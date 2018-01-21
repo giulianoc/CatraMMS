@@ -26,16 +26,18 @@ int main (int iArgc, char *pArgv [])
 
 
     thread cmsEngineProcessorThread (cmsEngineProcessor, multiEventsSet);
-    cmsEngineProcessorThread.join();
 
     thread schedulerThread (ref(scheduler));
-    schedulerThread.join();
 
     unsigned long           checkIngestionTimesPeriodInMilliSecs = 5 * 1000;
     shared_ptr<CheckIngestionTimes>     checkIngestionTimes =
-            make_shared<CheckIngestionTimes>(checkIngestionTimesPeriodInMilliSecs, multiEventsSet);
+            make_shared<CheckIngestionTimes>(checkIngestionTimesPeriodInMilliSecs, multiEventsSet, logger);
     checkIngestionTimes->start();
     scheduler.activeTimes(checkIngestionTimes);
 
+    cmsEngineProcessorThread.join();
+    schedulerThread.join();
+
+    
     return 0;
 }

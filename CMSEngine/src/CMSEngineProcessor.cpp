@@ -44,9 +44,9 @@ void CMSEngineProcessor::operator ()(shared_ptr<MultiEventsSet> multiEventsSet)
             }
             break;
             */
-            case CMS_EVENT_CHECKINGESTION:	// 10
+            case CMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTION:	// 1
             {
-                _logger->info("Received CMS_EVENT_CHECKINGESTION");
+                _logger->info("Received CMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTION");
 
 		handleCheckIngestionEvent ();
 
