@@ -20,26 +20,16 @@
 # License is allowed only after express negotiation of conditions
 # with the authors.
 
-cmake_minimum_required(
-	VERSION 2.8.12
+SET (SOURCES
+	Customer.cpp
+	CMSRepository.cpp
+)
+SET (HEADERS
+	Customer.h
+	CMSRepository.h
 )
 
-project(
-	CatraCMS
-)
+include_directories ("${PROJECT_SOURCE_DIR}/../usr_local/include")
 
-SET(CMAKE_CXX_FLAGS "-std=c++14")
+add_library (CMSRepository SHARED ${SOURCES} ${HEADERS})
 
-set(CMAKE_BUILD_TYPE Debug)
-#set(CMAKE_BUILD_TYPE RelWithDebInfo)
-#set(CMAKE_BUILD_TYPE Release)
-
-set(CatraCMS_VERSION_MAJOR 1)
-set(CatraCMS_VERSION_MINOR 0)
-
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
-find_package(LibCrypto)
-find_package(ZLIB)
-
-add_subdirectory(CMSRepository/src)
-add_subdirectory(CMSEngine/src)

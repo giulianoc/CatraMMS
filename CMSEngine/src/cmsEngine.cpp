@@ -5,6 +5,7 @@
 
 #include "CMSEngineProcessor.h"
 #include "CheckIngestionTimes.h"
+#include "CMSEngineDBFacade.h"
 
 
 int main (int iArgc, char *pArgv [])
@@ -15,11 +16,20 @@ int main (int iArgc, char *pArgv [])
     // globally register the loggers so so the can be accessed using spdlog::get(logger_name)
     // spdlog::register_logger(logger);
 
+    size_t dbPoolSize = 5;
+    string dbServer ("tcp://127.0.0.1:3306");
+    string dbUsername("root");
+    string dbPassword("root");
+    string dbName("CatraCMS");
+    shared_ptr<CMSEngineDBFacade>       cmsEngineDBFacade = make_shared<CMSEngineDBFacade>(
+            dbPoolSize, dbServer, dbUsername, dbPassword, dbName);
 
+    shared_ptr<Customers>       customers = make_shared<Customers>(cmsEngineDBFacade);
+    
     shared_ptr<MultiEventsSet>          multiEventsSet = make_shared<MultiEventsSet>();
     multiEventsSet->addDestination(CMSENGINEPROCESSORNAME);
 
-    CMSEngineProcessor      cmsEngineProcessor(logger);
+    CMSEngineProcessor      cmsEngineProcessor(logger, cmsEngineDBFacade, customers);
     
     unsigned long           ulThreadSleepInMilliSecs = 100;
     Scheduler2              scheduler(ulThreadSleepInMilliSecs);

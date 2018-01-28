@@ -1,9 +1,10 @@
 
-/*
+
 #ifndef CMSRepository_h
 #define CMSRepository_h
 
-#include "catralibraries/ConfigurationFile.h"
+#include <mutex>
+#include <vector>
 #include "catralibraries/FileIO.h"
 #include "Customer.h"
 
@@ -24,6 +25,7 @@ public:
         CMSREP_REPOSITORYTYPE_NUMBER
     };
 
+    /*
     struct SanityCheckContentInfo {
         string              _contentsDirectory;
         string              _customerDirectoryName;
@@ -74,216 +76,198 @@ public:
         } ;
 
     };
+     */
 
 private:
-    Error contentInRepository (
-            unsigned long ulIsCopyOrMove,
-            const char *pFilePathName,
-            RepositoryType_t rtRepositoryType,
-            const char *pCustomerDirectoryName,
-            Boolean_t bAddDateTimeToFileName);
+    void contentInRepository (
+	unsigned long ulIsCopyOrMove,
+	string contentPathName,
+	RepositoryType rtRepositoryType,
+	string customerDirectoryName,
+	bool addDateTimeToFileName);
 
-    Error sanityCheck_CustomersDirectory (
-            RepositoryType_t rtRepositoryType,
-            const char *pCustomersDirectory,
-            FileIO:: Directory_p pdDeliveryDirectory,
-            SanityCheckContentInfo_p psciSanityCheckContentsInfo,
-            long *plSanityCheckContentsInfoNumber,
-            unsigned long *pulFileIndex,
-            unsigned long *pulCurrentFileNumberProcessedInThisSchedule,
-            unsigned long *pulCurrentContentsRemovedNumberInThisSchedule,
-            unsigned long *pulCurrentOtherFilesRemovedNumberInThisSchedule,
-            unsigned long *pulDirectoryLevelIndexInsideCustomer,
-            Boolean_p pbHasCustomerToBeResumed);
-
-    Error sanityCheck_ContentsDirectory (
-            const char *pCustomerDirectoryName, const char *pContentsDirectory,
-            unsigned long ulRelativePathIndex,
-            RepositoryType_t rtRepositoryType,
-            SanityCheckContentInfo_p psciSanityCheckContentsInfo,
-            long *plSanityCheckContentsInfoNumber,
-            unsigned long *pulFileIndex,
-            unsigned long *pulCurrentFileNumberProcessedInThisSchedule,
-            unsigned long *pulCurrentContentsRemovedNumberInThisSchedule,
-            unsigned long *pulCurrentOtherFilesRemovedNumberInThisSchedule,
-            unsigned long *pulDirectoryLevelIndexInsideCustomer);
-
-    Error sanityCheck_runOnContentsInfo (
-            SanityCheckContentInfo_p psciSanityCheckContentsInfo,
-            unsigned long ulSanityCheckContentsInfoNumber,
-            RepositoryType_t rtRepositoryType,
-            unsigned long *pulCurrentContentsRemovedNumberInThisSchedule,
-            unsigned long *pulCurrentOtherFilesRemovedNumberInThisSchedule);
+//    Error sanityCheck_CustomersDirectory (
+//            RepositoryType rtRepositoryType,
+//            const char *pCustomersDirectory,
+//            FileIO:: Directory_p pdDeliveryDirectory,
+//            SanityCheckContentInfo_p psciSanityCheckContentsInfo,
+//            long *plSanityCheckContentsInfoNumber,
+//            unsigned long *pulFileIndex,
+//            unsigned long *pulCurrentFileNumberProcessedInThisSchedule,
+//            unsigned long *pulCurrentContentsRemovedNumberInThisSchedule,
+//            unsigned long *pulCurrentOtherFilesRemovedNumberInThisSchedule,
+//            unsigned long *pulDirectoryLevelIndexInsideCustomer,
+//            Boolean_p pbHasCustomerToBeResumed);
+//
+//    Error sanityCheck_ContentsDirectory (
+//            const char *pCustomerDirectoryName, const char *pContentsDirectory,
+//            unsigned long ulRelativePathIndex,
+//            RepositoryType rtRepositoryType,
+//            SanityCheckContentInfo_p psciSanityCheckContentsInfo,
+//            long *plSanityCheckContentsInfoNumber,
+//            unsigned long *pulFileIndex,
+//            unsigned long *pulCurrentFileNumberProcessedInThisSchedule,
+//            unsigned long *pulCurrentContentsRemovedNumberInThisSchedule,
+//            unsigned long *pulCurrentOtherFilesRemovedNumberInThisSchedule,
+//            unsigned long *pulDirectoryLevelIndexInsideCustomer);
+//
+//    Error sanityCheck_runOnContentsInfo (
+//            SanityCheckContentInfo_p psciSanityCheckContentsInfo,
+//            unsigned long ulSanityCheckContentsInfoNumber,
+//            RepositoryType rtRepositoryType,
+//            unsigned long *pulCurrentContentsRemovedNumberInThisSchedule,
+//            unsigned long *pulCurrentOtherFilesRemovedNumberInThisSchedule);
 
 private:
     string                      _hostName;
-    ConfigurationFile_p			_pcfConfiguration;
-    Buffer_p					_pbRepositories [
-            CMSREP_REPOSITORYTYPE_NUMBER];
 
-    string                      _downloadReservedDirectoryName;
-    string                      _downloadFreeDirectoryName;
-    string                      _downloadiPhoneLiveDirectoryName;
-    string                      _downloadSilverlightLiveDirectoryName;
-    string                      _downloadAdobeLiveDirectoryName;
-    string                      _streamingFreeDirectoryName;
-    string                      _streamingMetaDirectoryName;
-    string                      _streamingRecordingDirectoryName;
-    string                      _iPhoneAliasForLive;
-
-    unsigned long long          _freeSpaceToLeaveInEachPartition;
-    bool                        _unexpectedFilesToBeRemoved;
-    unsigned long               _retentionPeriodInSecondsForTemporaryFiles;
-    unsigned long               _maxFilesToBeProcessedPerSchedule [
-            CMSREP_REPOSITORYTYPE_NUMBER];
-    SanityCheckLastProcessedContent         _lastProcessedContent [
-            CMSREP_REPOSITORYTYPE_NUMBER];
-
-    string                      _fTPRootRepository;
-    string                      _cMSRootRepository;
+    string                      _cmsRootRepository;
     string                      _downloadRootRepository;
     string                      _streamingRootRepository;
-    string                      _errorRootRepository;
-    string                      _doneRootRepository;
-    string                      _profilesRootRepository;
-    string                      _profilesRootDirectoryFromXOEMachine;
     string                      _stagingRootRepository;
-    string                      _stagingRootRepositoryFromXOEMachine;
+    string                      _doneRootRepository;
+    string                      _errorRootRepository;
+    string                      _ftpRootRepository;
 
-    mutex                       _mtCMSPartitions;
-    unsigned long               _cMSPartitionsNumber;
-    unsigned long long          *_pullCMSPartitionsFreeSizeInMB;
-    unsigned long               _ulCurrentCMSPartitionIndex;
+    string                      _profilesRootRepository;
+
+//    string                      _iPhoneAliasForLive;
+    
+//    string                      _downloadReservedDirectoryName;
+//    string                      _downloadFreeDirectoryName;
+//    string                      _downloadiPhoneLiveDirectoryName;
+//    string                      _downloadSilverlightLiveDirectoryName;
+//    string                      _downloadAdobeLiveDirectoryName;
+//    string                      _streamingFreeDirectoryName;
+//    string                      _streamingMetaDirectoryName;
+//    string                      _streamingRecordingDirectoryName;
+
+    unsigned long long          _freeSpaceToLeaveInEachPartition;
+//    bool                        _unexpectedFilesToBeRemoved;
+//    unsigned long               _retentionPeriodInSecondsForTemporaryFiles;
+//    unsigned long               _maxFilesToBeProcessedPerSchedule [
+//            CMSREP_REPOSITORYTYPE_NUMBER];
+//    SanityCheckLastProcessedContent         _lastProcessedContent [
+//            CMSREP_REPOSITORYTYPE_NUMBER];
 
 
-    Error creatingDirsUsingTerritories (
-            unsigned long ulCurrentCMSPartitionIndex,
-            const char *pRelativePath,
-            const char *pCustomerDirectoryName,
-            Boolean_t bDeliveryRepositoriesToo,
-            TerritoriesHashMap_p phmTerritories,
-            Buffer_p pbCMSAssetPathName);
+    recursive_mutex                 _mtCMSPartitions;
+    vector<unsigned long long>      _cmsPartitionsFreeSizeInMB;
+    unsigned long                   _ulCurrentCMSPartitionIndex;
+
+
+    string getRepository(RepositoryType rtRepositoryType);
+
+    string creatingDirsUsingTerritories (
+	unsigned long ulCurrentCMSPartitionIndex,
+	string relativePath,
+	string customerDirectoryName,
+	bool deliveryRepositoriesToo,
+	Customer::TerritoriesHashMap& phmTerritories);
 
 public:
     CMSRepository (void);
 
     ~CMSRepository (void);
 
-    Error init (
-            ConfigurationFile_p pcfConfiguration,
-            LoadBalancer_p plbWebServerLoadBalancer,
-            Tracer_p ptTracer);
+//    const char *getIPhoneAliasForLive (void);
 
-    Error finish ();
+    string getCMSRootRepository (void);
 
-    const char *getIPhoneAliasForLive (void);
+    string getStreamingRootRepository (void);
 
-    const char *getCMSRootRepository (void);
+    string getDownloadRootRepository (void);
 
-    const char *getStreamingRootRepository (void);
+    string getFTPRootRepository (void);
 
-    const char *getDownloadRootRepository (void);
+    string getStagingRootRepository (void);
 
-    const char *getFTPRootRepository (void);
+    string getErrorRootRepository (void);
 
-    const char *getStagingRootRepository (void);
+    string getDoneRootRepository (void);
 
-    const char *getErrorRootRepository (void);
+    void refreshPartitionsFreeSizes (void);
 
-    const char *getDoneRootRepository (void);
+    void moveContentInRepository (
+        string filePathName,
+        RepositoryType rtRepositoryType,
+        string customerDirectoryName,
+        bool addDateTimeToFileName);
 
-    Error refreshPartitionsFreeSizes (void);
+    void copyFileInRepository (
+	string filePathName,
+	RepositoryType rtRepositoryType,
+	string customerDirectoryName,
+	bool addDateTimeToFileName);
 
-    Error saveSanityCheckLastProcessedContent (
-            const char *pFilePathName);
+    string moveAssetInCMSRepository (
+        string sourceAssetPathName,
+        string customerDirectoryName,
+        string destinationFileName,
+        string relativePath,
 
-    Error readSanityCheckLastProcessedContent (
-            const char *pFilePathName);
+        bool isPartitionIndexToBeCalculated,
+        unsigned long *pulCMSPartitionIndexUsed,	// OUT if bIsPartitionIndexToBeCalculated is true, IN is bIsPartitionIndexToBeCalculated is false
 
-    Error moveContentInRepository (
-            const char *pFilePathName,
-            RepositoryType_t rtRepositoryType,
-            const char *pCustomerDirectoryName,
-            Boolean_t bAddDateTimeToFileName);
+        bool deliveryRepositoriesToo,
+        Customer::TerritoriesHashMap& phmTerritories
+    );
 
-    Error copyFileInRepository (
-            const char *pFilePathName,
-            RepositoryType_t rtRepositoryType,
-            const char *pCustomerDirectoryName,
-            Boolean_t bAddDateTimeToFileName);
+    string getCMSAssetPathName (
+	unsigned long ulPartitionNumber,
+	string customerDirectoryName,
+	string relativePath,		// using '/'
+	string fileName);
 
-    Error moveAssetInCMSRepository (
-            const char *pSourceAssetPathName,
-            const char *pCustomerDirectoryName,
-            const char *pDestinationFileName,
-            const char *pRelativePath,
+    string getDownloadLinkPathName (
+	unsigned long ulPartitionNumber,
+	string customerDirectoryName,
+	string territoryName,
+	string relativePath,
+	string fileName,
+	bool downloadRepositoryToo);
 
-            Boolean_t bIsPartitionIndexToBeCalculated,
-            unsigned long *pulCMSPartitionIndexUsed,
-
-            Boolean_t bDeliveryRepositoriesToo,
-            TerritoriesHashMap_p phmTerritories,
-
-            Buffer_p pbCMSAssetPathName);
-
-    Error sanityCheck_ContentsOnFileSystem (
-            RepositoryType_t rtRepositoryType);
-
-    Error getCMSAssetPathName (
-            Buffer_p pbAssetPathName,
-            unsigned long ulPartitionNumber,
-            const char *pCustomerDirectoryName,
-            const char *pRelativePath,
-            const char *pFileName,
-            Boolean_t bIsFromXOEMachine);
-
-    Error getDownloadLinkPathName (
-            Buffer_p pbLinkPathName,
-            unsigned long ulPartitionNumber,
-            const char *pCustomerDirectoryName,
-            const char *pTerritoryName,
-            const char *pRelativePath,
-            const char *pFileName,
-            Boolean_t bDownloadRepositoryToo = true);
-
-    Error getStreamingLinkPathName (
-            Buffer_p pbLinkPathName,
-            unsigned long ulPartitionNumber,
-            const char *pCustomerDirectoryName,
-            const char *pTerritoryName,
-            const char *pRelativePath,
-            const char *pFileName);
+string getStreamingLinkPathName (
+	unsigned long ulPartitionNumber,	// IN
+	string customerDirectoryName,	// IN
+	string territoryName,	// IN
+	string relativePath,	// IN
+	string fileName);	// IN
 
 //     * bRemoveLinuxPathIfExist: often this method is called 
 //     * 		to get the path where the encoder put his output
 //     * 		(file or directory). In this case it is good
 //     * 		to clean/remove that path if already existing in order
 //     * 		to give to the encoder a clean place where to write
-    Error getStagingAssetPathName (
-            Buffer_p pbAssetPathName,
-            const char *pCustomerDirectoryName,
-            const char *pRelativePath,
-            const char *pFileName,
-            long long llMediaItemKey,
-            long long llPhysicalPathKey,
-            Boolean_t bIsFromXOEMachine,
-            Boolean_t bRemoveLinuxPathIfExist);
+    string getStagingAssetPathName (
+	string customerDirectoryName,
+	string relativePath,
+	string fileName,            // may be empty ("")
+	long long llMediaItemKey,
+	long long llPhysicalPathKey,
+	bool removeLinuxPathIfExist);
 
-    Error getEncodingProfilePathName (
-            Buffer_p pbEncodingProfilePathName,
-            long long llEncodingProfileKey,
-            const char *pProfileFileNameExtension,
-            Boolean_t bIsFromXOEMachine);
+    string getEncodingProfilePathName (
+	long long llEncodingProfileKey,
+	string profileFileNameExtension);
 
-    Error getFFMPEGEncodingProfilePathName (
-            unsigned long ulContentType,
-            Buffer_p pbEncodingProfilePathName,
-            long long llEncodingProfileKey);
+    string getFFMPEGEncodingProfilePathName (
+	unsigned long ulContentType,
+	long long llEncodingProfileKey);
 
-    Error getCustomerStorageUsage (
-            const char *pCustomerDirectoryName,
-            unsigned long *pulStorageUsageInMB);
+    unsigned long getCustomerStorageUsage (
+	string customerDirectoryName);
+
+//    Error saveSanityCheckLastProcessedContent (
+//            const char *pFilePathName);
+//
+//    Error readSanityCheckLastProcessedContent (
+//            const char *pFilePathName);
+//
+//    Error sanityCheck_ContentsOnFileSystem (
+//            RepositoryType rtRepositoryType);
+
 } ;
 
 #endif
-*/
+

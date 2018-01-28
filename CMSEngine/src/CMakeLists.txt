@@ -22,12 +22,14 @@
 
 SET (SOURCES
 	cmsEngine.cpp
+	CMSEngineDBFacade.cpp
 	CMSEngineProcessor.cpp
 	CheckIngestionTimes.cpp
 	Customers.cpp
 )
 
 SET (HEADERS
+	CMSEngineDBFacade.h
 	CMSEngineProcessor.h
 	CheckIngestionTimes.h
 	Customers.h
@@ -35,11 +37,16 @@ SET (HEADERS
 
 include_directories ("${PROJECT_SOURCE_DIR}/../usr_local/include")
 include_directories ("${PROJECT_SOURCE_DIR}/../spdlog/include")
-link_directories("${PROJECT_SOURCE_DIR}/../usr_local/lib")
+include_directories ("${PROJECT_SOURCE_DIR}/../connection-pool")
+include_directories ("/app/5/ThirdPartySoftware/mysql-connector-c++-1.1.9-linux-ubuntu16.10-x86-64bit/include")
+
+link_directories ("${PROJECT_SOURCE_DIR}/../usr_local/lib")
+link_directories ("/app/5/ThirdPartySoftware/mysql-connector-c++-1.1.9-linux-ubuntu16.10-x86-64bit/lib")
 
 add_executable(cmsEngine ${SOURCES} ${HEADERS})
 
 target_link_libraries (cmsEngine MultiEventsSet)
+target_link_libraries (cmsEngine mysqlcppconn)
 
 target_link_libraries (cmsEngine Scheduler)
 target_link_libraries (cmsEngine PThread)
