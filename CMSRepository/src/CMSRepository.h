@@ -5,6 +5,7 @@
 
 #include <mutex>
 #include <vector>
+#include "spdlog/spdlog.h"
 #include "catralibraries/FileIO.h"
 #include "Customer.h"
 
@@ -12,7 +13,7 @@
 class CMSRepository
 {
 public:
-    enum class RepositoryType
+    enum RepositoryType
     {
         CMSREP_REPOSITORYTYPE_CMSCUSTOMER	= 0,
         CMSREP_REPOSITORYTYPE_DOWNLOAD,
@@ -119,8 +120,11 @@ private:
 //            unsigned long *pulCurrentOtherFilesRemovedNumberInThisSchedule);
 
 private:
+    shared_ptr<spdlog::logger>  _logger;
+
     string                      _hostName;
 
+    string                      _storage;
     string                      _cmsRootRepository;
     string                      _downloadRootRepository;
     string                      _streamingRootRepository;
@@ -166,7 +170,7 @@ private:
 	Customer::TerritoriesHashMap& phmTerritories);
 
 public:
-    CMSRepository (void);
+    CMSRepository (shared_ptr<spdlog::logger> logger);
 
     ~CMSRepository (void);
 

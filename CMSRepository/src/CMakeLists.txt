@@ -30,6 +30,15 @@ SET (HEADERS
 )
 
 include_directories ("${PROJECT_SOURCE_DIR}/../usr_local/include")
+include_directories ("${PROJECT_SOURCE_DIR}/../spdlog/include")
+
+if (APPLE)
+	link_directories ("${PROJECT_SOURCE_DIR}/../usr_local/lib")
+endif()
 
 add_library (CMSRepository SHARED ${SOURCES} ${HEADERS})
 
+if (APPLE)
+	target_link_libraries (CMSRepository ErrMsg)
+	target_link_libraries (CMSRepository Tools)
+endif()

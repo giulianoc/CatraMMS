@@ -1,36 +1,41 @@
 
 #include "CMSRepository.h"
-//#include "catralibraries/HttpGetThread.h"
-//#include "catralibraries/HttpPostThread.h"
-//#include "catralibraries/WebUtility.h"
 #include "catralibraries/FileIO.h"
 #include "catralibraries/System.h"
 #include "catralibraries/DateTime.h"
-//#include <stdlib.h>
 
-CMSRepository::CMSRepository(void) {
+CMSRepository::CMSRepository(shared_ptr<spdlog::logger> logger) 
+{
+
+    _logger             = logger;
 
     _hostName = System::getHostName();
 
     // MB
     _freeSpaceToLeaveInEachPartition = 5;
 
-    _ftpRootRepository = "/app/storage/FTPRepository/users/";
-    _cmsRootRepository = "/app/storage/CMSRepository/";
-    _downloadRootRepository = "/app/storage/DownloadRepository/";
-    _streamingRootRepository = "/app/storage/StreamingRepository/";
-    _errorRootRepository = "/app/storage/CMSWorkingAreaRepository/Errors/";
-    _doneRootRepository = "/app/storage/CMSWorkingAreaRepository/Done/";
-    _profilesRootRepository = "/app/storage/CMSRepository/EncodingProfiles/";
-    _stagingRootRepository = "/app/storage/CMSWorkingAreaRepository/Staging/";
+    _storage = "/app/storage/";
 
+    _ftpRootRepository = _storage.append("FTPRepository/users/");
+    _cmsRootRepository = _storage.append("CMSRepository/");
+    _downloadRootRepository = _storage.append("DownloadRepository/");
+    _streamingRootRepository = _storage.append("StreamingRepository/");
+
+    _errorRootRepository = _storage.append("CMSWorkingAreaRepository/Errors/");
+    _doneRootRepository = _storage.append("CMSWorkingAreaRepository/Done/");
+    _stagingRootRepository = _storage.append("CMSWorkingAreaRepository/Staging/");
+
+    _profilesRootRepository = _storage.append("CMSRepository/EncodingProfiles/");
+
+    bool noErrorIfExists = true;
+    bool recursive = true;
     FileIO::createDirectory(_ftpRootRepository,
             S_IRUSR | S_IWUSR | S_IXUSR |
-            S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, true, true);
+            S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 
     FileIO::createDirectory(_cmsRootRepository,
             S_IRUSR | S_IWUSR | S_IXUSR |
-            S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, true, true);
+            S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 
     // create CMS_0000 in case it does not exist (first running of CMS)
     {
@@ -41,36 +46,35 @@ CMSRepository::CMSRepository(void) {
 
         FileIO::createDirectory(CMS_0000Path,
                 S_IRUSR | S_IWUSR | S_IXUSR |
-                S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, true, true);
+                S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
     }
 
     FileIO::createDirectory(_downloadRootRepository,
             S_IRUSR | S_IWUSR | S_IXUSR |
-            S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, true, true);
+            S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 
     FileIO::createDirectory(_streamingRootRepository,
             S_IRUSR | S_IWUSR | S_IXUSR |
-            S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, true, true);
+            S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 
     FileIO::createDirectory(_errorRootRepository,
             S_IRUSR | S_IWUSR | S_IXUSR |
-            S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, true, true);
+            S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 
     FileIO::createDirectory(_doneRootRepository,
             S_IRUSR | S_IWUSR | S_IXUSR |
-            S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, true, true);
+            S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 
     FileIO::createDirectory(_profilesRootRepository,
             S_IRUSR | S_IWUSR | S_IXUSR |
-            S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, true, true);
+            S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 
     FileIO::createDirectory(_stagingRootRepository,
             S_IRUSR | S_IWUSR | S_IXUSR |
-            S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, true, true);
+            S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 
     // Partitions staff
     {
-        bool bCMSAvailablePartitions;
         char pCMSPartitionName [64];
         unsigned long long ullUsedInKB;
         unsigned long long ullAvailableInKB;
@@ -80,22 +84,26 @@ CMSRepository::CMSRepository(void) {
         lock_guard<recursive_mutex> locker(_mtCMSPartitions);
 
         unsigned long ulCMSPartitionsNumber = 0;
+        bool cmsAvailablePartitions = true;
 
         _ulCurrentCMSPartitionIndex = 0;
-        bCMSAvailablePartitions = true;
 
         // inizializzare FreeSize
-        while (bCMSAvailablePartitions) {
+        while (cmsAvailablePartitions) 
+        {
             string pathNameToGetFileSystemInfo(_cmsRootRepository);
 
             sprintf(pCMSPartitionName, "CMS_%04lu", ulCMSPartitionsNumber);
 
             pathNameToGetFileSystemInfo.append(pCMSPartitionName);
 
-            try {
+            try 
+            {
                 FileIO::getFileSystemInfo(pathNameToGetFileSystemInfo,
                         &ullUsedInKB, &ullAvailableInKB, &lPercentUsed);
-            }            catch (...) {
+            }            
+            catch (...) 
+            {
                 break;
             }
 
@@ -143,8 +151,8 @@ string CMSRepository::getDoneRootRepository(void) {
     return _doneRootRepository;
 }
 
-void CMSRepository::refreshPartitionsFreeSizes(void) {
-    unsigned long ulCMSPartitionIndex;
+void CMSRepository::refreshPartitionsFreeSizes(void) 
+{
     char pCMSPartitionName [64];
     unsigned long long ullUsedInKB;
     unsigned long long ullAvailableInKB;
@@ -153,9 +161,10 @@ void CMSRepository::refreshPartitionsFreeSizes(void) {
 
     lock_guard<recursive_mutex> locker(_mtCMSPartitions);
 
-    for (ulCMSPartitionIndex = 0;
+    for (unsigned long ulCMSPartitionIndex = 0;
             ulCMSPartitionIndex < _cmsPartitionsFreeSizeInMB.size();
-            ulCMSPartitionIndex++) {
+            ulCMSPartitionIndex++) 
+    {
         string pathNameToGetFileSystemInfo(_cmsRootRepository);
 
         sprintf(pCMSPartitionName, "CMS_%04lu", ulCMSPartitionIndex);
@@ -168,18 +177,10 @@ void CMSRepository::refreshPartitionsFreeSizes(void) {
         _cmsPartitionsFreeSizeInMB[ulCMSPartitionIndex] =
                 ullAvailableInKB / 1024;
 
-        /*
-                {
-                        Message msg = CMSRepositoryMessages (
-                                __FILE__, __LINE__, 
-                                CMSREP_CMSREPOSITORY_AVAILABLESPACE,
-                                2, 
-                                (const char *) bPathNameToGetFileSystemInfo,
-                                _pullCMSPartitionsFreeSizeInMB [ulCMSPartitionIndex]);
-                        _ptSystemTracer -> trace (Tracer:: TRACER_LINFO,
-                                (const char *) msg, __FILE__, __LINE__);
-                }
-         */
+        _logger->info(string("Available space")
+            + ", pathNameToGetFileSystemInfo: " + pathNameToGetFileSystemInfo
+            + ", _cmsPartitionsFreeSizeInMB[ulCMSPartitionIndex]: " + to_string(_cmsPartitionsFreeSizeInMB[ulCMSPartitionIndex])
+        );
     }
 }
 
@@ -197,86 +198,79 @@ string CMSRepository::creatingDirsUsingTerritories(
     sprintf(pCMSPartitionName, "CMS_%04lu/", ulCurrentCMSPartitionIndex);
 
     string cmsAssetPathName(_cmsRootRepository);
-    cmsAssetPathName.append(pCMSPartitionName).append(customerDirectoryName).append(relativePath);
+    cmsAssetPathName
+        .append(pCMSPartitionName)
+        .append(customerDirectoryName)
+        .append(relativePath);
 
-    if (!FileIO::directoryExisting(cmsAssetPathName)) {
-        /*
-                        {
-                        Message msg = CMSRepositoryMessages (
-                                __FILE__, __LINE__,
-                                CMSREP_CMSREPOSITORY_CREATEDIRECTORY,
-                                2,
-                                pCustomerDirectoryName,
-                                (const char *) (*pbCMSAssetPathName));
-                        _ptSystemTracer -> trace (Tracer:: TRACER_LINFO,
-                                (const char *) msg, __FILE__, __LINE__);
-                }
+    if (!FileIO::directoryExisting(cmsAssetPathName)) 
+    {
+        _logger->info(string("Create directory")
+            + ", cmsAssetPathName: " + cmsAssetPathName
+        );
 
-         */
+        bool noErrorIfExists = true;
+        bool recursive = true;
         FileIO::createDirectory(cmsAssetPathName,
                 S_IRUSR | S_IWUSR | S_IXUSR |
                 S_IRGRP | S_IXGRP |
-                S_IROTH | S_IXOTH, true, true);
+                S_IROTH | S_IXOTH, noErrorIfExists, recursive);
     }
 
     if (cmsAssetPathName.back() != '/')
         cmsAssetPathName.append("/");
 
-    if (deliveryRepositoriesToo) {
+    if (deliveryRepositoriesToo) 
+    {
         Customer::TerritoriesHashMap::iterator it;
 
 
-        for (it = phmTerritories.begin(); it != phmTerritories.end(); ++it) {
+        for (it = phmTerritories.begin(); it != phmTerritories.end(); ++it) 
+        {
             string territoryName = it->second;
 
             string downloadAssetPathName(_downloadRootRepository);
-
-            downloadAssetPathName.append(pCMSPartitionName).append(customerDirectoryName).append("/")
-                    .append(territoryName).append(relativePath);
+            downloadAssetPathName
+                .append(pCMSPartitionName)
+                .append(customerDirectoryName)
+                .append("/")
+                .append(territoryName)
+                .append(relativePath);
 
             string streamingAssetPathName(_streamingRootRepository);
-            streamingAssetPathName.append(pCMSPartitionName)
-                    .append(customerDirectoryName)
-                    .append("/")
-                    .append(territoryName)
-                    .append(relativePath);
+            streamingAssetPathName
+                .append(pCMSPartitionName)
+                .append(customerDirectoryName)
+                .append("/")
+                .append(territoryName)
+                .append(relativePath);
 
-            if (!FileIO::directoryExisting(downloadAssetPathName)) {
-                /*
-                        {
-                                Message msg = CMSRepositoryMessages (
-                                        __FILE__, __LINE__,
-                                        CMSREP_CMSREPOSITORY_CREATEDIRECTORY,
-                                        2,
-                                        pCustomerDirectoryName,
-                                        (const char *) bDownloadAssetPathName);
-                                _ptSystemTracer -> trace (Tracer:: TRACER_LINFO,
-                                        (const char *) msg, __FILE__, __LINE__);
-                        }
-                 */
+            if (!FileIO::directoryExisting(downloadAssetPathName)) 
+            {
+                _logger->info(string("Create directory")
+                    + ", downloadAssetPathName: " + downloadAssetPathName
+                );
+                
+                bool noErrorIfExists = true;
+                bool recursive = true;
                 FileIO::createDirectory(downloadAssetPathName,
                         S_IRUSR | S_IWUSR | S_IXUSR |
                         S_IRGRP | S_IXGRP |
-                        S_IROTH | S_IXOTH, true, true);
+                        S_IROTH | S_IXOTH, noErrorIfExists, recursive);
             }
 
-            if (!FileIO::directoryExisting(streamingAssetPathName)) {
-                /*
-                        {
-                                Message msg = CMSRepositoryMessages (
-                                        __FILE__, __LINE__,
-                                        CMSREP_CMSREPOSITORY_CREATEDIRECTORY,
-                                        2,
-                                        pCustomerDirectoryName,
-                                        (const char *) bStreamingAssetPathName);
-                                _ptSystemTracer -> trace (Tracer:: TRACER_LINFO,
-                                        (const char *) msg, __FILE__, __LINE__);
-                        }
-                 */
+            if (!FileIO::directoryExisting(streamingAssetPathName)) 
+            {
+                _logger->info(string("Create directory")
+                    + ", streamingAssetPathName: " + streamingAssetPathName
+                );
+
+                bool noErrorIfExists = true;
+                bool recursive = true;
                 FileIO::createDirectory(streamingAssetPathName,
                         S_IRUSR | S_IWUSR | S_IXUSR |
                         S_IRGRP | S_IXGRP |
-                        S_IROTH | S_IXOTH, true, true);
+                        S_IROTH | S_IXOTH, noErrorIfExists, recursive);
             }
         }
     }
@@ -293,11 +287,11 @@ void CMSRepository::moveContentInRepository(
  {
 
     contentInRepository(
-            1,
-            filePathName,
-            rtRepositoryType,
-            customerDirectoryName,
-            addDateTimeToFileName);
+        1,
+        filePathName,
+        rtRepositoryType,
+        customerDirectoryName,
+        addDateTimeToFileName);
 }
 
 void CMSRepository::copyFileInRepository(
@@ -308,43 +302,51 @@ void CMSRepository::copyFileInRepository(
  {
 
     contentInRepository(
-            0,
-            filePathName,
-            rtRepositoryType,
-            customerDirectoryName,
-            addDateTimeToFileName);
+        0,
+        filePathName,
+        rtRepositoryType,
+        customerDirectoryName,
+        addDateTimeToFileName);
 }
 
-string CMSRepository::getRepository(RepositoryType rtRepositoryType) {
+string CMSRepository::getRepository(RepositoryType rtRepositoryType) 
+{
 
-    switch (rtRepositoryType) {
-        case RepositoryType::CMSREP_REPOSITORYTYPE_CMSCUSTOMER:
+    switch (rtRepositoryType) 
+    {
+        case CMSREP_REPOSITORYTYPE_CMSCUSTOMER:
         {
             return _cmsRootRepository;
         }
-        case RepositoryType::CMSREP_REPOSITORYTYPE_DOWNLOAD:
+        case CMSREP_REPOSITORYTYPE_DOWNLOAD:
         {
             return _downloadRootRepository;
         }
-        case RepositoryType::CMSREP_REPOSITORYTYPE_STREAMING:
+        case CMSREP_REPOSITORYTYPE_STREAMING:
         {
             return _streamingRootRepository;
         }
-        case RepositoryType::CMSREP_REPOSITORYTYPE_STAGING:
+        case CMSREP_REPOSITORYTYPE_STAGING:
         {
             return _stagingRootRepository;
         }
-        case RepositoryType::CMSREP_REPOSITORYTYPE_DONE:
+        case CMSREP_REPOSITORYTYPE_DONE:
         {
             return _doneRootRepository;
         }
-        case RepositoryType::CMSREP_REPOSITORYTYPE_ERRORS:
+        case CMSREP_REPOSITORYTYPE_ERRORS:
         {
             return _errorRootRepository;
         }
-        case RepositoryType::CMSREP_REPOSITORYTYPE_FTP:
+        case CMSREP_REPOSITORYTYPE_FTP:
         {
             return _ftpRootRepository;
+        }
+        default:
+        {
+            throw invalid_argument(string("Wrong argument")
+                    + ", rtRepositoryType: " + to_string(rtRepositoryType)
+                    );
         }
     }
 }
@@ -364,16 +366,18 @@ void CMSRepository::contentInRepository(
 
     // pDestRepository includes the '/' at the end
     string metaDataFileInDestRepository(getRepository(rtRepositoryType));
-
-    metaDataFileInDestRepository.append(customerDirectoryName).append("/");
+    metaDataFileInDestRepository
+        .append(customerDirectoryName)
+        .append("/");
 
     DateTime::get_tm_LocalTime(&tmDateTime, &ulMilliSecs);
 
-    if (rtRepositoryType == RepositoryType::CMSREP_REPOSITORYTYPE_DONE ||
-            rtRepositoryType == RepositoryType::CMSREP_REPOSITORYTYPE_STAGING ||
-            rtRepositoryType == RepositoryType::CMSREP_REPOSITORYTYPE_ERRORS) {
+    if (rtRepositoryType == CMSREP_REPOSITORYTYPE_DONE ||
+            rtRepositoryType == CMSREP_REPOSITORYTYPE_STAGING ||
+            rtRepositoryType == CMSREP_REPOSITORYTYPE_ERRORS) 
+    {
         char pDateTime [64];
-        Boolean_t bIsDirectoryExisting;
+        bool directoryExisting;
 
 
         sprintf(pDateTime,
@@ -384,57 +388,49 @@ void CMSRepository::contentInRepository(
 
         metaDataFileInDestRepository.append(pDateTime);
 
-        if (!FileIO::directoryExisting(metaDataFileInDestRepository)) {
-            /*
-                    {
-                            Message msg = CMSRepositoryMessages (
-                                    __FILE__, __LINE__,
-                                    CMSREP_CMSREPOSITORY_CREATEDIRECTORY,
-                                    2,
-                                    pCustomerDirectoryName,
-                                    (const char *) bMetaDataFileInDestRepository);
-                            _ptSystemTracer -> trace (Tracer:: TRACER_LINFO,
-                                    (const char *) msg, __FILE__, __LINE__);
-                    }
-             */
+        if (!FileIO::directoryExisting(metaDataFileInDestRepository)) 
+        {
+            _logger->info(string("Create directory")
+                + ", metaDataFileInDestRepository: " + metaDataFileInDestRepository
+            );
+
+            bool noErrorIfExists = true;
+            bool recursive = true;
             FileIO::createDirectory(metaDataFileInDestRepository,
                     S_IRUSR | S_IWUSR | S_IXUSR |
                     S_IRGRP | S_IXGRP |
-                    S_IROTH | S_IXOTH, true, true);
+                    S_IROTH | S_IXOTH, noErrorIfExists, recursive);
         }
 
         metaDataFileInDestRepository.append("/");
 
-        if (rtRepositoryType == RepositoryType::CMSREP_REPOSITORYTYPE_DONE) {
+        if (rtRepositoryType == CMSREP_REPOSITORYTYPE_DONE) 
+        {
             sprintf(pDateTime, "%02lu",
                     (unsigned long) (tmDateTime. tm_hour));
 
             metaDataFileInDestRepository.append(pDateTime);
 
-            if (!FileIO::directoryExisting(metaDataFileInDestRepository)) {
-                /*
-                        {
-                                Message msg = CMSRepositoryMessages (
-                                        __FILE__, __LINE__,
-                                        CMSREP_CMSREPOSITORY_CREATEDIRECTORY,
-                                        2,
-                                        pCustomerDirectoryName,
-                                        (const char *) bMetaDataFileInDestRepository);
-                                _ptSystemTracer -> trace (Tracer:: TRACER_LINFO,
-                                        (const char *) msg, __FILE__, __LINE__);
-                        }
-                 */
+            if (!FileIO::directoryExisting(metaDataFileInDestRepository)) 
+            {
+                _logger->info(string("Create directory")
+                    + ", metaDataFileInDestRepository: " + metaDataFileInDestRepository
+                );
+
+                bool noErrorIfExists = true;
+                bool recursive = true;
                 FileIO::createDirectory(metaDataFileInDestRepository,
                         S_IRUSR | S_IWUSR | S_IXUSR |
                         S_IRGRP | S_IXGRP |
-                        S_IROTH | S_IXOTH, true, true);
+                        S_IROTH | S_IXOTH, noErrorIfExists, recursive);
             }
 
             metaDataFileInDestRepository.append("/");
         }
     }
 
-    if (addDateTimeToFileName) {
+    if (addDateTimeToFileName) 
+    {
         char pDateTime [64];
 
 
@@ -464,73 +460,53 @@ void CMSRepository::contentInRepository(
     // directory in case of IPhone content
     detSourceFileType = FileIO::getDirectoryEntryType(contentPathName);
 
-    if (ulIsCopyOrMove == 1) {
-        if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY) {
-            /*
-                    {
-                            Message msg = CMSRepositoryMessages (__FILE__, __LINE__,
-                                    CMSREP_CMSREPOSITORY_MOVEDIRECTORY,
-                                    3,
-                                    pCustomerDirectoryName,
-                                    pContentPathName,
-                                    (const char *) bMetaDataFileInDestRepository);
-                            _ptSystemTracer -> trace (Tracer:: TRACER_LINFO,
-                                    (const char *) msg, __FILE__, __LINE__);
-                    }
-             */
+    if (ulIsCopyOrMove == 1) 
+    {
+        if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY) 
+        {
+            _logger->info(string("Move directory")
+                + ", from: " + contentPathName
+                + ", to: " + metaDataFileInDestRepository
+            );
+
             FileIO::moveDirectory(contentPathName,
                     metaDataFileInDestRepository,
                     S_IRUSR | S_IWUSR | S_IXUSR |
                     S_IRGRP | S_IXGRP |
                     S_IROTH | S_IXOTH);
-        } else // if (detSourceFileType == FileIO:: TOOLS_FILEIO_REGULARFILE
+        } 
+        else // if (detSourceFileType == FileIO:: TOOLS_FILEIO_REGULARFILE
         {
-            /*
-                    {
-                            Message msg = CMSRepositoryMessages (__FILE__, __LINE__,
-                                    CMSREP_CMSREPOSITORY_MOVEFILE,
-                                    3,
-                                    pCustomerDirectoryName,
-                                    pContentPathName,
-                                    (const char *) bMetaDataFileInDestRepository);
-                            _ptSystemTracer -> trace (Tracer:: TRACER_LINFO,
-                                    (const char *) msg, __FILE__, __LINE__);
-                    }
-             */
+            _logger->info(string("Move file")
+                + ", from: " + contentPathName
+                + ", to: " + metaDataFileInDestRepository
+            );
+
             FileIO::moveFile(contentPathName, metaDataFileInDestRepository);
         }
-    } else {
-        if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY) {
-            /*
-                    {
-                            Message msg = CMSRepositoryMessages (__FILE__, __LINE__,
-                                    CMSREP_CMSREPOSITORY_COPYDIRECTORY,
-                                    3,
-                                    pCustomerDirectoryName,
-                                    pContentPathName,
-                                    (const char *) bMetaDataFileInDestRepository);
-                            _ptSystemTracer -> trace (Tracer:: TRACER_LINFO,
-                                    (const char *) msg, __FILE__, __LINE__);
-                    }
-             */
+    } 
+    else 
+    {
+        if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY) 
+        {
+            _logger->info(string("Copy directory")
+                + ", from: " + contentPathName
+                + ", to: " + metaDataFileInDestRepository
+            );
+
             FileIO::copyDirectory(contentPathName,
                     metaDataFileInDestRepository,
                     S_IRUSR | S_IWUSR | S_IXUSR |
                     S_IRGRP | S_IXGRP |
                     S_IROTH | S_IXOTH);
-        } else {
-            /*
-                    {
-                            Message msg = CMSRepositoryMessages (__FILE__, __LINE__,
-                                    CMSREP_CMSREPOSITORY_COPYFILE,
-                                    3,
-                                    pCustomerDirectoryName,
-                                    pContentPathName,
-                                    (const char *) bMetaDataFileInDestRepository);
-                            _ptSystemTracer -> trace (Tracer:: TRACER_LINFO,
-                                    (const char *) msg, __FILE__, __LINE__);
-                    }
-             */
+        } 
+        else 
+        {
+            _logger->info(string("Copy file")
+                + ", from: " + contentPathName
+                + ", to: " + metaDataFileInDestRepository
+            );
+
             FileIO::copyFile(contentPathName,
                     metaDataFileInDestRepository);
         }
@@ -543,7 +519,7 @@ string CMSRepository::moveAssetInCMSRepository(
         string destinationFileName,
         string relativePath,
 
-        bool isPartitionIndexToBeCalculated,
+        bool partitionIndexToBeCalculated,
         unsigned long *pulCMSPartitionIndexUsed, // OUT if bIsPartitionIndexToBeCalculated is true, IN is bIsPartitionIndexToBeCalculated is false
 
         bool deliveryRepositoriesToo,
@@ -555,68 +531,62 @@ string CMSRepository::moveAssetInCMSRepository(
 
     if (relativePath.front() != '/' || pulCMSPartitionIndexUsed == (unsigned long *) NULL) 
     {
-        throw runtime_error("Activation wrong");
+            throw invalid_argument(string("Wrong argument")
+                    + ", relativePath: " + relativePath
+                    );
     }
 
     lock_guard<recursive_mutex> locker(_mtCMSPartitions);
 
     // file in case of .3gp content OR
     // directory in case of IPhone content
-    detSourceFileType = FileIO::getDirectoryEntryType(
-            sourceAssetPathName);
+    detSourceFileType = FileIO::getDirectoryEntryType(sourceAssetPathName);
 
     if (detSourceFileType != FileIO::TOOLS_FILEIO_DIRECTORY &&
-            detSourceFileType != FileIO::TOOLS_FILEIO_REGULARFILE) {
+            detSourceFileType != FileIO::TOOLS_FILEIO_REGULARFILE) 
+    {
         throw runtime_error("Wrong directory entry type");
     }
 
-    if (isPartitionIndexToBeCalculated) {
-        Error_t errGetFileSize;
+    if (partitionIndexToBeCalculated) 
+    {
         unsigned long long ullFSEntrySizeInBytes;
-        unsigned long ulCMSPartitionIndex;
-        unsigned long long ullCMSPartitionsFreeSizeInKB;
 
 
-        if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY) {
-            ullFSEntrySizeInBytes = FileIO::getDirectorySizeInBytes(
-                    sourceAssetPathName);
-        } else // if (detSourceFileType == FileIO:: TOOLS_FILEIO_REGULARFILE)
+        if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY) 
+        {
+            ullFSEntrySizeInBytes = FileIO::getDirectorySizeInBytes(sourceAssetPathName);
+        } 
+        else // if (detSourceFileType == FileIO:: TOOLS_FILEIO_REGULARFILE)
         {
             unsigned long ulFileSizeInBytes;
+            bool inCaseOfLinkHasItToBeRead = false;
 
 
-            ulFileSizeInBytes = FileIO::getFileSizeInBytes(
-                    sourceAssetPathName, false);
+            ulFileSizeInBytes = FileIO::getFileSizeInBytes(sourceAssetPathName, inCaseOfLinkHasItToBeRead);
 
             ullFSEntrySizeInBytes = ulFileSizeInBytes;
         }
 
         // find the CMS partition index
+        unsigned long ulCMSPartitionIndex;
         for (ulCMSPartitionIndex = 0;
                 ulCMSPartitionIndex < _cmsPartitionsFreeSizeInMB.size();
-                ulCMSPartitionIndex++) {
-            ullCMSPartitionsFreeSizeInKB = (unsigned long long)
-                    ((_cmsPartitionsFreeSizeInMB [
-                    _ulCurrentCMSPartitionIndex]) *
-                    1024);
+                ulCMSPartitionIndex++) 
+        {
+            unsigned long long cmsPartitionsFreeSizeInKB = (unsigned long long)
+                ((_cmsPartitionsFreeSizeInMB [_ulCurrentCMSPartitionIndex]) * 1024);
 
-            if (ullCMSPartitionsFreeSizeInKB <=
-                    (_freeSpaceToLeaveInEachPartition * 1024)) {
-                /*
-                    {
-                            Message msg = CMSRepositoryMessages (
-                                    __FILE__, __LINE__,
-                                    CMSREP_CMSREPOSITORY_PARTITIONFREESPACETOOLOW,
-                                    3, _ulCurrentCMSPartitionIndex,
-                                    ullCMSPartitionsFreeSizeInKB,
-                                    _freeSpaceToLeaveInEachPartition * 1024);
-                            _ptSystemTracer -> trace (Tracer:: TRACER_LINFO,
-                                    (const char *) msg, __FILE__, __LINE__);
-                    }
-                 */
+            if (cmsPartitionsFreeSizeInKB <=
+                    (_freeSpaceToLeaveInEachPartition * 1024)) 
+            {
+                _logger->info(string("Partition space too low")
+                    + ", _ulCurrentCMSPartitionIndex: " + to_string(_ulCurrentCMSPartitionIndex)
+                    + ", cmsPartitionsFreeSizeInKB: " + to_string(cmsPartitionsFreeSizeInKB)
+                    + ", _freeSpaceToLeaveInEachPartition * 1024: " + to_string(_freeSpaceToLeaveInEachPartition * 1024)
+                );
 
-                if (_ulCurrentCMSPartitionIndex + 1 >=
-                        _cmsPartitionsFreeSizeInMB.size())
+                if (_ulCurrentCMSPartitionIndex + 1 >= _cmsPartitionsFreeSizeInMB.size())
                     _ulCurrentCMSPartitionIndex = 0;
                 else
                     _ulCurrentCMSPartitionIndex++;
@@ -624,22 +594,21 @@ string CMSRepository::moveAssetInCMSRepository(
                 continue;
             }
 
-            if ((unsigned long long)
-                    (ullCMSPartitionsFreeSizeInKB -
+            if ((unsigned long long) (cmsPartitionsFreeSizeInKB -
                     (_freeSpaceToLeaveInEachPartition * 1024)) >
-                    (ullFSEntrySizeInBytes / 1024)) {
-
+                    (ullFSEntrySizeInBytes / 1024)) 
+            {
                 break;
             }
 
-            if (_ulCurrentCMSPartitionIndex + 1 >=
-                    _cmsPartitionsFreeSizeInMB.size())
+            if (_ulCurrentCMSPartitionIndex + 1 >= _cmsPartitionsFreeSizeInMB.size())
                 _ulCurrentCMSPartitionIndex = 0;
             else
                 _ulCurrentCMSPartitionIndex++;
         }
 
-        if (ulCMSPartitionIndex == _cmsPartitionsFreeSizeInMB.size()) {
+        if (ulCMSPartitionIndex == _cmsPartitionsFreeSizeInMB.size()) 
+        {
             throw runtime_error(string("No more space in CMS Partitions")
                     + ", ullFSEntrySizeInBytes: " + to_string(ullFSEntrySizeInBytes)
                     );
@@ -651,83 +620,44 @@ string CMSRepository::moveAssetInCMSRepository(
     // creating directories and build the bCMSAssetPathName
     string cmsAssetPathName;
     {
-        // const char					*pStartCurrentDirectoryName;
-
-
-        /*
-        {
-                Message msg = CMSRepositoryMessages (
-                        __FILE__, __LINE__,
-                        CMSREP_CMSREPOSITORY_CREATINGDIRS,
-                        3, *pulCMSPartitionIndexUsed, pRelativePath,
-                        (long) deliveryRepositoriesToo);
-                _ptSystemTracer -> trace (Tracer:: TRACER_LINFO,
-                        (const char *) msg, __FILE__, __LINE__);
-        }
-         */
-
         // to create the content provider directory and the
         // territories directories (if not already existing)
         cmsAssetPathName = creatingDirsUsingTerritories(*pulCMSPartitionIndexUsed,
-                relativePath, customerDirectoryName,
-                deliveryRepositoriesToo,
-                phmTerritories);
+            relativePath, customerDirectoryName, deliveryRepositoriesToo,
+            phmTerritories);
 
         cmsAssetPathName.append(destinationFileName);
     }
 
-    /*
-    {
-            Message msg = CMSRepositoryMessages (
-                    __FILE__, __LINE__, 
-                    CMSREP_CMSREPOSITORY_PARTITIONSELECTED,
-                    5, 
-                    pCustomerDirectoryName,
-     *pulCMSPartitionIndexUsed,
-                    (const char *) (*pbCMSAssetPathName),
-                    _ulCurrentCMSPartitionIndex,
-                    _pullCMSPartitionsFreeSizeInMB [_ulCurrentCMSPartitionIndex]);
-            _ptSystemTracer -> trace (Tracer:: TRACER_LINFO,
-                    (const char *) msg, __FILE__, __LINE__);
-    }
-     */
+    _logger->info(string("Selected CMS Partition for the content")
+        + ", customerDirectoryName: " + customerDirectoryName
+        + ", *pulCMSPartitionIndexUsed: " + to_string(*pulCMSPartitionIndexUsed)
+        + ", cmsAssetPathName: " + cmsAssetPathName
+        + ", _cmsPartitionsFreeSizeInMB [_ulCurrentCMSPartitionIndex]: " + to_string(_cmsPartitionsFreeSizeInMB [_ulCurrentCMSPartitionIndex])
+    );
 
     // move the file in case of .3gp content OR
     // move the directory in case of IPhone content
     {
-        if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY) {
-            /*
-                {
-                        Message msg = CMSRepositoryMessages (__FILE__, __LINE__,
-                                CMSREP_CMSREPOSITORY_MOVEDIRECTORY,
-                                3,
-                                pCustomerDirectoryName,
-                                pSourceAssetPathName,
-                                (const char *) (*pbCMSAssetPathName));
-                        _ptSystemTracer -> trace (Tracer:: TRACER_LINFO,
-                                (const char *) msg, __FILE__, __LINE__);
-                }
-             */
+        if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY) 
+        {
+            _logger->info(string("Move directory")
+                + ", from: " + sourceAssetPathName
+                + ", to: " + cmsAssetPathName
+            );
 
             FileIO::moveDirectory(sourceAssetPathName,
                     cmsAssetPathName,
                     S_IRUSR | S_IWUSR | S_IXUSR |
                     S_IRGRP | S_IXGRP |
                     S_IROTH | S_IXOTH);
-        } else // if (detDirectoryEntryType == FileIO:: TOOLS_FILEIO_REGULARFILE)
+        } 
+        else // if (detDirectoryEntryType == FileIO:: TOOLS_FILEIO_REGULARFILE)
         {
-            /*
-                {
-                        Message msg = CMSRepositoryMessages (__FILE__, __LINE__,
-                                CMSREP_CMSREPOSITORY_MOVEFILE,
-                                3,
-                                pCustomerDirectoryName,
-                                pSourceAssetPathName,
-                                (const char *) (*pbCMSAssetPathName));
-                        _ptSystemTracer -> trace (Tracer:: TRACER_LINFO,
-                                (const char *) msg, __FILE__, __LINE__);
-                }
-             */
+            _logger->info(string("Move file")
+                + ", from: " + sourceAssetPathName
+                + ", to: " + cmsAssetPathName
+            );
 
             FileIO::moveFile(sourceAssetPathName,
                     cmsAssetPathName);
@@ -735,42 +665,23 @@ string CMSRepository::moveAssetInCMSRepository(
     }
 
     // update _pullCMSPartitionsFreeSizeInMB ONLY if bIsPartitionIndexToBeCalculated
-    if (isPartitionIndexToBeCalculated) {
+    if (partitionIndexToBeCalculated) 
+    {
         unsigned long long ullUsedInKB;
         unsigned long long ullAvailableInKB;
         long lPercentUsed;
-        Error_t errFileIO;
 
 
-        FileIO::getFileSystemInfo(
-                cmsAssetPathName,
+        FileIO::getFileSystemInfo(cmsAssetPathName,
                 &ullUsedInKB, &ullAvailableInKB, &lPercentUsed);
 
         _cmsPartitionsFreeSizeInMB [_ulCurrentCMSPartitionIndex] =
-                ullAvailableInKB / 1024;
+            ullAvailableInKB / 1024;
 
-        /*
-        {
-                Message msg = CMSRepositoryMessages (
-                        __FILE__, __LINE__, 
-                        CMSREP_CMSREPOSITORY_AVAILABLESPACE,
-                        2, 
-                        (const char *) (*pbCMSAssetPathName),
-                        _pullCMSPartitionsFreeSizeInMB [_ulCurrentCMSPartitionIndex]);
-                _ptSystemTracer -> trace (Tracer:: TRACER_LINFO,
-                        (const char *) msg, __FILE__, __LINE__);
-        }
-
-        {
-                Message msg = CMSRepositoryMessages (__FILE__, __LINE__,
-                        CMSREP_CMSREPOSITORY_CMSPARTITIONAVAILABLESPACE,
-                        2,
-                        _ulCurrentCMSPartitionIndex,
-                        (_pullCMSPartitionsFreeSizeInMB [_ulCurrentCMSPartitionIndex]));
-                _ptSystemTracer -> trace (Tracer:: TRACER_LINFO,
-                        (const char *) msg, __FILE__, __LINE__);
-        }
-         */
+        _logger->info(string("Available space")
+            + ", cmsAssetPathName: " + cmsAssetPathName
+            + ", _cmsPartitionsFreeSizeInMB[_ulCurrentCMSPartitionIndex]: " + to_string(_cmsPartitionsFreeSizeInMB[_ulCurrentCMSPartitionIndex])
+        );
     }
 
 
@@ -789,7 +700,11 @@ string CMSRepository::getCMSAssetPathName(
     sprintf(pCMSPartitionName, "CMS_%04lu/", ulPartitionNumber);
 
     string assetPathName(_cmsRootRepository);
-    assetPathName.append(pCMSPartitionName).append(customerDirectoryName).append(relativePath).append(fileName);
+    assetPathName
+        .append(pCMSPartitionName)
+        .append(customerDirectoryName)
+        .append(relativePath)
+        .append(fileName);
 
 
     return assetPathName;
@@ -807,26 +722,30 @@ string CMSRepository::getDownloadLinkPathName(
     char pCMSPartitionName [64];
     string linkPathName;
 
-    if (downloadRepositoryToo) {
-#ifdef WIN32
-        sprintf(pCMSPartitionName, "CMS_%04lu\\", ulPartitionNumber);
-#else
+    if (downloadRepositoryToo) 
+    {
         sprintf(pCMSPartitionName, "CMS_%04lu/", ulPartitionNumber);
-#endif
 
         linkPathName = _downloadRootRepository;
-        linkPathName.append(pCMSPartitionName).append(customerDirectoryName)
-                .append("/").append(territoryName).append(relativePath).append(fileName);
-    } else {
-#ifdef WIN32
-        sprintf(pCMSPartitionName, "\\CMS_%04lu\\", ulPartitionNumber);
-#else
+        linkPathName
+            .append(pCMSPartitionName)
+            .append(customerDirectoryName)
+            .append("/")
+            .append(territoryName)
+            .append(relativePath)
+            .append(fileName);
+    } 
+    else
+    {
         sprintf(pCMSPartitionName, "/CMS_%04lu/", ulPartitionNumber);
-#endif
 
         linkPathName = pCMSPartitionName;
-        linkPathName.append(customerDirectoryName).append("/")
-                .append(territoryName).append(relativePath).append(fileName);
+        linkPathName
+            .append(customerDirectoryName)
+            .append("/")
+            .append(territoryName)
+            .append(relativePath)
+            .append(fileName);
     }
 
 
@@ -844,15 +763,16 @@ string CMSRepository::getStreamingLinkPathName(
     string linkPathName;
 
 
-#ifdef WIN32
-    sprintf(pCMSPartitionName, "CMS_%04lu\\", ulPartitionNumber);
-#else
     sprintf(pCMSPartitionName, "CMS_%04lu/", ulPartitionNumber);
-#endif
 
     linkPathName = _streamingRootRepository;
-    linkPathName.append(pCMSPartitionName).append(customerDirectoryName).append("/")
-            .append(territoryName).append(relativePath).append(fileName);
+    linkPathName
+        .append(pCMSPartitionName)
+        .append(customerDirectoryName)
+        .append("/")
+        .append(territoryName)
+        .append(relativePath)
+        .append(fileName);
 
 
     return linkPathName;
@@ -866,7 +786,7 @@ string CMSRepository::getStagingAssetPathName(
         long long llPhysicalPathKey,
         bool removeLinuxPathIfExist)
  {
-    char pUniqueFileName [64];
+    char pUniqueFileName [256];
     string localFileName;
     tm tmDateTime;
     unsigned long ulMilliSecs;
@@ -874,10 +794,10 @@ string CMSRepository::getStagingAssetPathName(
     string assetPathName;
 
 
-    DateTime::get_tm_LocalTime(
-            &tmDateTime, &ulMilliSecs);
+    DateTime::get_tm_LocalTime(&tmDateTime, &ulMilliSecs);
 
-    if (fileName == "") {
+    if (fileName == "") 
+    {
         sprintf(pUniqueFileName,
                 "%04lu_%02lu_%02lu_%02lu_%02lu_%02lu_%04lu_%lld_%lld_%s",
                 (unsigned long) (tmDateTime. tm_year + 1900),
@@ -892,7 +812,9 @@ string CMSRepository::getStagingAssetPathName(
                 _hostName.c_str());
 
         localFileName = pUniqueFileName;
-    } else {
+    } 
+    else 
+    {
         localFileName = fileName;
     }
 
@@ -904,84 +826,66 @@ string CMSRepository::getStagingAssetPathName(
 
     // create the 'date' directory in staging if not exist
     {
-        Boolean_t bIsDirectoryExisting;
-        Error_t errFileIO;
-
-
         assetPathName = _stagingRootRepository;
-        assetPathName.append(customerDirectoryName).append("/")
-                .append(pDateTime).append(relativePath);
+        assetPathName
+            .append(customerDirectoryName)
+            .append("/")
+            .append(pDateTime)
+            .append(relativePath);
 
-        if (!FileIO::directoryExisting(assetPathName)) {
-            /*
-                {
-                        Message msg = CMSRepositoryMessages (
-                                __FILE__, __LINE__,
-                                CMSREP_CMSREPOSITORY_CREATEDIRECTORY,
-                                2,
-                                pCustomerDirectoryName,
-                                (const char *) (*pbAssetPathName));
-                        _ptSystemTracer -> trace (Tracer:: TRACER_LINFO,
-                                (const char *) msg, __FILE__, __LINE__);
-                }
-             */
+        if (!FileIO::directoryExisting(assetPathName)) 
+        {
+            _logger->info(string("Create directory")
+                + ", assetPathName: " + assetPathName
+            );
 
+            bool noErrorIfExists = true;
+            bool recursive = true;
             FileIO::createDirectory(
                     assetPathName,
                     S_IRUSR | S_IWUSR | S_IXUSR |
                     S_IRGRP | S_IXGRP |
-                    S_IROTH | S_IXOTH, true, true);
+                    S_IROTH | S_IXOTH, noErrorIfExists, recursive);
         }
     }
 
     {
-        assetPathName = _stagingRootRepository;
-        assetPathName.append(customerDirectoryName).append("/")
-                .append(pDateTime).append(relativePath).append(localFileName);
+        assetPathName.append(localFileName);
 
-        if (removeLinuxPathIfExist) {
+        if (removeLinuxPathIfExist) 
+        {
             FileIO::DirectoryEntryType_t detSourceFileType;
-            Error_t errFileIO;
 
+            try 
+            {
+                detSourceFileType = FileIO::getDirectoryEntryType(assetPathName);
 
-            try {
-                detSourceFileType = FileIO::getDirectoryEntryType(
-                        assetPathName);
+                if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY) 
+                {
+                    _logger->info(string("Remove directory")
+                        + ", assetPathName: " + assetPathName
+                    );
 
-                if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY) {
-                    /*
-                        {
-                                Message msg = CMSRepositoryMessages (
-                                        __FILE__, __LINE__,
-                                        CMSREP_CMSREPOSITORY_REMOVEDIRECTORY,
-                                        2,
-                                        pCustomerDirectoryName,
-                                        pbAssetPathName -> str());
-                                _ptSystemTracer -> trace (Tracer:: TRACER_LINFO,
-                                        (const char *) msg, __FILE__, __LINE__);
-                        }
-                     */
-
-                    FileIO::removeDirectory(assetPathName, true);
-                } else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) {
-                    /*
-                        {
-                                Message msg = CMSRepositoryMessages (__FILE__, __LINE__,
-                                        CMSREP_CMSREPOSITORY_REMOVEFILE,
-                                        2, pCustomerDirectoryName,
-                                        pbAssetPathName -> str());
-                                _ptSystemTracer -> trace (Tracer:: TRACER_LINFO,
-                                        (const char *) msg, __FILE__, __LINE__);
-                        }
-                     */
+                    bool removeRecursively = true;
+                    FileIO::removeDirectory(assetPathName, removeRecursively);
+                } 
+                else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
+                {
+                    _logger->info(string("Remove file")
+                        + ", assetPathName: " + assetPathName
+                    );
 
                     FileIO::remove(assetPathName);
-                } else {
+                } 
+                else 
+                {
                     throw runtime_error(string("Unexpected file in staging")
                             + ", assetPathName: " + assetPathName
                             );
                 }
-            } catch (...) {
+            }
+            catch (...) 
+            {
                 //				 * the entry does not exist
                 //				 *
                 //				_ptSystemTracer -> trace (Tracer:: TRACER_LERRR,
@@ -1008,8 +912,9 @@ string CMSRepository::getEncodingProfilePathName(
  {
     string encodingProfilePathName(_profilesRootRepository);
 
-    encodingProfilePathName.append(to_string(llEncodingProfileKey)).append(profileFileNameExtension);
-
+    encodingProfilePathName
+        .append(to_string(llEncodingProfileKey))
+        .append(profileFileNameExtension);
 
     return encodingProfilePathName;
 }
@@ -1022,20 +927,25 @@ string CMSRepository::getFFMPEGEncodingProfilePathName(
     if (ulContentType != 0 && ulContentType != 1 && ulContentType != 2 &&
             ulContentType != 4) // video/audio/image/ringtone
     {
-        throw runtime_error("Activation wrong");
+        throw invalid_argument(string("Wrong argument")
+                + ", ulContentType: " + to_string(ulContentType)
+                );
     }
 
     string encodingProfilePathName(_profilesRootRepository);
 
-    encodingProfilePathName.append(to_string(llEncodingProfileKey));
+    encodingProfilePathName
+        .append(to_string(llEncodingProfileKey));
 
     if (ulContentType == 0) // video
     {
         encodingProfilePathName.append(".vep");
-    } else if (ulContentType == 1 || ulContentType == 4) // audio / ringtone
+    } 
+    else if (ulContentType == 1 || ulContentType == 4) // audio / ringtone
     {
         encodingProfilePathName.append(".aep");
-    } else if (ulContentType == 2) // image
+    } 
+    else if (ulContentType == 2) // image
     {
         encodingProfilePathName.append(".iep");
     }
@@ -1061,17 +971,22 @@ unsigned long CMSRepository::getCustomerStorageUsage(
 
     for (ulCMSPartitionIndex = 0;
             ulCMSPartitionIndex < _cmsPartitionsFreeSizeInMB.size();
-            ulCMSPartitionIndex++) {
+            ulCMSPartitionIndex++) 
+    {
         string contentProviderPathName = getCMSAssetPathName(
                 ulCMSPartitionIndex, customerDirectoryName,
-                "", "");
+                string(""), string(""));
 
-        try {
-            ullDirectoryUsageInBytes = FileIO::getDirectoryUsage(
-                    contentProviderPathName);
-        } catch (DirectoryNotExisting d) {
+        try 
+        {
+            ullDirectoryUsageInBytes = FileIO::getDirectoryUsage(contentProviderPathName);
+        } 
+        catch (DirectoryNotExisting d) 
+        {
             continue;
-        } catch (...) {
+        } 
+        catch (...) 
+        {
             throw runtime_error(string("FileIO:: getDirectoryUsage failed")
                     + ", contentProviderPathName: " + contentProviderPathName
                     );

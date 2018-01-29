@@ -6,6 +6,7 @@
 #include "CMSEngineProcessor.h"
 #include "CheckIngestionTimes.h"
 #include "CMSEngineDBFacade.h"
+#include "CMSRepository.h"
 
 
 int main (int iArgc, char *pArgv [])
@@ -26,10 +27,12 @@ int main (int iArgc, char *pArgv [])
 
     shared_ptr<Customers>       customers = make_shared<Customers>(cmsEngineDBFacade);
     
+    shared_ptr<CMSRepository>       cmsRepository = make_shared<CMSRepository>(logger);
+
     shared_ptr<MultiEventsSet>          multiEventsSet = make_shared<MultiEventsSet>();
     multiEventsSet->addDestination(CMSENGINEPROCESSORNAME);
 
-    CMSEngineProcessor      cmsEngineProcessor(logger, cmsEngineDBFacade, customers);
+    CMSEngineProcessor      cmsEngineProcessor(logger, cmsEngineDBFacade, customers, cmsRepository);
     
     unsigned long           ulThreadSleepInMilliSecs = 100;
     Scheduler2              scheduler(ulThreadSleepInMilliSecs);

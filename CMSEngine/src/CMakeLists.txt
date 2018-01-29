@@ -38,14 +38,24 @@ SET (HEADERS
 include_directories ("${PROJECT_SOURCE_DIR}/../usr_local/include")
 include_directories ("${PROJECT_SOURCE_DIR}/../spdlog/include")
 include_directories ("${PROJECT_SOURCE_DIR}/../connection-pool")
-include_directories ("/app/5/ThirdPartySoftware/mysql-connector-c++-1.1.9-linux-ubuntu16.10-x86-64bit/include")
+include_directories ("${PROJECT_SOURCE_DIR}/CMSRepository/src")
+if (APPLE)
+	include_directories ("${PROJECT_SOURCE_DIR}/../mysql-connector-c++-1.1.9-macos10.12-x86-64bit/include")
+else()
+	include_directories ("/app/5/ThirdPartySoftware/mysql-connector-c++-1.1.9-linux-ubuntu16.10-x86-64bit/include")
+endif()
 
 link_directories ("${PROJECT_SOURCE_DIR}/../usr_local/lib")
-link_directories ("/app/5/ThirdPartySoftware/mysql-connector-c++-1.1.9-linux-ubuntu16.10-x86-64bit/lib")
+if (APPLE)
+	link_directories ("${PROJECT_SOURCE_DIR}/../mysql-connector-c++-1.1.9-macos10.12-x86-64bit/lib")
+else()
+	link_directories ("/app/5/ThirdPartySoftware/mysql-connector-c++-1.1.9-linux-ubuntu16.10-x86-64bit/lib")
+endif()
 
 add_executable(cmsEngine ${SOURCES} ${HEADERS})
 
 target_link_libraries (cmsEngine MultiEventsSet)
+target_link_libraries (cmsEngine CMSRepository)
 target_link_libraries (cmsEngine mysqlcppconn)
 
 target_link_libraries (cmsEngine Scheduler)
