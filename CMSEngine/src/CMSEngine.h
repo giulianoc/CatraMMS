@@ -45,7 +45,11 @@ public:
         long period,
 	long maxIngestionsNumber,
         long maxStorageInGB,
-	string languageCode
+	string languageCode,
+        string userName,
+        string userPassword,
+        string userEmailAddress,
+        chrono::system_clock::time_point userExpirationDate
 );
 
 };

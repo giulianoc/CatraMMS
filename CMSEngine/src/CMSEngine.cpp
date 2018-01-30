@@ -42,7 +42,11 @@ void CMSEngine::addCustomer(
         long period,
 	long maxIngestionsNumber,
         long maxStorageInGB,
-	string languageCode
+	string languageCode,
+        string userName,
+        string userPassword,
+        string userEmailAddress,
+        chrono::system_clock::time_point userExpirationDate
 )
 {    
     string customerDirectoryName;
@@ -75,54 +79,15 @@ void CMSEngine::addCustomer(
             period,
             maxIngestionsNumber,
             maxStorageInGB,
-            languageCode);
+            languageCode,
+            userName,
+            userPassword,
+            userEmailAddress,
+            userExpirationDate);
 
 }
 /*
-                                        
-        	// insert in CMS_CustomerMoreInfo
-			{
-	        	if (lDatabase == DB_MYSQL)
-	    			sQuery = new String ("insert into CMS_CustomerMoreInfo (CustomerKey, CurrentDirLevel1, CurrentDirLevel2, CurrentDirLevel3, StartDateTime, EndDateTime, CurrentIngestionsNumber) values (" +
-	    				"?, 0, 0, 0, NOW(), NOW(), 0)");                
-		    	stmt.setLong(iQueryParameterIndex++, lCustomerKey);
 
-                // insert in CMS_ContentProviders
-                sQuery = new String ("insert into CMS_ContentProviders (ContentProviderKey, CustomerKey, Name) values (" +
-                        "NULL, ?, ?)");
-		    	stmt.setLong(iQueryParameterIndex++, lCustomerKey);
-		    	stmt.setString(iQueryParameterIndex++, "default");
-
-	        		sQuery = new String ("select LAST_INSERT_ID()");
-		    		stmt = conn.prepareStatement(sQuery);
-		    		iQueryParameterIndex			= 1;
-		   			logger.debug("Query: " + sQuery + " ---> ");
-		    		returnSQLObject = this.executeQuery(stmt, sQuery);
-		    		lSQLElapsedInMillisecs		= ((Long) (returnSQLObject [0])).longValue();
-		    		rs								= (ResultSet) (returnSQLObject [1]);
-		   			logger.debug("Query: " + sQuery + " ---> " +
-		    			" - SQL statistics (millisecs): @" + lSQLElapsedInMillisecs + "@");
-
-	        		if (rs.next()) {
-	        			lContentProviderKey = rs.getLong(1);
-
-   		returnAddTerritoryObject		= addTerritory (conn, sCustomerName, lCustomerKey, "default", null);
-	        lTerritoryKey		= ((Long) (returnAddTerritoryObject [0])).longValue();
-	        // lChargingKeyForFree	= ((Long) (returnAddTerritoryObject [1])).longValue();
-
-	        // add default administrator
-	    	addUser (conn,
-	    		sCustomerName.concat("_admin"),
-	    		"giuliano",
-	    		lCustomerKey,
-	    		getCMSAdministratorUser() | getCMSUser(),
-	    		null,		// sEMailAddress,
-	    		sCreationDate,
-	    		sDefaultUserExpirationDate,
-	    		sCustomerName.concat("_admin"),	// sPartyID
-	    		0);		// lBalanceCents
-
-                
                          	// insert default EncodingProfilesSet per Customer/ContentType
          	{
          		long			lEncodingProfilesSetKey		= -1;

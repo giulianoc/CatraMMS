@@ -13,6 +13,8 @@
 
 #include "CMSEngineDBFacade.h"
 
+// http://download.nust.na/pub6/mysql/tech-resources/articles/mysql-connector-cpp.html#trx
+
 CMSEngineDBFacade::CMSEngineDBFacade(
         size_t poolSize, 
         string dbServer, 
@@ -22,6 +24,7 @@ CMSEngineDBFacade::CMSEngineDBFacade(
         shared_ptr<spdlog::logger> logger) 
 {
     _logger     = logger;
+    
     shared_ptr<MySQLConnectionFactory>  mySQLConnectionFactory = 
             make_shared<MySQLConnectionFactory>(dbServer, dbUsername, dbPassword, dbName);
         
@@ -95,15 +98,26 @@ int64_t CMSEngineDBFacade::addCustomer(
         long period,
 	long maxIngestionsNumber,
         long maxStorageInGB,
-	string languageCode
+	string languageCode,
+        string userName,
+        string userPassword,
+        string userEmailAddress,
+        chrono::system_clock::time_point userExpirationDate
 )
 {
     int64_t         customerKey;
+    int64_t         contentProviderKey;
     
+    shared_ptr<MySQLConnection> conn;
+    bool autoCommit = true;
+
     try
     {
-        shared_ptr<MySQLConnection> conn = _connectionPool->borrow();	
+        conn = _connectionPool->borrow();	
 
+        autoCommit = false;
+        conn->_sqlConnection->setAutoCommit(autoCommit);    // or execute the statement START TRANSACTION
+        
         {
             shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
 
@@ -153,7 +167,103 @@ int64_t CMSEngineDBFacade::addCustomer(
         
         customerKey = getLastInsertId(conn);
         
+        {
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(
+                "insert into CMS_CustomerMoreInfo (CustomerKey, CurrentDirLevel1, CurrentDirLevel2, CurrentDirLevel3, StartDateTime, EndDateTime, CurrentIngestionsNumber) values ("
+	    	"?, 0, 0, 0, NOW(), NOW(), 0)"
+            ));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, customerKey);
+
+            preparedStatement->executeUpdate();
+        }
+
+        {
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(
+                "insert into CMS_ContentProviders (ContentProviderKey, CustomerKey, Name) values ("
+                "NULL, ?, ?)"
+            ));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, customerKey);
+            preparedStatement->setString(queryParameterIndex++, "default");
+
+            preparedStatement->executeUpdate();
+        }
+
+        contentProviderKey = getLastInsertId(conn);
+
+        int64_t territoryKey = addTerritory(
+                conn,
+                customerKey,
+                "default");
+        
+        int userType = getCMSUser();
+        
+        int64_t userKey = addUser (
+                conn,
+                customerKey,
+                userName,
+                userPassword,
+                userType,
+                userEmailAddress,
+                userExpirationDate);
+
+        conn->_sqlConnection->commit();     // or execute COMMIT
+        autoCommit = true;
+
         _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        if (!autoCommit)
+            conn->_sqlConnection->rollback();     // or execute ROLLBACK
+        
+        string exceptionMessage(se.what());
+        
+        _logger->error(string("SQL exception")
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw se;
+    }
+    
+    return customerKey;
+}
+
+int64_t CMSEngineDBFacade::addTerritory (
+	shared_ptr<MySQLConnection> conn,
+        int64_t customerKey,
+        string territoryName
+)
+{
+    int64_t         territoryKey;
+    
+    try
+    {
+        {
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(
+                "insert into CMS_Territories (TerritoryKey, CustomerKey, Name, Currency) values ("
+    		"NULL, ?, ?, ?)"
+            ));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, customerKey);
+            preparedStatement->setString(queryParameterIndex++, territoryName);
+            string currency("");
+            if (currency == "")
+                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+            else
+                preparedStatement->setString(queryParameterIndex++, currency);
+
+            preparedStatement->executeUpdate();
+        }
+        
+        territoryKey = getLastInsertId(conn);
     }
     catch(sql::SQLException se)
     {
@@ -166,7 +276,74 @@ int64_t CMSEngineDBFacade::addCustomer(
         throw se;
     }
     
-    return customerKey;
+    return territoryKey;
+}
+
+int64_t CMSEngineDBFacade::addUser (
+	shared_ptr<MySQLConnection> conn,
+        int64_t customerKey,
+        string userName,
+        string password,
+        int type,
+        string emailAddress,
+        chrono::system_clock::time_point expirationDate
+)
+{
+    int64_t         userKey;
+    
+    try
+    {
+        {
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(
+                "insert into CMS_Users2 (UserKey, UserName, Password, CustomerKey, Type, EMailAddress, CreationDate, ExpirationDate) values ("
+                "NULL, ?, ?, ?, ?, ?, NULL, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'))"
+            ));
+            int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, userName);
+            preparedStatement->setString(queryParameterIndex++, password);
+            preparedStatement->setInt64(queryParameterIndex++, customerKey);
+            preparedStatement->setInt(queryParameterIndex++, type);
+            if (emailAddress == "")
+                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+            else
+                preparedStatement->setString(queryParameterIndex++, emailAddress);
+            {
+                tm          tmDateTime;
+                char        strExpirationDate [64];
+                time_t utcTime = chrono::system_clock::to_time_t(expirationDate);
+                
+                localtime_r (&utcTime, &tmDateTime);
+
+                sprintf (strExpirationDate, "%04d-%02d-%02d %02d:%02d:%02d",
+                        tmDateTime. tm_year + 1900,
+                        tmDateTime. tm_mon + 1,
+                        tmDateTime. tm_mday,
+                        tmDateTime. tm_hour,
+                        tmDateTime. tm_min,
+                        tmDateTime. tm_sec);
+
+                preparedStatement->setString(queryParameterIndex++, strExpirationDate);
+            }
+            
+            preparedStatement->executeUpdate();
+        }
+        
+        userKey = getLastInsertId(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(string("SQL exception")
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw se;
+    }
+    
+    return userKey;
 }
 
 int64_t CMSEngineDBFacade::getLastInsertId(shared_ptr<MySQLConnection> conn)
@@ -284,36 +461,49 @@ void CMSEngineDBFacade::createTablesIfNeeded()
                 "ENGINE=InnoDB"
         );
 
+        // create table CMS_Users2
+        // Type (bits: ...9876543210)
+        //      bit 0: CMSAdministrator
+        //      bin 1: CMSUser
+        //      bit 2: EndUser
+        //      bit 3: CMSEditorialUser
+        //      bit 4: BillingAdministrator
+        statement->execute(
+            "create table if not exists CMS_Users2 ("
+                "UserKey				BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                "UserName				VARCHAR (128) NOT NULL,"
+                "Password				VARCHAR (128) NOT NULL,"
+                "CustomerKey                            BIGINT UNSIGNED NOT NULL,"
+                "Type					INT NOT NULL,"
+                "EMailAddress				VARCHAR (128) NULL,"
+                "CreationDate				TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+                "ExpirationDate				DATETIME NOT NULL,"
+                "constraint CMS_Users2_PK PRIMARY KEY (UserKey), "
+                "constraint CMS_Users2_FK foreign key (CustomerKey) "
+                    "references CMS_Customers (CustomerKey) on delete cascade) "
+                "ENGINE=InnoDB"
+        );
+
+        // this index is important because UserName is used by the EndUser to login
+        //  (i.e.: it is the end-user email address) and we cannot have
+        //  two equal UserName since we will not be able to understand the CustomerKey
+        statement->execute(
+            "create unique index CMS_Users2_idx on CMS_Users2 (UserName)"
+        );
+
+        statement->execute(
+            "create table if not exists CMS_ContentProviders ("
+                "ContentProviderKey                     BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                "CustomerKey                            BIGINT UNSIGNED NOT NULL,"
+                "Name					VARCHAR (64) NOT NULL,"
+                "constraint CMS_ContentProviders_PK PRIMARY KEY (ContentProviderKey), "
+                "constraint CMS_ContentProviders_FK foreign key (CustomerKey) "
+                    "references CMS_Customers (CustomerKey) on delete cascade, "
+                "UNIQUE (CustomerKey, Name))" 
+                "ENGINE=InnoDB"
+        );
+
         /*
-    # create table CMS_Users2
-    # Type (bits: ...9876543210)
-    #		bit 0: CMSAdministrator
-    #		bin 1: CMSUser
-    #		bit 2: EndUser
-    #		bit 3: CMSEditorialUser
-    #		bit 4: BillingAdministrator
-    create table if not exists CMS_Users2 (
-            UserKey					BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            UserName					VARCHAR (128) NOT NULL,
-            Password					VARCHAR (128) NOT NULL,
-            CustomerKey             	BIGINT UNSIGNED NOT NULL,
-            Type						INT NOT NULL,
-            EMailAddress				VARCHAR (128) NULL,
-            CreationDate				TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            ExpirationDate				DATETIME NOT NULL,
-            PartyID					VARCHAR (64) NULL,
-            BalanceCents				BIGINT NULL,
-            constraint CMS_Users2_PK PRIMARY KEY (UserKey), 
-            constraint CMS_Users2_FK foreign key (CustomerKey) 
-                    references CMS_Customers (CustomerKey) on delete cascade) 
-            ENGINE=InnoDB;
-    # this index is important because UserName is used by the EndUser to login
-    #	(i.e.: it is the end-user email address) and we cannot have
-    #	two equal UserName since we will not be able to understand the CustomerKey
-    create unique index CMS_Users2_idx on CMS_Users2 (UserName);
-    create unique index CMS_Users2_idx2 on CMS_Users2 (CustomerKey, PartyID);
-
-
     # create table CMS_HTTPSessions
     # One session is per UserKey and UserAgent
     create table if not exists CMS_HTTPSessions (
@@ -368,17 +558,6 @@ void CMSEngineDBFacade::createTablesIfNeeded()
                     references CMS_Customers (CustomerKey) on delete cascade, 
             constraint CMS_CustomersSharable_FK2 foreign key (CustomerKeySharable) 
                     references CMS_Customers (CustomerKey) on delete cascade)
-            ENGINE=InnoDB;
-
-    # create table CMS_ContentProviders
-    create table if not exists CMS_ContentProviders (
-            ContentProviderKey  		BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            CustomerKey             	BIGINT UNSIGNED NOT NULL,
-            Name						VARCHAR (64) NOT NULL,
-            constraint CMS_ContentProviders_PK PRIMARY KEY (ContentProviderKey), 
-            constraint CMS_ContentProviders_FK foreign key (CustomerKey) 
-                    references CMS_Customers (CustomerKey) on delete cascade, 
-            UNIQUE (CustomerKey, Name)) 
             ENGINE=InnoDB;
 
     # create table EncodingProfiles
