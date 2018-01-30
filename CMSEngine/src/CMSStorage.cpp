@@ -1,10 +1,13 @@
 
-#include "CMSRepository.h"
+#include "CMSStorage.h"
 #include "catralibraries/FileIO.h"
 #include "catralibraries/System.h"
 #include "catralibraries/DateTime.h"
 
-CMSRepository::CMSRepository(shared_ptr<spdlog::logger> logger) 
+CMSStorage::CMSStorage(
+        string storage, 
+        unsigned long freeSpaceToLeaveInEachPartitionInMB, 
+        shared_ptr<spdlog::logger> logger) 
 {
 
     _logger             = logger;
@@ -12,63 +15,88 @@ CMSRepository::CMSRepository(shared_ptr<spdlog::logger> logger)
     _hostName = System::getHostName();
 
     // MB
-    _freeSpaceToLeaveInEachPartition = 5;
+    _freeSpaceToLeaveInEachPartitionInMB = freeSpaceToLeaveInEachPartitionInMB;
 
-    _storage = "/app/storage/";
+    _storage = storage;
 
-    _ftpRootRepository = _storage.append("FTPRepository/users/");
-    _cmsRootRepository = _storage.append("CMSRepository/");
-    _downloadRootRepository = _storage.append("DownloadRepository/");
-    _streamingRootRepository = _storage.append("StreamingRepository/");
+    _ftpRootRepository = _storage + "FTPRepository/users/";
+    _cmsRootRepository = _storage + "CMSRepository/";
+    _downloadRootRepository = _storage + "DownloadRepository/";
+    _streamingRootRepository = _storage + "StreamingRepository/";
 
-    _errorRootRepository = _storage.append("CMSWorkingAreaRepository/Errors/");
-    _doneRootRepository = _storage.append("CMSWorkingAreaRepository/Done/");
-    _stagingRootRepository = _storage.append("CMSWorkingAreaRepository/Staging/");
+    _errorRootRepository = _storage + "CMSWorkingAreaRepository/Errors/";
+    _doneRootRepository = _storage + "CMSWorkingAreaRepository/Done/";
+    _stagingRootRepository = _storage + "CMSWorkingAreaRepository/Staging/";
 
-    _profilesRootRepository = _storage.append("CMSRepository/EncodingProfiles/");
+    _profilesRootRepository = _storage + "CMSRepository/EncodingProfiles/";
 
     bool noErrorIfExists = true;
     bool recursive = true;
+    _logger->info(string("Creating directory (if needed)")
+        + ", _ftpRootRepository: " + _ftpRootRepository
+    );
     FileIO::createDirectory(_ftpRootRepository,
             S_IRUSR | S_IWUSR | S_IXUSR |
             S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 
+    _logger->info(string("Creating directory (if needed)")
+        + ", _cmsRootRepository: " + _cmsRootRepository
+    );
     FileIO::createDirectory(_cmsRootRepository,
             S_IRUSR | S_IWUSR | S_IXUSR |
             S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 
     // create CMS_0000 in case it does not exist (first running of CMS)
     {
-        string CMS_0000Path(_cmsRootRepository);
-
-        CMS_0000Path.append("CMS_0000");
+        string CMS_0000Path = _cmsRootRepository + "CMS_0000";
 
 
+        _logger->info(string("Creating directory (if needed)")
+            + ", CMS_0000Path: " + CMS_0000Path
+        );
         FileIO::createDirectory(CMS_0000Path,
                 S_IRUSR | S_IWUSR | S_IXUSR |
                 S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
     }
 
+    _logger->info(string("Creating directory (if needed)")
+        + ", _downloadRootRepository: " + _downloadRootRepository
+    );
     FileIO::createDirectory(_downloadRootRepository,
             S_IRUSR | S_IWUSR | S_IXUSR |
             S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 
+    _logger->info(string("Creating directory (if needed)")
+        + ", _streamingRootRepository: " + _streamingRootRepository
+    );
     FileIO::createDirectory(_streamingRootRepository,
             S_IRUSR | S_IWUSR | S_IXUSR |
             S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 
+    _logger->info(string("Creating directory (if needed)")
+        + ", _errorRootRepository: " + _errorRootRepository
+    );
     FileIO::createDirectory(_errorRootRepository,
             S_IRUSR | S_IWUSR | S_IXUSR |
             S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 
+    _logger->info(string("Creating directory (if needed)")
+        + ", _doneRootRepository: " + _doneRootRepository
+    );
     FileIO::createDirectory(_doneRootRepository,
             S_IRUSR | S_IWUSR | S_IXUSR |
             S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 
+    _logger->info(string("Creating directory (if needed)")
+        + ", _profilesRootRepository: " + _profilesRootRepository
+    );
     FileIO::createDirectory(_profilesRootRepository,
             S_IRUSR | S_IWUSR | S_IXUSR |
             S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 
+    _logger->info(string("Creating directory (if needed)")
+        + ", _stagingRootRepository: " + _stagingRootRepository
+    );
     FileIO::createDirectory(_stagingRootRepository,
             S_IRUSR | S_IWUSR | S_IXUSR |
             S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
@@ -107,7 +135,7 @@ CMSRepository::CMSRepository(shared_ptr<spdlog::logger> logger)
                 break;
             }
 
-            _cmsPartitionsFreeSizeInMB.push_back(0);
+            _cmsPartitionsFreeSizeInMB.push_back(ullAvailableInKB / 1024);
 
             ulCMSPartitionsNumber++;
         }
@@ -120,38 +148,38 @@ CMSRepository::CMSRepository(shared_ptr<spdlog::logger> logger)
     }
 }
 
-CMSRepository::~CMSRepository(void) {
+CMSStorage::~CMSStorage(void) {
 }
 
-string CMSRepository::getCMSRootRepository(void) {
+string CMSStorage::getCMSRootRepository(void) {
     return _cmsRootRepository;
 }
 
-string CMSRepository::getStreamingRootRepository(void) {
+string CMSStorage::getStreamingRootRepository(void) {
     return _streamingRootRepository;
 }
 
-string CMSRepository::getDownloadRootRepository(void) {
+string CMSStorage::getDownloadRootRepository(void) {
     return _downloadRootRepository;
 }
 
-string CMSRepository::getFTPRootRepository(void) {
+string CMSStorage::getFTPRootRepository(void) {
     return _ftpRootRepository;
 }
 
-string CMSRepository::getStagingRootRepository(void) {
+string CMSStorage::getStagingRootRepository(void) {
     return _stagingRootRepository;
 }
 
-string CMSRepository::getErrorRootRepository(void) {
+string CMSStorage::getErrorRootRepository(void) {
     return _errorRootRepository;
 }
 
-string CMSRepository::getDoneRootRepository(void) {
+string CMSStorage::getDoneRootRepository(void) {
     return _doneRootRepository;
 }
 
-void CMSRepository::refreshPartitionsFreeSizes(void) 
+void CMSStorage::refreshPartitionsFreeSizes(void) 
 {
     char pCMSPartitionName [64];
     unsigned long long ullUsedInKB;
@@ -184,7 +212,7 @@ void CMSRepository::refreshPartitionsFreeSizes(void)
     }
 }
 
-string CMSRepository::creatingDirsUsingTerritories(
+string CMSStorage::creatingDirsUsingTerritories(
         unsigned long ulCurrentCMSPartitionIndex,
         string relativePath,
         string customerDirectoryName,
@@ -279,7 +307,7 @@ string CMSRepository::creatingDirsUsingTerritories(
     return cmsAssetPathName;
 }
 
-void CMSRepository::moveContentInRepository(
+void CMSStorage::moveContentInRepository(
         string filePathName,
         RepositoryType rtRepositoryType,
         string customerDirectoryName,
@@ -294,7 +322,7 @@ void CMSRepository::moveContentInRepository(
         addDateTimeToFileName);
 }
 
-void CMSRepository::copyFileInRepository(
+void CMSStorage::copyFileInRepository(
         string filePathName,
         RepositoryType rtRepositoryType,
         string customerDirectoryName,
@@ -309,7 +337,7 @@ void CMSRepository::copyFileInRepository(
         addDateTimeToFileName);
 }
 
-string CMSRepository::getRepository(RepositoryType rtRepositoryType) 
+string CMSStorage::getRepository(RepositoryType rtRepositoryType) 
 {
 
     switch (rtRepositoryType) 
@@ -351,7 +379,7 @@ string CMSRepository::getRepository(RepositoryType rtRepositoryType)
     }
 }
 
-void CMSRepository::contentInRepository(
+void CMSStorage::contentInRepository(
         unsigned long ulIsCopyOrMove,
         string contentPathName,
         RepositoryType rtRepositoryType,
@@ -513,7 +541,7 @@ void CMSRepository::contentInRepository(
     }
 }
 
-string CMSRepository::moveAssetInCMSRepository(
+string CMSStorage::moveAssetInCMSRepository(
         string sourceAssetPathName,
         string customerDirectoryName,
         string destinationFileName,
@@ -578,12 +606,12 @@ string CMSRepository::moveAssetInCMSRepository(
                 ((_cmsPartitionsFreeSizeInMB [_ulCurrentCMSPartitionIndex]) * 1024);
 
             if (cmsPartitionsFreeSizeInKB <=
-                    (_freeSpaceToLeaveInEachPartition * 1024)) 
+                    (_freeSpaceToLeaveInEachPartitionInMB * 1024)) 
             {
                 _logger->info(string("Partition space too low")
                     + ", _ulCurrentCMSPartitionIndex: " + to_string(_ulCurrentCMSPartitionIndex)
                     + ", cmsPartitionsFreeSizeInKB: " + to_string(cmsPartitionsFreeSizeInKB)
-                    + ", _freeSpaceToLeaveInEachPartition * 1024: " + to_string(_freeSpaceToLeaveInEachPartition * 1024)
+                    + ", _freeSpaceToLeaveInEachPartitionInMB * 1024: " + to_string(_freeSpaceToLeaveInEachPartitionInMB * 1024)
                 );
 
                 if (_ulCurrentCMSPartitionIndex + 1 >= _cmsPartitionsFreeSizeInMB.size())
@@ -595,7 +623,7 @@ string CMSRepository::moveAssetInCMSRepository(
             }
 
             if ((unsigned long long) (cmsPartitionsFreeSizeInKB -
-                    (_freeSpaceToLeaveInEachPartition * 1024)) >
+                    (_freeSpaceToLeaveInEachPartitionInMB * 1024)) >
                     (ullFSEntrySizeInBytes / 1024)) 
             {
                 break;
@@ -688,7 +716,7 @@ string CMSRepository::moveAssetInCMSRepository(
     return cmsAssetPathName;
 }
 
-string CMSRepository::getCMSAssetPathName(
+string CMSStorage::getCMSAssetPathName(
         unsigned long ulPartitionNumber,
         string customerDirectoryName,
         string relativePath, // using '/'
@@ -710,7 +738,7 @@ string CMSRepository::getCMSAssetPathName(
     return assetPathName;
 }
 
-string CMSRepository::getDownloadLinkPathName(
+string CMSStorage::getDownloadLinkPathName(
         unsigned long ulPartitionNumber,
         string customerDirectoryName,
         string territoryName,
@@ -752,7 +780,7 @@ string CMSRepository::getDownloadLinkPathName(
     return linkPathName;
 }
 
-string CMSRepository::getStreamingLinkPathName(
+string CMSStorage::getStreamingLinkPathName(
         unsigned long ulPartitionNumber, // IN
         string customerDirectoryName, // IN
         string territoryName, // IN
@@ -778,7 +806,7 @@ string CMSRepository::getStreamingLinkPathName(
     return linkPathName;
 }
 
-string CMSRepository::getStagingAssetPathName(
+string CMSStorage::getStagingAssetPathName(
         string customerDirectoryName,
         string relativePath,
         string fileName, // may be empty ("")
@@ -906,7 +934,7 @@ string CMSRepository::getStagingAssetPathName(
     return assetPathName;
 }
 
-string CMSRepository::getEncodingProfilePathName(
+string CMSStorage::getEncodingProfilePathName(
         long long llEncodingProfileKey,
         string profileFileNameExtension)
  {
@@ -919,7 +947,7 @@ string CMSRepository::getEncodingProfilePathName(
     return encodingProfilePathName;
 }
 
-string CMSRepository::getFFMPEGEncodingProfilePathName(
+string CMSStorage::getFFMPEGEncodingProfilePathName(
         unsigned long ulContentType,
         long long llEncodingProfileKey)
  {
@@ -954,7 +982,7 @@ string CMSRepository::getFFMPEGEncodingProfilePathName(
     return encodingProfilePathName;
 }
 
-unsigned long CMSRepository::getCustomerStorageUsage(
+unsigned long CMSStorage::getCustomerStorageUsage(
         string customerDirectoryName)
  {
 
@@ -1004,7 +1032,7 @@ unsigned long CMSRepository::getCustomerStorageUsage(
 
 
 /*
-Error CMSRepository:: sanityCheck_ContentsOnFileSystem (
+Error CMSStorage:: sanityCheck_ContentsOnFileSystem (
         RepositoryType rtRepositoryType)
 
 {
@@ -1504,7 +1532,7 @@ Error CMSRepository:: sanityCheck_ContentsOnFileSystem (
 }
 
 
-Error CMSRepository:: sanityCheck_CustomersDirectory (
+Error CMSStorage:: sanityCheck_CustomersDirectory (
         RepositoryType rtRepositoryType,
         const char *pCustomersDirectory,
         FileIO:: Directory_p pdDeliveryDirectory,
@@ -1720,7 +1748,7 @@ Error CMSRepository:: sanityCheck_CustomersDirectory (
 }
 
 
-Error CMSRepository:: sanityCheck_ContentsDirectory (
+Error CMSStorage:: sanityCheck_ContentsDirectory (
         const char *pCustomerDirectoryName, const char *pContentsDirectory,
         unsigned long ulRelativePathIndex,
         RepositoryType rtRepositoryType,
@@ -2957,7 +2985,7 @@ Error CMSRepository:: sanityCheck_ContentsDirectory (
  */
 
 /*
-Error CMSRepository:: sanityCheck_runOnContentsInfo (
+Error CMSStorage:: sanityCheck_runOnContentsInfo (
         SanityCheckContentInfo_p psciSanityCheckContentsInfo,
         unsigned long ulSanityCheckContentsInfoCurrentIndex,
         RepositoryType rtRepositoryType,
@@ -3838,7 +3866,7 @@ Error CMSRepository:: sanityCheck_runOnContentsInfo (
                                                                 (const char *)
                                                                         (sciLocalSanityCheckContentInfo.
                                                                         _bFileName),
-                                                                CMSRepository:: CMSREP_REPOSITORYTYPE_STAGING,
+                                                                CMSStorage:: CMSREP_REPOSITORYTYPE_STAGING,
                                                                 (const char *)
                                                                         (sciLocalSanityCheckContentInfo.
                                                                         _bCustomerDirectoryName), true) != errNoError)
@@ -3865,7 +3893,7 @@ Error CMSRepository:: sanityCheck_runOnContentsInfo (
  */
 
 /*
-Error CMSRepository:: saveSanityCheckLastProcessedContent (
+Error CMSStorage:: saveSanityCheckLastProcessedContent (
         const char *pFilePathName)
 
 {
@@ -4873,7 +4901,7 @@ Error CMSRepository:: saveSanityCheckLastProcessedContent (
 }
 
 
-Error CMSRepository:: readSanityCheckLastProcessedContent (
+Error CMSStorage:: readSanityCheckLastProcessedContent (
         const char *pFilePathName)
 
 {

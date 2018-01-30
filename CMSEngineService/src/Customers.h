@@ -5,7 +5,7 @@
 #include <unordered_map>
 #include <mutex>
 #include <memory>
-#include "../../CMSRepository/src/Customer.h"
+#include "Customer.h"
 #include "CMSEngineDBFacade.h"
 
 class Customers

@@ -21,36 +21,53 @@
 # with the authors.
 
 SET (SOURCES
-	Customer.cpp
-	CMSStorage.cpp
-	CMSEngineDBFacade.cpp
-	CMSEngine.cpp
+	cmsEngineService.cpp
+	CMSEngineProcessor.cpp
+	CheckIngestionTimes.cpp
+	Customers.cpp
 )
+
 SET (HEADERS
-	Customer.h
-	CMSStorage.h
-	CMSEngineDBFacade.h
-	CMSEngine.h
+	CMSEngineProcessor.h
+	CheckIngestionTimes.h
+	Customers.h
 )
 
 include_directories ("${PROJECT_SOURCE_DIR}/../usr_local/include")
 include_directories ("${PROJECT_SOURCE_DIR}/../spdlog/include")
 include_directories ("${PROJECT_SOURCE_DIR}/../connection-pool")
+include_directories ("${PROJECT_SOURCE_DIR}/CMSEngine/src")
 if (APPLE)
 	include_directories ("${PROJECT_SOURCE_DIR}/../mysql-connector-c++-1.1.9-macos10.12-x86-64bit/include")
 else()
 	include_directories ("/app/5/ThirdPartySoftware/mysql-connector-c++-1.1.9-linux-ubuntu16.10-x86-64bit/include")
 endif()
 
+link_directories ("${PROJECT_SOURCE_DIR}/../usr_local/lib")
 if (APPLE)
-	link_directories ("${PROJECT_SOURCE_DIR}/../usr_local/lib")
 	link_directories ("${PROJECT_SOURCE_DIR}/../mysql-connector-c++-1.1.9-macos10.12-x86-64bit/lib")
+else()
+	link_directories ("/app/5/ThirdPartySoftware/mysql-connector-c++-1.1.9-linux-ubuntu16.10-x86-64bit/lib")
 endif()
 
-add_library (CMSEngine SHARED ${SOURCES} ${HEADERS})
+add_executable(cmsEngineService ${SOURCES} ${HEADERS})
 
-if (APPLE)
-	target_link_libraries (CMSEngine ErrMsg)
-	target_link_libraries (CMSEngine Tools)
-	target_link_libraries (CMSEngine mysqlcppconn)
+target_link_libraries (cmsEngineService MultiEventsSet)
+target_link_libraries (cmsEngineService CMSEngine)
+target_link_libraries (cmsEngineService mysqlcppconn)
+
+target_link_libraries (cmsEngineService Scheduler)
+target_link_libraries (cmsEngineService PThread)
+target_link_libraries (cmsEngineService Tools)
+target_link_libraries (cmsEngineService ErrMsg)
+if(CRYPTO_FOUND)
+	if (APPLE)
+		target_link_libraries (cmsEngineService ${CRYPTO_LIBRARIES})
+	else()
+		target_link_libraries (cmsEngineService crypt)
+	endif()
 endif()
+if (ZLIB_FOUND)
+	target_link_libraries(cmsEngineService ${ZLIB_LIBRARIES})
+endif()
+target_link_libraries (cmsEngineService pthread)

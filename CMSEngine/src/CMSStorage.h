@@ -1,7 +1,7 @@
 
 
-#ifndef CMSRepository_h
-#define CMSRepository_h
+#ifndef CMSStorage_h
+#define CMSStorage_h
 
 #include <mutex>
 #include <vector>
@@ -10,7 +10,7 @@
 #include "Customer.h"
 
 
-class CMSRepository
+class CMSStorage
 {
 public:
     enum RepositoryType
@@ -146,7 +146,7 @@ private:
 //    string                      _streamingMetaDirectoryName;
 //    string                      _streamingRecordingDirectoryName;
 
-    unsigned long long          _freeSpaceToLeaveInEachPartition;
+    unsigned long long          _freeSpaceToLeaveInEachPartitionInMB;
 //    bool                        _unexpectedFilesToBeRemoved;
 //    unsigned long               _retentionPeriodInSecondsForTemporaryFiles;
 //    unsigned long               _maxFilesToBeProcessedPerSchedule [
@@ -170,9 +170,12 @@ private:
 	Customer::TerritoriesHashMap& phmTerritories);
 
 public:
-    CMSRepository (shared_ptr<spdlog::logger> logger);
+    CMSStorage (
+            string storage, 
+            unsigned long freeSpaceToLeaveInEachPartitionInMB,
+            shared_ptr<spdlog::logger> logger);
 
-    ~CMSRepository (void);
+    ~CMSStorage (void);
 
 //    const char *getIPhoneAliasForLive (void);
 
@@ -231,18 +234,18 @@ public:
 	string fileName,
 	bool downloadRepositoryToo);
 
-string getStreamingLinkPathName (
+    string getStreamingLinkPathName (
 	unsigned long ulPartitionNumber,	// IN
 	string customerDirectoryName,	// IN
 	string territoryName,	// IN
 	string relativePath,	// IN
 	string fileName);	// IN
 
-//     * bRemoveLinuxPathIfExist: often this method is called 
-//     * 		to get the path where the encoder put his output
-//     * 		(file or directory). In this case it is good
-//     * 		to clean/remove that path if already existing in order
-//     * 		to give to the encoder a clean place where to write
+    // bRemoveLinuxPathIfExist: often this method is called 
+    // to get the path where the encoder put his output
+    // (file or directory). In this case it is good
+    // to clean/remove that path if already existing in order
+    // to give to the encoder a clean place where to write
     string getStagingAssetPathName (
 	string customerDirectoryName,
 	string relativePath,

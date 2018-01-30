@@ -6,13 +6,13 @@ CMSEngineProcessor::CMSEngineProcessor(
         shared_ptr<spdlog::logger> logger, 
         shared_ptr<CMSEngineDBFacade> cmsEngineDBFacade,
         shared_ptr<Customers> customers,
-        shared_ptr<CMSRepository> cmsRepository
+        shared_ptr<CMSStorage> cmsStorage
 )
 {
     _logger             = logger;
     _cmsEngineDBFacade  = cmsEngineDBFacade;
     _customers          = customers;
-    _cmsRepository      = cmsRepository;
+    _cmsStorage      = cmsStorage;
     
     _ulIngestionLastCustomerIndex   = 0;
     
@@ -112,7 +112,7 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
         {
             _ulIngestionLastCustomerIndex++;
 
-            string customerFTPDirectory = _cmsRepository->getFTPRootRepository();
+            string customerFTPDirectory = _cmsStorage->getFTPRootRepository();
             customerFTPDirectory.append(customer->_name);
 
             shared_ptr<FileIO::Directory> directory = FileIO:: openDirectory(customerFTPDirectory);

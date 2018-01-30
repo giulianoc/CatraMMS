@@ -9,7 +9,7 @@
 #include "catralibraries/MultiEventsSet.h"
 #include "CMSEngineDBFacade.h"
 #include "Customers.h"
-#include "CMSRepository.h"
+#include "CMSStorage.h"
 
 #define CMSENGINEPROCESSORNAME    "CMSEngineProcessor"
 
@@ -19,7 +19,7 @@ private:
     shared_ptr<spdlog::logger>          _logger;
     shared_ptr<CMSEngineDBFacade>       _cmsEngineDBFacade;
     shared_ptr<Customers>               _customers;
-    shared_ptr<CMSRepository>           _cmsRepository;
+    shared_ptr<CMSStorage>           _cmsStorage;
     
     unsigned long                       _ulIngestionLastCustomerIndex;
     unsigned long                       _ulMaxIngestionsNumberPerCustomerEachIngestionPeriod;
@@ -31,7 +31,7 @@ public:
             shared_ptr<spdlog::logger> logger, 
             shared_ptr<CMSEngineDBFacade> cmsEngineDBFacade,
             shared_ptr<Customers> customers,
-            shared_ptr<CMSRepository> cmsRepository);
+            shared_ptr<CMSStorage> cmsStorage);
     
     ~CMSEngineProcessor();
     

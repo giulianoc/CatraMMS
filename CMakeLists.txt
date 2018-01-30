@@ -41,5 +41,5 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 find_package(LibCrypto)
 find_package(ZLIB)
 
-add_subdirectory(CMSRepository/src)
 add_subdirectory(CMSEngine/src)
+add_subdirectory(CMSEngineService/src)
