@@ -15,6 +15,7 @@ CMSEngineProcessor::CMSEngineProcessor(
     _ulIngestionLastCustomerIndex   = 0;
     
     _ulMaxIngestionsNumberPerCustomerEachIngestionPeriod       = 2;
+    _ulJsonToBeProcessedAfterSeconds                           = 10;
 }
 
 CMSEngineProcessor::~CMSEngineProcessor()
@@ -148,183 +149,62 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                     continue;
                 }
 
-                /*
-                // check if the file has ".xml" as extension.
-                // We do not accept also the ".xml" file (without name)
-                if ((unsigned long) _bDirectoryEntry < 5 ||
-                        strcmp (((const char *) _bDirectoryEntry) +
-                                ((unsigned long) _bDirectoryEntry) - 4, ".xml"))
+                // check if the file has ".json" as extension.
+                // We do not accept also the ".json" file (without name)
+                string jsonExtension(".json");
+                if (directoryEntry.length() < 6 ||
+                        !equal(jsonExtension.rbegin(), jsonExtension.rend(), directoryEntry.rbegin()))
                         continue;
 
                 string srcPathName(customerFTPDirectory);
-                srcPathName.append("/").append(_bDirectoryEntry);
+                srcPathName.append("/").append(directoryEntry);
 
-                if ((errFileTime = FileIO:: getFileTime (
-                        (const char *) _bSrcPathName,
-                        &tLastModificationTime)) != errNoError)
+                try
                 {
-                        int					iErrno;
-                        unsigned long		ulUserDataBytes;
-
-
-                        errFileTime. getUserData (&iErrno, &ulUserDataBytes);
-                        if (iErrno != ENOENT)	// ENOENT: file not found
-                        {
-                                _ptSystemTracer -> trace (Tracer:: TRACER_LERRR,
-                                        (const char *) errFileTime, __FILE__, __LINE__);
-
-                                Error err = ToolsErrors (__FILE__, __LINE__,
-                                        TOOLS_FILEIO_GETFILETIME_FAILED,
-                                        1, (const char *) _bSrcPathName);
-                                _ptSystemTracer -> trace (Tracer:: TRACER_LERRR,
-                                        (const char *) err, __FILE__, __LINE__);
-                        }
-
-                        continue;
+                    tLastModificationTime = FileIO:: getFileTime (srcPathName);
                 }
-
-                if (time (NULL) - tLastModificationTime <
-                        _ulCheckIngestionPeriodInSeconds)
+                catch(FileNotExisting fne)
                 {
-                    // only the XML files having the last modification older
-                    // at least of _ulCheckIngestionPeriodInSeconds seconds
+                    continue;
+                }
+                catch(runtime_error re)
+                {
+                    _logger->error(string("FileIO::getFileTime failed")
+                        + ", srcPathName: " + srcPathName
+                        + ", re.what: " + re.what()
+                    );
+
+                    continue;
+                }
+                
+                if (time (NULL) - tLastModificationTime < _ulJsonToBeProcessedAfterSeconds)
+                {
+                    // only the json files having the last modification older
+                    // at least of _ulJsonToBeProcessedAfterSeconds seconds
                     // are considered
 
                     continue;
                 }
 
-                if (_pcrCMSRepository -> getStagingAssetPathName (
-                    &_bDestPathName,
-                    (const char *) (pcCustomer -> _bName),
-                    "/",
-                    (const char *) _bDirectoryEntry,
-                    0, 0,
-                    false, true) != errNoError)
-                {
-                    Error err = CMSEngineErrors (__FILE__, __LINE__,
-                            CMS_CMSREPOSITORY_GETSTAGINGASSETPATHNAME_FAILED);
-                    _ptSystemTracer -> trace (Tracer:: TRACER_LERRR,
-                            (const char *) err, __FILE__, __LINE__);
+                _logger->info(string("json to be processed")
+                    + ", directoryEntry: " + directoryEntry
+                );
 
-                        continue;
-                }
+                string stagingAssetPathName = _cmsStorage->getStagingAssetPathName (
+                    customer->_directoryName,
+                    "/",            // relativePath
+                    directoryEntry,
+                    0, 0,           // llMediaItemKey, llPhysicalPathKey
+                    true            // removeLinuxPathIfExist
+                );
 
-                {
-                    Message msg = CMSEngineMessages (__FILE__, __LINE__,
-                            CMS_INGESTASSETTHREAD_MOVEFILE,
-                            3,
-                            (const char *) (pcCustomer -> _bName),
-                            (const char *) _bSrcPathName,
-                            (const char *) _bDestPathName);
-                    _ptSystemTracer -> trace (Tracer:: TRACER_LINFO,
-                            (const char *) msg, __FILE__, __LINE__);
-                }
+                _logger->info(string("Move file")
+                    + ", from: " + srcPathName
+                    + ", to: " + stagingAssetPathName
+                );
 
-                if ((errMove = FileIO:: moveFile (
-                    (const char *) _bSrcPathName,
-                    (const char *) _bDestPathName)) != errNoError)
-                {
-                    // often the move failed because some other cms will do the move
-                    // before us
-                    _ptSystemTracer -> trace (Tracer:: TRACER_LWRNG,
-                            (const char *) errMove, __FILE__, __LINE__);
-
-                    Error err = ToolsErrors (__FILE__, __LINE__,
-                            TOOLS_FILEIO_MOVEFILE_FAILED,
-                            2, (const char *) _bSrcPathName,
-                            (const char *) _bDestPathName);
-                    _ptSystemTracer -> trace (Tracer:: TRACER_LWRNG,
-                            (const char *) err, __FILE__, __LINE__);
-
-                    continue;
-                }
-
-                // clean dirty characters at the beginning of the XML (if present)
-                {
-                        if (_bXMLFile. readBufferFromFile (
-                                (const char *) _bDestPathName) != errNoError)
-                        {
-                                Error err = ToolsErrors (__FILE__, __LINE__,
-                                        TOOLS_BUFFER_READBUFFERFROMFILE_FAILED);
-                                _ptSystemTracer -> trace (Tracer:: TRACER_LERRR,
-                                        (const char *) err, __FILE__, __LINE__);
-
-                                if (_pcrCMSRepository -> moveContentInRepository (
-                                        (const char *) _bDestPathName,
-                                        CMSRepository:: CMSREP_REPOSITORYTYPE_ERRORS,
-                                        (const char *) (pcCustomer -> _bName),
-                                        true) != errNoError)
-                                {
-                                        Error err = CMSRepositoryErrors (__FILE__, __LINE__,
-                                        CMSREP_CMSREPOSITORY_MOVECONTENTINREPOSITORY_FAILED);
-                                        _ptSystemTracer -> trace (Tracer:: TRACER_LERRR,
-                                                (const char *) err, __FILE__, __LINE__);
-                                }
-
-                                continue;
-                        }
-
-                        if (strchr ((const char *) _bXMLFile, '<') != (char *) NULL)
-                        {
-                            unsigned long		ulDirtyCharactersLength;
-
-
-                            ulDirtyCharactersLength		=
-                                    strchr ((const char *) _bXMLFile, '<') -
-                                    (const char *) _bXMLFile;
-
-                            if (ulDirtyCharactersLength > 0)
-                            {
-                                    if (_bXMLFile. strip (Buffer:: STRIPTYPE_LEADING,
-                                            ulDirtyCharactersLength) != errNoError)
-                                    {
-                                            Error err = ToolsErrors (__FILE__, __LINE__,
-                                                    TOOLS_BUFFER_STRIP_FAILED);
-                                            _ptSystemTracer -> trace (Tracer:: TRACER_LERRR,
-                                                    (const char *) err, __FILE__, __LINE__);
-
-                                            if (_pcrCMSRepository -> moveContentInRepository (
-                                                    (const char *) _bDestPathName,
-                                                    CMSRepository:: CMSREP_REPOSITORYTYPE_ERRORS,
-                                                    (const char *) (pcCustomer -> _bName),
-                                                    true) != errNoError)
-                                            {
-                                                    Error err = CMSRepositoryErrors (
-                                                            __FILE__, __LINE__,
-                                    CMSREP_CMSREPOSITORY_MOVECONTENTINREPOSITORY_FAILED);
-                                                    _ptSystemTracer -> trace (Tracer:: TRACER_LERRR,
-                                                            (const char *) err, __FILE__, __LINE__);
-                                            }
-
-                                            continue;
-                                    }
-
-                                    if (_bXMLFile. writeBufferOnFile (
-                                            (const char *) _bDestPathName) != errNoError)
-                                    {
-                                            Error err = ToolsErrors (__FILE__, __LINE__,
-                                                    TOOLS_BUFFER_WRITEBUFFERONFILE_FAILED);
-                                            _ptSystemTracer -> trace (Tracer:: TRACER_LERRR,
-                                                    (const char *) err, __FILE__, __LINE__);
-
-                                            if (_pcrCMSRepository -> moveContentInRepository (
-                                                    (const char *) _bDestPathName,
-                                                    CMSRepository:: CMSREP_REPOSITORYTYPE_ERRORS,
-                                                    (const char *) (pcCustomer -> _bName),
-                                                    true) != errNoError)
-                                            {
-                                                    Error err = CMSRepositoryErrors (
-                                                            __FILE__, __LINE__,
-                                    CMSREP_CMSREPOSITORY_MOVECONTENTINREPOSITORY_FAILED);
-                                                    _ptSystemTracer -> trace (Tracer:: TRACER_LERRR,
-                                                            (const char *) err, __FILE__, __LINE__);
-                                            }
-
-                                            continue;
-                                    }
-                            }
-                        }
-                }
+                /*
+                moveFile (srcPathName, stagingAssetPathName);
 
                 if (IngestAssetThread:: insertIngestionJobStatusOnFileAndDB (
                         _pcrCMSRepository -> getFTPRootRepository (),

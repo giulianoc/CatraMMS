@@ -19,8 +19,9 @@ private:
     shared_ptr<CMSEngineDBFacade>       _cmsEngineDBFacade;
     shared_ptr<CMSStorage>           _cmsStorage;
     
-    unsigned long                       _ulIngestionLastCustomerIndex;
-    unsigned long                       _ulMaxIngestionsNumberPerCustomerEachIngestionPeriod;
+    unsigned long           _ulIngestionLastCustomerIndex;
+    unsigned long           _ulMaxIngestionsNumberPerCustomerEachIngestionPeriod;
+    unsigned long           _ulJsonToBeProcessedAfterSeconds;
 
     void handleCheckIngestionEvent();
 

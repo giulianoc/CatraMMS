@@ -384,6 +384,128 @@ int64_t CMSEngineDBFacade::addUser (
     return userKey;
 }
 
+int64_t CMSEngineDBFacade::addIngestionJob (
+	int64_t customerKey,
+        string metadataFileName
+)
+{
+    int64_t         ingestionJobKey;
+    
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn;
+    bool autoCommit = true;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+
+        autoCommit = false;
+        conn->_sqlConnection->setAutoCommit(autoCommit);    // or execute the statement START TRANSACTION
+        
+        {
+            lastSQLCommand = 
+                "select IsEnabled, CustomerType from CMS_Customers where CustomerKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, customerKey);
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                int isEnabled = resultSet->getInt("IsEnabled");
+                int customerType = resultSet->getInt("CustomerType");
+                
+                if (isEnabled != 1)
+                {
+                    
+                }
+                else if (customerType != static_cast<int>(CustomerType::IngestionAndDelivery) &&
+                        customerType != static_cast<int>(CustomerType::EncodingOnly))
+                {
+                    
+                }
+            }
+            else
+            {
+                
+            }
+        }
+
+        {
+            lastSQLCommand = 
+                "insert into CMS_IngestionJobs (IngestionJobKey, CustomerKey, MediaItemKey, MetaDataFileName, IngestionType, StartIngestion, EndIngestion, Status, ErrorMessage) values ("
+                "NULL, ?, NULL, ?, NULL, NULL, NULL, 1, NULL)";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, customerName);
+            preparedStatement->setString(queryParameterIndex++, customerDirectoryName);
+            if (street == "")
+                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+            else
+                preparedStatement->setString(queryParameterIndex++, street);
+            if (city == "")
+                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+            else
+                preparedStatement->setString(queryParameterIndex++, city);
+            if (state == "")
+                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+            else
+                preparedStatement->setString(queryParameterIndex++, state);
+            if (zip == "")
+                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+            else
+                preparedStatement->setString(queryParameterIndex++, zip);
+            if (phone == "")
+                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+            else
+                preparedStatement->setString(queryParameterIndex++, phone);
+            if (countryCode == "")
+                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+            else
+                preparedStatement->setString(queryParameterIndex++, countryCode);
+            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(customerType));
+            if (deliveryURL == "")
+                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+            else
+                preparedStatement->setString(queryParameterIndex++, deliveryURL);
+            preparedStatement->setInt(queryParameterIndex++, enabled);
+            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(maxEncodingPriority));
+            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(encodingPeriod));
+            preparedStatement->setInt(queryParameterIndex++, maxIngestionsNumber);
+            preparedStatement->setInt(queryParameterIndex++, maxStorageInGB);
+            preparedStatement->setString(queryParameterIndex++, languageCode);
+
+            preparedStatement->executeUpdate();
+        }
+        
+        ingestionJobKey = getLastInsertId(conn);
+        
+
+        conn->_sqlConnection->commit();     // or execute COMMIT
+        autoCommit = true;
+
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        if (!autoCommit)
+            conn->_sqlConnection->rollback();     // or execute ROLLBACK
+        
+        string exceptionMessage(se.what());
+        
+        _logger->error(string("SQL exception")
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw se;
+    }
+    
+    return ingestionJobKey;
+}
+
 int64_t CMSEngineDBFacade::getLastInsertId(shared_ptr<MySQLConnection> conn)
 {
     int64_t         lastInsertId;

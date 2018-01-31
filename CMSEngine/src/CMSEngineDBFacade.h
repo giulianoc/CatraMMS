@@ -96,6 +96,11 @@ public:
         chrono::system_clock::time_point userExpirationDate
     );
     
+    int64_t addIngestionJob (
+	int64_t customerKey,
+        string metadataFileName
+    );
+
 private:
     shared_ptr<spdlog::logger>                      _logger;
     shared_ptr<ConnectionPool<MySQLConnection>>     _connectionPool;
