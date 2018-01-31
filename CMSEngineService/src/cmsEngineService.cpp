@@ -7,6 +7,7 @@
 #include "CheckIngestionTimes.h"
 #include "CMSEngineDBFacade.h"
 #include "CMSStorage.h"
+#include "CMSEngine.h"
 
 
 int main (int iArgc, char *pArgv [])
@@ -31,8 +32,6 @@ int main (int iArgc, char *pArgv [])
             );
     shared_ptr<CMSEngineDBFacade>       cmsEngineDBFacade = make_shared<CMSEngineDBFacade>(
             dbPoolSize, dbServer, dbUsername, dbPassword, dbName, logger);
-
-    shared_ptr<Customers>       customers = make_shared<Customers>(cmsEngineDBFacade);
     
     string storage ("/Users/multi/GestioneProgetti/Development/catrasoftware/storage/");
     unsigned long freeSpaceToLeaveInEachPartitionInMB = 5;
@@ -45,6 +44,10 @@ int main (int iArgc, char *pArgv [])
             freeSpaceToLeaveInEachPartitionInMB,
             logger);
 
+    logger->info(string("Creating CMSEngine")
+            );
+    shared_ptr<CMSEngine>       cmsEngine = make_shared<CMSEngine>(cmsEngineDBFacade, logger);
+    
     logger->info(string("Creating MultiEventsSet")
         + ", addDestination: " + CMSENGINEPROCESSORNAME
             );
@@ -53,7 +56,7 @@ int main (int iArgc, char *pArgv [])
 
     logger->info(string("Creating CMSEngineProcessor")
             );
-    CMSEngineProcessor      cmsEngineProcessor(logger, cmsEngineDBFacade, customers, cmsStorage);
+    CMSEngineProcessor      cmsEngineProcessor(logger, cmsEngineDBFacade, cmsStorage);
     
     unsigned long           ulThreadSleepInMilliSecs = 100;
     logger->info(string("Creating Scheduler2")
@@ -79,6 +82,31 @@ int main (int iArgc, char *pArgv [])
     checkIngestionTimes->start();
     scheduler.activeTimes(checkIngestionTimes);
 
+    /*
+    cmsEngine->addCustomer(
+	"Warner",                       // string customerName,
+        "Warner",                       // string password,
+	"",                             // string street,
+        "",                             // string city,
+        "",                             // string state,
+	"",                             // string zip,
+        "",                             // string phone,
+        "",                             // string countryCode,
+        CMSEngineDBFacade::CustomerType::EncodingOnly,  // CMSEngineDBFacade::CustomerType customerType
+	"",                             // string deliveryURL,
+        true,                           // bool enabled,
+        CMSEngineDBFacade::EncodingPriority::Default,   //  CMSEngineDBFacade::EncodingPriority maxEncodingPriority,
+        CMSEngineDBFacade::EncodingPeriod::Daily,       //  CMSEngineDBFacade::EncodingPeriod encodingPeriod,
+	10,                             // long maxIngestionsNumber,
+        10,                             // long maxStorageInGB,
+	"",                             // string languageCode,
+        "giuliano",                     // string userName,
+        "giuliano",                     // string userPassword,
+        "giulianoc@catrasoftware.it",   // string userEmailAddress,
+        chrono::system_clock::now()     // chrono::system_clock::time_point userExpirationDate
+    );
+     */
+    
     logger->info(string("Waiting CMSEngineProcessor")
             );
     cmsEngineProcessorThread.join();

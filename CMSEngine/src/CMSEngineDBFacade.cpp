@@ -92,10 +92,11 @@ int64_t CMSEngineDBFacade::addCustomer(
 	string zip,
         string phone,
         string countryCode,
+        CustomerType customerType,
 	string deliveryURL,
-        long enabled,
-	long maxEncodingPriority,
-        long period,
+        bool enabled,
+	EncodingPriority maxEncodingPriority,
+        EncodingPeriod encodingPeriod,
 	long maxIngestionsNumber,
         long maxStorageInGB,
 	string languageCode,
@@ -108,6 +109,8 @@ int64_t CMSEngineDBFacade::addCustomer(
     int64_t         customerKey;
     int64_t         contentProviderKey;
     
+    string      lastSQLCommand;
+    
     shared_ptr<MySQLConnection> conn;
     bool autoCommit = true;
 
@@ -119,11 +122,12 @@ int64_t CMSEngineDBFacade::addCustomer(
         conn->_sqlConnection->setAutoCommit(autoCommit);    // or execute the statement START TRANSACTION
         
         {
-            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            lastSQLCommand = 
+                    "insert into CMS_Customers ("
+                    "CustomerKey, CreationDate, Name, DirectoryName, Street, City, State, ZIP, Phone, CountryCode, CustomerType, DeliveryURL, IsEnabled, MaxEncodingPriority, EncodingPeriod, MaxIngestionsNumber, MaxStorageInGB, CurrentStorageUsageInGB, LanguageCode) values ("
+                    "NULL, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)";
 
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(
-                "insert into CMS_Customers (CustomerKey, CreationDate, Name, DirectoryName, Street, City, State, ZIP, Phone, CountryCode, CustomerType, DeliveryURL, IsEnabled, MaxEncodingPriority, Period, MaxIngestionsNumber, MaxStorageInGB, CurrentStorageUsageInGB, LanguageCode) values ("
-                "NULL, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, 0, ?)"));
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, customerName);
             preparedStatement->setString(queryParameterIndex++, customerDirectoryName);
@@ -151,13 +155,14 @@ int64_t CMSEngineDBFacade::addCustomer(
                 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
             else
                 preparedStatement->setString(queryParameterIndex++, countryCode);
+            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(customerType));
             if (deliveryURL == "")
                 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
             else
                 preparedStatement->setString(queryParameterIndex++, deliveryURL);
             preparedStatement->setInt(queryParameterIndex++, enabled);
-            preparedStatement->setInt(queryParameterIndex++, maxEncodingPriority);
-            preparedStatement->setInt(queryParameterIndex++, period);
+            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(maxEncodingPriority));
+            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(encodingPeriod));
             preparedStatement->setInt(queryParameterIndex++, maxIngestionsNumber);
             preparedStatement->setInt(queryParameterIndex++, maxStorageInGB);
             preparedStatement->setString(queryParameterIndex++, languageCode);
@@ -168,12 +173,10 @@ int64_t CMSEngineDBFacade::addCustomer(
         customerKey = getLastInsertId(conn);
         
         {
-            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(
-                "insert into CMS_CustomerMoreInfo (CustomerKey, CurrentDirLevel1, CurrentDirLevel2, CurrentDirLevel3, StartDateTime, EndDateTime, CurrentIngestionsNumber) values ("
-	    	"?, 0, 0, 0, NOW(), NOW(), 0)"
-            ));
+            lastSQLCommand = 
+                    "insert into CMS_CustomerMoreInfo (CustomerKey, CurrentDirLevel1, CurrentDirLevel2, CurrentDirLevel3, StartDateTime, EndDateTime, CurrentIngestionsNumber) values ("
+                    "?, 0, 0, 0, NOW(), NOW(), 0)";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, customerKey);
 
@@ -181,12 +184,10 @@ int64_t CMSEngineDBFacade::addCustomer(
         }
 
         {
-            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(
+            lastSQLCommand = 
                 "insert into CMS_ContentProviders (ContentProviderKey, CustomerKey, Name) values ("
-                "NULL, ?, ?)"
-            ));
+                "NULL, ?, ?)";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, customerKey);
             preparedStatement->setString(queryParameterIndex++, "default");
@@ -212,6 +213,40 @@ int64_t CMSEngineDBFacade::addCustomer(
                 userEmailAddress,
                 userExpirationDate);
 
+        // insert default EncodingProfilesSet per Customer/ContentType
+        {
+            vector<ContentType> contentTypes = { ContentType::Video, ContentType::Audio, ContentType::Image };
+            
+            for (ContentType contentType: contentTypes)
+            {
+                {
+                    lastSQLCommand = 
+                        "insert into CMS_EncodingProfilesSet (EncodingProfilesSetKey, ContentType, CustomerKey, Name) values ("
+                        "NULL, ?, ?, NULL)";
+                    shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                    int queryParameterIndex = 1;
+                    preparedStatement->setInt(queryParameterIndex++, static_cast<int>(contentType));
+                    preparedStatement->setInt64(queryParameterIndex++, customerKey);
+                    preparedStatement->executeUpdate();
+                }
+                        
+                int64_t encodingProfilesSetKey = getLastInsertId(conn);
+
+		// by default this new customer will inherited the profiles associated to 'global' 
+                {
+                    lastSQLCommand = 
+                        "insert into CMS_EncodingProfilesSetMapping (EncodingProfilesSetKey, EncodingProfileKey) " 
+                        "(select ?, EncodingProfileKey from CMS_EncodingProfilesSetMapping where EncodingProfilesSetKey = " 
+                            "(select EncodingProfilesSetKey from CMS_EncodingProfilesSet where ContentType = ? and CustomerKey is null and Name is null))";
+                    shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                    int queryParameterIndex = 1;
+                    preparedStatement->setInt64(queryParameterIndex++, encodingProfilesSetKey);
+                    preparedStatement->setInt(queryParameterIndex++, static_cast<int>(contentType));
+                    preparedStatement->executeUpdate();
+                }
+            }
+        }
+
         conn->_sqlConnection->commit();     // or execute COMMIT
         autoCommit = true;
 
@@ -225,6 +260,7 @@ int64_t CMSEngineDBFacade::addCustomer(
         string exceptionMessage(se.what());
         
         _logger->error(string("SQL exception")
+            + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
         );
 
@@ -242,15 +278,15 @@ int64_t CMSEngineDBFacade::addTerritory (
 {
     int64_t         territoryKey;
     
+    string      lastSQLCommand;
+
     try
     {
         {
-            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(
+            lastSQLCommand = 
                 "insert into CMS_Territories (TerritoryKey, CustomerKey, Name, Currency) values ("
-    		"NULL, ?, ?, ?)"
-            ));
+    		"NULL, ?, ?, ?)";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, customerKey);
             preparedStatement->setString(queryParameterIndex++, territoryName);
@@ -270,6 +306,7 @@ int64_t CMSEngineDBFacade::addTerritory (
         string exceptionMessage(se.what());
         
         _logger->error(string("SQL exception")
+            + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
         );
 
@@ -291,15 +328,15 @@ int64_t CMSEngineDBFacade::addUser (
 {
     int64_t         userKey;
     
+    string      lastSQLCommand;
+
     try
     {
         {
-            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(
+            lastSQLCommand = 
                 "insert into CMS_Users2 (UserKey, UserName, Password, CustomerKey, Type, EMailAddress, CreationDate, ExpirationDate) values ("
-                "NULL, ?, ?, ?, ?, ?, NULL, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'))"
-            ));
+                "NULL, ?, ?, ?, ?, ?, NULL, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'))";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, userName);
             preparedStatement->setString(queryParameterIndex++, password);
@@ -337,6 +374,7 @@ int64_t CMSEngineDBFacade::addUser (
         string exceptionMessage(se.what());
         
         _logger->error(string("SQL exception")
+            + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
         );
 
@@ -350,10 +388,13 @@ int64_t CMSEngineDBFacade::getLastInsertId(shared_ptr<MySQLConnection> conn)
 {
     int64_t         lastInsertId;
     
+    string      lastSQLCommand;
+
     try
     {
-        shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(
-            "select LAST_INSERT_ID()"));
+        lastSQLCommand = 
+            "select LAST_INSERT_ID()";
+        shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
         shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 
         if (resultSet->next())
@@ -374,6 +415,7 @@ int64_t CMSEngineDBFacade::getLastInsertId(shared_ptr<MySQLConnection> conn)
         string exceptionMessage(se.what());
         
         _logger->error(string("SQL exception")
+            + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
         );
 
@@ -385,124 +427,405 @@ int64_t CMSEngineDBFacade::getLastInsertId(shared_ptr<MySQLConnection> conn)
 
 void CMSEngineDBFacade::createTablesIfNeeded()
 {
+    string      lastSQLCommand;
+
     try
     {
         shared_ptr<MySQLConnection> conn = _connectionPool->borrow();	
 
         shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
 
-        // MaxEncodingPriority (0: low, 1: default, 2: high)
-        // CustomerType: (0: Live Sessions only, 1: Ingestion + Delivery, 2: Encoding Only)
-        // Period: 0: Daily, 1: Weekly, 2: Monthly
-        statement->execute(
-            "create table if not exists CMS_Customers ("
-                "CustomerKey                    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
-                "CreationDate                   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
-                "Name                           VARCHAR (64) NOT NULL,"
-                "DirectoryName                  VARCHAR (64) NOT NULL,"
-                "Street                         VARCHAR (128) NULL,"
-                "City                           VARCHAR (64) NULL,"
-                "State                          VARCHAR (64) NULL,"
-                "ZIP                            VARCHAR (32) NULL,"
-                "Phone                          VARCHAR (32) NULL,"
-                "CountryCode                    VARCHAR (64) NULL,"
-                "CustomerType                   TINYINT NOT NULL,"
-                "DeliveryURL                    VARCHAR (256) NOT NULL,"
-                "IsEnabled                      TINYINT (1) NOT NULL,"
-                "MaxEncodingPriority            TINYINT NOT NULL,"
-                "Period                         TINYINT NOT NULL,"
-                "MaxIngestionsNumber            INT NOT NULL,"
-                "MaxStorageInGB                 INT NOT NULL,"
-                "CurrentStorageUsageInGB        INT DEFAULT 0,"
-                "SuperDeliveryRights            INT DEFAULT 0,"
-                "LanguageCode                   VARCHAR (16) NOT NULL,"
-                "constraint CMS_Customers_PK PRIMARY KEY (CustomerKey),"
-                "UNIQUE (Name))"
-                "ENGINE=InnoDB"
-        );    
+        try
+        {
+            // MaxEncodingPriority (0: low, 1: default, 2: high)
+            // CustomerType: (0: Live Sessions only, 1: Ingestion + Delivery, 2: Encoding Only)
+            // EncodingPeriod: 0: Daily, 1: Weekly, 2: Monthly
 
-        statement->execute(
-            "create unique index CMS_Customers_idx on CMS_Customers (DirectoryName)"
-        );    
+            lastSQLCommand = 
+                "create table if not exists CMS_Customers ("
+                    "CustomerKey                    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "CreationDate                   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+                    "Name                           VARCHAR (64) NOT NULL,"
+                    "DirectoryName                  VARCHAR (64) NOT NULL,"
+                    "Street                         VARCHAR (128) NULL,"
+                    "City                           VARCHAR (64) NULL,"
+                    "State                          VARCHAR (64) NULL,"
+                    "ZIP                            VARCHAR (32) NULL,"
+                    "Phone                          VARCHAR (32) NULL,"
+                    "CountryCode                    VARCHAR (64) NULL,"
+                    "CustomerType                   TINYINT NOT NULL,"
+                    "DeliveryURL                    VARCHAR (256) NULL,"
+                    "IsEnabled                      TINYINT (1) NOT NULL,"
+                    "MaxEncodingPriority            TINYINT NOT NULL,"
+                    "EncodingPeriod                 TINYINT NOT NULL,"
+                    "MaxIngestionsNumber            INT NOT NULL,"
+                    "MaxStorageInGB                 INT NOT NULL,"
+                    "CurrentStorageUsageInGB        INT DEFAULT 0,"
+                    "SuperDeliveryRights            INT DEFAULT 0,"
+                    "LanguageCode                   VARCHAR (16) NOT NULL,"
+                    "constraint CMS_Customers_PK PRIMARY KEY (CustomerKey),"
+                    "UNIQUE (Name))"
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);    
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(string("SQL exception")
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
 
-        // The territories are present only if the Customer is a 'Content Provider'.
-        // In this case we could have two scenarios:
-        // - customer not having territories (we will have just one row in this table with Name set as 'default')
-        // - customer having at least one territory (we will as much rows in this table according the number of territories)
-        statement->execute(
-            "create table if not exists CMS_Territories ("
-                "TerritoryKey  				BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
-                "CustomerKey  				BIGINT UNSIGNED NOT NULL,"
-                "Name					VARCHAR (64) NOT NULL,"
-                "Currency					VARCHAR (16) DEFAULT NULL,"
-                "constraint CMS_Territories_PK PRIMARY KEY (TerritoryKey),"
-                "constraint CMS_Territories_FK foreign key (CustomerKey) "
-                    "references CMS_Customers (CustomerKey) on delete cascade, "
-                "UNIQUE (CustomerKey, Name))"
-                "ENGINE=InnoDB"
-        );
+                throw se;
+            }
+        }    
 
-        // create table CMS_CustomerMoreInfo. This table was created to move the fields
-        //		that are updated during the ingestion from CMS_Customers.
-        //		That will avoid to put a lock in the CMS_Customers during the update
-        //		since the CMS_Customers is a wide used table
-        statement->execute(
-            "create table if not exists CMS_CustomerMoreInfo ("
-                "CustomerKey  				BIGINT UNSIGNED NOT NULL,"
-                "CurrentDirLevel1			INT NOT NULL,"
-                "CurrentDirLevel2			INT NOT NULL,"
-                "CurrentDirLevel3			INT NOT NULL,"
-                "StartDateTime				DATETIME NOT NULL,"
-                "EndDateTime				DATETIME NOT NULL,"
-                "CurrentIngestionsNumber	INT NOT NULL,"
-                "constraint CMS_CustomerMoreInfo_PK PRIMARY KEY (CustomerKey), "
-                "constraint CMS_CustomerMoreInfo_FK foreign key (CustomerKey) "
-                    "references CMS_Customers (CustomerKey) on delete cascade) "
-                "ENGINE=InnoDB"
-        );
+        try
+        {
+            lastSQLCommand = 
+                "create unique index CMS_Customers_idx on CMS_Customers (DirectoryName)";
+            statement->execute(lastSQLCommand);    
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(string("SQL exception")
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
 
-        // create table CMS_Users2
-        // Type (bits: ...9876543210)
-        //      bit 0: CMSAdministrator
-        //      bin 1: CMSUser
-        //      bit 2: EndUser
-        //      bit 3: CMSEditorialUser
-        //      bit 4: BillingAdministrator
-        statement->execute(
-            "create table if not exists CMS_Users2 ("
-                "UserKey				BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
-                "UserName				VARCHAR (128) NOT NULL,"
-                "Password				VARCHAR (128) NOT NULL,"
-                "CustomerKey                            BIGINT UNSIGNED NOT NULL,"
-                "Type					INT NOT NULL,"
-                "EMailAddress				VARCHAR (128) NULL,"
-                "CreationDate				TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
-                "ExpirationDate				DATETIME NOT NULL,"
-                "constraint CMS_Users2_PK PRIMARY KEY (UserKey), "
-                "constraint CMS_Users2_FK foreign key (CustomerKey) "
-                    "references CMS_Customers (CustomerKey) on delete cascade) "
-                "ENGINE=InnoDB"
-        );
+                throw se;
+            }
+        }    
 
-        // this index is important because UserName is used by the EndUser to login
-        //  (i.e.: it is the end-user email address) and we cannot have
-        //  two equal UserName since we will not be able to understand the CustomerKey
-        statement->execute(
-            "create unique index CMS_Users2_idx on CMS_Users2 (UserName)"
-        );
+        try
+        {
+            // The territories are present only if the Customer is a 'Content Provider'.
+            // In this case we could have two scenarios:
+            // - customer not having territories (we will have just one row in this table with Name set as 'default')
+            // - customer having at least one territory (we will as much rows in this table according the number of territories)
+            lastSQLCommand = 
+                "create table if not exists CMS_Territories ("
+                    "TerritoryKey  				BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "CustomerKey  				BIGINT UNSIGNED NOT NULL,"
+                    "Name					VARCHAR (64) NOT NULL,"
+                    "Currency					VARCHAR (16) DEFAULT NULL,"
+                    "constraint CMS_Territories_PK PRIMARY KEY (TerritoryKey),"
+                    "constraint CMS_Territories_FK foreign key (CustomerKey) "
+                        "references CMS_Customers (CustomerKey) on delete cascade, "
+                    "UNIQUE (CustomerKey, Name))"
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(string("SQL exception")
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
 
-        statement->execute(
-            "create table if not exists CMS_ContentProviders ("
-                "ContentProviderKey                     BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
-                "CustomerKey                            BIGINT UNSIGNED NOT NULL,"
-                "Name					VARCHAR (64) NOT NULL,"
-                "constraint CMS_ContentProviders_PK PRIMARY KEY (ContentProviderKey), "
-                "constraint CMS_ContentProviders_FK foreign key (CustomerKey) "
-                    "references CMS_Customers (CustomerKey) on delete cascade, "
-                "UNIQUE (CustomerKey, Name))" 
-                "ENGINE=InnoDB"
-        );
+                throw se;
+            }
+        }    
 
+        try
+        {
+            // create table CMS_CustomerMoreInfo. This table was created to move the fields
+            //		that are updated during the ingestion from CMS_Customers.
+            //		That will avoid to put a lock in the CMS_Customers during the update
+            //		since the CMS_Customers is a wide used table
+            lastSQLCommand = 
+                "create table if not exists CMS_CustomerMoreInfo ("
+                    "CustomerKey  				BIGINT UNSIGNED NOT NULL,"
+                    "CurrentDirLevel1			INT NOT NULL,"
+                    "CurrentDirLevel2			INT NOT NULL,"
+                    "CurrentDirLevel3			INT NOT NULL,"
+                    "StartDateTime				DATETIME NOT NULL,"
+                    "EndDateTime				DATETIME NOT NULL,"
+                    "CurrentIngestionsNumber	INT NOT NULL,"
+                    "constraint CMS_CustomerMoreInfo_PK PRIMARY KEY (CustomerKey), "
+                    "constraint CMS_CustomerMoreInfo_FK foreign key (CustomerKey) "
+                        "references CMS_Customers (CustomerKey) on delete cascade) "
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(string("SQL exception")
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }    
+
+        try
+        {
+            // create table CMS_Users2
+            // Type (bits: ...9876543210)
+            //      bit 0: CMSAdministrator
+            //      bin 1: CMSUser
+            //      bit 2: EndUser
+            //      bit 3: CMSEditorialUser
+            //      bit 4: BillingAdministrator
+            lastSQLCommand = 
+                "create table if not exists CMS_Users2 ("
+                    "UserKey				BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "UserName				VARCHAR (128) NOT NULL,"
+                    "Password				VARCHAR (128) NOT NULL,"
+                    "CustomerKey                            BIGINT UNSIGNED NOT NULL,"
+                    "Type					INT NOT NULL,"
+                    "EMailAddress				VARCHAR (128) NULL,"
+                    "CreationDate				TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+                    "ExpirationDate				DATETIME NOT NULL,"
+                    "constraint CMS_Users2_PK PRIMARY KEY (UserKey), "
+                    "constraint CMS_Users2_FK foreign key (CustomerKey) "
+                        "references CMS_Customers (CustomerKey) on delete cascade) "
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(string("SQL exception")
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }    
+
+        try
+        {
+            // this index is important because UserName is used by the EndUser to login
+            //  (i.e.: it is the end-user email address) and we cannot have
+            //  two equal UserName since we will not be able to understand the CustomerKey
+            lastSQLCommand = 
+                "create unique index CMS_Users2_idx on CMS_Users2 (UserName)";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(string("SQL exception")
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }    
+
+        try
+        {
+            lastSQLCommand = 
+                "create table if not exists CMS_ContentProviders ("
+                    "ContentProviderKey                     BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "CustomerKey                            BIGINT UNSIGNED NOT NULL,"
+                    "Name					VARCHAR (64) NOT NULL,"
+                    "constraint CMS_ContentProviders_PK PRIMARY KEY (ContentProviderKey), "
+                    "constraint CMS_ContentProviders_FK foreign key (CustomerKey) "
+                        "references CMS_Customers (CustomerKey) on delete cascade, "
+                    "UNIQUE (CustomerKey, Name))" 
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(string("SQL exception")
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }    
+
+        try
+        {
+            // Technology.
+            //      0: Images (Download),
+            //      1: 3GPP (Streaming+Download),
+            //      2: MPEG2-TS (IPhone Streaming),
+            //      3: WEBM (VP8 and Vorbis)
+            //      4: WindowsMedia,
+            //      5: Adobe
+            // The encoding profile format is:
+            //      [<video enc. params>][<audio enc. params>][<image enc. params>][<ringtone enc. params>][<application enc. params>][file format params]
+            //  The <video enc. params> format is:
+            //      _V1<video_codec>_V21<video_bitrate1>_<frame_rate_fps>_..._V2M<video_bitrateM>_<frame_rate_fps>_V3<screen_size>_V5<key_frame_interval_in_seconds>_V6<profile>
+            //      <video_codec>: mpeg4, h263, h264, VP8, wmv
+            //      <video_bitrate1>: 68000, 70000
+            //      <screen_size>: QCIF: 176x144, SQCIF: 128x96, QSIF: 160x120, QVGA: 320x240, HVGA: 480x320, 480x360, CIF: 352x288, VGA: 640x480, SD: 720x576
+            //      <frame_rate_fps>: 15, 12.5, 10, 8
+            //      <key_frame_interval_in_seconds>: 3
+            //      <profile>: baseline, main, high
+            //  The <audio enc. params> format is:
+            //      _A1<audio_codec>_A21<audio_bitrate1>_..._A2N<audio_bitrateN>_A3<Channels>_A4<sampling_rate>_
+            //      <audio_codec>: amr-nb, amr-wb, aac-lc, enh-aacplus, he-aac, wma, vorbis
+            //      <audio_bitrate1>: 12200
+            //      <Channels>: S: Stereo, M: Mono
+            //      <sampling_rate>: 8000, 11025, 32000, 44100, 48000
+            //  The <image enc. params> format is:
+            //	_I1<image_format>_I2<width>_I3<height>_I4<AspectRatio>_I5<Interlace>
+            //	<image_format>: PNG, JPG, GIF
+            //	<AspectRatio>: 1, 0
+            //	<Interlace>: 0: NoInterlace, 1: LineInterlace, 2: PlaneInterlace, 3: PartitionInterlace
+            //  The <ringtone enc. params> format is:
+            //	...
+            //  The <application enc. params> format is:
+            //	...
+            //  The <file format params> format is:
+            //	_F1<hinter>
+            //	<hinter>: 1, 0
+            //  Temporary fields used by XHP: Width, Height, VideoCodec, AudioCodec
+            lastSQLCommand = 
+                "create table if not exists CMS_EncodingProfiles ("
+                    "EncodingProfileKey  		BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "ContentType			TINYINT NOT NULL,"
+                    "Technology			TINYINT NOT NULL,"
+                    "Description			VARCHAR (256) NOT NULL,"
+                    "Label				VARCHAR (64) NULL,"
+                    "Width				INT NOT NULL DEFAULT 0,"
+                    "Height				INT NOT NULL DEFAULT 0,"
+                    "VideoCodec			VARCHAR (32) null,"
+                    "AudioCodec			VARCHAR (32) null,"
+                    "constraint CMS_EncodingProfiles_PK PRIMARY KEY (EncodingProfileKey), "
+                    "UNIQUE (ContentType, Technology, Description)) "
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(string("SQL exception")
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }    
+
+        try
+        {
+            // CustomerKey and Name. If they are NULL, it means the EncodingProfileSet is the default one
+            //      for the specified ContentType.
+            // A customer can have custom EncodingProfilesSet specifying together CustomerKey and Name.
+            lastSQLCommand = 
+                "create table if not exists CMS_EncodingProfilesSet ("
+                    "EncodingProfilesSetKey  	BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "ContentType				TINYINT NOT NULL,"
+                    "CustomerKey  				BIGINT UNSIGNED NULL,"
+                    "Name						VARCHAR (64) NULL,"
+                    "constraint CMS_EncodingProfilesSet_PK PRIMARY KEY (EncodingProfilesSetKey)," 
+                    "constraint CMS_EncodingProfilesSet_FK foreign key (CustomerKey) "
+                        "references CMS_Customers (CustomerKey) on delete cascade, "
+                    "UNIQUE (ContentType, CustomerKey, Name)) "
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(string("SQL exception")
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }    
+
+        try
+        {
+            //  insert global EncodingProfilesSet per ContentType
+            vector<ContentType> contentTypes = { ContentType::Video, ContentType::Audio, ContentType::Image };
+            
+            for (ContentType contentType: contentTypes)
+            {
+                int     encodingProfilesSetCount = -1;
+                {
+                    lastSQLCommand = 
+                        "select count(*) from CMS_EncodingProfilesSet where ContentType = ? and CustomerKey is NULL and Name is NULL";
+                    shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                    int queryParameterIndex = 1;
+                    preparedStatement->setInt(queryParameterIndex++, static_cast<int>(contentType));
+
+                    shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+                    if (resultSet->next())
+                    {
+                        encodingProfilesSetCount = resultSet->getInt(1);
+                    }
+                }
+
+                if (encodingProfilesSetCount == 0)
+                {
+                    lastSQLCommand = 
+                        "insert into CMS_EncodingProfilesSet (EncodingProfilesSetKey, ContentType, CustomerKey, Name) values (NULL, ?, NULL, NULL)";
+                    shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                    int queryParameterIndex = 1;
+                    preparedStatement->setInt(queryParameterIndex++, static_cast<int>(contentType));
+                    preparedStatement->executeUpdate();
+                }
+            }
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(string("SQL exception")
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }    
+        
+        try
+        {
+            // create table EncodingProfilesSetMapping
+            lastSQLCommand = 
+                "create table if not exists CMS_EncodingProfilesSetMapping ("
+                    "EncodingProfilesSetKey  	BIGINT UNSIGNED NOT NULL,"
+                    "EncodingProfileKey			BIGINT UNSIGNED NOT NULL,"
+                    "constraint CMS_EncodingProfilesSetMapping_PK PRIMARY KEY (EncodingProfilesSetKey, EncodingProfileKey), "
+                    "constraint CMS_EncodingProfilesSetMapping_FK1 foreign key (EncodingProfilesSetKey) "
+                        "references CMS_EncodingProfilesSet (EncodingProfilesSetKey), "
+                    "constraint CMS_EncodingProfilesSetMapping_FK2 foreign key (EncodingProfileKey) "
+                        "references CMS_EncodingProfiles (EncodingProfileKey) on delete cascade) "
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(string("SQL exception")
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+    
+    
         /*
     # create table CMS_HTTPSessions
     # One session is per UserKey and UserAgent
@@ -558,92 +881,6 @@ void CMSEngineDBFacade::createTablesIfNeeded()
                     references CMS_Customers (CustomerKey) on delete cascade, 
             constraint CMS_CustomersSharable_FK2 foreign key (CustomerKeySharable) 
                     references CMS_Customers (CustomerKey) on delete cascade)
-            ENGINE=InnoDB;
-
-    # create table EncodingProfiles
-    # Technology.
-    #		0: Images (Download),
-    #		1: 3GPP (Streaming+Download),
-    #		2: MPEG2-TS (IPhone Streaming),
-    #		3: WEBM (VP8 and Vorbis)
-    #		4: WindowsMedia,
-    #		5: Adobe
-    # The encoding profile format is:
-    #	[<video enc. params>][<audio enc. params>][<image enc. params>][<ringtone enc. params>][<application enc. params>][file format params]
-    # The <video enc. params> format is:
-    # 		_V1<video_codec>_V21<video_bitrate1>_<frame_rate_fps>_..._V2M<video_bitrateM>_<frame_rate_fps>_V3<screen_size>_V5<key_frame_interval_in_seconds>_V6<profile>
-    #		<video_codec>: mpeg4, h263, h264, VP8, wmv
-    #		<video_bitrate1>: 68000, 70000
-    #		<screen_size>: QCIF: 176x144, SQCIF: 128x96, QSIF: 160x120, QVGA: 320x240, HVGA: 480x320, 480x360, CIF: 352x288, VGA: 640x480, SD: 720x576
-    #		<frame_rate_fps>: 15, 12.5, 10, 8
-    #		<key_frame_interval_in_seconds>: 3
-    #		<profile>: baseline, main, high
-    # The <audio enc. params> format is:
-    # 		_A1<audio_codec>_A21<audio_bitrate1>_..._A2N<audio_bitrateN>_A3<Channels>_A4<sampling_rate>_
-    #		<audio_codec>: amr-nb, amr-wb, aac-lc, enh-aacplus, he-aac, wma, vorbis
-    #		<audio_bitrate1>: 12200
-    #		<Channels>: S: Stereo, M: Mono
-    #		<sampling_rate>: 8000, 11025, 32000, 44100, 48000
-    # The <image enc. params> format is:
-    #		_I1<image_format>_I2<width>_I3<height>_I4<AspectRatio>_I5<Interlace>
-    #		<image_format>: PNG, JPG, GIF
-    #		<AspectRatio>: 1, 0
-    #		<Interlace>: 0: NoInterlace, 1: LineInterlace, 2: PlaneInterlace, 3: PartitionInterlace
-    # The <ringtone enc. params> format is:
-    #	...
-    # The <application enc. params> format is:
-    #	...
-    # The <file format params> format is:
-    #	_F1<hinter>
-    #	<hinter>: 1, 0
-    # Temporary fields used by XHP: Width, Height, VideoCodec, AudioCodec
-    create table if not exists CMS_EncodingProfiles (
-            EncodingProfileKey  		BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            ContentType				TINYINT NOT NULL,
-            Technology					TINYINT NOT NULL,
-            Description				VARCHAR (256) NOT NULL,
-            Label						VARCHAR (64) NULL,
-            Width						INT NOT NULL DEFAULT 0,
-            Height						INT NOT NULL DEFAULT 0,
-            VideoCodec					VARCHAR (32) null,
-            AudioCodec					VARCHAR (32) null,
-            constraint CMS_EncodingProfiles_PK PRIMARY KEY (EncodingProfileKey), 
-            UNIQUE (ContentType, Technology, Description)) 
-            ENGINE=InnoDB;
-
-
-    # create table EncodingProfilesSet
-    # CustomerKey and Name. If they are NULL, it means the EncodingProfileSet is the default one
-    #		for the specified ContentType.
-    #		A customer can have custom EncodingProfilesSet specifying together CustomerKey and Name.
-    create table if not exists CMS_EncodingProfilesSet (
-            EncodingProfilesSetKey  	BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            ContentType				TINYINT NOT NULL,
-            CustomerKey  				BIGINT UNSIGNED NULL,
-            Name						VARCHAR (64) NULL,
-            constraint CMS_EncodingProfilesSet_PK PRIMARY KEY (EncodingProfilesSetKey), 
-            constraint CMS_EncodingProfilesSet_FK foreign key (CustomerKey) 
-                    references CMS_Customers (CustomerKey) on delete cascade, 
-            UNIQUE (ContentType, CustomerKey, Name)) 
-            ENGINE=InnoDB;
-    # insert global EncodingProfilesSet per ContentType
-    # iContentType_Video --> 0
-    insert into CMS_EncodingProfilesSet (EncodingProfilesSetKey, ContentType, CustomerKey, Name) values (NULL, 0, NULL, NULL);
-    iContentType_Audio --> 1;
-    insert into CMS_EncodingProfilesSet (EncodingProfilesSetKey, ContentType, CustomerKey, Name) values (NULL,1, NULL, NULL);
-    iContentType_Image --> 2
-    insert into CMS_EncodingProfilesSet (EncodingProfilesSetKey, ContentType, CustomerKey, Name) values (NULL, 2, NULL, NULL);
-
-
-    # create table EncodingProfilesSetMapping
-    create table if not exists CMS_EncodingProfilesSetMapping (
-            EncodingProfilesSetKey  	BIGINT UNSIGNED NOT NULL,
-            EncodingProfileKey			BIGINT UNSIGNED NOT NULL,
-            constraint CMS_EncodingProfilesSetMapping_PK PRIMARY KEY (EncodingProfilesSetKey, EncodingProfileKey), 
-            constraint CMS_EncodingProfilesSetMapping_FK1 foreign key (EncodingProfilesSetKey) 
-                    references CMS_EncodingProfilesSet (EncodingProfilesSetKey), 
-            constraint CMS_EncodingProfilesSetMapping_FK2 foreign key (EncodingProfileKey) 
-                    references CMS_EncodingProfiles (EncodingProfileKey) on delete cascade) 
             ENGINE=InnoDB;
 
     # create table Handsets
@@ -1636,28 +1873,33 @@ void CMSEngineDBFacade::createTablesIfNeeded()
             ENGINE=InnoDB;
          */
 
-            _connectionPool->unborrow(conn);
+        _connectionPool->unborrow(conn);
     }
     catch(sql::SQLException se)
     {
-        string exceptionMessage(se.what());
-        
-        transform(
-                exceptionMessage.begin(), 
-                exceptionMessage.end(), 
-                exceptionMessage.begin(), 
-                [](unsigned char c){return tolower(c); } );
-        
-        if (exceptionMessage.find("already exists") == string::npos &&            // error (table) on mysql
-                exceptionMessage.find("duplicate key name") == string::npos    // error (index) on mysql
-                )
-        {
-            _logger->error(string("SQL exception")
-                + ", exceptionMessage: " + exceptionMessage
-            );
-
-            throw se;
-        }
-    }
+        _logger->error(string("SQL exception")
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", se.what(): " + se.what()
+        );
+    }    
 }
 
+bool CMSEngineDBFacade::isRealDBError(string exceptionMessage)
+{        
+    transform(
+            exceptionMessage.begin(), 
+            exceptionMessage.end(), 
+            exceptionMessage.begin(), 
+            [](unsigned char c){return tolower(c); } );
+
+    if (exceptionMessage.find("already exists") == string::npos &&            // error (table) on mysql
+            exceptionMessage.find("duplicate key name") == string::npos    // error (index) on mysql
+            )
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}

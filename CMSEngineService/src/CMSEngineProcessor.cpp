@@ -5,13 +5,11 @@
 CMSEngineProcessor::CMSEngineProcessor(
         shared_ptr<spdlog::logger> logger, 
         shared_ptr<CMSEngineDBFacade> cmsEngineDBFacade,
-        shared_ptr<Customers> customers,
         shared_ptr<CMSStorage> cmsStorage
 )
 {
     _logger             = logger;
     _cmsEngineDBFacade  = cmsEngineDBFacade;
-    _customers          = customers;
     _cmsStorage      = cmsStorage;
     
     _ulIngestionLastCustomerIndex   = 0;
@@ -94,26 +92,26 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
 	unsigned long						ulCurrentCustomerIndex;
 */
     
-    Customers::CustomerHashMap customersHashMap = _customers->getCustomers();
+    vector<shared_ptr<Customer>> customers = _cmsEngineDBFacade->getCustomers();
     
     unsigned long ulCurrentCustomerIndex = 0;
-    Customers::CustomerHashMap::iterator itCustomers;
-    for (itCustomers = customersHashMap.begin();
-            itCustomers != customersHashMap.end() && ulCurrentCustomerIndex < _ulIngestionLastCustomerIndex;
+    vector<shared_ptr<Customer>>::iterator itCustomers;
+    
+    for (itCustomers = customers.begin();
+            itCustomers != customers.end() && ulCurrentCustomerIndex < _ulIngestionLastCustomerIndex;
             ++itCustomers, ulCurrentCustomerIndex++)
     {
     }
 
-    for (; itCustomers != customersHashMap.end(); ++itCustomers)
+    for (; itCustomers != customers.end(); ++itCustomers)
     {
-        shared_ptr<Customer> customer = itCustomers -> second;
+        shared_ptr<Customer> customer = *itCustomers;
 
         try
         {
             _ulIngestionLastCustomerIndex++;
 
-            string customerFTPDirectory = _cmsStorage->getFTPRootRepository();
-            customerFTPDirectory.append(customer->_name);
+            string customerFTPDirectory = _cmsStorage->getCustomerFTPRepository(customer);
 
             shared_ptr<FileIO::Directory> directory = FileIO:: openDirectory(customerFTPDirectory);
 
@@ -124,6 +122,7 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
             {
                 FileIO:: DirectoryEntryType_t	detDirectoryEntryType;
                 string directoryEntry;
+                
                 try
                 {
                     directoryEntry = FileIO::readDirectory (directory,
@@ -434,8 +433,8 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
         }
     }
 
-    if (itCustomers == customersHashMap.end())
-            _ulIngestionLastCustomerIndex	= 0;
+    if (itCustomers == customers.end())
+        _ulIngestionLastCustomerIndex	= 0;
 
 }
 

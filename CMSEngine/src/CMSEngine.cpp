@@ -14,20 +14,18 @@
 #include "CMSEngine.h"
 
 
-CMSEngine::CMSEngine(shared_ptr<CMSEngineDBFacade> cmsEngineDBFacade) 
+CMSEngine::CMSEngine(shared_ptr<CMSEngineDBFacade> cmsEngineDBFacade,
+            shared_ptr<spdlog::logger> logger
+        ) 
 {
-    _cmsEngineDBFacade = cmsEngineDBFacade;
-}
-
-CMSEngine::CMSEngine(const CMSEngine& orig) {
+    _logger             = logger;
+    _cmsEngineDBFacade  = cmsEngineDBFacade;
 }
 
 CMSEngine::~CMSEngine() {
 }
 
 void CMSEngine::addCustomer(
-        string sCreationDate, 
-        string sDefaultUserExpirationDate,
 	string customerName,
         string password,
 	string street,
@@ -36,10 +34,11 @@ void CMSEngine::addCustomer(
 	string zip,
         string phone,
         string countryCode,
+        CMSEngineDBFacade::CustomerType customerType,
 	string deliveryURL,
-        long enabled,
-	long maxEncodingPriority,
-        long period,
+        bool enabled,
+	CMSEngineDBFacade::EncodingPriority maxEncodingPriority,
+        CMSEngineDBFacade::EncodingPeriod encodingPeriod,
 	long maxIngestionsNumber,
         long maxStorageInGB,
 	string languageCode,
@@ -49,6 +48,29 @@ void CMSEngine::addCustomer(
         chrono::system_clock::time_point userExpirationDate
 )
 {    
+    _logger->info(string("Received addCustomer")
+        + ", customerName: " + customerName
+        + ", password: " + password
+        + ", street: " + street
+        + ", city: " + city
+        + ", state: " + state
+        + ", zip: " + zip
+        + ", phone: " + phone
+        + ", countryCode: " + countryCode
+        + ", customerType: " + to_string(static_cast<int>(customerType))
+        + ", deliveryURL: " + deliveryURL
+        + ", enabled: " + to_string(enabled)
+        + ", maxEncodingPriority: " + to_string(static_cast<int>(maxEncodingPriority))
+        + ", encodingPeriod: " + to_string(static_cast<int>(encodingPeriod))
+        + ", maxIngestionsNumber: " + to_string(maxIngestionsNumber)
+        + ", maxStorageInGB: " + to_string(maxStorageInGB)
+        + ", languageCode: " + languageCode
+        + ", userName: " + userName
+        + ", userPassword: " + userPassword
+        + ", userEmailAddress: " + userEmailAddress
+        // ", userExpirationDate: " + userExpirationDate
+    );
+
     string customerDirectoryName;
 
     customerDirectoryName.resize(customerName.size());
@@ -64,7 +86,9 @@ void CMSEngine::addCustomer(
                 return (unsigned char) '_'; } 
     );
 
-    int64_t customerKey = _cmsEngineDBFacade->addCustomer(
+    try
+    {
+        int64_t customerKey = _cmsEngineDBFacade->addCustomer(
             customerName, 
             customerDirectoryName,
             street,
@@ -73,10 +97,11 @@ void CMSEngine::addCustomer(
             zip,
             phone,
             countryCode,
+            customerType,
             deliveryURL,
             enabled,
             maxEncodingPriority,
-            period,
+            encodingPeriod,
             maxIngestionsNumber,
             maxStorageInGB,
             languageCode,
@@ -84,102 +109,10 @@ void CMSEngine::addCustomer(
             userPassword,
             userEmailAddress,
             userExpirationDate);
+    }
+    catch(...)
+    {
+        _logger->error("_cmsEngineDBFacade->addCustomer failed");
+    }
 
 }
-/*
-
-                         	// insert default EncodingProfilesSet per Customer/ContentType
-         	{
-         		long			lEncodingProfilesSetKey		= -1;
-         		int				iContentType;
-         		
-
-         		// video
-         		{
-         			iContentType			= this.iContentType_Video;
-		    			sQuery = new String ("insert into CMS_EncodingProfilesSet (EncodingProfilesSetKey, ContentType, CustomerKey, Name) values (" +
-		    				"NULL, ?, ?, NULL)");
-			    	stmt.setInt(iQueryParameterIndex++, iContentType);
-			    	stmt.setLong(iQueryParameterIndex++, lCustomerKey);
-		        		sQuery = new String ("select LAST_INSERT_ID()");
-			    		stmt = conn.prepareStatement(sQuery);
-			    		iQueryParameterIndex			= 1;
-			   			logger.debug("Query: " + sQuery + " ---> ");
-			    		returnSQLObject = this.executeQuery(stmt, sQuery);
-			    		lSQLElapsedInMillisecs		= ((Long) (returnSQLObject [0])).longValue();
-			    		rs								= (ResultSet) (returnSQLObject [1]);
-			   			logger.debug("Query: " + sQuery + " ---> " +
-			    			" - SQL statistics (millisecs): @" + lSQLElapsedInMillisecs + "@");
-
-		        		if (rs.next()) {
-		        			lEncodingProfilesSetKey = rs.getLong(1);
-
-                                                		        	// by default this new customer will inherited the profiles associated to 'global' 
-		        	if (lDatabase == DB_MYSQL || lDatabase == DB_ORACLE || lDatabase == DB_MSSQL)
-		    			sQuery = new String ("insert into CMS_EncodingProfilesSetMapping (EncodingProfilesSetKey, EncodingProfileKey) (select ?, EncodingProfileKey from CMS_EncodingProfilesSetMapping where EncodingProfilesSetKey = (select EncodingProfilesSetKey from CMS_EncodingProfilesSet where ContentType = ? and CustomerKey is null and Name is null))");
-		    		stmt = conn.prepareStatement(sQuery);
-		    		iQueryParameterIndex			= 1;
-				    stmt.setLong(iQueryParameterIndex++, lEncodingProfilesSetKey);
-			    	stmt.setInt(iQueryParameterIndex++, iContentType);
-
-                                         		// audio
-         		{
-	         		iContentType			= this.iContentType_Audio;
-
-                                		    			sQuery = new String ("insert into CMS_EncodingProfilesSet (EncodingProfilesSetKey, ContentType, CustomerKey, Name) values (" +
-		    				"NULL, ?, ?, NULL)");
-			    	stmt.setInt(iQueryParameterIndex++, iContentType);
-			    	stmt.setLong(iQueryParameterIndex++, lCustomerKey);
-		        		sQuery = new String ("select LAST_INSERT_ID()");
-			    		stmt = conn.prepareStatement(sQuery);
-			    		iQueryParameterIndex			= 1;
-			   			logger.debug("Query: " + sQuery + " ---> ");
-			    		returnSQLObject = this.executeQuery(stmt, sQuery);
-			    		lSQLElapsedInMillisecs		= ((Long) (returnSQLObject [0])).longValue();
-			    		rs								= (ResultSet) (returnSQLObject [1]);
-			   			logger.debug("Query: " + sQuery + " ---> " +
-			    			" - SQL statistics (millisecs): @" + lSQLElapsedInMillisecs + "@");
-
-		        		if (rs.next()) {
-		        			lEncodingProfilesSetKey = rs.getLong(1);
-
-                                                		        	// by default this new customer will inherited the profiles associated to 'global' 
-		        	if (lDatabase == DB_MYSQL || lDatabase == DB_ORACLE || lDatabase == DB_MSSQL)
-		    			sQuery = new String ("insert into CMS_EncodingProfilesSetMapping (EncodingProfilesSetKey, EncodingProfileKey) (select ?, EncodingProfileKey from CMS_EncodingProfilesSetMapping where EncodingProfilesSetKey = (select EncodingProfilesSetKey from CMS_EncodingProfilesSet where ContentType = ? and CustomerKey is null and Name is null))");
-		    		stmt = conn.prepareStatement(sQuery);
-		    		iQueryParameterIndex			= 1;
-				    stmt.setLong(iQueryParameterIndex++, lEncodingProfilesSetKey);
-			    	stmt.setInt(iQueryParameterIndex++, iContentType);
-
-                                         		// image
-         		{
-	         		iContentType			= this.iContentType_Image;
-		    			sQuery = new String ("insert into CMS_EncodingProfilesSet (EncodingProfilesSetKey, ContentType, CustomerKey, Name) values (" +
-		    				"NULL, ?, ?, NULL)");
-			    	stmt.setInt(iQueryParameterIndex++, iContentType);
-			    	stmt.setLong(iQueryParameterIndex++, lCustomerKey);
-
-                                		        		sQuery = new String ("select LAST_INSERT_ID()");
-			    		stmt = conn.prepareStatement(sQuery);
-			    		iQueryParameterIndex			= 1;
-			   			logger.debug("Query: " + sQuery + " ---> ");
-			    		returnSQLObject = this.executeQuery(stmt, sQuery);
-			    		lSQLElapsedInMillisecs		= ((Long) (returnSQLObject [0])).longValue();
-			    		rs								= (ResultSet) (returnSQLObject [1]);
-			   			logger.debug("Query: " + sQuery + " ---> " +
-			    			" - SQL statistics (millisecs): @" + lSQLElapsedInMillisecs + "@");
-
-		        		if (rs.next()) {
-		        			lEncodingProfilesSetKey = rs.getLong(1);
-
-                                                		        	// by default this new customer will inherited the profiles associated to 'global' 
-		        	if (lDatabase == DB_MYSQL || lDatabase == DB_ORACLE || lDatabase == DB_MSSQL)
-		    			sQuery = new String ("insert into CMS_EncodingProfilesSetMapping (EncodingProfilesSetKey, EncodingProfileKey) (select ?, EncodingProfileKey from CMS_EncodingProfilesSetMapping where EncodingProfilesSetKey = (select EncodingProfilesSetKey from CMS_EncodingProfilesSet where ContentType = ? and CustomerKey is null and Name is null))");
-		    		stmt = conn.prepareStatement(sQuery);
-		    		iQueryParameterIndex			= 1;
-				    stmt.setLong(iQueryParameterIndex++, lEncodingProfilesSetKey);
-			    	stmt.setInt(iQueryParameterIndex++, iContentType);
-
-                        
-}
-*/

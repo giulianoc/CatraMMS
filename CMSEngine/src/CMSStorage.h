@@ -13,7 +13,7 @@
 class CMSStorage
 {
 public:
-    enum RepositoryType
+    enum class RepositoryType
     {
         CMSREP_REPOSITORYTYPE_CMSCUSTOMER	= 0,
         CMSREP_REPOSITORYTYPE_DOWNLOAD,
@@ -25,149 +25,6 @@ public:
 
         CMSREP_REPOSITORYTYPE_NUMBER
     };
-
-    /*
-    struct SanityCheckContentInfo {
-        string              _contentsDirectory;
-        string              _customerDirectoryName;
-        string              _territoryName;
-        string              _relativePath;
-        string              _fileName;
-
-        // response
-        unsigned long       _contentFound;
-        unsigned long       _publishingStatus;
-
-        SanityCheckContentInfo (void)
-        {
-            _contentFound		= 2;
-            _publishingStatus		= 2;
-        } ;
-
-        ~SanityCheckContentInfo (void)
-        {
-        } ;
-
-    } SanityCheckContentInfo_t, *SanityCheckContentInfo_p;
-
-    struct SanityCheckLastProcessedContent {
-        // i.e.: CMS_0010
-        string          _partition;
-
-        // i.e.: GMB
-        string          _customerDirectoryName;
-
-        // number of processed contents within the specified partition
-        // and CustomerDirectoryName
-        unsigned long		_filesNumberAlreadyProcessed;
-
-
-        SanityCheckLastProcessedContent (void)
-        {
-//            memset (_pPartition, '\0',
-//                    CMSREP_CMSREPOSITORY_MAXCMSPARTITIONNAMELENGTH);
-//            memset (_pCustomerDirectoryName, '\0',
-//                    CMSREP_CMSREPOSITORY_MAXCUSTOMERNAMELENGTH);
-
-            _filesNumberAlreadyProcessed		= 0;
-        } ;
-
-        ~SanityCheckLastProcessedContent (void)
-        {
-        } ;
-
-    };
-     */
-
-private:
-    void contentInRepository (
-	unsigned long ulIsCopyOrMove,
-	string contentPathName,
-	RepositoryType rtRepositoryType,
-	string customerDirectoryName,
-	bool addDateTimeToFileName);
-
-//    Error sanityCheck_CustomersDirectory (
-//            RepositoryType rtRepositoryType,
-//            const char *pCustomersDirectory,
-//            FileIO:: Directory_p pdDeliveryDirectory,
-//            SanityCheckContentInfo_p psciSanityCheckContentsInfo,
-//            long *plSanityCheckContentsInfoNumber,
-//            unsigned long *pulFileIndex,
-//            unsigned long *pulCurrentFileNumberProcessedInThisSchedule,
-//            unsigned long *pulCurrentContentsRemovedNumberInThisSchedule,
-//            unsigned long *pulCurrentOtherFilesRemovedNumberInThisSchedule,
-//            unsigned long *pulDirectoryLevelIndexInsideCustomer,
-//            Boolean_p pbHasCustomerToBeResumed);
-//
-//    Error sanityCheck_ContentsDirectory (
-//            const char *pCustomerDirectoryName, const char *pContentsDirectory,
-//            unsigned long ulRelativePathIndex,
-//            RepositoryType rtRepositoryType,
-//            SanityCheckContentInfo_p psciSanityCheckContentsInfo,
-//            long *plSanityCheckContentsInfoNumber,
-//            unsigned long *pulFileIndex,
-//            unsigned long *pulCurrentFileNumberProcessedInThisSchedule,
-//            unsigned long *pulCurrentContentsRemovedNumberInThisSchedule,
-//            unsigned long *pulCurrentOtherFilesRemovedNumberInThisSchedule,
-//            unsigned long *pulDirectoryLevelIndexInsideCustomer);
-//
-//    Error sanityCheck_runOnContentsInfo (
-//            SanityCheckContentInfo_p psciSanityCheckContentsInfo,
-//            unsigned long ulSanityCheckContentsInfoNumber,
-//            RepositoryType rtRepositoryType,
-//            unsigned long *pulCurrentContentsRemovedNumberInThisSchedule,
-//            unsigned long *pulCurrentOtherFilesRemovedNumberInThisSchedule);
-
-private:
-    shared_ptr<spdlog::logger>  _logger;
-
-    string                      _hostName;
-
-    string                      _storage;
-    string                      _cmsRootRepository;
-    string                      _downloadRootRepository;
-    string                      _streamingRootRepository;
-    string                      _stagingRootRepository;
-    string                      _doneRootRepository;
-    string                      _errorRootRepository;
-    string                      _ftpRootRepository;
-
-    string                      _profilesRootRepository;
-
-//    string                      _iPhoneAliasForLive;
-    
-//    string                      _downloadReservedDirectoryName;
-//    string                      _downloadFreeDirectoryName;
-//    string                      _downloadiPhoneLiveDirectoryName;
-//    string                      _downloadSilverlightLiveDirectoryName;
-//    string                      _downloadAdobeLiveDirectoryName;
-//    string                      _streamingFreeDirectoryName;
-//    string                      _streamingMetaDirectoryName;
-//    string                      _streamingRecordingDirectoryName;
-
-    unsigned long long          _freeSpaceToLeaveInEachPartitionInMB;
-//    bool                        _unexpectedFilesToBeRemoved;
-//    unsigned long               _retentionPeriodInSecondsForTemporaryFiles;
-//    unsigned long               _maxFilesToBeProcessedPerSchedule [
-//            CMSREP_REPOSITORYTYPE_NUMBER];
-//    SanityCheckLastProcessedContent         _lastProcessedContent [
-//            CMSREP_REPOSITORYTYPE_NUMBER];
-
-
-    recursive_mutex                 _mtCMSPartitions;
-    vector<unsigned long long>      _cmsPartitionsFreeSizeInMB;
-    unsigned long                   _ulCurrentCMSPartitionIndex;
-
-
-    string getRepository(RepositoryType rtRepositoryType);
-
-    string creatingDirsUsingTerritories (
-	unsigned long ulCurrentCMSPartitionIndex,
-	string relativePath,
-	string customerDirectoryName,
-	bool deliveryRepositoriesToo,
-	Customer::TerritoriesHashMap& phmTerritories);
 
 public:
     CMSStorage (
@@ -186,6 +43,8 @@ public:
     string getDownloadRootRepository (void);
 
     string getFTPRootRepository (void);
+    
+    string getCustomerFTPRepository(shared_ptr<Customer> customer);
 
     string getStagingRootRepository (void);
 
@@ -265,14 +124,44 @@ public:
     unsigned long getCustomerStorageUsage (
 	string customerDirectoryName);
 
-//    Error saveSanityCheckLastProcessedContent (
-//            const char *pFilePathName);
-//
-//    Error readSanityCheckLastProcessedContent (
-//            const char *pFilePathName);
-//
-//    Error sanityCheck_ContentsOnFileSystem (
-//            RepositoryType rtRepositoryType);
+private:
+    shared_ptr<spdlog::logger>  _logger;
+
+    string                      _hostName;
+
+    string                      _storage;
+    string                      _cmsRootRepository;
+    string                      _downloadRootRepository;
+    string                      _streamingRootRepository;
+    string                      _stagingRootRepository;
+    string                      _doneRootRepository;
+    string                      _errorRootRepository;
+    string                      _ftpRootRepository;
+    string                      _profilesRootRepository;
+
+    unsigned long long          _freeSpaceToLeaveInEachPartitionInMB;
+
+    recursive_mutex                 _mtCMSPartitions;
+    vector<unsigned long long>      _cmsPartitionsFreeSizeInMB;
+    unsigned long                   _ulCurrentCMSPartitionIndex;
+
+    
+    void contentInRepository (
+	unsigned long ulIsCopyOrMove,
+	string contentPathName,
+	RepositoryType rtRepositoryType,
+	string customerDirectoryName,
+	bool addDateTimeToFileName);
+
+    string getRepository(RepositoryType rtRepositoryType);
+
+    string creatingDirsUsingTerritories (
+	unsigned long ulCurrentCMSPartitionIndex,
+	string relativePath,
+	string customerDirectoryName,
+	bool deliveryRepositoriesToo,
+	Customer::TerritoriesHashMap& phmTerritories);
+
 
 } ;
 

@@ -24,13 +24,11 @@ SET (SOURCES
 	cmsEngineService.cpp
 	CMSEngineProcessor.cpp
 	CheckIngestionTimes.cpp
-	Customers.cpp
 )
 
 SET (HEADERS
 	CMSEngineProcessor.h
 	CheckIngestionTimes.h
-	Customers.h
 )
 
 include_directories ("${PROJECT_SOURCE_DIR}/../usr_local/include")

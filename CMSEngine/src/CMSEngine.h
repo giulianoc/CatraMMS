@@ -20,17 +20,15 @@
 using namespace std;
 
 class CMSEngine {
-private:
-    shared_ptr<CMSEngineDBFacade> _cmsEngineDBFacade;
     
 public:
-    CMSEngine(shared_ptr<CMSEngineDBFacade> cmsEngineDBFacade);
-    CMSEngine(const CMSEngine& orig);
+    CMSEngine(shared_ptr<CMSEngineDBFacade> cmsEngineDBFacade,
+            shared_ptr<spdlog::logger> logger
+            );
+
     virtual ~CMSEngine();
     
     void addCustomer(
-        string sCreationDate, 
-        string sDefaultUserExpirationDate,
 	string customerName,
         string password,
 	string street,
@@ -39,10 +37,11 @@ public:
 	string zip,
         string phone,
         string countryCode,
+        CMSEngineDBFacade::CustomerType customerType,
 	string deliveryURL,
-        long enabled,
-	long maxEncodingPriority,
-        long period,
+        bool enabled,
+	CMSEngineDBFacade::EncodingPriority maxEncodingPriority,
+        CMSEngineDBFacade::EncodingPeriod encodingPeriod,
 	long maxIngestionsNumber,
         long maxStorageInGB,
 	string languageCode,
@@ -52,6 +51,9 @@ public:
         chrono::system_clock::time_point userExpirationDate
 );
 
+private:
+    shared_ptr<CMSEngineDBFacade> _cmsEngineDBFacade;
+    shared_ptr<spdlog::logger> _logger;
 };
 
 #endif

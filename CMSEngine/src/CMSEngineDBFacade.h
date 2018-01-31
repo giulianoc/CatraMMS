@@ -25,6 +25,77 @@ using namespace std;
 
 class CMSEngineDBFacade {
 
+public:
+    enum class ContentType {
+        Video		= 0,
+	Audio		= 1,
+	Image		= 2
+//	Application	= 3,
+//	Ringtone	= 4,
+//	Playlist	= 5,
+//	Live		= 6
+    };
+
+    enum class EncodingPriority {
+        Low		= 0,
+	Default		= 1,
+	High		= 2
+//	Application	= 3,
+//	Ringtone	= 4,
+//	Playlist	= 5,
+//	Live		= 6
+    };
+
+    enum class EncodingPeriod {
+        Daily		= 0,
+	Weekly		= 1,
+	Monthly		= 2
+    };
+
+    enum class CustomerType {
+        LiveSessionOnly         = 0,
+        IngestionAndDelivery    = 1,
+        EncodingOnly            = 2
+    };
+
+
+public:
+    CMSEngineDBFacade(
+            size_t poolSize, 
+            string dbServer, 
+            string dbUsername, 
+            string dbPassword, 
+            string dbName, 
+            shared_ptr<spdlog::logger> logger
+            );
+
+    ~CMSEngineDBFacade();
+
+    vector<shared_ptr<Customer>> getCustomers();
+    
+    int64_t addCustomer(
+	string customerName,
+        string customerDirectoryName,
+	string street,
+        string city,
+        string state,
+	string zip,
+        string phone,
+        string countryCode,
+        CustomerType customerType,
+	string deliveryURL,
+        bool enabled,
+	EncodingPriority maxEncodingPriority,
+        EncodingPeriod encodingPeriod,
+	long maxIngestionsNumber,
+        long maxStorageInGB,
+	string languageCode,
+        string userName,
+        string userPassword,
+        string userEmailAddress,
+        chrono::system_clock::time_point userExpirationDate
+    );
+    
 private:
     shared_ptr<spdlog::logger>                      _logger;
     shared_ptr<ConnectionPool<MySQLConnection>>     _connectionPool;
@@ -32,6 +103,8 @@ private:
     void getTerritories(shared_ptr<Customer> customer);
 
     void createTablesIfNeeded();
+
+    bool isRealDBError(string exceptionMessage);
 
     int64_t getLastInsertId(shared_ptr<MySQLConnection> conn);
 
@@ -96,41 +169,6 @@ private:
         return ((int) 0x8);
     }
 
-public:
-    CMSEngineDBFacade(
-            size_t poolSize, 
-            string dbServer, 
-            string dbUsername, 
-            string dbPassword, 
-            string dbName, 
-            shared_ptr<spdlog::logger> logger);
-
-    ~CMSEngineDBFacade();
-
-    vector<shared_ptr<Customer>> getCustomers();
-    
-    int64_t addCustomer(
-	string customerName,
-        string customerDirectoryName,
-	string street,
-        string city,
-        string state,
-	string zip,
-        string phone,
-        string countryCode,
-	string deliveryURL,
-        long enabled,
-	long maxEncodingPriority,
-        long period,
-	long maxIngestionsNumber,
-        long maxStorageInGB,
-	string languageCode,
-        string userName,
-        string userPassword,
-        string userEmailAddress,
-        chrono::system_clock::time_point userExpirationDate
-    );
-    
 };
 
 #endif /* CMSEngineDBFacade_h */
