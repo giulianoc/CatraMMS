@@ -81,24 +81,6 @@ void CMSEngineProcessor::operator ()()
     _logger->info("CMSEngineProcessor thread terminated");
 }
 
-void CMSEngineProcessor::handleIngestAssetEvent(shared_ptr<IngestAssetEvent> ingestAssetEvent)
-
-{
-    
-    Json::Value root;
-    
-    std::ifstream ingestAssetJson(ingestAssetEvent->getFTPDirectoryWorkingEntryPathName(), std::ifstream::binary);
-    ingestAssetJson >> root;
-
-    // servlet saveMetaData
-    //  Type/Version    Encoding/1.0
-    // switch(Type) e call relativo metodo
-    // IngestAssetThread::manageEncoding1_0
-    //      controllo MD5
-    //      controllo fileSize
-    
-}
-
 void CMSEngineProcessor::handleCheckIngestionEvent()
 {
     
@@ -225,6 +207,8 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
 
                             ingestAssetEvent->setFTPDirectoryWorkingEntryPathName(ftpDirectoryWorkingEntryPathName);
                             ingestAssetEvent->setIngestionJobKey(ingestionJobKey);
+                            ingestAssetEvent->setCustomer(customer);
+                            ingestAssetEvent->setFileName(directoryEntry);
 
                             shared_ptr<Event>    event = dynamic_pointer_cast<Event>(ingestAssetEvent);
                             _multiEventsSet->addEvent(event);
@@ -269,4 +253,62 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
     if (itCustomers == customers.end())
         _ulIngestionLastCustomerIndex	= 0;
 
+}
+
+void CMSEngineProcessor::handleIngestAssetEvent(shared_ptr<IngestAssetEvent> ingestAssetEvent)
+
+{
+    {
+        "Type": "Encoding",         // mandatory
+        "Version": "1.0",           // mandatory
+        "Encoding": {
+            "SourceFileName": "aa.mp4", // mandatory
+            "ContentType": "video",     // mandatory: "video" or "audio" or "image"
+            "MD5FileCheckSum": "....",  // optional
+            "FileSizeInBytes": "...",   // optional
+                    
+            "EncodingProfilesSet": "",  // optional: "default" or "defaultCustomer" or <custom name>
+                    
+            "Delivery": "FTP",      // optional: "FTP"
+            "FTP": {                // mandatory only if "Delivery" is "FTP"
+                "Hostname": "aaa",  // mandatory only if "Delivery" is "FTP": hostname or IP address
+                "Port": "21",       // optional
+                "User": "aaa",      // mandatory only if "Delivery" is "FTP"
+                "Password": "bbb"   // mandatory only if "Delivery" is "FTP"
+            },
+                    
+            "Notification": "EMail",      // optional: "EMail
+            "EMail": {              // mandatory only if "Notification" is "EMail"
+                "Address": "giulanoc@catrasoftware.it"  // mandatory only if "Notification" is "EMail"
+            }
+        }
+    }
+    
+    Json::Value root;
+    
+    try
+    {        
+        1. in addIngestionJob verificare MaxIngestionNumberInThePeriod
+        2. chiamare validateJson() in handleCheckIngestionEvent
+        
+        std::ifstream ingestAssetJson(ingestAssetEvent->getFTPDirectoryWorkingEntryPathName(), std::ifstream::binary);
+        ingestAssetJson >> root;
+        
+        validateJson();
+
+        // servlet saveMetaData
+        //  Type/Version    Encoding/1.0
+        // switch(Type) e call relativo metodo
+        // IngestAssetThread::manageEncoding1_0
+        //      controllo MD5
+        //      controllo fileSize
+    }
+    catch(exception e)
+    {
+        string ftpDirectoryErrorEntryPathName =
+            _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(ingestAssetEvent->getCustomer(), ingestAssetEvent->getFileName());
+
+        _cmsEngineDBFacade->updateIngestionJob (ingestAssetEvent->getIngestionJobKey(), CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
+    }
+    
 }

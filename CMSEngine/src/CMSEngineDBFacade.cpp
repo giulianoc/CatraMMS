@@ -401,16 +401,28 @@ int64_t CMSEngineDBFacade::addIngestionJob (
 
         {
             lastSQLCommand = 
-                "select IsEnabled, CustomerType from CMS_Customers where CustomerKey = ?";
+                "select c.IsEnabled, c.CustomerType, c.MaxIngestionsNumber, c.Period, cmi.CurrentIngestionsNumber, cmi.StartDateTime, cmi.EndDateTime " 
+                "from CMS_Customers c, CMS_CustomerMoreInfo cmi where c.CustomerKey = cmi.CustomerKey and c.CustomerKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, customerKey);
 
+            int maxIngestionsNumber;
+            int currentIngestionsNumber;
+            int period;
+            string startDateTime;
+            string endDateTime;
+            
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
                 int isEnabled = resultSet->getInt("IsEnabled");
                 int customerType = resultSet->getInt("CustomerType");
+                maxIngestionsNumber = resultSet->getInt("MaxIngestionsNumber");
+                currentIngestionsNumber = resultSet->getInt("CurrentIngestionsNumber");
+                period = resultSet->getInt("Period");
+                startDateTime = resultSet->getString("StartDateTime");
+                endDateTime = resultSet->getString("EndDateTime");
                 
                 if (isEnabled != 1)
                 {
@@ -439,6 +451,8 @@ int64_t CMSEngineDBFacade::addIngestionJob (
 
                 throw runtime_error(errorMessage);                    
             }
+            
+            VEDI CONTROLLI IN SAVEMETADATA.JAVA
         }
 
         {
@@ -751,12 +765,12 @@ void CMSEngineDBFacade::createTablesIfNeeded()
             //		since the CMS_Customers is a wide used table
             lastSQLCommand = 
                 "create table if not exists CMS_CustomerMoreInfo ("
-                    "CustomerKey  				BIGINT UNSIGNED NOT NULL,"
+                    "CustomerKey  			BIGINT UNSIGNED NOT NULL,"
                     "CurrentDirLevel1			INT NOT NULL,"
                     "CurrentDirLevel2			INT NOT NULL,"
                     "CurrentDirLevel3			INT NOT NULL,"
-                    "StartDateTime				DATETIME NOT NULL,"
-                    "EndDateTime				DATETIME NOT NULL,"
+                    "StartDateTime			DATETIME NOT NULL,"
+                    "EndDateTime			DATETIME NOT NULL,"
                     "CurrentIngestionsNumber	INT NOT NULL,"
                     "constraint CMS_CustomerMoreInfo_PK PRIMARY KEY (CustomerKey), "
                     "constraint CMS_CustomerMoreInfo_FK foreign key (CustomerKey) "

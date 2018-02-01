@@ -45,8 +45,10 @@ using namespace std;
 
 class IngestAssetEvent: public Event {
 private:
-    string      _ftpDirectoryWorkingEntryPathName;
-    int64_t     _ingestionJobKey;
+    string                  _ftpDirectoryWorkingEntryPathName;
+    int64_t                 _ingestionJobKey;
+    shared_ptr<Customer>    _customer;
+    string                  _fileName;
     
 public:
     void setFTPDirectoryWorkingEntryPathName(string ftpDirectoryWorkingEntryPathName)
@@ -54,19 +56,39 @@ public:
         _ftpDirectoryWorkingEntryPathName   = ftpDirectoryWorkingEntryPathName;
     }
 
-    void setIngestionJobKey(int64_t ingestionJobKey)
-    {
-        _ingestionJobKey   = ingestionJobKey;
-    }
-    
     string getFTPDirectoryWorkingEntryPathName()
     {
         return _ftpDirectoryWorkingEntryPathName;
     }
 
+    void setIngestionJobKey(int64_t ingestionJobKey)
+    {
+        _ingestionJobKey   = ingestionJobKey;
+    }
+    
     int64_t getIngestionJobKey()
     {
         return _ingestionJobKey;
+    }
+    
+    void setFileName(string fileName)
+    {
+        _fileName   = fileName;
+    }
+
+    string getFileName()
+    {
+        return _fileName;
+    }
+    
+    void setCustomer(shared_ptr<Customer> customer)
+    {
+        _customer   = customer;
+    }
+
+    shared_ptr<Customer> getCustomer()
+    {
+        return _customer;
     }
 };
 

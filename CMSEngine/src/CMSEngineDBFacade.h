@@ -70,8 +70,8 @@ public:
 
     enum class IngestionStatus {
         StartIingestion         = 1,
-        MetaDataSavedInDB       = 2,
-        MediaFileMovedInCMS     = 3,
+        MetaDataValidated       = 2,    // Previously was MetaDataSavedInDB
+        ReadyToBeEncoded        = 3,    // Previously was MediaFileMovedInCMS
         End_IngestionFailure    = 8,                    // nothing done
         End_IngestionSuccess_EncodingError   = 9,    // (we will have this state if just one of the encoding failed.
                     // One encoding is considered a failure only after that the MaxFailuresNumer for this encoding is reached)
