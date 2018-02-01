@@ -1,14 +1,18 @@
 
+#include <fstream>
 #include "CMSEngineProcessor.h"
 #include "CheckIngestionTimes.h"
+#include "json/json.h"
 
 CMSEngineProcessor::CMSEngineProcessor(
         shared_ptr<spdlog::logger> logger, 
+        shared_ptr<MultiEventsSet> multiEventsSet,
         shared_ptr<CMSEngineDBFacade> cmsEngineDBFacade,
         shared_ptr<CMSStorage> cmsStorage
 )
 {
     _logger             = logger;
+    _multiEventsSet     = multiEventsSet;
     _cmsEngineDBFacade  = cmsEngineDBFacade;
     _cmsStorage      = cmsStorage;
     
@@ -16,6 +20,7 @@ CMSEngineProcessor::CMSEngineProcessor(
     
     _ulMaxIngestionsNumberPerCustomerEachIngestionPeriod       = 2;
     _ulJsonToBeProcessedAfterSeconds                           = 10;
+    _ulRetentionPeriodInDays                                   = 10;
 }
 
 CMSEngineProcessor::~CMSEngineProcessor()
@@ -23,7 +28,7 @@ CMSEngineProcessor::~CMSEngineProcessor()
     
 }
 
-void CMSEngineProcessor::operator ()(shared_ptr<MultiEventsSet> multiEventsSet) 
+void CMSEngineProcessor::operator ()() 
 {
     bool blocking = true;
     chrono::milliseconds milliSecondsToBlock(100);
@@ -36,7 +41,7 @@ void CMSEngineProcessor::operator ()(shared_ptr<MultiEventsSet> multiEventsSet)
     while(!endEvent)
     {
         // cout << "Calling getAndRemoveFirstEvent" << endl;
-        shared_ptr<Event> event = multiEventsSet->getAndRemoveFirstEvent(CMSENGINEPROCESSORNAME, blocking, milliSecondsToBlock);
+        shared_ptr<Event> event = _multiEventsSet->getAndRemoveFirstEvent(CMSENGINEPROCESSORNAME, blocking, milliSecondsToBlock);
         if (event == nullptr)
         {
             // cout << "No event found or event not yet expired" << endl;
@@ -46,23 +51,25 @@ void CMSEngineProcessor::operator ()(shared_ptr<MultiEventsSet> multiEventsSet)
 
         switch(event->getEventKey().first)
         {
-            /*
-            case GETDATAEVENT_TYPE:
-            {                    
-                shared_ptr<GetDataEvent>    getDataEvent = dynamic_pointer_cast<GetDataEvent>(event);
-                cout << "getAndRemoveFirstEvent: GETDATAEVENT_TYPE (" << event->getEventKey().first << ", " << event->getEventKey().second << "): " << getDataEvent->getDataId() << endl << endl;
-                multiEventsSet.getEventsFactory()->releaseEvent<GetDataEvent>(getDataEvent);
-            }
-            break;
-            */
             case CMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTION:	// 1
             {
                 _logger->info("Received CMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTION");
 
 		handleCheckIngestionEvent ();
 
-                multiEventsSet->getEventsFactory()->releaseEvent<Event>(event);
+                _multiEventsSet->getEventsFactory()->releaseEvent<Event>(event);
 
+            }
+            break;
+            case CMSENGINE_EVENTTYPEIDENTIFIER_INGESTASSETEVENT:	// 2
+            {
+                _logger->info("Received CMSENGINE_EVENTTYPEIDENTIFIER_INGESTASSETEVENT");
+
+                shared_ptr<IngestAssetEvent>    ingestAssetEvent = dynamic_pointer_cast<IngestAssetEvent>(event);
+
+		handleIngestAssetEvent (ingestAssetEvent);
+
+                _multiEventsSet->getEventsFactory()->releaseEvent<IngestAssetEvent>(ingestAssetEvent);
             }
             break;
             default:
@@ -74,24 +81,26 @@ void CMSEngineProcessor::operator ()(shared_ptr<MultiEventsSet> multiEventsSet)
     _logger->info("CMSEngineProcessor thread terminated");
 }
 
+void CMSEngineProcessor::handleIngestAssetEvent(shared_ptr<IngestAssetEvent> ingestAssetEvent)
+
+{
+    
+    Json::Value root;
+    
+    std::ifstream ingestAssetJson(ingestAssetEvent->getFTPDirectoryWorkingEntryPathName(), std::ifstream::binary);
+    ingestAssetJson >> root;
+
+    // servlet saveMetaData
+    //  Type/Version    Encoding/1.0
+    // switch(Type) e call relativo metodo
+    // IngestAssetThread::manageEncoding1_0
+    //      controllo MD5
+    //      controllo fileSize
+    
+}
+
 void CMSEngineProcessor::handleCheckIngestionEvent()
 {
-    /*
-	CustomersHashMap_t:: iterator		itCustomersBegin;
-	CustomersHashMap_t:: iterator		itCustomersEnd;
-	CustomersHashMap_t:: iterator		itCustomers;
-	Customer_p							pcCustomer;
-	FileIO:: Directory_t				dDirectory;
-	Error_t								errOpenDir;
-	Error_t								errReadDirectory;
-	Error_t								errMove;
-	Error_t								errFileTime;
-	FileIO:: DirectoryEntryType_t		detDirectoryEntryType;
-	long long							llIngestionJobKey;
-	unsigned long						ulCurrentCustomerIngestionsNumber;
-	time_t								tLastModificationTime;
-	unsigned long						ulCurrentCustomerIndex;
-*/
     
     vector<shared_ptr<Customer>> customers = _cmsEngineDBFacade->getCustomers();
     
@@ -149,158 +158,102 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                     continue;
                 }
 
-                // check if the file has ".json" as extension.
-                // We do not accept also the ".json" file (without name)
-                string jsonExtension(".json");
-                if (directoryEntry.length() < 6 ||
-                        !equal(jsonExtension.rbegin(), jsonExtension.rend(), directoryEntry.rbegin()))
-                        continue;
-
-                string srcPathName(customerFTPDirectory);
-                srcPathName.append("/").append(directoryEntry);
-
+                // managing the FTP entry
                 try
                 {
-                    tLastModificationTime = FileIO:: getFileTime (srcPathName);
-                }
-                catch(FileNotExisting fne)
-                {
-                    continue;
-                }
-                catch(runtime_error re)
-                {
-                    _logger->error(string("FileIO::getFileTime failed")
-                        + ", srcPathName: " + srcPathName
-                        + ", re.what: " + re.what()
+                    // check if the file has ".json" as extension.
+                    // We do not accept also the ".json" file (without name)
+                    string jsonExtension(".json");
+                    if (directoryEntry.length() < 6 ||
+                            !equal(jsonExtension.rbegin(), jsonExtension.rend(), directoryEntry.rbegin()))
+                            continue;
+
+                    string srcPathName(customerFTPDirectory);
+                    srcPathName.append("/").append(directoryEntry);
+
+                    chrono::system_clock::time_point lastModificationTime = 
+                        FileIO:: getFileTime (srcPathName);
+
+                    if (chrono::duration_cast<chrono::hours>(chrono::system_clock::now() - lastModificationTime) 
+                            >= chrono::hours(_ulRetentionPeriodInDays * 24))
+                    {
+                        _logger->info(string("Remove obsolete FTP file")
+                            + ", srcPathName: " + srcPathName
+                                );
+
+                        FileIO::remove (srcPathName);
+
+                        continue;
+                    }
+                    else if (chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - lastModificationTime) 
+                            < chrono::seconds(_ulJsonToBeProcessedAfterSeconds))
+                    {
+                        // only the json files having the last modification older
+                        // at least of _ulJsonToBeProcessedAfterSeconds seconds
+                        // are considered
+
+                        continue;
+                    }
+
+                    _logger->info(string("json to be processed")
+                        + ", directoryEntry: " + directoryEntry
                     );
 
-                    continue;
-                }
-                
-                if (time (NULL) - tLastModificationTime < _ulJsonToBeProcessedAfterSeconds)
-                {
-                    // only the json files having the last modification older
-                    // at least of _ulJsonToBeProcessedAfterSeconds seconds
-                    // are considered
+                    string ftpDirectoryWorkingEntryPathName =
+                            _cmsStorage->moveFTPRepositoryEntryToWorkingArea(customer, directoryEntry);
 
-                    continue;
-                }
+                    int64_t ingestionJobKey;
+                    try
+                    {
+                        ingestionJobKey = _cmsEngineDBFacade->addIngestionJob (customer->_customerKey, directoryEntry);
+                    }
+                    catch(exception e)
+                    {
+                        string ftpDirectoryErrorEntryPathName =
+                            _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, directoryEntry);
+                    }
 
-                _logger->info(string("json to be processed")
-                    + ", directoryEntry: " + directoryEntry
-                );
-
-                string stagingAssetPathName = _cmsStorage->getStagingAssetPathName (
-                    customer->_directoryName,
-                    "/",            // relativePath
-                    directoryEntry,
-                    0, 0,           // llMediaItemKey, llPhysicalPathKey
-                    true            // removeLinuxPathIfExist
-                );
-
-                _logger->info(string("Move file")
-                    + ", from: " + srcPathName
-                    + ", to: " + stagingAssetPathName
-                );
-
-                /*
-                moveFile (srcPathName, stagingAssetPathName);
-
-                if (IngestAssetThread:: insertIngestionJobStatusOnFileAndDB (
-                        _pcrCMSRepository -> getFTPRootRepository (),
-                        pcCustomer -> _bName. str(),
-                        pcCustomer -> _bDirectoryName. str(),
-                        _bDirectoryEntry. str(),
-                        &llIngestionJobKey,
-                        _plbWebServerLoadBalancer,
-                        _pWebServerLocalIPAddress,
-                        _ulWebServerTimeoutToWaitAnswerInSeconds,
-                        _ptSystemTracer) != errNoError)
-                {
-                        Error err = CMSEngineErrors (__FILE__, __LINE__,
-                CMS_INGESTASSETTHREAD_INSERTINGESTIONJOBSTATUSONFILEANDDB_FAILED);
-                        _ptSystemTracer -> trace (Tracer:: TRACER_LERRR,
-                                (const char *) err, __FILE__, __LINE__);
-
-                        if (_pcrCMSRepository -> moveContentInRepository (
-                                (const char *) _bDestPathName,
-                                CMSRepository:: CMSREP_REPOSITORYTYPE_ERRORS,
-                                (const char *) (pcCustomer -> _bName),
-                                true) != errNoError)
+                    try
+                    {
                         {
-                                Error err = CMSRepositoryErrors (__FILE__, __LINE__,
-                                CMSREP_CMSREPOSITORY_MOVECONTENTINREPOSITORY_FAILED);
-                                _ptSystemTracer -> trace (Tracer:: TRACER_LERRR,
-                                        (const char *) err, __FILE__, __LINE__);
+                            shared_ptr<IngestAssetEvent>    ingestAssetEvent = _multiEventsSet->getEventsFactory()
+                                    ->getFreeEvent<IngestAssetEvent>(CMSENGINE_EVENTTYPEIDENTIFIER_INGESTASSETEVENT);
+
+                            ingestAssetEvent->setSource(CMSENGINEPROCESSORNAME);
+                            ingestAssetEvent->setDestination(CMSENGINEPROCESSORNAME);
+                            ingestAssetEvent->setExpirationTimePoint(chrono::system_clock::now());
+
+                            ingestAssetEvent->setFTPDirectoryWorkingEntryPathName(ftpDirectoryWorkingEntryPathName);
+                            ingestAssetEvent->setIngestionJobKey(ingestionJobKey);
+
+                            shared_ptr<Event>    event = dynamic_pointer_cast<Event>(ingestAssetEvent);
+                            _multiEventsSet->addEvent(event);
+
+                            _logger->info("addEvent: EVENT_TYPE ({}, {})", event->getEventKey().first, event->getEventKey().second);
                         }
+                    }
+                    catch(exception e)
+                    {
+                        string ftpDirectoryErrorEntryPathName =
+                            _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, directoryEntry);
 
-                        continue;
+                        _cmsEngineDBFacade->updateIngestionJob (ingestionJobKey, CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
+                    }
+
+                    ulCurrentCustomerIngestionsNumber++;
+
+                    if (ulCurrentCustomerIngestionsNumber >=
+                        _ulMaxIngestionsNumberPerCustomerEachIngestionPeriod)
+                        break;
                 }
-
+                catch(exception e)
                 {
-                        Message msg = CMSEngineMessages (__FILE__, __LINE__,
-                                CMS_CMSENGINEPROCESSOR_ASSETTOINGEST,
-                                2,
-                                (const char *) (pcCustomer -> _bName),
-                                (const char *) _bDirectoryEntry);
-                        _ptSystemTracer -> trace (Tracer:: TRACER_LINFO,
-                                (const char *) msg, __FILE__, __LINE__);
+                    _logger->error(string("Exception managing the FTP entry")
+                        + ", exception: " + e.what()
+                        + ", customerKey: " + to_string(customer->_customerKey)
+                        + ", directoryEntry: " + directoryEntry
+                    );
                 }
-
-                if (sendIngestAssetEvent (
-                        pcCustomer,
-                        (const char *) _bDestPathName,
-                        llIngestionJobKey) != errNoError)
-                {
-                        Error err = CMSEngineErrors (__FILE__, __LINE__,
-                                CMS_CMSENGINEPROCESSOR_SENDINGESTASSETEVENT_FAILED);
-                        _ptSystemTracer -> trace (Tracer:: TRACER_LERRR,
-                                (const char *) err, __FILE__, __LINE__);
-
-                        if (IngestAssetThread:: updateIngestionJobStatusOnFileAndDB (
-                                _pcrCMSRepository,
-                                _pesEventsSet,
-                                _pcCustomers,
-                                "8",
-                                false,
-                                (const char *) err,
-                                llIngestionJobKey,
-                                -1,
-                                _pcrCMSRepository -> getFTPRootRepository (),
-                                pcCustomer -> _bName. str(),
-                                pcCustomer -> _bDirectoryName. str(),
-                                _plbWebServerLoadBalancer,
-                                _pWebServerLocalIPAddress,
-                                _ulWebServerTimeoutToWaitAnswerInSeconds,
-                                _ptSystemTracer) != errNoError)
-                        {
-                                Error err = CMSEngineErrors (__FILE__, __LINE__,
-                CMS_INGESTASSETTHREAD_UPDATEINGESTIONJOBSTATUSONFILEANDDB_FAILED);
-                                _ptSystemTracer -> trace (Tracer:: TRACER_LERRR,
-                                        (const char *) err, __FILE__, __LINE__);
-                        }
-
-                        if (_pcrCMSRepository -> moveContentInRepository (
-                                (const char *) _bDestPathName,
-                                CMSRepository:: CMSREP_REPOSITORYTYPE_ERRORS,
-                                (const char *) (pcCustomer -> _bName),
-                                true) != errNoError)
-                        {
-                                Error err = CMSRepositoryErrors (__FILE__, __LINE__,
-                                        CMSREP_CMSREPOSITORY_MOVECONTENTINREPOSITORY_FAILED);
-                                _ptSystemTracer -> trace (Tracer:: TRACER_LERRR,
-                                        (const char *) err, __FILE__, __LINE__);
-                        }
-
-                        continue;
-                }
-                */
-
-                ulCurrentCustomerIngestionsNumber++;
-
-                if (ulCurrentCustomerIngestionsNumber >=
-                    _ulMaxIngestionsNumberPerCustomerEachIngestionPeriod)
-                    break;
             }
 
             FileIO:: closeDirectory (directory);
@@ -317,89 +270,3 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
         _ulIngestionLastCustomerIndex	= 0;
 
 }
-
-
-/*
-Error CheckIngestionThread:: sendIngestAssetEvent (
-	Customer_p pcCustomer,
-	const char *pMetaFilePathName,
-	long long llIngestionJobKey)
-
-{
-
-	IngestAssetEvent_p			pevIngestAssetEvent;
-	Event_p						pevEvent;
-
-
-	if (_pesEventsSet -> getFreeEvent (
-		CMSEngineEventsSet:: CMS_EVENTTYPE_INGESTASSETIDENTIFIER,
-		&pevEvent) != errNoError)
-	{
-		Error err = EventsSetErrors (__FILE__, __LINE__,
-			EVSET_EVENTSSET_GETFREEEVENT_FAILED);
-		_ptSystemTracer -> trace (Tracer:: TRACER_LERRR,
-			(const char *) err, __FILE__, __LINE__);
-
-		return err;
-	}
-
-	pevIngestAssetEvent			= (IngestAssetEvent_p) pevEvent;
-
-	if (pevIngestAssetEvent -> init (
-		CMS_CHECKINGESTIONTHREAD_SOURCE,
-		(const char *) _bMainProcessor,
-		pcCustomer,
-		pMetaFilePathName,
-		llIngestionJobKey,
-		_ptSystemTracer) != errNoError)
-	{
-		Error err = EventsSetErrors (__FILE__, __LINE__,
-			EVSET_EVENT_INIT_FAILED);
-		_ptSystemTracer -> trace (Tracer:: TRACER_LERRR,
-			(const char *) err, __FILE__, __LINE__);
-
-		if (_pesEventsSet -> releaseEvent (
-			CMSEngineEventsSet:: CMS_EVENTTYPE_INGESTASSETIDENTIFIER,
-			pevIngestAssetEvent) != errNoError)
-		{
-			Error err = EventsSetErrors (__FILE__, __LINE__,
-				EVSET_EVENTSSET_RELEASEEVENT_FAILED);
-			_ptSystemTracer -> trace (Tracer:: TRACER_LERRR,
-				(const char *) err, __FILE__, __LINE__);
-		}
-
-		return err;
-	}
-
-	if (_pesEventsSet -> addEvent (pevIngestAssetEvent) != errNoError)
-	{
-		Error err = EventsSetErrors (__FILE__, __LINE__,
-			EVSET_EVENTSSET_ADDEVENT_FAILED);
-		_ptSystemTracer -> trace (Tracer:: TRACER_LERRR,
-			(const char *) err, __FILE__, __LINE__);
-
-		if (pevIngestAssetEvent -> finish () != errNoError)
-		{
-			Error err = EventsSetErrors (__FILE__, __LINE__,
-				EVSET_EVENT_FINISH_FAILED);
-			_ptSystemTracer -> trace (Tracer:: TRACER_LERRR,
-				(const char *) err, __FILE__, __LINE__);
-		}
-
-		if (_pesEventsSet -> releaseEvent (
-			CMSEngineEventsSet:: CMS_EVENTTYPE_INGESTASSETIDENTIFIER,
-			pevIngestAssetEvent) != errNoError)
-		{
-			Error err = EventsSetErrors (__FILE__, __LINE__,
-				EVSET_EVENTSSET_RELEASEEVENT_FAILED);
-			_ptSystemTracer -> trace (Tracer:: TRACER_LERRR,
-				(const char *) err, __FILE__, __LINE__);
-		}
-
-		return err;
-	}
-
-
-	return errNoError;
-}
-*/

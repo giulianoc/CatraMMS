@@ -394,15 +394,11 @@ int64_t CMSEngineDBFacade::addIngestionJob (
     string      lastSQLCommand;
     
     shared_ptr<MySQLConnection> conn;
-    bool autoCommit = true;
 
     try
     {
         conn = _connectionPool->borrow();	
 
-        autoCommit = false;
-        conn->_sqlConnection->setAutoCommit(autoCommit);    // or execute the statement START TRANSACTION
-        
         {
             lastSQLCommand = 
                 "select IsEnabled, CustomerType from CMS_Customers where CustomerKey = ?";
@@ -418,81 +414,53 @@ int64_t CMSEngineDBFacade::addIngestionJob (
                 
                 if (isEnabled != 1)
                 {
+                    string errorMessage = string("Customer is not enabled")
+                        + ", customerKey: " + to_string(customerKey);
+                    _logger->error(errorMessage);
                     
+                    throw runtime_error(errorMessage);                    
                 }
                 else if (customerType != static_cast<int>(CustomerType::IngestionAndDelivery) &&
                         customerType != static_cast<int>(CustomerType::EncodingOnly))
                 {
+                    string errorMessage = string("Customer is not enabled to ingest content")
+                        + ", customerKey: " + to_string(customerKey);
+                        + ", customerType: " + to_string(static_cast<int>(customerType));
+                    _logger->error(errorMessage);
                     
+                    throw runtime_error(errorMessage);                    
                 }
             }
             else
             {
-                
+                string errorMessage = string("Customer is not present/configured")
+                    + ", customerKey: " + to_string(customerKey);
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
             }
         }
 
         {
             lastSQLCommand = 
                 "insert into CMS_IngestionJobs (IngestionJobKey, CustomerKey, MediaItemKey, MetaDataFileName, IngestionType, StartIngestion, EndIngestion, Status, ErrorMessage) values ("
-                "NULL, ?, NULL, ?, NULL, NULL, NULL, 1, NULL)";
+                "NULL, ?, NULL, ?, NULL, NULL, NULL, ?, NULL)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++, customerName);
-            preparedStatement->setString(queryParameterIndex++, customerDirectoryName);
-            if (street == "")
-                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-            else
-                preparedStatement->setString(queryParameterIndex++, street);
-            if (city == "")
-                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-            else
-                preparedStatement->setString(queryParameterIndex++, city);
-            if (state == "")
-                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-            else
-                preparedStatement->setString(queryParameterIndex++, state);
-            if (zip == "")
-                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-            else
-                preparedStatement->setString(queryParameterIndex++, zip);
-            if (phone == "")
-                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-            else
-                preparedStatement->setString(queryParameterIndex++, phone);
-            if (countryCode == "")
-                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-            else
-                preparedStatement->setString(queryParameterIndex++, countryCode);
-            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(customerType));
-            if (deliveryURL == "")
-                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-            else
-                preparedStatement->setString(queryParameterIndex++, deliveryURL);
-            preparedStatement->setInt(queryParameterIndex++, enabled);
-            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(maxEncodingPriority));
-            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(encodingPeriod));
-            preparedStatement->setInt(queryParameterIndex++, maxIngestionsNumber);
-            preparedStatement->setInt(queryParameterIndex++, maxStorageInGB);
-            preparedStatement->setString(queryParameterIndex++, languageCode);
+            preparedStatement->setInt64(queryParameterIndex++, customerKey);
+            preparedStatement->setString(queryParameterIndex++, metadataFileName);
+            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(IngestionStatus::StartIingestion));
 
             preparedStatement->executeUpdate();
         }
         
         ingestionJobKey = getLastInsertId(conn);
         
-
-        conn->_sqlConnection->commit();     // or execute COMMIT
-        autoCommit = true;
-
         _connectionPool->unborrow(conn);
     }
     catch(sql::SQLException se)
     {
-        if (!autoCommit)
-            conn->_sqlConnection->rollback();     // or execute ROLLBACK
-        
         string exceptionMessage(se.what());
         
         _logger->error(string("SQL exception")
@@ -504,6 +472,127 @@ int64_t CMSEngineDBFacade::addIngestionJob (
     }
     
     return ingestionJobKey;
+}
+
+void CMSEngineDBFacade::updateIngestionJob (
+    int64_t ingestionJobKey,
+    IngestionStatus newIngestionStatus,
+    string errorMessage
+)
+{    
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn;
+
+    try
+    {
+        string errorMessageForSQL;
+        if (errorMessage == "")
+            errorMessageForSQL = errorMessage;
+        else
+        {
+            if (errorMessageForSQL.length() >= 1024)
+                errorMessageForSQL.substr(0, 1024);
+            else
+                errorMessageForSQL = errorMessage;
+        }
+        
+        bool finalState;
+
+        conn = _connectionPool->borrow();	
+
+        if (newIngestionStatus == IngestionStatus::End_IngestionFailure ||
+                newIngestionStatus == IngestionStatus::End_IngestionSuccess_EncodingError ||
+                newIngestionStatus == IngestionStatus::End_IngestionSuccess)
+        {
+            finalState			= true;
+
+            if (newIngestionStatus == IngestionStatus::End_IngestionSuccess)
+            {
+                // it could happen that a previous encoding failed, in this case the correct state is iIngestionStatus_IngestionSuccess_EncodingFailure
+
+                lastSQLCommand = 
+                    "select count(*) from CMS_EncodingJobs where IngestionJobKey = ? and Status = ?";
+                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                int queryParameterIndex = 1;
+                preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+                preparedStatement->setInt(queryParameterIndex++, static_cast<int>(EncodingJob::End_Failed));
+
+                shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+                if (resultSet->next())
+                {
+                    int encodingFailureNumber = resultSet->getInt(1);
+
+                    if (encodingFailureNumber > 0)
+                    {
+                        _logger->info(string("Changed the IngestionStatus from IngestionSuccess to End_IngestionSuccess_EncodingError")
+                            + ", encodingFailureNumber: " + to_string(encodingFailureNumber) 
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        );
+
+                        newIngestionStatus      = IngestionStatus::End_IngestionSuccess_EncodingError;
+                    }
+                }
+                else
+                {
+                    string errorMessage = string("count(*) didn't return a value!!!");
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);                    
+                }
+            }
+        }
+        else
+        {
+            finalState          = false;
+        }
+
+        if (finalState)
+        {
+            lastSQLCommand = 
+                "update CMS_IngestionJobs set Status = ?, EndIngestion = NOW(), ErrorMessage = ? where IngestionJobKey = ?";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(newIngestionStatus));
+            if (errorMessageForSQL == "")
+                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+            else
+                preparedStatement->setString(queryParameterIndex++, errorMessageForSQL);
+            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+
+            preparedStatement->executeUpdate();
+        }
+        else
+        {
+            lastSQLCommand = 
+                "update CMS_IngestionJobs set Status = ?, ErrorMessage = ? where IngestionJobKey = ?";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(newIngestionStatus));
+            if (errorMessageForSQL == "")
+                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+            else
+                preparedStatement->setString(queryParameterIndex++, errorMessageForSQL);
+            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+
+            preparedStatement->executeUpdate();
+        }
+        
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(string("SQL exception")
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw se;
+    }    
 }
 
 int64_t CMSEngineDBFacade::getLastInsertId(shared_ptr<MySQLConnection> conn)
@@ -732,7 +821,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
             //  (i.e.: it is the end-user email address) and we cannot have
             //  two equal UserName since we will not be able to understand the CustomerKey
             lastSQLCommand = 
-                "create unique index CMS_Users2_idx on CMS_Users2 (UserName)";
+                "create unique index CMS_Users2_idx on CMS_Users2 (CustomerKey, UserName)";
             statement->execute(lastSQLCommand);
         }
         catch(sql::SQLException se)
@@ -932,6 +1021,156 @@ void CMSEngineDBFacade::createTablesIfNeeded()
                     "constraint CMS_EncodingProfilesSetMapping_FK2 foreign key (EncodingProfileKey) "
                         "references CMS_EncodingProfiles (EncodingProfileKey) on delete cascade) "
                     "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(string("SQL exception")
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+        
+        try
+        {
+            // Status.
+            //  1: StartIingestion
+            //  2: MetaDataSavedInDB
+            //  3: MediaFileMovedInCMS
+            //  8: End_IngestionFailure  # nothing done
+            //  9: End_IngestionSrcSuccess_EncodingError (we will have this state if just one of the encoding failed.
+            //      One encoding is considered a failure only after that the MaxFailuresNumer for this encoding is reached)
+            //  10: End_IngestionSuccess  # all done
+            // So, at the beginning the status is 1
+            //      from 1 it could become 2 or 8 in case of failure
+            //      from 2 it could become 3 or 8 in case of failure
+            //      from 3 it could become 10 or 9 in case of encoding failure
+            //      The final states are 8, 9 and 10
+            // IngestionType could be:
+            //      NULL: XML not parsed yet to know the type
+            //      0: insert
+            //      1: update
+            //      2. remove
+            // MetaDataFileName could be null to implement the following scenario done through XHP GUI:
+            //      allow the user to extend the content specifying a new encoding profile to be used
+            //      for a content that was already ingested previously. In this scenario we do not have
+            //      any meta data file.
+            lastSQLCommand = 
+                "create table if not exists CMS_IngestionJobs ("
+                    "IngestionJobKey  			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "CustomerKey			BIGINT UNSIGNED NOT NULL,"
+                    "MediaItemKey			BIGINT UNSIGNED NULL,"
+                    "MetaDataFileName			VARCHAR (128) NULL,"
+                    "IngestionType                      TINYINT (2) NULL,"
+                    "StartIngestion			TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+                    "EndIngestion			DATETIME NULL,"
+                    "Status           			TINYINT (2) NOT NULL,"
+                    "ErrorMessage			VARCHAR (1024) NULL,"
+                    "constraint CMS_IngestionJobs_PK PRIMARY KEY (IngestionJobKey), "
+                    "constraint CMS_IngestionJobs_FK foreign key (CustomerKey) "
+                        "references CMS_Customers (CustomerKey) on delete cascade) "	   	        				
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(string("SQL exception")
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+        
+        try
+        {
+            // The CMS_EncodingJobs table include all the contents that have to be encoded
+            //  OriginatingProcedure.
+            //      0: ContentIngestion1_0
+            //          Used fields: FileName, RelativePath, CustomerKey, PhysicalPathKey, EncodingProfileKey
+            //          The other fields will be NULL
+            //      1: Encoding1_0
+            //          Used fields: FileName, RelativePath, CustomerKey, FTPIPAddress (optional), FTPPort (optional),
+            //              FTPUser (optional), FTPPassword (optional), EncodingProfileKey
+            //          The other fields will be NULL
+            //  RelativePath: it is the relative path of the original uncompressed file name
+            //  PhysicalPathKey: it is the physical path key of the original uncompressed file name
+            //  The ContentType was added just to avoid a big join to retrieve this info
+            //  ProcessorCMS is the CMSEngine processing the encoding
+            //  Status.
+            //      0: TOBEPROCESSED
+            //      1: PROCESSING
+            //      2: SUCCESS (PROCESSED)
+            //      3: FAILED
+            //  EncodingPriority:
+            //      0: low
+            //      1: default
+            //      2: high
+            lastSQLCommand = 
+                "create table if not exists CMS_EncodingJobs ("
+                    "EncodingJobKey  			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "IngestionJobKey			BIGINT UNSIGNED NOT NULL,"
+                    "OriginatingProcedure		TINYINT (2) NOT NULL,"
+                    "OriginalFileName			VARCHAR (128) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
+                    "FileNameWithTimeStamp		VARCHAR (128) NULL,"
+                    "RelativePath				VARCHAR (256) NOT NULL,"
+                    "CustomerKey				BIGINT UNSIGNED NOT NULL,"
+                    "PhysicalPathKey			BIGINT UNSIGNED NULL,"
+                    "ContentType                TINYINT NOT NULL,"
+                    "EncodingPriority			TINYINT NOT NULL,"
+                    "FTPIPAddress				VARCHAR (32) NULL,"
+                    "FTPPort           			INT NULL,"
+                    "FTPUser					VARCHAR (32) NULL,"
+                    "FTPPassword				VARCHAR (32) NULL,"
+                    "EncodingProfileKey			BIGINT UNSIGNED NOT NULL,"
+                    "EncodingJobStart			TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+                    "EncodingJobEnd				DATETIME NULL,"
+                    "Status           			TINYINT (2) NOT NULL,"
+                    "ProcessorCMS				VARCHAR (24) NULL,"
+                    "FailuresNumber           	INT NOT NULL,"
+                    "constraint CMS_EncodingJobs_PK PRIMARY KEY (EncodingJobKey), "
+                    "constraint CMS_EncodingJobs_FK foreign key (IngestionJobKey) "
+                        "references CMS_IngestionJobs (IngestionJobKey) on delete cascade, "
+                    "constraint CMS_EncodingJobs_FK2 foreign key (CustomerKey) "
+                        "references CMS_Customers (CustomerKey), "
+                    "constraint CMS_EncodingJobs_FK3 foreign key (PhysicalPathKey) "
+                    // on delete cascade is necessary because when the ingestion fails, it is important that the 'removeMediaItemMetaData'
+                    //      remove the rows from this table too, otherwise we will be flooded by the errors: PartitionNumber is null
+                    // The consequence is that when the PhysicalPath is removed in general, also the rows from this table will be removed
+                        "references CMS_PhysicalPaths (PhysicalPathKey) on delete cascade, "
+                    "constraint CMS_EncodingJobs_FK4 foreign key (EncodingProfileKey) "
+                        "references CMS_EncodingProfiles (EncodingProfileKey) on delete cascade, "
+                    "UNIQUE (PhysicalPathKey, EncodingProfileKey)) "
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(string("SQL exception")
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
+        try
+        {
+            // that index is important because it will be used by the query looking every 15 seconds if there are
+            // contents to be encoded
+            lastSQLCommand = 
+                "create index CMS_EncodingJobs_idx2 on CMS_EncodingJobs (Status, ProcessorCMS, FailuresNumber, EncodingJobStart)";
             statement->execute(lastSQLCommand);
         }
         catch(sql::SQLException se)
@@ -1878,106 +2117,6 @@ void CMSEngineDBFacade::createTablesIfNeeded()
                     references CMS_MediaItems (MediaItemKey) on delete cascade) 
             ENGINE=InnoDB;
 
-    # create table IngestionJobs
-    # Status.
-    #		1: StartIingestion
-    #		2: MetaDataSavedInDB
-    #		3: MediaFileMovedInCMS
-    #		8: End_IngestionFailure  # nothing done
-    #		9: End_IngestionSrcSuccess_EncodingError (we will have this state if just one of the encoding failed.
-    #				One encoding is considered a failure only after that the MaxFailuresNumer for this encoding is reached)
-    #		10: End_IngestionSuccess  # all done
-    # So, at the beginning the status is 1
-    # from 1 it could become 2 or 8 in case of failure
-    # from 2 it could become 3 or 8 in case of failure
-    # from 3 it could become 10 or 9 in case of encoding failure
-    # The final states are 8, 9 and 10
-    #
-    # IngestionType could be:
-    #	NULL: XML not parsed yet to know the type
-    #	0: insert
-    #	1: update
-    #	2. remove
-    # MetaDataFileName could be null to implement the following scenario done through XHP GUI:
-    #	allow the user to extend the content specifying a new encoding profile to be used
-    #	for a content that was already ingested previously. In this scenario we do not have
-    #	any meta data file.
-    create table if not exists CMS_IngestionJobs (
-            IngestionJobKey  			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            CustomerKey				BIGINT UNSIGNED NOT NULL,
-            MediaItemKey				BIGINT UNSIGNED NULL,
-            MetaDataFileName			VARCHAR (128) NULL,
-            IngestionType           	TINYINT (2) NULL,
-            StartIngestion				TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            EndIngestion				DATETIME NULL,
-            Status           			TINYINT (2) NOT NULL,
-            ErrorMessage				VARCHAR (1024) NULL,
-            constraint CMS_IngestionJobs_PK PRIMARY KEY (IngestionJobKey), 
-            constraint CMS_IngestionJobs_FK foreign key (CustomerKey) 
-                    references CMS_Customers (CustomerKey) on delete cascade) 	   	        				
-            ENGINE=InnoDB;
-
-    # create table EncodingJobs
-    # The CMS_EncodingJobs table include all the contents that have to be encoded
-    # OriginatingProcedure.
-    #		0: ContentIngestion1_0
-    #			Used fields: FileName, RelativePath, CustomerKey, PhysicalPathKey, EncodingProfileKey
-    #			The other fields will be NULL
-    #		1: Encoding1_0
-    #			Used fields: FileName, RelativePath, CustomerKey, FTPIPAddress (optional), FTPPort (optional),
-    #				FTPUser (optional), FTPPassword (optional), EncodingProfileKey
-    #			The other fields will be NULL
-    # RelativePath: it is the relative path of the original uncompressed file name
-    # PhysicalPathKey: it is the physical path key of the original uncompressed file name
-    # The ContentType was added just to avoid a big join to retrieve this info
-    # ProcessorCMS is the CMSEngine processing the encoding
-    # Status.
-    #		0: TOBEPROCESSED
-    #		1: PROCESSING
-    #		2: SUCCESS (PROCESSED)
-    #		3: FAILED
-    # EncodingPriority:
-    #		0: low
-    #		1: default
-    #		2: high
-    create table if not exists CMS_EncodingJobs (
-            EncodingJobKey  			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            IngestionJobKey			BIGINT UNSIGNED NOT NULL,
-            OriginatingProcedure		TINYINT (2) NOT NULL,
-            OriginalFileName			VARCHAR (128) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
-            FileNameWithTimeStamp		VARCHAR (128) NULL,
-            RelativePath				VARCHAR (256) NOT NULL,
-            CustomerKey				BIGINT UNSIGNED NOT NULL,
-            PhysicalPathKey			BIGINT UNSIGNED NULL,
-            ContentType                TINYINT NOT NULL,
-            EncodingPriority			TINYINT NOT NULL,
-            FTPIPAddress				VARCHAR (32) NULL,
-            FTPPort           			INT NULL,
-            FTPUser					VARCHAR (32) NULL,
-            FTPPassword				VARCHAR (32) NULL,
-            EncodingProfileKey			BIGINT UNSIGNED NOT NULL,
-            EncodingJobStart			TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            EncodingJobEnd				DATETIME NULL,
-            Status           			TINYINT (2) NOT NULL,
-            ProcessorCMS				VARCHAR (24) NULL,
-            FailuresNumber           	INT NOT NULL,
-            constraint CMS_EncodingJobs_PK PRIMARY KEY (EncodingJobKey), 
-            constraint CMS_EncodingJobs_FK foreign key (IngestionJobKey) 
-                    references CMS_IngestionJobs (IngestionJobKey) on delete cascade, 
-            constraint CMS_EncodingJobs_FK2 foreign key (CustomerKey) 
-                    references CMS_Customers (CustomerKey), 
-            constraint CMS_EncodingJobs_FK3 foreign key (PhysicalPathKey) 
-            # on delete cascade is necessary because when the ingestion fails, it is important that the 'removeMediaItemMetaData'
-            #		remove the rows from this table too, otherwise we will be flooded by the errors: PartitionNumber is null
-            #	The consequence is that when the PhysicalPath is removed in general, also the rows from this table will be removed
-                    references CMS_PhysicalPaths (PhysicalPathKey) on delete cascade, 
-            constraint CMS_EncodingJobs_FK4 foreign key (EncodingProfileKey) 
-                    references CMS_EncodingProfiles (EncodingProfileKey) on delete cascade, 
-            UNIQUE (PhysicalPathKey, EncodingProfileKey)) 
-            ENGINE=InnoDB;
-    # that index is important because it will be used by the quesry looking every 15 seconds if there are
-    # contents to be encoded
-    create index CMS_EncodingJobs_idx2 on CMS_EncodingJobs (Status, ProcessorCMS, FailuresNumber, EncodingJobStart);
 
     # create table MimeTypes
     # HandsetBrandPattern, HandsetModelPattern and HandsetOperativeSystem must be all different from null or all equal to null

@@ -56,7 +56,7 @@ int main (int iArgc, char *pArgv [])
 
     logger->info(string("Creating CMSEngineProcessor")
             );
-    CMSEngineProcessor      cmsEngineProcessor(logger, cmsEngineDBFacade, cmsStorage);
+    CMSEngineProcessor      cmsEngineProcessor(logger, multiEventsSet, cmsEngineDBFacade, cmsStorage);
     
     unsigned long           ulThreadSleepInMilliSecs = 100;
     logger->info(string("Creating Scheduler2")
@@ -67,7 +67,7 @@ int main (int iArgc, char *pArgv [])
 
     logger->info(string("Starting CMSEngineProcessor")
             );
-    thread cmsEngineProcessorThread (cmsEngineProcessor, multiEventsSet);
+    thread cmsEngineProcessorThread (cmsEngineProcessor);
 
     logger->info(string("Starting Scheduler2")
             );
@@ -86,6 +86,50 @@ int main (int iArgc, char *pArgv [])
     cmsEngine->addCustomer(
 	"Warner",                       // string customerName,
         "Warner",                       // string password,
+	"",                             // string street,
+        "",                             // string city,
+        "",                             // string state,
+	"",                             // string zip,
+        "",                             // string phone,
+        "",                             // string countryCode,
+        CMSEngineDBFacade::CustomerType::EncodingOnly,  // CMSEngineDBFacade::CustomerType customerType
+	"",                             // string deliveryURL,
+        true,                           // bool enabled,
+        CMSEngineDBFacade::EncodingPriority::Default,   //  CMSEngineDBFacade::EncodingPriority maxEncodingPriority,
+        CMSEngineDBFacade::EncodingPeriod::Daily,       //  CMSEngineDBFacade::EncodingPeriod encodingPeriod,
+	10,                             // long maxIngestionsNumber,
+        10,                             // long maxStorageInGB,
+	"",                             // string languageCode,
+        "giuliano",                     // string userName,
+        "giuliano",                     // string userPassword,
+        "giulianoc@catrasoftware.it",   // string userEmailAddress,
+        chrono::system_clock::now()     // chrono::system_clock::time_point userExpirationDate
+    );
+    cmsEngine->addCustomer(
+	"Universal",                       // string customerName,
+        "Universal",                       // string password,
+	"",                             // string street,
+        "",                             // string city,
+        "",                             // string state,
+	"",                             // string zip,
+        "",                             // string phone,
+        "",                             // string countryCode,
+        CMSEngineDBFacade::CustomerType::EncodingOnly,  // CMSEngineDBFacade::CustomerType customerType
+	"",                             // string deliveryURL,
+        true,                           // bool enabled,
+        CMSEngineDBFacade::EncodingPriority::Default,   //  CMSEngineDBFacade::EncodingPriority maxEncodingPriority,
+        CMSEngineDBFacade::EncodingPeriod::Daily,       //  CMSEngineDBFacade::EncodingPeriod encodingPeriod,
+	10,                             // long maxIngestionsNumber,
+        10,                             // long maxStorageInGB,
+	"",                             // string languageCode,
+        "giuliano",                     // string userName,
+        "giuliano",                     // string userPassword,
+        "giulianoc@catrasoftware.it",   // string userEmailAddress,
+        chrono::system_clock::now()     // chrono::system_clock::time_point userExpirationDate
+    );
+    cmsEngine->addCustomer(
+	"Sony",                       // string customerName,
+        "Sony",                       // string password,
 	"",                             // string street,
         "",                             // string city,
         "",                             // string state,

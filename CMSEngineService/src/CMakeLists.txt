@@ -53,6 +53,7 @@ add_executable(cmsEngineService ${SOURCES} ${HEADERS})
 target_link_libraries (cmsEngineService MultiEventsSet)
 target_link_libraries (cmsEngineService CMSEngine)
 target_link_libraries (cmsEngineService mysqlcppconn)
+target_link_libraries (cmsEngineService jsoncpp)
 
 target_link_libraries (cmsEngineService Scheduler)
 target_link_libraries (cmsEngineService PThread)

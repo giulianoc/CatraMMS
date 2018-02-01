@@ -45,6 +45,14 @@ public:
     string getFTPRootRepository (void);
     
     string getCustomerFTPRepository(shared_ptr<Customer> customer);
+    
+    string moveFTPRepositoryEntryToWorkingArea(
+        shared_ptr<Customer> customer,
+        string entryFileName);
+
+    string moveFTPRepositoryWorkingEntryToErrorArea(
+        shared_ptr<Customer> customer,
+        string entryFileName);
 
     string getStagingRootRepository (void);
 

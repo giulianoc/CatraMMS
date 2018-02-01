@@ -186,7 +186,125 @@ string CMSStorage::getCustomerFTPRepository(shared_ptr<Customer> customer)
                 S_IROTH | S_IXOTH, noErrorIfExists, recursive);
     }
 
+    {
+        string customerErrorFTPDirectory = customerFTPDirectory;
+        customerErrorFTPDirectory
+                .append("/")
+                .append("ERROR");
+
+        if (!FileIO::directoryExisting(customerErrorFTPDirectory)) 
+        {
+            _logger->info(string("Create directory")
+                + ", customerErrorFTPDirectory: " + customerErrorFTPDirectory
+            );
+
+            bool noErrorIfExists = true;
+            bool recursive = true;
+            FileIO::createDirectory(customerErrorFTPDirectory,
+                    S_IRUSR | S_IWUSR | S_IXUSR |
+                    S_IRGRP | S_IXGRP |
+                    S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+        }
+    }
+
+    {
+        string customerSuccessFTPDirectory = customerFTPDirectory;
+        customerSuccessFTPDirectory
+                .append("/")
+                .append("SUCCESS");
+
+        if (!FileIO::directoryExisting(customerSuccessFTPDirectory)) 
+        {
+            _logger->info(string("Create directory")
+                + ", customerSuccessFTPDirectory: " + customerSuccessFTPDirectory
+            );
+
+            bool noErrorIfExists = true;
+            bool recursive = true;
+            FileIO::createDirectory(customerSuccessFTPDirectory,
+                    S_IRUSR | S_IWUSR | S_IXUSR |
+                    S_IRGRP | S_IXGRP |
+                    S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+        }
+    }
+
+    {
+        string customerWorkingFTPDirectory = customerFTPDirectory;
+        customerWorkingFTPDirectory
+                .append("/")
+                .append("WORKING");
+
+        if (!FileIO::directoryExisting(customerWorkingFTPDirectory)) 
+        {
+            _logger->info(string("Create directory")
+                + ", customerWorkingFTPDirectory: " + customerWorkingFTPDirectory
+            );
+
+            bool noErrorIfExists = true;
+            bool recursive = true;
+            FileIO::createDirectory(customerWorkingFTPDirectory,
+                    S_IRUSR | S_IWUSR | S_IXUSR |
+                    S_IRGRP | S_IXGRP |
+                    S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+        }
+    }
+
     return customerFTPDirectory;
+}
+
+string CMSStorage::moveFTPRepositoryEntryToWorkingArea(
+        shared_ptr<Customer> customer,
+        string entryFileName)
+{
+    string ftpDirectoryEntryPathName = getCustomerFTPRepository(customer);
+    ftpDirectoryEntryPathName
+            .append("/")
+            .append(entryFileName);
+
+    string ftpDirectoryWorkingEntryPathName = getCustomerFTPRepository(customer);
+    ftpDirectoryWorkingEntryPathName
+        .append("/")
+        .append("WORKING")
+        .append("/")
+        .append(entryFileName);
+    
+    _logger->info(string("Move file")
+        + ", from: " + ftpDirectoryEntryPathName
+        + ", to: " + ftpDirectoryWorkingEntryPathName
+    );
+
+    FileIO::moveFile(ftpDirectoryEntryPathName, ftpDirectoryWorkingEntryPathName);
+            
+    return ftpDirectoryWorkingEntryPathName;
+}
+
+string CMSStorage::moveFTPRepositoryWorkingEntryToErrorArea(
+        shared_ptr<Customer> customer,
+        string entryFileName)
+{
+    string ftpDirectoryWorkingEntryPathName = getCustomerFTPRepository(customer);
+    ftpDirectoryWorkingEntryPathName
+        .append("/")
+        .append("WORKING")
+        .append("/")
+        .append(entryFileName);
+
+    string ftpDirectoryErrorEntryPathName = getCustomerFTPRepository(customer);
+    ftpDirectoryErrorEntryPathName
+        .append("/")
+        .append("ERROR")
+        .append("/")
+        .append(entryFileName);
+
+    
+    _logger->info(string("Move file")
+        + ", from: " + ftpDirectoryWorkingEntryPathName
+        + ", to: " + ftpDirectoryErrorEntryPathName
+    );
+
+    FileIO::moveFile(ftpDirectoryWorkingEntryPathName, ftpDirectoryErrorEntryPathName);
+            
+    return ftpDirectoryErrorEntryPathName;
 }
 
 string CMSStorage::getStagingRootRepository(void) {

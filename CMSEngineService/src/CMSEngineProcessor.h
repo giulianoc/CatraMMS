@@ -9,6 +9,7 @@
 #include "catralibraries/MultiEventsSet.h"
 #include "CMSEngineDBFacade.h"
 #include "CMSStorage.h"
+#include "IngestAssetEvent.h"
 
 #define CMSENGINEPROCESSORNAME    "CMSEngineProcessor"
 
@@ -16,24 +17,29 @@ class CMSEngineProcessor
 {
 private:
     shared_ptr<spdlog::logger>          _logger;
+    shared_ptr<MultiEventsSet>          _multiEventsSet;
     shared_ptr<CMSEngineDBFacade>       _cmsEngineDBFacade;
-    shared_ptr<CMSStorage>           _cmsStorage;
+    shared_ptr<CMSStorage>              _cmsStorage;
     
     unsigned long           _ulIngestionLastCustomerIndex;
     unsigned long           _ulMaxIngestionsNumberPerCustomerEachIngestionPeriod;
     unsigned long           _ulJsonToBeProcessedAfterSeconds;
+    unsigned long           _ulRetentionPeriodInDays;
 
     void handleCheckIngestionEvent();
+
+    void handleIngestAssetEvent(shared_ptr<IngestAssetEvent> ingestAssetEvent);
 
 public:
     CMSEngineProcessor(
             shared_ptr<spdlog::logger> logger, 
+            shared_ptr<MultiEventsSet> multiEventsSet,
             shared_ptr<CMSEngineDBFacade> cmsEngineDBFacade,
             shared_ptr<CMSStorage> cmsStorage);
     
     ~CMSEngineProcessor();
     
-    void operator()(shared_ptr<MultiEventsSet> multiEventsSet);
+    void operator()();
 } ;
 
 #endif

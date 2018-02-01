@@ -40,12 +40,15 @@ public:
         Low		= 0,
 	Default		= 1,
 	High		= 2
-//	Application	= 3,
-//	Ringtone	= 4,
-//	Playlist	= 5,
-//	Live		= 6
     };
 
+    enum class EncodingJob {
+        ToBeProcessed           = 0,
+        Processing              = 1,
+        End_ProcessedSuccessful = 2,
+        End_Failed              = 3
+    };
+    
     enum class EncodingPeriod {
         Daily		= 0,
 	Weekly		= 1,
@@ -58,6 +61,22 @@ public:
         EncodingOnly            = 2
     };
 
+    enum class IngestionType {
+        Unknown                 = 0,
+        Insert                  = 1,
+        Update                  = 2,
+        Remove                  = 3
+    };
+
+    enum class IngestionStatus {
+        StartIingestion         = 1,
+        MetaDataSavedInDB       = 2,
+        MediaFileMovedInCMS     = 3,
+        End_IngestionFailure    = 8,                    // nothing done
+        End_IngestionSuccess_EncodingError   = 9,    // (we will have this state if just one of the encoding failed.
+                    // One encoding is considered a failure only after that the MaxFailuresNumer for this encoding is reached)
+        End_IngestionSuccess    = 10                    // all done
+    };
 
 public:
     CMSEngineDBFacade(
@@ -100,6 +119,11 @@ public:
 	int64_t customerKey,
         string metadataFileName
     );
+
+    void updateIngestionJob (
+        int64_t ingestionJobKey,
+        IngestionStatus newIngestionStatus,
+        string errorMessage);
 
 private:
     shared_ptr<spdlog::logger>                      _logger;
