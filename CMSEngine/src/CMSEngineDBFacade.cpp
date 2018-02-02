@@ -386,7 +386,8 @@ int64_t CMSEngineDBFacade::addUser (
 
 int64_t CMSEngineDBFacade::addIngestionJob (
 	int64_t customerKey,
-        string metadataFileName
+        string metadataFileName,
+        IngestionType ingestionType
 )
 {
     int64_t         ingestionJobKey;
@@ -401,28 +402,16 @@ int64_t CMSEngineDBFacade::addIngestionJob (
 
         {
             lastSQLCommand = 
-                "select c.IsEnabled, c.CustomerType, c.MaxIngestionsNumber, c.Period, cmi.CurrentIngestionsNumber, cmi.StartDateTime, cmi.EndDateTime " 
-                "from CMS_Customers c, CMS_CustomerMoreInfo cmi where c.CustomerKey = cmi.CustomerKey and c.CustomerKey = ?";
+                "select c.IsEnabled, c.CustomerType from CMS_Customers c where c.CustomerKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, customerKey);
-
-            int maxIngestionsNumber;
-            int currentIngestionsNumber;
-            int period;
-            string startDateTime;
-            string endDateTime;
             
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
                 int isEnabled = resultSet->getInt("IsEnabled");
                 int customerType = resultSet->getInt("CustomerType");
-                maxIngestionsNumber = resultSet->getInt("MaxIngestionsNumber");
-                currentIngestionsNumber = resultSet->getInt("CurrentIngestionsNumber");
-                period = resultSet->getInt("Period");
-                startDateTime = resultSet->getString("StartDateTime");
-                endDateTime = resultSet->getString("EndDateTime");
                 
                 if (isEnabled != 1)
                 {
@@ -450,28 +439,42 @@ int64_t CMSEngineDBFacade::addIngestionJob (
                 _logger->error(errorMessage);
 
                 throw runtime_error(errorMessage);                    
-            }
-            
-            VEDI CONTROLLI IN SAVEMETADATA.JAVA
+            }            
         }
-
+        
         {
             lastSQLCommand = 
                 "insert into CMS_IngestionJobs (IngestionJobKey, CustomerKey, MediaItemKey, MetaDataFileName, IngestionType, StartIngestion, EndIngestion, Status, ErrorMessage) values ("
-                "NULL, ?, NULL, ?, NULL, NULL, NULL, ?, NULL)";
+                "NULL, ?, NULL, ?, ?, NULL, NULL, ?, ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, customerKey);
             preparedStatement->setString(queryParameterIndex++, metadataFileName);
+            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(ingestionType));
             preparedStatement->setInt(queryParameterIndex++, static_cast<int>(IngestionStatus::StartIingestion));
+            preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
 
             preparedStatement->executeUpdate();
         }
         
         ingestionJobKey = getLastInsertId(conn);
-        
+                
         _connectionPool->unborrow(conn);
+
+        try
+        {
+            if (ingestionType == IngestionType::Encoding)
+            {
+                checkMaxIngestionNumber (conn, customerKey, ingestionJobKey);
+            }          
+        }
+        catch(exception e)
+        {
+            updateIngestionJob (ingestionJobKey, IngestionStatus::End_IngestionFailure, e.what());
+            
+            throw e;
+        }
     }
     catch(sql::SQLException se)
     {
@@ -608,6 +611,292 @@ void CMSEngineDBFacade::updateIngestionJob (
         throw se;
     }    
 }
+
+void CMSEngineDBFacade::checkMaxIngestionNumber (
+    shared_ptr<MySQLConnection> conn,
+    int64_t customerKey,
+    int64_t ingestionJobKey
+)
+{
+    string      lastSQLCommand;
+
+    try
+    {
+        int maxIngestionsNumber;
+        int currentIngestionsNumber;
+        int encodingPeriod;
+        string periodStartDateTime;
+        string periodEndDateTime;
+
+        {
+            lastSQLCommand = 
+                "select c.MaxIngestionsNumber, cmi.CurrentIngestionsNumber, c.EncodingPeriod, " 
+                    "DATE_FORMAT(cmi.StartDateTime, '%Y-%m-%d %H:%i:%s') as LocalStartDateTime, DATE_FORMAT(cmi.EndDateTime, '%Y-%m-%d %H:%i:%s') as LocalEndDateTime " 
+                "from CMS_Customers c, CMS_CustomerMoreInfo cmi where c.CustomerKey = cmi.CustomerKey and c.CustomerKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, customerKey);
+            
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                maxIngestionsNumber = resultSet->getInt("MaxIngestionsNumber");
+                currentIngestionsNumber = resultSet->getInt("CurrentIngestionsNumber");
+                encodingPeriod = resultSet->getInt("EncodingPeriod");
+                periodStartDateTime = resultSet->getString("LocalStartDateTime");
+                periodEndDateTime = resultSet->getString("LocalEndDateTime");                
+            }
+            else
+            {
+                string errorMessage = string("Customer is not present/configured")
+                    + ", customerKey: " + to_string(customerKey);
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }            
+        }
+        
+        bool ingestionsAllowed = true;
+        bool periodExpired = false;
+        char newPeriodStartDateTime [64];
+        char newPeriodEndDateTime [64];
+
+        {
+            char                strDateTimeNow [64];
+            tm                  tmDateTimeNow;
+            chrono::system_clock::time_point now = chrono::system_clock::now();
+            time_t utcTimeNow = chrono::system_clock::to_time_t(now);
+            localtime_r (&utcTimeNow, &tmDateTimeNow);
+
+            sprintf (strDateTimeNow, "%04d-%02d-%02d %02d:%02d:%02d",
+                tmDateTimeNow. tm_year + 1900,
+                tmDateTimeNow. tm_mon + 1,
+                tmDateTimeNow. tm_mday,
+                tmDateTimeNow. tm_hour,
+                tmDateTimeNow. tm_min,
+                tmDateTimeNow. tm_sec);
+
+            if (periodStartDateTime.compare(strDateTimeNow) <= 0 && periodEndDateTime.compare(strDateTimeNow) >= 0)
+            {
+                // Period not expired
+
+                // periodExpired = false; already initialized
+                
+                if (currentIngestionsNumber >= maxIngestionsNumber)
+                {
+                    // no more ingestions are allowed for this customer
+
+                    ingestionsAllowed = false;
+                }
+            }
+            else
+            {
+                // Period expired
+
+                periodExpired = true;
+                
+                if (encodingPeriod == static_cast<int>(EncodingPeriod::Daily))
+                {
+                    sprintf (newPeriodStartDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+                            tmDateTimeNow. tm_year + 1900,
+                            tmDateTimeNow. tm_mon + 1,
+                            tmDateTimeNow. tm_mday,
+                            0,  // tmDateTimeNow. tm_hour,
+                            0,  // tmDateTimeNow. tm_min,
+                            0  // tmDateTimeNow. tm_sec
+                    );
+                    sprintf (newPeriodEndDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+                            tmDateTimeNow. tm_year + 1900,
+                            tmDateTimeNow. tm_mon + 1,
+                            tmDateTimeNow. tm_mday,
+                            23,  // tmCurrentDateTime. tm_hour,
+                            59,  // tmCurrentDateTime. tm_min,
+                            59  // tmCurrentDateTime. tm_sec
+                    );
+                }
+                else if (encodingPeriod == static_cast<int>(EncodingPeriod::Weekly))
+                {
+                    // from monday to sunday
+                    // monday
+                    {
+                        int daysToHavePreviousMonday;
+
+                        if (tmDateTimeNow.tm_wday == 0)  // Sunday
+                            daysToHavePreviousMonday = 6;
+                        else
+                            daysToHavePreviousMonday = tmDateTimeNow.tm_wday - 1;
+
+                        chrono::system_clock::time_point mondayOfCurrentWeek;
+                        if (daysToHavePreviousMonday != 0)
+                        {
+                            chrono::duration<int, ratio<60*60*24>> days(daysToHavePreviousMonday);
+                            mondayOfCurrentWeek = now - days;
+                        }
+                        else
+                            mondayOfCurrentWeek = now;
+
+                        tm                  tmMondayOfCurrentWeek;
+                        time_t utcTimeMondayOfCurrentWeek = chrono::system_clock::to_time_t(mondayOfCurrentWeek);
+                        localtime_r (&utcTimeMondayOfCurrentWeek, &tmMondayOfCurrentWeek);
+
+                        sprintf (newPeriodStartDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+                                tmMondayOfCurrentWeek. tm_year + 1900,
+                                tmMondayOfCurrentWeek. tm_mon + 1,
+                                tmMondayOfCurrentWeek. tm_mday,
+                                0,  // tmDateTimeNow. tm_hour,
+                                0,  // tmDateTimeNow. tm_min,
+                                0  // tmDateTimeNow. tm_sec
+                        );
+                    }
+
+                    // sunday
+                    {
+                        int daysToHaveNextSunday;
+
+                        daysToHaveNextSunday = 7 - tmDateTimeNow.tm_wday;
+
+                        chrono::system_clock::time_point sundayOfCurrentWeek;
+                        if (daysToHaveNextSunday != 0)
+                        {
+                            chrono::duration<int, ratio<60*60*24>> days(daysToHaveNextSunday);
+                            sundayOfCurrentWeek = now + days;
+                        }
+                        else
+                            sundayOfCurrentWeek = now;
+
+                        tm                  tmSundayOfCurrentWeek;
+                        time_t utcTimeSundayOfCurrentWeek = chrono::system_clock::to_time_t(sundayOfCurrentWeek);
+                        localtime_r (&utcTimeSundayOfCurrentWeek, &tmSundayOfCurrentWeek);
+
+                        sprintf (newPeriodEndDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+                                tmSundayOfCurrentWeek. tm_year + 1900,
+                                tmSundayOfCurrentWeek. tm_mon + 1,
+                                tmSundayOfCurrentWeek. tm_mday,
+                                23,  // tmSundayOfCurrentWeek. tm_hour,
+                                59,  // tmSundayOfCurrentWeek. tm_min,
+                                59  // tmSundayOfCurrentWeek. tm_sec
+                        );
+                    }
+                }
+                else if (encodingPeriod == static_cast<int>(EncodingPeriod::Monthly))
+                {
+                    // first day of the month
+                    {
+                        sprintf (newPeriodStartDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+                                tmDateTimeNow. tm_year + 1900,
+                                tmDateTimeNow. tm_mon + 1,
+                                1,  // tmDateTimeNow. tm_mday,
+                                0,  // tmDateTimeNow. tm_hour,
+                                0,  // tmDateTimeNow. tm_min,
+                                0  // tmDateTimeNow. tm_sec
+                        );
+                    }
+
+                    // last day of the month
+                    {
+                        tm                  tmLastDayOfCurrentMonth = tmDateTimeNow;
+
+                        tmLastDayOfCurrentMonth.tm_mday = 1;
+
+                        // Next month 0=Jan
+                        if (tmLastDayOfCurrentMonth.tm_mon == 11)    // Dec
+                        {
+                            tmLastDayOfCurrentMonth.tm_mon = 0;
+                            tmLastDayOfCurrentMonth.tm_year++;
+                        }
+                        else
+                        {
+                            tmLastDayOfCurrentMonth.tm_mon++;
+                        }
+
+                        // Get the first day of the next month
+                        time_t utcTimeLastDayOfCurrentMonth = mktime (&tmLastDayOfCurrentMonth);
+
+                        // Subtract 1 day
+                        utcTimeLastDayOfCurrentMonth -= 86400;
+
+                        // Convert back to date and time
+                        localtime_r (&utcTimeLastDayOfCurrentMonth, &tmLastDayOfCurrentMonth);
+
+                        sprintf (newPeriodEndDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+                                tmLastDayOfCurrentMonth. tm_year + 1900,
+                                tmLastDayOfCurrentMonth. tm_mon + 1,
+                                tmLastDayOfCurrentMonth. tm_mday,
+                                23,  // tmDateTimeNow. tm_hour,
+                                59,  // tmDateTimeNow. tm_min,
+                                59  // tmDateTimeNow. tm_sec
+                        );
+                    }
+                }
+                else // if (encodingPeriod == static_cast<int>(EncodingPeriod::Yearly))
+                {
+                    // first day of the year
+                    {
+                        sprintf (newPeriodStartDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+                                tmDateTimeNow. tm_year + 1900,
+                                1,  // tmDateTimeNow. tm_mon + 1,
+                                1,  // tmDateTimeNow. tm_mday,
+                                0,  // tmDateTimeNow. tm_hour,
+                                0,  // tmDateTimeNow. tm_min,
+                                0  // tmDateTimeNow. tm_sec
+                        );
+                    }
+
+                    // last day of the month
+                    {
+                        sprintf (newPeriodEndDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+                                tmDateTimeNow. tm_year + 1900,
+                                12, // tmDateTimeNow. tm_mon + 1,
+                                31, // tmDateTimeNow. tm_mday,
+                                23,  // tmDateTimeNow. tm_hour,
+                                59,  // tmDateTimeNow. tm_min,
+                                59  // tmDateTimeNow. tm_sec
+                        );
+                    }
+                }
+            }
+        }
+        
+        if (periodExpired)
+        {
+            lastSQLCommand = 
+                "update CMS_CustomerMoreInfo set CurrentIngestionsNumber = 0, StartDateTime = STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'), EndDateTime = STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S') where CustomerKey = ?";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, newPeriodStartDateTime);
+            preparedStatement->setString(queryParameterIndex++, newPeriodEndDateTime);
+            preparedStatement->setInt64(queryParameterIndex++, customerKey);
+
+            preparedStatement->executeUpdate();
+        }
+        
+        _connectionPool->unborrow(conn);
+
+        if (!ingestionsAllowed)
+        {
+            string errorMessage = string("Reached the max number of Ingestions in your period")
+                + ", maxIngestionsNumber: " + to_string(maxIngestionsNumber)
+                + ", encodingPeriod: " + to_string(static_cast<int>(encodingPeriod))
+            ;
+            _logger->error(errorMessage);
+            
+            throw runtime_error(errorMessage);
+        }
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(string("SQL exception")
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw se;
+    }    
+}
+
 
 int64_t CMSEngineDBFacade::getLastInsertId(shared_ptr<MySQLConnection> conn)
 {
@@ -1080,7 +1369,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
                     "CustomerKey			BIGINT UNSIGNED NOT NULL,"
                     "MediaItemKey			BIGINT UNSIGNED NULL,"
                     "MetaDataFileName			VARCHAR (128) NULL,"
-                    "IngestionType                      TINYINT (2) NULL,"
+                    "IngestionType                      TINYINT (2) NOT NULL,"
                     "StartIngestion			TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "EndIngestion			DATETIME NULL,"
                     "Status           			TINYINT (2) NOT NULL,"

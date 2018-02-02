@@ -52,7 +52,8 @@ public:
     enum class EncodingPeriod {
         Daily		= 0,
 	Weekly		= 1,
-	Monthly		= 2
+	Monthly		= 2,
+        Yearly          = 3
     };
 
     enum class CustomerType {
@@ -62,10 +63,10 @@ public:
     };
 
     enum class IngestionType {
-        Unknown                 = 0,
-        Insert                  = 1,
-        Update                  = 2,
-        Remove                  = 3
+        ContentIngestion        = 0,
+        ContentUpdate           = 1,
+        ContentRemove           = 2,
+        Encoding                = 3
     };
 
     enum class IngestionStatus {
@@ -116,9 +117,9 @@ public:
     );
     
     int64_t addIngestionJob (
-	int64_t customerKey,
-        string metadataFileName
-    );
+        int64_t customerKey,
+        string metadataFileName,
+        IngestionType ingestionType);
 
     void updateIngestionJob (
         int64_t ingestionJobKey,
@@ -151,6 +152,12 @@ private:
         int type,
         string emailAddress,
         chrono::system_clock::time_point expirationDate
+    );
+
+    void checkMaxIngestionNumber (
+        shared_ptr<MySQLConnection> conn,
+        int64_t customerKey,
+        int64_t ingestionJobKey
     );
 
     bool isCMSAdministratorUser (long lUserType)

@@ -10,6 +10,7 @@
 #include "CMSEngineDBFacade.h"
 #include "CMSStorage.h"
 #include "IngestAssetEvent.h"
+#include "json/json.h"
 
 #define CMSENGINEPROCESSORNAME    "CMSEngineProcessor"
 
@@ -29,6 +30,10 @@ private:
     void handleCheckIngestionEvent();
 
     void handleIngestAssetEvent(shared_ptr<IngestAssetEvent> ingestAssetEvent);
+
+    CMSEngineDBFacade::IngestionType validateMetadata(string ftpDirectoryWorkingEntryPathName);
+
+    bool isMetadataPresent(Json::Value root, string field);
 
 public:
     CMSEngineProcessor(

@@ -2,7 +2,6 @@
 #include <fstream>
 #include "CMSEngineProcessor.h"
 #include "CheckIngestionTimes.h"
-#include "json/json.h"
 
 CMSEngineProcessor::CMSEngineProcessor(
         shared_ptr<spdlog::logger> logger, 
@@ -184,15 +183,37 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                     string ftpDirectoryWorkingEntryPathName =
                             _cmsStorage->moveFTPRepositoryEntryToWorkingArea(customer, directoryEntry);
 
-                    int64_t ingestionJobKey;
+                    CMSEngineDBFacade::IngestionType ingestionType;
                     try
                     {
-                        ingestionJobKey = _cmsEngineDBFacade->addIngestionJob (customer->_customerKey, directoryEntry);
+                        ingestionType = validateMetadata(ftpDirectoryWorkingEntryPathName);
                     }
                     catch(exception e)
                     {
+                        _logger->error(string("validateMetadata failed")
+                                + ", exception: " + e.what()
+                        );
                         string ftpDirectoryErrorEntryPathName =
                             _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, directoryEntry);
+                    
+                        throw e;
+                    }
+                    
+                    int64_t ingestionJobKey;
+                    try
+                    {
+                        ingestionJobKey = _cmsEngineDBFacade->addIngestionJob (customer->_customerKey, directoryEntry, ingestionType);
+                    }
+                    catch(exception e)
+                    {
+                        _logger->error(string("_cmsEngineDBFacade->addIngestionJob failed")
+                                + ", exception: " + e.what()
+                        );
+
+                        string ftpDirectoryErrorEntryPathName =
+                            _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, directoryEntry);
+                    
+                        throw e;
                     }
 
                     try
@@ -218,6 +239,10 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                     }
                     catch(exception e)
                     {
+                        _logger->error(string("add IngestAssetEvent failed")
+                                + ", exception: " + e.what()
+                        );
+
                         string ftpDirectoryErrorEntryPathName =
                             _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, directoryEntry);
 
@@ -258,6 +283,11 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
 void CMSEngineProcessor::handleIngestAssetEvent(shared_ptr<IngestAssetEvent> ingestAssetEvent)
 
 {
+}
+
+CMSEngineDBFacade::IngestionType CMSEngineProcessor::validateMetadata(string ftpDirectoryWorkingEntryPathName)
+{
+    /*
     {
         "Type": "Encoding",         // mandatory
         "Version": "1.0",           // mandatory
@@ -266,9 +296,9 @@ void CMSEngineProcessor::handleIngestAssetEvent(shared_ptr<IngestAssetEvent> ing
             "ContentType": "video",     // mandatory: "video" or "audio" or "image"
             "MD5FileCheckSum": "....",  // optional
             "FileSizeInBytes": "...",   // optional
-                    
+
             "EncodingProfilesSet": "",  // optional: "default" or "defaultCustomer" or <custom name>
-                    
+
             "Delivery": "FTP",      // optional: "FTP"
             "FTP": {                // mandatory only if "Delivery" is "FTP"
                 "Hostname": "aaa",  // mandatory only if "Delivery" is "FTP": hostname or IP address
@@ -276,25 +306,50 @@ void CMSEngineProcessor::handleIngestAssetEvent(shared_ptr<IngestAssetEvent> ing
                 "User": "aaa",      // mandatory only if "Delivery" is "FTP"
                 "Password": "bbb"   // mandatory only if "Delivery" is "FTP"
             },
-                    
+
             "Notification": "EMail",      // optional: "EMail
             "EMail": {              // mandatory only if "Notification" is "EMail"
                 "Address": "giulanoc@catrasoftware.it"  // mandatory only if "Notification" is "EMail"
             }
         }
     }
+     */
     
+    CMSEngineDBFacade::IngestionType ingestionType;
     Json::Value root;
     
     try
-    {        
-        1. in addIngestionJob verificare MaxIngestionNumberInThePeriod
-        2. chiamare validateJson() in handleCheckIngestionEvent
-        
-        std::ifstream ingestAssetJson(ingestAssetEvent->getFTPDirectoryWorkingEntryPathName(), std::ifstream::binary);
+    {                
+        std::ifstream ingestAssetJson(ftpDirectoryWorkingEntryPathName, std::ifstream::binary);
         ingestAssetJson >> root;
         
-        validateJson();
+        string type = root.get("Type", "XXX").asString();
+        if (type == "IngestionType")
+            ingestionType = CMSEngineDBFacade::IngestionType::Encoding;
+        else if (type == "ContentIngestion")
+            ingestionType = CMSEngineDBFacade::IngestionType::ContentIngestion;
+        else if (type == "ContentUpdate")
+            ingestionType = CMSEngineDBFacade::IngestionType::ContentUpdate;
+        else if (type == "ContentRemove")
+            ingestionType = CMSEngineDBFacade::IngestionType::ContentRemove;
+        else
+        {
+            string errorMessage = string("Field 'Type' is wrong");
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        
+        string field = "Version";
+        if (!isMetadataPresent(root, field))
+        {
+            string errorMessage = string("Field is not present")
+                    + ", Field: " + field;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
 
         // servlet saveMetaData
         //  Type/Version    Encoding/1.0
@@ -305,10 +360,20 @@ void CMSEngineProcessor::handleIngestAssetEvent(shared_ptr<IngestAssetEvent> ing
     }
     catch(exception e)
     {
-        string ftpDirectoryErrorEntryPathName =
-            _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(ingestAssetEvent->getCustomer(), ingestAssetEvent->getFileName());
-
-        _cmsEngineDBFacade->updateIngestionJob (ingestAssetEvent->getIngestionJobKey(), CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
+        _logger->error(string("validateMetadata failed")
+                + ", exception: " + e.what()
+        );
+        
+        throw e.what();
     }
     
+    return ingestionType;
+}
+
+bool CMSEngineProcessor::isMetadataPresent(Json::Value root, string field)
+{
+    if (root.isObject() && root.isMember(field))
+        return true;
+    else
+        return false;
 }
