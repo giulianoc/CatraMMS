@@ -14,6 +14,7 @@
 
 #define CMSENGINEPROCESSORNAME    "CMSEngineProcessor"
 
+
 class CMSEngineProcessor
 {
 private:
@@ -29,9 +30,16 @@ private:
 
     void handleCheckIngestionEvent();
 
-    void handleIngestAssetEvent(shared_ptr<IngestAssetEvent> ingestAssetEvent);
+    void handleIngestAssetEvent (shared_ptr<IngestAssetEvent> ingestAssetEvent);
 
-    CMSEngineDBFacade::IngestionType validateMetadata(string ftpDirectoryWorkingEntryPathName);
+    CMSEngineDBFacade::IngestionType validateMetadata(Json::Value root);
+
+    void validateContentIngestionMetadata(Json::Value encoding);
+
+    pair<string, string> validateMediaSourceFile(
+        string customerFTPDirectory,
+        CMSEngineDBFacade::IngestionType ingestionType,
+        Json::Value root);
 
     bool isMetadataPresent(Json::Value root, string field);
 

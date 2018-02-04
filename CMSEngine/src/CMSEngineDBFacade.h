@@ -19,7 +19,8 @@
 #include <vector>
 #include "spdlog/spdlog.h"
 #include "Customer.h"
-#include "MySQLConnection.h"
+#include "catralibraries/MySQLConnection.h"
+#include "json/json.h"
 
 using namespace std;
 
@@ -63,20 +64,24 @@ public:
     };
 
     enum class IngestionType {
-        ContentIngestion        = 0,
-        ContentUpdate           = 1,
-        ContentRemove           = 2,
-        Encoding                = 3
+        Unknown                 = 0,    // in case json was not able to be parsed
+        ContentIngestion        = 1,
+        ContentUpdate           = 2,
+        ContentRemove           = 3
     };
 
     enum class IngestionStatus {
-        StartIingestion         = 1,
-        MetaDataValidated       = 2,    // Previously was MetaDataSavedInDB
-        ReadyToBeEncoded        = 3,    // Previously was MediaFileMovedInCMS
-        End_IngestionFailure    = 8,                    // nothing done
-        End_IngestionSuccess_EncodingError   = 9,    // (we will have this state if just one of the encoding failed.
+        DataReceivedAndValidated                    = 1,
+        QueuedForEncoding                           = 2,
+
+        End_ValidationMetadataFailed                = 5,
+        End_ValidationMediaSourceFailed             = 6,
+        End_CustomerReachedHisMaxIngestionNumber    = 7,
+        
+        End_IngestionFailure            = 10,                    // nothing done
+        End_IngestionSuccess_EncodingError   = 14,    // (we will have this state if just one of the encoding failed.
                     // One encoding is considered a failure only after that the MaxFailuresNumer for this encoding is reached)
-        End_IngestionSuccess    = 10                    // all done
+        End_IngestionSuccess    = 20                    // all done
     };
 
 public:
@@ -93,6 +98,8 @@ public:
 
     vector<shared_ptr<Customer>> getCustomers();
     
+    bool isMetadataPresent(Json::Value root, string field);
+
     int64_t addCustomer(
 	string customerName,
         string customerDirectoryName,
@@ -117,18 +124,36 @@ public:
     );
     
     int64_t addIngestionJob (
-        int64_t customerKey,
-        string metadataFileName,
-        IngestionType ingestionType);
+            int64_t customerKey,
+            string metadataFileName,
+            string metadataFileContent,
+            IngestionType ingestionType,
+            IngestionStatus ingestionStatus,
+            string errorMessage);
 
     void updateIngestionJob (
         int64_t ingestionJobKey,
         IngestionStatus newIngestionStatus,
         string errorMessage);
 
+    string checkCustomerMaxIngestionNumber (int64_t customerKey);
+
+    int64_t saveContentMetadata(
+        shared_ptr<Customer> customer,
+        int64_t ingestionJobKey,
+        Json::Value metadataRoot,
+        string relativePath,
+        int cmsPartitionIndexUsed,
+        int sizeInBytes,
+        int64_t videoOrAudioDurationInMilliSeconds,
+        int imageWidth,
+        int imageHeight);
+
 private:
     shared_ptr<spdlog::logger>                      _logger;
     shared_ptr<ConnectionPool<MySQLConnection>>     _connectionPool;
+    string                          _defaultContentProviderName;
+    string                          _defaultTerritoryName;
 
     void getTerritories(shared_ptr<Customer> customer);
 
@@ -152,12 +177,6 @@ private:
         int type,
         string emailAddress,
         chrono::system_clock::time_point expirationDate
-    );
-
-    void checkMaxIngestionNumber (
-        shared_ptr<MySQLConnection> conn,
-        int64_t customerKey,
-        int64_t ingestionJobKey
     );
 
     bool isCMSAdministratorUser (long lUserType)

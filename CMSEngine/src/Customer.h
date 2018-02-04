@@ -15,6 +15,7 @@ struct Customer
     string                  _name;
     string                  _directoryName;
     unsigned long           _maxStorageInGB;
+    int                     _maxEncodingPriority;
 
     TerritoriesHashMap      _territories;
 };

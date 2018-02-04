@@ -35,7 +35,6 @@ SET (HEADERS
 
 include_directories ("${PROJECT_SOURCE_DIR}/../usr_local/include")
 include_directories ("${PROJECT_SOURCE_DIR}/../spdlog/include")
-include_directories ("${PROJECT_SOURCE_DIR}/../connection-pool")
 if (APPLE)
 	include_directories ("${PROJECT_SOURCE_DIR}/../mysql-connector-c++-1.1.9-macos10.12-x86-64bit/include")
 else()

@@ -25,6 +25,9 @@ CMSEngineDBFacade::CMSEngineDBFacade(
 {
     _logger     = logger;
     
+    _defaultContentProviderName     = "default";
+    _defaultTerritoryName           = "default";
+    
     shared_ptr<MySQLConnectionFactory>  mySQLConnectionFactory = 
             make_shared<MySQLConnectionFactory>(dbServer, dbUsername, dbPassword, dbName);
         
@@ -42,7 +45,7 @@ vector<shared_ptr<Customer>> CMSEngineDBFacade::getCustomers()
     shared_ptr<MySQLConnection> conn = _connectionPool->borrow();	
 
     shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(
-        "select CustomerKey, Name, DirectoryName, MaxStorageInGB from CMS_Customers where IsEnabled = 1 and CustomerType in (1, 2)"));
+        "select CustomerKey, Name, DirectoryName, MaxStorageInGB, MaxEncodingPriority from CMS_Customers where IsEnabled = 1 and CustomerType in (1, 2)"));
     shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 
     vector<shared_ptr<Customer>>    customers;
@@ -57,7 +60,8 @@ vector<shared_ptr<Customer>> CMSEngineDBFacade::getCustomers()
         customer->_name = resultSet->getString("Name");
         customer->_directoryName = resultSet->getString("DirectoryName");
         customer->_maxStorageInGB = resultSet->getInt("MaxStorageInGB");
-        
+        customer->_maxEncodingPriority = resultSet->getInt("MaxEncodingPriority");
+
         getTerritories(customer);
     }
 
@@ -190,7 +194,7 @@ int64_t CMSEngineDBFacade::addCustomer(
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, customerKey);
-            preparedStatement->setString(queryParameterIndex++, "default");
+            preparedStatement->setString(queryParameterIndex++, _defaultContentProviderName);
 
             preparedStatement->executeUpdate();
         }
@@ -200,7 +204,7 @@ int64_t CMSEngineDBFacade::addCustomer(
         int64_t territoryKey = addTerritory(
                 conn,
                 customerKey,
-                "default");
+                _defaultTerritoryName);
         
         int userType = getCMSUser();
         
@@ -257,6 +261,8 @@ int64_t CMSEngineDBFacade::addCustomer(
         if (!autoCommit)
             conn->_sqlConnection->rollback();     // or execute ROLLBACK
         
+        _connectionPool->unborrow(conn);
+
         string exceptionMessage(se.what());
         
         _logger->error(string("SQL exception")
@@ -387,7 +393,10 @@ int64_t CMSEngineDBFacade::addUser (
 int64_t CMSEngineDBFacade::addIngestionJob (
 	int64_t customerKey,
         string metadataFileName,
-        IngestionType ingestionType
+        string metadataFileContent,
+        IngestionType ingestionType,
+        IngestionStatus ingestionStatus,
+        string errorMessage
 )
 {
     int64_t         ingestionJobKey;
@@ -444,16 +453,20 @@ int64_t CMSEngineDBFacade::addIngestionJob (
         
         {
             lastSQLCommand = 
-                "insert into CMS_IngestionJobs (IngestionJobKey, CustomerKey, MediaItemKey, MetaDataFileName, IngestionType, StartIngestion, EndIngestion, Status, ErrorMessage) values ("
-                "NULL, ?, NULL, ?, ?, NULL, NULL, ?, ?)";
+                "insert into CMS_IngestionJobs (IngestionJobKey, CustomerKey, MediaItemKey, MetaDataFileName, MetadataFileContent, IngestionType, StartIngestion, EndIngestion, Status, ErrorMessage) values ("
+                "NULL, ?, NULL, ?, ?, ?, NULL, NULL, ?, ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, customerKey);
             preparedStatement->setString(queryParameterIndex++, metadataFileName);
+            preparedStatement->setString(queryParameterIndex++, metadataFileContent);
             preparedStatement->setInt(queryParameterIndex++, static_cast<int>(ingestionType));
-            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(IngestionStatus::StartIingestion));
-            preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(ingestionStatus));
+            if (errorMessage == "")
+                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+            else
+                preparedStatement->setString(queryParameterIndex++, errorMessage);
 
             preparedStatement->executeUpdate();
         }
@@ -462,19 +475,6 @@ int64_t CMSEngineDBFacade::addIngestionJob (
                 
         _connectionPool->unborrow(conn);
 
-        try
-        {
-            if (ingestionType == IngestionType::Encoding)
-            {
-                checkMaxIngestionNumber (conn, customerKey, ingestionJobKey);
-            }          
-        }
-        catch(exception e)
-        {
-            updateIngestionJob (ingestionJobKey, IngestionStatus::End_IngestionFailure, e.what());
-            
-            throw e;
-        }
     }
     catch(sql::SQLException se)
     {
@@ -612,13 +612,14 @@ void CMSEngineDBFacade::updateIngestionJob (
     }    
 }
 
-void CMSEngineDBFacade::checkMaxIngestionNumber (
-    shared_ptr<MySQLConnection> conn,
-    int64_t customerKey,
-    int64_t ingestionJobKey
+string CMSEngineDBFacade::checkCustomerMaxIngestionNumber (
+    int64_t customerKey
 )
 {
+    string      relativePathToBeUsed;
     string      lastSQLCommand;
+
+    shared_ptr<MySQLConnection> conn;
 
     try
     {
@@ -627,11 +628,17 @@ void CMSEngineDBFacade::checkMaxIngestionNumber (
         int encodingPeriod;
         string periodStartDateTime;
         string periodEndDateTime;
+        int currentDirLevel1;
+        int currentDirLevel2;
+        int currentDirLevel3;
+
+        conn = _connectionPool->borrow();	
 
         {
             lastSQLCommand = 
                 "select c.MaxIngestionsNumber, cmi.CurrentIngestionsNumber, c.EncodingPeriod, " 
-                    "DATE_FORMAT(cmi.StartDateTime, '%Y-%m-%d %H:%i:%s') as LocalStartDateTime, DATE_FORMAT(cmi.EndDateTime, '%Y-%m-%d %H:%i:%s') as LocalEndDateTime " 
+                    "DATE_FORMAT(cmi.StartDateTime, '%Y-%m-%d %H:%i:%s') as LocalStartDateTime, DATE_FORMAT(cmi.EndDateTime, '%Y-%m-%d %H:%i:%s') as LocalEndDateTime, "
+                    "cmi.CurrentDirLevel1, cmi.CurrentDirLevel2, cmi.CurrentDirLevel3 "
                 "from CMS_Customers c, CMS_CustomerMoreInfo cmi where c.CustomerKey = cmi.CustomerKey and c.CustomerKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -645,6 +652,9 @@ void CMSEngineDBFacade::checkMaxIngestionNumber (
                 encodingPeriod = resultSet->getInt("EncodingPeriod");
                 periodStartDateTime = resultSet->getString("LocalStartDateTime");
                 periodEndDateTime = resultSet->getString("LocalEndDateTime");                
+                currentDirLevel1 = resultSet->getInt("CurrentDirLevel1");
+                currentDirLevel2 = resultSet->getInt("CurrentDirLevel2");
+                currentDirLevel3 = resultSet->getInt("CurrentDirLevel3");
             }
             else
             {
@@ -883,6 +893,15 @@ void CMSEngineDBFacade::checkMaxIngestionNumber (
             
             throw runtime_error(errorMessage);
         }
+        
+        {
+            char pCurrentRelativePath [64];
+            
+            sprintf (pCurrentRelativePath, "/%03d/%03d/%03d/", 
+                currentDirLevel1, currentDirLevel2, currentDirLevel3);
+            
+            relativePathToBeUsed = pCurrentRelativePath;
+        }
     }
     catch(sql::SQLException se)
     {
@@ -895,8 +914,466 @@ void CMSEngineDBFacade::checkMaxIngestionNumber (
 
         throw se;
     }    
+    
+    return relativePathToBeUsed;
 }
 
+int64_t CMSEngineDBFacade::saveContentMetadata(
+        shared_ptr<Customer> customer,
+        int64_t ingestionJobKey,
+        Json::Value metadataRoot,
+        string relativePath,
+        int cmsPartitionIndexUsed,
+        int sizeInBytes,
+        int64_t videoOrAudioDurationInMilliSeconds,
+        int imageWidth,
+        int imageHeight
+)
+{
+    int64_t         mediaItemKey;
+    int64_t         physicalPathKey;
+    
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn;
+    bool autoCommit = true;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+
+        autoCommit = false;
+        conn->_sqlConnection->setAutoCommit(autoCommit);    // or execute the statement START TRANSACTION
+        
+        Json::Value contentIngestion = metadataRoot["ContentIngestion"]; 
+
+        // get ContentProviderKey
+        int64_t contentProviderKey;
+        {
+            string contentProviderName;
+            
+            if (isMetadataPresent(contentIngestion, "ContentProviderName"))
+                contentProviderName = contentIngestion.get("ContentProviderName", "XXX").asString();
+            else
+                contentProviderName = _defaultContentProviderName;
+
+            lastSQLCommand = 
+                "select ContentProviderKey from CMS_ContentProviders where CustomerKey = ? and Name = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, customer->_customerKey);
+            preparedStatement->setString(queryParameterIndex++, contentProviderName);
+            
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                contentProviderKey = resultSet->getInt64("ContentProviderKey");
+            }
+            else
+            {
+                string errorMessage = string("ContentProvider is not present")
+                    + ", customer->_customerKey: " + to_string(customer->_customerKey)
+                    + ", contentProviderName: " + contentProviderName
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }            
+        }
+
+        ContentType contentType;
+        int64_t encodingProfileSetKey;
+        {
+            string title = "";
+            string subTitle = "";
+            string ingester = "";
+            string keywords = "";
+            string description = "";
+            string sContentType;
+            string logicalType = "";
+            string encodingProfilesSet;
+
+            title = contentIngestion.get("Title", "XXX").asString();
+            
+            if (isMetadataPresent(contentIngestion, "SubTitle"))
+                subTitle = contentIngestion.get("SubTitle", "XXX").asString();
+
+            if (isMetadataPresent(contentIngestion, "Ingester"))
+                ingester = contentIngestion.get("Ingester", "XXX").asString();
+
+            if (isMetadataPresent(contentIngestion, "Keywords"))
+                keywords = contentIngestion.get("Keywords", "XXX").asString();
+
+            if (isMetadataPresent(contentIngestion, "Description"))
+                description = contentIngestion.get("Description", "XXX").asString();
+
+            sContentType = contentIngestion.get("ContentType", "XXX").asString();
+            if (sContentType == "video")
+                contentType = ContentType::Video;
+            else if (sContentType == "audio")
+                contentType = ContentType::Audio;
+            else if (sContentType == "image")
+                contentType = ContentType::Image;
+            else
+            {
+                string errorMessage = string("ContentType is wrong")
+                    + ", sContentType: " + sContentType
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }            
+
+            if (isMetadataPresent(contentIngestion, "LogicalType"))
+                logicalType = contentIngestion.get("LogicalType", "XXX").asString();
+
+            {
+                encodingProfilesSet = contentIngestion.get("EncodingProfilesSet", "XXX").asString();
+                if (encodingProfilesSet == "systemDefault")
+                {
+                    lastSQLCommand = 
+                        "select EncodingProfilesSetKey from CMS_EncodingProfilesSet where ContentType = ? and CustomerKey is null and Name is null";
+                    shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                    int queryParameterIndex = 1;
+                    preparedStatement->setInt(queryParameterIndex++, static_cast<int>(contentType));
+                }
+                else if (encodingProfilesSet == "customerDefault")
+                {
+                    lastSQLCommand = 
+                        "select EncodingProfilesSetKey from CMS_EncodingProfilesSet where ContentType = ? and CustomerKey = ? and Name is null";
+                    shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                    int queryParameterIndex = 1;
+                    preparedStatement->setInt(queryParameterIndex++, static_cast<int>(contentType));
+                    preparedStatement->setInt64(queryParameterIndex++, customer->_customerKey);
+                }
+                else
+                {
+                    lastSQLCommand = 
+                        "select EncodingProfilesSetKey from CMS_EncodingProfilesSet where ContentType = ? and CustomerKey = ? and Name = ?";
+                }
+                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                int queryParameterIndex = 1;
+                if (encodingProfilesSet == "systemDefault")
+                {
+                    preparedStatement->setInt(queryParameterIndex++, static_cast<int>(contentType));
+                }
+                else if (encodingProfilesSet == "customerDefault")
+                {
+                    preparedStatement->setInt(queryParameterIndex++, static_cast<int>(contentType));
+                    preparedStatement->setInt64(queryParameterIndex++, customer->_customerKey);
+                }
+                else
+                {
+                    preparedStatement->setInt(queryParameterIndex++, static_cast<int>(contentType));
+                    preparedStatement->setInt64(queryParameterIndex++, customer->_customerKey);
+                    preparedStatement->setString(queryParameterIndex++, encodingProfilesSet);
+                }
+                shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+                if (resultSet->next())
+                {
+                    encodingProfileSetKey = resultSet->getInt64("EncodingProfilesSetKey");
+                }
+                else
+                {
+                    string errorMessage = string("EncodingProfilesSetKey is not present")
+                        + ", contentType: " + to_string(static_cast<int>(contentType))
+                        + ", customer->_customerKey: " + to_string(customer->_customerKey)
+                        + ", encodingProfilesSet: " + encodingProfilesSet
+                    ;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);                    
+                }            
+            }
+
+
+            lastSQLCommand = 
+                "insert into CMS_MediaItems (MediaItemKey, CustomerKey, ContentProviderKey, GenreKey, Title, SubTitle, Ingester, Keywords, Description, " 
+                "IngestionDate, ContentType, LogicalType, EncodingProfilesSetKey) values ("
+                "NULL, ?, ?, NULL, ?, ?, ?, ?, ?, NULL, ?, ?, ?)";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, customer->_customerKey);
+            preparedStatement->setInt64(queryParameterIndex++, contentProviderKey);
+            preparedStatement->setString(queryParameterIndex++, title);
+            if (subTitle == "")
+                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+            else
+                preparedStatement->setString(queryParameterIndex++, subTitle);
+            if (ingester == "")
+                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+            else
+                preparedStatement->setString(queryParameterIndex++, ingester);
+            if (keywords == "")
+                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+            else
+                preparedStatement->setString(queryParameterIndex++, keywords);
+            if (description == "")
+                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+            else
+                preparedStatement->setString(queryParameterIndex++, description);
+            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(contentType));
+            if (logicalType == "")
+                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+            else
+                preparedStatement->setString(queryParameterIndex++, logicalType);
+            preparedStatement->setInt64(queryParameterIndex++, encodingProfileSetKey);
+
+            preparedStatement->executeUpdate();
+        }
+        
+        mediaItemKey = getLastInsertId(conn);
+
+        {
+            if (contentType == ContentType::Video)
+            {
+                lastSQLCommand = 
+                    "insert into CMS_VideoItems (MediaItemKey, DurationInMilliSeconds) values ("
+                    "?, ?)";
+
+                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                int queryParameterIndex = 1;
+                preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+                if (videoOrAudioDurationInMilliSeconds == -1)
+                    preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
+                else
+                    preparedStatement->setInt64(queryParameterIndex++, videoOrAudioDurationInMilliSeconds);
+
+                preparedStatement->executeUpdate();
+            }
+            else if (contentType == ContentType::Audio)
+            {
+                lastSQLCommand = 
+                    "insert into CMS_AudioItems (MediaItemKey, DurationInMilliSeconds) values ("
+                    "?, ?)";
+
+                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                int queryParameterIndex = 1;
+                preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+                if (videoOrAudioDurationInMilliSeconds == -1)
+                    preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
+                else
+                    preparedStatement->setInt64(queryParameterIndex++, videoOrAudioDurationInMilliSeconds);
+
+                preparedStatement->executeUpdate();
+            }
+            else if (contentType == ContentType::Image)
+            {
+                lastSQLCommand = 
+                    "insert into CMS_ImageItems (MediaItemKey, Width, Height) values ("
+                    "?, ?, ?)";
+
+                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                int queryParameterIndex = 1;
+                preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+                preparedStatement->setInt64(queryParameterIndex++, imageWidth);
+                preparedStatement->setInt64(queryParameterIndex++, imageHeight);
+
+                preparedStatement->executeUpdate();
+            }
+            else
+            {
+                string errorMessage = string("ContentType is wrong")
+                    + ", contentType: " + to_string(static_cast<int>(contentType))
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }            
+        }        
+
+        {
+            string sourceFileName = "";
+            int drm = 0;
+
+            sourceFileName = contentIngestion.get("SourceFileName", "XXX").asString();
+
+            lastSQLCommand = 
+                "insert into CMS_PhysicalPaths(PhysicalPathKey, MediaItemKey, DRM, FileName, RelativePath, CMSPartitionNumber, SizeInBytes, EncodingProfileKey, CreationDate) values ("
+		"NULL, ?, ?, ?, ?, ?, ?, ?, NOW())";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+            preparedStatement->setInt(queryParameterIndex++, drm);
+            preparedStatement->setString(queryParameterIndex++, sourceFileName);
+            preparedStatement->setString(queryParameterIndex++, relativePath);
+            preparedStatement->setInt(queryParameterIndex++, cmsPartitionIndexUsed);
+            preparedStatement->setInt(queryParameterIndex++, sizeInBytes);
+            preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
+
+            preparedStatement->executeUpdate();
+        }
+
+        physicalPathKey = getLastInsertId(conn);
+
+        {
+            int currentDirLevel1;
+            int currentDirLevel2;
+            int currentDirLevel3;
+
+            {
+                lastSQLCommand = 
+                    "select CurrentDirLevel1, CurrentDirLevel2, CurrentDirLevel3 "
+                    "from CMS_CustomerMoreInfo where CustomerKey = ?";
+                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                int queryParameterIndex = 1;
+                preparedStatement->setInt64(queryParameterIndex++, customer->_customerKey);
+
+                shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+                if (resultSet->next())
+                {
+                    currentDirLevel1 = resultSet->getInt("CurrentDirLevel1");
+                    currentDirLevel2 = resultSet->getInt("CurrentDirLevel2");
+                    currentDirLevel3 = resultSet->getInt("CurrentDirLevel3");
+                }
+                else
+                {
+                    string errorMessage = string("Customer is not present/configured")
+                        + ", customer->_customerKey: " + to_string(customer->_customerKey);
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);                    
+                }            
+            }
+
+            if (currentDirLevel3 >= 999)
+            {
+                currentDirLevel3		= 0;
+
+                if (currentDirLevel2 >= 999)
+                {
+                    currentDirLevel2		= 0;
+
+                    if (currentDirLevel1 >= 999)
+                    {
+                        currentDirLevel1		= 0;
+                    }
+                    else
+                    {
+                        currentDirLevel1++;
+                    }
+                }
+                else
+                {
+                    currentDirLevel2++;
+                }
+            }
+            else
+            {
+                currentDirLevel3++;
+            }
+
+            {
+                lastSQLCommand = 
+                    "update CMS_CustomerMoreInfo set CurrentDirLevel1 = ?, CurrentDirLevel2 = ?, CurrentDirLevel3 = ?, CurrentIngestionsNumber = CurrentIngestionsNumber + 1 where CustomerKey = ?";
+
+                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                int queryParameterIndex = 1;
+                preparedStatement->setInt(queryParameterIndex++, currentDirLevel1);
+                preparedStatement->setInt(queryParameterIndex++, currentDirLevel2);
+                preparedStatement->setInt(queryParameterIndex++, currentDirLevel3);
+                preparedStatement->setInt64(queryParameterIndex++, customer->_customerKey);
+
+                preparedStatement->executeUpdate();
+            }
+        }
+        
+        {
+            EncodingPriority encodingPriority;
+            string field = "EncodingPriority";
+            if (isMetadataPresent(contentIngestion, field))
+            {
+                string strEncodingPriority = contentIngestion.get(field, "XXX").asString();
+                if (strEncodingPriority == "low")
+                {
+                   encodingPriority = EncodingPriority::Low; 
+                }
+                else if (strEncodingPriority == "default")
+                {
+                   encodingPriority = EncodingPriority::Default;
+                }
+                else if (strEncodingPriority == "high")
+                {
+                   encodingPriority = EncodingPriority::High; 
+                }
+                else
+                {
+                    string errorMessage = string("Field 'EncodingPriority' is wrong")
+                            + ", EncodingPriority: " + to_string(static_cast<int>(encodingPriority));
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+                
+                if (static_cast<int>(encodingPriority) > customer->_maxEncodingPriority)
+                    encodingPriority = static_cast<EncodingPriority>(customer->_maxEncodingPriority); 
+            }
+            else
+                encodingPriority = static_cast<EncodingPriority>(customer->_maxEncodingPriority);
+
+            lastSQLCommand = 
+                "insert into CMS_EncodingJobs(EncodingJobKey, IngestionJobKey, SourcePhysicalPathKey, EncodingPriority, EncodingProfileKey, EncodingJobStart, EncodingJobEnd, Status, ProcessorCMS, FailuresNumber)"
+	        " select                      NULL,           ?,               ?,                     ?,                 EncodingProfileKey, NULL,             NULL,           ?,      NULL,         0 from CMS_EncodingProfilesSetMapping where EncodingProfilesSetKey = ?";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+            preparedStatement->setInt64(queryParameterIndex++, physicalPathKey);
+            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(encodingPriority));
+            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(EncodingJob::ToBeProcessed));
+            preparedStatement->setInt64(queryParameterIndex++, encodingProfileSetKey);
+
+            preparedStatement->executeUpdate();
+        }
+
+        {
+            lastSQLCommand = 
+                "update CMS_IngestionJobs set MediaItemKey = ?, Status = ? where IngestionJobKey = ?";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(IngestionStatus::QueuedForEncoding));
+            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+
+            preparedStatement->executeUpdate();
+        }
+
+        conn->_sqlConnection->commit();     // or execute COMMIT
+        autoCommit = true;
+
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        if (!autoCommit)
+            conn->_sqlConnection->rollback();     // or execute ROLLBACK
+        
+        _connectionPool->unborrow(conn);
+
+        string exceptionMessage(se.what());
+        
+        _logger->error(string("SQL exception")
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw se;
+    }
+    
+    return mediaItemKey;
+}
+
+bool CMSEngineDBFacade::isMetadataPresent(Json::Value root, string field)
+{
+    if (root.isObject() && root.isMember(field) && !root[field].isNull()
+)
+        return true;
+    else
+        return false;
+}
 
 int64_t CMSEngineDBFacade::getLastInsertId(shared_ptr<MySQLConnection> conn)
 {
@@ -1368,7 +1845,8 @@ void CMSEngineDBFacade::createTablesIfNeeded()
                     "IngestionJobKey  			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "CustomerKey			BIGINT UNSIGNED NOT NULL,"
                     "MediaItemKey			BIGINT UNSIGNED NULL,"
-                    "MetaDataFileName			VARCHAR (128) NULL,"
+                    "MetaDataFileName                   VARCHAR (128) CHARACTER SET utf8 COLLATE utf8_bin NULL,"
+                    "MetaDataFileContent		TEXT CHARACTER SET utf8 COLLATE utf8_bin NULL,"
                     "IngestionType                      TINYINT (2) NOT NULL,"
                     "StartIngestion			TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "EndIngestion			DATETIME NULL,"
@@ -1377,6 +1855,301 @@ void CMSEngineDBFacade::createTablesIfNeeded()
                     "constraint CMS_IngestionJobs_PK PRIMARY KEY (IngestionJobKey), "
                     "constraint CMS_IngestionJobs_FK foreign key (CustomerKey) "
                         "references CMS_Customers (CustomerKey) on delete cascade) "	   	        				
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(string("SQL exception")
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
+        try
+        {
+            lastSQLCommand = 
+                "create table if not exists CMS_Genres ("
+                    "GenreKey				BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "Name				VARCHAR (128) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
+                    "constraint CMS_Genres_PK PRIMARY KEY (GenreKey), "
+                    "UNIQUE (Name)) "
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(string("SQL exception")
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
+        try
+        {
+            // CustomerKey is the owner of the content
+            // ContentType: 0: video, 1: audio, 2: image, 3: application, 4: ringtone (it uses the same audio tables),
+            //		5: playlist, 6: live
+            // IngestedRelativePath MUST start always with '/' and ends always with '/'
+            // IngestedFileName and IngestedRelativePath refer the ingested content independently
+            //		if it is encoded or uncompressed
+            // if EncodingProfilesSet is NULL, it means the ingested content is already encoded
+            // The ContentProviderKey is the entity owner of the content. For example H3G is our customer and EMI is the ContentProvider.
+            lastSQLCommand = 
+                "create table if not exists CMS_MediaItems ("
+                    "MediaItemKey  			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "CustomerKey			BIGINT UNSIGNED NOT NULL,"
+                    "ContentProviderKey			BIGINT UNSIGNED NOT NULL,"
+                    "GenreKey				BIGINT UNSIGNED NULL,"
+                    "Title      			VARCHAR (256) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
+                    "SubTitle				MEDIUMTEXT CHARACTER SET utf8 COLLATE utf8_bin NULL,"
+                    "Ingester				VARCHAR (128) NULL,"
+                    "Keywords				VARCHAR (128) CHARACTER SET utf8 COLLATE utf8_bin NULL,"
+                    "Description			TEXT CHARACTER SET utf8 COLLATE utf8_bin NULL,"
+                    "IngestionDate			TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+                    "ContentType                        TINYINT NOT NULL,"
+                    "LogicalType			VARCHAR (32) NULL,"
+                    "EncodingProfilesSetKey		BIGINT UNSIGNED NULL,"
+                    "constraint CMS_MediaItems_PK PRIMARY KEY (MediaItemKey), "
+                    "constraint CMS_MediaItems_FK foreign key (CustomerKey) "
+                        "references CMS_Customers (CustomerKey) on delete cascade, "
+                    "constraint CMS_MediaItems_FK2 foreign key (ContentProviderKey) "
+                        "references CMS_ContentProviders (ContentProviderKey), "
+                    "constraint CMS_MediaItems_FK3 foreign key (EncodingProfilesSetKey) "
+                        "references CMS_EncodingProfilesSet (EncodingProfilesSetKey), "
+                    "constraint CMS_MediaItems_FK4 foreign key (GenreKey) "
+                        "references CMS_Genres (GenreKey)) "
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(string("SQL exception")
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
+        try
+        {
+            lastSQLCommand = 
+                "create index CMS_MediaItems_idx2 on CMS_MediaItems (ContentType, LogicalType, IngestionDate)";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(string("SQL exception")
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
+        try
+        {
+            lastSQLCommand = 
+                "create index CMS_MediaItems_idx3 on CMS_MediaItems (ContentType, IngestionDate)";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(string("SQL exception")
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
+        try
+        {
+            lastSQLCommand = 
+                "create index CMS_MediaItems_idx4 on CMS_MediaItems (ContentType, Title)";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(string("SQL exception")
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
+        try
+        {
+            // DRM. 0: NO DRM, 1: YES DRM
+            // EncodedFileName and EncodedRelativePath are NULL only if the content is un-compressed.
+            //  EncodedRelativePath MUST start always with '/' and ends always with '/'
+            // EncodingProfileKey will be NULL only in case of
+            //      - an un-compressed video or audio
+            //      - an Application
+            // CMSPartitionNumber. -1: live partition, >= 0: partition for any other content
+            // IsAlias (0: false): it is used for a PhysicalPath that is an alias and
+            //  it really refers another existing PhysicalPath. It was introduced to manage the XLE live profile
+            //  supporting really multi profiles: rtsp, hls, adobe. So for every different profiles, we will
+            //  create just an alias
+            lastSQLCommand = 
+                "create table if not exists CMS_PhysicalPaths ("
+                    "PhysicalPathKey  			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "MediaItemKey			BIGINT UNSIGNED NOT NULL,"
+                    "DRM	             		TINYINT NOT NULL,"
+                    "FileName				VARCHAR (128) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
+                    "RelativePath			VARCHAR (256) NOT NULL,"
+                    "CMSPartitionNumber			INT NULL,"
+                    "SizeInBytes			BIGINT UNSIGNED NOT NULL,"
+                    "EncodingProfileKey			BIGINT UNSIGNED NULL,"
+                    "IsAlias				INT NOT NULL DEFAULT 0,"
+                    "CreationDate			TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+                    "constraint CMS_PhysicalPaths_PK PRIMARY KEY (PhysicalPathKey), "
+                    "constraint CMS_PhysicalPaths_FK foreign key (MediaItemKey) "
+                        "references CMS_MediaItems (MediaItemKey) on delete cascade, "
+                    "constraint CMS_PhysicalPaths_FK2 foreign key (EncodingProfileKey) "
+                        "references CMS_EncodingProfiles (EncodingProfileKey), "
+                    "UNIQUE (MediaItemKey, RelativePath, FileName, IsAlias), "
+                    "UNIQUE (MediaItemKey, EncodingProfileKey)) "	// it is not possible to have the same content using the same encoding profile key
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(string("SQL exception")
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
+        try
+        {
+            // that index is important for the periodical select done by 'checkPublishing'
+            lastSQLCommand = 
+                "create index CMS_PhysicalPaths_idx2 on CMS_PhysicalPaths (MediaItemKey, PhysicalPathKey, EncodingProfileKey, CMSPartitionNumber)";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(string("SQL exception")
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
+        try
+        {
+            // that index is important for the periodical select done by 'checkPublishing'
+            lastSQLCommand = 
+                "create index CMS_PhysicalPaths_idx3 on CMS_PhysicalPaths (RelativePath, FileName)";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(string("SQL exception")
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
+        try
+        {
+            lastSQLCommand = 
+                "create table if not exists CMS_VideoItems ("
+                    "MediaItemKey			BIGINT UNSIGNED NOT NULL,"
+                    "DurationInMilliSeconds		BIGINT NULL,"
+                    "constraint CMS_VideoItems_PK PRIMARY KEY (MediaItemKey), "
+                    "constraint CMS_VideoItems_FK foreign key (MediaItemKey) "
+                        "references CMS_MediaItems (MediaItemKey) on delete cascade) "
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(string("SQL exception")
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+        
+        try
+        {
+            lastSQLCommand = 
+                "create table if not exists CMS_AudioItems ("
+                    "MediaItemKey			BIGINT UNSIGNED NOT NULL,"
+                    "DurationInMilliSeconds		BIGINT NULL,"
+                    "constraint CMS_AudioItems_PK PRIMARY KEY (MediaItemKey), "
+                    "constraint CMS_AudioItems_FK foreign key (MediaItemKey) "
+                        "references CMS_MediaItems (MediaItemKey) on delete cascade) "
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(string("SQL exception")
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+        
+        try
+        {
+            lastSQLCommand = 
+                "create table if not exists CMS_ImageItems ("
+                    "MediaItemKey				BIGINT UNSIGNED NOT NULL,"
+                    "Width						INT NOT NULL,"
+                    "Height						INT NOT NULL,"
+                    "constraint CMS_ImageItems_PK PRIMARY KEY (MediaItemKey), "
+                    "constraint CMS_ImageItems_FK foreign key (MediaItemKey) "
+                        "references CMS_MediaItems (MediaItemKey) on delete cascade) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
@@ -1421,37 +2194,25 @@ void CMSEngineDBFacade::createTablesIfNeeded()
                 "create table if not exists CMS_EncodingJobs ("
                     "EncodingJobKey  			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "IngestionJobKey			BIGINT UNSIGNED NOT NULL,"
-                    "OriginatingProcedure		TINYINT (2) NOT NULL,"
-                    "OriginalFileName			VARCHAR (128) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
-                    "FileNameWithTimeStamp		VARCHAR (128) NULL,"
-                    "RelativePath				VARCHAR (256) NOT NULL,"
-                    "CustomerKey				BIGINT UNSIGNED NOT NULL,"
-                    "PhysicalPathKey			BIGINT UNSIGNED NULL,"
-                    "ContentType                TINYINT NOT NULL,"
+                    "SourcePhysicalPathKey		BIGINT UNSIGNED NULL,"
                     "EncodingPriority			TINYINT NOT NULL,"
-                    "FTPIPAddress				VARCHAR (32) NULL,"
-                    "FTPPort           			INT NULL,"
-                    "FTPUser					VARCHAR (32) NULL,"
-                    "FTPPassword				VARCHAR (32) NULL,"
                     "EncodingProfileKey			BIGINT UNSIGNED NOT NULL,"
                     "EncodingJobStart			TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
-                    "EncodingJobEnd				DATETIME NULL,"
+                    "EncodingJobEnd			DATETIME NULL,"
                     "Status           			TINYINT (2) NOT NULL,"
-                    "ProcessorCMS				VARCHAR (24) NULL,"
+                    "ProcessorCMS			VARCHAR (24) NULL,"
                     "FailuresNumber           	INT NOT NULL,"
                     "constraint CMS_EncodingJobs_PK PRIMARY KEY (EncodingJobKey), "
                     "constraint CMS_EncodingJobs_FK foreign key (IngestionJobKey) "
                         "references CMS_IngestionJobs (IngestionJobKey) on delete cascade, "
-                    "constraint CMS_EncodingJobs_FK2 foreign key (CustomerKey) "
-                        "references CMS_Customers (CustomerKey), "
-                    "constraint CMS_EncodingJobs_FK3 foreign key (PhysicalPathKey) "
+                    "constraint CMS_EncodingJobs_FK3 foreign key (SourcePhysicalPathKey) "
                     // on delete cascade is necessary because when the ingestion fails, it is important that the 'removeMediaItemMetaData'
                     //      remove the rows from this table too, otherwise we will be flooded by the errors: PartitionNumber is null
                     // The consequence is that when the PhysicalPath is removed in general, also the rows from this table will be removed
                         "references CMS_PhysicalPaths (PhysicalPathKey) on delete cascade, "
                     "constraint CMS_EncodingJobs_FK4 foreign key (EncodingProfileKey) "
                         "references CMS_EncodingProfiles (EncodingProfileKey) on delete cascade, "
-                    "UNIQUE (PhysicalPathKey, EncodingProfileKey)) "
+                    "UNIQUE (SourcePhysicalPathKey, EncodingProfileKey)) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
@@ -1630,13 +2391,6 @@ void CMSEngineDBFacade::createTablesIfNeeded()
             UNIQUE (CustomerKey, ContentType, HandsetFamilyKey, NetworkCoverage, EncodingProfileKey, Priority)) 
             ENGINE=InnoDB;
 
-    # create table CMS_Genres
-    create table if not exists CMS_Genres (
-            GenreKey					BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            Name						TEXT CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
-            constraint CMS_Genres_PK PRIMARY KEY (GenreKey), 
-            UNIQUE (Name)) 
-            ENGINE=InnoDB;
 
     # create table CMS_GenresTranslation
     create table if not exists CMS_GenresTranslation (
@@ -1651,52 +2405,6 @@ void CMSEngineDBFacade::createTablesIfNeeded()
             ENGINE=InnoDB;
     create unique index CMS_GenresTranslation_idx on CMS_GenresTranslation (GenreKey, Field, LanguageCode);
 
-    # create table MediaItems
-    # CustomerKey is the owner of the content
-    # ContentType: 0: video, 1: audio, 2: image, 3: application, 4: ringtone (it uses the same audio tables),
-    #		5: playlist, 6: live
-    # IngestedRelativePath MUST start always with '/' and ends always with '/'
-    # IngestedFileName and IngestedRelativePath refer the ingested content independently
-    # 		if it is encoded or uncompressed
-    # if EncodingProfilesSet is NULL, it means the ingested content is already encoded
-    # The ContentProviderKey is the entity owner of the content. For example H3G is our customer and EMI is the ContentProvider.
-    create table if not exists CMS_MediaItems (
-            MediaItemKey  				BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            CustomerKey				BIGINT UNSIGNED NOT NULL,
-            ContentProviderKey			BIGINT UNSIGNED NOT NULL,
-            GenreKey					BIGINT UNSIGNED NULL,
-            DisplayName				VARCHAR (256) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
-            Ingester					VARCHAR (128) NULL,
-            CPIdentifierType1			VARCHAR (64) NULL,
-            CPIdentifier1				VARCHAR (64) NULL,
-            CPIdentifierType2			VARCHAR (64) NULL,
-            CPIdentifier2				VARCHAR (64) NULL,
-            CPIdentifierType3			VARCHAR (64) NULL,
-            CPIdentifier3				VARCHAR (64) NULL,
-            Keywords					VARCHAR (128) CHARACTER SET utf8 COLLATE utf8_bin NULL,
-            Description				TEXT CHARACTER SET utf8 COLLATE utf8_bin NULL,
-            Country					VARCHAR (32) NULL,
-            IngestionDate				TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            ContentType                TINYINT NOT NULL,
-            LogicalType				VARCHAR (32) NULL,
-            EncodingProfilesSetKey		BIGINT UNSIGNED NULL,
-            IngestedFileName			VARCHAR (128) CHARACTER SET utf8 COLLATE utf8_bin NULL,
-            IngestedRelativePath		VARCHAR (256) NULL,
-            MD5FilecheckSum			VARCHAR (64) NULL,
-            FileSizeInBytes			BIGINT UNSIGNED NULL,
-            constraint CMS_MediaItems_PK PRIMARY KEY (MediaItemKey), 
-            constraint CMS_MediaItems_FK foreign key (CustomerKey) 
-                    references CMS_Customers (CustomerKey) on delete cascade, 
-            constraint CMS_MediaItems_FK2 foreign key (ContentProviderKey) 
-                    references CMS_ContentProviders (ContentProviderKey), 
-            constraint CMS_MediaItems_FK3 foreign key (EncodingProfilesSetKey) 
-                    references CMS_EncodingProfilesSet (EncodingProfilesSetKey), 
-            constraint CMS_MediaItems_FK4 foreign key (GenreKey) 
-                    references CMS_Genres (GenreKey)) 
-            ENGINE=InnoDB;
-    create index CMS_MediaItems_idx2 on CMS_MediaItems (ContentType, LogicalType, IngestionDate);
-    create index CMS_MediaItems_idx3 on CMS_MediaItems (ContentType, IngestionDate);
-    create index CMS_MediaItems_idx4 on CMS_MediaItems (ContentType, DisplayName);
 
     # create table CMS_MediaItemsTranslation
     create table if not exists CMS_MediaItemsTranslation (
@@ -1949,42 +2657,6 @@ void CMSEngineDBFacade::createTablesIfNeeded()
     create index CMS_RequestsStatistics_idx2 on CMS_RequestsStatistics (AuthorizationKey);
 
 
-    # create table PhysicalPaths
-
-    # DRM. 0: NO DRM, 1: YES DRM
-    # EncodedFileName and EncodedRelativePath are NULL only if the content is un-compressed.
-    #	EncodedRelativePath MUST start always with '/' and ends always with '/'
-    # EncodingProfileKey will be NULL only in case of
-    #		- an un-compressed video or audio
-    #		- an Application
-    # CMSPartitionNumber. -1: live partition, >= 0: partition for any other content
-    # IsAlias (0: false): it is used for a PhysicalPath that is an alias and
-    #	it really refers another existing PhysicalPath. It was introduced to manage the XLE live profile
-    #	supporting really multi profiles: rtsp, hls, adobe. So for every different profiles, we will
-    #	create just an alias
-    create table if not exists CMS_PhysicalPaths (
-            PhysicalPathKey  			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            MediaItemKey				BIGINT UNSIGNED NOT NULL,
-            DRM	             		TINYINT NOT NULL,
-            FileName					VARCHAR (128) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
-            RelativePath				VARCHAR (256) NOT NULL,
-            CMSPartitionNumber			INT NULL,
-            SizeInBytes				BIGINT UNSIGNED NOT NULL,
-            EncodingProfileKey			BIGINT UNSIGNED NULL,
-            IsAlias					INT NOT NULL DEFAULT 0,
-            CreationDate				TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            constraint CMS_PhysicalPaths_PK PRIMARY KEY (PhysicalPathKey), 
-            constraint CMS_PhysicalPaths_FK foreign key (MediaItemKey) 
-                    references CMS_MediaItems (MediaItemKey) on delete cascade, 
-            constraint CMS_PhysicalPaths_FK2 foreign key (EncodingProfileKey) 
-                    references CMS_EncodingProfiles (EncodingProfileKey), 
-            UNIQUE (MediaItemKey, RelativePath, FileName, IsAlias), 
-            UNIQUE (MediaItemKey, EncodingProfileKey)) 	# it is not possible to have the same content using the same encoding profile key
-            ENGINE=InnoDB;
-    # that index is important for the periodical select done by 'checkPublishing'
-    create index CMS_PhysicalPaths_idx2 on CMS_PhysicalPaths (MediaItemKey, PhysicalPathKey, EncodingProfileKey, CMSPartitionNumber);
-    # that index is important for the periodical select done by 'checkPublishing'
-    create index CMS_PhysicalPaths_idx3 on CMS_PhysicalPaths (RelativePath, FileName);
 
     # create table Publishing2
     # PublishingStatus. 0: not published, 1: published
@@ -2276,28 +2948,6 @@ void CMSEngineDBFacade::createTablesIfNeeded()
             ENGINE=InnoDB;
     create unique index CMS_ISRCMapping_idx on CMS_ISRCMapping (TargetISRC, SourceISRC);
 
-    # create table VideoItems
-    create table if not exists CMS_VideoItems (
-            MediaItemKey				BIGINT UNSIGNED NOT NULL,
-            Version					VARCHAR (128) CHARACTER SET utf8 COLLATE utf8_bin NULL,
-            Supplier					VARCHAR (64) NULL,
-            SubSupplier				VARCHAR (64) NULL,
-            ReleaseDate				DATETIME NULL,
-            UPC						VARCHAR (32) NULL,
-            AlbumPlaylistMediaItemKey	BIGINT UNSIGNED NULL,
-            ISRC						VARCHAR (32) NULL,
-            GRID						VARCHAR (32) NULL,
-            SongName					VARCHAR (256) CHARACTER SET utf8 COLLATE utf8_bin NULL,
-            TrackNr					INT NULL,
-            DurationInMilliSeconds		BIGINT NULL,
-            SubTitle					MEDIUMTEXT CHARACTER SET utf8 COLLATE utf8_bin NULL,
-            constraint CMS_VideoItems_PK PRIMARY KEY (MediaItemKey), 
-            constraint CMS_VideoItems_FK foreign key (MediaItemKey) 
-                    references CMS_MediaItems (MediaItemKey) on delete cascade, 
-            constraint CMS_VideoItems_FK3 foreign key (AlbumPlaylistMediaItemKey) 
-                    references CMS_Albums (AlbumKey)) 
-            ENGINE=InnoDB;
-    create index CMS_VideoItems_idx2 on CMS_VideoItems (ISRC);
 
     # create table CMS_SubTitlesTranslation
     create table if not exists CMS_SubTitlesTranslation (
@@ -2312,47 +2962,6 @@ void CMSEngineDBFacade::createTablesIfNeeded()
             ENGINE=InnoDB;
     create unique index CMS_SubTitlesTranslation_idx on CMS_SubTitlesTranslation (MediaItemKey, Field, LanguageCode);
 
-    # create table AudioItems
-    create table if not exists CMS_AudioItems (
-            MediaItemKey				BIGINT UNSIGNED NOT NULL,
-            Version					VARCHAR (128) CHARACTER SET utf8 COLLATE utf8_bin NULL,
-            Supplier					VARCHAR (64) NULL,
-            SubSupplier				VARCHAR (64) NULL,
-            PCopyright					VARCHAR (256) NULL,
-            ReleaseDate				DATETIME NULL,
-            UPC						VARCHAR (32) NULL,
-            AlbumPlaylistMediaItemKey	BIGINT UNSIGNED NULL,
-            ISRC						VARCHAR (32) NULL,
-            GRID						VARCHAR (32) NULL,
-            SongName					VARCHAR (256) CHARACTER SET utf8 COLLATE utf8_bin NULL,
-            DiskNr						INT NULL,
-            TrackNr					INT NULL,
-            DurationInMilliSeconds		BIGINT NULL,
-            IndividualSalesPermission	VARCHAR (128) NULL,
-            constraint CMS_AudioItems_PK PRIMARY KEY (MediaItemKey), 
-            constraint CMS_AudioItems_FK foreign key (MediaItemKey) 
-                    references CMS_MediaItems (MediaItemKey) on delete cascade, 
-            constraint CMS_AudioItems_FK3 foreign key (AlbumPlaylistMediaItemKey) 
-                    references CMS_Albums (AlbumKey)) 
-            ENGINE=InnoDB;
-    create index CMS_AudioItems_idx2 on CMS_AudioItems (ISRC);
-    create index CMS_AudioItems_idx3 on CMS_AudioItems (GRID);
-
-    # create table ImageItems
-    create table if not exists CMS_ImageItems (
-            MediaItemKey				BIGINT UNSIGNED NOT NULL,
-            Supplier					VARCHAR (64) NULL,
-            ReleaseDate				DATETIME NULL,
-            UPC						VARCHAR (32) NULL,
-            AlbumPlaylistMediaItemKey	BIGINT UNSIGNED NULL,
-            Width						INT NOT NULL,
-            Height						INT NOT NULL,
-            constraint CMS_ImageItems_PK PRIMARY KEY (MediaItemKey), 
-            constraint CMS_ImageItems_FK foreign key (MediaItemKey) 
-                    references CMS_MediaItems (MediaItemKey) on delete cascade, 
-            constraint CMS_ImageItems_FK3 foreign key (AlbumPlaylistMediaItemKey) 
-                    references CMS_Albums (AlbumKey)) 
-            ENGINE=InnoDB;
 
     # create table ApplicationItems
     create table if not exists CMS_ApplicationItems (

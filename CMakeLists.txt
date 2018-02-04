@@ -43,3 +43,6 @@ find_package(ZLIB)
 
 add_subdirectory(CMSEngine/src)
 add_subdirectory(CMSEngineService/src)
+
+add_subdirectory(addCustomer/src)
+

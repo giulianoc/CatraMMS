@@ -44,23 +44,49 @@ using namespace std;
 
 
 class IngestAssetEvent: public Event {
-private:
-    string                  _ftpDirectoryWorkingEntryPathName;
+private:    
+    string                  _ftpDirectoryMediaSourceFileName;
+    string                  _mediaSourceFileName;
+    string                  _relativePath;
+    
     int64_t                 _ingestionJobKey;
     shared_ptr<Customer>    _customer;
-    string                  _fileName;
+
+    string                  _ftpDirectoryWorkingMetadataPathName;
+    string                  _metadataFileName;
+    Json::Value             _metadataRoot;
     
 public:
-    void setFTPDirectoryWorkingEntryPathName(string ftpDirectoryWorkingEntryPathName)
+    void setFTPDirectoryWorkingMetadataPathName(string ftpDirectoryWorkingMetadataPathName)
     {
-        _ftpDirectoryWorkingEntryPathName   = ftpDirectoryWorkingEntryPathName;
+        _ftpDirectoryWorkingMetadataPathName   = ftpDirectoryWorkingMetadataPathName;
     }
 
-    string getFTPDirectoryWorkingEntryPathName()
+    string getFTPDirectoryWorkingMetadataPathName()
     {
-        return _ftpDirectoryWorkingEntryPathName;
+        return _ftpDirectoryWorkingMetadataPathName;
     }
 
+    void setFTPDirectoryMediaSourceFileName(string ftpDirectoryMediaSourceFileName)
+    {
+        _ftpDirectoryMediaSourceFileName   = ftpDirectoryMediaSourceFileName;
+    }
+
+    string getFTPDirectoryMediaSourceFileName()
+    {
+        return _ftpDirectoryMediaSourceFileName;
+    }
+
+    void setMediaSourceFileName(string mediaSourceFileName)
+    {
+        _mediaSourceFileName = mediaSourceFileName;
+    }
+    
+    string getMediaSourceFileName()
+    {
+        return _mediaSourceFileName;
+    }
+    
     void setIngestionJobKey(int64_t ingestionJobKey)
     {
         _ingestionJobKey   = ingestionJobKey;
@@ -71,16 +97,26 @@ public:
         return _ingestionJobKey;
     }
     
-    void setFileName(string fileName)
+    void setMetadataFileName(string metadataFileName)
     {
-        _fileName   = fileName;
+        _metadataFileName   = metadataFileName;
     }
 
-    string getFileName()
+    string getMetadataFileName()
     {
-        return _fileName;
+        return _metadataFileName;
     }
     
+    void setRelativePath(string relativePath)
+    {
+        _relativePath   = relativePath;
+    }
+
+    string getRelativePath()
+    {
+        return _relativePath;
+    }
+
     void setCustomer(shared_ptr<Customer> customer)
     {
         _customer   = customer;
@@ -89,6 +125,16 @@ public:
     shared_ptr<Customer> getCustomer()
     {
         return _customer;
+    }
+
+    void setMetadataRoot(Json::Value metadataRoot)
+    {
+        _metadataRoot   = metadataRoot;
+    }
+
+    Json::Value getMetadataRoot()
+    {
+        return _metadataRoot;
     }
 };
 

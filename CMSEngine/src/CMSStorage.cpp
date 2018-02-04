@@ -384,7 +384,7 @@ string CMSStorage::getRepository(RepositoryType rtRepositoryType)
         }
         default:
         {
-            throw invalid_argument(string("Wrong argument")
+            throw runtime_error(string("Wrong argument")
                     + ", rtRepositoryType: " + to_string(static_cast<int>(rtRepositoryType))
                     );
         }
@@ -556,7 +556,7 @@ void CMSStorage::contentInRepository(
 string CMSStorage::moveAssetInCMSRepository(
         string sourceAssetPathName,
         string customerDirectoryName,
-        string destinationFileName,
+        string destinationAssetFileName,
         string relativePath,
 
         bool partitionIndexToBeCalculated,
@@ -571,7 +571,7 @@ string CMSStorage::moveAssetInCMSRepository(
 
     if (relativePath.front() != '/' || pulCMSPartitionIndexUsed == (unsigned long *) NULL) 
     {
-            throw invalid_argument(string("Wrong argument")
+            throw runtime_error(string("Wrong argument")
                     + ", relativePath: " + relativePath
                     );
     }
@@ -666,7 +666,7 @@ string CMSStorage::moveAssetInCMSRepository(
             relativePath, customerDirectoryName, deliveryRepositoriesToo,
             phmTerritories);
 
-        cmsAssetPathName.append(destinationFileName);
+        cmsAssetPathName.append(destinationAssetFileName);
     }
 
     _logger->info(string("Selected CMS Partition for the content")
@@ -967,7 +967,7 @@ string CMSStorage::getFFMPEGEncodingProfilePathName(
     if (ulContentType != 0 && ulContentType != 1 && ulContentType != 2 &&
             ulContentType != 4) // video/audio/image/ringtone
     {
-        throw invalid_argument(string("Wrong argument")
+        throw runtime_error(string("Wrong argument")
                 + ", ulContentType: " + to_string(ulContentType)
                 );
     }
