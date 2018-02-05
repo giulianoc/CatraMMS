@@ -50,6 +50,13 @@ public:
         End_Failed              = 3
     };
     
+    enum class EncodingError {
+        NoError,
+        PunctualError,
+        MaxCapacityReached,
+        ErrorBeforeEncoding
+    };
+    
     enum class EncodingPeriod {
         Daily		= 0,
 	Weekly		= 1,
@@ -138,7 +145,8 @@ public:
 
     void updateEncodingJob (
         int64_t encodingJobKey,
-        EncodingStatus newEncodingStatus);
+        EncodingError encodingError,
+        int64_t ingestionJobKey);
 
     string checkCustomerMaxIngestionNumber (int64_t customerKey);
 
@@ -158,6 +166,7 @@ private:
     shared_ptr<ConnectionPool<MySQLConnection>>     _connectionPool;
     string                          _defaultContentProviderName;
     string                          _defaultTerritoryName;
+    int                             _maxEncodingFailures;
 
     void getTerritories(shared_ptr<Customer> customer);
 

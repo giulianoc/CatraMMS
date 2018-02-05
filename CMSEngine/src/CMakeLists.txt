@@ -26,6 +26,7 @@ SET (SOURCES
 	CMSEngineDBFacade.cpp
 	CMSEngine.cpp
 	ActiveEncodingsManager.cpp
+	EncoderVideoAudioProxy.cpp
 	EncodingItem.cpp
 )
 SET (HEADERS
@@ -34,6 +35,7 @@ SET (HEADERS
 	CMSEngineDBFacade.h
 	CMSEngine.h
 	ActiveEncodingsManager.h
+	EncoderVideoAudioProxy.h
 	EncodingItem.h
 )
 
