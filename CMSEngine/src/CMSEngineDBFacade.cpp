@@ -33,7 +33,7 @@ CMSEngineDBFacade::CMSEngineDBFacade(
     shared_ptr<MySQLConnectionFactory>  mySQLConnectionFactory = 
             make_shared<MySQLConnectionFactory>(dbServer, dbUsername, dbPassword, dbName);
         
-    _connectionPool = make_shared<ConnectionPool<MySQLConnection>>(poolSize, mySQLConnectionFactory);
+    _connectionPool = make_shared<DBConnectionPool<MySQLConnection>>(poolSize, mySQLConnectionFactory);
 
     createTablesIfNeeded();
 }
