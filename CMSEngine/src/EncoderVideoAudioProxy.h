@@ -36,6 +36,7 @@ class EncoderVideoAudioProxy {
 public:
     EncoderVideoAudioProxy(
         shared_ptr<CMSEngineDBFacade> cmsEngineDBFacade,
+        shared_ptr<CMSStorage> cmsStorage,
         EncodingItem* pEncodingItem,
         shared_ptr<spdlog::logger> logger);
 
@@ -46,7 +47,12 @@ public:
 private:
     shared_ptr<spdlog::logger>          _logger;
     shared_ptr<CMSEngineDBFacade>       _cmsEngineDBFacade;
+    shared_ptr<CMSStorage>              _cmsStorage;
     EncodingItem*                       _pEncodingItem;
+    
+    string                              _3GPPEncoder;
+    string                              _mpeg2TSEncoder;
+
 
     void encodeContentVideoAudio();
 

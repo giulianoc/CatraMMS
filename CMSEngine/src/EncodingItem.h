@@ -33,25 +33,7 @@ struct EncodingItem
     string                                  _ftpUser;
     string                                  _ftpPassword;
     long long                               _encodingProfileKey;
-    int                                     _encodingProfileTechnology;
-
-
-    EncodingItem (void)
-    {
-        _encodingJobKey             = 0;
-        _ingestionJobKey            = 0;
-        _cmsPartitionNumber         = 9999999;	// undefined
-        _customerKey                = 0;
-        _mediaItemKey               = 0;
-        _physicalPathKey            = 0;
-        _contentType                = CMSEngineDBFacade::ContentType::Video;
-        _encodingProfileKey         = 0;
-        _encodingProfileTechnology  = -1;
-    } ;
-
-    ~EncodingItem (void)
-    {
-    } ;
+    CMSEngineDBFacade::EncodingTechnology   _encodingProfileTechnology;
 } ;
 
 #endif

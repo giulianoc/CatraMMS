@@ -14,13 +14,20 @@
 #include "EncoderVideoAudioProxy.h"
 
 EncoderVideoAudioProxy::EncoderVideoAudioProxy(
-    shared_ptr<CMSEngineDBFacade> cmsEngineDBFacade,
-    EncodingItem* pEncodingItem,
-    shared_ptr<spdlog::logger> logger) 
+        shared_ptr<CMSEngineDBFacade> cmsEngineDBFacade,
+        shared_ptr<CMSStorage> cmsStorage,
+        EncodingItem* pEncodingItem,
+        shared_ptr<spdlog::logger> logger
+)
 {
     _logger                 = logger;
     _cmsEngineDBFacade      = cmsEngineDBFacade;
+    _cmsStorage             = cmsStorage;
     _pEncodingItem          = pEncodingItem;
+    
+    _3GPPEncoder            = "FFMPEG";
+    _mpeg2TSEncoder         = "FFMPEG";
+
 }
 
 EncoderVideoAudioProxy::~EncoderVideoAudioProxy() 
@@ -82,7 +89,34 @@ void EncoderVideoAudioProxy::operator()()
 
 void EncoderVideoAudioProxy::encodeContentVideoAudio()
 {
+    string cmsAssetPathName = _cmsStorage->getCMSAssetPathName(
+        _pEncodingItem->_cmsPartitionNumber,
+        _pEncodingItem->_customerDirectoryName,
+        _pEncodingItem->_relativePath,
+        _pEncodingItem->_fileName);
     
+    if (
+        (_pEncodingItem->_encodingProfileTechnology == CMSEngineDBFacade::EncodingTechnology::3GPP &&
+            _3GPPEncoder == "FFMPEG") ||
+        (_pEncodingItem->_encodingProfileTechnology == CMSEngineDBFacade::EncodingTechnology::MPEG2_TS &&
+            _mpeg2TSEncoder == "FFMPEG") ||
+        _pEncodingItem->_encodingProfileTechnology == CMSEngineDBFacade::EncodingTechnology::WEBM ||
+        (_pEncodingItem->_encodingProfileTechnology == CMSEngineDBFacade::EncodingTechnology::Adobe &&
+            _mpeg2TSEncoder == "FFMPEG")
+    )
+    {
+        
+    }
+    else if (_pEncodingItem->_encodingProfileTechnology == CMSEngineDBFacade::EncodingTechnology::WindowsMedia)
+    {
+        
+    }
+    else
+    {
+        
+    }
+
+
 }
 
 void EncoderVideoAudioProxy::processEncodedContentVideoAudio()

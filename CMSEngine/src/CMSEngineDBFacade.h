@@ -57,6 +57,15 @@ public:
         ErrorBeforeEncoding
     };
     
+    enum class EncodingTechnology {
+        Images      = 0,    // (Download),
+        3GPP,               // (Streaming+Download),
+        MPEG2_TS,           // (IPhone Streaming),
+        WEBM,               // (VP8 and Vorbis)
+        WindowsMedia,
+        Adobe
+    };
+    
     enum class EncodingPeriod {
         Daily		= 0,
 	Weekly		= 1,
