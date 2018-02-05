@@ -25,12 +25,16 @@ SET (SOURCES
 	CMSStorage.cpp
 	CMSEngineDBFacade.cpp
 	CMSEngine.cpp
+	ActiveEncodingsManager.cpp
+	EncodingItem.cpp
 )
 SET (HEADERS
 	Customer.h
 	CMSStorage.h
 	CMSEngineDBFacade.h
 	CMSEngine.h
+	ActiveEncodingsManager.h
+	EncodingItem.h
 )
 
 include_directories ("${PROJECT_SOURCE_DIR}/../usr_local/include")
@@ -52,4 +56,5 @@ if (APPLE)
 	target_link_libraries (CMSEngine ErrMsg)
 	target_link_libraries (CMSEngine Tools)
 	target_link_libraries (CMSEngine mysqlcppconn)
+	target_link_libraries (CMSEngine jsoncpp)
 endif()

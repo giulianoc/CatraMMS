@@ -43,7 +43,7 @@ public:
 	High		= 2
     };
 
-    enum class EncodingJob {
+    enum class EncodingStatus {
         ToBeProcessed           = 0,
         Processing              = 1,
         End_ProcessedSuccessful = 2,
@@ -135,6 +135,10 @@ public:
         int64_t ingestionJobKey,
         IngestionStatus newIngestionStatus,
         string errorMessage);
+
+    void updateEncodingJob (
+        int64_t encodingJobKey,
+        EncodingStatus newEncodingStatus);
 
     string checkCustomerMaxIngestionNumber (int64_t customerKey);
 

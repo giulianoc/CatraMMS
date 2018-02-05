@@ -11,18 +11,21 @@
  * Created on February 4, 2018, 7:18 PM
  */
 
-#ifndef EncodingsManager_h
-#define EncodingsManager_h
+#ifndef EncoderVideoAudioProxy_h
+#define EncoderVideoAudioProxy_h
 
-class EncodingsManager {
+#include "spdlog/spdlog.h"
+
+class EncoderVideoAudioProxy {
 public:
-    EncodingsManager();
+    EncoderVideoAudioProxy(shared_ptr<spdlog::logger> logger);
 
-    virtual ~EncodingsManager();
+    virtual ~EncoderVideoAudioProxy();
+    
+    void operator ()();
 
 private:
-
 };
 
-#endif /* ENODINGSMANAGER_H */
+#endif
 

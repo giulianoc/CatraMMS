@@ -612,6 +612,13 @@ void CMSEngineDBFacade::updateIngestionJob (
     }    
 }
 
+void CMSEngineDBFacade::updateEncodingJob (
+    int64_t encodingJobKey,
+    EncodingStatus newEncodingStatus)
+{
+    
+}
+
 string CMSEngineDBFacade::checkCustomerMaxIngestionNumber (
     int64_t customerKey
 )

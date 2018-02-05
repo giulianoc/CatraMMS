@@ -6,6 +6,7 @@
 #include "CMSEngineProcessor.h"
 #include "CheckIngestionTimes.h"
 #include "CMSEngineDBFacade.h"
+#include "ActiveEncodingsManager.h"
 #include "CMSStorage.h"
 #include "CMSEngine.h"
 
@@ -20,8 +21,11 @@ int main (int iArgc, char *pArgv [])
 
     size_t dbPoolSize = 5;
     string dbServer ("tcp://127.0.0.1:3306");
-    string dbUsername("root"); string dbPassword("root"); string dbName("catracms");
-    // string dbUsername("root"); string dbPassword("giuliano"); string dbName("workKing");
+    #ifdef __APPLE__
+        string dbUsername("root"); string dbPassword("giuliano"); string dbName("workKing");
+    #else
+        string dbUsername("root"); string dbPassword("root"); string dbName("catracms");
+    #endif
     logger->info(string("Creating CMSEngineDBFacade")
         + ", dbPoolSize: " + to_string(dbPoolSize)
         + ", dbServer: " + dbServer
@@ -32,8 +36,11 @@ int main (int iArgc, char *pArgv [])
     shared_ptr<CMSEngineDBFacade>       cmsEngineDBFacade = make_shared<CMSEngineDBFacade>(
             dbPoolSize, dbServer, dbUsername, dbPassword, dbName, logger);
     
-    // string storage ("/Users/multi/GestioneProgetti/Development/catrasoftware/storage/");
-    string storage ("/home/giuliano/storage/");
+    #ifdef __APPLE__
+        string storage ("/Users/multi/GestioneProgetti/Development/catrasoftware/storage/");
+    #else
+        string storage ("/home/giuliano/storage/");
+    #endif
     unsigned long freeSpaceToLeaveInEachPartitionInMB = 5;
     logger->info(string("Creating CMSStorage")
         + ", storage: " + storage
@@ -47,12 +54,16 @@ int main (int iArgc, char *pArgv [])
     logger->info(string("Creating CMSEngine")
             );
     shared_ptr<CMSEngine>       cmsEngine = make_shared<CMSEngine>(cmsEngineDBFacade, logger);
-    
+        
     logger->info(string("Creating MultiEventsSet")
         + ", addDestination: " + CMSENGINEPROCESSORNAME
             );
     shared_ptr<MultiEventsSet>          multiEventsSet = make_shared<MultiEventsSet>();
     multiEventsSet->addDestination(CMSENGINEPROCESSORNAME);
+
+    logger->info(string("Creating ActiveEncodingsManager")
+            );
+    ActiveEncodingsManager      activeEncodingsManager(logger);
 
     logger->info(string("Creating CMSEngineProcessor")
             );
@@ -64,6 +75,10 @@ int main (int iArgc, char *pArgv [])
             );
     Scheduler2              scheduler(ulThreadSleepInMilliSecs);
 
+
+    logger->info(string("Starting ActiveEncodingsManager")
+            );
+    thread activeEncodingsManagerThread (ref(activeEncodingsManager));
 
     logger->info(string("Starting CMSEngineProcessor")
             );
@@ -83,9 +98,14 @@ int main (int iArgc, char *pArgv [])
     scheduler.activeTimes(checkIngestionTimes);
 
     
+    logger->info(string("Waiting ActiveEncodingsManager")
+            );
+    activeEncodingsManagerThread.join();
+    
     logger->info(string("Waiting CMSEngineProcessor")
             );
     cmsEngineProcessorThread.join();
+    
     logger->info(string("Waiting Scheduler2")
             );
     schedulerThread.join();
