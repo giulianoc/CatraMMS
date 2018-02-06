@@ -15,6 +15,7 @@
 #define EncoderVideoAudioProxy_h
 
 #include "CMSEngineDBFacade.h"
+#include "CMSStorage.h"
 #include "EncodingItem.h"
 #include "spdlog/spdlog.h"
 
@@ -50,13 +51,15 @@ private:
     shared_ptr<CMSStorage>              _cmsStorage;
     EncodingItem*                       _pEncodingItem;
     
+    string                              _ffmpegPathName;
     string                              _3GPPEncoder;
     string                              _mpeg2TSEncoder;
 
 
-    void encodeContentVideoAudio();
+    string encodeContentVideoAudio();
+    string encodeContent_VideoAudio_through_ffmpeg();
 
-    void processEncodedContentVideoAudio();
+    void processEncodedContentVideoAudio(string stagingEncodedAssetPathName);
 };
 
 #endif

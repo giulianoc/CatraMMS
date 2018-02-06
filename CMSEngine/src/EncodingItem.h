@@ -21,9 +21,7 @@ struct EncodingItem
     unsigned long                           _cmsPartitionNumber;
     string                                  _fileName;
     string                                  _relativePath;
-    long long                               _customerKey;
-    string                                  _customerName;
-    string                                  _customerDirectoryName;
+    shared_ptr<Customer>                    _customer;
     long long                               _mediaItemKey;
     long long                               _physicalPathKey;
     CMSEngineDBFacade::ContentType          _contentType;

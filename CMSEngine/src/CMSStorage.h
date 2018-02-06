@@ -8,6 +8,7 @@
 #include "spdlog/spdlog.h"
 #include "catralibraries/FileIO.h"
 #include "Customer.h"
+#include "CMSEngineDBFacade.h"
 
 
 class CMSStorage
@@ -125,9 +126,9 @@ public:
 	long long llEncodingProfileKey,
 	string profileFileNameExtension);
 
-    string getFFMPEGEncodingProfilePathName (
-	unsigned long ulContentType,
-	long long llEncodingProfileKey);
+    string getFFMPEGEncodingProfilePathName(
+        CMSEngineDBFacade::ContentType contentType,
+        long long llEncodingProfileKey);
 
     unsigned long getCustomerStorageUsage (
 	string customerDirectoryName);

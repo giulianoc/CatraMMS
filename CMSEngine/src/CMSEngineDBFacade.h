@@ -59,7 +59,7 @@ public:
     
     enum class EncodingTechnology {
         Images      = 0,    // (Download),
-        3GPP,               // (Streaming+Download),
+        ThreeGPP,           // (Streaming+Download),
         MPEG2_TS,           // (IPhone Streaming),
         WEBM,               // (VP8 and Vorbis)
         WindowsMedia,
@@ -159,7 +159,7 @@ public:
 
     string checkCustomerMaxIngestionNumber (int64_t customerKey);
 
-    int64_t saveContentMetadata(
+    int64_t saveIngestedContentMetadata(
         shared_ptr<Customer> customer,
         int64_t ingestionJobKey,
         Json::Value metadataRoot,
@@ -169,6 +169,15 @@ public:
         int64_t videoOrAudioDurationInMilliSeconds,
         int imageWidth,
         int imageHeight);
+
+    int64_t saveEncodedContentMetadata(
+        int64_t customerKey,
+        int64_t mediaItemKey,
+        string encodedFileName,
+        string relativePath,
+        int cmsPartitionIndexUsed,
+        unsigned long long sizeInBytes,
+        int64_t encodingProfileKey);
 
 private:
     shared_ptr<spdlog::logger>                      _logger;

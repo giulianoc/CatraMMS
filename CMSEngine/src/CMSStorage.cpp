@@ -822,8 +822,8 @@ string CMSStorage::getStagingAssetPathName(
         string customerDirectoryName,
         string relativePath,
         string fileName, // may be empty ("")
-        long long llMediaItemKey,
-        long long llPhysicalPathKey,
+        long long llMediaItemKey,       // used only if fileName is ""
+        long long llPhysicalPathKey,    // used only if fileName is ""
         bool removeLinuxPathIfExist)
  {
     char pUniqueFileName [256];
@@ -960,15 +960,16 @@ string CMSStorage::getEncodingProfilePathName(
 }
 
 string CMSStorage::getFFMPEGEncodingProfilePathName(
-        unsigned long ulContentType,
+        CMSEngineDBFacade::ContentType contentType,
         long long llEncodingProfileKey)
  {
 
-    if (ulContentType != 0 && ulContentType != 1 && ulContentType != 2 &&
-            ulContentType != 4) // video/audio/image/ringtone
+    if (contentType != CMSEngineDBFacade::ContentType::Video && 
+            contentType != CMSEngineDBFacade::ContentType::Audio &&
+            contentType != CMSEngineDBFacade::ContentType::Image)
     {
         throw runtime_error(string("Wrong argument")
-                + ", ulContentType: " + to_string(ulContentType)
+                + ", contentType: " + to_string(static_cast<int>(contentType))
                 );
     }
 
@@ -977,15 +978,15 @@ string CMSStorage::getFFMPEGEncodingProfilePathName(
     encodingProfilePathName
         .append(to_string(llEncodingProfileKey));
 
-    if (ulContentType == 0) // video
+    if (contentType == CMSEngineDBFacade::ContentType::Video)
     {
         encodingProfilePathName.append(".vep");
     } 
-    else if (ulContentType == 1 || ulContentType == 4) // audio / ringtone
+    else if (contentType == CMSEngineDBFacade::ContentType::Audio)
     {
         encodingProfilePathName.append(".aep");
     } 
-    else if (ulContentType == 2) // image
+    else if (contentType == CMSEngineDBFacade::ContentType::Image)
     {
         encodingProfilePathName.append(".iep");
     }

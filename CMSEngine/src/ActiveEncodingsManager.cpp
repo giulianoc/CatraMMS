@@ -73,7 +73,7 @@ void ActiveEncodingsManager::operator()()
                         _logger->info(string("EncodingJob still running")
                                 + ", elapsed (minutes): " + 
                                     to_string(chrono::duration_cast<chrono::minutes>(chrono::system_clock::now() - encodingJob._encodingJobStart).count())
-                                + ", customer: " + encodingJob._encodingItem._customerName
+                                + ", customer: " + encodingJob._encodingItem._customer->_name
                                 + ", _ingestionJobKey: " + to_string(encodingJob._encodingItem._ingestionJobKey)
                                 + ", _encodingJobKey: " + to_string(encodingJob._encodingItem._encodingJobKey)
                                 + ", _encodingPriority: " + to_string(encodingJob._encodingItem._encodingPriority)
@@ -92,7 +92,7 @@ void ActiveEncodingsManager::operator()()
                     _logger->info(string("processEncodingJob finished")
                             + ", elapsed (seconds): " + 
                                 to_string(chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - processingItemStart).count())
-                            + ", customer: " + encodingJob._encodingItem._customerName
+                            + ", customer: " + encodingJob._encodingItem._customer->_name
                             + ", _ingestionJobKey: " + to_string(encodingJob._encodingItem._ingestionJobKey)
                             + ", _encodingJobKey: " + to_string(encodingJob._encodingItem._encodingJobKey)
                             + ", _encodingPriority: " + to_string(encodingJob._encodingItem._encodingPriority)

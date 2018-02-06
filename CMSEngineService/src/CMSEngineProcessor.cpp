@@ -235,7 +235,9 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                             }
                             catch(...)
                             {
-                                throw runtime_error("wrong json format");
+                                throw runtime_error(string("wrong ingestion metadata json format")
+                                        + ", directoryEntry: " + directoryEntry
+                                        );
                             }
 
                             ingestionType = validateMetadata(metadataRoot);
@@ -441,7 +443,7 @@ void CMSEngineProcessor::handleIngestAssetEvent (shared_ptr<IngestAssetEvent> in
         int imageWidth = 10;
         int imageHeight = 10;
 
-        _cmsEngineDBFacade->saveContentMetadata (
+        _cmsEngineDBFacade->saveIngestedContentMetadata (
             ingestAssetEvent->getCustomer(),
             ingestAssetEvent->getIngestionJobKey(),
             ingestAssetEvent->getMetadataRoot(),
@@ -568,6 +570,13 @@ void CMSEngineProcessor::validateContentIngestionMetadata(Json::Value contentIng
 
             "ContentProviderName": "default",    // optional
             
+            "Territories": {
+                "default": {
+                    "startPublishing": "NOW",
+                    "endPublishing": "FOREVER"
+                }
+            },
+
             "Delivery": "FTP",      // optional: "FTP"
             "FTP": {                // mandatory only if "Delivery" is "FTP"
                 "Hostname": "aaa",  // mandatory only if "Delivery" is "FTP": hostname or IP address
@@ -626,6 +635,22 @@ void CMSEngineProcessor::validateContentIngestionMetadata(Json::Value contentIng
         }
     }
 
+    /*
+    // Territories
+    {
+        field = "Territories";
+        if (isMetadataPresent(contentIngestion, field))
+        {
+            const Json::Value territories = contentIngestion[field];
+            
+            for( Json::ValueIterator itr = territories.begin() ; itr != territories.end() ; itr++ ) 
+            {
+                Json::Value territory = territories[territoryIndex];
+            }
+        
+    }
+     */
+    
     field = "Delivery";
     if (_cmsEngineDBFacade->isMetadataPresent(contentIngestion, field) && contentIngestion.get(field, "XXX").asString() == "FTP")
     {

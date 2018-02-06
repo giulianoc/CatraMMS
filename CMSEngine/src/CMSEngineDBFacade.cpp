@@ -1055,7 +1055,7 @@ string CMSEngineDBFacade::checkCustomerMaxIngestionNumber (
     return relativePathToBeUsed;
 }
 
-int64_t CMSEngineDBFacade::saveContentMetadata(
+int64_t CMSEngineDBFacade::saveIngestedContentMetadata(
         shared_ptr<Customer> customer,
         int64_t ingestionJobKey,
         Json::Value metadataRoot,
@@ -1345,6 +1345,101 @@ int64_t CMSEngineDBFacade::saveContentMetadata(
 
         physicalPathKey = getLastInsertId(conn);
 
+        // territories
+        {
+            string field = "Territories";
+            if (isMetadataPresent(contentIngestion, field))
+            {
+                const Json::Value territories = contentIngestion[field];
+                
+                lastSQLCommand = 
+                    "select TerritoryKey, Name from CMS_Territories where CustomerKey = ?";
+                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                int queryParameterIndex = 1;
+                preparedStatement->setInt64(queryParameterIndex++, customer->_customerKey);
+
+                shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+                while (resultSet->next())
+                {
+                    int64_t territoryKey = resultSet->getInt64("TerritoryKey");
+                    string territoryName = resultSet->getString("Name");
+
+                    string startPublishing = "NOW";
+                    string endPublishing = "FOREVER";
+                    if (isMetadataPresent(territories, territoryName))
+                    {
+                        Json::Value territory = territories[territoryName];
+                        
+                        field = "startPublishing";
+                        if (isMetadataPresent(territory, field))
+                            startPublishing = territory.get(field, "XXX").asString();
+
+                        field = "endPublishing";
+                        if (isMetadataPresent(territory, field))
+                            endPublishing = territory.get(field, "XXX").asString();
+                    }
+                    
+                    if (startPublishing == "NOW")
+                    {
+                        tm          tmDateTime;
+                        char        strDateTime [64];
+
+                        chrono::system_clock::time_point now = chrono::system_clock::now();
+                        time_t utcTime = chrono::system_clock::to_time_t(now);
+                        
+                        localtime_r (&utcTime, &tmDateTime);
+
+                        sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+                                tmDateTime. tm_year + 1900,
+                                tmDateTime. tm_mon + 1,
+                                tmDateTime. tm_mday,
+                                tmDateTime. tm_hour,
+                                tmDateTime. tm_min,
+                                tmDateTime. tm_sec);
+
+                        startPublishing = strDateTime;
+                    }
+                    
+                    if (endPublishing == "FOREVER")
+                    {
+                        tm          tmDateTime;
+                        char        strDateTime [64];
+
+                        chrono::system_clock::time_point forever = chrono::system_clock::now() + chrono::hours(24 * 365 * 20);
+                        
+                        time_t utcTime = chrono::system_clock::to_time_t(forever);
+                        
+                        localtime_r (&utcTime, &tmDateTime);
+
+                        sprintf (strDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+                                tmDateTime. tm_year + 1900,
+                                tmDateTime. tm_mon + 1,
+                                tmDateTime. tm_mday,
+                                tmDateTime. tm_hour,
+                                tmDateTime. tm_min,
+                                tmDateTime. tm_sec);
+
+                        endPublishing = strDateTime;
+                    }
+                    
+                    {
+                        lastSQLCommand = 
+                            "insert into CMS_DefaultTerritoryInfo(DefaultTerritoryInfoKey, MediaItemKey, TerritoryKey, StartPublishing, EndPublishing) values ("
+                            "NULL, ?, ?, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'), STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'))";
+
+                        shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                        int queryParameterIndex = 1;
+                        preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+                        preparedStatement->setInt(queryParameterIndex++, territoryKey);
+                        preparedStatement->setString(queryParameterIndex++, startPublishing);
+                        preparedStatement->setString(queryParameterIndex++, endPublishing);
+
+                        preparedStatement->executeUpdate();
+                    }
+                }                
+            }
+        }
+        
         {
             int currentDirLevel1;
             int currentDirLevel2;
@@ -1501,6 +1596,137 @@ int64_t CMSEngineDBFacade::saveContentMetadata(
     }
     
     return mediaItemKey;
+}
+
+int64_t CMSEngineDBFacade::saveEncodedContentMetadata(
+        int64_t customerKey,
+        int64_t mediaItemKey,
+        string encodedFileName,
+        string relativePath,
+        int cmsPartitionIndexUsed,
+        unsigned long long sizeInBytes,
+        int64_t encodingProfileKey
+)
+{
+    int64_t     encodedPhysicalPathKey;
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn;
+    bool autoCommit = true;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+
+        autoCommit = false;
+        conn->_sqlConnection->setAutoCommit(autoCommit);    // or execute the statement START TRANSACTION
+        
+        {
+            int drm = 0;
+
+            lastSQLCommand = 
+                "insert into CMS_PhysicalPaths(PhysicalPathKey, MediaItemKey, DRM, FileName, RelativePath, CMSPartitionNumber, SizeInBytes, EncodingProfileKey, CreationDate) values ("
+        	"NULL, ?, ?, ?, ?, ?, ?, ?, NOW())";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+            preparedStatement->setInt(queryParameterIndex++, drm);
+            preparedStatement->setString(queryParameterIndex++, encodedFileName);
+            preparedStatement->setString(queryParameterIndex++, relativePath);
+            preparedStatement->setInt(queryParameterIndex++, cmsPartitionIndexUsed);
+            preparedStatement->setInt(queryParameterIndex++, sizeInBytes);
+            preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
+
+            preparedStatement->executeUpdate();
+        }
+
+        encodedPhysicalPathKey = getLastInsertId(conn);
+
+        // publishing territories
+        {
+            lastSQLCommand = 
+                "select t.TerritoryKey, t.Name, DATE_FORMAT(d.StartPublishing, '%Y-%m-%d %H:%i:%s') as StartPublishing, DATE_FORMAT(d.EndPublishing, '%Y-%m-%d %H:%i:%s') as EndPublishing from CMS_Territories t, CMS_DefaultTerritoryInfo d "
+                "where t.TerritoryKey = d.TerritoryKey and t.CustomerKey = ? and d.MediaItemKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, customerKey);
+            preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            while (resultSet->next())
+            {
+                int64_t territoryKey = resultSet->getInt64("TerritoryKey");
+                string territoryName = resultSet->getString("Name");
+                string startPublishing = resultSet->getString("StartPublishing");
+                string endPublishing = resultSet->getString("EndPublishing");
+                
+                lastSQLCommand = 
+                    "select PublishingStatus from CMS_Publishing2 where MediaItemKey = ? and TerritoryKey = ?";
+                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                int queryParameterIndex = 1;
+                preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+                preparedStatement->setInt64(queryParameterIndex++, territoryKey);
+
+                shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+                if (resultSet->next())
+                {
+                    int publishingStatus = resultSet->getInt("PublishingStatus");
+                    
+                    if (publishingStatus == 1)
+                    {
+                        lastSQLCommand = 
+                            "update CMS_Publishing2 set PublishingStatus = 0 where MediaItemKey = ? and TerritoryKey = ?";
+
+                        shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                        int queryParameterIndex = 1;
+                        preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+                        preparedStatement->setInt(queryParameterIndex++, territoryKey);
+
+                        preparedStatement->executeUpdate();
+                    }
+                }
+                else
+                {
+                    lastSQLCommand = 
+                        "insert into CMS_Publishing2 (PublishingKey, MediaItemKey, TerritoryKey, StartPublishing, EndPublishing, PublishingStatus) values ("
+	        	"NULL, ?, ?, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'), STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'), 0)";
+
+                    shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                    int queryParameterIndex = 1;
+                    preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+                    preparedStatement->setInt(queryParameterIndex++, territoryKey);
+                    preparedStatement->setString(queryParameterIndex++, startPublishing);
+                    preparedStatement->setString(queryParameterIndex++, endPublishing);
+
+                    preparedStatement->executeUpdate();
+                }
+            }                
+        }
+
+        conn->_sqlConnection->commit();     // or execute COMMIT
+        autoCommit = true;
+
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        if (!autoCommit)
+            conn->_sqlConnection->rollback();     // or execute ROLLBACK
+        
+        _connectionPool->unborrow(conn);
+
+        string exceptionMessage(se.what());
+        
+        _logger->error(string("SQL exception")
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw se;
+    }
+    
+    return encodedPhysicalPathKey;
 }
 
 bool CMSEngineDBFacade::isMetadataPresent(Json::Value root, string field)
@@ -2305,6 +2531,164 @@ void CMSEngineDBFacade::createTablesIfNeeded()
         
         try
         {
+            // Reservecredit is not NULL only in case of PayPerEvent or Bundle. In these cases, it will be 0 or 1.
+            lastSQLCommand = 
+                "create table if not exists CMS_DefaultTerritoryInfo ("
+                    "DefaultTerritoryInfoKey  			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "MediaItemKey				BIGINT UNSIGNED NOT NULL,"
+                    "TerritoryKey				BIGINT UNSIGNED NOT NULL,"
+                    /*
+                    "DownloadChargingKey1			BIGINT UNSIGNED NOT NULL,"
+                    "DownloadChargingKey2			BIGINT UNSIGNED NOT NULL,"
+                    "DownloadReserveCredit			TINYINT (1) NULL,"
+                    "DownloadExternalBillingName		VARCHAR (64) NULL,"
+                    "DownloadMaxRetries				INT NOT NULL,"
+                    "DownloadTTLInSeconds			INT NOT NULL,"
+                    "StreamingChargingKey1			BIGINT UNSIGNED NOT NULL,"
+                    "StreamingChargingKey2			BIGINT UNSIGNED NOT NULL,"
+                    "StreamingReserveCredit			TINYINT (1) NULL,"
+                    "StreamingExternalBillingName		VARCHAR (64) NULL,"
+                    "StreamingMaxRetries			INT NOT NULL,"
+                    "StreamingTTLInSeconds			INT NOT NULL,"
+                    */
+                    "StartPublishing				DATETIME NOT NULL,"
+                    "EndPublishing				DATETIME NOT NULL,"
+                    "constraint CMS_DefaultTerritoryInfo_PK PRIMARY KEY (DefaultTerritoryInfoKey), "
+                    "constraint CMS_DefaultTerritoryInfo_FK foreign key (MediaItemKey) "
+                        "references CMS_MediaItems (MediaItemKey) on delete cascade, "
+                    "constraint CMS_DefaultTerritoryInfo_FK2 foreign key (TerritoryKey) "
+                        "references CMS_Territories (TerritoryKey) on delete cascade, "
+                    /*
+                    "constraint CMS_DefaultTerritoryInfo_FK3 foreign key (DownloadChargingKey1) "
+                        "references ChargingInfo (ChargingKey), "
+                    "constraint CMS_DefaultTerritoryInfo_FK4 foreign key (DownloadChargingKey2) "
+                        "references ChargingInfo (ChargingKey), "
+                    "constraint CMS_DefaultTerritoryInfo_FK5 foreign key (StreamingChargingKey1) "
+                        "references ChargingInfo (ChargingKey), "
+                    "constraint CMS_DefaultTerritoryInfo_FK6 foreign key (StreamingChargingKey2) "
+                        "references ChargingInfo (ChargingKey), "
+                     */
+                    "UNIQUE (MediaItemKey, TerritoryKey)) "
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(string("SQL exception")
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+        
+        try
+        {
+            // PublishingStatus. 0: not published, 1: published
+            // In this table it is considered the publishing 'per content'.
+            // In CMS_Publishing2, a content is considered published if all his profiles are published.
+            lastSQLCommand = 
+                "create table if not exists CMS_Publishing2 ("
+                    "PublishingKey                  BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "MediaItemKey                   BIGINT UNSIGNED NOT NULL,"
+                    "TerritoryKey                   BIGINT UNSIGNED NOT NULL,"
+                    "StartPublishing                DATETIME NOT NULL,"
+                    "EndPublishing                  DATETIME NOT NULL,"
+                    "PublishingStatus               TINYINT (1) NOT NULL,"
+                    "ProcessorCMS                   VARCHAR (24) NULL,"
+                    "constraint CMS_Publishing2_PK PRIMARY KEY (PublishingKey), "
+                    "constraint CMS_Publishing2_FK foreign key (MediaItemKey) "
+                        "references CMS_MediaItems (MediaItemKey) on delete cascade, "
+                    "constraint CMS_Publishing2_FK2 foreign key (TerritoryKey) "
+                        "references CMS_Territories (TerritoryKey) on delete cascade, "
+                    "UNIQUE (MediaItemKey, TerritoryKey)) "
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(string("SQL exception")
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+        
+        try
+        {
+            // PublishingStatus. 0: not published, 1: published
+            // In this table it is considered the publishing 'per content'.
+            // In CMS_Publishing2, a content is considered published if all his profiles are published.
+            lastSQLCommand = 
+                "create index CMS_Publishing2_idx2 on CMS_Publishing2 (MediaItemKey, StartPublishing, EndPublishing, PublishingStatus)";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(string("SQL exception")
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
+        try
+        {
+            // PublishingStatus. 0: not published, 1: published
+            // In this table it is considered the publishing 'per content'.
+            // In CMS_Publishing2, a content is considered published if all his profiles are published.
+            lastSQLCommand = 
+                "create index CMS_Publishing2_idx3 on CMS_Publishing2 (PublishingStatus, StartPublishing, EndPublishing)";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(string("SQL exception")
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
+        try
+        {
+            // PublishingStatus. 0: not published, 1: published
+            // In this table it is considered the publishing 'per content'.
+            // In CMS_Publishing2, a content is considered published if all his profiles are published.
+            lastSQLCommand = 
+                "create index CMS_Publishing2_idx4 on CMS_Publishing2 (PublishingStatus, EndPublishing, StartPublishing)";            
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(string("SQL exception")
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
+        try
+        {
             // The CMS_EncodingJobs table include all the contents that have to be encoded
             //  OriginatingProcedure.
             //      0: ContentIngestion1_0
@@ -2795,29 +3179,6 @@ void CMSEngineDBFacade::createTablesIfNeeded()
 
 
 
-    # create table Publishing2
-    # PublishingStatus. 0: not published, 1: published
-    # In this table it is considered the publishing 'per content'.
-    # In CMS_Publishing2, a content is considered published if all his profiles are published.
-    create table if not exists CMS_Publishing2 (
-            PublishingKey				BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            MediaItemKey				BIGINT UNSIGNED NOT NULL,
-            TerritoryKey				BIGINT UNSIGNED NOT NULL,
-            StartPublishing			DATETIME NOT NULL,
-            EndPublishing				DATETIME NOT NULL,
-            PublishingStatus           TINYINT (1) NOT NULL,
-            ProcessorCMS				VARCHAR (24) NULL,
-            constraint CMS_Publishing2_PK PRIMARY KEY (PublishingKey), 
-            constraint CMS_Publishing2_FK foreign key (MediaItemKey) 
-                    references CMS_MediaItems (MediaItemKey) on delete cascade, 
-            constraint CMS_Publishing2_FK2 foreign key (TerritoryKey) 
-                    references CMS_Territories (TerritoryKey) on delete cascade, 
-            UNIQUE (MediaItemKey, TerritoryKey)) 
-            ENGINE=InnoDB;
-    create index CMS_Publishing2_idx2 on CMS_Publishing2 (MediaItemKey, StartPublishing, EndPublishing, PublishingStatus);
-    create index CMS_Publishing2_idx3 on CMS_Publishing2 (PublishingStatus, StartPublishing, EndPublishing);
-    create index CMS_Publishing2_idx4 on CMS_Publishing2 (PublishingStatus, EndPublishing, StartPublishing);
-
     # create table CMS_MediaItemsPublishing
     # In this table it is considered the publishing 'per content'.
     # In CMS_MediaItemsPublishing, a content is considered published if all his profiles are published.
@@ -2876,41 +3237,6 @@ void CMSEngineDBFacade::createTablesIfNeeded()
             constraint CMS_AllowedDeliveryMethods_PK PRIMARY KEY (ContentType, DeliveryMethod)) 
             ENGINE=InnoDB;
 
-    # create table CMS_DefaultTerritoryInfo
-    # Reservecredit is not NULL only in case of PayPerEvent or Bundle. In these cases, it will be 0 or 1.
-    create table if not exists CMS_DefaultTerritoryInfo (
-            DefaultTerritoryInfoKey  			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            MediaItemKey						BIGINT UNSIGNED NOT NULL,
-            TerritoryKey						BIGINT UNSIGNED NOT NULL,
-            DownloadChargingKey1				BIGINT UNSIGNED NOT NULL,
-            DownloadChargingKey2				BIGINT UNSIGNED NOT NULL,
-            DownloadReserveCredit				TINYINT (1) NULL,
-            DownloadExternalBillingName		VARCHAR (64) NULL,
-            DownloadMaxRetries					INT NOT NULL,
-            DownloadTTLInSeconds				INT NOT NULL,
-            StreamingChargingKey1				BIGINT UNSIGNED NOT NULL,
-            StreamingChargingKey2				BIGINT UNSIGNED NOT NULL,
-            StreamingReserveCredit				TINYINT (1) NULL,
-            StreamingExternalBillingName		VARCHAR (64) NULL,
-            StreamingMaxRetries				INT NOT NULL,
-            StreamingTTLInSeconds				INT NOT NULL,
-            StartPublishing					DATETIME NOT NULL,
-            EndPublishing						DATETIME NOT NULL,
-            constraint CMS_DefaultTerritoryInfo_PK PRIMARY KEY (DefaultTerritoryInfoKey), 
-            constraint CMS_DefaultTerritoryInfo_FK foreign key (MediaItemKey) 
-                    references CMS_MediaItems (MediaItemKey) on delete cascade, 
-            constraint CMS_DefaultTerritoryInfo_FK2 foreign key (TerritoryKey) 
-                    references CMS_Territories (TerritoryKey) on delete cascade, 
-            constraint CMS_DefaultTerritoryInfo_FK3 foreign key (DownloadChargingKey1) 
-                    references ChargingInfo (ChargingKey), 
-            constraint CMS_DefaultTerritoryInfo_FK4 foreign key (DownloadChargingKey2) 
-                    references ChargingInfo (ChargingKey), 
-            constraint CMS_DefaultTerritoryInfo_FK5 foreign key (StreamingChargingKey1) 
-                    references ChargingInfo (ChargingKey), 
-            constraint CMS_DefaultTerritoryInfo_FK6 foreign key (StreamingChargingKey2) 
-                    references ChargingInfo (ChargingKey), 
-            UNIQUE (MediaItemKey, TerritoryKey)) 
-            ENGINE=InnoDB;
 
     # create table CMS_Artists
     create table if not exists CMS_Artists (
