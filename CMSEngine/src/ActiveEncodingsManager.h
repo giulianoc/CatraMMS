@@ -18,12 +18,20 @@
 #include <vector>
 #include <condition_variable>
 #include "CMSEngineDBFacade.h"
+#include "CMSStorage.h"
 #include "EncodingItem.h"
 #include "spdlog/spdlog.h"
 
+#define MAXHIGHENCODINGSTOBEMANAGED     30
+#define MAXDEFAULTENCODINGSTOBEMANAGED  20
+#define MAXLOWENCODINGSTOBEMANAGED      20
+
 class ActiveEncodingsManager {
 public:
-    ActiveEncodingsManager(shared_ptr<spdlog::logger> logger);
+    ActiveEncodingsManager(        
+            shared_ptr<CMSEngineDBFacade> cmsEngineDBFacade,
+            shared_ptr<CMSStorage> cmsStorage,
+            shared_ptr<spdlog::logger> logger);
 
     virtual ~ActiveEncodingsManager();
     
@@ -35,20 +43,23 @@ private:
         EncodingJobStatus			_status;
         chrono::system_clock::time_point	_encodingJobStart;
 
-        EncodingItem				_encodingItem;
+        shared_ptr<EncodingItem>		_encodingItem;
         void					*_encodingThread;
     };
 
     shared_ptr<spdlog::logger>                  _logger;
+    shared_ptr<CMSEngineDBFacade>               _cmsEngineDBFacade;
+    shared_ptr<CMSStorage>                      _cmsStorage;
     
     condition_variable                          _cvAddedEncodingJob;
     mutex                                       _mtEncodingJobs;
     
-    vector<EncodingJob>                        _highPriorityEncodingJobs;
-    vector<EncodingJob>                        _defaultPriorityEncodingJobs;
-    vector<EncodingJob>                        _lowPriorityEncodingJobs;
+    EncodingJob     _highPriorityEncodingJobs[MAXHIGHENCODINGSTOBEMANAGED];
+    EncodingJob     _defaultPriorityEncodingJobs[MAXDEFAULTENCODINGSTOBEMANAGED];
+    EncodingJob     _lowPriorityEncodingJobs[MAXLOWENCODINGSTOBEMANAGED];
 
-    void processEncodingJob(EncodingJob encodingJob);
+    void processEncodingJob(EncodingJob* encodingJob);
+    void addEncodingItem(shared_ptr<EncodingItem> encodingItem);
 };
 
 #endif

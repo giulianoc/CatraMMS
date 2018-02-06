@@ -18,14 +18,14 @@
 EncoderVideoAudioProxy::EncoderVideoAudioProxy(
         shared_ptr<CMSEngineDBFacade> cmsEngineDBFacade,
         shared_ptr<CMSStorage> cmsStorage,
-        EncodingItem* pEncodingItem,
+        shared_ptr<EncodingItem> encodingItem,
         shared_ptr<spdlog::logger> logger
 )
 {
     _logger                 = logger;
     _cmsEngineDBFacade      = cmsEngineDBFacade;
     _cmsStorage             = cmsStorage;
-    _pEncodingItem          = pEncodingItem;
+    _encodingItem          = encodingItem;
     
     _ffmpegPathName        = "/app/ffmpeg-1.0-usr_include_Centos5_64/bin/ffmpeg ";
     _3GPPEncoder            = "FFMPEG";
@@ -48,8 +48,8 @@ void EncoderVideoAudioProxy::operator()()
     {
         _logger->error(string("encodeContentVideoAudio: ") + e.what());
         
-        _cmsEngineDBFacade->updateEncodingJob (_pEncodingItem->_encodingJobKey, 
-                CMSEngineDBFacade::EncodingError::MaxCapacityReached, _pEncodingItem->_ingestionJobKey);
+        _cmsEngineDBFacade->updateEncodingJob (_encodingItem->_encodingJobKey, 
+                CMSEngineDBFacade::EncodingError::MaxCapacityReached, _encodingItem->_ingestionJobKey);
         
         throw e;
     }
@@ -57,8 +57,8 @@ void EncoderVideoAudioProxy::operator()()
     {
         _logger->error(string("encodeContentVideoAudio: ") + e.what());
         
-        _cmsEngineDBFacade->updateEncodingJob (_pEncodingItem->_encodingJobKey, 
-                CMSEngineDBFacade::EncodingError::PunctualError, _pEncodingItem->_ingestionJobKey);
+        _cmsEngineDBFacade->updateEncodingJob (_encodingItem->_encodingJobKey, 
+                CMSEngineDBFacade::EncodingError::PunctualError, _encodingItem->_ingestionJobKey);
 
         throw e;
     }
@@ -68,9 +68,9 @@ void EncoderVideoAudioProxy::operator()()
         
         // PunctualError is used because, in case it always happens, the encoding will never reach a final state
         _cmsEngineDBFacade->updateEncodingJob (
-                _pEncodingItem->_encodingJobKey, 
+                _encodingItem->_encodingJobKey, 
                 CMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
-                _pEncodingItem->_ingestionJobKey);
+                _encodingItem->_ingestionJobKey);
 
         throw e;
     }
@@ -80,9 +80,9 @@ void EncoderVideoAudioProxy::operator()()
         
         // PunctualError is used because, in case it always happens, the encoding will never reach a final state
         _cmsEngineDBFacade->updateEncodingJob (
-                _pEncodingItem->_encodingJobKey, 
+                _encodingItem->_encodingJobKey, 
                 CMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
-                _pEncodingItem->_ingestionJobKey);
+                _encodingItem->_ingestionJobKey);
 
         throw e;
     }
@@ -112,8 +112,8 @@ void EncoderVideoAudioProxy::operator()()
             FileIO::remove(stagingEncodedAssetPathName);
         }
 
-        _cmsEngineDBFacade->updateEncodingJob (_pEncodingItem->_encodingJobKey, 
-                CMSEngineDBFacade::EncodingError::MaxCapacityReached, _pEncodingItem->_ingestionJobKey);
+        _cmsEngineDBFacade->updateEncodingJob (_encodingItem->_encodingJobKey, 
+                CMSEngineDBFacade::EncodingError::MaxCapacityReached, _encodingItem->_ingestionJobKey);
         
         throw e;
     }
@@ -138,8 +138,8 @@ void EncoderVideoAudioProxy::operator()()
             FileIO::remove(stagingEncodedAssetPathName);
         }
 
-        _cmsEngineDBFacade->updateEncodingJob (_pEncodingItem->_encodingJobKey, 
-                CMSEngineDBFacade::EncodingError::PunctualError, _pEncodingItem->_ingestionJobKey);
+        _cmsEngineDBFacade->updateEncodingJob (_encodingItem->_encodingJobKey, 
+                CMSEngineDBFacade::EncodingError::PunctualError, _encodingItem->_ingestionJobKey);
 
         throw e;
     }
@@ -166,9 +166,9 @@ void EncoderVideoAudioProxy::operator()()
 
         // PunctualError is used because, in case it always happens, the encoding will never reach a final state
         _cmsEngineDBFacade->updateEncodingJob (
-                _pEncodingItem->_encodingJobKey, 
+                _encodingItem->_encodingJobKey, 
                 CMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
-                _pEncodingItem->_ingestionJobKey);
+                _encodingItem->_ingestionJobKey);
 
         throw e;
     }
@@ -195,9 +195,9 @@ void EncoderVideoAudioProxy::operator()()
 
         // PunctualError is used because, in case it always happens, the encoding will never reach a final state
         _cmsEngineDBFacade->updateEncodingJob (
-                _pEncodingItem->_encodingJobKey, 
+                _encodingItem->_encodingJobKey, 
                 CMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
-                _pEncodingItem->_ingestionJobKey);
+                _encodingItem->_ingestionJobKey);
 
         throw e;
     }
@@ -205,9 +205,9 @@ void EncoderVideoAudioProxy::operator()()
     try
     {
         _cmsEngineDBFacade->updateEncodingJob (
-            _pEncodingItem->_encodingJobKey, 
+            _encodingItem->_encodingJobKey, 
             CMSEngineDBFacade::EncodingError::NoError, 
-            _pEncodingItem->_ingestionJobKey);
+            _encodingItem->_ingestionJobKey);
     }
     catch(exception e)
     {
@@ -222,18 +222,18 @@ string EncoderVideoAudioProxy::encodeContentVideoAudio()
     string stagingEncodedAssetPathName;
     
     if (
-        (_pEncodingItem->_encodingProfileTechnology == CMSEngineDBFacade::EncodingTechnology::ThreeGPP &&
+        (_encodingItem->_encodingProfileTechnology == CMSEngineDBFacade::EncodingTechnology::ThreeGPP &&
             _3GPPEncoder == "FFMPEG") ||
-        (_pEncodingItem->_encodingProfileTechnology == CMSEngineDBFacade::EncodingTechnology::MPEG2_TS &&
+        (_encodingItem->_encodingProfileTechnology == CMSEngineDBFacade::EncodingTechnology::MPEG2_TS &&
             _mpeg2TSEncoder == "FFMPEG") ||
-        _pEncodingItem->_encodingProfileTechnology == CMSEngineDBFacade::EncodingTechnology::WEBM ||
-        (_pEncodingItem->_encodingProfileTechnology == CMSEngineDBFacade::EncodingTechnology::Adobe &&
+        _encodingItem->_encodingProfileTechnology == CMSEngineDBFacade::EncodingTechnology::WEBM ||
+        (_encodingItem->_encodingProfileTechnology == CMSEngineDBFacade::EncodingTechnology::Adobe &&
             _mpeg2TSEncoder == "FFMPEG")
     )
     {
         stagingEncodedAssetPathName = encodeContent_VideoAudio_through_ffmpeg();
     }
-    else if (_pEncodingItem->_encodingProfileTechnology == CMSEngineDBFacade::EncodingTechnology::WindowsMedia)
+    else if (_encodingItem->_encodingProfileTechnology == CMSEngineDBFacade::EncodingTechnology::WindowsMedia)
     {
         string errorMessage = "No Encoder available to encode WindowsMedia technology";
         _logger->error(errorMessage);
@@ -254,33 +254,33 @@ string EncoderVideoAudioProxy::encodeContentVideoAudio()
 string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 {
     string cmsSourceAssetPathName = _cmsStorage->getCMSAssetPathName(
-        _pEncodingItem->_cmsPartitionNumber,
-        _pEncodingItem->_customer->_directoryName,
-        _pEncodingItem->_relativePath,
-        _pEncodingItem->_fileName);
+        _encodingItem->_cmsPartitionNumber,
+        _encodingItem->_customer->_directoryName,
+        _encodingItem->_relativePath,
+        _encodingItem->_fileName);
     
     bool removeLinuxPathIfExist = true;
     
-    size_t extensionIndex = _pEncodingItem->_fileName.find_last_of(".");
+    size_t extensionIndex = _encodingItem->_fileName.find_last_of(".");
     if (extensionIndex == string::npos)
     {
         string errorMessage = string("No extension find in the asset file name")
-                + ", _pEncodingItem->_fileName: " + _pEncodingItem->_fileName;
+                + ", _encodingItem->_fileName: " + _encodingItem->_fileName;
         _logger->error(errorMessage);
         
         throw runtime_error(errorMessage);
     }
     
     string encodedFileName =
-            _pEncodingItem->_fileName.substr(0, extensionIndex)
+            _encodingItem->_fileName.substr(0, extensionIndex)
             + "_" 
-            + to_string(_pEncodingItem->_encodingProfileKey);
-    if (_pEncodingItem->_encodingProfileTechnology == CMSEngineDBFacade::EncodingTechnology::ThreeGPP)
+            + to_string(_encodingItem->_encodingProfileKey);
+    if (_encodingItem->_encodingProfileTechnology == CMSEngineDBFacade::EncodingTechnology::ThreeGPP)
         encodedFileName.append(".3gp");
-    else if (_pEncodingItem->_encodingProfileTechnology == CMSEngineDBFacade::EncodingTechnology::MPEG2_TS ||
-            _pEncodingItem->_encodingProfileTechnology == CMSEngineDBFacade::EncodingTechnology::Adobe)
+    else if (_encodingItem->_encodingProfileTechnology == CMSEngineDBFacade::EncodingTechnology::MPEG2_TS ||
+            _encodingItem->_encodingProfileTechnology == CMSEngineDBFacade::EncodingTechnology::Adobe)
         ;
-    else if (_pEncodingItem->_encodingProfileTechnology == CMSEngineDBFacade::EncodingTechnology::WEBM)
+    else if (_encodingItem->_encodingProfileTechnology == CMSEngineDBFacade::EncodingTechnology::WEBM)
         encodedFileName.append(".webm");
     else
     {
@@ -291,15 +291,15 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
     }
     
     string stagingEncodedAssetPathName = _cmsStorage->getStagingAssetPathName(
-        _pEncodingItem->_customer->_directoryName,
-        _pEncodingItem->_relativePath,
+        _encodingItem->_customer->_directoryName,
+        _encodingItem->_relativePath,
         encodedFileName,
-        -1, // _pEncodingItem->_mediaItemKey, not used because encodedFileName is not ""
-        -1, // _pEncodingItem->_physicalPathKey, not used because encodedFileName is not ""
+        -1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
+        -1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
         removeLinuxPathIfExist);
     
-    if (_pEncodingItem->_encodingProfileTechnology == CMSEngineDBFacade::EncodingTechnology::MPEG2_TS ||
-        _pEncodingItem->_encodingProfileTechnology == CMSEngineDBFacade::EncodingTechnology::Adobe)
+    if (_encodingItem->_encodingProfileTechnology == CMSEngineDBFacade::EncodingTechnology::MPEG2_TS ||
+        _encodingItem->_encodingProfileTechnology == CMSEngineDBFacade::EncodingTechnology::Adobe)
     {
         // In this case, the path is a directory where to place the segments
 
@@ -320,7 +320,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
     }
 
     string ffmpegEncodingProfilePathName = _cmsStorage->getFFMPEGEncodingProfilePathName(
-        _pEncodingItem->_contentType, _pEncodingItem->_encodingProfileKey);
+        _encodingItem->_contentType, _encodingItem->_encodingProfileKey);
 
     ifstream ffmpegEncodingProfileJson(ffmpegEncodingProfilePathName, std::ifstream::binary);
     Json::Value encodingProfileRoot;
@@ -423,7 +423,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
         }
     }
 
-    if (_pEncodingItem->_contentType == CMSEngineDBFacade::ContentType::Video)
+    if (_encodingItem->_contentType == CMSEngineDBFacade::ContentType::Video)
     {
         field = "video";
         if (!_cmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
@@ -610,8 +610,8 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
         }
     }
     
-    if (_pEncodingItem->_contentType == CMSEngineDBFacade::ContentType::Video ||
-            _pEncodingItem->_contentType == CMSEngineDBFacade::ContentType::Audio)
+    if (_encodingItem->_contentType == CMSEngineDBFacade::ContentType::Video ||
+            _encodingItem->_contentType == CMSEngineDBFacade::ContentType::Audio)
     {
         field = "audio";
         if (!_cmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
@@ -839,15 +839,15 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEncod
     
     string cmsAssetPathName = _cmsStorage->moveAssetInCMSRepository(
         stagingEncodedAssetPathName,
-        _pEncodingItem->_customer->_directoryName,
+        _encodingItem->_customer->_directoryName,
         encodedFileName,
-        _pEncodingItem->_relativePath,
+        _encodingItem->_relativePath,
 
         partitionIndexToBeCalculated,
         &cmsPartitionIndexUsed, // OUT if bIsPartitionIndexToBeCalculated is true, IN is bIsPartitionIndexToBeCalculated is false
 
         deliveryRepositoriesToo,
-        _pEncodingItem->_customer->_territories
+        _encodingItem->_customer->_territories
         );
 
     unsigned long long cmsAssetSizeInBytes;
@@ -881,12 +881,12 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEncod
     
     int64_t encodedPhysicalPathKey =
             _cmsEngineDBFacade->saveEncodedContentMetadata(
-        _pEncodingItem->_customer->_customerKey,
-        _pEncodingItem->_mediaItemKey,
+        _encodingItem->_customer->_customerKey,
+        _encodingItem->_mediaItemKey,
         encodedFileName,
-        _pEncodingItem->_relativePath,
+        _encodingItem->_relativePath,
         cmsPartitionIndexUsed,
         cmsAssetSizeInBytes,
-        _pEncodingItem->_encodingProfileKey);
+        _encodingItem->_encodingProfileKey);
 }
 

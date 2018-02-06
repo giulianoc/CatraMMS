@@ -38,7 +38,7 @@ public:
     EncoderVideoAudioProxy(
         shared_ptr<CMSEngineDBFacade> cmsEngineDBFacade,
         shared_ptr<CMSStorage> cmsStorage,
-        EncodingItem* pEncodingItem,
+        shared_ptr<EncodingItem> encodingItem,
         shared_ptr<spdlog::logger> logger);
 
     virtual ~EncoderVideoAudioProxy();
@@ -49,7 +49,7 @@ private:
     shared_ptr<spdlog::logger>          _logger;
     shared_ptr<CMSEngineDBFacade>       _cmsEngineDBFacade;
     shared_ptr<CMSStorage>              _cmsStorage;
-    EncodingItem*                       _pEncodingItem;
+    shared_ptr<EncodingItem>            _encodingItem;
     
     string                              _ffmpegPathName;
     string                              _3GPPEncoder;

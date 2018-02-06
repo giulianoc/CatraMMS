@@ -7,7 +7,7 @@
 
 using namespace std;
 
-enum EncodingJobStatus
+enum class EncodingJobStatus
 {
     Free,
     ToBeRun,

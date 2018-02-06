@@ -63,7 +63,7 @@ int main (int iArgc, char *pArgv [])
 
     logger->info(string("Creating ActiveEncodingsManager")
             );
-    ActiveEncodingsManager      activeEncodingsManager(logger);
+    ActiveEncodingsManager      activeEncodingsManager(cmsEngineDBFacade, cmsStorage, logger);
 
     logger->info(string("Creating CMSEngineProcessor")
             );
