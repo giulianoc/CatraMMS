@@ -92,7 +92,7 @@ void ActiveEncodingsManager::operator()()
                                 + ", customer: " + encodingJob->_encodingItem->_customer->_name
                                 + ", _ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey)
                                 + ", _encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
-                                + ", _encodingPriority: " + to_string(encodingJob->_encodingItem->_encodingPriority)
+                                + ", _encodingPriority: " + to_string(static_cast<int>(encodingJob->_encodingItem->_encodingPriority))
                                 + ", _relativePath: " + encodingJob->_encodingItem->_relativePath
                                 + ", _fileName: " + encodingJob->_encodingItem->_fileName
                                 + ", _encodingProfileKey: " + to_string(encodingJob->_encodingItem->_encodingProfileKey)
@@ -111,7 +111,7 @@ void ActiveEncodingsManager::operator()()
                             + ", customer: " + encodingJob->_encodingItem->_customer->_name
                             + ", _ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey)
                             + ", _encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
-                            + ", _encodingPriority: " + to_string(encodingJob->_encodingItem->_encodingPriority)
+                            + ", _encodingPriority: " + to_string(static_cast<int>(encodingJob->_encodingItem->_encodingPriority))
                             + ", _relativePath: " + encodingJob->_encodingItem->_relativePath
                             + ", _fileName: " + encodingJob->_encodingItem->_fileName
                             + ", _encodingProfileKey: " + to_string(encodingJob->_encodingItem->_encodingProfileKey)
@@ -153,17 +153,17 @@ void ActiveEncodingsManager::addEncodingItem(shared_ptr<CMSEngineDBFacade::Encod
     EncodingJob*    encodingJobs;
     int             maxEncodingsToBeManaged;
 
-    if (encodingItem->_encodingPriority == 0)
+    if (encodingItem->_encodingPriority == CMSEngineDBFacade::EncodingPriority::High)
     {
         encodingJobs            = _highPriorityEncodingJobs;
         maxEncodingsToBeManaged = MAXHIGHENCODINGSTOBEMANAGED;
     }
-    else if (encodingItem->_encodingPriority == 1)
+    else if (encodingItem->_encodingPriority == CMSEngineDBFacade::EncodingPriority::Default)
     {
         encodingJobs = _defaultPriorityEncodingJobs;
         maxEncodingsToBeManaged = MAXDEFAULTENCODINGSTOBEMANAGED;
     }
-    else // if (encodingItem->_encodingPriority == 2)
+    else // if (encodingItem->_encodingPriority == CMSEngineDBFacade::EncodingPriority::Low)
     {
         encodingJobs = _lowPriorityEncodingJobs;
         maxEncodingsToBeManaged = MAXLOWENCODINGSTOBEMANAGED;
@@ -209,7 +209,7 @@ unsigned long ActiveEncodingsManager:: addEncodingItems (
             + ", encodingItem->_customer->_name: " + encodingItem->_customer->_name
             + ", encodingItem->_ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
             + ", encodingItem->_encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
-            + ", encodingItem->_encodingPriority: " + to_string(encodingItem->_encodingPriority)
+            + ", encodingItem->_encodingPriority: " + to_string(static_cast<int>(encodingItem->_encodingPriority))
             + ", encodingItem->_mediaItemKey: " + to_string(encodingItem->_mediaItemKey)
             + ", encodingItem->_physicalPathKey: " + to_string(encodingItem->_physicalPathKey)
             + ", encodingItem->_fileName: " + encodingItem->_fileName
@@ -226,7 +226,7 @@ unsigned long ActiveEncodingsManager:: addEncodingItems (
                 + ", encodingItem->_customer->_name: " + encodingItem->_customer->_name
                 + ", encodingItem->_ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
                 + ", encodingItem->_encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
-                + ", encodingItem->_encodingPriority: " + to_string(encodingItem->_encodingPriority)
+                + ", encodingItem->_encodingPriority: " + to_string(static_cast<int>(encodingItem->_encodingPriority))
                 + ", encodingItem->_mediaItemKey: " + to_string(encodingItem->_mediaItemKey)
                 + ", encodingItem->_physicalPathKey: " + to_string(encodingItem->_physicalPathKey)
                 + ", encodingItem->_fileName: " + encodingItem->_fileName
@@ -241,7 +241,7 @@ unsigned long ActiveEncodingsManager:: addEncodingItems (
                 + ", encodingItem->_customer->_name: " + encodingItem->_customer->_name
                 + ", encodingItem->_ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
                 + ", encodingItem->_encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
-                + ", encodingItem->_encodingPriority: " + to_string(encodingItem->_encodingPriority)
+                + ", encodingItem->_encodingPriority: " + to_string(static_cast<int>(encodingItem->_encodingPriority))
                 + ", encodingItem->_mediaItemKey: " + to_string(encodingItem->_mediaItemKey)
                 + ", encodingItem->_physicalPathKey: " + to_string(encodingItem->_physicalPathKey)
                 + ", encodingItem->_fileName: " + encodingItem->_fileName

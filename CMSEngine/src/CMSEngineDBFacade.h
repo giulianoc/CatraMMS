@@ -84,11 +84,13 @@ public:
         long long                               _mediaItemKey;
         long long                               _physicalPathKey;
         ContentType                             _contentType;
-        unsigned long                           _encodingPriority;
+        EncodingPriority                        _encodingPriority;
+        /*
         string                                  _ftpIPAddress;
         string                                  _ftpPort;
         string                                  _ftpUser;
         string                                  _ftpPassword;
+         */
         long long                               _encodingProfileKey;
         CMSEngineDBFacade::EncodingTechnology   _encodingProfileTechnology;
     } ;
@@ -134,6 +136,8 @@ public:
 
     vector<shared_ptr<Customer>> getCustomers();
     
+    shared_ptr<Customer> getCustomer(int64_t customerKey);
+
     bool isMetadataPresent(Json::Value root, string field);
 
     int64_t addCustomer(
@@ -172,6 +176,11 @@ public:
         IngestionStatus newIngestionStatus,
         string errorMessage);
 
+    void getEncodingJobs(
+        bool resetToBeDone,
+        string processorCMS,
+        vector<shared_ptr<CMSEngineDBFacade::EncodingItem>>& encodingItems);
+    
     void updateEncodingJob (
         int64_t encodingJobKey,
         EncodingError encodingError,

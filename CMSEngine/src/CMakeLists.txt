@@ -27,7 +27,6 @@ SET (SOURCES
 	CMSEngine.cpp
 	ActiveEncodingsManager.cpp
 	EncoderVideoAudioProxy.cpp
-	EncodingItem.cpp
 )
 SET (HEADERS
 	Customer.h
@@ -36,7 +35,6 @@ SET (HEADERS
 	CMSEngine.h
 	ActiveEncodingsManager.h
 	EncoderVideoAudioProxy.h
-	EncodingItem.h
 )
 
 include_directories ("${PROJECT_SOURCE_DIR}/../usr_local/include")

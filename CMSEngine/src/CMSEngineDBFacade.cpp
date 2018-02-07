@@ -72,6 +72,44 @@ vector<shared_ptr<Customer>> CMSEngineDBFacade::getCustomers()
     return customers;
 }
 
+shared_ptr<Customer> CMSEngineDBFacade::getCustomer(int64_t customerKey)
+{
+    shared_ptr<MySQLConnection> conn = _connectionPool->borrow();	
+
+    shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(
+        "select CustomerKey, Name, DirectoryName, MaxStorageInGB, MaxEncodingPriority from CMS_Customers where CustomerKey = ?"));
+    int queryParameterIndex = 1;
+    preparedStatement->setInt64(queryParameterIndex++, customerKey);
+    shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+
+    shared_ptr<Customer>    customer = make_shared<Customer>();
+    
+    if (resultSet->next())
+    {
+        customer->_customerKey = resultSet->getInt("CustomerKey");
+        customer->_name = resultSet->getString("Name");
+        customer->_directoryName = resultSet->getString("DirectoryName");
+        customer->_maxStorageInGB = resultSet->getInt("MaxStorageInGB");
+        customer->_maxEncodingPriority = resultSet->getInt("MaxEncodingPriority");
+
+        getTerritories(customer);
+    }
+    else
+    {
+        _connectionPool->unborrow(conn);
+
+        string errorMessage = string("select failed")
+                + ", customerKey: " + to_string(customerKey);
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);                    
+    }
+
+    _connectionPool->unborrow(conn);
+    
+    return customer;
+}
+
 void CMSEngineDBFacade::getTerritories(shared_ptr<Customer> customer)
 {
     shared_ptr<MySQLConnection> conn = _connectionPool->borrow();	
@@ -580,11 +618,13 @@ void CMSEngineDBFacade::updateIngestionJob (
 }
 
 void CMSEngineDBFacade::getEncodingJobs(
-    bool resetToBeDone,
-    string processorCMS)
+        bool resetToBeDone,
+        string processorCMS,
+        vector<shared_ptr<CMSEngineDBFacade::EncodingItem>>& encodingItems
+)
 {
     string      lastSQLCommand;
-    
+        
     shared_ptr<MySQLConnection> conn;
     bool autoCommit = true;
 
@@ -598,12 +638,12 @@ void CMSEngineDBFacade::getEncodingJobs(
         if (resetToBeDone)
         {
             lastSQLCommand = 
-                "update CMS_EncodingJobs set Status = ?, ProcessorCMS = null where ProcessorCMS = ? and Status <> ?"";
+                "update CMS_EncodingJobs set Status = ?, ProcessorCMS = null where ProcessorCMS = ? and Status <> ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt(queryParameterIndex++, static_cast<int>(EncodingStatus::ToBeProcessed));
             preparedStatement->setString(queryParameterIndex++, processorCMS);
-            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(EncodingStatus::Processed));
+            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(EncodingStatus::Processing));
 
             preparedStatement->executeUpdate();
         }
@@ -632,40 +672,71 @@ void CMSEngineDBFacade::getEncodingJobs(
             int queryParameterIndex = 1;
             preparedStatement->setInt(queryParameterIndex++, static_cast<int>(EncodingStatus::ToBeProcessed));
 
-            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-            while (resultSet->next())
+            shared_ptr<sql::ResultSet> encodingResultSet (preparedStatement->executeQuery());
+            while (encodingResultSet->next())
             {
-        OK------_encodingJobKey, _ingestionJobKey, _physicalPathKey (source?), _encodingPriority, _encodingProfileKey,
-        NOK-----_cmsPartitionNumber, _fileName, _relativePath, _customer, _mediaItemKey, _contentType, _encodingProfileTechnology;
-                lastSQLCommand = 
-                    "select pp.CMSPartitionNumber, pp.MediaItemKey, "
-                    " from CMS_EncodingJobs ej, CMS_PhysicalPaths pp "
-                    "where ej.SourcePhysicalPathKey = pp.PhysicalPathKey and ej.EncodingJobKey = ?";
-                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                int queryParameterIndex = 1;
-                preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
-
-                shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-                if (resultSet->next())
+                shared_ptr<CMSEngineDBFacade::EncodingItem> encodingItem =
+                        make_shared<CMSEngineDBFacade::EncodingItem>();
+                
+                encodingItem->_encodingJobKey = encodingResultSet->getInt64("EncodingJobKey");
+                encodingItem->_ingestionJobKey = encodingResultSet->getInt64("IngestionJobKey");
+                encodingItem->_physicalPathKey = encodingResultSet->getInt64("SourcePhysicalPathKey");
+                encodingItem->_encodingPriority = static_cast<EncodingPriority>(encodingResultSet->getInt("EncodingPriority"));
+                encodingItem->_encodingProfileKey = encodingResultSet->getInt64("EncodingProfileKey");
+                
                 {
-                    IngestionStatus ingestionStatus;
+                    lastSQLCommand = 
+                        "select p.CMSPartitionNumber, p.MediaItemKey, p.FileName, p.RelativePath, ep.Technology "
+                        "from CMS_PhysicalPaths p, CMS_EncodingProfiles ep "
+                        "where p.EncodingProfileKey = ep.EncodingProfileKey and p.EncodingProfileKey = ? and p.PhysicalPathKey = ?";
+                    shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                    int queryParameterIndex = 1;
+                    preparedStatement->setInt64(queryParameterIndex++, encodingItem->_encodingProfileKey);
+                    preparedStatement->setInt64(queryParameterIndex++, encodingItem->_physicalPathKey);
 
-                    if (resultSet->getInt(1) == 0)  // no failures
-                        ingestionStatus = IngestionStatus::End_IngestionSuccess;
+                    shared_ptr<sql::ResultSet> physicalPathResultSet (preparedStatement->executeQuery());
+                    if (physicalPathResultSet->next())
+                    {
+                        encodingItem->_cmsPartitionNumber = physicalPathResultSet->getInt("CMSPartitionNumber");
+                        encodingItem->_mediaItemKey = physicalPathResultSet->getInt64("MediaItemKey");
+                        encodingItem->_fileName = physicalPathResultSet->getString("FileName");
+                        encodingItem->_relativePath = physicalPathResultSet->getString("RelativePath");
+                        encodingItem->_encodingProfileTechnology = static_cast<EncodingTechnology>(physicalPathResultSet->getInt("Technology"));
+                    }
                     else
-                        ingestionStatus = IngestionStatus::End_IngestionSuccess_EncodingError;
+                    {
+                        string errorMessage = string("select failed")
+                                + ", encodingItem->_encodingProfileKey: " + to_string(encodingItem->_encodingProfileKey)
+                                + ", encodingItem->_physicalPathKey: " + to_string(encodingItem->_physicalPathKey);
+                        _logger->error(errorMessage);
 
-                    string errorMessage = "";
-                    updateIngestionJob (ingestionJobKey, IngestionStatus::End_IngestionSuccess_EncodingError, errorMessage);
+                        throw runtime_error(errorMessage);                    
+                    }
                 }
-                else
                 {
-                    string errorMessage = string("count(*) failure")
-                            + ", IngestionJobKey: " + to_string(encodingJobKey);
-                    _logger->error(errorMessage);
+                    lastSQLCommand = 
+                        "select CustomerKey, ContentType from CMS_MediaItems where MediaItemKey = ?";
+                    shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                    int queryParameterIndex = 1;
+                    preparedStatement->setInt64(queryParameterIndex++, encodingItem->_mediaItemKey);
 
-                    throw runtime_error(errorMessage);                    
+                    shared_ptr<sql::ResultSet> mediaItemResultSet (preparedStatement->executeQuery());
+                    if (mediaItemResultSet->next())
+                    {
+                        encodingItem->_contentType = static_cast<ContentType>(mediaItemResultSet->getInt("ContentType"));
+                        encodingItem->_customer = getCustomer(mediaItemResultSet->getInt64("CustomerKey"));
+                    }
+                    else
+                    {
+                        string errorMessage = string("select failed")
+                                + ", encodingItem->_mediaItemKey: " + to_string(encodingItem->_mediaItemKey);
+                        _logger->error(errorMessage);
+
+                        throw runtime_error(errorMessage);                    
+                    }
                 }
+                
+                encodingItems.push_back(encodingItem);
             }
         }
 
