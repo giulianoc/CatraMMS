@@ -16,7 +16,6 @@
 
 #include "CMSEngineDBFacade.h"
 #include "CMSStorage.h"
-#include "EncodingItem.h"
 #include "spdlog/spdlog.h"
 
 struct MaxConcurrentJobsReached: public exception {
@@ -33,12 +32,21 @@ struct EncoderError: public exception {
     }; 
 };
 
+enum class EncodingJobStatus
+{
+    Free,
+    ToBeRun,
+    Running
+};
+
 class EncoderVideoAudioProxy {
 public:
     EncoderVideoAudioProxy(
+            mutex* mtEncodingJobs,
+            EncodingJobStatus* status,
         shared_ptr<CMSEngineDBFacade> cmsEngineDBFacade,
         shared_ptr<CMSStorage> cmsStorage,
-        shared_ptr<EncodingItem> encodingItem,
+        shared_ptr<CMSEngineDBFacade::EncodingItem> encodingItem,
         shared_ptr<spdlog::logger> logger);
 
     virtual ~EncoderVideoAudioProxy();
@@ -47,9 +55,11 @@ public:
 
 private:
     shared_ptr<spdlog::logger>          _logger;
+    mutex*                              _mtEncodingJobs;
+    EncodingJobStatus*                  _status;
     shared_ptr<CMSEngineDBFacade>       _cmsEngineDBFacade;
     shared_ptr<CMSStorage>              _cmsStorage;
-    shared_ptr<EncodingItem>            _encodingItem;
+    shared_ptr<CMSEngineDBFacade::EncodingItem> _encodingItem;
     
     string                              _ffmpegPathName;
     string                              _3GPPEncoder;

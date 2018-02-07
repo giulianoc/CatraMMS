@@ -579,6 +579,119 @@ void CMSEngineDBFacade::updateIngestionJob (
     }    
 }
 
+void CMSEngineDBFacade::getEncodingJobs(
+    bool resetToBeDone,
+    string processorCMS)
+{
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn;
+    bool autoCommit = true;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+
+        autoCommit = false;
+        conn->_sqlConnection->setAutoCommit(autoCommit);    // or execute the statement START TRANSACTION
+        
+        if (resetToBeDone)
+        {
+            lastSQLCommand = 
+                "update CMS_EncodingJobs set Status = ?, ProcessorCMS = null where ProcessorCMS = ? and Status <> ?"";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(EncodingStatus::ToBeProcessed));
+            preparedStatement->setString(queryParameterIndex++, processorCMS);
+            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(EncodingStatus::Processed));
+
+            preparedStatement->executeUpdate();
+        }
+        else
+        {
+            int retentionDaysToReset = 7;
+            
+            lastSQLCommand = 
+                "update CMS_EncodingJobs set Status = ?, ProcessorCMS = null where ProcessorCMS = ? and Status = ? and DATE_ADD(EncodingJobStart, INTERVAL ? DAY) <= NOW()";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(EncodingStatus::ToBeProcessed));
+            preparedStatement->setString(queryParameterIndex++, processorCMS);
+            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(EncodingStatus::Processing));
+            preparedStatement->setInt(queryParameterIndex++, retentionDaysToReset);
+
+            preparedStatement->executeUpdate();
+        }
+        
+        {
+            lastSQLCommand = 
+                "select EncodingJobKey, IngestionJobKey, SourcePhysicalPathKey, EncodingPriority, EncodingProfileKey from CMS_EncodingJobs " 
+                "where ProcessorCMS is null and Status = ? and EncodingJobStart <= NOW() "
+                "order by EncodingPriority desc, EncodingJobStart asc, FailuresNumber asc for update";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(EncodingStatus::ToBeProcessed));
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            while (resultSet->next())
+            {
+        OK------_encodingJobKey, _ingestionJobKey, _physicalPathKey (source?), _encodingPriority, _encodingProfileKey,
+        NOK-----_cmsPartitionNumber, _fileName, _relativePath, _customer, _mediaItemKey, _contentType, _encodingProfileTechnology;
+                lastSQLCommand = 
+                    "select pp.CMSPartitionNumber, pp.MediaItemKey, "
+                    " from CMS_EncodingJobs ej, CMS_PhysicalPaths pp "
+                    "where ej.SourcePhysicalPathKey = pp.PhysicalPathKey and ej.EncodingJobKey = ?";
+                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                int queryParameterIndex = 1;
+                preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
+
+                shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+                if (resultSet->next())
+                {
+                    IngestionStatus ingestionStatus;
+
+                    if (resultSet->getInt(1) == 0)  // no failures
+                        ingestionStatus = IngestionStatus::End_IngestionSuccess;
+                    else
+                        ingestionStatus = IngestionStatus::End_IngestionSuccess_EncodingError;
+
+                    string errorMessage = "";
+                    updateIngestionJob (ingestionJobKey, IngestionStatus::End_IngestionSuccess_EncodingError, errorMessage);
+                }
+                else
+                {
+                    string errorMessage = string("count(*) failure")
+                            + ", IngestionJobKey: " + to_string(encodingJobKey);
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);                    
+                }
+            }
+        }
+
+        conn->_sqlConnection->commit();     // or execute COMMIT
+        autoCommit = true;
+
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        if (!autoCommit)
+            conn->_sqlConnection->rollback();     // or execute ROLLBACK
+        
+        _connectionPool->unborrow(conn);
+
+        string exceptionMessage(se.what());
+        
+        _logger->error(string("SQL exception")
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw se;
+    }
+}
+
 void CMSEngineDBFacade::updateEncodingJob (
         int64_t encodingJobKey,
         EncodingError encodingError,

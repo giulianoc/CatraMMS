@@ -16,13 +16,19 @@
 #include "EncoderVideoAudioProxy.h"
 
 EncoderVideoAudioProxy::EncoderVideoAudioProxy(
+        mutex* mtEncodingJobs,
+        EncodingJobStatus* status,
         shared_ptr<CMSEngineDBFacade> cmsEngineDBFacade,
         shared_ptr<CMSStorage> cmsStorage,
-        shared_ptr<EncodingItem> encodingItem,
+        shared_ptr<CMSEngineDBFacade::EncodingItem> encodingItem,
         shared_ptr<spdlog::logger> logger
 )
 {
     _logger                 = logger;
+    
+    _mtEncodingJobs         = mtEncodingJobs;
+    _status                 = status;
+    
     _cmsEngineDBFacade      = cmsEngineDBFacade;
     _cmsStorage             = cmsStorage;
     _encodingItem          = encodingItem;
@@ -35,6 +41,10 @@ EncoderVideoAudioProxy::EncoderVideoAudioProxy(
 
 EncoderVideoAudioProxy::~EncoderVideoAudioProxy() 
 {
+    lock_guard<mutex> locker(*_mtEncodingJobs);
+    
+    *_status = EncodingJobStatus::Free;
+
 }
 
 void EncoderVideoAudioProxy::operator()()

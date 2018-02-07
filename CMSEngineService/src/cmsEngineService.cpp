@@ -67,7 +67,7 @@ int main (int iArgc, char *pArgv [])
 
     logger->info(string("Creating CMSEngineProcessor")
             );
-    CMSEngineProcessor      cmsEngineProcessor(logger, multiEventsSet, cmsEngineDBFacade, cmsStorage);
+    CMSEngineProcessor      cmsEngineProcessor(logger, multiEventsSet, cmsEngineDBFacade, cmsStorage, &activeEncodingsManager);
     
     unsigned long           ulThreadSleepInMilliSecs = 100;
     logger->info(string("Creating Scheduler2")

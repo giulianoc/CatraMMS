@@ -9,6 +9,7 @@
 #include "catralibraries/MultiEventsSet.h"
 #include "CMSEngineDBFacade.h"
 #include "CMSStorage.h"
+#include "ActiveEncodingsManager.h"
 #include "IngestAssetEvent.h"
 #include "json/json.h"
 
@@ -22,8 +23,11 @@ private:
     shared_ptr<MultiEventsSet>          _multiEventsSet;
     shared_ptr<CMSEngineDBFacade>       _cmsEngineDBFacade;
     shared_ptr<CMSStorage>              _cmsStorage;
+    ActiveEncodingsManager*             _pActiveEncodingsManager;
     
     unsigned long           _ulIngestionLastCustomerIndex;
+    bool                    _firstGetEncodingJob;
+    
     unsigned long           _ulMaxIngestionsNumberPerCustomerEachIngestionPeriod;
     unsigned long           _ulJsonToBeProcessedAfterSeconds;
     unsigned long           _ulRetentionPeriodInDays;
@@ -31,6 +35,8 @@ private:
     void handleCheckIngestionEvent();
 
     void handleIngestAssetEvent (shared_ptr<IngestAssetEvent> ingestAssetEvent);
+
+    void handleCheckEncodingEvent ();
 
     CMSEngineDBFacade::IngestionType validateMetadata(Json::Value root);
 
@@ -48,7 +54,8 @@ public:
             shared_ptr<spdlog::logger> logger, 
             shared_ptr<MultiEventsSet> multiEventsSet,
             shared_ptr<CMSEngineDBFacade> cmsEngineDBFacade,
-            shared_ptr<CMSStorage> cmsStorage);
+            shared_ptr<CMSStorage> cmsStorage,
+            ActiveEncodingsManager* pActiveEncodingsManager);
     
     ~CMSEngineProcessor();
     

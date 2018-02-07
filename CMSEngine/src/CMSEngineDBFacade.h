@@ -73,6 +73,26 @@ public:
         Yearly          = 3
     };
 
+    struct EncodingItem
+    {
+        long long                               _encodingJobKey;
+        long long                               _ingestionJobKey;
+        unsigned long                           _cmsPartitionNumber;
+        string                                  _fileName;
+        string                                  _relativePath;
+        shared_ptr<Customer>                    _customer;
+        long long                               _mediaItemKey;
+        long long                               _physicalPathKey;
+        ContentType                             _contentType;
+        unsigned long                           _encodingPriority;
+        string                                  _ftpIPAddress;
+        string                                  _ftpPort;
+        string                                  _ftpUser;
+        string                                  _ftpPassword;
+        long long                               _encodingProfileKey;
+        CMSEngineDBFacade::EncodingTechnology   _encodingProfileTechnology;
+    } ;
+
     enum class CustomerType {
         LiveSessionOnly         = 0,
         IngestionAndDelivery    = 1,

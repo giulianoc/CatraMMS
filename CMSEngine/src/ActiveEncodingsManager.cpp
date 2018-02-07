@@ -12,7 +12,6 @@
  */
 
 #include "ActiveEncodingsManager.h"
-#include "EncoderVideoAudioProxy.h"
 
 ActiveEncodingsManager::ActiveEncodingsManager(
     shared_ptr<CMSEngineDBFacade> cmsEngineDBFacade,
@@ -104,7 +103,7 @@ void ActiveEncodingsManager::operator()()
                 {
                     chrono::system_clock::time_point        processingItemStart;
 
-                    processEncodingJob(encodingJob);
+                    processEncodingJob(&_mtEncodingJobs, encodingJob);
 
                     _logger->info(string("processEncodingJob finished")
                             + ", elapsed (seconds): " + 
@@ -124,12 +123,14 @@ void ActiveEncodingsManager::operator()()
     }
 }
 
-void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
+void ActiveEncodingsManager::processEncodingJob(mutex* mtEncodingJobs, EncodingJob* encodingJob)
 {
     if (encodingJob->_encodingItem->_contentType == CMSEngineDBFacade::ContentType::Video ||
             encodingJob->_encodingItem->_contentType == CMSEngineDBFacade::ContentType::Audio)
     {
         EncoderVideoAudioProxy encoderVideoAudioProxy(
+            mtEncodingJobs,
+            &(encodingJob->_status),
             _cmsEngineDBFacade,
             _cmsStorage,
             encodingJob->_encodingItem,
@@ -146,7 +147,7 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
     }
 }
 
-void ActiveEncodingsManager::addEncodingItem(shared_ptr<EncodingItem> encodingItem)
+void ActiveEncodingsManager::addEncodingItem(shared_ptr<CMSEngineDBFacade::EncodingItem> encodingItem)
 {
     
     EncodingJob*    encodingJobs;
@@ -184,10 +185,9 @@ void ActiveEncodingsManager::addEncodingItem(shared_ptr<EncodingItem> encodingIt
     
     if (encodingJobIndex == maxEncodingsToBeManaged)
     {
-        string errorMessage = "Max capacity reached";
-        _logger->error(errorMessage);
+        _logger->error("Max Encodings Manager capacity reached");
         
-        throw runtime_error(errorMessage);
+        throw MaxEncodingsManagerCapacityReached();
     }
     
     _logger->info(string("Encoding Job Key added")
@@ -195,4 +195,66 @@ void ActiveEncodingsManager::addEncodingItem(shared_ptr<EncodingItem> encodingIt
         + ", encodingItem->_ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
         + ", encodingItem->_encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
     );
+}
+
+unsigned long ActiveEncodingsManager:: addEncodingItems (
+	std:: vector<shared_ptr<CMSEngineDBFacade::EncodingItem>> *vEncodingItems)
+{
+    unsigned long       ulEncodingsNumberAdded = 0;
+    lock_guard<mutex>   locker(_mtEncodingJobs);
+
+    for (shared_ptr<CMSEngineDBFacade::EncodingItem> encodingItem: *vEncodingItems)
+    {
+        _logger->info(string("Adding Encoding Item")
+            + ", encodingItem->_customer->_name: " + encodingItem->_customer->_name
+            + ", encodingItem->_ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+            + ", encodingItem->_encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+            + ", encodingItem->_encodingPriority: " + to_string(encodingItem->_encodingPriority)
+            + ", encodingItem->_mediaItemKey: " + to_string(encodingItem->_mediaItemKey)
+            + ", encodingItem->_physicalPathKey: " + to_string(encodingItem->_physicalPathKey)
+            + ", encodingItem->_fileName: " + encodingItem->_fileName
+        );
+
+        try
+        {
+            addEncodingItem (encodingItem);
+            ulEncodingsNumberAdded++;
+        }
+        catch(MaxEncodingsManagerCapacityReached e)
+        {
+            _logger->info(string("Max Encodings Manager Capacity reached")
+                + ", encodingItem->_customer->_name: " + encodingItem->_customer->_name
+                + ", encodingItem->_ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+                + ", encodingItem->_encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+                + ", encodingItem->_encodingPriority: " + to_string(encodingItem->_encodingPriority)
+                + ", encodingItem->_mediaItemKey: " + to_string(encodingItem->_mediaItemKey)
+                + ", encodingItem->_physicalPathKey: " + to_string(encodingItem->_physicalPathKey)
+                + ", encodingItem->_fileName: " + encodingItem->_fileName
+            );
+            
+            _cmsEngineDBFacade->updateEncodingJob (encodingItem->_encodingJobKey, 
+                CMSEngineDBFacade::EncodingError::MaxCapacityReached, encodingItem->_ingestionJobKey);
+        }
+        catch(exception e)
+        {
+            _logger->error(string("addEncodingItem failed")
+                + ", encodingItem->_customer->_name: " + encodingItem->_customer->_name
+                + ", encodingItem->_ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+                + ", encodingItem->_encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+                + ", encodingItem->_encodingPriority: " + to_string(encodingItem->_encodingPriority)
+                + ", encodingItem->_mediaItemKey: " + to_string(encodingItem->_mediaItemKey)
+                + ", encodingItem->_physicalPathKey: " + to_string(encodingItem->_physicalPathKey)
+                + ", encodingItem->_fileName: " + encodingItem->_fileName
+            );
+            _cmsEngineDBFacade->updateEncodingJob (encodingItem->_encodingJobKey, 
+                CMSEngineDBFacade::EncodingError::ErrorBeforeEncoding, encodingItem->_ingestionJobKey);
+        }        
+    }
+    
+    if (ulEncodingsNumberAdded > 0)
+    {
+        _cvAddedEncodingJob.notify_one();
+    }
+
+    return ulEncodingsNumberAdded;
 }

@@ -9,15 +9,18 @@ CMSEngineProcessor::CMSEngineProcessor(
         shared_ptr<spdlog::logger> logger, 
         shared_ptr<MultiEventsSet> multiEventsSet,
         shared_ptr<CMSEngineDBFacade> cmsEngineDBFacade,
-        shared_ptr<CMSStorage> cmsStorage
+        shared_ptr<CMSStorage> cmsStorage,
+        ActiveEncodingsManager* pActiveEncodingsManager
 )
 {
     _logger             = logger;
     _multiEventsSet     = multiEventsSet;
     _cmsEngineDBFacade  = cmsEngineDBFacade;
     _cmsStorage      = cmsStorage;
+    _pActiveEncodingsManager = pActiveEncodingsManager;
     
     _ulIngestionLastCustomerIndex   = 0;
+    _firstGetEncodingJob            = true;
     
     _ulMaxIngestionsNumberPerCustomerEachIngestionPeriod        = 2;
     _ulJsonToBeProcessedAfterSeconds                            = 10;
@@ -479,6 +482,21 @@ void CMSEngineProcessor::handleIngestAssetEvent (shared_ptr<IngestAssetEvent> in
         move metadata file name (o remove?)
          */
 
+}
+
+void CMSEngineProcessor::handleCheckEncodingEvent ()
+{
+    vector<shared_ptr<CMSEngineDBFacade::EncodingItem>> encodingItems;
+    
+    bool resetToBeDone = _firstGetEncodingJob ? true : false;
+    /*
+    encodingItems = _cmsEngineDBFacade->getEncodingsJob (
+        resetToBeDone
+    );
+     */
+    _firstGetEncodingJob = false;
+
+    _pActiveEncodingsManager->addEncodingItems(&encodingItems);
 }
 
 CMSEngineDBFacade::IngestionType CMSEngineProcessor::validateMetadata(
