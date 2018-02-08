@@ -53,6 +53,11 @@ public:
     
     void operator ()();
 
+    static void encodingFileFormatValidation(string fileFormat);
+    static void ffmpeg_encodingVideoCodecValidation(string codec);
+    static void ffmpeg_encodingVideoProfileValidation(string codec, string profile);
+    static void ffmpeg_encodingAudioCodecValidation(string codec);
+
 private:
     shared_ptr<spdlog::logger>          _logger;
     mutex*                              _mtEncodingJobs;
@@ -70,6 +75,7 @@ private:
     string encodeContent_VideoAudio_through_ffmpeg();
 
     void processEncodedContentVideoAudio(string stagingEncodedAssetPathName);
+    
 };
 
 #endif

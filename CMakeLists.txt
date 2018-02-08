@@ -45,4 +45,5 @@ add_subdirectory(CMSEngine/src)
 add_subdirectory(CMSEngineService/src)
 
 add_subdirectory(addCustomer/src)
+add_subdirectory(addEncodingProfile/src)
 

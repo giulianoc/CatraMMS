@@ -1,23 +1,23 @@
 
-#include "CheckIngestionTimes.h"
+#include "CheckEncodingTimes.h"
 #include "catralibraries/Event.h"
 
 
-CheckIngestionTimes:: CheckIngestionTimes (unsigned long ulPeriodInMilliSecs,
+CheckEncodingTimes:: CheckEncodingTimes (unsigned long ulPeriodInMilliSecs,
 	shared_ptr<MultiEventsSet> multiEventsSet, shared_ptr<spdlog::logger> logger): 
-    Times2 (ulPeriodInMilliSecs, CMSENGINE_CHECKINGESTIONTIMES_CLASSNAME)
+    Times2 (ulPeriodInMilliSecs, CMSENGINE_CHECKENCODINGTIMES_CLASSNAME)
 
 {
     _multiEventsSet     = multiEventsSet;
     _logger             = logger;
 }
 
-CheckIngestionTimes::~CheckIngestionTimes (void)
+CheckEncodingTimes::~CheckEncodingTimes (void)
 {
     
 }
 
-void CheckIngestionTimes:: handleTimeOut (void)
+void CheckEncodingTimes:: handleTimeOut (void)
 {
 
     lock_guard<mutex>   locker(_mtTimesMutex);
@@ -27,16 +27,16 @@ void CheckIngestionTimes:: handleTimeOut (void)
         return;
     }
 
-    shared_ptr<Event>    event = _multiEventsSet->getEventsFactory()->getFreeEvent<Event>(CMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTIONEVENT);
+    shared_ptr<Event>    event = _multiEventsSet->getEventsFactory()->getFreeEvent<Event>(CMSENGINE_EVENTTYPEIDENTIFIER_CHECKENCODINGEVENT);
 
-    event->setSource(CMSENGINE_CHECKINGESTIONTIMES_SOURCE);
+    event->setSource(CMSENGINE_CHECKENCODINGTIMES_SOURCE);
     event->setDestination(CMSENGINEPROCESSORNAME);
     event->setExpirationTimePoint(chrono::system_clock::now());
 
     _multiEventsSet->addEvent(event);
     
     _logger->info("addEvent: EVENT_TYPE ({}, {}, {})", 
-            "CMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTION", 
+            "CMSENGINE_EVENTTYPEIDENTIFIER_CHECKENCODING", 
             event->getEventKey().first, 
             event->getEventKey().second);
 }

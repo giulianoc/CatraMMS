@@ -93,6 +93,7 @@ public:
          */
         long long                               _encodingProfileKey;
         CMSEngineDBFacade::EncodingTechnology   _encodingProfileTechnology;
+        string                                  _details;
     } ;
 
     enum class CustomerType {
@@ -117,8 +118,7 @@ public:
         End_CustomerReachedHisMaxIngestionNumber    = 7,
         
         End_IngestionFailure            = 10,                    // nothing done
-        End_IngestionSuccess_EncodingError   = 14,    // (we will have this state if just one of the encoding failed.
-                    // One encoding is considered a failure only after that the MaxFailuresNumer for this encoding is reached)
+        End_IngestionSuccess_AtLeastOneEncodingProfileError   = 14,    // One encoding is considered a failure only after MaxFailuresNumer attempts
         End_IngestionSuccess    = 20                    // all done
     };
 
@@ -137,6 +137,8 @@ public:
     vector<shared_ptr<Customer>> getCustomers();
     
     shared_ptr<Customer> getCustomer(int64_t customerKey);
+
+    shared_ptr<Customer> getCustomer(string customerName);
 
     bool isMetadataPresent(Json::Value root, string field);
 
@@ -163,6 +165,17 @@ public:
         chrono::system_clock::time_point userExpirationDate
     );
     
+    int64_t addVideoEncodeProfile(
+        shared_ptr<Customer> customer,
+        string encodingProfileSet,
+        EncodingTechnology encodingTechnology,
+        string details,
+        string label,
+        int width,
+        int height,
+        string videoCodec
+    );
+
     int64_t addIngestionJob (
             int64_t customerKey,
             string metadataFileName,

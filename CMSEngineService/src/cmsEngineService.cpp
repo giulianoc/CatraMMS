@@ -5,6 +5,7 @@
 
 #include "CMSEngineProcessor.h"
 #include "CheckIngestionTimes.h"
+#include "CheckEncodingTimes.h"
 #include "CMSEngineDBFacade.h"
 #include "ActiveEncodingsManager.h"
 #include "CMSStorage.h"
@@ -96,6 +97,15 @@ int main (int iArgc, char *pArgv [])
             make_shared<CheckIngestionTimes>(checkIngestionTimesPeriodInMilliSecs, multiEventsSet, logger);
     checkIngestionTimes->start();
     scheduler.activeTimes(checkIngestionTimes);
+
+    unsigned long           checkEncodingTimesPeriodInMilliSecs = 15 * 1000;
+    logger->info(string("Creating and Starting CheckEncodingTimes")
+        + ", checkEncodingTimesPeriodInMilliSecs: " + to_string(checkEncodingTimesPeriodInMilliSecs)
+            );
+    shared_ptr<CheckEncodingTimes>     checkEncodingTimes =
+            make_shared<CheckEncodingTimes>(checkEncodingTimesPeriodInMilliSecs, multiEventsSet, logger);
+    checkEncodingTimes->start();
+    scheduler.activeTimes(checkEncodingTimes);
 
     
     logger->info(string("Waiting ActiveEncodingsManager")

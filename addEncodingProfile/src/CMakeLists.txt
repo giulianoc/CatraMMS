@@ -21,17 +21,10 @@
 # with the authors.
 
 SET (SOURCES
-	cmsEngineService.cpp
-	CMSEngineProcessor.cpp
-	CheckIngestionTimes.cpp
-	CheckEncodingTimes.cpp
+	addEncodingProfile.cpp
 )
 
 SET (HEADERS
-	CMSEngineProcessor.h
-	CheckIngestionTimes.h
-	CheckEncodingTimes.h
-	IngestAssetEvent.h
 )
 
 include_directories ("${PROJECT_SOURCE_DIR}/../usr_local/include")
@@ -50,25 +43,25 @@ else()
 	link_directories ("/app/5/ThirdPartySoftware/mysql-connector-c++-1.1.9-linux-ubuntu16.10-x86-64bit/lib")
 endif()
 
-add_executable(cmsEngineService ${SOURCES} ${HEADERS})
+add_executable(addEncodingProfile ${SOURCES} ${HEADERS})
 
-target_link_libraries (cmsEngineService MultiEventsSet)
-target_link_libraries (cmsEngineService CMSEngine)
-target_link_libraries (cmsEngineService mysqlcppconn)
-target_link_libraries (cmsEngineService jsoncpp)
+#target_link_libraries (addEncodingProfile MultiEventsSet)
+target_link_libraries (addEncodingProfile CMSEngine)
+target_link_libraries (addEncodingProfile mysqlcppconn)
+target_link_libraries (addEncodingProfile jsoncpp)
 
-target_link_libraries (cmsEngineService Scheduler)
-target_link_libraries (cmsEngineService PThread)
-target_link_libraries (cmsEngineService Tools)
-target_link_libraries (cmsEngineService ErrMsg)
+#target_link_libraries (addEncodingProfile Scheduler)
+#target_link_libraries (addEncodingProfile PThread)
+target_link_libraries (addEncodingProfile Tools)
+target_link_libraries (addEncodingProfile ErrMsg)
 if(CRYPTO_FOUND)
 	if (APPLE)
-		target_link_libraries (cmsEngineService ${CRYPTO_LIBRARIES})
+		target_link_libraries (addEncodingProfile ${CRYPTO_LIBRARIES})
 	else()
-		target_link_libraries (cmsEngineService crypt)
+		target_link_libraries (addEncodingProfile crypt)
 	endif()
 endif()
 if (ZLIB_FOUND)
-	target_link_libraries(cmsEngineService ${ZLIB_LIBRARIES})
+	target_link_libraries(addEncodingProfile ${ZLIB_LIBRARIES})
 endif()
-target_link_libraries (cmsEngineService pthread)
+target_link_libraries (addEncodingProfile pthread)

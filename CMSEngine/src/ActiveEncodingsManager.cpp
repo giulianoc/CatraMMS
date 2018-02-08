@@ -33,6 +33,12 @@ void ActiveEncodingsManager::operator()()
     
     chrono::seconds secondsToBlock(5);
     
+    vector<CMSEngineDBFacade::EncodingPriority> sortedEncodingPriorities = { 
+        CMSEngineDBFacade::EncodingPriority::High,
+        CMSEngineDBFacade::EncodingPriority::Default,
+        CMSEngineDBFacade::EncodingPriority::Low
+    };
+        
     while (!shutdown)
     {
         unique_lock<mutex>  locker(_mtEncodingJobs);
@@ -45,23 +51,23 @@ void ActiveEncodingsManager::operator()()
 
             continue;
         }
-                        
-        for (int encodingPriority = 0; encodingPriority < 3; encodingPriority++)
+                   
+        for (CMSEngineDBFacade::EncodingPriority encodingPriority: sortedEncodingPriorities)
         {
             EncodingJob*    encodingJobs;
             int             maxEncodingsToBeManaged;
             
-            if (encodingPriority == 0)
+            if (encodingPriority == CMSEngineDBFacade::EncodingPriority::High)
             {
                 encodingJobs            = _highPriorityEncodingJobs;
                 maxEncodingsToBeManaged = MAXHIGHENCODINGSTOBEMANAGED;
             }
-            else if (encodingPriority == 1)
+            else if (encodingPriority == CMSEngineDBFacade::EncodingPriority::Default)
             {
                 encodingJobs = _defaultPriorityEncodingJobs;
                 maxEncodingsToBeManaged = MAXDEFAULTENCODINGSTOBEMANAGED;
             }
-            else // if (encodingPriority == 2)
+            else // if (encodingPriority == CMSEngineDBFacade::EncodingPriority::Low)
             {
                 encodingJobs = _lowPriorityEncodingJobs;
                 maxEncodingsToBeManaged = MAXLOWENCODINGSTOBEMANAGED;
@@ -116,7 +122,6 @@ void ActiveEncodingsManager::operator()()
                             + ", _fileName: " + encodingJob->_encodingItem->_fileName
                             + ", _encodingProfileKey: " + to_string(encodingJob->_encodingItem->_encodingProfileKey)
                     );
-
                 }
             }
         }
@@ -144,6 +149,15 @@ void ActiveEncodingsManager::processEncodingJob(mutex* mtEncodingJobs, EncodingJ
         // before the below _ejsStatus setting
         encodingJob->_encodingJobStart		= chrono::system_clock::now();
         encodingJob->_status			= EncodingJobStatus::Running;
+    }
+    else
+    {
+        string errorMessage = string("Encoding not managed for the ContentType")
+                + ", encodingJob->_encodingItem->_contentType: " + to_string(static_cast<int>(encodingJob->_encodingItem->_contentType))
+                ;
+        _logger->error(errorMessage);
+        
+        throw runtime_error(errorMessage);
     }
 }
 
@@ -198,12 +212,12 @@ void ActiveEncodingsManager::addEncodingItem(shared_ptr<CMSEngineDBFacade::Encod
 }
 
 unsigned long ActiveEncodingsManager:: addEncodingItems (
-	std:: vector<shared_ptr<CMSEngineDBFacade::EncodingItem>> *vEncodingItems)
+	std:: vector<shared_ptr<CMSEngineDBFacade::EncodingItem>>& vEncodingItems)
 {
     unsigned long       ulEncodingsNumberAdded = 0;
     lock_guard<mutex>   locker(_mtEncodingJobs);
 
-    for (shared_ptr<CMSEngineDBFacade::EncodingItem> encodingItem: *vEncodingItems)
+    for (shared_ptr<CMSEngineDBFacade::EncodingItem> encodingItem: vEncodingItems)
     {
         _logger->info(string("Adding Encoding Item")
             + ", encodingItem->_customer->_name: " + encodingItem->_customer->_name

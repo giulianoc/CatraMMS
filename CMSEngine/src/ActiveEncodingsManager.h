@@ -45,7 +45,7 @@ public:
     void operator ()();
 
     unsigned long addEncodingItems (
-	vector<shared_ptr<CMSEngineDBFacade::EncodingItem>> *vEncodingItems);
+	vector<shared_ptr<CMSEngineDBFacade::EncodingItem>>& vEncodingItems);
     
 private:
     struct EncodingJob

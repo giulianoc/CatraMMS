@@ -49,11 +49,49 @@ public:
         string userPassword,
         string userEmailAddress,
         chrono::system_clock::time_point userExpirationDate
-);
+    );
+
+    void addFFMPEGVideoEncodingProfile(
+        shared_ptr<Customer> customer,
+        string encodingProfileSet,  // "": default Customer family, != "": named customer family
+        CMSEngineDBFacade::EncodingTechnology encodingTechnology,
+	string label,
+	string fileFormat,
+        
+        string videoCodec,
+        string videoProfile,
+        int width,
+        int height,
+        string videoBitRate,
+        string videoMaxRate,
+        string videoBufSize,
+        int videoFrameRate,
+        int videoKeyFrameIntervalInSeconds,
+
+        string audioCodec,
+        string audioBitRate
+    );
 
 private:
     shared_ptr<CMSEngineDBFacade> _cmsEngineDBFacade;
     shared_ptr<spdlog::logger> _logger;
+    
+    string getEncodingProfileDetails(
+        string fileFormat,
+
+        string videoCodec,
+        string videoProfile,
+        int videoWidth,
+        int videoHeight,
+        string videoBitRate,
+        string videoMaxRate,
+        string videoBufSize,
+        int videoFrameRate,
+        int videoKeyFrameIntervalInSeconds,
+
+        string audioCodec,
+        string audioBitRate
+    );
 };
 
 #endif

@@ -110,6 +110,44 @@ shared_ptr<Customer> CMSEngineDBFacade::getCustomer(int64_t customerKey)
     return customer;
 }
 
+shared_ptr<Customer> CMSEngineDBFacade::getCustomer(string customerName)
+{
+    shared_ptr<MySQLConnection> conn = _connectionPool->borrow();	
+
+    shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(
+        "select CustomerKey, Name, DirectoryName, MaxStorageInGB, MaxEncodingPriority from CMS_Customers where Name = ?"));
+    int queryParameterIndex = 1;
+    preparedStatement->setString(queryParameterIndex++, customerName);
+    shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+
+    shared_ptr<Customer>    customer = make_shared<Customer>();
+    
+    if (resultSet->next())
+    {
+        customer->_customerKey = resultSet->getInt("CustomerKey");
+        customer->_name = resultSet->getString("Name");
+        customer->_directoryName = resultSet->getString("DirectoryName");
+        customer->_maxStorageInGB = resultSet->getInt("MaxStorageInGB");
+        customer->_maxEncodingPriority = resultSet->getInt("MaxEncodingPriority");
+
+        getTerritories(customer);
+    }
+    else
+    {
+        _connectionPool->unborrow(conn);
+
+        string errorMessage = string("select failed")
+                + ", customerName: " + customerName;
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);                    
+    }
+
+    _connectionPool->unborrow(conn);
+    
+    return customer;
+}
+
 void CMSEngineDBFacade::getTerritories(shared_ptr<Customer> customer)
 {
     shared_ptr<MySQLConnection> conn = _connectionPool->borrow();	
@@ -312,6 +350,19 @@ int64_t CMSEngineDBFacade::addCustomer(
 
         throw se;
     }
+    catch(exception e)
+    {
+        if (!autoCommit)
+            conn->_sqlConnection->rollback();     // or execute ROLLBACK
+        
+        _connectionPool->unborrow(conn);
+
+        _logger->error(string("SQL exception")
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
+    }
     
     return customerKey;
 }
@@ -357,6 +408,14 @@ int64_t CMSEngineDBFacade::addTerritory (
         );
 
         throw se;
+    }
+    catch(exception e)
+    {        
+        _logger->error(string("SQL exception")
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
     }
     
     return territoryKey;
@@ -426,8 +485,174 @@ int64_t CMSEngineDBFacade::addUser (
 
         throw se;
     }
+    catch(exception e)
+    {        
+        _logger->error(string("SQL exception")
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
+    }
     
     return userKey;
+}
+
+int64_t CMSEngineDBFacade::addVideoEncodeProfile(
+        shared_ptr<Customer> customer,
+        string encodingProfileSet,  // "": default Customer family, != "": named customer family
+        EncodingTechnology encodingTechnology,
+        string details,
+        string label,
+        int width,
+        int height,
+        string videoCodec
+)
+{
+    int64_t         encodingProfileKey;
+
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn;
+    bool autoCommit = true;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+
+        autoCommit = false;
+        conn->_sqlConnection->setAutoCommit(autoCommit);    // or execute the statement START TRANSACTION
+        
+        ContentType contentType = ContentType::Video;
+
+        {
+            lastSQLCommand = 
+                    "insert into CMS_EncodingProfiles ("
+                    "EncodingProfileKey, ContentType, Technology, Details, Label, Width, Height, VideoCodec, AudioCodec) values ("
+                    "NULL, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(contentType));
+            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(encodingTechnology));
+            preparedStatement->setString(queryParameterIndex++, details);
+            if (label == "")
+                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+            else
+                preparedStatement->setString(queryParameterIndex++, label);
+            preparedStatement->setInt(queryParameterIndex++, width);
+            preparedStatement->setInt(queryParameterIndex++, height);
+            if (videoCodec == "")
+                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+            else
+                preparedStatement->setString(queryParameterIndex++, videoCodec);
+            preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+
+            preparedStatement->executeUpdate();
+        }
+        
+        encodingProfileKey = getLastInsertId(conn);
+        
+        int64_t encodingProfilesSetKey;
+        
+        if (encodingProfileSet == "")   // default Customer family
+        {
+            lastSQLCommand = 
+                "select EncodingProfilesSetKey from CMS_EncodingProfilesSet where ContentType = ? and CustomerKey = ? and Name is null";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(contentType));
+            preparedStatement->setInt64(queryParameterIndex++, customer->_customerKey);
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                encodingProfilesSetKey = resultSet->getInt64("EncodingProfilesSetKey");
+            }
+            else
+            {
+                string errorMessage = string("EncodingProfilesSetKey is not present")
+                    + ", contentType: " + to_string(static_cast<int>(contentType))
+                    + ", customer->_customerKey: " + to_string(customer->_customerKey)
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }
+        }
+        else
+        {
+            lastSQLCommand = 
+                "select EncodingProfilesSetKey from CMS_EncodingProfilesSet where ContentType = ? and CustomerKey = ? and Name = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(contentType));
+            preparedStatement->setInt64(queryParameterIndex++, customer->_customerKey);
+            preparedStatement->setString(queryParameterIndex++, encodingProfileSet);
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                encodingProfilesSetKey = resultSet->getInt64("EncodingProfilesSetKey");
+            }
+            else
+            {
+                lastSQLCommand = 
+                    "insert into CMS_EncodingProfilesSet (EncodingProfilesSetKey, ContentType, CustomerKey, Name) values (NULL, ?, ?, ?)";
+                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                int queryParameterIndex = 1;
+                preparedStatement->setInt(queryParameterIndex++, static_cast<int>(contentType));
+                preparedStatement->setInt64(queryParameterIndex++, customer->_customerKey);
+                preparedStatement->setString(queryParameterIndex++, encodingProfileSet);
+                preparedStatement->executeUpdate();
+ 
+                encodingProfilesSetKey = getLastInsertId(conn);
+            }
+        }
+        
+        {
+            lastSQLCommand = 
+                "insert into CMS_EncodingProfilesSetMapping (EncodingProfilesSetKey, EncodingProfileKey)  values (?, ?)";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, encodingProfilesSetKey);
+            preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
+            preparedStatement->executeUpdate();
+        }
+
+        conn->_sqlConnection->commit();     // or execute COMMIT
+        autoCommit = true;
+
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        if (!autoCommit)
+            conn->_sqlConnection->rollback();     // or execute ROLLBACK
+        
+        _connectionPool->unborrow(conn);
+
+        string exceptionMessage(se.what());
+        
+        _logger->error(string("SQL exception")
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw se;
+    }
+    catch(exception e)
+    {
+        if (!autoCommit)
+            conn->_sqlConnection->rollback();     // or execute ROLLBACK
+        
+        _connectionPool->unborrow(conn);
+        
+        _logger->error(string("SQL exception")
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
+    }
+    
+    return encodingProfileKey;
 }
 
 int64_t CMSEngineDBFacade::addIngestionJob (
@@ -527,6 +752,14 @@ int64_t CMSEngineDBFacade::addIngestionJob (
 
         throw se;
     }
+    catch(exception e)
+    {        
+        _logger->error(string("SQL exception")
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
+    }
     
     return ingestionJobKey;
 }
@@ -559,7 +792,7 @@ void CMSEngineDBFacade::updateIngestionJob (
         conn = _connectionPool->borrow();	
 
         if (newIngestionStatus == IngestionStatus::End_IngestionFailure ||
-                newIngestionStatus == IngestionStatus::End_IngestionSuccess_EncodingError ||
+                newIngestionStatus == IngestionStatus::End_IngestionSuccess_AtLeastOneEncodingProfileError ||
                 newIngestionStatus == IngestionStatus::End_IngestionSuccess)
         {
             finalState			= true;
@@ -615,6 +848,14 @@ void CMSEngineDBFacade::updateIngestionJob (
 
         throw se;
     }    
+    catch(exception e)
+    {        
+        _logger->error(string("SQL exception")
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
+    }    
 }
 
 void CMSEngineDBFacade::getEncodingJobs(
@@ -638,7 +879,7 @@ void CMSEngineDBFacade::getEncodingJobs(
         if (resetToBeDone)
         {
             lastSQLCommand = 
-                "update CMS_EncodingJobs set Status = ?, ProcessorCMS = null where ProcessorCMS = ? and Status <> ?";
+                "update CMS_EncodingJobs set Status = ?, ProcessorCMS = null where ProcessorCMS = ? and Status = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt(queryParameterIndex++, static_cast<int>(EncodingStatus::ToBeProcessed));
@@ -686,7 +927,7 @@ void CMSEngineDBFacade::getEncodingJobs(
                 
                 {
                     lastSQLCommand = 
-                        "select p.CMSPartitionNumber, p.MediaItemKey, p.FileName, p.RelativePath, ep.Technology "
+                        "select p.CMSPartitionNumber, p.MediaItemKey, p.FileName, p.RelativePath, ep.Technology, ep.Details "
                         "from CMS_PhysicalPaths p, CMS_EncodingProfiles ep "
                         "where p.EncodingProfileKey = ep.EncodingProfileKey and p.EncodingProfileKey = ? and p.PhysicalPathKey = ?";
                     shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -702,6 +943,7 @@ void CMSEngineDBFacade::getEncodingJobs(
                         encodingItem->_fileName = physicalPathResultSet->getString("FileName");
                         encodingItem->_relativePath = physicalPathResultSet->getString("RelativePath");
                         encodingItem->_encodingProfileTechnology = static_cast<EncodingTechnology>(physicalPathResultSet->getInt("Technology"));
+                        encodingItem->_details = physicalPathResultSet->getString("Details");
                     }
                     else
                     {
@@ -761,6 +1003,19 @@ void CMSEngineDBFacade::getEncodingJobs(
 
         throw se;
     }
+    catch(exception e)
+    {
+        if (!autoCommit)
+            conn->_sqlConnection->rollback();     // or execute ROLLBACK
+        
+        _connectionPool->unborrow(conn);
+        
+        _logger->error(string("SQL exception")
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
+    }
 }
 
 void CMSEngineDBFacade::updateEncodingJob (
@@ -796,7 +1051,6 @@ void CMSEngineDBFacade::updateEncodingJob (
                 if (resultSet->next())
                 {
                     encodingFailureNumber = resultSet->getInt(1);
-
                 }
                 else
                 {
@@ -809,9 +1063,9 @@ void CMSEngineDBFacade::updateEncodingJob (
             }
             
             if (encodingFailureNumber + 1 >= _maxEncodingFailures)
-                    newEncodingStatus          = EncodingStatus::End_Failed;
+                newEncodingStatus          = EncodingStatus::End_Failed;
             else
-                    newEncodingStatus          = EncodingStatus::ToBeProcessed;
+                newEncodingStatus          = EncodingStatus::ToBeProcessed;
 
             {
                 lastSQLCommand = 
@@ -819,7 +1073,10 @@ void CMSEngineDBFacade::updateEncodingJob (
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
                 preparedStatement->setInt(queryParameterIndex++, static_cast<int>(newEncodingStatus));
-                preparedStatement->setInt(queryParameterIndex++, encodingFailureNumber + 1);
+                if (newEncodingStatus == EncodingStatus::ToBeProcessed)
+                    preparedStatement->setInt(queryParameterIndex++, encodingFailureNumber + 1);
+                else
+                    preparedStatement->setInt(queryParameterIndex++, encodingFailureNumber);
                 preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
                 preparedStatement->setInt(queryParameterIndex++, static_cast<int>(EncodingStatus::Processing));
 
@@ -885,10 +1142,10 @@ void CMSEngineDBFacade::updateEncodingJob (
                         if (resultSet->getInt(1) == 0)  // no failures
                             ingestionStatus = IngestionStatus::End_IngestionSuccess;
                         else
-                            ingestionStatus = IngestionStatus::End_IngestionSuccess_EncodingError;
+                            ingestionStatus = IngestionStatus::End_IngestionSuccess_AtLeastOneEncodingProfileError;
 
                         string errorMessage = "";
-                        updateIngestionJob (ingestionJobKey, IngestionStatus::End_IngestionSuccess_EncodingError, errorMessage);
+                        updateIngestionJob (ingestionJobKey, ingestionStatus, errorMessage);
                     }
                     else
                     {
@@ -930,6 +1187,19 @@ void CMSEngineDBFacade::updateEncodingJob (
         );
 
         throw se;
+    }
+    catch(exception e)
+    {
+        if (!autoCommit)
+            conn->_sqlConnection->rollback();     // or execute ROLLBACK
+        
+        _connectionPool->unborrow(conn);
+        
+        _logger->error(string("SQL exception")
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
     }
 }
 
@@ -1234,6 +1504,14 @@ string CMSEngineDBFacade::checkCustomerMaxIngestionNumber (
         );
 
         throw se;
+    }    
+    catch(exception e)
+    {        
+        _logger->error(string("SQL exception")
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
     }    
     
     return relativePathToBeUsed;
@@ -1778,6 +2056,19 @@ int64_t CMSEngineDBFacade::saveIngestedContentMetadata(
 
         throw se;
     }
+    catch(exception e)
+    {
+        if (!autoCommit)
+            conn->_sqlConnection->rollback();     // or execute ROLLBACK
+        
+        _connectionPool->unborrow(conn);
+        
+        _logger->error(string("SQL exception")
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
+    }
     
     return mediaItemKey;
 }
@@ -1909,6 +2200,19 @@ int64_t CMSEngineDBFacade::saveEncodedContentMetadata(
 
         throw se;
     }
+    catch(exception e)
+    {
+        if (!autoCommit)
+            conn->_sqlConnection->rollback();     // or execute ROLLBACK
+        
+        _connectionPool->unborrow(conn);
+        
+        _logger->error(string("SQL exception")
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
+    }
     
     return encodedPhysicalPathKey;
 }
@@ -1958,6 +2262,14 @@ int64_t CMSEngineDBFacade::getLastInsertId(shared_ptr<MySQLConnection> conn)
         );
 
         throw se;
+    }
+    catch(exception e)
+    {        
+        _logger->error(string("SQL exception")
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
     }
     
     return lastInsertId;
@@ -2233,15 +2545,15 @@ void CMSEngineDBFacade::createTablesIfNeeded()
                 "create table if not exists CMS_EncodingProfiles ("
                     "EncodingProfileKey  		BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "ContentType			TINYINT NOT NULL,"
-                    "Technology			TINYINT NOT NULL,"
-                    "Description			VARCHAR (256) NOT NULL,"
+                    "Technology         		TINYINT NOT NULL,"
+                    "Details    			VARCHAR (512) NOT NULL,"
                     "Label				VARCHAR (64) NULL,"
                     "Width				INT NOT NULL DEFAULT 0,"
                     "Height				INT NOT NULL DEFAULT 0,"
                     "VideoCodec			VARCHAR (32) null,"
                     "AudioCodec			VARCHAR (32) null,"
                     "constraint CMS_EncodingProfiles_PK PRIMARY KEY (EncodingProfileKey), "
-                    "UNIQUE (ContentType, Technology, Description)) "
+                    "UNIQUE (ContentType, Technology, Details)) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
@@ -2260,9 +2572,10 @@ void CMSEngineDBFacade::createTablesIfNeeded()
 
         try
         {
-            // CustomerKey and Name. If they are NULL, it means the EncodingProfileSet is the default one
-            //      for the specified ContentType.
-            // A customer can have custom EncodingProfilesSet specifying together CustomerKey and Name.
+            // CustomerKey and Name
+            //      both NULL: global/system EncodingProfiles for the ContentType
+            //      only Name NULL: Customer default EncodingProfiles for the ContentType
+            //      both different by NULL: named Customer EncodingProfiles for the ContentType
             lastSQLCommand = 
                 "create table if not exists CMS_EncodingProfilesSet ("
                     "EncodingProfilesSetKey  	BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
@@ -2337,7 +2650,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
         
         try
         {
-            // create table EncodingProfilesSetMapping
+            // EncodingProfiles associated to each family (EncodingProfilesSet)
             lastSQLCommand = 
                 "create table if not exists CMS_EncodingProfilesSetMapping ("
                     "EncodingProfilesSetKey  	BIGINT UNSIGNED NOT NULL,"

@@ -1,8 +1,10 @@
 
 #include <fstream>
 #include <sstream>
+#include "catralibraries/System.h"
 #include "CMSEngineProcessor.h"
 #include "CheckIngestionTimes.h"
+#include "CheckEncodingTimes.h"
 #include "catralibraries/md5.h"
 
 CMSEngineProcessor::CMSEngineProcessor(
@@ -18,9 +20,10 @@ CMSEngineProcessor::CMSEngineProcessor(
     _cmsEngineDBFacade  = cmsEngineDBFacade;
     _cmsStorage      = cmsStorage;
     _pActiveEncodingsManager = pActiveEncodingsManager;
-    
+
     _ulIngestionLastCustomerIndex   = 0;
     _firstGetEncodingJob            = true;
+    _processorCMS                   = System::getHostName();
     
     _ulMaxIngestionsNumberPerCustomerEachIngestionPeriod        = 2;
     _ulJsonToBeProcessedAfterSeconds                            = 10;
@@ -55,7 +58,7 @@ void CMSEngineProcessor::operator ()()
 
         switch(event->getEventKey().first)
         {
-            case CMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTION:	// 1
+            case CMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTIONEVENT:	// 1
             {
                 _logger->info("Received CMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTION");
 
@@ -92,6 +95,25 @@ void CMSEngineProcessor::operator ()()
                 }
 
                 _multiEventsSet->getEventsFactory()->releaseEvent<IngestAssetEvent>(ingestAssetEvent);
+            }
+            break;
+            case CMSENGINE_EVENTTYPEIDENTIFIER_CHECKENCODINGEVENT:	// 3
+            {
+                _logger->info("Received CMSENGINE_EVENTTYPEIDENTIFIER_CHECKENCODING");
+
+                try
+                {
+        		handleCheckEncodingEvent ();
+                }
+                catch(exception e)
+                {
+                    _logger->error(string("handleCheckEncodingEvent failed")
+                        + ", exception: " + e.what()
+                    );
+                }
+
+                _multiEventsSet->getEventsFactory()->releaseEvent<Event>(event);
+
             }
             break;
             default:
@@ -489,14 +511,13 @@ void CMSEngineProcessor::handleCheckEncodingEvent ()
     vector<shared_ptr<CMSEngineDBFacade::EncodingItem>> encodingItems;
     
     bool resetToBeDone = _firstGetEncodingJob ? true : false;
-    /*
-    encodingItems = _cmsEngineDBFacade->getEncodingsJob (
-        resetToBeDone
-    );
-     */
+    
+    _cmsEngineDBFacade->getEncodingJobs(resetToBeDone,
+        _processorCMS, encodingItems);
+
     _firstGetEncodingJob = false;
 
-    _pActiveEncodingsManager->addEncodingItems(&encodingItems);
+    _pActiveEncodingsManager->addEncodingItems(encodingItems);
 }
 
 CMSEngineDBFacade::IngestionType CMSEngineProcessor::validateMetadata(
@@ -567,48 +588,48 @@ CMSEngineDBFacade::IngestionType CMSEngineProcessor::validateMetadata(
 void CMSEngineProcessor::validateContentIngestionMetadata(Json::Value contentIngestion)
 {
     /*
-    {
-        "Type": "ContentIngestion",         // mandatory
-        "Version": "1.0",           // mandatory
-        "ContentIngestion": {
-            "Title": "aaaa",            // mandatory
-            "SubTitle": "aaaa",            // optional
-            "Ingester": "aaaa",         // optional
-            "Keywords": "aaa",          // optional
-            "Description": "aaa",       // optional
+{
+    "Type": "ContentIngestion",         // mandatory
+    "Version": "1.0",           // mandatory
+    "ContentIngestion": {
+        "Title": "CiVediamoDomani.mpg",            // mandatory
+        "SubTitle": "aaaa",            // optional
+        "Ingester": "aaaa",         // optional
+        "Keywords": "aaa",          // optional
+        "Description": "aaa",       // optional
 
-            "SourceFileName": "aa.mp4", // mandatory
-            "ContentType": "video",     // mandatory: "video" or "audio" or "image"
-            "LogicalType": "Advertising",     // optional
-            "MD5FileCheckSum": null,  // optional
-            "FileSizeInBytes": null,   // optional
+        "SourceFileName": "CiVediamoDomani.mpg", // mandatory
+        "ContentType": "video",     // mandatory: "video" or "audio" or "image"
+        "LogicalType": "Advertising",     // optional
+        "MD5FileCheckSum": "6f60b0d5ed8925d032da926c78c8c67d",  // optional
+        "FileSizeInBytes": 1379043332,   // optional
 
-            "EncodingProfilesSet": "systemDefault",  // mandatory: "systemDefault" or "customerDefault" or <custom name>
-            "EncodingPriority": "low",               // optional: "low", "default", "high"
+        "EncodingProfilesSet": "customerDefault",  // mandatory: "systemDefault" or "customerDefault" or <custom name>
+        "EncodingPriority": "low",               // optional: "low", "default", "high"
 
-            "ContentProviderName": "default",    // optional
-            
-            "Territories": {
-                "default": {
-                    "startPublishing": "NOW",
-                    "endPublishing": "FOREVER"
-                }
-            },
+        "ContentProviderName": "default",    // optional
 
-            "Delivery": "FTP",      // optional: "FTP"
-            "FTP": {                // mandatory only if "Delivery" is "FTP"
-                "Hostname": "aaa",  // mandatory only if "Delivery" is "FTP": hostname or IP address
-                "Port": null,       // optional
-                "User": "aaa",      // mandatory only if "Delivery" is "FTP"
-                "Password": "bbb"   // mandatory only if "Delivery" is "FTP"
-            },
-
-            "Notification": "EMail",      // optional: "EMail
-            "EMail": {              // mandatory only if "Notification" is "EMail"
-                "Address": "giulanoc@catrasoftware.it"  // mandatory only if "Notification" is "EMail"
+        "Territories": {
+            "default": {
+                "startPublishing": "NOW",
+                "endPublishing": "FOREVER"
             }
+        },
+
+        "Delivery": "FTP",      // optional: "FTP"
+        "FTP": {                // mandatory only if "Delivery" is "FTP"
+            "Hostname": "aaa",  // mandatory only if "Delivery" is "FTP": hostname or IP address
+            "Port": null,       // optional
+            "User": "aaa",      // mandatory only if "Delivery" is "FTP"
+            "Password": "bbb"   // mandatory only if "Delivery" is "FTP"
+        },
+
+        "Notification": "EMail",      // optional: "EMail
+        "EMail": {              // mandatory only if "Notification" is "EMail"
+            "Address": "giulianoc@catrasoftware.it"  // mandatory only if "Notification" is "EMail"
         }
     }
+}
     */
     
     vector<string> mandatoryFields = {

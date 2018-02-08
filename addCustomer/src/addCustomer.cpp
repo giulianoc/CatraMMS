@@ -13,8 +13,11 @@ int main (int iArgc, char *pArgv [])
 
     size_t dbPoolSize = 5;
     string dbServer ("tcp://127.0.0.1:3306");
-    string dbUsername("root"); string dbPassword("root"); string dbName("catracms");
-    // string dbUsername("root"); string dbPassword("giuliano"); string dbName("workKing");
+    #ifdef __APPLE__
+        string dbUsername("root"); string dbPassword("giuliano"); string dbName("workKing");
+    #else
+        string dbUsername("root"); string dbPassword("root"); string dbName("catracms");
+    #endif
     logger->info(string("Creating CMSEngineDBFacade")
         + ", dbPoolSize: " + to_string(dbPoolSize)
         + ", dbServer: " + dbServer

@@ -33,7 +33,12 @@ EncoderVideoAudioProxy::EncoderVideoAudioProxy(
     _cmsStorage             = cmsStorage;
     _encodingItem          = encodingItem;
     
-    _ffmpegPathName        = "/app/ffmpeg-1.0-usr_include_Centos5_64/bin/ffmpeg ";
+    #ifdef __APPLE__
+        _ffmpegPathName        = "/Users/multi/GestioneProgetti/Development/vireo/vireoBinaries/bin/ffmpeg ";
+    #else
+        _ffmpegPathName        = "/Users/multi/GestioneProgetti/Development/vireo/vireoBinaries/bin/ffmpeg ";
+    #endif
+
     _3GPPEncoder            = "FFMPEG";
     _mpeg2TSEncoder         = "FFMPEG";
 
@@ -103,7 +108,7 @@ void EncoderVideoAudioProxy::operator()()
     }
     catch(MaxConcurrentJobsReached e)
     {
-        _logger->error(string("encodeContentVideoAudio: ") + e.what());
+        _logger->error(string("processEncodedContentVideoAudio: ") + e.what());
         
         FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
 
@@ -129,7 +134,7 @@ void EncoderVideoAudioProxy::operator()()
     }
     catch(EncoderError e)
     {
-        _logger->error(string("encodeContentVideoAudio: ") + e.what());
+        _logger->error(string("processEncodedContentVideoAudio: ") + e.what());
         
         FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
 
@@ -155,7 +160,7 @@ void EncoderVideoAudioProxy::operator()()
     }
     catch(runtime_error e)
     {
-        _logger->error(string("encodeContentVideoAudio: ") + e.what());
+        _logger->error(string("processEncodedContentVideoAudio: ") + e.what());
         
         FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
 
@@ -184,7 +189,7 @@ void EncoderVideoAudioProxy::operator()()
     }
     catch(exception e)
     {
-        _logger->error(string("encodeContentVideoAudio: ") + e.what());
+        _logger->error(string("processEncodedContentVideoAudio: ") + e.what());
         
         FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
 
@@ -268,9 +273,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
         _encodingItem->_customer->_directoryName,
         _encodingItem->_relativePath,
         _encodingItem->_fileName);
-    
-    bool removeLinuxPathIfExist = true;
-    
+        
     size_t extensionIndex = _encodingItem->_fileName.find_last_of(".");
     if (extensionIndex == string::npos)
     {
@@ -300,6 +303,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
         throw runtime_error(errorMessage);
     }
     
+    bool removeLinuxPathIfExist = true;
     string stagingEncodedAssetPathName = _cmsStorage->getStagingAssetPathName(
         _encodingItem->_customer->_directoryName,
         _encodingItem->_relativePath,
@@ -329,19 +333,37 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
         }        
     }
 
+    /*
     string ffmpegEncodingProfilePathName = _cmsStorage->getFFMPEGEncodingProfilePathName(
         _encodingItem->_contentType, _encodingItem->_encodingProfileKey);
 
     ifstream ffmpegEncodingProfileJson(ffmpegEncodingProfilePathName, std::ifstream::binary);
+     */
     Json::Value encodingProfileRoot;
     try
     {
-        ffmpegEncodingProfileJson >> encodingProfileRoot;
+        Json::CharReaderBuilder builder;
+        Json::CharReader* reader = builder.newCharReader();
+        string errors;
+
+        bool parsingSuccessful = reader->parse(_encodingItem->_details.c_str(),
+                _encodingItem->_details.c_str() + _encodingItem->_details.size(), 
+                &encodingProfileRoot, &errors);
+        delete reader;
+
+        if (!parsingSuccessful)
+        {
+            string errorMessage = string("failed to parse the encoder details")
+                    + ", details: " + _encodingItem->_details;
+            _logger->error(errorMessage);
+            
+            throw runtime_error(errorMessage);
+        }
     }
     catch(...)
     {
         throw runtime_error(string("wrong encoding profile json format")
-                + ", ffmpegEncodingProfilePathName: " + ffmpegEncodingProfilePathName
+                + ", _encodingItem->_details: " + _encodingItem->_details
                 );
     }
     
@@ -351,11 +373,12 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
         "video": {
             codec = "libx264",     // mandatory, libx264 or libvpx
             profile = "high",      // optional, if libx264 -> high or baseline or main. if libvpx -> best or good
-            resolution = "-1:480", // mandatory
+            width = "-1", // mandatory
+            height = "480", // mandatory
             bitRate = "500k",      // mandatory
             maxRate = "500k",      // optional
             bufSize = "1000k",     // optional
-            frameRate = "25",      // optional
+            frameRate = 25,      // optional
             keyFrameIntervalInSeconds = 5   // optional and only if framerate is present
         },
         "audio": {
@@ -368,19 +391,19 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
     bool segmentFileFormat;
     string stagingManifestAssetPathName;
     
-    string ffmpegFileFormatParameter;
+    string ffmpegFileFormatParameter = "";
 
-    string ffmpegVideoCodecParameter;
-    string ffmpegVideoProfileParameter;
-    string ffmpegVideoResolutionParameter;
-    string ffmpegVideoBitRateParameter;
-    string ffmpegVideoMaxRateParameter;
-    string ffmpegVideoBufSizeParameter;
-    string ffmpegVideoFrameRateParameter;
-    string ffmpegVideoKeyFramesRateParameter;
+    string ffmpegVideoCodecParameter = "";
+    string ffmpegVideoProfileParameter = "";
+    string ffmpegVideoResolutionParameter = "";
+    string ffmpegVideoBitRateParameter = "";
+    string ffmpegVideoMaxRateParameter = "";
+    string ffmpegVideoBufSizeParameter = "";
+    string ffmpegVideoFrameRateParameter = "";
+    string ffmpegVideoKeyFramesRateParameter = "";
 
-    string ffmpegAudioCodecParameter;
-    string ffmpegAudioBitRateParameter;
+    string ffmpegAudioCodecParameter = "";
+    string ffmpegAudioBitRateParameter = "";
     
     // fileFormat
     {
@@ -396,16 +419,9 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 
         string fileFormat = encodingProfileRoot.get(field, "XXX").asString();
 
-        if (fileFormat != "3gp" && fileFormat != "webm" && fileFormat != "segment")
-        {
-            string errorMessage = string(field) + "is wrong"
-                    + ", fileFormat: " + fileFormat;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
+        encodingFileFormatValidation(fileFormat);
         
-        if (fileFormat != "segment")
+        if (fileFormat == "segment")
         {
             segmentFileFormat = true;
             
@@ -462,14 +478,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 
             codec = videoRoot.get(field, "XXX").asString();
 
-            if (codec != "libx264" && codec != "libvpx")
-            {
-                string errorMessage = string(field) + "is wrong"
-                        + ", codec: " + codec;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
+            ffmpeg_encodingVideoCodecValidation(codec);
 
             ffmpegVideoCodecParameter   =
                     "-vcodec " + codec + " "
@@ -483,32 +492,15 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
             {
                 string profile = videoRoot.get(field, "XXX").asString();
 
+                ffmpeg_encodingVideoProfileValidation(codec, profile);
                 if (codec == "libx264")
                 {
-                    if (profile != "high" && profile != "baseline" && profile != "main")
-                    {
-                        string errorMessage = string(field) + "is wrong"
-                                + ", profile: " + profile;
-                        _logger->error(errorMessage);
-
-                        throw runtime_error(errorMessage);
-                    }
-
                     ffmpegVideoProfileParameter =
                             "-vprofile " + profile + " "
                     ;
                 }
                 else if (codec == "libvpx")
                 {
-                    if (profile != "best" && profile != "good")
-                    {
-                        string errorMessage = string(field) + "is wrong"
-                                + ", profile: " + profile;
-                        _logger->error(errorMessage);
-
-                        throw runtime_error(errorMessage);
-                    }
-
                     ffmpegVideoProfileParameter =
                             "-quality " + profile + " "
                     ;
@@ -522,12 +514,11 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                     throw runtime_error(errorMessage);
                 }
             }
-
         }
 
         // resolution
         {
-            field = "resolution";
+            field = "width";
             if (!_cmsEngineDBFacade->isMetadataPresent(videoRoot, field))
             {
                 string errorMessage = string("Field is not present or it is null")
@@ -536,11 +527,21 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 
                 throw runtime_error(errorMessage);
             }
+            string width = videoRoot.get(field, "XXX").asString();
 
-            string resolution = videoRoot.get(field, "XXX").asString();
+            field = "height";
+            if (!_cmsEngineDBFacade->isMetadataPresent(videoRoot, field))
+            {
+                string errorMessage = string("Field is not present or it is null")
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            string height = videoRoot.get(field, "XXX").asString();
 
             ffmpegVideoResolutionParameter =
-                    "-vf scale= " + resolution + " "
+                    "-vf scale= " + width + ":" + height + " "
             ;
         }
 
@@ -649,14 +650,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 
             string codec = audioRoot.get(field, "XXX").asString();
 
-            if (codec != "libaacplus" && codec != "libvo_aacenc" && codec != "libvorbis")
-            {
-                string errorMessage = string(field) + "is wrong"
-                        + ", codec: " + codec;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
+            ffmpeg_encodingAudioCodecValidation(codec);
 
             ffmpegAudioCodecParameter   =
                     "-acodec " + codec + " "
@@ -829,6 +823,73 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
     return stagingEncodedAssetPathName;
 }
 
+void EncoderVideoAudioProxy::encodingFileFormatValidation(string fileFormat)
+{    
+    if (fileFormat != "3gp" && fileFormat != "webm" && fileFormat != "segment")
+    {
+        string errorMessage = string("fileFormat is wrong")
+                + ", fileFormat: " + fileFormat;
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void EncoderVideoAudioProxy::ffmpeg_encodingVideoCodecValidation(string codec)
+{    
+    if (codec != "libx264" && codec != "libvpx")
+    {
+        string errorMessage = string("Video codec is wrong")
+                + ", codec: " + codec;
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void EncoderVideoAudioProxy::ffmpeg_encodingVideoProfileValidation(
+    string codec, string profile)
+{
+    if (codec == "libx264")
+    {
+        if (profile != "high" && profile != "baseline" && profile != "main")
+        {
+            string errorMessage = string("Profile is wrong")
+                    + ", codec: " + codec
+                    + ", profile: " + profile;
+
+            throw runtime_error(errorMessage);
+        }
+    }
+    else if (codec == "libvpx")
+    {
+        if (profile != "best" && profile != "good")
+        {
+            string errorMessage = string("Profile is wrong")
+                    + ", codec: " + codec
+                    + ", profile: " + profile;
+
+            throw runtime_error(errorMessage);
+        }
+    }
+    else
+    {
+        string errorMessage = string("codec is wrong")
+                + ", codec: " + codec;
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void EncoderVideoAudioProxy::ffmpeg_encodingAudioCodecValidation(string codec)
+{    
+    if (codec != "libaacplus" && codec != "libvo_aacenc" && codec != "libvorbis")
+    {
+        string errorMessage = string("Audio codec is wrong")
+                + ", codec: " + codec;
+
+        throw runtime_error(errorMessage);
+    }
+}
+
 void EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEncodedAssetPathName)
 {
     size_t fileNameIndex = stagingEncodedAssetPathName.find_last_of("/");
@@ -889,8 +950,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEncod
         }
     }
     
-    int64_t encodedPhysicalPathKey =
-            _cmsEngineDBFacade->saveEncodedContentMetadata(
+    int64_t encodedPhysicalPathKey = _cmsEngineDBFacade->saveEncodedContentMetadata(
         _encodingItem->_customer->_customerKey,
         _encodingItem->_mediaItemKey,
         encodedFileName,
@@ -899,4 +959,3 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEncod
         cmsAssetSizeInBytes,
         _encodingItem->_encodingProfileKey);
 }
-
