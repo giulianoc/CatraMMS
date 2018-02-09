@@ -15,7 +15,15 @@
 #include "catralibraries/ProcessUtility.h"
 #include "EncoderVideoAudioProxy.h"
 
-EncoderVideoAudioProxy::EncoderVideoAudioProxy(
+EncoderVideoAudioProxy::EncoderVideoAudioProxy()
+{    
+}
+
+EncoderVideoAudioProxy::~EncoderVideoAudioProxy() 
+{
+}
+
+void EncoderVideoAudioProxy::setData(
         mutex* mtEncodingJobs,
         EncodingJobStatus* status,
         shared_ptr<CMSEngineDBFacade> cmsEngineDBFacade,
@@ -44,14 +52,6 @@ EncoderVideoAudioProxy::EncoderVideoAudioProxy(
 
 }
 
-EncoderVideoAudioProxy::~EncoderVideoAudioProxy() 
-{
-    lock_guard<mutex> locker(*_mtEncodingJobs);
-    
-    *_status = EncodingJobStatus::Free;
-
-}
-
 void EncoderVideoAudioProxy::operator()()
 {
     string stagingEncodedAssetPathName;
@@ -63,35 +63,52 @@ void EncoderVideoAudioProxy::operator()()
     {
         _logger->error(string("encodeContentVideoAudio: ") + e.what());
         
+        _logger->info(string("_cmsEngineDBFacade->updateEncodingJob MaxCapacityReached")
+            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+        );
+        
         _cmsEngineDBFacade->updateEncodingJob (_encodingItem->_encodingJobKey, 
                 CMSEngineDBFacade::EncodingError::MaxCapacityReached, _encodingItem->_ingestionJobKey);
         
-        throw e;
+        {
+            lock_guard<mutex> locker(*_mtEncodingJobs);
+
+            *_status = EncodingJobStatus::Free;
+        }
+        
+        // throw e;
+        return;
     }
     catch(EncoderError e)
     {
         _logger->error(string("encodeContentVideoAudio: ") + e.what());
         
+        _logger->info(string("_cmsEngineDBFacade->updateEncodingJob PunctualError")
+            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+        );
+        
         _cmsEngineDBFacade->updateEncodingJob (_encodingItem->_encodingJobKey, 
                 CMSEngineDBFacade::EncodingError::PunctualError, _encodingItem->_ingestionJobKey);
 
-        throw e;
+        {
+            lock_guard<mutex> locker(*_mtEncodingJobs);
+
+            *_status = EncodingJobStatus::Free;
+        }
+        
+        // throw e;
+        return;
     }
     catch(runtime_error e)
     {
         _logger->error(string("encodeContentVideoAudio: ") + e.what());
         
-        // PunctualError is used because, in case it always happens, the encoding will never reach a final state
-        _cmsEngineDBFacade->updateEncodingJob (
-                _encodingItem->_encodingJobKey, 
-                CMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
-                _encodingItem->_ingestionJobKey);
-
-        throw e;
-    }
-    catch(exception e)
-    {
-        _logger->error(string("encodeContentVideoAudio: ") + e.what());
+        _logger->info(string("_cmsEngineDBFacade->updateEncodingJob PunctualError")
+            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+        );
         
         // PunctualError is used because, in case it always happens, the encoding will never reach a final state
         _cmsEngineDBFacade->updateEncodingJob (
@@ -99,7 +116,38 @@ void EncoderVideoAudioProxy::operator()()
                 CMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
                 _encodingItem->_ingestionJobKey);
 
-        throw e;
+        {
+            lock_guard<mutex> locker(*_mtEncodingJobs);
+
+            *_status = EncodingJobStatus::Free;
+        }
+        
+        // throw e;
+        return;
+    }
+    catch(exception e)
+    {
+        _logger->error(string("encodeContentVideoAudio: ") + e.what());
+        
+        _logger->info(string("_cmsEngineDBFacade->updateEncodingJob PunctualError")
+            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+        );
+        
+        // PunctualError is used because, in case it always happens, the encoding will never reach a final state
+        _cmsEngineDBFacade->updateEncodingJob (
+                _encodingItem->_encodingJobKey, 
+                CMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
+                _encodingItem->_ingestionJobKey);
+
+        {
+            lock_guard<mutex> locker(*_mtEncodingJobs);
+
+            *_status = EncodingJobStatus::Free;
+        }
+        
+        // throw e;
+        return;
     }
             
     try
@@ -127,10 +175,22 @@ void EncoderVideoAudioProxy::operator()()
             FileIO::remove(stagingEncodedAssetPathName);
         }
 
+        _logger->info(string("_cmsEngineDBFacade->updateEncodingJob MaxCapacityReached")
+            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+        );
+        
         _cmsEngineDBFacade->updateEncodingJob (_encodingItem->_encodingJobKey, 
                 CMSEngineDBFacade::EncodingError::MaxCapacityReached, _encodingItem->_ingestionJobKey);
         
-        throw e;
+        {
+            lock_guard<mutex> locker(*_mtEncodingJobs);
+
+            *_status = EncodingJobStatus::Free;
+        }
+        
+        // throw e;
+        return;
     }
     catch(EncoderError e)
     {
@@ -153,10 +213,22 @@ void EncoderVideoAudioProxy::operator()()
             FileIO::remove(stagingEncodedAssetPathName);
         }
 
+        _logger->info(string("_cmsEngineDBFacade->updateEncodingJob PunctualError")
+            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+        );
+        
         _cmsEngineDBFacade->updateEncodingJob (_encodingItem->_encodingJobKey, 
                 CMSEngineDBFacade::EncodingError::PunctualError, _encodingItem->_ingestionJobKey);
 
-        throw e;
+        {
+            lock_guard<mutex> locker(*_mtEncodingJobs);
+
+            *_status = EncodingJobStatus::Free;
+        }
+        
+        // throw e;
+        return;
     }
     catch(runtime_error e)
     {
@@ -179,13 +251,25 @@ void EncoderVideoAudioProxy::operator()()
             FileIO::remove(stagingEncodedAssetPathName);
         }
 
+        _logger->info(string("_cmsEngineDBFacade->updateEncodingJob PunctualError")
+            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+        );
+        
         // PunctualError is used because, in case it always happens, the encoding will never reach a final state
         _cmsEngineDBFacade->updateEncodingJob (
                 _encodingItem->_encodingJobKey, 
                 CMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
                 _encodingItem->_ingestionJobKey);
 
-        throw e;
+        {
+            lock_guard<mutex> locker(*_mtEncodingJobs);
+
+            *_status = EncodingJobStatus::Free;
+        }
+        
+        // throw e;
+        return;
     }
     catch(exception e)
     {
@@ -208,17 +292,34 @@ void EncoderVideoAudioProxy::operator()()
             FileIO::remove(stagingEncodedAssetPathName);
         }
 
+        _logger->info(string("_cmsEngineDBFacade->updateEncodingJob PunctualError")
+            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+        );
+        
         // PunctualError is used because, in case it always happens, the encoding will never reach a final state
         _cmsEngineDBFacade->updateEncodingJob (
                 _encodingItem->_encodingJobKey, 
                 CMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
                 _encodingItem->_ingestionJobKey);
 
-        throw e;
+        {
+            lock_guard<mutex> locker(*_mtEncodingJobs);
+
+            *_status = EncodingJobStatus::Free;
+        }
+        
+        // throw e;
+        return;
     }
 
     try
     {
+        _logger->info(string("_cmsEngineDBFacade->updateEncodingJob NoError")
+            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+        );
+        
         _cmsEngineDBFacade->updateEncodingJob (
             _encodingItem->_encodingJobKey, 
             CMSEngineDBFacade::EncodingError::NoError, 
@@ -228,14 +329,32 @@ void EncoderVideoAudioProxy::operator()()
     {
         _logger->error(string("_cmsEngineDBFacade->updateEncodingJob failed: ") + e.what());
 
-        throw e;
+        {
+            lock_guard<mutex> locker(*_mtEncodingJobs);
+
+            *_status = EncodingJobStatus::Free;
+        }
+        
+        // throw e;
+        return;
     }
+    
+    {
+        lock_guard<mutex> locker(*_mtEncodingJobs);
+
+        *_status = EncodingJobStatus::Free;
+    }        
 }
 
 string EncoderVideoAudioProxy::encodeContentVideoAudio()
 {
     string stagingEncodedAssetPathName;
     
+    _logger->info(string("Creating encoderVideoAudioProxy thread")
+        + ", _encodingItem->_encodingProfileTechnology" + to_string(static_cast<int>(_encodingItem->_encodingProfileTechnology))
+        + ", _3GPPEncoder: " + _3GPPEncoder
+    );
+
     if (
         (_encodingItem->_encodingProfileTechnology == CMSEngineDBFacade::EncodingTechnology::ThreeGPP &&
             _3GPPEncoder == "FFMPEG") ||
@@ -541,7 +660,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
             string height = videoRoot.get(field, "XXX").asString();
 
             ffmpegVideoResolutionParameter =
-                    "-vf scale= " + width + ":" + height + " "
+                    "-vf scale=" + width + ":" + height + " "
             ;
         }
 

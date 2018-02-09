@@ -54,7 +54,12 @@ private:
         chrono::system_clock::time_point	_encodingJobStart;
 
         shared_ptr<CMSEngineDBFacade::EncodingItem>	_encodingItem;
-        void					*_encodingThread;
+        EncoderVideoAudioProxy                  _encoderVideoAudioProxy;
+        
+        EncodingJob()
+        {
+            _status         = EncodingJobStatus::Free;
+        }
     };
 
     shared_ptr<spdlog::logger>                  _logger;

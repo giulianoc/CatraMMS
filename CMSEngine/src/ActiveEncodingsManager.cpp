@@ -51,7 +51,7 @@ void ActiveEncodingsManager::operator()()
 
             continue;
         }
-                   
+                           
         for (CMSEngineDBFacade::EncodingPriority encodingPriority: sortedEncodingPriorities)
         {
             EncodingJob*    encodingJobs;
@@ -59,16 +59,22 @@ void ActiveEncodingsManager::operator()()
             
             if (encodingPriority == CMSEngineDBFacade::EncodingPriority::High)
             {
+                _logger->info("Processing the high encodings...");
+                
                 encodingJobs            = _highPriorityEncodingJobs;
                 maxEncodingsToBeManaged = MAXHIGHENCODINGSTOBEMANAGED;
             }
             else if (encodingPriority == CMSEngineDBFacade::EncodingPriority::Default)
             {
+                _logger->info("Processing the default encodings...");
+                
                 encodingJobs = _defaultPriorityEncodingJobs;
                 maxEncodingsToBeManaged = MAXDEFAULTENCODINGSTOBEMANAGED;
             }
             else // if (encodingPriority == CMSEngineDBFacade::EncodingPriority::Low)
             {
+                _logger->info("Processing the low encodings...");
+                
                 encodingJobs = _lowPriorityEncodingJobs;
                 maxEncodingsToBeManaged = MAXLOWENCODINGSTOBEMANAGED;
             }
@@ -109,6 +115,16 @@ void ActiveEncodingsManager::operator()()
                 {
                     chrono::system_clock::time_point        processingItemStart;
 
+                    _logger->info(string("processEncodingJob")
+                            + ", customer: " + encodingJob->_encodingItem->_customer->_name
+                            + ", _ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey)
+                            + ", _encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
+                            + ", _encodingPriority: " + to_string(static_cast<int>(encodingJob->_encodingItem->_encodingPriority))
+                            + ", _relativePath: " + encodingJob->_encodingItem->_relativePath
+                            + ", _fileName: " + encodingJob->_encodingItem->_fileName
+                            + ", _encodingProfileKey: " + to_string(encodingJob->_encodingItem->_encodingProfileKey)
+                    );
+
                     processEncodingJob(&_mtEncodingJobs, encodingJob);
 
                     _logger->info(string("processEncodingJob finished")
@@ -133,7 +149,7 @@ void ActiveEncodingsManager::processEncodingJob(mutex* mtEncodingJobs, EncodingJ
     if (encodingJob->_encodingItem->_contentType == CMSEngineDBFacade::ContentType::Video ||
             encodingJob->_encodingItem->_contentType == CMSEngineDBFacade::ContentType::Audio)
     {
-        EncoderVideoAudioProxy encoderVideoAudioProxy(
+        encodingJob->_encoderVideoAudioProxy.setData(
             mtEncodingJobs,
             &(encodingJob->_status),
             _cmsEngineDBFacade,
@@ -142,7 +158,11 @@ void ActiveEncodingsManager::processEncodingJob(mutex* mtEncodingJobs, EncodingJ
             _logger
         );
         
-        thread encoderVideoAudioProxyThread(encoderVideoAudioProxy);
+        _logger->info(string("Creating encoderVideoAudioProxy thread")
+            + ", encodingJob->_encodingItem->_encodingJobKey" + to_string(encodingJob->_encodingItem->_encodingJobKey)
+            + ", encodingJob->_encodingItem->_fileName" + encodingJob->_encodingItem->_fileName
+        );
+        thread encoderVideoAudioProxyThread(encodingJob->_encoderVideoAudioProxy);
         encoderVideoAudioProxyThread.detach();
         
         // the lock guarantees us that the _ejsStatus is not updated

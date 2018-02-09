@@ -41,16 +41,18 @@ enum class EncodingJobStatus
 
 class EncoderVideoAudioProxy {
 public:
-    EncoderVideoAudioProxy(
-            mutex* mtEncodingJobs,
-            EncodingJobStatus* status,
+    EncoderVideoAudioProxy();
+
+    virtual ~EncoderVideoAudioProxy();
+    
+    void setData(
+        mutex* mtEncodingJobs,
+        EncodingJobStatus* status,
         shared_ptr<CMSEngineDBFacade> cmsEngineDBFacade,
         shared_ptr<CMSStorage> cmsStorage,
         shared_ptr<CMSEngineDBFacade::EncodingItem> encodingItem,
         shared_ptr<spdlog::logger> logger);
 
-    virtual ~EncoderVideoAudioProxy();
-    
     void operator ()();
 
     static void encodingFileFormatValidation(string fileFormat);

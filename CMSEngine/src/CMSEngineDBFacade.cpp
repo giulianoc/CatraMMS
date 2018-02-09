@@ -927,28 +927,25 @@ void CMSEngineDBFacade::getEncodingJobs(
                 
                 {
                     lastSQLCommand = 
-                        "select p.CMSPartitionNumber, p.MediaItemKey, p.FileName, p.RelativePath, ep.Technology, ep.Details "
-                        "from CMS_PhysicalPaths p, CMS_EncodingProfiles ep "
-                        "where p.EncodingProfileKey = ep.EncodingProfileKey and p.EncodingProfileKey = ? and p.PhysicalPathKey = ?";
+                        "select m.CustomerKey, m.ContentType, p.CMSPartitionNumber, p.MediaItemKey, p.FileName, p.RelativePath "
+                        "from CMS_MediaItems m, CMS_PhysicalPaths p where m.MediaItemKey = p.MediaItemKey and p.PhysicalPathKey = ?";
                     shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
-                    preparedStatement->setInt64(queryParameterIndex++, encodingItem->_encodingProfileKey);
                     preparedStatement->setInt64(queryParameterIndex++, encodingItem->_physicalPathKey);
 
                     shared_ptr<sql::ResultSet> physicalPathResultSet (preparedStatement->executeQuery());
                     if (physicalPathResultSet->next())
                     {
+                        encodingItem->_contentType = static_cast<ContentType>(physicalPathResultSet->getInt("ContentType"));
+                        encodingItem->_customer = getCustomer(physicalPathResultSet->getInt64("CustomerKey"));
                         encodingItem->_cmsPartitionNumber = physicalPathResultSet->getInt("CMSPartitionNumber");
                         encodingItem->_mediaItemKey = physicalPathResultSet->getInt64("MediaItemKey");
                         encodingItem->_fileName = physicalPathResultSet->getString("FileName");
                         encodingItem->_relativePath = physicalPathResultSet->getString("RelativePath");
-                        encodingItem->_encodingProfileTechnology = static_cast<EncodingTechnology>(physicalPathResultSet->getInt("Technology"));
-                        encodingItem->_details = physicalPathResultSet->getString("Details");
                     }
                     else
                     {
                         string errorMessage = string("select failed")
-                                + ", encodingItem->_encodingProfileKey: " + to_string(encodingItem->_encodingProfileKey)
                                 + ", encodingItem->_physicalPathKey: " + to_string(encodingItem->_physicalPathKey);
                         _logger->error(errorMessage);
 
@@ -957,21 +954,21 @@ void CMSEngineDBFacade::getEncodingJobs(
                 }
                 {
                     lastSQLCommand = 
-                        "select CustomerKey, ContentType from CMS_MediaItems where MediaItemKey = ?";
+                        "select Technology, Details from CMS_EncodingProfiles where EncodingProfileKey = ?";
                     shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
-                    preparedStatement->setInt64(queryParameterIndex++, encodingItem->_mediaItemKey);
+                    preparedStatement->setInt64(queryParameterIndex++, encodingItem->_encodingProfileKey);
 
-                    shared_ptr<sql::ResultSet> mediaItemResultSet (preparedStatement->executeQuery());
-                    if (mediaItemResultSet->next())
+                    shared_ptr<sql::ResultSet> encodingProfilesResultSet (preparedStatement->executeQuery());
+                    if (encodingProfilesResultSet->next())
                     {
-                        encodingItem->_contentType = static_cast<ContentType>(mediaItemResultSet->getInt("ContentType"));
-                        encodingItem->_customer = getCustomer(mediaItemResultSet->getInt64("CustomerKey"));
+                        encodingItem->_encodingProfileTechnology = static_cast<EncodingTechnology>(encodingProfilesResultSet->getInt("Technology"));
+                        encodingItem->_details = encodingProfilesResultSet->getString("Details");
                     }
                     else
                     {
                         string errorMessage = string("select failed")
-                                + ", encodingItem->_mediaItemKey: " + to_string(encodingItem->_mediaItemKey);
+                                + ", encodingItem->_encodingProfileKey: " + to_string(encodingItem->_encodingProfileKey);
                         _logger->error(errorMessage);
 
                         throw runtime_error(errorMessage);                    
@@ -1461,7 +1458,9 @@ string CMSEngineDBFacade::checkCustomerMaxIngestionNumber (
         if (periodExpired)
         {
             lastSQLCommand = 
-                "update CMS_CustomerMoreInfo set CurrentIngestionsNumber = 0, StartDateTime = STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'), EndDateTime = STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S') where CustomerKey = ?";
+                "update CMS_CustomerMoreInfo set CurrentIngestionsNumber = 0, "
+                "StartDateTime = STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'), EndDateTime = STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S') "
+                "where CustomerKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -1961,7 +1960,9 @@ int64_t CMSEngineDBFacade::saveIngestedContentMetadata(
 
             {
                 lastSQLCommand = 
-                    "update CMS_CustomerMoreInfo set CurrentDirLevel1 = ?, CurrentDirLevel2 = ?, CurrentDirLevel3 = ?, CurrentIngestionsNumber = CurrentIngestionsNumber + 1 where CustomerKey = ?";
+                    "update CMS_CustomerMoreInfo set CurrentDirLevel1 = ?, CurrentDirLevel2 = ?, "
+                    "CurrentDirLevel3 = ?, CurrentIngestionsNumber = CurrentIngestionsNumber + 1 "
+                    "where CustomerKey = ?";
 
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;

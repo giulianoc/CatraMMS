@@ -220,30 +220,38 @@ string CMSEngine::getEncodingProfileDetails(
 )
 {
     string details = string("")
-            + "{ "
-            + "\"fileFormat\" = \"" + fileFormat + "\", "         // mandatory, 3gp, webm or segment
+            + "{"
+            + "\"fileFormat\": \"" + fileFormat + "\", "         // mandatory, 3gp, webm or segment
+    ;
+    
+    details.append(string("")
             + "\"video\": { "
-            +    "\"codec\" = \"" + videoCodec + "\", "     // mandatory, libx264 or libvpx
-            +    "\"profile\" = \"" + videoProfile + "\", "      // optional, if libx264 -> high or baseline or main. if libvpx -> best or good
-            +    "\"width\" = " + to_string(videoWidth) + ", " // mandatory
-            +    "\"height\" = " + to_string(videoHeight) + ", " // mandatory
-            +    "\"bitRate\" = \"" + videoBitRate + "\", "      // mandatory
-            +    "\"maxRate\" = \"" + videoMaxRate + "\", "      // optional
-            +    "\"bufSize\" = \"" + videoBufSize + "\", "     // optional
-            +    "\"frameRate\" = " + to_string(videoFrameRate) + ", "      // optional
-            +    "\"keyFrameIntervalInSeconds\" = " + to_string(videoKeyFrameIntervalInSeconds) + " "   // optional and only if framerate is present
-            + "}";
+            +    "\"codec\": \"" + videoCodec + "\", "     // mandatory, libx264 or libvpx
+            +    "\"profile\": \"" + videoProfile + "\", "      // optional, if libx264 -> high or baseline or main. if libvpx -> best or good
+            +    "\"width\": " + to_string(videoWidth) + ", " // mandatory
+            +    "\"height\": " + to_string(videoHeight) + ", " // mandatory
+            +    "\"bitRate\": \"" + videoBitRate + "\", "      // mandatory
+            +    "\"maxRate\": \"" + videoMaxRate + "\", "      // optional
+            +    "\"bufSize\": \"" + videoBufSize + "\", "     // optional
+            +    "\"frameRate\": " + to_string(videoFrameRate) + ", "      // optional
+            +    "\"keyFrameIntervalInSeconds\": " + to_string(videoKeyFrameIntervalInSeconds) + " "   // optional and only if framerate is present
+            + "}"
+    );
     
     if (audioCodec != "")
     {
         details.append(string("")
             + ", "
             + "\"audio\": { "
-            +    "\"codec\" = \"" + audioCodec + "\", "  // mandatory, libaacplus, libvo_aacenc or libvorbis
-            +    "\"bitRate\" = \"" + audioBitRate + "\" "      // mandatory
+            +    "\"codec\": \"" + audioCodec + "\", "  // mandatory, libaacplus, libvo_aacenc or libvorbis
+            +    "\"bitRate\": \"" + audioBitRate + "\" "      // mandatory
             + "}"
         );
     }
     
+    details.append(string("")
+        + "}"
+    );
+
     return details;
 }

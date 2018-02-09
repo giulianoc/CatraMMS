@@ -284,6 +284,23 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
 
                             throw e;
                         }
+                        catch(exception e)
+                        {
+                            _logger->error(string("validateMetadata failed")
+                                    + ", exception: " + e.what()
+                            );
+                            string ftpDirectoryErrorEntryPathName =
+                                _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, directoryEntry);
+
+                            string errorMessage = e.what();
+
+                            _cmsEngineDBFacade->addIngestionJob (customer->_customerKey, 
+                                    directoryEntry, metadataFileContent, CMSEngineDBFacade::IngestionType::Unknown, 
+                                    CMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed, 
+                                    errorMessage);
+
+                            throw e;
+                        }
 
                         try
                         {
@@ -292,6 +309,23 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                             ftpDirectoryMediaSourceFileName = mediaSource.second;
                         }
                         catch(runtime_error e)
+                        {
+                            _logger->error(string("validateMediaSourceFile failed")
+                                    + ", exception: " + e.what()
+                            );
+                            string ftpDirectoryErrorEntryPathName =
+                                _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, directoryEntry);
+
+                            string errorMessage = e.what();
+
+                            _cmsEngineDBFacade->addIngestionJob (customer->_customerKey, 
+                                    directoryEntry, metadataFileContent, ingestionType, 
+                                    CMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
+                                    errorMessage);
+
+                            throw e;
+                        }
+                        catch(exception e)
                         {
                             _logger->error(string("validateMediaSourceFile failed")
                                     + ", exception: " + e.what()
@@ -460,6 +494,17 @@ void CMSEngineProcessor::handleIngestAssetEvent (shared_ptr<IngestAssetEvent> in
         _cmsEngineDBFacade->updateIngestionJob (ingestAssetEvent->getIngestionJobKey(),
                 CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
     }
+    catch(exception e)
+    {
+        _logger->error(string("_cmsStorage->moveAssetInCMSRepository failed"));
+        
+        string ftpDirectoryErrorEntryPathName =
+            _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(
+                ingestAssetEvent->getCustomer(), ingestAssetEvent->getMetadataFileName());
+
+        _cmsEngineDBFacade->updateIngestionJob (ingestAssetEvent->getIngestionJobKey(),
+                CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
+    }
 
     try
     {
@@ -481,6 +526,22 @@ void CMSEngineProcessor::handleIngestAssetEvent (shared_ptr<IngestAssetEvent> in
         );
     }
     catch(runtime_error e)
+    {
+        _logger->error(string("_cmsStorage->moveAssetInCMSRepository failed"));
+
+        _logger->info(string("Remove file")
+            + ", cmsAssetPathName: " + cmsAssetPathName
+        );
+        FileIO::remove(cmsAssetPathName);
+        
+        string ftpDirectoryErrorEntryPathName =
+            _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(
+                ingestAssetEvent->getCustomer(), ingestAssetEvent->getMetadataFileName());
+
+        _cmsEngineDBFacade->updateIngestionJob (ingestAssetEvent->getIngestionJobKey(),
+                CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
+    }
+    catch(exception e)
     {
         _logger->error(string("_cmsStorage->moveAssetInCMSRepository failed"));
 
