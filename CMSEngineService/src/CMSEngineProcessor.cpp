@@ -40,9 +40,9 @@ void CMSEngineProcessor::operator ()()
     bool blocking = true;
     chrono::milliseconds milliSecondsToBlock(100);
 
-    // SPDLOG_DEBUG(_logger , "Enabled only #ifdef SPDLOG_TRACE_ON..{} ,{}", 1, 3.23);
+    //SPDLOG_DEBUG(_logger , "Enabled only #ifdef SPDLOG_TRACE_ON..{} ,{}", 1, 3.23);
     // SPDLOG_TRACE(_logger , "Enabled only #ifdef SPDLOG_TRACE_ON..{} ,{}", 1, 3.23);
-    _logger->info("CMSEngineProcessor thread started");
+    _logger->info(__FILEREF__ + "CMSEngineProcessor thread started");
 
     bool endEvent = false;
     while(!endEvent)
@@ -60,7 +60,7 @@ void CMSEngineProcessor::operator ()()
         {
             case CMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTIONEVENT:	// 1
             {
-                _logger->info("Received CMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTION");
+                _logger->debug(__FILEREF__ + "Received CMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTION");
 
                 try
                 {
@@ -68,7 +68,7 @@ void CMSEngineProcessor::operator ()()
                 }
                 catch(exception e)
                 {
-                    _logger->error(string("handleCheckIngestionEvent failed")
+                    _logger->error(__FILEREF__ + "handleCheckIngestionEvent failed"
                         + ", exception: " + e.what()
                     );
                 }
@@ -79,7 +79,7 @@ void CMSEngineProcessor::operator ()()
             break;
             case CMSENGINE_EVENTTYPEIDENTIFIER_INGESTASSETEVENT:	// 2
             {
-                _logger->info("Received CMSENGINE_EVENTTYPEIDENTIFIER_INGESTASSETEVENT");
+                _logger->info(__FILEREF__ + "Received CMSENGINE_EVENTTYPEIDENTIFIER_INGESTASSETEVENT");
 
                 shared_ptr<IngestAssetEvent>    ingestAssetEvent = dynamic_pointer_cast<IngestAssetEvent>(event);
 
@@ -89,7 +89,7 @@ void CMSEngineProcessor::operator ()()
                 }
                 catch(exception e)
                 {
-                    _logger->error(string("handleIngestAssetEvent failed")
+                    _logger->error(__FILEREF__ + "handleIngestAssetEvent failed"
                         + ", exception: " + e.what()
                     );
                 }
@@ -99,7 +99,7 @@ void CMSEngineProcessor::operator ()()
             break;
             case CMSENGINE_EVENTTYPEIDENTIFIER_CHECKENCODINGEVENT:	// 3
             {
-                _logger->info("Received CMSENGINE_EVENTTYPEIDENTIFIER_CHECKENCODING");
+                _logger->debug(__FILEREF__ + "Received CMSENGINE_EVENTTYPEIDENTIFIER_CHECKENCODING");
 
                 try
                 {
@@ -107,12 +107,34 @@ void CMSEngineProcessor::operator ()()
                 }
                 catch(exception e)
                 {
-                    _logger->error(string("handleCheckEncodingEvent failed")
+                    _logger->error(__FILEREF__ + "handleCheckEncodingEvent failed"
                         + ", exception: " + e.what()
                     );
                 }
 
                 _multiEventsSet->getEventsFactory()->releaseEvent<Event>(event);
+
+            }
+            break;
+            case CMSENGINE_EVENTTYPEIDENTIFIER_GENERATEIMAGETOINGESTEVENT:	// 4
+            {
+                _logger->debug(__FILEREF__ + "Received CMSENGINE_EVENTTYPEIDENTIFIER_GENERATEIMAGETOINGESTEVENT");
+
+                shared_ptr<GenerateImageToIngestEvent>    generateImageToIngestEvent =
+                        dynamic_pointer_cast<GenerateImageToIngestEvent>(event);
+
+                try
+                {
+                    handleGenerateImageToIngestEvent (generateImageToIngestEvent);
+                }
+                catch(exception e)
+                {
+                    _logger->error(__FILEREF__ + "handleGenerateImageToIngestEvent failed"
+                        + ", exception: " + e.what()
+                    );
+                }
+
+                _multiEventsSet->getEventsFactory()->releaseEvent<GenerateImageToIngestEvent>(generateImageToIngestEvent);
 
             }
             break;
@@ -122,7 +144,7 @@ void CMSEngineProcessor::operator ()()
         }
     }
 
-    _logger->info("CMSEngineProcessor thread terminated");
+    _logger->info(__FILEREF__ + "CMSEngineProcessor thread terminated");
 }
 
 void CMSEngineProcessor::handleCheckIngestionEvent()
@@ -145,7 +167,7 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
 
         try
         {
-            _logger->info(string("Looking for ingestions")
+            _logger->debug(__FILEREF__ + "Looking for ingestions"
                 + ", customer->_customerKey: " + to_string(customer->_customerKey)
                 + ", customer->_customerKey: " + customer->_name
             );
@@ -176,7 +198,7 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                 }
                 catch(...)
                 {
-                    _logger->error("FileIO::readDirectory failed");
+                    _logger->error(__FILEREF__ + "FileIO::readDirectory failed");
 
                     moreContentsToBeProcessed = false;
 
@@ -202,7 +224,7 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                     if (chrono::duration_cast<chrono::hours>(chrono::system_clock::now() - lastModificationTime) 
                             >= chrono::hours(_ulRetentionPeriodInDays * 24))
                     {
-                        _logger->info(string("Remove obsolete FTP file")
+                        _logger->info(__FILEREF__ + "Remove obsolete FTP file"
                             + ", srcPathName: " + srcPathName
                             + ", _ulRetentionPeriodInDays: " + to_string(_ulRetentionPeriodInDays)
                         );
@@ -229,7 +251,7 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                         continue;
                     }
 
-                    _logger->info(string("json to be processed")
+                    _logger->info(__FILEREF__ + "json to be processed"
                         + ", directoryEntry: " + directoryEntry
                     );
 
@@ -237,7 +259,7 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                             _cmsStorage->moveFTPRepositoryEntryToWorkingArea(customer, directoryEntry);
 
                     string      metadataFileContent;
-                    CMSEngineDBFacade::IngestionType ingestionType;
+                    pair<CMSEngineDBFacade::IngestionType,CMSEngineDBFacade::ContentType> ingestionTypeAndContentType;
                     Json::Value metadataRoot;
                     string relativePathToBeUsed;
                     string mediaSourceFileName;
@@ -265,11 +287,11 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                                         );
                             }
 
-                            ingestionType = validateMetadata(metadataRoot);
+                            ingestionTypeAndContentType = validateMetadata(metadataRoot);
                         }
                         catch(runtime_error e)
                         {
-                            _logger->error(string("validateMetadata failed")
+                            _logger->error(__FILEREF__ + "validateMetadata failed"
                                     + ", exception: " + e.what()
                             );
                             string ftpDirectoryErrorEntryPathName =
@@ -286,7 +308,7 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                         }
                         catch(exception e)
                         {
-                            _logger->error(string("validateMetadata failed")
+                            _logger->error(__FILEREF__ + "validateMetadata failed"
                                     + ", exception: " + e.what()
                             );
                             string ftpDirectoryErrorEntryPathName =
@@ -304,13 +326,14 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
 
                         try
                         {
-                            pair<string, string> mediaSource = validateMediaSourceFile(customerFTPDirectory, ingestionType, metadataRoot);
+                            pair<string, string> mediaSource = validateMediaSourceFile(
+                                    customerFTPDirectory, ingestionTypeAndContentType.first, metadataRoot);
                             mediaSourceFileName = mediaSource.first;
                             ftpDirectoryMediaSourceFileName = mediaSource.second;
                         }
                         catch(runtime_error e)
                         {
-                            _logger->error(string("validateMediaSourceFile failed")
+                            _logger->error(__FILEREF__ + "validateMediaSourceFile failed"
                                     + ", exception: " + e.what()
                             );
                             string ftpDirectoryErrorEntryPathName =
@@ -319,7 +342,7 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                             string errorMessage = e.what();
 
                             _cmsEngineDBFacade->addIngestionJob (customer->_customerKey, 
-                                    directoryEntry, metadataFileContent, ingestionType, 
+                                    directoryEntry, metadataFileContent, ingestionTypeAndContentType.first, 
                                     CMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
                                     errorMessage);
 
@@ -327,7 +350,7 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                         }
                         catch(exception e)
                         {
-                            _logger->error(string("validateMediaSourceFile failed")
+                            _logger->error(__FILEREF__ + "validateMediaSourceFile failed"
                                     + ", exception: " + e.what()
                             );
                             string ftpDirectoryErrorEntryPathName =
@@ -336,7 +359,7 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                             string errorMessage = e.what();
 
                             _cmsEngineDBFacade->addIngestionJob (customer->_customerKey, 
-                                    directoryEntry, metadataFileContent, ingestionType, 
+                                    directoryEntry, metadataFileContent, ingestionTypeAndContentType.first, 
                                     CMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
                                     errorMessage);
 
@@ -350,7 +373,7 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                     }
                     catch(exception e)
                     {
-                        _logger->error(string("checkCustomerMaxIngestionNumber failed")
+                        _logger->error(__FILEREF__ + "checkCustomerMaxIngestionNumber failed"
                                 + ", exception: " + e.what()
                         );
                         string ftpDirectoryErrorEntryPathName =
@@ -359,7 +382,7 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                         string errorMessage = e.what();
 
                         _cmsEngineDBFacade->addIngestionJob (customer->_customerKey, 
-                                directoryEntry, metadataFileContent, ingestionType, 
+                                directoryEntry, metadataFileContent, ingestionTypeAndContentType.first, 
                                 CMSEngineDBFacade::IngestionStatus::End_CustomerReachedHisMaxIngestionNumber, 
                                 errorMessage);
 
@@ -371,12 +394,12 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                     {
                         string errorMessage = "";
                         ingestionJobKey = _cmsEngineDBFacade->addIngestionJob (customer->_customerKey, 
-                                directoryEntry, metadataFileContent, ingestionType, 
+                                directoryEntry, metadataFileContent, ingestionTypeAndContentType.first, 
                                 CMSEngineDBFacade::IngestionStatus::DataReceivedAndValidated, errorMessage);
                     }
                     catch(exception e)
                     {
-                        _logger->error(string("_cmsEngineDBFacade->addIngestionJob failed")
+                        _logger->error(__FILEREF__ + "_cmsEngineDBFacade->addIngestionJob failed"
                                 + ", exception: " + e.what()
                         );
 
@@ -399,6 +422,7 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                             ingestAssetEvent->setFTPDirectoryWorkingMetadataPathName(ftpDirectoryWorkingMetadataPathName);
                             ingestAssetEvent->setMetadataFileName(directoryEntry);
 
+                            ingestAssetEvent->setContentType(ingestionTypeAndContentType.second);
                             ingestAssetEvent->setFTPDirectoryMediaSourceFileName(ftpDirectoryMediaSourceFileName);
                             ingestAssetEvent->setMediaSourceFileName(mediaSourceFileName);
 
@@ -410,12 +434,14 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                             shared_ptr<Event>    event = dynamic_pointer_cast<Event>(ingestAssetEvent);
                             _multiEventsSet->addEvent(event);
 
-                            _logger->info("addEvent: EVENT_TYPE ({}, {})", event->getEventKey().first, event->getEventKey().second);
+                            _logger->debug(__FILEREF__ + "addEvent: EVENT_TYPE"
+                                + ", getEventKey().first: " + to_string(event->getEventKey().first)
+                                + ", getEventKey().second: " + to_string(event->getEventKey().second));
                         }
                     }
                     catch(exception e)
                     {
-                        _logger->error(string("add IngestAssetEvent failed")
+                        _logger->error(__FILEREF__ + "add IngestAssetEvent failed"
                                 + ", exception: " + e.what()
                         );
 
@@ -433,7 +459,7 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                 }
                 catch(exception e)
                 {
-                    _logger->error(string("Exception managing the FTP entry")
+                    _logger->error(__FILEREF__ + "Exception managing the FTP entry"
                         + ", exception: " + e.what()
                         + ", customerKey: " + to_string(customer->_customerKey)
                         + ", directoryEntry: " + directoryEntry
@@ -445,7 +471,7 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
         }
         catch(...)
         {
-            _logger->error(string("Error processing the Customer FTP")
+            _logger->error(__FILEREF__ + "Error processing the Customer FTP"
                 + ", customer->_name: " + customer->_name
                     );
         }
@@ -458,14 +484,6 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
 
 void CMSEngineProcessor::handleIngestAssetEvent (shared_ptr<IngestAssetEvent> ingestAssetEvent)
 {
-
-    /*
-    if (getContentDurationInMilliSeconds (
-        _cCustomer. _bName. str (), (const char *) bFTPAssetPathName,
-        (const char *) (pmitMediaItemInfo -> _bContentType),
-        pContentDuration, _ptSystemTracer) != errNoError)
-    */
-
     unsigned long cmsPartitionIndexUsed;
     string cmsAssetPathName;
     try
@@ -485,7 +503,7 @@ void CMSEngineProcessor::handleIngestAssetEvent (shared_ptr<IngestAssetEvent> in
     }
     catch(runtime_error e)
     {
-        _logger->error(string("_cmsStorage->moveAssetInCMSRepository failed"));
+        _logger->error(__FILEREF__ + "_cmsStorage->moveAssetInCMSRepository failed");
         
         string ftpDirectoryErrorEntryPathName =
             _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(
@@ -496,7 +514,7 @@ void CMSEngineProcessor::handleIngestAssetEvent (shared_ptr<IngestAssetEvent> in
     }
     catch(exception e)
     {
-        _logger->error(string("_cmsStorage->moveAssetInCMSRepository failed"));
+        _logger->error(__FILEREF__ + "_cmsStorage->moveAssetInCMSRepository failed");
         
         string ftpDirectoryErrorEntryPathName =
             _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(
@@ -506,30 +524,49 @@ void CMSEngineProcessor::handleIngestAssetEvent (shared_ptr<IngestAssetEvent> in
                 CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
     }
 
+    int64_t videoOrAudioDurationInMilliSeconds = 0;
+    int64_t mediaItemKey;
     try
     {
+        if (ingestAssetEvent->getContentType() == CMSEngineDBFacade::ContentType::Video 
+                || ingestAssetEvent->getContentType() == CMSEngineDBFacade::ContentType::Audio)
+        {
+            videoOrAudioDurationInMilliSeconds = 
+                EncoderVideoAudioProxy::getVideoOrAudioDurationInMilliSeconds(
+                    cmsAssetPathName);
+        }
         int sizeInBytes  = 10;
-        int64_t videoOrAudioDurationInMilliSeconds = 10;
         int imageWidth = 10;
         int imageHeight = 10;
 
-        _cmsEngineDBFacade->saveIngestedContentMetadata (
-            ingestAssetEvent->getCustomer(),
-            ingestAssetEvent->getIngestionJobKey(),
-            ingestAssetEvent->getMetadataRoot(),
-            ingestAssetEvent->getRelativePath(),
-            cmsPartitionIndexUsed,
-            sizeInBytes,
-            videoOrAudioDurationInMilliSeconds,
-            imageWidth,
-            imageHeight
+        _logger->info(__FILEREF__ + "_cmsEngineDBFacade->saveIngestedContentMetadata..."
+        );
+
+        pair<int64_t,int64_t> mediaItemKeyAndPhysicalPathKey =
+                _cmsEngineDBFacade->saveIngestedContentMetadata (
+                ingestAssetEvent->getCustomer(),
+                ingestAssetEvent->getIngestionJobKey(),
+                ingestAssetEvent->getMetadataRoot(),
+                ingestAssetEvent->getRelativePath(),
+                cmsPartitionIndexUsed,
+                sizeInBytes,
+                videoOrAudioDurationInMilliSeconds,
+                imageWidth,
+                imageHeight
+        );
+        
+        mediaItemKey = mediaItemKeyAndPhysicalPathKey.first;
+        
+        _logger->info(__FILEREF__ + "Added a new ingested content"
+            + ", mediaItemKey: " + to_string(mediaItemKeyAndPhysicalPathKey.first)
+            + ", physicalPathKey: " + to_string(mediaItemKeyAndPhysicalPathKey.second)
         );
     }
     catch(runtime_error e)
     {
-        _logger->error(string("_cmsStorage->moveAssetInCMSRepository failed"));
+        _logger->error(__FILEREF__ + "_cmsStorage->moveAssetInCMSRepository failed");
 
-        _logger->info(string("Remove file")
+        _logger->info(__FILEREF__ + "Remove file"
             + ", cmsAssetPathName: " + cmsAssetPathName
         );
         FileIO::remove(cmsAssetPathName);
@@ -543,9 +580,9 @@ void CMSEngineProcessor::handleIngestAssetEvent (shared_ptr<IngestAssetEvent> in
     }
     catch(exception e)
     {
-        _logger->error(string("_cmsStorage->moveAssetInCMSRepository failed"));
+        _logger->error(__FILEREF__ + "_cmsStorage->moveAssetInCMSRepository failed");
 
-        _logger->info(string("Remove file")
+        _logger->info(__FILEREF__ + "Remove file"
             + ", cmsAssetPathName: " + cmsAssetPathName
         );
         FileIO::remove(cmsAssetPathName);
@@ -558,13 +595,201 @@ void CMSEngineProcessor::handleIngestAssetEvent (shared_ptr<IngestAssetEvent> in
                 CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
     }
     
-        /*
-        se screenshot del video:
-        generate image e ingest
+    // ingest Screenshots if present
+    if (ingestAssetEvent->getContentType() == CMSEngineDBFacade::ContentType::Video)
+    {
+        Json::Value metadataRoot = ingestAssetEvent->getMetadataRoot();
+        
+        string field = "ContentIngestion";
+        Json::Value contentIngestion = metadataRoot[field]; 
 
-        move metadata file name (o remove?)
-         */
+        field = "Screenshots";
+        if (_cmsEngineDBFacade->isMetadataPresent(contentIngestion, field))
+        {
+            const Json::Value screenshots = contentIngestion[field];
 
+            field = "Title";
+            if (!_cmsEngineDBFacade->isMetadataPresent(contentIngestion, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            string videoTitle = contentIngestion.get(field, "XXX").asString();
+
+            for(int screenshotIndex = 0; screenshotIndex < screenshots.size(); screenshotIndex++) 
+            {
+                try
+                {
+                    Json::Value screenshot = screenshots[screenshotIndex];
+
+                    field = "TimePositionInSeconds";
+                    if (!_cmsEngineDBFacade->isMetadataPresent(screenshot, field))
+                    {
+                        string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                                + ", Field: " + field;
+                        _logger->error(errorMessage);
+
+                        throw runtime_error(errorMessage);
+                    }
+                    double timePositionInSeconds = screenshot.get(field, "XXX").asDouble();
+
+                    field = "EncodingProfilesSet";
+                    string encodingProfilesSet;
+                    if (!_cmsEngineDBFacade->isMetadataPresent(screenshot, field))
+                        encodingProfilesSet = "customerDefault";
+                    else
+                        encodingProfilesSet = screenshot.get(field, "XXX").asString();
+
+                    field = "SourceImageWidth";
+                    if (!_cmsEngineDBFacade->isMetadataPresent(screenshot, field))
+                    {
+                        string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                                + ", Field: " + field;
+                        _logger->error(errorMessage);
+
+                        throw runtime_error(errorMessage);
+                    }
+                    int sourceImageWidth = screenshot.get(field, "XXX").asInt();
+
+                    field = "SourceImageHeight";
+                    if (!_cmsEngineDBFacade->isMetadataPresent(screenshot, field))
+                    {
+                        string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                                + ", Field: " + field;
+                        _logger->error(errorMessage);
+
+                        throw runtime_error(errorMessage);
+                    }
+                    int sourceImageHeight = screenshot.get(field, "XXX").asInt();
+
+                    if (videoOrAudioDurationInMilliSeconds < timePositionInSeconds * 1000)
+                    {
+                        string errorMessage = __FILEREF__ + "Screenshot was not generated because timePositionInSeconds is bigger than the video duration"
+                                + ", video mediaItemKey: " + to_string(mediaItemKey)
+                                + ", timePositionInSeconds: " + to_string(timePositionInSeconds)
+                                + ", videoOrAudioDurationInMilliSeconds: " + to_string(videoOrAudioDurationInMilliSeconds)
+                        ;
+                        _logger->error(errorMessage);
+
+                        throw runtime_error(errorMessage);
+                    }
+                    
+                    string imageFileName;
+                    {
+                        size_t fileExtensionIndex = ingestAssetEvent->getMediaSourceFileName().find_last_of(".");
+                        if (fileExtensionIndex == string::npos)
+                            imageFileName.append(ingestAssetEvent->getMediaSourceFileName());
+                        else
+                            imageFileName.append(ingestAssetEvent->getMediaSourceFileName().substr(0, fileExtensionIndex));
+                        imageFileName
+                                .append("_")
+                                .append(to_string(screenshotIndex + 1))
+                                .append(".jpg")
+                        ;
+                    }
+
+                    {
+                        shared_ptr<GenerateImageToIngestEvent>    generateImageToIngestEvent = _multiEventsSet->getEventsFactory()
+                                ->getFreeEvent<GenerateImageToIngestEvent>(CMSENGINE_EVENTTYPEIDENTIFIER_GENERATEIMAGETOINGESTEVENT);
+
+                        generateImageToIngestEvent->setSource(CMSENGINEPROCESSORNAME);
+                        generateImageToIngestEvent->setDestination(CMSENGINEPROCESSORNAME);
+                        generateImageToIngestEvent->setExpirationTimePoint(chrono::system_clock::now());
+
+                        generateImageToIngestEvent->setCmsVideoPathName(cmsAssetPathName);
+                        generateImageToIngestEvent->setCustomerFTPRepository(_cmsStorage->getCustomerFTPRepository(ingestAssetEvent->getCustomer()));
+                        generateImageToIngestEvent->setImageFileName(imageFileName);
+                        generateImageToIngestEvent->setImageTitle(videoTitle + " image #" + to_string(screenshotIndex + 1));
+
+                        generateImageToIngestEvent->setTimePositionInSeconds(timePositionInSeconds);
+                        generateImageToIngestEvent->setEncodingProfilesSet(encodingProfilesSet);
+                        generateImageToIngestEvent->setSourceImageWidth(sourceImageWidth);
+                        generateImageToIngestEvent->setSourceImageHeight(sourceImageHeight);
+
+                        shared_ptr<Event>    event = dynamic_pointer_cast<Event>(generateImageToIngestEvent);
+                        _multiEventsSet->addEvent(event);
+
+                        _logger->debug(__FILEREF__ + "addEvent: EVENT_TYPE"
+                            + ", getEventKey().first: " + to_string(event->getEventKey().first)
+                            + ", getEventKey().second: " + to_string(event->getEventKey().second));
+                    }
+                }
+                catch(exception e)
+                {
+                    _logger->error(__FILEREF__ + "Prepare generation image to ingest failed"
+                        + ", screenshotIndex: " + to_string(screenshotIndex)
+                    );
+                }
+            }
+        }
+    }
+}
+
+void CMSEngineProcessor::handleGenerateImageToIngestEvent (
+    shared_ptr<GenerateImageToIngestEvent> generateImageToIngestEvent)
+{
+    string imagePathName = generateImageToIngestEvent->getCustomerFTPRepository()
+            + "/"
+            + generateImageToIngestEvent->getImageFileName()
+    ;
+
+    size_t extensionIndex = generateImageToIngestEvent->getImageFileName().find_last_of(".");
+    if (extensionIndex == string::npos)
+    {
+        string errorMessage = __FILEREF__ + "No extension find in the image file name"
+                + ", generateImageToIngestEvent->getImageFileName(): " + generateImageToIngestEvent->getImageFileName();
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    string metadataImagePathName = generateImageToIngestEvent->getCustomerFTPRepository()
+            + "/"
+            + generateImageToIngestEvent->getImageFileName().substr(0, extensionIndex)
+            + ".json"
+    ;
+
+    EncoderVideoAudioProxy::generateScreenshotToIngest(
+            imagePathName,
+            generateImageToIngestEvent->getTimePositionInSeconds(),
+            generateImageToIngestEvent->getSourceImageWidth(),
+            generateImageToIngestEvent->getSourceImageHeight(),
+            generateImageToIngestEvent->getCmsVideoPathName()
+    );
+
+    generateImageMetadataToIngest(
+            metadataImagePathName,
+            generateImageToIngestEvent->getImageTitle(),
+            generateImageToIngestEvent->getImageFileName(),
+            generateImageToIngestEvent->getEncodingProfilesSet()
+    );
+}
+
+void CMSEngineProcessor::generateImageMetadataToIngest(
+        string metadataImagePathName,
+        string title,
+        string sourceImageFileName,
+        string encodingProfilesSet
+)
+{
+    string imageMetadata = string("")
+        + "{"
+            + "\"Type\": \"ContentIngestion\","
+            + "\"Version\": \"1.0\","
+            + "\"ContentIngestion\": {"
+                + "\"Title\": \"" + title + "\","
+                + "\"Ingester\": \"CMSEngine\","
+                + "\"SourceFileName\": \"" + sourceImageFileName + "\","
+                + "\"ContentType\": \"image\","
+                + "\"EncodingProfilesSet\": \"" + encodingProfilesSet + "\""
+            + "}"
+        + "}"
+    ;
+
+    ofstream metadataFileStream(metadataImagePathName, ofstream::trunc);
+    metadataFileStream << imageMetadata;
 }
 
 void CMSEngineProcessor::handleCheckEncodingEvent ()
@@ -581,16 +806,18 @@ void CMSEngineProcessor::handleCheckEncodingEvent ()
     _pActiveEncodingsManager->addEncodingItems(encodingItems);
 }
 
-CMSEngineDBFacade::IngestionType CMSEngineProcessor::validateMetadata(
+pair<CMSEngineDBFacade::IngestionType,CMSEngineDBFacade::ContentType> CMSEngineProcessor::validateMetadata(
     Json::Value metadataRoot)
 {
+    pair<CMSEngineDBFacade::IngestionType,CMSEngineDBFacade::ContentType> ingestionTypeAndContentType;
     
-    CMSEngineDBFacade::IngestionType ingestionType;
+    CMSEngineDBFacade::IngestionType    ingestionType;
+    CMSEngineDBFacade::ContentType      contentType;
 
     string field = "Type";
     if (!_cmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
     {
-        string errorMessage = string("Field is not present or it is null")
+        string errorMessage = __FILEREF__ + "Field is not present or it is null"
                 + ", Field: " + field;
         _logger->error(errorMessage);
 
@@ -608,7 +835,7 @@ CMSEngineDBFacade::IngestionType CMSEngineProcessor::validateMetadata(
     */
     else
     {
-        string errorMessage = string("Field 'Type' is wrong")
+        string errorMessage = __FILEREF__ + "Field 'Type' is wrong"
                 + ", Type: " + type;
         _logger->error(errorMessage);
 
@@ -618,19 +845,20 @@ CMSEngineDBFacade::IngestionType CMSEngineProcessor::validateMetadata(
     field = "Version";
     if (!_cmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
     {
-        string errorMessage = string("Field is not present or it is wrong")
+        string errorMessage = __FILEREF__ + "Field is not present or it is wrong"
                 + ", Field: " + field;
         _logger->error(errorMessage);
 
         throw runtime_error(errorMessage);
     }
 
+    // CMSEngineDBFacade::ContentType contentType = CMSEngineDBFacade::ContentType::Video;
     if (ingestionType == CMSEngineDBFacade::IngestionType::ContentIngestion)
     {
         string field = "ContentIngestion";
         if (!_cmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
         {
-            string errorMessage = string("Field is not present or it is null")
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field;
             _logger->error(errorMessage);
 
@@ -639,59 +867,22 @@ CMSEngineDBFacade::IngestionType CMSEngineProcessor::validateMetadata(
 
         Json::Value contentIngestion = metadataRoot[field]; 
 
-        validateContentIngestionMetadata(contentIngestion);
+        contentType = validateContentIngestionMetadata(contentIngestion);
     }
-    // else ...        
     
-    return ingestionType;
+    ingestionTypeAndContentType.first = ingestionType;
+    ingestionTypeAndContentType.second = contentType;
+
+    
+    return ingestionTypeAndContentType;
 }
 
-void CMSEngineProcessor::validateContentIngestionMetadata(Json::Value contentIngestion)
+CMSEngineDBFacade::ContentType CMSEngineProcessor::validateContentIngestionMetadata(
+    Json::Value contentIngestion)
 {
-    /*
-{
-    "Type": "ContentIngestion",         // mandatory
-    "Version": "1.0",           // mandatory
-    "ContentIngestion": {
-        "Title": "CiVediamoDomani.mpg",            // mandatory
-        "SubTitle": "aaaa",            // optional
-        "Ingester": "aaaa",         // optional
-        "Keywords": "aaa",          // optional
-        "Description": "aaa",       // optional
-
-        "SourceFileName": "CiVediamoDomani.mpg", // mandatory
-        "ContentType": "video",     // mandatory: "video" or "audio" or "image"
-        "LogicalType": "Advertising",     // optional
-        "MD5FileCheckSum": "6f60b0d5ed8925d032da926c78c8c67d",  // optional
-        "FileSizeInBytes": 1379043332,   // optional
-
-        "EncodingProfilesSet": "customerDefault",  // mandatory: "systemDefault" or "customerDefault" or <custom name>
-        "EncodingPriority": "low",               // optional: "low", "default", "high"
-
-        "ContentProviderName": "default",    // optional
-
-        "Territories": {
-            "default": {
-                "startPublishing": "NOW",
-                "endPublishing": "FOREVER"
-            }
-        },
-
-        "Delivery": "FTP",      // optional: "FTP"
-        "FTP": {                // mandatory only if "Delivery" is "FTP"
-            "Hostname": "aaa",  // mandatory only if "Delivery" is "FTP": hostname or IP address
-            "Port": null,       // optional
-            "User": "aaa",      // mandatory only if "Delivery" is "FTP"
-            "Password": "bbb"   // mandatory only if "Delivery" is "FTP"
-        },
-
-        "Notification": "EMail",      // optional: "EMail
-        "EMail": {              // mandatory only if "Notification" is "EMail"
-            "Address": "giulianoc@catrasoftware.it"  // mandatory only if "Notification" is "EMail"
-        }
-    }
-}
-    */
+    // see sample in directory samples
+    
+    CMSEngineDBFacade::ContentType         contentType;
     
     vector<string> mandatoryFields = {
         "Title",
@@ -703,7 +894,7 @@ void CMSEngineProcessor::validateContentIngestionMetadata(Json::Value contentIng
     {
         if (!_cmsEngineDBFacade->isMetadataPresent(contentIngestion, field))
         {
-            string errorMessage = string("Field is not present or it is null")
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field;
             _logger->error(errorMessage);
 
@@ -711,27 +902,39 @@ void CMSEngineProcessor::validateContentIngestionMetadata(Json::Value contentIng
         }
     }
 
-    string contentType = contentIngestion.get("ContentType", "XXX").asString();
-    if (contentType != "video" && contentType != "audio" && contentType != "image")
+    string sContentType = contentIngestion.get("ContentType", "XXX").asString();
+    if (sContentType != "video" && sContentType != "audio" && sContentType != "image")
     {
-        string errorMessage = string("Field 'ContentType' is wrong")
-                + ", ContentType: " + contentType;
+        string errorMessage = __FILEREF__ + "Field 'ContentType' is wrong"
+                + ", sContentType: " + sContentType;
         _logger->error(errorMessage);
 
         throw runtime_error(errorMessage);
     }
 
-    string field = "EncodingPriority";
-    if (_cmsEngineDBFacade->isMetadataPresent(contentIngestion, field))
-    {
-        string encodingPriority = contentIngestion.get(field, "XXX").asString();
-        if (encodingPriority != "low" && encodingPriority != "default" && encodingPriority != "high")
-        {
-            string errorMessage = string("Field 'EncodingPriority' is wrong")
-                    + ", EncodingPriority: " + encodingPriority;
-            _logger->error(errorMessage);
+    if (sContentType == "video")
+        contentType = CMSEngineDBFacade::ContentType::Video;
+    else if (sContentType == "audio")
+        contentType = CMSEngineDBFacade::ContentType::Audio;
+    else // if (sContentType == "image")
+        contentType = CMSEngineDBFacade::ContentType::Image;
 
-            throw runtime_error(errorMessage);
+    string field;
+    if (contentType == CMSEngineDBFacade::ContentType::Video 
+            || contentType == CMSEngineDBFacade::ContentType::Audio)
+    {
+        field = "EncodingPriority";
+        if (_cmsEngineDBFacade->isMetadataPresent(contentIngestion, field))
+        {
+            string encodingPriority = contentIngestion.get(field, "XXX").asString();
+            if (encodingPriority != "low" && encodingPriority != "default" && encodingPriority != "high")
+            {
+                string errorMessage = __FILEREF__ + "Field 'EncodingPriority' is wrong"
+                        + ", EncodingPriority: " + encodingPriority;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
         }
     }
 
@@ -749,7 +952,40 @@ void CMSEngineProcessor::validateContentIngestionMetadata(Json::Value contentIng
             }
         
     }
-     */
+    */
+    
+    // Screenshots
+    if (contentType == CMSEngineDBFacade::ContentType::Video)
+    {
+        field = "Screenshots";
+        if (_cmsEngineDBFacade->isMetadataPresent(contentIngestion, field))
+        {
+            const Json::Value screenshots = contentIngestion[field];
+            
+            for(int screenshotIndex = 0; screenshotIndex < screenshots.size(); screenshotIndex++) 
+            {
+                Json::Value screenshot = screenshots[screenshotIndex];
+                
+                vector<string> screenshotMandatoryFields = {
+                    "TimePositionInSeconds",
+                    // "EncodingProfilesSet",
+                    "SourceImageWidth",
+                    "SourceImageHeight"
+                };
+                for (string field: mandatoryFields)
+                {
+                    if (!_cmsEngineDBFacade->isMetadataPresent(screenshot, field))
+                    {
+                        string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                                + ", Field: " + field;
+                        _logger->error(errorMessage);
+
+                        throw runtime_error(errorMessage);
+                    }
+                }
+            }
+        }
+    }
     
     field = "Delivery";
     if (_cmsEngineDBFacade->isMetadataPresent(contentIngestion, field) && contentIngestion.get(field, "XXX").asString() == "FTP")
@@ -757,7 +993,7 @@ void CMSEngineProcessor::validateContentIngestionMetadata(Json::Value contentIng
         field = "FTP";
         if (!_cmsEngineDBFacade->isMetadataPresent(contentIngestion, field))
         {
-            string errorMessage = string("Field is not present or it is null")
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field;
             _logger->error(errorMessage);
 
@@ -775,7 +1011,7 @@ void CMSEngineProcessor::validateContentIngestionMetadata(Json::Value contentIng
         {
             if (!_cmsEngineDBFacade->isMetadataPresent(ftp, field))
             {
-                string errorMessage = string("Field is not present or it is null")
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
                 _logger->error(errorMessage);
 
@@ -790,7 +1026,7 @@ void CMSEngineProcessor::validateContentIngestionMetadata(Json::Value contentIng
         field = "EMail";
         if (!_cmsEngineDBFacade->isMetadataPresent(contentIngestion, field))
         {
-            string errorMessage = string("Field is not present or it is null")
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field;
             _logger->error(errorMessage);
 
@@ -806,7 +1042,7 @@ void CMSEngineProcessor::validateContentIngestionMetadata(Json::Value contentIng
         {
             if (!_cmsEngineDBFacade->isMetadataPresent(email, field))
             {
-                string errorMessage = string("Field is not present or it is null")
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
                 _logger->error(errorMessage);
 
@@ -814,6 +1050,8 @@ void CMSEngineProcessor::validateContentIngestionMetadata(Json::Value contentIng
             }
         }
     }
+    
+    return contentType;
 }
 
 pair<string, string> CMSEngineProcessor::validateMediaSourceFile(
@@ -836,7 +1074,7 @@ pair<string, string> CMSEngineProcessor::validateMediaSourceFile(
     }   
     else
     {
-        string errorMessage = string("ingestionType is wrong")
+        string errorMessage = __FILEREF__ + "ingestionType is wrong"
                 + ", ingestionType: " + to_string(static_cast<int>(ingestionType));
         _logger->error(errorMessage);
 
@@ -850,13 +1088,13 @@ pair<string, string> CMSEngineProcessor::validateMediaSourceFile(
     
     mediaSource.second = ftpDirectoryMediaSourceFileName;
 
-    _logger->info(string("media source file to be processed")
+    _logger->info(__FILEREF__ + "media source file to be processed"
         + ", ftpDirectoryMediaSourceFileName: " + ftpDirectoryMediaSourceFileName
     );
 
     if (!FileIO::fileExisting(ftpDirectoryMediaSourceFileName))
     {
-        string errorMessage = string("Media Source file does not exist (it was not uploaded yet)")
+        string errorMessage = __FILEREF__ + "Media Source file does not exist (it was not uploaded yet)"
                 + ", mediaSourceFileName: " + mediaSourceFileName;
         _logger->error(errorMessage);
 
@@ -875,7 +1113,7 @@ pair<string, string> CMSEngineProcessor::validateMediaSourceFile(
 
         if (md5FileCheckSum != md5RealDigest)
         {
-            string errorMessage = string("MD5 check failed")
+            string errorMessage = __FILEREF__ + "MD5 check failed"
                 + ", ftpDirectoryMediaSourceFileName: " + ftpDirectoryMediaSourceFileName
                 + ", md5FileCheckSum: " + md5FileCheckSum
                 + ", md5RealDigest: " + md5RealDigest
@@ -896,7 +1134,7 @@ pair<string, string> CMSEngineProcessor::validateMediaSourceFile(
 
         if (fileSizeInBytes != realFileSizeInBytes)
         {
-            string errorMessage = string("FileSize check failed")
+            string errorMessage = __FILEREF__ + "FileSize check failed"
                 + ", ftpDirectoryMediaSourceFileName: " + ftpDirectoryMediaSourceFileName
                 + ", fileSizeInBytes: " + to_string(fileSizeInBytes)
                 + ", realFileSizeInBytes: " + to_string(realFileSizeInBytes)

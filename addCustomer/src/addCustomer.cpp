@@ -18,7 +18,7 @@ int main (int iArgc, char *pArgv [])
     #else
         string dbUsername("root"); string dbPassword("root"); string dbName("catracms");
     #endif
-    logger->info(string("Creating CMSEngineDBFacade")
+    logger->info(__FILEREF__ + "Creating CMSEngineDBFacade"
         + ", dbPoolSize: " + to_string(dbPoolSize)
         + ", dbServer: " + dbServer
         + ", dbUsername: " + dbUsername
@@ -28,7 +28,7 @@ int main (int iArgc, char *pArgv [])
     shared_ptr<CMSEngineDBFacade>       cmsEngineDBFacade = make_shared<CMSEngineDBFacade>(
             dbPoolSize, dbServer, dbUsername, dbPassword, dbName, logger);
 
-    logger->info(string("Creating CMSEngine")
+    logger->info(__FILEREF__ + "Creating CMSEngine"
             );
     shared_ptr<CMSEngine>       cmsEngine = make_shared<CMSEngine>(cmsEngineDBFacade, logger);
     
@@ -99,7 +99,7 @@ int main (int iArgc, char *pArgv [])
         chrono::system_clock::now()     // chrono::system_clock::time_point userExpirationDate
     );
 
-    logger->info(string("Shutdown done")
+    logger->info(__FILEREF__ + "Shutdown done"
             );
     
     return 0;

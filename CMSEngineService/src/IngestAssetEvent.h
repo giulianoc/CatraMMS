@@ -26,17 +26,7 @@
 
 #include <iostream>
 #include "catralibraries/Event.h"
-/*
-#include <thread>
-#include <chrono>
-#include <memory>
-#include <vector>
-
-#include "stdlib.h"
-#include "stdio.h"
-#include "string.h"
-
-*/
+#include "CMSEngineDBFacade.h"
         
 using namespace std;
 
@@ -48,6 +38,7 @@ private:
     string                  _ftpDirectoryMediaSourceFileName;
     string                  _mediaSourceFileName;
     string                  _relativePath;
+    CMSEngineDBFacade::ContentType   _contentType;
     
     int64_t                 _ingestionJobKey;
     shared_ptr<Customer>    _customer;
@@ -90,11 +81,19 @@ public:
     void setIngestionJobKey(int64_t ingestionJobKey)
     {
         _ingestionJobKey   = ingestionJobKey;
-    }
-    
+    }    
     int64_t getIngestionJobKey()
     {
         return _ingestionJobKey;
+    }
+    
+    void setContentType(CMSEngineDBFacade::ContentType contentType)
+    {
+        _contentType   = contentType;
+    }    
+    CMSEngineDBFacade::ContentType getContentType()
+    {
+        return _contentType;
     }
     
     void setMetadataFileName(string metadataFileName)

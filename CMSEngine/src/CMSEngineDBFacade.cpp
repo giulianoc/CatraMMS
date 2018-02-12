@@ -46,8 +46,9 @@ vector<shared_ptr<Customer>> CMSEngineDBFacade::getCustomers()
 {
     shared_ptr<MySQLConnection> conn = _connectionPool->borrow();	
 
-    shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(
-        "select CustomerKey, Name, DirectoryName, MaxStorageInGB, MaxEncodingPriority from CMS_Customers where IsEnabled = 1 and CustomerType in (1, 2)"));
+    string lastSQLCommand =
+        "select CustomerKey, Name, DirectoryName, MaxStorageInGB, MaxEncodingPriority from CMS_Customers where IsEnabled = 1 and CustomerType in (1, 2)";
+    shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
     shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 
     vector<shared_ptr<Customer>>    customers;
@@ -76,8 +77,9 @@ shared_ptr<Customer> CMSEngineDBFacade::getCustomer(int64_t customerKey)
 {
     shared_ptr<MySQLConnection> conn = _connectionPool->borrow();	
 
-    shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(
-        "select CustomerKey, Name, DirectoryName, MaxStorageInGB, MaxEncodingPriority from CMS_Customers where CustomerKey = ?"));
+    string lastSQLCommand =
+        "select CustomerKey, Name, DirectoryName, MaxStorageInGB, MaxEncodingPriority from CMS_Customers where CustomerKey = ?";
+    shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
     int queryParameterIndex = 1;
     preparedStatement->setInt64(queryParameterIndex++, customerKey);
     shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
@@ -98,8 +100,10 @@ shared_ptr<Customer> CMSEngineDBFacade::getCustomer(int64_t customerKey)
     {
         _connectionPool->unborrow(conn);
 
-        string errorMessage = string("select failed")
-                + ", customerKey: " + to_string(customerKey);
+        string errorMessage = __FILEREF__ + "select failed"
+                + ", customerKey: " + to_string(customerKey)
+                + ", lastSQLCommand: " + lastSQLCommand
+        ;
         _logger->error(errorMessage);
 
         throw runtime_error(errorMessage);                    
@@ -114,8 +118,9 @@ shared_ptr<Customer> CMSEngineDBFacade::getCustomer(string customerName)
 {
     shared_ptr<MySQLConnection> conn = _connectionPool->borrow();	
 
-    shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(
-        "select CustomerKey, Name, DirectoryName, MaxStorageInGB, MaxEncodingPriority from CMS_Customers where Name = ?"));
+    string lastSQLCommand =
+        "select CustomerKey, Name, DirectoryName, MaxStorageInGB, MaxEncodingPriority from CMS_Customers where Name = ?";
+    shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
     int queryParameterIndex = 1;
     preparedStatement->setString(queryParameterIndex++, customerName);
     shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
@@ -136,8 +141,10 @@ shared_ptr<Customer> CMSEngineDBFacade::getCustomer(string customerName)
     {
         _connectionPool->unborrow(conn);
 
-        string errorMessage = string("select failed")
-                + ", customerName: " + customerName;
+        string errorMessage = __FILEREF__ + "select failed"
+                + ", customerName: " + customerName
+                + ", lastSQLCommand: " + lastSQLCommand
+        ;
         _logger->error(errorMessage);
 
         throw runtime_error(errorMessage);                    
@@ -152,8 +159,10 @@ void CMSEngineDBFacade::getTerritories(shared_ptr<Customer> customer)
 {
     shared_ptr<MySQLConnection> conn = _connectionPool->borrow();	
 
+    string lastSQLCommand =
+        "select TerritoryKey, Name from CMS_Territories t where CustomerKey = ?";
     shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(
-        "select TerritoryKey, Name from CMS_Territories t where CustomerKey = ?"));
+        lastSQLCommand));
     preparedStatement->setInt(1, customer->_customerKey);
     shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 
@@ -201,7 +210,14 @@ int64_t CMSEngineDBFacade::addCustomer(
         conn = _connectionPool->borrow();	
 
         autoCommit = false;
-        conn->_sqlConnection->setAutoCommit(autoCommit);    // or execute the statement START TRANSACTION
+        // conn->_sqlConnection->setAutoCommit(autoCommit); OR execute the statement START TRANSACTION
+        {
+            lastSQLCommand = 
+                "START TRANSACTION";
+
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute(lastSQLCommand);
+        }
         
         {
             lastSQLCommand = 
@@ -329,21 +345,32 @@ int64_t CMSEngineDBFacade::addCustomer(
             }
         }
 
-        conn->_sqlConnection->commit();     // or execute COMMIT
+        // conn->_sqlConnection->commit(); OR execute COMMIT
+        {
+            lastSQLCommand = 
+                "COMMIT";
+
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute(lastSQLCommand);
+        }
         autoCommit = true;
 
         _connectionPool->unborrow(conn);
     }
     catch(sql::SQLException se)
     {
+        // conn->_sqlConnection->rollback(); OR execute ROLLBACK
         if (!autoCommit)
-            conn->_sqlConnection->rollback();     // or execute ROLLBACK
+        {
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute("ROLLBACK");
+        }
         
         _connectionPool->unborrow(conn);
 
         string exceptionMessage(se.what());
         
-        _logger->error(string("SQL exception")
+        _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
         );
@@ -352,12 +379,16 @@ int64_t CMSEngineDBFacade::addCustomer(
     }
     catch(exception e)
     {
+        // conn->_sqlConnection->rollback(); OR execute ROLLBACK
         if (!autoCommit)
-            conn->_sqlConnection->rollback();     // or execute ROLLBACK
+        {
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute("ROLLBACK");
+        }
         
         _connectionPool->unborrow(conn);
 
-        _logger->error(string("SQL exception")
+        _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
@@ -402,7 +433,7 @@ int64_t CMSEngineDBFacade::addTerritory (
     {
         string exceptionMessage(se.what());
         
-        _logger->error(string("SQL exception")
+        _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
         );
@@ -411,7 +442,7 @@ int64_t CMSEngineDBFacade::addTerritory (
     }
     catch(exception e)
     {        
-        _logger->error(string("SQL exception")
+        _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
@@ -478,7 +509,7 @@ int64_t CMSEngineDBFacade::addUser (
     {
         string exceptionMessage(se.what());
         
-        _logger->error(string("SQL exception")
+        _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
         );
@@ -487,7 +518,7 @@ int64_t CMSEngineDBFacade::addUser (
     }
     catch(exception e)
     {        
-        _logger->error(string("SQL exception")
+        _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
@@ -520,7 +551,14 @@ int64_t CMSEngineDBFacade::addVideoEncodeProfile(
         conn = _connectionPool->borrow();	
 
         autoCommit = false;
-        conn->_sqlConnection->setAutoCommit(autoCommit);    // or execute the statement START TRANSACTION
+        // conn->_sqlConnection->setAutoCommit(autoCommit); OR execute the statement START TRANSACTION
+        {
+            lastSQLCommand = 
+                "START TRANSACTION";
+
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute(lastSQLCommand);
+        }
         
         ContentType contentType = ContentType::Video;
 
@@ -569,9 +607,10 @@ int64_t CMSEngineDBFacade::addVideoEncodeProfile(
             }
             else
             {
-                string errorMessage = string("EncodingProfilesSetKey is not present")
+                string errorMessage = __FILEREF__ + "EncodingProfilesSetKey is not present"
                     + ", contentType: " + to_string(static_cast<int>(contentType))
                     + ", customer->_customerKey: " + to_string(customer->_customerKey)
+                    + ", lastSQLCommand: " + lastSQLCommand
                 ;
                 _logger->error(errorMessage);
 
@@ -617,21 +656,32 @@ int64_t CMSEngineDBFacade::addVideoEncodeProfile(
             preparedStatement->executeUpdate();
         }
 
-        conn->_sqlConnection->commit();     // or execute COMMIT
+        // conn->_sqlConnection->commit(); OR execute COMMIT
+        {
+            lastSQLCommand = 
+                "COMMIT";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            preparedStatement->executeUpdate();
+        }
         autoCommit = true;
 
         _connectionPool->unborrow(conn);
     }
     catch(sql::SQLException se)
     {
+        // conn->_sqlConnection->rollback(); OR execute ROLLBACK
         if (!autoCommit)
-            conn->_sqlConnection->rollback();     // or execute ROLLBACK
+        {
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute("ROLLBACK");
+        }
         
         _connectionPool->unborrow(conn);
 
         string exceptionMessage(se.what());
         
-        _logger->error(string("SQL exception")
+        _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
         );
@@ -640,12 +690,16 @@ int64_t CMSEngineDBFacade::addVideoEncodeProfile(
     }
     catch(exception e)
     {
+        // conn->_sqlConnection->rollback(); OR execute ROLLBACK
         if (!autoCommit)
-            conn->_sqlConnection->rollback();     // or execute ROLLBACK
+        {
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute("ROLLBACK");
+        }
         
         _connectionPool->unborrow(conn);
         
-        _logger->error(string("SQL exception")
+        _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
@@ -689,8 +743,10 @@ int64_t CMSEngineDBFacade::addIngestionJob (
                 
                 if (isEnabled != 1)
                 {
-                    string errorMessage = string("Customer is not enabled")
-                        + ", customerKey: " + to_string(customerKey);
+                    string errorMessage = __FILEREF__ + "Customer is not enabled"
+                        + ", customerKey: " + to_string(customerKey)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                    ;
                     _logger->error(errorMessage);
                     
                     throw runtime_error(errorMessage);                    
@@ -698,9 +754,11 @@ int64_t CMSEngineDBFacade::addIngestionJob (
                 else if (customerType != static_cast<int>(CustomerType::IngestionAndDelivery) &&
                         customerType != static_cast<int>(CustomerType::EncodingOnly))
                 {
-                    string errorMessage = string("Customer is not enabled to ingest content")
+                    string errorMessage = __FILEREF__ + "Customer is not enabled to ingest content"
                         + ", customerKey: " + to_string(customerKey);
-                        + ", customerType: " + to_string(static_cast<int>(customerType));
+                        + ", customerType: " + to_string(static_cast<int>(customerType))
+                        + ", lastSQLCommand: " + lastSQLCommand
+                    ;
                     _logger->error(errorMessage);
                     
                     throw runtime_error(errorMessage);                    
@@ -708,8 +766,10 @@ int64_t CMSEngineDBFacade::addIngestionJob (
             }
             else
             {
-                string errorMessage = string("Customer is not present/configured")
-                    + ", customerKey: " + to_string(customerKey);
+                string errorMessage = __FILEREF__ + "Customer is not present/configured"
+                    + ", customerKey: " + to_string(customerKey)
+                    + ", lastSQLCommand: " + lastSQLCommand
+                ;
                 _logger->error(errorMessage);
 
                 throw runtime_error(errorMessage);                    
@@ -745,7 +805,7 @@ int64_t CMSEngineDBFacade::addIngestionJob (
     {
         string exceptionMessage(se.what());
         
-        _logger->error(string("SQL exception")
+        _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
         );
@@ -754,7 +814,7 @@ int64_t CMSEngineDBFacade::addIngestionJob (
     }
     catch(exception e)
     {        
-        _logger->error(string("SQL exception")
+        _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
@@ -816,7 +876,17 @@ void CMSEngineDBFacade::updateIngestionJob (
                 preparedStatement->setString(queryParameterIndex++, errorMessageForSQL);
             preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 
-            preparedStatement->executeUpdate();
+            if (preparedStatement->executeUpdate() != 1)
+            {
+                string errorMessage = __FILEREF__ + "no update was done"
+                        + ", errorMessageForSQL: " + errorMessageForSQL
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }
         }
         else
         {
@@ -832,7 +902,17 @@ void CMSEngineDBFacade::updateIngestionJob (
                 preparedStatement->setString(queryParameterIndex++, errorMessageForSQL);
             preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 
-            preparedStatement->executeUpdate();
+            if (preparedStatement->executeUpdate() != 1)
+            {
+                string errorMessage = __FILEREF__ + "no update was done"
+                        + ", errorMessageForSQL: " + errorMessageForSQL
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }
         }
         
         _connectionPool->unborrow(conn);
@@ -841,7 +921,7 @@ void CMSEngineDBFacade::updateIngestionJob (
     {
         string exceptionMessage(se.what());
         
-        _logger->error(string("SQL exception")
+        _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
         );
@@ -850,7 +930,7 @@ void CMSEngineDBFacade::updateIngestionJob (
     }    
     catch(exception e)
     {        
-        _logger->error(string("SQL exception")
+        _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
@@ -874,7 +954,14 @@ void CMSEngineDBFacade::getEncodingJobs(
         conn = _connectionPool->borrow();	
 
         autoCommit = false;
-        conn->_sqlConnection->setAutoCommit(autoCommit);    // or execute the statement START TRANSACTION
+        // conn->_sqlConnection->setAutoCommit(autoCommit); OR execute the statement START TRANSACTION
+        {
+            lastSQLCommand = 
+                "START TRANSACTION";
+
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute(lastSQLCommand);
+        }
         
         if (resetToBeDone)
         {
@@ -886,7 +973,12 @@ void CMSEngineDBFacade::getEncodingJobs(
             preparedStatement->setString(queryParameterIndex++, processorCMS);
             preparedStatement->setInt(queryParameterIndex++, static_cast<int>(EncodingStatus::Processing));
 
-            preparedStatement->executeUpdate();
+            int rowsReset = preparedStatement->executeUpdate();
+            
+            if (rowsReset > 0)
+                _logger->warn(__FILEREF__ + "Rows (CMS_EncodingJobs) that were reset"
+                    + ", rowsReset: " + to_string(rowsReset)
+                );
         }
         else
         {
@@ -901,7 +993,12 @@ void CMSEngineDBFacade::getEncodingJobs(
             preparedStatement->setInt(queryParameterIndex++, static_cast<int>(EncodingStatus::Processing));
             preparedStatement->setInt(queryParameterIndex++, retentionDaysToReset);
 
-            preparedStatement->executeUpdate();
+            int rowsExpired = preparedStatement->executeUpdate();
+            
+            if (rowsExpired > 0)
+                _logger->warn(__FILEREF__ + "Rows (CMS_EncodingJobs) that were expired"
+                    + ", rowsExpired: " + to_string(rowsExpired)
+                );
         }
         
         {
@@ -909,11 +1006,11 @@ void CMSEngineDBFacade::getEncodingJobs(
                 "select EncodingJobKey, IngestionJobKey, SourcePhysicalPathKey, EncodingPriority, EncodingProfileKey from CMS_EncodingJobs " 
                 "where ProcessorCMS is null and Status = ? and EncodingJobStart <= NOW() "
                 "order by EncodingPriority desc, EncodingJobStart asc, FailuresNumber asc for update";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            shared_ptr<sql::PreparedStatement> preparedStatementEncoding (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(EncodingStatus::ToBeProcessed));
+            preparedStatementEncoding->setInt(queryParameterIndex++, static_cast<int>(EncodingStatus::ToBeProcessed));
 
-            shared_ptr<sql::ResultSet> encodingResultSet (preparedStatement->executeQuery());
+            shared_ptr<sql::ResultSet> encodingResultSet (preparedStatementEncoding->executeQuery());
             while (encodingResultSet->next())
             {
                 shared_ptr<CMSEngineDBFacade::EncodingItem> encodingItem =
@@ -929,11 +1026,11 @@ void CMSEngineDBFacade::getEncodingJobs(
                     lastSQLCommand = 
                         "select m.CustomerKey, m.ContentType, p.CMSPartitionNumber, p.MediaItemKey, p.FileName, p.RelativePath "
                         "from CMS_MediaItems m, CMS_PhysicalPaths p where m.MediaItemKey = p.MediaItemKey and p.PhysicalPathKey = ?";
-                    shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                    shared_ptr<sql::PreparedStatement> preparedStatementPhysicalPath (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
-                    preparedStatement->setInt64(queryParameterIndex++, encodingItem->_physicalPathKey);
+                    preparedStatementPhysicalPath->setInt64(queryParameterIndex++, encodingItem->_physicalPathKey);
 
-                    shared_ptr<sql::ResultSet> physicalPathResultSet (preparedStatement->executeQuery());
+                    shared_ptr<sql::ResultSet> physicalPathResultSet (preparedStatementPhysicalPath->executeQuery());
                     if (physicalPathResultSet->next())
                     {
                         encodingItem->_contentType = static_cast<ContentType>(physicalPathResultSet->getInt("ContentType"));
@@ -945,21 +1042,73 @@ void CMSEngineDBFacade::getEncodingJobs(
                     }
                     else
                     {
-                        string errorMessage = string("select failed")
-                                + ", encodingItem->_physicalPathKey: " + to_string(encodingItem->_physicalPathKey);
+                        string errorMessage = __FILEREF__ + "select failed, no row returned"
+                                + ", encodingItem->_physicalPathKey: " + to_string(encodingItem->_physicalPathKey)
+                                + ", lastSQLCommand: " + lastSQLCommand
+                        ;
                         _logger->error(errorMessage);
 
                         throw runtime_error(errorMessage);                    
                     }
                 }
+
+                if (encodingItem->_contentType == ContentType::Video)
+                {
+                    lastSQLCommand = 
+                        "select DurationInMilliSeconds from CMS_VideoItems where MediaItemKey = ?";
+                    shared_ptr<sql::PreparedStatement> preparedStatementVideo (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                    int queryParameterIndex = 1;
+                    preparedStatementVideo->setInt64(queryParameterIndex++, encodingItem->_mediaItemKey);
+
+                    shared_ptr<sql::ResultSet> videoResultSet (preparedStatementVideo->executeQuery());
+                    if (videoResultSet->next())
+                    {
+                        encodingItem->_durationInMilliSeconds = videoResultSet->getInt64("DurationInMilliSeconds");
+                    }
+                    else
+                    {
+                        string errorMessage = __FILEREF__ + "select failed, no row returned"
+                                + ", encodingItem->_mediaItemKey: " + to_string(encodingItem->_mediaItemKey)
+                                + ", lastSQLCommand: " + lastSQLCommand
+                        ;
+                        _logger->error(errorMessage);
+
+                        throw runtime_error(errorMessage);                    
+                    }
+                }
+                else if (encodingItem->_contentType == ContentType::Audio)
+                {
+                    lastSQLCommand = 
+                        "select DurationInMilliSeconds from CMS_AudioItems where MediaItemKey = ?";
+                    shared_ptr<sql::PreparedStatement> preparedStatementAudio (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                    int queryParameterIndex = 1;
+                    preparedStatementAudio->setInt64(queryParameterIndex++, encodingItem->_mediaItemKey);
+
+                    shared_ptr<sql::ResultSet> audioResultSet (preparedStatementAudio->executeQuery());
+                    if (audioResultSet->next())
+                    {
+                        encodingItem->_durationInMilliSeconds = audioResultSet->getInt64("DurationInMilliSeconds");
+                    }
+                    else
+                    {
+                        string errorMessage = __FILEREF__ + "select failed, no row returned"
+                                + ", encodingItem->_mediaItemKey: " + to_string(encodingItem->_mediaItemKey)
+                                + ", lastSQLCommand: " + lastSQLCommand
+                        ;
+                        _logger->error(errorMessage);
+
+                        throw runtime_error(errorMessage);                    
+                    }
+                }
+
                 {
                     lastSQLCommand = 
                         "select Technology, Details from CMS_EncodingProfiles where EncodingProfileKey = ?";
-                    shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                    shared_ptr<sql::PreparedStatement> preparedStatementEncodingProfile (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
-                    preparedStatement->setInt64(queryParameterIndex++, encodingItem->_encodingProfileKey);
+                    preparedStatementEncodingProfile->setInt64(queryParameterIndex++, encodingItem->_encodingProfileKey);
 
-                    shared_ptr<sql::ResultSet> encodingProfilesResultSet (preparedStatement->executeQuery());
+                    shared_ptr<sql::ResultSet> encodingProfilesResultSet (preparedStatementEncodingProfile->executeQuery());
                     if (encodingProfilesResultSet->next())
                     {
                         encodingItem->_encodingProfileTechnology = static_cast<EncodingTechnology>(encodingProfilesResultSet->getInt("Technology"));
@@ -967,8 +1116,10 @@ void CMSEngineDBFacade::getEncodingJobs(
                     }
                     else
                     {
-                        string errorMessage = string("select failed")
-                                + ", encodingItem->_encodingProfileKey: " + to_string(encodingItem->_encodingProfileKey);
+                        string errorMessage = __FILEREF__ + "select failed"
+                                + ", encodingItem->_encodingProfileKey: " + to_string(encodingItem->_encodingProfileKey)
+                                + ", lastSQLCommand: " + lastSQLCommand
+                        ;
                         _logger->error(errorMessage);
 
                         throw runtime_error(errorMessage);                    
@@ -976,24 +1127,57 @@ void CMSEngineDBFacade::getEncodingJobs(
                 }
                 
                 encodingItems.push_back(encodingItem);
+                
+                {
+                    lastSQLCommand = 
+                        "update CMS_EncodingJobs set Status = ?, ProcessorCMS = ?, EncodingJobStart = NULL where EncodingJobKey = ? and ProcessorCMS is null";
+                    shared_ptr<sql::PreparedStatement> preparedStatementUpdateEncoding (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                    int queryParameterIndex = 1;
+                    preparedStatementUpdateEncoding->setInt(queryParameterIndex++, static_cast<int>(EncodingStatus::Processing));
+                    preparedStatementUpdateEncoding->setString(queryParameterIndex++, processorCMS);
+                    preparedStatementUpdateEncoding->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
+
+                    if (preparedStatementUpdateEncoding->executeUpdate() != 1)
+                    {
+                        string errorMessage = __FILEREF__ + "no update was done"
+                                + ", processorCMS: " + processorCMS
+                                + ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+                                + ", lastSQLCommand: " + lastSQLCommand
+                        ;
+                        _logger->error(errorMessage);
+
+                        throw runtime_error(errorMessage);                    
+                    }
+                }
             }
         }
 
-        conn->_sqlConnection->commit();     // or execute COMMIT
+        // conn->_sqlConnection->commit(); OR execute COMMIT
+        {
+            lastSQLCommand = 
+                "COMMIT";
+
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute(lastSQLCommand);
+        }
         autoCommit = true;
 
         _connectionPool->unborrow(conn);
     }
     catch(sql::SQLException se)
     {
+        // conn->_sqlConnection->rollback(); OR execute ROLLBACK
         if (!autoCommit)
-            conn->_sqlConnection->rollback();     // or execute ROLLBACK
+        {
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute("ROLLBACK");
+        }
         
         _connectionPool->unborrow(conn);
 
         string exceptionMessage(se.what());
         
-        _logger->error(string("SQL exception")
+        _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
         );
@@ -1002,12 +1186,16 @@ void CMSEngineDBFacade::getEncodingJobs(
     }
     catch(exception e)
     {
+        // conn->_sqlConnection->rollback(); OR execute ROLLBACK
         if (!autoCommit)
-            conn->_sqlConnection->rollback();     // or execute ROLLBACK
+        {
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute("ROLLBACK");
+        }
         
         _connectionPool->unborrow(conn);
         
-        _logger->error(string("SQL exception")
+        _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
@@ -1015,7 +1203,7 @@ void CMSEngineDBFacade::getEncodingJobs(
     }
 }
 
-void CMSEngineDBFacade::updateEncodingJob (
+int CMSEngineDBFacade::updateEncodingJob (
         int64_t encodingJobKey,
         EncodingError encodingError,
         int64_t ingestionJobKey)
@@ -1026,17 +1214,25 @@ void CMSEngineDBFacade::updateEncodingJob (
     shared_ptr<MySQLConnection> conn;
     bool autoCommit = true;
 
+    int encodingFailureNumber = -1;
+
     try
     {
         conn = _connectionPool->borrow();	
 
         autoCommit = false;
-        conn->_sqlConnection->setAutoCommit(autoCommit);    // or execute the statement START TRANSACTION
+        // conn->_sqlConnection->setAutoCommit(autoCommit); OR execute the statement START TRANSACTION
+        {
+            lastSQLCommand = 
+                "START TRANSACTION";
+
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute(lastSQLCommand);
+        }
         
         EncodingStatus newEncodingStatus;
         if (encodingError == EncodingError::PunctualError)
         {
-            int encodingFailureNumber;
             {
                 lastSQLCommand = 
                     "select FailuresNumber from CMS_EncodingJobs where EncodingJobKey = ? for update";
@@ -1051,8 +1247,10 @@ void CMSEngineDBFacade::updateEncodingJob (
                 }
                 else
                 {
-                    string errorMessage = string("EncodingJob not found")
-                            + ", EncodingJobKey: " + to_string(encodingJobKey);
+                    string errorMessage = __FILEREF__ + "EncodingJob not found"
+                            + ", EncodingJobKey: " + to_string(encodingJobKey)
+                            + ", lastSQLCommand: " + lastSQLCommand
+                    ;
                     _logger->error(errorMessage);
 
                     throw runtime_error(errorMessage);                    
@@ -1062,22 +1260,32 @@ void CMSEngineDBFacade::updateEncodingJob (
             if (encodingFailureNumber + 1 >= _maxEncodingFailures)
                 newEncodingStatus          = EncodingStatus::End_Failed;
             else
+            {
                 newEncodingStatus          = EncodingStatus::ToBeProcessed;
+                encodingFailureNumber++;
+            }
 
             {
                 lastSQLCommand = 
-                    "update CMS_EncodingJobs set Status = ?, ProcessorCMS = NULL, FailuresNumber = ? where EncodingJobKey = ? and Status = ?";
+                    "update CMS_EncodingJobs set Status = ?, ProcessorCMS = NULL, FailuresNumber = ?, Progress = NULL where EncodingJobKey = ? and Status = ?";
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
                 preparedStatement->setInt(queryParameterIndex++, static_cast<int>(newEncodingStatus));
-                if (newEncodingStatus == EncodingStatus::ToBeProcessed)
-                    preparedStatement->setInt(queryParameterIndex++, encodingFailureNumber + 1);
-                else
-                    preparedStatement->setInt(queryParameterIndex++, encodingFailureNumber);
+                preparedStatement->setInt(queryParameterIndex++, encodingFailureNumber);
                 preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
                 preparedStatement->setInt(queryParameterIndex++, static_cast<int>(EncodingStatus::Processing));
 
-                preparedStatement->executeUpdate();
+                if (preparedStatement->executeUpdate() != 1)
+                {
+                    string errorMessage = __FILEREF__ + "no update was done"
+                            + ", static_cast<int>(newEncodingStatus): " + to_string(static_cast<int>(newEncodingStatus))
+                            + ", encodingJobKey: " + to_string(encodingJobKey)
+                            + ", lastSQLCommand: " + lastSQLCommand
+                    ;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);                    
+                }
             }
         }
         else if (encodingError == EncodingError::MaxCapacityReached || encodingError == EncodingError::ErrorBeforeEncoding)
@@ -1085,58 +1293,78 @@ void CMSEngineDBFacade::updateEncodingJob (
             newEncodingStatus       = EncodingStatus::ToBeProcessed;
             
             lastSQLCommand = 
-                "update CMS_EncodingJobs set Status = ?, ProcessorCMS = NULL where EncodingJobKey = ? and Status = ?";
+                "update CMS_EncodingJobs set Status = ?, ProcessorCMS = NULL, Progress = NULL where EncodingJobKey = ? and Status = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
                 preparedStatement->setInt(queryParameterIndex++, static_cast<int>(newEncodingStatus));
                 preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
                 preparedStatement->setInt(queryParameterIndex++, static_cast<int>(EncodingStatus::Processing));
 
-            preparedStatement->executeUpdate();
+            if (preparedStatement->executeUpdate() != 1)
+            {
+                string errorMessage = __FILEREF__ + "no update was done"
+                        + ", static_cast<int>(newEncodingStatus): " + to_string(static_cast<int>(newEncodingStatus))
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }
         }
         else    // success
         {
             newEncodingStatus       = EncodingStatus::End_ProcessedSuccessful;
 
             lastSQLCommand = 
-                "update CMS_EncodingJobs set Status = ?, ProcessorCMS = NULL, EncodingJobEnd = NOW()     where EncodingJobKey = ? and Status = ?";
+                "update CMS_EncodingJobs set Status = ?, ProcessorCMS = NULL, EncodingJobEnd = NOW(), Progress = 100 where EncodingJobKey = ? and Status = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt(queryParameterIndex++, static_cast<int>(newEncodingStatus));
             preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
             preparedStatement->setInt(queryParameterIndex++, static_cast<int>(EncodingStatus::Processing));
 
-            preparedStatement->executeUpdate();
+            if (preparedStatement->executeUpdate() != 1)
+            {
+                string errorMessage = __FILEREF__ + "no update was done"
+                        + ", static_cast<int>(newEncodingStatus): " + to_string(static_cast<int>(newEncodingStatus))
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }
         }
         
         if (newEncodingStatus == EncodingStatus::End_ProcessedSuccessful || newEncodingStatus == EncodingStatus::End_Failed)
         {
             lastSQLCommand = 
                 "select count(*) from CMS_EncodingJobs where IngestionJobKey = ? and (Status <> ? and Status <> ?)";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            shared_ptr<sql::PreparedStatement> preparedStatementEncoding (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
-            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(EncodingStatus::End_ProcessedSuccessful));
-            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(EncodingStatus::End_Failed));
+            preparedStatementEncoding->setInt64(queryParameterIndex++, ingestionJobKey);
+            preparedStatementEncoding->setInt(queryParameterIndex++, static_cast<int>(EncodingStatus::End_ProcessedSuccessful));
+            preparedStatementEncoding->setInt(queryParameterIndex++, static_cast<int>(EncodingStatus::End_Failed));
 
-            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-            if (resultSet->next())
+            shared_ptr<sql::ResultSet> resultSetEncoding (preparedStatementEncoding->executeQuery());
+            if (resultSetEncoding->next())
             {
-                if (resultSet->getInt(1) == 0)  // ingestionJob is finished
+                if (resultSetEncoding->getInt(1) == 0)  // ingestionJob is finished
                 {
                     lastSQLCommand = 
-                        "select count(*) from CMS_EncodingJobs where IngestionJobKey = ? and Status == ?)";
-                    shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                        "select count(*) from CMS_EncodingJobs where IngestionJobKey = ? and Status = ?";
+                    shared_ptr<sql::PreparedStatement> preparedStatementIngestion (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
-                    preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
-                    preparedStatement->setInt(queryParameterIndex++, static_cast<int>(EncodingStatus::End_Failed));
+                    preparedStatementIngestion->setInt64(queryParameterIndex++, ingestionJobKey);
+                    preparedStatementIngestion->setInt(queryParameterIndex++, static_cast<int>(EncodingStatus::End_Failed));
 
-                    shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-                    if (resultSet->next())
+                    shared_ptr<sql::ResultSet> resultSetIngestion (preparedStatementIngestion->executeQuery());
+                    if (resultSetIngestion->next())
                     {
                         IngestionStatus ingestionStatus;
                         
-                        if (resultSet->getInt(1) == 0)  // no failures
+                        if (resultSetIngestion->getInt(1) == 0)  // no failures
                             ingestionStatus = IngestionStatus::End_IngestionSuccess;
                         else
                             ingestionStatus = IngestionStatus::End_IngestionSuccess_AtLeastOneEncodingProfileError;
@@ -1146,8 +1374,10 @@ void CMSEngineDBFacade::updateEncodingJob (
                     }
                     else
                     {
-                        string errorMessage = string("count(*) failure")
-                                + ", IngestionJobKey: " + to_string(encodingJobKey);
+                        string errorMessage = __FILEREF__ + "count(*) failure"
+                                + ", IngestionJobKey: " + to_string(encodingJobKey)
+                                + ", lastSQLCommand: " + lastSQLCommand
+                        ;
                         _logger->error(errorMessage);
 
                         throw runtime_error(errorMessage);                    
@@ -1156,29 +1386,42 @@ void CMSEngineDBFacade::updateEncodingJob (
             }
             else
             {
-                string errorMessage = string("EncodingJob not found")
-                        + ", EncodingJobKey: " + to_string(encodingJobKey);
+                string errorMessage = __FILEREF__ + "EncodingJob not found"
+                        + ", EncodingJobKey: " + to_string(encodingJobKey)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
                 _logger->error(errorMessage);
 
                 throw runtime_error(errorMessage);                    
             }
         }
 
-        conn->_sqlConnection->commit();     // or execute COMMIT
+        // conn->_sqlConnection->commit(); OR execute COMMIT
+        {
+            lastSQLCommand = 
+                "COMMIT";
+
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute(lastSQLCommand);
+        }
         autoCommit = true;
 
         _connectionPool->unborrow(conn);
     }
     catch(sql::SQLException se)
     {
+        // conn->_sqlConnection->rollback(); OR execute ROLLBACK
         if (!autoCommit)
-            conn->_sqlConnection->rollback();     // or execute ROLLBACK
+        {
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute("ROLLBACK");
+        }
         
         _connectionPool->unborrow(conn);
 
         string exceptionMessage(se.what());
         
-        _logger->error(string("SQL exception")
+        _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
         );
@@ -1187,12 +1430,79 @@ void CMSEngineDBFacade::updateEncodingJob (
     }
     catch(exception e)
     {
+        // conn->_sqlConnection->rollback(); OR execute ROLLBACK
         if (!autoCommit)
-            conn->_sqlConnection->rollback();     // or execute ROLLBACK
+        {
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute("ROLLBACK");
+        }
         
         _connectionPool->unborrow(conn);
         
-        _logger->error(string("SQL exception")
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
+    }
+    
+    return encodingFailureNumber;
+}
+
+void CMSEngineDBFacade::updateEncodingJobProgress (
+        int64_t encodingJobKey,
+        int encodingPercentage)
+{
+    
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+
+        {
+            lastSQLCommand = 
+                "update CMS_EncodingJobs set Progress = ? where EncodingJobKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt(queryParameterIndex++, encodingPercentage);
+            preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
+
+            if (preparedStatement->executeUpdate() != 1)
+            {
+                string errorMessage = __FILEREF__ + "no update was done"
+                        + ", encodingPercentage: " + to_string(encodingPercentage)
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }
+        }
+        
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        _connectionPool->unborrow(conn);
+
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw se;
+    }
+    catch(exception e)
+    {
+        _connectionPool->unborrow(conn);
+        
+        _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
@@ -1246,8 +1556,10 @@ string CMSEngineDBFacade::checkCustomerMaxIngestionNumber (
             }
             else
             {
-                string errorMessage = string("Customer is not present/configured")
-                    + ", customerKey: " + to_string(customerKey);
+                string errorMessage = __FILEREF__ + "Customer is not present/configured"
+                    + ", customerKey: " + to_string(customerKey)
+                    + ", lastSQLCommand: " + lastSQLCommand
+                ;
                 _logger->error(errorMessage);
 
                 throw runtime_error(errorMessage);                    
@@ -1468,16 +1780,28 @@ string CMSEngineDBFacade::checkCustomerMaxIngestionNumber (
             preparedStatement->setString(queryParameterIndex++, newPeriodEndDateTime);
             preparedStatement->setInt64(queryParameterIndex++, customerKey);
 
-            preparedStatement->executeUpdate();
+            if (preparedStatement->executeUpdate() != 1)
+            {
+                string errorMessage = __FILEREF__ + "no update was done"
+                        + ", newPeriodStartDateTime: " + newPeriodStartDateTime
+                        + ", newPeriodEndDateTime: " + newPeriodEndDateTime
+                        + ", customerKey: " + to_string(customerKey)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }
         }
         
         _connectionPool->unborrow(conn);
 
         if (!ingestionsAllowed)
         {
-            string errorMessage = string("Reached the max number of Ingestions in your period")
+            string errorMessage = __FILEREF__ + "Reached the max number of Ingestions in your period"
                 + ", maxIngestionsNumber: " + to_string(maxIngestionsNumber)
                 + ", encodingPeriod: " + to_string(static_cast<int>(encodingPeriod))
+                + ", lastSQLCommand: " + lastSQLCommand
             ;
             _logger->error(errorMessage);
             
@@ -1497,7 +1821,7 @@ string CMSEngineDBFacade::checkCustomerMaxIngestionNumber (
     {
         string exceptionMessage(se.what());
         
-        _logger->error(string("SQL exception")
+        _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
         );
@@ -1506,7 +1830,7 @@ string CMSEngineDBFacade::checkCustomerMaxIngestionNumber (
     }    
     catch(exception e)
     {        
-        _logger->error(string("SQL exception")
+        _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
@@ -1516,7 +1840,7 @@ string CMSEngineDBFacade::checkCustomerMaxIngestionNumber (
     return relativePathToBeUsed;
 }
 
-int64_t CMSEngineDBFacade::saveIngestedContentMetadata(
+pair<int64_t,int64_t> CMSEngineDBFacade::saveIngestedContentMetadata(
         shared_ptr<Customer> customer,
         int64_t ingestionJobKey,
         Json::Value metadataRoot,
@@ -1528,8 +1852,7 @@ int64_t CMSEngineDBFacade::saveIngestedContentMetadata(
         int imageHeight
 )
 {
-    int64_t         mediaItemKey;
-    int64_t         physicalPathKey;
+    pair<int64_t,int64_t> mediaItemKeyAndPhysicalPathKey;
     
     string      lastSQLCommand;
     
@@ -1541,10 +1864,18 @@ int64_t CMSEngineDBFacade::saveIngestedContentMetadata(
         conn = _connectionPool->borrow();	
 
         autoCommit = false;
-        conn->_sqlConnection->setAutoCommit(autoCommit);    // or execute the statement START TRANSACTION
-        
+        // conn->_sqlConnection->setAutoCommit(autoCommit); OR execute the statement START TRANSACTION
+        {
+            lastSQLCommand = 
+                "START TRANSACTION";
+
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute(lastSQLCommand);
+        }
+
         Json::Value contentIngestion = metadataRoot["ContentIngestion"]; 
 
+        _logger->info(__FILEREF__ + "Retrieving contentProviderKey...");
         // get ContentProviderKey
         int64_t contentProviderKey;
         {
@@ -1569,9 +1900,10 @@ int64_t CMSEngineDBFacade::saveIngestedContentMetadata(
             }
             else
             {
-                string errorMessage = string("ContentProvider is not present")
+                string errorMessage = __FILEREF__ + "ContentProvider is not present"
                     + ", customer->_customerKey: " + to_string(customer->_customerKey)
                     + ", contentProviderName: " + contentProviderName
+                    + ", lastSQLCommand: " + lastSQLCommand
                 ;
                 _logger->error(errorMessage);
 
@@ -1579,6 +1911,7 @@ int64_t CMSEngineDBFacade::saveIngestedContentMetadata(
             }            
         }
 
+        _logger->info(__FILEREF__ + "Insert into CMS_MediaItems...");
         ContentType contentType;
         int64_t encodingProfileSetKey;
         {
@@ -1614,7 +1947,7 @@ int64_t CMSEngineDBFacade::saveIngestedContentMetadata(
                 contentType = ContentType::Image;
             else
             {
-                string errorMessage = string("ContentType is wrong")
+                string errorMessage = __FILEREF__ + "ContentType is wrong"
                     + ", sContentType: " + sContentType
                 ;
                 _logger->error(errorMessage);
@@ -1673,10 +2006,11 @@ int64_t CMSEngineDBFacade::saveIngestedContentMetadata(
                 }
                 else
                 {
-                    string errorMessage = string("EncodingProfilesSetKey is not present")
+                    string errorMessage = __FILEREF__ + "EncodingProfilesSetKey is not present"
                         + ", contentType: " + to_string(static_cast<int>(contentType))
                         + ", customer->_customerKey: " + to_string(customer->_customerKey)
                         + ", encodingProfilesSet: " + encodingProfilesSet
+                        + ", lastSQLCommand: " + lastSQLCommand
                     ;
                     _logger->error(errorMessage);
 
@@ -1721,7 +2055,7 @@ int64_t CMSEngineDBFacade::saveIngestedContentMetadata(
             preparedStatement->executeUpdate();
         }
         
-        mediaItemKey = getLastInsertId(conn);
+        int64_t mediaItemKey = getLastInsertId(conn);
 
         {
             if (contentType == ContentType::Video)
@@ -1772,7 +2106,7 @@ int64_t CMSEngineDBFacade::saveIngestedContentMetadata(
             }
             else
             {
-                string errorMessage = string("ContentType is wrong")
+                string errorMessage = __FILEREF__ + "ContentType is wrong"
                     + ", contentType: " + to_string(static_cast<int>(contentType))
                 ;
                 _logger->error(errorMessage);
@@ -1804,7 +2138,7 @@ int64_t CMSEngineDBFacade::saveIngestedContentMetadata(
             preparedStatement->executeUpdate();
         }
 
-        physicalPathKey = getLastInsertId(conn);
+        int64_t physicalPathKey = getLastInsertId(conn);
 
         // territories
         {
@@ -1815,15 +2149,15 @@ int64_t CMSEngineDBFacade::saveIngestedContentMetadata(
                 
                 lastSQLCommand = 
                     "select TerritoryKey, Name from CMS_Territories where CustomerKey = ?";
-                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                shared_ptr<sql::PreparedStatement> preparedStatementTerrirories (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
-                preparedStatement->setInt64(queryParameterIndex++, customer->_customerKey);
+                preparedStatementTerrirories->setInt64(queryParameterIndex++, customer->_customerKey);
 
-                shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-                while (resultSet->next())
+                shared_ptr<sql::ResultSet> resultSetTerritories (preparedStatementTerrirories->executeQuery());
+                while (resultSetTerritories->next())
                 {
-                    int64_t territoryKey = resultSet->getInt64("TerritoryKey");
-                    string territoryName = resultSet->getString("Name");
+                    int64_t territoryKey = resultSetTerritories->getInt64("TerritoryKey");
+                    string territoryName = resultSetTerritories->getString("Name");
 
                     string startPublishing = "NOW";
                     string endPublishing = "FOREVER";
@@ -1888,14 +2222,14 @@ int64_t CMSEngineDBFacade::saveIngestedContentMetadata(
                             "insert into CMS_DefaultTerritoryInfo(DefaultTerritoryInfoKey, MediaItemKey, TerritoryKey, StartPublishing, EndPublishing) values ("
                             "NULL, ?, ?, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'), STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'))";
 
-                        shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                        shared_ptr<sql::PreparedStatement> preparedStatementDefaultTerritory (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                         int queryParameterIndex = 1;
-                        preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
-                        preparedStatement->setInt(queryParameterIndex++, territoryKey);
-                        preparedStatement->setString(queryParameterIndex++, startPublishing);
-                        preparedStatement->setString(queryParameterIndex++, endPublishing);
+                        preparedStatementDefaultTerritory->setInt64(queryParameterIndex++, mediaItemKey);
+                        preparedStatementDefaultTerritory->setInt(queryParameterIndex++, territoryKey);
+                        preparedStatementDefaultTerritory->setString(queryParameterIndex++, startPublishing);
+                        preparedStatementDefaultTerritory->setString(queryParameterIndex++, endPublishing);
 
-                        preparedStatement->executeUpdate();
+                        preparedStatementDefaultTerritory->executeUpdate();
                     }
                 }                
             }
@@ -1923,8 +2257,10 @@ int64_t CMSEngineDBFacade::saveIngestedContentMetadata(
                 }
                 else
                 {
-                    string errorMessage = string("Customer is not present/configured")
-                        + ", customer->_customerKey: " + to_string(customer->_customerKey);
+                    string errorMessage = __FILEREF__ + "Customer is not present/configured"
+                        + ", customer->_customerKey: " + to_string(customer->_customerKey)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                    ;
                     _logger->error(errorMessage);
 
                     throw runtime_error(errorMessage);                    
@@ -1971,46 +2307,64 @@ int64_t CMSEngineDBFacade::saveIngestedContentMetadata(
                 preparedStatement->setInt(queryParameterIndex++, currentDirLevel3);
                 preparedStatement->setInt64(queryParameterIndex++, customer->_customerKey);
 
-                preparedStatement->executeUpdate();
+                if (preparedStatement->executeUpdate() != 1)
+                {
+                    string errorMessage = __FILEREF__ + "no update was done"
+                            + ", currentDirLevel1: " + to_string(currentDirLevel1)
+                            + ", currentDirLevel2: " + to_string(currentDirLevel2)
+                            + ", currentDirLevel3: " + to_string(currentDirLevel3)
+                            + ", customer->_customerKey: " + to_string(customer->_customerKey)
+                            + ", lastSQLCommand: " + lastSQLCommand
+                    ;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);                    
+                }
             }
         }
         
         {
             EncodingPriority encodingPriority;
-            string field = "EncodingPriority";
-            if (isMetadataPresent(contentIngestion, field))
+            if (contentType == ContentType::Video || contentType == ContentType::Audio)
             {
-                string strEncodingPriority = contentIngestion.get(field, "XXX").asString();
-                if (strEncodingPriority == "low")
+                string field = "EncodingPriority";
+                if (isMetadataPresent(contentIngestion, field))
                 {
-                   encodingPriority = EncodingPriority::Low; 
-                }
-                else if (strEncodingPriority == "default")
-                {
-                   encodingPriority = EncodingPriority::Default;
-                }
-                else if (strEncodingPriority == "high")
-                {
-                   encodingPriority = EncodingPriority::High; 
+                    string strEncodingPriority = contentIngestion.get(field, "XXX").asString();
+                    if (strEncodingPriority == "low")
+                    {
+                       encodingPriority = EncodingPriority::Low; 
+                    }
+                    else if (strEncodingPriority == "default")
+                    {
+                       encodingPriority = EncodingPriority::Default;
+                    }
+                    else if (strEncodingPriority == "high")
+                    {
+                       encodingPriority = EncodingPriority::High; 
+                    }
+                    else
+                    {
+                        string errorMessage = __FILEREF__ + "Field 'EncodingPriority' is wrong"
+                                + ", EncodingPriority: " + to_string(static_cast<int>(encodingPriority));
+                        _logger->error(errorMessage);
+
+                        throw runtime_error(errorMessage);
+                    }
+
+                    if (static_cast<int>(encodingPriority) > customer->_maxEncodingPriority)
+                        encodingPriority = static_cast<EncodingPriority>(customer->_maxEncodingPriority); 
                 }
                 else
-                {
-                    string errorMessage = string("Field 'EncodingPriority' is wrong")
-                            + ", EncodingPriority: " + to_string(static_cast<int>(encodingPriority));
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }
-                
-                if (static_cast<int>(encodingPriority) > customer->_maxEncodingPriority)
-                    encodingPriority = static_cast<EncodingPriority>(customer->_maxEncodingPriority); 
+                    encodingPriority = static_cast<EncodingPriority>(customer->_maxEncodingPriority);
             }
             else
-                encodingPriority = static_cast<EncodingPriority>(customer->_maxEncodingPriority);
+                encodingPriority = EncodingPriority::Default;
 
             lastSQLCommand = 
-                "insert into CMS_EncodingJobs(EncodingJobKey, IngestionJobKey, SourcePhysicalPathKey, EncodingPriority, EncodingProfileKey, EncodingJobStart, EncodingJobEnd, Status, ProcessorCMS, FailuresNumber)"
-	        " select                      NULL,           ?,               ?,                     ?,                 EncodingProfileKey, NULL,             NULL,           ?,      NULL,         0 from CMS_EncodingProfilesSetMapping where EncodingProfilesSetKey = ?";
+                "insert into CMS_EncodingJobs(EncodingJobKey, IngestionJobKey, SourcePhysicalPathKey, EncodingPriority, EncodingProfileKey, EncodingJobStart, EncodingJobEnd, Progress, Status, ProcessorCMS, FailuresNumber) "
+	        "select                       NULL,           ?,               ?,                     ?,                EncodingProfileKey, NULL,             NULL,           NULL,     ?,      NULL,         0 "
+                "from CMS_EncodingProfilesSetMapping where EncodingProfilesSetKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -2033,24 +2387,48 @@ int64_t CMSEngineDBFacade::saveIngestedContentMetadata(
             preparedStatement->setInt(queryParameterIndex++, static_cast<int>(IngestionStatus::QueuedForEncoding));
             preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 
-            preparedStatement->executeUpdate();
+            if (preparedStatement->executeUpdate() != 1)
+            {
+                string errorMessage = __FILEREF__ + "no update was done"
+                        + ", mediaItemKey: " + to_string(mediaItemKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }
         }
 
-        conn->_sqlConnection->commit();     // or execute COMMIT
+        // conn->_sqlConnection->commit(); OR execute COMMIT
+        {
+            lastSQLCommand = 
+                "COMMIT";
+
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute(lastSQLCommand);
+        }
         autoCommit = true;
 
         _connectionPool->unborrow(conn);
+        
+        mediaItemKeyAndPhysicalPathKey.first = mediaItemKey;
+        mediaItemKeyAndPhysicalPathKey.second = physicalPathKey;
     }
     catch(sql::SQLException se)
     {
+        // conn->_sqlConnection->rollback(); OR execute ROLLBACK
         if (!autoCommit)
-            conn->_sqlConnection->rollback();     // or execute ROLLBACK
+        {
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute("ROLLBACK");
+        }
         
         _connectionPool->unborrow(conn);
 
         string exceptionMessage(se.what());
         
-        _logger->error(string("SQL exception")
+        _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
         );
@@ -2059,19 +2437,23 @@ int64_t CMSEngineDBFacade::saveIngestedContentMetadata(
     }
     catch(exception e)
     {
+        // conn->_sqlConnection->rollback(); OR execute ROLLBACK
         if (!autoCommit)
-            conn->_sqlConnection->rollback();     // or execute ROLLBACK
+        {
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute("ROLLBACK");
+        }
         
         _connectionPool->unborrow(conn);
         
-        _logger->error(string("SQL exception")
+        _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
         throw e;
     }
     
-    return mediaItemKey;
+    return mediaItemKeyAndPhysicalPathKey;
 }
 
 int64_t CMSEngineDBFacade::saveEncodedContentMetadata(
@@ -2095,7 +2477,14 @@ int64_t CMSEngineDBFacade::saveEncodedContentMetadata(
         conn = _connectionPool->borrow();	
 
         autoCommit = false;
-        conn->_sqlConnection->setAutoCommit(autoCommit);    // or execute the statement START TRANSACTION
+        // conn->_sqlConnection->setAutoCommit(autoCommit); OR execute the statement START TRANSACTION
+        {
+            lastSQLCommand = 
+                "START TRANSACTION";
+
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute(lastSQLCommand);
+        }
         
         {
             int drm = 0;
@@ -2124,42 +2513,52 @@ int64_t CMSEngineDBFacade::saveEncodedContentMetadata(
             lastSQLCommand = 
                 "select t.TerritoryKey, t.Name, DATE_FORMAT(d.StartPublishing, '%Y-%m-%d %H:%i:%s') as StartPublishing, DATE_FORMAT(d.EndPublishing, '%Y-%m-%d %H:%i:%s') as EndPublishing from CMS_Territories t, CMS_DefaultTerritoryInfo d "
                 "where t.TerritoryKey = d.TerritoryKey and t.CustomerKey = ? and d.MediaItemKey = ?";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            shared_ptr<sql::PreparedStatement> preparedStatementTerritory (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, customerKey);
-            preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+            preparedStatementTerritory->setInt64(queryParameterIndex++, customerKey);
+            preparedStatementTerritory->setInt64(queryParameterIndex++, mediaItemKey);
 
-            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-            while (resultSet->next())
+            shared_ptr<sql::ResultSet> resultSetTerritory (preparedStatementTerritory->executeQuery());
+            while (resultSetTerritory->next())
             {
-                int64_t territoryKey = resultSet->getInt64("TerritoryKey");
-                string territoryName = resultSet->getString("Name");
-                string startPublishing = resultSet->getString("StartPublishing");
-                string endPublishing = resultSet->getString("EndPublishing");
+                int64_t territoryKey = resultSetTerritory->getInt64("TerritoryKey");
+                string territoryName = resultSetTerritory->getString("Name");
+                string startPublishing = resultSetTerritory->getString("StartPublishing");
+                string endPublishing = resultSetTerritory->getString("EndPublishing");
                 
                 lastSQLCommand = 
                     "select PublishingStatus from CMS_Publishing2 where MediaItemKey = ? and TerritoryKey = ?";
-                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                shared_ptr<sql::PreparedStatement> preparedStatementPublishing (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
-                preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
-                preparedStatement->setInt64(queryParameterIndex++, territoryKey);
+                preparedStatementPublishing->setInt64(queryParameterIndex++, mediaItemKey);
+                preparedStatementPublishing->setInt64(queryParameterIndex++, territoryKey);
 
-                shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-                if (resultSet->next())
+                shared_ptr<sql::ResultSet> resultSetPublishing (preparedStatementPublishing->executeQuery());
+                if (resultSetPublishing->next())
                 {
-                    int publishingStatus = resultSet->getInt("PublishingStatus");
+                    int publishingStatus = resultSetPublishing->getInt("PublishingStatus");
                     
                     if (publishingStatus == 1)
                     {
                         lastSQLCommand = 
                             "update CMS_Publishing2 set PublishingStatus = 0 where MediaItemKey = ? and TerritoryKey = ?";
 
-                        shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                        shared_ptr<sql::PreparedStatement> preparedStatementUpdatePublishing (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                         int queryParameterIndex = 1;
-                        preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
-                        preparedStatement->setInt(queryParameterIndex++, territoryKey);
+                        preparedStatementUpdatePublishing->setInt64(queryParameterIndex++, mediaItemKey);
+                        preparedStatementUpdatePublishing->setInt(queryParameterIndex++, territoryKey);
 
-                        preparedStatement->executeUpdate();
+                        if (preparedStatementUpdatePublishing->executeUpdate() != 1)
+                        {
+                            string errorMessage = __FILEREF__ + "no update was done"
+                                    + ", mediaItemKey: " + to_string(mediaItemKey)
+                                    + ", territoryKey: " + to_string(territoryKey)
+                                    + ", lastSQLCommand: " + lastSQLCommand
+                            ;
+                            _logger->error(errorMessage);
+
+                            throw runtime_error(errorMessage);                    
+                        }
                     }
                 }
                 else
@@ -2168,33 +2567,44 @@ int64_t CMSEngineDBFacade::saveEncodedContentMetadata(
                         "insert into CMS_Publishing2 (PublishingKey, MediaItemKey, TerritoryKey, StartPublishing, EndPublishing, PublishingStatus) values ("
 	        	"NULL, ?, ?, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'), STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'), 0)";
 
-                    shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                    shared_ptr<sql::PreparedStatement> preparedStatementInsertPublishing (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
-                    preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
-                    preparedStatement->setInt(queryParameterIndex++, territoryKey);
-                    preparedStatement->setString(queryParameterIndex++, startPublishing);
-                    preparedStatement->setString(queryParameterIndex++, endPublishing);
+                    preparedStatementInsertPublishing->setInt64(queryParameterIndex++, mediaItemKey);
+                    preparedStatementInsertPublishing->setInt(queryParameterIndex++, territoryKey);
+                    preparedStatementInsertPublishing->setString(queryParameterIndex++, startPublishing);
+                    preparedStatementInsertPublishing->setString(queryParameterIndex++, endPublishing);
 
-                    preparedStatement->executeUpdate();
+                    preparedStatementInsertPublishing->executeUpdate();
                 }
             }                
         }
 
-        conn->_sqlConnection->commit();     // or execute COMMIT
+        // conn->_sqlConnection->commit(); OR execute COMMIT
+        {
+            lastSQLCommand = 
+                "COMMIT";
+
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute(lastSQLCommand);
+        }
         autoCommit = true;
 
         _connectionPool->unborrow(conn);
     }
     catch(sql::SQLException se)
     {
+        // conn->_sqlConnection->rollback(); OR execute ROLLBACK
         if (!autoCommit)
-            conn->_sqlConnection->rollback();     // or execute ROLLBACK
+        {
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute("ROLLBACK");
+        }
         
         _connectionPool->unborrow(conn);
 
         string exceptionMessage(se.what());
         
-        _logger->error(string("SQL exception")
+        _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
         );
@@ -2203,12 +2613,16 @@ int64_t CMSEngineDBFacade::saveEncodedContentMetadata(
     }
     catch(exception e)
     {
+        // conn->_sqlConnection->rollback(); OR execute ROLLBACK
         if (!autoCommit)
-            conn->_sqlConnection->rollback();     // or execute ROLLBACK
+        {
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute("ROLLBACK");
+        }
         
         _connectionPool->unborrow(conn);
         
-        _logger->error(string("SQL exception")
+        _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
@@ -2257,7 +2671,7 @@ int64_t CMSEngineDBFacade::getLastInsertId(shared_ptr<MySQLConnection> conn)
     {
         string exceptionMessage(se.what());
         
-        _logger->error(string("SQL exception")
+        _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
         );
@@ -2266,7 +2680,7 @@ int64_t CMSEngineDBFacade::getLastInsertId(shared_ptr<MySQLConnection> conn)
     }
     catch(exception e)
     {        
-        _logger->error(string("SQL exception")
+        _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
@@ -2323,7 +2737,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
         {
             if (isRealDBError(se.what()))
             {
-                _logger->error(string("SQL exception")
+                _logger->error(__FILEREF__ + "SQL exception"
                     + ", lastSQLCommand: " + lastSQLCommand
                     + ", se.what(): " + se.what()
                 );
@@ -2342,7 +2756,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
         {
             if (isRealDBError(se.what()))
             {
-                _logger->error(string("SQL exception")
+                _logger->error(__FILEREF__ + "SQL exception"
                     + ", lastSQLCommand: " + lastSQLCommand
                     + ", se.what(): " + se.what()
                 );
@@ -2374,7 +2788,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
         {
             if (isRealDBError(se.what()))
             {
-                _logger->error(string("SQL exception")
+                _logger->error(__FILEREF__ + "SQL exception"
                     + ", lastSQLCommand: " + lastSQLCommand
                     + ", se.what(): " + se.what()
                 );
@@ -2408,7 +2822,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
         {
             if (isRealDBError(se.what()))
             {
-                _logger->error(string("SQL exception")
+                _logger->error(__FILEREF__ + "SQL exception"
                     + ", lastSQLCommand: " + lastSQLCommand
                     + ", se.what(): " + se.what()
                 );
@@ -2446,7 +2860,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
         {
             if (isRealDBError(se.what()))
             {
-                _logger->error(string("SQL exception")
+                _logger->error(__FILEREF__ + "SQL exception"
                     + ", lastSQLCommand: " + lastSQLCommand
                     + ", se.what(): " + se.what()
                 );
@@ -2468,7 +2882,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
         {
             if (isRealDBError(se.what()))
             {
-                _logger->error(string("SQL exception")
+                _logger->error(__FILEREF__ + "SQL exception"
                     + ", lastSQLCommand: " + lastSQLCommand
                     + ", se.what(): " + se.what()
                 );
@@ -2495,7 +2909,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
         {
             if (isRealDBError(se.what()))
             {
-                _logger->error(string("SQL exception")
+                _logger->error(__FILEREF__ + "SQL exception"
                     + ", lastSQLCommand: " + lastSQLCommand
                     + ", se.what(): " + se.what()
                 );
@@ -2562,7 +2976,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
         {
             if (isRealDBError(se.what()))
             {
-                _logger->error(string("SQL exception")
+                _logger->error(__FILEREF__ + "SQL exception"
                     + ", lastSQLCommand: " + lastSQLCommand
                     + ", se.what(): " + se.what()
                 );
@@ -2594,7 +3008,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
         {
             if (isRealDBError(se.what()))
             {
-                _logger->error(string("SQL exception")
+                _logger->error(__FILEREF__ + "SQL exception"
                     + ", lastSQLCommand: " + lastSQLCommand
                     + ", se.what(): " + se.what()
                 );
@@ -2640,7 +3054,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
         {
             if (isRealDBError(se.what()))
             {
-                _logger->error(string("SQL exception")
+                _logger->error(__FILEREF__ + "SQL exception"
                     + ", lastSQLCommand: " + lastSQLCommand
                     + ", se.what(): " + se.what()
                 );
@@ -2668,7 +3082,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
         {
             if (isRealDBError(se.what()))
             {
-                _logger->error(string("SQL exception")
+                _logger->error(__FILEREF__ + "SQL exception"
                     + ", lastSQLCommand: " + lastSQLCommand
                     + ", se.what(): " + se.what()
                 );
@@ -2723,7 +3137,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
         {
             if (isRealDBError(se.what()))
             {
-                _logger->error(string("SQL exception")
+                _logger->error(__FILEREF__ + "SQL exception"
                     + ", lastSQLCommand: " + lastSQLCommand
                     + ", se.what(): " + se.what()
                 );
@@ -2747,7 +3161,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
         {
             if (isRealDBError(se.what()))
             {
-                _logger->error(string("SQL exception")
+                _logger->error(__FILEREF__ + "SQL exception"
                     + ", lastSQLCommand: " + lastSQLCommand
                     + ", se.what(): " + se.what()
                 );
@@ -2797,7 +3211,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
         {
             if (isRealDBError(se.what()))
             {
-                _logger->error(string("SQL exception")
+                _logger->error(__FILEREF__ + "SQL exception"
                     + ", lastSQLCommand: " + lastSQLCommand
                     + ", se.what(): " + se.what()
                 );
@@ -2816,7 +3230,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
         {
             if (isRealDBError(se.what()))
             {
-                _logger->error(string("SQL exception")
+                _logger->error(__FILEREF__ + "SQL exception"
                     + ", lastSQLCommand: " + lastSQLCommand
                     + ", se.what(): " + se.what()
                 );
@@ -2835,7 +3249,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
         {
             if (isRealDBError(se.what()))
             {
-                _logger->error(string("SQL exception")
+                _logger->error(__FILEREF__ + "SQL exception"
                     + ", lastSQLCommand: " + lastSQLCommand
                     + ", se.what(): " + se.what()
                 );
@@ -2854,7 +3268,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
         {
             if (isRealDBError(se.what()))
             {
-                _logger->error(string("SQL exception")
+                _logger->error(__FILEREF__ + "SQL exception"
                     + ", lastSQLCommand: " + lastSQLCommand
                     + ", se.what(): " + se.what()
                 );
@@ -2902,7 +3316,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
         {
             if (isRealDBError(se.what()))
             {
-                _logger->error(string("SQL exception")
+                _logger->error(__FILEREF__ + "SQL exception"
                     + ", lastSQLCommand: " + lastSQLCommand
                     + ", se.what(): " + se.what()
                 );
@@ -2922,7 +3336,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
         {
             if (isRealDBError(se.what()))
             {
-                _logger->error(string("SQL exception")
+                _logger->error(__FILEREF__ + "SQL exception"
                     + ", lastSQLCommand: " + lastSQLCommand
                     + ", se.what(): " + se.what()
                 );
@@ -2942,7 +3356,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
         {
             if (isRealDBError(se.what()))
             {
-                _logger->error(string("SQL exception")
+                _logger->error(__FILEREF__ + "SQL exception"
                     + ", lastSQLCommand: " + lastSQLCommand
                     + ", se.what(): " + se.what()
                 );
@@ -2967,7 +3381,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
         {
             if (isRealDBError(se.what()))
             {
-                _logger->error(string("SQL exception")
+                _logger->error(__FILEREF__ + "SQL exception"
                     + ", lastSQLCommand: " + lastSQLCommand
                     + ", se.what(): " + se.what()
                 );
@@ -2992,7 +3406,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
         {
             if (isRealDBError(se.what()))
             {
-                _logger->error(string("SQL exception")
+                _logger->error(__FILEREF__ + "SQL exception"
                     + ", lastSQLCommand: " + lastSQLCommand
                     + ", se.what(): " + se.what()
                 );
@@ -3018,7 +3432,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
         {
             if (isRealDBError(se.what()))
             {
-                _logger->error(string("SQL exception")
+                _logger->error(__FILEREF__ + "SQL exception"
                     + ", lastSQLCommand: " + lastSQLCommand
                     + ", se.what(): " + se.what()
                 );
@@ -3074,7 +3488,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
         {
             if (isRealDBError(se.what()))
             {
-                _logger->error(string("SQL exception")
+                _logger->error(__FILEREF__ + "SQL exception"
                     + ", lastSQLCommand: " + lastSQLCommand
                     + ", se.what(): " + se.what()
                 );
@@ -3110,7 +3524,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
         {
             if (isRealDBError(se.what()))
             {
-                _logger->error(string("SQL exception")
+                _logger->error(__FILEREF__ + "SQL exception"
                     + ", lastSQLCommand: " + lastSQLCommand
                     + ", se.what(): " + se.what()
                 );
@@ -3132,7 +3546,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
         {
             if (isRealDBError(se.what()))
             {
-                _logger->error(string("SQL exception")
+                _logger->error(__FILEREF__ + "SQL exception"
                     + ", lastSQLCommand: " + lastSQLCommand
                     + ", se.what(): " + se.what()
                 );
@@ -3154,7 +3568,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
         {
             if (isRealDBError(se.what()))
             {
-                _logger->error(string("SQL exception")
+                _logger->error(__FILEREF__ + "SQL exception"
                     + ", lastSQLCommand: " + lastSQLCommand
                     + ", se.what(): " + se.what()
                 );
@@ -3176,7 +3590,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
         {
             if (isRealDBError(se.what()))
             {
-                _logger->error(string("SQL exception")
+                _logger->error(__FILEREF__ + "SQL exception"
                     + ", lastSQLCommand: " + lastSQLCommand
                     + ", se.what(): " + se.what()
                 );
@@ -3218,6 +3632,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
                     "EncodingProfileKey			BIGINT UNSIGNED NOT NULL,"
                     "EncodingJobStart			TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "EncodingJobEnd			DATETIME NULL,"
+                    "Progress                           INT NULL,"
                     "Status           			TINYINT (2) NOT NULL,"
                     "ProcessorCMS			VARCHAR (24) NULL,"
                     "FailuresNumber           	INT NOT NULL,"
@@ -3239,7 +3654,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
         {
             if (isRealDBError(se.what()))
             {
-                _logger->error(string("SQL exception")
+                _logger->error(__FILEREF__ + "SQL exception"
                     + ", lastSQLCommand: " + lastSQLCommand
                     + ", se.what(): " + se.what()
                 );
@@ -3260,7 +3675,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
         {
             if (isRealDBError(se.what()))
             {
-                _logger->error(string("SQL exception")
+                _logger->error(__FILEREF__ + "SQL exception"
                     + ", lastSQLCommand: " + lastSQLCommand
                     + ", se.what(): " + se.what()
                 );
@@ -4011,7 +4426,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
     }
     catch(sql::SQLException se)
     {
-        _logger->error(string("SQL exception")
+        _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", se.what(): " + se.what()
         );

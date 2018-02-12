@@ -35,8 +35,9 @@ void CheckEncodingTimes:: handleTimeOut (void)
 
     _multiEventsSet->addEvent(event);
     
-    _logger->info("addEvent: EVENT_TYPE ({}, {}, {})", 
-            "CMSENGINE_EVENTTYPEIDENTIFIER_CHECKENCODING", 
-            event->getEventKey().first, 
-            event->getEventKey().second);
+    _logger->debug(__FILEREF__ + "addEvent: EVENT_TYPE" 
+            + ", CMSENGINE_EVENTTYPEIDENTIFIER_CHECKENCODING"
+            + ", getEventKey().first: " + to_string(event->getEventKey().first)
+            + ", getEventKey().second: " + to_string(event->getEventKey().second)
+    );
 }

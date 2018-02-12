@@ -45,10 +45,10 @@ endif()
 
 add_executable(addEncodingProfile ${SOURCES} ${HEADERS})
 
-#target_link_libraries (addEncodingProfile MultiEventsSet)
 target_link_libraries (addEncodingProfile CMSEngine)
 target_link_libraries (addEncodingProfile mysqlcppconn)
 target_link_libraries (addEncodingProfile jsoncpp)
+target_link_libraries (addEncodingProfile Magick++-7.Q16HDRI)
 
 #target_link_libraries (addEncodingProfile Scheduler)
 #target_link_libraries (addEncodingProfile PThread)

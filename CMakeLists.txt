@@ -30,6 +30,9 @@ project(
 
 SET(CMAKE_CXX_FLAGS "-std=c++14")
 
+ADD_DEFINITIONS(-D__FFMPEGLOCALENCODER__)
+
+
 set(CMAKE_BUILD_TYPE Debug)
 #set(CMAKE_BUILD_TYPE RelWithDebInfo)
 #set(CMAKE_BUILD_TYPE Release)

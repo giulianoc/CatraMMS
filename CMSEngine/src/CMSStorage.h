@@ -117,9 +117,9 @@ public:
     string getStagingAssetPathName (
 	string customerDirectoryName,
 	string relativePath,
-	string fileName,            // may be empty ("")
-	long long llMediaItemKey,
-	long long llPhysicalPathKey,
+	string fileName,                // may be empty ("")
+	long long llMediaItemKey,       // used only if fileName is ""
+	long long llPhysicalPathKey,    // used only if fileName is ""
 	bool removeLinuxPathIfExist);
 
     string getEncodingProfilePathName (

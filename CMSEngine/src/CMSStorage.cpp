@@ -32,14 +32,14 @@ CMSStorage::CMSStorage(
 
     bool noErrorIfExists = true;
     bool recursive = true;
-    _logger->info(string("Creating directory (if needed)")
+    _logger->info(__FILEREF__ + "Creating directory (if needed)"
         + ", _ftpRootRepository: " + _ftpRootRepository
     );
     FileIO::createDirectory(_ftpRootRepository,
             S_IRUSR | S_IWUSR | S_IXUSR |
             S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 
-    _logger->info(string("Creating directory (if needed)")
+    _logger->info(__FILEREF__ + "Creating directory (if needed)"
         + ", _cmsRootRepository: " + _cmsRootRepository
     );
     FileIO::createDirectory(_cmsRootRepository,
@@ -51,7 +51,7 @@ CMSStorage::CMSStorage(
         string CMS_0000Path = _cmsRootRepository + "CMS_0000";
 
 
-        _logger->info(string("Creating directory (if needed)")
+        _logger->info(__FILEREF__ + "Creating directory (if needed)"
             + ", CMS_0000Path: " + CMS_0000Path
         );
         FileIO::createDirectory(CMS_0000Path,
@@ -59,42 +59,42 @@ CMSStorage::CMSStorage(
                 S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
     }
 
-    _logger->info(string("Creating directory (if needed)")
+    _logger->info(__FILEREF__ + "Creating directory (if needed)"
         + ", _downloadRootRepository: " + _downloadRootRepository
     );
     FileIO::createDirectory(_downloadRootRepository,
             S_IRUSR | S_IWUSR | S_IXUSR |
             S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 
-    _logger->info(string("Creating directory (if needed)")
+    _logger->info(__FILEREF__ + "Creating directory (if needed)"
         + ", _streamingRootRepository: " + _streamingRootRepository
     );
     FileIO::createDirectory(_streamingRootRepository,
             S_IRUSR | S_IWUSR | S_IXUSR |
             S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 
-    _logger->info(string("Creating directory (if needed)")
+    _logger->info(__FILEREF__ + "Creating directory (if needed)"
         + ", _errorRootRepository: " + _errorRootRepository
     );
     FileIO::createDirectory(_errorRootRepository,
             S_IRUSR | S_IWUSR | S_IXUSR |
             S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 
-    _logger->info(string("Creating directory (if needed)")
+    _logger->info(__FILEREF__ + "Creating directory (if needed)"
         + ", _doneRootRepository: " + _doneRootRepository
     );
     FileIO::createDirectory(_doneRootRepository,
             S_IRUSR | S_IWUSR | S_IXUSR |
             S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 
-    _logger->info(string("Creating directory (if needed)")
+    _logger->info(__FILEREF__ + "Creating directory (if needed)"
         + ", _profilesRootRepository: " + _profilesRootRepository
     );
     FileIO::createDirectory(_profilesRootRepository,
             S_IRUSR | S_IWUSR | S_IXUSR |
             S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 
-    _logger->info(string("Creating directory (if needed)")
+    _logger->info(__FILEREF__ + "Creating directory (if needed)"
         + ", _stagingRootRepository: " + _stagingRootRepository
     );
     FileIO::createDirectory(_stagingRootRepository,
@@ -174,7 +174,7 @@ string CMSStorage::getCustomerFTPRepository(shared_ptr<Customer> customer)
     
     if (!FileIO::directoryExisting(customerFTPDirectory)) 
     {
-        _logger->info(string("Create directory")
+        _logger->info(__FILEREF__ + "Create directory"
             + ", customerFTPDirectory: " + customerFTPDirectory
         );
 
@@ -194,7 +194,7 @@ string CMSStorage::getCustomerFTPRepository(shared_ptr<Customer> customer)
 
         if (!FileIO::directoryExisting(customerErrorFTPDirectory)) 
         {
-            _logger->info(string("Create directory")
+            _logger->info(__FILEREF__ + "Create directory"
                 + ", customerErrorFTPDirectory: " + customerErrorFTPDirectory
             );
 
@@ -215,7 +215,7 @@ string CMSStorage::getCustomerFTPRepository(shared_ptr<Customer> customer)
 
         if (!FileIO::directoryExisting(customerSuccessFTPDirectory)) 
         {
-            _logger->info(string("Create directory")
+            _logger->info(__FILEREF__ + "Create directory"
                 + ", customerSuccessFTPDirectory: " + customerSuccessFTPDirectory
             );
 
@@ -236,7 +236,7 @@ string CMSStorage::getCustomerFTPRepository(shared_ptr<Customer> customer)
 
         if (!FileIO::directoryExisting(customerWorkingFTPDirectory)) 
         {
-            _logger->info(string("Create directory")
+            _logger->info(__FILEREF__ + "Create directory"
                 + ", customerWorkingFTPDirectory: " + customerWorkingFTPDirectory
             );
 
@@ -268,7 +268,7 @@ string CMSStorage::moveFTPRepositoryEntryToWorkingArea(
         .append("/")
         .append(entryFileName);
     
-    _logger->info(string("Move file")
+    _logger->info(__FILEREF__ + "Move file"
         + ", from: " + ftpDirectoryEntryPathName
         + ", to: " + ftpDirectoryWorkingEntryPathName
     );
@@ -297,7 +297,7 @@ string CMSStorage::moveFTPRepositoryWorkingEntryToErrorArea(
         .append(entryFileName);
 
     
-    _logger->info(string("Move file")
+    _logger->info(__FILEREF__ + "Move file"
         + ", from: " + ftpDirectoryWorkingEntryPathName
         + ", to: " + ftpDirectoryErrorEntryPathName
     );
@@ -430,7 +430,7 @@ void CMSStorage::contentInRepository(
 
         if (!FileIO::directoryExisting(metaDataFileInDestRepository)) 
         {
-            _logger->info(string("Create directory")
+            _logger->info(__FILEREF__ + "Create directory"
                 + ", metaDataFileInDestRepository: " + metaDataFileInDestRepository
             );
 
@@ -453,7 +453,7 @@ void CMSStorage::contentInRepository(
 
             if (!FileIO::directoryExisting(metaDataFileInDestRepository)) 
             {
-                _logger->info(string("Create directory")
+                _logger->info(__FILEREF__ + "Create directory"
                     + ", metaDataFileInDestRepository: " + metaDataFileInDestRepository
                 );
 
@@ -504,7 +504,7 @@ void CMSStorage::contentInRepository(
     {
         if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY) 
         {
-            _logger->info(string("Move directory")
+            _logger->info(__FILEREF__ + "Move directory"
                 + ", from: " + contentPathName
                 + ", to: " + metaDataFileInDestRepository
             );
@@ -517,7 +517,7 @@ void CMSStorage::contentInRepository(
         } 
         else // if (detSourceFileType == FileIO:: TOOLS_FILEIO_REGULARFILE
         {
-            _logger->info(string("Move file")
+            _logger->info(__FILEREF__ + "Move file"
                 + ", from: " + contentPathName
                 + ", to: " + metaDataFileInDestRepository
             );
@@ -529,7 +529,7 @@ void CMSStorage::contentInRepository(
     {
         if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY) 
         {
-            _logger->info(string("Copy directory")
+            _logger->info(__FILEREF__ + "Copy directory"
                 + ", from: " + contentPathName
                 + ", to: " + metaDataFileInDestRepository
             );
@@ -542,7 +542,7 @@ void CMSStorage::contentInRepository(
         } 
         else 
         {
-            _logger->info(string("Copy file")
+            _logger->info(__FILEREF__ + "Copy file"
                 + ", from: " + contentPathName
                 + ", to: " + metaDataFileInDestRepository
             );
@@ -620,7 +620,7 @@ string CMSStorage::moveAssetInCMSRepository(
             if (cmsPartitionsFreeSizeInKB <=
                     (_freeSpaceToLeaveInEachPartitionInMB * 1024)) 
             {
-                _logger->info(string("Partition space too low")
+                _logger->info(__FILEREF__ + "Partition space too low"
                     + ", _ulCurrentCMSPartitionIndex: " + to_string(_ulCurrentCMSPartitionIndex)
                     + ", cmsPartitionsFreeSizeInKB: " + to_string(cmsPartitionsFreeSizeInKB)
                     + ", _freeSpaceToLeaveInEachPartitionInMB * 1024: " + to_string(_freeSpaceToLeaveInEachPartitionInMB * 1024)
@@ -669,7 +669,7 @@ string CMSStorage::moveAssetInCMSRepository(
         cmsAssetPathName.append(destinationAssetFileName);
     }
 
-    _logger->info(string("Selected CMS Partition for the content")
+    _logger->info(__FILEREF__ + "Selected CMS Partition for the content"
         + ", customerDirectoryName: " + customerDirectoryName
         + ", *pulCMSPartitionIndexUsed: " + to_string(*pulCMSPartitionIndexUsed)
         + ", cmsAssetPathName: " + cmsAssetPathName
@@ -681,7 +681,7 @@ string CMSStorage::moveAssetInCMSRepository(
     {
         if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY) 
         {
-            _logger->info(string("Move directory")
+            _logger->info(__FILEREF__ + "Move directory"
                 + ", from: " + sourceAssetPathName
                 + ", to: " + cmsAssetPathName
             );
@@ -694,7 +694,7 @@ string CMSStorage::moveAssetInCMSRepository(
         } 
         else // if (detDirectoryEntryType == FileIO:: TOOLS_FILEIO_REGULARFILE)
         {
-            _logger->info(string("Move file")
+            _logger->info(__FILEREF__ + "Move file"
                 + ", from: " + sourceAssetPathName
                 + ", to: " + cmsAssetPathName
             );
@@ -718,7 +718,7 @@ string CMSStorage::moveAssetInCMSRepository(
         _cmsPartitionsFreeSizeInMB [_ulCurrentCMSPartitionIndex] =
             ullAvailableInKB / 1024;
 
-        _logger->info(string("Available space")
+        _logger->info(__FILEREF__ + "Available space"
             + ", cmsAssetPathName: " + cmsAssetPathName
             + ", _cmsPartitionsFreeSizeInMB[_ulCurrentCMSPartitionIndex]: " + to_string(_cmsPartitionsFreeSizeInMB[_ulCurrentCMSPartitionIndex])
         );
@@ -821,7 +821,7 @@ string CMSStorage::getStreamingLinkPathName(
 string CMSStorage::getStagingAssetPathName(
         string customerDirectoryName,
         string relativePath,
-        string fileName, // may be empty ("")
+        string fileName,                // may be empty ("")
         long long llMediaItemKey,       // used only if fileName is ""
         long long llPhysicalPathKey,    // used only if fileName is ""
         bool removeLinuxPathIfExist)
@@ -875,7 +875,7 @@ string CMSStorage::getStagingAssetPathName(
 
         if (!FileIO::directoryExisting(assetPathName)) 
         {
-            _logger->info(string("Create directory")
+            _logger->info(__FILEREF__ + "Create directory"
                 + ", assetPathName: " + assetPathName
             );
 
@@ -902,7 +902,7 @@ string CMSStorage::getStagingAssetPathName(
 
                 if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY) 
                 {
-                    _logger->info(string("Remove directory")
+                    _logger->info(__FILEREF__ + "Remove directory"
                         + ", assetPathName: " + assetPathName
                     );
 
@@ -911,7 +911,7 @@ string CMSStorage::getStagingAssetPathName(
                 } 
                 else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
                 {
-                    _logger->info(string("Remove file")
+                    _logger->info(__FILEREF__ + "Remove file"
                         + ", assetPathName: " + assetPathName
                     );
 
@@ -1069,7 +1069,7 @@ void CMSStorage::refreshPartitionsFreeSizes(void)
         _cmsPartitionsFreeSizeInMB[ulCMSPartitionIndex] =
                 ullAvailableInKB / 1024;
 
-        _logger->info(string("Available space")
+        _logger->info(__FILEREF__ + "Available space"
             + ", pathNameToGetFileSystemInfo: " + pathNameToGetFileSystemInfo
             + ", _cmsPartitionsFreeSizeInMB[ulCMSPartitionIndex]: " + to_string(_cmsPartitionsFreeSizeInMB[ulCMSPartitionIndex])
         );
@@ -1097,7 +1097,7 @@ string CMSStorage::creatingDirsUsingTerritories(
 
     if (!FileIO::directoryExisting(cmsAssetPathName)) 
     {
-        _logger->info(string("Create directory")
+        _logger->info(__FILEREF__ + "Create directory"
             + ", cmsAssetPathName: " + cmsAssetPathName
         );
 
@@ -1139,7 +1139,7 @@ string CMSStorage::creatingDirsUsingTerritories(
 
             if (!FileIO::directoryExisting(downloadAssetPathName)) 
             {
-                _logger->info(string("Create directory")
+                _logger->info(__FILEREF__ + "Create directory"
                     + ", downloadAssetPathName: " + downloadAssetPathName
                 );
                 
@@ -1153,7 +1153,7 @@ string CMSStorage::creatingDirsUsingTerritories(
 
             if (!FileIO::directoryExisting(streamingAssetPathName)) 
             {
-                _logger->info(string("Create directory")
+                _logger->info(__FILEREF__ + "Create directory"
                     + ", streamingAssetPathName: " + streamingAssetPathName
                 );
 

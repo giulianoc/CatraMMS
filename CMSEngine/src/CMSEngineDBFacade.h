@@ -22,6 +22,10 @@
 #include "catralibraries/MySQLConnection.h"
 #include "json/json.h"
 
+#ifndef __FILEREF__
+    #define __FILEREF__ string("[") + basename(__FILE__) + ":" + to_string(__LINE__) + "] "
+#endif
+
 using namespace std;
 
 class CMSEngineDBFacade {
@@ -59,7 +63,7 @@ public:
     
     enum class EncodingTechnology {
         Images      = 0,    // (Download),
-        ThreeGPP,           // (Streaming+Download),
+        MP4,                // (Streaming+Download),
         MPEG2_TS,           // (IPhone Streaming),
         WEBM,               // (VP8 and Vorbis)
         WindowsMedia,
@@ -83,6 +87,7 @@ public:
         shared_ptr<Customer>                    _customer;
         long long                               _mediaItemKey;
         long long                               _physicalPathKey;
+        int64_t                                 _durationInMilliSeconds;
         ContentType                             _contentType;
         EncodingPriority                        _encodingPriority;
         /*
@@ -194,14 +199,18 @@ public:
         string processorCMS,
         vector<shared_ptr<CMSEngineDBFacade::EncodingItem>>& encodingItems);
     
-    void updateEncodingJob (
+    int updateEncodingJob (
         int64_t encodingJobKey,
         EncodingError encodingError,
         int64_t ingestionJobKey);
 
+    void updateEncodingJobProgress (
+        int64_t encodingJobKey,
+        int encodingPercentage);
+
     string checkCustomerMaxIngestionNumber (int64_t customerKey);
 
-    int64_t saveIngestedContentMetadata(
+    pair<int64_t,int64_t> saveIngestedContentMetadata(
         shared_ptr<Customer> customer,
         int64_t ingestionJobKey,
         Json::Value metadataRoot,

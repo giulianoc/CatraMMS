@@ -49,7 +49,7 @@ void CMSEngine::addCustomer(
         chrono::system_clock::time_point userExpirationDate
 )
 {    
-    _logger->info(string("Received addCustomer")
+    _logger->info(__FILEREF__ + "Received addCustomer"
         + ", customerName: " + customerName
         + ", password: " + password
         + ", street: " + street
@@ -113,7 +113,7 @@ void CMSEngine::addCustomer(
     }
     catch(...)
     {
-        _logger->error("_cmsEngineDBFacade->addCustomer failed");
+        _logger->error(__FILEREF__ + "_cmsEngineDBFacade->addCustomer failed");
     }
 
 }
@@ -131,6 +131,7 @@ void CMSEngine::addFFMPEGVideoEncodingProfile(
         int videoWidth,
         int videoHeight,
         string videoBitRate,
+        bool twoPasses,
         string videoMaxRate,
         string videoBufSize,
         int videoFrameRate,
@@ -140,7 +141,7 @@ void CMSEngine::addFFMPEGVideoEncodingProfile(
         string audioBitRate
 )
 {    
-    _logger->info(string("Received addEncodingProfile")
+    _logger->info(__FILEREF__ + "Received addEncodingProfile"
         + ", customer->_customerKey: " + to_string(customer->_customerKey)
         + ", customer->_name: " + customer->_name
         + ", encodingProfileSet: " + encodingProfileSet
@@ -153,6 +154,7 @@ void CMSEngine::addFFMPEGVideoEncodingProfile(
         + ", videoWidth: " + to_string(videoWidth)
         + ", videoHeight: " + to_string(videoHeight)
         + ", videoBitRate: " + videoBitRate
+        + ", twoPasses: " + to_string(twoPasses)
         + ", videoMaxRate: " + videoMaxRate
         + ", videoBufSize: " + videoBufSize
         + ", videoFrameRate: " + to_string(videoFrameRate)
@@ -177,6 +179,7 @@ void CMSEngine::addFFMPEGVideoEncodingProfile(
             videoWidth,
             videoHeight,
             videoBitRate,
+            twoPasses,
             videoMaxRate,
             videoBufSize,
             videoFrameRate,
@@ -194,11 +197,15 @@ void CMSEngine::addFFMPEGVideoEncodingProfile(
             label,
             videoWidth,
             videoHeight,
-            videoCodec);        
+            videoCodec);      
+        
+        _logger->info(__FILEREF__ + "Created the encoding profile"
+            + ", encodingProfileKey: " + to_string(encodingProfileKey)
+        );
     }
     catch(...)
     {
-        _logger->error("_cmsEngineDBFacade->addVideoEncodeProfile failed");
+        _logger->error(__FILEREF__ + "_cmsEngineDBFacade->addVideoEncodeProfile failed");
     }
 }
 
@@ -210,6 +217,7 @@ string CMSEngine::getEncodingProfileDetails(
     int videoWidth,
     int videoHeight,
     string videoBitRate,
+    bool twoPasses,
     string videoMaxRate,
     string videoBufSize,
     int videoFrameRate,
@@ -219,39 +227,52 @@ string CMSEngine::getEncodingProfileDetails(
     string audioBitRate
 )
 {
-    string details = string("")
-            + "{"
-            + "\"fileFormat\": \"" + fileFormat + "\", "         // mandatory, 3gp, webm or segment
-    ;
+    string details;
     
-    details.append(string("")
-            + "\"video\": { "
-            +    "\"codec\": \"" + videoCodec + "\", "     // mandatory, libx264 or libvpx
-            +    "\"profile\": \"" + videoProfile + "\", "      // optional, if libx264 -> high or baseline or main. if libvpx -> best or good
-            +    "\"width\": " + to_string(videoWidth) + ", " // mandatory
-            +    "\"height\": " + to_string(videoHeight) + ", " // mandatory
-            +    "\"bitRate\": \"" + videoBitRate + "\", "      // mandatory
-            +    "\"maxRate\": \"" + videoMaxRate + "\", "      // optional
-            +    "\"bufSize\": \"" + videoBufSize + "\", "     // optional
-            +    "\"frameRate\": " + to_string(videoFrameRate) + ", "      // optional
-            +    "\"keyFrameIntervalInSeconds\": " + to_string(videoKeyFrameIntervalInSeconds) + " "   // optional and only if framerate is present
-            + "}"
-    );
-    
-    if (audioCodec != "")
+    try
     {
+        details = string("")
+                + "{"
+                + "\"fileFormat\": \"" + fileFormat + "\", "         // mandatory, 3gp, webm or segment
+        ;
+
         details.append(string("")
-            + ", "
-            + "\"audio\": { "
-            +    "\"codec\": \"" + audioCodec + "\", "  // mandatory, libaacplus, libvo_aacenc or libvorbis
-            +    "\"bitRate\": \"" + audioBitRate + "\" "      // mandatory
+                + "\"video\": { "
+                +    "\"codec\": \"" + videoCodec + "\", "     // mandatory, libx264 or libvpx
+                +    "\"profile\": \"" + videoProfile + "\", "      // optional, if libx264 -> high or baseline or main. if libvpx -> best or good
+                +    "\"width\": " + to_string(videoWidth) + ", " // mandatory
+                +    "\"height\": " + to_string(videoHeight) + ", " // mandatory
+                +    "\"bitRate\": \"" + videoBitRate + "\", "      // mandatory
+                +    "\"twoPasses\": " + (twoPasses ? "true" : "false") + ", "      // mandatory
+                +    "\"maxRate\": \"" + videoMaxRate + "\", "      // optional
+                +    "\"bufSize\": \"" + videoBufSize + "\", "     // optional
+                +    "\"frameRate\": " + to_string(videoFrameRate) + ", "      // optional
+                +    "\"keyFrameIntervalInSeconds\": " + to_string(videoKeyFrameIntervalInSeconds) + " "   // optional and only if framerate is present
+                + "}"
+        );
+
+        if (audioCodec != "")
+        {
+            details.append(string("")
+                + ", "
+                + "\"audio\": { "
+                +    "\"codec\": \"" + audioCodec + "\", "  // mandatory, libaacplus, libvo_aacenc or libvorbis
+                +    "\"bitRate\": \"" + audioBitRate + "\" "      // mandatory
+                + "}"
+            );
+        }
+
+        details.append(string("")
             + "}"
         );
     }
-    
-    details.append(string("")
-        + "}"
-    );
+    catch(...)
+    {
+        string errorMessage = __FILEREF__ + "getEncodingProfileDetails failed";
+        _logger->error(errorMessage);
+                
+        throw runtime_error(errorMessage);
+    }
 
     return details;
 }

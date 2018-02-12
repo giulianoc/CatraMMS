@@ -18,7 +18,7 @@ int main (int iArgc, char *pArgv [])
     #else
         string dbUsername("root"); string dbPassword("root"); string dbName("catracms");
     #endif
-    logger->info(string("Creating CMSEngineDBFacade")
+    logger->info(__FILEREF__ + "Creating CMSEngineDBFacade"
         + ", dbPoolSize: " + to_string(dbPoolSize)
         + ", dbServer: " + dbServer
         + ", dbUsername: " + dbUsername
@@ -30,33 +30,34 @@ int main (int iArgc, char *pArgv [])
 
     shared_ptr<Customer> customer = cmsEngineDBFacade->getCustomer("Warner");
     
-    logger->info(string("Creating CMSEngine")
+    logger->info(__FILEREF__ + "Creating CMSEngine"
             );
     shared_ptr<CMSEngine>       cmsEngine = make_shared<CMSEngine>(cmsEngineDBFacade, logger);
 
     cmsEngine->addFFMPEGVideoEncodingProfile(
         customer,
         "",                         // string encodingProfileSet,  // "": default Customer family, != "": named customer family
-        CMSEngineDBFacade::EncodingTechnology::ThreeGPP,
+        CMSEngineDBFacade::EncodingTechnology::MP4,
 	"",                         // string label,
 
-	"3gp",                      // string fileFormat,
+	"mp4",                      // string fileFormat,
         
         "libx264",                  // string videoCodec,
         "high",                     // string videoProfile,
         -1,                         // int videoWidth,
         480,                        // int videoHeight,
         "500k",                     // string videoBitRate,
+        true,                       // twoPasses
         "500k",                     // string videoMaxRate,
         "1000k",                    // string videoBufSize,
         25,                         // int videoFrameRate,
         5,                          // string videoKeyFrameIntervalInSeconds,
 
-        "libaacplus",               // string audioCodec,
+        "libfdk_aac",               // string audioCodec,
         "128k"                     // string audioBitRate
     );
 
-    logger->info(string("Shutdown done")
+    logger->info(__FILEREF__ + "Shutdown done"
             );
     
     return 0;

@@ -49,6 +49,7 @@ add_executable(addCustomer ${SOURCES} ${HEADERS})
 target_link_libraries (addCustomer CMSEngine)
 target_link_libraries (addCustomer mysqlcppconn)
 target_link_libraries (addCustomer jsoncpp)
+target_link_libraries (addCustomer Magick++-7.Q16HDRI)
 
 #target_link_libraries (addCustomer Scheduler)
 #target_link_libraries (addCustomer PThread)

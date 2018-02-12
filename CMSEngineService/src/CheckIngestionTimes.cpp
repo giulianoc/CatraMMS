@@ -35,8 +35,9 @@ void CheckIngestionTimes:: handleTimeOut (void)
 
     _multiEventsSet->addEvent(event);
     
-    _logger->info("addEvent: EVENT_TYPE ({}, {}, {})", 
-            "CMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTION", 
-            event->getEventKey().first, 
-            event->getEventKey().second);
+    _logger->debug(__FILEREF__ + "addEvent: EVENT_TYPE" 
+            + ", CMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTION"
+            + ", getEventKey().first: " + to_string(event->getEventKey().first)
+            + ", getEventKey().second: " + to_string(event->getEventKey().second)
+    );
 }

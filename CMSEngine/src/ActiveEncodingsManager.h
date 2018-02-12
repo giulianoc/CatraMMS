@@ -73,8 +73,15 @@ private:
     EncodingJob     _defaultPriorityEncodingJobs[MAXDEFAULTENCODINGSTOBEMANAGED];
     EncodingJob     _lowPriorityEncodingJobs[MAXLOWENCODINGSTOBEMANAGED];
 
+    #ifdef __FFMPEGLOCALENCODER__
+        int                 _ffmpegEncoderRunning;
+    #endif
+
     void processEncodingJob(mutex* mtEncodingJobs, EncodingJob* encodingJob);
     void addEncodingItem(shared_ptr<CMSEngineDBFacade::EncodingItem> encodingItem);
+    string encodeContentImage(
+        shared_ptr<CMSEngineDBFacade::EncodingItem> encodingItem);
+    void processEncodedImage(string stagingEncodedImagePathName);
 };
 
 #endif

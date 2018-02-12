@@ -14,6 +14,9 @@
 #define CMSENGINEPROCESSORNAME                          "CMSEngineProcessor"
 
 
+#ifndef __FILEREF__
+    #define __FILEREF__ string("[") + basename(__FILE__) + ":" + to_string(__LINE__) + "] "
+#endif
 
 class CheckIngestionTimes: public Times2
 {

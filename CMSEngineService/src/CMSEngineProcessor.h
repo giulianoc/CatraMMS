@@ -11,6 +11,7 @@
 #include "CMSStorage.h"
 #include "ActiveEncodingsManager.h"
 #include "IngestAssetEvent.h"
+#include "GenerateImageToIngestEvent.h"
 #include "json/json.h"
 
 #define CMSENGINEPROCESSORNAME    "CMSEngineProcessor"
@@ -39,9 +40,19 @@ private:
 
     void handleCheckEncodingEvent ();
 
-    CMSEngineDBFacade::IngestionType validateMetadata(Json::Value root);
+    void handleGenerateImageToIngestEvent (
+        shared_ptr<GenerateImageToIngestEvent> generateImageToIngestEvent);
 
-    void validateContentIngestionMetadata(Json::Value encoding);
+    void generateImageMetadataToIngest(
+        string metadataImagePathName,
+        string title,
+        string sourceImageFileName,
+        string encodingProfilesSet
+    );
+
+    pair<CMSEngineDBFacade::IngestionType,CMSEngineDBFacade::ContentType>  validateMetadata(Json::Value root);
+
+    CMSEngineDBFacade::ContentType validateContentIngestionMetadata(Json::Value encoding);
 
     pair<string, string> validateMediaSourceFile(
         string customerFTPDirectory,

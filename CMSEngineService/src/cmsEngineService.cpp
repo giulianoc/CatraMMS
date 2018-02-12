@@ -15,8 +15,9 @@
 int main (int iArgc, char *pArgv [])
 {
 
-    auto logger = spdlog::stdout_logger_mt("encodingEngine");
-    spdlog::set_level(spdlog::level::trace);
+    auto logger = spdlog::stdout_logger_mt("cmsEngineService");
+    spdlog::set_level(spdlog::level::info); // trace, debug, info, warn, err, critical, off
+
     // globally register the loggers so so the can be accessed using spdlog::get(logger_name)
     // spdlog::register_logger(logger);
 
@@ -27,7 +28,7 @@ int main (int iArgc, char *pArgv [])
     #else
         string dbUsername("root"); string dbPassword("root"); string dbName("catracms");
     #endif
-    logger->info(string("Creating CMSEngineDBFacade")
+    logger->info(__FILEREF__ + "Creating CMSEngineDBFacade"
         + ", dbPoolSize: " + to_string(dbPoolSize)
         + ", dbServer: " + dbServer
         + ", dbUsername: " + dbUsername
@@ -43,7 +44,7 @@ int main (int iArgc, char *pArgv [])
         string storage ("/home/giuliano/storage/");
     #endif
     unsigned long freeSpaceToLeaveInEachPartitionInMB = 5;
-    logger->info(string("Creating CMSStorage")
+    logger->info(__FILEREF__ + "Creating CMSStorage"
         + ", storage: " + storage
         + ", freeSpaceToLeaveInEachPartitionInMB: " + to_string(freeSpaceToLeaveInEachPartitionInMB)
             );
@@ -52,45 +53,45 @@ int main (int iArgc, char *pArgv [])
             freeSpaceToLeaveInEachPartitionInMB,
             logger);
 
-    logger->info(string("Creating CMSEngine")
+    logger->info(__FILEREF__ + "Creating CMSEngine"
             );
     shared_ptr<CMSEngine>       cmsEngine = make_shared<CMSEngine>(cmsEngineDBFacade, logger);
         
-    logger->info(string("Creating MultiEventsSet")
+    logger->info(__FILEREF__ + "Creating MultiEventsSet"
         + ", addDestination: " + CMSENGINEPROCESSORNAME
             );
     shared_ptr<MultiEventsSet>          multiEventsSet = make_shared<MultiEventsSet>();
     multiEventsSet->addDestination(CMSENGINEPROCESSORNAME);
 
-    logger->info(string("Creating ActiveEncodingsManager")
+    logger->info(__FILEREF__ + "Creating ActiveEncodingsManager"
             );
     ActiveEncodingsManager      activeEncodingsManager(cmsEngineDBFacade, cmsStorage, logger);
 
-    logger->info(string("Creating CMSEngineProcessor")
+    logger->info(__FILEREF__ + "Creating CMSEngineProcessor"
             );
     CMSEngineProcessor      cmsEngineProcessor(logger, multiEventsSet, cmsEngineDBFacade, cmsStorage, &activeEncodingsManager);
     
     unsigned long           ulThreadSleepInMilliSecs = 100;
-    logger->info(string("Creating Scheduler2")
+    logger->info(__FILEREF__ + "Creating Scheduler2"
         + ", ulThreadSleepInMilliSecs: " + to_string(ulThreadSleepInMilliSecs)
             );
     Scheduler2              scheduler(ulThreadSleepInMilliSecs);
 
 
-    logger->info(string("Starting ActiveEncodingsManager")
+    logger->info(__FILEREF__ + "Starting ActiveEncodingsManager"
             );
     thread activeEncodingsManagerThread (ref(activeEncodingsManager));
 
-    logger->info(string("Starting CMSEngineProcessor")
+    logger->info(__FILEREF__ + "Starting CMSEngineProcessor"
             );
     thread cmsEngineProcessorThread (cmsEngineProcessor);
 
-    logger->info(string("Starting Scheduler2")
+    logger->info(__FILEREF__ + "Starting Scheduler2"
             );
     thread schedulerThread (ref(scheduler));
 
     unsigned long           checkIngestionTimesPeriodInMilliSecs = 4 * 1000;
-    logger->info(string("Creating and Starting CheckIngestionTimes")
+    logger->info(__FILEREF__ + "Creating and Starting CheckIngestionTimes"
         + ", checkIngestionTimesPeriodInMilliSecs: " + to_string(checkIngestionTimesPeriodInMilliSecs)
             );
     shared_ptr<CheckIngestionTimes>     checkIngestionTimes =
@@ -99,7 +100,7 @@ int main (int iArgc, char *pArgv [])
     scheduler.activeTimes(checkIngestionTimes);
 
     unsigned long           checkEncodingTimesPeriodInMilliSecs = 15 * 1000;
-    logger->info(string("Creating and Starting CheckEncodingTimes")
+    logger->info(__FILEREF__ + "Creating and Starting CheckEncodingTimes"
         + ", checkEncodingTimesPeriodInMilliSecs: " + to_string(checkEncodingTimesPeriodInMilliSecs)
             );
     shared_ptr<CheckEncodingTimes>     checkEncodingTimes =
@@ -108,19 +109,19 @@ int main (int iArgc, char *pArgv [])
     scheduler.activeTimes(checkEncodingTimes);
 
     
-    logger->info(string("Waiting ActiveEncodingsManager")
+    logger->info(__FILEREF__ + "Waiting ActiveEncodingsManager"
             );
     activeEncodingsManagerThread.join();
     
-    logger->info(string("Waiting CMSEngineProcessor")
+    logger->info(__FILEREF__ + "Waiting CMSEngineProcessor"
             );
     cmsEngineProcessorThread.join();
     
-    logger->info(string("Waiting Scheduler2")
+    logger->info(__FILEREF__ + "Waiting Scheduler2"
             );
     schedulerThread.join();
 
-    logger->info(string("Shutdown done")
+    logger->info(__FILEREF__ + "Shutdown done"
             );
     
     return 0;
