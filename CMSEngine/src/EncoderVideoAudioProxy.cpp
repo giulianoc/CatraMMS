@@ -18,10 +18,12 @@
 #include "EncoderVideoAudioProxy.h"
 
 #ifdef __APPLE__
-#define _ffmpegPath  string("/Users/multi/GestioneProgetti/Development/vireo/vireoBinaries/bin")
+#define _ffmpegPath  string("/Users/multi/GestioneProgetti/Development/catrasoftware/usr_local/bin")
 #else
 #define _ffmpegPath  string("/app/7/DevelopmentWorkingArea/usr_local/bin")
 #endif
+
+#define _charsToBeReadFromFfmpegErrorOutput 1024
 
 EncoderVideoAudioProxy::EncoderVideoAudioProxy()
 {    
@@ -57,8 +59,6 @@ void EncoderVideoAudioProxy::setData(
     _MP4Encoder            = "FFMPEG";
     _mpeg2TSEncoder         = "FFMPEG";
     
-    _charsToBeReadFromFfmpegErrorOutput = 1024;
-
     _outputFfmpegPathFileName   = "";
     
     #ifdef __FFMPEGLOCALENCODER__
@@ -381,16 +381,34 @@ int64_t EncoderVideoAudioProxy::getVideoOrAudioDurationInMilliSeconds(
         + ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
     );
 
-    int executeCommandStatus = ProcessUtility:: execute (ffprobeExecuteCommand);
-    if (executeCommandStatus != 0)
+    try
     {
+        int executeCommandStatus = ProcessUtility:: execute (ffprobeExecuteCommand);
+        if (executeCommandStatus != 0)
+        {
+            string errorMessage = __FILEREF__ + "ffprobe command failed"
+                    + ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
+            ;
+
+            logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+    catch(exception e)
+    {
+        string lastPartOfFfmpegOutputFile = getLastPartOfFile(
+                durationPathFileName, _charsToBeReadFromFfmpegErrorOutput);
         string errorMessage = __FILEREF__ + "ffprobe command failed"
                 + ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
+                + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
         ;
-
         logger->error(errorMessage);
 
-        throw runtime_error(errorMessage);
+        bool exceptionInCaseOfError = false;
+        FileIO::remove(durationPathFileName, exceptionInCaseOfError);
+
+        throw e;
     }
 
     int64_t      videoOrAudioDurationInMilliSeconds;
@@ -434,13 +452,28 @@ void EncoderVideoAudioProxy::generateScreenshotToIngest(
     // -an: disable audio
     // -s set frame size (WxH or abbreviation)
 
+    size_t extensionIndex = imagePathName.find_last_of("/");
+    if (extensionIndex == string::npos)
+    {
+        string errorMessage = __FILEREF__ + "No extension find in the asset file name"
+                + ", imagePathName: " + imagePathName;
+        logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    string outputFfmpegPathFileName =
+            string("/tmp/")
+            + imagePathName.substr(extensionIndex + 1)
+            + ".generateScreenshot.log"
+            ;
+    
     string ffmpegExecuteCommand = 
             _ffmpegPath + "/ffmpeg "
             + "-y -i " + cmsAssetPathName + " "
             + "-f mjpeg -ss " + to_string(timePositionInSeconds) + " "
             + "-vframes 1 -an -s " + to_string(sourceImageWidth) + "x" + to_string(sourceImageHeight) + " "
             + imagePathName + " "
-            + "> /dev/null " 
+            + "> " + outputFfmpegPathFileName + " "
             + "2>&1"
             ;
 
@@ -448,16 +481,34 @@ void EncoderVideoAudioProxy::generateScreenshotToIngest(
         + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
     );
 
-    int executeCommandStatus = ProcessUtility::execute (ffmpegExecuteCommand);
-    if (executeCommandStatus != 0)
+    try
     {
+        int executeCommandStatus = ProcessUtility::execute (ffmpegExecuteCommand);
+        if (executeCommandStatus != 0)
+        {
+            string errorMessage = __FILEREF__ + "ffmpeg command failed"
+                    + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+            ;
+
+            logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+    catch(exception e)
+    {
+        string lastPartOfFfmpegOutputFile = getLastPartOfFile(
+                outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
         string errorMessage = __FILEREF__ + "ffmpeg command failed"
                 + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+                + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
         ;
-
         logger->error(errorMessage);
 
-        throw runtime_error(errorMessage);
+        bool exceptionInCaseOfError = false;
+        FileIO::remove(outputFfmpegPathFileName, exceptionInCaseOfError);
+
+        throw e;
     }
 
     bool inCaseOfLinkHasItToBeRead = false;
@@ -1036,6 +1087,8 @@ string EncoderVideoAudioProxy::getLastPartOfFile(
     string lastPartOfFile = "";
     char* buffer = nullptr;
 
+    auto logger = spdlog::get("cmsEngineService");
+
     try
     {
         ifstream ifPathFileName(pathFileName);
@@ -1079,7 +1132,7 @@ string EncoderVideoAudioProxy::getLastPartOfFile(
         if (buffer != nullptr)
             delete [] buffer;
 
-        _logger->error("getLastPartOfFile failed");        
+        logger->error("getLastPartOfFile failed");        
     }
 
     return lastPartOfFile;

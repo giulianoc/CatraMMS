@@ -97,7 +97,6 @@ private:
     // static string                              _ffmpegPathName;
     string                              _MP4Encoder;
     string                              _mpeg2TSEncoder;
-    int                                 _charsToBeReadFromFfmpegErrorOutput;
     
     // string                              _outputFfmpegPathFileName;
 
@@ -132,7 +131,7 @@ private:
         string& ffmpegAudioBitRateParameter
     );
 
-    string getLastPartOfFile(string pathFileName, int lastCharsToBeRead);
+    static string getLastPartOfFile(string pathFileName, int lastCharsToBeRead);
 };
 
 #endif

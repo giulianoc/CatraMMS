@@ -12,7 +12,6 @@
  */
 
 #include "ActiveEncodingsManager.h"
-#include "Magick++.h"
 
 ActiveEncodingsManager::ActiveEncodingsManager(
     shared_ptr<CMSEngineDBFacade> cmsEngineDBFacade,
@@ -203,10 +202,10 @@ void ActiveEncodingsManager::processEncodingJob(mutex* mtEncodingJobs, EncodingJ
     }
     else if (encodingJob->_encodingItem->_contentType == CMSEngineDBFacade::ContentType::Image)
     {
-        string stagingEncodedImagePathName;
+        string stagingEncodedAssetPathName;
         try
         {
-            stagingEncodedImagePathName = encodeContentImage(encodingJob->_encodingItem);
+            stagingEncodedAssetPathName = encodeContentImage(encodingJob->_encodingItem);
         }
         catch(exception e)
         {
@@ -237,17 +236,17 @@ void ActiveEncodingsManager::processEncodingJob(mutex* mtEncodingJobs, EncodingJ
 
         try
         {
-            processEncodedImage(stagingEncodedImagePathName);
+            processEncodedImage(encodingJob->_encodingItem, stagingEncodedAssetPathName);
         }
         catch(exception e)
         {
             _logger->error(__FILEREF__ + "processEncodedImage: " + e.what());
 
             _logger->error(__FILEREF__ + "Remove"
-                + ", stagingEncodedImagePathName: " + stagingEncodedImagePathName
+                + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
             );
 
-            FileIO::remove(stagingEncodedImagePathName);
+            FileIO::remove(stagingEncodedAssetPathName);
 
             _logger->info(__FILEREF__ + "_cmsEngineDBFacade->updateEncodingJob PunctualError"
                 + ", encodingJob->_encodingItem->_encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
@@ -329,69 +328,123 @@ string ActiveEncodingsManager::encodeContentImage(shared_ptr<CMSEngineDBFacade::
         encodingItem->_relativePath,
         encodingItem->_fileName);
 
+    string          stagingEncodedAssetPathName;
+    
+    // added the check of the file size is zero because in this case the
+    // magick library cause the crash of the xcms engine
+    {
+        bool inCaseOfLinkHasItToBeRead = false;
+        unsigned long ulFileSize = FileIO::getFileSizeInBytes (
+            cmsSourceAssetPathName, inCaseOfLinkHasItToBeRead);
+        if (ulFileSize == 0)
+        {
+            string errorMessage = __FILEREF__ + "source image file size is zero"
+                + ", cmsSourceAssetPathName: " + cmsSourceAssetPathName
+            ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+        
+    string                      newImageFormat;
+    int                         newWidth;
+    int                         newHeight;
+    int                         newAspect;
+    string                      newInterlace;
+    Magick::InterlaceType       newInterlaceType;
+
+    readingImageProfile(encodingItem->_details,
+            newImageFormat, newWidth, newHeight, newAspect, newInterlace, newInterlaceType);
+
     try
     {
-        // added the check of the file size is zero because in this case the
-        // magick library cause the crash of the xcms engine
-        {
-            bool inCaseOfLinkHasItToBeRead = false;
-            unsigned long ulFileSize = FileIO::getFileSizeInBytes (
-                cmsSourceAssetPathName, inCaseOfLinkHasItToBeRead);
-            if (ulFileSize == 0)
-            {
-                string errorMessage = __FILEREF__ + "source image file size is zero"
-                    + ", cmsSourceAssetPathName: " + cmsSourceAssetPathName
-                ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-        }
+        Magick:: Image      imageToEncode;
         
-        Magick:: Image      iImageToEncode;
-        
-        iImageToEncode. read (cmsSourceAssetPathName.c_str());
+        imageToEncode. read (cmsSourceAssetPathName.c_str());
 
-        string currentImageFormat = iImageToEncode.magick ();
+        string currentImageFormat = imageToEncode.magick ();
         
 	if (currentImageFormat == "jpeg")
             currentImageFormat = "JPG";
 
-        int currentWidth	= iImageToEncode. columns ();
-	int currentHeight	= iImageToEncode. rows ();
+        int currentWidth	= imageToEncode. columns ();
+	int currentHeight	= imageToEncode. rows ();
 
+        _logger->info(__FILEREF__ + "Image processing"
+            + ", encodingItem->_encodingProfileKey: " + to_string(encodingItem->_encodingProfileKey)
+            + ", cmsSourceAssetPathName: " + cmsSourceAssetPathName
+            + ", currentImageFormat: " + currentImageFormat
+            + ", currentWidth: " + to_string(currentWidth)
+            + ", currentHeight: " + to_string(currentHeight)
+            + ", newImageFormat: " + newImageFormat
+            + ", newWidth: " + to_string(newWidth)
+            + ", newHeight: " + to_string(newHeight)
+            + ", newAspect: " + to_string(newAspect)
+            + ", newInterlace: " + newInterlace
+        );
+        
+        if (currentImageFormat == newImageFormat
+            && currentWidth == newWidth
+            && currentHeight == newHeight)
         {
-            string field;
-            Json::Value encodingProfileRoot;
-            try
-            {
-                Json::CharReaderBuilder builder;
-                Json::CharReader* reader = builder.newCharReader();
-                string errors;
+            // same as the ingested content. Just copy the content
+            
+            encodedFileName.append(encodingItem->_fileName.substr(extensionIndex));
 
-                bool parsingSuccessful = reader->parse(encodingItem->_details.c_str(),
-                        encodingItem->_details.c_str() + encodingItem->_details.size(), 
-                        &encodingProfileRoot, &errors);
-                delete reader;
+            bool removeLinuxPathIfExist = true;
+            stagingEncodedAssetPathName = _cmsStorage->getStagingAssetPathName(
+                encodingItem->_customer->_directoryName,
+                encodingItem->_relativePath,
+                encodedFileName,
+                -1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
+                -1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
+                removeLinuxPathIfExist);
 
-                if (!parsingSuccessful)
-                {
-                    string errorMessage = __FILEREF__ + "failed to parse the encoder details"
-                            + ", details: " + encodingItem->_details;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }
-            }
-            catch(...)
-            {
-                throw runtime_error(string("wrong encoding profile json format")
-                        + ", encodingItem->_details: " + encodingItem->_details
-                        );
-            }
+            FileIO::copyFile (cmsSourceAssetPathName, stagingEncodedAssetPathName);
         }
+        else
+        {
+            if (newImageFormat == "JPG")
+            {
+                imageToEncode. magick ("JPEG");                
+                encodedFileName.append(".jpg");
+            }
+            else if (newImageFormat == "GIF")
+            {
+                imageToEncode. magick ("GIF");                
+                encodedFileName.append(".gif");
+            }
+            else if (newImageFormat == "PNG")
+            {
+                imageToEncode. magick ("PNG");
+                imageToEncode. depth (8);
+                encodedFileName.append(".png");
+            }
 
-        Magick::InterlaceType			itInterlaceType;
+            bool removeLinuxPathIfExist = true;
+            stagingEncodedAssetPathName = _cmsStorage->getStagingAssetPathName(
+                encodingItem->_customer->_directoryName,
+                encodingItem->_relativePath,
+                encodedFileName,
+                -1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
+                -1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
+                removeLinuxPathIfExist);
+            
+            Magick:: Geometry	newGeometry (newWidth, newHeight);
+
+            // if Aspect is true the proportion are not mantained
+            // if Aspect is false the proportion are mantained
+            newGeometry. aspect (newAspect ? true : false);
+
+            // if ulAspect is false, it means the aspect is preserved,
+            // the width is fixed and the height will be calculated
+
+            // also 'scale' could be used
+            imageToEncode. scale (newGeometry);
+            imageToEncode. interlaceType (newInterlaceType);
+            imageToEncode.write(stagingEncodedAssetPathName);
+        }
     }
     catch (Magick::Error &e)
     {
@@ -413,22 +466,102 @@ string ActiveEncodingsManager::encodeContentImage(shared_ptr<CMSEngineDBFacade::
         
         throw e;
     }
-    
-    
-    
-    
-    
-    string stagingEncodedImagePathName;
-    
-    
-    return stagingEncodedImagePathName;
+        
+    return stagingEncodedAssetPathName;
 }
 
-void ActiveEncodingsManager::processEncodedImage(string stagingEncodedImagePathName)
+void ActiveEncodingsManager::processEncodedImage(
+        shared_ptr<CMSEngineDBFacade::EncodingItem> encodingItem, 
+        string stagingEncodedAssetPathName)
 {
-    
-}
+    string encodedFileName;
+    string cmsAssetPathName;
+    unsigned long cmsPartitionIndexUsed;
+    try
+    {
+        size_t fileNameIndex = stagingEncodedAssetPathName.find_last_of("/");
+        if (fileNameIndex == string::npos)
+        {
+            string errorMessage = __FILEREF__ + "No fileName find in the asset path name"
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
+            _logger->error(errorMessage);
 
+            throw runtime_error(errorMessage);
+        }
+
+        encodedFileName = stagingEncodedAssetPathName.substr(fileNameIndex + 1);
+
+        bool partitionIndexToBeCalculated = true;
+        bool deliveryRepositoriesToo = true;
+
+        cmsAssetPathName = _cmsStorage->moveAssetInCMSRepository(
+            stagingEncodedAssetPathName,
+            encodingItem->_customer->_directoryName,
+            encodedFileName,
+            encodingItem->_relativePath,
+
+            partitionIndexToBeCalculated,
+            &cmsPartitionIndexUsed, // OUT if bIsPartitionIndexToBeCalculated is true, IN is bIsPartitionIndexToBeCalculated is false
+
+            deliveryRepositoriesToo,
+            encodingItem->_customer->_territories
+        );
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "_cmsStorage->moveAssetInCMSRepository failed"
+            + ", encodingItem->_encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+            + ", encodingItem->_ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+            + ", encodingItem->_physicalPathKey: " + to_string(encodingItem->_physicalPathKey)
+            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+        );
+
+        throw e;
+    }
+
+    try
+    {
+        unsigned long long cmsAssetSizeInBytes;
+        {
+            bool inCaseOfLinkHasItToBeRead = false;
+            cmsAssetSizeInBytes = FileIO::getFileSizeInBytes(cmsAssetPathName,
+                    inCaseOfLinkHasItToBeRead);   
+        }
+
+        int64_t encodedPhysicalPathKey = _cmsEngineDBFacade->saveEncodedContentMetadata(
+            encodingItem->_customer->_customerKey,
+            encodingItem->_mediaItemKey,
+            encodedFileName,
+            encodingItem->_relativePath,
+            cmsPartitionIndexUsed,
+            cmsAssetSizeInBytes,
+            encodingItem->_encodingProfileKey);
+        
+        _logger->info(__FILEREF__ + "Saved the Encoded content"
+            + ", encodingItem->_encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+            + ", encodingItem->_ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+            + ", encodingItem->_physicalPathKey: " + to_string(encodingItem->_physicalPathKey)
+            + ", encodedPhysicalPathKey: " + to_string(encodedPhysicalPathKey)
+        );
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "_cmsEngineDBFacade->saveEncodedContentMetadata failed"
+            + ", encodingItem->_encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+            + ", encodingItem->_ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+            + ", encodingItem->_physicalPathKey: " + to_string(encodingItem->_physicalPathKey)
+            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+        );
+
+        _logger->info(__FILEREF__ + "Remove"
+            + ", cmsAssetPathName: " + cmsAssetPathName
+        );
+
+        FileIO::remove(cmsAssetPathName);
+
+        throw e;
+    }
+}
 
 void ActiveEncodingsManager::addEncodingItem(shared_ptr<CMSEngineDBFacade::EncodingItem> encodingItem)
 {
@@ -540,4 +673,166 @@ unsigned long ActiveEncodingsManager:: addEncodingItems (
     }
 
     return ulEncodingsNumberAdded;
+}
+
+void ActiveEncodingsManager::readingImageProfile(
+        string profileDetails,
+        string& newFormat,
+        int& newWidth,
+        int& newHeight,
+        int& newAspect,
+        string& newInterlace,
+        Magick::InterlaceType& interlaceType
+)
+{
+    string field;
+    Json::Value encodingProfileRoot;
+    try
+    {
+        Json::CharReaderBuilder builder;
+        Json::CharReader* reader = builder.newCharReader();
+        string errors;
+
+        bool parsingSuccessful = reader->parse(profileDetails.c_str(),
+                profileDetails.c_str() + profileDetails.size(), 
+                &encodingProfileRoot, &errors);
+        delete reader;
+
+        if (!parsingSuccessful)
+        {
+            string errorMessage = __FILEREF__ + "failed to parse the encoder details"
+                    + ", details: " + profileDetails;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+    catch(...)
+    {
+        throw runtime_error(string("wrong encoding profile json format")
+                + ", profileDetails: " + profileDetails
+                );
+    }
+
+    // Format
+    {
+        field = "format";
+        if (!_cmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        newFormat = encodingProfileRoot.get(field, "XXX").asString();
+
+        encodingImageFormatValidation(newFormat);
+    }
+
+    // Width
+    {
+        field = "width";
+        if (!_cmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        newWidth = encodingProfileRoot.get(field, "XXX").asInt();
+    }
+
+    // Height
+    {
+        field = "height";
+        if (!_cmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        newHeight = encodingProfileRoot.get(field, "XXX").asInt();
+    }
+
+    // Aspect
+    {
+        field = "aspect";
+        if (!_cmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        newAspect = encodingProfileRoot.get(field, "XXX").asInt();
+    }
+
+    // Interlace
+    {
+        field = "interlace";
+        if (!_cmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        newInterlace = encodingProfileRoot.get(field, "XXX").asString();
+
+        interlaceType = encodingImageInterlaceValidation(newInterlace);
+    }
+}
+
+void ActiveEncodingsManager::encodingImageFormatValidation(string newFormat)
+{    
+    if (newFormat != "JPG" 
+            && newFormat != "GIF" 
+            && newFormat != "PNG" 
+            )
+    {
+        string errorMessage = __FILEREF__ + "newFormat is wrong"
+                + ", newFormat: " + newFormat;
+
+        auto logger = spdlog::get("cmsEngineService");
+        logger->error(errorMessage);
+        
+        throw runtime_error(errorMessage);
+    }
+}
+
+Magick::InterlaceType ActiveEncodingsManager::encodingImageInterlaceValidation(string newInterlace)
+{    
+    Magick::InterlaceType       interlaceType;
+    
+    if (newInterlace == "NoInterlace")
+        interlaceType       = Magick::NoInterlace;
+    else if (newInterlace == "LineInterlace")
+        interlaceType       = Magick::LineInterlace;
+    else if (newInterlace == "PlaneInterlace")
+        interlaceType       = Magick::PlaneInterlace;
+    else if (newInterlace == "PartitionInterlace")
+        interlaceType       = Magick::PartitionInterlace;
+    else
+    {
+        string errorMessage = __FILEREF__ + "newInterlace is wrong"
+                + ", newInterlace: " + newInterlace;
+
+        auto logger = spdlog::get("cmsEngineService");
+        logger->error(errorMessage);
+        
+        throw runtime_error(errorMessage);
+    }
+    
+    return interlaceType;
 }

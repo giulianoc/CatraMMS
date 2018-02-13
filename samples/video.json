@@ -14,7 +14,8 @@
 		{
 			"TimePositionInSeconds": 123.34,		// mandatory
 			"EncodingProfilesSet": "customerDefault",	// mandatory
-			"SourceImageResolution": 176x144		// mandatory
+			"SourceImageWidth": 176,		// mandatory
+			"SourceImageHeight": 144		// mandatory
 		}
 	],
         "LogicalType": "Advertising",     // optional

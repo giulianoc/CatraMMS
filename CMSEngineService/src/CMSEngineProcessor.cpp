@@ -511,6 +511,8 @@ void CMSEngineProcessor::handleIngestAssetEvent (shared_ptr<IngestAssetEvent> in
 
         _cmsEngineDBFacade->updateIngestionJob (ingestAssetEvent->getIngestionJobKey(),
                 CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
+        
+        throw e;
     }
     catch(exception e)
     {
@@ -522,6 +524,8 @@ void CMSEngineProcessor::handleIngestAssetEvent (shared_ptr<IngestAssetEvent> in
 
         _cmsEngineDBFacade->updateIngestionJob (ingestAssetEvent->getIngestionJobKey(),
                 CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
+        
+        throw e;
     }
 
     int64_t videoOrAudioDurationInMilliSeconds = 0;
@@ -577,6 +581,8 @@ void CMSEngineProcessor::handleIngestAssetEvent (shared_ptr<IngestAssetEvent> in
 
         _cmsEngineDBFacade->updateIngestionJob (ingestAssetEvent->getIngestionJobKey(),
                 CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
+        
+        throw e;
     }
     catch(exception e)
     {
@@ -593,6 +599,8 @@ void CMSEngineProcessor::handleIngestAssetEvent (shared_ptr<IngestAssetEvent> in
 
         _cmsEngineDBFacade->updateIngestionJob (ingestAssetEvent->getIngestionJobKey(),
                 CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
+        
+        throw e;
     }
     
     // ingest Screenshots if present
@@ -884,18 +892,18 @@ CMSEngineDBFacade::ContentType CMSEngineProcessor::validateContentIngestionMetad
     
     CMSEngineDBFacade::ContentType         contentType;
     
-    vector<string> mandatoryFields = {
+    vector<string> contentIngestionMandatoryFields = {
         "Title",
         "SourceFileName",
         "ContentType",
         "EncodingProfilesSet"
     };
-    for (string field: mandatoryFields)
+    for (string contentIngestionField: contentIngestionMandatoryFields)
     {
-        if (!_cmsEngineDBFacade->isMetadataPresent(contentIngestion, field))
+        if (!_cmsEngineDBFacade->isMetadataPresent(contentIngestion, contentIngestionField))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + field;
+                    + ", Field: " + contentIngestionField;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -972,12 +980,12 @@ CMSEngineDBFacade::ContentType CMSEngineProcessor::validateContentIngestionMetad
                     "SourceImageWidth",
                     "SourceImageHeight"
                 };
-                for (string field: mandatoryFields)
+                for (string screenshotField: screenshotMandatoryFields)
                 {
-                    if (!_cmsEngineDBFacade->isMetadataPresent(screenshot, field))
+                    if (!_cmsEngineDBFacade->isMetadataPresent(screenshot, screenshotField))
                     {
                         string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                                + ", Field: " + field;
+                                + ", Field: " + screenshotField;
                         _logger->error(errorMessage);
 
                         throw runtime_error(errorMessage);

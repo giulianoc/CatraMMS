@@ -21,6 +21,7 @@
 #include "CMSEngineDBFacade.h"
 #include "CMSStorage.h"
 #include "spdlog/spdlog.h"
+#include "Magick++.h"
 
 #define MAXHIGHENCODINGSTOBEMANAGED     30
 #define MAXDEFAULTENCODINGSTOBEMANAGED  20
@@ -47,6 +48,9 @@ public:
     unsigned long addEncodingItems (
 	vector<shared_ptr<CMSEngineDBFacade::EncodingItem>>& vEncodingItems);
     
+    static void encodingImageFormatValidation(string newFormat);
+    static Magick::InterlaceType encodingImageInterlaceValidation(string newInterlace);
+
 private:
     struct EncodingJob
     {
@@ -81,7 +85,19 @@ private:
     void addEncodingItem(shared_ptr<CMSEngineDBFacade::EncodingItem> encodingItem);
     string encodeContentImage(
         shared_ptr<CMSEngineDBFacade::EncodingItem> encodingItem);
-    void processEncodedImage(string stagingEncodedImagePathName);
+    void processEncodedImage(
+        shared_ptr<CMSEngineDBFacade::EncodingItem> encodingItem, 
+        string stagingEncodedAssetPathName);
+
+    void readingImageProfile(
+        string profileDetails,
+        string& newFormat,
+        int& newWidth,
+        int& newHeight,
+        int& newAspect,
+        string& newInterlace,
+        Magick::InterlaceType& interlaceType
+    );
 };
 
 #endif
