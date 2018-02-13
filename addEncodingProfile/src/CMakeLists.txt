@@ -50,7 +50,7 @@ target_link_libraries (addEncodingProfile mysqlcppconn)
 target_link_libraries (addEncodingProfile jsoncpp)
 if (APPLE) 
 else()  
-        target_link_libraries (addCustomer Magick++-7.Q16HDRI)
+        target_link_libraries (addEncodingProfile Magick++-7.Q16HDRI)
 endif() 
 
 

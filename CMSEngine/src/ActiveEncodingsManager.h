@@ -49,7 +49,7 @@ public:
 	vector<shared_ptr<CMSEngineDBFacade::EncodingItem>>& vEncodingItems);
     
     static void encodingImageFormatValidation(string newFormat);
-    static Magick::InterlaceType encodingImageInterlaceValidation(string newInterlace);
+    static Magick::InterlaceType encodingImageInterlaceTypeValidation(string sNewInterlaceType);
 
 private:
     struct EncodingJob
@@ -94,9 +94,9 @@ private:
         string& newFormat,
         int& newWidth,
         int& newHeight,
-        int& newAspect,
-        string& newInterlace,
-        Magick::InterlaceType& interlaceType
+        bool& newAspect,
+        string& sNewInterlaceType,
+        Magick::InterlaceType& newInterlaceType
     );
 };
 

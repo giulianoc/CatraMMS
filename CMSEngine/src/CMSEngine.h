@@ -73,11 +73,25 @@ public:
         string audioBitRate
     );
 
+    void addImageEncodingProfile(
+        shared_ptr<Customer> customer,
+        string encodingProfileSet,  // "": default Customer family, != "": named customer family
+	string label,
+
+	string format,         // JPG, GIF, PNG
+        
+        int width,
+        int height,
+        bool aspectRatio,   // Aspect is true the proportion are NOT maintained
+                            // if Aspect is false the proportion are maintained, the width is fixed and the height will be calculated
+        string sInterlaceType    // NoInterlace, LineInterlace, PlaneInterlace, PartitionInterlace
+    );
+
 private:
     shared_ptr<CMSEngineDBFacade> _cmsEngineDBFacade;
     shared_ptr<spdlog::logger> _logger;
     
-    string getEncodingProfileDetails(
+    string getVideoEncodingProfileDetails(
         string fileFormat,
 
         string videoCodec,
@@ -93,6 +107,15 @@ private:
 
         string audioCodec,
         string audioBitRate
+    );
+    
+    string getImageEncodingProfileDetails(
+        string format,
+
+        int width,
+        int height,
+        bool aspectRatio,
+        string sInterlaceType
     );
 };
 

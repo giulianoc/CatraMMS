@@ -434,7 +434,8 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                             shared_ptr<Event>    event = dynamic_pointer_cast<Event>(ingestAssetEvent);
                             _multiEventsSet->addEvent(event);
 
-                            _logger->debug(__FILEREF__ + "addEvent: EVENT_TYPE"
+                            _logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
+                                + ", mediaSourceFileName: " + mediaSourceFileName
                                 + ", getEventKey().first: " + to_string(event->getEventKey().first)
                                 + ", getEventKey().second: " + to_string(event->getEventKey().second));
                         }
@@ -627,6 +628,10 @@ void CMSEngineProcessor::handleIngestAssetEvent (shared_ptr<IngestAssetEvent> in
             }
             string videoTitle = contentIngestion.get(field, "XXX").asString();
 
+            _logger->info(__FILEREF__ + "Processing the screenshots"
+                + ", screenshots.size(): " + to_string(screenshots.size())
+            );
+            
             for(int screenshotIndex = 0; screenshotIndex < screenshots.size(); screenshotIndex++) 
             {
                 try
@@ -720,7 +725,8 @@ void CMSEngineProcessor::handleIngestAssetEvent (shared_ptr<IngestAssetEvent> in
                         shared_ptr<Event>    event = dynamic_pointer_cast<Event>(generateImageToIngestEvent);
                         _multiEventsSet->addEvent(event);
 
-                        _logger->debug(__FILEREF__ + "addEvent: EVENT_TYPE"
+                        _logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (GENERATEIMAGETOINGESTEVENT) to generate the screenshot"
+                            + ", imageFileName: " + imageFileName
                             + ", getEventKey().first: " + to_string(event->getEventKey().first)
                             + ", getEventKey().second: " + to_string(event->getEventKey().second));
                     }

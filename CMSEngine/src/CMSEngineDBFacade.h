@@ -66,7 +66,7 @@ public:
     };
     
     enum class EncodingTechnology {
-        Images      = 0,    // (Download),
+        Image      = 0,    // (Download),
         MP4,                // (Streaming+Download),
         MPEG2_TS,           // (IPhone Streaming),
         WEBM,               // (VP8 and Vorbis)
@@ -174,7 +174,7 @@ public:
         chrono::system_clock::time_point userExpirationDate
     );
     
-    int64_t addVideoEncodeProfile(
+    int64_t addVideoEncodingProfile(
         shared_ptr<Customer> customer,
         string encodingProfileSet,
         EncodingTechnology encodingTechnology,
@@ -182,7 +182,17 @@ public:
         string label,
         int width,
         int height,
-        string videoCodec
+        string videoCodec,
+        string audioCodec
+    );
+
+    int64_t addImageEncodingProfile(
+        shared_ptr<Customer> customer,
+        string encodingProfileSet,
+        string details,
+        string label,
+        int width,
+        int height
     );
 
     int64_t addIngestionJob (

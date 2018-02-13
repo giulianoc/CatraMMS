@@ -13,6 +13,7 @@
 
 #include "CMSEngine.h"
 #include "EncoderVideoAudioProxy.h"
+#include "ActiveEncodingsManager.h"
 
 
 CMSEngine::CMSEngine(shared_ptr<CMSEngineDBFacade> cmsEngineDBFacade,
@@ -141,7 +142,7 @@ void CMSEngine::addFFMPEGVideoEncodingProfile(
         string audioBitRate
 )
 {    
-    _logger->info(__FILEREF__ + "Received addEncodingProfile"
+    _logger->info(__FILEREF__ + "Received addFFMPEGVideoEncodingProfile"
         + ", customer->_customerKey: " + to_string(customer->_customerKey)
         + ", customer->_name: " + customer->_name
         + ", encodingProfileSet: " + encodingProfileSet
@@ -171,7 +172,7 @@ void CMSEngine::addFFMPEGVideoEncodingProfile(
         EncoderVideoAudioProxy::ffmpeg_encodingVideoProfileValidation(videoCodec, videoProfile);
         EncoderVideoAudioProxy::ffmpeg_encodingAudioCodecValidation(audioCodec);
 
-        string details = getEncodingProfileDetails(
+        string details = getVideoEncodingProfileDetails(
             fileFormat,
                 
             videoCodec,
@@ -189,7 +190,7 @@ void CMSEngine::addFFMPEGVideoEncodingProfile(
             audioBitRate
         );
 
-        int64_t encodingProfileKey = _cmsEngineDBFacade->addVideoEncodeProfile(
+        int64_t encodingProfileKey = _cmsEngineDBFacade->addVideoEncodingProfile(
             customer,
             encodingProfileSet,
             encodingTechnology,
@@ -197,19 +198,114 @@ void CMSEngine::addFFMPEGVideoEncodingProfile(
             label,
             videoWidth,
             videoHeight,
-            videoCodec);      
+            videoCodec,
+            audioCodec);      
         
-        _logger->info(__FILEREF__ + "Created the encoding profile"
+        _logger->info(__FILEREF__ + "Created the video/audio encoding profile"
             + ", encodingProfileKey: " + to_string(encodingProfileKey)
         );
     }
     catch(...)
     {
-        _logger->error(__FILEREF__ + "_cmsEngineDBFacade->addVideoEncodeProfile failed");
+        _logger->error(__FILEREF__ + "_cmsEngineDBFacade->addVideoAudioEncodeProfile failed");
     }
 }
 
-string CMSEngine::getEncodingProfileDetails(
+void CMSEngine::addImageEncodingProfile(
+    shared_ptr<Customer> customer,
+    string encodingProfileSet,  // "": default Customer family, != "": named customer family
+    string label,
+
+    string format,         // JPG, GIF, PNG
+
+    int width,
+    int height,
+    bool aspectRatio,   // Aspect is true the proportion are NOT maintained
+                        // if Aspect is false the proportion are maintained, the width is fixed and the height will be calculated
+    string sInterlaceType    // NoInterlace, LineInterlace, PlaneInterlace, PartitionInterlace
+)
+{
+    _logger->info(__FILEREF__ + "Received addImageEncodingProfile"
+        + ", customer->_customerKey: " + to_string(customer->_customerKey)
+        + ", customer->_name: " + customer->_name
+        + ", encodingProfileSet: " + encodingProfileSet
+        + ", label: " + label
+        + ", format: " + format
+
+        + ", width: " + to_string(width)
+        + ", height: " + to_string(height)
+        + ", aspectRatio: " + to_string(aspectRatio)
+        + ", sInterlaceType: " + sInterlaceType
+    );
+
+    try
+    {
+        ActiveEncodingsManager::encodingImageFormatValidation(format);
+        ActiveEncodingsManager::encodingImageInterlaceTypeValidation(sInterlaceType);
+
+
+        string details = getImageEncodingProfileDetails(
+            format,
+                
+            width,
+            height,
+            aspectRatio,
+            sInterlaceType
+        );
+
+        int64_t encodingProfileKey = _cmsEngineDBFacade->addImageEncodingProfile(
+            customer,
+            encodingProfileSet,
+            details,
+            label,
+            width,
+            height);      
+        
+        _logger->info(__FILEREF__ + "Created the image encoding profile"
+            + ", encodingProfileKey: " + to_string(encodingProfileKey)
+        );
+    }
+    catch(...)
+    {
+        _logger->error(__FILEREF__ + "_cmsEngineDBFacade->addImageEncodingProfile failed");
+    }
+}
+
+string CMSEngine::getImageEncodingProfileDetails(
+    string format,
+
+    int width,
+    int height,
+    bool aspectRatio,
+    string sInterlaceType
+)
+{
+    string details;
+    
+    try
+    {
+        details = string("")
+                + "{"
+                +    "\"format\": \"" + format + "\", "         // mandatory, JPG, GIF or PNG
+                +    "\"width\": " + to_string(width) + ", " // mandatory
+                +    "\"height\": " + to_string(height) + ", " // mandatory
+                +    "\"aspectRatio\": " + (aspectRatio ? "true" : "false") + ", "      // mandatory
+                +    "\"interlaceType\": \"" + sInterlaceType + "\" "         // mandatory
+                + "}"
+        ;
+    }
+    catch(...)
+    {
+        string errorMessage = __FILEREF__ + "getVideoAudioEncodingProfileDetails failed";
+        _logger->error(errorMessage);
+                
+        throw runtime_error(errorMessage);
+    }
+
+    return details;
+}
+
+string CMSEngine::getVideoEncodingProfileDetails(
     string fileFormat,
 
     string videoCodec,
@@ -251,16 +347,13 @@ string CMSEngine::getEncodingProfileDetails(
                 + "}"
         );
 
-        if (audioCodec != "")
-        {
-            details.append(string("")
-                + ", "
-                + "\"audio\": { "
-                +    "\"codec\": \"" + audioCodec + "\", "  // mandatory, libaacplus, libvo_aacenc or libvorbis
-                +    "\"bitRate\": \"" + audioBitRate + "\" "      // mandatory
-                + "}"
-            );
-        }
+        details.append(string("")
+            + ", "
+            + "\"audio\": { "
+            +    "\"codec\": \"" + audioCodec + "\", "  // mandatory, libaacplus, libvo_aacenc or libvorbis
+            +    "\"bitRate\": \"" + audioBitRate + "\" "      // mandatory
+            + "}"
+        );
 
         details.append(string("")
             + "}"
@@ -268,7 +361,7 @@ string CMSEngine::getEncodingProfileDetails(
     }
     catch(...)
     {
-        string errorMessage = __FILEREF__ + "getEncodingProfileDetails failed";
+        string errorMessage = __FILEREF__ + "getVideoEncodingProfileDetails failed";
         _logger->error(errorMessage);
                 
         throw runtime_error(errorMessage);

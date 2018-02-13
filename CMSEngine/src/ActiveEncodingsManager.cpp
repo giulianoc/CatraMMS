@@ -94,7 +94,9 @@ void ActiveEncodingsManager::operator()()
 
                     if (encodingJob->_status == EncodingJobStatus::Free)
                         continue;
-                    else if (encodingJob->_status == EncodingJobStatus::Running)
+                    else if (encodingJob->_status == EncodingJobStatus::Running && 
+                            (encodingJob->_encodingItem->_contentType == CMSEngineDBFacade::ContentType::Video
+                            || encodingJob->_encodingItem->_contentType == CMSEngineDBFacade::ContentType::Audio))
                     {
                         try
                         {
@@ -106,6 +108,16 @@ void ActiveEncodingsManager::operator()()
                         catch(EncodingStatusNotAvailable e)
                         {
 
+                        }
+                        catch(runtime_error e)
+                        {
+                            _logger->error(__FILEREF__ + "_encoderVideoAudioProxy or updateEncodingJobProgress failed"
+                                + ", runtime_error: " + e.what()
+                            );
+                        }
+                        catch(exception e)
+                        {
+                            _logger->error(__FILEREF__ + "_encoderVideoAudioProxy or updateEncodingJobProgress failed");
                         }
 
                         if (chrono::duration_cast<chrono::hours>(
@@ -147,9 +159,11 @@ void ActiveEncodingsManager::operator()()
                                 + ", _encodingProfileKey: " + to_string(encodingJob->_encodingItem->_encodingProfileKey)
                         );
 
-                        processEncodingJob(&_mtEncodingJobs, encodingJob);
-
-                        _logger->info(__FILEREF__ + "processEncodingJob finished"
+                        try
+                        {
+                            processEncodingJob(&_mtEncodingJobs, encodingJob);
+                            
+                            _logger->info(__FILEREF__ + "processEncodingJob done"
                                 + ", elapsed (seconds): " + 
                                     to_string(chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - processingItemStart).count())
                                 + ", customer: " + encodingJob->_encodingItem->_customer->_name
@@ -159,7 +173,18 @@ void ActiveEncodingsManager::operator()()
                                 + ", _relativePath: " + encodingJob->_encodingItem->_relativePath
                                 + ", _fileName: " + encodingJob->_encodingItem->_fileName
                                 + ", _encodingProfileKey: " + to_string(encodingJob->_encodingItem->_encodingProfileKey)
-                        );
+                            );
+                        }
+                        catch(runtime_error e)
+                        {
+                            _logger->error(__FILEREF__ + "processEncodingJob failed"
+                                + ", runtime_error: " + e.what()
+                            );
+                        }
+                        catch(exception e)
+                        {
+                            _logger->error(__FILEREF__ + "processEncodingJob failed");
+                        }
                     }
                 }
             }
@@ -350,12 +375,12 @@ string ActiveEncodingsManager::encodeContentImage(shared_ptr<CMSEngineDBFacade::
     string                      newImageFormat;
     int                         newWidth;
     int                         newHeight;
-    int                         newAspect;
-    string                      newInterlace;
+    bool                        newAspectRatio;
+    string                      sNewInterlaceType;
     Magick::InterlaceType       newInterlaceType;
 
     readingImageProfile(encodingItem->_details,
-            newImageFormat, newWidth, newHeight, newAspect, newInterlace, newInterlaceType);
+            newImageFormat, newWidth, newHeight, newAspectRatio, sNewInterlaceType, newInterlaceType);
 
     try
     {
@@ -380,8 +405,8 @@ string ActiveEncodingsManager::encodeContentImage(shared_ptr<CMSEngineDBFacade::
             + ", newImageFormat: " + newImageFormat
             + ", newWidth: " + to_string(newWidth)
             + ", newHeight: " + to_string(newHeight)
-            + ", newAspect: " + to_string(newAspect)
-            + ", newInterlace: " + newInterlace
+            + ", newAspectRatio: " + to_string(newAspectRatio)
+            + ", sNewInterlace: " + sNewInterlaceType
         );
         
         if (currentImageFormat == newImageFormat
@@ -435,14 +460,14 @@ string ActiveEncodingsManager::encodeContentImage(shared_ptr<CMSEngineDBFacade::
 
             // if Aspect is true the proportion are not mantained
             // if Aspect is false the proportion are mantained
-            newGeometry. aspect (newAspect ? true : false);
+            newGeometry. aspect (newAspectRatio);
 
             // if ulAspect is false, it means the aspect is preserved,
             // the width is fixed and the height will be calculated
 
             // also 'scale' could be used
-            imageToEncode. scale (newGeometry);
-            imageToEncode. interlaceType (newInterlaceType);
+            imageToEncode.scale (newGeometry);
+            imageToEncode.interlaceType (newInterlaceType);
             imageToEncode.write(stagingEncodedAssetPathName);
         }
     }
@@ -680,9 +705,9 @@ void ActiveEncodingsManager::readingImageProfile(
         string& newFormat,
         int& newWidth,
         int& newHeight,
-        int& newAspect,
-        string& newInterlace,
-        Magick::InterlaceType& interlaceType
+        bool& newAspectRatio,
+        string& sNewInterlaceType,
+        Magick::InterlaceType& newInterlaceType
 )
 {
     string field;
@@ -763,7 +788,7 @@ void ActiveEncodingsManager::readingImageProfile(
 
     // Aspect
     {
-        field = "aspect";
+        field = "aspectRatio";
         if (!_cmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -773,12 +798,12 @@ void ActiveEncodingsManager::readingImageProfile(
             throw runtime_error(errorMessage);
         }
 
-        newAspect = encodingProfileRoot.get(field, "XXX").asInt();
+        newAspectRatio = encodingProfileRoot.get(field, "XXX").asBool();
     }
 
     // Interlace
     {
-        field = "interlace";
+        field = "interlaceType";
         if (!_cmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -788,14 +813,15 @@ void ActiveEncodingsManager::readingImageProfile(
             throw runtime_error(errorMessage);
         }
 
-        newInterlace = encodingProfileRoot.get(field, "XXX").asString();
+        sNewInterlaceType = encodingProfileRoot.get(field, "XXX").asString();
 
-        interlaceType = encodingImageInterlaceValidation(newInterlace);
+        newInterlaceType = encodingImageInterlaceTypeValidation(sNewInterlaceType);
     }
 }
 
 void ActiveEncodingsManager::encodingImageFormatValidation(string newFormat)
 {    
+    auto logger = spdlog::get("cmsEngineService");
     if (newFormat != "JPG" 
             && newFormat != "GIF" 
             && newFormat != "PNG" 
@@ -804,31 +830,30 @@ void ActiveEncodingsManager::encodingImageFormatValidation(string newFormat)
         string errorMessage = __FILEREF__ + "newFormat is wrong"
                 + ", newFormat: " + newFormat;
 
-        auto logger = spdlog::get("cmsEngineService");
         logger->error(errorMessage);
         
         throw runtime_error(errorMessage);
     }
 }
 
-Magick::InterlaceType ActiveEncodingsManager::encodingImageInterlaceValidation(string newInterlace)
+Magick::InterlaceType ActiveEncodingsManager::encodingImageInterlaceTypeValidation(string sNewInterlaceType)
 {    
+    auto logger = spdlog::get("cmsEngineService");
     Magick::InterlaceType       interlaceType;
     
-    if (newInterlace == "NoInterlace")
+    if (sNewInterlaceType == "NoInterlace")
         interlaceType       = Magick::NoInterlace;
-    else if (newInterlace == "LineInterlace")
+    else if (sNewInterlaceType == "LineInterlace")
         interlaceType       = Magick::LineInterlace;
-    else if (newInterlace == "PlaneInterlace")
+    else if (sNewInterlaceType == "PlaneInterlace")
         interlaceType       = Magick::PlaneInterlace;
-    else if (newInterlace == "PartitionInterlace")
+    else if (sNewInterlaceType == "PartitionInterlace")
         interlaceType       = Magick::PartitionInterlace;
     else
     {
-        string errorMessage = __FILEREF__ + "newInterlace is wrong"
-                + ", newInterlace: " + newInterlace;
+        string errorMessage = __FILEREF__ + "sNewInterlaceType is wrong"
+                + ", sNewInterlaceType: " + sNewInterlaceType;
 
-        auto logger = spdlog::get("cmsEngineService");
         logger->error(errorMessage);
         
         throw runtime_error(errorMessage);

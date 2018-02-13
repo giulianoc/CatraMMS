@@ -57,6 +57,20 @@ int main (int iArgc, char *pArgv [])
         "128k"                     // string audioBitRate
     );
 
+    cmsEngine->addImageEncodingProfile(
+        customer,
+        "",                         // string encodingProfileSet,  // "": default Customer family, != "": named customer family
+	"",                         // string label,
+
+	"PNG",                      // string format,
+        
+        352,                         // int width,
+        240,                        // int height,
+        true,                     // bool aspectRatio,  Aspect is true the proportion are NOT maintained
+                                                        // if Aspect is false the proportion are maintained, the width is fixed and the height will be calculated
+        "NoInterlace"                // interlaceType: NoInterlace, LineInterlace, PlaneInterlace, PartitionInterlace
+    );
+
     logger->info(__FILEREF__ + "Shutdown done"
             );
     
