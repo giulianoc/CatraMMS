@@ -1366,6 +1366,7 @@ void CMSEngineDBFacade::getEncodingJobs(
         
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", processorCMS: " + processorCMS
             + ", exceptionMessage: " + exceptionMessage
         );
 
@@ -3727,7 +3728,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
                     "StartPublishing                DATETIME NOT NULL,"
                     "EndPublishing                  DATETIME NOT NULL,"
                     "PublishingStatus               TINYINT (1) NOT NULL,"
-                    "ProcessorCMS                   VARCHAR (24) NULL,"
+                    "ProcessorCMS                   VARCHAR (128) NULL,"
                     "constraint CMS_Publishing2_PK PRIMARY KEY (PublishingKey), "
                     "constraint CMS_Publishing2_FK foreign key (MediaItemKey) "
                         "references CMS_MediaItems (MediaItemKey) on delete cascade, "
@@ -3851,7 +3852,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
                     "EncodingJobEnd			DATETIME NULL,"
                     "Progress                           INT NULL,"
                     "Status           			TINYINT (2) NOT NULL,"
-                    "ProcessorCMS			VARCHAR (24) NULL,"
+                    "ProcessorCMS			VARCHAR (128) NULL,"
                     "FailuresNumber           	INT NOT NULL,"
                     "constraint CMS_EncodingJobs_PK PRIMARY KEY (EncodingJobKey), "
                     "constraint CMS_EncodingJobs_FK foreign key (IngestionJobKey) "

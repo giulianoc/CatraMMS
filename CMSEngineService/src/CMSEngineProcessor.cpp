@@ -772,12 +772,20 @@ void CMSEngineProcessor::handleGenerateImageToIngestEvent (
             generateImageToIngestEvent->getSourceImageHeight(),
             generateImageToIngestEvent->getCmsVideoPathName()
     );
+    
+    _logger->info(__FILEREF__ + "Generated Screenshot to ingest"
+        + ", imagePathName: " + imagePathName
+    );
 
     generateImageMetadataToIngest(
             metadataImagePathName,
             generateImageToIngestEvent->getImageTitle(),
             generateImageToIngestEvent->getImageFileName(),
             generateImageToIngestEvent->getEncodingProfilesSet()
+    );
+
+    _logger->info(__FILEREF__ + "Generated Image metadata to ingest"
+        + ", metadataImagePathName: " + metadataImagePathName
     );
 }
 

@@ -71,6 +71,7 @@ void EncoderVideoAudioProxy::setData(
 
 void EncoderVideoAudioProxy::operator()()
 {
+    
     string stagingEncodedAssetPathName;
     try
     {
@@ -377,6 +378,10 @@ int64_t EncoderVideoAudioProxy::getVideoOrAudioDurationInMilliSeconds(
             + " 2>&1"
             ;
 
+    #ifdef __APPLE__
+        ffprobeExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
+    #endif
+
     logger->info(__FILEREF__ + "Executing ffprobe command"
         + ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
     );
@@ -476,6 +481,10 @@ void EncoderVideoAudioProxy::generateScreenshotToIngest(
             + "> " + outputFfmpegPathFileName + " "
             + "2>&1"
             ;
+
+    #ifdef __APPLE__
+        ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
+    #endif
 
     logger->info(__FILEREF__ + "Executing ffmpeg command"
         + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
@@ -788,6 +797,10 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                     + "2>&1"
             ;
 
+            #ifdef __APPLE__
+                ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
+            #endif
+
             _logger->info(__FILEREF__ + "Executing ffmpeg command"
                 + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
             );
@@ -873,6 +886,10 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                         + "2>&1"
                 ;
 
+                #ifdef __APPLE__
+                    ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
+                #endif
+
                 _logger->info(__FILEREF__ + "Executing ffmpeg command"
                     + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                 );
@@ -928,6 +945,10 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                         + "> " + _outputFfmpegPathFileName 
                         + " 2>&1"
                 ;
+
+                #ifdef __APPLE__
+                    ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
+                #endif
 
                 _logger->info(__FILEREF__ + "Executing ffmpeg command"
                     + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
@@ -990,6 +1011,10 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                         + "> " + _outputFfmpegPathFileName 
                         + " 2>&1"
                 ;
+
+                #ifdef __APPLE__
+                    ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
+                #endif
 
                 _logger->info(__FILEREF__ + "Executing ffmpeg command"
                     + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand

@@ -214,8 +214,8 @@ void ActiveEncodingsManager::processEncodingJob(mutex* mtEncodingJobs, EncodingJ
         );
         
         _logger->info(__FILEREF__ + "Creating encoderVideoAudioProxy thread"
-            + ", encodingJob->_encodingItem->_encodingJobKey" + to_string(encodingJob->_encodingItem->_encodingJobKey)
-            + ", encodingJob->_encodingItem->_fileName" + encodingJob->_encodingItem->_fileName
+            + ", encodingJob->_encodingItem->_encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
+            + ", encodingJob->_encodingItem->_fileName: " + encodingJob->_encodingItem->_fileName
         );
         thread encoderVideoAudioProxyThread(ref(encodingJob->_encoderVideoAudioProxy));
         encoderVideoAudioProxyThread.detach();
