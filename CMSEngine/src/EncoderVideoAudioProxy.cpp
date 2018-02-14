@@ -1336,7 +1336,9 @@ void EncoderVideoAudioProxy::settingFfmpegPatameters(
                 throw runtime_error(errorMessage);
             }
             string width = videoRoot.get(field, "XXX").asString();
-
+            if (width == "-1" && codec == "libx264")
+                width   = "-2";     // h264 requires always a even width/height
+        
             field = "height";
             if (!_cmsEngineDBFacade->isMetadataPresent(videoRoot, field))
             {
@@ -1347,6 +1349,8 @@ void EncoderVideoAudioProxy::settingFfmpegPatameters(
                 throw runtime_error(errorMessage);
             }
             string height = videoRoot.get(field, "XXX").asString();
+            if (height == "-1" && codec == "libx264")
+                height   = "-2";     // h264 requires always a even width/height
 
             ffmpegVideoResolutionParameter =
                     "-vf scale=" + width + ":" + height + " "
