@@ -63,9 +63,16 @@ private:
 
     bool isMetadataPresent(Json::Value root, string field);
 
-    
+    void downloadMediaSourceFile(string sourceReferenceURL,
+        int64_t ingestionJobKey, shared_ptr<Customer> customer,
+        string metadataFileName, string ftpDirectoryWorkingMetadataPathName,
+        string customerFTPDirectory, string mediaSourceFileName);
+
+    double progressCallback(int64_t ingestionJobKey,
+        double dltotal, double dlnow,
+        double ultotal, double ulnow);
+
 public:
-    void downloadMediaSourceFile(string sourceReferenceURL);
     CMSEngineProcessor(
             shared_ptr<spdlog::logger> logger, 
             shared_ptr<MultiEventsSet> multiEventsSet,

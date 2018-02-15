@@ -6,6 +6,7 @@
 #include <curlpp/Easy.hpp>
 #include <curlpp/Options.hpp>
 #include <curlpp/Exception.hpp>
+#include <curlpp/Infos.hpp>
 #include "catralibraries/System.h"
 #include "CMSEngineProcessor.h"
 #include "CheckIngestionTimes.h"
@@ -406,6 +407,13 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                         {          
                             _cmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                     CMSEngineDBFacade::IngestionStatus::SourceDownloadingInProgress, "");
+                            
+                            thread downloadMediaSource(&CMSEngineProcessor::downloadMediaSourceFile, this, 
+                                mediaSourceReference, ingestionJobKey, customer,
+                                directoryEntry, ftpDirectoryWorkingMetadataPathName,
+                                customerFTPDirectory, mediaSourceFileName);
+                            downloadMediaSource.detach();
+                            
                             /*
                             string ftpDirectoryWorkingMetadataPathName =
                                 _cmsStorage->moveFTPRepositoryEntryToSourceDownloadingArea(
@@ -1316,7 +1324,7 @@ tuple<bool, string, string, string, int> CMSEngineProcessor::getMediaSourceDetai
                     throw runtime_error(errorMessage);
                 }
 
-                mediaSourceFileName = mediaSourceReference.substr(fileNameIndex + 1);
+                mediaSourceFileName = path.substr(fileNameIndex + 1);
             }
         }
         else
@@ -1424,11 +1432,19 @@ void CMSEngineProcessor::validateMediaSourceFile (string ftpDirectoryMediaSource
     }    
 }
 
-void CMSEngineProcessor::downloadMediaSourceFile(string sourceReferenceURL)
+void CMSEngineProcessor::downloadMediaSourceFile(string sourceReferenceURL,
+        int64_t ingestionJobKey, shared_ptr<Customer> customer,
+        string metadataFileName, string ftpDirectoryWorkingMetadataPathName,
+        string customerFTPDirectory, string mediaSourceFileName)
 {
     try 
     {
-        ofstream of("/tmp/aaaaaa.mp4");
+        string ftpMediaSourcePathName =
+                customerFTPDirectory
+                + "/"
+                + mediaSourceFileName;
+                
+        ofstream of(ftpMediaSourcePathName);
         
         curlpp::Cleanup cleaner;
         curlpp::Easy request;
@@ -1439,15 +1455,104 @@ void CMSEngineProcessor::downloadMediaSourceFile(string sourceReferenceURL)
 
         // Setting the URL to retrive.
         request.setOpt(new curlpp::options::Url(sourceReferenceURL));
-
+        
+        curlpp::options::ProgressFunction
+            progressBar(bind(&CMSEngineProcessor::progressCallback, this, ingestionJobKey, placeholders::_1, placeholders::_2, placeholders::_3, placeholders::_4));
+        request.setOpt(progressBar);
+        
+        _logger->info(__FILEREF__ + "Downloading media file"
+            + ", sourceReferenceURL: " + sourceReferenceURL
+        );
         request.perform();
+
+        {
+            shared_ptr<IngestAssetEvent>    ingestAssetEvent = _multiEventsSet->getEventsFactory()
+                    ->getFreeEvent<IngestAssetEvent>(CMSENGINE_EVENTTYPEIDENTIFIER_INGESTASSETEVENT);
+
+            ingestAssetEvent->setSource(CMSENGINEPROCESSORNAME);
+            ingestAssetEvent->setDestination(CMSENGINEPROCESSORNAME);
+            ingestAssetEvent->setExpirationTimePoint(chrono::system_clock::now());
+
+            ingestAssetEvent->setIngestionJobKey(ingestionJobKey);
+            ingestAssetEvent->setCustomer(customer);
+
+            ingestAssetEvent->setMetadataFileName(metadataFileName);
+            ingestAssetEvent->setFTPWorkingMetadataPathName(ftpDirectoryWorkingMetadataPathName);
+            ingestAssetEvent->setFTPMediaSourcePathName(ftpMediaSourcePathName);
+            ingestAssetEvent->setMediaSourceFileName(mediaSourceFileName);
+
+            shared_ptr<Event>    event = dynamic_pointer_cast<Event>(ingestAssetEvent);
+            _multiEventsSet->addEvent(event);
+
+            _logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
+                + ", mediaSourceFileName: " + mediaSourceFileName
+                + ", getEventKey().first: " + to_string(event->getEventKey().first)
+                + ", getEventKey().second: " + to_string(event->getEventKey().second));
+        }
     }
     catch ( curlpp::LogicError & e ) 
     {
-        _logger->error(e.what());
+        _logger->error(__FILEREF__ + "Download failed"
+            + ", sourceReferenceURL: " + sourceReferenceURL 
+            + ", exception: " + e.what()
+        );
+        
+        string ftpDirectoryErrorEntryPathName =
+            _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, metadataFileName);
+
+        _cmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
     }
     catch ( curlpp::RuntimeError & e ) 
     {
-        _logger->error(e.what());
+        _logger->error(__FILEREF__ + "Download failed"
+            + ", sourceReferenceURL: " + sourceReferenceURL 
+            + ", exception: " + e.what()
+        );
+        
+        string ftpDirectoryErrorEntryPathName =
+            _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, metadataFileName);
+
+        _cmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
     }
+    catch (exception e)
+    {
+        _logger->error(__FILEREF__ + "Download failed"
+            + ", sourceReferenceURL: " + sourceReferenceURL 
+            + ", exception: " + e.what()
+        );
+        
+        string ftpDirectoryErrorEntryPathName =
+            _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, metadataFileName);
+
+        _cmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
+    }
+}
+
+double CMSEngineProcessor::progressCallback(int64_t ingestionJobKey,
+    double dltotal, double dlnow,
+    double ultotal, double ulnow)
+{
+
+    _logger->info(__FILEREF__ + "Download still running"
+        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+        + ", dltotal: " + to_string(dltotal)
+        + ", dlnow: " + to_string(dlnow)
+        + ", ultotal: " + to_string(ultotal)
+        + ", ulnow: " + to_string(ulnow)
+    );
+
+    double progress = (dlnow / dltotal) * 100;
+    float percent = floorf(progress * 100) / 100;
+
+    _logger->info(__FILEREF__ + "Download still running"
+        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+        + ", percent: " + to_string(percent)
+        + ", dltotal: " + to_string(dltotal)
+        + ", dlnow: " + to_string(dlnow)
+        + ", ultotal: " + to_string(ultotal)
+        + ", ulnow: " + to_string(ulnow)
+    );
 }

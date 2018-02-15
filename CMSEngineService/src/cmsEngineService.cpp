@@ -71,7 +71,6 @@ int main (int iArgc, char *pArgv [])
             );
     CMSEngineProcessor      cmsEngineProcessor(logger, multiEventsSet, cmsEngineDBFacade, cmsStorage, &activeEncodingsManager);
     
-cmsEngineProcessor.downloadMediaSourceFile("http://mediaww.rsi.ch/rsi/unrestricted/2018/02/15/2523167.mp4");
     unsigned long           ulThreadSleepInMilliSecs = 100;
     logger->info(__FILEREF__ + "Creating Scheduler2"
         + ", ulThreadSleepInMilliSecs: " + to_string(ulThreadSleepInMilliSecs)
