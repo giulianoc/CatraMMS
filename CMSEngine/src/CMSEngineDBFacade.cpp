@@ -963,7 +963,10 @@ int64_t CMSEngineDBFacade::addIngestionJob (
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, customerKey);
             preparedStatement->setString(queryParameterIndex++, metadataFileName);
-            preparedStatement->setString(queryParameterIndex++, metadataFileContent);
+            if (metadataFileContent == "")
+                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+            else
+                preparedStatement->setString(queryParameterIndex++, metadataFileContent);
             preparedStatement->setInt(queryParameterIndex++, static_cast<int>(ingestionType));
             preparedStatement->setInt(queryParameterIndex++, static_cast<int>(ingestionStatus));
             if (errorMessage == "")
@@ -2057,6 +2060,7 @@ pair<int64_t,int64_t> CMSEngineDBFacade::saveIngestedContentMetadata(
         int64_t ingestionJobKey,
         Json::Value metadataRoot,
         string relativePath,
+        string mediaSourceFileName,
         int cmsPartitionIndexUsed,
         int sizeInBytes,
         int64_t videoOrAudioDurationInMilliSeconds,
@@ -2328,10 +2332,7 @@ pair<int64_t,int64_t> CMSEngineDBFacade::saveIngestedContentMetadata(
         }        
 
         {
-            string sourceFileName = "";
             int drm = 0;
-
-            sourceFileName = contentIngestion.get("SourceFileName", "XXX").asString();
 
             lastSQLCommand = 
                 "insert into CMS_PhysicalPaths(PhysicalPathKey, MediaItemKey, DRM, FileName, RelativePath, CMSPartitionNumber, SizeInBytes, EncodingProfileKey, CreationDate) values ("
@@ -2341,7 +2342,7 @@ pair<int64_t,int64_t> CMSEngineDBFacade::saveIngestedContentMetadata(
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
             preparedStatement->setInt(queryParameterIndex++, drm);
-            preparedStatement->setString(queryParameterIndex++, sourceFileName);
+            preparedStatement->setString(queryParameterIndex++, mediaSourceFileName);
             preparedStatement->setString(queryParameterIndex++, relativePath);
             preparedStatement->setInt(queryParameterIndex++, cmsPartitionIndexUsed);
             preparedStatement->setInt(queryParameterIndex++, sizeInBytes);
@@ -3340,7 +3341,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
                     "MediaItemKey			BIGINT UNSIGNED NULL,"
                     "MetaDataFileName                   VARCHAR (128) CHARACTER SET utf8 COLLATE utf8_bin NULL,"
                     "MetaDataFileContent		TEXT CHARACTER SET utf8 COLLATE utf8_bin NULL,"
-                    "IngestionType                      TINYINT (2) NOT NULL,"
+                    "IngestionType                      TINYINT (2) NULL,"
                     "StartIngestion			TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "EndIngestion			DATETIME NULL,"
                     "Status           			TINYINT (2) NOT NULL,"

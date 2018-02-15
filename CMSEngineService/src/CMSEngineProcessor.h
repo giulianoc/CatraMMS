@@ -54,14 +54,18 @@ private:
 
     CMSEngineDBFacade::ContentType validateContentIngestionMetadata(Json::Value encoding);
 
-    pair<string, string> validateMediaSourceFile(
-        string customerFTPDirectory,
+    tuple<bool, string, string, string, int> getMediaSourceDetails(
         CMSEngineDBFacade::IngestionType ingestionType,
         Json::Value root);
 
+    void validateMediaSourceFile (string ftpDirectoryMediaSourceFileName,
+        string md5FileCheckSum, int fileSizeInBytes);
+
     bool isMetadataPresent(Json::Value root, string field);
 
+    
 public:
+    void downloadMediaSourceFile(string sourceReferenceURL);
     CMSEngineProcessor(
             shared_ptr<spdlog::logger> logger, 
             shared_ptr<MultiEventsSet> multiEventsSet,

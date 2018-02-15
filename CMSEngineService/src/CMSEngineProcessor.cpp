@@ -1,6 +1,11 @@
 
 #include <fstream>
 #include <sstream>
+#include <regex>
+#include <curlpp/cURLpp.hpp>
+#include <curlpp/Easy.hpp>
+#include <curlpp/Options.hpp>
+#include <curlpp/Exception.hpp>
 #include "catralibraries/System.h"
 #include "CMSEngineProcessor.h"
 #include "CheckIngestionTimes.h"
@@ -261,141 +266,114 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                     string      metadataFileContent;
                     pair<CMSEngineDBFacade::IngestionType,CMSEngineDBFacade::ContentType> ingestionTypeAndContentType;
                     Json::Value metadataRoot;
-                    string relativePathToBeUsed;
-                    string mediaSourceFileName;
-                    string ftpDirectoryMediaSourceFileName;
-                    {    
-                        try
-                        {
-                            {
-                                ifstream medatataFile(ftpDirectoryWorkingMetadataPathName);
-                                stringstream buffer;
-                                buffer << medatataFile.rdbuf();
-                                
-                                metadataFileContent = buffer.str();
-                            }
-                            
-                            ifstream ingestAssetJson(ftpDirectoryWorkingMetadataPathName, std::ifstream::binary);
-                            try
-                            {
-                                ingestAssetJson >> metadataRoot;
-                            }
-                            catch(...)
-                            {
-                                throw runtime_error(string("wrong ingestion metadata json format")
-                                        + ", directoryEntry: " + directoryEntry
-                                        );
-                            }
-
-                            ingestionTypeAndContentType = validateMetadata(metadataRoot);
-                        }
-                        catch(runtime_error e)
-                        {
-                            _logger->error(__FILEREF__ + "validateMetadata failed"
-                                    + ", exception: " + e.what()
-                            );
-                            string ftpDirectoryErrorEntryPathName =
-                                _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, directoryEntry);
-
-                            string errorMessage = e.what();
-
-                            _cmsEngineDBFacade->addIngestionJob (customer->_customerKey, 
-                                    directoryEntry, metadataFileContent, CMSEngineDBFacade::IngestionType::Unknown, 
-                                    CMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed, 
-                                    errorMessage);
-
-                            throw e;
-                        }
-                        catch(exception e)
-                        {
-                            _logger->error(__FILEREF__ + "validateMetadata failed"
-                                    + ", exception: " + e.what()
-                            );
-                            string ftpDirectoryErrorEntryPathName =
-                                _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, directoryEntry);
-
-                            string errorMessage = e.what();
-
-                            _cmsEngineDBFacade->addIngestionJob (customer->_customerKey, 
-                                    directoryEntry, metadataFileContent, CMSEngineDBFacade::IngestionType::Unknown, 
-                                    CMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed, 
-                                    errorMessage);
-
-                            throw e;
-                        }
-
-                        try
-                        {
-                            pair<string, string> mediaSource = validateMediaSourceFile(
-                                    customerFTPDirectory, ingestionTypeAndContentType.first, metadataRoot);
-                            mediaSourceFileName = mediaSource.first;
-                            ftpDirectoryMediaSourceFileName = mediaSource.second;
-                        }
-                        catch(runtime_error e)
-                        {
-                            _logger->error(__FILEREF__ + "validateMediaSourceFile failed"
-                                    + ", exception: " + e.what()
-                            );
-                            string ftpDirectoryErrorEntryPathName =
-                                _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, directoryEntry);
-
-                            string errorMessage = e.what();
-
-                            _cmsEngineDBFacade->addIngestionJob (customer->_customerKey, 
-                                    directoryEntry, metadataFileContent, ingestionTypeAndContentType.first, 
-                                    CMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
-                                    errorMessage);
-
-                            throw e;
-                        }
-                        catch(exception e)
-                        {
-                            _logger->error(__FILEREF__ + "validateMediaSourceFile failed"
-                                    + ", exception: " + e.what()
-                            );
-                            string ftpDirectoryErrorEntryPathName =
-                                _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, directoryEntry);
-
-                            string errorMessage = e.what();
-
-                            _cmsEngineDBFacade->addIngestionJob (customer->_customerKey, 
-                                    directoryEntry, metadataFileContent, ingestionTypeAndContentType.first, 
-                                    CMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
-                                    errorMessage);
-
-                            throw e;
-                        }
-                    }
-                    
                     try
                     {
-                        relativePathToBeUsed = _cmsEngineDBFacade->checkCustomerMaxIngestionNumber (customer->_customerKey);
+                        {
+                            ifstream medatataFile(ftpDirectoryWorkingMetadataPathName);
+                            stringstream buffer;
+                            buffer << medatataFile.rdbuf();
+
+                            metadataFileContent = buffer.str();
+                        }
+
+                        ifstream ingestAssetJson(ftpDirectoryWorkingMetadataPathName, std::ifstream::binary);
+                        try
+                        {
+                            ingestAssetJson >> metadataRoot;
+                        }
+                        catch(...)
+                        {
+                            throw runtime_error(string("wrong ingestion metadata json format")
+                                    + ", directoryEntry: " + directoryEntry
+                                    );
+                        }
+
+                        ingestionTypeAndContentType = validateMetadata(metadataRoot);
                     }
-                    catch(exception e)
+                    catch(runtime_error e)
                     {
-                        _logger->error(__FILEREF__ + "checkCustomerMaxIngestionNumber failed"
+                        _logger->error(__FILEREF__ + "validateMetadata failed"
                                 + ", exception: " + e.what()
                         );
                         string ftpDirectoryErrorEntryPathName =
                             _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, directoryEntry);
-                    
+
                         string errorMessage = e.what();
 
                         _cmsEngineDBFacade->addIngestionJob (customer->_customerKey, 
-                                directoryEntry, metadataFileContent, ingestionTypeAndContentType.first, 
-                                CMSEngineDBFacade::IngestionStatus::End_CustomerReachedHisMaxIngestionNumber, 
+                                directoryEntry, metadataFileContent, CMSEngineDBFacade::IngestionType::Unknown, 
+                                CMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed, 
                                 errorMessage);
 
                         throw e;
                     }
-                    
+                    catch(exception e)
+                    {
+                        _logger->error(__FILEREF__ + "validateMetadata failed"
+                                + ", exception: " + e.what()
+                        );
+                        string ftpDirectoryErrorEntryPathName =
+                            _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, directoryEntry);
+
+                        string errorMessage = e.what();
+
+                        _cmsEngineDBFacade->addIngestionJob (customer->_customerKey, 
+                                directoryEntry, metadataFileContent, CMSEngineDBFacade::IngestionType::Unknown, 
+                                CMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed, 
+                                errorMessage);
+
+                        throw e;
+                    }
+
+                    tuple<bool, string, string, string, int> mediaSourceDetails;
+                    try
+                    {
+                        mediaSourceDetails = getMediaSourceDetails(
+                                ingestionTypeAndContentType.first, metadataRoot);
+                    }
+                    catch(runtime_error e)
+                    {
+                        _logger->error(__FILEREF__ + "getMediaSourceDetails failed"
+                                + ", exception: " + e.what()
+                        );
+                        string ftpDirectoryErrorEntryPathName =
+                            _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, directoryEntry);
+
+                        string errorMessage = e.what();
+
+                        _cmsEngineDBFacade->addIngestionJob (customer->_customerKey, 
+                                directoryEntry, metadataFileContent, ingestionTypeAndContentType.first, 
+                                CMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
+                                errorMessage);
+
+                        throw e;
+                    }
+                    catch(exception e)
+                    {
+                        _logger->error(__FILEREF__ + "getMediaSourceDetails failed"
+                                + ", exception: " + e.what()
+                        );
+                        string ftpDirectoryErrorEntryPathName =
+                            _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, directoryEntry);
+
+                        string errorMessage = e.what();
+
+                        _cmsEngineDBFacade->addIngestionJob (customer->_customerKey, 
+                                directoryEntry, metadataFileContent, ingestionTypeAndContentType.first, 
+                                CMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
+                                errorMessage);
+
+                        throw e;
+                    }
+
                     int64_t ingestionJobKey;
                     try
                     {
                         string errorMessage = "";
                         ingestionJobKey = _cmsEngineDBFacade->addIngestionJob (customer->_customerKey, 
-                                directoryEntry, metadataFileContent, ingestionTypeAndContentType.first, 
-                                CMSEngineDBFacade::IngestionStatus::DataReceivedAndValidated, errorMessage);
+                            directoryEntry, metadataFileContent, ingestionTypeAndContentType.first, 
+                            CMSEngineDBFacade::IngestionStatus::StartIngestion, 
+                            errorMessage);
                     }
                     catch(exception e)
                     {
@@ -411,7 +389,43 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
 
                     try
                     {
-                        {
+                        // mediaSourceReference could be a URL or a filename.
+                        // In this last case, it will be the same as mediaSourceFileName
+                        
+                        bool mediaSourceToBeDownload;
+                        string mediaSourceReference;
+                        string mediaSourceFileName;
+                        string md5FileCheckSum;
+                        int fileSizeInBytes;
+
+                        tie(mediaSourceToBeDownload, mediaSourceReference,
+                                mediaSourceFileName, md5FileCheckSum, fileSizeInBytes) 
+                                = mediaSourceDetails;                        
+
+                        if (mediaSourceToBeDownload)
+                        {          
+                            _cmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                    CMSEngineDBFacade::IngestionStatus::SourceDownloadingInProgress, "");
+                            /*
+                            string ftpDirectoryWorkingMetadataPathName =
+                                _cmsStorage->moveFTPRepositoryEntryToSourceDownloadingArea(
+                                    customer, directoryEntry, _processorCMS);
+
+                            _cmsEngineDBFacade->addIngestionJob (customer->_customerKey, 
+                                directoryEntry, metadataFileContent, ingestionTypeAndContentType.first, 
+                                CMSEngineDBFacade::IngestionStatus::SourceDownloadingInProgress, 
+                                errorMessage);
+
+                             */
+                            // start downloading
+                        }
+                        else
+                        {            
+                            string ftpMediaSourcePathName   =
+                                    customerFTPDirectory
+                                    + "/"
+                                    + mediaSourceFileName;
+                            
                             shared_ptr<IngestAssetEvent>    ingestAssetEvent = _multiEventsSet->getEventsFactory()
                                     ->getFreeEvent<IngestAssetEvent>(CMSENGINE_EVENTTYPEIDENTIFIER_INGESTASSETEVENT);
 
@@ -419,23 +433,25 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                             ingestAssetEvent->setDestination(CMSENGINEPROCESSORNAME);
                             ingestAssetEvent->setExpirationTimePoint(chrono::system_clock::now());
 
-                            ingestAssetEvent->setFTPDirectoryWorkingMetadataPathName(ftpDirectoryWorkingMetadataPathName);
-                            ingestAssetEvent->setMetadataFileName(directoryEntry);
-
-                            ingestAssetEvent->setContentType(ingestionTypeAndContentType.second);
-                            ingestAssetEvent->setFTPDirectoryMediaSourceFileName(ftpDirectoryMediaSourceFileName);
-                            ingestAssetEvent->setMediaSourceFileName(mediaSourceFileName);
-
                             ingestAssetEvent->setIngestionJobKey(ingestionJobKey);
                             ingestAssetEvent->setCustomer(customer);
-                            ingestAssetEvent->setRelativePath(relativePathToBeUsed);
-                            ingestAssetEvent->setMetadataRoot(metadataRoot);
+
+                            ingestAssetEvent->setMetadataFileName(directoryEntry);
+                            ingestAssetEvent->setFTPWorkingMetadataPathName(ftpDirectoryWorkingMetadataPathName);
+                            ingestAssetEvent->setFTPMediaSourcePathName(ftpMediaSourcePathName);
+                            ingestAssetEvent->setMediaSourceFileName(mediaSourceFileName);
+
+                            // ingestAssetEvent->setFTPDirectoryMediaSourceFileName(ftpDirectoryMediaSourceFileName);
+//                            ingestAssetEvent->setMediaSourceFileName(mediaSourceFileName);
+//
+//                            ingestAssetEvent->setRelativePath(relativePathToBeUsed);
+//                            ingestAssetEvent->setMetadataRoot(metadataRoot);
 
                             shared_ptr<Event>    event = dynamic_pointer_cast<Event>(ingestAssetEvent);
                             _multiEventsSet->addEvent(event);
 
                             _logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
-                                + ", mediaSourceFileName: " + mediaSourceFileName
+                                + ", mediaSourceReference: " + mediaSourceReference
                                 + ", getEventKey().first: " + to_string(event->getEventKey().first)
                                 + ", getEventKey().second: " + to_string(event->getEventKey().second));
                         }
@@ -485,6 +501,176 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
 
 void CMSEngineProcessor::handleIngestAssetEvent (shared_ptr<IngestAssetEvent> ingestAssetEvent)
 {
+    string relativePathToBeUsed;
+    try
+    {
+        relativePathToBeUsed = _cmsEngineDBFacade->checkCustomerMaxIngestionNumber (
+                ingestAssetEvent->getCustomer()->_customerKey);
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "checkCustomerMaxIngestionNumber failed"
+                + ", exception: " + e.what()
+        );
+        string ftpDirectoryErrorEntryPathName =
+            _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(
+                ingestAssetEvent->getCustomer(), ingestAssetEvent->getMetadataFileName());
+
+        string errorMessage = e.what();
+
+        _cmsEngineDBFacade->updateIngestionJob (ingestAssetEvent->getIngestionJobKey(),
+                CMSEngineDBFacade::IngestionStatus::End_CustomerReachedHisMaxIngestionNumber,
+                e.what());
+
+        throw e;
+    }
+                    
+    string      metadataFileContent;
+    pair<CMSEngineDBFacade::IngestionType,CMSEngineDBFacade::ContentType> ingestionTypeAndContentType;
+    Json::Value metadataRoot;
+    try
+    {
+        {
+            ifstream medatataFile(ingestAssetEvent->getFTPWorkingMetadataPathName());
+            stringstream buffer;
+            buffer << medatataFile.rdbuf();
+
+            metadataFileContent = buffer.str();
+        }
+
+        ifstream ingestAssetJson(ingestAssetEvent->getFTPWorkingMetadataPathName(), std::ifstream::binary);
+        try
+        {
+            ingestAssetJson >> metadataRoot;
+        }
+        catch(...)
+        {
+            throw runtime_error(string("wrong ingestion metadata json format")
+                    + ", ingestAssetEvent->getFTPWorkingMetadataPathName: " + ingestAssetEvent->getFTPWorkingMetadataPathName()
+                    );
+        }
+
+        ingestionTypeAndContentType = validateMetadata(metadataRoot);
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "validateMetadata failed"
+                + ", exception: " + e.what()
+        );
+        string ftpDirectoryErrorEntryPathName =
+            _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(
+                ingestAssetEvent->getCustomer(), ingestAssetEvent->getMetadataFileName());
+
+        string errorMessage = e.what();
+
+        _cmsEngineDBFacade->updateIngestionJob (ingestAssetEvent->getIngestionJobKey(),
+            CMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed,
+            e.what());
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "validateMetadata failed"
+                + ", exception: " + e.what()
+        );
+        string ftpDirectoryErrorEntryPathName =
+            _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(
+                ingestAssetEvent->getCustomer(), ingestAssetEvent->getMetadataFileName());
+
+        string errorMessage = e.what();
+
+        _cmsEngineDBFacade->updateIngestionJob (ingestAssetEvent->getIngestionJobKey(),
+            CMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed,
+            e.what());
+
+        throw e;
+    }
+
+    tuple<bool, string, string, string, int> mediaSourceDetails;
+    try
+    {
+        mediaSourceDetails = getMediaSourceDetails(
+                ingestionTypeAndContentType.first, metadataRoot);
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "getMediaSourceDetails failed"
+                + ", exception: " + e.what()
+        );
+        string ftpDirectoryErrorEntryPathName =
+            _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(
+                ingestAssetEvent->getCustomer(), ingestAssetEvent->getMetadataFileName());
+
+        string errorMessage = e.what();
+
+        _cmsEngineDBFacade->updateIngestionJob (ingestAssetEvent->getIngestionJobKey(),
+            CMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed,
+            e.what());
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "getMediaSourceDetails failed"
+                + ", exception: " + e.what()
+        );
+        string ftpDirectoryErrorEntryPathName =
+            _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(
+                ingestAssetEvent->getCustomer(), ingestAssetEvent->getMetadataFileName());
+
+        string errorMessage = e.what();
+
+        _cmsEngineDBFacade->updateIngestionJob (ingestAssetEvent->getIngestionJobKey(),
+            CMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed,
+            e.what());
+
+        throw e;
+    }
+
+    try
+    {
+        string md5FileCheckSum = get<3>(mediaSourceDetails);
+        int fileSizeInBytes = get<4>(mediaSourceDetails);
+
+        validateMediaSourceFile(ingestAssetEvent->getFTPMediaSourcePathName(),
+                md5FileCheckSum, fileSizeInBytes);
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "validateMediaSourceFile failed"
+                + ", exception: " + e.what()
+        );
+        string ftpDirectoryErrorEntryPathName =
+            _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(
+                ingestAssetEvent->getCustomer(), ingestAssetEvent->getMetadataFileName());
+
+        string errorMessage = e.what();
+
+        _cmsEngineDBFacade->updateIngestionJob (ingestAssetEvent->getIngestionJobKey(),
+            CMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed,
+            e.what());
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "validateMediaSourceFile failed"
+                + ", exception: " + e.what()
+        );
+        string ftpDirectoryErrorEntryPathName =
+            _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(
+                ingestAssetEvent->getCustomer(), ingestAssetEvent->getMetadataFileName());
+
+        string errorMessage = e.what();
+
+        _cmsEngineDBFacade->updateIngestionJob (ingestAssetEvent->getIngestionJobKey(),
+            CMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed,
+            e.what());
+
+        throw e;
+    }
+
     unsigned long cmsPartitionIndexUsed;
     string cmsAssetPathName;
     try
@@ -492,10 +678,10 @@ void CMSEngineProcessor::handleIngestAssetEvent (shared_ptr<IngestAssetEvent> in
         bool partitionIndexToBeCalculated   = true;
         bool deliveryRepositoriesToo        = true;
         cmsAssetPathName = _cmsStorage->moveAssetInCMSRepository(
-            ingestAssetEvent->getFTPDirectoryMediaSourceFileName(),
+            ingestAssetEvent->getFTPMediaSourcePathName(),
             ingestAssetEvent->getCustomer()->_directoryName,
             ingestAssetEvent->getMediaSourceFileName(),
-            ingestAssetEvent->getRelativePath(),
+            relativePathToBeUsed,
             partitionIndexToBeCalculated,
             &cmsPartitionIndexUsed,
             deliveryRepositoriesToo,
@@ -533,8 +719,8 @@ void CMSEngineProcessor::handleIngestAssetEvent (shared_ptr<IngestAssetEvent> in
     int64_t mediaItemKey;
     try
     {
-        if (ingestAssetEvent->getContentType() == CMSEngineDBFacade::ContentType::Video 
-                || ingestAssetEvent->getContentType() == CMSEngineDBFacade::ContentType::Audio)
+        if (ingestionTypeAndContentType.second == CMSEngineDBFacade::ContentType::Video 
+                || ingestionTypeAndContentType.second == CMSEngineDBFacade::ContentType::Audio)
         {
             videoOrAudioDurationInMilliSeconds = 
                 EncoderVideoAudioProxy::getVideoOrAudioDurationInMilliSeconds(
@@ -551,8 +737,9 @@ void CMSEngineProcessor::handleIngestAssetEvent (shared_ptr<IngestAssetEvent> in
                 _cmsEngineDBFacade->saveIngestedContentMetadata (
                 ingestAssetEvent->getCustomer(),
                 ingestAssetEvent->getIngestionJobKey(),
-                ingestAssetEvent->getMetadataRoot(),
-                ingestAssetEvent->getRelativePath(),
+                metadataRoot,
+                relativePathToBeUsed,
+                ingestAssetEvent->getMediaSourceFileName(),
                 cmsPartitionIndexUsed,
                 sizeInBytes,
                 videoOrAudioDurationInMilliSeconds,
@@ -605,10 +792,8 @@ void CMSEngineProcessor::handleIngestAssetEvent (shared_ptr<IngestAssetEvent> in
     }
     
     // ingest Screenshots if present
-    if (ingestAssetEvent->getContentType() == CMSEngineDBFacade::ContentType::Video)
-    {
-        Json::Value metadataRoot = ingestAssetEvent->getMetadataRoot();
-        
+    if (ingestionTypeAndContentType.second == CMSEngineDBFacade::ContentType::Video)
+    {        
         string field = "ContentIngestion";
         Json::Value contentIngestion = metadataRoot[field]; 
 
@@ -803,7 +988,7 @@ void CMSEngineProcessor::generateImageMetadataToIngest(
             + "\"ContentIngestion\": {"
                 + "\"Title\": \"" + title + "\","
                 + "\"Ingester\": \"CMSEngine\","
-                + "\"SourceFileName\": \"" + sourceImageFileName + "\","
+                + "\"SourceReference\": \"" + sourceImageFileName + "\","
                 + "\"ContentType\": \"image\","
                 + "\"EncodingProfilesSet\": \"" + encodingProfilesSet + "\""
             + "}"
@@ -908,7 +1093,7 @@ CMSEngineDBFacade::ContentType CMSEngineProcessor::validateContentIngestionMetad
     
     vector<string> contentIngestionMandatoryFields = {
         "Title",
-        "SourceFileName",
+        "SourceReference",
         "ContentType",
         "EncodingProfilesSet"
     };
@@ -1076,23 +1261,72 @@ CMSEngineDBFacade::ContentType CMSEngineProcessor::validateContentIngestionMetad
     return contentType;
 }
 
-pair<string, string> CMSEngineProcessor::validateMediaSourceFile(
-        string customerFTPDirectory,
+tuple<bool, string, string, string, int> CMSEngineProcessor::getMediaSourceDetails(
         CMSEngineDBFacade::IngestionType ingestionType,
         Json::Value root)        
 {
-    pair<string, string> mediaSource;
+    tuple<bool, string, string, string, int> mediaSourceDetails;
     
- 
     string mediaSourceFileName;
     
-    Json::Value contentIngestion = root["ContentIngestion"]; 
+    string field = "ContentIngestion";
+    Json::Value contentIngestion = root[field]; 
 
     if (ingestionType == CMSEngineDBFacade::IngestionType::ContentIngestion)
     {
-        mediaSourceFileName = contentIngestion.get("SourceFileName", "XXX").asString();
+        string mediaSourceReference;    // URL or local file name
+        bool mediaSourceToBeDownload;
+
+        field = "SourceReference";
+        mediaSourceReference = contentIngestion.get(field, "XXX").asString();
         
-        mediaSource.first = mediaSourceFileName;
+        string httpPrefix ("http");
+        string ftpPrefix ("ftp");
+        if (!mediaSourceReference.compare(0, httpPrefix.size(), httpPrefix)
+                || !mediaSourceReference.compare(0, ftpPrefix.size(), ftpPrefix))
+        {
+            mediaSourceToBeDownload = true;
+            
+            // mediaSourceFileName
+            {
+                smatch m;
+                
+                regex e (R"(^(([^:\/?#]+):)?(//([^\/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?)", std::regex::extended);
+                
+                if (!regex_search(mediaSourceReference, m, e))
+                {
+                    string errorMessage = __FILEREF__ + "mediaSourceReference URL format is wrong"
+                            + ", mediaSourceReference: " + mediaSourceReference;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+                
+                string path = m[5].str();
+                if (path.back() == '/')
+                    path.pop_back();
+                
+                size_t fileNameIndex = path.find_last_of("/");
+                if (fileNameIndex == string::npos)
+                {
+                    string errorMessage = __FILEREF__ + "No fileName find in the mediaSourceReference"
+                            + ", mediaSourceReference: " + mediaSourceReference;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+
+                mediaSourceFileName = mediaSourceReference.substr(fileNameIndex + 1);
+            }
+        }
+        else
+        {
+            mediaSourceFileName = mediaSourceReference;
+            mediaSourceToBeDownload = false;
+        }
+
+        get<0>(mediaSourceDetails) = mediaSourceToBeDownload;
+        get<1>(mediaSourceDetails) = mediaSourceReference;
     }   
     else
     {
@@ -1103,33 +1337,59 @@ pair<string, string> CMSEngineProcessor::validateMediaSourceFile(
         throw runtime_error(errorMessage);
     }
     
-    string ftpDirectoryMediaSourceFileName (customerFTPDirectory);
-    ftpDirectoryMediaSourceFileName
-        .append("/")
-        .append(mediaSourceFileName);
-    
-    mediaSource.second = ftpDirectoryMediaSourceFileName;
+    get<2>(mediaSourceDetails) = mediaSourceFileName;
 
-    _logger->info(__FILEREF__ + "media source file to be processed"
-        + ", ftpDirectoryMediaSourceFileName: " + ftpDirectoryMediaSourceFileName
-    );
-
-    if (!FileIO::fileExisting(ftpDirectoryMediaSourceFileName))
-    {
-        string errorMessage = __FILEREF__ + "Media Source file does not exist (it was not uploaded yet)"
-                + ", mediaSourceFileName: " + mediaSourceFileName;
-        _logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-
-    string field = "MD5FileCheckSum";
+    field = "MD5FileCheckSum";
     if (_cmsEngineDBFacade->isMetadataPresent(contentIngestion, field))
     {
         MD5         md5;
         char        md5RealDigest [32 + 1];
 
         string md5FileCheckSum = contentIngestion.get(field, "XXX").asString();
+        
+        get<3>(mediaSourceDetails) = md5FileCheckSum;
+    }
+    else
+        get<3>(mediaSourceDetails) = string("");
+
+    field = "FileSizeInBytes";
+    if (_cmsEngineDBFacade->isMetadataPresent(contentIngestion, field))
+    {
+        int fileSizeInBytes = contentIngestion.get(field, 3).asInt();
+
+        get<4>(mediaSourceDetails) = fileSizeInBytes;
+    }
+    else
+        get<4>(mediaSourceDetails) = -1;
+
+    _logger->info(__FILEREF__ + "media source file to be processed"
+        + ", mediaSourceToBeDownload: " + to_string(get<0>(mediaSourceDetails))
+        + ", mediaSourceReference: " + get<1>(mediaSourceDetails)
+        + ", mediaSourceFileName: " + get<2>(mediaSourceDetails)
+        + ", md5FileCheckSum: " + get<3>(mediaSourceDetails)
+        + ", fileSizeInBytes: " + to_string(get<4>(mediaSourceDetails))
+    );
+
+    
+    return mediaSourceDetails;
+}
+
+void CMSEngineProcessor::validateMediaSourceFile (string ftpDirectoryMediaSourceFileName,
+        string md5FileCheckSum, int fileSizeInBytes)
+{
+    if (!FileIO::fileExisting(ftpDirectoryMediaSourceFileName))
+    {
+        string errorMessage = __FILEREF__ + "Media Source file does not exist (it was not uploaded yet)"
+                + ", ftpDirectoryMediaSourceFileName: " + ftpDirectoryMediaSourceFileName;
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+
+    if (md5FileCheckSum != "")
+    {
+        MD5         md5;
+        char        md5RealDigest [32 + 1];
 
         strcpy (md5RealDigest, md5.digestFile((char *) ftpDirectoryMediaSourceFileName.c_str()));
 
@@ -1145,11 +1405,8 @@ pair<string, string> CMSEngineProcessor::validateMediaSourceFile(
         }
     }
     
-    field = "FileSizeInBytes";
-    if (_cmsEngineDBFacade->isMetadataPresent(contentIngestion, field))
+    if (fileSizeInBytes != -1)
     {
-        int fileSizeInBytes = contentIngestion.get(field, 3).asInt();
-
         bool inCaseOfLinkHasItToBeRead = false;
         unsigned long realFileSizeInBytes = 
             FileIO:: getFileSizeInBytes (ftpDirectoryMediaSourceFileName, inCaseOfLinkHasItToBeRead);
@@ -1164,7 +1421,33 @@ pair<string, string> CMSEngineProcessor::validateMediaSourceFile(
             _logger->error(errorMessage);
             throw runtime_error(errorMessage);
         }
+    }    
+}
+
+void CMSEngineProcessor::downloadMediaSourceFile(string sourceReferenceURL)
+{
+    try 
+    {
+        ofstream of("/tmp/aaaaaa.mp4");
+        
+        curlpp::Cleanup cleaner;
+        curlpp::Easy request;
+
+        // Set the writer callback to enable cURL 
+        // to write result in a memory area
+        request.setOpt(new curlpp::options::WriteStream(&of));
+
+        // Setting the URL to retrive.
+        request.setOpt(new curlpp::options::Url(sourceReferenceURL));
+
+        request.perform();
     }
-    
-    return mediaSource;
+    catch ( curlpp::LogicError & e ) 
+    {
+        _logger->error(e.what());
+    }
+    catch ( curlpp::RuntimeError & e ) 
+    {
+        _logger->error(e.what());
+    }
 }

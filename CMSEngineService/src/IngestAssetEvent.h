@@ -35,49 +35,56 @@ using namespace std;
 
 class IngestAssetEvent: public Event {
 private:    
-    string                  _ftpDirectoryMediaSourceFileName;
-    string                  _mediaSourceFileName;
+    /*
+    tuple<bool, string, string, string, int>    _mediaSourceDetails;
     string                  _relativePath;
     CMSEngineDBFacade::ContentType   _contentType;
-    
+    */
     int64_t                 _ingestionJobKey;
     shared_ptr<Customer>    _customer;
 
-    string                  _ftpDirectoryWorkingMetadataPathName;
     string                  _metadataFileName;
-    Json::Value             _metadataRoot;
-    
+    string                  _ftpWorkingMetadataPathName;
+    string                  _mediaSourceFileName;
+    string                  _ftpMediaSourcePathName;
+
 public:
-    void setFTPDirectoryWorkingMetadataPathName(string ftpDirectoryWorkingMetadataPathName)
+    void setFTPWorkingMetadataPathName(string ftpWorkingMetadataPathName)
     {
-        _ftpDirectoryWorkingMetadataPathName   = ftpDirectoryWorkingMetadataPathName;
+        _ftpWorkingMetadataPathName   = ftpWorkingMetadataPathName;
     }
-
-    string getFTPDirectoryWorkingMetadataPathName()
+    string getFTPWorkingMetadataPathName()
     {
-        return _ftpDirectoryWorkingMetadataPathName;
-    }
-
-    void setFTPDirectoryMediaSourceFileName(string ftpDirectoryMediaSourceFileName)
-    {
-        _ftpDirectoryMediaSourceFileName   = ftpDirectoryMediaSourceFileName;
-    }
-
-    string getFTPDirectoryMediaSourceFileName()
-    {
-        return _ftpDirectoryMediaSourceFileName;
+        return _ftpWorkingMetadataPathName;
     }
 
     void setMediaSourceFileName(string mediaSourceFileName)
     {
-        _mediaSourceFileName = mediaSourceFileName;
+        _mediaSourceFileName   = mediaSourceFileName;
     }
-    
     string getMediaSourceFileName()
     {
         return _mediaSourceFileName;
     }
-    
+
+    void setFTPMediaSourcePathName(string ftpMediaSourcePathName)
+    {
+        _ftpMediaSourcePathName   = ftpMediaSourcePathName;
+    }
+    string getFTPMediaSourcePathName()
+    {
+        return _ftpMediaSourcePathName;
+    }
+
+    void setMetadataFileName(string metadataFileName)
+    {
+        _metadataFileName   = metadataFileName;
+    }
+    string getMetadataFileName()
+    {
+        return _metadataFileName;
+    }
+
     void setIngestionJobKey(int64_t ingestionJobKey)
     {
         _ingestionJobKey   = ingestionJobKey;
@@ -85,35 +92,6 @@ public:
     int64_t getIngestionJobKey()
     {
         return _ingestionJobKey;
-    }
-    
-    void setContentType(CMSEngineDBFacade::ContentType contentType)
-    {
-        _contentType   = contentType;
-    }    
-    CMSEngineDBFacade::ContentType getContentType()
-    {
-        return _contentType;
-    }
-    
-    void setMetadataFileName(string metadataFileName)
-    {
-        _metadataFileName   = metadataFileName;
-    }
-
-    string getMetadataFileName()
-    {
-        return _metadataFileName;
-    }
-    
-    void setRelativePath(string relativePath)
-    {
-        _relativePath   = relativePath;
-    }
-
-    string getRelativePath()
-    {
-        return _relativePath;
     }
 
     void setCustomer(shared_ptr<Customer> customer)
@@ -124,16 +102,6 @@ public:
     shared_ptr<Customer> getCustomer()
     {
         return _customer;
-    }
-
-    void setMetadataRoot(Json::Value metadataRoot)
-    {
-        _metadataRoot   = metadataRoot;
-    }
-
-    Json::Value getMetadataRoot()
-    {
-        return _metadataRoot;
     }
 };
 

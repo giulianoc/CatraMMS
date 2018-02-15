@@ -119,8 +119,9 @@ public:
     };
 
     enum class IngestionStatus {
-        DataReceivedAndValidated                    = 1,
-        QueuedForEncoding                           = 2,
+        StartIngestion                              = 1,
+        SourceDownloadingInProgress                 = 2,
+        QueuedForEncoding                           = 3,
 
         End_ValidationMetadataFailed                = 5,
         End_ValidationMediaSourceFailed             = 6,
@@ -196,12 +197,12 @@ public:
     );
 
     int64_t addIngestionJob (
-            int64_t customerKey,
-            string metadataFileName,
-            string metadataFileContent,
-            IngestionType ingestionType,
-            IngestionStatus ingestionStatus,
-            string errorMessage);
+        int64_t customerKey,
+        string metadataFileName,
+        string metadataFileContent,
+        IngestionType ingestionType,
+        IngestionStatus ingestionStatus,
+        string errorMessage);
 
     void updateIngestionJob (
         int64_t ingestionJobKey,
@@ -229,6 +230,7 @@ public:
         int64_t ingestionJobKey,
         Json::Value metadataRoot,
         string relativePath,
+        string mediaSourceFileName,
         int cmsPartitionIndexUsed,
         int sizeInBytes,
         int64_t videoOrAudioDurationInMilliSeconds,
