@@ -90,7 +90,7 @@ int main (int iArgc, char *pArgv [])
             );
     thread schedulerThread (ref(scheduler));
 
-    unsigned long           checkIngestionTimesPeriodInMilliSecs = 4 * 1000;
+    unsigned long           checkIngestionTimesPeriodInMilliSecs = 2 * 1000;
     logger->info(__FILEREF__ + "Creating and Starting CheckIngestionTimes"
         + ", checkIngestionTimesPeriodInMilliSecs: " + to_string(checkIngestionTimesPeriodInMilliSecs)
             );
@@ -99,7 +99,7 @@ int main (int iArgc, char *pArgv [])
     checkIngestionTimes->start();
     scheduler.activeTimes(checkIngestionTimes);
 
-    unsigned long           checkEncodingTimesPeriodInMilliSecs = 15 * 1000;
+    unsigned long           checkEncodingTimesPeriodInMilliSecs = 10 * 1000;
     logger->info(__FILEREF__ + "Creating and Starting CheckEncodingTimes"
         + ", checkEncodingTimesPeriodInMilliSecs: " + to_string(checkEncodingTimesPeriodInMilliSecs)
             );

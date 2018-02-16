@@ -8,7 +8,7 @@
         "Keywords": "aaa",          // optional
         "Description": "aaa",       // optional
 
-        "SourceReference": "http://mediaww.rsi.ch/rsi/unrestricted/2018/02/15/2523167.mp4", // mandatory, filename or URL (http/ftp)
+        "SourceReference": "http://mediaww.rsi.ch/rsi/unrestricted/2018/02/15/2523221.mp4", // mandatory, filename or URL (http/ftp)
         "ContentType": "video",     // mandatory: "video" or "audio" or "image"
 	"Screenshots": [		// optional, if present only in case of video
 		{

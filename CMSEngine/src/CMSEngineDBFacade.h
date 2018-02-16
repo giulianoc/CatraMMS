@@ -123,12 +123,13 @@ public:
         SourceDownloadingInProgress                 = 2,
         QueuedForEncoding                           = 3,
 
-        End_ValidationMetadataFailed                = 5,
-        End_ValidationMediaSourceFailed             = 6,
-        End_CustomerReachedHisMaxIngestionNumber    = 7,
+        End_DownloadCancelledByUser                 = 10,
+        End_ValidationMetadataFailed                = 11,
+        End_ValidationMediaSourceFailed             = 12,
+        End_CustomerReachedHisMaxIngestionNumber    = 13,
         
-        End_IngestionFailure            = 10,                    // nothing done
-        End_IngestionSuccess_AtLeastOneEncodingProfileError   = 14,    // One encoding is considered a failure only after MaxFailuresNumer attempts
+        End_IngestionFailure                        = 15,                    // nothing done
+        End_IngestionSuccess_AtLeastOneEncodingProfileError   = 16,    // One encoding is considered a failure only after MaxFailuresNumer attempts
         End_IngestionSuccess    = 20                    // all done
     };
 
@@ -202,12 +203,17 @@ public:
         string metadataFileContent,
         IngestionType ingestionType,
         IngestionStatus ingestionStatus,
+        string processorCMS,
         string errorMessage);
 
     void updateIngestionJob (
         int64_t ingestionJobKey,
         IngestionStatus newIngestionStatus,
         string errorMessage);
+
+    bool updateIngestionJobSourceDownloadingInProgress (
+        int64_t ingestionJobKey,
+        int downloadingPercentage);
 
     void getEncodingJobs(
         bool resetToBeDone,

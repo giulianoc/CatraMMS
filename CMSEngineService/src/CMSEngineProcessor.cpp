@@ -31,6 +31,8 @@ CMSEngineProcessor::CMSEngineProcessor(
     _firstGetEncodingJob            = true;
     _processorCMS                   = System::getHostName();
     _maxDownloadAttemptNumber       = 3;
+    _progressUpdatePeriodInSeconds  = 5;
+    _secondsWaitingAmongDownloadingAttempt  = 5;
     
     _ulMaxIngestionsNumberPerCustomerEachIngestionPeriod        = 2;
     _ulJsonToBeProcessedAfterSeconds                            = 10;
@@ -305,7 +307,7 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                         _cmsEngineDBFacade->addIngestionJob (customer->_customerKey, 
                                 directoryEntry, metadataFileContent, CMSEngineDBFacade::IngestionType::Unknown, 
                                 CMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed, 
-                                errorMessage);
+                                _processorCMS, errorMessage);
 
                         throw e;
                     }
@@ -322,7 +324,7 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                         _cmsEngineDBFacade->addIngestionJob (customer->_customerKey, 
                                 directoryEntry, metadataFileContent, CMSEngineDBFacade::IngestionType::Unknown, 
                                 CMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed, 
-                                errorMessage);
+                                _processorCMS, errorMessage);
 
                         throw e;
                     }
@@ -346,7 +348,7 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                         _cmsEngineDBFacade->addIngestionJob (customer->_customerKey, 
                                 directoryEntry, metadataFileContent, ingestionTypeAndContentType.first, 
                                 CMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
-                                errorMessage);
+                                _processorCMS, errorMessage);
 
                         throw e;
                     }
@@ -363,7 +365,7 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                         _cmsEngineDBFacade->addIngestionJob (customer->_customerKey, 
                                 directoryEntry, metadataFileContent, ingestionTypeAndContentType.first, 
                                 CMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
-                                errorMessage);
+                                _processorCMS, errorMessage);
 
                         throw e;
                     }
@@ -375,7 +377,7 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                         ingestionJobKey = _cmsEngineDBFacade->addIngestionJob (customer->_customerKey, 
                             directoryEntry, metadataFileContent, ingestionTypeAndContentType.first, 
                             CMSEngineDBFacade::IngestionStatus::StartIngestion, 
-                            errorMessage);
+                            _processorCMS, errorMessage);
                     }
                     catch(exception e)
                     {
@@ -1438,7 +1440,7 @@ void CMSEngineProcessor::downloadMediaSourceFile(string sourceReferenceURL,
         string metadataFileName, string ftpDirectoryWorkingMetadataPathName,
         string customerFTPDirectory, string mediaSourceFileName)
 {
-    bool downloadSuccessful = false;
+    bool downloadingCompleted = false;
 
 /*
     - aggiungere un timeout nel caso nessun pacchetto è ricevuto entro XXXX seconds
@@ -1472,42 +1474,81 @@ RESUMING FILE TRANSFERS
  */    
  
         
-    for (int attemptIndex = 0; attemptIndex < _maxDownloadAttemptNumber && !dowloadSuccessful; attemptIndex++)
+    string ftpMediaSourcePathName =
+        customerFTPDirectory
+        + "/"
+        + mediaSourceFileName;
+
+    for (int attemptIndex = 0; attemptIndex < _maxDownloadAttemptNumber && !downloadingCompleted; attemptIndex++)
     {
+        bool downloadingStoppedByUser = false;
+        
         try 
         {
-            string ftpMediaSourcePathName =
-                    customerFTPDirectory
-                    + "/"
-                    + mediaSourceFileName;
+            if (attemptIndex == 0)
+            {
+                ofstream mediaSourceFileStream(ftpMediaSourcePathName);
 
-            ofstream of(ftpMediaSourcePathName);
+                curlpp::Cleanup cleaner;
+                curlpp::Easy request;
 
-            curlpp::Cleanup cleaner;
-            curlpp::Easy request;
+                // Set the writer callback to enable cURL 
+                // to write result in a memory area
+                request.setOpt(new curlpp::options::WriteStream(&mediaSourceFileStream));
 
-            // Set the writer callback to enable cURL 
-            // to write result in a memory area
-            request.setOpt(new curlpp::options::WriteStream(&of));
+                // Setting the URL to retrive.
+                request.setOpt(new curlpp::options::Url(sourceReferenceURL));
 
-            // Setting the URL to retrive.
-            request.setOpt(new curlpp::options::Url(sourceReferenceURL));
+                chrono::system_clock::time_point lastProgressUpdate = chrono::system_clock::now();
+                curlpp::types::ProgressFunctionFunctor functor = bind(&CMSEngineProcessor::progressCallback, this,
+                        ingestionJobKey, lastProgressUpdate, downloadingStoppedByUser,
+                        placeholders::_1, placeholders::_2, placeholders::_3, placeholders::_4);
+                request.setOpt(new curlpp::options::ProgressFunction(curlpp::types::ProgressFunctionFunctor(functor)));
+                request.setOpt(new curlpp::options::NoProgress(0L));
 
-            curlpp::options::ProgressFunction
-                progressBar(bind(&CMSEngineProcessor::progressCallback, this, ingestionJobKey, placeholders::_1, placeholders::_2, placeholders::_3, placeholders::_4));
-            request.setOpt(progressBar);
+                request.setOpt(new curlpp::options::NoProgress(0L));
 
-            _logger->info(__FILEREF__ + "Downloading media file"
-                + ", sourceReferenceURL: " + sourceReferenceURL
-            );
-            request.perform();
-            
-            downloadSuccessful = true;
+                _logger->info(__FILEREF__ + "Downloading media file"
+                    + ", sourceReferenceURL: " + sourceReferenceURL
+                );
+                request.perform();
+            }
+            else
+            {
+                ofstream mediaSourceFileStream(ftpMediaSourcePathName, ofstream::app);
+
+                curlpp::Cleanup cleaner;
+                curlpp::Easy request;
+
+                // Set the writer callback to enable cURL 
+                // to write result in a memory area
+                request.setOpt(new curlpp::options::WriteStream(&mediaSourceFileStream));
+
+                // Setting the URL to retrive.
+                request.setOpt(new curlpp::options::Url(sourceReferenceURL));
+
+                chrono::system_clock::time_point lastProgressUpdate = chrono::system_clock::now();
+                curlpp::types::ProgressFunctionFunctor functor = bind(&CMSEngineProcessor::progressCallback, this,
+                        ingestionJobKey, lastProgressUpdate, downloadingStoppedByUser,
+                        placeholders::_1, placeholders::_2, placeholders::_3, placeholders::_4);
+                request.setOpt(new curlpp::options::ProgressFunction(curlpp::types::ProgressFunctionFunctor(functor)));
+                request.setOpt(new curlpp::options::NoProgress(0L));
+
+                long fileSize = mediaSourceFileStream.tellp();
+                request.setOpt(new curlpp::options::ResumeFromLarge(fileSize));
+                
+                _logger->info(__FILEREF__ + "Downloading media file"
+                    + ", sourceReferenceURL: " + sourceReferenceURL
+                );
+                request.perform();
+            }
+
+            downloadingCompleted = true;
         }
-        catch ( curlpp::LogicError & e ) 
+        catch (curlpp::LogicError & e) 
         {
             _logger->error(__FILEREF__ + "Download failed"
-                + ", ingestionJobKey: " + ingestionJobKey 
+                + ", ingestionJobKey: " + to_string(ingestionJobKey) 
                 + ", sourceReferenceURL: " + sourceReferenceURL 
                 + ", exception: " + e.what()
             );
@@ -1515,15 +1556,27 @@ RESUMING FILE TRANSFERS
             string ftpDirectoryErrorEntryPathName =
                 _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, metadataFileName);
 
-            _cmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                    CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
-
-            downloadSuccessful = false;
+            if (downloadingStoppedByUser)
+            {
+                downloadingCompleted = true;
+            }
+            else
+            {
+                if (attemptIndex + 1 == _maxDownloadAttemptNumber)
+                {
+                    _cmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                        CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
+                }
+                else
+                {
+                    this_thread::sleep_for(chrono::seconds(_secondsWaitingAmongDownloadingAttempt));
+                }
+            }
         }
-        catch ( curlpp::RuntimeError & e ) 
+        catch (curlpp::RuntimeError & e) 
         {
             _logger->error(__FILEREF__ + "Download failed"
-                + ", ingestionJobKey: " + ingestionJobKey 
+                + ", ingestionJobKey: " + to_string(ingestionJobKey) 
                 + ", sourceReferenceURL: " + sourceReferenceURL 
                 + ", exception: " + e.what()
             );
@@ -1531,15 +1584,27 @@ RESUMING FILE TRANSFERS
             string ftpDirectoryErrorEntryPathName =
                 _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, metadataFileName);
 
-            _cmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                    CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
-
-            downloadSuccessful = false;
+            if (downloadingStoppedByUser)
+            {
+                downloadingCompleted = true;
+            }
+            else
+            {
+                if (attemptIndex + 1 == _maxDownloadAttemptNumber)
+                {
+                    _cmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                        CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
+                }
+                else
+                {
+                    this_thread::sleep_for(chrono::seconds(_secondsWaitingAmongDownloadingAttempt));
+                }
+            }
         }
         catch (exception e)
         {
             _logger->error(__FILEREF__ + "Download failed"
-                + ", ingestionJobKey: " + ingestionJobKey 
+                + ", ingestionJobKey: " + to_string(ingestionJobKey) 
                 + ", sourceReferenceURL: " + sourceReferenceURL 
                 + ", exception: " + e.what()
             );
@@ -1547,10 +1612,22 @@ RESUMING FILE TRANSFERS
             string ftpDirectoryErrorEntryPathName =
                 _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, metadataFileName);
 
-            _cmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                    CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
-
-            downloadSuccessful = false;
+            if (downloadingStoppedByUser)
+            {
+                downloadingCompleted = true;
+            }
+            else
+            {
+                if (attemptIndex + 1 == _maxDownloadAttemptNumber)
+                {
+                    _cmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                        CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
+                }
+                else
+                {
+                    this_thread::sleep_for(chrono::seconds(_secondsWaitingAmongDownloadingAttempt));
+                }
+            }
         }
     }
 
@@ -1582,7 +1659,7 @@ RESUMING FILE TRANSFERS
     catch (runtime_error & e) 
     {
         _logger->error(__FILEREF__ + "sending INGESTASSETEVENT failed"
-            + ", ingestionJobKey: " + ingestionJobKey 
+            + ", ingestionJobKey: " + to_string(ingestionJobKey) 
             + ", sourceReferenceURL: " + sourceReferenceURL 
             + ", exception: " + e.what()
         );
@@ -1596,7 +1673,7 @@ RESUMING FILE TRANSFERS
     catch (exception e)
     {
         _logger->error(__FILEREF__ + "sending INGESTASSETEVENT failed"
-            + ", ingestionJobKey: " + ingestionJobKey 
+            + ", ingestionJobKey: " + to_string(ingestionJobKey) 
             + ", sourceReferenceURL: " + sourceReferenceURL 
             + ", exception: " + e.what()
         );
@@ -1609,28 +1686,39 @@ RESUMING FILE TRANSFERS
     }
 }
 
-double CMSEngineProcessor::progressCallback(int64_t ingestionJobKey,
-    double dltotal, double dlnow,
-    double ultotal, double ulnow)
+int CMSEngineProcessor::progressCallback(
+        int64_t ingestionJobKey,
+        chrono::system_clock::time_point& lastProgressUpdate, bool& downloadingStoppedByUser,
+        double dltotal, double dlnow,
+        double ultotal, double ulnow)
 {
 
-    _logger->info(__FILEREF__ + "Download still running"
-        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-        + ", dltotal: " + to_string(dltotal)
-        + ", dlnow: " + to_string(dlnow)
-        + ", ultotal: " + to_string(ultotal)
-        + ", ulnow: " + to_string(ulnow)
-    );
+    chrono::system_clock::time_point now = chrono::system_clock::now();
+            
+    if (dltotal != 0 &&
+            (dltotal == dlnow 
+            || now - lastProgressUpdate >= chrono::seconds(_progressUpdatePeriodInSeconds)))
+    {
+        double progress = (dlnow / dltotal) * 100;
+        int downloadingPercentage = floorf(progress * 100) / 100;
 
-    double progress = (dlnow / dltotal) * 100;
-    float percent = floorf(progress * 100) / 100;
+        _logger->info(__FILEREF__ + "Download still running"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", downloadingPercentage: " + to_string(downloadingPercentage)
+            + ", dltotal: " + to_string(dltotal)
+            + ", dlnow: " + to_string(dlnow)
+            + ", ultotal: " + to_string(ultotal)
+            + ", ulnow: " + to_string(ulnow)
+        );
+        
+        lastProgressUpdate = now;
+        
+        downloadingStoppedByUser = _cmsEngineDBFacade->updateIngestionJobSourceDownloadingInProgress (
+            ingestionJobKey, downloadingPercentage);
 
-    _logger->info(__FILEREF__ + "Download still running"
-        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-        + ", percent: " + to_string(percent)
-        + ", dltotal: " + to_string(dltotal)
-        + ", dlnow: " + to_string(dlnow)
-        + ", ultotal: " + to_string(ultotal)
-        + ", ulnow: " + to_string(ulnow)
-    );
+        if (downloadingStoppedByUser)
+            return 1;   // stop downloading
+    }
+    
+    return 0;
 }

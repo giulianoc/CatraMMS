@@ -893,6 +893,7 @@ int64_t CMSEngineDBFacade::addIngestionJob (
         string metadataFileContent,
         IngestionType ingestionType,
         IngestionStatus ingestionStatus,
+        string processorCMS,
         string errorMessage
 )
 {
@@ -956,8 +957,8 @@ int64_t CMSEngineDBFacade::addIngestionJob (
         
         {
             lastSQLCommand = 
-                "insert into CMS_IngestionJobs (IngestionJobKey, CustomerKey, MediaItemKey, MetaDataFileName, MetadataFileContent, IngestionType, StartIngestion, EndIngestion, Status, ErrorMessage) values ("
-                "NULL, ?, NULL, ?, ?, ?, NULL, NULL, ?, ?)";
+                "insert into CMS_IngestionJobs (IngestionJobKey, CustomerKey, MediaItemKey, MetaDataFileName, MetadataFileContent, IngestionType, StartIngestion, EndIngestion, DownloadingProgress, ProcessorCMS, Status, ErrorMessage) values ("
+                "NULL, ?, NULL, ?, ?, ?, NULL, NULL, NULL, ?, ?, ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -968,6 +969,7 @@ int64_t CMSEngineDBFacade::addIngestionJob (
             else
                 preparedStatement->setString(queryParameterIndex++, metadataFileContent);
             preparedStatement->setInt(queryParameterIndex++, static_cast<int>(ingestionType));
+            preparedStatement->setString(queryParameterIndex++, processorCMS);
             preparedStatement->setInt(queryParameterIndex++, static_cast<int>(ingestionStatus));
             if (errorMessage == "")
                 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
@@ -1126,6 +1128,99 @@ void CMSEngineDBFacade::updateIngestionJob (
 
         throw e;
     }    
+}
+
+bool CMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress (
+        int64_t ingestionJobKey,
+        int downloadingPercentage)
+{
+    
+    bool        toBeCancelled = false;
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+
+        {
+            lastSQLCommand = 
+                "update CMS_IngestionJobs set DownloadingProgress = ? where IngestionJobKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt(queryParameterIndex++, downloadingPercentage);
+            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+
+            int rowsUpdated = preparedStatement->executeUpdate();
+            if (rowsUpdated != 1)
+            {
+                string errorMessage = __FILEREF__ + "no update was done"
+                        + ", downloadingPercentage: " + to_string(downloadingPercentage)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", rowsUpdated: " + to_string(rowsUpdated)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }
+        }
+        
+        {
+            lastSQLCommand = 
+                "select Status from CMS_IngestionJobs where IngestionJobKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+            
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                IngestionStatus ingestionStatus = static_cast<IngestionStatus>(resultSet->getInt("Status"));
+                
+                if (ingestionStatus == IngestionStatus::End_DownloadCancelledByUser)
+                    toBeCancelled = true;
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "IngestionJob is not found"
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }            
+        }
+
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        _connectionPool->unborrow(conn);
+
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw se;
+    }
+    catch(exception e)
+    {
+        _connectionPool->unborrow(conn);
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
+    }
+    
+    return toBeCancelled;
 }
 
 void CMSEngineDBFacade::getEncodingJobs(
@@ -3344,6 +3439,8 @@ void CMSEngineDBFacade::createTablesIfNeeded()
                     "IngestionType                      TINYINT (2) NULL,"
                     "StartIngestion			TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "EndIngestion			DATETIME NULL,"
+                    "DownloadingProgress                INT NULL,"
+                    "ProcessorCMS			VARCHAR (128) NULL,"
                     "Status           			TINYINT (2) NOT NULL,"
                     "ErrorMessage			VARCHAR (1024) NULL,"
                     "constraint CMS_IngestionJobs_PK PRIMARY KEY (IngestionJobKey), "

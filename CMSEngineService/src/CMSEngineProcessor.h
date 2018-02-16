@@ -30,6 +30,8 @@ private:
     bool                    _firstGetEncodingJob;
     string                  _processorCMS;
     int                     _maxDownloadAttemptNumber;
+    int                     _progressUpdatePeriodInSeconds;
+    int                     _secondsWaitingAmongDownloadingAttempt;
     
     unsigned long           _ulMaxIngestionsNumberPerCustomerEachIngestionPeriod;
     unsigned long           _ulJsonToBeProcessedAfterSeconds;
@@ -69,7 +71,9 @@ private:
         string metadataFileName, string ftpDirectoryWorkingMetadataPathName,
         string customerFTPDirectory, string mediaSourceFileName);
 
-    double progressCallback(int64_t ingestionJobKey,
+    int progressCallback(
+        int64_t ingestionJobKey,
+        chrono::system_clock::time_point& lastProgressUpdate, bool& downloadingStoppedByUser,
         double dltotal, double dlnow,
         double ultotal, double ulnow);
 
