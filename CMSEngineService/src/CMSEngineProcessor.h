@@ -29,6 +29,7 @@ private:
     unsigned long           _ulIngestionLastCustomerIndex;
     bool                    _firstGetEncodingJob;
     string                  _processorCMS;
+    int                     _maxDownloadAttemptNumber;
     
     unsigned long           _ulMaxIngestionsNumberPerCustomerEachIngestionPeriod;
     unsigned long           _ulJsonToBeProcessedAfterSeconds;

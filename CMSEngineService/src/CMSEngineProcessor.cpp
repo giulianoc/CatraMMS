@@ -30,6 +30,7 @@ CMSEngineProcessor::CMSEngineProcessor(
     _ulIngestionLastCustomerIndex   = 0;
     _firstGetEncodingJob            = true;
     _processorCMS                   = System::getHostName();
+    _maxDownloadAttemptNumber       = 3;
     
     _ulMaxIngestionsNumberPerCustomerEachIngestionPeriod        = 2;
     _ulJsonToBeProcessedAfterSeconds                            = 10;
@@ -1437,79 +1438,155 @@ void CMSEngineProcessor::downloadMediaSourceFile(string sourceReferenceURL,
         string metadataFileName, string ftpDirectoryWorkingMetadataPathName,
         string customerFTPDirectory, string mediaSourceFileName)
 {
-    try 
+    bool downloadSuccessful = false;
+
+/*
+    - aggiungere un timeout nel caso nessun pacchetto è ricevuto entro XXXX seconds
+    - per il resume:
+        l'apertura dello stream of dovrà essere fatta in append in questo caso
+        usare l'opzione CURLOPT_RESUME_FROM o CURLOPT_RESUME_FROM_LARGE (>2GB) per dire da dove ripartire
+    per ftp vedere https://raw.githubusercontent.com/curl/curl/master/docs/examples/ftpuploadresume.c
+ 
+RESUMING FILE TRANSFERS 
+  
+ To continue a file transfer where it was previously aborted, curl supports 
+ resume on http(s) downloads as well as ftp uploads and downloads. 
+  
+ Continue downloading a document: 
+  
+        curl -C - -o file ftp://ftp.server.com/path/file 
+  
+ Continue uploading a document(*1): 
+  
+        curl -C - -T file ftp://ftp.server.com/path/file 
+  
+ Continue downloading a document from a web server(*2): 
+  
+        curl -C - -o file http://www.server.com/ 
+  
+ (*1) = This requires that the ftp server supports the non-standard command 
+        SIZE. If it doesn't, curl will say so. 
+  
+ (*2) = This requires that the web server supports at least HTTP/1.1. If it 
+        doesn't, curl will say so. 
+ */    
+ 
+        
+    for (int attemptIndex = 0; attemptIndex < _maxDownloadAttemptNumber && !dowloadSuccessful; attemptIndex++)
     {
-        string ftpMediaSourcePathName =
-                customerFTPDirectory
-                + "/"
-                + mediaSourceFileName;
-                
-        ofstream of(ftpMediaSourcePathName);
-        
-        curlpp::Cleanup cleaner;
-        curlpp::Easy request;
-
-        // Set the writer callback to enable cURL 
-        // to write result in a memory area
-        request.setOpt(new curlpp::options::WriteStream(&of));
-
-        // Setting the URL to retrive.
-        request.setOpt(new curlpp::options::Url(sourceReferenceURL));
-        
-        curlpp::options::ProgressFunction
-            progressBar(bind(&CMSEngineProcessor::progressCallback, this, ingestionJobKey, placeholders::_1, placeholders::_2, placeholders::_3, placeholders::_4));
-        request.setOpt(progressBar);
-        
-        _logger->info(__FILEREF__ + "Downloading media file"
-            + ", sourceReferenceURL: " + sourceReferenceURL
-        );
-        request.perform();
-
+        try 
         {
-            shared_ptr<IngestAssetEvent>    ingestAssetEvent = _multiEventsSet->getEventsFactory()
-                    ->getFreeEvent<IngestAssetEvent>(CMSENGINE_EVENTTYPEIDENTIFIER_INGESTASSETEVENT);
+            string ftpMediaSourcePathName =
+                    customerFTPDirectory
+                    + "/"
+                    + mediaSourceFileName;
 
-            ingestAssetEvent->setSource(CMSENGINEPROCESSORNAME);
-            ingestAssetEvent->setDestination(CMSENGINEPROCESSORNAME);
-            ingestAssetEvent->setExpirationTimePoint(chrono::system_clock::now());
+            ofstream of(ftpMediaSourcePathName);
 
-            ingestAssetEvent->setIngestionJobKey(ingestionJobKey);
-            ingestAssetEvent->setCustomer(customer);
+            curlpp::Cleanup cleaner;
+            curlpp::Easy request;
 
-            ingestAssetEvent->setMetadataFileName(metadataFileName);
-            ingestAssetEvent->setFTPWorkingMetadataPathName(ftpDirectoryWorkingMetadataPathName);
-            ingestAssetEvent->setFTPMediaSourcePathName(ftpMediaSourcePathName);
-            ingestAssetEvent->setMediaSourceFileName(mediaSourceFileName);
+            // Set the writer callback to enable cURL 
+            // to write result in a memory area
+            request.setOpt(new curlpp::options::WriteStream(&of));
 
-            shared_ptr<Event>    event = dynamic_pointer_cast<Event>(ingestAssetEvent);
-            _multiEventsSet->addEvent(event);
+            // Setting the URL to retrive.
+            request.setOpt(new curlpp::options::Url(sourceReferenceURL));
 
-            _logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
-                + ", mediaSourceFileName: " + mediaSourceFileName
-                + ", getEventKey().first: " + to_string(event->getEventKey().first)
-                + ", getEventKey().second: " + to_string(event->getEventKey().second));
+            curlpp::options::ProgressFunction
+                progressBar(bind(&CMSEngineProcessor::progressCallback, this, ingestionJobKey, placeholders::_1, placeholders::_2, placeholders::_3, placeholders::_4));
+            request.setOpt(progressBar);
+
+            _logger->info(__FILEREF__ + "Downloading media file"
+                + ", sourceReferenceURL: " + sourceReferenceURL
+            );
+            request.perform();
+            
+            downloadSuccessful = true;
+        }
+        catch ( curlpp::LogicError & e ) 
+        {
+            _logger->error(__FILEREF__ + "Download failed"
+                + ", ingestionJobKey: " + ingestionJobKey 
+                + ", sourceReferenceURL: " + sourceReferenceURL 
+                + ", exception: " + e.what()
+            );
+
+            string ftpDirectoryErrorEntryPathName =
+                _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, metadataFileName);
+
+            _cmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                    CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
+
+            downloadSuccessful = false;
+        }
+        catch ( curlpp::RuntimeError & e ) 
+        {
+            _logger->error(__FILEREF__ + "Download failed"
+                + ", ingestionJobKey: " + ingestionJobKey 
+                + ", sourceReferenceURL: " + sourceReferenceURL 
+                + ", exception: " + e.what()
+            );
+
+            string ftpDirectoryErrorEntryPathName =
+                _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, metadataFileName);
+
+            _cmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                    CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
+
+            downloadSuccessful = false;
+        }
+        catch (exception e)
+        {
+            _logger->error(__FILEREF__ + "Download failed"
+                + ", ingestionJobKey: " + ingestionJobKey 
+                + ", sourceReferenceURL: " + sourceReferenceURL 
+                + ", exception: " + e.what()
+            );
+
+            string ftpDirectoryErrorEntryPathName =
+                _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, metadataFileName);
+
+            _cmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                    CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
+
+            downloadSuccessful = false;
         }
     }
-    catch ( curlpp::LogicError & e ) 
-    {
-        _logger->error(__FILEREF__ + "Download failed"
-            + ", sourceReferenceURL: " + sourceReferenceURL 
-            + ", exception: " + e.what()
-        );
-        
-        string ftpDirectoryErrorEntryPathName =
-            _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, metadataFileName);
 
-        _cmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
-    }
-    catch ( curlpp::RuntimeError & e ) 
+    try 
     {
-        _logger->error(__FILEREF__ + "Download failed"
+        shared_ptr<IngestAssetEvent>    ingestAssetEvent = _multiEventsSet->getEventsFactory()
+                ->getFreeEvent<IngestAssetEvent>(CMSENGINE_EVENTTYPEIDENTIFIER_INGESTASSETEVENT);
+
+        ingestAssetEvent->setSource(CMSENGINEPROCESSORNAME);
+        ingestAssetEvent->setDestination(CMSENGINEPROCESSORNAME);
+        ingestAssetEvent->setExpirationTimePoint(chrono::system_clock::now());
+
+        ingestAssetEvent->setIngestionJobKey(ingestionJobKey);
+        ingestAssetEvent->setCustomer(customer);
+
+        ingestAssetEvent->setMetadataFileName(metadataFileName);
+        ingestAssetEvent->setFTPWorkingMetadataPathName(ftpDirectoryWorkingMetadataPathName);
+        ingestAssetEvent->setFTPMediaSourcePathName(ftpMediaSourcePathName);
+        ingestAssetEvent->setMediaSourceFileName(mediaSourceFileName);
+
+        shared_ptr<Event>    event = dynamic_pointer_cast<Event>(ingestAssetEvent);
+        _multiEventsSet->addEvent(event);
+
+        _logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
+            + ", mediaSourceFileName: " + mediaSourceFileName
+            + ", getEventKey().first: " + to_string(event->getEventKey().first)
+            + ", getEventKey().second: " + to_string(event->getEventKey().second));
+    }
+    catch (runtime_error & e) 
+    {
+        _logger->error(__FILEREF__ + "sending INGESTASSETEVENT failed"
+            + ", ingestionJobKey: " + ingestionJobKey 
             + ", sourceReferenceURL: " + sourceReferenceURL 
             + ", exception: " + e.what()
         );
-        
+
         string ftpDirectoryErrorEntryPathName =
             _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, metadataFileName);
 
@@ -1518,11 +1595,12 @@ void CMSEngineProcessor::downloadMediaSourceFile(string sourceReferenceURL,
     }
     catch (exception e)
     {
-        _logger->error(__FILEREF__ + "Download failed"
+        _logger->error(__FILEREF__ + "sending INGESTASSETEVENT failed"
+            + ", ingestionJobKey: " + ingestionJobKey 
             + ", sourceReferenceURL: " + sourceReferenceURL 
             + ", exception: " + e.what()
         );
-        
+
         string ftpDirectoryErrorEntryPathName =
             _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, metadataFileName);
 
