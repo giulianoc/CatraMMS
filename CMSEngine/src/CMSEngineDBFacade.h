@@ -119,18 +119,41 @@ public:
     };
 
     enum class IngestionStatus {
-        StartIngestion                              = 1,
-        SourceDownloadingInProgress                 = 2,
-        QueuedForEncoding                           = 3,
+        StartIngestion                              = 1,    
+            // metadata moved in WorkingArea, metadata partially validated
+        
+        SourceDownloadingInProgress                 = 2,    
+            // media source is remote, downloading in FTP repository started
+        
+        QueuedForEncoding                           = 3,   
+            // metadata ingestion is finished (saved into DB), media source is in CMS repository
 
-        End_DownloadCancelledByUser                 = 10,
-        End_ValidationMetadataFailed                = 11,
-        End_ValidationMediaSourceFailed             = 12,
+
+        End_DownloadCancelledByUser                 = 10,   
+            // User cancelled the media source downloading, metadata is moved in ErrorArea
+
+        End_ValidationMetadataFailed                = 11,   
+            // Validation metadata failed, metadata is moved in ErrorArea.
+            // MediaSource (if present) remains in FTP repository in case the json would be ingested again (MediaSource would be remove by retention)
+
+        End_ValidationMediaSourceFailed             = 12,   
+            // validation media source failed, metadata is moved in ErrorArea
+            // MediaSource (if present) remains in FTP repository in case the json would be ingested again (MediaSource would be remove by retention)
+
         End_CustomerReachedHisMaxIngestionNumber    = 13,
+            // validation media source failed, metadata is moved in ErrorArea
+            // MediaSource (if present) remains in FTP repository in case the json would be ingested again (MediaSource would be remove by retention)
         
         End_IngestionFailure                        = 15,                    // nothing done
-        End_IngestionSuccess_AtLeastOneEncodingProfileError   = 16,    // One encoding is considered a failure only after MaxFailuresNumer attempts
-        End_IngestionSuccess    = 20                    // all done
+            // validation media source failed, metadata is moved in ErrorArea
+            // MediaSource (if present) remains in FTP repository in case the json would be ingested again (MediaSource would be remove by retention)
+
+        End_IngestionSuccess_AtLeastOneEncodingProfileError   = 16,    
+            // Content was ingested successful but at least one encoding failed
+            // One encoding is considered a failure only after MaxFailuresNumer attempts
+        
+        End_IngestionSuccess    = 20
+            // Ingestion and encodings successful
     };
 
 public:
@@ -153,7 +176,7 @@ public:
 
     bool isMetadataPresent(Json::Value root, string field);
 
-    int64_t addCustomer(
+    pair<int64_t,string> registerCustomer(
 	string customerName,
         string customerDirectoryName,
 	string street,
@@ -164,7 +187,6 @@ public:
         string countryCode,
         CustomerType customerType,
 	string deliveryURL,
-        bool enabled,
 	EncodingPriority maxEncodingPriority,
         EncodingPeriod encodingPeriod,
 	long maxIngestionsNumber,
@@ -176,6 +198,19 @@ public:
         chrono::system_clock::time_point userExpirationDate
     );
     
+    void confirmCustomer(string confirmationCode);
+
+    bool isLoginValid(
+        string emailAddress,
+        string password);
+
+    string getPassword(string emailAddress);
+
+    string createAPIKey (
+        string emailAddress,
+        string flags,
+        chrono::system_clock::time_point expirationDate);
+
     int64_t addVideoEncodingProfile(
         shared_ptr<Customer> customer,
         string encodingProfileSet,
@@ -238,7 +273,7 @@ public:
         string relativePath,
         string mediaSourceFileName,
         int cmsPartitionIndexUsed,
-        int sizeInBytes,
+        unsigned long sizeInBytes,
         int64_t videoOrAudioDurationInMilliSeconds,
         int imageWidth,
         int imageHeight);
@@ -258,6 +293,7 @@ private:
     string                          _defaultContentProviderName;
     string                          _defaultTerritoryName;
     int                             _maxEncodingFailures;
+    int                             _confirmationCodeRetentionInDays;
 
     void getTerritories(shared_ptr<Customer> customer);
 

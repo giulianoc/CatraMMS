@@ -11,6 +11,8 @@
  * Created on January 27, 2018, 9:38 AM
  */
 
+#include <random>
+#include "catralibraries/Encrypt.h"
 #include "CMSEngineDBFacade.h"
 
 // http://download.nust.na/pub6/mysql/tech-resources/articles/mysql-connector-cpp.html#trx
@@ -29,6 +31,8 @@ CMSEngineDBFacade::CMSEngineDBFacade(
     _defaultTerritoryName           = "default";
     
     _maxEncodingFailures            = 3;
+    
+    _confirmationCodeRetentionInDays    = 7;
     
     shared_ptr<MySQLConnectionFactory>  mySQLConnectionFactory = 
             make_shared<MySQLConnectionFactory>(dbServer, dbUsername, dbPassword, dbName);
@@ -174,7 +178,7 @@ void CMSEngineDBFacade::getTerritories(shared_ptr<Customer> customer)
     _connectionPool->unborrow(conn);
 }
 
-int64_t CMSEngineDBFacade::addCustomer(
+pair<int64_t,string> CMSEngineDBFacade::registerCustomer(
 	string customerName,
         string customerDirectoryName,
 	string street,
@@ -185,7 +189,6 @@ int64_t CMSEngineDBFacade::addCustomer(
         string countryCode,
         CustomerType customerType,
 	string deliveryURL,
-        bool enabled,
 	EncodingPriority maxEncodingPriority,
         EncodingPeriod encodingPeriod,
 	long maxIngestionsNumber,
@@ -198,6 +201,7 @@ int64_t CMSEngineDBFacade::addCustomer(
 )
 {
     int64_t         customerKey;
+    string          confirmationCode;
     int64_t         contentProviderKey;
     
     string      lastSQLCommand;
@@ -220,6 +224,8 @@ int64_t CMSEngineDBFacade::addCustomer(
         }
         
         {
+            bool enabled = false;
+            
             lastSQLCommand = 
                     "insert into CMS_Customers ("
                     "CustomerKey, CreationDate, Name, DirectoryName, Street, City, State, ZIP, Phone, CountryCode, CustomerType, DeliveryURL, IsEnabled, MaxEncodingPriority, EncodingPeriod, MaxIngestionsNumber, MaxStorageInGB, CurrentStorageUsageInGB, LanguageCode) values ("
@@ -267,9 +273,22 @@ int64_t CMSEngineDBFacade::addCustomer(
 
             preparedStatement->executeUpdate();
         }
-        
-        customerKey = getLastInsertId(conn);
-        
+
+        unsigned seed = chrono::steady_clock::now().time_since_epoch().count();
+        default_random_engine e(seed);
+        confirmationCode = to_string(e());
+        {
+            lastSQLCommand = 
+                    "insert into CMS_ConfirmationCodes (CustomerKey, CreationDate, ConfirmationCode) values ("
+                    "?, NOW(), ?)";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, customerKey);
+            preparedStatement->setString(queryParameterIndex++, confirmationCode);
+
+            preparedStatement->executeUpdate();
+        }
+
         {
             lastSQLCommand = 
                     "insert into CMS_CustomerMoreInfo (CustomerKey, CurrentDirLevel1, CurrentDirLevel2, CurrentDirLevel3, StartDateTime, EndDateTime, CurrentIngestionsNumber) values ("
@@ -395,7 +414,101 @@ int64_t CMSEngineDBFacade::addCustomer(
         throw e;
     }
     
-    return customerKey;
+    pair<int64_t,string> customerKeyAndConfirmationCode = make_pair(customerKey, confirmationCode);
+    
+    return customerKeyAndConfirmationCode;
+}
+
+void CMSEngineDBFacade::confirmCustomer(
+    string confirmationCode
+)
+{
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+
+        int64_t     customerKey;
+        {
+            lastSQLCommand = 
+                "select CustomerKey from CMS_ConfirmationCodes where ConfirmationCode = ? and DATE_ADD(CreationDate, INTERVAL ? DAY) >= NOW()";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, confirmationCode);
+            preparedStatement->setInt(queryParameterIndex++, _confirmationCodeRetentionInDays);
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                customerKey = resultSet->getInt64("CustomerKey");
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "Confirmation Code not found or expired"
+                    + ", confirmationCode: " + confirmationCode
+                    + ", _confirmationCodeRetentionInDays: " + to_string(_confirmationCodeRetentionInDays)
+                    + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }
+        }
+        
+        {
+            bool enabled = true;
+            
+            lastSQLCommand = 
+                "update CMS_Customers set IsEnabled = ? where CustomerKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt(queryParameterIndex++, enabled);
+            preparedStatement->setInt64(queryParameterIndex++, customerKey);
+
+            int rowsUpdated = preparedStatement->executeUpdate();
+            if (rowsUpdated != 1)
+            {
+                string errorMessage = __FILEREF__ + "no update was done"
+                        + ", enabled: " + to_string(enabled)
+                        + ", customerKey: " + to_string(customerKey)
+                        + ", rowsUpdated: " + to_string(rowsUpdated)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }
+        }
+
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        _connectionPool->unborrow(conn);
+
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw se;
+    }
+    catch(exception e)
+    {
+        _connectionPool->unborrow(conn);
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
+    }
 }
 
 int64_t CMSEngineDBFacade::addTerritory (
@@ -526,6 +639,238 @@ int64_t CMSEngineDBFacade::addUser (
     }
     
     return userKey;
+}
+
+bool CMSEngineDBFacade::isLoginValid(
+        string emailAddress,
+        string password
+)
+{
+    bool        isLoginValid;
+    string      lastSQLCommand;
+
+    shared_ptr<MySQLConnection> conn;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+
+        {
+            lastSQLCommand = 
+                "select UserKey from CMS_Users2 where EMailAddress = ? and Password = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, emailAddress);
+            preparedStatement->setString(queryParameterIndex++, password);
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                int64_t userKey = resultSet->getInt("UserKey");
+                
+                isLoginValid = true;
+            }
+            else
+            {
+                isLoginValid = false;
+            }            
+        }
+                        
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        _connectionPool->unborrow(conn);
+
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw se;
+    }
+    catch(exception e)
+    {        
+        _connectionPool->unborrow(conn);
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
+    }
+    
+    return isLoginValid;
+}
+
+string CMSEngineDBFacade::getPassword(string emailAddress)
+{
+    string      password;
+    string      lastSQLCommand;
+
+    shared_ptr<MySQLConnection> conn;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+
+        {
+            lastSQLCommand = 
+                "select Password from CMS_Users2 where EMailAddress = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, emailAddress);
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                password = resultSet->getString("Password");
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "User is not present"
+                    + ", emailAddress: " + emailAddress
+                    + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }            
+        }
+                        
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        _connectionPool->unborrow(conn);
+
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw se;
+    }
+    catch(exception e)
+    {        
+        _connectionPool->unborrow(conn);
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
+    }
+    
+    return password;
+}
+
+string CMSEngineDBFacade::createAPIKey (
+        string emailAddress,
+        string flags,
+        chrono::system_clock::time_point expirationDate
+)
+{
+    string          apiKey;
+    
+    string      lastSQLCommand;
+
+    shared_ptr<MySQLConnection> conn;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+
+        int64_t         userKey;
+        
+        {
+            lastSQLCommand = 
+                "select UserKey from CMS_Users2 where EMailAddress = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, emailAddress);
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                userKey = resultSet->getInt64("UserKey");
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "User is not present"
+                    + ", emailAddress: " + emailAddress
+                    + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+
+        {
+            string sourceApiKey = emailAddress;
+            apiKey = Encrypt::encrypt(sourceApiKey);
+
+            lastSQLCommand = 
+                "insert into CMS_APIKeys (APIKey, UserKey, Flags, CreationDate, ExpirationDate) values ("
+                "?, ?, ?, NULL, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'))";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, apiKey);
+            preparedStatement->setInt64(queryParameterIndex++, userKey);
+            preparedStatement->setString(queryParameterIndex++, flags);
+            {
+                tm          tmDateTime;
+                char        strExpirationDate [64];
+                time_t utcTime = chrono::system_clock::to_time_t(expirationDate);
+
+                localtime_r (&utcTime, &tmDateTime);
+
+                sprintf (strExpirationDate, "%04d-%02d-%02d %02d:%02d:%02d",
+                        tmDateTime. tm_year + 1900,
+                        tmDateTime. tm_mon + 1,
+                        tmDateTime. tm_mday,
+                        tmDateTime. tm_hour,
+                        tmDateTime. tm_min,
+                        tmDateTime. tm_sec);
+
+                preparedStatement->setString(queryParameterIndex++, strExpirationDate);
+            }
+
+            preparedStatement->executeUpdate();
+        }
+
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        _connectionPool->unborrow(conn);
+
+        string exceptionMessage(se.what());
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw se;
+    }
+    catch(exception e)
+    {        
+        _connectionPool->unborrow(conn);
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
+    }
+    
+    return apiKey;
 }
 
 int64_t CMSEngineDBFacade::addVideoEncodingProfile(
@@ -1155,15 +1500,17 @@ bool CMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress (
             int rowsUpdated = preparedStatement->executeUpdate();
             if (rowsUpdated != 1)
             {
+                // we tried to update a value but the same value was already in the table,
+                // in this case rowsUpdated will be 0
                 string errorMessage = __FILEREF__ + "no update was done"
                         + ", downloadingPercentage: " + to_string(downloadingPercentage)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                         + ", rowsUpdated: " + to_string(rowsUpdated)
                         + ", lastSQLCommand: " + lastSQLCommand
                 ;
-                _logger->error(errorMessage);
+                _logger->warn(errorMessage);
 
-                throw runtime_error(errorMessage);                    
+                // throw runtime_error(errorMessage);                    
             }
         }
         
@@ -1553,7 +1900,7 @@ int CMSEngineDBFacade::updateEncodingJob (
 
             {
                 lastSQLCommand = 
-                    "update CMS_EncodingJobs set Status = ?, ProcessorCMS = NULL, FailuresNumber = ?, Progress = NULL where EncodingJobKey = ? and Status = ?";
+                    "update CMS_EncodingJobs set Status = ?, ProcessorCMS = NULL, FailuresNumber = ?, EncodingProgress = NULL where EncodingJobKey = ? and Status = ?";
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
                 preparedStatement->setInt(queryParameterIndex++, static_cast<int>(newEncodingStatus));
@@ -1587,7 +1934,7 @@ int CMSEngineDBFacade::updateEncodingJob (
             newEncodingStatus       = EncodingStatus::ToBeProcessed;
             
             lastSQLCommand = 
-                "update CMS_EncodingJobs set Status = ?, ProcessorCMS = NULL, Progress = NULL where EncodingJobKey = ? and Status = ?";
+                "update CMS_EncodingJobs set Status = ?, ProcessorCMS = NULL, EncodingProgress = NULL where EncodingJobKey = ? and Status = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
                 preparedStatement->setInt(queryParameterIndex++, static_cast<int>(newEncodingStatus));
@@ -1617,7 +1964,7 @@ int CMSEngineDBFacade::updateEncodingJob (
             newEncodingStatus       = EncodingStatus::End_ProcessedSuccessful;
 
             lastSQLCommand = 
-                "update CMS_EncodingJobs set Status = ?, ProcessorCMS = NULL, EncodingJobEnd = NOW(), Progress = 100 where EncodingJobKey = ? and Status = ?";
+                "update CMS_EncodingJobs set Status = ?, ProcessorCMS = NULL, EncodingJobEnd = NOW(), EncodingProgress = 100 where EncodingJobKey = ? and Status = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt(queryParameterIndex++, static_cast<int>(newEncodingStatus));
@@ -1770,7 +2117,7 @@ void CMSEngineDBFacade::updateEncodingJobProgress (
 
         {
             lastSQLCommand = 
-                "update CMS_EncodingJobs set Progress = ? where EncodingJobKey = ?";
+                "update CMS_EncodingJobs set EncodingProgress = ? where EncodingJobKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt(queryParameterIndex++, encodingPercentage);
@@ -1779,15 +2126,16 @@ void CMSEngineDBFacade::updateEncodingJobProgress (
             int rowsUpdated = preparedStatement->executeUpdate();
             if (rowsUpdated != 1)
             {
+                // probable because encodingPercentage was already the same in the table
                 string errorMessage = __FILEREF__ + "no update was done"
                         + ", encodingPercentage: " + to_string(encodingPercentage)
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", rowsUpdated: " + to_string(rowsUpdated)
                         + ", lastSQLCommand: " + lastSQLCommand
                 ;
-                _logger->error(errorMessage);
+                _logger->warn(errorMessage);
 
-                throw runtime_error(errorMessage);                    
+                // throw runtime_error(errorMessage);                    
             }
         }
         
@@ -2157,7 +2505,7 @@ pair<int64_t,int64_t> CMSEngineDBFacade::saveIngestedContentMetadata(
         string relativePath,
         string mediaSourceFileName,
         int cmsPartitionIndexUsed,
-        int sizeInBytes,
+        unsigned long sizeInBytes,
         int64_t videoOrAudioDurationInMilliSeconds,
         int imageWidth,
         int imageHeight
@@ -2440,7 +2788,7 @@ pair<int64_t,int64_t> CMSEngineDBFacade::saveIngestedContentMetadata(
             preparedStatement->setString(queryParameterIndex++, mediaSourceFileName);
             preparedStatement->setString(queryParameterIndex++, relativePath);
             preparedStatement->setInt(queryParameterIndex++, cmsPartitionIndexUsed);
-            preparedStatement->setInt(queryParameterIndex++, sizeInBytes);
+            preparedStatement->setInt64(queryParameterIndex++, sizeInBytes);
             preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
 
             preparedStatement->executeUpdate();
@@ -2672,7 +3020,7 @@ pair<int64_t,int64_t> CMSEngineDBFacade::saveIngestedContentMetadata(
                 encodingPriority = EncodingPriority::Default;
 
             lastSQLCommand = 
-                "insert into CMS_EncodingJobs(EncodingJobKey, IngestionJobKey, SourcePhysicalPathKey, EncodingPriority, EncodingProfileKey, EncodingJobStart, EncodingJobEnd, Progress, Status, ProcessorCMS, FailuresNumber) "
+                "insert into CMS_EncodingJobs(EncodingJobKey, IngestionJobKey, SourcePhysicalPathKey, EncodingPriority, EncodingProfileKey, EncodingJobStart, EncodingJobEnd, EncodingProgress, Status, ProcessorCMS, FailuresNumber) "
 	        "select                       NULL,           ?,               ?,                     ?,                EncodingProfileKey, NULL,             NULL,           NULL,     ?,      NULL,         0 "
                 "from CMS_EncodingProfilesSetMapping where EncodingProfilesSetKey = ?";
 
@@ -2812,7 +3160,7 @@ int64_t CMSEngineDBFacade::saveEncodedContentMetadata(
             preparedStatement->setString(queryParameterIndex++, encodedFileName);
             preparedStatement->setString(queryParameterIndex++, relativePath);
             preparedStatement->setInt(queryParameterIndex++, cmsPartitionIndexUsed);
-            preparedStatement->setInt(queryParameterIndex++, sizeInBytes);
+            preparedStatement->setInt64(queryParameterIndex++, sizeInBytes);
             preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
 
             preparedStatement->executeUpdate();
@@ -3081,6 +3429,31 @@ void CMSEngineDBFacade::createTablesIfNeeded()
 
         try
         {
+            lastSQLCommand = 
+                "create table if not exists CMS_ConfirmationCodes ("
+                    "CustomerKey                    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "CreationDate                   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+                    "ConfirmationCode               VARCHAR (64) NOT NULL,"
+                    "constraint CMS_ConfirmationCodes_PK PRIMARY KEY (CustomerKey),"
+                    "UNIQUE (ConfirmationCode))"
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);    
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
+        try
+        {
             // The territories are present only if the Customer is a 'Content Provider'.
             // In this case we could have two scenarios:
             // - customer not having territories (we will have just one row in this table with Name set as 'default')
@@ -3157,17 +3530,37 @@ void CMSEngineDBFacade::createTablesIfNeeded()
             lastSQLCommand = 
                 "create table if not exists CMS_Users2 ("
                     "UserKey				BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
-                    "UserName				VARCHAR (128) NOT NULL,"
+                    "EMailAddress				VARCHAR (128) NULL,"
                     "Password				VARCHAR (128) NOT NULL,"
+                    "UserName				VARCHAR (128) NOT NULL,"
                     "CustomerKey                            BIGINT UNSIGNED NOT NULL,"
                     "Type					INT NOT NULL,"
-                    "EMailAddress				VARCHAR (128) NULL,"
                     "CreationDate				TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "ExpirationDate				DATETIME NOT NULL,"
                     "constraint CMS_Users2_PK PRIMARY KEY (UserKey), "
                     "constraint CMS_Users2_FK foreign key (CustomerKey) "
-                        "references CMS_Customers (CustomerKey) on delete cascade) "
+                        "references CMS_Customers (CustomerKey) on delete cascade, "
+                    "UNIQUE (EMailAddress))"
                     "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
+        try
+        {
+            lastSQLCommand = 
+                "create unique index CMS_Users2_idx on CMS_Users2 (CustomerKey, UserName)";
             statement->execute(lastSQLCommand);
         }
         catch(sql::SQLException se)
@@ -3185,11 +3578,17 @@ void CMSEngineDBFacade::createTablesIfNeeded()
 
         try
         {
-            // this index is important because UserName is used by the EndUser to login
-            //  (i.e.: it is the end-user email address) and we cannot have
-            //  two equal UserName since we will not be able to understand the CustomerKey
             lastSQLCommand = 
-                "create unique index CMS_Users2_idx on CMS_Users2 (CustomerKey, UserName)";
+                "create table if not exists CMS_APIKeys ("
+                    "APIKey                     VARCHAR (128) NULL,"
+                    "UserKey                    BIGINT UNSIGNED NOT NULL,"
+                    "Flags			SET('ADMIN_API', 'USER_API') NOT NULL,"
+                    "CreationDate		TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+                    "ExpirationDate		DATETIME NOT NULL,"
+                    "constraint CMS_APIKeys_PK PRIMARY KEY (APIKey), "
+                    "constraint CMS_APIKeys_FK foreign key (UserKey) "
+                        "references CMS_Users2 (UserKey) on delete cascade) "
+                    "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
         catch(sql::SQLException se)
@@ -3203,7 +3602,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
 
                 throw se;
             }
-        }    
+        }
 
         try
         {
@@ -3948,7 +4347,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
                     "EncodingProfileKey			BIGINT UNSIGNED NOT NULL,"
                     "EncodingJobStart			TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "EncodingJobEnd			DATETIME NULL,"
-                    "Progress                           INT NULL,"
+                    "EncodingProgress                   INT NULL,"
                     "Status           			TINYINT (2) NOT NULL,"
                     "ProcessorCMS			VARCHAR (128) NULL,"
                     "FailuresNumber           	INT NOT NULL,"

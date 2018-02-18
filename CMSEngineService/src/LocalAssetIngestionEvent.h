@@ -21,8 +21,8 @@
  with the authors.
 */
 
-#ifndef IngestAssetEvent_h
-#define IngestAssetEvent_h
+#ifndef LocalAssetIngestionEvent_h
+#define LocalAssetIngestionEvent_h
 
 #include <iostream>
 #include "catralibraries/Event.h"
@@ -30,34 +30,18 @@
         
 using namespace std;
 
-#define CMSENGINE_EVENTTYPEIDENTIFIER_INGESTASSETEVENT	2
+#define CMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT	2
 
 
-class IngestAssetEvent: public Event {
+class LocalAssetIngestionEvent: public Event {
 private:    
-    /*
-    tuple<bool, string, string, string, int>    _mediaSourceDetails;
-    string                  _relativePath;
-    CMSEngineDBFacade::ContentType   _contentType;
-    */
     int64_t                 _ingestionJobKey;
     shared_ptr<Customer>    _customer;
 
     string                  _metadataFileName;
-    string                  _ftpWorkingMetadataPathName;
     string                  _mediaSourceFileName;
-    string                  _ftpMediaSourcePathName;
 
 public:
-    void setFTPWorkingMetadataPathName(string ftpWorkingMetadataPathName)
-    {
-        _ftpWorkingMetadataPathName   = ftpWorkingMetadataPathName;
-    }
-    string getFTPWorkingMetadataPathName()
-    {
-        return _ftpWorkingMetadataPathName;
-    }
-
     void setMediaSourceFileName(string mediaSourceFileName)
     {
         _mediaSourceFileName   = mediaSourceFileName;
@@ -65,15 +49,6 @@ public:
     string getMediaSourceFileName()
     {
         return _mediaSourceFileName;
-    }
-
-    void setFTPMediaSourcePathName(string ftpMediaSourcePathName)
-    {
-        _ftpMediaSourcePathName   = ftpMediaSourcePathName;
-    }
-    string getFTPMediaSourcePathName()
-    {
-        return _ftpMediaSourcePathName;
     }
 
     void setMetadataFileName(string metadataFileName)
@@ -98,7 +73,6 @@ public:
     {
         _customer   = customer;
     }
-
     shared_ptr<Customer> getCustomer()
     {
         return _customer;

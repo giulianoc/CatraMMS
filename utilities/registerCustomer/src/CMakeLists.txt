@@ -21,7 +21,7 @@
 # with the authors.
 
 SET (SOURCES
-	addCustomer.cpp
+	registerCustomer.cpp
 )
 
 SET (HEADERS
@@ -43,29 +43,28 @@ else()
 	link_directories ("/app/5/ThirdPartySoftware/mysql-connector-c++-1.1.9-linux-ubuntu16.10-x86-64bit/lib")
 endif()
 
-add_executable(addCustomer ${SOURCES} ${HEADERS})
+add_executable(registerCustomer ${SOURCES} ${HEADERS})
 
-#target_link_libraries (addCustomer MultiEventsSet)
-target_link_libraries (addCustomer CMSEngine)
-target_link_libraries (addCustomer mysqlcppconn)
-target_link_libraries (addCustomer jsoncpp)
+target_link_libraries (registerCustomer CMSEngine)
+target_link_libraries (registerCustomer mysqlcppconn)
+target_link_libraries (registerCustomer jsoncpp)
 if (APPLE)
 else()
-	target_link_libraries (addCustomer Magick++-7.Q16HDRI)
+	target_link_libraries (registerCustomer Magick++-7.Q16HDRI)
 endif()
 
-#target_link_libraries (addCustomer Scheduler)
-#target_link_libraries (addCustomer PThread)
-target_link_libraries (addCustomer Tools)
-target_link_libraries (addCustomer ErrMsg)
+#target_link_libraries (registerCustomer Scheduler)
+#target_link_libraries (registerCustomer PThread)
+target_link_libraries (registerCustomer Tools)
+target_link_libraries (registerCustomer ErrMsg)
 if(CRYPTO_FOUND)
 	if (APPLE)
-		target_link_libraries (addCustomer ${CRYPTO_LIBRARIES})
+		target_link_libraries (registerCustomer ${CRYPTO_LIBRARIES})
 	else()
-		target_link_libraries (addCustomer crypt)
+		target_link_libraries (registerCustomer crypt)
 	endif()
 endif()
 if (ZLIB_FOUND)
-	target_link_libraries(addCustomer ${ZLIB_LIBRARIES})
+	target_link_libraries(registerCustomer ${ZLIB_LIBRARIES})
 endif()
-target_link_libraries (addCustomer pthread)
+target_link_libraries (registerCustomer pthread)

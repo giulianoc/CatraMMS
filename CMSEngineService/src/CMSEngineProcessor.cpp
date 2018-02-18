@@ -35,7 +35,7 @@ CMSEngineProcessor::CMSEngineProcessor(
     _secondsWaitingAmongDownloadingAttempt  = 5;
     
     _ulMaxIngestionsNumberPerCustomerEachIngestionPeriod        = 2;
-    _ulJsonToBeProcessedAfterSeconds                            = 10;
+    _ulJsonToBeProcessedAfterSeconds                            = 4;
     _ulRetentionPeriodInDays                                    = 10;
 }
 
@@ -86,24 +86,24 @@ void CMSEngineProcessor::operator ()()
 
             }
             break;
-            case CMSENGINE_EVENTTYPEIDENTIFIER_INGESTASSETEVENT:	// 2
+            case CMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT:	// 2
             {
-                _logger->info(__FILEREF__ + "Received CMSENGINE_EVENTTYPEIDENTIFIER_INGESTASSETEVENT");
+                _logger->info(__FILEREF__ + "Received LOCALASSETINGESTIONEVENT");
 
-                shared_ptr<IngestAssetEvent>    ingestAssetEvent = dynamic_pointer_cast<IngestAssetEvent>(event);
+                shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = dynamic_pointer_cast<LocalAssetIngestionEvent>(event);
 
                 try
                 {
-                    handleIngestAssetEvent (ingestAssetEvent);
+                    handleLocalAssetIngestionEvent (localAssetIngestionEvent);
                 }
                 catch(exception e)
                 {
-                    _logger->error(__FILEREF__ + "handleIngestAssetEvent failed"
+                    _logger->error(__FILEREF__ + "handleLocalAssetIngestionEvent failed"
                         + ", exception: " + e.what()
                     );
                 }
 
-                _multiEventsSet->getEventsFactory()->releaseEvent<IngestAssetEvent>(ingestAssetEvent);
+                _multiEventsSet->getEventsFactory()->releaseEvent<LocalAssetIngestionEvent>(localAssetIngestionEvent);
             }
             break;
             case CMSENGINE_EVENTTYPEIDENTIFIER_CHECKENCODINGEVENT:	// 3
@@ -264,8 +264,7 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                         + ", directoryEntry: " + directoryEntry
                     );
 
-                    string ftpDirectoryWorkingMetadataPathName =
-                            _cmsStorage->moveFTPRepositoryEntryToWorkingArea(customer, directoryEntry);
+                    _cmsStorage->moveFTPRepositoryEntryToWorkingArea(customer, directoryEntry);
 
                     string      metadataFileContent;
                     pair<CMSEngineDBFacade::IngestionType,CMSEngineDBFacade::ContentType> ingestionTypeAndContentType;
@@ -273,14 +272,17 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                     try
                     {
                         {
-                            ifstream medatataFile(ftpDirectoryWorkingMetadataPathName);
+                            ifstream medatataFile(
+                                _cmsStorage->getCustomerFTPWorkingMetadataPathName(customer, directoryEntry));
                             stringstream buffer;
                             buffer << medatataFile.rdbuf();
 
                             metadataFileContent = buffer.str();
                         }
 
-                        ifstream ingestAssetJson(ftpDirectoryWorkingMetadataPathName, std::ifstream::binary);
+                        ifstream ingestAssetJson(
+                                _cmsStorage->getCustomerFTPWorkingMetadataPathName(customer, directoryEntry), 
+                                std::ifstream::binary);
                         try
                         {
                             ingestAssetJson >> metadataRoot;
@@ -407,58 +409,37 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                                 = mediaSourceDetails;                        
 
                         if (mediaSourceToBeDownload)
-                        {          
-                            _cmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                                    CMSEngineDBFacade::IngestionStatus::SourceDownloadingInProgress, "");
-                            
+                        {
                             thread downloadMediaSource(&CMSEngineProcessor::downloadMediaSourceFile, this, 
                                 mediaSourceReference, ingestionJobKey, customer,
-                                directoryEntry, ftpDirectoryWorkingMetadataPathName,
-                                customerFTPDirectory, mediaSourceFileName);
+                                directoryEntry, mediaSourceFileName);
                             downloadMediaSource.detach();
                             
-                            /*
-                            string ftpDirectoryWorkingMetadataPathName =
-                                _cmsStorage->moveFTPRepositoryEntryToSourceDownloadingArea(
-                                    customer, directoryEntry, _processorCMS);
-
-                            _cmsEngineDBFacade->addIngestionJob (customer->_customerKey, 
-                                directoryEntry, metadataFileContent, ingestionTypeAndContentType.first, 
-                                CMSEngineDBFacade::IngestionStatus::SourceDownloadingInProgress, 
-                                errorMessage);
-
-                             */
-                            // start downloading
+                            _cmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                CMSEngineDBFacade::IngestionStatus::SourceDownloadingInProgress, "");
                         }
                         else
-                        {            
-                            string ftpMediaSourcePathName   =
-                                    customerFTPDirectory
-                                    + "/"
-                                    + mediaSourceFileName;
-                            
-                            shared_ptr<IngestAssetEvent>    ingestAssetEvent = _multiEventsSet->getEventsFactory()
-                                    ->getFreeEvent<IngestAssetEvent>(CMSENGINE_EVENTTYPEIDENTIFIER_INGESTASSETEVENT);
+                        {
+                            shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
+                                    ->getFreeEvent<LocalAssetIngestionEvent>(CMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
 
-                            ingestAssetEvent->setSource(CMSENGINEPROCESSORNAME);
-                            ingestAssetEvent->setDestination(CMSENGINEPROCESSORNAME);
-                            ingestAssetEvent->setExpirationTimePoint(chrono::system_clock::now());
+                            localAssetIngestionEvent->setSource(CMSENGINEPROCESSORNAME);
+                            localAssetIngestionEvent->setDestination(CMSENGINEPROCESSORNAME);
+                            localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
 
-                            ingestAssetEvent->setIngestionJobKey(ingestionJobKey);
-                            ingestAssetEvent->setCustomer(customer);
+                            localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
+                            localAssetIngestionEvent->setCustomer(customer);
 
-                            ingestAssetEvent->setMetadataFileName(directoryEntry);
-                            ingestAssetEvent->setFTPWorkingMetadataPathName(ftpDirectoryWorkingMetadataPathName);
-                            ingestAssetEvent->setFTPMediaSourcePathName(ftpMediaSourcePathName);
-                            ingestAssetEvent->setMediaSourceFileName(mediaSourceFileName);
+                            localAssetIngestionEvent->setMetadataFileName(directoryEntry);
+                            localAssetIngestionEvent->setMediaSourceFileName(mediaSourceFileName);
 
-                            // ingestAssetEvent->setFTPDirectoryMediaSourceFileName(ftpDirectoryMediaSourceFileName);
-//                            ingestAssetEvent->setMediaSourceFileName(mediaSourceFileName);
+                            // localAssetIngestionEvent->setFTPDirectoryMediaSourceFileName(ftpDirectoryMediaSourceFileName);
+//                            localAssetIngestionEvent->setMediaSourceFileName(mediaSourceFileName);
 //
-//                            ingestAssetEvent->setRelativePath(relativePathToBeUsed);
-//                            ingestAssetEvent->setMetadataRoot(metadataRoot);
+//                            localAssetIngestionEvent->setRelativePath(relativePathToBeUsed);
+//                            localAssetIngestionEvent->setMetadataRoot(metadataRoot);
 
-                            shared_ptr<Event>    event = dynamic_pointer_cast<Event>(ingestAssetEvent);
+                            shared_ptr<Event>    event = dynamic_pointer_cast<Event>(localAssetIngestionEvent);
                             _multiEventsSet->addEvent(event);
 
                             _logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
@@ -469,7 +450,7 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                     }
                     catch(exception e)
                     {
-                        _logger->error(__FILEREF__ + "add IngestAssetEvent failed"
+                        _logger->error(__FILEREF__ + "add LocalAssetIngestionEvent failed"
                                 + ", exception: " + e.what()
                         );
 
@@ -510,13 +491,14 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
 
 }
 
-void CMSEngineProcessor::handleIngestAssetEvent (shared_ptr<IngestAssetEvent> ingestAssetEvent)
+void CMSEngineProcessor::handleLocalAssetIngestionEvent (
+    shared_ptr<LocalAssetIngestionEvent> localAssetIngestionEvent)
 {
     string relativePathToBeUsed;
     try
     {
         relativePathToBeUsed = _cmsEngineDBFacade->checkCustomerMaxIngestionNumber (
-                ingestAssetEvent->getCustomer()->_customerKey);
+                localAssetIngestionEvent->getCustomer()->_customerKey);
     }
     catch(exception e)
     {
@@ -525,11 +507,11 @@ void CMSEngineProcessor::handleIngestAssetEvent (shared_ptr<IngestAssetEvent> in
         );
         string ftpDirectoryErrorEntryPathName =
             _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(
-                ingestAssetEvent->getCustomer(), ingestAssetEvent->getMetadataFileName());
+                localAssetIngestionEvent->getCustomer(), localAssetIngestionEvent->getMetadataFileName());
 
         string errorMessage = e.what();
 
-        _cmsEngineDBFacade->updateIngestionJob (ingestAssetEvent->getIngestionJobKey(),
+        _cmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                 CMSEngineDBFacade::IngestionStatus::End_CustomerReachedHisMaxIngestionNumber,
                 e.what());
 
@@ -542,14 +524,21 @@ void CMSEngineProcessor::handleIngestAssetEvent (shared_ptr<IngestAssetEvent> in
     try
     {
         {
-            ifstream medatataFile(ingestAssetEvent->getFTPWorkingMetadataPathName());
+            ifstream medatataFile(
+                _cmsStorage->getCustomerFTPWorkingMetadataPathName(
+                    localAssetIngestionEvent->getCustomer(), localAssetIngestionEvent->getMetadataFileName())
+            );
             stringstream buffer;
             buffer << medatataFile.rdbuf();
 
             metadataFileContent = buffer.str();
         }
 
-        ifstream ingestAssetJson(ingestAssetEvent->getFTPWorkingMetadataPathName(), std::ifstream::binary);
+        ifstream ingestAssetJson(
+                _cmsStorage->getCustomerFTPWorkingMetadataPathName(
+                    localAssetIngestionEvent->getCustomer(), 
+                    localAssetIngestionEvent->getMetadataFileName()), 
+                std::ifstream::binary);
         try
         {
             ingestAssetJson >> metadataRoot;
@@ -557,7 +546,8 @@ void CMSEngineProcessor::handleIngestAssetEvent (shared_ptr<IngestAssetEvent> in
         catch(...)
         {
             throw runtime_error(string("wrong ingestion metadata json format")
-                    + ", ingestAssetEvent->getFTPWorkingMetadataPathName: " + ingestAssetEvent->getFTPWorkingMetadataPathName()
+                    + ", FTPWorkingMetadataPathName: " + _cmsStorage->getCustomerFTPWorkingMetadataPathName(
+                        localAssetIngestionEvent->getCustomer(), localAssetIngestionEvent->getMetadataFileName())
                     );
         }
 
@@ -570,11 +560,11 @@ void CMSEngineProcessor::handleIngestAssetEvent (shared_ptr<IngestAssetEvent> in
         );
         string ftpDirectoryErrorEntryPathName =
             _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(
-                ingestAssetEvent->getCustomer(), ingestAssetEvent->getMetadataFileName());
+                localAssetIngestionEvent->getCustomer(), localAssetIngestionEvent->getMetadataFileName());
 
         string errorMessage = e.what();
 
-        _cmsEngineDBFacade->updateIngestionJob (ingestAssetEvent->getIngestionJobKey(),
+        _cmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
             CMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed,
             e.what());
 
@@ -587,11 +577,11 @@ void CMSEngineProcessor::handleIngestAssetEvent (shared_ptr<IngestAssetEvent> in
         );
         string ftpDirectoryErrorEntryPathName =
             _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(
-                ingestAssetEvent->getCustomer(), ingestAssetEvent->getMetadataFileName());
+                localAssetIngestionEvent->getCustomer(), localAssetIngestionEvent->getMetadataFileName());
 
         string errorMessage = e.what();
 
-        _cmsEngineDBFacade->updateIngestionJob (ingestAssetEvent->getIngestionJobKey(),
+        _cmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
             CMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed,
             e.what());
 
@@ -611,11 +601,11 @@ void CMSEngineProcessor::handleIngestAssetEvent (shared_ptr<IngestAssetEvent> in
         );
         string ftpDirectoryErrorEntryPathName =
             _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(
-                ingestAssetEvent->getCustomer(), ingestAssetEvent->getMetadataFileName());
+                localAssetIngestionEvent->getCustomer(), localAssetIngestionEvent->getMetadataFileName());
 
         string errorMessage = e.what();
 
-        _cmsEngineDBFacade->updateIngestionJob (ingestAssetEvent->getIngestionJobKey(),
+        _cmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
             CMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed,
             e.what());
 
@@ -628,11 +618,11 @@ void CMSEngineProcessor::handleIngestAssetEvent (shared_ptr<IngestAssetEvent> in
         );
         string ftpDirectoryErrorEntryPathName =
             _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(
-                ingestAssetEvent->getCustomer(), ingestAssetEvent->getMetadataFileName());
+                localAssetIngestionEvent->getCustomer(), localAssetIngestionEvent->getMetadataFileName());
 
         string errorMessage = e.what();
 
-        _cmsEngineDBFacade->updateIngestionJob (ingestAssetEvent->getIngestionJobKey(),
+        _cmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
             CMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed,
             e.what());
 
@@ -644,7 +634,8 @@ void CMSEngineProcessor::handleIngestAssetEvent (shared_ptr<IngestAssetEvent> in
         string md5FileCheckSum = get<3>(mediaSourceDetails);
         int fileSizeInBytes = get<4>(mediaSourceDetails);
 
-        validateMediaSourceFile(ingestAssetEvent->getFTPMediaSourcePathName(),
+        validateMediaSourceFile(_cmsStorage->getCustomerFTPMediaSourcePathName(
+                    localAssetIngestionEvent->getCustomer(), localAssetIngestionEvent->getMediaSourceFileName()),
                 md5FileCheckSum, fileSizeInBytes);
     }
     catch(runtime_error e)
@@ -654,11 +645,11 @@ void CMSEngineProcessor::handleIngestAssetEvent (shared_ptr<IngestAssetEvent> in
         );
         string ftpDirectoryErrorEntryPathName =
             _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(
-                ingestAssetEvent->getCustomer(), ingestAssetEvent->getMetadataFileName());
+                localAssetIngestionEvent->getCustomer(), localAssetIngestionEvent->getMetadataFileName());
 
         string errorMessage = e.what();
 
-        _cmsEngineDBFacade->updateIngestionJob (ingestAssetEvent->getIngestionJobKey(),
+        _cmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
             CMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed,
             e.what());
 
@@ -671,11 +662,11 @@ void CMSEngineProcessor::handleIngestAssetEvent (shared_ptr<IngestAssetEvent> in
         );
         string ftpDirectoryErrorEntryPathName =
             _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(
-                ingestAssetEvent->getCustomer(), ingestAssetEvent->getMetadataFileName());
+                localAssetIngestionEvent->getCustomer(), localAssetIngestionEvent->getMetadataFileName());
 
         string errorMessage = e.what();
 
-        _cmsEngineDBFacade->updateIngestionJob (ingestAssetEvent->getIngestionJobKey(),
+        _cmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
             CMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed,
             e.what());
 
@@ -689,14 +680,15 @@ void CMSEngineProcessor::handleIngestAssetEvent (shared_ptr<IngestAssetEvent> in
         bool partitionIndexToBeCalculated   = true;
         bool deliveryRepositoriesToo        = true;
         cmsAssetPathName = _cmsStorage->moveAssetInCMSRepository(
-            ingestAssetEvent->getFTPMediaSourcePathName(),
-            ingestAssetEvent->getCustomer()->_directoryName,
-            ingestAssetEvent->getMediaSourceFileName(),
+            _cmsStorage->getCustomerFTPMediaSourcePathName(
+                localAssetIngestionEvent->getCustomer(), localAssetIngestionEvent->getMediaSourceFileName()),
+            localAssetIngestionEvent->getCustomer()->_directoryName,
+            localAssetIngestionEvent->getMediaSourceFileName(),
             relativePathToBeUsed,
             partitionIndexToBeCalculated,
             &cmsPartitionIndexUsed,
             deliveryRepositoriesToo,
-            ingestAssetEvent->getCustomer()->_territories
+            localAssetIngestionEvent->getCustomer()->_territories
             );
     }
     catch(runtime_error e)
@@ -705,9 +697,9 @@ void CMSEngineProcessor::handleIngestAssetEvent (shared_ptr<IngestAssetEvent> in
         
         string ftpDirectoryErrorEntryPathName =
             _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(
-                ingestAssetEvent->getCustomer(), ingestAssetEvent->getMetadataFileName());
+                localAssetIngestionEvent->getCustomer(), localAssetIngestionEvent->getMetadataFileName());
 
-        _cmsEngineDBFacade->updateIngestionJob (ingestAssetEvent->getIngestionJobKey(),
+        _cmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                 CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
         
         throw e;
@@ -718,39 +710,111 @@ void CMSEngineProcessor::handleIngestAssetEvent (shared_ptr<IngestAssetEvent> in
         
         string ftpDirectoryErrorEntryPathName =
             _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(
-                ingestAssetEvent->getCustomer(), ingestAssetEvent->getMetadataFileName());
+                localAssetIngestionEvent->getCustomer(), localAssetIngestionEvent->getMetadataFileName());
 
-        _cmsEngineDBFacade->updateIngestionJob (ingestAssetEvent->getIngestionJobKey(),
+        _cmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                 CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
         
         throw e;
     }
 
-    int64_t videoOrAudioDurationInMilliSeconds = 0;
-    int64_t mediaItemKey;
-    try
+    int64_t videoOrAudioDurationInMilliSeconds = -1;
+    int imageWidth = -1;
+    int imageHeight = -1;
+    if (ingestionTypeAndContentType.second == CMSEngineDBFacade::ContentType::Video 
+            || ingestionTypeAndContentType.second == CMSEngineDBFacade::ContentType::Audio)
     {
-        if (ingestionTypeAndContentType.second == CMSEngineDBFacade::ContentType::Video 
-                || ingestionTypeAndContentType.second == CMSEngineDBFacade::ContentType::Audio)
+        try
         {
             videoOrAudioDurationInMilliSeconds = 
                 EncoderVideoAudioProxy::getVideoOrAudioDurationInMilliSeconds(
                     cmsAssetPathName);
         }
-        int sizeInBytes  = 10;
-        int imageWidth = 10;
-        int imageHeight = 10;
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + "EncoderVideoAudioProxy::getVideoOrAudioDurationInMilliSeconds failed");
+
+            _logger->info(__FILEREF__ + "Remove file"
+                + ", cmsAssetPathName: " + cmsAssetPathName
+            );
+            FileIO::remove(cmsAssetPathName);
+
+            string ftpDirectoryErrorEntryPathName =
+                _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(
+                    localAssetIngestionEvent->getCustomer(), localAssetIngestionEvent->getMetadataFileName());
+
+            _cmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+                    CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
+
+            throw e;
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "EncoderVideoAudioProxy::getVideoOrAudioDurationInMilliSeconds failed");
+
+            _logger->info(__FILEREF__ + "Remove file"
+                + ", cmsAssetPathName: " + cmsAssetPathName
+            );
+            FileIO::remove(cmsAssetPathName);
+
+            string ftpDirectoryErrorEntryPathName =
+                _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(
+                    localAssetIngestionEvent->getCustomer(), localAssetIngestionEvent->getMetadataFileName());
+
+            _cmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+                    CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
+
+            throw e;
+        }
+    }
+    else if (ingestionTypeAndContentType.second == CMSEngineDBFacade::ContentType::Image)
+    {
+        try
+        {
+            Magick:: Image      imageToEncode;
+
+            imageToEncode. read (cmsAssetPathName.c_str());
+
+            imageWidth	= imageToEncode. columns ();
+            imageHeight	= imageToEncode. rows ();
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "ImageMagick failed to retrieve width and height failed");
+
+            _logger->info(__FILEREF__ + "Remove file"
+                + ", cmsAssetPathName: " + cmsAssetPathName
+            );
+            FileIO::remove(cmsAssetPathName);
+
+            string ftpDirectoryErrorEntryPathName =
+                _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(
+                    localAssetIngestionEvent->getCustomer(), localAssetIngestionEvent->getMetadataFileName());
+
+            _cmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+                    CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
+
+            throw e;
+        }
+    }
+
+    int64_t mediaItemKey;
+    try
+    {
+        bool inCaseOfLinkHasItToBeRead = false;
+        unsigned long sizeInBytes = FileIO::getFileSizeInBytes(cmsAssetPathName,
+                inCaseOfLinkHasItToBeRead);   
 
         _logger->info(__FILEREF__ + "_cmsEngineDBFacade->saveIngestedContentMetadata..."
         );
 
         pair<int64_t,int64_t> mediaItemKeyAndPhysicalPathKey =
                 _cmsEngineDBFacade->saveIngestedContentMetadata (
-                ingestAssetEvent->getCustomer(),
-                ingestAssetEvent->getIngestionJobKey(),
+                localAssetIngestionEvent->getCustomer(),
+                localAssetIngestionEvent->getIngestionJobKey(),
                 metadataRoot,
                 relativePathToBeUsed,
-                ingestAssetEvent->getMediaSourceFileName(),
+                localAssetIngestionEvent->getMediaSourceFileName(),
                 cmsPartitionIndexUsed,
                 sizeInBytes,
                 videoOrAudioDurationInMilliSeconds,
@@ -767,7 +831,7 @@ void CMSEngineProcessor::handleIngestAssetEvent (shared_ptr<IngestAssetEvent> in
     }
     catch(runtime_error e)
     {
-        _logger->error(__FILEREF__ + "_cmsStorage->moveAssetInCMSRepository failed");
+        _logger->error(__FILEREF__ + "_cmsEngineDBFacade->saveIngestedContentMetadata failed");
 
         _logger->info(__FILEREF__ + "Remove file"
             + ", cmsAssetPathName: " + cmsAssetPathName
@@ -776,16 +840,16 @@ void CMSEngineProcessor::handleIngestAssetEvent (shared_ptr<IngestAssetEvent> in
         
         string ftpDirectoryErrorEntryPathName =
             _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(
-                ingestAssetEvent->getCustomer(), ingestAssetEvent->getMetadataFileName());
+                localAssetIngestionEvent->getCustomer(), localAssetIngestionEvent->getMetadataFileName());
 
-        _cmsEngineDBFacade->updateIngestionJob (ingestAssetEvent->getIngestionJobKey(),
+        _cmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                 CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
         
         throw e;
     }
     catch(exception e)
     {
-        _logger->error(__FILEREF__ + "_cmsStorage->moveAssetInCMSRepository failed");
+        _logger->error(__FILEREF__ + "_cmsEngineDBFacade->saveIngestedContentMetadata failed");
 
         _logger->info(__FILEREF__ + "Remove file"
             + ", cmsAssetPathName: " + cmsAssetPathName
@@ -794,9 +858,9 @@ void CMSEngineProcessor::handleIngestAssetEvent (shared_ptr<IngestAssetEvent> in
         
         string ftpDirectoryErrorEntryPathName =
             _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(
-                ingestAssetEvent->getCustomer(), ingestAssetEvent->getMetadataFileName());
+                localAssetIngestionEvent->getCustomer(), localAssetIngestionEvent->getMetadataFileName());
 
-        _cmsEngineDBFacade->updateIngestionJob (ingestAssetEvent->getIngestionJobKey(),
+        _cmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                 CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
         
         throw e;
@@ -888,11 +952,11 @@ void CMSEngineProcessor::handleIngestAssetEvent (shared_ptr<IngestAssetEvent> in
                     
                     string imageFileName;
                     {
-                        size_t fileExtensionIndex = ingestAssetEvent->getMediaSourceFileName().find_last_of(".");
+                        size_t fileExtensionIndex = localAssetIngestionEvent->getMediaSourceFileName().find_last_of(".");
                         if (fileExtensionIndex == string::npos)
-                            imageFileName.append(ingestAssetEvent->getMediaSourceFileName());
+                            imageFileName.append(localAssetIngestionEvent->getMediaSourceFileName());
                         else
-                            imageFileName.append(ingestAssetEvent->getMediaSourceFileName().substr(0, fileExtensionIndex));
+                            imageFileName.append(localAssetIngestionEvent->getMediaSourceFileName().substr(0, fileExtensionIndex));
                         imageFileName
                                 .append("_")
                                 .append(to_string(screenshotIndex + 1))
@@ -909,7 +973,7 @@ void CMSEngineProcessor::handleIngestAssetEvent (shared_ptr<IngestAssetEvent> in
                         generateImageToIngestEvent->setExpirationTimePoint(chrono::system_clock::now());
 
                         generateImageToIngestEvent->setCmsVideoPathName(cmsAssetPathName);
-                        generateImageToIngestEvent->setCustomerFTPRepository(_cmsStorage->getCustomerFTPRepository(ingestAssetEvent->getCustomer()));
+                        generateImageToIngestEvent->setCustomerFTPRepository(_cmsStorage->getCustomerFTPRepository(localAssetIngestionEvent->getCustomer()));
                         generateImageToIngestEvent->setImageFileName(imageFileName);
                         generateImageToIngestEvent->setImageTitle(videoTitle + " image #" + to_string(screenshotIndex + 1));
 
@@ -1437,8 +1501,7 @@ void CMSEngineProcessor::validateMediaSourceFile (string ftpDirectoryMediaSource
 
 void CMSEngineProcessor::downloadMediaSourceFile(string sourceReferenceURL,
         int64_t ingestionJobKey, shared_ptr<Customer> customer,
-        string metadataFileName, string ftpDirectoryWorkingMetadataPathName,
-        string customerFTPDirectory, string mediaSourceFileName)
+        string metadataFileName, string mediaSourceFileName)
 {
     bool downloadingCompleted = false;
 
@@ -1474,20 +1537,22 @@ RESUMING FILE TRANSFERS
  */    
  
         
-    string ftpMediaSourcePathName =
-        customerFTPDirectory
-        + "/"
-        + mediaSourceFileName;
-
     for (int attemptIndex = 0; attemptIndex < _maxDownloadAttemptNumber && !downloadingCompleted; attemptIndex++)
     {
         bool downloadingStoppedByUser = false;
         
         try 
         {
+            _logger->info(__FILEREF__ + "Downloading"
+                + ", sourceReferenceURL: " + sourceReferenceURL
+                + ", attempt: " + to_string(attemptIndex + 1)
+                + ", _maxDownloadAttemptNumber: " + to_string(_maxDownloadAttemptNumber)
+            );
+            
             if (attemptIndex == 0)
             {
-                ofstream mediaSourceFileStream(ftpMediaSourcePathName);
+                ofstream mediaSourceFileStream(
+                    _cmsStorage->getCustomerFTPMediaSourcePathName(customer, mediaSourceFileName));
 
                 curlpp::Cleanup cleaner;
                 curlpp::Easy request;
@@ -1500,8 +1565,9 @@ RESUMING FILE TRANSFERS
                 request.setOpt(new curlpp::options::Url(sourceReferenceURL));
 
                 chrono::system_clock::time_point lastProgressUpdate = chrono::system_clock::now();
+                int lastPercentageUpdated = -1;
                 curlpp::types::ProgressFunctionFunctor functor = bind(&CMSEngineProcessor::progressCallback, this,
-                        ingestionJobKey, lastProgressUpdate, downloadingStoppedByUser,
+                        ingestionJobKey, lastProgressUpdate, lastPercentageUpdated, downloadingStoppedByUser,
                         placeholders::_1, placeholders::_2, placeholders::_3, placeholders::_4);
                 request.setOpt(new curlpp::options::ProgressFunction(curlpp::types::ProgressFunctionFunctor(functor)));
                 request.setOpt(new curlpp::options::NoProgress(0L));
@@ -1515,7 +1581,11 @@ RESUMING FILE TRANSFERS
             }
             else
             {
-                ofstream mediaSourceFileStream(ftpMediaSourcePathName, ofstream::app);
+                _logger->warn(__FILEREF__ + "Coming from a download failure, trying to Resume");
+                
+                ofstream mediaSourceFileStream(
+                        _cmsStorage->getCustomerFTPMediaSourcePathName(customer, mediaSourceFileName),
+                        ofstream::app);
 
                 curlpp::Cleanup cleaner;
                 curlpp::Easy request;
@@ -1527,18 +1597,23 @@ RESUMING FILE TRANSFERS
                 // Setting the URL to retrive.
                 request.setOpt(new curlpp::options::Url(sourceReferenceURL));
 
-                chrono::system_clock::time_point lastProgressUpdate = chrono::system_clock::now();
+                chrono::system_clock::time_point lastTimeProgressUpdate = chrono::system_clock::now();
+                int lastPercentageUpdated = -1;
                 curlpp::types::ProgressFunctionFunctor functor = bind(&CMSEngineProcessor::progressCallback, this,
-                        ingestionJobKey, lastProgressUpdate, downloadingStoppedByUser,
+                        ingestionJobKey, lastTimeProgressUpdate, lastPercentageUpdated, downloadingStoppedByUser,
                         placeholders::_1, placeholders::_2, placeholders::_3, placeholders::_4);
                 request.setOpt(new curlpp::options::ProgressFunction(curlpp::types::ProgressFunctionFunctor(functor)));
                 request.setOpt(new curlpp::options::NoProgress(0L));
 
-                long fileSize = mediaSourceFileStream.tellp();
-                request.setOpt(new curlpp::options::ResumeFromLarge(fileSize));
+                long long fileSize = mediaSourceFileStream.tellp();
+                if (fileSize > 2 * 1000 * 1000 * 1000)
+                    request.setOpt(new curlpp::options::ResumeFromLarge(fileSize));
+                else
+                    request.setOpt(new curlpp::options::ResumeFrom(fileSize));
                 
-                _logger->info(__FILEREF__ + "Downloading media file"
+                _logger->info(__FILEREF__ + "Resume Download media file"
                     + ", sourceReferenceURL: " + sourceReferenceURL
+                    + ", resuming from fileSize: " + to_string(fileSize)
                 );
                 request.perform();
             }
@@ -1547,84 +1622,120 @@ RESUMING FILE TRANSFERS
         }
         catch (curlpp::LogicError & e) 
         {
-            _logger->error(__FILEREF__ + "Download failed"
+            _logger->error(__FILEREF__ + "Download failed (LogicError)"
                 + ", ingestionJobKey: " + to_string(ingestionJobKey) 
                 + ", sourceReferenceURL: " + sourceReferenceURL 
                 + ", exception: " + e.what()
             );
 
-            string ftpDirectoryErrorEntryPathName =
-                _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, metadataFileName);
-
             if (downloadingStoppedByUser)
             {
+                string ftpDirectoryErrorEntryPathName =
+                    _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, metadataFileName);
+
                 downloadingCompleted = true;
             }
             else
             {
                 if (attemptIndex + 1 == _maxDownloadAttemptNumber)
                 {
+                    _logger->info(__FILEREF__ + "Reached the max number of download attempts"
+                        + ", _maxDownloadAttemptNumber: " + to_string(_maxDownloadAttemptNumber)
+                    );
+                    
+                    string ftpDirectoryErrorEntryPathName =
+                        _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, metadataFileName);
+
                     _cmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                         CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
                 }
                 else
                 {
+                    _logger->info(__FILEREF__ + "Download failed. sleeping before to attempt again"
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey) 
+                        + ", sourceReferenceURL: " + sourceReferenceURL 
+                        + ", _secondsWaitingAmongDownloadingAttempt: " + to_string(_secondsWaitingAmongDownloadingAttempt)
+                    );
                     this_thread::sleep_for(chrono::seconds(_secondsWaitingAmongDownloadingAttempt));
                 }
             }
         }
         catch (curlpp::RuntimeError & e) 
         {
-            _logger->error(__FILEREF__ + "Download failed"
+            _logger->error(__FILEREF__ + "Download failed (RuntimeError)"
                 + ", ingestionJobKey: " + to_string(ingestionJobKey) 
                 + ", sourceReferenceURL: " + sourceReferenceURL 
                 + ", exception: " + e.what()
             );
 
-            string ftpDirectoryErrorEntryPathName =
-                _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, metadataFileName);
-
             if (downloadingStoppedByUser)
             {
+                string ftpDirectoryErrorEntryPathName =
+                    _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, metadataFileName);
+
                 downloadingCompleted = true;
             }
             else
             {
                 if (attemptIndex + 1 == _maxDownloadAttemptNumber)
                 {
+                    _logger->info(__FILEREF__ + "Reached the max number of download attempts"
+                        + ", _maxDownloadAttemptNumber: " + to_string(_maxDownloadAttemptNumber)
+                    );
+                    
+                    string ftpDirectoryErrorEntryPathName =
+                        _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, metadataFileName);
+
                     _cmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                         CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
                 }
                 else
                 {
+                    _logger->info(__FILEREF__ + "Download failed. sleeping before to attempt again"
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey) 
+                        + ", sourceReferenceURL: " + sourceReferenceURL 
+                        + ", _secondsWaitingAmongDownloadingAttempt: " + to_string(_secondsWaitingAmongDownloadingAttempt)
+                    );
                     this_thread::sleep_for(chrono::seconds(_secondsWaitingAmongDownloadingAttempt));
                 }
             }
         }
         catch (exception e)
         {
-            _logger->error(__FILEREF__ + "Download failed"
+            _logger->error(__FILEREF__ + "Download failed (exception)"
                 + ", ingestionJobKey: " + to_string(ingestionJobKey) 
                 + ", sourceReferenceURL: " + sourceReferenceURL 
                 + ", exception: " + e.what()
             );
 
-            string ftpDirectoryErrorEntryPathName =
-                _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, metadataFileName);
-
             if (downloadingStoppedByUser)
             {
+                string ftpDirectoryErrorEntryPathName =
+                    _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, metadataFileName);
+
                 downloadingCompleted = true;
             }
             else
             {
                 if (attemptIndex + 1 == _maxDownloadAttemptNumber)
                 {
+                    _logger->info(__FILEREF__ + "Reached the max number of download attempts"
+                        + ", _maxDownloadAttemptNumber: " + to_string(_maxDownloadAttemptNumber)
+                    );
+                    
+                    string ftpDirectoryErrorEntryPathName =
+                        _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, metadataFileName);
+
                     _cmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                         CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
                 }
                 else
                 {
+                    _logger->info(__FILEREF__ + "Download failed. sleeping before to attempt again"
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey) 
+                        + ", sourceReferenceURL: " + sourceReferenceURL 
+                        + ", _secondsWaitingAmongDownloadingAttempt: " + to_string(_secondsWaitingAmongDownloadingAttempt)
+                    );
                     this_thread::sleep_for(chrono::seconds(_secondsWaitingAmongDownloadingAttempt));
                 }
             }
@@ -1633,22 +1744,20 @@ RESUMING FILE TRANSFERS
 
     try 
     {
-        shared_ptr<IngestAssetEvent>    ingestAssetEvent = _multiEventsSet->getEventsFactory()
-                ->getFreeEvent<IngestAssetEvent>(CMSENGINE_EVENTTYPEIDENTIFIER_INGESTASSETEVENT);
+        shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
+                ->getFreeEvent<LocalAssetIngestionEvent>(CMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
 
-        ingestAssetEvent->setSource(CMSENGINEPROCESSORNAME);
-        ingestAssetEvent->setDestination(CMSENGINEPROCESSORNAME);
-        ingestAssetEvent->setExpirationTimePoint(chrono::system_clock::now());
+        localAssetIngestionEvent->setSource(CMSENGINEPROCESSORNAME);
+        localAssetIngestionEvent->setDestination(CMSENGINEPROCESSORNAME);
+        localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
 
-        ingestAssetEvent->setIngestionJobKey(ingestionJobKey);
-        ingestAssetEvent->setCustomer(customer);
+        localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
+        localAssetIngestionEvent->setCustomer(customer);
 
-        ingestAssetEvent->setMetadataFileName(metadataFileName);
-        ingestAssetEvent->setFTPWorkingMetadataPathName(ftpDirectoryWorkingMetadataPathName);
-        ingestAssetEvent->setFTPMediaSourcePathName(ftpMediaSourcePathName);
-        ingestAssetEvent->setMediaSourceFileName(mediaSourceFileName);
+        localAssetIngestionEvent->setMetadataFileName(metadataFileName);
+        localAssetIngestionEvent->setMediaSourceFileName(mediaSourceFileName);
 
-        shared_ptr<Event>    event = dynamic_pointer_cast<Event>(ingestAssetEvent);
+        shared_ptr<Event>    event = dynamic_pointer_cast<Event>(localAssetIngestionEvent);
         _multiEventsSet->addEvent(event);
 
         _logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
@@ -1688,7 +1797,8 @@ RESUMING FILE TRANSFERS
 
 int CMSEngineProcessor::progressCallback(
         int64_t ingestionJobKey,
-        chrono::system_clock::time_point& lastProgressUpdate, bool& downloadingStoppedByUser,
+        chrono::system_clock::time_point& lastTimeProgressUpdate, 
+        int& lastPercentageUpdated, bool& downloadingStoppedByUser,
         double dltotal, double dlnow,
         double ultotal, double ulnow)
 {
@@ -1697,7 +1807,7 @@ int CMSEngineProcessor::progressCallback(
             
     if (dltotal != 0 &&
             (dltotal == dlnow 
-            || now - lastProgressUpdate >= chrono::seconds(_progressUpdatePeriodInSeconds)))
+            || now - lastTimeProgressUpdate >= chrono::seconds(_progressUpdatePeriodInSeconds)))
     {
         double progress = (dlnow / dltotal) * 100;
         int downloadingPercentage = floorf(progress * 100) / 100;
@@ -1711,14 +1821,19 @@ int CMSEngineProcessor::progressCallback(
             + ", ulnow: " + to_string(ulnow)
         );
         
-        lastProgressUpdate = now;
-        
-        downloadingStoppedByUser = _cmsEngineDBFacade->updateIngestionJobSourceDownloadingInProgress (
-            ingestionJobKey, downloadingPercentage);
+        lastTimeProgressUpdate = now;
+
+        if (lastPercentageUpdated != downloadingPercentage)
+        {
+            downloadingStoppedByUser = _cmsEngineDBFacade->updateIngestionJobSourceDownloadingInProgress (
+                ingestionJobKey, downloadingPercentage);
+
+            lastPercentageUpdated = downloadingPercentage;
+        }
 
         if (downloadingStoppedByUser)
             return 1;   // stop downloading
     }
-    
+
     return 0;
 }

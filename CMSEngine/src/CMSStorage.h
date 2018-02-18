@@ -35,16 +35,6 @@ public:
 
     ~CMSStorage (void);
 
-//    const char *getIPhoneAliasForLive (void);
-
-    string getCMSRootRepository (void);
-
-    string getStreamingRootRepository (void);
-
-    string getDownloadRootRepository (void);
-
-    string getFTPRootRepository (void);
-    
     string getCustomerFTPRepository(shared_ptr<Customer> customer);
     
     string moveFTPRepositoryEntryToWorkingArea(
@@ -55,6 +45,24 @@ public:
         shared_ptr<Customer> customer,
         string entryFileName);
 
+    string getCustomerFTPWorkingMetadataPathName(
+        shared_ptr<Customer> customer,
+        string metadataFileName);
+
+    string getCustomerFTPMediaSourcePathName(
+        shared_ptr<Customer> customer,
+        string mediaSourceFileName);
+
+    //    const char *getIPhoneAliasForLive (void);
+
+    string getCMSRootRepository (void);
+
+    string getStreamingRootRepository (void);
+
+    string getDownloadRootRepository (void);
+
+    string getFTPRootRepository (void);
+    
     string getStagingRootRepository (void);
 
     string getErrorRootRepository (void);

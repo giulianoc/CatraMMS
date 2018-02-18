@@ -27,9 +27,8 @@ CMSEngine::CMSEngine(shared_ptr<CMSEngineDBFacade> cmsEngineDBFacade,
 CMSEngine::~CMSEngine() {
 }
 
-void CMSEngine::addCustomer(
+string CMSEngine::registerCustomer(
 	string customerName,
-        string password,
 	string street,
         string city,
         string state,
@@ -38,7 +37,6 @@ void CMSEngine::addCustomer(
         string countryCode,
         CMSEngineDBFacade::CustomerType customerType,
 	string deliveryURL,
-        bool enabled,
 	CMSEngineDBFacade::EncodingPriority maxEncodingPriority,
         CMSEngineDBFacade::EncodingPeriod encodingPeriod,
 	long maxIngestionsNumber,
@@ -52,7 +50,6 @@ void CMSEngine::addCustomer(
 {    
     _logger->info(__FILEREF__ + "Received addCustomer"
         + ", customerName: " + customerName
-        + ", password: " + password
         + ", street: " + street
         + ", city: " + city
         + ", state: " + state
@@ -61,7 +58,6 @@ void CMSEngine::addCustomer(
         + ", countryCode: " + countryCode
         + ", customerType: " + to_string(static_cast<int>(customerType))
         + ", deliveryURL: " + deliveryURL
-        + ", enabled: " + to_string(enabled)
         + ", maxEncodingPriority: " + to_string(static_cast<int>(maxEncodingPriority))
         + ", encodingPeriod: " + to_string(static_cast<int>(encodingPeriod))
         + ", maxIngestionsNumber: " + to_string(maxIngestionsNumber)
@@ -88,9 +84,10 @@ void CMSEngine::addCustomer(
                 return (unsigned char) '_'; } 
     );
 
+    pair<int64_t,string> customerKeyAndConfirmationCode;
     try
     {
-        int64_t customerKey = _cmsEngineDBFacade->addCustomer(
+        customerKeyAndConfirmationCode = _cmsEngineDBFacade->registerCustomer(
             customerName, 
             customerDirectoryName,
             street,
@@ -101,7 +98,6 @@ void CMSEngine::addCustomer(
             countryCode,
             customerType,
             deliveryURL,
-            enabled,
             maxEncodingPriority,
             encodingPeriod,
             maxIngestionsNumber,
@@ -114,9 +110,10 @@ void CMSEngine::addCustomer(
     }
     catch(...)
     {
-        _logger->error(__FILEREF__ + "_cmsEngineDBFacade->addCustomer failed");
+        _logger->error(__FILEREF__ + "_cmsEngineDBFacade->registerCustomer failed");
     }
 
+    return customerKeyAndConfirmationCode.second;
 }
 
 void CMSEngine::addFFMPEGVideoEncodingProfile(

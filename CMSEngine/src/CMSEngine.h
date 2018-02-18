@@ -28,9 +28,8 @@ public:
 
     virtual ~CMSEngine();
     
-    void addCustomer(
+    string registerCustomer(
 	string customerName,
-        string password,
 	string street,
         string city,
         string state,
@@ -39,7 +38,6 @@ public:
         string countryCode,
         CMSEngineDBFacade::CustomerType customerType,
 	string deliveryURL,
-        bool enabled,
 	CMSEngineDBFacade::EncodingPriority maxEncodingPriority,
         CMSEngineDBFacade::EncodingPeriod encodingPeriod,
 	long maxIngestionsNumber,

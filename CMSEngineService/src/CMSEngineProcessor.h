@@ -10,7 +10,7 @@
 #include "CMSEngineDBFacade.h"
 #include "CMSStorage.h"
 #include "ActiveEncodingsManager.h"
-#include "IngestAssetEvent.h"
+#include "LocalAssetIngestionEvent.h"
 #include "GenerateImageToIngestEvent.h"
 #include "json/json.h"
 
@@ -39,7 +39,8 @@ private:
 
     void handleCheckIngestionEvent();
 
-    void handleIngestAssetEvent (shared_ptr<IngestAssetEvent> ingestAssetEvent);
+    void handleLocalAssetIngestionEvent (
+        shared_ptr<LocalAssetIngestionEvent> localAssetIngestionEvent);
 
     void handleCheckEncodingEvent ();
 
@@ -68,12 +69,12 @@ private:
 
     void downloadMediaSourceFile(string sourceReferenceURL,
         int64_t ingestionJobKey, shared_ptr<Customer> customer,
-        string metadataFileName, string ftpDirectoryWorkingMetadataPathName,
-        string customerFTPDirectory, string mediaSourceFileName);
+        string metadataFileName, string mediaSourceFileName);
 
     int progressCallback(
         int64_t ingestionJobKey,
-        chrono::system_clock::time_point& lastProgressUpdate, bool& downloadingStoppedByUser,
+        chrono::system_clock::time_point& lastTimeProgressUpdate, 
+        int& lastPercentageUpdated, bool& downloadingStoppedByUser,
         double dltotal, double dlnow,
         double ultotal, double ulnow);
 

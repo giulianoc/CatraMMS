@@ -20,18 +20,17 @@
 # License is allowed only after express negotiation of conditions
 # with the authors.
 
+SET (COMMON_SOURCES
+	../APICommon.cpp
+)
+
 SET (SOURCES
-	cmsEngineService.cpp
-	CMSEngineProcessor.cpp
-	CheckIngestionTimes.cpp
-	CheckEncodingTimes.cpp
+	RegisterCustomer
+	echo
 )
 
 SET (HEADERS
-	CMSEngineProcessor.h
-	CheckIngestionTimes.h
-	CheckEncodingTimes.h
-	LocalAssetIngestionEvent.h
+	../APICommon.h
 )
 
 include_directories ("${PROJECT_SOURCE_DIR}/../usr_local/include")
@@ -39,10 +38,9 @@ include_directories ("${PROJECT_SOURCE_DIR}/../spdlog/include")
 include_directories ("${PROJECT_SOURCE_DIR}/CMSEngine/src")
 if (APPLE)
 	include_directories ("${PROJECT_SOURCE_DIR}/../mysql-connector-c++-1.1.9-macos10.12-x86-64bit/include")
-	include_directories ("/usr/local/Cellar/imagemagick/7.0.7-22/include/ImageMagick-7")
 else()
 	include_directories ("/app/5/ThirdPartySoftware/mysql-connector-c++-1.1.9-linux-ubuntu16.10-x86-64bit/include")
-	include_directories ("/app/7/DevelopmentWorkingArea/usr_local/include/ImageMagick-7")
+	include_directories ("${PROJECT_SOURCE_DIR}/API/src")
 endif()
 
 link_directories ("${PROJECT_SOURCE_DIR}/../usr_local/lib")
@@ -52,31 +50,33 @@ else()
 	link_directories ("/app/5/ThirdPartySoftware/mysql-connector-c++-1.1.9-linux-ubuntu16.10-x86-64bit/lib")
 endif()
 
-add_executable(cmsEngineService ${SOURCES} ${HEADERS})
+foreach(SOURCE ${SOURCES})
+    add_executable(${SOURCE}.fcgi ${SOURCE}.cpp ${COMMON_SOURCES} ${HEADERS})
 
-target_link_libraries (cmsEngineService MultiEventsSet)
-target_link_libraries (cmsEngineService CMSEngine)
-target_link_libraries (cmsEngineService mysqlcppconn)
-target_link_libraries (cmsEngineService jsoncpp)
-target_link_libraries (cmsEngineService curl)
-target_link_libraries (cmsEngineService curlpp)
-if (APPLE) 
-else()  
-        target_link_libraries (cmsEngineService Magick++-7.Q16HDRI)
-endif() 
+    target_link_libraries (${SOURCE}.fcgi CMSEngine)
+    target_link_libraries (${SOURCE}.fcgi mysqlcppconn)
+    target_link_libraries (${SOURCE}.fcgi jsoncpp)
+    if (APPLE)
+    else()
+	    target_link_libraries (${SOURCE}.fcgi Magick++-7.Q16HDRI)
+    endif()
+    target_link_libraries(${SOURCE}.fcgi fastcgipp)
+    target_link_libraries (${SOURCE}.fcgi Tools)
+target_link_libraries (${SOURCE}.fcgi ErrMsg)
+    if(CRYPTO_FOUND)
+	    if (APPLE)
+		    target_link_libraries (${SOURCE}.fcgi ${CRYPTO_LIBRARIES})
+	    else()
+		target_link_libraries (${SOURCE}.fcgi crypt)
+	    endif()
+    endif()
+    if (ZLIB_FOUND)
+	    target_link_libraries(${SOURCE}.fcgi ${ZLIB_LIBRARIES})
+    endif()
+    target_link_libraries (${SOURCE}.fcgi pthread)
 
-target_link_libraries (cmsEngineService Scheduler)
-target_link_libraries (cmsEngineService PThread)
-target_link_libraries (cmsEngineService Tools)
-target_link_libraries (cmsEngineService ErrMsg)
-if(CRYPTO_FOUND)
-	if (APPLE)
-		target_link_libraries (cmsEngineService ${CRYPTO_LIBRARIES})
-	else()
-		target_link_libraries (cmsEngineService crypt)
-	endif()
-endif()
-if (ZLIB_FOUND)
-	target_link_libraries(cmsEngineService ${ZLIB_LIBRARIES})
-endif()
-target_link_libraries (cmsEngineService pthread)
+    list(APPEND TARGETS ${SOURCE}.fcgi)
+endforeach()
+
+install (TARGETS DESTINATION bin)
+

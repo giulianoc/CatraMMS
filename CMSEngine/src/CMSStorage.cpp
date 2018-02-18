@@ -252,6 +252,33 @@ string CMSStorage::getCustomerFTPRepository(shared_ptr<Customer> customer)
     return customerFTPDirectory;
 }
 
+string CMSStorage::getCustomerFTPWorkingMetadataPathName(
+        shared_ptr<Customer> customer,
+        string metadataFileName)
+{
+    string customerFTPWorkingMetadataPathName =
+        getCustomerFTPRepository(customer)
+        .append("/")
+        .append("WORKING")
+        .append("/")
+        + metadataFileName;
+    
+    return customerFTPWorkingMetadataPathName;
+}
+
+
+string CMSStorage::getCustomerFTPMediaSourcePathName(
+        shared_ptr<Customer> customer,
+        string mediaSourceFileName)
+{
+    string customerFTPMediaSourcePathName =
+        getCustomerFTPRepository(customer)
+        + "/"
+        + mediaSourceFileName;
+    
+    return customerFTPMediaSourcePathName;
+}
+
 string CMSStorage::moveFTPRepositoryEntryToWorkingArea(
         shared_ptr<Customer> customer,
         string entryFileName)
