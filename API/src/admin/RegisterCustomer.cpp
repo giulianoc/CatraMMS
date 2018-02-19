@@ -11,7 +11,6 @@
  * Created on February 18, 2018, 1:27 AM
  */
 
-#include <fastcgi++/manager.hpp>
 #include "RegisterCustomer.h"
 
 RegisterCustomer::RegisterCustomer(): APICommon() {
@@ -20,39 +19,11 @@ RegisterCustomer::RegisterCustomer(): APICommon() {
 RegisterCustomer::~RegisterCustomer() {
 }
 
-bool RegisterCustomer::response()
+void RegisterCustomer::manageRequest()
 {
-    out << "Content-Type: application/json; charset=ISO-8859-1\r\n\r\n";
-
-/*    
-    std::map<std::string, std::string> parameters;
-    for (const auto& post: environment().posts)
-    {
-        parameters[post->first] = post->second;
-    }
+    _logger->info(__FILEREF__ + "aaaaaaa");
     
-    if (parameters.find("name") == parameters.end())
-    {
-        sendError("Name is missing");
-    }
-    else if (parameters.find("publisher") == parameters.end())
-    {
-        sendError("Publisher is missing");
-    }
-    else if (parameters.find("date") == parameters.end())
-    {
-        sendError("Date is missing");
-    }
-    else if (parameters.find("edition") == parameters.end())
-    {    
-        sendError("Edition is missing");
-    }
-    else
-    {        
-        // TODO
-    }
-  */
-  /*
+    /*
   cmsEngine->registerCustomer(
 	"Warner",                       // string customerName,
 	"",                             // string street,
@@ -74,27 +45,11 @@ bool RegisterCustomer::response()
         chrono::system_clock::now()     // chrono::system_clock::time_point userExpirationDate
     );
      */
-
-
-        return true;
 }
 
 int main(int argc, char** argv) 
 {
+    RegisterCustomer registerCustomer;
 
-    try
-    {
-        Fastcgipp::Manager<RegisterCustomer> manager;
-        manager.setupSignals();
-        manager.listen();
-        manager.start();
-        manager.join();
-    }
-    catch (std::exception& e)
-    {
-    //        error_log(e.what());  
-    }
-  
-
-    return 0;
+    return registerCustomer.listen();
 }

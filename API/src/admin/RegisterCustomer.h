@@ -14,13 +14,15 @@
 #ifndef RegisterCustomer_h
 #define RegisterCustomer_h
 
-#include "APICommon.h"
+#include "../APICommon.h"
 
 class RegisterCustomer: public APICommon {
 public:
     RegisterCustomer();
+    
     virtual ~RegisterCustomer();
-    bool response();
+    
+    virtual void manageRequest();
 private:
 
 };

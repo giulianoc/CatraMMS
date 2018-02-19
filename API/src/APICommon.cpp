@@ -11,9 +11,10 @@
  * Created on February 17, 2018, 6:59 PM
  */
 
+#include "fcgio.h"
 #include "APICommon.h"
 
-APICommon::APICommon(): Fastcgipp::Request<char>(5*1024)
+APICommon::APICommon()
 {
     _logger = spdlog::stdout_logger_mt("API");
     spdlog::set_level(spdlog::level::trace);
@@ -45,3 +46,64 @@ APICommon::APICommon(): Fastcgipp::Request<char>(5*1024)
 APICommon::~APICommon() {
 }
 
+int APICommon::listen()
+{
+    // Backup the stdio streambufs
+    streambuf * cin_streambuf  = cin.rdbuf();
+    streambuf * cout_streambuf = cout.rdbuf();
+    streambuf * cerr_streambuf = cerr.rdbuf();
+
+    FCGX_Request request;
+
+    FCGX_Init();
+    FCGX_InitRequest(&request, 0, 0);
+
+    while (FCGX_Accept_r(&request) == 0) 
+    {
+        fcgi_streambuf cin_fcgi_streambuf(request.in);
+        fcgi_streambuf cout_fcgi_streambuf(request.out);
+        fcgi_streambuf cerr_fcgi_streambuf(request.err);
+
+        cin.rdbuf(&cin_fcgi_streambuf);
+        cout.rdbuf(&cout_fcgi_streambuf);
+        cerr.rdbuf(&cerr_fcgi_streambuf);
+
+        try
+        {
+            manageRequest();
+        }
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + "manageRequest failed"
+                + ", e: " + e.what()
+            );
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "manageRequest failed"
+                + ", e: " + e.what()
+            );
+        }
+        
+        cout << "Content-type: text/html\r\n"
+             << "\r\n"
+             << "<html>\n"
+             << "  <head>\n"
+             << "    <title>Hello, World!</title>\n"
+             << "  </head>\n"
+             << "  <body>\n"
+             << "    <h1>Hello, World!</h1>\n"
+             << "  </body>\n"
+             << "</html>\n";
+
+        // Note: the fcgi_streambuf destructor will auto flush
+    }
+
+   // restore stdio streambufs
+    cin.rdbuf(cin_streambuf);
+    cout.rdbuf(cout_streambuf);
+    cerr.rdbuf(cerr_streambuf);
+
+
+    return 0;
+}

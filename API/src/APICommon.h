@@ -14,16 +14,20 @@
 #ifndef APICommon_h
 #define APICommon_h
 
-#include <fastcgi++/request.hpp>
 #include "CMSEngine.h"
 #include "spdlog/spdlog.h"
 
-class APICommon: public Fastcgipp::Request<char> {
+class APICommon {
 public:
     APICommon();
+    
     virtual ~APICommon();
+    
+    int listen();
 
-private:
+    virtual void manageRequest() = 0;
+
+protected:
     shared_ptr<spdlog::logger>      _logger;
     shared_ptr<CMSEngineDBFacade>   _cmsEngineDBFacade;
     shared_ptr<CMSEngine>           _cmsEngine;

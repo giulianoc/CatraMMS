@@ -26,7 +26,7 @@ SET (COMMON_SOURCES
 
 SET (SOURCES
 	RegisterCustomer
-	echo
+	echo-cpp
 )
 
 SET (HEADERS
@@ -60,7 +60,8 @@ foreach(SOURCE ${SOURCES})
     else()
 	    target_link_libraries (${SOURCE}.fcgi Magick++-7.Q16HDRI)
     endif()
-    target_link_libraries(${SOURCE}.fcgi fastcgipp)
+    target_link_libraries(${SOURCE}.fcgi fcgi++)
+    target_link_libraries(${SOURCE}.fcgi fcgi)
     target_link_libraries (${SOURCE}.fcgi Tools)
 target_link_libraries (${SOURCE}.fcgi ErrMsg)
     if(CRYPTO_FOUND)
