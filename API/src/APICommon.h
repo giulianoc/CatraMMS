@@ -14,6 +14,7 @@
 #ifndef APICommon_h
 #define APICommon_h
 
+#include <unordered_map>
 #include "CMSEngine.h"
 #include "spdlog/spdlog.h"
 
@@ -25,13 +26,26 @@ public:
     
     int listen();
 
-    virtual void manageRequest() = 0;
+    virtual void manageRequest(
+        string requestURI,
+        string requestMethod,
+        unsigned long contentLength,
+        string requestBody
+    ) = 0;
 
 protected:
     shared_ptr<spdlog::logger>      _logger;
     shared_ptr<CMSEngineDBFacade>   _cmsEngineDBFacade;
     shared_ptr<CMSEngine>           _cmsEngine;
-    
+
+private:
+    int             _managedRequestsNumber;
+    long            _processId;
+    unsigned long   _stdInMax;
+
+    void fillEnvironmentDetails(
+        const char * const * envp, 
+        unordered_map<string, string>& requestDetails);
 };
 
 #endif

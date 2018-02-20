@@ -42,7 +42,7 @@ int main (int iArgc, char *pArgv [])
         "",                             // string countryCode,
         CMSEngineDBFacade::CustomerType::EncodingOnly,  // CMSEngineDBFacade::CustomerType customerType
 	"",                             // string deliveryURL,
-        CMSEngineDBFacade::EncodingPriority::Default,   //  CMSEngineDBFacade::EncodingPriority maxEncodingPriority,
+        CMSEngineDBFacade::EncodingPriority::Medium,   //  CMSEngineDBFacade::EncodingPriority maxEncodingPriority,
         CMSEngineDBFacade::EncodingPeriod::Daily,       //  CMSEngineDBFacade::EncodingPeriod encodingPeriod,
 	10,                             // long maxIngestionsNumber,
         10,                             // long maxStorageInGB,

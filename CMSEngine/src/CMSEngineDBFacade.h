@@ -44,12 +44,74 @@ public:
 //	Playlist	= 5,
 //	Live		= 6
     };
+    static const char* toString(const ContentType& contentType)
+    {
+        switch (contentType)
+        {
+            case ContentType::Video:
+                return "Video";
+            case ContentType::Audio:
+                return "Audio";
+            case ContentType::Image:
+                return "Image";
+            default:
+                throw runtime_error(string("Wrong ContentType"));
+        }
+    }
+    static ContentType toContentType(const string& contentType)
+    {
+        string lowerCase;
+        lowerCase.resize(contentType.size());
+        transform(contentType.begin(), contentType.end(), lowerCase.begin(), [](unsigned char c){return tolower(c); } );
+
+        if (lowerCase == "video")
+            return ContentType::Video;
+        else if (lowerCase == "audio")
+            return ContentType::Audio;
+        else if (lowerCase == "image")
+            return ContentType::Image;
+        else
+            throw runtime_error(string("Wrong ContentType")
+                    + ", contentType: " + contentType
+                    );
+    }
 
     enum class EncodingPriority {
-        Low		= 0,
-	Default		= 1,
-	High		= 2
+        Low                 = 0,
+        Medium              = 1,
+        High                = 2
     };
+    static const char* toString(const EncodingPriority& priority)
+    {
+        switch (priority)
+        {
+            case EncodingPriority::Low:
+                return "Low";
+            case EncodingPriority::Medium:
+                return "Medium";
+            case EncodingPriority::High:
+                return "High";
+            default:
+            throw runtime_error(string("Wrong EncodingPriority"));
+        }
+    }
+    static EncodingPriority toEncodingPriority(const string& priority)
+    {
+        string lowerCase;
+        lowerCase.resize(priority.size());
+        transform(priority.begin(), priority.end(), lowerCase.begin(), [](unsigned char c){return tolower(c); } );
+
+        if (lowerCase == "low")
+            return EncodingPriority::Low;
+        else if (lowerCase == "medium")
+            return EncodingPriority::Medium;
+        else if (lowerCase == "high")
+            return EncodingPriority::High;
+        else
+            throw runtime_error(string("Wrong EncodingPriority")
+                    + ", priority: " + priority
+                    );
+    }
 
     enum class EncodingStatus {
         ToBeProcessed           = 0,
@@ -57,6 +119,41 @@ public:
         End_ProcessedSuccessful = 2,
         End_Failed              = 3
     };
+    static const char* toString(const EncodingStatus& encodingStatus)
+    {
+        switch (encodingStatus)
+        {
+            case EncodingStatus::ToBeProcessed:
+                return "ToBeProcessed";
+            case EncodingStatus::Processing:
+                return "Processing";
+            case EncodingStatus::End_ProcessedSuccessful:
+                return "End_ProcessedSuccessful";
+            case EncodingStatus::End_Failed:
+                return "End_Failed";
+            default:
+            throw runtime_error(string("Wrong EncodingStatus"));
+        }
+    }
+    static EncodingStatus toEncodingStatus(const string& encodingStatus)
+    {
+        string lowerCase;
+        lowerCase.resize(encodingStatus.size());
+        transform(encodingStatus.begin(), encodingStatus.end(), lowerCase.begin(), [](unsigned char c){return tolower(c); } );
+
+        if (lowerCase == "tobeprocessed")
+            return EncodingStatus::ToBeProcessed;
+        else if (lowerCase == "processing")
+            return EncodingStatus::Processing;
+        else if (lowerCase == "end_processedsuccessful")
+            return EncodingStatus::End_ProcessedSuccessful;
+        else if (lowerCase == "end_failed")
+            return EncodingStatus::End_Failed;
+        else
+            throw runtime_error(string("Wrong EncodingStatus")
+                    + ", encodingStatus: " + encodingStatus
+                    );
+    }
     
     enum class EncodingError {
         NoError,
@@ -155,6 +252,65 @@ public:
         End_IngestionSuccess    = 20
             // Ingestion and encodings successful
     };
+    static const char* toString(const IngestionStatus& ingestionStatus)
+    {
+        switch (ingestionStatus)
+        {
+            case IngestionStatus::StartIngestion:
+                return "StartIngestion";
+            case IngestionStatus::SourceDownloadingInProgress:
+                return "SourceDownloadingInProgress";
+            case IngestionStatus::QueuedForEncoding:
+                return "QueuedForEncoding";
+            case IngestionStatus::End_DownloadCancelledByUser:
+                return "End_DownloadCancelledByUser";
+            case IngestionStatus::End_ValidationMetadataFailed:
+                return "End_ValidationMetadataFailed";
+            case IngestionStatus::End_ValidationMediaSourceFailed:
+                return "End_ValidationMediaSourceFailed";
+            case IngestionStatus::End_CustomerReachedHisMaxIngestionNumber:
+                return "End_CustomerReachedHisMaxIngestionNumber";
+            case IngestionStatus::End_IngestionFailure:
+                return "End_IngestionFailure";
+            case IngestionStatus::End_IngestionSuccess_AtLeastOneEncodingProfileError:
+                return "End_IngestionSuccess_AtLeastOneEncodingProfileError";
+            case IngestionStatus::End_IngestionSuccess:
+                return "End_IngestionSuccess";
+            default:
+            throw runtime_error(string("Wrong IngestionStatus"));
+        }
+    }
+    static IngestionStatus toIngestionStatus(const string& ingestionStatus)
+    {
+        string lowerCase;
+        lowerCase.resize(ingestionStatus.size());
+        transform(ingestionStatus.begin(), ingestionStatus.end(), lowerCase.begin(), [](unsigned char c){return tolower(c); } );
+
+        if (lowerCase == "startingestion")
+            return IngestionStatus::StartIngestion;
+        else if (lowerCase == "sourcedownloadinginprogress")
+            return IngestionStatus::SourceDownloadingInProgress;
+        else if (lowerCase == "queuedforencoding")
+            return IngestionStatus::QueuedForEncoding;
+        else if (lowerCase == "end_downloadcancelledbyuser")
+            return IngestionStatus::End_DownloadCancelledByUser;
+        else if (lowerCase == "end_validationmetadatafailed")
+            return IngestionStatus::End_ValidationMetadataFailed;
+        else if (lowerCase == "end_validationmediasourcefailed")
+            return IngestionStatus::End_ValidationMediaSourceFailed;
+        else if (lowerCase == "end_customerreachedhismaxingestionnumber")
+            return IngestionStatus::End_CustomerReachedHisMaxIngestionNumber;
+        else if (lowerCase == "end_ingestionfailure")
+            return IngestionStatus::End_IngestionFailure;
+        else if (lowerCase == "end_ingestionsuccess_atleastoneencodingprofileerror")
+            return IngestionStatus::End_IngestionSuccess_AtLeastOneEncodingProfileError;
+        else if (lowerCase == "end_ingestionsuccess")
+            return IngestionStatus::End_IngestionSuccess;
+        else
+            throw runtime_error(string("Wrong IngestionStatus")
+                    + ", ingestionStatus: " + ingestionStatus
+                    );
+    }
 
 public:
     CMSEngineDBFacade(

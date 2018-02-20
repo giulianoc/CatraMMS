@@ -49,6 +49,8 @@ public:
         chrono::system_clock::time_point userExpirationDate
     );
 
+    void confirmCustomer(string confirmationCode);
+    
     void addFFMPEGVideoEncodingProfile(
         shared_ptr<Customer> customer,
         string encodingProfileSet,  // "": default Customer family, != "": named customer family

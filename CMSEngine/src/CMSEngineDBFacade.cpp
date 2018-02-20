@@ -67,7 +67,7 @@ vector<shared_ptr<Customer>> CMSEngineDBFacade::getCustomers()
         customer->_name = resultSet->getString("Name");
         customer->_directoryName = resultSet->getString("DirectoryName");
         customer->_maxStorageInGB = resultSet->getInt("MaxStorageInGB");
-        customer->_maxEncodingPriority = resultSet->getInt("MaxEncodingPriority");
+        customer->_maxEncodingPriority = static_cast<int>(CMSEngineDBFacade::toEncodingPriority(resultSet->getString("MaxEncodingPriority")));
 
         getTerritories(customer);
     }
@@ -96,7 +96,7 @@ shared_ptr<Customer> CMSEngineDBFacade::getCustomer(int64_t customerKey)
         customer->_name = resultSet->getString("Name");
         customer->_directoryName = resultSet->getString("DirectoryName");
         customer->_maxStorageInGB = resultSet->getInt("MaxStorageInGB");
-        customer->_maxEncodingPriority = resultSet->getInt("MaxEncodingPriority");
+        customer->_maxEncodingPriority = static_cast<int>(CMSEngineDBFacade::toEncodingPriority(resultSet->getString("MaxEncodingPriority")));
 
         getTerritories(customer);
     }
@@ -137,7 +137,7 @@ shared_ptr<Customer> CMSEngineDBFacade::getCustomer(string customerName)
         customer->_name = resultSet->getString("Name");
         customer->_directoryName = resultSet->getString("DirectoryName");
         customer->_maxStorageInGB = resultSet->getInt("MaxStorageInGB");
-        customer->_maxEncodingPriority = resultSet->getInt("MaxEncodingPriority");
+        customer->_maxEncodingPriority = static_cast<int>(CMSEngineDBFacade::toEncodingPriority(resultSet->getString("MaxEncodingPriority")));
 
         getTerritories(customer);
     }
@@ -265,7 +265,7 @@ pair<int64_t,string> CMSEngineDBFacade::registerCustomer(
             else
                 preparedStatement->setString(queryParameterIndex++, deliveryURL);
             preparedStatement->setInt(queryParameterIndex++, enabled);
-            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(maxEncodingPriority));
+            preparedStatement->setString(queryParameterIndex++, CMSEngineDBFacade::toString(maxEncodingPriority));
             preparedStatement->setInt(queryParameterIndex++, static_cast<int>(encodingPeriod));
             preparedStatement->setInt(queryParameterIndex++, maxIngestionsNumber);
             preparedStatement->setInt(queryParameterIndex++, maxStorageInGB);
@@ -342,7 +342,7 @@ pair<int64_t,string> CMSEngineDBFacade::registerCustomer(
                         "NULL, ?, ?, NULL)";
                     shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
-                    preparedStatement->setInt(queryParameterIndex++, static_cast<int>(contentType));
+                    preparedStatement->setString(queryParameterIndex++, CMSEngineDBFacade::toString(contentType));
                     preparedStatement->setInt64(queryParameterIndex++, customerKey);
                     preparedStatement->executeUpdate();
                 }
@@ -358,7 +358,7 @@ pair<int64_t,string> CMSEngineDBFacade::registerCustomer(
                     shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
                     preparedStatement->setInt64(queryParameterIndex++, encodingProfilesSetKey);
-                    preparedStatement->setInt(queryParameterIndex++, static_cast<int>(contentType));
+                    preparedStatement->setString(queryParameterIndex++, CMSEngineDBFacade::toString(contentType));
                     preparedStatement->executeUpdate();
                 }
             }
@@ -916,7 +916,7 @@ int64_t CMSEngineDBFacade::addVideoEncodingProfile(
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(contentType));
+            preparedStatement->setString(queryParameterIndex++, CMSEngineDBFacade::toString(contentType));
             preparedStatement->setInt(queryParameterIndex++, static_cast<int>(encodingTechnology));
             preparedStatement->setString(queryParameterIndex++, details);
             if (label == "")
@@ -947,7 +947,7 @@ int64_t CMSEngineDBFacade::addVideoEncodingProfile(
                 "select EncodingProfilesSetKey from CMS_EncodingProfilesSet where ContentType = ? and CustomerKey = ? and Name is null";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(contentType));
+            preparedStatement->setString(queryParameterIndex++, CMSEngineDBFacade::toString(contentType));
             preparedStatement->setInt64(queryParameterIndex++, customer->_customerKey);
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
@@ -957,7 +957,7 @@ int64_t CMSEngineDBFacade::addVideoEncodingProfile(
             else
             {
                 string errorMessage = __FILEREF__ + "EncodingProfilesSetKey is not present"
-                    + ", contentType: " + to_string(static_cast<int>(contentType))
+                    + ", contentType: " + CMSEngineDBFacade::toString(contentType)
                     + ", customer->_customerKey: " + to_string(customer->_customerKey)
                     + ", lastSQLCommand: " + lastSQLCommand
                 ;
@@ -972,7 +972,7 @@ int64_t CMSEngineDBFacade::addVideoEncodingProfile(
                 "select EncodingProfilesSetKey from CMS_EncodingProfilesSet where ContentType = ? and CustomerKey = ? and Name = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(contentType));
+            preparedStatement->setString(queryParameterIndex++, CMSEngineDBFacade::toString(contentType));
             preparedStatement->setInt64(queryParameterIndex++, customer->_customerKey);
             preparedStatement->setString(queryParameterIndex++, encodingProfileSet);
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
@@ -986,7 +986,7 @@ int64_t CMSEngineDBFacade::addVideoEncodingProfile(
                     "insert into CMS_EncodingProfilesSet (EncodingProfilesSetKey, ContentType, CustomerKey, Name) values (NULL, ?, ?, ?)";
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
-                preparedStatement->setInt(queryParameterIndex++, static_cast<int>(contentType));
+                preparedStatement->setString(queryParameterIndex++, CMSEngineDBFacade::toString(contentType));
                 preparedStatement->setInt64(queryParameterIndex++, customer->_customerKey);
                 preparedStatement->setString(queryParameterIndex++, encodingProfileSet);
                 preparedStatement->executeUpdate();
@@ -1098,7 +1098,7 @@ int64_t CMSEngineDBFacade::addImageEncodingProfile(
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(contentType));
+            preparedStatement->setString(queryParameterIndex++, CMSEngineDBFacade::toString(contentType));
             preparedStatement->setInt(queryParameterIndex++, static_cast<int>(EncodingTechnology::Image));
             preparedStatement->setString(queryParameterIndex++, details);
             if (label == "")
@@ -1121,7 +1121,7 @@ int64_t CMSEngineDBFacade::addImageEncodingProfile(
                 "select EncodingProfilesSetKey from CMS_EncodingProfilesSet where ContentType = ? and CustomerKey = ? and Name is null";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(contentType));
+            preparedStatement->setString(queryParameterIndex++, CMSEngineDBFacade::toString(contentType));
             preparedStatement->setInt64(queryParameterIndex++, customer->_customerKey);
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
@@ -1131,7 +1131,7 @@ int64_t CMSEngineDBFacade::addImageEncodingProfile(
             else
             {
                 string errorMessage = __FILEREF__ + "EncodingProfilesSetKey is not present"
-                    + ", contentType: " + to_string(static_cast<int>(contentType))
+                    + ", contentType: " + CMSEngineDBFacade::toString(contentType)
                     + ", customer->_customerKey: " + to_string(customer->_customerKey)
                     + ", lastSQLCommand: " + lastSQLCommand
                 ;
@@ -1146,7 +1146,7 @@ int64_t CMSEngineDBFacade::addImageEncodingProfile(
                 "select EncodingProfilesSetKey from CMS_EncodingProfilesSet where ContentType = ? and CustomerKey = ? and Name = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(contentType));
+            preparedStatement->setString(queryParameterIndex++, CMSEngineDBFacade::toString(contentType));
             preparedStatement->setInt64(queryParameterIndex++, customer->_customerKey);
             preparedStatement->setString(queryParameterIndex++, encodingProfileSet);
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
@@ -1160,7 +1160,7 @@ int64_t CMSEngineDBFacade::addImageEncodingProfile(
                     "insert into CMS_EncodingProfilesSet (EncodingProfilesSetKey, ContentType, CustomerKey, Name) values (NULL, ?, ?, ?)";
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
-                preparedStatement->setInt(queryParameterIndex++, static_cast<int>(contentType));
+                preparedStatement->setString(queryParameterIndex++, CMSEngineDBFacade::toString(contentType));
                 preparedStatement->setInt64(queryParameterIndex++, customer->_customerKey);
                 preparedStatement->setString(queryParameterIndex++, encodingProfileSet);
                 preparedStatement->executeUpdate();
@@ -1315,7 +1315,7 @@ int64_t CMSEngineDBFacade::addIngestionJob (
                 preparedStatement->setString(queryParameterIndex++, metadataFileContent);
             preparedStatement->setInt(queryParameterIndex++, static_cast<int>(ingestionType));
             preparedStatement->setString(queryParameterIndex++, processorCMS);
-            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(ingestionStatus));
+            preparedStatement->setString(queryParameterIndex++, CMSEngineDBFacade::toString(ingestionStatus));
             if (errorMessage == "")
                 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
             else
@@ -1397,7 +1397,7 @@ void CMSEngineDBFacade::updateIngestionJob (
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(newIngestionStatus));
+            preparedStatement->setString(queryParameterIndex++, CMSEngineDBFacade::toString(newIngestionStatus));
             if (errorMessageForSQL == "")
                 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
             else
@@ -1425,7 +1425,7 @@ void CMSEngineDBFacade::updateIngestionJob (
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(newIngestionStatus));
+            preparedStatement->setString(queryParameterIndex++, CMSEngineDBFacade::toString(newIngestionStatus));
             if (errorMessageForSQL == "")
                 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
             else
@@ -1448,7 +1448,7 @@ void CMSEngineDBFacade::updateIngestionJob (
         }
         
         _logger->info(__FILEREF__ + "IngestionJob updated successful"
-            + ", newIngestionStatus: " + to_string(static_cast<int>(newIngestionStatus))
+            + ", newIngestionStatus: " + CMSEngineDBFacade::toString(newIngestionStatus)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             );
 
@@ -1524,7 +1524,7 @@ bool CMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress (
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
-                IngestionStatus ingestionStatus = static_cast<IngestionStatus>(resultSet->getInt("Status"));
+                IngestionStatus ingestionStatus = CMSEngineDBFacade::toIngestionStatus(resultSet->getString("Status"));
                 
                 if (ingestionStatus == IngestionStatus::End_DownloadCancelledByUser)
                     toBeCancelled = true;
@@ -1601,9 +1601,9 @@ void CMSEngineDBFacade::getEncodingJobs(
                 "update CMS_EncodingJobs set Status = ?, ProcessorCMS = null where ProcessorCMS = ? and Status = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(EncodingStatus::ToBeProcessed));
+            preparedStatement->setString(queryParameterIndex++, CMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
             preparedStatement->setString(queryParameterIndex++, processorCMS);
-            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(EncodingStatus::Processing));
+            preparedStatement->setString(queryParameterIndex++, CMSEngineDBFacade::toString(EncodingStatus::Processing));
 
             int rowsReset = preparedStatement->executeUpdate();            
             if (rowsReset > 0)
@@ -1619,9 +1619,9 @@ void CMSEngineDBFacade::getEncodingJobs(
                 "update CMS_EncodingJobs set Status = ?, ProcessorCMS = null where ProcessorCMS = ? and Status = ? and DATE_ADD(EncodingJobStart, INTERVAL ? DAY) <= NOW()";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(EncodingStatus::ToBeProcessed));
+            preparedStatement->setString(queryParameterIndex++, CMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
             preparedStatement->setString(queryParameterIndex++, processorCMS);
-            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(EncodingStatus::Processing));
+            preparedStatement->setString(queryParameterIndex++, CMSEngineDBFacade::toString(EncodingStatus::Processing));
             preparedStatement->setInt(queryParameterIndex++, retentionDaysToReset);
 
             int rowsExpired = preparedStatement->executeUpdate();            
@@ -1638,7 +1638,7 @@ void CMSEngineDBFacade::getEncodingJobs(
                 "order by EncodingPriority desc, EncodingJobStart asc, FailuresNumber asc for update";
             shared_ptr<sql::PreparedStatement> preparedStatementEncoding (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatementEncoding->setInt(queryParameterIndex++, static_cast<int>(EncodingStatus::ToBeProcessed));
+            preparedStatementEncoding->setString(queryParameterIndex++, CMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
 
             shared_ptr<sql::ResultSet> encodingResultSet (preparedStatementEncoding->executeQuery());
             while (encodingResultSet->next())
@@ -1663,7 +1663,7 @@ void CMSEngineDBFacade::getEncodingJobs(
                     shared_ptr<sql::ResultSet> physicalPathResultSet (preparedStatementPhysicalPath->executeQuery());
                     if (physicalPathResultSet->next())
                     {
-                        encodingItem->_contentType = static_cast<ContentType>(physicalPathResultSet->getInt("ContentType"));
+                        encodingItem->_contentType = CMSEngineDBFacade::toContentType(physicalPathResultSet->getString("ContentType"));
                         encodingItem->_customer = getCustomer(physicalPathResultSet->getInt64("CustomerKey"));
                         encodingItem->_cmsPartitionNumber = physicalPathResultSet->getInt("CMSPartitionNumber");
                         encodingItem->_mediaItemKey = physicalPathResultSet->getInt64("MediaItemKey");
@@ -1763,7 +1763,7 @@ void CMSEngineDBFacade::getEncodingJobs(
                         "update CMS_EncodingJobs set Status = ?, ProcessorCMS = ?, EncodingJobStart = NULL where EncodingJobKey = ? and ProcessorCMS is null";
                     shared_ptr<sql::PreparedStatement> preparedStatementUpdateEncoding (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
-                    preparedStatementUpdateEncoding->setInt(queryParameterIndex++, static_cast<int>(EncodingStatus::Processing));
+                    preparedStatementUpdateEncoding->setString(queryParameterIndex++, CMSEngineDBFacade::toString(EncodingStatus::Processing));
                     preparedStatementUpdateEncoding->setString(queryParameterIndex++, processorCMS);
                     preparedStatementUpdateEncoding->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
 
@@ -1903,16 +1903,16 @@ int CMSEngineDBFacade::updateEncodingJob (
                     "update CMS_EncodingJobs set Status = ?, ProcessorCMS = NULL, FailuresNumber = ?, EncodingProgress = NULL where EncodingJobKey = ? and Status = ?";
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
-                preparedStatement->setInt(queryParameterIndex++, static_cast<int>(newEncodingStatus));
+                preparedStatement->setString(queryParameterIndex++, CMSEngineDBFacade::toString(newEncodingStatus));
                 preparedStatement->setInt(queryParameterIndex++, encodingFailureNumber);
                 preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
-                preparedStatement->setInt(queryParameterIndex++, static_cast<int>(EncodingStatus::Processing));
+                preparedStatement->setString(queryParameterIndex++, CMSEngineDBFacade::toString(EncodingStatus::Processing));
 
                 int rowsUpdated = preparedStatement->executeUpdate();
                 if (rowsUpdated != 1)
                 {
                     string errorMessage = __FILEREF__ + "no update was done"
-                            + ", static_cast<int>(newEncodingStatus): " + to_string(static_cast<int>(newEncodingStatus))
+                            + ", CMSEngineDBFacade::toString(newEncodingStatus): " + CMSEngineDBFacade::toString(newEncodingStatus)
                             + ", encodingJobKey: " + to_string(encodingJobKey)
                             + ", rowsUpdated: " + to_string(rowsUpdated)
                             + ", lastSQLCommand: " + lastSQLCommand
@@ -1924,7 +1924,7 @@ int CMSEngineDBFacade::updateEncodingJob (
             }
             
             _logger->info(__FILEREF__ + "EncodingJob updated successful"
-                + ", newEncodingStatus: " + to_string(static_cast<int>(newEncodingStatus))
+                + ", newEncodingStatus: " + CMSEngineDBFacade::toString(newEncodingStatus)
                 + ", encodingFailureNumber: " + to_string(encodingFailureNumber)
                 + ", encodingJobKey: " + to_string(encodingJobKey)
             );
@@ -1937,15 +1937,15 @@ int CMSEngineDBFacade::updateEncodingJob (
                 "update CMS_EncodingJobs set Status = ?, ProcessorCMS = NULL, EncodingProgress = NULL where EncodingJobKey = ? and Status = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-                preparedStatement->setInt(queryParameterIndex++, static_cast<int>(newEncodingStatus));
+                preparedStatement->setString(queryParameterIndex++, CMSEngineDBFacade::toString(newEncodingStatus));
                 preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
-                preparedStatement->setInt(queryParameterIndex++, static_cast<int>(EncodingStatus::Processing));
+                preparedStatement->setString(queryParameterIndex++, CMSEngineDBFacade::toString(EncodingStatus::Processing));
 
             int rowsUpdated = preparedStatement->executeUpdate();
             if (rowsUpdated != 1)
             {
                 string errorMessage = __FILEREF__ + "no update was done"
-                        + ", static_cast<int>(newEncodingStatus): " + to_string(static_cast<int>(newEncodingStatus))
+                        + ", CMSEngineDBFacade::toString(newEncodingStatus): " + CMSEngineDBFacade::toString(newEncodingStatus)
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", rowsUpdated: " + to_string(rowsUpdated)
                         + ", lastSQLCommand: " + lastSQLCommand
@@ -1955,7 +1955,7 @@ int CMSEngineDBFacade::updateEncodingJob (
                 throw runtime_error(errorMessage);                    
             }
             _logger->info(__FILEREF__ + "EncodingJob updated successful"
-                + ", newEncodingStatus: " + to_string(static_cast<int>(newEncodingStatus))
+                + ", newEncodingStatus: " + CMSEngineDBFacade::toString(newEncodingStatus)
                 + ", encodingJobKey: " + to_string(encodingJobKey)
             );
         }
@@ -1967,15 +1967,15 @@ int CMSEngineDBFacade::updateEncodingJob (
                 "update CMS_EncodingJobs set Status = ?, ProcessorCMS = NULL, EncodingJobEnd = NOW(), EncodingProgress = 100 where EncodingJobKey = ? and Status = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(newEncodingStatus));
+            preparedStatement->setString(queryParameterIndex++, CMSEngineDBFacade::toString(newEncodingStatus));
             preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
-            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(EncodingStatus::Processing));
+            preparedStatement->setString(queryParameterIndex++, CMSEngineDBFacade::toString(EncodingStatus::Processing));
 
             int rowsUpdated = preparedStatement->executeUpdate();
             if (rowsUpdated != 1)
             {
                 string errorMessage = __FILEREF__ + "no update was done"
-                        + ", static_cast<int>(newEncodingStatus): " + to_string(static_cast<int>(newEncodingStatus))
+                        + ", CMSEngineDBFacade::toString(newEncodingStatus): " + CMSEngineDBFacade::toString(newEncodingStatus)
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", rowsUpdated: " + to_string(rowsUpdated)
                         + ", lastSQLCommand: " + lastSQLCommand
@@ -1985,7 +1985,7 @@ int CMSEngineDBFacade::updateEncodingJob (
                 throw runtime_error(errorMessage);                    
             }
             _logger->info(__FILEREF__ + "EncodingJob updated successful"
-                + ", newEncodingStatus: " + to_string(static_cast<int>(newEncodingStatus))
+                + ", newEncodingStatus: " + CMSEngineDBFacade::toString(newEncodingStatus)
                 + ", encodingJobKey: " + to_string(encodingJobKey)
             );
         }
@@ -1997,8 +1997,8 @@ int CMSEngineDBFacade::updateEncodingJob (
             shared_ptr<sql::PreparedStatement> preparedStatementEncoding (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatementEncoding->setInt64(queryParameterIndex++, ingestionJobKey);
-            preparedStatementEncoding->setInt(queryParameterIndex++, static_cast<int>(EncodingStatus::End_ProcessedSuccessful));
-            preparedStatementEncoding->setInt(queryParameterIndex++, static_cast<int>(EncodingStatus::End_Failed));
+            preparedStatementEncoding->setString(queryParameterIndex++, CMSEngineDBFacade::toString(EncodingStatus::End_ProcessedSuccessful));
+            preparedStatementEncoding->setString(queryParameterIndex++, CMSEngineDBFacade::toString(EncodingStatus::End_Failed));
 
             shared_ptr<sql::ResultSet> resultSetEncoding (preparedStatementEncoding->executeQuery());
             if (resultSetEncoding->next())
@@ -2010,7 +2010,7 @@ int CMSEngineDBFacade::updateEncodingJob (
                     shared_ptr<sql::PreparedStatement> preparedStatementIngestion (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
                     preparedStatementIngestion->setInt64(queryParameterIndex++, ingestionJobKey);
-                    preparedStatementIngestion->setInt(queryParameterIndex++, static_cast<int>(EncodingStatus::End_Failed));
+                    preparedStatementIngestion->setString(queryParameterIndex++, CMSEngineDBFacade::toString(EncodingStatus::End_Failed));
 
                     shared_ptr<sql::ResultSet> resultSetIngestion (preparedStatementIngestion->executeQuery());
                     if (resultSetIngestion->next())
@@ -2598,13 +2598,11 @@ pair<int64_t,int64_t> CMSEngineDBFacade::saveIngestedContentMetadata(
                 description = contentIngestion.get("Description", "XXX").asString();
 
             sContentType = contentIngestion.get("ContentType", "XXX").asString();
-            if (sContentType == "video")
-                contentType = ContentType::Video;
-            else if (sContentType == "audio")
-                contentType = ContentType::Audio;
-            else if (sContentType == "image")
-                contentType = ContentType::Image;
-            else
+            try
+            {
+                contentType = CMSEngineDBFacade::toContentType(sContentType);
+            }
+            catch(exception e)
             {
                 string errorMessage = __FILEREF__ + "ContentType is wrong"
                     + ", sContentType: " + sContentType
@@ -2625,7 +2623,7 @@ pair<int64_t,int64_t> CMSEngineDBFacade::saveIngestedContentMetadata(
                         "select EncodingProfilesSetKey from CMS_EncodingProfilesSet where ContentType = ? and CustomerKey is null and Name is null";
                     shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
-                    preparedStatement->setInt(queryParameterIndex++, static_cast<int>(contentType));
+                    preparedStatement->setString(queryParameterIndex++, CMSEngineDBFacade::toString(contentType));
                 }
                 else if (encodingProfilesSet == "customerDefault")
                 {
@@ -2633,7 +2631,7 @@ pair<int64_t,int64_t> CMSEngineDBFacade::saveIngestedContentMetadata(
                         "select EncodingProfilesSetKey from CMS_EncodingProfilesSet where ContentType = ? and CustomerKey = ? and Name is null";
                     shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
-                    preparedStatement->setInt(queryParameterIndex++, static_cast<int>(contentType));
+                    preparedStatement->setString(queryParameterIndex++, CMSEngineDBFacade::toString(contentType));
                     preparedStatement->setInt64(queryParameterIndex++, customer->_customerKey);
                 }
                 else
@@ -2645,16 +2643,16 @@ pair<int64_t,int64_t> CMSEngineDBFacade::saveIngestedContentMetadata(
                 int queryParameterIndex = 1;
                 if (encodingProfilesSet == "systemDefault")
                 {
-                    preparedStatement->setInt(queryParameterIndex++, static_cast<int>(contentType));
+                    preparedStatement->setString(queryParameterIndex++, CMSEngineDBFacade::toString(contentType));
                 }
                 else if (encodingProfilesSet == "customerDefault")
                 {
-                    preparedStatement->setInt(queryParameterIndex++, static_cast<int>(contentType));
+                    preparedStatement->setString(queryParameterIndex++, CMSEngineDBFacade::toString(contentType));
                     preparedStatement->setInt64(queryParameterIndex++, customer->_customerKey);
                 }
                 else
                 {
-                    preparedStatement->setInt(queryParameterIndex++, static_cast<int>(contentType));
+                    preparedStatement->setString(queryParameterIndex++, CMSEngineDBFacade::toString(contentType));
                     preparedStatement->setInt64(queryParameterIndex++, customer->_customerKey);
                     preparedStatement->setString(queryParameterIndex++, encodingProfilesSet);
                 }
@@ -2666,7 +2664,7 @@ pair<int64_t,int64_t> CMSEngineDBFacade::saveIngestedContentMetadata(
                 else
                 {
                     string errorMessage = __FILEREF__ + "EncodingProfilesSetKey is not present"
-                        + ", contentType: " + to_string(static_cast<int>(contentType))
+                        + ", contentType: " + CMSEngineDBFacade::toString(contentType)
                         + ", customer->_customerKey: " + to_string(customer->_customerKey)
                         + ", encodingProfilesSet: " + encodingProfilesSet
                         + ", lastSQLCommand: " + lastSQLCommand
@@ -2704,7 +2702,7 @@ pair<int64_t,int64_t> CMSEngineDBFacade::saveIngestedContentMetadata(
                 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
             else
                 preparedStatement->setString(queryParameterIndex++, description);
-            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(contentType));
+            preparedStatement->setString(queryParameterIndex++, CMSEngineDBFacade::toString(contentType));
             if (logicalType == "")
                 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
             else
@@ -2766,7 +2764,7 @@ pair<int64_t,int64_t> CMSEngineDBFacade::saveIngestedContentMetadata(
             else
             {
                 string errorMessage = __FILEREF__ + "ContentType is wrong"
-                    + ", contentType: " + to_string(static_cast<int>(contentType))
+                    + ", contentType: " + CMSEngineDBFacade::toString(contentType)
                 ;
                 _logger->error(errorMessage);
 
@@ -2989,26 +2987,7 @@ pair<int64_t,int64_t> CMSEngineDBFacade::saveIngestedContentMetadata(
                 if (isMetadataPresent(contentIngestion, field))
                 {
                     string strEncodingPriority = contentIngestion.get(field, "XXX").asString();
-                    if (strEncodingPriority == "low")
-                    {
-                       encodingPriority = EncodingPriority::Low; 
-                    }
-                    else if (strEncodingPriority == "default")
-                    {
-                       encodingPriority = EncodingPriority::Default;
-                    }
-                    else if (strEncodingPriority == "high")
-                    {
-                       encodingPriority = EncodingPriority::High; 
-                    }
-                    else
-                    {
-                        string errorMessage = __FILEREF__ + "Field 'EncodingPriority' is wrong"
-                                + ", EncodingPriority: " + to_string(static_cast<int>(encodingPriority));
-                        _logger->error(errorMessage);
-
-                        throw runtime_error(errorMessage);
-                    }
+                    encodingPriority = CMSEngineDBFacade::toEncodingPriority(strEncodingPriority);
 
                     if (static_cast<int>(encodingPriority) > customer->_maxEncodingPriority)
                         encodingPriority = static_cast<EncodingPriority>(customer->_maxEncodingPriority); 
@@ -3017,7 +2996,7 @@ pair<int64_t,int64_t> CMSEngineDBFacade::saveIngestedContentMetadata(
                     encodingPriority = static_cast<EncodingPriority>(customer->_maxEncodingPriority);
             }
             else
-                encodingPriority = EncodingPriority::Default;
+                encodingPriority = EncodingPriority::Medium;
 
             lastSQLCommand = 
                 "insert into CMS_EncodingJobs(EncodingJobKey, IngestionJobKey, SourcePhysicalPathKey, EncodingPriority, EncodingProfileKey, EncodingJobStart, EncodingJobEnd, EncodingProgress, Status, ProcessorCMS, FailuresNumber) "
@@ -3029,7 +3008,7 @@ pair<int64_t,int64_t> CMSEngineDBFacade::saveIngestedContentMetadata(
             preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
             preparedStatement->setInt64(queryParameterIndex++, physicalPathKey);
             preparedStatement->setInt(queryParameterIndex++, static_cast<int>(encodingPriority));
-            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(EncodingStatus::ToBeProcessed));
+            preparedStatement->setString(queryParameterIndex++, CMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
             preparedStatement->setInt64(queryParameterIndex++, encodingProfileSetKey);
 
             preparedStatement->executeUpdate();
@@ -3042,7 +3021,7 @@ pair<int64_t,int64_t> CMSEngineDBFacade::saveIngestedContentMetadata(
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
-            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(IngestionStatus::QueuedForEncoding));
+            preparedStatement->setString(queryParameterIndex++, CMSEngineDBFacade::toString(IngestionStatus::QueuedForEncoding));
             preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 
             int rowsUpdated = preparedStatement->executeUpdate();
@@ -3383,7 +3362,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
                     "CustomerType                   TINYINT NOT NULL,"
                     "DeliveryURL                    VARCHAR (256) NULL,"
                     "IsEnabled                      TINYINT (1) NOT NULL,"
-                    "MaxEncodingPriority            TINYINT NOT NULL,"
+                    "MaxEncodingPriority            VARCHAR (32) NOT NULL,"
                     "EncodingPeriod                 TINYINT NOT NULL,"
                     "MaxIngestionsNumber            INT NOT NULL,"
                     "MaxStorageInGB                 INT NOT NULL,"
@@ -3672,7 +3651,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
             lastSQLCommand = 
                 "create table if not exists CMS_EncodingProfiles ("
                     "EncodingProfileKey  		BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
-                    "ContentType			TINYINT NOT NULL,"
+                    "ContentType			VARCHAR (32) NOT NULL,"
                     "Technology         		TINYINT NOT NULL,"
                     "Details    			VARCHAR (512) NOT NULL,"
                     "Label				VARCHAR (64) NULL,"
@@ -3707,7 +3686,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
             lastSQLCommand = 
                 "create table if not exists CMS_EncodingProfilesSet ("
                     "EncodingProfilesSetKey  	BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
-                    "ContentType				TINYINT NOT NULL,"
+                    "ContentType				VARCHAR (32) NOT NULL,"
                     "CustomerKey  				BIGINT UNSIGNED NULL,"
                     "Name						VARCHAR (64) NULL,"
                     "constraint CMS_EncodingProfilesSet_PK PRIMARY KEY (EncodingProfilesSetKey)," 
@@ -3743,7 +3722,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
                         "select count(*) from CMS_EncodingProfilesSet where ContentType = ? and CustomerKey is NULL and Name is NULL";
                     shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
-                    preparedStatement->setInt(queryParameterIndex++, static_cast<int>(contentType));
+                    preparedStatement->setString(queryParameterIndex++, CMSEngineDBFacade::toString(contentType));
 
                     shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
                     if (resultSet->next())
@@ -3758,7 +3737,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
                         "insert into CMS_EncodingProfilesSet (EncodingProfilesSetKey, ContentType, CustomerKey, Name) values (NULL, ?, NULL, NULL)";
                     shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
-                    preparedStatement->setInt(queryParameterIndex++, static_cast<int>(contentType));
+                    preparedStatement->setString(queryParameterIndex++, CMSEngineDBFacade::toString(contentType));
                     preparedStatement->executeUpdate();
                 }
             }
@@ -3840,7 +3819,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
                     "EndIngestion			DATETIME NULL,"
                     "DownloadingProgress                INT NULL,"
                     "ProcessorCMS			VARCHAR (128) NULL,"
-                    "Status           			TINYINT (2) NOT NULL,"
+                    "Status           			VARCHAR (64) NOT NULL,"
                     "ErrorMessage			VARCHAR (1024) NULL,"
                     "constraint CMS_IngestionJobs_PK PRIMARY KEY (IngestionJobKey), "
                     "constraint CMS_IngestionJobs_FK foreign key (CustomerKey) "
@@ -3907,7 +3886,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
                     "Keywords				VARCHAR (128) CHARACTER SET utf8 COLLATE utf8_bin NULL,"
                     "Description			TEXT CHARACTER SET utf8 COLLATE utf8_bin NULL,"
                     "IngestionDate			TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
-                    "ContentType                        TINYINT NOT NULL,"
+                    "ContentType                        VARCHAR (32) NOT NULL,"
                     "LogicalType			VARCHAR (32) NULL,"
                     "EncodingProfilesSetKey		BIGINT UNSIGNED NULL,"
                     "constraint CMS_MediaItems_PK PRIMARY KEY (MediaItemKey), "
@@ -4348,7 +4327,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
                     "EncodingJobStart			TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "EncodingJobEnd			DATETIME NULL,"
                     "EncodingProgress                   INT NULL,"
-                    "Status           			TINYINT (2) NOT NULL,"
+                    "Status           			VARCHAR (64) NOT NULL,"
                     "ProcessorCMS			VARCHAR (128) NULL,"
                     "FailuresNumber           	INT NOT NULL,"
                     "constraint CMS_EncodingJobs_PK PRIMARY KEY (EncodingJobKey), "

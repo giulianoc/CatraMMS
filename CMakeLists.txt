@@ -47,7 +47,7 @@ find_package(ZLIB)
 add_subdirectory(CMSEngine/src)
 add_subdirectory(CMSEngineService/src)
 
-add_subdirectory(API/src/admin)
+add_subdirectory(API/src)
 
 add_subdirectory(utilities/registerCustomer/src)
 add_subdirectory(utilities/addEncodingProfile/src)

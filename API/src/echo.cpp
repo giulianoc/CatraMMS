@@ -77,7 +77,7 @@ static long gstdin(FCGX_Request * request, char ** content)
         *content = new char[clen];
 
         cin.read(*content, clen);
-        clen = cin.gcount();
+        clen = cin.gcount();     // Returns the number of characters extracted by the last unformatted input operation
     }
     else
     {
@@ -119,15 +119,15 @@ int main (void)
         fcgi_streambuf cout_fcgi_streambuf(request.out);
         fcgi_streambuf cerr_fcgi_streambuf(request.err);
 
-#if HAVE_IOSTREAM_WITHASSIGN_STREAMBUF
-        cin  = &cin_fcgi_streambuf;
-        cout = &cout_fcgi_streambuf;
-        cerr = &cerr_fcgi_streambuf;
-#else
-        cin.rdbuf(&cin_fcgi_streambuf);
-        cout.rdbuf(&cout_fcgi_streambuf);
-        cerr.rdbuf(&cerr_fcgi_streambuf);
-#endif
+        #if HAVE_IOSTREAM_WITHASSIGN_STREAMBUF
+            cin  = &cin_fcgi_streambuf;
+            cout = &cout_fcgi_streambuf;
+            cerr = &cerr_fcgi_streambuf;
+        #else
+            cin.rdbuf(&cin_fcgi_streambuf);
+            cout.rdbuf(&cout_fcgi_streambuf);
+            cerr.rdbuf(&cerr_fcgi_streambuf);
+        #endif
 
         // Although FastCGI supports writing before reading,
         // many http clients (browsers) don't support it (so

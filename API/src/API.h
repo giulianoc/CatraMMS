@@ -5,24 +5,30 @@
  */
 
 /* 
- * File:   RegisterCustomer.h
+ * File:   API.h
  * Author: giuliano
  *
  * Created on February 18, 2018, 1:27 AM
  */
 
-#ifndef RegisterCustomer_h
-#define RegisterCustomer_h
+#ifndef API_h
+#define API_h
 
-#include "../APICommon.h"
+#include "APICommon.h"
 
-class RegisterCustomer: public APICommon {
+class API: public APICommon {
 public:
-    RegisterCustomer();
+    API();
     
-    virtual ~RegisterCustomer();
+    ~API();
     
-    virtual void manageRequest();
+    virtual void manageRequest(
+        string requestURI,
+        string requestMethod,
+        unsigned long contentLength,
+        string requestBody
+    );
+    
 private:
 
 };

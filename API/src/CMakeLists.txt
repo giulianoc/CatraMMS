@@ -21,16 +21,16 @@
 # with the authors.
 
 SET (COMMON_SOURCES
-	../APICommon.cpp
+	APICommon.cpp
 )
 
 SET (SOURCES
-	RegisterCustomer
-	echo-cpp
+	API
+	echo
 )
 
 SET (HEADERS
-	../APICommon.h
+	APICommon.h
 )
 
 include_directories ("${PROJECT_SOURCE_DIR}/../usr_local/include")

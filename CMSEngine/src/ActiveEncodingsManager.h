@@ -24,7 +24,7 @@
 #include "Magick++.h"
 
 #define MAXHIGHENCODINGSTOBEMANAGED     30
-#define MAXDEFAULTENCODINGSTOBEMANAGED  20
+#define MAXMEDIUMENCODINGSTOBEMANAGED  20
 #define MAXLOWENCODINGSTOBEMANAGED      20
 
 struct MaxEncodingsManagerCapacityReached: public exception {    
@@ -74,7 +74,7 @@ private:
     mutex                                       _mtEncodingJobs;
     
     EncodingJob     _highPriorityEncodingJobs[MAXHIGHENCODINGSTOBEMANAGED];
-    EncodingJob     _defaultPriorityEncodingJobs[MAXDEFAULTENCODINGSTOBEMANAGED];
+    EncodingJob     _mediumPriorityEncodingJobs[MAXMEDIUMENCODINGSTOBEMANAGED];
     EncodingJob     _lowPriorityEncodingJobs[MAXLOWENCODINGSTOBEMANAGED];
 
     #ifdef __FFMPEGLOCALENCODER__

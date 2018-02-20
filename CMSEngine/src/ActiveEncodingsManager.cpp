@@ -39,7 +39,7 @@ void ActiveEncodingsManager::operator()()
     
     vector<CMSEngineDBFacade::EncodingPriority> sortedEncodingPriorities = { 
         CMSEngineDBFacade::EncodingPriority::High,
-        CMSEngineDBFacade::EncodingPriority::Default,
+        CMSEngineDBFacade::EncodingPriority::Medium,
         CMSEngineDBFacade::EncodingPriority::Low
     };
         
@@ -73,12 +73,12 @@ void ActiveEncodingsManager::operator()()
                     encodingJobs            = _highPriorityEncodingJobs;
                     maxEncodingsToBeManaged = MAXHIGHENCODINGSTOBEMANAGED;
                 }
-                else if (encodingPriority == CMSEngineDBFacade::EncodingPriority::Default)
+                else if (encodingPriority == CMSEngineDBFacade::EncodingPriority::Medium)
                 {
                     // _logger->info(__FILEREF__ + "Processing the default encodings...");
 
-                    encodingJobs = _defaultPriorityEncodingJobs;
-                    maxEncodingsToBeManaged = MAXDEFAULTENCODINGSTOBEMANAGED;
+                    encodingJobs = _mediumPriorityEncodingJobs;
+                    maxEncodingsToBeManaged = MAXMEDIUMENCODINGSTOBEMANAGED;
                 }
                 else // if (encodingPriority == CMSEngineDBFacade::EncodingPriority::Low)
                 {
@@ -599,10 +599,10 @@ void ActiveEncodingsManager::addEncodingItem(shared_ptr<CMSEngineDBFacade::Encod
         encodingJobs            = _highPriorityEncodingJobs;
         maxEncodingsToBeManaged = MAXHIGHENCODINGSTOBEMANAGED;
     }
-    else if (encodingItem->_encodingPriority == CMSEngineDBFacade::EncodingPriority::Default)
+    else if (encodingItem->_encodingPriority == CMSEngineDBFacade::EncodingPriority::Medium)
     {
-        encodingJobs = _defaultPriorityEncodingJobs;
-        maxEncodingsToBeManaged = MAXDEFAULTENCODINGSTOBEMANAGED;
+        encodingJobs = _mediumPriorityEncodingJobs;
+        maxEncodingsToBeManaged = MAXMEDIUMENCODINGSTOBEMANAGED;
     }
     else // if (encodingItem->_encodingPriority == CMSEngineDBFacade::EncodingPriority::Low)
     {

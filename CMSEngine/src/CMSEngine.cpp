@@ -110,10 +110,32 @@ string CMSEngine::registerCustomer(
     }
     catch(...)
     {
-        _logger->error(__FILEREF__ + "_cmsEngineDBFacade->registerCustomer failed");
+        string errorMessage = __FILEREF__ + "_cmsEngineDBFacade->registerCustomer failed";
+        _logger->error(errorMessage);
+        
+        throw runtime_error(errorMessage);
     }
 
     return customerKeyAndConfirmationCode.second;
+}
+
+void CMSEngine::confirmCustomer(string confirmationCode)
+{    
+    _logger->info(__FILEREF__ + "Received confirmCustomer"
+        + ", confirmationCode: " + confirmationCode
+    );
+
+    try
+    {
+        _cmsEngineDBFacade->confirmCustomer(confirmationCode);
+    }
+    catch(...)
+    {
+        string errorMessage = __FILEREF__ + "_cmsEngineDBFacade->confirmCustomer failed";
+        _logger->error(errorMessage);
+        
+        throw runtime_error(errorMessage);
+    }
 }
 
 void CMSEngine::addFFMPEGVideoEncodingProfile(

@@ -1185,7 +1185,11 @@ CMSEngineDBFacade::ContentType CMSEngineProcessor::validateContentIngestionMetad
     }
 
     string sContentType = contentIngestion.get("ContentType", "XXX").asString();
-    if (sContentType != "video" && sContentType != "audio" && sContentType != "image")
+    try
+    {
+        contentType = CMSEngineDBFacade::toContentType(sContentType);
+    }
+    catch(exception e)
     {
         string errorMessage = __FILEREF__ + "Field 'ContentType' is wrong"
                 + ", sContentType: " + sContentType;
@@ -1193,13 +1197,6 @@ CMSEngineDBFacade::ContentType CMSEngineProcessor::validateContentIngestionMetad
 
         throw runtime_error(errorMessage);
     }
-
-    if (sContentType == "video")
-        contentType = CMSEngineDBFacade::ContentType::Video;
-    else if (sContentType == "audio")
-        contentType = CMSEngineDBFacade::ContentType::Audio;
-    else // if (sContentType == "image")
-        contentType = CMSEngineDBFacade::ContentType::Image;
 
     string field;
     if (contentType == CMSEngineDBFacade::ContentType::Video 
@@ -1209,7 +1206,11 @@ CMSEngineDBFacade::ContentType CMSEngineProcessor::validateContentIngestionMetad
         if (_cmsEngineDBFacade->isMetadataPresent(contentIngestion, field))
         {
             string encodingPriority = contentIngestion.get(field, "XXX").asString();
-            if (encodingPriority != "low" && encodingPriority != "default" && encodingPriority != "high")
+            try
+            {
+                CMSEngineDBFacade::toEncodingPriority(encodingPriority);    // it generate an exception in case of wrong string
+            }
+            catch(exception e)
             {
                 string errorMessage = __FILEREF__ + "Field 'EncodingPriority' is wrong"
                         + ", EncodingPriority: " + encodingPriority;
