@@ -90,7 +90,18 @@ int APICommon::listen()
                 if ((it = requestDetails.find("CONTENT_LENGTH")) != requestDetails.end())
                 {
                     if (it->second != "")
+                    {
                         contentLength = stol(it->second);
+                        if (contentLength > _stdInMax)
+                        {
+                            _logger->error(__FILEREF__ + "ContentLength too long, it will be truncated and data will be lost"
+                                + ", contentLength: " + to_string(contentLength)
+                                + ", _stdInMax: " + to_string(_stdInMax)
+                            );
+                            
+                            contentLength = _stdInMax;
+                        }
+                    }
                     else
                         contentLength = _stdInMax;
                 }
@@ -102,7 +113,9 @@ int APICommon::listen()
                 cin.read(content, contentLength);
                 contentLength = cin.gcount();     // Returns the number of characters extracted by the last unformatted input operation
                 
-                requestBody = content;
+                requestBody = content.assign(content, contentLength);
+                
+                delete [] content;
             }
             
             // Chew up any remaining stdin - this shouldn't be necessary
