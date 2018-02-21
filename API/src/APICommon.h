@@ -33,11 +33,17 @@ public:
         string requestBody
     ) = 0;
 
+    void sendEmail();
+    
 protected:
     shared_ptr<spdlog::logger>      _logger;
     shared_ptr<CMSEngineDBFacade>   _cmsEngineDBFacade;
     shared_ptr<CMSEngine>           _cmsEngine;
 
+    void sendSuccess(int htmlResponseCode, string responseBody);
+    void sendError(int htmlResponseCode, string errorMessage);
+    void sendEmail(string from, string to, string bodyText);
+    
 private:
     int             _managedRequestsNumber;
     long            _processId;
@@ -46,6 +52,8 @@ private:
     void fillEnvironmentDetails(
         const char * const * envp, 
         unordered_map<string, string>& requestDetails);
+
+    string getHtmlStandardMessage(int htmlResponseCode);
 };
 
 #endif

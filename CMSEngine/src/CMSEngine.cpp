@@ -27,7 +27,7 @@ CMSEngine::CMSEngine(shared_ptr<CMSEngineDBFacade> cmsEngineDBFacade,
 CMSEngine::~CMSEngine() {
 }
 
-string CMSEngine::registerCustomer(
+pair<int64_t,string> CMSEngine::registerCustomer(
 	string customerName,
 	string street,
         string city,
@@ -116,7 +116,7 @@ string CMSEngine::registerCustomer(
         throw runtime_error(errorMessage);
     }
 
-    return customerKeyAndConfirmationCode.second;
+    return customerKeyAndConfirmationCode;
 }
 
 void CMSEngine::confirmCustomer(string confirmationCode)

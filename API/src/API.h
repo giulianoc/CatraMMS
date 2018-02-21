@@ -30,7 +30,12 @@ public:
     );
     
 private:
-
+    void registerCustomer(string requestURI,
+        string requestMethod,
+        unsigned long contentLength,
+        string requestBody
+    );
+    
 };
 
 #endif /* POSTCUSTOMER_H */

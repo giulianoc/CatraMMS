@@ -28,7 +28,7 @@ public:
 
     virtual ~CMSEngine();
     
-    string registerCustomer(
+    pair<int64_t,string> registerCustomer(
 	string customerName,
 	string street,
         string city,

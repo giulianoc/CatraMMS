@@ -177,6 +177,25 @@ public:
 	Monthly		= 2,
         Yearly          = 3
     };
+    static EncodingPeriod toEncodingPeriod(const string& encodingPeriod)
+    {
+        string lowerCase;
+        lowerCase.resize(encodingPeriod.size());
+        transform(encodingPeriod.begin(), encodingPeriod.end(), lowerCase.begin(), [](unsigned char c){return tolower(c); } );
+
+        if (lowerCase == "daily")
+            return EncodingPeriod::Daily;
+        else if (lowerCase == "weekly")
+            return EncodingPeriod::Weekly;
+        else if (lowerCase == "monthly")
+            return EncodingPeriod::Monthly;
+        else if (lowerCase == "yearly")
+            return EncodingPeriod::Yearly;
+        else
+            throw runtime_error(string("Wrong EncodingPeriod")
+                    + ", encodingPeriod: " + encodingPeriod
+                    );
+    }
 
     struct EncodingItem
     {
