@@ -32,6 +32,13 @@
 
 using namespace std;
 
+struct APIKeyNotFoundOrExpired: public exception {    
+    char const* what() const throw() 
+    {
+        return "APIKey was not found or it is expired";
+    }; 
+};
+
 class CMSEngineDBFacade {
 
 public:
@@ -177,6 +184,22 @@ public:
 	Monthly		= 2,
         Yearly          = 3
     };
+    static const char* toString(const EncodingPeriod& encodingPeriod)
+    {
+        switch (encodingPeriod)
+        {
+            case EncodingPeriod::Daily:
+                return "Daily";
+            case EncodingPeriod::Weekly:
+                return "Weekly";
+            case EncodingPeriod::Monthly:
+                return "Monthly";
+            case EncodingPeriod::Yearly:
+                return "Yearly";
+            default:
+            throw runtime_error(string("Wrong EncodingPeriod"));
+        }
+    }
     static EncodingPeriod toEncodingPeriod(const string& encodingPeriod)
     {
         string lowerCase;
@@ -385,6 +408,8 @@ public:
         string emailAddress,
         string flags,
         chrono::system_clock::time_point expirationDate);
+
+    pair<shared_ptr<Customer>,bool> checkAPIKey (string apiKey);
 
     int64_t addVideoEncodingProfile(
         shared_ptr<Customer> customer,

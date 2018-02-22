@@ -274,6 +274,8 @@ pair<int64_t,string> CMSEngineDBFacade::registerCustomer(
             preparedStatement->executeUpdate();
         }
 
+        customerKey = getLastInsertId(conn);
+
         unsigned seed = chrono::steady_clock::now().time_since_epoch().count();
         default_random_engine e(seed);
         confirmationCode = to_string(e());
@@ -817,12 +819,12 @@ string CMSEngineDBFacade::createAPIKey (
 
             lastSQLCommand = 
                 "insert into CMS_APIKeys (APIKey, UserKey, Flags, CreationDate, ExpirationDate) values ("
-                "?, ?, ?, NULL, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'))";
+                "?, ?, " + flags + ", NULL, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'))";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, apiKey);
             preparedStatement->setInt64(queryParameterIndex++, userKey);
-            preparedStatement->setString(queryParameterIndex++, flags);
+            // preparedStatement->setString(queryParameterIndex++, flags);
             {
                 tm          tmDateTime;
                 char        strExpirationDate [64];
@@ -871,6 +873,120 @@ string CMSEngineDBFacade::createAPIKey (
     }
     
     return apiKey;
+}
+
+pair<shared_ptr<Customer>,bool> CMSEngineDBFacade::checkAPIKey (string apiKey)
+{
+    shared_ptr<Customer> customer;
+    string          flags;
+    string          lastSQLCommand;
+
+    shared_ptr<MySQLConnection> conn;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+
+        int64_t         userKey;
+        
+        {
+            lastSQLCommand = 
+                "select UserKey, Flags from CMS_APIKeys where APIKey = ? and ExpirationDate >= NOW()";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, apiKey);
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                userKey = resultSet->getInt64("UserKey");
+                flags = resultSet->getString("Flags");
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "apiKey is not present or it is expired"
+                    + ", apiKey: " + apiKey
+                    + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw APIKeyNotFoundOrExpired();
+            }
+        }
+
+        int64_t                 customerKey;
+        
+        {
+            lastSQLCommand = 
+                "select c.CustomerKey from CMS_Customers c, CMS_Users2 u where c.CustomerKey = u.CustomerKey and u.UserKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, userKey);
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                customerKey = resultSet->getInt64("CustomerKey");
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "CustomerKey is not present"
+                    + ", userKey: " + to_string(userKey)
+                    + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+
+        customer = getCustomer(customerKey);
+
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        _connectionPool->unborrow(conn);
+
+        string exceptionMessage(se.what());
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw se;
+    }
+    catch(APIKeyNotFoundOrExpired e)
+    {        
+        _connectionPool->unborrow(conn);
+
+        string exceptionMessage(e.what());
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw e;
+    }
+    catch(exception e)
+    {        
+        _connectionPool->unborrow(conn);
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
+    }
+    
+    pair<shared_ptr<Customer>,bool> customerAndFlags;
+    
+    customerAndFlags.first = customer;
+    customerAndFlags.second = flags.find("ADMIN_API") == string::npos ? false : true;
+            
+    return customerAndFlags;
 }
 
 int64_t CMSEngineDBFacade::addVideoEncodingProfile(
@@ -3559,7 +3675,7 @@ void CMSEngineDBFacade::createTablesIfNeeded()
         {
             lastSQLCommand = 
                 "create table if not exists CMS_APIKeys ("
-                    "APIKey                     VARCHAR (128) NULL,"
+                    "APIKey                     VARCHAR (128) NOT NULL,"
                     "UserKey                    BIGINT UNSIGNED NOT NULL,"
                     "Flags			SET('ADMIN_API', 'USER_API') NOT NULL,"
                     "CreationDate		TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"

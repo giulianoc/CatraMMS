@@ -108,7 +108,7 @@ pair<int64_t,string> CMSEngine::registerCustomer(
             userEmailAddress,
             userExpirationDate);
     }
-    catch(...)
+    catch(exception e)
     {
         string errorMessage = __FILEREF__ + "_cmsEngineDBFacade->registerCustomer failed";
         _logger->error(errorMessage);
@@ -129,13 +129,70 @@ void CMSEngine::confirmCustomer(string confirmationCode)
     {
         _cmsEngineDBFacade->confirmCustomer(confirmationCode);
     }
-    catch(...)
+    catch(exception e)
     {
         string errorMessage = __FILEREF__ + "_cmsEngineDBFacade->confirmCustomer failed";
         _logger->error(errorMessage);
         
         throw runtime_error(errorMessage);
     }
+}
+
+string CMSEngine::createAPIKey(
+        string emailAddress,
+        string flags,
+        chrono::system_clock::time_point apiKeyExpirationDate)
+{    
+    _logger->info(__FILEREF__ + "Received createAPIKey"
+        + ", emailAddress: " + emailAddress
+        + ", flags: " + flags
+    );
+
+    string apiKey;
+    try
+    {
+        apiKey = _cmsEngineDBFacade->createAPIKey(emailAddress, flags, apiKeyExpirationDate);
+    }
+    catch(exception e)
+    {
+        string errorMessage = __FILEREF__ + "_cmsEngineDBFacade->createAPIKey failed";
+        _logger->error(errorMessage);
+        
+        throw runtime_error(errorMessage);
+    }
+    
+    return apiKey;
+}
+
+pair<shared_ptr<Customer>,bool> CMSEngine::checkAPIKey (string apiKey)
+{
+    _logger->info(__FILEREF__ + "Received checkAPIKey"
+        + ", apiKey: " + apiKey
+    );
+
+    pair<shared_ptr<Customer>,bool> customerAndFlags;
+    try
+    {
+        customerAndFlags = _cmsEngineDBFacade->checkAPIKey(apiKey);
+    }
+    catch(APIKeyNotFoundOrExpired e)
+    {
+        string errorMessage = __FILEREF__ + "_cmsEngineDBFacade->checkAPIKey failed"
+                + ", e.what(): " + e.what()
+                ;
+        _logger->error(errorMessage);
+        
+        throw e;
+    }
+    catch(exception e)
+    {
+        string errorMessage = __FILEREF__ + "_cmsEngineDBFacade->checkAPIKey failed";
+        _logger->error(errorMessage);
+        
+        throw e;
+    }
+    
+    return customerAndFlags;
 }
 
 void CMSEngine::addFFMPEGVideoEncodingProfile(

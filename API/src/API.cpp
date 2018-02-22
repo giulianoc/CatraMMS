@@ -14,24 +14,54 @@
 #include "API.h"
 
 API::API(): APICommon() {
+    _encodingPriorityDefaultValue = CMSEngineDBFacade::EncodingPriority::Low;
+    _encodingPeriodDefaultValue = CMSEngineDBFacade::EncodingPeriod::Daily;
+    _maxIngestionsNumberDefaultValue = 1;
+    _maxStorageInGBDefaultValue = 1;
 }
 
 API::~API() {
 }
 
-void API::manageRequest(
+void API::manageRequestAndResponse(
         string requestURI,
         string requestMethod,
+        pair<shared_ptr<Customer>,bool>& customerAndFlags,
         unsigned long contentLength,
         string requestBody
 )
 {
+    
     string customerPrefix = "/catracms/customer";
 
     if (requestURI.compare(0, customerPrefix.size(), customerPrefix) == 0
             && requestMethod == "POST")
     {
+        bool isAdminAPI = customerAndFlags.second;
+        if (!isAdminAPI)
+        {
+            string errorMessage = string("APIKey flags does not have the ADMIN permission"
+                    ", isAdminAPI: " + isAdminAPI
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        
         registerCustomer(requestURI, requestMethod, contentLength, requestBody);
+    }
+    else
+    {
+        string errorMessage = string("No API is matched")
+            + ", requestURI: " +requestURI
+            + ", requestMethod: " +requestMethod;
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(400, errorMessage);
+
+        throw runtime_error(errorMessage);
     }
 }
 
@@ -43,7 +73,10 @@ void API::registerCustomer(string requestURI,
 {
     string api = "registerCustomer";
 
-    _logger->info(__FILEREF__ + api
+    _logger->info(__FILEREF__ + "Received registerCustomer"
+        + ", requestURI: " + requestURI
+        + ", requestMethod: " + requestMethod
+        + ", contentLength: " + to_string(contentLength)
         + ", requestBody: " + requestBody
     );
 
@@ -57,7 +90,41 @@ void API::registerCustomer(string requestURI,
         int maxIngestionsNumber;
         int maxStorageInGB;
 
-        Json::Value metadataRoot(requestBody);
+        Json::Value metadataRoot;
+        try
+        {
+            Json::CharReaderBuilder builder;
+            Json::CharReader* reader = builder.newCharReader();
+            string errors;
+
+            bool parsingSuccessful = reader->parse(requestBody.c_str(),
+                    requestBody.c_str() + requestBody.size(), 
+                    &metadataRoot, &errors);
+            delete reader;
+
+            if (!parsingSuccessful)
+            {
+                string errorMessage = string("Json metadata failed during the parsing"
+                        ", json data: " + requestBody
+                        );
+                _logger->error(__FILEREF__ + errorMessage);
+
+                sendError(400, errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+        catch(exception e)
+        {
+            string errorMessage = string("Json metadata failed during the parsing"
+                    ", json data: " + requestBody
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(400, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
 
         // name, email and password
         {
@@ -90,9 +157,11 @@ void API::registerCustomer(string requestURI,
             string field = "EncodingPriority";
             if (!_cmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
             {
-                _logger->info(__FILEREF__ + "encodingPriority is not present, set the default value");
+                _logger->info(__FILEREF__ + "encodingPriority is not present, set the default value"
+                    + ", _encodingPriorityDefaultValue: " + CMSEngineDBFacade::toString(_encodingPriorityDefaultValue)
+                );
 
-                encodingPriority = CMSEngineDBFacade::EncodingPriority::Low;
+                encodingPriority = _encodingPriorityDefaultValue;
             }
             else
             {
@@ -121,9 +190,11 @@ void API::registerCustomer(string requestURI,
             string field = "EncodingPeriod";
             if (!_cmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
             {
-                _logger->info(__FILEREF__ + "encodingPeriod is not present, set the default value");
+                _logger->info(__FILEREF__ + "encodingPeriod is not present, set the default value"
+                    + ", _encodingPeriodDefaultValue: " + CMSEngineDBFacade::toString(_encodingPeriodDefaultValue)
+                );
 
-                encodingPeriod = CMSEngineDBFacade::EncodingPeriod::Daily;
+                encodingPeriod = _encodingPeriodDefaultValue;
             }
             else
             {
@@ -152,9 +223,11 @@ void API::registerCustomer(string requestURI,
             string field = "MaxIngestionsNumber";
             if (!_cmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
             {
-                _logger->info(__FILEREF__ + "MaxIngestionsNumber is not present, set the default value");
+                _logger->info(__FILEREF__ + "MaxIngestionsNumber is not present, set the default value"
+                    + ", _maxIngestionsNumberDefaultValue: " + to_string(_maxIngestionsNumberDefaultValue)
+                );
 
-                maxIngestionsNumber = 1;
+                maxIngestionsNumber = _maxIngestionsNumberDefaultValue;
             }
             else
             {
@@ -183,9 +256,11 @@ void API::registerCustomer(string requestURI,
             string field = "MaxStorageInGB";
             if (!_cmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
             {
-                _logger->info(__FILEREF__ + "MaxStorageInGB is not present, set the default value");
+                _logger->info(__FILEREF__ + "MaxStorageInGB is not present, set the default value"
+                    + ", _maxStorageInGBDefaultValue: " + to_string(_maxStorageInGBDefaultValue)
+                );
 
-                maxStorageInGB = 1;
+                maxStorageInGB = _maxStorageInGBDefaultValue;
             }
             else
             {
@@ -235,9 +310,20 @@ void API::registerCustomer(string requestURI,
 
             string responseBody =
                 string("{ ")
-                + "\"customerKey\": " + to_string(customerKeyAndConfirmationCode.first) + ", "
+                + "\"customerKey\": " + to_string(customerKeyAndConfirmationCode.first) + " "
                 + "}";
             sendSuccess(201, responseBody);
+            
+            string to = "giulianoc@catrasoftware.it";
+            string subject = "Confirmation code";
+            
+            vector<string> emailBody;
+            emailBody.push_back("<p>Hi John,</p>");
+            emailBody.push_back(string("<p>This is the confirmation code ") + customerKeyAndConfirmationCode.second + "</p>");
+            emailBody.push_back(string("<p>for the customer key ") + to_string(customerKeyAndConfirmationCode.first) + "</p>");
+            emailBody.push_back("<p>Bye!</p>");
+
+            sendEmail(to, subject, emailBody);
         }
         catch(runtime_error e)
         {

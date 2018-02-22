@@ -51,6 +51,13 @@ public:
 
     void confirmCustomer(string confirmationCode);
     
+    string createAPIKey(
+        string emailAddress,
+        string flags,
+        chrono::system_clock::time_point apiKeyExpirationDate);
+
+    pair<shared_ptr<Customer>,bool> checkAPIKey (string apiKey);
+    
     void addFFMPEGVideoEncodingProfile(
         shared_ptr<Customer> customer,
         string encodingProfileSet,  // "": default Customer family, != "": named customer family

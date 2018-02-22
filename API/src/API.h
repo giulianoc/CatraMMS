@@ -22,14 +22,20 @@ public:
     
     ~API();
     
-    virtual void manageRequest(
-        string requestURI,
-        string requestMethod,
-        unsigned long contentLength,
-        string requestBody
+    virtual void manageRequestAndResponse(
+            string requestURI,
+            string requestMethod,
+            pair<shared_ptr<Customer>,bool>& customerAndFlags,
+            unsigned long contentLength,
+            string requestBody
     );
     
 private:
+    CMSEngineDBFacade::EncodingPriority _encodingPriorityDefaultValue;
+    CMSEngineDBFacade::EncodingPeriod _encodingPeriodDefaultValue;
+    int _maxIngestionsNumberDefaultValue;
+    int _maxStorageInGBDefaultValue;
+
     void registerCustomer(string requestURI,
         string requestMethod,
         unsigned long contentLength,

@@ -49,6 +49,7 @@ add_subdirectory(CMSEngineService/src)
 
 add_subdirectory(API/src)
 
+add_subdirectory(utilities/registerAdministratorCustomer/src)
 add_subdirectory(utilities/registerCustomer/src)
 add_subdirectory(utilities/addEncodingProfile/src)
 

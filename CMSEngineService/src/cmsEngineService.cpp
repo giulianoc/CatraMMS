@@ -15,8 +15,16 @@
 int main (int iArgc, char *pArgv [])
 {
 
-    auto logger = spdlog::stdout_logger_mt("cmsEngineService");
+    string logPathName ("/tmp/cmsEngineService.log");
+    // auto logger = spdlog::stdout_logger_mt("cmsEngineService");
+    auto logger = spdlog::daily_logger_mt("cmsEngineService", logPathName.c_str(), 11, 20);
+    
+    // trigger flush if the log severity is error or higher
+    logger->flush_on(spdlog::level::trace);
+    
     spdlog::set_level(spdlog::level::info); // trace, debug, info, warn, err, critical, off
+
+    spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%n] [%l] [tid %t] %v");
 
     // globally register the loggers so so the can be accessed using spdlog::get(logger_name)
     // spdlog::register_logger(logger);

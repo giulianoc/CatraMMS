@@ -18,6 +18,13 @@
 #include "CMSEngine.h"
 #include "spdlog/spdlog.h"
 
+struct NoAPIKeyPresentIntoRequest: public exception {    
+    char const* what() const throw() 
+    {
+        return "No APIKey present into the Request";
+    }; 
+};
+
 class APICommon {
 public:
     APICommon();
@@ -26,14 +33,13 @@ public:
     
     int listen();
 
-    virtual void manageRequest(
+    virtual void manageRequestAndResponse(
         string requestURI,
         string requestMethod,
+        pair<shared_ptr<Customer>,bool>& customerAndFlags,
         unsigned long contentLength,
         string requestBody
     ) = 0;
-
-    void sendEmail();
     
 protected:
     shared_ptr<spdlog::logger>      _logger;
@@ -42,7 +48,7 @@ protected:
 
     void sendSuccess(int htmlResponseCode, string responseBody);
     void sendError(int htmlResponseCode, string errorMessage);
-    void sendEmail(string from, string to, string bodyText);
+    void sendEmail(string to, string subject, vector<string>& emailBody);
     
 private:
     int             _managedRequestsNumber;
@@ -54,6 +60,8 @@ private:
         unordered_map<string, string>& requestDetails);
 
     string getHtmlStandardMessage(int htmlResponseCode);
+
+    static size_t emailPayloadFeed(void *ptr, size_t size, size_t nmemb, void *userp);
 };
 
 #endif
