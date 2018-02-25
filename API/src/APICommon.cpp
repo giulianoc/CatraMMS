@@ -13,8 +13,10 @@
 
 #include <deque>
 #include <vector>
+#include <sstream>
 #include <curl/curl.h>
 #include "fcgio.h"
+#include "catralibraries/Convert.h"
 #include "APICommon.h"
 
 extern char** environ;
@@ -54,6 +56,21 @@ APICommon::APICommon()
             );
     _cmsEngine = make_shared<CMSEngine>(_cmsEngineDBFacade, _logger);
     
+    #ifdef __APPLE__
+        string storageRootPath ("/Users/multi/GestioneProgetti/Development/catrasoftware/storage/");
+    #else
+        string storageRootPath ("/home/giuliano/storage/");
+    #endif
+    unsigned long freeSpaceToLeaveInEachPartitionInMB = 5;
+    _logger->info(__FILEREF__ + "Creating CMSStorage"
+        + ", storageRootPath: " + storageRootPath
+        + ", freeSpaceToLeaveInEachPartitionInMB: " + to_string(freeSpaceToLeaveInEachPartitionInMB)
+            );
+    _cmsStorage = make_shared<CMSStorage>(
+            storageRootPath, 
+            freeSpaceToLeaveInEachPartitionInMB,
+            _logger);
+
     _managedRequestsNumber = 0;
     _processId = getpid();
     _stdInMax = 1000000;
@@ -62,7 +79,7 @@ APICommon::APICommon()
 APICommon::~APICommon() {
 }
 
-int APICommon::listen()
+int APICommon::listen(bool binaryFlag)
 {    
     // Backup the stdio streambufs
     streambuf * cin_streambuf  = cin.rdbuf();
@@ -126,24 +143,30 @@ int APICommon::listen()
                     else
                         contentLength = _stdInMax;
 
-                    char* content = new char[contentLength];
+                    if (!binaryFlag)
+                    {
+                        char* content = new char[contentLength];
 
-                    cin.read(content, contentLength);
-                    contentLength = cin.gcount();     // Returns the number of characters extracted by the last unformatted input operation
+                        cin.read(content, contentLength);
+                        contentLength = cin.gcount();     // Returns the number of characters extracted by the last unformatted input operation
 
-                    requestBody.assign(content, contentLength);
+                        requestBody.assign(content, contentLength);
 
-                    delete [] content;
+                        delete [] content;
+                    }
                 }
 
-                // Chew up any remaining stdin - this shouldn't be necessary
-                // but is because mod_fastcgi doesn't handle it correctly.
+                if (!binaryFlag)
+                {
+                    // Chew up any remaining stdin - this shouldn't be necessary
+                    // but is because mod_fastcgi doesn't handle it correctly.
 
-                // ignore() doesn't set the eof bit in some versions of glibc++
-                // so use gcount() instead of eof()...
-                do 
-                    cin.ignore(1024); 
-                while (cin.gcount() == 1024);
+                    // ignore() doesn't set the eof bit in some versions of glibc++
+                    // so use gcount() instead of eof()...
+                    do 
+                        cin.ignore(1024); 
+                    while (cin.gcount() == 1024);
+                }
 
 //                _logger->info(__FILEREF__ + "Request body"
 //                    + ", length: " + to_string(contentLength)
@@ -162,22 +185,57 @@ int APICommon::listen()
             continue;
         }
         
-        pair<shared_ptr<Customer>,bool> customerAndFlags;
+        tuple<shared_ptr<Customer>,bool, bool> customerAndFlags;
         try
         {
             unordered_map<string, string>::iterator it;
-            string apiKey;
 
-            if ((it = requestDetails.find("HTTP_BASIC")) == requestDetails.end())
+            if ((it = requestDetails.find("HTTP_AUTHORIZATION")) == requestDetails.end())
             {
                 _logger->error(__FILEREF__ + "No APIKey present into the request");
 
                 throw NoAPIKeyPresentIntoRequest();
             }
 
-            apiKey = it->second;
+            string authorizationPrefix = "Basic ";
+            if (it->second.compare(0, authorizationPrefix.size(), authorizationPrefix) != 0)
+            {
+                _logger->error(__FILEREF__ + "No 'Basic' authorization is present into the request"
+                    + ", Authorization: " + it->second
+                );
+
+                throw NoAPIKeyPresentIntoRequest();
+            }
+
+            string usernameAndPasswordBase64 = it->second.substr(authorizationPrefix.length());
+            string usernameAndPassword = Convert::base64_decode(usernameAndPasswordBase64);
+            size_t userNameSeparator = usernameAndPassword.find(":");
+            if (userNameSeparator == string::npos)
+            {
+                _logger->error(__FILEREF__ + "Wrong Authentication format"
+                    + ", usernameAndPasswordBase64: " + usernameAndPasswordBase64
+                    + ", usernameAndPassword: " + usernameAndPassword
+                );
+
+                throw NoAPIKeyPresentIntoRequest();
+            }
+            
+            string custormerKey = usernameAndPassword.substr(0, userNameSeparator);
+            string apiKey = usernameAndPassword.substr(userNameSeparator + 1);
 
             customerAndFlags = _cmsEngine->checkAPIKey (apiKey);
+            
+            if (get<0>(customerAndFlags)->_customerKey != stol(custormerKey))
+            {
+                _logger->error(__FILEREF__ + "Username (CustomerKey) is not the same Customer the apiKey is referring"
+                    + ", username (custormerKey): " + custormerKey
+                    + ", apiKey: " + apiKey
+                );
+
+                throw NoAPIKeyPresentIntoRequest();
+            }        
+            
+            _logger->info(__FILEREF__ + "APIKey and Customer verified successful");
         }
         catch(NoAPIKeyPresentIntoRequest e)
         {
@@ -188,7 +246,7 @@ int APICommon::listen()
             string errorMessage = e.what();
             _logger->error(__FILEREF__ + errorMessage);
 
-            sendError(400, errorMessage);
+            sendError(400, errorMessage);   // bad request
 
             // throw runtime_error(errorMessage);
             continue;
@@ -202,7 +260,7 @@ int APICommon::listen()
             string errorMessage = e.what();
             _logger->error(__FILEREF__ + errorMessage);
 
-            sendError(401, errorMessage);
+            sendError(401, errorMessage);   // unauthorized
 
             //  throw runtime_error(errorMessage);
             continue;
@@ -236,33 +294,79 @@ int APICommon::listen()
             continue;
         }
 
-        try
+        if (!binaryFlag)
         {
-            unordered_map<string, string>::iterator it;
+            try
+            {
+                unordered_map<string, string> queryParameters;
+                unordered_map<string, string>::iterator it;
 
-            string requestURI;
-            if ((it = requestDetails.find("REQUEST_URI")) != requestDetails.end())
-                requestURI = it->second;
+                string requestURI;
+                if ((it = requestDetails.find("REQUEST_URI")) != requestDetails.end())
+                    requestURI = it->second;
 
-            string requestMethod;
-            if ((it = requestDetails.find("REQUEST_METHOD")) != requestDetails.end())
-                requestMethod = it->second;
+                string requestMethod;
+                if ((it = requestDetails.find("REQUEST_METHOD")) != requestDetails.end())
+                    requestMethod = it->second;
 
-            manageRequestAndResponse(requestURI, requestMethod, customerAndFlags, contentLength, requestBody);            
+                if ((it = requestDetails.find("QUERY_STRING")) != requestDetails.end())
+                    fillQueryString(it->second, queryParameters);
+
+                manageRequestAndResponse(requestURI, requestMethod, queryParameters,
+                        customerAndFlags, contentLength, requestBody);            
+            }
+            catch(runtime_error e)
+            {
+                _logger->error(__FILEREF__ + "manageRequestAndResponse failed"
+                    + ", e: " + e.what()
+                );
+            }
+            catch(exception e)
+            {
+                _logger->error(__FILEREF__ + "manageRequestAndResponse failed"
+                    + ", e: " + e.what()
+                );
+            }
         }
-        catch(runtime_error e)
+        else
         {
-            _logger->error(__FILEREF__ + "manageRequest failed"
-                + ", e: " + e.what()
-            );
-        }
-        catch(exception e)
-        {
-            _logger->error(__FILEREF__ + "manageRequest failed"
-                + ", e: " + e.what()
-            );
+            try
+            {
+                unordered_map<string, string> queryParameters;
+                unordered_map<string, string>::iterator it;
+
+                string requestURI;
+                if ((it = requestDetails.find("REQUEST_URI")) != requestDetails.end())
+                    requestURI = it->second;
+
+                string requestMethod;
+                if ((it = requestDetails.find("REQUEST_METHOD")) != requestDetails.end())
+                    requestMethod = it->second;
+
+                if ((it = requestDetails.find("QUERY_STRING")) != requestDetails.end())
+                    fillQueryString(it->second, queryParameters);
+
+                manageBinaryRequestAndResponse(requestURI, requestMethod, queryParameters,
+                        customerAndFlags, contentLength);            
+            }
+            catch(runtime_error e)
+            {
+                _logger->error(__FILEREF__ + "manageBinaryRequestAndResponse failed"
+                    + ", e: " + e.what()
+                );
+            }
+            catch(exception e)
+            {
+                _logger->error(__FILEREF__ + "manageBinaryRequestAndResponse failed"
+                    + ", e: " + e.what()
+                );
+            }
         }
 
+        // it is a cgi, just terminate the process
+        if (binaryFlag)
+            break;
+        
         // Note: the fcgi_streambuf destructor will auto flush
     }
 
@@ -381,6 +485,41 @@ void APICommon::fillEnvironmentDetails(
             + ", key/Name: " + key + "=" + value
         );
     }
+}
+
+void APICommon::fillQueryString(
+        string queryString,
+        unordered_map<string, string>& queryParameters)
+{
+
+    stringstream ss(queryString);
+    string token;
+    char delim = '&';
+    while (getline(ss, token, delim)) 
+    {
+        if (!token.empty())
+        {
+            size_t keySeparator;
+            
+            if ((keySeparator = token.find("=")) == string::npos)
+            {
+                _logger->error(__FILEREF__ + "Wrong query parameter format"
+                    + ", token: " + token
+                );
+                
+                continue;
+            }
+
+            string key = token.substr(0, keySeparator);
+            string value = token.substr(keySeparator + 1);
+            
+            queryParameters[key] = value;
+
+            _logger->info(__FILEREF__ + "Query parameter"
+                + ", key/Name: " + key + "=" + value
+            );
+        }
+    }    
 }
 
 size_t APICommon:: emailPayloadFeed(void *ptr, size_t size, size_t nmemb, void *userp)

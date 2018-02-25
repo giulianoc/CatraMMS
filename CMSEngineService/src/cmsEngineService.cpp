@@ -47,17 +47,17 @@ int main (int iArgc, char *pArgv [])
             dbPoolSize, dbServer, dbUsername, dbPassword, dbName, logger);
     
     #ifdef __APPLE__
-        string storage ("/Users/multi/GestioneProgetti/Development/catrasoftware/storage/");
+        string storageRootPath ("/Users/multi/GestioneProgetti/Development/catrasoftware/storage/");
     #else
-        string storage ("/home/giuliano/storage/");
+        string storageRootPath ("/home/giuliano/storage/");
     #endif
     unsigned long freeSpaceToLeaveInEachPartitionInMB = 5;
     logger->info(__FILEREF__ + "Creating CMSStorage"
-        + ", storage: " + storage
+        + ", storageRootPath: " + storageRootPath
         + ", freeSpaceToLeaveInEachPartitionInMB: " + to_string(freeSpaceToLeaveInEachPartitionInMB)
             );
     shared_ptr<CMSStorage>       cmsStorage = make_shared<CMSStorage>(
-            storage, 
+            storageRootPath, 
             freeSpaceToLeaveInEachPartitionInMB,
             logger);
 

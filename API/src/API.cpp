@@ -11,7 +11,17 @@
  * Created on February 18, 2018, 1:27 AM
  */
 
+#include <fstream>
 #include "API.h"
+
+int main(int argc, char** argv) 
+{
+    API api;
+
+    bool binaryFlag = false;
+
+    return api.listen(binaryFlag);
+}
 
 API::API(): APICommon() {
     _encodingPriorityDefaultValue = CMSEngineDBFacade::EncodingPriority::Low;
@@ -23,21 +33,42 @@ API::API(): APICommon() {
 API::~API() {
 }
 
+void API::manageBinaryRequestAndResponse(
+        string requestURI,
+        string requestMethod,
+        unordered_map<string, string> queryParameters,
+        tuple<shared_ptr<Customer>,bool,bool>& customerAndFlags,
+        unsigned long contentLength
+)
+{
+    
+}
+
 void API::manageRequestAndResponse(
         string requestURI,
         string requestMethod,
-        pair<shared_ptr<Customer>,bool>& customerAndFlags,
+        unordered_map<string, string> queryParameters,
+        tuple<shared_ptr<Customer>,bool,bool>& customerAndFlags,
         unsigned long contentLength,
         string requestBody
 )
 {
     
-    string customerPrefix = "/catracms/customer";
-
-    if (requestURI.compare(0, customerPrefix.size(), customerPrefix) == 0
-            && requestMethod == "POST")
+    auto methodIt = queryParameters.find("method");
+    if (methodIt == queryParameters.end())
     {
-        bool isAdminAPI = customerAndFlags.second;
+        string errorMessage = string("The 'method' parameter is not found");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(400, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    string method = methodIt->second;
+
+    if (method == "registerCustomer")
+    {
+        bool isAdminAPI = get<1>(customerAndFlags);
         if (!isAdminAPI)
         {
             string errorMessage = string("APIKey flags does not have the ADMIN permission"
@@ -50,7 +81,58 @@ void API::manageRequestAndResponse(
             throw runtime_error(errorMessage);
         }
         
-        registerCustomer(requestURI, requestMethod, contentLength, requestBody);
+        registerCustomer(requestBody);
+    }
+    else if (method == "confirmCustomer")
+    {
+        bool isAdminAPI = get<1>(customerAndFlags);
+        if (!isAdminAPI)
+        {
+            string errorMessage = string("APIKey flags does not have the ADMIN permission"
+                    ", isAdminAPI: " + isAdminAPI
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        
+        confirmCustomer(queryParameters);
+    }
+    else if (method == "createAPIKey")
+    {
+        bool isAdminAPI = get<1>(customerAndFlags);
+        if (!isAdminAPI)
+        {
+            string errorMessage = string("APIKey flags does not have the ADMIN permission"
+                    ", isAdminAPI: " + isAdminAPI
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        
+        createAPIKey(queryParameters);
+    }
+    else if (method == "ingestContent")
+    {
+        bool isUserAPI = get<2>(customerAndFlags);
+        if (!isUserAPI)
+        {
+            string errorMessage = string("APIKey flags does not have the USER permission"
+                    ", isUserAPI: " + isUserAPI
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        
+        ingestContent(get<0>(customerAndFlags), queryParameters, requestBody);
     }
     else
     {
@@ -65,18 +147,11 @@ void API::manageRequestAndResponse(
     }
 }
 
-void API::registerCustomer(string requestURI,
-        string requestMethod,
-        unsigned long contentLength,
-        string requestBody
-)
+void API::registerCustomer(string requestBody)
 {
     string api = "registerCustomer";
 
-    _logger->info(__FILEREF__ + "Received registerCustomer"
-        + ", requestURI: " + requestURI
-        + ", requestMethod: " + requestMethod
-        + ", contentLength: " + to_string(contentLength)
+    _logger->info(__FILEREF__ + "Received " + api
         + ", requestBody: " + requestBody
     );
 
@@ -286,7 +361,7 @@ void API::registerCustomer(string requestURI,
 
         try
         {
-            pair<int64_t,string> customerKeyAndConfirmationCode = 
+            tuple<int64_t,int64_t,string> customerKeyUserKeyAndConfirmationCode = 
                 _cmsEngine->registerCustomer(
                     name,                       // string customerName,
                     "",                             // string street,
@@ -308,9 +383,8 @@ void API::registerCustomer(string requestURI,
                     chrono::system_clock::now() + chrono::hours(24 * 365 * 10)     // chrono::system_clock::time_point userExpirationDate
             );
 
-            string responseBody =
-                string("{ ")
-                + "\"customerKey\": " + to_string(customerKeyAndConfirmationCode.first) + " "
+            string responseBody = string("{ ")
+                + "\"customerKey\": " + to_string(get<0>(customerKeyUserKeyAndConfirmationCode)) + " "
                 + "}";
             sendSuccess(201, responseBody);
             
@@ -319,15 +393,15 @@ void API::registerCustomer(string requestURI,
             
             vector<string> emailBody;
             emailBody.push_back("<p>Hi John,</p>");
-            emailBody.push_back(string("<p>This is the confirmation code ") + customerKeyAndConfirmationCode.second + "</p>");
-            emailBody.push_back(string("<p>for the customer key ") + to_string(customerKeyAndConfirmationCode.first) + "</p>");
+            emailBody.push_back(string("<p>This is the confirmation code ") + get<2>(customerKeyUserKeyAndConfirmationCode) + "</p>");
+            emailBody.push_back(string("<p>for the customer key ") + to_string(get<0>(customerKeyUserKeyAndConfirmationCode)) + "</p>");
             emailBody.push_back("<p>Bye!</p>");
 
             sendEmail(to, subject, emailBody);
         }
         catch(runtime_error e)
         {
-            _logger->error(__FILEREF__ + "_cmsEngine->registerCustomer failed"
+            _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
             );
 
@@ -340,7 +414,7 @@ void API::registerCustomer(string requestURI,
         }
         catch(exception e)
         {
-            _logger->error(__FILEREF__ + "_cmsEngine->registerCustomer failed"
+            _logger->error(__FILEREF__ + api + " failed"
                 + ", e.what(): " + e.what()
             );
 
@@ -379,9 +453,326 @@ void API::registerCustomer(string requestURI,
     }
 }
 
-int main(int argc, char** argv) 
+void API::confirmCustomer(unordered_map<string, string> queryParameters)
 {
-    API api;
+    string api = "confirmCustomer";
 
-    return api.listen();
+    _logger->info(__FILEREF__ + "Received " + api
+    );
+
+    try
+    {
+        auto confirmationCodeIt = queryParameters.find("confirmationeCode");
+        if (confirmationCodeIt == queryParameters.end())
+        {
+            string errorMessage = string("The 'confirmationeCode' parameter is not found");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(400, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        try
+        {
+            _cmsEngine->confirmCustomer(confirmationCodeIt->second);
+
+            string responseBody;
+            sendSuccess(200, responseBody);
+            
+            string to = "giulianoc@catrasoftware.it";
+            string subject = "Welcome";
+            
+            vector<string> emailBody;
+            emailBody.push_back("<p>Hi John,</p>");
+            emailBody.push_back(string("<p>Your registration is now completed and you can start working with ...</p>"));
+            emailBody.push_back("<p>Bye!</p>");
+
+            sendEmail(to, subject, emailBody);
+        }
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + api + " failed"
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + api + " failed"
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", e.what(): " + e.what()
+        );
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::createAPIKey(unordered_map<string, string> queryParameters)
+{
+    string api = "createAPIKey";
+
+    _logger->info(__FILEREF__ + "Received " + api
+    );
+
+    try
+    {
+        auto customerKeyIt = queryParameters.find("customerKey");
+        if (customerKeyIt == queryParameters.end())
+        {
+            string errorMessage = string("The 'customerKey' parameter is not found");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(400, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        auto userKeyIt = queryParameters.find("userKey");
+        if (userKeyIt == queryParameters.end())
+        {
+            string errorMessage = string("The 'userKey' parameter is not found");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(400, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        try
+        {
+            bool adminAPI = false; 
+            bool userAPI = true;
+            chrono::system_clock::time_point apiKeyExpirationDate = 
+                    chrono::system_clock::now() + chrono::hours(24 * 365 * 20);
+            
+            string apiKey = _cmsEngine->createAPIKey(
+                    stol(customerKeyIt->second), 
+                    stol(userKeyIt->second), 
+                    adminAPI,
+                    userAPI,
+                    apiKeyExpirationDate);
+
+            string responseBody = string("{ ")
+                + "\"apiKey\": \"" + apiKey + "\" "
+                + "}";
+            sendSuccess(201, responseBody);
+        }
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + api + " failed"
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + api + " failed"
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", e.what(): " + e.what()
+        );
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::ingestContent(
+        shared_ptr<Customer> customer,
+        unordered_map<string, string> queryParameters,
+        string requestBody)
+{
+    string api = "ingestContent";
+
+    _logger->info(__FILEREF__ + "Received " + api
+        + ", requestBody: " + requestBody
+    );
+
+    int64_t ingestionJobKey = -1;
+    try
+    {
+        string label;
+        
+        auto labelIt = queryParameters.find("label");
+        if (labelIt != queryParameters.end())
+        {
+            label.resize(labelIt->second.length());
+
+            transform(labelIt->second.begin(), labelIt->second.end(), label.begin(),
+              [](unsigned char c){
+                if ((c >= 'a' && c <= 'z')
+                        || (c >= 'A' && c <= 'Z')
+                        || (c >= '0' && c <= '9')
+                        || (c == '_')
+                        || (c == '.')
+                        )
+                    return c;
+                else
+                    return (unsigned char) '_';
+            });
+        }
+
+        // using '-' as separator
+        string ingestionJobKeyPlaceHolder = "__INGESTIONJOBKEY__";
+        string apiPrefix = "API-";
+        string fileNameWithIngestionJobKey =
+                apiPrefix
+                + ingestionJobKeyPlaceHolder
+                + (label != "" ? "-" : "")
+                + label
+                + ".json"
+                ;
+ 
+        _logger->info(__FILEREF__ + "Ingestion template file name"
+            + ", fileNameWithIngestionJobKey: " + fileNameWithIngestionJobKey
+        );
+        
+        ingestionJobKey = _cmsEngine->addIngestionJob (
+                customer->_customerKey, 
+                fileNameWithIngestionJobKey, 
+                ingestionJobKeyPlaceHolder,
+                requestBody, 
+                CMSEngineDBFacade::IngestionType::Unknown, 
+                CMSEngineDBFacade::IngestionStatus::StartIngestionThroughAPI);
+
+        fileNameWithIngestionJobKey.replace(
+                fileNameWithIngestionJobKey.find(ingestionJobKeyPlaceHolder),
+                ingestionJobKeyPlaceHolder.length(), 
+                to_string(ingestionJobKey)
+        );
+        
+        string customerFTPMetadataPathName = _cmsStorage->getCustomerFTPRepository(customer);
+        customerFTPMetadataPathName
+                .append("/")
+                .append(fileNameWithIngestionJobKey)
+                ;
+        
+        _logger->info(__FILEREF__ + "Customer FTP Metadata path name"
+            + ", customerFTPMetadataPathName: " + customerFTPMetadataPathName
+        );
+
+        {
+            ofstream of(customerFTPMetadataPathName);
+            of << requestBody;
+            if (!of.good())
+            {
+                string errorMessage = string("The writing of Metadata file failed")
+                        + ", customerFTPMetadataPathName: " + customerFTPMetadataPathName
+                        + ", strerror(errno): " + strerror(errno)
+                        ;
+                _logger->error(__FILEREF__ + errorMessage);
+                
+                throw runtime_error(errorMessage);
+            }
+        }
+
+        string responseBody = string("{ ")
+                + "\"ingestionJobKey\": " + to_string(ingestionJobKey) + " "
+                + "}";
+
+        sendSuccess(201, responseBody);
+    }
+    catch(runtime_error e)
+    {
+        if (ingestionJobKey != -1)
+            _cmsEngine->removeIngestionJob (ingestionJobKey);
+
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        if (ingestionJobKey != -1)
+            _cmsEngine->removeIngestionJob (ingestionJobKey);
+
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
 }

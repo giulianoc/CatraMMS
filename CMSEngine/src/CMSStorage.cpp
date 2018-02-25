@@ -6,7 +6,7 @@
 
 CMSStorage::CMSStorage(
         string storage, 
-        unsigned long freeSpaceToLeaveInEachPartitionInMB, 
+        unsigned long freeSpaceToLeaveInEachPartitionInMB,
         shared_ptr<spdlog::logger> logger) 
 {
 

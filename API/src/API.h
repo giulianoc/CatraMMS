@@ -22,10 +22,18 @@ public:
     
     ~API();
     
+    virtual void manageBinaryRequestAndResponse(
+        string requestURI,
+        string requestMethod,
+        unordered_map<string, string> queryParameters,
+        tuple<shared_ptr<Customer>,bool,bool>& customerAndFlags,
+        unsigned long contentLength);
+
     virtual void manageRequestAndResponse(
             string requestURI,
             string requestMethod,
-            pair<shared_ptr<Customer>,bool>& customerAndFlags,
+            unordered_map<string, string> queryParameters,
+            tuple<shared_ptr<Customer>,bool,bool>& customerAndFlags,
             unsigned long contentLength,
             string requestBody
     );
@@ -36,12 +44,16 @@ private:
     int _maxIngestionsNumberDefaultValue;
     int _maxStorageInGBDefaultValue;
 
-    void registerCustomer(string requestURI,
-        string requestMethod,
-        unsigned long contentLength,
-        string requestBody
-    );
+    void registerCustomer(string requestBody);
     
+    void confirmCustomer(unordered_map<string, string> queryParameters);
+
+    void createAPIKey(unordered_map<string, string> queryParameters);
+
+    void ingestContent(
+            shared_ptr<Customer> customer,
+            unordered_map<string, string> queryParameters,
+            string requestBody);
 };
 
 #endif /* POSTCUSTOMER_H */

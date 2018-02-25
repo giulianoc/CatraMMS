@@ -256,48 +256,69 @@ public:
         ContentUpdate           = 2,
         ContentRemove           = 3
     };
+    static const char* toString(const IngestionType& ingestionType)
+    {
+        switch (ingestionType)
+        {
+            case IngestionType::Unknown:
+                return "Unknown";
+            case IngestionType::ContentIngestion:
+                return "ContentIngestion";
+            case IngestionType::ContentUpdate:
+                return "ContentUpdate";
+            case IngestionType::ContentRemove:
+                return "ContentRemove";
+            default:
+            throw runtime_error(string("Wrong IngestionType"));
+        }
+    }
 
     enum class IngestionStatus {
-        StartIngestion                              = 1,    
+        StartIngestionThroughAPI,
+            // API created a file into the FTP customer repository
+
+        StartIngestion,    
             // metadata moved in WorkingArea, metadata partially validated
         
-        SourceDownloadingInProgress                 = 2,    
+        SourceDownloadingInProgress,    
             // media source is remote, downloading in FTP repository started
         
-        QueuedForEncoding                           = 3,   
+        QueuedForEncoding,   
             // metadata ingestion is finished (saved into DB), media source is in CMS repository
 
 
-        End_DownloadCancelledByUser                 = 10,   
+        End_DownloadCancelledByUser,   
             // User cancelled the media source downloading, metadata is moved in ErrorArea
 
-        End_ValidationMetadataFailed                = 11,   
+        End_ValidationMetadataFailed,   
             // Validation metadata failed, metadata is moved in ErrorArea.
             // MediaSource (if present) remains in FTP repository in case the json would be ingested again (MediaSource would be remove by retention)
 
-        End_ValidationMediaSourceFailed             = 12,   
+        End_ValidationMediaSourceFailed,   
             // validation media source failed, metadata is moved in ErrorArea
             // MediaSource (if present) remains in FTP repository in case the json would be ingested again (MediaSource would be remove by retention)
 
-        End_CustomerReachedHisMaxIngestionNumber    = 13,
+        End_CustomerReachedHisMaxIngestionNumber,
             // validation media source failed, metadata is moved in ErrorArea
             // MediaSource (if present) remains in FTP repository in case the json would be ingested again (MediaSource would be remove by retention)
         
-        End_IngestionFailure                        = 15,                    // nothing done
+        End_IngestionFailure,                    // nothing done
             // validation media source failed, metadata is moved in ErrorArea
             // MediaSource (if present) remains in FTP repository in case the json would be ingested again (MediaSource would be remove by retention)
 
-        End_IngestionSuccess_AtLeastOneEncodingProfileError   = 16,    
+        End_IngestionSuccess_AtLeastOneEncodingProfileError,    
             // Content was ingested successful but at least one encoding failed
             // One encoding is considered a failure only after MaxFailuresNumer attempts
         
-        End_IngestionSuccess    = 20
+        End_IngestionSuccess
             // Ingestion and encodings successful
     };
     static const char* toString(const IngestionStatus& ingestionStatus)
     {
         switch (ingestionStatus)
         {
+            case IngestionStatus::StartIngestionThroughAPI:
+                return "StartIngestionThroughAPI";
             case IngestionStatus::StartIngestion:
                 return "StartIngestion";
             case IngestionStatus::SourceDownloadingInProgress:
@@ -328,7 +349,9 @@ public:
         lowerCase.resize(ingestionStatus.size());
         transform(ingestionStatus.begin(), ingestionStatus.end(), lowerCase.begin(), [](unsigned char c){return tolower(c); } );
 
-        if (lowerCase == "startingestion")
+        if (lowerCase == "startingestionthroughapi")
+            return IngestionStatus::StartIngestionThroughAPI;
+        else if (lowerCase == "startingestion")
             return IngestionStatus::StartIngestion;
         else if (lowerCase == "sourcedownloadinginprogress")
             return IngestionStatus::SourceDownloadingInProgress;
@@ -374,7 +397,7 @@ public:
 
     bool isMetadataPresent(Json::Value root, string field);
 
-    pair<int64_t,string> registerCustomer(
+    tuple<int64_t,int64_t,string> registerCustomer(
 	string customerName,
         string customerDirectoryName,
 	string street,
@@ -405,11 +428,13 @@ public:
     string getPassword(string emailAddress);
 
     string createAPIKey (
-        string emailAddress,
-        string flags,
+        int64_t customerKey,
+        int64_t userKey,
+        bool adminAPI, 
+        bool userAPI,
         chrono::system_clock::time_point expirationDate);
 
-    pair<shared_ptr<Customer>,bool> checkAPIKey (string apiKey);
+    tuple<shared_ptr<Customer>,bool,bool> checkAPIKey (string apiKey);
 
     int64_t addVideoEncodingProfile(
         shared_ptr<Customer> customer,
@@ -441,10 +466,34 @@ public:
         string processorCMS,
         string errorMessage);
 
+    int64_t addIngestionJob (
+	int64_t customerKey,
+        string fileNameWithIngestionJobKeyPlaceholder,
+        string ingestionJobKeyPlaceHolder,
+        string metadataFileContent,
+        IngestionType ingestionType,
+        IngestionStatus ingestionStatus);
+
     void updateIngestionJob (
         int64_t ingestionJobKey,
         IngestionStatus newIngestionStatus,
         string errorMessage);
+
+    void updateIngestionJob (
+        int64_t ingestionJobKey,
+        IngestionStatus newIngestionStatus,
+        string processorCMS,
+        string errorMessage);
+
+    void updateIngestionJob (
+        int64_t ingestionJobKey,
+        IngestionType ingestionType,
+        IngestionStatus newIngestionStatus,
+        string processorCMS,
+        string errorMessage);
+
+    void removeIngestionJob (
+        int64_t ingestionJobKey);
 
     bool updateIngestionJobSourceDownloadingInProgress (
         int64_t ingestionJobKey,

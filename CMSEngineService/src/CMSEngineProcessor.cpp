@@ -35,7 +35,7 @@ CMSEngineProcessor::CMSEngineProcessor(
     _secondsWaitingAmongDownloadingAttempt  = 5;
     
     _ulMaxIngestionsNumberPerCustomerEachIngestionPeriod        = 2;
-    _ulJsonToBeProcessedAfterSeconds                            = 4;
+    _ulJsonToBeProcessedAfterSeconds                            = 3;
     _ulRetentionPeriodInDays                                    = 10;
 }
 
@@ -264,6 +264,26 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                         + ", directoryEntry: " + directoryEntry
                     );
 
+                    // check if directoryEntry was created by API. In this case
+                    //  we already have an entry into DB (ingestionJobKey)
+                    int64_t ingestionJobKey = -1;
+                    try
+                    {
+                        string apiPrefix = "API-";
+                        int ingestionJobKeyStart = apiPrefix.length();
+                        int ingestionJobKeyEnd;
+                        
+                        if (directoryEntry.compare(0, apiPrefix.size(), apiPrefix) == 0 
+                                && (ingestionJobKeyEnd = directoryEntry.find("-", ingestionJobKeyStart)) != string::npos)
+                            ingestionJobKey = stol(directoryEntry.substr(ingestionJobKeyStart, ingestionJobKeyEnd));
+                    }
+                    catch(exception e)
+                    {
+                        _logger->error(__FILEREF__ + "IngestionJobKey not found"
+                            + ", directoryEntry: " + directoryEntry
+                        );
+                    }
+
                     _cmsStorage->moveFTPRepositoryEntryToWorkingArea(customer, directoryEntry);
 
                     string      metadataFileContent;
@@ -306,8 +326,13 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
 
                         string errorMessage = e.what();
 
-                        _cmsEngineDBFacade->addIngestionJob (customer->_customerKey, 
+                        if (ingestionJobKey == -1)
+                            _cmsEngineDBFacade->addIngestionJob (customer->_customerKey, 
                                 directoryEntry, metadataFileContent, CMSEngineDBFacade::IngestionType::Unknown, 
+                                CMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed, 
+                                _processorCMS, errorMessage);
+                        else
+                            _cmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                 CMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed, 
                                 _processorCMS, errorMessage);
 
@@ -323,8 +348,13 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
 
                         string errorMessage = e.what();
 
-                        _cmsEngineDBFacade->addIngestionJob (customer->_customerKey, 
+                        if (ingestionJobKey == -1)
+                            _cmsEngineDBFacade->addIngestionJob (customer->_customerKey, 
                                 directoryEntry, metadataFileContent, CMSEngineDBFacade::IngestionType::Unknown, 
+                                CMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed, 
+                                _processorCMS, errorMessage);
+                        else
+                            _cmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                 CMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed, 
                                 _processorCMS, errorMessage);
 
@@ -347,8 +377,14 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
 
                         string errorMessage = e.what();
 
-                        _cmsEngineDBFacade->addIngestionJob (customer->_customerKey, 
+                        if (ingestionJobKey == -1)
+                            _cmsEngineDBFacade->addIngestionJob (customer->_customerKey, 
                                 directoryEntry, metadataFileContent, ingestionTypeAndContentType.first, 
+                                CMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
+                                _processorCMS, errorMessage);
+                        else
+                            _cmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                ingestionTypeAndContentType.first,
                                 CMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
                                 _processorCMS, errorMessage);
 
@@ -364,22 +400,37 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
 
                         string errorMessage = e.what();
 
-                        _cmsEngineDBFacade->addIngestionJob (customer->_customerKey, 
+                        if (ingestionJobKey == -1)
+                            _cmsEngineDBFacade->addIngestionJob (customer->_customerKey, 
                                 directoryEntry, metadataFileContent, ingestionTypeAndContentType.first, 
+                                CMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
+                                _processorCMS, errorMessage);
+                        else
+                            _cmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                ingestionTypeAndContentType.first,
                                 CMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
                                 _processorCMS, errorMessage);
 
                         throw e;
                     }
 
-                    int64_t ingestionJobKey;
                     try
                     {
                         string errorMessage = "";
-                        ingestionJobKey = _cmsEngineDBFacade->addIngestionJob (customer->_customerKey, 
-                            directoryEntry, metadataFileContent, ingestionTypeAndContentType.first, 
-                            CMSEngineDBFacade::IngestionStatus::StartIngestion, 
-                            _processorCMS, errorMessage);
+                        if (ingestionJobKey == -1)
+                        {
+                            ingestionJobKey = _cmsEngineDBFacade->addIngestionJob (customer->_customerKey, 
+                                directoryEntry, metadataFileContent, ingestionTypeAndContentType.first, 
+                                CMSEngineDBFacade::IngestionStatus::StartIngestion, 
+                                _processorCMS, errorMessage);
+                        }
+                        else
+                        {
+                            _cmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                ingestionTypeAndContentType.first,
+                                CMSEngineDBFacade::IngestionStatus::StartIngestion, 
+                                _processorCMS, errorMessage);
+                        }
                     }
                     catch(exception e)
                     {

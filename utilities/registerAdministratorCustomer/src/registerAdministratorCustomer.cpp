@@ -1,6 +1,7 @@
 
 #include "CMSEngineDBFacade.h"
 #include "CMSEngine.h"
+#include "catralibraries/Convert.h"
 
 
 int main (int iArgc, char *pArgv [])
@@ -35,7 +36,7 @@ int main (int iArgc, char *pArgv [])
     string emailAddress = "giulianoc@catrasoftware.it";
     logger->info(__FILEREF__ + "Creating Administrator Customer"
             );
-    pair<int64_t,string> customerKeyAndConfirmationCode =
+    tuple<int64_t,int64_t,string> customerKeyUserKeyAndConfirmationCode =
             cmsEngine->registerCustomer(
                 "Admin",                       // string customerName,
                 "",                             // string street,
@@ -59,18 +60,22 @@ int main (int iArgc, char *pArgv [])
 
     logger->info(__FILEREF__ + "Confirm Customer"
             );
-    cmsEngine->confirmCustomer(customerKeyAndConfirmationCode.second);
+    cmsEngine->confirmCustomer(get<2>(customerKeyUserKeyAndConfirmationCode));
     
-    string flags = "('ADMIN_API,USER_API')";
+    bool adminAPI = true;
+    bool userAPI = true;
     logger->info(__FILEREF__ + "Create APIKey"
             );
     string apiKey = cmsEngine->createAPIKey(
-            emailAddress, 
-            flags,
+            get<0>(customerKeyUserKeyAndConfirmationCode),
+            get<1>(customerKeyUserKeyAndConfirmationCode),
+            adminAPI,
+            userAPI,
             chrono::system_clock::now() + chrono::hours(24 * 365 * 20)  // apiKeyExpirationDate
     );
     
-    cout << "Administrator APIKey: " << apiKey << endl;
+    cout << "Username (CustomerKey): " + to_string(get<0>(customerKeyUserKeyAndConfirmationCode)) << endl;
+    cout << "Password (Administrator APIKey): " << apiKey << endl;
 
     logger->info(__FILEREF__ + "Shutdown done"
             );

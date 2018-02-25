@@ -27,7 +27,7 @@ CMSEngine::CMSEngine(shared_ptr<CMSEngineDBFacade> cmsEngineDBFacade,
 CMSEngine::~CMSEngine() {
 }
 
-pair<int64_t,string> CMSEngine::registerCustomer(
+tuple<int64_t,int64_t,string> CMSEngine::registerCustomer(
 	string customerName,
 	string street,
         string city,
@@ -84,10 +84,10 @@ pair<int64_t,string> CMSEngine::registerCustomer(
                 return (unsigned char) '_'; } 
     );
 
-    pair<int64_t,string> customerKeyAndConfirmationCode;
+    tuple<int64_t,int64_t,string> customerKeyUserKeyAndConfirmationCode;
     try
     {
-        customerKeyAndConfirmationCode = _cmsEngineDBFacade->registerCustomer(
+        customerKeyUserKeyAndConfirmationCode = _cmsEngineDBFacade->registerCustomer(
             customerName, 
             customerDirectoryName,
             street,
@@ -116,7 +116,7 @@ pair<int64_t,string> CMSEngine::registerCustomer(
         throw runtime_error(errorMessage);
     }
 
-    return customerKeyAndConfirmationCode;
+    return customerKeyUserKeyAndConfirmationCode;
 }
 
 void CMSEngine::confirmCustomer(string confirmationCode)
@@ -139,19 +139,23 @@ void CMSEngine::confirmCustomer(string confirmationCode)
 }
 
 string CMSEngine::createAPIKey(
-        string emailAddress,
-        string flags,
+        int64_t customerKey,
+        int64_t userKey,
+        bool adminAPI, 
+        bool userAPI,
         chrono::system_clock::time_point apiKeyExpirationDate)
 {    
     _logger->info(__FILEREF__ + "Received createAPIKey"
-        + ", emailAddress: " + emailAddress
-        + ", flags: " + flags
+        + ", customerKey: " + to_string(customerKey)
+        + ", userKey: " + to_string(userKey)
+        + ", adminAPI: " + to_string(adminAPI)
+        + ", userAPI: " + to_string(userAPI)
     );
 
     string apiKey;
     try
     {
-        apiKey = _cmsEngineDBFacade->createAPIKey(emailAddress, flags, apiKeyExpirationDate);
+        apiKey = _cmsEngineDBFacade->createAPIKey(customerKey, userKey, adminAPI, userAPI, apiKeyExpirationDate);
     }
     catch(exception e)
     {
@@ -164,13 +168,13 @@ string CMSEngine::createAPIKey(
     return apiKey;
 }
 
-pair<shared_ptr<Customer>,bool> CMSEngine::checkAPIKey (string apiKey)
+tuple<shared_ptr<Customer>,bool,bool> CMSEngine::checkAPIKey (string apiKey)
 {
     _logger->info(__FILEREF__ + "Received checkAPIKey"
         + ", apiKey: " + apiKey
     );
 
-    pair<shared_ptr<Customer>,bool> customerAndFlags;
+    tuple<shared_ptr<Customer>,bool,bool> customerAndFlags;
     try
     {
         customerAndFlags = _cmsEngineDBFacade->checkAPIKey(apiKey);
@@ -193,6 +197,66 @@ pair<shared_ptr<Customer>,bool> CMSEngine::checkAPIKey (string apiKey)
     }
     
     return customerAndFlags;
+}
+
+int64_t CMSEngine::addIngestionJob (
+        int64_t customerKey,
+        string fileNameWithIngestionJobKeyPlaceholder,
+        string ingestionJobKeyPlaceHolder,
+        string metadataFileContent,
+        CMSEngineDBFacade::IngestionType ingestionType,
+        CMSEngineDBFacade::IngestionStatus ingestionStatus)
+{
+    _logger->info(__FILEREF__ + "Received addIngestionJob"
+        + ", customerKey: " + to_string(customerKey)
+        + ", fileNameWithIngestionJobKeyPlaceholder: " + fileNameWithIngestionJobKeyPlaceholder
+        + ", ingestionJobKeyPlaceHolder: " + ingestionJobKeyPlaceHolder
+        + ", metadataFileContent: " + metadataFileContent
+        + ", ingestionType: " + CMSEngineDBFacade::toString(ingestionType)
+        + ", ingestionStatus: " + CMSEngineDBFacade::toString(ingestionStatus)
+    );
+
+    int64_t ingestionJobKey;
+
+    try
+    {
+        ingestionJobKey = _cmsEngineDBFacade->addIngestionJob(
+                customerKey,
+                fileNameWithIngestionJobKeyPlaceholder,
+                ingestionJobKeyPlaceHolder,
+                metadataFileContent,
+                ingestionType,
+                ingestionStatus);
+    }
+    catch(exception e)
+    {
+        string errorMessage = __FILEREF__ + "_cmsEngineDBFacade->addIngestionJob failed";
+        _logger->error(errorMessage);
+        
+        throw e;
+    }
+    
+    return ingestionJobKey;
+}
+
+void CMSEngine::removeIngestionJob (
+        int64_t ingestionJobKey)
+{
+    _logger->info(__FILEREF__ + "Received removeIngestionJob"
+        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+    );
+
+    try
+    {
+        _cmsEngineDBFacade->removeIngestionJob(ingestionJobKey);
+    }
+    catch(exception e)
+    {
+        string errorMessage = __FILEREF__ + "_cmsEngineDBFacade->removeIngestionJob failed";
+        _logger->error(errorMessage);
+        
+        throw e;
+    }
 }
 
 void CMSEngine::addFFMPEGVideoEncodingProfile(

@@ -16,6 +16,7 @@
 
 #include <unordered_map>
 #include "CMSEngine.h"
+#include "CMSStorage.h"
 #include "spdlog/spdlog.h"
 
 struct NoAPIKeyPresentIntoRequest: public exception {    
@@ -31,20 +32,30 @@ public:
     
     virtual ~APICommon();
     
-    int listen();
+    int listen(bool binaryFlag);
 
     virtual void manageRequestAndResponse(
         string requestURI,
         string requestMethod,
-        pair<shared_ptr<Customer>,bool>& customerAndFlags,
+        unordered_map<string, string> queryParameters,
+        tuple<shared_ptr<Customer>,bool,bool>& customerAndFlags,
         unsigned long contentLength,
         string requestBody
     ) = 0;
     
+    virtual void manageBinaryRequestAndResponse(
+        string requestURI,
+        string requestMethod,
+        unordered_map<string, string> queryParameters,
+        tuple<shared_ptr<Customer>,bool,bool>& customerAndFlags,
+        unsigned long contentLength
+    ) = 0;
+
 protected:
     shared_ptr<spdlog::logger>      _logger;
     shared_ptr<CMSEngineDBFacade>   _cmsEngineDBFacade;
     shared_ptr<CMSEngine>           _cmsEngine;
+    shared_ptr<CMSStorage>          _cmsStorage;
 
     void sendSuccess(int htmlResponseCode, string responseBody);
     void sendError(int htmlResponseCode, string errorMessage);
@@ -58,6 +69,9 @@ private:
     void fillEnvironmentDetails(
         const char * const * envp, 
         unordered_map<string, string>& requestDetails);
+    void fillQueryString(
+        string queryString,
+        unordered_map<string, string>& queryParameters);
 
     string getHtmlStandardMessage(int htmlResponseCode);
 

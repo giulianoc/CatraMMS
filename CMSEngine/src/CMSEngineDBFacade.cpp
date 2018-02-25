@@ -178,7 +178,7 @@ void CMSEngineDBFacade::getTerritories(shared_ptr<Customer> customer)
     _connectionPool->unborrow(conn);
 }
 
-pair<int64_t,string> CMSEngineDBFacade::registerCustomer(
+tuple<int64_t,int64_t,string> CMSEngineDBFacade::registerCustomer(
 	string customerName,
         string customerDirectoryName,
 	string street,
@@ -201,6 +201,7 @@ pair<int64_t,string> CMSEngineDBFacade::registerCustomer(
 )
 {
     int64_t         customerKey;
+    int64_t         userKey;
     string          confirmationCode;
     int64_t         contentProviderKey;
     
@@ -323,7 +324,7 @@ pair<int64_t,string> CMSEngineDBFacade::registerCustomer(
         
         int userType = getCMSUser();
         
-        int64_t userKey = addUser (
+        userKey = addUser (
                 conn,
                 customerKey,
                 userName,
@@ -416,9 +417,9 @@ pair<int64_t,string> CMSEngineDBFacade::registerCustomer(
         throw e;
     }
     
-    pair<int64_t,string> customerKeyAndConfirmationCode = make_pair(customerKey, confirmationCode);
+    tuple<int64_t,int64_t,string> customerKeyUserKeyAndConfirmationCode = make_tuple(customerKey, userKey, confirmationCode);
     
-    return customerKeyAndConfirmationCode;
+    return customerKeyUserKeyAndConfirmationCode;
 }
 
 void CMSEngineDBFacade::confirmCustomer(
@@ -772,8 +773,10 @@ string CMSEngineDBFacade::getPassword(string emailAddress)
 }
 
 string CMSEngineDBFacade::createAPIKey (
-        string emailAddress,
-        string flags,
+        int64_t customerKey,
+        int64_t userKey,
+        bool adminAPI, 
+        bool userAPI,
         chrono::system_clock::time_point expirationDate
 )
 {
@@ -787,24 +790,25 @@ string CMSEngineDBFacade::createAPIKey (
     {
         conn = _connectionPool->borrow();	
 
-        int64_t         userKey;
-        
+        string emailAddress;
         {
             lastSQLCommand = 
-                "select UserKey from CMS_Users2 where EMailAddress = ?";
+                "select EMailAddress from CMS_Users2 where CustomerKey = ? and UserKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++, emailAddress);
+            preparedStatement->setInt64(queryParameterIndex++, customerKey);
+            preparedStatement->setInt64(queryParameterIndex++, userKey);
 
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
-                userKey = resultSet->getInt64("UserKey");
+                emailAddress = resultSet->getString("EMailAddress");
             }
             else
             {
-                string errorMessage = __FILEREF__ + "User is not present"
-                    + ", emailAddress: " + emailAddress
+                string errorMessage = __FILEREF__ + "Customer-User are not present"
+                    + ", customerKey: " + to_string(customerKey)
+                    + ", userKey: " + to_string(userKey)
                     + ", lastSQLCommand: " + lastSQLCommand
                 ;
                 _logger->error(errorMessage);
@@ -814,17 +818,33 @@ string CMSEngineDBFacade::createAPIKey (
         }
 
         {
-            string sourceApiKey = emailAddress;
+            unsigned seed = chrono::steady_clock::now().time_since_epoch().count();
+            default_random_engine e(seed);
+
+            string sourceApiKey = emailAddress + "__SEP__" + to_string(e());
             apiKey = Encrypt::encrypt(sourceApiKey);
 
+            string flags;
+            {
+                if (adminAPI)
+                    flags.append("ADMIN_API");
+
+                if (userAPI)
+                {
+                    if (flags != "")
+                       flags.append(",");
+                    flags.append("USER_API");
+                }
+            }
+            
             lastSQLCommand = 
                 "insert into CMS_APIKeys (APIKey, UserKey, Flags, CreationDate, ExpirationDate) values ("
-                "?, ?, " + flags + ", NULL, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'))";
+                "?, ?, ?, NULL, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'))";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, apiKey);
             preparedStatement->setInt64(queryParameterIndex++, userKey);
-            // preparedStatement->setString(queryParameterIndex++, flags);
+            preparedStatement->setString(queryParameterIndex++, flags); // ADMIN_API,USER_API
             {
                 tm          tmDateTime;
                 char        strExpirationDate [64];
@@ -875,7 +895,7 @@ string CMSEngineDBFacade::createAPIKey (
     return apiKey;
 }
 
-pair<shared_ptr<Customer>,bool> CMSEngineDBFacade::checkAPIKey (string apiKey)
+tuple<shared_ptr<Customer>,bool,bool> CMSEngineDBFacade::checkAPIKey (string apiKey)
 {
     shared_ptr<Customer> customer;
     string          flags;
@@ -981,10 +1001,12 @@ pair<shared_ptr<Customer>,bool> CMSEngineDBFacade::checkAPIKey (string apiKey)
         throw e;
     }
     
-    pair<shared_ptr<Customer>,bool> customerAndFlags;
+    tuple<shared_ptr<Customer>,bool,bool> customerAndFlags;
     
-    customerAndFlags.first = customer;
-    customerAndFlags.second = flags.find("ADMIN_API") == string::npos ? false : true;
+    customerAndFlags = make_tuple(customer,
+        flags.find("ADMIN_API") == string::npos ? false : true,
+        flags.find("USER_API") == string::npos ? false : true
+    );
             
     return customerAndFlags;
 }
@@ -1447,6 +1469,8 @@ int64_t CMSEngineDBFacade::addIngestionJob (
     }
     catch(sql::SQLException se)
     {
+        _connectionPool->unborrow(conn);
+
         string exceptionMessage(se.what());
         
         _logger->error(__FILEREF__ + "SQL exception"
@@ -1458,6 +1482,195 @@ int64_t CMSEngineDBFacade::addIngestionJob (
     }
     catch(exception e)
     {        
+        _connectionPool->unborrow(conn);
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
+    }
+    
+    return ingestionJobKey;
+}
+
+int64_t CMSEngineDBFacade::addIngestionJob (
+	int64_t customerKey,
+        string fileNameWithIngestionJobKeyPlaceholder,
+        string ingestionJobKeyPlaceHolder,
+        string metadataFileContent,
+        IngestionType ingestionType,
+        IngestionStatus ingestionStatus
+)
+{
+    int64_t         ingestionJobKey;
+    
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn;
+    bool autoCommit = true;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+
+        autoCommit = false;
+        // conn->_sqlConnection->setAutoCommit(autoCommit); OR execute the statement START TRANSACTION
+        {
+            lastSQLCommand = 
+                "START TRANSACTION";
+
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute(lastSQLCommand);
+        }
+
+        {
+            lastSQLCommand = 
+                "select c.IsEnabled, c.CustomerType from CMS_Customers c where c.CustomerKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, customerKey);
+            
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                int isEnabled = resultSet->getInt("IsEnabled");
+                int customerType = resultSet->getInt("CustomerType");
+                
+                if (isEnabled != 1)
+                {
+                    string errorMessage = __FILEREF__ + "Customer is not enabled"
+                        + ", customerKey: " + to_string(customerKey)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                    ;
+                    _logger->error(errorMessage);
+                    
+                    throw runtime_error(errorMessage);                    
+                }
+                else if (customerType != static_cast<int>(CustomerType::IngestionAndDelivery) &&
+                        customerType != static_cast<int>(CustomerType::EncodingOnly))
+                {
+                    string errorMessage = __FILEREF__ + "Customer is not enabled to ingest content"
+                        + ", customerKey: " + to_string(customerKey);
+                        + ", customerType: " + to_string(static_cast<int>(customerType))
+                        + ", lastSQLCommand: " + lastSQLCommand
+                    ;
+                    _logger->error(errorMessage);
+                    
+                    throw runtime_error(errorMessage);                    
+                }
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "Customer is not present/configured"
+                    + ", customerKey: " + to_string(customerKey)
+                    + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }            
+        }
+        
+        {
+            lastSQLCommand = 
+                "insert into CMS_IngestionJobs (IngestionJobKey, CustomerKey, MediaItemKey, MetaDataFileName, MetadataFileContent, IngestionType, StartIngestion, EndIngestion, DownloadingProgress, ProcessorCMS, Status, ErrorMessage) values ("
+                                               "NULL,            ?,           NULL,         NULL,             ?,                   ?,             NULL,           NULL,         NULL,                ?,            ?,      ?)";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, customerKey);
+            if (metadataFileContent == "")
+                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+            else
+                preparedStatement->setString(queryParameterIndex++, metadataFileContent);
+            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(ingestionType));
+            preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+            preparedStatement->setString(queryParameterIndex++, CMSEngineDBFacade::toString(ingestionStatus));
+            preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+
+            preparedStatement->executeUpdate();
+        }
+        
+        ingestionJobKey = getLastInsertId(conn);
+        
+        string metaDataFileName = fileNameWithIngestionJobKeyPlaceholder;
+        // we know we have ingestionJobKeyPlaceHolder but we will check anyway
+        if (metaDataFileName.find(ingestionJobKeyPlaceHolder) != string::npos)
+            metaDataFileName.replace(
+                metaDataFileName.find(ingestionJobKeyPlaceHolder),
+                ingestionJobKeyPlaceHolder.length(), 
+                to_string(ingestionJobKey)
+            );
+        
+        {
+            lastSQLCommand = 
+                "update CMS_IngestionJobs set MetaDataFileName = ? where IngestionJobKey = ?";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, metaDataFileName);
+            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+
+            int rowsUpdated = preparedStatement->executeUpdate();
+            if (rowsUpdated != 1)
+            {
+                string errorMessage = __FILEREF__ + "no update was done"
+                        + ", metaDataFileName: " + metaDataFileName
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", rowsUpdated: " + to_string(rowsUpdated)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }
+        }
+
+        // conn->_sqlConnection->commit(); OR execute COMMIT
+        {
+            lastSQLCommand = 
+                "COMMIT";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            preparedStatement->executeUpdate();
+        }
+        autoCommit = true;
+
+        _connectionPool->unborrow(conn);
+
+    }
+    catch(sql::SQLException se)
+    {
+        // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+        if (!autoCommit)
+        {
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute("ROLLBACK");
+        }
+        
+        _connectionPool->unborrow(conn);
+
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw se;
+    }
+    catch(exception e)
+    {        
+        // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+        if (!autoCommit)
+        {
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute("ROLLBACK");
+        }
+        
+        _connectionPool->unborrow(conn);
+
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
@@ -1469,9 +1682,9 @@ int64_t CMSEngineDBFacade::addIngestionJob (
 }
 
 void CMSEngineDBFacade::updateIngestionJob (
-    int64_t ingestionJobKey,
-    IngestionStatus newIngestionStatus,
-    string errorMessage
+        int64_t ingestionJobKey,
+        IngestionStatus newIngestionStatus,
+        string errorMessage
 )
 {    
     string      lastSQLCommand;
@@ -1572,6 +1785,8 @@ void CMSEngineDBFacade::updateIngestionJob (
     }
     catch(sql::SQLException se)
     {
+        _connectionPool->unborrow(conn);
+
         string exceptionMessage(se.what());
         
         _logger->error(__FILEREF__ + "SQL exception"
@@ -1583,6 +1798,352 @@ void CMSEngineDBFacade::updateIngestionJob (
     }    
     catch(exception e)
     {        
+        _connectionPool->unborrow(conn);
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
+    }    
+}
+
+void CMSEngineDBFacade::updateIngestionJob (
+        int64_t ingestionJobKey,
+        IngestionStatus newIngestionStatus,
+        string processorCMS,
+        string errorMessage
+)
+{    
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn;
+
+    try
+    {
+        string errorMessageForSQL;
+        if (errorMessage == "")
+            errorMessageForSQL = errorMessage;
+        else
+        {
+            if (errorMessageForSQL.length() >= 1024)
+                errorMessageForSQL.substr(0, 1024);
+            else
+                errorMessageForSQL = errorMessage;
+        }
+        
+        bool finalState;
+
+        conn = _connectionPool->borrow();	
+
+        if (newIngestionStatus == IngestionStatus::End_IngestionFailure ||
+                newIngestionStatus == IngestionStatus::End_IngestionSuccess_AtLeastOneEncodingProfileError ||
+                newIngestionStatus == IngestionStatus::End_IngestionSuccess)
+        {
+            finalState			= true;
+        }
+        else
+        {
+            finalState          = false;
+        }
+
+        if (finalState)
+        {
+            lastSQLCommand = 
+                "update CMS_IngestionJobs set Status = ?, EndIngestion = NOW(), ProcessorCMS = ?, ErrorMessage = ? where IngestionJobKey = ?";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, CMSEngineDBFacade::toString(newIngestionStatus));
+            if (processorCMS == "")
+                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+            else
+                preparedStatement->setString(queryParameterIndex++, processorCMS);
+            if (errorMessageForSQL == "")
+                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+            else
+                preparedStatement->setString(queryParameterIndex++, errorMessageForSQL);
+            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+
+            int rowsUpdated = preparedStatement->executeUpdate();
+            if (rowsUpdated != 1)
+            {
+                string errorMessage = __FILEREF__ + "no update was done"
+                        + ", processorCMS: " + processorCMS
+                        + ", errorMessageForSQL: " + errorMessageForSQL
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", rowsUpdated: " + to_string(rowsUpdated)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }
+        }
+        else
+        {
+            lastSQLCommand = 
+                "update CMS_IngestionJobs set Status = ?, ProcessorCMS = ?, ErrorMessage = ? where IngestionJobKey = ?";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, CMSEngineDBFacade::toString(newIngestionStatus));
+            if (processorCMS == "")
+                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+            else
+                preparedStatement->setString(queryParameterIndex++, processorCMS);
+            if (errorMessageForSQL == "")
+                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+            else
+                preparedStatement->setString(queryParameterIndex++, errorMessageForSQL);
+            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+
+            int rowsUpdated = preparedStatement->executeUpdate();
+            if (rowsUpdated != 1)
+            {
+                string errorMessage = __FILEREF__ + "no update was done"
+                        + ", processorCMS: " + processorCMS
+                        + ", errorMessageForSQL: " + errorMessageForSQL
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", rowsUpdated: " + to_string(rowsUpdated)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }
+        }
+        
+        _logger->info(__FILEREF__ + "IngestionJob updated successful"
+            + ", newIngestionStatus: " + CMSEngineDBFacade::toString(newIngestionStatus)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            );
+
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        _connectionPool->unborrow(conn);
+
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw se;
+    }    
+    catch(exception e)
+    {        
+        _connectionPool->unborrow(conn);
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
+    }    
+}
+
+void CMSEngineDBFacade::updateIngestionJob (
+        int64_t ingestionJobKey,
+        IngestionType ingestionType,
+        IngestionStatus newIngestionStatus,
+        string processorCMS,
+        string errorMessage
+)
+{    
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn;
+
+    try
+    {
+        string errorMessageForSQL;
+        if (errorMessage == "")
+            errorMessageForSQL = errorMessage;
+        else
+        {
+            if (errorMessageForSQL.length() >= 1024)
+                errorMessageForSQL.substr(0, 1024);
+            else
+                errorMessageForSQL = errorMessage;
+        }
+        
+        bool finalState;
+
+        conn = _connectionPool->borrow();	
+
+        if (newIngestionStatus == IngestionStatus::End_IngestionFailure ||
+                newIngestionStatus == IngestionStatus::End_IngestionSuccess_AtLeastOneEncodingProfileError ||
+                newIngestionStatus == IngestionStatus::End_IngestionSuccess)
+        {
+            finalState			= true;
+        }
+        else
+        {
+            finalState          = false;
+        }
+
+        if (finalState)
+        {
+            lastSQLCommand = 
+                "update CMS_IngestionJobs set IngestionType = ?, Status = ?, EndIngestion = NOW(), ProcessorCMS = ?, ErrorMessage = ? where IngestionJobKey = ?";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(ingestionType));
+            preparedStatement->setString(queryParameterIndex++, CMSEngineDBFacade::toString(newIngestionStatus));
+            if (processorCMS == "")
+                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+            else
+                preparedStatement->setString(queryParameterIndex++, processorCMS);
+            if (errorMessageForSQL == "")
+                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+            else
+                preparedStatement->setString(queryParameterIndex++, errorMessageForSQL);
+            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+
+            int rowsUpdated = preparedStatement->executeUpdate();
+            if (rowsUpdated != 1)
+            {
+                string errorMessage = __FILEREF__ + "no update was done"
+                        + ", processorCMS: " + processorCMS
+                        + ", errorMessageForSQL: " + errorMessageForSQL
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", rowsUpdated: " + to_string(rowsUpdated)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }
+        }
+        else
+        {
+            lastSQLCommand = 
+                "update CMS_IngestionJobs set IngestionType = ?, Status = ?, ProcessorCMS = ?, ErrorMessage = ? where IngestionJobKey = ?";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(ingestionType));
+            preparedStatement->setString(queryParameterIndex++, CMSEngineDBFacade::toString(newIngestionStatus));
+            if (processorCMS == "")
+                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+            else
+                preparedStatement->setString(queryParameterIndex++, processorCMS);
+            if (errorMessageForSQL == "")
+                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+            else
+                preparedStatement->setString(queryParameterIndex++, errorMessageForSQL);
+            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+
+            int rowsUpdated = preparedStatement->executeUpdate();
+            if (rowsUpdated != 1)
+            {
+                string errorMessage = __FILEREF__ + "no update was done"
+                        + ", processorCMS: " + processorCMS
+                        + ", errorMessageForSQL: " + errorMessageForSQL
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", rowsUpdated: " + to_string(rowsUpdated)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }
+        }
+        
+        _logger->info(__FILEREF__ + "IngestionJob updated successful"
+            + ", newIngestionStatus: " + CMSEngineDBFacade::toString(newIngestionStatus)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            );
+
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        _connectionPool->unborrow(conn);
+
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw se;
+    }    
+    catch(exception e)
+    {        
+        _connectionPool->unborrow(conn);
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
+    }    
+}
+
+void CMSEngineDBFacade::removeIngestionJob (
+        int64_t ingestionJobKey
+)
+{    
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+
+        {
+            lastSQLCommand = 
+                "delete from CMS_IngestionJobs where IngestionJobKey = ?";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+
+            int rowsUpdated = preparedStatement->executeUpdate();
+            if (rowsUpdated != 1)
+            {
+                string errorMessage = __FILEREF__ + "no update was done"
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", rowsUpdated: " + to_string(rowsUpdated)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }
+        }
+
+        _logger->info(__FILEREF__ + "IngestionJob removed successful"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            );
+
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        _connectionPool->unborrow(conn);
+
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw se;
+    }    
+    catch(exception e)
+    {        
+        _connectionPool->unborrow(conn);
+
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
@@ -2593,6 +3154,8 @@ string CMSEngineDBFacade::checkCustomerMaxIngestionNumber (
     }
     catch(sql::SQLException se)
     {
+        _connectionPool->unborrow(conn);
+
         string exceptionMessage(se.what());
         
         _logger->error(__FILEREF__ + "SQL exception"
@@ -2604,6 +3167,8 @@ string CMSEngineDBFacade::checkCustomerMaxIngestionNumber (
     }    
     catch(exception e)
     {        
+        _connectionPool->unborrow(conn);
+
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
@@ -3449,11 +4014,13 @@ int64_t CMSEngineDBFacade::getLastInsertId(shared_ptr<MySQLConnection> conn)
 
 void CMSEngineDBFacade::createTablesIfNeeded()
 {
+    shared_ptr<MySQLConnection> conn;
+
     string      lastSQLCommand;
 
     try
     {
-        shared_ptr<MySQLConnection> conn = _connectionPool->borrow();	
+        conn = _connectionPool->borrow();	
 
         shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
 
@@ -5236,6 +5803,8 @@ void CMSEngineDBFacade::createTablesIfNeeded()
     }
     catch(sql::SQLException se)
     {
+        _connectionPool->unborrow(conn);
+
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", se.what(): " + se.what()

@@ -26,6 +26,7 @@ SET (COMMON_SOURCES
 
 SET (SOURCES
 	API
+	Binary
 	echo
 )
 

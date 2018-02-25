@@ -28,7 +28,7 @@ public:
 
     virtual ~CMSEngine();
     
-    pair<int64_t,string> registerCustomer(
+    tuple<int64_t,int64_t,string> registerCustomer(
 	string customerName,
 	string street,
         string city,
@@ -52,12 +52,24 @@ public:
     void confirmCustomer(string confirmationCode);
     
     string createAPIKey(
-        string emailAddress,
-        string flags,
+        int64_t customerKey,
+        int64_t userKey,
+        bool adminAPI, 
+        bool userAPI,
         chrono::system_clock::time_point apiKeyExpirationDate);
 
-    pair<shared_ptr<Customer>,bool> checkAPIKey (string apiKey);
+    tuple<shared_ptr<Customer>,bool,bool> checkAPIKey (string apiKey);
     
+    int64_t addIngestionJob (
+	int64_t customerKey,
+        string fileNameWithIngestionJobKeyPlaceholder,
+        string ingestionJobKeyPlaceHolder,
+        string metadataFileContent,
+        CMSEngineDBFacade::IngestionType ingestionType,
+        CMSEngineDBFacade::IngestionStatus ingestionStatus);
+
+    void removeIngestionJob (int64_t ingestionJobKey);
+
     void addFFMPEGVideoEncodingProfile(
         shared_ptr<Customer> customer,
         string encodingProfileSet,  // "": default Customer family, != "": named customer family
