@@ -23,6 +23,7 @@ int main(int argc, char** argv)
 
 Binary::Binary(): APICommon() 
 {
+    _binaryBufferLength     = 1024 * 10;
 }
 
 Binary::~Binary() {
@@ -55,7 +56,6 @@ void Binary::getBinaryAndResponse(
         unsigned long contentLength
 )
 {
-    unsigned long bufferLength = 1024;
     char* buffer = nullptr;
 
     try
@@ -84,23 +84,71 @@ void Binary::getBinaryAndResponse(
         );
 
         ofstream binaryFileStream(customerFTPBinaryPathName, ofstream::binary);
-        buffer = new char [bufferLength];
+        buffer = new char [_binaryBufferLength];
 
         unsigned long currentRead;
-        do
+        unsigned long totalRead = 0;
+        if (contentLength == -1)
         {
-            cin.read(buffer, bufferLength);
+            // we do not have the content-length header, we will read all what we receive
+            do
+            {
+                cin.read(buffer, _binaryBufferLength);
 
-            currentRead = cin.gcount();
+                currentRead = cin.gcount();
 
-            binaryFileStream.write(buffer, currentRead); 
+                totalRead   += currentRead;
+
+                binaryFileStream.write(buffer, currentRead); 
+            }
+            while (currentRead == _binaryBufferLength);
         }
-        while (currentRead == bufferLength);
+        else
+        {
+            // we have the content-length and we will use it to read the binary
+            
+            unsigned long bytesToBeRead;
+            while (totalRead < contentLength)
+            {
+                if (contentLength - totalRead >= _binaryBufferLength)
+                    bytesToBeRead = _binaryBufferLength;
+                else
+                    bytesToBeRead = contentLength - totalRead;
+
+                cin.read(buffer, bytesToBeRead);
+                currentRead = cin.gcount();
+                if (currentRead != bytesToBeRead)
+                {
+                    // this should never happen because it will be against the content-length
+                    string errorMessage = string("Error reading the binary")
+                        + ", contentLength: " + to_string(contentLength)
+                        + ", totalRead: " + to_string(totalRead)
+                        + ", bytesToBeRead: " + to_string(bytesToBeRead)
+                        + ", currentRead: " + to_string(currentRead)
+                    ;
+                    _logger->error(__FILEREF__ + errorMessage);
+
+                    sendError(400, errorMessage);
+
+                    throw runtime_error(errorMessage);            
+                }
+
+                totalRead   += currentRead;
+
+                binaryFileStream.write(buffer, currentRead); 
+            }
+        }
 
         binaryFileStream.close();
         
         delete buffer;
 
+        _logger->info(__FILEREF__ + "Binary read"
+            + ", contentLength: " + to_string(contentLength)
+            + ", totalRead: " + to_string(totalRead)
+        );
+
+        /*
         {
             // Chew up any remaining stdin - this shouldn't be necessary
             // but is because mod_fastcgi doesn't handle it correctly.
@@ -111,6 +159,14 @@ void Binary::getBinaryAndResponse(
                 cin.ignore(bufferLength); 
             while (cin.gcount() == bufferLength);
         }    
+        */
+        
+        string responseBody = string("{ ")
+            + "\"sourceFileName\": \"" + sourceFileName + "\" "
+            + "\"contentLength\": " + to_string(contentLength) + " "
+            + "\"writtenBytes\": " + to_string(totalRead) + " "
+            + "}";
+        sendSuccess(201, responseBody);
     }
     catch (exception e)
     {

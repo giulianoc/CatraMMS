@@ -365,6 +365,7 @@ int APICommon::manageBinaryRequest()
                     if (it->second != "")
                     {
                         contentLength = stol(it->second);
+                        /* This is a binary, We cannot truncate it because it may be big
                         if (contentLength > _stdInMax)
                         {
                             _logger->error(__FILEREF__ + "ContentLength too long, it will be truncated and data will be lost"
@@ -374,12 +375,19 @@ int APICommon::manageBinaryRequest()
 
                             contentLength = _stdInMax;
                         }
+                         */
                     }
                     else
-                        contentLength = _stdInMax;
+                    {
+                        _logger->error(__FILEREF__ + "No ContentLength header is found, it is read all what we get");
+                        contentLength = -1;
+                    }
                 }
                 else
-                    contentLength = _stdInMax;
+                {
+                    _logger->error(__FILEREF__ + "No ContentLength header is found, it is read all what we get");
+                    contentLength = -1;
+                }
             }
         }
     }
@@ -536,17 +544,25 @@ int APICommon::manageBinaryRequest()
 
 void APICommon::sendSuccess(int htmlResponseCode, string responseBody)
 {
+    string endLine = "\r\n";
+    
+//    string httpStatus =
+//            string("HTTP/1.1 ")
+//            + to_string(htmlResponseCode) + " "
+//            + getHtmlStandardMessage(htmlResponseCode)
+//            + endLine;
+
     string httpStatus =
-            string("HTTP/1.1 ")
+            string("Status: ")
             + to_string(htmlResponseCode) + " "
             + getHtmlStandardMessage(htmlResponseCode)
-            + "\r\n";
+            + endLine;
 
     string completeHttpResponse =
             httpStatus
-            + "Content-Type: application/json; charset=utf-8\r\n"
-            + "Content-Length: " + to_string(responseBody.length()) + "\r\n"
-            + "\r\n"
+            + "Content-Type: application/json; charset=utf-8" + endLine
+            + "Content-Length: " + to_string(responseBody.length()) + endLine
+            + endLine
             + responseBody;
 
     _logger->info(__FILEREF__ + "HTTP Success"
@@ -558,23 +574,30 @@ void APICommon::sendSuccess(int htmlResponseCode, string responseBody)
 
 void APICommon::sendError(int htmlResponseCode, string errorMessage)
 {
+    string endLine = "\r\n";
+
     string responseBody =
             string("{ ")
             + "\"status\": " + to_string(htmlResponseCode) + ", "
             + "\"error\": " + "\"" + errorMessage + "\"" + " "
             + "}";
     
+//    string httpStatus =
+//            string("HTTP/1.1 ")
+//            + to_string(htmlResponseCode) + " "
+//            + getHtmlStandardMessage(htmlResponseCode)
+//            + endLine;
     string httpStatus =
-            string("HTTP/1.1 ")
+            string("Status: ")
             + to_string(htmlResponseCode) + " "
             + getHtmlStandardMessage(htmlResponseCode)
-            + "\r\n";
+            + endLine;
 
     string completeHttpResponse =
             httpStatus
-            + "Content-Type: application/json; charset=utf-8\r\n"
-            + "Content-Length: " + to_string(responseBody.length()) + "\r\n"
-            + "\r\n"
+            + "Content-Type: application/json; charset=utf-8" + endLine
+            + "Content-Length: " + to_string(responseBody.length()) + endLine
+            + endLine
             + responseBody
             ;
     

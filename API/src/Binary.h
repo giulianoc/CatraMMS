@@ -39,6 +39,7 @@ public:
     );
     
 private:
+    unsigned long       _binaryBufferLength;
 };
 
 #endif
