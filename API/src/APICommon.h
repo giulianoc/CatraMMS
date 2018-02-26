@@ -32,9 +32,11 @@ public:
     
     virtual ~APICommon();
     
-    int listen(bool binaryFlag);
+    int listen();
 
-    virtual void manageRequestAndResponse(
+    int manageBinaryRequest();
+
+virtual void manageRequestAndResponse(
         string requestURI,
         string requestMethod,
         unordered_map<string, string> queryParameters,
@@ -43,7 +45,7 @@ public:
         string requestBody
     ) = 0;
     
-    virtual void manageBinaryRequestAndResponse(
+    virtual void getBinaryAndResponse(
         string requestURI,
         string requestMethod,
         unordered_map<string, string> queryParameters,

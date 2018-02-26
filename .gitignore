@@ -16,6 +16,8 @@ install_manifest.txt
 compile_commands.json
 nbproject
 
+*.cgi
+*.fcgi
 *.sln
 *.ncb
 *.sln

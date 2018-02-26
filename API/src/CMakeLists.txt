@@ -24,10 +24,12 @@ SET (COMMON_SOURCES
 	APICommon.cpp
 )
 
-SET (SOURCES
-	API
-	Binary
-	echo
+SET (SOURCES_API
+	API.cpp
+)
+
+SET (SOURCES_BINARY
+	Binary.cpp
 )
 
 SET (HEADERS
@@ -51,35 +53,60 @@ else()
 	link_directories ("/app/5/ThirdPartySoftware/mysql-connector-c++-1.1.9-linux-ubuntu16.10-x86-64bit/lib")
 endif()
 
-foreach(SOURCE ${SOURCES})
-    add_executable(${SOURCE}.fcgi ${SOURCE}.cpp ${COMMON_SOURCES} ${HEADERS})
-
-    target_link_libraries (${SOURCE}.fcgi CMSEngine)
-    target_link_libraries (${SOURCE}.fcgi mysqlcppconn)
-    target_link_libraries (${SOURCE}.fcgi jsoncpp)
+#API
+    add_executable(API.fcgi API.cpp ${COMMON_SOURCES} ${HEADERS})
+    target_link_libraries (API.fcgi CMSEngine)
+    target_link_libraries (API.fcgi mysqlcppconn)
+    target_link_libraries (API.fcgi jsoncpp)
     if (APPLE)
     else()
-	    target_link_libraries (${SOURCE}.fcgi Magick++-7.Q16HDRI)
+	    target_link_libraries (API.fcgi Magick++-7.Q16HDRI)
     endif()
-    target_link_libraries(${SOURCE}.fcgi fcgi++)
-    target_link_libraries(${SOURCE}.fcgi curl)
-    target_link_libraries(${SOURCE}.fcgi fcgi)
-    target_link_libraries (${SOURCE}.fcgi Tools)
-target_link_libraries (${SOURCE}.fcgi ErrMsg)
+    target_link_libraries(API.fcgi fcgi++)
+    target_link_libraries(API.fcgi curl)
+    target_link_libraries(API.fcgi fcgi)
+    target_link_libraries (API.fcgi Tools)
+target_link_libraries (API.fcgi ErrMsg)
     if(CRYPTO_FOUND)
 	    if (APPLE)
-		    target_link_libraries (${SOURCE}.fcgi ${CRYPTO_LIBRARIES})
+		    target_link_libraries (API.fcgi ${CRYPTO_LIBRARIES})
 	    else()
-		target_link_libraries (${SOURCE}.fcgi crypt)
+		target_link_libraries (API.fcgi crypt)
 	    endif()
     endif()
     if (ZLIB_FOUND)
-	    target_link_libraries(${SOURCE}.fcgi ${ZLIB_LIBRARIES})
+	    target_link_libraries(API.fcgi ${ZLIB_LIBRARIES})
     endif()
-    target_link_libraries (${SOURCE}.fcgi pthread)
+    target_link_libraries (API.fcgi pthread)
+    list(APPEND TARGETS API.fcgi)
 
-    list(APPEND TARGETS ${SOURCE}.fcgi)
-endforeach()
+#Binary
+    add_executable(Binary.cgi Binary.cpp ${COMMON_SOURCES} ${HEADERS})
+    target_link_libraries (Binary.cgi CMSEngine)
+    target_link_libraries (Binary.cgi mysqlcppconn)
+    target_link_libraries (Binary.cgi jsoncpp)
+    if (APPLE)
+    else()
+	    target_link_libraries (Binary.cgi Magick++-7.Q16HDRI)
+    endif()
+    target_link_libraries(Binary.cgi fcgi++)
+    target_link_libraries(Binary.cgi curl)
+    target_link_libraries(Binary.cgi fcgi)
+    target_link_libraries (Binary.cgi Tools)
+target_link_libraries (Binary.cgi ErrMsg)
+    if(CRYPTO_FOUND)
+	    if (APPLE)
+		    target_link_libraries (Binary.cgi ${CRYPTO_LIBRARIES})
+	    else()
+		target_link_libraries (Binary.cgi crypt)
+	    endif()
+    endif()
+    if (ZLIB_FOUND)
+	    target_link_libraries(Binary.cgi ${ZLIB_LIBRARIES})
+    endif()
+    target_link_libraries (Binary.cgi pthread)
+    list(APPEND TARGETS Binary.cgi)
+
 
 install (TARGETS DESTINATION bin)
 

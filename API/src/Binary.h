@@ -30,7 +30,7 @@ public:
         unsigned long contentLength,
         string requestBody);
 
-    virtual void manageBinaryRequestAndResponse(
+    virtual void getBinaryAndResponse(
             string requestURI,
             string requestMethod,
             unordered_map<string, string> queryParameters,

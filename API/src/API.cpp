@@ -18,9 +18,7 @@ int main(int argc, char** argv)
 {
     API api;
 
-    bool binaryFlag = false;
-
-    return api.listen(binaryFlag);
+    return api.listen();
 }
 
 API::API(): APICommon() {
@@ -33,7 +31,7 @@ API::API(): APICommon() {
 API::~API() {
 }
 
-void API::manageBinaryRequestAndResponse(
+void API::getBinaryAndResponse(
         string requestURI,
         string requestMethod,
         unordered_map<string, string> queryParameters,
@@ -41,7 +39,14 @@ void API::manageBinaryRequestAndResponse(
         unsigned long contentLength
 )
 {
+    _logger->error(__FILEREF__ + "API application is able to manage ONLY NON-Binary requests");
     
+    string errorMessage = string("Internal server error");
+    _logger->error(__FILEREF__ + errorMessage);
+
+    sendError(500, errorMessage);
+
+    throw runtime_error(errorMessage);
 }
 
 void API::manageRequestAndResponse(
@@ -72,7 +77,7 @@ void API::manageRequestAndResponse(
         if (!isAdminAPI)
         {
             string errorMessage = string("APIKey flags does not have the ADMIN permission"
-                    ", isAdminAPI: " + isAdminAPI
+                    ", isAdminAPI: " + to_string(isAdminAPI)
                     );
             _logger->error(__FILEREF__ + errorMessage);
 
@@ -89,7 +94,7 @@ void API::manageRequestAndResponse(
         if (!isAdminAPI)
         {
             string errorMessage = string("APIKey flags does not have the ADMIN permission"
-                    ", isAdminAPI: " + isAdminAPI
+                    ", isAdminAPI: " + to_string(isAdminAPI)
                     );
             _logger->error(__FILEREF__ + errorMessage);
 
@@ -106,7 +111,7 @@ void API::manageRequestAndResponse(
         if (!isAdminAPI)
         {
             string errorMessage = string("APIKey flags does not have the ADMIN permission"
-                    ", isAdminAPI: " + isAdminAPI
+                    ", isAdminAPI: " + to_string(isAdminAPI)
                     );
             _logger->error(__FILEREF__ + errorMessage);
 
@@ -123,7 +128,7 @@ void API::manageRequestAndResponse(
         if (!isUserAPI)
         {
             string errorMessage = string("APIKey flags does not have the USER permission"
-                    ", isUserAPI: " + isUserAPI
+                    ", isUserAPI: " + to_string(isUserAPI)
                     );
             _logger->error(__FILEREF__ + errorMessage);
 
@@ -719,10 +724,12 @@ void API::ingestContent(
         );
 
         {
-            ofstream of(customerFTPMetadataPathName);
-            of << requestBody;
-            if (!of.good())
+            ofstream metadataStream(customerFTPMetadataPathName);
+            metadataStream << requestBody;
+            if (!metadataStream.good())
             {
+                metadataStream.close();
+                
                 string errorMessage = string("The writing of Metadata file failed")
                         + ", customerFTPMetadataPathName: " + customerFTPMetadataPathName
                         + ", strerror(errno): " + strerror(errno)
@@ -731,6 +738,8 @@ void API::ingestContent(
                 
                 throw runtime_error(errorMessage);
             }
+            
+            metadataStream.close();
         }
 
         string responseBody = string("{ ")
