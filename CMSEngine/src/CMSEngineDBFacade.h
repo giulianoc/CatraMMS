@@ -280,9 +280,12 @@ public:
         StartIngestion,    
             // metadata moved in WorkingArea, metadata partially validated
         
-        SourceDownloadingInProgress,    
+        SourceDownloadingInProgress,
             // media source is remote, downloading in FTP repository started
         
+        SourceUploadingInProgress,
+            // media source is remote, uploading in FTP repository is not done/completed
+
         QueuedForEncoding,   
             // metadata ingestion is finished (saved into DB), media source is in CMS repository
 
@@ -323,6 +326,8 @@ public:
                 return "StartIngestion";
             case IngestionStatus::SourceDownloadingInProgress:
                 return "SourceDownloadingInProgress";
+            case IngestionStatus::SourceUploadingInProgress:
+                return "SourceUploadingInProgress";
             case IngestionStatus::QueuedForEncoding:
                 return "QueuedForEncoding";
             case IngestionStatus::End_DownloadCancelledByUser:
@@ -355,6 +360,8 @@ public:
             return IngestionStatus::StartIngestion;
         else if (lowerCase == "sourcedownloadinginprogress")
             return IngestionStatus::SourceDownloadingInProgress;
+        else if (lowerCase == "sourceuploadinginprogress")
+            return IngestionStatus::SourceUploadingInProgress;
         else if (lowerCase == "queuedforencoding")
             return IngestionStatus::QueuedForEncoding;
         else if (lowerCase == "end_downloadcancelledbyuser")
@@ -461,6 +468,7 @@ public:
         int64_t customerKey,
         string metadataFileName,
         string metadataFileContent,
+        string sourceReference,
         IngestionType ingestionType,
         IngestionStatus ingestionStatus,
         string processorCMS,
@@ -487,10 +495,13 @@ public:
 
     void updateIngestionJob (
         int64_t ingestionJobKey,
+        string sourceReference,
         IngestionType ingestionType,
         IngestionStatus newIngestionStatus,
         string processorCMS,
         string errorMessage);
+
+    string getSourceReferenceOfUploadingInProgress(int64_t ingestionJobKey);
 
     void removeIngestionJob (
         int64_t ingestionJobKey);

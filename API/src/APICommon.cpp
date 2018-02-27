@@ -73,7 +73,8 @@ APICommon::APICommon()
 
     _managedRequestsNumber = 0;
     _processId = getpid();
-    _stdInMax = 1000000;
+    _maxAPIContentLength = 1000000;
+    _maxBinaryContentLength = 10 * 1000 * 1000 * 1000;  // 10GB
 }
 
 APICommon::~APICommon() {
@@ -127,21 +128,21 @@ int APICommon::listen()
                         if (it->second != "")
                         {
                             contentLength = stol(it->second);
-                            if (contentLength > _stdInMax)
+                            if (contentLength > _maxAPIContentLength)
                             {
                                 _logger->error(__FILEREF__ + "ContentLength too long, it will be truncated and data will be lost"
                                     + ", contentLength: " + to_string(contentLength)
-                                    + ", _stdInMax: " + to_string(_stdInMax)
+                                    + ", _maxAPIContentLength: " + to_string(_maxAPIContentLength)
                                 );
 
-                                contentLength = _stdInMax;
+                                contentLength = _maxAPIContentLength;
                             }
                         }
                         else
-                            contentLength = _stdInMax;
+                            contentLength = _maxAPIContentLength;
                     }
                     else
-                        contentLength = _stdInMax;
+                        contentLength = _maxAPIContentLength;
 
                     {
                         char* content = new char[contentLength];
@@ -365,27 +366,28 @@ int APICommon::manageBinaryRequest()
                     if (it->second != "")
                     {
                         contentLength = stol(it->second);
-                        /* This is a binary, We cannot truncate it because it may be big
-                        if (contentLength > _stdInMax)
+                        if (contentLength > _maxBinaryContentLength)
                         {
-                            _logger->error(__FILEREF__ + "ContentLength too long, it will be truncated and data will be lost"
+                            string errorMessage = string("ContentLength too long")
                                 + ", contentLength: " + to_string(contentLength)
-                                + ", _stdInMax: " + to_string(_stdInMax)
-                            );
+                                + ", _maxBinaryContentLength: " + to_string(_maxBinaryContentLength)
+                            ;
+                            _logger->error(__FILEREF__ + errorMessage);
 
-                            contentLength = _stdInMax;
+                            throw runtime_error(errorMessage);
                         }
-                         */
                     }
                     else
                     {
-                        _logger->error(__FILEREF__ + "No ContentLength header is found, it is read all what we get");
+                        _logger->error(__FILEREF__ + "No ContentLength header is found");
+                        
                         contentLength = -1;
                     }
                 }
                 else
                 {
-                    _logger->error(__FILEREF__ + "No ContentLength header is found, it is read all what we get");
+                    _logger->error(__FILEREF__ + "No ContentLength header is found");
+                    
                     contentLength = -1;
                 }
             }

@@ -328,7 +328,7 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
 
                         if (ingestionJobKey == -1)
                             _cmsEngineDBFacade->addIngestionJob (customer->_customerKey, 
-                                directoryEntry, metadataFileContent, CMSEngineDBFacade::IngestionType::Unknown, 
+                                directoryEntry, metadataFileContent, "", CMSEngineDBFacade::IngestionType::Unknown, 
                                 CMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed, 
                                 _processorCMS, errorMessage);
                         else
@@ -350,7 +350,7 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
 
                         if (ingestionJobKey == -1)
                             _cmsEngineDBFacade->addIngestionJob (customer->_customerKey, 
-                                directoryEntry, metadataFileContent, CMSEngineDBFacade::IngestionType::Unknown, 
+                                directoryEntry, metadataFileContent, "", CMSEngineDBFacade::IngestionType::Unknown, 
                                 CMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed, 
                                 _processorCMS, errorMessage);
                         else
@@ -361,11 +361,22 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                         throw e;
                     }
 
-                    tuple<bool, string, string, string, int> mediaSourceDetails;
+                    bool mediaSourceToBeDownload;
+                    bool localMediaSourceUploadCompleted;
+                    string mediaSourceReference;
+                    string mediaSourceFileName;
+                    string md5FileCheckSum;
+                    int fileSizeInBytes;
                     try
                     {
-                        mediaSourceDetails = getMediaSourceDetails(
+                        tuple<bool, bool, string, string, string, int> mediaSourceDetails;
+                        
+                        mediaSourceDetails = getMediaSourceDetails(customer,
                                 ingestionTypeAndContentType.first, metadataRoot);
+
+                        tie(mediaSourceToBeDownload, localMediaSourceUploadCompleted,
+                                mediaSourceReference, mediaSourceFileName, 
+                                md5FileCheckSum, fileSizeInBytes) = mediaSourceDetails;                        
                     }
                     catch(runtime_error e)
                     {
@@ -379,12 +390,12 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
 
                         if (ingestionJobKey == -1)
                             _cmsEngineDBFacade->addIngestionJob (customer->_customerKey, 
-                                directoryEntry, metadataFileContent, ingestionTypeAndContentType.first, 
+                                directoryEntry, metadataFileContent, "", ingestionTypeAndContentType.first, 
                                 CMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
                                 _processorCMS, errorMessage);
                         else
                             _cmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                                ingestionTypeAndContentType.first,
+                                "", ingestionTypeAndContentType.first,
                                 CMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
                                 _processorCMS, errorMessage);
 
@@ -402,12 +413,12 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
 
                         if (ingestionJobKey == -1)
                             _cmsEngineDBFacade->addIngestionJob (customer->_customerKey, 
-                                directoryEntry, metadataFileContent, ingestionTypeAndContentType.first, 
+                                directoryEntry, metadataFileContent, "", ingestionTypeAndContentType.first, 
                                 CMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
                                 _processorCMS, errorMessage);
                         else
                             _cmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                                ingestionTypeAndContentType.first,
+                                "", ingestionTypeAndContentType.first,
                                 CMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
                                 _processorCMS, errorMessage);
 
@@ -420,16 +431,16 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                         if (ingestionJobKey == -1)
                         {
                             ingestionJobKey = _cmsEngineDBFacade->addIngestionJob (customer->_customerKey, 
-                                directoryEntry, metadataFileContent, ingestionTypeAndContentType.first, 
+                                directoryEntry, metadataFileContent, mediaSourceReference, ingestionTypeAndContentType.first, 
                                 CMSEngineDBFacade::IngestionStatus::StartIngestion, 
                                 _processorCMS, errorMessage);
                         }
                         else
                         {
-                            _cmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                                ingestionTypeAndContentType.first,
-                                CMSEngineDBFacade::IngestionStatus::StartIngestion, 
-                                _processorCMS, errorMessage);
+                            _cmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
+                                    mediaSourceReference, ingestionTypeAndContentType.first,
+                                    CMSEngineDBFacade::IngestionStatus::StartIngestion, 
+                                    _processorCMS, errorMessage);
                         }
                     }
                     catch(exception e)
@@ -449,16 +460,6 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                         // mediaSourceReference could be a URL or a filename.
                         // In this last case, it will be the same as mediaSourceFileName
                         
-                        bool mediaSourceToBeDownload;
-                        string mediaSourceReference;
-                        string mediaSourceFileName;
-                        string md5FileCheckSum;
-                        int fileSizeInBytes;
-
-                        tie(mediaSourceToBeDownload, mediaSourceReference,
-                                mediaSourceFileName, md5FileCheckSum, fileSizeInBytes) 
-                                = mediaSourceDetails;                        
-
                         if (mediaSourceToBeDownload)
                         {
                             thread downloadMediaSource(&CMSEngineProcessor::downloadMediaSourceFile, this, 
@@ -468,6 +469,11 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                             
                             _cmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                 CMSEngineDBFacade::IngestionStatus::SourceDownloadingInProgress, "");
+                        }
+                        else if (!localMediaSourceUploadCompleted)
+                        {
+                            _cmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                CMSEngineDBFacade::IngestionStatus::SourceUploadingInProgress, "");
                         }
                         else
                         {
@@ -639,10 +645,11 @@ void CMSEngineProcessor::handleLocalAssetIngestionEvent (
         throw e;
     }
 
-    tuple<bool, string, string, string, int> mediaSourceDetails;
+    tuple<bool, bool, string, string, string, int> mediaSourceDetails;
     try
     {
         mediaSourceDetails = getMediaSourceDetails(
+                localAssetIngestionEvent->getCustomer(),
                 ingestionTypeAndContentType.first, metadataRoot);
     }
     catch(runtime_error e)
@@ -682,8 +689,8 @@ void CMSEngineProcessor::handleLocalAssetIngestionEvent (
 
     try
     {
-        string md5FileCheckSum = get<3>(mediaSourceDetails);
-        int fileSizeInBytes = get<4>(mediaSourceDetails);
+        string md5FileCheckSum = get<4>(mediaSourceDetails);
+        int fileSizeInBytes = get<5>(mediaSourceDetails);
 
         validateMediaSourceFile(_cmsStorage->getCustomerFTPMediaSourcePathName(
                     localAssetIngestionEvent->getCustomer(), localAssetIngestionEvent->getMediaSourceFileName()),
@@ -730,9 +737,12 @@ void CMSEngineProcessor::handleLocalAssetIngestionEvent (
     {                
         bool partitionIndexToBeCalculated   = true;
         bool deliveryRepositoriesToo        = true;
+        string customerFTPMediaSourcePathNameCompleted =
+                _cmsStorage->getCustomerFTPMediaSourcePathName(
+                localAssetIngestionEvent->getCustomer(), localAssetIngestionEvent->getMediaSourceFileName());
+        customerFTPMediaSourcePathNameCompleted.append(".completed");
         cmsAssetPathName = _cmsStorage->moveAssetInCMSRepository(
-            _cmsStorage->getCustomerFTPMediaSourcePathName(
-                localAssetIngestionEvent->getCustomer(), localAssetIngestionEvent->getMediaSourceFileName()),
+            customerFTPMediaSourcePathNameCompleted,
             localAssetIngestionEvent->getCustomer()->_directoryName,
             localAssetIngestionEvent->getMediaSourceFileName(),
             relativePathToBeUsed,
@@ -861,16 +871,16 @@ void CMSEngineProcessor::handleLocalAssetIngestionEvent (
 
         pair<int64_t,int64_t> mediaItemKeyAndPhysicalPathKey =
                 _cmsEngineDBFacade->saveIngestedContentMetadata (
-                localAssetIngestionEvent->getCustomer(),
-                localAssetIngestionEvent->getIngestionJobKey(),
-                metadataRoot,
-                relativePathToBeUsed,
-                localAssetIngestionEvent->getMediaSourceFileName(),
-                cmsPartitionIndexUsed,
-                sizeInBytes,
-                videoOrAudioDurationInMilliSeconds,
-                imageWidth,
-                imageHeight
+                    localAssetIngestionEvent->getCustomer(),
+                    localAssetIngestionEvent->getIngestionJobKey(),
+                    metadataRoot,
+                    relativePathToBeUsed,
+                    localAssetIngestionEvent->getMediaSourceFileName(),
+                    cmsPartitionIndexUsed,
+                    sizeInBytes,
+                    videoOrAudioDurationInMilliSeconds,
+                    imageWidth,
+                    imageHeight
         );
         
         mediaItemKey = mediaItemKeyAndPhysicalPathKey.first;
@@ -1059,6 +1069,7 @@ void CMSEngineProcessor::handleGenerateImageToIngestEvent (
     string imagePathName = generateImageToIngestEvent->getCustomerFTPRepository()
             + "/"
             + generateImageToIngestEvent->getImageFileName()
+            + ".completed"
     ;
 
     size_t extensionIndex = generateImageToIngestEvent->getImageFileName().find_last_of(".");
@@ -1388,12 +1399,12 @@ CMSEngineDBFacade::ContentType CMSEngineProcessor::validateContentIngestionMetad
     return contentType;
 }
 
-tuple<bool, string, string, string, int> CMSEngineProcessor::getMediaSourceDetails(
-        CMSEngineDBFacade::IngestionType ingestionType,
+tuple<bool, bool, string, string, string, int> CMSEngineProcessor::getMediaSourceDetails(
+        shared_ptr<Customer> customer, CMSEngineDBFacade::IngestionType ingestionType,
         Json::Value root)        
 {
-    tuple<bool, string, string, string, int> mediaSourceDetails;
-    
+    bool mediaSourceToBeDownload;
+    string mediaSourceReference;    // URL or local file name
     string mediaSourceFileName;
     
     string field = "ContentIngestion";
@@ -1401,9 +1412,6 @@ tuple<bool, string, string, string, int> CMSEngineProcessor::getMediaSourceDetai
 
     if (ingestionType == CMSEngineDBFacade::IngestionType::ContentIngestion)
     {
-        string mediaSourceReference;    // URL or local file name
-        bool mediaSourceToBeDownload;
-
         field = "SourceReference";
         mediaSourceReference = contentIngestion.get(field, "XXX").asString();
         
@@ -1451,9 +1459,6 @@ tuple<bool, string, string, string, int> CMSEngineProcessor::getMediaSourceDetai
             mediaSourceFileName = mediaSourceReference;
             mediaSourceToBeDownload = false;
         }
-
-        get<0>(mediaSourceDetails) = mediaSourceToBeDownload;
-        get<1>(mediaSourceDetails) = mediaSourceReference;
     }   
     else
     {
@@ -1463,38 +1468,46 @@ tuple<bool, string, string, string, int> CMSEngineProcessor::getMediaSourceDetai
 
         throw runtime_error(errorMessage);
     }
-    
-    get<2>(mediaSourceDetails) = mediaSourceFileName;
 
+    bool localMediaSourceUploadCompleted = false;
+    if (!mediaSourceToBeDownload)
+    {
+        string ftpDirectoryMediaSourceFileName = _cmsStorage->getCustomerFTPMediaSourcePathName(
+                    customer, mediaSourceFileName) + ".completed";
+        
+        localMediaSourceUploadCompleted = FileIO::fileExisting(ftpDirectoryMediaSourceFileName);
+    }
+
+    string md5FileCheckSum;
     field = "MD5FileCheckSum";
     if (_cmsEngineDBFacade->isMetadataPresent(contentIngestion, field))
     {
         MD5         md5;
         char        md5RealDigest [32 + 1];
 
-        string md5FileCheckSum = contentIngestion.get(field, "XXX").asString();
-        
-        get<3>(mediaSourceDetails) = md5FileCheckSum;
+        md5FileCheckSum = contentIngestion.get(field, "XXX").asString();
     }
-    else
-        get<3>(mediaSourceDetails) = string("");
 
+    int fileSizeInBytes = -1;
     field = "FileSizeInBytes";
     if (_cmsEngineDBFacade->isMetadataPresent(contentIngestion, field))
-    {
-        int fileSizeInBytes = contentIngestion.get(field, 3).asInt();
+        fileSizeInBytes = contentIngestion.get(field, 3).asInt();
 
-        get<4>(mediaSourceDetails) = fileSizeInBytes;
-    }
-    else
-        get<4>(mediaSourceDetails) = -1;
+    tuple<bool, bool, string, string, string, int> mediaSourceDetails;
+    get<0>(mediaSourceDetails) = mediaSourceToBeDownload;
+    get<1>(mediaSourceDetails) = localMediaSourceUploadCompleted;
+    get<2>(mediaSourceDetails) = mediaSourceReference;
+    get<3>(mediaSourceDetails) = mediaSourceFileName;
+    get<4>(mediaSourceDetails) = md5FileCheckSum;
+    get<5>(mediaSourceDetails) = fileSizeInBytes;
 
     _logger->info(__FILEREF__ + "media source file to be processed"
         + ", mediaSourceToBeDownload: " + to_string(get<0>(mediaSourceDetails))
-        + ", mediaSourceReference: " + get<1>(mediaSourceDetails)
-        + ", mediaSourceFileName: " + get<2>(mediaSourceDetails)
-        + ", md5FileCheckSum: " + get<3>(mediaSourceDetails)
-        + ", fileSizeInBytes: " + to_string(get<4>(mediaSourceDetails))
+        + ", localMediaSourceUploadCompleted: " + to_string(get<1>(mediaSourceDetails))
+        + ", mediaSourceReference: " + get<2>(mediaSourceDetails)
+        + ", mediaSourceFileName: " + get<3>(mediaSourceDetails)
+        + ", md5FileCheckSum: " + get<4>(mediaSourceDetails)
+        + ", fileSizeInBytes: " + to_string(get<5>(mediaSourceDetails))
     );
 
     
@@ -1668,6 +1681,16 @@ RESUMING FILE TRANSFERS
                     + ", resuming from fileSize: " + to_string(fileSize)
                 );
                 request.perform();
+            }
+
+            // rename to .completed
+            {
+                string customerFTPMediaSourcePathNameCompleted =
+                    _cmsStorage->getCustomerFTPMediaSourcePathName(customer, mediaSourceFileName);
+                customerFTPMediaSourcePathNameCompleted.append(".completed");
+                FileIO::moveFile (
+                        _cmsStorage->getCustomerFTPMediaSourcePathName(customer, mediaSourceFileName), 
+                        customerFTPMediaSourcePathNameCompleted);
             }
 
             downloadingCompleted = true;

@@ -24,6 +24,7 @@ int main(int argc, char** argv)
 Binary::Binary(): APICommon() 
 {
     _binaryBufferLength     = 1024 * 10;
+    _binaryBufferLength     = 1024 * 10;
 }
 
 Binary::~Binary() {
@@ -60,18 +61,33 @@ void Binary::getBinaryAndResponse(
 
     try
     {        
-        auto sourceFileNameIt = queryParameters.find("sourceFileName");
-        if (sourceFileNameIt == queryParameters.end())
+        auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
+        if (ingestionJobKeyIt == queryParameters.end())
         {
-            string errorMessage = string("'sourceFileName' query parameter is missing");
+            string errorMessage = string("'ingestionJobKey' URI parameter is missing");
             _logger->error(__FILEREF__ + errorMessage);
 
             sendError(400, errorMessage);
 
             throw runtime_error(errorMessage);            
         }
-        string sourceFileName = sourceFileNameIt->second;
+        int64_t ingestionJobKey = stol(ingestionJobKeyIt->second);
 
+        string sourceFileName;
+        try
+        {
+            sourceFileName = _cmsEngineDBFacade->getSourceReferenceOfUploadingInProgress(ingestionJobKey);
+        }
+        catch(exception e)
+        {
+            string errorMessage = string("'ingestionJobKey' is wrong");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(400, errorMessage);
+
+            throw runtime_error(errorMessage);            
+        }
+        
         shared_ptr<Customer> customer = get<0>(customerAndFlags);
         string customerFTPBinaryPathName = _cmsStorage->getCustomerFTPRepository(customer);
         customerFTPBinaryPathName
@@ -82,91 +98,124 @@ void Binary::getBinaryAndResponse(
         _logger->info(__FILEREF__ + "Customer FTP Binary path name"
             + ", customerFTPBinaryPathName: " + customerFTPBinaryPathName
         );
-
-        ofstream binaryFileStream(customerFTPBinaryPathName, ofstream::binary);
-        buffer = new char [_binaryBufferLength];
-
-        unsigned long currentRead;
-        unsigned long totalRead = 0;
-        if (contentLength == -1)
+        
+        if (requestMethod == "HEAD")
         {
-            // we do not have the content-length header, we will read all what we receive
-            do
-            {
-                cin.read(buffer, _binaryBufferLength);
-
-                currentRead = cin.gcount();
-
-                totalRead   += currentRead;
-
-                binaryFileStream.write(buffer, currentRead); 
-            }
-            while (currentRead == _binaryBufferLength);
+            
         }
         else
         {
-            // we have the content-length and we will use it to read the binary
-            
-            unsigned long bytesToBeRead;
-            while (totalRead < contentLength)
+            chrono::system_clock::time_point uploadStartTime = chrono::system_clock::now();
+
+            ofstream binaryFileStream(customerFTPBinaryPathName, ofstream::binary);
+            buffer = new char [_binaryBufferLength];
+
+            unsigned long currentRead;
+            unsigned long totalRead = 0;
+            if (contentLength == -1)
             {
-                if (contentLength - totalRead >= _binaryBufferLength)
-                    bytesToBeRead = _binaryBufferLength;
-                else
-                    bytesToBeRead = contentLength - totalRead;
-
-                cin.read(buffer, bytesToBeRead);
-                currentRead = cin.gcount();
-                if (currentRead != bytesToBeRead)
+                // we do not have the content-length header, we will read all what we receive
+                do
                 {
-                    // this should never happen because it will be against the content-length
-                    string errorMessage = string("Error reading the binary")
-                        + ", contentLength: " + to_string(contentLength)
-                        + ", totalRead: " + to_string(totalRead)
-                        + ", bytesToBeRead: " + to_string(bytesToBeRead)
-                        + ", currentRead: " + to_string(currentRead)
-                    ;
-                    _logger->error(__FILEREF__ + errorMessage);
+                    cin.read(buffer, _binaryBufferLength);
 
-                    sendError(400, errorMessage);
+                    currentRead = cin.gcount();
 
-                    throw runtime_error(errorMessage);            
+                    totalRead   += currentRead;
+
+                    binaryFileStream.write(buffer, currentRead); 
+
+                    if (totalRead >= _maxBinaryContentLength)
+                    {
+                        string errorMessage = string("Binary too long")
+                            + ", totalRead: " + to_string(totalRead)
+                            + ", _maxBinaryContentLength: " + to_string(_maxBinaryContentLength)
+                        ;
+                        _logger->error(__FILEREF__ + errorMessage);
+
+                        sendError(400, errorMessage);
+
+                        throw runtime_error(errorMessage);            
+                    }
                 }
-
-                totalRead   += currentRead;
-
-                binaryFileStream.write(buffer, currentRead); 
+                while (currentRead == _binaryBufferLength);
             }
+            else
+            {
+                // we have the content-length and we will use it to read the binary
+
+                unsigned long bytesToBeRead;
+                while (totalRead < contentLength)
+                {
+                    if (contentLength - totalRead >= _binaryBufferLength)
+                        bytesToBeRead = _binaryBufferLength;
+                    else
+                        bytesToBeRead = contentLength - totalRead;
+
+                    cin.read(buffer, bytesToBeRead);
+                    currentRead = cin.gcount();
+                    if (currentRead != bytesToBeRead)
+                    {
+                        // this should never happen because it will be against the content-length
+                        string errorMessage = string("Error reading the binary")
+                            + ", contentLength: " + to_string(contentLength)
+                            + ", totalRead: " + to_string(totalRead)
+                            + ", bytesToBeRead: " + to_string(bytesToBeRead)
+                            + ", currentRead: " + to_string(currentRead)
+                        ;
+                        _logger->error(__FILEREF__ + errorMessage);
+
+                        sendError(400, errorMessage);
+
+                        throw runtime_error(errorMessage);            
+                    }
+
+                    totalRead   += currentRead;
+
+                    binaryFileStream.write(buffer, currentRead); 
+                }
+            }
+
+            binaryFileStream.close();
+
+            delete buffer;
+
+            // rename to .completed
+            {
+                string customerFTPBinaryPathNameCompleted =
+                    customerFTPBinaryPathName;
+                customerFTPBinaryPathName.append(".completed");
+                FileIO::moveFile (customerFTPBinaryPathName, customerFTPBinaryPathName);
+            }
+
+            unsigned long elapsedUploadInSeconds = chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - uploadStartTime).count();
+            _logger->info(__FILEREF__ + "Binary read"
+                + ", contentLength: " + to_string(contentLength)
+                + ", totalRead: " + to_string(totalRead)
+                + ", elapsedUploadInSeconds: " + to_string(elapsedUploadInSeconds)
+            );
+
+            /*
+            {
+                // Chew up any remaining stdin - this shouldn't be necessary
+                // but is because mod_fastcgi doesn't handle it correctly.
+
+                // ignore() doesn't set the eof bit in some versions of glibc++
+                // so use gcount() instead of eof()...
+                do 
+                    cin.ignore(bufferLength); 
+                while (cin.gcount() == bufferLength);
+            }    
+            */
+
+            string responseBody = string("{ ")
+                + "\"sourceFileName\": \"" + sourceFileName + "\" "
+                + "\"contentLength\": " + to_string(contentLength) + " "
+                + "\"writtenBytes\": " + to_string(totalRead) + " "
+                + "\"elapsedUploadInSeconds\": " + to_string(elapsedUploadInSeconds) + " "
+                + "}";
+            sendSuccess(201, responseBody);
         }
-
-        binaryFileStream.close();
-        
-        delete buffer;
-
-        _logger->info(__FILEREF__ + "Binary read"
-            + ", contentLength: " + to_string(contentLength)
-            + ", totalRead: " + to_string(totalRead)
-        );
-
-        /*
-        {
-            // Chew up any remaining stdin - this shouldn't be necessary
-            // but is because mod_fastcgi doesn't handle it correctly.
-
-            // ignore() doesn't set the eof bit in some versions of glibc++
-            // so use gcount() instead of eof()...
-            do 
-                cin.ignore(bufferLength); 
-            while (cin.gcount() == bufferLength);
-        }    
-        */
-        
-        string responseBody = string("{ ")
-            + "\"sourceFileName\": \"" + sourceFileName + "\" "
-            + "\"contentLength\": " + to_string(contentLength) + " "
-            + "\"writtenBytes\": " + to_string(totalRead) + " "
-            + "}";
-        sendSuccess(201, responseBody);
     }
     catch (exception e)
     {

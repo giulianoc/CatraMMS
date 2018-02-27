@@ -59,6 +59,8 @@ protected:
     shared_ptr<CMSEngine>           _cmsEngine;
     shared_ptr<CMSStorage>          _cmsStorage;
 
+    unsigned long long   _maxBinaryContentLength;
+
     void sendSuccess(int htmlResponseCode, string responseBody);
     void sendError(int htmlResponseCode, string errorMessage);
     void sendEmail(string to, string subject, vector<string>& emailBody);
@@ -66,7 +68,7 @@ protected:
 private:
     int             _managedRequestsNumber;
     long            _processId;
-    unsigned long   _stdInMax;
+    unsigned long   _maxAPIContentLength;
 
     void fillEnvironmentDetails(
         const char * const * envp, 

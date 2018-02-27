@@ -58,7 +58,8 @@ private:
 
     CMSEngineDBFacade::ContentType validateContentIngestionMetadata(Json::Value encoding);
 
-    tuple<bool, string, string, string, int> getMediaSourceDetails(
+    tuple<bool, bool, string, string, string, int> getMediaSourceDetails(
+        shared_ptr<Customer> customer,
         CMSEngineDBFacade::IngestionType ingestionType,
         Json::Value root);
 
