@@ -52,6 +52,7 @@ void Binary::manageRequestAndResponse(
 void Binary::getBinaryAndResponse(
         string requestURI,
         string requestMethod,
+        string xCatraCMSResumeHeader,
         unordered_map<string, string> queryParameters,
         tuple<shared_ptr<Customer>,bool,bool>& customerAndFlags,
         unsigned long contentLength
@@ -60,7 +61,7 @@ void Binary::getBinaryAndResponse(
     char* buffer = nullptr;
 
     try
-    {        
+    {
         auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
         if (ingestionJobKeyIt == queryParameters.end())
         {
@@ -80,7 +81,7 @@ void Binary::getBinaryAndResponse(
         }
         catch(exception e)
         {
-            string errorMessage = string("'ingestionJobKey' is wrong");
+            string errorMessage = string("The 'ingestionJobKey' URI parameter is not found");
             _logger->error(__FILEREF__ + errorMessage);
 
             sendError(400, errorMessage);
@@ -101,13 +102,85 @@ void Binary::getBinaryAndResponse(
         
         if (requestMethod == "HEAD")
         {
-            
+            unsigned long fileSize = 0;
+            try
+            {
+                if (FileIO::fileExisting(customerFTPBinaryPathName))
+                {
+                    bool inCaseOfLinkHasItToBeRead = false;
+                    fileSize = FileIO::getFileSizeInBytes (
+                        customerFTPBinaryPathName, inCaseOfLinkHasItToBeRead);
+                }
+            }
+            catch(exception e)
+            {
+                string errorMessage = string("Error to retrieve the file size")
+                    + ", sourceFileName: " + sourceFileName
+                ;
+                _logger->error(__FILEREF__ + errorMessage);
+
+                sendError(500, errorMessage);
+
+                throw runtime_error(errorMessage);            
+            }
+
+            sendHeadSuccess(200, fileSize);
         }
         else
         {
             chrono::system_clock::time_point uploadStartTime = chrono::system_clock::now();
 
-            ofstream binaryFileStream(customerFTPBinaryPathName, ofstream::binary);
+            bool resume = false;
+            {
+                if (xCatraCMSResumeHeader != "")
+                {
+                    unsigned long fileSize = 0;
+                    try
+                    {
+                        if (FileIO::fileExisting(customerFTPBinaryPathName))
+                        {
+                            bool inCaseOfLinkHasItToBeRead = false;
+                            fileSize = FileIO::getFileSizeInBytes (
+                                customerFTPBinaryPathName, inCaseOfLinkHasItToBeRead);
+                        }
+                    }
+                    catch(exception e)
+                    {
+                        string errorMessage = string("Error to retrieve the file size")
+                            + ", sourceFileName: " + sourceFileName
+                        ;
+                        _logger->error(__FILEREF__ + errorMessage);
+    //
+    //                    sendError(500, errorMessage);
+    //
+    //                    throw runtime_error(errorMessage);            
+                    }
+
+                    if (stol(xCatraCMSResumeHeader) == fileSize)
+                    {
+                        _logger->info(__FILEREF__ + "Resume is enabled"
+                            + ", xCatraCMSResumeHeader: " + xCatraCMSResumeHeader
+                            + ", fileSize: " + to_string(fileSize)
+                        );
+                        resume = true;
+                    }
+                    else
+                    {
+                        _logger->info(__FILEREF__ + "Resume is NOT enabled (X-CatraCMS-Resume header found but different length)"
+                            + ", xCatraCMSResumeHeader: " + xCatraCMSResumeHeader
+                            + ", fileSize: " + to_string(fileSize)
+                        );
+                    }
+                }
+                else
+                {
+                    _logger->info(__FILEREF__ + "Resume is NOT enabled (No X-CatraCMS-Resume header found)"
+                    );
+                }
+            }
+            
+            ofstream binaryFileStream(customerFTPBinaryPathName, 
+                    resume ? (ofstream::binary | ofstream::app) : ofstream::binary);
             buffer = new char [_binaryBufferLength];
 
             unsigned long currentRead;
@@ -184,8 +257,8 @@ void Binary::getBinaryAndResponse(
             {
                 string customerFTPBinaryPathNameCompleted =
                     customerFTPBinaryPathName;
-                customerFTPBinaryPathName.append(".completed");
-                FileIO::moveFile (customerFTPBinaryPathName, customerFTPBinaryPathName);
+                customerFTPBinaryPathNameCompleted.append(".completed");
+                FileIO::moveFile (customerFTPBinaryPathName, customerFTPBinaryPathNameCompleted);
             }
 
             unsigned long elapsedUploadInSeconds = chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - uploadStartTime).count();
@@ -209,9 +282,9 @@ void Binary::getBinaryAndResponse(
             */
 
             string responseBody = string("{ ")
-                + "\"sourceFileName\": \"" + sourceFileName + "\" "
-                + "\"contentLength\": " + to_string(contentLength) + " "
-                + "\"writtenBytes\": " + to_string(totalRead) + " "
+                + "\"sourceFileName\": \"" + sourceFileName + "\", "
+                + "\"contentLength\": " + to_string(contentLength) + ", "
+                + "\"writtenBytes\": " + to_string(totalRead) + ", "
                 + "\"elapsedUploadInSeconds\": " + to_string(elapsedUploadInSeconds) + " "
                 + "}";
             sendSuccess(201, responseBody);

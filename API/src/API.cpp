@@ -34,6 +34,7 @@ API::~API() {
 void API::getBinaryAndResponse(
         string requestURI,
         string requestMethod,
+        string xCatraCMSResumeHeader,
         unordered_map<string, string> queryParameters,
         tuple<shared_ptr<Customer>,bool,bool>& customerAndFlags,
         unsigned long contentLength

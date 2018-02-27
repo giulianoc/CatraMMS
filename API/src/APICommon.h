@@ -48,6 +48,7 @@ virtual void manageRequestAndResponse(
     virtual void getBinaryAndResponse(
         string requestURI,
         string requestMethod,
+        string xCatraCMSResumeHeader,
         unordered_map<string, string> queryParameters,
         tuple<shared_ptr<Customer>,bool,bool>& customerAndFlags,
         unsigned long contentLength
@@ -62,6 +63,7 @@ protected:
     unsigned long long   _maxBinaryContentLength;
 
     void sendSuccess(int htmlResponseCode, string responseBody);
+    void sendHeadSuccess(int htmlResponseCode, unsigned long fileSize);
     void sendError(int htmlResponseCode, string errorMessage);
     void sendEmail(string to, string subject, vector<string>& emailBody);
     

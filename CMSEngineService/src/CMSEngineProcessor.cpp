@@ -327,14 +327,26 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                         string errorMessage = e.what();
 
                         if (ingestionJobKey == -1)
+                        {
+                            _logger->info(__FILEREF__ + "Adding IngestionJob"
+                                + ", customer->_customerKey: " + to_string(customer->_customerKey)
+                                + ", directoryEntry: " + directoryEntry
+                                + ", IngestionType: " + "Unknown"
+                                + ", IngestionStatus: " + "End_ValidationMetadataFailed"
+                                + ", _processorCMS: " + _processorCMS
+                                + ", errorMessage: " + errorMessage
+                            );
                             _cmsEngineDBFacade->addIngestionJob (customer->_customerKey, 
                                 directoryEntry, metadataFileContent, "", CMSEngineDBFacade::IngestionType::Unknown, 
                                 CMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed, 
                                 _processorCMS, errorMessage);
+                        }
                         else
+                        {
                             _cmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                 CMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed, 
                                 _processorCMS, errorMessage);
+                        }
 
                         throw e;
                     }

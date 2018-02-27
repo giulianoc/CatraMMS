@@ -74,7 +74,7 @@ APICommon::APICommon()
     _managedRequestsNumber = 0;
     _processId = getpid();
     _maxAPIContentLength = 1000000;
-    _maxBinaryContentLength = 10 * 1000 * 1000 * 1000;  // 10GB
+    _maxBinaryContentLength = 10ll * 1024ll * 1024ll * 1024ll;  // 10GB
 }
 
 APICommon::~APICommon() {
@@ -524,7 +524,12 @@ int APICommon::manageBinaryRequest()
         if ((it = processDetails.find("QUERY_STRING")) != processDetails.end())
             fillQueryString(it->second, queryParameters);
 
-        getBinaryAndResponse(requestURI, requestMethod, queryParameters,
+        string xCatraCMSResumeHeader;
+        if ((it = processDetails.find("HTTP_X_CATRACMS_RESUME")) != processDetails.end())
+            xCatraCMSResumeHeader = it->second;
+
+        getBinaryAndResponse(requestURI, requestMethod, 
+                xCatraCMSResumeHeader, queryParameters,
                 customerAndFlags, contentLength);            
     }
     catch(runtime_error e)
@@ -568,6 +573,34 @@ void APICommon::sendSuccess(int htmlResponseCode, string responseBody)
             + responseBody;
 
     _logger->info(__FILEREF__ + "HTTP Success"
+        + ", response: " + completeHttpResponse
+    );
+
+    cout << completeHttpResponse;
+}
+
+void APICommon::sendHeadSuccess(int htmlResponseCode, unsigned long fileSize)
+{
+    string endLine = "\r\n";
+    
+//    string httpStatus =
+//            string("HTTP/1.1 ")
+//            + to_string(htmlResponseCode) + " "
+//            + getHtmlStandardMessage(htmlResponseCode)
+//            + endLine;
+
+    string httpStatus =
+            string("Status: ")
+            + to_string(htmlResponseCode) + " "
+            + getHtmlStandardMessage(htmlResponseCode)
+            + endLine;
+
+    string completeHttpResponse =
+            httpStatus
+            + "X-CatraCMS-Resume: " + to_string(fileSize) + endLine
+            + endLine;
+
+    _logger->info(__FILEREF__ + "HTTP HEAD Success"
         + ", response: " + completeHttpResponse
     );
 

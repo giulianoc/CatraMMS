@@ -2109,7 +2109,7 @@ string CMSEngineDBFacade::getSourceReferenceOfUploadingInProgress(
 
         {
             lastSQLCommand = 
-                "select SourceReference, IngestionStatus from CMS_IngestionJobs where IngestionJobKey = ?";
+                "select SourceReference, Status from CMS_IngestionJobs where IngestionJobKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
@@ -2118,7 +2118,7 @@ string CMSEngineDBFacade::getSourceReferenceOfUploadingInProgress(
             if (resultSet->next())
             {
                 IngestionStatus ingestionStatus = 
-                        CMSEngineDBFacade::toIngestionStatus(resultSet->getString("SourceReference"));
+                        CMSEngineDBFacade::toIngestionStatus(resultSet->getString("Status"));
                 sourceReference = resultSet->getString("SourceReference");
                 
                 if (ingestionStatus != IngestionStatus::SourceUploadingInProgress)
