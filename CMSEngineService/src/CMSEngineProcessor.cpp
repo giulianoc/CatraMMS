@@ -331,6 +331,7 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                             _logger->info(__FILEREF__ + "Adding IngestionJob"
                                 + ", customer->_customerKey: " + to_string(customer->_customerKey)
                                 + ", directoryEntry: " + directoryEntry
+                                + ", SourceReference: " + ""
                                 + ", IngestionType: " + "Unknown"
                                 + ", IngestionStatus: " + "End_ValidationMetadataFailed"
                                 + ", _processorCMS: " + _processorCMS
@@ -343,6 +344,12 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                         }
                         else
                         {
+                            _logger->info(__FILEREF__ + "Update IngestionJob"
+                                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                + ", IngestionStatus: " + "End_ValidationMetadataFailed"
+                                + ", _processorCMS: " + _processorCMS
+                                + ", errorMessage: " + errorMessage
+                            );
                             _cmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                 CMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed, 
                                 _processorCMS, errorMessage);
@@ -361,14 +368,33 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                         string errorMessage = e.what();
 
                         if (ingestionJobKey == -1)
+                        {
+                            _logger->info(__FILEREF__ + "Adding IngestionJob"
+                                + ", customer->_customerKey: " + to_string(customer->_customerKey)
+                                + ", directoryEntry: " + directoryEntry
+                                + ", SourceReference: " + ""
+                                + ", IngestionType: " + "Unknown"
+                                + ", IngestionStatus: " + "End_ValidationMetadataFailed"
+                                + ", _processorCMS: " + _processorCMS
+                                + ", errorMessage: " + errorMessage
+                            );
                             _cmsEngineDBFacade->addIngestionJob (customer->_customerKey, 
                                 directoryEntry, metadataFileContent, "", CMSEngineDBFacade::IngestionType::Unknown, 
                                 CMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed, 
-                                _processorCMS, errorMessage);
+                                _processorCMS, errorMessage);                            
+                        }
                         else
+                        {
+                            _logger->info(__FILEREF__ + "Update IngestionJob"
+                                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                + ", IngestionStatus: " + "End_ValidationMetadataFailed"
+                                + ", _processorCMS: " + _processorCMS
+                                + ", errorMessage: " + errorMessage
+                            );
                             _cmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                 CMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed, 
                                 _processorCMS, errorMessage);
+                        }
 
                         throw e;
                     }
@@ -401,15 +427,36 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                         string errorMessage = e.what();
 
                         if (ingestionJobKey == -1)
+                        {
+                            _logger->info(__FILEREF__ + "Adding IngestionJob"
+                                + ", customer->_customerKey: " + to_string(customer->_customerKey)
+                                + ", directoryEntry: " + directoryEntry
+                                + ", SourceReference: " + ""
+                                + ", IngestionType: " + CMSEngineDBFacade::toString(ingestionTypeAndContentType.first)
+                                + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
+                                + ", _processorCMS: " + _processorCMS
+                                + ", errorMessage: " + errorMessage
+                            );
                             _cmsEngineDBFacade->addIngestionJob (customer->_customerKey, 
                                 directoryEntry, metadataFileContent, "", ingestionTypeAndContentType.first, 
                                 CMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
                                 _processorCMS, errorMessage);
+                        }
                         else
+                        {
+                            _logger->info(__FILEREF__ + "Update IngestionJob"
+                                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                + ", SourceReference: " + ""
+                                + ", IngestionType: " + CMSEngineDBFacade::toString(ingestionTypeAndContentType.first)
+                                + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
+                                + ", _processorCMS: " + _processorCMS
+                                + ", errorMessage: " + errorMessage
+                            );                            
                             _cmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                 "", ingestionTypeAndContentType.first,
                                 CMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
                                 _processorCMS, errorMessage);
+                        }
 
                         throw e;
                     }
@@ -424,15 +471,36 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                         string errorMessage = e.what();
 
                         if (ingestionJobKey == -1)
+                        {
+                            _logger->info(__FILEREF__ + "Adding IngestionJob"
+                                + ", customer->_customerKey: " + to_string(customer->_customerKey)
+                                + ", directoryEntry: " + directoryEntry
+                                + ", SourceReference: " + ""
+                                + ", IngestionType: " + CMSEngineDBFacade::toString(ingestionTypeAndContentType.first)
+                                + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
+                                + ", _processorCMS: " + _processorCMS
+                                + ", errorMessage: " + errorMessage
+                            );
                             _cmsEngineDBFacade->addIngestionJob (customer->_customerKey, 
                                 directoryEntry, metadataFileContent, "", ingestionTypeAndContentType.first, 
                                 CMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
                                 _processorCMS, errorMessage);
+                        }
                         else
+                        {
+                            _logger->info(__FILEREF__ + "Update IngestionJob"
+                                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                + ", SourceReference: " + ""
+                                + ", IngestionType: " + CMSEngineDBFacade::toString(ingestionTypeAndContentType.first)
+                                + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
+                                + ", _processorCMS: " + _processorCMS
+                                + ", errorMessage: " + errorMessage
+                            );                            
                             _cmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                 "", ingestionTypeAndContentType.first,
                                 CMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
                                 _processorCMS, errorMessage);
+                        }
 
                         throw e;
                     }
@@ -442,6 +510,15 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                         string errorMessage = "";
                         if (ingestionJobKey == -1)
                         {
+                            _logger->info(__FILEREF__ + "Adding IngestionJob"
+                                + ", customer->_customerKey: " + to_string(customer->_customerKey)
+                                + ", directoryEntry: " + directoryEntry
+                                + ", SourceReference: " + mediaSourceReference
+                                + ", IngestionType: " + CMSEngineDBFacade::toString(ingestionTypeAndContentType.first)
+                                + ", IngestionStatus: " + "StartIngestion"
+                                + ", _processorCMS: " + _processorCMS
+                                + ", errorMessage: " + errorMessage
+                            );
                             ingestionJobKey = _cmsEngineDBFacade->addIngestionJob (customer->_customerKey, 
                                 directoryEntry, metadataFileContent, mediaSourceReference, ingestionTypeAndContentType.first, 
                                 CMSEngineDBFacade::IngestionStatus::StartIngestion, 
@@ -449,6 +526,14 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                         }
                         else
                         {
+                            _logger->info(__FILEREF__ + "Update IngestionJob"
+                                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                + ", SourceReference: " + mediaSourceReference
+                                + ", IngestionType: " + CMSEngineDBFacade::toString(ingestionTypeAndContentType.first)
+                                + ", IngestionStatus: " + "StartIngestion"
+                                + ", _processorCMS: " + _processorCMS
+                                + ", errorMessage: " + errorMessage
+                            );                            
                             _cmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
                                     mediaSourceReference, ingestionTypeAndContentType.first,
                                     CMSEngineDBFacade::IngestionStatus::StartIngestion, 
@@ -479,11 +564,21 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                                 directoryEntry, mediaSourceFileName);
                             downloadMediaSource.detach();
                             
+                            _logger->info(__FILEREF__ + "Update IngestionJob"
+                                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                + ", IngestionStatus: " + "SourceDownloadingInProgress"
+                                + ", errorMessage: " + ""
+                            );                            
                             _cmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                 CMSEngineDBFacade::IngestionStatus::SourceDownloadingInProgress, "");
                         }
                         else if (!localMediaSourceUploadCompleted)
                         {
+                            _logger->info(__FILEREF__ + "Update IngestionJob"
+                                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                + ", IngestionStatus: " + "SourceUploadingInProgress"
+                                + ", errorMessage: " + ""
+                            );                            
                             _cmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                 CMSEngineDBFacade::IngestionStatus::SourceUploadingInProgress, "");
                         }
@@ -526,6 +621,11 @@ void CMSEngineProcessor::handleCheckIngestionEvent()
                         string ftpDirectoryErrorEntryPathName =
                             _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, directoryEntry);
 
+                        _logger->info(__FILEREF__ + "Update IngestionJob"
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", IngestionStatus: " + "End_IngestionFailure"
+                            + ", errorMessage: " + e.what()
+                        );                            
                         _cmsEngineDBFacade->updateIngestionJob (ingestionJobKey, CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
                     }
 
@@ -580,6 +680,11 @@ void CMSEngineProcessor::handleLocalAssetIngestionEvent (
 
         string errorMessage = e.what();
 
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+            + ", IngestionStatus: " + "End_CustomerReachedHisMaxIngestionNumber"
+            + ", errorMessage: " + e.what()
+        );                            
         _cmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                 CMSEngineDBFacade::IngestionStatus::End_CustomerReachedHisMaxIngestionNumber,
                 e.what());
@@ -633,6 +738,11 @@ void CMSEngineProcessor::handleLocalAssetIngestionEvent (
 
         string errorMessage = e.what();
 
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+            + ", IngestionStatus: " + "End_ValidationMetadataFailed"
+            + ", errorMessage: " + e.what()
+        );                            
         _cmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
             CMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed,
             e.what());
@@ -650,6 +760,11 @@ void CMSEngineProcessor::handleLocalAssetIngestionEvent (
 
         string errorMessage = e.what();
 
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+            + ", IngestionStatus: " + "End_ValidationMetadataFailed"
+            + ", errorMessage: " + e.what()
+        );                            
         _cmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
             CMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed,
             e.what());
@@ -675,6 +790,11 @@ void CMSEngineProcessor::handleLocalAssetIngestionEvent (
 
         string errorMessage = e.what();
 
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+            + ", IngestionStatus: " + "End_ValidationMetadataFailed"
+            + ", errorMessage: " + e.what()
+        );                            
         _cmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
             CMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed,
             e.what());
@@ -692,6 +812,11 @@ void CMSEngineProcessor::handleLocalAssetIngestionEvent (
 
         string errorMessage = e.what();
 
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+            + ", IngestionStatus: " + "End_ValidationMetadataFailed"
+            + ", errorMessage: " + e.what()
+        );                            
         _cmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
             CMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed,
             e.what());
@@ -719,6 +844,11 @@ void CMSEngineProcessor::handleLocalAssetIngestionEvent (
 
         string errorMessage = e.what();
 
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+            + ", IngestionStatus: " + "End_ValidationMetadataFailed"
+            + ", errorMessage: " + e.what()
+        );                            
         _cmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
             CMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed,
             e.what());
@@ -736,6 +866,11 @@ void CMSEngineProcessor::handleLocalAssetIngestionEvent (
 
         string errorMessage = e.what();
 
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+            + ", IngestionStatus: " + "End_ValidationMetadataFailed"
+            + ", errorMessage: " + e.what()
+        );                            
         _cmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
             CMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed,
             e.what());
@@ -772,6 +907,11 @@ void CMSEngineProcessor::handleLocalAssetIngestionEvent (
             _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(
                 localAssetIngestionEvent->getCustomer(), localAssetIngestionEvent->getMetadataFileName());
 
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
         _cmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                 CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
         
@@ -785,6 +925,11 @@ void CMSEngineProcessor::handleLocalAssetIngestionEvent (
             _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(
                 localAssetIngestionEvent->getCustomer(), localAssetIngestionEvent->getMetadataFileName());
 
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
         _cmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                 CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
         
@@ -816,6 +961,11 @@ void CMSEngineProcessor::handleLocalAssetIngestionEvent (
                 _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(
                     localAssetIngestionEvent->getCustomer(), localAssetIngestionEvent->getMetadataFileName());
 
+            _logger->info(__FILEREF__ + "Update IngestionJob"
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+                + ", IngestionStatus: " + "End_IngestionFailure"
+                + ", errorMessage: " + e.what()
+            );                            
             _cmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                     CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
 
@@ -834,6 +984,11 @@ void CMSEngineProcessor::handleLocalAssetIngestionEvent (
                 _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(
                     localAssetIngestionEvent->getCustomer(), localAssetIngestionEvent->getMetadataFileName());
 
+            _logger->info(__FILEREF__ + "Update IngestionJob"
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+                + ", IngestionStatus: " + "End_IngestionFailure"
+                + ", errorMessage: " + e.what()
+            );                            
             _cmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                     CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
 
@@ -864,6 +1019,11 @@ void CMSEngineProcessor::handleLocalAssetIngestionEvent (
                 _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(
                     localAssetIngestionEvent->getCustomer(), localAssetIngestionEvent->getMetadataFileName());
 
+            _logger->info(__FILEREF__ + "Update IngestionJob"
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+                + ", IngestionStatus: " + "End_IngestionFailure"
+                + ", errorMessage: " + e.what()
+            );                            
             _cmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                     CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
 
@@ -915,6 +1075,11 @@ void CMSEngineProcessor::handleLocalAssetIngestionEvent (
             _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(
                 localAssetIngestionEvent->getCustomer(), localAssetIngestionEvent->getMetadataFileName());
 
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
         _cmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                 CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
         
@@ -933,6 +1098,11 @@ void CMSEngineProcessor::handleLocalAssetIngestionEvent (
             _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(
                 localAssetIngestionEvent->getCustomer(), localAssetIngestionEvent->getMetadataFileName());
 
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
         _cmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                 CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
         
@@ -1733,6 +1903,11 @@ RESUMING FILE TRANSFERS
                     string ftpDirectoryErrorEntryPathName =
                         _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, metadataFileName);
 
+                    _logger->info(__FILEREF__ + "Update IngestionJob"
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", IngestionStatus: " + "End_IngestionFailure"
+                        + ", errorMessage: " + e.what()
+                    );                            
                     _cmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                         CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
                 }
@@ -1773,6 +1948,11 @@ RESUMING FILE TRANSFERS
                     string ftpDirectoryErrorEntryPathName =
                         _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, metadataFileName);
 
+                    _logger->info(__FILEREF__ + "Update IngestionJob"
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", IngestionStatus: " + "End_IngestionFailure"
+                        + ", errorMessage: " + e.what()
+                    );                            
                     _cmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                         CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
                 }
@@ -1813,6 +1993,11 @@ RESUMING FILE TRANSFERS
                     string ftpDirectoryErrorEntryPathName =
                         _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, metadataFileName);
 
+                    _logger->info(__FILEREF__ + "Update IngestionJob"
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", IngestionStatus: " + "End_IngestionFailure"
+                        + ", errorMessage: " + e.what()
+                    );                            
                     _cmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                         CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
                 }
@@ -1863,6 +2048,11 @@ RESUMING FILE TRANSFERS
         string ftpDirectoryErrorEntryPathName =
             _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, metadataFileName);
 
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
         _cmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
     }
@@ -1877,6 +2067,11 @@ RESUMING FILE TRANSFERS
         string ftpDirectoryErrorEntryPathName =
             _cmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, metadataFileName);
 
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
         _cmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 CMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
     }
@@ -1912,6 +2107,10 @@ int CMSEngineProcessor::progressCallback(
 
         if (lastPercentageUpdated != downloadingPercentage)
         {
+            _logger->info(__FILEREF__ + "Update IngestionJob"
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", downloadingPercentage: " + to_string(downloadingPercentage)
+            );                            
             downloadingStoppedByUser = _cmsEngineDBFacade->updateIngestionJobSourceDownloadingInProgress (
                 ingestionJobKey, downloadingPercentage);
 
