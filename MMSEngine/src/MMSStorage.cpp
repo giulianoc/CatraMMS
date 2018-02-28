@@ -334,6 +334,35 @@ string MMSStorage::moveFTPRepositoryWorkingEntryToErrorArea(
     return ftpDirectoryErrorEntryPathName;
 }
 
+string MMSStorage::moveFTPRepositoryWorkingEntryToSuccessArea(
+        shared_ptr<Customer> customer,
+        string entryFileName)
+{
+    string ftpDirectoryWorkingEntryPathName = getCustomerFTPRepository(customer);
+    ftpDirectoryWorkingEntryPathName
+        .append("/")
+        .append("WORKING")
+        .append("/")
+        .append(entryFileName);
+
+    string ftpDirectorySuccessEntryPathName = getCustomerFTPRepository(customer);
+    ftpDirectorySuccessEntryPathName
+        .append("/")
+        .append("SUCCESS")
+        .append("/")
+        .append(entryFileName);
+
+    
+    _logger->info(__FILEREF__ + "Move file"
+        + ", from: " + ftpDirectoryWorkingEntryPathName
+        + ", to: " + ftpDirectorySuccessEntryPathName
+    );
+
+    FileIO::moveFile(ftpDirectoryWorkingEntryPathName, ftpDirectorySuccessEntryPathName);
+            
+    return ftpDirectorySuccessEntryPathName;
+}
+
 string MMSStorage::getStagingRootRepository(void) {
     return _stagingRootRepository;
 }

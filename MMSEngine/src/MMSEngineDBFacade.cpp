@@ -2095,7 +2095,7 @@ void MMSEngineDBFacade::updateIngestionJob (
     }    
 }
 
-string MMSEngineDBFacade::getSourceReferenceOfUploadingInProgress(
+string MMSEngineDBFacade::getWaitingUploadSourceReference(
     int64_t ingestionJobKey)
 {
     string      sourceReference;
@@ -2121,9 +2121,9 @@ string MMSEngineDBFacade::getSourceReferenceOfUploadingInProgress(
                         MMSEngineDBFacade::toIngestionStatus(resultSet->getString("Status"));
                 sourceReference = resultSet->getString("SourceReference");
                 
-                if (ingestionStatus != IngestionStatus::SourceUploadingInProgress)
+                if (ingestionStatus != IngestionStatus::WaitingUploadSourceReference)
                 {
-                    string errorMessage = __FILEREF__ + "IngestionJob was found but his state is not 'SourceUploadingInProgress'"
+                    string errorMessage = __FILEREF__ + "IngestionJob was found but his state is not 'WaitingUploadSourceReference'"
                         + ", ingestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                         + ", lastSQLCommand: " + lastSQLCommand

@@ -246,10 +246,52 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                     // check if the file has ".json" as extension.
                     // We do not accept also the ".json" file (without name)
                     string jsonExtension(".json");
-                    if (directoryEntry.length() < 6 ||
+                    string completedExtension(".completed");    // source media binary that is first uploaded/downloaded and then it is renamed to append .completed
+                    if (directoryEntry.length() > completedExtension.length() 
+                            && equal(completedExtension.rbegin(), completedExtension.rend(), directoryEntry.rbegin()))
+                    {
+                        // it is a completed media source binary
+                        // let's see if metadata are already arrived/managed?
+                        string mediaSourceFileName = directoryEntry.substr(0, directoryEntry.length() - completedExtension.length());
+                        
+        IMPLEMENTARE IL METODO SOTTO usando nella where 
+        - gli stati SourceDownloadingInProgress e WaitingUploadSourceReference
+        - considerare che quando nella where si usa SourceReference, puo' anche essereuna URL
+                        pair<int64_t,string> ingestionJobKeyAndMetadataFileName = 
+                                _mmsEngineDBFacade->getWaitingSourceReferenceIngestionJob (
+                                customer->_customerKey, mediaSourceFileName);
+                         
+                        {
+                            shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
+                                    ->getFreeEvent<LocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
+
+                            localAssetIngestionEvent->setSource(MMSENGINEPROCESSORNAME);
+                            localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
+                            localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
+
+                            localAssetIngestionEvent->setIngestionJobKey(ingestionJobKeyAndMetadataFileName.first);
+                            localAssetIngestionEvent->setCustomer(customer);
+
+                            localAssetIngestionEvent->setMetadataFileName(ingestionJobKeyAndMetadataFileName.second);
+                            localAssetIngestionEvent->setMediaSourceFileName(mediaSourceFileName);
+
+                            shared_ptr<Event>    event = dynamic_pointer_cast<Event>(localAssetIngestionEvent);
+                            _multiEventsSet->addEvent(event);
+
+                            _logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
+                                + ", mediaSourceFileName: " + mediaSourceFileName
+                                + ", getEventKey().first: " + to_string(event->getEventKey().first)
+                                + ", getEventKey().second: " + to_string(event->getEventKey().second));
+                        }
+
+                        continue;
+                    }
+                    else if (directoryEntry.length() <= jsonExtension.length() ||
                             !equal(jsonExtension.rbegin(), jsonExtension.rend(), directoryEntry.rbegin()))
                             continue;
 
+                    // it's a json file
+                    
                     if (chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - lastModificationTime) 
                             < chrono::seconds(_ulJsonToBeProcessedAfterSeconds))
                     {
@@ -572,7 +614,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                 MMSEngineDBFacade::IngestionStatus::SourceDownloadingInProgress, "");
                         }
-                        else if (!localMediaSourceUploadCompleted)
+                        else
                         {
                             _logger->info(__FILEREF__ + "Update IngestionJob"
                                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -580,36 +622,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 + ", errorMessage: " + ""
                             );                            
                             _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                                MMSEngineDBFacade::IngestionStatus::SourceUploadingInProgress, "");
-                        }
-                        else
-                        {
-                            shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
-                                    ->getFreeEvent<LocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
-
-                            localAssetIngestionEvent->setSource(MMSENGINEPROCESSORNAME);
-                            localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
-                            localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
-
-                            localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
-                            localAssetIngestionEvent->setCustomer(customer);
-
-                            localAssetIngestionEvent->setMetadataFileName(directoryEntry);
-                            localAssetIngestionEvent->setMediaSourceFileName(mediaSourceFileName);
-
-                            // localAssetIngestionEvent->setFTPDirectoryMediaSourceFileName(ftpDirectoryMediaSourceFileName);
-//                            localAssetIngestionEvent->setMediaSourceFileName(mediaSourceFileName);
-//
-//                            localAssetIngestionEvent->setRelativePath(relativePathToBeUsed);
-//                            localAssetIngestionEvent->setMetadataRoot(metadataRoot);
-
-                            shared_ptr<Event>    event = dynamic_pointer_cast<Event>(localAssetIngestionEvent);
-                            _multiEventsSet->addEvent(event);
-
-                            _logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
-                                + ", mediaSourceReference: " + mediaSourceReference
-                                + ", getEventKey().first: " + to_string(event->getEventKey().first)
-                                + ", getEventKey().second: " + to_string(event->getEventKey().second));
+                                MMSEngineDBFacade::IngestionStatus::WaitingUploadSourceReference, "");
                         }
                     }
                     catch(exception e)
@@ -792,11 +805,11 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 
         _logger->info(__FILEREF__ + "Update IngestionJob"
             + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-            + ", IngestionStatus: " + "End_ValidationMetadataFailed"
+            + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
             + ", errorMessage: " + e.what()
         );                            
         _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
-            MMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed,
+            MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed,
             e.what());
 
         throw e;
@@ -814,11 +827,11 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 
         _logger->info(__FILEREF__ + "Update IngestionJob"
             + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-            + ", IngestionStatus: " + "End_ValidationMetadataFailed"
+            + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
             + ", errorMessage: " + e.what()
         );                            
         _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
-            MMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed,
+            MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed,
             e.what());
 
         throw e;
@@ -846,11 +859,11 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 
         _logger->info(__FILEREF__ + "Update IngestionJob"
             + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-            + ", IngestionStatus: " + "End_ValidationMetadataFailed"
+            + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
             + ", errorMessage: " + e.what()
         );                            
         _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
-            MMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed,
+            MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed,
             e.what());
 
         throw e;
@@ -868,11 +881,11 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 
         _logger->info(__FILEREF__ + "Update IngestionJob"
             + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-            + ", IngestionStatus: " + "End_ValidationMetadataFailed"
+            + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
             + ", errorMessage: " + e.what()
         );                            
         _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
-            MMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed,
+            MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed,
             e.what());
 
         throw e;
@@ -1109,6 +1122,10 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         throw e;
     }
     
+    string ftpDirectorySuccessEntryPathName =
+        _mmsStorage->moveFTPRepositoryWorkingEntryToSuccessArea(
+            localAssetIngestionEvent->getCustomer(), localAssetIngestionEvent->getMetadataFileName());
+
     // ingest Screenshots if present
     if (ingestionTypeAndContentType.second == MMSEngineDBFacade::ContentType::Video)
     {        

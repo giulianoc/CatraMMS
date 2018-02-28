@@ -283,7 +283,7 @@ public:
         SourceDownloadingInProgress,
             // media source is remote, downloading in FTP repository started
         
-        SourceUploadingInProgress,
+        WaitingUploadSourceReference,
             // media source is remote, uploading in FTP repository is not done/completed
 
         QueuedForEncoding,   
@@ -326,8 +326,8 @@ public:
                 return "StartIngestion";
             case IngestionStatus::SourceDownloadingInProgress:
                 return "SourceDownloadingInProgress";
-            case IngestionStatus::SourceUploadingInProgress:
-                return "SourceUploadingInProgress";
+            case IngestionStatus::WaitingUploadSourceReference:
+                return "WaitingUploadSourceReference";
             case IngestionStatus::QueuedForEncoding:
                 return "QueuedForEncoding";
             case IngestionStatus::End_DownloadCancelledByUser:
@@ -360,8 +360,8 @@ public:
             return IngestionStatus::StartIngestion;
         else if (lowerCase == "sourcedownloadinginprogress")
             return IngestionStatus::SourceDownloadingInProgress;
-        else if (lowerCase == "sourceuploadinginprogress")
-            return IngestionStatus::SourceUploadingInProgress;
+        else if (lowerCase == "waitinguploadsourcereference")
+            return IngestionStatus::WaitingUploadSourceReference;
         else if (lowerCase == "queuedforencoding")
             return IngestionStatus::QueuedForEncoding;
         else if (lowerCase == "end_downloadcancelledbyuser")
@@ -501,7 +501,7 @@ public:
         string processorMMS,
         string errorMessage);
 
-    string getSourceReferenceOfUploadingInProgress(int64_t ingestionJobKey);
+    string getWaitingUploadSourceReference(int64_t ingestionJobKey);
 
     void removeIngestionJob (
         int64_t ingestionJobKey);

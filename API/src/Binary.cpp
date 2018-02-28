@@ -77,7 +77,7 @@ void Binary::getBinaryAndResponse(
         string sourceFileName;
         try
         {
-            sourceFileName = _mmsEngineDBFacade->getSourceReferenceOfUploadingInProgress(ingestionJobKey);
+            sourceFileName = _mmsEngineDBFacade->getWaitingUploadSourceReference(ingestionJobKey);
         }
         catch(exception e)
         {

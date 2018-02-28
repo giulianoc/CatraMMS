@@ -45,6 +45,10 @@ public:
         shared_ptr<Customer> customer,
         string entryFileName);
 
+    string moveFTPRepositoryWorkingEntryToSuccessArea(
+        shared_ptr<Customer> customer,
+        string entryFileName);
+
     string getCustomerFTPWorkingMetadataPathName(
         shared_ptr<Customer> customer,
         string metadataFileName);
