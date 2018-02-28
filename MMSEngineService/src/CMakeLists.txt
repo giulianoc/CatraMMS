@@ -21,14 +21,14 @@
 # with the authors.
 
 SET (SOURCES
-	cmsEngineService.cpp
-	CMSEngineProcessor.cpp
+	mmsEngineService.cpp
+	MMSEngineProcessor.cpp
 	CheckIngestionTimes.cpp
 	CheckEncodingTimes.cpp
 )
 
 SET (HEADERS
-	CMSEngineProcessor.h
+	MMSEngineProcessor.h
 	CheckIngestionTimes.h
 	CheckEncodingTimes.h
 	LocalAssetIngestionEvent.h
@@ -36,7 +36,7 @@ SET (HEADERS
 
 include_directories ("${PROJECT_SOURCE_DIR}/../usr_local/include")
 include_directories ("${PROJECT_SOURCE_DIR}/../spdlog/include")
-include_directories ("${PROJECT_SOURCE_DIR}/CMSEngine/src")
+include_directories ("${PROJECT_SOURCE_DIR}/MMSEngine/src")
 if (APPLE)
 	include_directories ("${PROJECT_SOURCE_DIR}/../mysql-connector-c++-1.1.9-macos10.12-x86-64bit/include")
 	include_directories ("/usr/local/Cellar/imagemagick/7.0.7-22/include/ImageMagick-7")
@@ -55,7 +55,7 @@ endif()
 add_executable(cmsEngineService ${SOURCES} ${HEADERS})
 
 target_link_libraries (cmsEngineService MultiEventsSet)
-target_link_libraries (cmsEngineService CMSEngine)
+target_link_libraries (cmsEngineService MMSEngine)
 target_link_libraries (cmsEngineService mysqlcppconn)
 target_link_libraries (cmsEngineService jsoncpp)
 target_link_libraries (cmsEngineService curl)

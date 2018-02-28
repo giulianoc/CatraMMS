@@ -36,9 +36,9 @@ EncoderVideoAudioProxy::~EncoderVideoAudioProxy()
 void EncoderVideoAudioProxy::setData(
         mutex* mtEncodingJobs,
         EncodingJobStatus* status,
-        shared_ptr<CMSEngineDBFacade> cmsEngineDBFacade,
-        shared_ptr<CMSStorage> cmsStorage,
-        shared_ptr<CMSEngineDBFacade::EncodingItem> encodingItem,
+        shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
+        shared_ptr<MMSStorage> mmsStorage,
+        shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem,
         #ifdef __FFMPEGLOCALENCODER__
             int* pffmpegEncoderRunning,
         #endif
@@ -50,8 +50,8 @@ void EncoderVideoAudioProxy::setData(
     _mtEncodingJobs         = mtEncodingJobs;
     _status                 = status;
     
-    _cmsEngineDBFacade      = cmsEngineDBFacade;
-    _cmsStorage             = cmsStorage;
+    _mmsEngineDBFacade      = mmsEngineDBFacade;
+    _mmsStorage             = mmsStorage;
     _encodingItem           = encodingItem;
     _twoPasses              = false;
     _currentlyAtSecondPass             = false;
@@ -90,13 +90,13 @@ void EncoderVideoAudioProxy::operator()()
     {
         _logger->warn(__FILEREF__ + "encodeContentVideoAudio: " + e.what());
         
-        _logger->info(__FILEREF__ + "_cmsEngineDBFacade->updateEncodingJob MaxCapacityReached"
+        _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob MaxCapacityReached"
             + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
         );
         
-        _cmsEngineDBFacade->updateEncodingJob (_encodingItem->_encodingJobKey, 
-                CMSEngineDBFacade::EncodingError::MaxCapacityReached, _encodingItem->_ingestionJobKey);
+        _mmsEngineDBFacade->updateEncodingJob (_encodingItem->_encodingJobKey, 
+                MMSEngineDBFacade::EncodingError::MaxCapacityReached, _encodingItem->_ingestionJobKey);
         
         {
             lock_guard<mutex> locker(*_mtEncodingJobs);
@@ -114,15 +114,15 @@ void EncoderVideoAudioProxy::operator()()
     {
         _logger->error(__FILEREF__ + "encodeContentVideoAudio: " + e.what());
         
-        _logger->info(__FILEREF__ + "_cmsEngineDBFacade->updateEncodingJob PunctualError"
+        _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
             + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
         );
         
-        int encodingFailureNumber = _cmsEngineDBFacade->updateEncodingJob (_encodingItem->_encodingJobKey, 
-                CMSEngineDBFacade::EncodingError::PunctualError, _encodingItem->_ingestionJobKey);
+        int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (_encodingItem->_encodingJobKey, 
+                MMSEngineDBFacade::EncodingError::PunctualError, _encodingItem->_ingestionJobKey);
 
-        _logger->info(__FILEREF__ + "_cmsEngineDBFacade->updateEncodingJob PunctualError"
+        _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
             + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", encodingFailureNumber: " + to_string(encodingFailureNumber)
@@ -144,18 +144,18 @@ void EncoderVideoAudioProxy::operator()()
     {
         _logger->error(__FILEREF__ + "encodeContentVideoAudio: " + e.what());
         
-        _logger->info(__FILEREF__ + "_cmsEngineDBFacade->updateEncodingJob PunctualError"
+        _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
             + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
         );
         
         // PunctualError is used because, in case it always happens, the encoding will never reach a final state
-        int encodingFailureNumber = _cmsEngineDBFacade->updateEncodingJob (
+        int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (
                 _encodingItem->_encodingJobKey, 
-                CMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
+                MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
                 _encodingItem->_ingestionJobKey);
 
-        _logger->info(__FILEREF__ + "_cmsEngineDBFacade->updateEncodingJob PunctualError"
+        _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
             + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", encodingFailureNumber: " + to_string(encodingFailureNumber)
@@ -177,18 +177,18 @@ void EncoderVideoAudioProxy::operator()()
     {
         _logger->error(__FILEREF__ + "encodeContentVideoAudio: " + e.what());
         
-        _logger->info(__FILEREF__ + "_cmsEngineDBFacade->updateEncodingJob PunctualError"
+        _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
             + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
         );
         
         // PunctualError is used because, in case it always happens, the encoding will never reach a final state
-        int encodingFailureNumber = _cmsEngineDBFacade->updateEncodingJob (
+        int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (
                 _encodingItem->_encodingJobKey, 
-                CMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
+                MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
                 _encodingItem->_ingestionJobKey);
 
-        _logger->info(__FILEREF__ + "_cmsEngineDBFacade->updateEncodingJob PunctualError"
+        _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
             + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", encodingFailureNumber: " + to_string(encodingFailureNumber)
@@ -232,18 +232,18 @@ void EncoderVideoAudioProxy::operator()()
             FileIO::remove(stagingEncodedAssetPathName);
         }
 
-        _logger->info(__FILEREF__ + "_cmsEngineDBFacade->updateEncodingJob PunctualError"
+        _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
             + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
         );
         
         // PunctualError is used because, in case it always happens, the encoding will never reach a final state
-        int encodingFailureNumber = _cmsEngineDBFacade->updateEncodingJob (
+        int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (
                 _encodingItem->_encodingJobKey, 
-                CMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
+                MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
                 _encodingItem->_ingestionJobKey);
 
-        _logger->info(__FILEREF__ + "_cmsEngineDBFacade->updateEncodingJob PunctualError"
+        _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
             + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", encodingFailureNumber: " + to_string(encodingFailureNumber)
@@ -264,19 +264,19 @@ void EncoderVideoAudioProxy::operator()()
 
     try
     {
-        _logger->info(__FILEREF__ + "_cmsEngineDBFacade->updateEncodingJob NoError"
+        _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob NoError"
             + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
         );
         
-        _cmsEngineDBFacade->updateEncodingJob (
+        _mmsEngineDBFacade->updateEncodingJob (
             _encodingItem->_encodingJobKey, 
-            CMSEngineDBFacade::EncodingError::NoError, 
+            MMSEngineDBFacade::EncodingError::NoError, 
             _encodingItem->_ingestionJobKey);
     }
     catch(exception e)
     {
-        _logger->error(__FILEREF__ + "_cmsEngineDBFacade->updateEncodingJob failed: " + e.what());
+        _logger->error(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob failed: " + e.what());
 
         {
             lock_guard<mutex> locker(*_mtEncodingJobs);
@@ -311,18 +311,18 @@ string EncoderVideoAudioProxy::encodeContentVideoAudio()
     );
 
     if (
-        (_encodingItem->_encodingProfileTechnology == CMSEngineDBFacade::EncodingTechnology::MP4 &&
+        (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MP4 &&
             _MP4Encoder == "FFMPEG") ||
-        (_encodingItem->_encodingProfileTechnology == CMSEngineDBFacade::EncodingTechnology::MPEG2_TS &&
+        (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MPEG2_TS &&
             _mpeg2TSEncoder == "FFMPEG") ||
-        _encodingItem->_encodingProfileTechnology == CMSEngineDBFacade::EncodingTechnology::WEBM ||
-        (_encodingItem->_encodingProfileTechnology == CMSEngineDBFacade::EncodingTechnology::Adobe &&
+        _encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::WEBM ||
+        (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::Adobe &&
             _mpeg2TSEncoder == "FFMPEG")
     )
     {
         stagingEncodedAssetPathName = encodeContent_VideoAudio_through_ffmpeg();
     }
-    else if (_encodingItem->_encodingProfileTechnology == CMSEngineDBFacade::EncodingTechnology::WindowsMedia)
+    else if (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::WindowsMedia)
     {
         string errorMessage = __FILEREF__ + "No Encoder available to encode WindowsMedia technology";
         _logger->error(errorMessage);
@@ -341,21 +341,21 @@ string EncoderVideoAudioProxy::encodeContentVideoAudio()
 }
 
 int64_t EncoderVideoAudioProxy::getVideoOrAudioDurationInMilliSeconds(
-    string cmsAssetPathName)
+    string mmsAssetPathName)
 {
-    auto logger = spdlog::get("cmsEngineService");
+    auto logger = spdlog::get("mmsEngineService");
 
-    size_t fileNameIndex = cmsAssetPathName.find_last_of("/");
+    size_t fileNameIndex = mmsAssetPathName.find_last_of("/");
     if (fileNameIndex == string::npos)
     {
         string errorMessage = __FILEREF__ + "No fileName find in the asset path name"
-                + ", cmsAssetPathName: " + cmsAssetPathName;
+                + ", mmsAssetPathName: " + mmsAssetPathName;
         logger->error(errorMessage);
         
         throw runtime_error(errorMessage);
     }
     
-    string sourceFileName = cmsAssetPathName.substr(fileNameIndex + 1);
+    string sourceFileName = mmsAssetPathName.substr(fileNameIndex + 1);
 
     string      durationPathFileName =
             string("/tmp/") + sourceFileName + ".duration";
@@ -373,7 +373,7 @@ int64_t EncoderVideoAudioProxy::getVideoOrAudioDurationInMilliSeconds(
     string ffprobeExecuteCommand = 
             _ffmpegPath + "/ffprobe "
             + "-v quiet -print_format compact=print_section=0:nokey=1:escape=csv -show_entries format=duration "
-            + cmsAssetPathName + " "
+            + mmsAssetPathName + " "
             + "> " + durationPathFileName 
             + " 2>&1"
             ;
@@ -423,7 +423,7 @@ int64_t EncoderVideoAudioProxy::getVideoOrAudioDurationInMilliSeconds(
         buffer << durationFile.rdbuf();
         
         logger->info(__FILEREF__ + "Duration found"
-            + ", cmsAssetPathName: " + cmsAssetPathName
+            + ", mmsAssetPathName: " + mmsAssetPathName
             + ", durationInSeconds: " + buffer.str()
         );
 
@@ -444,9 +444,9 @@ void EncoderVideoAudioProxy::generateScreenshotToIngest(
     double timePositionInSeconds,
     int sourceImageWidth,
     int sourceImageHeight,
-    string cmsAssetPathName)
+    string mmsAssetPathName)
 {
-    auto logger = spdlog::get("cmsEngineService");
+    auto logger = spdlog::get("mmsEngineService");
 
     // ffmpeg -y -i [source.wmv] -f mjpeg -ss [10] -vframes 1 -an -s [176x144] [thumbnail_image.jpg]
     // -y: overwrite output files
@@ -474,7 +474,7 @@ void EncoderVideoAudioProxy::generateScreenshotToIngest(
     
     string ffmpegExecuteCommand = 
             _ffmpegPath + "/ffmpeg "
-            + "-y -i " + cmsAssetPathName + " "
+            + "-y -i " + mmsAssetPathName + " "
             + "-f mjpeg -ss " + to_string(timePositionInSeconds) + " "
             + "-vframes 1 -an -s " + to_string(sourceImageWidth) + "x" + to_string(sourceImageHeight) + " "
             + imagePathName + " "
@@ -647,11 +647,11 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
     
     string stagingEncodedAssetPathName;
     string encodedFileName;
-    string cmsSourceAssetPathName;
+    string mmsSourceAssetPathName;
     // stagingEncodedAssetPathName preparation
     {
-        cmsSourceAssetPathName = _cmsStorage->getCMSAssetPathName(
-            _encodingItem->_cmsPartitionNumber,
+        mmsSourceAssetPathName = _mmsStorage->getMMSAssetPathName(
+            _encodingItem->_mmsPartitionNumber,
             _encodingItem->_customer->_directoryName,
             _encodingItem->_relativePath,
             _encodingItem->_fileName);
@@ -670,12 +670,12 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                 _encodingItem->_fileName.substr(0, extensionIndex)
                 + "_" 
                 + to_string(_encodingItem->_encodingProfileKey);
-        if (_encodingItem->_encodingProfileTechnology == CMSEngineDBFacade::EncodingTechnology::MP4)
+        if (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MP4)
             encodedFileName.append(".mp4");
-        else if (_encodingItem->_encodingProfileTechnology == CMSEngineDBFacade::EncodingTechnology::MPEG2_TS ||
-                _encodingItem->_encodingProfileTechnology == CMSEngineDBFacade::EncodingTechnology::Adobe)
+        else if (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MPEG2_TS ||
+                _encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::Adobe)
             ;
-        else if (_encodingItem->_encodingProfileTechnology == CMSEngineDBFacade::EncodingTechnology::WEBM)
+        else if (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::WEBM)
             encodedFileName.append(".webm");
         else
         {
@@ -686,7 +686,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
         }
 
         bool removeLinuxPathIfExist = true;
-        stagingEncodedAssetPathName = _cmsStorage->getStagingAssetPathName(
+        stagingEncodedAssetPathName = _mmsStorage->getStagingAssetPathName(
             _encodingItem->_customer->_directoryName,
             _encodingItem->_relativePath,
             encodedFileName,
@@ -694,8 +694,8 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
             -1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
             removeLinuxPathIfExist);
 
-        if (_encodingItem->_encodingProfileTechnology == CMSEngineDBFacade::EncodingTechnology::MPEG2_TS ||
-            _encodingItem->_encodingProfileTechnology == CMSEngineDBFacade::EncodingTechnology::Adobe)
+        if (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MPEG2_TS ||
+            _encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::Adobe)
         {
             // In this case, the path is a directory where to place the segments
 
@@ -758,7 +758,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
         string ffmpegoutputPathName = string("")
                 + to_string(_encodingItem->_physicalPathKey)
                 + ".ffmpegoutput";
-        _outputFfmpegPathFileName = _cmsStorage->getStagingAssetPathName (
+        _outputFfmpegPathFileName = _mmsStorage->getStagingAssetPathName (
             _encodingItem->_customer->_directoryName,
             _encodingItem->_relativePath,
             ffmpegoutputPathName,
@@ -778,7 +778,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 
             string ffmpegExecuteCommand =
                     _ffmpegPath + "/ffmpeg "
-                    + "-y -i " + cmsSourceAssetPathName + " "
+                    + "-y -i " + mmsSourceAssetPathName + " "
                     + ffmpegVideoCodecParameter
                     + ffmpegVideoProfileParameter
                     + "-preset slow "
@@ -856,7 +856,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                     ;
 
                 // bool removeLinuxPathIfExist = true;
-                string ffmpegPassLogPathFileName = _cmsStorage->getStagingAssetPathName (
+                string ffmpegPassLogPathFileName = _mmsStorage->getStagingAssetPathName (
                     _encodingItem->_customer->_directoryName,
                     _encodingItem->_relativePath,
                     passLogFileName,
@@ -867,7 +867,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 
                 ffmpegExecuteCommand =
                         _ffmpegPath + "/ffmpeg "
-                        + "-y -i " + cmsSourceAssetPathName + " "
+                        + "-y -i " + mmsSourceAssetPathName + " "
                         + ffmpegVideoCodecParameter
                         + ffmpegVideoProfileParameter
                         + "-preset slow "
@@ -926,7 +926,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 
                 ffmpegExecuteCommand =
                         _ffmpegPath + "/ffmpeg "
-                        + "-y -i " + cmsSourceAssetPathName + " "
+                        + "-y -i " + mmsSourceAssetPathName + " "
                         + ffmpegVideoCodecParameter
                         + ffmpegVideoProfileParameter
                         + "-preset slow "
@@ -993,7 +993,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
             {
                 ffmpegExecuteCommand =
                         _ffmpegPath + "/ffmpeg "
-                        + "-y -i " + cmsSourceAssetPathName + " "
+                        + "-y -i " + mmsSourceAssetPathName + " "
                         + ffmpegVideoCodecParameter
                         + ffmpegVideoProfileParameter
                         + "-preset slow "
@@ -1079,7 +1079,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
             + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingItem->_physicalPathKey: " + to_string(_encodingItem->_physicalPathKey)
-            + ", cmsSourceAssetPathName: " + cmsSourceAssetPathName
+            + ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
         );
 
@@ -1112,7 +1112,7 @@ string EncoderVideoAudioProxy::getLastPartOfFile(
     string lastPartOfFile = "";
     char* buffer = nullptr;
 
-    auto logger = spdlog::get("cmsEngineService");
+    auto logger = spdlog::get("mmsEngineService");
 
     try
     {
@@ -1216,7 +1216,7 @@ void EncoderVideoAudioProxy::settingFfmpegPatameters(
     string fileFormat;
     {
         field = "fileFormat";
-        if (!_cmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
+        if (!_mmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field;
@@ -1257,10 +1257,10 @@ void EncoderVideoAudioProxy::settingFfmpegPatameters(
         }
     }
 
-    if (_encodingItem->_contentType == CMSEngineDBFacade::ContentType::Video)
+    if (_encodingItem->_contentType == MMSEngineDBFacade::ContentType::Video)
     {
         field = "video";
-        if (!_cmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
+        if (!_mmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field;
@@ -1275,7 +1275,7 @@ void EncoderVideoAudioProxy::settingFfmpegPatameters(
         string codec;
         {
             field = "codec";
-            if (!_cmsEngineDBFacade->isMetadataPresent(videoRoot, field))
+            if (!_mmsEngineDBFacade->isMetadataPresent(videoRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -1296,7 +1296,7 @@ void EncoderVideoAudioProxy::settingFfmpegPatameters(
         // profile
         {
             field = "profile";
-            if (_cmsEngineDBFacade->isMetadataPresent(videoRoot, field))
+            if (_mmsEngineDBFacade->isMetadataPresent(videoRoot, field))
             {
                 string profile = videoRoot.get(field, "XXX").asString();
 
@@ -1327,7 +1327,7 @@ void EncoderVideoAudioProxy::settingFfmpegPatameters(
         // resolution
         {
             field = "width";
-            if (!_cmsEngineDBFacade->isMetadataPresent(videoRoot, field))
+            if (!_mmsEngineDBFacade->isMetadataPresent(videoRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -1340,7 +1340,7 @@ void EncoderVideoAudioProxy::settingFfmpegPatameters(
                 width   = "-2";     // h264 requires always a even width/height
         
             field = "height";
-            if (!_cmsEngineDBFacade->isMetadataPresent(videoRoot, field))
+            if (!_mmsEngineDBFacade->isMetadataPresent(videoRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -1360,7 +1360,7 @@ void EncoderVideoAudioProxy::settingFfmpegPatameters(
         // bitRate
         {
             field = "bitRate";
-            if (!_cmsEngineDBFacade->isMetadataPresent(videoRoot, field))
+            if (!_mmsEngineDBFacade->isMetadataPresent(videoRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -1379,7 +1379,7 @@ void EncoderVideoAudioProxy::settingFfmpegPatameters(
         // bitRate
         {
             field = "twoPasses";
-            if (!_cmsEngineDBFacade->isMetadataPresent(videoRoot, field) 
+            if (!_mmsEngineDBFacade->isMetadataPresent(videoRoot, field) 
                     && fileFormat != "segment") // twoPasses is used ONLY if it is NOT segment
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -1396,7 +1396,7 @@ void EncoderVideoAudioProxy::settingFfmpegPatameters(
         // maxRate
         {
             field = "maxRate";
-            if (_cmsEngineDBFacade->isMetadataPresent(videoRoot, field))
+            if (_mmsEngineDBFacade->isMetadataPresent(videoRoot, field))
             {
                 string maxRate = videoRoot.get(field, "XXX").asString();
 
@@ -1409,7 +1409,7 @@ void EncoderVideoAudioProxy::settingFfmpegPatameters(
         // bufSize
         {
             field = "bufSize";
-            if (_cmsEngineDBFacade->isMetadataPresent(videoRoot, field))
+            if (_mmsEngineDBFacade->isMetadataPresent(videoRoot, field))
             {
                 string bufSize = videoRoot.get(field, "XXX").asString();
 
@@ -1423,7 +1423,7 @@ void EncoderVideoAudioProxy::settingFfmpegPatameters(
         // frameRate
         {
             field = "frameRate";
-            if (_cmsEngineDBFacade->isMetadataPresent(videoRoot, field))
+            if (_mmsEngineDBFacade->isMetadataPresent(videoRoot, field))
             {
                 string frameRate = videoRoot.get(field, "XXX").asString();
 
@@ -1436,7 +1436,7 @@ void EncoderVideoAudioProxy::settingFfmpegPatameters(
                 // keyFrameIntervalInSeconds
                 {
                     field = "keyFrameIntervalInSeconds";
-                    if (_cmsEngineDBFacade->isMetadataPresent(videoRoot, field))
+                    if (_mmsEngineDBFacade->isMetadataPresent(videoRoot, field))
                     {
                         string keyFrameIntervalInSeconds = videoRoot.get(field, "XXX").asString();
 
@@ -1452,11 +1452,11 @@ void EncoderVideoAudioProxy::settingFfmpegPatameters(
          */
     }
     
-    if (_encodingItem->_contentType == CMSEngineDBFacade::ContentType::Video ||
-            _encodingItem->_contentType == CMSEngineDBFacade::ContentType::Audio)
+    if (_encodingItem->_contentType == MMSEngineDBFacade::ContentType::Video ||
+            _encodingItem->_contentType == MMSEngineDBFacade::ContentType::Audio)
     {
         field = "audio";
-        if (!_cmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
+        if (!_mmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field;
@@ -1470,7 +1470,7 @@ void EncoderVideoAudioProxy::settingFfmpegPatameters(
         // codec
         {
             field = "codec";
-            if (!_cmsEngineDBFacade->isMetadataPresent(audioRoot, field))
+            if (!_mmsEngineDBFacade->isMetadataPresent(audioRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -1491,7 +1491,7 @@ void EncoderVideoAudioProxy::settingFfmpegPatameters(
         // bitRate
         {
             field = "bitRate";
-            if (!_cmsEngineDBFacade->isMetadataPresent(audioRoot, field))
+            if (!_mmsEngineDBFacade->isMetadataPresent(audioRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -1520,7 +1520,7 @@ void EncoderVideoAudioProxy::encodingFileFormatValidation(string fileFormat)
         string errorMessage = __FILEREF__ + "fileFormat is wrong"
                 + ", fileFormat: " + fileFormat;
 
-        auto logger = spdlog::get("cmsEngineService");
+        auto logger = spdlog::get("mmsEngineService");
         logger->error(errorMessage);
         
         throw runtime_error(errorMessage);
@@ -1534,7 +1534,7 @@ void EncoderVideoAudioProxy::ffmpeg_encodingVideoCodecValidation(string codec)
         string errorMessage = __FILEREF__ + "Video codec is wrong"
                 + ", codec: " + codec;
 
-        auto logger = spdlog::get("cmsEngineService");
+        auto logger = spdlog::get("mmsEngineService");
         logger->error(errorMessage);
         
         throw runtime_error(errorMessage);
@@ -1544,7 +1544,7 @@ void EncoderVideoAudioProxy::ffmpeg_encodingVideoCodecValidation(string codec)
 void EncoderVideoAudioProxy::ffmpeg_encodingVideoProfileValidation(
     string codec, string profile)
 {
-    auto logger = spdlog::get("cmsEngineService");
+    auto logger = spdlog::get("mmsEngineService");
 
     if (codec == "libx264")
     {
@@ -1594,7 +1594,7 @@ void EncoderVideoAudioProxy::ffmpeg_encodingAudioCodecValidation(string codec)
         string errorMessage = __FILEREF__ + "Audio codec is wrong"
                 + ", codec: " + codec;
 
-        auto logger = spdlog::get("cmsEngineService");
+        auto logger = spdlog::get("mmsEngineService");
         logger->error(errorMessage);
         
         throw runtime_error(errorMessage);
@@ -1604,8 +1604,8 @@ void EncoderVideoAudioProxy::ffmpeg_encodingAudioCodecValidation(string codec)
 void EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEncodedAssetPathName)
 {
     string encodedFileName;
-    string cmsAssetPathName;
-    unsigned long cmsPartitionIndexUsed;
+    string mmsAssetPathName;
+    unsigned long mmsPartitionIndexUsed;
     try
     {
         size_t fileNameIndex = stagingEncodedAssetPathName.find_last_of("/");
@@ -1623,14 +1623,14 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEncod
         bool partitionIndexToBeCalculated = true;
         bool deliveryRepositoriesToo = true;
 
-        cmsAssetPathName = _cmsStorage->moveAssetInCMSRepository(
+        mmsAssetPathName = _mmsStorage->moveAssetInMMSRepository(
             stagingEncodedAssetPathName,
             _encodingItem->_customer->_directoryName,
             encodedFileName,
             _encodingItem->_relativePath,
 
             partitionIndexToBeCalculated,
-            &cmsPartitionIndexUsed, // OUT if bIsPartitionIndexToBeCalculated is true, IN is bIsPartitionIndexToBeCalculated is false
+            &mmsPartitionIndexUsed, // OUT if bIsPartitionIndexToBeCalculated is true, IN is bIsPartitionIndexToBeCalculated is false
 
             deliveryRepositoriesToo,
             _encodingItem->_customer->_territories
@@ -1638,7 +1638,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEncod
     }
     catch(exception e)
     {
-        _logger->error(__FILEREF__ + "_cmsStorage->moveAssetInCMSRepository failed"
+        _logger->error(__FILEREF__ + "_mmsStorage->moveAssetInMMSRepository failed"
             + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingItem->_physicalPathKey: " + to_string(_encodingItem->_physicalPathKey)
@@ -1650,17 +1650,17 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEncod
 
     try
     {
-        unsigned long long cmsAssetSizeInBytes;
+        unsigned long long mmsAssetSizeInBytes;
         {
             FileIO::DirectoryEntryType_t detSourceFileType = 
-                    FileIO::getDirectoryEntryType(cmsAssetPathName);
+                    FileIO::getDirectoryEntryType(mmsAssetPathName);
 
             // file in case of .3gp content OR directory in case of IPhone content
             if (detSourceFileType != FileIO::TOOLS_FILEIO_DIRECTORY &&
                     detSourceFileType != FileIO::TOOLS_FILEIO_REGULARFILE) 
             {
                 string errorMessage = __FILEREF__ + "Wrong directory entry type"
-                        + ", cmsAssetPathName: " + cmsAssetPathName
+                        + ", mmsAssetPathName: " + mmsAssetPathName
                         ;
 
                 _logger->error(errorMessage);
@@ -1669,24 +1669,24 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEncod
 
             if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
             {
-                cmsAssetSizeInBytes = FileIO::getDirectorySizeInBytes(cmsAssetPathName);   
+                mmsAssetSizeInBytes = FileIO::getDirectorySizeInBytes(mmsAssetPathName);   
             }
             else
             {
                 bool inCaseOfLinkHasItToBeRead = false;
-                cmsAssetSizeInBytes = FileIO::getFileSizeInBytes(cmsAssetPathName,
+                mmsAssetSizeInBytes = FileIO::getFileSizeInBytes(mmsAssetPathName,
                         inCaseOfLinkHasItToBeRead);   
             }
         }
 
 
-        int64_t encodedPhysicalPathKey = _cmsEngineDBFacade->saveEncodedContentMetadata(
+        int64_t encodedPhysicalPathKey = _mmsEngineDBFacade->saveEncodedContentMetadata(
             _encodingItem->_customer->_customerKey,
             _encodingItem->_mediaItemKey,
             encodedFileName,
             _encodingItem->_relativePath,
-            cmsPartitionIndexUsed,
-            cmsAssetSizeInBytes,
+            mmsPartitionIndexUsed,
+            mmsAssetSizeInBytes,
             _encodingItem->_encodingProfileKey);
         
         _logger->info(__FILEREF__ + "Saved the Encoded content"
@@ -1698,28 +1698,28 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEncod
     }
     catch(exception e)
     {
-        _logger->error(__FILEREF__ + "_cmsEngineDBFacade->saveEncodedContentMetadata failed"
+        _logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveEncodedContentMetadata failed"
             + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingItem->_physicalPathKey: " + to_string(_encodingItem->_physicalPathKey)
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
         );
 
-        FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(cmsAssetPathName);
+        FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(mmsAssetPathName);
 
         _logger->info(__FILEREF__ + "Remove"
-            + ", cmsAssetPathName: " + cmsAssetPathName
+            + ", mmsAssetPathName: " + mmsAssetPathName
         );
 
         // file in case of .3gp content OR directory in case of IPhone content
         if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
         {
             Boolean_t bRemoveRecursively = true;
-            FileIO::removeDirectory(cmsAssetPathName, bRemoveRecursively);
+            FileIO::removeDirectory(mmsAssetPathName, bRemoveRecursively);
         }
         else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
         {
-            FileIO::remove(cmsAssetPathName);
+            FileIO::remove(mmsAssetPathName);
         }
 
         throw e;

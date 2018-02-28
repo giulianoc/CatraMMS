@@ -1,6 +1,6 @@
 
-#include "CMSEngineDBFacade.h"
-#include "CMSEngine.h"
+#include "MMSEngineDBFacade.h"
+#include "MMSEngine.h"
 
 
 int main (int iArgc, char *pArgv [])
@@ -18,26 +18,26 @@ int main (int iArgc, char *pArgv [])
     #else
         string dbUsername("root"); string dbPassword("root"); string dbName("catracms");
     #endif
-    logger->info(__FILEREF__ + "Creating CMSEngineDBFacade"
+    logger->info(__FILEREF__ + "Creating MMSEngineDBFacade"
         + ", dbPoolSize: " + to_string(dbPoolSize)
         + ", dbServer: " + dbServer
         + ", dbUsername: " + dbUsername
         + ", dbPassword: " + dbPassword
         + ", dbName: " + dbName
             );
-    shared_ptr<CMSEngineDBFacade>       cmsEngineDBFacade = make_shared<CMSEngineDBFacade>(
+    shared_ptr<MMSEngineDBFacade>       mmsEngineDBFacade = make_shared<MMSEngineDBFacade>(
             dbPoolSize, dbServer, dbUsername, dbPassword, dbName, logger);
 
-    shared_ptr<Customer> customer = cmsEngineDBFacade->getCustomer("Warner");
+    shared_ptr<Customer> customer = mmsEngineDBFacade->getCustomer("Warner");
     
-    logger->info(__FILEREF__ + "Creating CMSEngine"
+    logger->info(__FILEREF__ + "Creating MMSEngine"
             );
-    shared_ptr<CMSEngine>       cmsEngine = make_shared<CMSEngine>(cmsEngineDBFacade, logger);
+    shared_ptr<MMSEngine>       mmsEngine = make_shared<MMSEngine>(mmsEngineDBFacade, logger);
 
-    cmsEngine->addFFMPEGVideoEncodingProfile(
+    mmsEngine->addFFMPEGVideoEncodingProfile(
         customer,
         "",                         // string encodingProfileSet,  // "": default Customer family, != "": named customer family
-        CMSEngineDBFacade::EncodingTechnology::MP4,
+        MMSEngineDBFacade::EncodingTechnology::MP4,
 	"",                         // string label,
 
 	"mp4",                      // string fileFormat,
@@ -57,7 +57,7 @@ int main (int iArgc, char *pArgv [])
         "128k"                     // string audioBitRate
     );
 
-    cmsEngine->addImageEncodingProfile(
+    mmsEngine->addImageEncodingProfile(
         customer,
         "",                         // string encodingProfileSet,  // "": default Customer family, != "": named customer family
 	"",                         // string label,

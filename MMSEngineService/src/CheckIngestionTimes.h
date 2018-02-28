@@ -1,17 +1,17 @@
 
-#ifndef CheckEncodingTimes_h
-#define CheckEncodingTimes_h
+#ifndef CheckIngestionTimes_h
+#define CheckIngestionTimes_h
 
 #include <memory>
 #include "spdlog/spdlog.h"
 #include "catralibraries/MultiEventsSet.h"
 #include "catralibraries/Times2.h"
 
-#define CMSENGINE_CHECKENCODINGTIMES_CLASSNAME		"CheckEncodingTimes"
-#define CMSENGINE_CHECKENCODINGTIMES_SOURCE		"CheckEncodingTimes"
+#define MMSENGINE_CHECKINGESTIONTIMES_CLASSNAME		"CheckIngestionTimes"
+#define MMSENGINE_CHECKINGESTIONTIMES_SOURCE		"CheckIngestionTimes"
 
-#define CMSENGINE_EVENTTYPEIDENTIFIER_CHECKENCODINGEVENT	3
-#define CMSENGINEPROCESSORNAME                          "CMSEngineProcessor"
+#define MMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTIONEVENT	1
+#define MMSENGINEPROCESSORNAME                          "MMSEngineProcessor"
 
 
 #ifndef __FILEREF__
@@ -22,18 +22,18 @@
     #endif
 #endif
 
-class CheckEncodingTimes: public Times2
+class CheckIngestionTimes: public Times2
 {
 protected:
     shared_ptr<MultiEventsSet>              _multiEventsSet;
     shared_ptr<spdlog::logger>              _logger;
 
 public:
-    CheckEncodingTimes (unsigned long ulPeriodInMilliSecs,
+    CheckIngestionTimes (unsigned long ulPeriodInMilliSecs,
         shared_ptr<MultiEventsSet> multiEventsSet,
             shared_ptr<spdlog::logger> logger);
 
-    virtual ~CheckEncodingTimes (void);
+    virtual ~CheckIngestionTimes (void);
 
     virtual void handleTimeOut (void);
 

@@ -5,7 +5,7 @@
 
 CheckIngestionTimes:: CheckIngestionTimes (unsigned long ulPeriodInMilliSecs,
 	shared_ptr<MultiEventsSet> multiEventsSet, shared_ptr<spdlog::logger> logger): 
-    Times2 (ulPeriodInMilliSecs, CMSENGINE_CHECKINGESTIONTIMES_CLASSNAME)
+    Times2 (ulPeriodInMilliSecs, MMSENGINE_CHECKINGESTIONTIMES_CLASSNAME)
 
 {
     _multiEventsSet     = multiEventsSet;
@@ -27,16 +27,16 @@ void CheckIngestionTimes:: handleTimeOut (void)
         return;
     }
 
-    shared_ptr<Event>    event = _multiEventsSet->getEventsFactory()->getFreeEvent<Event>(CMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTIONEVENT);
+    shared_ptr<Event>    event = _multiEventsSet->getEventsFactory()->getFreeEvent<Event>(MMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTIONEVENT);
 
-    event->setSource(CMSENGINE_CHECKINGESTIONTIMES_SOURCE);
-    event->setDestination(CMSENGINEPROCESSORNAME);
+    event->setSource(MMSENGINE_CHECKINGESTIONTIMES_SOURCE);
+    event->setDestination(MMSENGINEPROCESSORNAME);
     event->setExpirationTimePoint(chrono::system_clock::now());
 
     _multiEventsSet->addEvent(event);
     
     _logger->debug(__FILEREF__ + "addEvent: EVENT_TYPE" 
-            + ", CMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTION"
+            + ", MMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTION"
             + ", getEventKey().first: " + to_string(event->getEventKey().first)
             + ", getEventKey().second: " + to_string(event->getEventKey().second)
     );

@@ -42,19 +42,19 @@ APICommon::APICommon()
     #else
         string dbUsername("root"); string dbPassword("root"); string dbName("catracms");
     #endif
-    _logger->info(__FILEREF__ + "Creating CMSEngineDBFacade"
+    _logger->info(__FILEREF__ + "Creating MMSEngineDBFacade"
         + ", dbPoolSize: " + to_string(dbPoolSize)
         + ", dbServer: " + dbServer
         + ", dbUsername: " + dbUsername
         + ", dbPassword: " + dbPassword
         + ", dbName: " + dbName
             );
-    _cmsEngineDBFacade = make_shared<CMSEngineDBFacade>(
+    _mmsEngineDBFacade = make_shared<MMSEngineDBFacade>(
             dbPoolSize, dbServer, dbUsername, dbPassword, dbName, _logger);
 
-    _logger->info(__FILEREF__ + "Creating CMSEngine"
+    _logger->info(__FILEREF__ + "Creating MMSEngine"
             );
-    _cmsEngine = make_shared<CMSEngine>(_cmsEngineDBFacade, _logger);
+    _mmsEngine = make_shared<MMSEngine>(_mmsEngineDBFacade, _logger);
     
     #ifdef __APPLE__
         string storageRootPath ("/Users/multi/GestioneProgetti/Development/catrasoftware/storage/");
@@ -62,11 +62,11 @@ APICommon::APICommon()
         string storageRootPath ("/home/giuliano/storage/");
     #endif
     unsigned long freeSpaceToLeaveInEachPartitionInMB = 5;
-    _logger->info(__FILEREF__ + "Creating CMSStorage"
+    _logger->info(__FILEREF__ + "Creating MMSStorage"
         + ", storageRootPath: " + storageRootPath
         + ", freeSpaceToLeaveInEachPartitionInMB: " + to_string(freeSpaceToLeaveInEachPartitionInMB)
             );
-    _cmsStorage = make_shared<CMSStorage>(
+    _mmsStorage = make_shared<MMSStorage>(
             storageRootPath, 
             freeSpaceToLeaveInEachPartitionInMB,
             _logger);
@@ -222,7 +222,7 @@ int APICommon::listen()
             string custormerKey = usernameAndPassword.substr(0, userNameSeparator);
             string apiKey = usernameAndPassword.substr(userNameSeparator + 1);
 
-            customerAndFlags = _cmsEngine->checkAPIKey (apiKey);
+            customerAndFlags = _mmsEngine->checkAPIKey (apiKey);
             
             if (get<0>(customerAndFlags)->_customerKey != stol(custormerKey))
             {
@@ -252,7 +252,7 @@ int APICommon::listen()
         }
         catch(APIKeyNotFoundOrExpired e)
         {
-            _logger->error(__FILEREF__ + "_cmsEngine->checkAPIKey failed"
+            _logger->error(__FILEREF__ + "_mmsEngine->checkAPIKey failed"
                 + ", e.what(): " + e.what()
             );
             
@@ -266,7 +266,7 @@ int APICommon::listen()
         }
         catch(runtime_error e)
         {
-            _logger->error(__FILEREF__ + "_cmsEngine->checkAPIKey failed"
+            _logger->error(__FILEREF__ + "_mmsEngine->checkAPIKey failed"
                 + ", e.what(): " + e.what()
             );
 
@@ -280,7 +280,7 @@ int APICommon::listen()
         }
         catch(exception e)
         {
-            _logger->error(__FILEREF__ + "_cmsEngine->checkAPIKey failed"
+            _logger->error(__FILEREF__ + "_mmsEngine->checkAPIKey failed"
                 + ", e.what(): " + e.what()
             );
 
@@ -441,7 +441,7 @@ int APICommon::manageBinaryRequest()
         string custormerKey = usernameAndPassword.substr(0, userNameSeparator);
         string apiKey = usernameAndPassword.substr(userNameSeparator + 1);
 
-        customerAndFlags = _cmsEngine->checkAPIKey (apiKey);
+        customerAndFlags = _mmsEngine->checkAPIKey (apiKey);
 
         if (get<0>(customerAndFlags)->_customerKey != stol(custormerKey))
         {
@@ -470,7 +470,7 @@ int APICommon::manageBinaryRequest()
     }
     catch(APIKeyNotFoundOrExpired e)
     {
-        _logger->error(__FILEREF__ + "_cmsEngine->checkAPIKey failed"
+        _logger->error(__FILEREF__ + "_mmsEngine->checkAPIKey failed"
             + ", e.what(): " + e.what()
         );
 
@@ -483,7 +483,7 @@ int APICommon::manageBinaryRequest()
     }
     catch(runtime_error e)
     {
-        _logger->error(__FILEREF__ + "_cmsEngine->checkAPIKey failed"
+        _logger->error(__FILEREF__ + "_mmsEngine->checkAPIKey failed"
             + ", e.what(): " + e.what()
         );
 
@@ -496,7 +496,7 @@ int APICommon::manageBinaryRequest()
     }
     catch(exception e)
     {
-        _logger->error(__FILEREF__ + "_cmsEngine->checkAPIKey failed"
+        _logger->error(__FILEREF__ + "_mmsEngine->checkAPIKey failed"
             + ", e.what(): " + e.what()
         );
 
@@ -524,12 +524,12 @@ int APICommon::manageBinaryRequest()
         if ((it = processDetails.find("QUERY_STRING")) != processDetails.end())
             fillQueryString(it->second, queryParameters);
 
-        string xCatraCMSResumeHeader;
-        if ((it = processDetails.find("HTTP_X_CATRACMS_RESUME")) != processDetails.end())
-            xCatraCMSResumeHeader = it->second;
+        string xCatraMMSResumeHeader;
+        if ((it = processDetails.find("HTTP_X_CATRAMMS_RESUME")) != processDetails.end())
+            xCatraMMSResumeHeader = it->second;
 
         getBinaryAndResponse(requestURI, requestMethod, 
-                xCatraCMSResumeHeader, queryParameters,
+                xCatraMMSResumeHeader, queryParameters,
                 customerAndFlags, contentLength);            
     }
     catch(runtime_error e)
@@ -597,7 +597,7 @@ void APICommon::sendHeadSuccess(int htmlResponseCode, unsigned long fileSize)
 
     string completeHttpResponse =
             httpStatus
-            + "X-CatraCMS-Resume: " + to_string(fileSize) + endLine
+            + "X-CatraMMS-Resume: " + to_string(fileSize) + endLine
             + endLine;
 
     _logger->info(__FILEREF__ + "HTTP HEAD Success"

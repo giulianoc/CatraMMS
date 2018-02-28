@@ -5,14 +5,14 @@
  */
 
 /* 
- * File:   CMSEngineDBFacade.h
+ * File:   MMSEngineDBFacade.h
  * Author: giuliano
  *
  * Created on January 27, 2018, 9:38 AM
  */
 
-#ifndef CMSEngineDBFacade_h
-#define CMSEngineDBFacade_h
+#ifndef MMSEngineDBFacade_h
+#define MMSEngineDBFacade_h
 
 #include <string>
 #include <memory>
@@ -39,7 +39,7 @@ struct APIKeyNotFoundOrExpired: public exception {
     }; 
 };
 
-class CMSEngineDBFacade {
+class MMSEngineDBFacade {
 
 public:
     enum class ContentType {
@@ -224,7 +224,7 @@ public:
     {
         long long                               _encodingJobKey;
         long long                               _ingestionJobKey;
-        unsigned long                           _cmsPartitionNumber;
+        unsigned long                           _mmsPartitionNumber;
         string                                  _fileName;
         string                                  _relativePath;
         shared_ptr<Customer>                    _customer;
@@ -240,7 +240,7 @@ public:
         string                                  _ftpPassword;
          */
         long long                               _encodingProfileKey;
-        CMSEngineDBFacade::EncodingTechnology   _encodingProfileTechnology;
+        MMSEngineDBFacade::EncodingTechnology   _encodingProfileTechnology;
         string                                  _details;
     } ;
 
@@ -287,7 +287,7 @@ public:
             // media source is remote, uploading in FTP repository is not done/completed
 
         QueuedForEncoding,   
-            // metadata ingestion is finished (saved into DB), media source is in CMS repository
+            // metadata ingestion is finished (saved into DB), media source is in MMS repository
 
 
         End_DownloadCancelledByUser,   
@@ -385,7 +385,7 @@ public:
     }
 
 public:
-    CMSEngineDBFacade(
+    MMSEngineDBFacade(
             size_t poolSize, 
             string dbServer, 
             string dbUsername, 
@@ -394,7 +394,7 @@ public:
             shared_ptr<spdlog::logger> logger
             );
 
-    ~CMSEngineDBFacade();
+    ~MMSEngineDBFacade();
 
     vector<shared_ptr<Customer>> getCustomers();
     
@@ -471,7 +471,7 @@ public:
         string sourceReference,
         IngestionType ingestionType,
         IngestionStatus ingestionStatus,
-        string processorCMS,
+        string processorMMS,
         string errorMessage);
 
     int64_t addIngestionJob (
@@ -490,7 +490,7 @@ public:
     void updateIngestionJob (
         int64_t ingestionJobKey,
         IngestionStatus newIngestionStatus,
-        string processorCMS,
+        string processorMMS,
         string errorMessage);
 
     void updateIngestionJob (
@@ -498,7 +498,7 @@ public:
         string sourceReference,
         IngestionType ingestionType,
         IngestionStatus newIngestionStatus,
-        string processorCMS,
+        string processorMMS,
         string errorMessage);
 
     string getSourceReferenceOfUploadingInProgress(int64_t ingestionJobKey);
@@ -512,8 +512,8 @@ public:
 
     void getEncodingJobs(
         bool resetToBeDone,
-        string processorCMS,
-        vector<shared_ptr<CMSEngineDBFacade::EncodingItem>>& encodingItems);
+        string processorMMS,
+        vector<shared_ptr<MMSEngineDBFacade::EncodingItem>>& encodingItems);
     
     int updateEncodingJob (
         int64_t encodingJobKey,
@@ -532,7 +532,7 @@ public:
         Json::Value metadataRoot,
         string relativePath,
         string mediaSourceFileName,
-        int cmsPartitionIndexUsed,
+        int mmsPartitionIndexUsed,
         unsigned long sizeInBytes,
         int64_t videoOrAudioDurationInMilliSeconds,
         int imageWidth,
@@ -543,7 +543,7 @@ public:
         int64_t mediaItemKey,
         string encodedFileName,
         string relativePath,
-        int cmsPartitionIndexUsed,
+        int mmsPartitionIndexUsed,
         unsigned long long sizeInBytes,
         int64_t encodingProfileKey);
 
@@ -579,12 +579,12 @@ private:
         chrono::system_clock::time_point expirationDate
     );
 
-    bool isCMSAdministratorUser (long lUserType)
+    bool isMMSAdministratorUser (long lUserType)
     {
         return (lUserType & 0x1) != 0 ? true : false;
     }
 
-    bool isCMSUser (long lUserType)
+    bool isMMSUser (long lUserType)
     {
         return (lUserType & 0x2) != 0 ? true : false;
     }
@@ -594,7 +594,7 @@ private:
         return (lUserType & 0x4) != 0 ? true : false;
     }
 
-    bool isCMSEditorialUser (long lUserType)
+    bool isMMSEditorialUser (long lUserType)
     {
         return (lUserType & 0x8) != 0 ? true : false;
     }
@@ -604,12 +604,12 @@ private:
         return (lUserType & 0x10) != 0 ? true : false;
     }
 
-    int getCMSAdministratorUser ()
+    int getMMSAdministratorUser ()
     {
         return ((int) 0x1);
     }
 
-    int getCMSUser ()
+    int getMMSUser ()
     {
         return ((int) 0x2);
     }
@@ -619,11 +619,11 @@ private:
         return ((int) 0x4);
     }
 
-    int getCMSEditorialUser ()
+    int getMMSEditorialUser ()
     {
         return ((int) 0x8);
     }
 
 };
 
-#endif /* CMSEngineDBFacade_h */
+#endif /* MMSEngineDBFacade_h */

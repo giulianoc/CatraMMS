@@ -29,12 +29,12 @@
         
 using namespace std;
 
-#define CMSENGINE_EVENTTYPEIDENTIFIER_GENERATEIMAGETOINGESTEVENT	4
+#define MMSENGINE_EVENTTYPEIDENTIFIER_GENERATEIMAGETOINGESTEVENT	4
 
 
 class GenerateImageToIngestEvent: public Event {
 private:
-    string                  _cmsVideoPathName;
+    string                  _mmsVideoPathName;
     string                  _customerFTPRepository;
     string                  _imageFileName;
     string                  _imageTitle;
@@ -46,10 +46,10 @@ private:
 
 public:
     string getCmsVideoPathName() {
-        return _cmsVideoPathName;
+        return _mmsVideoPathName;
     }
-    void setCmsVideoPathName(string cmsVideoPathName) {
-        _cmsVideoPathName = cmsVideoPathName;
+    void setCmsVideoPathName(string mmsVideoPathName) {
+        _mmsVideoPathName = mmsVideoPathName;
     }
 
     string getCustomerFTPRepository() {

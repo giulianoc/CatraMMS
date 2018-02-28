@@ -22,17 +22,17 @@
 
 SET (SOURCES
 	Customer.cpp
-	CMSStorage.cpp
-	CMSEngineDBFacade.cpp
-	CMSEngine.cpp
+	MMSStorage.cpp
+	MMSEngineDBFacade.cpp
+	MMSEngine.cpp
 	ActiveEncodingsManager.cpp
 	EncoderVideoAudioProxy.cpp
 )
 SET (HEADERS
 	Customer.h
-	CMSStorage.h
-	CMSEngineDBFacade.h
-	CMSEngine.h
+	MMSStorage.h
+	MMSEngineDBFacade.h
+	MMSEngine.h
 	ActiveEncodingsManager.h
 	EncoderVideoAudioProxy.h
 )
@@ -52,12 +52,12 @@ if (APPLE)
 	link_directories ("${PROJECT_SOURCE_DIR}/../mysql-connector-c++-1.1.9-macos10.12-x86-64bit/lib")
 endif()
 
-add_library (CMSEngine SHARED ${SOURCES} ${HEADERS})
+add_library (MMSEngine SHARED ${SOURCES} ${HEADERS})
 
 if (APPLE)
-	target_link_libraries (CMSEngine ErrMsg)
-	target_link_libraries (CMSEngine Tools)
-	target_link_libraries (CMSEngine mysqlcppconn)
-	target_link_libraries (CMSEngine jsoncpp)
-        target_link_libraries (CMSEngine Magick++-7.Q16HDRI)
+	target_link_libraries (MMSEngine ErrMsg)
+	target_link_libraries (MMSEngine Tools)
+	target_link_libraries (MMSEngine mysqlcppconn)
+	target_link_libraries (MMSEngine jsoncpp)
+        target_link_libraries (MMSEngine Magick++-7.Q16HDRI)
 endif()

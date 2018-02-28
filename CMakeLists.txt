@@ -25,7 +25,7 @@ cmake_minimum_required(
 )
 
 project(
-	CatraCMS
+	CatraMMS
 )
 
 SET(CMAKE_CXX_FLAGS "-std=c++14")
@@ -37,15 +37,15 @@ set(CMAKE_BUILD_TYPE Debug)
 #set(CMAKE_BUILD_TYPE RelWithDebInfo)
 #set(CMAKE_BUILD_TYPE Release)
 
-set(CatraCMS_VERSION_MAJOR 1)
-set(CatraCMS_VERSION_MINOR 0)
+set(CatraMMS_VERSION_MAJOR 1)
+set(CatraMMS_VERSION_MINOR 0)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 find_package(LibCrypto)
 find_package(ZLIB)
 
-add_subdirectory(CMSEngine/src)
-add_subdirectory(CMSEngineService/src)
+add_subdirectory(MMSEngine/src)
+add_subdirectory(MMSEngineService/src)
 
 add_subdirectory(API/src)
 

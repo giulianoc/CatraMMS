@@ -1,34 +1,34 @@
 
-#ifndef CMSEngineProcessor_h
-#define CMSEngineProcessor_h
+#ifndef MMSEngineProcessor_h
+#define MMSEngineProcessor_h
 
 #include <string>
 // #define SPDLOG_DEBUG_ON
 // #define SPDLOG_TRACE_ON
 #include "spdlog/spdlog.h"
 #include "catralibraries/MultiEventsSet.h"
-#include "CMSEngineDBFacade.h"
-#include "CMSStorage.h"
+#include "MMSEngineDBFacade.h"
+#include "MMSStorage.h"
 #include "ActiveEncodingsManager.h"
 #include "LocalAssetIngestionEvent.h"
 #include "GenerateImageToIngestEvent.h"
 #include "json/json.h"
 
-#define CMSENGINEPROCESSORNAME    "CMSEngineProcessor"
+#define MMSENGINEPROCESSORNAME    "MMSEngineProcessor"
 
 
-class CMSEngineProcessor
+class MMSEngineProcessor
 {
 private:
     shared_ptr<spdlog::logger>          _logger;
     shared_ptr<MultiEventsSet>          _multiEventsSet;
-    shared_ptr<CMSEngineDBFacade>       _cmsEngineDBFacade;
-    shared_ptr<CMSStorage>              _cmsStorage;
+    shared_ptr<MMSEngineDBFacade>       _mmsEngineDBFacade;
+    shared_ptr<MMSStorage>              _mmsStorage;
     ActiveEncodingsManager*             _pActiveEncodingsManager;
     
     unsigned long           _ulIngestionLastCustomerIndex;
     bool                    _firstGetEncodingJob;
-    string                  _processorCMS;
+    string                  _processorMMS;
     int                     _maxDownloadAttemptNumber;
     int                     _progressUpdatePeriodInSeconds;
     int                     _secondsWaitingAmongDownloadingAttempt;
@@ -54,13 +54,13 @@ private:
         string encodingProfilesSet
     );
 
-    pair<CMSEngineDBFacade::IngestionType,CMSEngineDBFacade::ContentType>  validateMetadata(Json::Value root);
+    pair<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType>  validateMetadata(Json::Value root);
 
-    CMSEngineDBFacade::ContentType validateContentIngestionMetadata(Json::Value encoding);
+    MMSEngineDBFacade::ContentType validateContentIngestionMetadata(Json::Value encoding);
 
     tuple<bool, bool, string, string, string, int> getMediaSourceDetails(
         shared_ptr<Customer> customer,
-        CMSEngineDBFacade::IngestionType ingestionType,
+        MMSEngineDBFacade::IngestionType ingestionType,
         Json::Value root);
 
     void validateMediaSourceFile (string ftpDirectoryMediaSourceFileName,
@@ -80,14 +80,14 @@ private:
         double ultotal, double ulnow);
 
 public:
-    CMSEngineProcessor(
+    MMSEngineProcessor(
             shared_ptr<spdlog::logger> logger, 
             shared_ptr<MultiEventsSet> multiEventsSet,
-            shared_ptr<CMSEngineDBFacade> cmsEngineDBFacade,
-            shared_ptr<CMSStorage> cmsStorage,
+            shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
+            shared_ptr<MMSStorage> mmsStorage,
             ActiveEncodingsManager* pActiveEncodingsManager);
     
-    ~CMSEngineProcessor();
+    ~MMSEngineProcessor();
     
     void operator()();
 } ;

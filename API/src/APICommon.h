@@ -15,8 +15,8 @@
 #define APICommon_h
 
 #include <unordered_map>
-#include "CMSEngine.h"
-#include "CMSStorage.h"
+#include "MMSEngine.h"
+#include "MMSStorage.h"
 #include "spdlog/spdlog.h"
 
 struct NoAPIKeyPresentIntoRequest: public exception {    
@@ -48,7 +48,7 @@ virtual void manageRequestAndResponse(
     virtual void getBinaryAndResponse(
         string requestURI,
         string requestMethod,
-        string xCatraCMSResumeHeader,
+        string xCatraMMSResumeHeader,
         unordered_map<string, string> queryParameters,
         tuple<shared_ptr<Customer>,bool,bool>& customerAndFlags,
         unsigned long contentLength
@@ -56,9 +56,9 @@ virtual void manageRequestAndResponse(
 
 protected:
     shared_ptr<spdlog::logger>      _logger;
-    shared_ptr<CMSEngineDBFacade>   _cmsEngineDBFacade;
-    shared_ptr<CMSEngine>           _cmsEngine;
-    shared_ptr<CMSStorage>          _cmsStorage;
+    shared_ptr<MMSEngineDBFacade>   _mmsEngineDBFacade;
+    shared_ptr<MMSEngine>           _mmsEngine;
+    shared_ptr<MMSStorage>          _mmsStorage;
 
     unsigned long long   _maxBinaryContentLength;
 

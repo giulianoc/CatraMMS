@@ -5,28 +5,28 @@
  */
 
 /* 
- * File:   CMSEngine.h
+ * File:   MMSEngine.h
  * Author: multi
  *
  * Created on January 30, 2018, 3:00 PM
  */
 
-#ifndef CMSEngine_h
-#define CMSEngine_h
+#ifndef MMSEngine_h
+#define MMSEngine_h
 
 #include <string>
-#include "CMSEngineDBFacade.h"
+#include "MMSEngineDBFacade.h"
 
 using namespace std;
 
-class CMSEngine {
+class MMSEngine {
     
 public:
-    CMSEngine(shared_ptr<CMSEngineDBFacade> cmsEngineDBFacade,
+    MMSEngine(shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
             shared_ptr<spdlog::logger> logger
             );
 
-    virtual ~CMSEngine();
+    virtual ~MMSEngine();
     
     tuple<int64_t,int64_t,string> registerCustomer(
 	string customerName,
@@ -36,10 +36,10 @@ public:
 	string zip,
         string phone,
         string countryCode,
-        CMSEngineDBFacade::CustomerType customerType,
+        MMSEngineDBFacade::CustomerType customerType,
 	string deliveryURL,
-	CMSEngineDBFacade::EncodingPriority maxEncodingPriority,
-        CMSEngineDBFacade::EncodingPeriod encodingPeriod,
+	MMSEngineDBFacade::EncodingPriority maxEncodingPriority,
+        MMSEngineDBFacade::EncodingPeriod encodingPeriod,
 	long maxIngestionsNumber,
         long maxStorageInGB,
 	string languageCode,
@@ -65,15 +65,15 @@ public:
         string fileNameWithIngestionJobKeyPlaceholder,
         string ingestionJobKeyPlaceHolder,
         string metadataFileContent,
-        CMSEngineDBFacade::IngestionType ingestionType,
-        CMSEngineDBFacade::IngestionStatus ingestionStatus);
+        MMSEngineDBFacade::IngestionType ingestionType,
+        MMSEngineDBFacade::IngestionStatus ingestionStatus);
 
     void removeIngestionJob (int64_t ingestionJobKey);
 
     void addFFMPEGVideoEncodingProfile(
         shared_ptr<Customer> customer,
         string encodingProfileSet,  // "": default Customer family, != "": named customer family
-        CMSEngineDBFacade::EncodingTechnology encodingTechnology,
+        MMSEngineDBFacade::EncodingTechnology encodingTechnology,
 	string label,
 	string fileFormat,
         
@@ -107,7 +107,7 @@ public:
     );
 
 private:
-    shared_ptr<CMSEngineDBFacade> _cmsEngineDBFacade;
+    shared_ptr<MMSEngineDBFacade> _mmsEngineDBFacade;
     shared_ptr<spdlog::logger> _logger;
     
     string getVideoEncodingProfileDetails(

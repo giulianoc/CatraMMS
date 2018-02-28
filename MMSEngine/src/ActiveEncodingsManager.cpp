@@ -14,13 +14,13 @@
 #include "ActiveEncodingsManager.h"
 
 ActiveEncodingsManager::ActiveEncodingsManager(
-    shared_ptr<CMSEngineDBFacade> cmsEngineDBFacade,
-    shared_ptr<CMSStorage> cmsStorage,
+    shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
+    shared_ptr<MMSStorage> mmsStorage,
     shared_ptr<spdlog::logger> logger) 
 {
     _logger = logger;
-    _cmsEngineDBFacade = cmsEngineDBFacade;
-    _cmsStorage = cmsStorage; 
+    _mmsEngineDBFacade = mmsEngineDBFacade;
+    _mmsStorage = mmsStorage; 
     
     #ifdef __FFMPEGLOCALENCODER__
         _ffmpegEncoderRunning = 0;
@@ -37,10 +37,10 @@ void ActiveEncodingsManager::operator()()
     
     chrono::seconds secondsToBlock(5);
     
-    vector<CMSEngineDBFacade::EncodingPriority> sortedEncodingPriorities = { 
-        CMSEngineDBFacade::EncodingPriority::High,
-        CMSEngineDBFacade::EncodingPriority::Medium,
-        CMSEngineDBFacade::EncodingPriority::Low
+    vector<MMSEngineDBFacade::EncodingPriority> sortedEncodingPriorities = { 
+        MMSEngineDBFacade::EncodingPriority::High,
+        MMSEngineDBFacade::EncodingPriority::Medium,
+        MMSEngineDBFacade::EncodingPriority::Low
     };
         
     while (!shutdown)
@@ -61,26 +61,26 @@ void ActiveEncodingsManager::operator()()
             }
              */
 
-            for (CMSEngineDBFacade::EncodingPriority encodingPriority: sortedEncodingPriorities)
+            for (MMSEngineDBFacade::EncodingPriority encodingPriority: sortedEncodingPriorities)
             {
                 EncodingJob*    encodingJobs;
                 int             maxEncodingsToBeManaged;
 
-                if (encodingPriority == CMSEngineDBFacade::EncodingPriority::High)
+                if (encodingPriority == MMSEngineDBFacade::EncodingPriority::High)
                 {
                     // _logger->info(__FILEREF__ + "Processing the high encodings...");
 
                     encodingJobs            = _highPriorityEncodingJobs;
                     maxEncodingsToBeManaged = MAXHIGHENCODINGSTOBEMANAGED;
                 }
-                else if (encodingPriority == CMSEngineDBFacade::EncodingPriority::Medium)
+                else if (encodingPriority == MMSEngineDBFacade::EncodingPriority::Medium)
                 {
                     // _logger->info(__FILEREF__ + "Processing the default encodings...");
 
                     encodingJobs = _mediumPriorityEncodingJobs;
                     maxEncodingsToBeManaged = MAXMEDIUMENCODINGSTOBEMANAGED;
                 }
-                else // if (encodingPriority == CMSEngineDBFacade::EncodingPriority::Low)
+                else // if (encodingPriority == MMSEngineDBFacade::EncodingPriority::Low)
                 {
                     // _logger->info(__FILEREF__ + "Processing the low encodings...");
 
@@ -95,14 +95,14 @@ void ActiveEncodingsManager::operator()()
                     if (encodingJob->_status == EncodingJobStatus::Free)
                         continue;
                     else if (encodingJob->_status == EncodingJobStatus::Running && 
-                            (encodingJob->_encodingItem->_contentType == CMSEngineDBFacade::ContentType::Video
-                            || encodingJob->_encodingItem->_contentType == CMSEngineDBFacade::ContentType::Audio))
+                            (encodingJob->_encodingItem->_contentType == MMSEngineDBFacade::ContentType::Video
+                            || encodingJob->_encodingItem->_contentType == MMSEngineDBFacade::ContentType::Audio))
                     {
                         try
                         {
                             int encodingPercentage = encodingJob->_encoderVideoAudioProxy.getEncodingProgress();
                             
-                            _cmsEngineDBFacade->updateEncodingJobProgress (encodingJob->_encodingItem->_encodingJobKey, 
+                            _mmsEngineDBFacade->updateEncodingJobProgress (encodingJob->_encodingItem->_encodingJobKey, 
                                 encodingPercentage);
                         }
                         catch(EncodingStatusNotAvailable e)
@@ -198,14 +198,14 @@ void ActiveEncodingsManager::operator()()
 
 void ActiveEncodingsManager::processEncodingJob(mutex* mtEncodingJobs, EncodingJob* encodingJob)
 {
-    if (encodingJob->_encodingItem->_contentType == CMSEngineDBFacade::ContentType::Video ||
-            encodingJob->_encodingItem->_contentType == CMSEngineDBFacade::ContentType::Audio)
+    if (encodingJob->_encodingItem->_contentType == MMSEngineDBFacade::ContentType::Video ||
+            encodingJob->_encodingItem->_contentType == MMSEngineDBFacade::ContentType::Audio)
     {
         encodingJob->_encoderVideoAudioProxy.setData(
             mtEncodingJobs,
             &(encodingJob->_status),
-            _cmsEngineDBFacade,
-            _cmsStorage,
+            _mmsEngineDBFacade,
+            _mmsStorage,
             encodingJob->_encodingItem,
             #ifdef __FFMPEGLOCALENCODER__
                 &_ffmpegEncoderRunning,
@@ -225,7 +225,7 @@ void ActiveEncodingsManager::processEncodingJob(mutex* mtEncodingJobs, EncodingJ
         encodingJob->_encodingJobStart		= chrono::system_clock::now();
         encodingJob->_status			= EncodingJobStatus::Running;
     }
-    else if (encodingJob->_encodingItem->_contentType == CMSEngineDBFacade::ContentType::Image)
+    else if (encodingJob->_encodingItem->_contentType == MMSEngineDBFacade::ContentType::Image)
     {
         string stagingEncodedAssetPathName;
         try
@@ -236,18 +236,18 @@ void ActiveEncodingsManager::processEncodingJob(mutex* mtEncodingJobs, EncodingJ
         {
             _logger->error(__FILEREF__ + "encodeContentImage: " + e.what());
 
-            _logger->info(__FILEREF__ + "_cmsEngineDBFacade->updateEncodingJob PunctualError"
+            _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
                 + ", encodingJob->_encodingItem->_encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
                 + ", encodingJob->_encodingItem->_ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey)
             );
 
             // PunctualError is used because, in case it always happens, the encoding will never reach a final state
-            int encodingFailureNumber = _cmsEngineDBFacade->updateEncodingJob (
+            int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (
                     encodingJob->_encodingItem->_encodingJobKey, 
-                    CMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
+                    MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
                     encodingJob->_encodingItem->_ingestionJobKey);
 
-            _logger->info(__FILEREF__ + "_cmsEngineDBFacade->updateEncodingJob PunctualError"
+            _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
                 + ", encodingJob->_encodingItem->_encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
                 + ", encodingJob->_encodingItem->_ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey)
                 + ", encodingFailureNumber: " + to_string(encodingFailureNumber)
@@ -273,18 +273,18 @@ void ActiveEncodingsManager::processEncodingJob(mutex* mtEncodingJobs, EncodingJ
 
             FileIO::remove(stagingEncodedAssetPathName);
 
-            _logger->info(__FILEREF__ + "_cmsEngineDBFacade->updateEncodingJob PunctualError"
+            _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
                 + ", encodingJob->_encodingItem->_encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
                 + ", encodingJob->_encodingItem->_ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey)
             );
 
             // PunctualError is used because, in case it always happens, the encoding will never reach a final state
-            int encodingFailureNumber = _cmsEngineDBFacade->updateEncodingJob (
+            int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (
                     encodingJob->_encodingItem->_encodingJobKey, 
-                    CMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
+                    MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
                     encodingJob->_encodingItem->_ingestionJobKey);
 
-            _logger->info(__FILEREF__ + "_cmsEngineDBFacade->updateEncodingJob PunctualError"
+            _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
                 + ", encodingJob->_encodingItem->_encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
                 + ", encodingJob->_encodingItem->_ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey)
                 + ", encodingFailureNumber: " + to_string(encodingFailureNumber)
@@ -298,19 +298,19 @@ void ActiveEncodingsManager::processEncodingJob(mutex* mtEncodingJobs, EncodingJ
 
         try
         {
-            _logger->info(__FILEREF__ + "_cmsEngineDBFacade->updateEncodingJob NoError"
+            _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob NoError"
                 + ", encodingJob->_encodingItem->_encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
                 + ", encodingJob->_encodingItem->_ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey)
             );
 
-            _cmsEngineDBFacade->updateEncodingJob (
+            _mmsEngineDBFacade->updateEncodingJob (
                 encodingJob->_encodingItem->_encodingJobKey, 
-                CMSEngineDBFacade::EncodingError::NoError, 
+                MMSEngineDBFacade::EncodingError::NoError, 
                 encodingJob->_encodingItem->_ingestionJobKey);
         }
         catch(exception e)
         {
-            _logger->error(__FILEREF__ + "_cmsEngineDBFacade->updateEncodingJob failed: " + e.what());
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob failed: " + e.what());
 
             encodingJob->_status = EncodingJobStatus::Free;
 
@@ -331,7 +331,7 @@ void ActiveEncodingsManager::processEncodingJob(mutex* mtEncodingJobs, EncodingJ
     }
 }
 
-string ActiveEncodingsManager::encodeContentImage(shared_ptr<CMSEngineDBFacade::EncodingItem> encodingItem)
+string ActiveEncodingsManager::encodeContentImage(shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem)
 {
     size_t extensionIndex = encodingItem->_fileName.find_last_of(".");
     if (extensionIndex == string::npos)
@@ -347,8 +347,8 @@ string ActiveEncodingsManager::encodeContentImage(shared_ptr<CMSEngineDBFacade::
             + "_" 
             + to_string(encodingItem->_encodingProfileKey);
     
-    string cmsSourceAssetPathName = _cmsStorage->getCMSAssetPathName(
-        encodingItem->_cmsPartitionNumber,
+    string mmsSourceAssetPathName = _mmsStorage->getMMSAssetPathName(
+        encodingItem->_mmsPartitionNumber,
         encodingItem->_customer->_directoryName,
         encodingItem->_relativePath,
         encodingItem->_fileName);
@@ -356,15 +356,15 @@ string ActiveEncodingsManager::encodeContentImage(shared_ptr<CMSEngineDBFacade::
     string          stagingEncodedAssetPathName;
     
     // added the check of the file size is zero because in this case the
-    // magick library cause the crash of the xcms engine
+    // magick library cause the crash of the xmms engine
     {
         bool inCaseOfLinkHasItToBeRead = false;
         unsigned long ulFileSize = FileIO::getFileSizeInBytes (
-            cmsSourceAssetPathName, inCaseOfLinkHasItToBeRead);
+            mmsSourceAssetPathName, inCaseOfLinkHasItToBeRead);
         if (ulFileSize == 0)
         {
             string errorMessage = __FILEREF__ + "source image file size is zero"
-                + ", cmsSourceAssetPathName: " + cmsSourceAssetPathName
+                + ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
             ;
             _logger->error(errorMessage);
 
@@ -386,7 +386,7 @@ string ActiveEncodingsManager::encodeContentImage(shared_ptr<CMSEngineDBFacade::
     {
         Magick:: Image      imageToEncode;
         
-        imageToEncode. read (cmsSourceAssetPathName.c_str());
+        imageToEncode. read (mmsSourceAssetPathName.c_str());
 
         string currentImageFormat = imageToEncode.magick ();
         
@@ -398,7 +398,7 @@ string ActiveEncodingsManager::encodeContentImage(shared_ptr<CMSEngineDBFacade::
 
         _logger->info(__FILEREF__ + "Image processing"
             + ", encodingItem->_encodingProfileKey: " + to_string(encodingItem->_encodingProfileKey)
-            + ", cmsSourceAssetPathName: " + cmsSourceAssetPathName
+            + ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
             + ", currentImageFormat: " + currentImageFormat
             + ", currentWidth: " + to_string(currentWidth)
             + ", currentHeight: " + to_string(currentHeight)
@@ -418,7 +418,7 @@ string ActiveEncodingsManager::encodeContentImage(shared_ptr<CMSEngineDBFacade::
             encodedFileName.append(encodingItem->_fileName.substr(extensionIndex));
 
             bool removeLinuxPathIfExist = true;
-            stagingEncodedAssetPathName = _cmsStorage->getStagingAssetPathName(
+            stagingEncodedAssetPathName = _mmsStorage->getStagingAssetPathName(
                 encodingItem->_customer->_directoryName,
                 encodingItem->_relativePath,
                 encodedFileName,
@@ -426,7 +426,7 @@ string ActiveEncodingsManager::encodeContentImage(shared_ptr<CMSEngineDBFacade::
                 -1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
                 removeLinuxPathIfExist);
 
-            FileIO::copyFile (cmsSourceAssetPathName, stagingEncodedAssetPathName);
+            FileIO::copyFile (mmsSourceAssetPathName, stagingEncodedAssetPathName);
         }
         else
         {
@@ -448,7 +448,7 @@ string ActiveEncodingsManager::encodeContentImage(shared_ptr<CMSEngineDBFacade::
             }
 
             bool removeLinuxPathIfExist = true;
-            stagingEncodedAssetPathName = _cmsStorage->getStagingAssetPathName(
+            stagingEncodedAssetPathName = _mmsStorage->getStagingAssetPathName(
                 encodingItem->_customer->_directoryName,
                 encodingItem->_relativePath,
                 encodedFileName,
@@ -496,12 +496,12 @@ string ActiveEncodingsManager::encodeContentImage(shared_ptr<CMSEngineDBFacade::
 }
 
 void ActiveEncodingsManager::processEncodedImage(
-        shared_ptr<CMSEngineDBFacade::EncodingItem> encodingItem, 
+        shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem, 
         string stagingEncodedAssetPathName)
 {
     string encodedFileName;
-    string cmsAssetPathName;
-    unsigned long cmsPartitionIndexUsed;
+    string mmsAssetPathName;
+    unsigned long mmsPartitionIndexUsed;
     try
     {
         size_t fileNameIndex = stagingEncodedAssetPathName.find_last_of("/");
@@ -519,14 +519,14 @@ void ActiveEncodingsManager::processEncodedImage(
         bool partitionIndexToBeCalculated = true;
         bool deliveryRepositoriesToo = true;
 
-        cmsAssetPathName = _cmsStorage->moveAssetInCMSRepository(
+        mmsAssetPathName = _mmsStorage->moveAssetInMMSRepository(
             stagingEncodedAssetPathName,
             encodingItem->_customer->_directoryName,
             encodedFileName,
             encodingItem->_relativePath,
 
             partitionIndexToBeCalculated,
-            &cmsPartitionIndexUsed, // OUT if bIsPartitionIndexToBeCalculated is true, IN is bIsPartitionIndexToBeCalculated is false
+            &mmsPartitionIndexUsed, // OUT if bIsPartitionIndexToBeCalculated is true, IN is bIsPartitionIndexToBeCalculated is false
 
             deliveryRepositoriesToo,
             encodingItem->_customer->_territories
@@ -534,7 +534,7 @@ void ActiveEncodingsManager::processEncodedImage(
     }
     catch(exception e)
     {
-        _logger->error(__FILEREF__ + "_cmsStorage->moveAssetInCMSRepository failed"
+        _logger->error(__FILEREF__ + "_mmsStorage->moveAssetInMMSRepository failed"
             + ", encodingItem->_encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
             + ", encodingItem->_ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
             + ", encodingItem->_physicalPathKey: " + to_string(encodingItem->_physicalPathKey)
@@ -546,20 +546,20 @@ void ActiveEncodingsManager::processEncodedImage(
 
     try
     {
-        unsigned long long cmsAssetSizeInBytes;
+        unsigned long long mmsAssetSizeInBytes;
         {
             bool inCaseOfLinkHasItToBeRead = false;
-            cmsAssetSizeInBytes = FileIO::getFileSizeInBytes(cmsAssetPathName,
+            mmsAssetSizeInBytes = FileIO::getFileSizeInBytes(mmsAssetPathName,
                     inCaseOfLinkHasItToBeRead);   
         }
 
-        int64_t encodedPhysicalPathKey = _cmsEngineDBFacade->saveEncodedContentMetadata(
+        int64_t encodedPhysicalPathKey = _mmsEngineDBFacade->saveEncodedContentMetadata(
             encodingItem->_customer->_customerKey,
             encodingItem->_mediaItemKey,
             encodedFileName,
             encodingItem->_relativePath,
-            cmsPartitionIndexUsed,
-            cmsAssetSizeInBytes,
+            mmsPartitionIndexUsed,
+            mmsAssetSizeInBytes,
             encodingItem->_encodingProfileKey);
         
         _logger->info(__FILEREF__ + "Saved the Encoded content"
@@ -571,7 +571,7 @@ void ActiveEncodingsManager::processEncodedImage(
     }
     catch(exception e)
     {
-        _logger->error(__FILEREF__ + "_cmsEngineDBFacade->saveEncodedContentMetadata failed"
+        _logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveEncodedContentMetadata failed"
             + ", encodingItem->_encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
             + ", encodingItem->_ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
             + ", encodingItem->_physicalPathKey: " + to_string(encodingItem->_physicalPathKey)
@@ -579,32 +579,32 @@ void ActiveEncodingsManager::processEncodedImage(
         );
 
         _logger->info(__FILEREF__ + "Remove"
-            + ", cmsAssetPathName: " + cmsAssetPathName
+            + ", mmsAssetPathName: " + mmsAssetPathName
         );
 
-        FileIO::remove(cmsAssetPathName);
+        FileIO::remove(mmsAssetPathName);
 
         throw e;
     }
 }
 
-void ActiveEncodingsManager::addEncodingItem(shared_ptr<CMSEngineDBFacade::EncodingItem> encodingItem)
+void ActiveEncodingsManager::addEncodingItem(shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem)
 {
     
     EncodingJob*    encodingJobs;
     int             maxEncodingsToBeManaged;
 
-    if (encodingItem->_encodingPriority == CMSEngineDBFacade::EncodingPriority::High)
+    if (encodingItem->_encodingPriority == MMSEngineDBFacade::EncodingPriority::High)
     {
         encodingJobs            = _highPriorityEncodingJobs;
         maxEncodingsToBeManaged = MAXHIGHENCODINGSTOBEMANAGED;
     }
-    else if (encodingItem->_encodingPriority == CMSEngineDBFacade::EncodingPriority::Medium)
+    else if (encodingItem->_encodingPriority == MMSEngineDBFacade::EncodingPriority::Medium)
     {
         encodingJobs = _mediumPriorityEncodingJobs;
         maxEncodingsToBeManaged = MAXMEDIUMENCODINGSTOBEMANAGED;
     }
-    else // if (encodingItem->_encodingPriority == CMSEngineDBFacade::EncodingPriority::Low)
+    else // if (encodingItem->_encodingPriority == MMSEngineDBFacade::EncodingPriority::Low)
     {
         encodingJobs = _lowPriorityEncodingJobs;
         maxEncodingsToBeManaged = MAXLOWENCODINGSTOBEMANAGED;
@@ -639,12 +639,12 @@ void ActiveEncodingsManager::addEncodingItem(shared_ptr<CMSEngineDBFacade::Encod
 }
 
 unsigned long ActiveEncodingsManager:: addEncodingItems (
-	std:: vector<shared_ptr<CMSEngineDBFacade::EncodingItem>>& vEncodingItems)
+	std:: vector<shared_ptr<MMSEngineDBFacade::EncodingItem>>& vEncodingItems)
 {
     unsigned long       ulEncodingsNumberAdded = 0;
     lock_guard<mutex>   locker(_mtEncodingJobs);
 
-    for (shared_ptr<CMSEngineDBFacade::EncodingItem> encodingItem: vEncodingItems)
+    for (shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem: vEncodingItems)
     {
         _logger->info(__FILEREF__ + "Adding Encoding Item"
             + ", encodingItem->_customer->_name: " + encodingItem->_customer->_name
@@ -673,8 +673,8 @@ unsigned long ActiveEncodingsManager:: addEncodingItems (
                 + ", encodingItem->_fileName: " + encodingItem->_fileName
             );
             
-            _cmsEngineDBFacade->updateEncodingJob (encodingItem->_encodingJobKey, 
-                CMSEngineDBFacade::EncodingError::MaxCapacityReached, encodingItem->_ingestionJobKey);
+            _mmsEngineDBFacade->updateEncodingJob (encodingItem->_encodingJobKey, 
+                MMSEngineDBFacade::EncodingError::MaxCapacityReached, encodingItem->_ingestionJobKey);
         }
         catch(exception e)
         {
@@ -687,8 +687,8 @@ unsigned long ActiveEncodingsManager:: addEncodingItems (
                 + ", encodingItem->_physicalPathKey: " + to_string(encodingItem->_physicalPathKey)
                 + ", encodingItem->_fileName: " + encodingItem->_fileName
             );
-            _cmsEngineDBFacade->updateEncodingJob (encodingItem->_encodingJobKey, 
-                CMSEngineDBFacade::EncodingError::ErrorBeforeEncoding, encodingItem->_ingestionJobKey);
+            _mmsEngineDBFacade->updateEncodingJob (encodingItem->_encodingJobKey, 
+                MMSEngineDBFacade::EncodingError::ErrorBeforeEncoding, encodingItem->_ingestionJobKey);
         }        
     }
     
@@ -742,7 +742,7 @@ void ActiveEncodingsManager::readingImageProfile(
     // Format
     {
         field = "format";
-        if (!_cmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
+        if (!_mmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field;
@@ -759,7 +759,7 @@ void ActiveEncodingsManager::readingImageProfile(
     // Width
     {
         field = "width";
-        if (!_cmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
+        if (!_mmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field;
@@ -774,7 +774,7 @@ void ActiveEncodingsManager::readingImageProfile(
     // Height
     {
         field = "height";
-        if (!_cmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
+        if (!_mmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field;
@@ -789,7 +789,7 @@ void ActiveEncodingsManager::readingImageProfile(
     // Aspect
     {
         field = "aspectRatio";
-        if (!_cmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
+        if (!_mmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field;
@@ -804,7 +804,7 @@ void ActiveEncodingsManager::readingImageProfile(
     // Interlace
     {
         field = "interlaceType";
-        if (!_cmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
+        if (!_mmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field;
@@ -821,7 +821,7 @@ void ActiveEncodingsManager::readingImageProfile(
 
 void ActiveEncodingsManager::encodingImageFormatValidation(string newFormat)
 {    
-    auto logger = spdlog::get("cmsEngineService");
+    auto logger = spdlog::get("mmsEngineService");
     if (newFormat != "JPG" 
             && newFormat != "GIF" 
             && newFormat != "PNG" 
@@ -838,7 +838,7 @@ void ActiveEncodingsManager::encodingImageFormatValidation(string newFormat)
 
 Magick::InterlaceType ActiveEncodingsManager::encodingImageInterlaceTypeValidation(string sNewInterlaceType)
 {    
-    auto logger = spdlog::get("cmsEngineService");
+    auto logger = spdlog::get("mmsEngineService");
     Magick::InterlaceType       interlaceType;
     
     if (sNewInterlaceType == "NoInterlace")

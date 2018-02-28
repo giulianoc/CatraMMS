@@ -1,10 +1,10 @@
 
-#include "CMSStorage.h"
+#include "MMSStorage.h"
 #include "catralibraries/FileIO.h"
 #include "catralibraries/System.h"
 #include "catralibraries/DateTime.h"
 
-CMSStorage::CMSStorage(
+MMSStorage::MMSStorage(
         string storage, 
         unsigned long freeSpaceToLeaveInEachPartitionInMB,
         shared_ptr<spdlog::logger> logger) 
@@ -20,15 +20,15 @@ CMSStorage::CMSStorage(
     _storage = storage;
 
     _ftpRootRepository = _storage + "FTPRepository/users/";
-    _cmsRootRepository = _storage + "CMSRepository/";
+    _mmsRootRepository = _storage + "MMSRepository/";
     _downloadRootRepository = _storage + "DownloadRepository/";
     _streamingRootRepository = _storage + "StreamingRepository/";
 
-    _errorRootRepository = _storage + "CMSWorkingAreaRepository/Errors/";
-    _doneRootRepository = _storage + "CMSWorkingAreaRepository/Done/";
-    _stagingRootRepository = _storage + "CMSWorkingAreaRepository/Staging/";
+    _errorRootRepository = _storage + "MMSWorkingAreaRepository/Errors/";
+    _doneRootRepository = _storage + "MMSWorkingAreaRepository/Done/";
+    _stagingRootRepository = _storage + "MMSWorkingAreaRepository/Staging/";
 
-    _profilesRootRepository = _storage + "CMSRepository/EncodingProfiles/";
+    _profilesRootRepository = _storage + "MMSRepository/EncodingProfiles/";
 
     bool noErrorIfExists = true;
     bool recursive = true;
@@ -40,21 +40,21 @@ CMSStorage::CMSStorage(
             S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 
     _logger->info(__FILEREF__ + "Creating directory (if needed)"
-        + ", _cmsRootRepository: " + _cmsRootRepository
+        + ", _mmsRootRepository: " + _mmsRootRepository
     );
-    FileIO::createDirectory(_cmsRootRepository,
+    FileIO::createDirectory(_mmsRootRepository,
             S_IRUSR | S_IWUSR | S_IXUSR |
             S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 
-    // create CMS_0000 in case it does not exist (first running of CMS)
+    // create MMS_0000 in case it does not exist (first running of MMS)
     {
-        string CMS_0000Path = _cmsRootRepository + "CMS_0000";
+        string MMS_0000Path = _mmsRootRepository + "MMS_0000";
 
 
         _logger->info(__FILEREF__ + "Creating directory (if needed)"
-            + ", CMS_0000Path: " + CMS_0000Path
+            + ", MMS_0000Path: " + MMS_0000Path
         );
-        FileIO::createDirectory(CMS_0000Path,
+        FileIO::createDirectory(MMS_0000Path,
                 S_IRUSR | S_IWUSR | S_IXUSR |
                 S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
     }
@@ -103,27 +103,27 @@ CMSStorage::CMSStorage(
 
     // Partitions staff
     {
-        char pCMSPartitionName [64];
+        char pMMSPartitionName [64];
         unsigned long long ullUsedInKB;
         unsigned long long ullAvailableInKB;
         long lPercentUsed;
 
 
-        lock_guard<recursive_mutex> locker(_mtCMSPartitions);
+        lock_guard<recursive_mutex> locker(_mtMMSPartitions);
 
-        unsigned long ulCMSPartitionsNumber = 0;
-        bool cmsAvailablePartitions = true;
+        unsigned long ulMMSPartitionsNumber = 0;
+        bool mmsAvailablePartitions = true;
 
-        _ulCurrentCMSPartitionIndex = 0;
+        _ulCurrentMMSPartitionIndex = 0;
 
         // inizializzare FreeSize
-        while (cmsAvailablePartitions) 
+        while (mmsAvailablePartitions) 
         {
-            string pathNameToGetFileSystemInfo(_cmsRootRepository);
+            string pathNameToGetFileSystemInfo(_mmsRootRepository);
 
-            sprintf(pCMSPartitionName, "CMS_%04lu", ulCMSPartitionsNumber);
+            sprintf(pMMSPartitionName, "MMS_%04lu", ulMMSPartitionsNumber);
 
-            pathNameToGetFileSystemInfo.append(pCMSPartitionName);
+            pathNameToGetFileSystemInfo.append(pMMSPartitionName);
 
             try 
             {
@@ -135,39 +135,39 @@ CMSStorage::CMSStorage(
                 break;
             }
 
-            _cmsPartitionsFreeSizeInMB.push_back(ullAvailableInKB / 1024);
+            _mmsPartitionsFreeSizeInMB.push_back(ullAvailableInKB / 1024);
 
-            ulCMSPartitionsNumber++;
+            ulMMSPartitionsNumber++;
         }
 
-        if (ulCMSPartitionsNumber == 0) {
-            throw runtime_error("No CMS partition found");
+        if (ulMMSPartitionsNumber == 0) {
+            throw runtime_error("No MMS partition found");
         }
 
         refreshPartitionsFreeSizes();
     }
 }
 
-CMSStorage::~CMSStorage(void) {
+MMSStorage::~MMSStorage(void) {
 }
 
-string CMSStorage::getCMSRootRepository(void) {
-    return _cmsRootRepository;
+string MMSStorage::getMMSRootRepository(void) {
+    return _mmsRootRepository;
 }
 
-string CMSStorage::getStreamingRootRepository(void) {
+string MMSStorage::getStreamingRootRepository(void) {
     return _streamingRootRepository;
 }
 
-string CMSStorage::getDownloadRootRepository(void) {
+string MMSStorage::getDownloadRootRepository(void) {
     return _downloadRootRepository;
 }
 
-string CMSStorage::getFTPRootRepository(void) {
+string MMSStorage::getFTPRootRepository(void) {
     return _ftpRootRepository;
 }
 
-string CMSStorage::getCustomerFTPRepository(shared_ptr<Customer> customer)
+string MMSStorage::getCustomerFTPRepository(shared_ptr<Customer> customer)
 {
     string customerFTPDirectory = getFTPRootRepository();
     customerFTPDirectory.append(customer->_name);
@@ -252,7 +252,7 @@ string CMSStorage::getCustomerFTPRepository(shared_ptr<Customer> customer)
     return customerFTPDirectory;
 }
 
-string CMSStorage::getCustomerFTPWorkingMetadataPathName(
+string MMSStorage::getCustomerFTPWorkingMetadataPathName(
         shared_ptr<Customer> customer,
         string metadataFileName)
 {
@@ -267,7 +267,7 @@ string CMSStorage::getCustomerFTPWorkingMetadataPathName(
 }
 
 
-string CMSStorage::getCustomerFTPMediaSourcePathName(
+string MMSStorage::getCustomerFTPMediaSourcePathName(
         shared_ptr<Customer> customer,
         string mediaSourceFileName)
 {
@@ -279,7 +279,7 @@ string CMSStorage::getCustomerFTPMediaSourcePathName(
     return customerFTPMediaSourcePathName;
 }
 
-string CMSStorage::moveFTPRepositoryEntryToWorkingArea(
+string MMSStorage::moveFTPRepositoryEntryToWorkingArea(
         shared_ptr<Customer> customer,
         string entryFileName)
 {
@@ -305,7 +305,7 @@ string CMSStorage::moveFTPRepositoryEntryToWorkingArea(
     return ftpDirectoryWorkingEntryPathName;
 }
 
-string CMSStorage::moveFTPRepositoryWorkingEntryToErrorArea(
+string MMSStorage::moveFTPRepositoryWorkingEntryToErrorArea(
         shared_ptr<Customer> customer,
         string entryFileName)
 {
@@ -334,19 +334,19 @@ string CMSStorage::moveFTPRepositoryWorkingEntryToErrorArea(
     return ftpDirectoryErrorEntryPathName;
 }
 
-string CMSStorage::getStagingRootRepository(void) {
+string MMSStorage::getStagingRootRepository(void) {
     return _stagingRootRepository;
 }
 
-string CMSStorage::getErrorRootRepository(void) {
+string MMSStorage::getErrorRootRepository(void) {
     return _errorRootRepository;
 }
 
-string CMSStorage::getDoneRootRepository(void) {
+string MMSStorage::getDoneRootRepository(void) {
     return _doneRootRepository;
 }
 
-void CMSStorage::moveContentInRepository(
+void MMSStorage::moveContentInRepository(
         string filePathName,
         RepositoryType rtRepositoryType,
         string customerDirectoryName,
@@ -361,7 +361,7 @@ void CMSStorage::moveContentInRepository(
         addDateTimeToFileName);
 }
 
-void CMSStorage::copyFileInRepository(
+void MMSStorage::copyFileInRepository(
         string filePathName,
         RepositoryType rtRepositoryType,
         string customerDirectoryName,
@@ -376,36 +376,36 @@ void CMSStorage::copyFileInRepository(
         addDateTimeToFileName);
 }
 
-string CMSStorage::getRepository(RepositoryType rtRepositoryType) 
+string MMSStorage::getRepository(RepositoryType rtRepositoryType) 
 {
 
     switch (rtRepositoryType) 
     {
-        case RepositoryType::CMSREP_REPOSITORYTYPE_CMSCUSTOMER:
+        case RepositoryType::MMSREP_REPOSITORYTYPE_MMSCUSTOMER:
         {
-            return _cmsRootRepository;
+            return _mmsRootRepository;
         }
-        case RepositoryType::CMSREP_REPOSITORYTYPE_DOWNLOAD:
+        case RepositoryType::MMSREP_REPOSITORYTYPE_DOWNLOAD:
         {
             return _downloadRootRepository;
         }
-        case RepositoryType::CMSREP_REPOSITORYTYPE_STREAMING:
+        case RepositoryType::MMSREP_REPOSITORYTYPE_STREAMING:
         {
             return _streamingRootRepository;
         }
-        case RepositoryType::CMSREP_REPOSITORYTYPE_STAGING:
+        case RepositoryType::MMSREP_REPOSITORYTYPE_STAGING:
         {
             return _stagingRootRepository;
         }
-        case RepositoryType::CMSREP_REPOSITORYTYPE_DONE:
+        case RepositoryType::MMSREP_REPOSITORYTYPE_DONE:
         {
             return _doneRootRepository;
         }
-        case RepositoryType::CMSREP_REPOSITORYTYPE_ERRORS:
+        case RepositoryType::MMSREP_REPOSITORYTYPE_ERRORS:
         {
             return _errorRootRepository;
         }
-        case RepositoryType::CMSREP_REPOSITORYTYPE_FTP:
+        case RepositoryType::MMSREP_REPOSITORYTYPE_FTP:
         {
             return _ftpRootRepository;
         }
@@ -418,7 +418,7 @@ string CMSStorage::getRepository(RepositoryType rtRepositoryType)
     }
 }
 
-void CMSStorage::contentInRepository(
+void MMSStorage::contentInRepository(
         unsigned long ulIsCopyOrMove,
         string contentPathName,
         RepositoryType rtRepositoryType,
@@ -439,9 +439,9 @@ void CMSStorage::contentInRepository(
 
     DateTime::get_tm_LocalTime(&tmDateTime, &ulMilliSecs);
 
-    if (rtRepositoryType == RepositoryType::CMSREP_REPOSITORYTYPE_DONE ||
-            rtRepositoryType == RepositoryType::CMSREP_REPOSITORYTYPE_STAGING ||
-            rtRepositoryType == RepositoryType::CMSREP_REPOSITORYTYPE_ERRORS) 
+    if (rtRepositoryType == RepositoryType::MMSREP_REPOSITORYTYPE_DONE ||
+            rtRepositoryType == RepositoryType::MMSREP_REPOSITORYTYPE_STAGING ||
+            rtRepositoryType == RepositoryType::MMSREP_REPOSITORYTYPE_ERRORS) 
     {
         char pDateTime [64];
         bool directoryExisting;
@@ -471,7 +471,7 @@ void CMSStorage::contentInRepository(
 
         metaDataFileInDestRepository.append("/");
 
-        if (rtRepositoryType == RepositoryType::CMSREP_REPOSITORYTYPE_DONE) 
+        if (rtRepositoryType == RepositoryType::MMSREP_REPOSITORYTYPE_DONE) 
         {
             sprintf(pDateTime, "%02lu",
                     (unsigned long) (tmDateTime. tm_hour));
@@ -580,14 +580,14 @@ void CMSStorage::contentInRepository(
     }
 }
 
-string CMSStorage::moveAssetInCMSRepository(
+string MMSStorage::moveAssetInMMSRepository(
         string sourceAssetPathName,
         string customerDirectoryName,
         string destinationAssetFileName,
         string relativePath,
 
         bool partitionIndexToBeCalculated,
-        unsigned long *pulCMSPartitionIndexUsed, // OUT if bIsPartitionIndexToBeCalculated is true, IN is bIsPartitionIndexToBeCalculated is false
+        unsigned long *pulMMSPartitionIndexUsed, // OUT if bIsPartitionIndexToBeCalculated is true, IN is bIsPartitionIndexToBeCalculated is false
 
         bool deliveryRepositoriesToo,
         Customer::TerritoriesHashMap& phmTerritories
@@ -596,14 +596,14 @@ string CMSStorage::moveAssetInCMSRepository(
     FileIO::DirectoryEntryType_t detSourceFileType;
 
 
-    if (relativePath.front() != '/' || pulCMSPartitionIndexUsed == (unsigned long *) NULL) 
+    if (relativePath.front() != '/' || pulMMSPartitionIndexUsed == (unsigned long *) NULL) 
     {
             throw runtime_error(string("Wrong argument")
                     + ", relativePath: " + relativePath
                     );
     }
 
-    lock_guard<recursive_mutex> locker(_mtCMSPartitions);
+    lock_guard<recursive_mutex> locker(_mtMMSPartitions);
 
     // file in case of .3gp content OR
     // directory in case of IPhone content
@@ -635,72 +635,72 @@ string CMSStorage::moveAssetInCMSRepository(
             ullFSEntrySizeInBytes = ulFileSizeInBytes;
         }
 
-        // find the CMS partition index
-        unsigned long ulCMSPartitionIndex;
-        for (ulCMSPartitionIndex = 0;
-                ulCMSPartitionIndex < _cmsPartitionsFreeSizeInMB.size();
-                ulCMSPartitionIndex++) 
+        // find the MMS partition index
+        unsigned long ulMMSPartitionIndex;
+        for (ulMMSPartitionIndex = 0;
+                ulMMSPartitionIndex < _mmsPartitionsFreeSizeInMB.size();
+                ulMMSPartitionIndex++) 
         {
-            unsigned long long cmsPartitionsFreeSizeInKB = (unsigned long long)
-                ((_cmsPartitionsFreeSizeInMB [_ulCurrentCMSPartitionIndex]) * 1024);
+            unsigned long long mmsPartitionsFreeSizeInKB = (unsigned long long)
+                ((_mmsPartitionsFreeSizeInMB [_ulCurrentMMSPartitionIndex]) * 1024);
 
-            if (cmsPartitionsFreeSizeInKB <=
+            if (mmsPartitionsFreeSizeInKB <=
                     (_freeSpaceToLeaveInEachPartitionInMB * 1024)) 
             {
                 _logger->info(__FILEREF__ + "Partition space too low"
-                    + ", _ulCurrentCMSPartitionIndex: " + to_string(_ulCurrentCMSPartitionIndex)
-                    + ", cmsPartitionsFreeSizeInKB: " + to_string(cmsPartitionsFreeSizeInKB)
+                    + ", _ulCurrentMMSPartitionIndex: " + to_string(_ulCurrentMMSPartitionIndex)
+                    + ", mmsPartitionsFreeSizeInKB: " + to_string(mmsPartitionsFreeSizeInKB)
                     + ", _freeSpaceToLeaveInEachPartitionInMB * 1024: " + to_string(_freeSpaceToLeaveInEachPartitionInMB * 1024)
                 );
 
-                if (_ulCurrentCMSPartitionIndex + 1 >= _cmsPartitionsFreeSizeInMB.size())
-                    _ulCurrentCMSPartitionIndex = 0;
+                if (_ulCurrentMMSPartitionIndex + 1 >= _mmsPartitionsFreeSizeInMB.size())
+                    _ulCurrentMMSPartitionIndex = 0;
                 else
-                    _ulCurrentCMSPartitionIndex++;
+                    _ulCurrentMMSPartitionIndex++;
 
                 continue;
             }
 
-            if ((unsigned long long) (cmsPartitionsFreeSizeInKB -
+            if ((unsigned long long) (mmsPartitionsFreeSizeInKB -
                     (_freeSpaceToLeaveInEachPartitionInMB * 1024)) >
                     (ullFSEntrySizeInBytes / 1024)) 
             {
                 break;
             }
 
-            if (_ulCurrentCMSPartitionIndex + 1 >= _cmsPartitionsFreeSizeInMB.size())
-                _ulCurrentCMSPartitionIndex = 0;
+            if (_ulCurrentMMSPartitionIndex + 1 >= _mmsPartitionsFreeSizeInMB.size())
+                _ulCurrentMMSPartitionIndex = 0;
             else
-                _ulCurrentCMSPartitionIndex++;
+                _ulCurrentMMSPartitionIndex++;
         }
 
-        if (ulCMSPartitionIndex == _cmsPartitionsFreeSizeInMB.size()) 
+        if (ulMMSPartitionIndex == _mmsPartitionsFreeSizeInMB.size()) 
         {
-            throw runtime_error(string("No more space in CMS Partitions")
+            throw runtime_error(string("No more space in MMS Partitions")
                     + ", ullFSEntrySizeInBytes: " + to_string(ullFSEntrySizeInBytes)
                     );
         }
 
-        *pulCMSPartitionIndexUsed = _ulCurrentCMSPartitionIndex;
+        *pulMMSPartitionIndexUsed = _ulCurrentMMSPartitionIndex;
     }
 
-    // creating directories and build the bCMSAssetPathName
-    string cmsAssetPathName;
+    // creating directories and build the bMMSAssetPathName
+    string mmsAssetPathName;
     {
         // to create the content provider directory and the
         // territories directories (if not already existing)
-        cmsAssetPathName = creatingDirsUsingTerritories(*pulCMSPartitionIndexUsed,
+        mmsAssetPathName = creatingDirsUsingTerritories(*pulMMSPartitionIndexUsed,
             relativePath, customerDirectoryName, deliveryRepositoriesToo,
             phmTerritories);
 
-        cmsAssetPathName.append(destinationAssetFileName);
+        mmsAssetPathName.append(destinationAssetFileName);
     }
 
-    _logger->info(__FILEREF__ + "Selected CMS Partition for the content"
+    _logger->info(__FILEREF__ + "Selected MMS Partition for the content"
         + ", customerDirectoryName: " + customerDirectoryName
-        + ", *pulCMSPartitionIndexUsed: " + to_string(*pulCMSPartitionIndexUsed)
-        + ", cmsAssetPathName: " + cmsAssetPathName
-        + ", _cmsPartitionsFreeSizeInMB [_ulCurrentCMSPartitionIndex]: " + to_string(_cmsPartitionsFreeSizeInMB [_ulCurrentCMSPartitionIndex])
+        + ", *pulMMSPartitionIndexUsed: " + to_string(*pulMMSPartitionIndexUsed)
+        + ", mmsAssetPathName: " + mmsAssetPathName
+        + ", _mmsPartitionsFreeSizeInMB [_ulCurrentMMSPartitionIndex]: " + to_string(_mmsPartitionsFreeSizeInMB [_ulCurrentMMSPartitionIndex])
     );
 
     // move the file in case of .3gp content OR
@@ -710,11 +710,11 @@ string CMSStorage::moveAssetInCMSRepository(
         {
             _logger->info(__FILEREF__ + "Move directory"
                 + ", from: " + sourceAssetPathName
-                + ", to: " + cmsAssetPathName
+                + ", to: " + mmsAssetPathName
             );
 
             FileIO::moveDirectory(sourceAssetPathName,
-                    cmsAssetPathName,
+                    mmsAssetPathName,
                     S_IRUSR | S_IWUSR | S_IXUSR |
                     S_IRGRP | S_IXGRP |
                     S_IROTH | S_IXOTH);
@@ -723,15 +723,15 @@ string CMSStorage::moveAssetInCMSRepository(
         {
             _logger->info(__FILEREF__ + "Move file"
                 + ", from: " + sourceAssetPathName
-                + ", to: " + cmsAssetPathName
+                + ", to: " + mmsAssetPathName
             );
 
             FileIO::moveFile(sourceAssetPathName,
-                    cmsAssetPathName);
+                    mmsAssetPathName);
         }
     }
 
-    // update _pullCMSPartitionsFreeSizeInMB ONLY if bIsPartitionIndexToBeCalculated
+    // update _pullMMSPartitionsFreeSizeInMB ONLY if bIsPartitionIndexToBeCalculated
     if (partitionIndexToBeCalculated) 
     {
         unsigned long long ullUsedInKB;
@@ -739,36 +739,36 @@ string CMSStorage::moveAssetInCMSRepository(
         long lPercentUsed;
 
 
-        FileIO::getFileSystemInfo(cmsAssetPathName,
+        FileIO::getFileSystemInfo(mmsAssetPathName,
                 &ullUsedInKB, &ullAvailableInKB, &lPercentUsed);
 
-        _cmsPartitionsFreeSizeInMB [_ulCurrentCMSPartitionIndex] =
+        _mmsPartitionsFreeSizeInMB [_ulCurrentMMSPartitionIndex] =
             ullAvailableInKB / 1024;
 
         _logger->info(__FILEREF__ + "Available space"
-            + ", cmsAssetPathName: " + cmsAssetPathName
-            + ", _cmsPartitionsFreeSizeInMB[_ulCurrentCMSPartitionIndex]: " + to_string(_cmsPartitionsFreeSizeInMB[_ulCurrentCMSPartitionIndex])
+            + ", mmsAssetPathName: " + mmsAssetPathName
+            + ", _mmsPartitionsFreeSizeInMB[_ulCurrentMMSPartitionIndex]: " + to_string(_mmsPartitionsFreeSizeInMB[_ulCurrentMMSPartitionIndex])
         );
     }
 
 
-    return cmsAssetPathName;
+    return mmsAssetPathName;
 }
 
-string CMSStorage::getCMSAssetPathName(
+string MMSStorage::getMMSAssetPathName(
         unsigned long ulPartitionNumber,
         string customerDirectoryName,
         string relativePath, // using '/'
         string fileName)
  {
-    char pCMSPartitionName [64];
+    char pMMSPartitionName [64];
 
 
-    sprintf(pCMSPartitionName, "CMS_%04lu/", ulPartitionNumber);
+    sprintf(pMMSPartitionName, "MMS_%04lu/", ulPartitionNumber);
 
-    string assetPathName(_cmsRootRepository);
+    string assetPathName(_mmsRootRepository);
     assetPathName
-        .append(pCMSPartitionName)
+        .append(pMMSPartitionName)
         .append(customerDirectoryName)
         .append(relativePath)
         .append(fileName);
@@ -777,7 +777,7 @@ string CMSStorage::getCMSAssetPathName(
     return assetPathName;
 }
 
-string CMSStorage::getDownloadLinkPathName(
+string MMSStorage::getDownloadLinkPathName(
         unsigned long ulPartitionNumber,
         string customerDirectoryName,
         string territoryName,
@@ -786,16 +786,16 @@ string CMSStorage::getDownloadLinkPathName(
         bool downloadRepositoryToo)
  {
 
-    char pCMSPartitionName [64];
+    char pMMSPartitionName [64];
     string linkPathName;
 
     if (downloadRepositoryToo) 
     {
-        sprintf(pCMSPartitionName, "CMS_%04lu/", ulPartitionNumber);
+        sprintf(pMMSPartitionName, "MMS_%04lu/", ulPartitionNumber);
 
         linkPathName = _downloadRootRepository;
         linkPathName
-            .append(pCMSPartitionName)
+            .append(pMMSPartitionName)
             .append(customerDirectoryName)
             .append("/")
             .append(territoryName)
@@ -804,9 +804,9 @@ string CMSStorage::getDownloadLinkPathName(
     } 
     else
     {
-        sprintf(pCMSPartitionName, "/CMS_%04lu/", ulPartitionNumber);
+        sprintf(pMMSPartitionName, "/MMS_%04lu/", ulPartitionNumber);
 
-        linkPathName = pCMSPartitionName;
+        linkPathName = pMMSPartitionName;
         linkPathName
             .append(customerDirectoryName)
             .append("/")
@@ -819,22 +819,22 @@ string CMSStorage::getDownloadLinkPathName(
     return linkPathName;
 }
 
-string CMSStorage::getStreamingLinkPathName(
+string MMSStorage::getStreamingLinkPathName(
         unsigned long ulPartitionNumber, // IN
         string customerDirectoryName, // IN
         string territoryName, // IN
         string relativePath, // IN
         string fileName) // IN
  {
-    char pCMSPartitionName [64];
+    char pMMSPartitionName [64];
     string linkPathName;
 
 
-    sprintf(pCMSPartitionName, "CMS_%04lu/", ulPartitionNumber);
+    sprintf(pMMSPartitionName, "MMS_%04lu/", ulPartitionNumber);
 
     linkPathName = _streamingRootRepository;
     linkPathName
-        .append(pCMSPartitionName)
+        .append(pMMSPartitionName)
         .append(customerDirectoryName)
         .append("/")
         .append(territoryName)
@@ -845,7 +845,7 @@ string CMSStorage::getStreamingLinkPathName(
     return linkPathName;
 }
 
-string CMSStorage::getStagingAssetPathName(
+string MMSStorage::getStagingAssetPathName(
         string customerDirectoryName,
         string relativePath,
         string fileName,                // may be empty ("")
@@ -973,7 +973,7 @@ string CMSStorage::getStagingAssetPathName(
     return assetPathName;
 }
 
-string CMSStorage::getEncodingProfilePathName(
+string MMSStorage::getEncodingProfilePathName(
         long long llEncodingProfileKey,
         string profileFileNameExtension)
  {
@@ -986,14 +986,14 @@ string CMSStorage::getEncodingProfilePathName(
     return encodingProfilePathName;
 }
 
-string CMSStorage::getFFMPEGEncodingProfilePathName(
-        CMSEngineDBFacade::ContentType contentType,
+string MMSStorage::getFFMPEGEncodingProfilePathName(
+        MMSEngineDBFacade::ContentType contentType,
         long long llEncodingProfileKey)
  {
 
-    if (contentType != CMSEngineDBFacade::ContentType::Video && 
-            contentType != CMSEngineDBFacade::ContentType::Audio &&
-            contentType != CMSEngineDBFacade::ContentType::Image)
+    if (contentType != MMSEngineDBFacade::ContentType::Video && 
+            contentType != MMSEngineDBFacade::ContentType::Audio &&
+            contentType != MMSEngineDBFacade::ContentType::Image)
     {
         throw runtime_error(string("Wrong argument")
                 + ", contentType: " + to_string(static_cast<int>(contentType))
@@ -1005,15 +1005,15 @@ string CMSStorage::getFFMPEGEncodingProfilePathName(
     encodingProfilePathName
         .append(to_string(llEncodingProfileKey));
 
-    if (contentType == CMSEngineDBFacade::ContentType::Video)
+    if (contentType == MMSEngineDBFacade::ContentType::Video)
     {
         encodingProfilePathName.append(".vep");
     } 
-    else if (contentType == CMSEngineDBFacade::ContentType::Audio)
+    else if (contentType == MMSEngineDBFacade::ContentType::Audio)
     {
         encodingProfilePathName.append(".aep");
     } 
-    else if (contentType == CMSEngineDBFacade::ContentType::Image)
+    else if (contentType == MMSEngineDBFacade::ContentType::Image)
     {
         encodingProfilePathName.append(".iep");
     }
@@ -1022,27 +1022,27 @@ string CMSStorage::getFFMPEGEncodingProfilePathName(
     return encodingProfilePathName;
 }
 
-unsigned long CMSStorage::getCustomerStorageUsage(
+unsigned long MMSStorage::getCustomerStorageUsage(
         string customerDirectoryName)
  {
 
     unsigned long ulStorageUsageInMB;
 
-    unsigned long ulCMSPartitionIndex;
+    unsigned long ulMMSPartitionIndex;
     unsigned long long ullDirectoryUsageInBytes;
     unsigned long long ullCustomerStorageUsageInBytes;
 
 
-    lock_guard<recursive_mutex> locker(_mtCMSPartitions);
+    lock_guard<recursive_mutex> locker(_mtMMSPartitions);
 
     ullCustomerStorageUsageInBytes = 0;
 
-    for (ulCMSPartitionIndex = 0;
-            ulCMSPartitionIndex < _cmsPartitionsFreeSizeInMB.size();
-            ulCMSPartitionIndex++) 
+    for (ulMMSPartitionIndex = 0;
+            ulMMSPartitionIndex < _mmsPartitionsFreeSizeInMB.size();
+            ulMMSPartitionIndex++) 
     {
-        string contentProviderPathName = getCMSAssetPathName(
-                ulCMSPartitionIndex, customerDirectoryName,
+        string contentProviderPathName = getMMSAssetPathName(
+                ulMMSPartitionIndex, customerDirectoryName,
                 string(""), string(""));
 
         try 
@@ -1070,74 +1070,74 @@ unsigned long CMSStorage::getCustomerStorageUsage(
     return ulStorageUsageInMB;
 }
 
-void CMSStorage::refreshPartitionsFreeSizes(void) 
+void MMSStorage::refreshPartitionsFreeSizes(void) 
 {
-    char pCMSPartitionName [64];
+    char pMMSPartitionName [64];
     unsigned long long ullUsedInKB;
     unsigned long long ullAvailableInKB;
     long lPercentUsed;
 
 
-    lock_guard<recursive_mutex> locker(_mtCMSPartitions);
+    lock_guard<recursive_mutex> locker(_mtMMSPartitions);
 
-    for (unsigned long ulCMSPartitionIndex = 0;
-            ulCMSPartitionIndex < _cmsPartitionsFreeSizeInMB.size();
-            ulCMSPartitionIndex++) 
+    for (unsigned long ulMMSPartitionIndex = 0;
+            ulMMSPartitionIndex < _mmsPartitionsFreeSizeInMB.size();
+            ulMMSPartitionIndex++) 
     {
-        string pathNameToGetFileSystemInfo(_cmsRootRepository);
+        string pathNameToGetFileSystemInfo(_mmsRootRepository);
 
-        sprintf(pCMSPartitionName, "CMS_%04lu", ulCMSPartitionIndex);
+        sprintf(pMMSPartitionName, "MMS_%04lu", ulMMSPartitionIndex);
 
-        pathNameToGetFileSystemInfo.append(pCMSPartitionName);
+        pathNameToGetFileSystemInfo.append(pMMSPartitionName);
 
         FileIO::getFileSystemInfo(pathNameToGetFileSystemInfo,
                 &ullUsedInKB, &ullAvailableInKB, &lPercentUsed);
 
-        _cmsPartitionsFreeSizeInMB[ulCMSPartitionIndex] =
+        _mmsPartitionsFreeSizeInMB[ulMMSPartitionIndex] =
                 ullAvailableInKB / 1024;
 
         _logger->info(__FILEREF__ + "Available space"
             + ", pathNameToGetFileSystemInfo: " + pathNameToGetFileSystemInfo
-            + ", _cmsPartitionsFreeSizeInMB[ulCMSPartitionIndex]: " + to_string(_cmsPartitionsFreeSizeInMB[ulCMSPartitionIndex])
+            + ", _mmsPartitionsFreeSizeInMB[ulMMSPartitionIndex]: " + to_string(_mmsPartitionsFreeSizeInMB[ulMMSPartitionIndex])
         );
     }
 }
 
-string CMSStorage::creatingDirsUsingTerritories(
-        unsigned long ulCurrentCMSPartitionIndex,
+string MMSStorage::creatingDirsUsingTerritories(
+        unsigned long ulCurrentMMSPartitionIndex,
         string relativePath,
         string customerDirectoryName,
         bool deliveryRepositoriesToo,
         Customer::TerritoriesHashMap& phmTerritories)
  {
 
-    char pCMSPartitionName [64];
+    char pMMSPartitionName [64];
 
 
-    sprintf(pCMSPartitionName, "CMS_%04lu/", ulCurrentCMSPartitionIndex);
+    sprintf(pMMSPartitionName, "MMS_%04lu/", ulCurrentMMSPartitionIndex);
 
-    string cmsAssetPathName(_cmsRootRepository);
-    cmsAssetPathName
-        .append(pCMSPartitionName)
+    string mmsAssetPathName(_mmsRootRepository);
+    mmsAssetPathName
+        .append(pMMSPartitionName)
         .append(customerDirectoryName)
         .append(relativePath);
 
-    if (!FileIO::directoryExisting(cmsAssetPathName)) 
+    if (!FileIO::directoryExisting(mmsAssetPathName)) 
     {
         _logger->info(__FILEREF__ + "Create directory"
-            + ", cmsAssetPathName: " + cmsAssetPathName
+            + ", mmsAssetPathName: " + mmsAssetPathName
         );
 
         bool noErrorIfExists = true;
         bool recursive = true;
-        FileIO::createDirectory(cmsAssetPathName,
+        FileIO::createDirectory(mmsAssetPathName,
                 S_IRUSR | S_IWUSR | S_IXUSR |
                 S_IRGRP | S_IXGRP |
                 S_IROTH | S_IXOTH, noErrorIfExists, recursive);
     }
 
-    if (cmsAssetPathName.back() != '/')
-        cmsAssetPathName.append("/");
+    if (mmsAssetPathName.back() != '/')
+        mmsAssetPathName.append("/");
 
     if (deliveryRepositoriesToo) 
     {
@@ -1150,7 +1150,7 @@ string CMSStorage::creatingDirsUsingTerritories(
 
             string downloadAssetPathName(_downloadRootRepository);
             downloadAssetPathName
-                .append(pCMSPartitionName)
+                .append(pMMSPartitionName)
                 .append(customerDirectoryName)
                 .append("/")
                 .append(territoryName)
@@ -1158,7 +1158,7 @@ string CMSStorage::creatingDirsUsingTerritories(
 
             string streamingAssetPathName(_streamingRootRepository);
             streamingAssetPathName
-                .append(pCMSPartitionName)
+                .append(pMMSPartitionName)
                 .append(customerDirectoryName)
                 .append("/")
                 .append(territoryName)
@@ -1195,6 +1195,6 @@ string CMSStorage::creatingDirsUsingTerritories(
     }
 
 
-    return cmsAssetPathName;
+    return mmsAssetPathName;
 }
 

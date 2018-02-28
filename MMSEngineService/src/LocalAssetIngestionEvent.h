@@ -26,11 +26,11 @@
 
 #include <iostream>
 #include "catralibraries/Event.h"
-#include "CMSEngineDBFacade.h"
+#include "MMSEngineDBFacade.h"
         
 using namespace std;
 
-#define CMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT	2
+#define MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT	2
 
 
 class LocalAssetIngestionEvent: public Event {

@@ -25,7 +25,7 @@ public:
     virtual void getBinaryAndResponse(
         string requestURI,
         string requestMethod,
-        string xCatraCMSResumeHeader,
+        string xCatraMMSResumeHeader,
         unordered_map<string, string> queryParameters,
         tuple<shared_ptr<Customer>,bool,bool>& customerAndFlags,
         unsigned long contentLength);
@@ -40,8 +40,8 @@ public:
     );
     
 private:
-    CMSEngineDBFacade::EncodingPriority _encodingPriorityDefaultValue;
-    CMSEngineDBFacade::EncodingPeriod _encodingPeriodDefaultValue;
+    MMSEngineDBFacade::EncodingPriority _encodingPriorityDefaultValue;
+    MMSEngineDBFacade::EncodingPeriod _encodingPeriodDefaultValue;
     int _maxIngestionsNumberDefaultValue;
     int _maxStorageInGBDefaultValue;
 

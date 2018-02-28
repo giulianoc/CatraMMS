@@ -33,7 +33,7 @@ public:
     virtual void getBinaryAndResponse(
             string requestURI,
             string requestMethod,
-            string xCatraCMSResumeHeader,
+            string xCatraMMSResumeHeader,
             unordered_map<string, string> queryParameters,
             tuple<shared_ptr<Customer>,bool,bool>& customerAndFlags,
             unsigned long contentLength

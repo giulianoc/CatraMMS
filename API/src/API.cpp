@@ -22,8 +22,8 @@ int main(int argc, char** argv)
 }
 
 API::API(): APICommon() {
-    _encodingPriorityDefaultValue = CMSEngineDBFacade::EncodingPriority::Low;
-    _encodingPeriodDefaultValue = CMSEngineDBFacade::EncodingPeriod::Daily;
+    _encodingPriorityDefaultValue = MMSEngineDBFacade::EncodingPriority::Low;
+    _encodingPeriodDefaultValue = MMSEngineDBFacade::EncodingPeriod::Daily;
     _maxIngestionsNumberDefaultValue = 1;
     _maxStorageInGBDefaultValue = 1;
 }
@@ -34,7 +34,7 @@ API::~API() {
 void API::getBinaryAndResponse(
         string requestURI,
         string requestMethod,
-        string xCatraCMSResumeHeader,
+        string xCatraMMSResumeHeader,
         unordered_map<string, string> queryParameters,
         tuple<shared_ptr<Customer>,bool,bool>& customerAndFlags,
         unsigned long contentLength
@@ -166,8 +166,8 @@ void API::registerCustomer(string requestBody)
         string name;
         string email;
         string password;
-        CMSEngineDBFacade::EncodingPriority encodingPriority;
-        CMSEngineDBFacade::EncodingPeriod encodingPeriod;
+        MMSEngineDBFacade::EncodingPriority encodingPriority;
+        MMSEngineDBFacade::EncodingPeriod encodingPeriod;
         int maxIngestionsNumber;
         int maxStorageInGB;
 
@@ -216,7 +216,7 @@ void API::registerCustomer(string requestBody)
             };
             for (string field: mandatoryFields)
             {
-                if (!_cmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
+                if (!_mmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
                 {
                     string errorMessage = string("Json field is not present or it is null")
                             + ", Field: " + field;
@@ -236,10 +236,10 @@ void API::registerCustomer(string requestBody)
         // encodingPriority
         {
             string field = "EncodingPriority";
-            if (!_cmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
+            if (!_mmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
             {
                 _logger->info(__FILEREF__ + "encodingPriority is not present, set the default value"
-                    + ", _encodingPriorityDefaultValue: " + CMSEngineDBFacade::toString(_encodingPriorityDefaultValue)
+                    + ", _encodingPriorityDefaultValue: " + MMSEngineDBFacade::toString(_encodingPriorityDefaultValue)
                 );
 
                 encodingPriority = _encodingPriorityDefaultValue;
@@ -249,7 +249,7 @@ void API::registerCustomer(string requestBody)
                 string sEncodingPriority = metadataRoot.get(field, "XXX").asString();
                 try
                 {                        
-                    encodingPriority = CMSEngineDBFacade::toEncodingPriority(sEncodingPriority);
+                    encodingPriority = MMSEngineDBFacade::toEncodingPriority(sEncodingPriority);
                 }
                 catch(exception e)
                 {
@@ -269,10 +269,10 @@ void API::registerCustomer(string requestBody)
         // EncodingPeriod
         {
             string field = "EncodingPeriod";
-            if (!_cmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
+            if (!_mmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
             {
                 _logger->info(__FILEREF__ + "encodingPeriod is not present, set the default value"
-                    + ", _encodingPeriodDefaultValue: " + CMSEngineDBFacade::toString(_encodingPeriodDefaultValue)
+                    + ", _encodingPeriodDefaultValue: " + MMSEngineDBFacade::toString(_encodingPeriodDefaultValue)
                 );
 
                 encodingPeriod = _encodingPeriodDefaultValue;
@@ -282,7 +282,7 @@ void API::registerCustomer(string requestBody)
                 string sEncodingPeriod = metadataRoot.get(field, "XXX").asString();
                 try
                 {                        
-                    encodingPeriod = CMSEngineDBFacade::toEncodingPeriod(sEncodingPeriod);
+                    encodingPeriod = MMSEngineDBFacade::toEncodingPeriod(sEncodingPeriod);
                 }
                 catch(exception e)
                 {
@@ -302,7 +302,7 @@ void API::registerCustomer(string requestBody)
         // MaxIngestionsNumber
         {
             string field = "MaxIngestionsNumber";
-            if (!_cmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
+            if (!_mmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
             {
                 _logger->info(__FILEREF__ + "MaxIngestionsNumber is not present, set the default value"
                     + ", _maxIngestionsNumberDefaultValue: " + to_string(_maxIngestionsNumberDefaultValue)
@@ -335,7 +335,7 @@ void API::registerCustomer(string requestBody)
         // MaxStorageInGB
         {
             string field = "MaxStorageInGB";
-            if (!_cmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
+            if (!_mmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
             {
                 _logger->info(__FILEREF__ + "MaxStorageInGB is not present, set the default value"
                     + ", _maxStorageInGBDefaultValue: " + to_string(_maxStorageInGBDefaultValue)
@@ -368,7 +368,7 @@ void API::registerCustomer(string requestBody)
         try
         {
             tuple<int64_t,int64_t,string> customerKeyUserKeyAndConfirmationCode = 
-                _cmsEngine->registerCustomer(
+                _mmsEngine->registerCustomer(
                     name,                       // string customerName,
                     "",                             // string street,
                     "",                             // string city,
@@ -376,10 +376,10 @@ void API::registerCustomer(string requestBody)
                     "",                             // string zip,
                     "",                             // string phone,
                     "",                             // string countryCode,
-                    CMSEngineDBFacade::CustomerType::IngestionAndDelivery,  // CMSEngineDBFacade::CustomerType customerType
+                    MMSEngineDBFacade::CustomerType::IngestionAndDelivery,  // MMSEngineDBFacade::CustomerType customerType
                     "",                             // string deliveryURL,
-                    encodingPriority,               //  CMSEngineDBFacade::EncodingPriority maxEncodingPriority,
-                    encodingPeriod,                 //  CMSEngineDBFacade::EncodingPeriod encodingPeriod,
+                    encodingPriority,               //  MMSEngineDBFacade::EncodingPriority maxEncodingPriority,
+                    encodingPeriod,                 //  MMSEngineDBFacade::EncodingPeriod encodingPeriod,
                     maxIngestionsNumber,            // long maxIngestionsNumber,
                     maxStorageInGB,                 // long maxStorageInGB,
                     "",                             // string languageCode,
@@ -481,7 +481,7 @@ void API::confirmCustomer(unordered_map<string, string> queryParameters)
 
         try
         {
-            _cmsEngine->confirmCustomer(confirmationCodeIt->second);
+            _mmsEngine->confirmCustomer(confirmationCodeIt->second);
 
             string responseBody;
             sendSuccess(200, responseBody);
@@ -586,7 +586,7 @@ void API::createAPIKey(unordered_map<string, string> queryParameters)
             chrono::system_clock::time_point apiKeyExpirationDate = 
                     chrono::system_clock::now() + chrono::hours(24 * 365 * 20);
             
-            string apiKey = _cmsEngine->createAPIKey(
+            string apiKey = _mmsEngine->createAPIKey(
                     stol(customerKeyIt->second), 
                     stol(userKeyIt->second), 
                     adminAPI,
@@ -700,13 +700,13 @@ void API::ingestContent(
             + ", fileNameWithIngestionJobKey: " + fileNameWithIngestionJobKey
         );
         
-        ingestionJobKey = _cmsEngine->addIngestionJob (
+        ingestionJobKey = _mmsEngine->addIngestionJob (
                 customer->_customerKey, 
                 fileNameWithIngestionJobKey, 
                 ingestionJobKeyPlaceHolder,
                 requestBody, 
-                CMSEngineDBFacade::IngestionType::Unknown, 
-                CMSEngineDBFacade::IngestionStatus::StartIngestionThroughAPI);
+                MMSEngineDBFacade::IngestionType::Unknown, 
+                MMSEngineDBFacade::IngestionStatus::StartIngestionThroughAPI);
 
         fileNameWithIngestionJobKey.replace(
                 fileNameWithIngestionJobKey.find(ingestionJobKeyPlaceHolder),
@@ -714,7 +714,7 @@ void API::ingestContent(
                 to_string(ingestionJobKey)
         );
         
-        string customerFTPMetadataPathName = _cmsStorage->getCustomerFTPRepository(customer);
+        string customerFTPMetadataPathName = _mmsStorage->getCustomerFTPRepository(customer);
         customerFTPMetadataPathName
                 .append("/")
                 .append(fileNameWithIngestionJobKey)
@@ -752,7 +752,7 @@ void API::ingestContent(
     catch(runtime_error e)
     {
         if (ingestionJobKey != -1)
-            _cmsEngine->removeIngestionJob (ingestionJobKey);
+            _mmsEngine->removeIngestionJob (ingestionJobKey);
 
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
@@ -770,7 +770,7 @@ void API::ingestContent(
     catch(exception e)
     {
         if (ingestionJobKey != -1)
-            _cmsEngine->removeIngestionJob (ingestionJobKey);
+            _mmsEngine->removeIngestionJob (ingestionJobKey);
 
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api

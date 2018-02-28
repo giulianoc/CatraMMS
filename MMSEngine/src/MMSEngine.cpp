@@ -5,29 +5,29 @@
  */
 
 /* 
- * File:   CMSEngine.cpp
+ * File:   MMSEngine.cpp
  * Author: multi
  * 
  * Created on January 30, 2018, 3:00 PM
  */
 
-#include "CMSEngine.h"
+#include "MMSEngine.h"
 #include "EncoderVideoAudioProxy.h"
 #include "ActiveEncodingsManager.h"
 
 
-CMSEngine::CMSEngine(shared_ptr<CMSEngineDBFacade> cmsEngineDBFacade,
+MMSEngine::MMSEngine(shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
             shared_ptr<spdlog::logger> logger
         ) 
 {
     _logger             = logger;
-    _cmsEngineDBFacade  = cmsEngineDBFacade;
+    _mmsEngineDBFacade  = mmsEngineDBFacade;
 }
 
-CMSEngine::~CMSEngine() {
+MMSEngine::~MMSEngine() {
 }
 
-tuple<int64_t,int64_t,string> CMSEngine::registerCustomer(
+tuple<int64_t,int64_t,string> MMSEngine::registerCustomer(
 	string customerName,
 	string street,
         string city,
@@ -35,10 +35,10 @@ tuple<int64_t,int64_t,string> CMSEngine::registerCustomer(
 	string zip,
         string phone,
         string countryCode,
-        CMSEngineDBFacade::CustomerType customerType,
+        MMSEngineDBFacade::CustomerType customerType,
 	string deliveryURL,
-	CMSEngineDBFacade::EncodingPriority maxEncodingPriority,
-        CMSEngineDBFacade::EncodingPeriod encodingPeriod,
+	MMSEngineDBFacade::EncodingPriority maxEncodingPriority,
+        MMSEngineDBFacade::EncodingPeriod encodingPeriod,
 	long maxIngestionsNumber,
         long maxStorageInGB,
 	string languageCode,
@@ -87,7 +87,7 @@ tuple<int64_t,int64_t,string> CMSEngine::registerCustomer(
     tuple<int64_t,int64_t,string> customerKeyUserKeyAndConfirmationCode;
     try
     {
-        customerKeyUserKeyAndConfirmationCode = _cmsEngineDBFacade->registerCustomer(
+        customerKeyUserKeyAndConfirmationCode = _mmsEngineDBFacade->registerCustomer(
             customerName, 
             customerDirectoryName,
             street,
@@ -110,7 +110,7 @@ tuple<int64_t,int64_t,string> CMSEngine::registerCustomer(
     }
     catch(exception e)
     {
-        string errorMessage = __FILEREF__ + "_cmsEngineDBFacade->registerCustomer failed";
+        string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->registerCustomer failed";
         _logger->error(errorMessage);
         
         throw runtime_error(errorMessage);
@@ -119,7 +119,7 @@ tuple<int64_t,int64_t,string> CMSEngine::registerCustomer(
     return customerKeyUserKeyAndConfirmationCode;
 }
 
-void CMSEngine::confirmCustomer(string confirmationCode)
+void MMSEngine::confirmCustomer(string confirmationCode)
 {    
     _logger->info(__FILEREF__ + "Received confirmCustomer"
         + ", confirmationCode: " + confirmationCode
@@ -127,18 +127,18 @@ void CMSEngine::confirmCustomer(string confirmationCode)
 
     try
     {
-        _cmsEngineDBFacade->confirmCustomer(confirmationCode);
+        _mmsEngineDBFacade->confirmCustomer(confirmationCode);
     }
     catch(exception e)
     {
-        string errorMessage = __FILEREF__ + "_cmsEngineDBFacade->confirmCustomer failed";
+        string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->confirmCustomer failed";
         _logger->error(errorMessage);
         
         throw runtime_error(errorMessage);
     }
 }
 
-string CMSEngine::createAPIKey(
+string MMSEngine::createAPIKey(
         int64_t customerKey,
         int64_t userKey,
         bool adminAPI, 
@@ -155,11 +155,11 @@ string CMSEngine::createAPIKey(
     string apiKey;
     try
     {
-        apiKey = _cmsEngineDBFacade->createAPIKey(customerKey, userKey, adminAPI, userAPI, apiKeyExpirationDate);
+        apiKey = _mmsEngineDBFacade->createAPIKey(customerKey, userKey, adminAPI, userAPI, apiKeyExpirationDate);
     }
     catch(exception e)
     {
-        string errorMessage = __FILEREF__ + "_cmsEngineDBFacade->createAPIKey failed";
+        string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->createAPIKey failed";
         _logger->error(errorMessage);
         
         throw runtime_error(errorMessage);
@@ -168,7 +168,7 @@ string CMSEngine::createAPIKey(
     return apiKey;
 }
 
-tuple<shared_ptr<Customer>,bool,bool> CMSEngine::checkAPIKey (string apiKey)
+tuple<shared_ptr<Customer>,bool,bool> MMSEngine::checkAPIKey (string apiKey)
 {
     _logger->info(__FILEREF__ + "Received checkAPIKey"
         + ", apiKey: " + apiKey
@@ -177,11 +177,11 @@ tuple<shared_ptr<Customer>,bool,bool> CMSEngine::checkAPIKey (string apiKey)
     tuple<shared_ptr<Customer>,bool,bool> customerAndFlags;
     try
     {
-        customerAndFlags = _cmsEngineDBFacade->checkAPIKey(apiKey);
+        customerAndFlags = _mmsEngineDBFacade->checkAPIKey(apiKey);
     }
     catch(APIKeyNotFoundOrExpired e)
     {
-        string errorMessage = __FILEREF__ + "_cmsEngineDBFacade->checkAPIKey failed"
+        string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->checkAPIKey failed"
                 + ", e.what(): " + e.what()
                 ;
         _logger->error(errorMessage);
@@ -190,7 +190,7 @@ tuple<shared_ptr<Customer>,bool,bool> CMSEngine::checkAPIKey (string apiKey)
     }
     catch(exception e)
     {
-        string errorMessage = __FILEREF__ + "_cmsEngineDBFacade->checkAPIKey failed";
+        string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->checkAPIKey failed";
         _logger->error(errorMessage);
         
         throw e;
@@ -199,28 +199,28 @@ tuple<shared_ptr<Customer>,bool,bool> CMSEngine::checkAPIKey (string apiKey)
     return customerAndFlags;
 }
 
-int64_t CMSEngine::addIngestionJob (
+int64_t MMSEngine::addIngestionJob (
         int64_t customerKey,
         string fileNameWithIngestionJobKeyPlaceholder,
         string ingestionJobKeyPlaceHolder,
         string metadataFileContent,
-        CMSEngineDBFacade::IngestionType ingestionType,
-        CMSEngineDBFacade::IngestionStatus ingestionStatus)
+        MMSEngineDBFacade::IngestionType ingestionType,
+        MMSEngineDBFacade::IngestionStatus ingestionStatus)
 {
     _logger->info(__FILEREF__ + "Received addIngestionJob"
         + ", customerKey: " + to_string(customerKey)
         + ", fileNameWithIngestionJobKeyPlaceholder: " + fileNameWithIngestionJobKeyPlaceholder
         + ", ingestionJobKeyPlaceHolder: " + ingestionJobKeyPlaceHolder
         + ", metadataFileContent: " + metadataFileContent
-        + ", ingestionType: " + CMSEngineDBFacade::toString(ingestionType)
-        + ", ingestionStatus: " + CMSEngineDBFacade::toString(ingestionStatus)
+        + ", ingestionType: " + MMSEngineDBFacade::toString(ingestionType)
+        + ", ingestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
     );
 
     int64_t ingestionJobKey;
 
     try
     {
-        ingestionJobKey = _cmsEngineDBFacade->addIngestionJob(
+        ingestionJobKey = _mmsEngineDBFacade->addIngestionJob(
                 customerKey,
                 fileNameWithIngestionJobKeyPlaceholder,
                 ingestionJobKeyPlaceHolder,
@@ -230,7 +230,7 @@ int64_t CMSEngine::addIngestionJob (
     }
     catch(exception e)
     {
-        string errorMessage = __FILEREF__ + "_cmsEngineDBFacade->addIngestionJob failed";
+        string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->addIngestionJob failed";
         _logger->error(errorMessage);
         
         throw e;
@@ -239,7 +239,7 @@ int64_t CMSEngine::addIngestionJob (
     return ingestionJobKey;
 }
 
-void CMSEngine::removeIngestionJob (
+void MMSEngine::removeIngestionJob (
         int64_t ingestionJobKey)
 {
     _logger->info(__FILEREF__ + "Received removeIngestionJob"
@@ -248,21 +248,21 @@ void CMSEngine::removeIngestionJob (
 
     try
     {
-        _cmsEngineDBFacade->removeIngestionJob(ingestionJobKey);
+        _mmsEngineDBFacade->removeIngestionJob(ingestionJobKey);
     }
     catch(exception e)
     {
-        string errorMessage = __FILEREF__ + "_cmsEngineDBFacade->removeIngestionJob failed";
+        string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->removeIngestionJob failed";
         _logger->error(errorMessage);
         
         throw e;
     }
 }
 
-void CMSEngine::addFFMPEGVideoEncodingProfile(
+void MMSEngine::addFFMPEGVideoEncodingProfile(
         shared_ptr<Customer> customer,
         string encodingProfileSet,  // "": default Customer family, != "": named customer family
-        CMSEngineDBFacade::EncodingTechnology encodingTechnology,
+        MMSEngineDBFacade::EncodingTechnology encodingTechnology,
 	string label,
 
 	string fileFormat,
@@ -330,7 +330,7 @@ void CMSEngine::addFFMPEGVideoEncodingProfile(
             audioBitRate
         );
 
-        int64_t encodingProfileKey = _cmsEngineDBFacade->addVideoEncodingProfile(
+        int64_t encodingProfileKey = _mmsEngineDBFacade->addVideoEncodingProfile(
             customer,
             encodingProfileSet,
             encodingTechnology,
@@ -347,11 +347,11 @@ void CMSEngine::addFFMPEGVideoEncodingProfile(
     }
     catch(...)
     {
-        _logger->error(__FILEREF__ + "_cmsEngineDBFacade->addVideoAudioEncodeProfile failed");
+        _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addVideoAudioEncodeProfile failed");
     }
 }
 
-void CMSEngine::addImageEncodingProfile(
+void MMSEngine::addImageEncodingProfile(
     shared_ptr<Customer> customer,
     string encodingProfileSet,  // "": default Customer family, != "": named customer family
     string label,
@@ -393,7 +393,7 @@ void CMSEngine::addImageEncodingProfile(
             sInterlaceType
         );
 
-        int64_t encodingProfileKey = _cmsEngineDBFacade->addImageEncodingProfile(
+        int64_t encodingProfileKey = _mmsEngineDBFacade->addImageEncodingProfile(
             customer,
             encodingProfileSet,
             details,
@@ -407,11 +407,11 @@ void CMSEngine::addImageEncodingProfile(
     }
     catch(...)
     {
-        _logger->error(__FILEREF__ + "_cmsEngineDBFacade->addImageEncodingProfile failed");
+        _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addImageEncodingProfile failed");
     }
 }
 
-string CMSEngine::getImageEncodingProfileDetails(
+string MMSEngine::getImageEncodingProfileDetails(
     string format,
 
     int width,
@@ -445,7 +445,7 @@ string CMSEngine::getImageEncodingProfileDetails(
     return details;
 }
 
-string CMSEngine::getVideoEncodingProfileDetails(
+string MMSEngine::getVideoEncodingProfileDetails(
     string fileFormat,
 
     string videoCodec,

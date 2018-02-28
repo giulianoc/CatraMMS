@@ -14,8 +14,8 @@
 #ifndef EncoderVideoAudioProxy_h
 #define EncoderVideoAudioProxy_h
 
-#include "CMSEngineDBFacade.h"
-#include "CMSStorage.h"
+#include "MMSEngineDBFacade.h"
+#include "MMSStorage.h"
 #include "spdlog/spdlog.h"
 
 struct MaxConcurrentJobsReached: public exception {
@@ -55,9 +55,9 @@ public:
     void setData(
         mutex* mtEncodingJobs,
         EncodingJobStatus* status,
-        shared_ptr<CMSEngineDBFacade> cmsEngineDBFacade,
-        shared_ptr<CMSStorage> cmsStorage,
-        shared_ptr<CMSEngineDBFacade::EncodingItem> encodingItem,
+        shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
+        shared_ptr<MMSStorage> mmsStorage,
+        shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem,
         #ifdef __FFMPEGLOCALENCODER__
             int* pffmpegEncoderRunning,
         #else
@@ -73,13 +73,13 @@ public:
     static void ffmpeg_encodingVideoProfileValidation(string codec, string profile);
     static void ffmpeg_encodingAudioCodecValidation(string codec);
 
-    static int64_t getVideoOrAudioDurationInMilliSeconds(string cmsAssetPathName);
+    static int64_t getVideoOrAudioDurationInMilliSeconds(string mmsAssetPathName);
     static void generateScreenshotToIngest(
         string imagePathName,
         double timePositionInSeconds,
         int sourceImageWidth,
         int sourceImageHeight,
-        string cmsAssetPathName);
+        string mmsAssetPathName);
 
     string                              _outputFfmpegPathFileName;
 
@@ -87,9 +87,9 @@ private:
     shared_ptr<spdlog::logger>          _logger;
     mutex*                              _mtEncodingJobs;
     EncodingJobStatus*                  _status;
-    shared_ptr<CMSEngineDBFacade>       _cmsEngineDBFacade;
-    shared_ptr<CMSStorage>              _cmsStorage;
-    shared_ptr<CMSEngineDBFacade::EncodingItem> _encodingItem;
+    shared_ptr<MMSEngineDBFacade>       _mmsEngineDBFacade;
+    shared_ptr<MMSStorage>              _mmsStorage;
+    shared_ptr<MMSEngineDBFacade::EncodingItem> _encodingItem;
     
     bool                                _twoPasses;
     bool                                _currentlyAtSecondPass;

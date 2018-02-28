@@ -1,39 +1,39 @@
 
 
-#ifndef CMSStorage_h
-#define CMSStorage_h
+#ifndef MMSStorage_h
+#define MMSStorage_h
 
 #include <mutex>
 #include <vector>
 #include "spdlog/spdlog.h"
 #include "catralibraries/FileIO.h"
 #include "Customer.h"
-#include "CMSEngineDBFacade.h"
+#include "MMSEngineDBFacade.h"
 
 
-class CMSStorage
+class MMSStorage
 {
 public:
     enum class RepositoryType
     {
-        CMSREP_REPOSITORYTYPE_CMSCUSTOMER	= 0,
-        CMSREP_REPOSITORYTYPE_DOWNLOAD,
-        CMSREP_REPOSITORYTYPE_STREAMING,
-        CMSREP_REPOSITORYTYPE_STAGING,
-        CMSREP_REPOSITORYTYPE_DONE,
-        CMSREP_REPOSITORYTYPE_ERRORS,
-        CMSREP_REPOSITORYTYPE_FTP,
+        MMSREP_REPOSITORYTYPE_MMSCUSTOMER	= 0,
+        MMSREP_REPOSITORYTYPE_DOWNLOAD,
+        MMSREP_REPOSITORYTYPE_STREAMING,
+        MMSREP_REPOSITORYTYPE_STAGING,
+        MMSREP_REPOSITORYTYPE_DONE,
+        MMSREP_REPOSITORYTYPE_ERRORS,
+        MMSREP_REPOSITORYTYPE_FTP,
 
-        CMSREP_REPOSITORYTYPE_NUMBER
+        MMSREP_REPOSITORYTYPE_NUMBER
     };
 
 public:
-    CMSStorage (
+    MMSStorage (
             string storage, 
             unsigned long freeSpaceToLeaveInEachPartitionInMB,
             shared_ptr<spdlog::logger> logger);
 
-    ~CMSStorage (void);
+    ~MMSStorage (void);
 
     string getCustomerFTPRepository(shared_ptr<Customer> customer);
     
@@ -55,7 +55,7 @@ public:
 
     //    const char *getIPhoneAliasForLive (void);
 
-    string getCMSRootRepository (void);
+    string getMMSRootRepository (void);
 
     string getStreamingRootRepository (void);
 
@@ -83,20 +83,20 @@ public:
 	string customerDirectoryName,
 	bool addDateTimeToFileName);
 
-    string moveAssetInCMSRepository (
+    string moveAssetInMMSRepository (
         string sourceAssetPathName,
         string customerDirectoryName,
         string destinationFileName,
         string relativePath,
 
         bool isPartitionIndexToBeCalculated,
-        unsigned long *pulCMSPartitionIndexUsed,	// OUT if bIsPartitionIndexToBeCalculated is true, IN is bIsPartitionIndexToBeCalculated is false
+        unsigned long *pulMMSPartitionIndexUsed,	// OUT if bIsPartitionIndexToBeCalculated is true, IN is bIsPartitionIndexToBeCalculated is false
 
         bool deliveryRepositoriesToo,
         Customer::TerritoriesHashMap& phmTerritories
     );
 
-    string getCMSAssetPathName (
+    string getMMSAssetPathName (
 	unsigned long ulPartitionNumber,
 	string customerDirectoryName,
 	string relativePath,		// using '/'
@@ -135,7 +135,7 @@ public:
 	string profileFileNameExtension);
 
     string getFFMPEGEncodingProfilePathName(
-        CMSEngineDBFacade::ContentType contentType,
+        MMSEngineDBFacade::ContentType contentType,
         long long llEncodingProfileKey);
 
     unsigned long getCustomerStorageUsage (
@@ -147,7 +147,7 @@ private:
     string                      _hostName;
 
     string                      _storage;
-    string                      _cmsRootRepository;
+    string                      _mmsRootRepository;
     string                      _downloadRootRepository;
     string                      _streamingRootRepository;
     string                      _stagingRootRepository;
@@ -158,9 +158,9 @@ private:
 
     unsigned long long          _freeSpaceToLeaveInEachPartitionInMB;
 
-    recursive_mutex                 _mtCMSPartitions;
-    vector<unsigned long long>      _cmsPartitionsFreeSizeInMB;
-    unsigned long                   _ulCurrentCMSPartitionIndex;
+    recursive_mutex                 _mtMMSPartitions;
+    vector<unsigned long long>      _mmsPartitionsFreeSizeInMB;
+    unsigned long                   _ulCurrentMMSPartitionIndex;
 
     
     void contentInRepository (
@@ -173,7 +173,7 @@ private:
     string getRepository(RepositoryType rtRepositoryType);
 
     string creatingDirsUsingTerritories (
-	unsigned long ulCurrentCMSPartitionIndex,
+	unsigned long ulCurrentMMSPartitionIndex,
 	string relativePath,
 	string customerDirectoryName,
 	bool deliveryRepositoriesToo,

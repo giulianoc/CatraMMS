@@ -5,7 +5,7 @@
 
 CheckEncodingTimes:: CheckEncodingTimes (unsigned long ulPeriodInMilliSecs,
 	shared_ptr<MultiEventsSet> multiEventsSet, shared_ptr<spdlog::logger> logger): 
-    Times2 (ulPeriodInMilliSecs, CMSENGINE_CHECKENCODINGTIMES_CLASSNAME)
+    Times2 (ulPeriodInMilliSecs, MMSENGINE_CHECKENCODINGTIMES_CLASSNAME)
 
 {
     _multiEventsSet     = multiEventsSet;
@@ -27,16 +27,16 @@ void CheckEncodingTimes:: handleTimeOut (void)
         return;
     }
 
-    shared_ptr<Event>    event = _multiEventsSet->getEventsFactory()->getFreeEvent<Event>(CMSENGINE_EVENTTYPEIDENTIFIER_CHECKENCODINGEVENT);
+    shared_ptr<Event>    event = _multiEventsSet->getEventsFactory()->getFreeEvent<Event>(MMSENGINE_EVENTTYPEIDENTIFIER_CHECKENCODINGEVENT);
 
-    event->setSource(CMSENGINE_CHECKENCODINGTIMES_SOURCE);
-    event->setDestination(CMSENGINEPROCESSORNAME);
+    event->setSource(MMSENGINE_CHECKENCODINGTIMES_SOURCE);
+    event->setDestination(MMSENGINEPROCESSORNAME);
     event->setExpirationTimePoint(chrono::system_clock::now());
 
     _multiEventsSet->addEvent(event);
     
     _logger->debug(__FILEREF__ + "addEvent: EVENT_TYPE" 
-            + ", CMSENGINE_EVENTTYPEIDENTIFIER_CHECKENCODING"
+            + ", MMSENGINE_EVENTTYPEIDENTIFIER_CHECKENCODING"
             + ", getEventKey().first: " + to_string(event->getEventKey().first)
             + ", getEventKey().second: " + to_string(event->getEventKey().second)
     );

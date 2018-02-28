@@ -3,21 +3,21 @@
 
 #include "catralibraries/Scheduler2.h"
 
-#include "CMSEngineProcessor.h"
+#include "MMSEngineProcessor.h"
 #include "CheckIngestionTimes.h"
 #include "CheckEncodingTimes.h"
-#include "CMSEngineDBFacade.h"
+#include "MMSEngineDBFacade.h"
 #include "ActiveEncodingsManager.h"
-#include "CMSStorage.h"
-#include "CMSEngine.h"
+#include "MMSStorage.h"
+#include "MMSEngine.h"
 
 
 int main (int iArgc, char *pArgv [])
 {
 
-    string logPathName ("/tmp/cmsEngineService.log");
-    // auto logger = spdlog::stdout_logger_mt("cmsEngineService");
-    auto logger = spdlog::daily_logger_mt("cmsEngineService", logPathName.c_str(), 11, 20);
+    string logPathName ("/tmp/mmsEngineService.log");
+    // auto logger = spdlog::stdout_logger_mt("mmsEngineService");
+    auto logger = spdlog::daily_logger_mt("mmsEngineService", logPathName.c_str(), 11, 20);
     
     // trigger flush if the log severity is error or higher
     logger->flush_on(spdlog::level::trace);
@@ -36,14 +36,14 @@ int main (int iArgc, char *pArgv [])
     #else
         string dbUsername("root"); string dbPassword("root"); string dbName("catracms");
     #endif
-    logger->info(__FILEREF__ + "Creating CMSEngineDBFacade"
+    logger->info(__FILEREF__ + "Creating MMSEngineDBFacade"
         + ", dbPoolSize: " + to_string(dbPoolSize)
         + ", dbServer: " + dbServer
         + ", dbUsername: " + dbUsername
         + ", dbPassword: " + dbPassword
         + ", dbName: " + dbName
             );
-    shared_ptr<CMSEngineDBFacade>       cmsEngineDBFacade = make_shared<CMSEngineDBFacade>(
+    shared_ptr<MMSEngineDBFacade>       mmsEngineDBFacade = make_shared<MMSEngineDBFacade>(
             dbPoolSize, dbServer, dbUsername, dbPassword, dbName, logger);
     
     #ifdef __APPLE__
@@ -52,32 +52,32 @@ int main (int iArgc, char *pArgv [])
         string storageRootPath ("/home/giuliano/storage/");
     #endif
     unsigned long freeSpaceToLeaveInEachPartitionInMB = 5;
-    logger->info(__FILEREF__ + "Creating CMSStorage"
+    logger->info(__FILEREF__ + "Creating MMSStorage"
         + ", storageRootPath: " + storageRootPath
         + ", freeSpaceToLeaveInEachPartitionInMB: " + to_string(freeSpaceToLeaveInEachPartitionInMB)
             );
-    shared_ptr<CMSStorage>       cmsStorage = make_shared<CMSStorage>(
+    shared_ptr<MMSStorage>       mmsStorage = make_shared<MMSStorage>(
             storageRootPath, 
             freeSpaceToLeaveInEachPartitionInMB,
             logger);
 
-    logger->info(__FILEREF__ + "Creating CMSEngine"
+    logger->info(__FILEREF__ + "Creating MMSEngine"
             );
-    shared_ptr<CMSEngine>       cmsEngine = make_shared<CMSEngine>(cmsEngineDBFacade, logger);
+    shared_ptr<MMSEngine>       mmsEngine = make_shared<MMSEngine>(mmsEngineDBFacade, logger);
         
     logger->info(__FILEREF__ + "Creating MultiEventsSet"
-        + ", addDestination: " + CMSENGINEPROCESSORNAME
+        + ", addDestination: " + MMSENGINEPROCESSORNAME
             );
     shared_ptr<MultiEventsSet>          multiEventsSet = make_shared<MultiEventsSet>();
-    multiEventsSet->addDestination(CMSENGINEPROCESSORNAME);
+    multiEventsSet->addDestination(MMSENGINEPROCESSORNAME);
 
     logger->info(__FILEREF__ + "Creating ActiveEncodingsManager"
             );
-    ActiveEncodingsManager      activeEncodingsManager(cmsEngineDBFacade, cmsStorage, logger);
+    ActiveEncodingsManager      activeEncodingsManager(mmsEngineDBFacade, mmsStorage, logger);
 
-    logger->info(__FILEREF__ + "Creating CMSEngineProcessor"
+    logger->info(__FILEREF__ + "Creating MMSEngineProcessor"
             );
-    CMSEngineProcessor      cmsEngineProcessor(logger, multiEventsSet, cmsEngineDBFacade, cmsStorage, &activeEncodingsManager);
+    MMSEngineProcessor      mmsEngineProcessor(logger, multiEventsSet, mmsEngineDBFacade, mmsStorage, &activeEncodingsManager);
     
     unsigned long           ulThreadSleepInMilliSecs = 100;
     logger->info(__FILEREF__ + "Creating Scheduler2"
@@ -90,9 +90,9 @@ int main (int iArgc, char *pArgv [])
             );
     thread activeEncodingsManagerThread (ref(activeEncodingsManager));
 
-    logger->info(__FILEREF__ + "Starting CMSEngineProcessor"
+    logger->info(__FILEREF__ + "Starting MMSEngineProcessor"
             );
-    thread cmsEngineProcessorThread (cmsEngineProcessor);
+    thread mmsEngineProcessorThread (mmsEngineProcessor);
 
     logger->info(__FILEREF__ + "Starting Scheduler2"
             );
@@ -121,9 +121,9 @@ int main (int iArgc, char *pArgv [])
             );
     activeEncodingsManagerThread.join();
     
-    logger->info(__FILEREF__ + "Waiting CMSEngineProcessor"
+    logger->info(__FILEREF__ + "Waiting MMSEngineProcessor"
             );
-    cmsEngineProcessorThread.join();
+    mmsEngineProcessorThread.join();
     
     logger->info(__FILEREF__ + "Waiting Scheduler2"
             );

@@ -1,6 +1,6 @@
 
-#include "CMSEngineDBFacade.h"
-#include "CMSEngine.h"
+#include "MMSEngineDBFacade.h"
+#include "MMSEngine.h"
 #include "catralibraries/Convert.h"
 
 
@@ -19,25 +19,25 @@ int main (int iArgc, char *pArgv [])
     #else
         string dbUsername("root"); string dbPassword("root"); string dbName("catracms");
     #endif
-    logger->info(__FILEREF__ + "Creating CMSEngineDBFacade"
+    logger->info(__FILEREF__ + "Creating MMSEngineDBFacade"
         + ", dbPoolSize: " + to_string(dbPoolSize)
         + ", dbServer: " + dbServer
         + ", dbUsername: " + dbUsername
         + ", dbPassword: " + dbPassword
         + ", dbName: " + dbName
             );
-    shared_ptr<CMSEngineDBFacade>       cmsEngineDBFacade = make_shared<CMSEngineDBFacade>(
+    shared_ptr<MMSEngineDBFacade>       mmsEngineDBFacade = make_shared<MMSEngineDBFacade>(
             dbPoolSize, dbServer, dbUsername, dbPassword, dbName, logger);
 
-    logger->info(__FILEREF__ + "Creating CMSEngine"
+    logger->info(__FILEREF__ + "Creating MMSEngine"
             );
-    shared_ptr<CMSEngine>       cmsEngine = make_shared<CMSEngine>(cmsEngineDBFacade, logger);
+    shared_ptr<MMSEngine>       mmsEngine = make_shared<MMSEngine>(mmsEngineDBFacade, logger);
 
     string emailAddress = "giulianoc@catrasoftware.it";
     logger->info(__FILEREF__ + "Creating Administrator Customer"
             );
     tuple<int64_t,int64_t,string> customerKeyUserKeyAndConfirmationCode =
-            cmsEngine->registerCustomer(
+            mmsEngine->registerCustomer(
                 "Admin",                       // string customerName,
                 "",                             // string street,
                 "",                             // string city,
@@ -45,10 +45,10 @@ int main (int iArgc, char *pArgv [])
                 "",                             // string zip,
                 "",                             // string phone,
                 "",                             // string countryCode,
-                CMSEngineDBFacade::CustomerType::IngestionAndDelivery,  // CMSEngineDBFacade::CustomerType customerType
+                MMSEngineDBFacade::CustomerType::IngestionAndDelivery,  // MMSEngineDBFacade::CustomerType customerType
                 "",                             // string deliveryURL,
-                CMSEngineDBFacade::EncodingPriority::High,   //  CMSEngineDBFacade::EncodingPriority maxEncodingPriority,
-                CMSEngineDBFacade::EncodingPeriod::Daily,       //  CMSEngineDBFacade::EncodingPeriod encodingPeriod,
+                MMSEngineDBFacade::EncodingPriority::High,   //  MMSEngineDBFacade::EncodingPriority maxEncodingPriority,
+                MMSEngineDBFacade::EncodingPeriod::Daily,       //  MMSEngineDBFacade::EncodingPeriod encodingPeriod,
                 100,                            // long maxIngestionsNumber,
                 100,                            // long maxStorageInGB,
                 "",                             // string languageCode,
@@ -60,13 +60,13 @@ int main (int iArgc, char *pArgv [])
 
     logger->info(__FILEREF__ + "Confirm Customer"
             );
-    cmsEngine->confirmCustomer(get<2>(customerKeyUserKeyAndConfirmationCode));
+    mmsEngine->confirmCustomer(get<2>(customerKeyUserKeyAndConfirmationCode));
     
     bool adminAPI = true;
     bool userAPI = true;
     logger->info(__FILEREF__ + "Create APIKey"
             );
-    string apiKey = cmsEngine->createAPIKey(
+    string apiKey = mmsEngine->createAPIKey(
             get<0>(customerKeyUserKeyAndConfirmationCode),
             get<1>(customerKeyUserKeyAndConfirmationCode),
             adminAPI,

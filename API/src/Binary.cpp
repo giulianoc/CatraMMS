@@ -52,7 +52,7 @@ void Binary::manageRequestAndResponse(
 void Binary::getBinaryAndResponse(
         string requestURI,
         string requestMethod,
-        string xCatraCMSResumeHeader,
+        string xCatraMMSResumeHeader,
         unordered_map<string, string> queryParameters,
         tuple<shared_ptr<Customer>,bool,bool>& customerAndFlags,
         unsigned long contentLength
@@ -77,7 +77,7 @@ void Binary::getBinaryAndResponse(
         string sourceFileName;
         try
         {
-            sourceFileName = _cmsEngineDBFacade->getSourceReferenceOfUploadingInProgress(ingestionJobKey);
+            sourceFileName = _mmsEngineDBFacade->getSourceReferenceOfUploadingInProgress(ingestionJobKey);
         }
         catch(exception e)
         {
@@ -90,7 +90,7 @@ void Binary::getBinaryAndResponse(
         }
         
         shared_ptr<Customer> customer = get<0>(customerAndFlags);
-        string customerFTPBinaryPathName = _cmsStorage->getCustomerFTPRepository(customer);
+        string customerFTPBinaryPathName = _mmsStorage->getCustomerFTPRepository(customer);
         customerFTPBinaryPathName
                 .append("/")
                 .append(sourceFileName)
@@ -132,7 +132,7 @@ void Binary::getBinaryAndResponse(
 
             bool resume = false;
             {
-                if (xCatraCMSResumeHeader != "")
+                if (xCatraMMSResumeHeader != "")
                 {
                     unsigned long fileSize = 0;
                     try
@@ -156,25 +156,25 @@ void Binary::getBinaryAndResponse(
     //                    throw runtime_error(errorMessage);            
                     }
 
-                    if (stol(xCatraCMSResumeHeader) == fileSize)
+                    if (stol(xCatraMMSResumeHeader) == fileSize)
                     {
                         _logger->info(__FILEREF__ + "Resume is enabled"
-                            + ", xCatraCMSResumeHeader: " + xCatraCMSResumeHeader
+                            + ", xCatraMMSResumeHeader: " + xCatraMMSResumeHeader
                             + ", fileSize: " + to_string(fileSize)
                         );
                         resume = true;
                     }
                     else
                     {
-                        _logger->info(__FILEREF__ + "Resume is NOT enabled (X-CatraCMS-Resume header found but different length)"
-                            + ", xCatraCMSResumeHeader: " + xCatraCMSResumeHeader
+                        _logger->info(__FILEREF__ + "Resume is NOT enabled (X-CatraMMS-Resume header found but different length)"
+                            + ", xCatraMMSResumeHeader: " + xCatraMMSResumeHeader
                             + ", fileSize: " + to_string(fileSize)
                         );
                     }
                 }
                 else
                 {
-                    _logger->info(__FILEREF__ + "Resume is NOT enabled (No X-CatraCMS-Resume header found)"
+                    _logger->info(__FILEREF__ + "Resume is NOT enabled (No X-CatraMMS-Resume header found)"
                     );
                 }
             }

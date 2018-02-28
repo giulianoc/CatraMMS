@@ -1,6 +1,6 @@
 
-#include "CMSEngineDBFacade.h"
-#include "CMSEngine.h"
+#include "MMSEngineDBFacade.h"
+#include "MMSEngine.h"
 
 
 int main (int iArgc, char *pArgv [])
@@ -18,21 +18,21 @@ int main (int iArgc, char *pArgv [])
     #else
         string dbUsername("root"); string dbPassword("root"); string dbName("catracms");
     #endif
-    logger->info(__FILEREF__ + "Creating CMSEngineDBFacade"
+    logger->info(__FILEREF__ + "Creating MMSEngineDBFacade"
         + ", dbPoolSize: " + to_string(dbPoolSize)
         + ", dbServer: " + dbServer
         + ", dbUsername: " + dbUsername
         + ", dbPassword: " + dbPassword
         + ", dbName: " + dbName
             );
-    shared_ptr<CMSEngineDBFacade>       cmsEngineDBFacade = make_shared<CMSEngineDBFacade>(
+    shared_ptr<MMSEngineDBFacade>       mmsEngineDBFacade = make_shared<MMSEngineDBFacade>(
             dbPoolSize, dbServer, dbUsername, dbPassword, dbName, logger);
 
-    logger->info(__FILEREF__ + "Creating CMSEngine"
+    logger->info(__FILEREF__ + "Creating MMSEngine"
             );
-    shared_ptr<CMSEngine>       cmsEngine = make_shared<CMSEngine>(cmsEngineDBFacade, logger);
+    shared_ptr<MMSEngine>       mmsEngine = make_shared<MMSEngine>(mmsEngineDBFacade, logger);
 
-    cmsEngine->registerCustomer(
+    mmsEngine->registerCustomer(
 	"Warner",                       // string customerName,
 	"",                             // string street,
         "",                             // string city,
@@ -40,10 +40,10 @@ int main (int iArgc, char *pArgv [])
 	"",                             // string zip,
         "",                             // string phone,
         "",                             // string countryCode,
-        CMSEngineDBFacade::CustomerType::EncodingOnly,  // CMSEngineDBFacade::CustomerType customerType
+        MMSEngineDBFacade::CustomerType::EncodingOnly,  // MMSEngineDBFacade::CustomerType customerType
 	"",                             // string deliveryURL,
-        CMSEngineDBFacade::EncodingPriority::Medium,   //  CMSEngineDBFacade::EncodingPriority maxEncodingPriority,
-        CMSEngineDBFacade::EncodingPeriod::Daily,       //  CMSEngineDBFacade::EncodingPeriod encodingPeriod,
+        MMSEngineDBFacade::EncodingPriority::Medium,   //  MMSEngineDBFacade::EncodingPriority maxEncodingPriority,
+        MMSEngineDBFacade::EncodingPeriod::Daily,       //  MMSEngineDBFacade::EncodingPeriod encodingPeriod,
 	10,                             // long maxIngestionsNumber,
         10,                             // long maxStorageInGB,
 	"",                             // string languageCode,

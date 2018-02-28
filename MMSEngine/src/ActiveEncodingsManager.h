@@ -18,8 +18,8 @@
 #include <vector>
 #include <condition_variable>
 #include "EncoderVideoAudioProxy.h"
-#include "CMSEngineDBFacade.h"
-#include "CMSStorage.h"
+#include "MMSEngineDBFacade.h"
+#include "MMSStorage.h"
 #include "spdlog/spdlog.h"
 #include "Magick++.h"
 
@@ -37,8 +37,8 @@ struct MaxEncodingsManagerCapacityReached: public exception {
 class ActiveEncodingsManager {
 public:
     ActiveEncodingsManager(        
-            shared_ptr<CMSEngineDBFacade> cmsEngineDBFacade,
-            shared_ptr<CMSStorage> cmsStorage,
+            shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
+            shared_ptr<MMSStorage> mmsStorage,
             shared_ptr<spdlog::logger> logger);
 
     virtual ~ActiveEncodingsManager();
@@ -46,7 +46,7 @@ public:
     void operator ()();
 
     unsigned long addEncodingItems (
-	vector<shared_ptr<CMSEngineDBFacade::EncodingItem>>& vEncodingItems);
+	vector<shared_ptr<MMSEngineDBFacade::EncodingItem>>& vEncodingItems);
     
     static void encodingImageFormatValidation(string newFormat);
     static Magick::InterlaceType encodingImageInterlaceTypeValidation(string sNewInterlaceType);
@@ -57,7 +57,7 @@ private:
         EncodingJobStatus			_status;
         chrono::system_clock::time_point	_encodingJobStart;
 
-        shared_ptr<CMSEngineDBFacade::EncodingItem>	_encodingItem;
+        shared_ptr<MMSEngineDBFacade::EncodingItem>	_encodingItem;
         EncoderVideoAudioProxy                  _encoderVideoAudioProxy;
         
         EncodingJob()
@@ -67,8 +67,8 @@ private:
     };
 
     shared_ptr<spdlog::logger>                  _logger;
-    shared_ptr<CMSEngineDBFacade>               _cmsEngineDBFacade;
-    shared_ptr<CMSStorage>                      _cmsStorage;
+    shared_ptr<MMSEngineDBFacade>               _mmsEngineDBFacade;
+    shared_ptr<MMSStorage>                      _mmsStorage;
     
     condition_variable                          _cvAddedEncodingJob;
     mutex                                       _mtEncodingJobs;
@@ -82,11 +82,11 @@ private:
     #endif
 
     void processEncodingJob(mutex* mtEncodingJobs, EncodingJob* encodingJob);
-    void addEncodingItem(shared_ptr<CMSEngineDBFacade::EncodingItem> encodingItem);
+    void addEncodingItem(shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem);
     string encodeContentImage(
-        shared_ptr<CMSEngineDBFacade::EncodingItem> encodingItem);
+        shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem);
     void processEncodedImage(
-        shared_ptr<CMSEngineDBFacade::EncodingItem> encodingItem, 
+        shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem, 
         string stagingEncodedAssetPathName);
 
     void readingImageProfile(

@@ -38,7 +38,7 @@ SET (HEADERS
 
 include_directories ("${PROJECT_SOURCE_DIR}/../usr_local/include")
 include_directories ("${PROJECT_SOURCE_DIR}/../spdlog/include")
-include_directories ("${PROJECT_SOURCE_DIR}/CMSEngine/src")
+include_directories ("${PROJECT_SOURCE_DIR}/MMSEngine/src")
 if (APPLE)
 	include_directories ("${PROJECT_SOURCE_DIR}/../mysql-connector-c++-1.1.9-macos10.12-x86-64bit/include")
 else()
@@ -55,7 +55,7 @@ endif()
 
 #API
     add_executable(API.fcgi API.cpp ${COMMON_SOURCES} ${HEADERS})
-    target_link_libraries (API.fcgi CMSEngine)
+    target_link_libraries (API.fcgi MMSEngine)
     target_link_libraries (API.fcgi mysqlcppconn)
     target_link_libraries (API.fcgi jsoncpp)
     if (APPLE)
@@ -82,7 +82,7 @@ target_link_libraries (API.fcgi ErrMsg)
 
 #Binary
     add_executable(Binary.cgi Binary.cpp ${COMMON_SOURCES} ${HEADERS})
-    target_link_libraries (Binary.cgi CMSEngine)
+    target_link_libraries (Binary.cgi MMSEngine)
     target_link_libraries (Binary.cgi mysqlcppconn)
     target_link_libraries (Binary.cgi jsoncpp)
     if (APPLE)
