@@ -27,7 +27,6 @@ MMSEngineProcessor::MMSEngineProcessor(
     _mmsStorage      = mmsStorage;
     _pActiveEncodingsManager = pActiveEncodingsManager;
 
-    _ulIngestionLastCustomerIndex   = 0;
     _firstGetEncodingJob            = true;
     _processorMMS                   = System::getHostName();
     _maxDownloadAttemptNumber       = 3;
@@ -159,6 +158,367 @@ void MMSEngineProcessor::operator ()()
 void MMSEngineProcessor::handleCheckIngestionEvent()
 {
     
+    try
+    {
+        vector<tuple<int64_t,int64_t,string,string,IngestionStatus>> ingestionsToBeManaged;
+        
+        _mmsEngineDBFacade->getIngestionsToBeManaged(ingestionsToBeManaged);
+        
+        for (tuple<int64_t,int64_t,string,string,IngestionStatus> ingestionToBeManaged:
+                ingestionsToBeManaged)
+        {
+            try
+            {
+                int64_t ingestionJobKey;
+                int64_t customerKey;
+                string metaDataContent;
+                string sourceReference;
+                IngestionStatus ingestionStatus;
+
+                tie(ingestionJobKey, customerKey, metaDataContent,
+                        sourceReference, ingestionStatus) = ingestionToBeManaged;
+                
+                _logger->info(__FILEREF__ + "json to be processed"
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                );
+
+                Json::Value metadataRoot;
+                try
+                {
+                    Json::CharReaderBuilder builder;
+                    Json::CharReader* reader = builder.newCharReader();
+                    string errors;
+
+                    bool parsingSuccessful = reader->parse(metaDataContent.c_str(),
+                            metaDataContent.c_str() + metaDataContent.size(), 
+                            &metadataRoot, &errors);
+                    delete reader;
+
+                    if (!parsingSuccessful)
+                    {
+                        string errorMessage = __FILEREF__ + "failed to parse the metadata"
+                                + ", metaDataContent: " + metaDataContent;
+                        _logger->error(errorMessage);
+
+                        throw runtime_error(errorMessage);
+                    }
+                }
+                catch(...)
+                {
+                    string errorMessage = string("metadata json is not well format")
+                            + ", metaDataContent: " + metaDataContent
+                            ;
+                    _logger->error(__FILEREF__ + errorMessage);
+
+                    _logger->info(__FILEREF__ + "Update IngestionJob"
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", IngestionStatus: " + "End_ValidationMetadataFailed"
+                        + ", _processorMMS: " + _processorMMS
+                        + ", errorMessage: " + errorMessage
+                    );
+                    _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                        MMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed, 
+                        _processorMMS, errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+
+                pair<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType> ingestionTypeAndContentType;
+                try
+                {
+                    ingestionTypeAndContentType = validateMetadata(metadataRoot);
+                }
+                catch(runtime_error e)
+                {
+                    _logger->error(__FILEREF__ + "validateMetadata failed"
+                            + ", exception: " + e.what()
+                    );
+
+                    string errorMessage = e.what();
+
+                    _logger->info(__FILEREF__ + "Update IngestionJob"
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", IngestionStatus: " + "End_ValidationMetadataFailed"
+                        + ", _processorMMS: " + _processorMMS
+                        + ", errorMessage: " + errorMessage
+                    );
+                    _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                        MMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed, 
+                        _processorMMS, errorMessage);
+
+                    throw e;
+                }
+                catch(exception e)
+                {
+                    _logger->error(__FILEREF__ + "validateMetadata failed"
+                            + ", exception: " + e.what()
+                    );
+                    string ftpDirectoryErrorEntryPathName =
+                        _mmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, directoryEntry);
+
+                    string errorMessage = e.what();
+
+                    if (ingestionJobKey == -1)
+                    {
+                        _logger->info(__FILEREF__ + "Adding IngestionJob"
+                            + ", customer->_customerKey: " + to_string(customer->_customerKey)
+                            + ", directoryEntry: " + directoryEntry
+                            + ", SourceReference: " + ""
+                            + ", IngestionType: " + "Unknown"
+                            + ", IngestionStatus: " + "End_ValidationMetadataFailed"
+                            + ", _processorMMS: " + _processorMMS
+                            + ", errorMessage: " + errorMessage
+                        );
+                        _mmsEngineDBFacade->addIngestionJob (customer->_customerKey, 
+                            directoryEntry, metadataFileContent, "", MMSEngineDBFacade::IngestionType::Unknown, 
+                            MMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed, 
+                            _processorMMS, errorMessage);                            
+                    }
+                    else
+                    {
+                        _logger->info(__FILEREF__ + "Update IngestionJob"
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", IngestionStatus: " + "End_ValidationMetadataFailed"
+                            + ", _processorMMS: " + _processorMMS
+                            + ", errorMessage: " + errorMessage
+                        );
+                        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                            MMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed, 
+                            _processorMMS, errorMessage);
+                    }
+
+                    throw e;
+                }
+
+                bool mediaSourceToBeDownload;
+                bool localMediaSourceUploadCompleted;
+                string mediaSourceReference;
+                string mediaSourceFileName;
+                string md5FileCheckSum;
+                int fileSizeInBytes;
+                try
+                {
+                    tuple<bool, bool, string, string, string, int> mediaSourceDetails;
+
+                    mediaSourceDetails = getMediaSourceDetails(customer,
+                            ingestionTypeAndContentType.first, metadataRoot);
+
+                    tie(mediaSourceToBeDownload, localMediaSourceUploadCompleted,
+                            mediaSourceReference, mediaSourceFileName, 
+                            md5FileCheckSum, fileSizeInBytes) = mediaSourceDetails;                        
+                }
+                catch(runtime_error e)
+                {
+                    _logger->error(__FILEREF__ + "getMediaSourceDetails failed"
+                            + ", exception: " + e.what()
+                    );
+                    string ftpDirectoryErrorEntryPathName =
+                        _mmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, directoryEntry);
+
+                    string errorMessage = e.what();
+
+                    if (ingestionJobKey == -1)
+                    {
+                        _logger->info(__FILEREF__ + "Adding IngestionJob"
+                            + ", customer->_customerKey: " + to_string(customer->_customerKey)
+                            + ", directoryEntry: " + directoryEntry
+                            + ", SourceReference: " + ""
+                            + ", IngestionType: " + MMSEngineDBFacade::toString(ingestionTypeAndContentType.first)
+                            + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
+                            + ", _processorMMS: " + _processorMMS
+                            + ", errorMessage: " + errorMessage
+                        );
+                        _mmsEngineDBFacade->addIngestionJob (customer->_customerKey, 
+                            directoryEntry, metadataFileContent, "", ingestionTypeAndContentType.first, 
+                            MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
+                            _processorMMS, errorMessage);
+                    }
+                    else
+                    {
+                        _logger->info(__FILEREF__ + "Update IngestionJob"
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", SourceReference: " + ""
+                            + ", IngestionType: " + MMSEngineDBFacade::toString(ingestionTypeAndContentType.first)
+                            + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
+                            + ", _processorMMS: " + _processorMMS
+                            + ", errorMessage: " + errorMessage
+                        );                            
+                        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                            "", ingestionTypeAndContentType.first,
+                            MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
+                            _processorMMS, errorMessage);
+                    }
+
+                    throw e;
+                }
+                catch(exception e)
+                {
+                    _logger->error(__FILEREF__ + "getMediaSourceDetails failed"
+                            + ", exception: " + e.what()
+                    );
+                    string ftpDirectoryErrorEntryPathName =
+                        _mmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, directoryEntry);
+
+                    string errorMessage = e.what();
+
+                    if (ingestionJobKey == -1)
+                    {
+                        _logger->info(__FILEREF__ + "Adding IngestionJob"
+                            + ", customer->_customerKey: " + to_string(customer->_customerKey)
+                            + ", directoryEntry: " + directoryEntry
+                            + ", SourceReference: " + ""
+                            + ", IngestionType: " + MMSEngineDBFacade::toString(ingestionTypeAndContentType.first)
+                            + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
+                            + ", _processorMMS: " + _processorMMS
+                            + ", errorMessage: " + errorMessage
+                        );
+                        _mmsEngineDBFacade->addIngestionJob (customer->_customerKey, 
+                            directoryEntry, metadataFileContent, "", ingestionTypeAndContentType.first, 
+                            MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
+                            _processorMMS, errorMessage);
+                    }
+                    else
+                    {
+                        _logger->info(__FILEREF__ + "Update IngestionJob"
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", SourceReference: " + ""
+                            + ", IngestionType: " + MMSEngineDBFacade::toString(ingestionTypeAndContentType.first)
+                            + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
+                            + ", _processorMMS: " + _processorMMS
+                            + ", errorMessage: " + errorMessage
+                        );                            
+                        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                            "", ingestionTypeAndContentType.first,
+                            MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
+                            _processorMMS, errorMessage);
+                    }
+
+                    throw e;
+                }
+
+                try
+                {
+                    string errorMessage = "";
+                    if (ingestionJobKey == -1)
+                    {
+                        _logger->info(__FILEREF__ + "Adding IngestionJob"
+                            + ", customer->_customerKey: " + to_string(customer->_customerKey)
+                            + ", directoryEntry: " + directoryEntry
+                            + ", SourceReference: " + mediaSourceReference
+                            + ", IngestionType: " + MMSEngineDBFacade::toString(ingestionTypeAndContentType.first)
+                            + ", IngestionStatus: " + "StartIngestion"
+                            + ", _processorMMS: " + _processorMMS
+                            + ", errorMessage: " + errorMessage
+                        );
+                        ingestionJobKey = _mmsEngineDBFacade->addIngestionJob (customer->_customerKey, 
+                            directoryEntry, metadataFileContent, mediaSourceReference, ingestionTypeAndContentType.first, 
+                            MMSEngineDBFacade::IngestionStatus::StartIngestion, 
+                            _processorMMS, errorMessage);
+                    }
+                    else
+                    {
+                        _logger->info(__FILEREF__ + "Update IngestionJob"
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", SourceReference: " + mediaSourceReference
+                            + ", IngestionType: " + MMSEngineDBFacade::toString(ingestionTypeAndContentType.first)
+                            + ", IngestionStatus: " + "StartIngestion"
+                            + ", _processorMMS: " + _processorMMS
+                            + ", errorMessage: " + errorMessage
+                        );                            
+                        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
+                                mediaSourceReference, ingestionTypeAndContentType.first,
+                                MMSEngineDBFacade::IngestionStatus::StartIngestion, 
+                                _processorMMS, errorMessage);
+                    }
+                }
+                catch(exception e)
+                {
+                    _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addIngestionJob failed"
+                            + ", exception: " + e.what()
+                    );
+
+                    string ftpDirectoryErrorEntryPathName =
+                        _mmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, directoryEntry);
+
+                    throw e;
+                }
+
+                try
+                {
+                    // mediaSourceReference could be a URL or a filename.
+                    // In this last case, it will be the same as mediaSourceFileName
+
+                    if (mediaSourceToBeDownload)
+                    {
+                        thread downloadMediaSource(&MMSEngineProcessor::downloadMediaSourceFile, this, 
+                            mediaSourceReference, ingestionJobKey, customer,
+                            directoryEntry, mediaSourceFileName);
+                        downloadMediaSource.detach();
+
+                        _logger->info(__FILEREF__ + "Update IngestionJob"
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", IngestionStatus: " + "SourceDownloadingInProgress"
+                            + ", errorMessage: " + ""
+                        );                            
+                        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                            MMSEngineDBFacade::IngestionStatus::SourceDownloadingInProgress, "");
+                    }
+                    else
+                    {
+                        _logger->info(__FILEREF__ + "Update IngestionJob"
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", IngestionStatus: " + "SourceUploadingInProgress"
+                            + ", errorMessage: " + ""
+                        );                            
+                        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                            MMSEngineDBFacade::IngestionStatus::WaitingUploadSourceReference, "");
+                    }
+                }
+                catch(exception e)
+                {
+                    _logger->error(__FILEREF__ + "add LocalAssetIngestionEvent failed"
+                            + ", exception: " + e.what()
+                    );
+
+                    string ftpDirectoryErrorEntryPathName =
+                        _mmsStorage->moveFTPRepositoryWorkingEntryToErrorArea(customer, directoryEntry);
+
+                    _logger->info(__FILEREF__ + "Update IngestionJob"
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", IngestionStatus: " + "End_IngestionFailure"
+                        + ", errorMessage: " + e.what()
+                    );                            
+                    _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
+                }
+
+                ulCurrentCustomerIngestionsNumber++;
+
+                if (ulCurrentCustomerIngestionsNumber >=
+                    _ulMaxIngestionsNumberPerCustomerEachIngestionPeriod)
+                    break;
+            }
+            catch(exception e)
+            {
+                _logger->error(__FILEREF__ + "Exception managing the FTP entry"
+                    + ", exception: " + e.what()
+                    + ", customerKey: " + to_string(customer->_customerKey)
+                    + ", directoryEntry: " + directoryEntry
+                );
+            }
+        }
+    }
+    catch(...)
+    {
+        _logger->error(__FILEREF__ + "Error processing the Customer FTP"
+            + ", customer->_name: " + customer->_name
+                );
+    }
+}
+
+/*
+void MMSEngineProcessor::handleCheckIngestionEvent()
+{
+    
     vector<shared_ptr<Customer>> customers = _mmsEngineDBFacade->getCustomers();
     
     unsigned long ulCurrentCustomerIndex = 0;
@@ -253,14 +613,34 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         // it is a completed media source binary
                         // let's see if metadata are already arrived/managed?
                         string mediaSourceFileName = directoryEntry.substr(0, directoryEntry.length() - completedExtension.length());
-                        
-        IMPLEMENTARE IL METODO SOTTO usando nella where 
-        - gli stati SourceDownloadingInProgress e WaitingUploadSourceReference
-        - considerare che quando nella where si usa SourceReference, puo' anche essereuna URL
-                        pair<int64_t,string> ingestionJobKeyAndMetadataFileName = 
+
+                        pair<int64_t,string> ingestionJobKeyAndMetadataFileName;
+                        try
+                        {
+                            ingestionJobKeyAndMetadataFileName =
                                 _mmsEngineDBFacade->getWaitingSourceReferenceIngestionJob (
                                 customer->_customerKey, mediaSourceFileName);
-                         
+                        }
+                        catch(runtime_error e)
+                        {
+                            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->getWaitingSourceReferenceIngestionJob failed"
+                                + ", customerKey: " + to_string(customer->_customerKey)
+                                + ", mediaSourceFileName: " + mediaSourceFileName
+                            );
+
+                            continue;                            
+                        } 
+                        catch(exception e)
+                        {
+                            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->getWaitingSourceReferenceIngestionJob failed"
+                                + ", customerKey: " + to_string(customer->_customerKey)
+                                + ", mediaSourceFileName: " + mediaSourceFileName
+                                + ", exception: " + e.what()
+                            );
+
+                            continue;                            
+                        }
+                        
                         {
                             shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
                                     ->getFreeEvent<LocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
@@ -672,7 +1052,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
         _ulIngestionLastCustomerIndex	= 0;
 
 }
-
+*/
 void MMSEngineProcessor::handleLocalAssetIngestionEvent (
     shared_ptr<LocalAssetIngestionEvent> localAssetIngestionEvent)
 {

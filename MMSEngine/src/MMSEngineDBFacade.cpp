@@ -1370,6 +1370,124 @@ int64_t MMSEngineDBFacade::addImageEncodingProfile(
     return encodingProfileKey;
 }
 
+void MMSEngineDBFacade::getIngestionsToBeManaged(
+        vector<tuple<int64_t,int64_t,string,string,IngestionStatus>>& ingestionsToBeManaged),
+        string processorMMS
+{
+    string      lastSQLCommand;
+    bool autoCommit = true;
+    
+    shared_ptr<MySQLConnection> conn;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+
+        autoCommit = false;
+        // conn->_sqlConnection->setAutoCommit(autoCommit); OR execute the statement START TRANSACTION
+        {
+            lastSQLCommand = 
+                "START TRANSACTION";
+
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute(lastSQLCommand);
+        }
+
+        {
+            lastSQLCommand = 
+                "select IngestionJobKey, CustomerKey, MetaDataContent, SourceReference, Status from MMS_IngestionJobs where Status = ? and ProcessorMMS is null for update";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::Start_Ingestion));
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            while (resultSet->next())
+            {
+                int64_t ingestionJobKey     = resultSet->getInt64("IngestionJobKey");
+                int64_t customerKey         = resultSet->getInt64("CustomerKey");
+                string metaDataContent      = resultSet->getString("MetaDataContent");
+                string sourceReference      = resultSet->getString("SourceReference");
+                IngestionStatus ingestionStatus     = MMSEngineDBFacade::toIngestionStatus(resultSet->getString("Status"));
+
+                tuple<int64_t,int64_t,string,string,IngestionStatus> ingestionToBeManaged
+                        = make_tuple(ingestionJobKey, customerKey, metaDataContent, sourceReference, ingestionStatus);
+                
+                ingestionsToBeManaged.push_back(ingestionToBeManaged);
+            }
+        }
+
+        {
+            lastSQLCommand = 
+                "update MMS_IngestionJobs set ProcessorMMS = ? from MMS_IngestionJobs where Status = ? and ProcessorMMS is null";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::Start_Ingestion));
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            while (resultSet->next())
+            {
+                int64_t ingestionJobKey     = resultSet->getInt64("IngestionJobKey");
+                int64_t customerKey         = resultSet->getInt64("CustomerKey");
+                string metaDataContent      = resultSet->getString("MetaDataContent");
+                string sourceReference      = resultSet->getString("SourceReference");
+                IngestionStatus ingestionStatus     = MMSEngineDBFacade::toIngestionStatus(resultSet->getString("Status"));
+
+                tuple<int64_t,int64_t,string,string,IngestionStatus> ingestionToBeManaged
+                        = make_tuple(ingestionJobKey, customerKey, metaDataContent, sourceReference, ingestionStatus);
+                
+                ingestionsToBeManaged.push_back(ingestionToBeManaged);
+            }
+        }
+
+        // conn->_sqlConnection->commit(); OR execute COMMIT
+        {
+            lastSQLCommand = 
+                "COMMIT";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            preparedStatement->executeUpdate();
+        }
+        autoCommit = true;
+
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        if (!autoCommit)
+        {
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute("ROLLBACK");
+        }
+        
+        _connectionPool->unborrow(conn);
+
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw se;
+    }    
+    catch(exception e)
+    {        
+        if (!autoCommit)
+        {
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute("ROLLBACK");
+        }
+        
+        _connectionPool->unborrow(conn);
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
+    }        
+}
+
 int64_t MMSEngineDBFacade::addIngestionJob (
 	int64_t customerKey,
         string metadataFileName,
@@ -1437,6 +1555,33 @@ int64_t MMSEngineDBFacade::addIngestionJob (
 
                 throw runtime_error(errorMessage);                    
             }            
+        }
+        
+        // we cannot have two ingestions of the same customer, waiting for the same sourceReference otherwise,
+        // when the media source will be uploaded, we will not be able to distinguish
+        // to which ingestion is referred
+        if (sourceReference != "")
+        {
+            try
+            {
+                pair<int64_t,string> ingestionJobKeyAndMetadataFileName = 
+                    _mmsEngineDBFacade->getWaitingSourceReferenceIngestionJob(
+                        customerKey, sourceReference);
+                
+                string errorMessage = "It is already present an Ingestion waiting for the same SourceReference"
+                    + ", customerKey: " + to_string(customerKey)
+                    + ", sourceReference: " + sourceReference
+                    + ", ingestionJobKey: " + to_string(ingestionJobKeyAndMetadataFileName->first)
+                ;
+                
+                _logger->error(__FILEREF__ + errorMessage);
+                
+                throw runtime_error(errorMessage);
+            }
+            catch(exception e)
+            {
+                // that's the correct scenario
+            }
         }
         
         {
@@ -2332,6 +2477,88 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress (
     }
     
     return toBeCancelled;
+}
+
+pair<int64_t,string> MMSEngineDBFacade:: getWaitingSourceReferenceIngestionJob(
+            int64_t customerKey, string mediaSourceFileName)
+{
+
+    bool        toBeCancelled = false;
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn;
+
+    int64_t     ingestionJobKey;
+    string      metaDataFileName;
+    try
+    {
+        conn = _connectionPool->borrow();	
+
+        {
+            lastSQLCommand = 
+                "select IngestionJobKey, MetaDataFileName from MMS_IngestionJobs where CustomerKey = ? and SourceReference is not NULL and LOCATE(?, SourceReference) > 0 and Status in (?, ?)";
+            
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, customerKey);
+            preparedStatement->setString(queryParameterIndex++, mediaSourceFileName);
+            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress));
+            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::WaitingUploadSourceReference));
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                // We should not have more than one row because the add/update method checks that
+
+                ingestionJobKey = resultSet->getInt64("IngestionJobKey");
+                metaDataFileName = resultSet->getString("MetaDataFileName");
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "IngestionJobKey/MetaDataFileName is not found"
+                    + ", customerKey: " + to_string(customerKey)
+                    + ", mediaSourceFileName: " + mediaSourceFileName
+                    + ", Status: " + "SourceDownloadingInProgress"
+                    + ", Status: " + "WaitingUploadSourceReference"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }            
+        }
+
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        _connectionPool->unborrow(conn);
+
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw se;
+    }
+    catch(exception e)
+    {
+        _connectionPool->unborrow(conn);
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
+    }
+    
+    pair<int64_t,string> ingestionJobKeyAndMetadataFileName =
+            make_pair(ingestionJobKey, metaDataFileName);
+
+
+    return ingestionJobKeyAndMetadataFileName;
 }
 
 void MMSEngineDBFacade::getEncodingJobs(
@@ -4582,8 +4809,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "IngestionJobKey  			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "CustomerKey			BIGINT UNSIGNED NOT NULL,"
                     "MediaItemKey			BIGINT UNSIGNED NULL,"
-                    "MetaDataFileName                   VARCHAR (128) CHARACTER SET utf8 COLLATE utf8_bin NULL,"
-                    "MetaDataFileContent		TEXT CHARACTER SET utf8 COLLATE utf8_bin NULL,"
+                    "MetaDataContent                    TEXT CHARACTER SET utf8 COLLATE utf8_bin NULL,"
                     "SourceReference                    VARCHAR (1024) NULL,"
                     "IngestionType                      TINYINT (2) NULL,"
                     "StartIngestion			TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"

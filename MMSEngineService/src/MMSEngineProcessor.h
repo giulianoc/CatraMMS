@@ -26,17 +26,12 @@ private:
     shared_ptr<MMSStorage>              _mmsStorage;
     ActiveEncodingsManager*             _pActiveEncodingsManager;
     
-    unsigned long           _ulIngestionLastCustomerIndex;
     bool                    _firstGetEncodingJob;
     string                  _processorMMS;
     int                     _maxDownloadAttemptNumber;
     int                     _progressUpdatePeriodInSeconds;
     int                     _secondsWaitingAmongDownloadingAttempt;
     
-    unsigned long           _ulMaxIngestionsNumberPerCustomerEachIngestionPeriod;
-    unsigned long           _ulJsonToBeProcessedAfterSeconds;
-    unsigned long           _ulRetentionPeriodInDays;
-
     void handleCheckIngestionEvent();
 
     void handleLocalAssetIngestionEvent (

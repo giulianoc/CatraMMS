@@ -274,11 +274,7 @@ public:
     }
 
     enum class IngestionStatus {
-        StartIngestionThroughAPI,
-            // API created a file into the FTP customer repository
-
-        StartIngestion,    
-            // metadata moved in WorkingArea, metadata partially validated
+        Start_Ingestion,    
         
         SourceDownloadingInProgress,
             // media source is remote, downloading in FTP repository started
@@ -320,10 +316,8 @@ public:
     {
         switch (ingestionStatus)
         {
-            case IngestionStatus::StartIngestionThroughAPI:
-                return "StartIngestionThroughAPI";
-            case IngestionStatus::StartIngestion:
-                return "StartIngestion";
+            case IngestionStatus::Start_Ingestion:
+                return "Start_Ingestion";
             case IngestionStatus::SourceDownloadingInProgress:
                 return "SourceDownloadingInProgress";
             case IngestionStatus::WaitingUploadSourceReference:
@@ -354,10 +348,8 @@ public:
         lowerCase.resize(ingestionStatus.size());
         transform(ingestionStatus.begin(), ingestionStatus.end(), lowerCase.begin(), [](unsigned char c){return tolower(c); } );
 
-        if (lowerCase == "startingestionthroughapi")
-            return IngestionStatus::StartIngestionThroughAPI;
-        else if (lowerCase == "startingestion")
-            return IngestionStatus::StartIngestion;
+        if (lowerCase == "start_ingestion")
+            return IngestionStatus::Start_Ingestion;
         else if (lowerCase == "sourcedownloadinginprogress")
             return IngestionStatus::SourceDownloadingInProgress;
         else if (lowerCase == "waitinguploadsourcereference")
@@ -464,6 +456,9 @@ public:
         int height
     );
 
+    void getIngestionsToBeManaged(
+        vector<tuple<int64_t,int64_t,string,string,IngestionStatus>>& ingestionsToBeManaged);
+
     int64_t addIngestionJob (
         int64_t customerKey,
         string metadataFileName,
@@ -509,6 +504,9 @@ public:
     bool updateIngestionJobSourceDownloadingInProgress (
         int64_t ingestionJobKey,
         int downloadingPercentage);
+
+    pair<int64_t,string> getWaitingSourceReferenceIngestionJob(
+            int64_t customerKey, string mediaSourceFileName);
 
     void getEncodingJobs(
         bool resetToBeDone,
