@@ -1372,10 +1372,11 @@ int64_t MMSEngineDBFacade::addImageEncodingProfile(
 
 void MMSEngineDBFacade::getIngestionsToBeManaged(
         vector<tuple<int64_t,int64_t,string,string,IngestionStatus>>& ingestionsToBeManaged),
-        string processorMMS
+        string processorMMS,
+        int maxIngestionJobs
 {
     string      lastSQLCommand;
-    bool autoCommit = true;
+    bool        autoCommit = true;
     
     shared_ptr<MySQLConnection> conn;
 
@@ -1383,6 +1384,8 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
     {
         conn = _connectionPool->borrow();	
 
+        // We have the Transaction because previously there was a select for update and then the update.
+        // Now we have first the update and than the select. Probable the Transaction does not need, anyway I left it
         autoCommit = false;
         // conn->_sqlConnection->setAutoCommit(autoCommit); OR execute the statement START TRANSACTION
         {
@@ -1395,33 +1398,25 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 
         {
             lastSQLCommand = 
-                "select IngestionJobKey, CustomerKey, MetaDataContent, SourceReference, Status from MMS_IngestionJobs where Status = ? and ProcessorMMS is null for update";
+                "update MMS_IngestionJobs set ProcessorMMS = ? from MMS_IngestionJobs where ProcessorMMS is null "
+                    "and (Status = ? or (Status in (?, ?) and SourceBinaryTransferred = 1)) limit ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, processorMMS);
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::Start_Ingestion));
+            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress));
+            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress));
+            preparedStatement->setInt(queryParameterIndex++, maxIngestionJobs);
 
-            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-            while (resultSet->next())
-            {
-                int64_t ingestionJobKey     = resultSet->getInt64("IngestionJobKey");
-                int64_t customerKey         = resultSet->getInt64("CustomerKey");
-                string metaDataContent      = resultSet->getString("MetaDataContent");
-                string sourceReference      = resultSet->getString("SourceReference");
-                IngestionStatus ingestionStatus     = MMSEngineDBFacade::toIngestionStatus(resultSet->getString("Status"));
-
-                tuple<int64_t,int64_t,string,string,IngestionStatus> ingestionToBeManaged
-                        = make_tuple(ingestionJobKey, customerKey, metaDataContent, sourceReference, ingestionStatus);
-                
-                ingestionsToBeManaged.push_back(ingestionToBeManaged);
-            }
+            int rowsUpdated = preparedStatement->executeUpdate();
         }
 
         {
             lastSQLCommand = 
-                "update MMS_IngestionJobs set ProcessorMMS = ? from MMS_IngestionJobs where Status = ? and ProcessorMMS is null";
+                "select IngestionJobKey, CustomerKey, MetaDataContent, SourceReference, Status from MMS_IngestionJobs where ProcessorMMS = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::Start_Ingestion));
+            preparedStatement->setString(queryParameterIndex++, processorMMS);
 
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             while (resultSet->next())
@@ -1490,165 +1485,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 
 int64_t MMSEngineDBFacade::addIngestionJob (
 	int64_t customerKey,
-        string metadataFileName,
-        string metadataFileContent,
-        string sourceReference,
-        IngestionType ingestionType,
-        IngestionStatus ingestionStatus,
-        string processorMMS,
-        string errorMessage
-)
-{
-    int64_t         ingestionJobKey;
-    
-    string      lastSQLCommand;
-    
-    shared_ptr<MySQLConnection> conn;
-
-    try
-    {
-        conn = _connectionPool->borrow();	
-
-        {
-            lastSQLCommand = 
-                "select c.IsEnabled, c.CustomerType from MMS_Customers c where c.CustomerKey = ?";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, customerKey);
-            
-            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-            if (resultSet->next())
-            {
-                int isEnabled = resultSet->getInt("IsEnabled");
-                int customerType = resultSet->getInt("CustomerType");
-                
-                if (isEnabled != 1)
-                {
-                    string errorMessage = __FILEREF__ + "Customer is not enabled"
-                        + ", customerKey: " + to_string(customerKey)
-                        + ", lastSQLCommand: " + lastSQLCommand
-                    ;
-                    _logger->error(errorMessage);
-                    
-                    throw runtime_error(errorMessage);                    
-                }
-                else if (customerType != static_cast<int>(CustomerType::IngestionAndDelivery) &&
-                        customerType != static_cast<int>(CustomerType::EncodingOnly))
-                {
-                    string errorMessage = __FILEREF__ + "Customer is not enabled to ingest content"
-                        + ", customerKey: " + to_string(customerKey);
-                        + ", customerType: " + to_string(static_cast<int>(customerType))
-                        + ", lastSQLCommand: " + lastSQLCommand
-                    ;
-                    _logger->error(errorMessage);
-                    
-                    throw runtime_error(errorMessage);                    
-                }
-            }
-            else
-            {
-                string errorMessage = __FILEREF__ + "Customer is not present/configured"
-                    + ", customerKey: " + to_string(customerKey)
-                    + ", lastSQLCommand: " + lastSQLCommand
-                ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);                    
-            }            
-        }
-        
-        // we cannot have two ingestions of the same customer, waiting for the same sourceReference otherwise,
-        // when the media source will be uploaded, we will not be able to distinguish
-        // to which ingestion is referred
-        if (sourceReference != "")
-        {
-            try
-            {
-                pair<int64_t,string> ingestionJobKeyAndMetadataFileName = 
-                    _mmsEngineDBFacade->getWaitingSourceReferenceIngestionJob(
-                        customerKey, sourceReference);
-                
-                string errorMessage = "It is already present an Ingestion waiting for the same SourceReference"
-                    + ", customerKey: " + to_string(customerKey)
-                    + ", sourceReference: " + sourceReference
-                    + ", ingestionJobKey: " + to_string(ingestionJobKeyAndMetadataFileName->first)
-                ;
-                
-                _logger->error(__FILEREF__ + errorMessage);
-                
-                throw runtime_error(errorMessage);
-            }
-            catch(exception e)
-            {
-                // that's the correct scenario
-            }
-        }
-        
-        {
-            lastSQLCommand = 
-                "insert into MMS_IngestionJobs (IngestionJobKey, CustomerKey, MediaItemKey, MetaDataFileName, MetadataFileContent, SourceReference, IngestionType, StartIngestion, EndIngestion, DownloadingProgress, ProcessorMMS, Status, ErrorMessage) values ("
-                                               "NULL,            ?,           NULL,         ?,                ?,                   ?,               ?,             NULL,           NULL,         NULL,                ?,            ?,      ?)";
-
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, customerKey);
-            preparedStatement->setString(queryParameterIndex++, metadataFileName);
-            if (metadataFileContent == "")
-                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-            else
-                preparedStatement->setString(queryParameterIndex++, metadataFileContent);
-            if (sourceReference == "")
-                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-            else
-                preparedStatement->setString(queryParameterIndex++, sourceReference);            
-            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(ingestionType));
-            preparedStatement->setString(queryParameterIndex++, processorMMS);
-            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(ingestionStatus));
-            if (errorMessage == "")
-                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-            else
-                preparedStatement->setString(queryParameterIndex++, errorMessage);
-
-            preparedStatement->executeUpdate();
-        }
-        
-        ingestionJobKey = getLastInsertId(conn);
-                
-        _connectionPool->unborrow(conn);
-
-    }
-    catch(sql::SQLException se)
-    {
-        _connectionPool->unborrow(conn);
-
-        string exceptionMessage(se.what());
-        
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", exceptionMessage: " + exceptionMessage
-        );
-
-        throw se;
-    }
-    catch(exception e)
-    {        
-        _connectionPool->unborrow(conn);
-
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", lastSQLCommand: " + lastSQLCommand
-        );
-
-        throw e;
-    }
-    
-    return ingestionJobKey;
-}
-
-int64_t MMSEngineDBFacade::addIngestionJob (
-	int64_t customerKey,
-        string fileNameWithIngestionJobKeyPlaceholder,
-        string ingestionJobKeyPlaceHolder,
-        string metadataFileContent,
+        string metadataContent,
         IngestionType ingestionType,
         IngestionStatus ingestionStatus
 )
@@ -1724,58 +1561,20 @@ int64_t MMSEngineDBFacade::addIngestionJob (
         
         {
             lastSQLCommand = 
-                "insert into MMS_IngestionJobs (IngestionJobKey, CustomerKey, MediaItemKey, MetaDataFileName, MetadataFileContent, SourceReference, IngestionType, StartIngestion, EndIngestion, DownloadingProgress, ProcessorMMS, Status, ErrorMessage) values ("
-                                               "NULL,            ?,           NULL,         NULL,             ?,                   NULL,            ?,             NULL,           NULL,         NULL,                ?,            ?,      ?)";
+                "insert into MMS_IngestionJobs (IngestionJobKey, CustomerKey, MediaItemKey, MetaDataContent, SourceReference, IngestionType, StartIngestion, EndIngestion, DownloadingProgress, UploadProgress, SourceBinaryTransferred, ProcessorMMS, Status, ErrorMessage) values ("
+                                               "NULL,            ?,           NULL,         ?,               NULL,            ?,             NULL,           NULL,         NULL,                NULL,           0,                       NULL,         ?,      NULL)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, customerKey);
-            if (metadataFileContent == "")
-                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-            else
-                preparedStatement->setString(queryParameterIndex++, metadataFileContent);
+            preparedStatement->setString(queryParameterIndex++, metadataContent);
             preparedStatement->setInt(queryParameterIndex++, static_cast<int>(ingestionType));
-            preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(ingestionStatus));
-            preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
 
             preparedStatement->executeUpdate();
         }
         
         ingestionJobKey = getLastInsertId(conn);
-        
-        string metaDataFileName = fileNameWithIngestionJobKeyPlaceholder;
-        // we know we have ingestionJobKeyPlaceHolder but we will check anyway
-        if (metaDataFileName.find(ingestionJobKeyPlaceHolder) != string::npos)
-            metaDataFileName.replace(
-                metaDataFileName.find(ingestionJobKeyPlaceHolder),
-                ingestionJobKeyPlaceHolder.length(), 
-                to_string(ingestionJobKey)
-            );
-        
-        {
-            lastSQLCommand = 
-                "update MMS_IngestionJobs set MetaDataFileName = ? where IngestionJobKey = ?";
-
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++, metaDataFileName);
-            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
-
-            int rowsUpdated = preparedStatement->executeUpdate();
-            if (rowsUpdated != 1)
-            {
-                string errorMessage = __FILEREF__ + "no update was done"
-                        + ", metaDataFileName: " + metaDataFileName
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", rowsUpdated: " + to_string(rowsUpdated)
-                        + ", lastSQLCommand: " + lastSQLCommand
-                ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);                    
-            }
-        }
 
         // conn->_sqlConnection->commit(); OR execute COMMIT
         {
@@ -1834,11 +1633,12 @@ int64_t MMSEngineDBFacade::addIngestionJob (
 void MMSEngineDBFacade::updateIngestionJob (
         int64_t ingestionJobKey,
         IngestionStatus newIngestionStatus,
-        string errorMessage
+        string errorMessage,
+        string processorMMS
 )
-{    
+{
     string      lastSQLCommand;
-    
+
     shared_ptr<MySQLConnection> conn;
 
     try
@@ -1858,137 +1658,8 @@ void MMSEngineDBFacade::updateIngestionJob (
 
         conn = _connectionPool->borrow();	
 
-        if (newIngestionStatus == IngestionStatus::End_IngestionFailure ||
-                newIngestionStatus == IngestionStatus::End_IngestionSuccess_AtLeastOneEncodingProfileError ||
-                newIngestionStatus == IngestionStatus::End_IngestionSuccess)
-        {
-            finalState			= true;
-        }
-        else
-        {
-            finalState          = false;
-        }
-
-        if (finalState)
-        {
-            lastSQLCommand = 
-                "update MMS_IngestionJobs set Status = ?, EndIngestion = NOW(), ErrorMessage = ? where IngestionJobKey = ?";
-
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(newIngestionStatus));
-            if (errorMessageForSQL == "")
-                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-            else
-                preparedStatement->setString(queryParameterIndex++, errorMessageForSQL);
-            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
-
-            int rowsUpdated = preparedStatement->executeUpdate();
-            if (rowsUpdated != 1)
-            {
-                string errorMessage = __FILEREF__ + "no update was done"
-                        + ", errorMessageForSQL: " + errorMessageForSQL
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", rowsUpdated: " + to_string(rowsUpdated)
-                        + ", lastSQLCommand: " + lastSQLCommand
-                ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);                    
-            }
-        }
-        else
-        {
-            lastSQLCommand = 
-                "update MMS_IngestionJobs set Status = ?, ErrorMessage = ? where IngestionJobKey = ?";
-
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(newIngestionStatus));
-            if (errorMessageForSQL == "")
-                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-            else
-                preparedStatement->setString(queryParameterIndex++, errorMessageForSQL);
-            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
-
-            int rowsUpdated = preparedStatement->executeUpdate();
-            if (rowsUpdated != 1)
-            {
-                string errorMessage = __FILEREF__ + "no update was done"
-                        + ", errorMessageForSQL: " + errorMessageForSQL
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", rowsUpdated: " + to_string(rowsUpdated)
-                        + ", lastSQLCommand: " + lastSQLCommand
-                ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);                    
-            }
-        }
-        
-        _logger->info(__FILEREF__ + "IngestionJob updated successful"
-            + ", newIngestionStatus: " + MMSEngineDBFacade::toString(newIngestionStatus)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            );
-
-        _connectionPool->unborrow(conn);
-    }
-    catch(sql::SQLException se)
-    {
-        _connectionPool->unborrow(conn);
-
-        string exceptionMessage(se.what());
-        
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", exceptionMessage: " + exceptionMessage
-        );
-
-        throw se;
-    }    
-    catch(exception e)
-    {        
-        _connectionPool->unborrow(conn);
-
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", lastSQLCommand: " + lastSQLCommand
-        );
-
-        throw e;
-    }    
-}
-
-void MMSEngineDBFacade::updateIngestionJob (
-        int64_t ingestionJobKey,
-        IngestionStatus newIngestionStatus,
-        string processorMMS,
-        string errorMessage
-)
-{    
-    string      lastSQLCommand;
-    
-    shared_ptr<MySQLConnection> conn;
-
-    try
-    {
-        string errorMessageForSQL;
-        if (errorMessage == "")
-            errorMessageForSQL = errorMessage;
-        else
-        {
-            if (errorMessageForSQL.length() >= 1024)
-                errorMessageForSQL.substr(0, 1024);
-            else
-                errorMessageForSQL = errorMessage;
-        }
-        
-        bool finalState;
-
-        conn = _connectionPool->borrow();	
-
-        if (newIngestionStatus == IngestionStatus::End_IngestionFailure ||
-                newIngestionStatus == IngestionStatus::End_IngestionSuccess_AtLeastOneEncodingProfileError ||
-                newIngestionStatus == IngestionStatus::End_IngestionSuccess)
+        string prefix = "End";
+        if (toString(newIngestionStatus).compare(0, prefix.size(), prefix) == 0)
         {
             finalState			= true;
         }
@@ -2101,8 +1772,8 @@ void MMSEngineDBFacade::updateIngestionJob (
         string sourceReference,
         IngestionType ingestionType,
         IngestionStatus newIngestionStatus,
-        string processorMMS,
-        string errorMessage
+        string errorMessage,
+        string processorMMS
 )
 {    
     string      lastSQLCommand;
@@ -2126,9 +1797,8 @@ void MMSEngineDBFacade::updateIngestionJob (
 
         conn = _connectionPool->borrow();	
 
-        if (newIngestionStatus == IngestionStatus::End_IngestionFailure ||
-                newIngestionStatus == IngestionStatus::End_IngestionSuccess_AtLeastOneEncodingProfileError ||
-                newIngestionStatus == IngestionStatus::End_IngestionSuccess)
+        string prefix = "End";
+        if (toString(newIngestionStatus).compare(0, prefix.size(), prefix) == 0)
         {
             finalState			= true;
         }
@@ -2144,7 +1814,10 @@ void MMSEngineDBFacade::updateIngestionJob (
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++, sourceReference);
+            if (sourceReference == "")
+                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+            else
+                preparedStatement->setString(queryParameterIndex++, sourceReference);
             preparedStatement->setInt(queryParameterIndex++, static_cast<int>(ingestionType));
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(newIngestionStatus));
             if (processorMMS == "")
@@ -2179,7 +1852,10 @@ void MMSEngineDBFacade::updateIngestionJob (
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++, sourceReference);
+            if (sourceReference == "")
+                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+            else
+                preparedStatement->setString(queryParameterIndex++, sourceReference);
             preparedStatement->setInt(queryParameterIndex++, static_cast<int>(ingestionType));
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(newIngestionStatus));
             if (processorMMS == "")
@@ -2210,150 +1886,6 @@ void MMSEngineDBFacade::updateIngestionJob (
         
         _logger->info(__FILEREF__ + "IngestionJob updated successful"
             + ", newIngestionStatus: " + MMSEngineDBFacade::toString(newIngestionStatus)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            );
-
-        _connectionPool->unborrow(conn);
-    }
-    catch(sql::SQLException se)
-    {
-        _connectionPool->unborrow(conn);
-
-        string exceptionMessage(se.what());
-        
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", exceptionMessage: " + exceptionMessage
-        );
-
-        throw se;
-    }    
-    catch(exception e)
-    {        
-        _connectionPool->unborrow(conn);
-
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", lastSQLCommand: " + lastSQLCommand
-        );
-
-        throw e;
-    }    
-}
-
-string MMSEngineDBFacade::getWaitingUploadSourceReference(
-    int64_t ingestionJobKey)
-{
-    string      sourceReference;
-    string      lastSQLCommand;
-    
-    shared_ptr<MySQLConnection> conn;
-
-    try
-    {
-        conn = _connectionPool->borrow();	
-
-        {
-            lastSQLCommand = 
-                "select SourceReference, Status from MMS_IngestionJobs where IngestionJobKey = ?";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
-
-            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-            if (resultSet->next())
-            {
-                IngestionStatus ingestionStatus = 
-                        MMSEngineDBFacade::toIngestionStatus(resultSet->getString("Status"));
-                sourceReference = resultSet->getString("SourceReference");
-                
-                if (ingestionStatus != IngestionStatus::WaitingUploadSourceReference)
-                {
-                    string errorMessage = __FILEREF__ + "IngestionJob was found but his state is not 'WaitingUploadSourceReference'"
-                        + ", ingestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", lastSQLCommand: " + lastSQLCommand
-                    ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);                    
-                }
-            }
-            else
-            {
-                string errorMessage = __FILEREF__ + "IngestionJob is not found"
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", lastSQLCommand: " + lastSQLCommand
-                ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);                    
-            }            
-        }
-
-        _connectionPool->unborrow(conn);
-    }
-    catch(sql::SQLException se)
-    {
-        _connectionPool->unborrow(conn);
-
-        string exceptionMessage(se.what());
-        
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", exceptionMessage: " + exceptionMessage
-        );
-
-        throw se;
-    }    
-    catch(exception e)
-    {        
-        _connectionPool->unborrow(conn);
-
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", lastSQLCommand: " + lastSQLCommand
-        );
-
-        throw e;
-    }    
-    
-    return sourceReference;
-}
-
-void MMSEngineDBFacade::removeIngestionJob (
-        int64_t ingestionJobKey
-)
-{    
-    string      lastSQLCommand;
-    
-    shared_ptr<MySQLConnection> conn;
-
-    try
-    {
-        conn = _connectionPool->borrow();	
-
-        {
-            lastSQLCommand = 
-                "delete from MMS_IngestionJobs where IngestionJobKey = ?";
-
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
-
-            int rowsUpdated = preparedStatement->executeUpdate();
-            if (rowsUpdated != 1)
-            {
-                string errorMessage = __FILEREF__ + "no update was done"
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", rowsUpdated: " + to_string(rowsUpdated)
-                        + ", lastSQLCommand: " + lastSQLCommand
-                ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);                    
-            }
-        }
-
-        _logger->info(__FILEREF__ + "IngestionJob removed successful"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             );
 
@@ -2479,55 +2011,44 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress (
     return toBeCancelled;
 }
 
-pair<int64_t,string> MMSEngineDBFacade:: getWaitingSourceReferenceIngestionJob(
-            int64_t customerKey, string mediaSourceFileName)
+void MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress (
+        int64_t ingestionJobKey,
+        int uploadingPercentage)
 {
-
-    bool        toBeCancelled = false;
+    
     string      lastSQLCommand;
     
     shared_ptr<MySQLConnection> conn;
 
-    int64_t     ingestionJobKey;
-    string      metaDataFileName;
     try
     {
         conn = _connectionPool->borrow();	
 
         {
             lastSQLCommand = 
-                "select IngestionJobKey, MetaDataFileName from MMS_IngestionJobs where CustomerKey = ? and SourceReference is not NULL and LOCATE(?, SourceReference) > 0 and Status in (?, ?)";
-            
+                "update MMS_IngestionJobs set UploadingProgress = ? where IngestionJobKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, customerKey);
-            preparedStatement->setString(queryParameterIndex++, mediaSourceFileName);
-            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress));
-            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::WaitingUploadSourceReference));
+            preparedStatement->setInt(queryParameterIndex++, uploadingPercentage);
+            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 
-            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-            if (resultSet->next())
+            int rowsUpdated = preparedStatement->executeUpdate();
+            if (rowsUpdated != 1)
             {
-                // We should not have more than one row because the add/update method checks that
-
-                ingestionJobKey = resultSet->getInt64("IngestionJobKey");
-                metaDataFileName = resultSet->getString("MetaDataFileName");
-            }
-            else
-            {
-                string errorMessage = __FILEREF__ + "IngestionJobKey/MetaDataFileName is not found"
-                    + ", customerKey: " + to_string(customerKey)
-                    + ", mediaSourceFileName: " + mediaSourceFileName
-                    + ", Status: " + "SourceDownloadingInProgress"
-                    + ", Status: " + "WaitingUploadSourceReference"
-                    + ", lastSQLCommand: " + lastSQLCommand
+                // we tried to update a value but the same value was already in the table,
+                // in this case rowsUpdated will be 0
+                string errorMessage = __FILEREF__ + "no update was done"
+                        + ", downloadingPercentage: " + to_string(downloadingPercentage)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", rowsUpdated: " + to_string(rowsUpdated)
+                        + ", lastSQLCommand: " + lastSQLCommand
                 ;
-                _logger->error(errorMessage);
+                _logger->warn(errorMessage);
 
-                throw runtime_error(errorMessage);                    
-            }            
+                // throw runtime_error(errorMessage);                    
+            }
         }
-
+        
         _connectionPool->unborrow(conn);
     }
     catch(sql::SQLException se)
@@ -2553,12 +2074,71 @@ pair<int64_t,string> MMSEngineDBFacade:: getWaitingSourceReferenceIngestionJob(
 
         throw e;
     }
+}
+
+void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred (
+        int64_t ingestionJobKey,
+        bool sourceBinaryTransferred)
+{
     
-    pair<int64_t,string> ingestionJobKeyAndMetadataFileName =
-            make_pair(ingestionJobKey, metaDataFileName);
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn;
 
+    try
+    {
+        conn = _connectionPool->borrow();	
 
-    return ingestionJobKeyAndMetadataFileName;
+        {
+            lastSQLCommand = 
+                "update MMS_IngestionJobs set SourceBinaryTransferred = ? where IngestionJobKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt(queryParameterIndex++, sourceBinaryTransferred ? 1 : 0);
+            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+
+            int rowsUpdated = preparedStatement->executeUpdate();
+            if (rowsUpdated != 1)
+            {
+                // we tried to update a value but the same value was already in the table,
+                // in this case rowsUpdated will be 0
+                string errorMessage = __FILEREF__ + "no update was done"
+                        + ", sourceBinaryTransferred: " + to_string(sourceBinaryTransferred)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", rowsUpdated: " + to_string(rowsUpdated)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->warn(errorMessage);
+
+                // throw runtime_error(errorMessage);                    
+            }
+        }
+        
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        _connectionPool->unborrow(conn);
+
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw se;
+    }
+    catch(exception e)
+    {
+        _connectionPool->unborrow(conn);
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
+    }
 }
 
 void MMSEngineDBFacade::getEncodingJobs(
@@ -4809,12 +4389,14 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "IngestionJobKey  			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "CustomerKey			BIGINT UNSIGNED NOT NULL,"
                     "MediaItemKey			BIGINT UNSIGNED NULL,"
-                    "MetaDataContent                    TEXT CHARACTER SET utf8 COLLATE utf8_bin NULL,"
+                    "MetaDataContent                    TEXT CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
                     "SourceReference                    VARCHAR (1024) NULL,"
                     "IngestionType                      TINYINT (2) NULL,"
                     "StartIngestion			TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "EndIngestion			DATETIME NULL,"
                     "DownloadingProgress                INT NULL,"
+                    "UploadProgress                     INT NULL,"
+                    "SourceBinaryTransferred            INT NOT NULL,"
                     "ProcessorMMS			VARCHAR (128) NULL,"
                     "Status           			VARCHAR (64) NOT NULL,"
                     "ErrorMessage			VARCHAR (1024) NULL,"

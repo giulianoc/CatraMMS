@@ -68,8 +68,6 @@ public:
         MMSEngineDBFacade::IngestionType ingestionType,
         MMSEngineDBFacade::IngestionStatus ingestionStatus);
 
-    void removeIngestionJob (int64_t ingestionJobKey);
-
     void addFFMPEGVideoEncodingProfile(
         shared_ptr<Customer> customer,
         string encodingProfileSet,  // "": default Customer family, != "": named customer family

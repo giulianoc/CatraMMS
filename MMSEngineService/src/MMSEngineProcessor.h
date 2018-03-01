@@ -28,9 +28,12 @@ private:
     
     bool                    _firstGetEncodingJob;
     string                  _processorMMS;
+
     int                     _maxDownloadAttemptNumber;
     int                     _progressUpdatePeriodInSeconds;
     int                     _secondsWaitingAmongDownloadingAttempt;
+
+    int                     _maxIngestionJobsPerEvent;
     
     void handleCheckIngestionEvent();
 

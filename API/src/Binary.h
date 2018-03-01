@@ -41,6 +41,7 @@ public:
     
 private:
     unsigned long       _binaryBufferLength;
+    unsigned long       _progressUpdatePeriodInSeconds;
 };
 
 #endif

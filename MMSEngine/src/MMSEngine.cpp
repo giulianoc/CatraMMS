@@ -239,26 +239,6 @@ int64_t MMSEngine::addIngestionJob (
     return ingestionJobKey;
 }
 
-void MMSEngine::removeIngestionJob (
-        int64_t ingestionJobKey)
-{
-    _logger->info(__FILEREF__ + "Received removeIngestionJob"
-        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-    );
-
-    try
-    {
-        _mmsEngineDBFacade->removeIngestionJob(ingestionJobKey);
-    }
-    catch(exception e)
-    {
-        string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->removeIngestionJob failed";
-        _logger->error(errorMessage);
-        
-        throw e;
-    }
-}
-
 void MMSEngine::addFFMPEGVideoEncodingProfile(
         shared_ptr<Customer> customer,
         string encodingProfileSet,  // "": default Customer family, != "": named customer family

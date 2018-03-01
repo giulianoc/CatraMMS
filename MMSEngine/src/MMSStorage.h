@@ -22,7 +22,7 @@ public:
         MMSREP_REPOSITORYTYPE_STAGING,
         MMSREP_REPOSITORYTYPE_DONE,
         MMSREP_REPOSITORYTYPE_ERRORS,
-        MMSREP_REPOSITORYTYPE_FTP,
+        MMSREP_REPOSITORYTYPE_INGESTION,
 
         MMSREP_REPOSITORYTYPE_NUMBER
     };
@@ -35,28 +35,8 @@ public:
 
     ~MMSStorage (void);
 
-    string getCustomerFTPRepository(shared_ptr<Customer> customer);
+    string getCustomerIngestionRepository(shared_ptr<Customer> customer);
     
-    string moveFTPRepositoryEntryToWorkingArea(
-        shared_ptr<Customer> customer,
-        string entryFileName);
-
-    string moveFTPRepositoryWorkingEntryToErrorArea(
-        shared_ptr<Customer> customer,
-        string entryFileName);
-
-    string moveFTPRepositoryWorkingEntryToSuccessArea(
-        shared_ptr<Customer> customer,
-        string entryFileName);
-
-    string getCustomerFTPWorkingMetadataPathName(
-        shared_ptr<Customer> customer,
-        string metadataFileName);
-
-    string getCustomerFTPMediaSourcePathName(
-        shared_ptr<Customer> customer,
-        string mediaSourceFileName);
-
     //    const char *getIPhoneAliasForLive (void);
 
     string getMMSRootRepository (void);
@@ -65,7 +45,7 @@ public:
 
     string getDownloadRootRepository (void);
 
-    string getFTPRootRepository (void);
+    string getIngestionRootRepository (void);
     
     string getStagingRootRepository (void);
 
@@ -157,7 +137,7 @@ private:
     string                      _stagingRootRepository;
     string                      _doneRootRepository;
     string                      _errorRootRepository;
-    string                      _ftpRootRepository;
+    string                      _ingestionRootRepository;
     string                      _profilesRootRepository;
 
     unsigned long long          _freeSpaceToLeaveInEachPartitionInMB;

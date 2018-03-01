@@ -19,7 +19,7 @@ MMSStorage::MMSStorage(
 
     _storage = storage;
 
-    _ftpRootRepository = _storage + "FTPRepository/users/";
+    _ingestionRootRepository = _storage + "IngestionRepository/users/";
     _mmsRootRepository = _storage + "MMSRepository/";
     _downloadRootRepository = _storage + "DownloadRepository/";
     _streamingRootRepository = _storage + "StreamingRepository/";
@@ -33,9 +33,9 @@ MMSStorage::MMSStorage(
     bool noErrorIfExists = true;
     bool recursive = true;
     _logger->info(__FILEREF__ + "Creating directory (if needed)"
-        + ", _ftpRootRepository: " + _ftpRootRepository
+        + ", _ingestionRootRepository: " + _ingestionRootRepository
     );
-    FileIO::createDirectory(_ftpRootRepository,
+    FileIO::createDirectory(_ingestionRootRepository,
             S_IRUSR | S_IWUSR | S_IXUSR |
             S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 
@@ -163,204 +163,30 @@ string MMSStorage::getDownloadRootRepository(void) {
     return _downloadRootRepository;
 }
 
-string MMSStorage::getFTPRootRepository(void) {
-    return _ftpRootRepository;
+string MMSStorage::getIngestionRootRepository(void) {
+    return _ingestionRootRepository;
 }
 
-string MMSStorage::getCustomerFTPRepository(shared_ptr<Customer> customer)
+string MMSStorage::getCustomerIngestionRepository(shared_ptr<Customer> customer)
 {
-    string customerFTPDirectory = getFTPRootRepository();
-    customerFTPDirectory.append(customer->_name);
+    string customerIngestionDirectory = getIngestionRootRepository();
+    customerIngestionDirectory.append(customer->_name);
     
-    if (!FileIO::directoryExisting(customerFTPDirectory)) 
+    if (!FileIO::directoryExisting(customerIngestionDirectory)) 
     {
         _logger->info(__FILEREF__ + "Create directory"
-            + ", customerFTPDirectory: " + customerFTPDirectory
+            + ", customerIngestionDirectory: " + customerIngestionDirectory
         );
 
         bool noErrorIfExists = true;
         bool recursive = true;
-        FileIO::createDirectory(customerFTPDirectory,
+        FileIO::createDirectory(customerIngestionDirectory,
                 S_IRUSR | S_IWUSR | S_IXUSR |
                 S_IRGRP | S_IXGRP |
                 S_IROTH | S_IXOTH, noErrorIfExists, recursive);
     }
 
-    {
-        string customerErrorFTPDirectory = customerFTPDirectory;
-        customerErrorFTPDirectory
-                .append("/")
-                .append("ERROR");
-
-        if (!FileIO::directoryExisting(customerErrorFTPDirectory)) 
-        {
-            _logger->info(__FILEREF__ + "Create directory"
-                + ", customerErrorFTPDirectory: " + customerErrorFTPDirectory
-            );
-
-            bool noErrorIfExists = true;
-            bool recursive = true;
-            FileIO::createDirectory(customerErrorFTPDirectory,
-                    S_IRUSR | S_IWUSR | S_IXUSR |
-                    S_IRGRP | S_IXGRP |
-                    S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-        }
-    }
-
-    {
-        string customerSuccessFTPDirectory = customerFTPDirectory;
-        customerSuccessFTPDirectory
-                .append("/")
-                .append("SUCCESS");
-
-        if (!FileIO::directoryExisting(customerSuccessFTPDirectory)) 
-        {
-            _logger->info(__FILEREF__ + "Create directory"
-                + ", customerSuccessFTPDirectory: " + customerSuccessFTPDirectory
-            );
-
-            bool noErrorIfExists = true;
-            bool recursive = true;
-            FileIO::createDirectory(customerSuccessFTPDirectory,
-                    S_IRUSR | S_IWUSR | S_IXUSR |
-                    S_IRGRP | S_IXGRP |
-                    S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-        }
-    }
-
-    {
-        string customerWorkingFTPDirectory = customerFTPDirectory;
-        customerWorkingFTPDirectory
-                .append("/")
-                .append("WORKING");
-
-        if (!FileIO::directoryExisting(customerWorkingFTPDirectory)) 
-        {
-            _logger->info(__FILEREF__ + "Create directory"
-                + ", customerWorkingFTPDirectory: " + customerWorkingFTPDirectory
-            );
-
-            bool noErrorIfExists = true;
-            bool recursive = true;
-            FileIO::createDirectory(customerWorkingFTPDirectory,
-                    S_IRUSR | S_IWUSR | S_IXUSR |
-                    S_IRGRP | S_IXGRP |
-                    S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-        }
-    }
-
-    return customerFTPDirectory;
-}
-
-string MMSStorage::getCustomerFTPWorkingMetadataPathName(
-        shared_ptr<Customer> customer,
-        string metadataFileName)
-{
-    string customerFTPWorkingMetadataPathName =
-        getCustomerFTPRepository(customer)
-        .append("/")
-        .append("WORKING")
-        .append("/")
-        + metadataFileName;
-    
-    return customerFTPWorkingMetadataPathName;
-}
-
-
-string MMSStorage::getCustomerFTPMediaSourcePathName(
-        shared_ptr<Customer> customer,
-        string mediaSourceFileName)
-{
-    string customerFTPMediaSourcePathName =
-        getCustomerFTPRepository(customer)
-        + "/"
-        + mediaSourceFileName;
-    
-    return customerFTPMediaSourcePathName;
-}
-
-string MMSStorage::moveFTPRepositoryEntryToWorkingArea(
-        shared_ptr<Customer> customer,
-        string entryFileName)
-{
-    string ftpDirectoryEntryPathName = getCustomerFTPRepository(customer);
-    ftpDirectoryEntryPathName
-            .append("/")
-            .append(entryFileName);
-
-    string ftpDirectoryWorkingEntryPathName = getCustomerFTPRepository(customer);
-    ftpDirectoryWorkingEntryPathName
-        .append("/")
-        .append("WORKING")
-        .append("/")
-        .append(entryFileName);
-    
-    _logger->info(__FILEREF__ + "Move file"
-        + ", from: " + ftpDirectoryEntryPathName
-        + ", to: " + ftpDirectoryWorkingEntryPathName
-    );
-
-    FileIO::moveFile(ftpDirectoryEntryPathName, ftpDirectoryWorkingEntryPathName);
-            
-    return ftpDirectoryWorkingEntryPathName;
-}
-
-string MMSStorage::moveFTPRepositoryWorkingEntryToErrorArea(
-        shared_ptr<Customer> customer,
-        string entryFileName)
-{
-    string ftpDirectoryWorkingEntryPathName = getCustomerFTPRepository(customer);
-    ftpDirectoryWorkingEntryPathName
-        .append("/")
-        .append("WORKING")
-        .append("/")
-        .append(entryFileName);
-
-    string ftpDirectoryErrorEntryPathName = getCustomerFTPRepository(customer);
-    ftpDirectoryErrorEntryPathName
-        .append("/")
-        .append("ERROR")
-        .append("/")
-        .append(entryFileName);
-
-    
-    _logger->info(__FILEREF__ + "Move file"
-        + ", from: " + ftpDirectoryWorkingEntryPathName
-        + ", to: " + ftpDirectoryErrorEntryPathName
-    );
-
-    FileIO::moveFile(ftpDirectoryWorkingEntryPathName, ftpDirectoryErrorEntryPathName);
-            
-    return ftpDirectoryErrorEntryPathName;
-}
-
-string MMSStorage::moveFTPRepositoryWorkingEntryToSuccessArea(
-        shared_ptr<Customer> customer,
-        string entryFileName)
-{
-    string ftpDirectoryWorkingEntryPathName = getCustomerFTPRepository(customer);
-    ftpDirectoryWorkingEntryPathName
-        .append("/")
-        .append("WORKING")
-        .append("/")
-        .append(entryFileName);
-
-    string ftpDirectorySuccessEntryPathName = getCustomerFTPRepository(customer);
-    ftpDirectorySuccessEntryPathName
-        .append("/")
-        .append("SUCCESS")
-        .append("/")
-        .append(entryFileName);
-
-    
-    _logger->info(__FILEREF__ + "Move file"
-        + ", from: " + ftpDirectoryWorkingEntryPathName
-        + ", to: " + ftpDirectorySuccessEntryPathName
-    );
-
-    FileIO::moveFile(ftpDirectoryWorkingEntryPathName, ftpDirectorySuccessEntryPathName);
-            
-    return ftpDirectorySuccessEntryPathName;
+    return customerIngestionDirectory;
 }
 
 string MMSStorage::getStagingRootRepository(void) {
@@ -434,9 +260,9 @@ string MMSStorage::getRepository(RepositoryType rtRepositoryType)
         {
             return _errorRootRepository;
         }
-        case RepositoryType::MMSREP_REPOSITORYTYPE_FTP:
+        case RepositoryType::MMSREP_REPOSITORYTYPE_INGESTION:
         {
-            return _ftpRootRepository;
+            return _ingestionRootRepository;
         }
         default:
         {

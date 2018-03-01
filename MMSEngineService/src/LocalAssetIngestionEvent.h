@@ -38,26 +38,16 @@ private:
     int64_t                 _ingestionJobKey;
     shared_ptr<Customer>    _customer;
 
-    string                  _metadataFileName;
-    string                  _mediaSourceFileName;
+    string                  _metadataContent;
 
 public:
-    void setMediaSourceFileName(string mediaSourceFileName)
+    void setMetadataContent(string metadataContent)
     {
-        _mediaSourceFileName   = mediaSourceFileName;
+        _metadataContent   = metadataContent;
     }
-    string getMediaSourceFileName()
+    string getMetadataContent()
     {
-        return _mediaSourceFileName;
-    }
-
-    void setMetadataFileName(string metadataFileName)
-    {
-        _metadataFileName   = metadataFileName;
-    }
-    string getMetadataFileName()
-    {
-        return _metadataFileName;
+        return _metadataContent;
     }
 
     void setIngestionJobKey(int64_t ingestionJobKey)

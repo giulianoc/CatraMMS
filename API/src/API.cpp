@@ -661,87 +661,13 @@ void API::ingestContent(
         + ", requestBody: " + requestBody
     );
 
-    int64_t ingestionJobKey = -1;
     try
-    {
-        string label;
-        
-        auto labelIt = queryParameters.find("label");
-        if (labelIt != queryParameters.end())
-        {
-            label.resize(labelIt->second.length());
-
-            transform(labelIt->second.begin(), labelIt->second.end(), label.begin(),
-              [](unsigned char c){
-                if ((c >= 'a' && c <= 'z')
-                        || (c >= 'A' && c <= 'Z')
-                        || (c >= '0' && c <= '9')
-                        || (c == '_')
-                        || (c == '.')
-                        )
-                    return c;
-                else
-                    return (unsigned char) '_';
-            });
-        }
-
-        // using '-' as separator
-        string ingestionJobKeyPlaceHolder = "__INGESTIONJOBKEY__";
-        string apiPrefix = "API-";
-        string fileNameWithIngestionJobKey =
-                apiPrefix
-                + ingestionJobKeyPlaceHolder
-                + (label != "" ? "-" : "")
-                + label
-                + ".json"
-                ;
- 
-        _logger->info(__FILEREF__ + "Ingestion template file name"
-            + ", fileNameWithIngestionJobKey: " + fileNameWithIngestionJobKey
-        );
-        
-        ingestionJobKey = _mmsEngine->addIngestionJob (
+    { 
+        int64_t ingestionJobKey = _mmsEngine->addIngestionJob (
                 customer->_customerKey, 
-                fileNameWithIngestionJobKey, 
-                ingestionJobKeyPlaceHolder,
                 requestBody, 
                 MMSEngineDBFacade::IngestionType::Unknown, 
-                MMSEngineDBFacade::IngestionStatus::StartIngestionThroughAPI);
-
-        fileNameWithIngestionJobKey.replace(
-                fileNameWithIngestionJobKey.find(ingestionJobKeyPlaceHolder),
-                ingestionJobKeyPlaceHolder.length(), 
-                to_string(ingestionJobKey)
-        );
-        
-        string customerFTPMetadataPathName = _mmsStorage->getCustomerFTPRepository(customer);
-        customerFTPMetadataPathName
-                .append("/")
-                .append(fileNameWithIngestionJobKey)
-                ;
-        
-        _logger->info(__FILEREF__ + "Customer FTP Metadata path name"
-            + ", customerFTPMetadataPathName: " + customerFTPMetadataPathName
-        );
-
-        {
-            ofstream metadataStream(customerFTPMetadataPathName);
-            metadataStream << requestBody;
-            if (!metadataStream.good())
-            {
-                metadataStream.close();
-                
-                string errorMessage = string("The writing of Metadata file failed")
-                        + ", customerFTPMetadataPathName: " + customerFTPMetadataPathName
-                        + ", strerror(errno): " + strerror(errno)
-                        ;
-                _logger->error(__FILEREF__ + errorMessage);
-                
-                throw runtime_error(errorMessage);
-            }
-            
-            metadataStream.close();
-        }
+                MMSEngineDBFacade::IngestionStatus::StartIngestion);
 
         string responseBody = string("{ ")
                 + "\"ingestionJobKey\": " + to_string(ingestionJobKey) + " "
@@ -751,9 +677,6 @@ void API::ingestContent(
     }
     catch(runtime_error e)
     {
-        if (ingestionJobKey != -1)
-            _mmsEngine->removeIngestionJob (ingestionJobKey);
-
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
             + ", requestBody: " + requestBody
@@ -769,9 +692,6 @@ void API::ingestContent(
     }
     catch(exception e)
     {
-        if (ingestionJobKey != -1)
-            _mmsEngine->removeIngestionJob (ingestionJobKey);
-
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
             + ", requestBody: " + requestBody

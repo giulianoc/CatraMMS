@@ -23,8 +23,8 @@ int main(int argc, char** argv)
 
 Binary::Binary(): APICommon() 
 {
-    _binaryBufferLength     = 1024 * 10;
-    _binaryBufferLength     = 1024 * 10;
+    _binaryBufferLength             = 1024 * 10;
+    _progressUpdatePeriodInSeconds  = 5;
 }
 
 Binary::~Binary() {
@@ -62,6 +62,16 @@ void Binary::getBinaryAndResponse(
 
     try
     {
+        if (contentLength == -1)
+        {
+            string errorMessage = string("'Content-Length' header is missing");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(400, errorMessage);
+
+            throw runtime_error(errorMessage);            
+        }
+        
         auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
         if (ingestionJobKeyIt == queryParameters.end())
         {
@@ -74,30 +84,16 @@ void Binary::getBinaryAndResponse(
         }
         int64_t ingestionJobKey = stol(ingestionJobKeyIt->second);
 
-        string sourceFileName;
-        try
-        {
-            sourceFileName = _mmsEngineDBFacade->getWaitingUploadSourceReference(ingestionJobKey);
-        }
-        catch(exception e)
-        {
-            string errorMessage = string("The 'ingestionJobKey' URI parameter is not found");
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(400, errorMessage);
-
-            throw runtime_error(errorMessage);            
-        }
-        
         shared_ptr<Customer> customer = get<0>(customerAndFlags);
-        string customerFTPBinaryPathName = _mmsStorage->getCustomerFTPRepository(customer);
-        customerFTPBinaryPathName
+        string customerIngestionBinaryPathName = _mmsStorage->getCustomerIngestionRepository(customer);
+        customerIngestionBinaryPathName
                 .append("/")
-                .append(sourceFileName)
+                .append(to_string(ingestionJobKey))
+                .append(".binary")
                 ;
         
-        _logger->info(__FILEREF__ + "Customer FTP Binary path name"
-            + ", customerFTPBinaryPathName: " + customerFTPBinaryPathName
+        _logger->info(__FILEREF__ + "Customer Ingestion Binary path name"
+            + ", customerIngestionBinaryPathName: " + customerIngestionBinaryPathName
         );
         
         if (requestMethod == "HEAD")
@@ -105,11 +101,11 @@ void Binary::getBinaryAndResponse(
             unsigned long fileSize = 0;
             try
             {
-                if (FileIO::fileExisting(customerFTPBinaryPathName))
+                if (FileIO::fileExisting(customerIngestionBinaryPathName))
                 {
                     bool inCaseOfLinkHasItToBeRead = false;
                     fileSize = FileIO::getFileSizeInBytes (
-                        customerFTPBinaryPathName, inCaseOfLinkHasItToBeRead);
+                        customerIngestionBinaryPathName, inCaseOfLinkHasItToBeRead);
                 }
             }
             catch(exception e)
@@ -137,11 +133,11 @@ void Binary::getBinaryAndResponse(
                     unsigned long fileSize = 0;
                     try
                     {
-                        if (FileIO::fileExisting(customerFTPBinaryPathName))
+                        if (FileIO::fileExisting(customerIngestionBinaryPathName))
                         {
                             bool inCaseOfLinkHasItToBeRead = false;
                             fileSize = FileIO::getFileSizeInBytes (
-                                customerFTPBinaryPathName, inCaseOfLinkHasItToBeRead);
+                                customerIngestionBinaryPathName, inCaseOfLinkHasItToBeRead);
                         }
                     }
                     catch(exception e)
@@ -179,12 +175,13 @@ void Binary::getBinaryAndResponse(
                 }
             }
             
-            ofstream binaryFileStream(customerFTPBinaryPathName, 
-                    resume ? (ofstream::binary | ofstream::app) : ofstream::binary);
+            ofstream binaryFileStream(customerIngestionBinaryPathName, 
+                    resume ? (ofstream::binary | ofstream::app) : (ofstream::binary | ofstream::trunc));
             buffer = new char [_binaryBufferLength];
 
             unsigned long currentRead;
             unsigned long totalRead = 0;
+            /*
             if (contentLength == -1)
             {
                 // we do not have the content-length header, we will read all what we receive
@@ -214,9 +211,13 @@ void Binary::getBinaryAndResponse(
                 while (currentRead == _binaryBufferLength);
             }
             else
+            */
             {
                 // we have the content-length and we will use it to read the binary
 
+                chrono::system_clock::time_point lastTimeProgressUpdate = chrono::system_clock::now();
+                int lastPercentageUpdated = -1;
+                
                 unsigned long bytesToBeRead;
                 while (totalRead < contentLength)
                 {
@@ -246,20 +247,43 @@ void Binary::getBinaryAndResponse(
                     totalRead   += currentRead;
 
                     binaryFileStream.write(buffer, currentRead); 
+                    
+                    {
+                        chrono::system_clock::time_point now = chrono::system_clock::now();
+
+                        if (now - uploadStartTime >= chrono::seconds(_progressUpdatePeriodInSeconds)))
+                        {
+                            double progress = (totalRead / contentLength) * 100;
+                            int uploadingPercentage = floorf(progress * 100) / 100;
+
+                            _logger->info(__FILEREF__ + "Upload still running"
+                                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                + ", downloadingPercentage: " + to_string(downloadingPercentage)
+                                + ", totalRead: " + to_string(totalRead)
+                                + ", contentLength: " + to_string(contentLength)
+                            );
+
+                            lastTimeProgressUpdate = now;
+
+                            if (lastPercentageUpdated != uploadingPercentage)
+                            {
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", uploadingPercentage: " + to_string(uploadingPercentage)
+                                );                            
+                                _mmsEngineDBFacade->updateIngestionJobSourceUploadingInProgress (
+                                    ingestionJobKey, uploadingPercentage);
+
+                                lastPercentageUpdated = uploadingPercentage;
+                            }
+                        }
+                    }
                 }
             }
 
             binaryFileStream.close();
 
             delete buffer;
-
-            // rename to .completed
-            {
-                string customerFTPBinaryPathNameCompleted =
-                    customerFTPBinaryPathName;
-                customerFTPBinaryPathNameCompleted.append(".completed");
-                FileIO::moveFile (customerFTPBinaryPathName, customerFTPBinaryPathNameCompleted);
-            }
 
             unsigned long elapsedUploadInSeconds = chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - uploadStartTime).count();
             _logger->info(__FILEREF__ + "Binary read"
@@ -281,8 +305,15 @@ void Binary::getBinaryAndResponse(
             }    
             */
 
+            bool sourceBinaryTransferred = true;
+            _logger->info(__FILEREF__ + "Update IngestionJob"
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", sourceBinaryTransferred: " + to_string(sourceBinaryTransferred)
+            );                            
+            _mmsEngineDBFacade->updateIngestionJobSourceBinaryTransferred (
+                ingestionJobKey, sourceBinaryTransferred);
+
             string responseBody = string("{ ")
-                + "\"sourceFileName\": \"" + sourceFileName + "\", "
                 + "\"contentLength\": " + to_string(contentLength) + ", "
                 + "\"writtenBytes\": " + to_string(totalRead) + ", "
                 + "\"elapsedUploadInSeconds\": " + to_string(elapsedUploadInSeconds) + " "

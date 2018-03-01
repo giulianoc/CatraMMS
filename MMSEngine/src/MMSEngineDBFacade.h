@@ -277,20 +277,18 @@ public:
         Start_Ingestion,    
         
         SourceDownloadingInProgress,
-            // media source is remote, downloading in FTP repository started
         
-        WaitingUploadSourceReference,
-            // media source is remote, uploading in FTP repository is not done/completed
+        SourceUploadingInProgress,
 
         QueuedForEncoding,   
             // metadata ingestion is finished (saved into DB), media source is in MMS repository
 
 
         End_DownloadCancelledByUser,   
-            // User cancelled the media source downloading, metadata is moved in ErrorArea
+            // User cancelled the media source downloading
 
         End_ValidationMetadataFailed,   
-            // Validation metadata failed, metadata is moved in ErrorArea.
+            // Validation metadata failed.
             // MediaSource (if present) remains in FTP repository in case the json would be ingested again (MediaSource would be remove by retention)
 
         End_ValidationMediaSourceFailed,   
@@ -320,8 +318,8 @@ public:
                 return "Start_Ingestion";
             case IngestionStatus::SourceDownloadingInProgress:
                 return "SourceDownloadingInProgress";
-            case IngestionStatus::WaitingUploadSourceReference:
-                return "WaitingUploadSourceReference";
+            case IngestionStatus::SourceUploadingInProgress:
+                return "SourceUploadingInProgress";
             case IngestionStatus::QueuedForEncoding:
                 return "QueuedForEncoding";
             case IngestionStatus::End_DownloadCancelledByUser:
@@ -352,8 +350,8 @@ public:
             return IngestionStatus::Start_Ingestion;
         else if (lowerCase == "sourcedownloadinginprogress")
             return IngestionStatus::SourceDownloadingInProgress;
-        else if (lowerCase == "waitinguploadsourcereference")
-            return IngestionStatus::WaitingUploadSourceReference;
+        else if (lowerCase == "sourceuploadinginprogress")
+            return IngestionStatus::SourceUploadingInProgress;
         else if (lowerCase == "queuedforencoding")
             return IngestionStatus::QueuedForEncoding;
         else if (lowerCase == "end_downloadcancelledbyuser")
@@ -457,56 +455,41 @@ public:
     );
 
     void getIngestionsToBeManaged(
-        vector<tuple<int64_t,int64_t,string,string,IngestionStatus>>& ingestionsToBeManaged);
-
-    int64_t addIngestionJob (
-        int64_t customerKey,
-        string metadataFileName,
-        string metadataFileContent,
-        string sourceReference,
-        IngestionType ingestionType,
-        IngestionStatus ingestionStatus,
+        vector<tuple<int64_t,int64_t,string,string,IngestionStatus>>& ingestionsToBeManaged,
         string processorMMS,
-        string errorMessage);
+        int maxIngestionJobs);
 
     int64_t addIngestionJob (
 	int64_t customerKey,
-        string fileNameWithIngestionJobKeyPlaceholder,
-        string ingestionJobKeyPlaceHolder,
-        string metadataFileContent,
+        string metadataContent,
         IngestionType ingestionType,
         IngestionStatus ingestionStatus);
 
     void updateIngestionJob (
         int64_t ingestionJobKey,
         IngestionStatus newIngestionStatus,
-        string errorMessage);
-
-    void updateIngestionJob (
-        int64_t ingestionJobKey,
-        IngestionStatus newIngestionStatus,
-        string processorMMS,
-        string errorMessage);
+        string errorMessage,
+        string processorMMS);
 
     void updateIngestionJob (
         int64_t ingestionJobKey,
         string sourceReference,
         IngestionType ingestionType,
         IngestionStatus newIngestionStatus,
-        string processorMMS,
-        string errorMessage);
-
-    string getWaitingUploadSourceReference(int64_t ingestionJobKey);
-
-    void removeIngestionJob (
-        int64_t ingestionJobKey);
+        string errorMessage,
+        string processorMMS);
 
     bool updateIngestionJobSourceDownloadingInProgress (
         int64_t ingestionJobKey,
         int downloadingPercentage);
 
-    pair<int64_t,string> getWaitingSourceReferenceIngestionJob(
-            int64_t customerKey, string mediaSourceFileName);
+    void updateIngestionJobSourceUploadingInProgress (
+        int64_t ingestionJobKey,
+        int uploadingPercentage);
+
+    void updateIngestionJobSourceBinaryTransferred (
+        int64_t ingestionJobKey,
+        bool sourceBinaryTransferred);
 
     void getEncodingJobs(
         bool resetToBeDone,
