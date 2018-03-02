@@ -667,7 +667,7 @@ void API::ingestContent(
                 customer->_customerKey, 
                 requestBody, 
                 MMSEngineDBFacade::IngestionType::Unknown, 
-                MMSEngineDBFacade::IngestionStatus::StartIngestion);
+                MMSEngineDBFacade::IngestionStatus::Start_Ingestion);
 
         string responseBody = string("{ ")
                 + "\"ingestionJobKey\": " + to_string(ingestionJobKey) + " "

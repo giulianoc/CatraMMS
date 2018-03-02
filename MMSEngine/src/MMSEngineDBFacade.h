@@ -277,7 +277,8 @@ public:
         Start_Ingestion,    
         
         SourceDownloadingInProgress,
-        
+        SourceMovingInProgress,
+        SourceCopingInProgress,
         SourceUploadingInProgress,
 
         QueuedForEncoding,   
@@ -318,6 +319,10 @@ public:
                 return "Start_Ingestion";
             case IngestionStatus::SourceDownloadingInProgress:
                 return "SourceDownloadingInProgress";
+            case IngestionStatus::SourceMovingInProgress:
+                return "SourceMovingInProgress";
+            case IngestionStatus::SourceCopingInProgress:
+                return "SourceCopingInProgress";
             case IngestionStatus::SourceUploadingInProgress:
                 return "SourceUploadingInProgress";
             case IngestionStatus::QueuedForEncoding:
@@ -350,6 +355,10 @@ public:
             return IngestionStatus::Start_Ingestion;
         else if (lowerCase == "sourcedownloadinginprogress")
             return IngestionStatus::SourceDownloadingInProgress;
+        else if (lowerCase == "sourcemovinginprogress")
+            return IngestionStatus::SourceMovingInProgress;
+        else if (lowerCase == "sourcecopinginprogress")
+            return IngestionStatus::SourceCopingInProgress;
         else if (lowerCase == "sourceuploadinginprogress")
             return IngestionStatus::SourceUploadingInProgress;
         else if (lowerCase == "queuedforencoding")
@@ -455,7 +464,7 @@ public:
     );
 
     void getIngestionsToBeManaged(
-        vector<tuple<int64_t,int64_t,string,string,IngestionStatus>>& ingestionsToBeManaged,
+        vector<tuple<int64_t,shared_ptr<Customer>,string,string,IngestionStatus>>& ingestionsToBeManaged,
         string processorMMS,
         int maxIngestionJobs);
 

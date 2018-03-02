@@ -111,7 +111,7 @@ void Binary::getBinaryAndResponse(
             catch(exception e)
             {
                 string errorMessage = string("Error to retrieve the file size")
-                    + ", sourceFileName: " + sourceFileName
+                    + ", customerIngestionBinaryPathName: " + customerIngestionBinaryPathName
                 ;
                 _logger->error(__FILEREF__ + errorMessage);
 
@@ -143,7 +143,7 @@ void Binary::getBinaryAndResponse(
                     catch(exception e)
                     {
                         string errorMessage = string("Error to retrieve the file size")
-                            + ", sourceFileName: " + sourceFileName
+                            + ", customerIngestionBinaryPathName: " + customerIngestionBinaryPathName
                         ;
                         _logger->error(__FILEREF__ + errorMessage);
     //
@@ -251,14 +251,14 @@ void Binary::getBinaryAndResponse(
                     {
                         chrono::system_clock::time_point now = chrono::system_clock::now();
 
-                        if (now - uploadStartTime >= chrono::seconds(_progressUpdatePeriodInSeconds)))
+                        if (now - uploadStartTime >= chrono::seconds(_progressUpdatePeriodInSeconds))
                         {
                             double progress = (totalRead / contentLength) * 100;
                             int uploadingPercentage = floorf(progress * 100) / 100;
 
                             _logger->info(__FILEREF__ + "Upload still running"
                                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                + ", downloadingPercentage: " + to_string(downloadingPercentage)
+                                + ", uploadingPercentage: " + to_string(uploadingPercentage)
                                 + ", totalRead: " + to_string(totalRead)
                                 + ", contentLength: " + to_string(contentLength)
                             );

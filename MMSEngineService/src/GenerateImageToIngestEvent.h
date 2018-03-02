@@ -35,7 +35,7 @@ using namespace std;
 class GenerateImageToIngestEvent: public Event {
 private:
     string                  _mmsVideoPathName;
-    string                  _customerFTPRepository;
+    shared_ptr<Customer>    _customer;
     string                  _imageFileName;
     string                  _imageTitle;
 
@@ -52,11 +52,11 @@ public:
         _mmsVideoPathName = mmsVideoPathName;
     }
 
-    string getCustomerFTPRepository() {
-        return _customerFTPRepository;
+    shared_ptr<Customer> getCustomer() {
+        return _customer;
     }
-    void setCustomerFTPRepository(string customerFTPRepository) {
-        _customerFTPRepository = customerFTPRepository;
+    void setCustomer(shared_ptr<Customer> customer) {
+        _customer = customer;
     }
 
     string getImageFileName() {

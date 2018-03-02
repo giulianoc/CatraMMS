@@ -62,8 +62,6 @@ public:
     
     int64_t addIngestionJob (
 	int64_t customerKey,
-        string fileNameWithIngestionJobKeyPlaceholder,
-        string ingestionJobKeyPlaceHolder,
         string metadataFileContent,
         MMSEngineDBFacade::IngestionType ingestionType,
         MMSEngineDBFacade::IngestionStatus ingestionStatus);

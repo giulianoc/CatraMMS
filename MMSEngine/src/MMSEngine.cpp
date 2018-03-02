@@ -201,16 +201,12 @@ tuple<shared_ptr<Customer>,bool,bool> MMSEngine::checkAPIKey (string apiKey)
 
 int64_t MMSEngine::addIngestionJob (
         int64_t customerKey,
-        string fileNameWithIngestionJobKeyPlaceholder,
-        string ingestionJobKeyPlaceHolder,
         string metadataFileContent,
         MMSEngineDBFacade::IngestionType ingestionType,
         MMSEngineDBFacade::IngestionStatus ingestionStatus)
 {
     _logger->info(__FILEREF__ + "Received addIngestionJob"
         + ", customerKey: " + to_string(customerKey)
-        + ", fileNameWithIngestionJobKeyPlaceholder: " + fileNameWithIngestionJobKeyPlaceholder
-        + ", ingestionJobKeyPlaceHolder: " + ingestionJobKeyPlaceHolder
         + ", metadataFileContent: " + metadataFileContent
         + ", ingestionType: " + MMSEngineDBFacade::toString(ingestionType)
         + ", ingestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
@@ -222,8 +218,6 @@ int64_t MMSEngine::addIngestionJob (
     {
         ingestionJobKey = _mmsEngineDBFacade->addIngestionJob(
                 customerKey,
-                fileNameWithIngestionJobKeyPlaceholder,
-                ingestionJobKeyPlaceHolder,
                 metadataFileContent,
                 ingestionType,
                 ingestionStatus);

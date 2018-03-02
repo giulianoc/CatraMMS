@@ -1371,9 +1371,9 @@ int64_t MMSEngineDBFacade::addImageEncodingProfile(
 }
 
 void MMSEngineDBFacade::getIngestionsToBeManaged(
-        vector<tuple<int64_t,int64_t,string,string,IngestionStatus>>& ingestionsToBeManaged),
+        vector<tuple<int64_t,shared_ptr<Customer>,string,string,IngestionStatus>>& ingestionsToBeManaged,
         string processorMMS,
-        int maxIngestionJobs
+        int maxIngestionJobs)
 {
     string      lastSQLCommand;
     bool        autoCommit = true;
@@ -1399,12 +1399,14 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
         {
             lastSQLCommand = 
                 "update MMS_IngestionJobs set ProcessorMMS = ? from MMS_IngestionJobs where ProcessorMMS is null "
-                    "and (Status = ? or (Status in (?, ?) and SourceBinaryTransferred = 1)) limit ?";
+                    "and (Status = ? or (Status in (?, ?, ?, ?) and SourceBinaryTransferred = 1)) limit ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, processorMMS);
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::Start_Ingestion));
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress));
+            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress));
+            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress));
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress));
             preparedStatement->setInt(queryParameterIndex++, maxIngestionJobs);
 
@@ -1427,8 +1429,10 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                 string sourceReference      = resultSet->getString("SourceReference");
                 IngestionStatus ingestionStatus     = MMSEngineDBFacade::toIngestionStatus(resultSet->getString("Status"));
 
-                tuple<int64_t,int64_t,string,string,IngestionStatus> ingestionToBeManaged
-                        = make_tuple(ingestionJobKey, customerKey, metaDataContent, sourceReference, ingestionStatus);
+                shared_ptr<Customer> customer = getCustomer(customerKey);
+                
+                tuple<int64_t,shared_ptr<Customer>,string,string,IngestionStatus> ingestionToBeManaged
+                        = make_tuple(ingestionJobKey, customer, metaDataContent, sourceReference, ingestionStatus);
                 
                 ingestionsToBeManaged.push_back(ingestionToBeManaged);
             }
@@ -1659,7 +1663,8 @@ void MMSEngineDBFacade::updateIngestionJob (
         conn = _connectionPool->borrow();	
 
         string prefix = "End";
-        if (toString(newIngestionStatus).compare(0, prefix.size(), prefix) == 0)
+        string sNewIngestionStatus = MMSEngineDBFacade::toString(newIngestionStatus);
+        if (sNewIngestionStatus.compare(0, prefix.size(), prefix) == 0)
         {
             finalState			= true;
         }
@@ -1798,7 +1803,8 @@ void MMSEngineDBFacade::updateIngestionJob (
         conn = _connectionPool->borrow();	
 
         string prefix = "End";
-        if (toString(newIngestionStatus).compare(0, prefix.size(), prefix) == 0)
+        string sNewIngestionStatus = MMSEngineDBFacade::toString(newIngestionStatus);
+        if (sNewIngestionStatus.compare(0, prefix.size(), prefix) == 0)
         {
             finalState			= true;
         }
@@ -2038,7 +2044,7 @@ void MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress (
                 // we tried to update a value but the same value was already in the table,
                 // in this case rowsUpdated will be 0
                 string errorMessage = __FILEREF__ + "no update was done"
-                        + ", downloadingPercentage: " + to_string(downloadingPercentage)
+                        + ", uploadingPercentage: " + to_string(uploadingPercentage)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                         + ", rowsUpdated: " + to_string(rowsUpdated)
                         + ", lastSQLCommand: " + lastSQLCommand
@@ -2594,7 +2600,7 @@ int MMSEngineDBFacade::updateEncodingJob (
                             ingestionStatus = IngestionStatus::End_IngestionSuccess_AtLeastOneEncodingProfileError;
 
                         string errorMessage = "";
-                        updateIngestionJob (ingestionJobKey, ingestionStatus, errorMessage);
+                        updateIngestionJob (ingestionJobKey, ingestionStatus, errorMessage, "" /* processorMMS */);
                     }
                     else
                     {

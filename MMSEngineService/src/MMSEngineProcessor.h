@@ -45,10 +45,9 @@ private:
     void handleGenerateImageToIngestEvent (
         shared_ptr<GenerateImageToIngestEvent> generateImageToIngestEvent);
 
-    void generateImageMetadataToIngest(
-        string metadataImagePathName,
+    string generateImageMetadataToIngest(
         string title,
-        string sourceImageFileName,
+        string imagePathName,
         string encodingProfilesSet
     );
 
@@ -56,7 +55,7 @@ private:
 
     MMSEngineDBFacade::ContentType validateContentIngestionMetadata(Json::Value encoding);
 
-    tuple<bool, bool, string, string, string, int> getMediaSourceDetails(
+    tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> getMediaSourceDetails(
         shared_ptr<Customer> customer,
         MMSEngineDBFacade::IngestionType ingestionType,
         Json::Value root);
@@ -67,8 +66,11 @@ private:
     bool isMetadataPresent(Json::Value root, string field);
 
     void downloadMediaSourceFile(string sourceReferenceURL,
-        int64_t ingestionJobKey, shared_ptr<Customer> customer,
-        string metadataFileName, string mediaSourceFileName);
+        int64_t ingestionJobKey, shared_ptr<Customer> customer);
+    void moveMediaSourceFile(string sourceReferenceURL,
+        int64_t ingestionJobKey, shared_ptr<Customer> customer);
+    void copyMediaSourceFile(string sourceReferenceURL,
+        int64_t ingestionJobKey, shared_ptr<Customer> customer);
 
     int progressCallback(
         int64_t ingestionJobKey,
