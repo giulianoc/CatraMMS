@@ -11,9 +11,20 @@
 #include "MMSStorage.h"
 #include "MMSEngine.h"
 
+Json::Value loadConfigurationFile(const char* configurationPathName);
 
 int main (int iArgc, char *pArgv [])
 {
+    cout << "iArgc: " << iArgc << endl;
+    
+    if (iArgc != 1)
+    {
+        cerr << "Usage: " << pArgv[0] << " config-path-name" << endl;
+        
+        return 1;
+    }
+    
+    Json::Value configuration = loadConfigurationFile(pArgv[1]);
 
     string logPathName ("/tmp/mmsEngineService.log");
     // auto logger = spdlog::stdout_logger_mt("mmsEngineService");
@@ -133,4 +144,23 @@ int main (int iArgc, char *pArgv [])
             );
     
     return 0;
+}
+
+Json::Value loadConfigurationFile(const char* configurationPathName)
+{
+    Json::Value configurationJson;
+    
+    try
+    {
+        ifstream configurationFile(configurationPathName, std::ifstream::binary);
+        configurationFile >> configurationJson;
+    }
+    catch(...)
+    {
+        throw runtime_error(string("wrong configuration json format")
+                + ", configurationPathName: " + configurationPathName
+                );
+    }
+    
+    return configurationJson;
 }

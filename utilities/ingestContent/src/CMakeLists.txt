@@ -21,17 +21,10 @@
 # with the authors.
 
 SET (SOURCES
-	mmsEngineService.cpp
-	MMSEngineProcessor.cpp
-	CheckIngestionTimes.cpp
-	CheckEncodingTimes.cpp
+	ingestContent.cpp
 )
 
 SET (HEADERS
-	MMSEngineProcessor.h
-	CheckIngestionTimes.h
-	CheckEncodingTimes.h
-	LocalAssetIngestionEvent.h
 )
 
 include_directories ("${PROJECT_SOURCE_DIR}/../usr_local/include")
@@ -39,10 +32,8 @@ include_directories ("${PROJECT_SOURCE_DIR}/../spdlog/include")
 include_directories ("${PROJECT_SOURCE_DIR}/MMSEngine/src")
 if (APPLE)
 	include_directories ("${PROJECT_SOURCE_DIR}/../mysql-connector-c++-1.1.9-macos10.12-x86-64bit/include")
-	include_directories ("/usr/local/Cellar/imagemagick/7.0.7-22/include/ImageMagick-7")
 else()
 	include_directories ("/app/5/ThirdPartySoftware/mysql-connector-c++-1.1.9-linux-ubuntu16.10-x86-64bit/include")
-	include_directories ("/app/7/DevelopmentWorkingArea/usr_local/include/ImageMagick-7")
 endif()
 
 link_directories ("${PROJECT_SOURCE_DIR}/../usr_local/lib")
@@ -52,31 +43,28 @@ else()
 	link_directories ("/app/5/ThirdPartySoftware/mysql-connector-c++-1.1.9-linux-ubuntu16.10-x86-64bit/lib")
 endif()
 
-add_executable(mmsEngineService ${SOURCES} ${HEADERS})
+add_executable(ingestContent ${SOURCES} ${HEADERS})
 
-target_link_libraries (mmsEngineService MultiEventsSet)
-target_link_libraries (mmsEngineService MMSEngine)
-target_link_libraries (mmsEngineService mysqlcppconn)
-target_link_libraries (mmsEngineService jsoncpp)
-target_link_libraries (mmsEngineService curl)
-target_link_libraries (mmsEngineService curlpp)
-if (APPLE) 
-else()  
-        target_link_libraries (mmsEngineService Magick++-7.Q16HDRI)
-endif() 
+target_link_libraries (ingestContent MMSEngine)
+target_link_libraries (ingestContent mysqlcppconn)
+target_link_libraries (ingestContent jsoncpp)
+if (APPLE)
+else()
+	target_link_libraries (ingestContent Magick++-7.Q16HDRI)
+endif()
 
-target_link_libraries (mmsEngineService Scheduler)
-target_link_libraries (mmsEngineService PThread)
-target_link_libraries (mmsEngineService Tools)
-target_link_libraries (mmsEngineService ErrMsg)
+#target_link_libraries (ingestContent Scheduler)
+#target_link_libraries (ingestContent PThread)
+target_link_libraries (ingestContent Tools)
+target_link_libraries (ingestContent ErrMsg)
 if(CRYPTO_FOUND)
 	if (APPLE)
-		target_link_libraries (mmsEngineService ${CRYPTO_LIBRARIES})
+		target_link_libraries (ingestContent ${CRYPTO_LIBRARIES})
 	else()
-		target_link_libraries (mmsEngineService crypt)
+		target_link_libraries (ingestContent crypt)
 	endif()
 endif()
 if (ZLIB_FOUND)
-	target_link_libraries(mmsEngineService ${ZLIB_LIBRARIES})
+	target_link_libraries(ingestContent ${ZLIB_LIBRARIES})
 endif()
-target_link_libraries (mmsEngineService pthread)
+target_link_libraries (ingestContent pthread)

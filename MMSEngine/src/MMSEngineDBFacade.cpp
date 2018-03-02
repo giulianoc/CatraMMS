@@ -1398,7 +1398,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 
         {
             lastSQLCommand = 
-                "update MMS_IngestionJobs set ProcessorMMS = ? from MMS_IngestionJobs where ProcessorMMS is null "
+                "update MMS_IngestionJobs set ProcessorMMS = ? where ProcessorMMS is null "
                     "and (Status = ? or (Status in (?, ?, ?, ?) and SourceBinaryTransferred = 1)) limit ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
