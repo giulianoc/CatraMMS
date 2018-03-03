@@ -1,5 +1,6 @@
 
 #include <thread>
+#include <fstream>
 
 #include "catralibraries/Scheduler2.h"
 
@@ -15,9 +16,8 @@ Json::Value loadConfigurationFile(const char* configurationPathName);
 
 int main (int iArgc, char *pArgv [])
 {
-    cout << "iArgc: " << iArgc << endl;
     
-    if (iArgc != 1)
+    if (iArgc != 2)
     {
         cerr << "Usage: " << pArgv[0] << " config-path-name" << endl;
         
@@ -26,51 +26,44 @@ int main (int iArgc, char *pArgv [])
     
     Json::Value configuration = loadConfigurationFile(pArgv[1]);
 
-    string logPathName ("/tmp/mmsEngineService.log");
+    string logPathName =  configuration["log"].get("pathName", "XXX").asString();
+    
     // auto logger = spdlog::stdout_logger_mt("mmsEngineService");
     auto logger = spdlog::daily_logger_mt("mmsEngineService", logPathName.c_str(), 11, 20);
     
     // trigger flush if the log severity is error or higher
     logger->flush_on(spdlog::level::trace);
     
-    spdlog::set_level(spdlog::level::info); // trace, debug, info, warn, err, critical, off
+    string logLevel =  configuration["log"].get("level", "XXX").asString();
+    if (logLevel == "debug")
+        spdlog::set_level(spdlog::level::debug); // trace, debug, info, warn, err, critical, off
+    else if (logLevel == "info")
+        spdlog::set_level(spdlog::level::info); // trace, debug, info, warn, err, critical, off
+    else if (logLevel == "err")
+        spdlog::set_level(spdlog::level::err); // trace, debug, info, warn, err, critical, off
 
-    spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%n] [%l] [tid %t] %v");
+    string pattern =  configuration["log"].get("pattern", "XXX").asString();
+    spdlog::set_pattern(pattern);
 
     // globally register the loggers so so the can be accessed using spdlog::get(logger_name)
     // spdlog::register_logger(logger);
 
-    size_t dbPoolSize = 5;
-    string dbServer ("tcp://127.0.0.1:3306");
-    #ifdef __APPLE__
-        string dbUsername("root"); string dbPassword("giuliano"); string dbName("workKing");
-    #else
-        string dbUsername("root"); string dbPassword("root"); string dbName("catracms");
-    #endif
     logger->info(__FILEREF__ + "Creating MMSEngineDBFacade"
-        + ", dbPoolSize: " + to_string(dbPoolSize)
-        + ", dbServer: " + dbServer
-        + ", dbUsername: " + dbUsername
-        + ", dbPassword: " + dbPassword
-        + ", dbName: " + dbName
             );
     shared_ptr<MMSEngineDBFacade>       mmsEngineDBFacade = make_shared<MMSEngineDBFacade>(
-            dbPoolSize, dbServer, dbUsername, dbPassword, dbName, logger);
+            configuration, logger);
     
+    /*
     #ifdef __APPLE__
         string storageRootPath ("/Users/multi/GestioneProgetti/Development/catrasoftware/storage/");
     #else
         string storageRootPath ("/home/giuliano/storage/");
     #endif
-    unsigned long freeSpaceToLeaveInEachPartitionInMB = 5;
+     */
     logger->info(__FILEREF__ + "Creating MMSStorage"
-        + ", storageRootPath: " + storageRootPath
-        + ", freeSpaceToLeaveInEachPartitionInMB: " + to_string(freeSpaceToLeaveInEachPartitionInMB)
             );
     shared_ptr<MMSStorage>       mmsStorage = make_shared<MMSStorage>(
-            storageRootPath, 
-            freeSpaceToLeaveInEachPartitionInMB,
-            logger);
+            configuration, logger);
 
     logger->info(__FILEREF__ + "Creating MMSEngine"
             );
@@ -88,9 +81,10 @@ int main (int iArgc, char *pArgv [])
 
     logger->info(__FILEREF__ + "Creating MMSEngineProcessor"
             );
-    MMSEngineProcessor      mmsEngineProcessor(logger, multiEventsSet, mmsEngineDBFacade, mmsStorage, &activeEncodingsManager);
+    MMSEngineProcessor      mmsEngineProcessor(logger, multiEventsSet, 
+            mmsEngineDBFacade, mmsStorage, &activeEncodingsManager, configuration);
     
-    unsigned long           ulThreadSleepInMilliSecs = 100;
+    unsigned long           ulThreadSleepInMilliSecs = configuration["scheduler"].get("threadSleepInMilliSecs", 5).asInt();
     logger->info(__FILEREF__ + "Creating Scheduler2"
         + ", ulThreadSleepInMilliSecs: " + to_string(ulThreadSleepInMilliSecs)
             );
@@ -109,7 +103,7 @@ int main (int iArgc, char *pArgv [])
             );
     thread schedulerThread (ref(scheduler));
 
-    unsigned long           checkIngestionTimesPeriodInMilliSecs = 2 * 1000;
+    unsigned long           checkIngestionTimesPeriodInMilliSecs = configuration["scheduler"].get("checkIngestionTimesPeriodInMilliSecs", 2000).asInt();
     logger->info(__FILEREF__ + "Creating and Starting CheckIngestionTimes"
         + ", checkIngestionTimesPeriodInMilliSecs: " + to_string(checkIngestionTimesPeriodInMilliSecs)
             );
@@ -118,7 +112,7 @@ int main (int iArgc, char *pArgv [])
     checkIngestionTimes->start();
     scheduler.activeTimes(checkIngestionTimes);
 
-    unsigned long           checkEncodingTimesPeriodInMilliSecs = 10 * 1000;
+    unsigned long           checkEncodingTimesPeriodInMilliSecs = configuration["scheduler"].get("checkEncodingTimesPeriodInMilliSecs", 10000).asInt();
     logger->info(__FILEREF__ + "Creating and Starting CheckEncodingTimes"
         + ", checkEncodingTimesPeriodInMilliSecs: " + to_string(checkEncodingTimesPeriodInMilliSecs)
             );
@@ -157,9 +151,9 @@ Json::Value loadConfigurationFile(const char* configurationPathName)
     }
     catch(...)
     {
-        throw runtime_error(string("wrong configuration json format")
+        cerr << string("wrong json configuration format")
                 + ", configurationPathName: " + configurationPathName
-                );
+            << endl;
     }
     
     return configurationJson;

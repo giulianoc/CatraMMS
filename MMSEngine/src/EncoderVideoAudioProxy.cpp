@@ -17,16 +17,23 @@
 #include "catralibraries/ProcessUtility.h"
 #include "EncoderVideoAudioProxy.h"
 
+
 #ifdef __APPLE__
 #define _ffmpegPath  string("/Users/multi/GestioneProgetti/Development/catrasoftware/usr_local/bin")
 #else
 #define _ffmpegPath  string("/app/7/DevelopmentWorkingArea/usr_local/bin")
 #endif
 
+
 #define _charsToBeReadFromFfmpegErrorOutput 1024
 
 EncoderVideoAudioProxy::EncoderVideoAudioProxy()
-{    
+{
+    /*
+    _ffmpegPath = configuration["ffmpeg"].get("path", "XXX").asString();
+    if (_ffmpegPath.back() == '/')
+        _ffmpegPath.pop_back();
+     */
 }
 
 EncoderVideoAudioProxy::~EncoderVideoAudioProxy() 

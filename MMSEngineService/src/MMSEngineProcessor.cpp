@@ -18,7 +18,8 @@ MMSEngineProcessor::MMSEngineProcessor(
         shared_ptr<MultiEventsSet> multiEventsSet,
         shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
         shared_ptr<MMSStorage> mmsStorage,
-        ActiveEncodingsManager* pActiveEncodingsManager
+        ActiveEncodingsManager* pActiveEncodingsManager,
+        Json::Value configuration
 )
 {
     _logger             = logger;
@@ -30,11 +31,11 @@ MMSEngineProcessor::MMSEngineProcessor(
     _firstGetEncodingJob            = true;
     _processorMMS                   = System::getHostName();
     
-    _maxDownloadAttemptNumber       = 3;
-    _progressUpdatePeriodInSeconds  = 5;
-    _secondsWaitingAmongDownloadingAttempt  = 5;
+    _maxDownloadAttemptNumber       = configuration["download"].get("maxDownloadAttemptNumber", 5).asInt();
+    _progressUpdatePeriodInSeconds  = configuration["download"].get("progressUpdatePeriodInSeconds", 5).asInt();
+    _secondsWaitingAmongDownloadingAttempt  = configuration["download"].get("secondsWaitingAmongDownloadingAttempt", 5).asInt();
     
-    _maxIngestionJobsPerEvent       = 5;
+    _maxIngestionJobsPerEvent       = configuration["mms"].get("maxIngestionJobsPerEvent", 5).asInt();
 }
 
 MMSEngineProcessor::~MMSEngineProcessor()

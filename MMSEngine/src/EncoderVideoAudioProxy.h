@@ -94,7 +94,7 @@ private:
     bool                                _twoPasses;
     bool                                _currentlyAtSecondPass;
     
-    // static string                              _ffmpegPathName;
+    string                              _ffmpegPath;
     string                              _MP4Encoder;
     string                              _mpeg2TSEncoder;
     

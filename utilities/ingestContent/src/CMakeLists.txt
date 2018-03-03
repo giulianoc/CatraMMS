@@ -68,3 +68,6 @@ if (ZLIB_FOUND)
 	target_link_libraries(ingestContent ${ZLIB_LIBRARIES})
 endif()
 target_link_libraries (ingestContent pthread)
+
+install (TARGETS ingestContent DESTINATION bin)
+

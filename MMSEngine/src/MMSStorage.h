@@ -29,8 +29,7 @@ public:
 
 public:
     MMSStorage (
-            string storage, 
-            unsigned long freeSpaceToLeaveInEachPartitionInMB,
+            Json::Value configuration,
             shared_ptr<spdlog::logger> logger);
 
     ~MMSStorage (void);

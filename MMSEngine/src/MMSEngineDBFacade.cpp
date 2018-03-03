@@ -18,11 +18,7 @@
 // http://download.nust.na/pub6/mysql/tech-resources/articles/mysql-connector-cpp.html#trx
 
 MMSEngineDBFacade::MMSEngineDBFacade(
-        size_t poolSize, 
-        string dbServer, 
-        string dbUsername, 
-        string dbPassword, 
-        string dbName,
+        Json::Value configuration,
         shared_ptr<spdlog::logger> logger) 
 {
     _logger     = logger;
@@ -30,14 +26,27 @@ MMSEngineDBFacade::MMSEngineDBFacade(
     _defaultContentProviderName     = "default";
     _defaultTerritoryName           = "default";
     
-    _maxEncodingFailures            = 3;
+    size_t dbPoolSize = configuration["database"].get("poolSize", 5).asInt();
+    string dbServer = configuration["database"].get("server", "XXX").asString();
+    /*
+    #ifdef __APPLE__
+        string dbUsername("root"); string dbPassword("giuliano"); string dbName("workKing");
+    #else
+        string dbUsername("root"); string dbPassword("root"); string dbName("catracms");
+    #endif
+     */
+    string dbUsername = configuration["database"].get("userName", "XXX").asString();
+    string dbPassword = configuration["database"].get("password", "XXX").asString();
+    string dbName = configuration["database"].get("dbName", "XXX").asString();
+
+    _maxEncodingFailures            = configuration["encoding"].get("maxEncodingFailures", 3).asInt();
     
-    _confirmationCodeRetentionInDays    = 7;
+    _confirmationCodeRetentionInDays    = configuration["mms"].get("confirmationCodeRetentionInDays", 3).asInt();
     
     shared_ptr<MySQLConnectionFactory>  mySQLConnectionFactory = 
             make_shared<MySQLConnectionFactory>(dbServer, dbUsername, dbPassword, dbName);
         
-    _connectionPool = make_shared<DBConnectionPool<MySQLConnection>>(poolSize, mySQLConnectionFactory);
+    _connectionPool = make_shared<DBConnectionPool<MySQLConnection>>(dbPoolSize, mySQLConnectionFactory);
 
     createTablesIfNeeded();
 }

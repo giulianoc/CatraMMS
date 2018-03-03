@@ -5,32 +5,40 @@
  */
 
 /* 
- * File:   Binary.cpp
+ * File:   UploadBinary.cpp
  * Author: giuliano
  * 
  * Created on February 18, 2018, 1:27 AM
  */
 
 #include <fstream>
-#include "Binary.h"
+#include "UploadBinary.h"
 
 int main(int argc, char** argv) 
 {
-    Binary binary;
+    const char* configurationPathName = getenv("MMS_CONFIGPATHNAME");
+    if (configurationPathName == nullptr)
+    {
+        cerr << "MMS API: the MMS_CONFIGPATHNAME environment variable is not defined" << endl;
+        
+        return 1;
+    }
+
+    UploadBinary binary(configurationPathName);
     
     return binary.manageBinaryRequest();
 }
 
-Binary::Binary(): APICommon() 
+UploadBinary::UploadBinary(const char* configurationPathName): APICommon(configurationPathName) 
 {
-    _binaryBufferLength             = 1024 * 10;
-    _progressUpdatePeriodInSeconds  = 5;
+    _binaryBufferLength             = _configuration["binary"].get("binaryBufferLength", "XXX").asInt();
+    _progressUpdatePeriodInSeconds  = _configuration["binary"].get("progressUpdatePeriodInSeconds", "XXX").asInt();
 }
 
-Binary::~Binary() {
+UploadBinary::~UploadBinary() {
 }
 
-void Binary::manageRequestAndResponse(
+void UploadBinary::manageRequestAndResponse(
         string requestURI,
         string requestMethod,
         unordered_map<string, string> queryParameters,
@@ -39,7 +47,7 @@ void Binary::manageRequestAndResponse(
         string requestBody
 )
 {
-    _logger->error(__FILEREF__ + "Binary application is able to manage ONLY Binary requests");
+    _logger->error(__FILEREF__ + "UploadBinary application is able to manage ONLY UploadBinary requests");
     
     string errorMessage = string("Internal server error");
     _logger->error(__FILEREF__ + errorMessage);
@@ -49,7 +57,7 @@ void Binary::manageRequestAndResponse(
     throw runtime_error(errorMessage);
 }
 
-void Binary::getBinaryAndResponse(
+void UploadBinary::getBinaryAndResponse(
         string requestURI,
         string requestMethod,
         string xCatraMMSResumeHeader,

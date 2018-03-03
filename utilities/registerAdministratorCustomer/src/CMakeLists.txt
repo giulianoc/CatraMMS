@@ -68,3 +68,6 @@ if (ZLIB_FOUND)
 	target_link_libraries(registerAdministratorCustomer ${ZLIB_LIBRARIES})
 endif()
 target_link_libraries (registerAdministratorCustomer pthread)
+
+install (TARGETS registerAdministratorCustomer DESTINATION bin)
+

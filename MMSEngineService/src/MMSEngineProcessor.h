@@ -19,6 +19,19 @@
 
 class MMSEngineProcessor
 {
+public:
+    MMSEngineProcessor(
+            shared_ptr<spdlog::logger> logger, 
+            shared_ptr<MultiEventsSet> multiEventsSet,
+            shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
+            shared_ptr<MMSStorage> mmsStorage,
+            ActiveEncodingsManager* pActiveEncodingsManager,
+            Json::Value configuration);
+    
+    ~MMSEngineProcessor();
+    
+    void operator()();
+    
 private:
     shared_ptr<spdlog::logger>          _logger;
     shared_ptr<MultiEventsSet>          _multiEventsSet;
@@ -79,17 +92,6 @@ private:
         double dltotal, double dlnow,
         double ultotal, double ulnow);
 
-public:
-    MMSEngineProcessor(
-            shared_ptr<spdlog::logger> logger, 
-            shared_ptr<MultiEventsSet> multiEventsSet,
-            shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
-            shared_ptr<MMSStorage> mmsStorage,
-            ActiveEncodingsManager* pActiveEncodingsManager);
-    
-    ~MMSEngineProcessor();
-    
-    void operator()();
 } ;
 
 #endif

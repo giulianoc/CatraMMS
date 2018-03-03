@@ -69,3 +69,6 @@ if (ZLIB_FOUND)
 	target_link_libraries(addEncodingProfile ${ZLIB_LIBRARIES})
 endif()
 target_link_libraries (addEncodingProfile pthread)
+
+install (TARGETS addEncodingProfile DESTINATION bin)
+

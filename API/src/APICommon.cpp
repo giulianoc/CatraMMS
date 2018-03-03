@@ -14,6 +14,7 @@
 #include <deque>
 #include <vector>
 #include <sstream>
+#include <fstream>
 #include <curl/curl.h>
 #include "fcgio.h"
 #include "catralibraries/Convert.h"
@@ -21,9 +22,34 @@
 
 extern char** environ;
 
-APICommon::APICommon()
+APICommon::APICommon(const char* configurationPathName)
 {
     
+    _configuration = loadConfigurationFile(configurationPathName);
+    
+    string logPathName =  _configuration["log"].get("pathName", "XXX").asString();
+    
+    // auto logger = spdlog::stdout_logger_mt("mmsEngineService");
+    _logger = spdlog::daily_logger_mt("API", logPathName.c_str(), 11, 20);
+    
+    // trigger flush if the log severity is error or higher
+    _logger->flush_on(spdlog::level::trace);
+    
+    string logLevel =  _configuration["log"].get("level", "XXX").asString();
+    if (logLevel == "debug")
+        spdlog::set_level(spdlog::level::debug); // trace, debug, info, warn, err, critical, off
+    else if (logLevel == "info")
+        spdlog::set_level(spdlog::level::info); // trace, debug, info, warn, err, critical, off
+    else if (logLevel == "err")
+        spdlog::set_level(spdlog::level::err); // trace, debug, info, warn, err, critical, off
+
+    string pattern =  _configuration["log"].get("pattern", "XXX").asString();
+    spdlog::set_pattern(pattern);
+
+    // globally register the loggers so so the can be accessed using spdlog::get(logger_name)
+    // spdlog::register_logger(logger);
+
+    /*
     // the log is written in the apache error log (stderr)
     _logger = spdlog::stderr_logger_mt("API");
 
@@ -34,47 +60,27 @@ APICommon::APICommon()
     
     // globally register the loggers so so the can be accessed using spdlog::get(logger_name)
     // spdlog::register_logger(logger);
+     */
 
-    size_t dbPoolSize = 5;
-    string dbServer ("tcp://127.0.0.1:3306");
-    #ifdef __APPLE__
-        string dbUsername("root"); string dbPassword("giuliano"); string dbName("workKing");
-    #else
-        string dbUsername("root"); string dbPassword("root"); string dbName("catracms");
-    #endif
     _logger->info(__FILEREF__ + "Creating MMSEngineDBFacade"
-        + ", dbPoolSize: " + to_string(dbPoolSize)
-        + ", dbServer: " + dbServer
-        + ", dbUsername: " + dbUsername
-        + ", dbPassword: " + dbPassword
-        + ", dbName: " + dbName
             );
     _mmsEngineDBFacade = make_shared<MMSEngineDBFacade>(
-            dbPoolSize, dbServer, dbUsername, dbPassword, dbName, _logger);
+            _configuration, _logger);
 
     _logger->info(__FILEREF__ + "Creating MMSEngine"
             );
     _mmsEngine = make_shared<MMSEngine>(_mmsEngineDBFacade, _logger);
     
-    #ifdef __APPLE__
-        string storageRootPath ("/Users/multi/GestioneProgetti/Development/catrasoftware/storage/");
-    #else
-        string storageRootPath ("/home/giuliano/storage/");
-    #endif
-    unsigned long freeSpaceToLeaveInEachPartitionInMB = 5;
     _logger->info(__FILEREF__ + "Creating MMSStorage"
-        + ", storageRootPath: " + storageRootPath
-        + ", freeSpaceToLeaveInEachPartitionInMB: " + to_string(freeSpaceToLeaveInEachPartitionInMB)
             );
     _mmsStorage = make_shared<MMSStorage>(
-            storageRootPath, 
-            freeSpaceToLeaveInEachPartitionInMB,
+            _configuration,
             _logger);
 
     _managedRequestsNumber = 0;
     _processId = getpid();
-    _maxAPIContentLength = 1000000;
-    _maxBinaryContentLength = 10ll * 1024ll * 1024ll * 1024ll;  // 10GB
+    _maxAPIContentLength = _configuration["api"].get("maxContentLength", "XXX").asInt64();
+    _maxBinaryContentLength = _configuration["binary"].get("maxContentLength", "XXX").asInt64();
 }
 
 APICommon::~APICommon() {
@@ -853,5 +859,24 @@ void APICommon:: sendEmail(string to, string subject, vector<string>& emailBody)
          * clean up in the end.
          */
         curl_easy_cleanup(curl);
+    }    
+}
+
+Json::Value APICommon::loadConfigurationFile(const char* configurationPathName)
+{
+    Json::Value configurationJson;
+
+    try
+    {
+        ifstream configurationFile(configurationPathName, ifstream::binary);
+        configurationFile >> configurationJson;
     }
+    catch(...)
+    {
+        cerr << string("wrong json configuration format")
+                + ", configurationPathName: " + configurationPathName
+            << endl;
+    }
+
+    return configurationJson;
 }

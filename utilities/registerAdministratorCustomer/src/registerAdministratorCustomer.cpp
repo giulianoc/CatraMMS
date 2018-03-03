@@ -1,33 +1,32 @@
 
+#include <fstream>
 #include "MMSEngineDBFacade.h"
 #include "MMSEngine.h"
 #include "catralibraries/Convert.h"
 
+Json::Value loadConfigurationFile(const char* configurationPathName);
 
 int main (int iArgc, char *pArgv [])
 {
+
+    if (iArgc != 2)
+    {
+        cerr << "Usage: " << pArgv[0] << " config-path-name" << endl;
+        
+        return 1;
+    }
+    
+    Json::Value configuration = loadConfigurationFile(pArgv[1]);
 
     auto logger = spdlog::stdout_logger_mt("registerAdministratorCustomer");
     spdlog::set_level(spdlog::level::trace);
     // globally register the loggers so so the can be accessed using spdlog::get(logger_name)
     // spdlog::register_logger(logger);
 
-    size_t dbPoolSize = 5;
-    string dbServer ("tcp://127.0.0.1:3306");
-    #ifdef __APPLE__
-        string dbUsername("root"); string dbPassword("giuliano"); string dbName("workKing");
-    #else
-        string dbUsername("root"); string dbPassword("root"); string dbName("catracms");
-    #endif
     logger->info(__FILEREF__ + "Creating MMSEngineDBFacade"
-        + ", dbPoolSize: " + to_string(dbPoolSize)
-        + ", dbServer: " + dbServer
-        + ", dbUsername: " + dbUsername
-        + ", dbPassword: " + dbPassword
-        + ", dbName: " + dbName
             );
     shared_ptr<MMSEngineDBFacade>       mmsEngineDBFacade = make_shared<MMSEngineDBFacade>(
-            dbPoolSize, dbServer, dbUsername, dbPassword, dbName, logger);
+            configuration, logger);
 
     logger->info(__FILEREF__ + "Creating MMSEngine"
             );
@@ -81,4 +80,23 @@ int main (int iArgc, char *pArgv [])
             );
 
     return 0;
+}
+
+Json::Value loadConfigurationFile(const char* configurationPathName)
+{
+    Json::Value configurationJson;
+    
+    try
+    {
+        ifstream configurationFile(configurationPathName, std::ifstream::binary);
+        configurationFile >> configurationJson;
+    }
+    catch(...)
+    {
+        cerr << string("wrong json configuration format")
+                + ", configurationPathName: " + configurationPathName
+            << endl;
+    }
+    
+    return configurationJson;
 }

@@ -5,8 +5,7 @@
 #include "catralibraries/DateTime.h"
 
 MMSStorage::MMSStorage(
-        string storage, 
-        unsigned long freeSpaceToLeaveInEachPartitionInMB,
+        Json::Value configuration,
         shared_ptr<spdlog::logger> logger) 
 {
 
@@ -14,10 +13,10 @@ MMSStorage::MMSStorage(
 
     _hostName = System::getHostName();
 
-    // MB
-    _freeSpaceToLeaveInEachPartitionInMB = freeSpaceToLeaveInEachPartitionInMB;
-
-    _storage = storage;
+    _storage = configuration["storage"].get("path", "XXX").asString();
+    if (_storage.back() != '/')
+        _storage.push_back('/');
+    _freeSpaceToLeaveInEachPartitionInMB = configuration["storage"].get("freeSpaceToLeaveInEachPartitionInMB", 5).asInt();
 
     _ingestionRootRepository = _storage + "IngestionRepository/users/";
     _mmsRootRepository = _storage + "MMSRepository/";

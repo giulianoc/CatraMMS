@@ -61,3 +61,7 @@ if (APPLE)
 	target_link_libraries (MMSEngine jsoncpp)
         target_link_libraries (MMSEngine Magick++-7.Q16HDRI)
 endif()
+
+install (TARGETS MMSEngine DESTINATION lib)
+install (FILES ${HEADERS} DESTINATION include)
+

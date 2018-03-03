@@ -5,22 +5,22 @@
  */
 
 /* 
- * File:   Binary.h
+ * File:   UploadBinary.h
  * Author: giuliano
  *
  * Created on February 18, 2018, 1:27 AM
  */
 
-#ifndef Binary_h
-#define Binary_h
+#ifndef UploadBinary_h
+#define UploadBinary_h
 
 #include "APICommon.h"
 
-class Binary: public APICommon {
+class UploadBinary: public APICommon {
 public:
-    Binary();
+    UploadBinary(const char* configurationPathName);
     
-    ~Binary();
+    ~UploadBinary();
     
     virtual void manageRequestAndResponse(
         string requestURI,

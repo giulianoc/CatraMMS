@@ -80,3 +80,5 @@ if (ZLIB_FOUND)
 	target_link_libraries(mmsEngineService ${ZLIB_LIBRARIES})
 endif()
 target_link_libraries (mmsEngineService pthread)
+
+install (TARGETS mmsEngineService DESTINATION bin)

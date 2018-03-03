@@ -385,12 +385,8 @@ public:
 
 public:
     MMSEngineDBFacade(
-            size_t poolSize, 
-            string dbServer, 
-            string dbUsername, 
-            string dbPassword, 
-            string dbName, 
-            shared_ptr<spdlog::logger> logger
+        Json::Value configuration,
+        shared_ptr<spdlog::logger> logger
             );
 
     ~MMSEngineDBFacade();
