@@ -12,7 +12,7 @@
  */
 
 #include "MMSEngine.h"
-#include "EncoderVideoAudioProxy.h"
+#include "FFMpeg.h"
 #include "ActiveEncodingsManager.h"
 
 
@@ -281,10 +281,10 @@ void MMSEngine::addFFMPEGVideoEncodingProfile(
 
     try
     {
-        EncoderVideoAudioProxy::encodingFileFormatValidation(fileFormat);
-        EncoderVideoAudioProxy::ffmpeg_encodingVideoCodecValidation(videoCodec);
-        EncoderVideoAudioProxy::ffmpeg_encodingVideoProfileValidation(videoCodec, videoProfile);
-        EncoderVideoAudioProxy::ffmpeg_encodingAudioCodecValidation(audioCodec);
+        FFMpeg::encodingFileFormatValidation(fileFormat, _logger);
+        FFMpeg::encodingVideoCodecValidation(videoCodec, _logger);
+        FFMpeg::encodingVideoProfileValidation(videoCodec, videoProfile, _logger);
+        FFMpeg::encodingAudioCodecValidation(audioCodec, _logger);
 
         string details = getVideoEncodingProfileDetails(
             fileFormat,

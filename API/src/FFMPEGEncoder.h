@@ -5,22 +5,23 @@
  */
 
 /* 
- * File:   API.h
+ * File:   FFMPEGEncoder.h
  * Author: giuliano
  *
  * Created on February 18, 2018, 1:27 AM
  */
 
-#ifndef API_h
-#define API_h
+#ifndef FFMPEGEncoder_h
+#define FFMPEGEncoder_h
 
 #include "APICommon.h"
+#include "FFMpeg.h"
 
-class API: public APICommon {
+class FFMPEGEncoder: public APICommon {
 public:
-    API(const char* configurationPathName);
+    FFMPEGEncoder(const char* configurationPathName);
     
-    ~API();
+    ~FFMPEGEncoder();
     
     virtual void getBinaryAndResponse(
         string requestURI,
@@ -40,22 +41,10 @@ public:
     );
     
 private:
-    MMSEngineDBFacade::EncodingPriority _encodingPriorityCustomerDefaultValue;
-    MMSEngineDBFacade::EncodingPeriod _encodingPeriodCustomerDefaultValue;
-    int _maxIngestionsNumberCustomerDefaultValue;
-    int _maxStorageInGBCustomerDefaultValue;
-
-    void registerCustomer(string requestBody);
+    shared_ptr<FFMpeg>      _ffmpeg;
     
-    void confirmCustomer(unordered_map<string, string> queryParameters);
-
-    void createAPIKey(unordered_map<string, string> queryParameters);
-
-    void ingestContent(
-            shared_ptr<Customer> customer,
-            unordered_map<string, string> queryParameters,
-            string requestBody);
+    void encodeContent(string requestBody);
 };
 
-#endif /* POSTCUSTOMER_H */
+#endif
 

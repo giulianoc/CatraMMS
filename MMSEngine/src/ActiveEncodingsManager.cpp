@@ -14,16 +14,18 @@
 #include "ActiveEncodingsManager.h"
 
 ActiveEncodingsManager::ActiveEncodingsManager(
+    Json::Value configuration,
     shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
     shared_ptr<MMSStorage> mmsStorage,
     shared_ptr<spdlog::logger> logger) 
 {
     _logger = logger;
+    _configuration = configuration;
     _mmsEngineDBFacade = mmsEngineDBFacade;
     _mmsStorage = mmsStorage; 
     
-    #ifdef __FFMPEGLOCALENCODER__
-        _ffmpegEncoderRunning = 0;
+    #ifdef __LOCALENCODER__
+        _runningEncodingsNumber = 0;
     #endif
 }
 
@@ -141,7 +143,6 @@ void ActiveEncodingsManager::operator()()
                                     + ", _relativePath: " + encodingJob->_encodingItem->_relativePath
                                     + ", _fileName: " + encodingJob->_encodingItem->_fileName
                                     + ", _encodingProfileKey: " + to_string(encodingJob->_encodingItem->_encodingProfileKey)
-                                    + ", _outputFfmpegPathFileName: " + encodingJob->_encoderVideoAudioProxy._outputFfmpegPathFileName
                             );
                         }
                     }
@@ -202,13 +203,14 @@ void ActiveEncodingsManager::processEncodingJob(mutex* mtEncodingJobs, EncodingJ
             encodingJob->_encodingItem->_contentType == MMSEngineDBFacade::ContentType::Audio)
     {
         encodingJob->_encoderVideoAudioProxy.setData(
+            _configuration,
             mtEncodingJobs,
             &(encodingJob->_status),
             _mmsEngineDBFacade,
             _mmsStorage,
             encodingJob->_encodingItem,
-            #ifdef __FFMPEGLOCALENCODER__
-                &_ffmpegEncoderRunning,
+            #ifdef __LOCALENCODER__
+                &_runningEncodingsNumber,
             #endif
             _logger
         );

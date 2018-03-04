@@ -30,7 +30,7 @@ project(
 
 SET(CMAKE_CXX_FLAGS "-std=c++14")
 
-ADD_DEFINITIONS(-D__FFMPEGLOCALENCODER__)
+ADD_DEFINITIONS(-D__LOCALENCODER__)
 
 
 set(CMAKE_BUILD_TYPE Debug)
@@ -45,6 +45,7 @@ find_package(LibCrypto)
 find_package(ZLIB)
 
 add_subdirectory(MMSEngine/src)
+add_subdirectory(FFMpeg/src)
 add_subdirectory(MMSEngineService/src)
 
 add_subdirectory(API/src)

@@ -28,8 +28,12 @@ SET (SOURCES_API
 	API.cpp
 )
 
-SET (SOURCES_BINARY
+SET (SOURCES_UPLOADBINARY
 	UploadBinary.cpp
+)
+
+SET (SOURCES_FFMPEGENCODER
+	FFMPEGEncoder.cpp
 )
 
 SET (HEADERS
@@ -39,6 +43,7 @@ SET (HEADERS
 include_directories ("${PROJECT_SOURCE_DIR}/../usr_local/include")
 include_directories ("${PROJECT_SOURCE_DIR}/../spdlog/include")
 include_directories ("${PROJECT_SOURCE_DIR}/MMSEngine/src")
+include_directories ("${PROJECT_SOURCE_DIR}/FFMpeg/src")
 if (APPLE)
 	include_directories ("${PROJECT_SOURCE_DIR}/../mysql-connector-c++-1.1.9-macos10.12-x86-64bit/include")
 else()
@@ -54,8 +59,9 @@ else()
 endif()
 
 #API
-    add_executable(api.fcgi API.cpp ${COMMON_SOURCES} ${HEADERS})
+    add_executable(api.fcgi ${SOURCES_API} ${COMMON_SOURCES} ${HEADERS})
     target_link_libraries (api.fcgi MMSEngine)
+    target_link_libraries (api.fcgi FFMpeg)
     target_link_libraries (api.fcgi mysqlcppconn)
     target_link_libraries (api.fcgi jsoncpp)
     if (APPLE)
@@ -81,8 +87,9 @@ target_link_libraries (api.fcgi ErrMsg)
     list(APPEND TARGETS api.fcgi)
 
 #UploadBinary
-    add_executable(uploadBinary.cgi UploadBinary.cpp ${COMMON_SOURCES} ${HEADERS})
+    add_executable(uploadBinary.cgi ${SOURCES_UPLOADBINARY} ${COMMON_SOURCES} ${HEADERS})
     target_link_libraries (uploadBinary.cgi MMSEngine)
+    target_link_libraries (uploadBinary.cgi FFMpeg)
     target_link_libraries (uploadBinary.cgi mysqlcppconn)
     target_link_libraries (uploadBinary.cgi jsoncpp)
     if (APPLE)
@@ -107,6 +114,34 @@ target_link_libraries (uploadBinary.cgi ErrMsg)
     target_link_libraries (uploadBinary.cgi pthread)
     list(APPEND TARGETS uploadBinary.cgi)
 
+#FFMPEGEncoder
+    add_executable(ffmpegEncoder.fcgi ${SOURCES_FFMPEGENCODER} ${COMMON_SOURCES} ${HEADERS})
+    target_link_libraries (ffmpegEncoder.fcgi MMSEngine)
+    target_link_libraries (ffmpegEncoder.fcgi FFMpeg)
+    target_link_libraries (ffmpegEncoder.fcgi mysqlcppconn)
+    target_link_libraries (ffmpegEncoder.fcgi jsoncpp)
+    if (APPLE)
+    else()
+	    target_link_libraries (ffmpegEncoder.fcgi Magick++-7.Q16HDRI)
+    endif()
+    target_link_libraries(ffmpegEncoder.fcgi fcgi++)
+    target_link_libraries(ffmpegEncoder.fcgi curl)
+    target_link_libraries(ffmpegEncoder.fcgi fcgi)
+    target_link_libraries (ffmpegEncoder.fcgi Tools)
+target_link_libraries (ffmpegEncoder.fcgi ErrMsg)
+    if(CRYPTO_FOUND)
+	    if (APPLE)
+		    target_link_libraries (ffmpegEncoder.fcgi ${CRYPTO_LIBRARIES})
+	    else()
+		target_link_libraries (ffmpegEncoder.fcgi crypt)
+	    endif()
+    endif()
+    if (ZLIB_FOUND)
+	    target_link_libraries(ffmpegEncoder.fcgi ${ZLIB_LIBRARIES})
+    endif()
+    target_link_libraries (ffmpegEncoder.fcgi pthread)
+    list(APPEND TARGETS ffmpegEncoder.fcgi)
 
-install (TARGETS api.fcgi uploadBinary.cgi DESTINATION bin/cgi)
+
+install (TARGETS api.fcgi uploadBinary.cgi ffmpegEncoder.fcgi DESTINATION bin/cgi)
 

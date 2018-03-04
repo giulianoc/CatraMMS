@@ -21,10 +21,10 @@
 # with the authors.
 
 SET (SOURCES
-	addEncodingProfile.cpp
+	FFMpeg.cpp
 )
-
 SET (HEADERS
+	FFMpeg.h
 )
 
 include_directories ("${PROJECT_SOURCE_DIR}/../usr_local/include")
@@ -32,44 +32,27 @@ include_directories ("${PROJECT_SOURCE_DIR}/../spdlog/include")
 include_directories ("${PROJECT_SOURCE_DIR}/MMSEngine/src")
 if (APPLE)
 	include_directories ("${PROJECT_SOURCE_DIR}/../mysql-connector-c++-1.1.9-macos10.12-x86-64bit/include")
+	include_directories ("/usr/local/Cellar/imagemagick/7.0.7-22/include/ImageMagick-7")
 else()
 	include_directories ("/app/5/ThirdPartySoftware/mysql-connector-c++-1.1.9-linux-ubuntu16.10-x86-64bit/include")
+	include_directories ("/app/7/DevelopmentWorkingArea/usr_local/include/ImageMagick-7")
 endif()
 
-link_directories ("${PROJECT_SOURCE_DIR}/../usr_local/lib")
 if (APPLE)
+	link_directories ("${PROJECT_SOURCE_DIR}/../usr_local/lib")
 	link_directories ("${PROJECT_SOURCE_DIR}/../mysql-connector-c++-1.1.9-macos10.12-x86-64bit/lib")
-else()
-	link_directories ("/app/5/ThirdPartySoftware/mysql-connector-c++-1.1.9-linux-ubuntu16.10-x86-64bit/lib")
 endif()
 
-add_executable(addEncodingProfile ${SOURCES} ${HEADERS})
+add_library (FFMpeg SHARED ${SOURCES} ${HEADERS})
 
-target_link_libraries (addEncodingProfile MMSEngine)
-target_link_libraries (addEncodingProfile FFMpeg)
-target_link_libraries (addEncodingProfile mysqlcppconn)
-target_link_libraries (addEncodingProfile jsoncpp)
-if (APPLE) 
-else()  
-        target_link_libraries (addEncodingProfile Magick++-7.Q16HDRI)
-endif() 
-
-
-#target_link_libraries (addEncodingProfile Scheduler)
-#target_link_libraries (addEncodingProfile PThread)
-target_link_libraries (addEncodingProfile Tools)
-target_link_libraries (addEncodingProfile ErrMsg)
-if(CRYPTO_FOUND)
-	if (APPLE)
-		target_link_libraries (addEncodingProfile ${CRYPTO_LIBRARIES})
-	else()
-		target_link_libraries (addEncodingProfile crypt)
-	endif()
+if (APPLE)
+	target_link_libraries (FFMpeg ErrMsg)
+	target_link_libraries (FFMpeg Tools)
+	target_link_libraries (FFMpeg mysqlcppconn)
+	target_link_libraries (FFMpeg jsoncpp)
+        target_link_libraries (FFMpeg Magick++-7.Q16HDRI)
 endif()
-if (ZLIB_FOUND)
-	target_link_libraries(addEncodingProfile ${ZLIB_LIBRARIES})
-endif()
-target_link_libraries (addEncodingProfile pthread)
 
-install (TARGETS addEncodingProfile DESTINATION bin)
+install (TARGETS FFMpeg DESTINATION lib)
+install (FILES ${HEADERS} DESTINATION include)
 

@@ -13,27 +13,13 @@
 
 #include <fstream>
 #include <sstream>
-#include <regex>
 #include "catralibraries/ProcessUtility.h"
+#include "catralibraries/Convert.h"
 #include "EncoderVideoAudioProxy.h"
 
 
-#ifdef __APPLE__
-#define _ffmpegPath  string("/Users/multi/GestioneProgetti/Development/catrasoftware/usr_local/bin")
-#else
-#define _ffmpegPath  string("/app/7/DevelopmentWorkingArea/usr_local/bin")
-#endif
-
-
-#define _charsToBeReadFromFfmpegErrorOutput 1024
-
 EncoderVideoAudioProxy::EncoderVideoAudioProxy()
 {
-    /*
-    _ffmpegPath = configuration["ffmpeg"].get("path", "XXX").asString();
-    if (_ffmpegPath.back() == '/')
-        _ffmpegPath.pop_back();
-     */
 }
 
 EncoderVideoAudioProxy::~EncoderVideoAudioProxy() 
@@ -41,18 +27,20 @@ EncoderVideoAudioProxy::~EncoderVideoAudioProxy()
 }
 
 void EncoderVideoAudioProxy::setData(
+        Json::Value configuration,
         mutex* mtEncodingJobs,
         EncodingJobStatus* status,
         shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
         shared_ptr<MMSStorage> mmsStorage,
         shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem,
-        #ifdef __FFMPEGLOCALENCODER__
-            int* pffmpegEncoderRunning,
+        #ifdef __LOCALENCODER__
+            int* pRunningEncodingsNumber,
         #endif
         shared_ptr<spdlog::logger> logger
 )
 {
     _logger                 = logger;
+    _configuration          = configuration;
     
     _mtEncodingJobs         = mtEncodingJobs;
     _status                 = status;
@@ -60,19 +48,17 @@ void EncoderVideoAudioProxy::setData(
     _mmsEngineDBFacade      = mmsEngineDBFacade;
     _mmsStorage             = mmsStorage;
     _encodingItem           = encodingItem;
-    _twoPasses              = false;
-    _currentlyAtSecondPass             = false;
     
-    _MP4Encoder            = "FFMPEG";
-    _mpeg2TSEncoder         = "FFMPEG";
-    
-    _outputFfmpegPathFileName   = "";
-    
-    #ifdef __FFMPEGLOCALENCODER__
+    _mp4Encoder             = _configuration["encoding"].get("mp4Encoder", "").asString();
+    _mpeg2TSEncoder         = _configuration["encoding"].get("mpeg2TSEncoder", "").asString();
+        
+    #ifdef __LOCALENCODER__
         _ffmpegMaxCapacity      = 1;
         
-        _pffmpegEncoderRunning  = pffmpegEncoderRunning;
-        (*_pffmpegEncoderRunning)++;
+        _pRunningEncodingsNumber  = pRunningEncodingsNumber;
+        
+        _ffmpeg = make_shared<FFMpeg>(configuration, mmsEngineDBFacade,
+            mmsStorage, logger);
     #endif
 }
 
@@ -82,15 +68,6 @@ void EncoderVideoAudioProxy::operator()()
     string stagingEncodedAssetPathName;
     try
     {
-        #ifdef __FFMPEGLOCALENCODER__
-            if (*_pffmpegEncoderRunning > _ffmpegMaxCapacity)
-            {
-                _logger->info("Max ffmpeg encoder capacity is reached");
-
-                throw MaxConcurrentJobsReached();
-            }
-        #endif
-        
         stagingEncodedAssetPathName = encodeContentVideoAudio();
     }
     catch(MaxConcurrentJobsReached e)
@@ -108,9 +85,6 @@ void EncoderVideoAudioProxy::operator()()
         {
             lock_guard<mutex> locker(*_mtEncodingJobs);
 
-            #ifdef __FFMPEGLOCALENCODER__
-                (*_pffmpegEncoderRunning)--;
-            #endif
             *_status = EncodingJobStatus::Free;
         }
         
@@ -138,9 +112,6 @@ void EncoderVideoAudioProxy::operator()()
         {
             lock_guard<mutex> locker(*_mtEncodingJobs);
 
-            #ifdef __FFMPEGLOCALENCODER__
-                (*_pffmpegEncoderRunning)--;
-            #endif
             *_status = EncodingJobStatus::Free;
         }
         
@@ -171,9 +142,6 @@ void EncoderVideoAudioProxy::operator()()
         {
             lock_guard<mutex> locker(*_mtEncodingJobs);
 
-            #ifdef __FFMPEGLOCALENCODER__
-                (*_pffmpegEncoderRunning)--;
-            #endif
             *_status = EncodingJobStatus::Free;
         }
         
@@ -204,9 +172,6 @@ void EncoderVideoAudioProxy::operator()()
         {
             lock_guard<mutex> locker(*_mtEncodingJobs);
 
-            #ifdef __FFMPEGLOCALENCODER__
-                (*_pffmpegEncoderRunning)--;
-            #endif
             *_status = EncodingJobStatus::Free;
         }
         
@@ -259,9 +224,6 @@ void EncoderVideoAudioProxy::operator()()
         {
             lock_guard<mutex> locker(*_mtEncodingJobs);
 
-            #ifdef __FFMPEGLOCALENCODER__
-                (*_pffmpegEncoderRunning)--;
-            #endif
             *_status = EncodingJobStatus::Free;
         }
         
@@ -288,9 +250,6 @@ void EncoderVideoAudioProxy::operator()()
         {
             lock_guard<mutex> locker(*_mtEncodingJobs);
 
-            #ifdef __FFMPEGLOCALENCODER__
-                (*_pffmpegEncoderRunning)--;
-            #endif
             *_status = EncodingJobStatus::Free;
         }
         
@@ -301,9 +260,6 @@ void EncoderVideoAudioProxy::operator()()
     {
         lock_guard<mutex> locker(*_mtEncodingJobs);
 
-        #ifdef __FFMPEGLOCALENCODER__
-            (*_pffmpegEncoderRunning)--;
-        #endif
         *_status = EncodingJobStatus::Free;
     }        
 }
@@ -314,12 +270,12 @@ string EncoderVideoAudioProxy::encodeContentVideoAudio()
     
     _logger->info(__FILEREF__ + "Creating encoderVideoAudioProxy thread"
         + ", _encodingItem->_encodingProfileTechnology" + to_string(static_cast<int>(_encodingItem->_encodingProfileTechnology))
-        + ", _MP4Encoder: " + _MP4Encoder
+        + ", _mp4Encoder: " + _mp4Encoder
     );
 
     if (
         (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MP4 &&
-            _MP4Encoder == "FFMPEG") ||
+            _mp4Encoder == "FFMPEG") ||
         (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MPEG2_TS &&
             _mpeg2TSEncoder == "FFMPEG") ||
         _encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::WEBM ||
@@ -347,306 +303,36 @@ string EncoderVideoAudioProxy::encodeContentVideoAudio()
     return stagingEncodedAssetPathName;
 }
 
-int64_t EncoderVideoAudioProxy::getVideoOrAudioDurationInMilliSeconds(
-    string mmsAssetPathName)
-{
-    auto logger = spdlog::get("mmsEngineService");
-
-    size_t fileNameIndex = mmsAssetPathName.find_last_of("/");
-    if (fileNameIndex == string::npos)
-    {
-        string errorMessage = __FILEREF__ + "No fileName find in the asset path name"
-                + ", mmsAssetPathName: " + mmsAssetPathName;
-        logger->error(errorMessage);
-        
-        throw runtime_error(errorMessage);
-    }
-    
-    string sourceFileName = mmsAssetPathName.substr(fileNameIndex + 1);
-
-    string      durationPathFileName =
-            string("/tmp/") + sourceFileName + ".duration";
-    
-    /*
-     * ffprobe:
-        "-v quiet": Don't output anything else but the desired raw data value
-        "-print_format": Use a certain format to print out the data
-        "compact=": Use a compact output format
-        "print_section=0": Do not print the section name
-        ":nokey=1": do not print the key of the key:value pair
-        ":escape=csv": escape the value
-        "-show_entries format=duration": Get entries of a field named duration inside a section named format
-    */
-    string ffprobeExecuteCommand = 
-            _ffmpegPath + "/ffprobe "
-            + "-v quiet -print_format compact=print_section=0:nokey=1:escape=csv -show_entries format=duration "
-            + mmsAssetPathName + " "
-            + "> " + durationPathFileName 
-            + " 2>&1"
-            ;
-
-    #ifdef __APPLE__
-        ffprobeExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
-    #endif
-
-    logger->info(__FILEREF__ + "Executing ffprobe command"
-        + ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
-    );
-
-    try
-    {
-        int executeCommandStatus = ProcessUtility:: execute (ffprobeExecuteCommand);
-        if (executeCommandStatus != 0)
-        {
-            string errorMessage = __FILEREF__ + "ffprobe command failed"
-                    + ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
-            ;
-
-            logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-    }
-    catch(exception e)
-    {
-        string lastPartOfFfmpegOutputFile = getLastPartOfFile(
-                durationPathFileName, _charsToBeReadFromFfmpegErrorOutput);
-        string errorMessage = __FILEREF__ + "ffprobe command failed"
-                + ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
-                + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
-        ;
-        logger->error(errorMessage);
-
-        bool exceptionInCaseOfError = false;
-        FileIO::remove(durationPathFileName, exceptionInCaseOfError);
-
-        throw e;
-    }
-
-    int64_t      videoOrAudioDurationInMilliSeconds;
-    {        
-        ifstream durationFile(durationPathFileName);
-        stringstream buffer;
-        buffer << durationFile.rdbuf();
-        
-        logger->info(__FILEREF__ + "Duration found"
-            + ", mmsAssetPathName: " + mmsAssetPathName
-            + ", durationInSeconds: " + buffer.str()
-        );
-
-        double durationInSeconds = atof(buffer.str().c_str());
-        
-        videoOrAudioDurationInMilliSeconds  = durationInSeconds * 1000;
-        
-        bool exceptionInCaseOfError = false;
-        FileIO::remove(durationPathFileName, exceptionInCaseOfError);
-    }
-
-    
-    return videoOrAudioDurationInMilliSeconds;
-}
-
-void EncoderVideoAudioProxy::generateScreenshotToIngest(
-    string imagePathName,
-    double timePositionInSeconds,
-    int sourceImageWidth,
-    int sourceImageHeight,
-    string mmsAssetPathName)
-{
-    auto logger = spdlog::get("mmsEngineService");
-
-    // ffmpeg -y -i [source.wmv] -f mjpeg -ss [10] -vframes 1 -an -s [176x144] [thumbnail_image.jpg]
-    // -y: overwrite output files
-    // -i: input file name
-    // -f: force format
-    // -ss: set the start time offset
-    // -vframes: set the number of video frames to record
-    // -an: disable audio
-    // -s set frame size (WxH or abbreviation)
-
-    size_t extensionIndex = imagePathName.find_last_of("/");
-    if (extensionIndex == string::npos)
-    {
-        string errorMessage = __FILEREF__ + "No extension find in the asset file name"
-                + ", imagePathName: " + imagePathName;
-        logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-    string outputFfmpegPathFileName =
-            string("/tmp/")
-            + imagePathName.substr(extensionIndex + 1)
-            + ".generateScreenshot.log"
-            ;
-    
-    string ffmpegExecuteCommand = 
-            _ffmpegPath + "/ffmpeg "
-            + "-y -i " + mmsAssetPathName + " "
-            + "-f mjpeg -ss " + to_string(timePositionInSeconds) + " "
-            + "-vframes 1 -an -s " + to_string(sourceImageWidth) + "x" + to_string(sourceImageHeight) + " "
-            + imagePathName + " "
-            + "> " + outputFfmpegPathFileName + " "
-            + "2>&1"
-            ;
-
-    #ifdef __APPLE__
-        ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
-    #endif
-
-    logger->info(__FILEREF__ + "Executing ffmpeg command"
-        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-    );
-
-    try
-    {
-        int executeCommandStatus = ProcessUtility::execute (ffmpegExecuteCommand);
-        if (executeCommandStatus != 0)
-        {
-            string errorMessage = __FILEREF__ + "ffmpeg command failed"
-                    + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-            ;
-
-            logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-    }
-    catch(exception e)
-    {
-        string lastPartOfFfmpegOutputFile = getLastPartOfFile(
-                outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
-        string errorMessage = __FILEREF__ + "ffmpeg command failed"
-                + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
-        ;
-        logger->error(errorMessage);
-
-        bool exceptionInCaseOfError = false;
-        FileIO::remove(outputFfmpegPathFileName, exceptionInCaseOfError);
-
-        throw e;
-    }
-
-    bool inCaseOfLinkHasItToBeRead = false;
-    unsigned long ulFileSize = FileIO::getFileSizeInBytes (
-        imagePathName, inCaseOfLinkHasItToBeRead);
-
-    if (ulFileSize == 0)
-    {
-        string errorMessage = __FILEREF__ + "ffmpeg command failed, image file size is 0"
-            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-        ;
-        logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }    
-}
-
 int EncoderVideoAudioProxy::getEncodingProgress()
 {
-    int encodingPercentage;
-
-
-    try
-    {
-        if (!FileIO::isFileExisting(_outputFfmpegPathFileName.c_str()))
+    int encodingProgress = 0;
+    
+    #ifdef __LOCALENCODER__
+        try
         {
-            _logger->info(__FILEREF__ + "Encoding status not available"
-                + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+            encodingProgress = _ffmpeg->getEncodingProgress();
+        }
+        catch(FFMpegEncodingStatusNotAvailable e)
+        {
+            _logger->error(__FILEREF__ + "_ffmpeg->getEncodingProgress failed"
+                + ", e.what(): " + e.what()
             );
 
             throw EncodingStatusNotAvailable();
-        }
-
-        string ffmpegEncodingStatus;
-        try
-        {
-            int lastCharsToBeRead = 512;
-            
-            ffmpegEncodingStatus = getLastPartOfFile(_outputFfmpegPathFileName, lastCharsToBeRead);
         }
         catch(exception e)
         {
-            _logger->error(__FILEREF__ + "Failure reading the encoding status file"
-                + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+            _logger->error(__FILEREF__ + "_ffmpeg->getEncodingProgress failed"
+                + ", e.what(): " + e.what()
             );
 
-            throw EncodingStatusNotAvailable();
+            throw e;
         }
+    #else
+        return 0;       // call http rest
+    #endif
 
-        {
-            // frame= 2315 fps= 98 q=27.0 q=28.0 size=    6144kB time=00:01:32.35 bitrate= 545.0kbits/s speed=3.93x    
-            
-            smatch m;   // typedef std:match_result<string>
-
-            regex e("time=([^ ]+)");
-
-            bool match = regex_search(ffmpegEncodingStatus, m, e);
-
-            // m is where the result is saved
-            // we will have three results: the entire match, the first submatch, the second submatch
-            // giving the following input: <email>user@gmail.com<end>
-            // m.prefix(): everything is in front of the matched string (<email> in the previous example)
-            // m.suffix(): everything is after the matched string (<end> in the previous example)
-
-            /*
-            _logger->info(string("m.size(): ") + to_string(m.size()) + ", ffmpegEncodingStatus: " + ffmpegEncodingStatus);
-            for (int n = 0; n < m.size(); n++)
-            {
-                _logger->info(string("m[") + to_string(n) + "]: str()=" + m[n].str());
-            }
-            cout << "m.prefix().str(): " << m.prefix().str() << endl;
-            cout << "m.suffix().str(): " << m.suffix().str() << endl;
-             */
-
-            if (m.size() >= 2)
-            {
-                string duration = m[1].str();   // 00:01:47.87
-
-                stringstream ss(duration);
-                string hours;
-                string minutes;
-                string seconds;
-                string roughMicroSeconds;    // microseconds???
-                char delim = ':';
-
-                getline(ss, hours, delim); 
-                getline(ss, minutes, delim); 
-
-                delim = '.';
-                getline(ss, seconds, delim); 
-                getline(ss, roughMicroSeconds, delim); 
-
-                int iHours = atoi(hours.c_str());
-                int iMinutes = atoi(minutes.c_str());
-                int iSeconds = atoi(seconds.c_str());
-                int iRoughMicroSeconds = atoi(roughMicroSeconds.c_str());
-
-                double encodingSeconds = (iHours * 3600) + (iMinutes * 60) + (iSeconds) + (iRoughMicroSeconds / 100);
-                double currentTimeInMilliSeconds = (encodingSeconds * 1000) + (_currentlyAtSecondPass ? _encodingItem->_durationInMilliSeconds : 0);
-                //  encodingSeconds : _encodingItem->videoOrAudioDurationInMilliSeconds = x : 100
-                
-                encodingPercentage = 100 * currentTimeInMilliSeconds / (_encodingItem->_durationInMilliSeconds * (_twoPasses ? 2 : 1));
-
-                _logger->info(__FILEREF__ + "Encoding status"
-                    + ", duration: " + duration
-                    + ", encodingSeconds: " + to_string(encodingSeconds)
-                    + ", _twoPasses: " + to_string(_twoPasses)
-                    + ", _currentlyAtSecondPass: " + to_string(_currentlyAtSecondPass)
-                    + ", currentTimeInMilliSeconds: " + to_string(currentTimeInMilliSeconds)
-                    + ", _encodingItem->_durationInMilliSeconds: " + to_string(_encodingItem->_durationInMilliSeconds)
-                    + ", encodingPercentage: " + to_string(encodingPercentage)
-                );
-            }
-        }
-    }
-    catch(...)
-    {
-        throw EncodingStatusNotAvailable();
-    }
-
-    
-    return encodingPercentage;
+    return encodingProgress;
 }
 
 string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
@@ -655,6 +341,17 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
     string stagingEncodedAssetPathName;
     string encodedFileName;
     string mmsSourceAssetPathName;
+
+    
+    #ifdef __LOCALENCODER__
+        if (*_pRunningEncodingsNumber > _ffmpegMaxCapacity)
+        {
+            _logger->info("Max ffmpeg encoder capacity is reached");
+
+            throw MaxConcurrentJobsReached();
+        }
+    #endif
+
     // stagingEncodedAssetPathName preparation
     {
         mmsSourceAssetPathName = _mmsStorage->getMMSAssetPathName(
@@ -723,889 +420,200 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
         }
     }
 
-    
-    // encoding
-    try
-    {
-        bool segmentFileFormat;    
-        string ffmpegFileFormatParameter = "";
+    #ifdef __LOCALENCODER__
+        (*_pRunningEncodingsNumber)++;
 
-        string ffmpegVideoCodecParameter = "";
-        string ffmpegVideoProfileParameter = "";
-        string ffmpegVideoResolutionParameter = "";
-        string ffmpegVideoBitRateParameter = "";
-        string ffmpegVideoMaxRateParameter = "";
-        string ffmpegVideoBufSizeParameter = "";
-        string ffmpegVideoFrameRateParameter = "";
-        string ffmpegVideoKeyFramesRateParameter = "";
-
-        string ffmpegAudioCodecParameter = "";
-        string ffmpegAudioBitRateParameter = "";
-
-        settingFfmpegPatameters(
-            stagingEncodedAssetPathName,
-
-            segmentFileFormat,
-            ffmpegFileFormatParameter,
-
-            ffmpegVideoCodecParameter,
-            ffmpegVideoProfileParameter,
-            ffmpegVideoResolutionParameter,
-            ffmpegVideoBitRateParameter,
-            _twoPasses,
-            ffmpegVideoMaxRateParameter,
-            ffmpegVideoBufSizeParameter,
-            ffmpegVideoFrameRateParameter,
-            ffmpegVideoKeyFramesRateParameter,
-
-            ffmpegAudioCodecParameter,
-            ffmpegAudioBitRateParameter
-        );
-
-        string ffmpegoutputPathName = string("")
-                + to_string(_encodingItem->_physicalPathKey)
-                + ".ffmpegoutput";
-        _outputFfmpegPathFileName = _mmsStorage->getStagingAssetPathName (
-            _encodingItem->_customer->_directoryName,
-            _encodingItem->_relativePath,
-            ffmpegoutputPathName,
-            -1,         // long long llMediaItemKey,
-            -1,         // long long llPhysicalPathKey,
-            true // removeLinuxPathIfExist
-        );
-
-        if (segmentFileFormat)
+        try
         {
-            string stagingEncodedSegmentAssetPathName =
-                    stagingEncodedAssetPathName 
-                    + "/"
-                    + encodedFileName
-                    + "_%04d.ts"
-            ;
+            _ffmpeg->encodeContent(
+                mmsSourceAssetPathName,
+                _encodingItem->_durationInMilliSeconds,
+                encodedFileName,
+                stagingEncodedAssetPathName,
+                _encodingItem->_details,
+                _encodingItem->_contentType,
+                _encodingItem->_physicalPathKey,
+                _encodingItem->_customer->_directoryName,
+                _encodingItem->_relativePath,
+                _encodingItem->_encodingJobKey,
+                _encodingItem->_ingestionJobKey);
 
-            string ffmpegExecuteCommand =
-                    _ffmpegPath + "/ffmpeg "
-                    + "-y -i " + mmsSourceAssetPathName + " "
-                    + ffmpegVideoCodecParameter
-                    + ffmpegVideoProfileParameter
-                    + "-preset slow "
-                    + ffmpegVideoBitRateParameter
-                    + ffmpegVideoMaxRateParameter
-                    + ffmpegVideoBufSizeParameter
-                    + ffmpegVideoFrameRateParameter
-                    + ffmpegVideoKeyFramesRateParameter
-                    + ffmpegVideoResolutionParameter
-                    + "-threads 0 "
-                    + ffmpegAudioCodecParameter
-                    + ffmpegAudioBitRateParameter
-                    + ffmpegFileFormatParameter
-                    + stagingEncodedSegmentAssetPathName + " "
-                    + "> " + _outputFfmpegPathFileName + " "
-                    + "2>&1"
-            ;
-
-            #ifdef __APPLE__
-                ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
-            #endif
-
-            _logger->info(__FILEREF__ + "Executing ffmpeg command"
-                + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-            );
-
-            try
-            {
-                int executeCommandStatus = ProcessUtility:: execute (ffmpegExecuteCommand);
-                if (executeCommandStatus != 0)
-                {
-                    string errorMessage = __FILEREF__ + "ffmpeg command failed"
-                            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                    ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }
-            }
-            catch(exception e)
-            {
-                string lastPartOfFfmpegOutputFile = getLastPartOfFile(
-                        _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
-                string errorMessage = __FILEREF__ + "ffmpeg command failed"
-                        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                        + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
-                ;
-                _logger->error(errorMessage);
-
-                bool exceptionInCaseOfError = false;
-                FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
-
-                throw e;
-            }
-
-            bool exceptionInCaseOfError = false;
-            FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
-
-            _logger->info(__FILEREF__ + "Encoded file generated"
+            (*_pRunningEncodingsNumber)++;
+        }
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + "_ffmpeg->encodeContent failed"
+                + ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
+                + ", encodedFileName: " + encodedFileName
                 + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-            );
-
-            // changes to be done to the manifest, see EncoderThread.cpp
-        }
-        else
-        {
-            string ffmpegExecuteCommand;
-            if (_twoPasses)
-            {
-                string passLogFileName = string("")
-                    + to_string(_encodingItem->_physicalPathKey)
-                    + "_"
-                    + encodedFileName
-                    + ".passlog"
-                    ;
-
-                // bool removeLinuxPathIfExist = true;
-                string ffmpegPassLogPathFileName = _mmsStorage->getStagingAssetPathName (
-                    _encodingItem->_customer->_directoryName,
-                    _encodingItem->_relativePath,
-                    passLogFileName,
-                    -1,         // long long llMediaItemKey,
-                    -1,         // long long llPhysicalPathKey,
-                    true    // removeLinuxPathIfExist
-                );
-
-                ffmpegExecuteCommand =
-                        _ffmpegPath + "/ffmpeg "
-                        + "-y -i " + mmsSourceAssetPathName + " "
-                        + ffmpegVideoCodecParameter
-                        + ffmpegVideoProfileParameter
-                        + "-preset slow "
-                        + ffmpegVideoBitRateParameter
-                        + ffmpegVideoMaxRateParameter
-                        + ffmpegVideoBufSizeParameter
-                        + ffmpegVideoFrameRateParameter
-                        + ffmpegVideoKeyFramesRateParameter
-                        + ffmpegVideoResolutionParameter
-                        + "-threads 0 "
-                        + "-pass 1 -passlogfile " + ffmpegPassLogPathFileName + " "
-                        + "-an "
-                        + ffmpegFileFormatParameter
-                        + "/dev/null "
-                        + "> " + _outputFfmpegPathFileName + " "
-                        + "2>&1"
-                ;
-
-                #ifdef __APPLE__
-                    ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
-                #endif
-
-                _logger->info(__FILEREF__ + "Executing ffmpeg command"
-                    + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                );
-
-                try
-                {
-                    int executeCommandStatus = ProcessUtility:: execute (ffmpegExecuteCommand);
-                    if (executeCommandStatus != 0)
-                    {
-                        string errorMessage = __FILEREF__ + "ffmpeg command failed"
-                                + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                        ;            
-                        _logger->error(errorMessage);
-
-                        throw runtime_error(errorMessage);
-                    }
-                }
-                catch(exception e)
-                {
-                    string lastPartOfFfmpegOutputFile = getLastPartOfFile(
-                            _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
-                    string errorMessage = __FILEREF__ + "ffmpeg command failed"
-                            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                            + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
-                    ;
-                    _logger->error(errorMessage);
-
-                    bool exceptionInCaseOfError = false;
-                    FileIO::remove(ffmpegPassLogPathFileName, exceptionInCaseOfError);
-                    FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
-
-                    throw e;
-                }
-
-                ffmpegExecuteCommand =
-                        _ffmpegPath + "/ffmpeg "
-                        + "-y -i " + mmsSourceAssetPathName + " "
-                        + ffmpegVideoCodecParameter
-                        + ffmpegVideoProfileParameter
-                        + "-preset slow "
-                        + ffmpegVideoBitRateParameter
-                        + ffmpegVideoMaxRateParameter
-                        + ffmpegVideoBufSizeParameter
-                        + ffmpegVideoFrameRateParameter
-                        + ffmpegVideoKeyFramesRateParameter
-                        + ffmpegVideoResolutionParameter
-                        + "-threads 0 "
-                        + "-pass 2 -passlogfile " + ffmpegPassLogPathFileName + " "
-                        + ffmpegAudioCodecParameter
-                        + ffmpegAudioBitRateParameter
-                        + ffmpegFileFormatParameter
-                        + stagingEncodedAssetPathName + " "
-                        + "> " + _outputFfmpegPathFileName 
-                        + " 2>&1"
-                ;
-
-                #ifdef __APPLE__
-                    ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
-                #endif
-
-                _logger->info(__FILEREF__ + "Executing ffmpeg command"
-                    + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                );
-
-                _currentlyAtSecondPass = true;
-                try
-                {
-                    int executeCommandStatus = ProcessUtility:: execute (ffmpegExecuteCommand);
-                    if (executeCommandStatus != 0)
-                    {
-                        string errorMessage = __FILEREF__ + "ffmpeg command failed"
-                                + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                        ;            
-                        _logger->error(errorMessage);
-
-                        throw runtime_error(errorMessage);
-                    }
-                }
-                catch(exception e)
-                {
-                    string lastPartOfFfmpegOutputFile = getLastPartOfFile(
-                            _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
-                    string errorMessage = __FILEREF__ + "ffmpeg command failed"
-                            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                            + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
-                    ;
-                    _logger->error(errorMessage);
-
-                    bool exceptionInCaseOfError = false;
-                    FileIO::remove(ffmpegPassLogPathFileName, exceptionInCaseOfError);
-                    FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
-
-                    throw e;
-                }
-
-                bool exceptionInCaseOfError = false;
-                FileIO::remove(ffmpegPassLogPathFileName, exceptionInCaseOfError);
-                FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
-            }
-            else
-            {
-                ffmpegExecuteCommand =
-                        _ffmpegPath + "/ffmpeg "
-                        + "-y -i " + mmsSourceAssetPathName + " "
-                        + ffmpegVideoCodecParameter
-                        + ffmpegVideoProfileParameter
-                        + "-preset slow "
-                        + ffmpegVideoBitRateParameter
-                        + ffmpegVideoMaxRateParameter
-                        + ffmpegVideoBufSizeParameter
-                        + ffmpegVideoFrameRateParameter
-                        + ffmpegVideoKeyFramesRateParameter
-                        + ffmpegVideoResolutionParameter
-                        + "-threads 0 "
-                        + ffmpegAudioCodecParameter
-                        + ffmpegAudioBitRateParameter
-                        + ffmpegFileFormatParameter
-                        + stagingEncodedAssetPathName + " "
-                        + "> " + _outputFfmpegPathFileName 
-                        + " 2>&1"
-                ;
-
-                #ifdef __APPLE__
-                    ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
-                #endif
-
-                _logger->info(__FILEREF__ + "Executing ffmpeg command"
-                    + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                );
-
-                try
-                {
-                    int executeCommandStatus = ProcessUtility:: execute (ffmpegExecuteCommand);
-                    if (executeCommandStatus != 0)
-                    {
-                        string errorMessage = __FILEREF__ + "ffmpeg command failed"
-                                + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                        ;            
-                        _logger->error(errorMessage);
-
-                        throw runtime_error(errorMessage);
-                    }
-                }
-                catch(exception e)
-                {
-                    string lastPartOfFfmpegOutputFile = getLastPartOfFile(
-                            _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
-                    string errorMessage = __FILEREF__ + "ffmpeg command failed"
-                            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                            + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
-                    ;
-                    _logger->error(errorMessage);
-
-                    bool exceptionInCaseOfError = false;
-                    FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
-
-                    throw e;
-                }
-
-                bool exceptionInCaseOfError = false;
-                FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
-            }
-
-            _logger->info(__FILEREF__ + "Encoded file generated"
-                + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-            );
-
-            bool inCaseOfLinkHasItToBeRead = false;
-            unsigned long ulFileSize = FileIO::getFileSizeInBytes (
-                stagingEncodedAssetPathName, inCaseOfLinkHasItToBeRead);
-
-            if (ulFileSize == 0)
-            {
-                string errorMessage = __FILEREF__ + "ffmpeg command failed, encoded file size is 0"
-                        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                ;
-
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-        } 
-    }
-    catch(exception e)
-    {
-        _logger->error(__FILEREF__ + "ffmpeg encode failed"
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_physicalPathKey: " + to_string(_encodingItem->_physicalPathKey)
-            + ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
-            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-        );
-
-        FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
-
-        _logger->info(__FILEREF__ + "Remove"
-            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-        );
-
-        // file in case of .3gp content OR directory in case of IPhone content
-        if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
-        {
-            Boolean_t bRemoveRecursively = true;
-            FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
-        }
-        else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
-        {
-            FileIO::remove(stagingEncodedAssetPathName);
-        }
-                
-        throw e;
-    }
-    
-    return stagingEncodedAssetPathName;
-}
-
-string EncoderVideoAudioProxy::getLastPartOfFile(
-    string pathFileName, int lastCharsToBeRead)
-{
-    string lastPartOfFile = "";
-    char* buffer = nullptr;
-
-    auto logger = spdlog::get("mmsEngineService");
-
-    try
-    {
-        ifstream ifPathFileName(pathFileName);
-        if (ifPathFileName) 
-        {
-            int         charsToBeRead;
-            
-            // get length of file:
-            ifPathFileName.seekg (0, ifPathFileName.end);
-            int fileSize = ifPathFileName.tellg();
-            if (fileSize >= lastCharsToBeRead)
-            {
-                ifPathFileName.seekg (fileSize - lastCharsToBeRead, ifPathFileName.beg);
-                charsToBeRead = lastCharsToBeRead;
-            }
-            else
-            {
-                ifPathFileName.seekg (0, ifPathFileName.beg);
-                charsToBeRead = fileSize;
-            }
-
-            buffer = new char [charsToBeRead];
-            ifPathFileName.read (buffer, charsToBeRead);
-            if (ifPathFileName)
-            {
-                // all characters read successfully
-                lastPartOfFile.assign(buffer, charsToBeRead);                
-            }
-            else
-            {
-                // error: only is.gcount() could be read";
-                lastPartOfFile.assign(buffer, ifPathFileName.gcount());                
-            }
-            ifPathFileName.close();
-
-            delete[] buffer;
-        }
-    }
-    catch(exception e)
-    {
-        if (buffer != nullptr)
-            delete [] buffer;
-
-        logger->error("getLastPartOfFile failed");        
-    }
-
-    return lastPartOfFile;
-}
-
-void EncoderVideoAudioProxy::settingFfmpegPatameters(
-    string stagingEncodedAssetPathName,
-        
-    bool& segmentFileFormat,
-    string& ffmpegFileFormatParameter,
-
-    string& ffmpegVideoCodecParameter,
-    string& ffmpegVideoProfileParameter,
-    string& ffmpegVideoResolutionParameter,
-    string& ffmpegVideoBitRateParameter,
-    bool& twoPasses,
-    string& ffmpegVideoMaxRateParameter,
-    string& ffmpegVideoBufSizeParameter,
-    string& ffmpegVideoFrameRateParameter,
-    string& ffmpegVideoKeyFramesRateParameter,
-
-    string& ffmpegAudioCodecParameter,
-    string& ffmpegAudioBitRateParameter
-)
-{
-    string field;
-    Json::Value encodingProfileRoot;
-    try
-    {
-        Json::CharReaderBuilder builder;
-        Json::CharReader* reader = builder.newCharReader();
-        string errors;
-
-        bool parsingSuccessful = reader->parse(_encodingItem->_details.c_str(),
-                _encodingItem->_details.c_str() + _encodingItem->_details.size(), 
-                &encodingProfileRoot, &errors);
-        delete reader;
-
-        if (!parsingSuccessful)
-        {
-            string errorMessage = __FILEREF__ + "failed to parse the encoder details"
-                    + ", details: " + _encodingItem->_details;
-            _logger->error(errorMessage);
-            
-            throw runtime_error(errorMessage);
-        }
-    }
-    catch(...)
-    {
-        throw runtime_error(string("wrong encoding profile json format")
                 + ", _encodingItem->_details: " + _encodingItem->_details
-                );
-    }
-
-    // fileFormat
-    string fileFormat;
-    {
-        field = "fileFormat";
-        if (!_mmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
-        {
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + field;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-
-        fileFormat = encodingProfileRoot.get(field, "XXX").asString();
-
-        encodingFileFormatValidation(fileFormat);
-        
-        if (fileFormat == "segment")
-        {
-            segmentFileFormat = true;
+                + ", _encodingItem->_contentType: " + MMSEngineDBFacade::toString(_encodingItem->_contentType)
+                + ", _encodingItem->_physicalPathKey: " + to_string(_encodingItem->_physicalPathKey)
+                + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            );
             
-            string stagingManifestAssetPathName =
-                    stagingEncodedAssetPathName
-                    + "/index.m3u8";
+            (*_pRunningEncodingsNumber)++;
             
-            ffmpegFileFormatParameter =
-                    "-vbsf h264_mp4toannexb "
-                    "-flags "
-                    "-global_header "
-                    "-map 0 "
-                    "-f segment "
-                    "-segment_time 10 "
-                    "-segment_list " + stagingManifestAssetPathName + " "
+            throw e;
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "_ffmpeg->encodeContent failed"
+                + ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
+                + ", encodedFileName: " + encodedFileName
+                + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+                + ", _encodingItem->_details: " + _encodingItem->_details
+                + ", _encodingItem->_contentType: " + MMSEngineDBFacade::toString(_encodingItem->_contentType)
+                + ", _encodingItem->_physicalPathKey: " + to_string(_encodingItem->_physicalPathKey)
+                + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            );
+            
+            (*_pRunningEncodingsNumber)++;
+            
+            throw e;
+        }
+    #else
+        string ffmpegEncoderURL;
+		try
+		{
+            string ffmpegEncoderHost = _configuration["ffmpeg"].get("encoderHost", "").asString();
+            int ffmpegEncoderPort = _configuration["ffmpeg"].get("encoderPort", "").asInt();
+            ffmpegEncoderURI = _configuration["ffmpeg"].get("encoderURI", "").asString();
+            string ffmpegEncoderURL = 
+                    string("http://")
+                    + ffmpegEncoderHost + ":"
+                    + to_string(ffmpegEncoderPort)
+                    + ffmpegEncoderURI
             ;
-        }
-        else
-        {
-            segmentFileFormat = false;
-
-            ffmpegFileFormatParameter =
-                    " -f " + fileFormat + " "
-            ;
-        }
-    }
-
-    if (_encodingItem->_contentType == MMSEngineDBFacade::ContentType::Video)
-    {
-        field = "video";
-        if (!_mmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
-        {
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + field;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-
-        Json::Value videoRoot = encodingProfileRoot[field]; 
-
-        // codec
-        string codec;
-        {
-            field = "codec";
-            if (!_mmsEngineDBFacade->isMetadataPresent(videoRoot, field))
+            string body;
             {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                        + ", Field: " + field;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-
-            codec = videoRoot.get(field, "XXX").asString();
-
-            ffmpeg_encodingVideoCodecValidation(codec);
-
-            ffmpegVideoCodecParameter   =
-                    "-codec:v " + codec + " "
-            ;
-        }
-
-        // profile
-        {
-            field = "profile";
-            if (_mmsEngineDBFacade->isMetadataPresent(videoRoot, field))
-            {
-                string profile = videoRoot.get(field, "XXX").asString();
-
-                ffmpeg_encodingVideoProfileValidation(codec, profile);
-                if (codec == "libx264")
+                Json::Value encodingMedatada;
+                
+                encodingMedatada["mmsSourceAssetPathName"] = mmsSourceAssetPathName;
+                encodingMedatada["durationInMilliSeconds"] = _encodingItem->_durationInMilliSeconds;
+                encodingMedatada["encodedFileName"] = encodedFileName;
+                encodingMedatada["stagingEncodedAssetPathName"] = stagingEncodedAssetPathName;
+                Json::Value encodingDetails;
                 {
-                    ffmpegVideoProfileParameter =
-                            "-profile:v " + profile + " "
-                    ;
-                }
-                else if (codec == "libvpx")
-                {
-                    ffmpegVideoProfileParameter =
-                            "-quality " + profile + " "
-                    ;
-                }
-                else
-                {
-                    string errorMessage = __FILEREF__ + "codec is wrong"
-                            + ", codec: " + codec;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }
-            }
-        }
-
-        // resolution
-        {
-            field = "width";
-            if (!_mmsEngineDBFacade->isMetadataPresent(videoRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                        + ", Field: " + field;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-            string width = videoRoot.get(field, "XXX").asString();
-            if (width == "-1" && codec == "libx264")
-                width   = "-2";     // h264 requires always a even width/height
-        
-            field = "height";
-            if (!_mmsEngineDBFacade->isMetadataPresent(videoRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                        + ", Field: " + field;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-            string height = videoRoot.get(field, "XXX").asString();
-            if (height == "-1" && codec == "libx264")
-                height   = "-2";     // h264 requires always a even width/height
-
-            ffmpegVideoResolutionParameter =
-                    "-vf scale=" + width + ":" + height + " "
-            ;
-        }
-
-        // bitRate
-        {
-            field = "bitRate";
-            if (!_mmsEngineDBFacade->isMetadataPresent(videoRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                        + ", Field: " + field;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-
-            string bitRate = videoRoot.get(field, "XXX").asString();
-
-            ffmpegVideoBitRateParameter =
-                    "-b:v " + bitRate + " "
-            ;
-        }
-
-        // bitRate
-        {
-            field = "twoPasses";
-            if (!_mmsEngineDBFacade->isMetadataPresent(videoRoot, field) 
-                    && fileFormat != "segment") // twoPasses is used ONLY if it is NOT segment
-            {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                        + ", Field: " + field;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-
-            if (fileFormat != "segment")
-                twoPasses = videoRoot.get(field, "XXX").asBool();
-        }
-
-        // maxRate
-        {
-            field = "maxRate";
-            if (_mmsEngineDBFacade->isMetadataPresent(videoRoot, field))
-            {
-                string maxRate = videoRoot.get(field, "XXX").asString();
-
-                ffmpegVideoMaxRateParameter =
-                        "-maxrate " + maxRate + " "
-                ;
-            }
-        }
-
-        // bufSize
-        {
-            field = "bufSize";
-            if (_mmsEngineDBFacade->isMetadataPresent(videoRoot, field))
-            {
-                string bufSize = videoRoot.get(field, "XXX").asString();
-
-                ffmpegVideoBufSizeParameter =
-                        "-bufsize " + bufSize + " "
-                ;
-            }
-        }
-
-        /*
-        // frameRate
-        {
-            field = "frameRate";
-            if (_mmsEngineDBFacade->isMetadataPresent(videoRoot, field))
-            {
-                string frameRate = videoRoot.get(field, "XXX").asString();
-
-                int iFrameRate = stoi(frameRate);
-
-                ffmpegVideoFrameRateParameter =
-                        "-r " + frameRate + " "
-                ;
-
-                // keyFrameIntervalInSeconds
-                {
-                    field = "keyFrameIntervalInSeconds";
-                    if (_mmsEngineDBFacade->isMetadataPresent(videoRoot, field))
+                    try
                     {
-                        string keyFrameIntervalInSeconds = videoRoot.get(field, "XXX").asString();
+                        Json::CharReaderBuilder builder;
+                        Json::CharReader* reader = builder.newCharReader();
+                        string errors;
 
-                        int iKeyFrameIntervalInSeconds = stoi(keyFrameIntervalInSeconds);
+                        bool parsingSuccessful = reader->parse(_encodingItem->_details.c_str(),
+                                _encodingItem->_details.c_str() + _encodingItem->_details.size(), 
+                                &encodingDetails, &errors);
+                        delete reader;
 
-                        ffmpegVideoKeyFramesRateParameter =
-                                "-g " + to_string(iFrameRate * iKeyFrameIntervalInSeconds) + " "
-                        ;
+                        if (!parsingSuccessful)
+                        {
+                            string errorMessage = __FILEREF__ + "failed to parse the _encodingItem->_details"
+                                    + ", _encodingItem->_details: " + _encodingItem->_details;
+                            _logger->error(errorMessage);
+
+                            throw runtime_error(errorMessage);
+                        }
+                    }
+                    catch(...)
+                    {
+                        string errorMessage = string("_encodingItem->_details json is not well format")
+                                + ", _encodingItem->_details: " + _encodingItem->_details
+                                ;
+                        _logger->error(__FILEREF__ + errorMessage);
+
+                        throw runtime_error(errorMessage);
                     }
                 }
+                encodingMedatada["encodingProfileDetails"] = encodingDetails;
+                encodingMedatada["contentType"] = MMSEngineDBFacade::toString(_encodingItem->_contentType);
+                encodingMedatada["physicalPathKey"] = _encodingItem->_physicalPathKey;
+                encodingMedatada["customerDirectoryName"] = _encodingItem->_customer->_directoryName;
+                encodingMedatada["relativePath"] = _encodingItem->_relativePath;
+                encodingMedatada["encodingJobKey"] = _encodingItem->_encodingJobKey;
+                encodingMedatada["ingestionJobKey"] = _encodingItem->_ingestionJobKey;
+
+                {
+                    Json::StreamWriterBuilder wbuilder;
+
+                    body = Json::writeString(wbuilder, encodingMedatada);
+                }
             }
-        }
-         */
-    }
-    
-    if (_encodingItem->_contentType == MMSEngineDBFacade::ContentType::Video ||
-            _encodingItem->_contentType == MMSEngineDBFacade::ContentType::Audio)
-    {
-        field = "audio";
-        if (!_mmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
-        {
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + field;
-            _logger->error(errorMessage);
+            
+            list<string> header;
 
-            throw runtime_error(errorMessage);
-        }
-
-        Json::Value audioRoot = encodingProfileRoot[field]; 
-
-        // codec
-        {
-            field = "codec";
-            if (!_mmsEngineDBFacade->isMetadataPresent(audioRoot, field))
+            header.push_back("Content-Type: application/json");
             {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                        + ", Field: " + field;
-                _logger->error(errorMessage);
+                string encoderUser = _configuration["ffmpeg"].get("encoderUser", "").asString();
+                string encoderPassword = _configuration["ffmpeg"].get("encoderPassword", "").asString();
+                string userPasswordEncoded = Convert::base64_encode(encoderUser + ":" + encoderPassword);
+                string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
 
-                throw runtime_error(errorMessage);
+                header.push_back(basicAuthorization);
             }
+            
+			curlpp::Cleanup cleaner;
+			curlpp::Easy request;
 
-            string codec = audioRoot.get(field, "XXX").asString();
+			// Setting the URL to retrive.
+			request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
 
-            ffmpeg_encodingAudioCodecValidation(codec);
+            request.setOpt(new curlpp::options::HttpHeader(header));
+            request.setOpt(new curlpp::options::PostFields(body));
+            request.setOpt(new curlpp::options::PostFieldSize(body.length()));
 
-            ffmpegAudioCodecParameter   =
-                    "-acodec " + codec + " "
-            ;
-        }
+            ostringstream response;
+            request.setOpt(new curlpp::options::WriteStream(&response));
 
-        // bitRate
+            chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
+
+			_logger->info(__FILEREF__ + "Encoding media file"
+				+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
+				+ ", body: " + body
+			);
+			request.perform();
+            chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
+			_logger->info(__FILEREF__ + "Encoded media file"
+				+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
+				+ ", body: " + body
+				+ ", encodingDuration (secs): " + to_string(chrono::duration<seconds>(endEncoding - startEncoding))
+			);
+		}
+        catch (curlpp::LogicError & e) 
         {
-            field = "bitRate";
-            if (!_mmsEngineDBFacade->isMetadataPresent(audioRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                        + ", Field: " + field;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-
-            string bitRate = audioRoot.get(field, "XXX").asString();
-
-            ffmpegAudioBitRateParameter =
-                    "-b:a " + bitRate + " "
-            ;
+            _logger->error(__FILEREF__ + "Encoding URL failed (LogicError)"
+                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+                + ", exception: " + e.what()
+            );
+            
+            throw e;
         }
-    }
-}
-
-void EncoderVideoAudioProxy::encodingFileFormatValidation(string fileFormat)
-{    
-    if (fileFormat != "3gp" 
-            && fileFormat != "mp4" 
-            && fileFormat != "webm" 
-            && fileFormat != "segment"
-            )
-    {
-        string errorMessage = __FILEREF__ + "fileFormat is wrong"
-                + ", fileFormat: " + fileFormat;
-
-        auto logger = spdlog::get("mmsEngineService");
-        logger->error(errorMessage);
-        
-        throw runtime_error(errorMessage);
-    }
-}
-
-void EncoderVideoAudioProxy::ffmpeg_encodingVideoCodecValidation(string codec)
-{    
-    if (codec != "libx264" && codec != "libvpx")
-    {
-        string errorMessage = __FILEREF__ + "Video codec is wrong"
-                + ", codec: " + codec;
-
-        auto logger = spdlog::get("mmsEngineService");
-        logger->error(errorMessage);
-        
-        throw runtime_error(errorMessage);
-    }
-}
-
-void EncoderVideoAudioProxy::ffmpeg_encodingVideoProfileValidation(
-    string codec, string profile)
-{
-    auto logger = spdlog::get("mmsEngineService");
-
-    if (codec == "libx264")
-    {
-        if (profile != "high" && profile != "baseline" && profile != "main")
+        catch (curlpp::RuntimeError & e) 
         {
-            string errorMessage = __FILEREF__ + "Profile is wrong"
-                    + ", codec: " + codec
-                    + ", profile: " + profile;
+            _logger->error(__FILEREF__ + "Encoding URL failed (RuntimeError)"
+                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+                + ", exception: " + e.what()
+            );
 
-            logger->error(errorMessage);
-        
-            throw runtime_error(errorMessage);
+            throw e;
         }
-    }
-    else if (codec == "libvpx")
-    {
-        if (profile != "best" && profile != "good")
+        catch (exception e)
         {
-            string errorMessage = __FILEREF__ + "Profile is wrong"
-                    + ", codec: " + codec
-                    + ", profile: " + profile;
+            _logger->error(__FILEREF__ + "Encoding URL failed (exception)"
+                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+                + ", exception: " + e.what()
+            );
 
-            logger->error(errorMessage);
-        
-            throw runtime_error(errorMessage);
+            throw e;
         }
-    }
-    else
-    {
-        string errorMessage = __FILEREF__ + "codec is wrong"
-                + ", codec: " + codec;
+    #endif
 
-        logger->error(errorMessage);
-        
-        throw runtime_error(errorMessage);
-    }
-}
-
-void EncoderVideoAudioProxy::ffmpeg_encodingAudioCodecValidation(string codec)
-{    
-    if (codec != "libaacplus" 
-            && codec != "libfdk_aac" 
-            && codec != "libvo_aacenc" 
-            && codec != "libvorbis"
-    )
-    {
-        string errorMessage = __FILEREF__ + "Audio codec is wrong"
-                + ", codec: " + codec;
-
-        auto logger = spdlog::get("mmsEngineService");
-        logger->error(errorMessage);
-        
-        throw runtime_error(errorMessage);
-    }
+    return stagingEncodedAssetPathName;
 }
 
 void EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEncodedAssetPathName)

@@ -34,6 +34,7 @@ public:
     
 private:
     shared_ptr<spdlog::logger>          _logger;
+    Json::Value                         _configuration;
     shared_ptr<MultiEventsSet>          _multiEventsSet;
     shared_ptr<MMSEngineDBFacade>       _mmsEngineDBFacade;
     shared_ptr<MMSStorage>              _mmsStorage;

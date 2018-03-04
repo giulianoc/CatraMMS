@@ -8,6 +8,7 @@
 #include <curlpp/Exception.hpp>
 #include <curlpp/Infos.hpp>
 #include "catralibraries/System.h"
+#include "FFMpeg.h"
 #include "MMSEngineProcessor.h"
 #include "CheckIngestionTimes.h"
 #include "CheckEncodingTimes.h"
@@ -23,9 +24,10 @@ MMSEngineProcessor::MMSEngineProcessor(
 )
 {
     _logger             = logger;
+    _configuration      = configuration;
     _multiEventsSet     = multiEventsSet;
     _mmsEngineDBFacade  = mmsEngineDBFacade;
-    _mmsStorage      = mmsStorage;
+    _mmsStorage         = mmsStorage;
     _pActiveEncodingsManager = pActiveEncodingsManager;
 
     _firstGetEncodingJob            = true;
@@ -1303,9 +1305,10 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
     {
         try
         {
+            FFMpeg ffmpeg (_configuration, _mmsEngineDBFacade,
+                _mmsStorage, _logger);
             videoOrAudioDurationInMilliSeconds = 
-                EncoderVideoAudioProxy::getVideoOrAudioDurationInMilliSeconds(
-                    mmsAssetPathName);
+                ffmpeg.getVideoOrAudioDurationInMilliSeconds(mmsAssetPathName);
         }
         catch(runtime_error e)
         {
@@ -1604,7 +1607,10 @@ void MMSEngineProcessor::handleGenerateImageToIngestEvent (
             + generateImageToIngestEvent->getImageFileName()
     ;
 
-    EncoderVideoAudioProxy::generateScreenshotToIngest(
+    FFMpeg ffmpeg (_configuration, _mmsEngineDBFacade,
+        _mmsStorage, _logger);
+    
+    ffmpeg.generateScreenshotToIngest(
             imagePathName,
             generateImageToIngestEvent->getTimePositionInSeconds(),
             generateImageToIngestEvent->getSourceImageWidth(),

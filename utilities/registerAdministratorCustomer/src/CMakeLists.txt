@@ -46,6 +46,7 @@ endif()
 add_executable(registerAdministratorCustomer ${SOURCES} ${HEADERS})
 
 target_link_libraries (registerAdministratorCustomer MMSEngine)
+target_link_libraries (registerAdministratorCustomer FFMpeg)
 target_link_libraries (registerAdministratorCustomer mysqlcppconn)
 target_link_libraries (registerAdministratorCustomer jsoncpp)
 if (APPLE)

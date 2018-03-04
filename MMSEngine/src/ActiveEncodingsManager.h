@@ -36,7 +36,8 @@ struct MaxEncodingsManagerCapacityReached: public exception {
 
 class ActiveEncodingsManager {
 public:
-    ActiveEncodingsManager(        
+    ActiveEncodingsManager(       
+            Json::Value configuration,
             shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
             shared_ptr<MMSStorage> mmsStorage,
             shared_ptr<spdlog::logger> logger);
@@ -67,6 +68,7 @@ private:
     };
 
     shared_ptr<spdlog::logger>                  _logger;
+    Json::Value                                 _configuration;
     shared_ptr<MMSEngineDBFacade>               _mmsEngineDBFacade;
     shared_ptr<MMSStorage>                      _mmsStorage;
     
@@ -77,8 +79,8 @@ private:
     EncodingJob     _mediumPriorityEncodingJobs[MAXMEDIUMENCODINGSTOBEMANAGED];
     EncodingJob     _lowPriorityEncodingJobs[MAXLOWENCODINGSTOBEMANAGED];
 
-    #ifdef __FFMPEGLOCALENCODER__
-        int                 _ffmpegEncoderRunning;
+    #ifdef __LOCALENCODER__
+        int                 _runningEncodingsNumber;
     #endif
 
     void processEncodingJob(mutex* mtEncodingJobs, EncodingJob* encodingJob);

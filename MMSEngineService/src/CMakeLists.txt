@@ -34,9 +34,10 @@ SET (HEADERS
 	LocalAssetIngestionEvent.h
 )
 
-include_directories ("${PROJECT_SOURCE_DIR}/../usr_local/include")
 include_directories ("${PROJECT_SOURCE_DIR}/../spdlog/include")
 include_directories ("${PROJECT_SOURCE_DIR}/MMSEngine/src")
+include_directories ("${PROJECT_SOURCE_DIR}/FFMpeg/src")
+include_directories ("${PROJECT_SOURCE_DIR}/../usr_local/include")
 if (APPLE)
 	include_directories ("${PROJECT_SOURCE_DIR}/../mysql-connector-c++-1.1.9-macos10.12-x86-64bit/include")
 	include_directories ("/usr/local/Cellar/imagemagick/7.0.7-22/include/ImageMagick-7")
@@ -56,6 +57,7 @@ add_executable(mmsEngineService ${SOURCES} ${HEADERS})
 
 target_link_libraries (mmsEngineService MultiEventsSet)
 target_link_libraries (mmsEngineService MMSEngine)
+target_link_libraries (mmsEngineService FFMpeg)
 target_link_libraries (mmsEngineService mysqlcppconn)
 target_link_libraries (mmsEngineService jsoncpp)
 target_link_libraries (mmsEngineService curl)
