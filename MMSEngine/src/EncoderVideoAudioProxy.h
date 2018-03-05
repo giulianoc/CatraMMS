@@ -70,7 +70,7 @@ public:
 
     void operator ()();
 
-    int getEncodingProgress();
+    int getEncodingProgress(int64_t encodingJobKey);
 
 private:
     shared_ptr<spdlog::logger>          _logger;
@@ -88,6 +88,8 @@ private:
         shared_ptr<FFMpeg>              _ffmpeg;
         int*                            _pRunningEncodingsNumber;
         int                             _ffmpegMaxCapacity;
+    #else
+        string                          _currentUsedFFMpegEncoderHost;
     #endif
 
     string encodeContentVideoAudio();

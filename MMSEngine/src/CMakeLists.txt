@@ -62,6 +62,8 @@ if (APPLE)
 	target_link_libraries (MMSEngine Tools)
 	target_link_libraries (MMSEngine mysqlcppconn)
 	target_link_libraries (MMSEngine jsoncpp)
+	target_link_libraries (MMSEngine curl)
+	target_link_libraries (MMSEngine curlpp)
         target_link_libraries (MMSEngine Magick++-7.Q16HDRI)
 endif()
 

@@ -13,6 +13,7 @@
 
 #include <fstream>
 #include "catralibraries/ProcessUtility.h"
+#include "catralibraries/System.h"
 #include "FFMPEGEncoder.h"
 
 int main(int argc, char** argv) 
@@ -120,7 +121,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
         if (!encodingFound)
         {
-            string errorMessage = string("All encoding are running, no encoding available")
+            string errorMessage = string("All encodings are running, no encoding available")
             ;
             _logger->error(__FILEREF__ + errorMessage);
 
@@ -134,7 +135,94 @@ void FFMPEGEncoder::manageRequestAndResponse(
         encodeContentThread.detach();
         
         // to make sure thread is able to set encoding->running to true
-        this_thread::sleep_for(chrono::seconds(3));
+        this_thread::sleep_for(chrono::seconds(1));
+    }
+    else if (method == "encodingProgress")
+    {
+        bool isAdminAPI = get<1>(customerAndFlags);
+        if (!isAdminAPI)
+        {
+            string errorMessage = string("APIKey flags does not have the ADMIN permission"
+                    ", isAdminAPI: " + to_string(isAdminAPI)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        
+        auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
+        if (encodingJobKeyIt == queryParameters.end())
+        {
+            string errorMessage = string("The 'encodingJobKey' parameter is not found");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(400, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        lock_guard<mutex> locker(_encodingMutex);
+
+        shared_ptr<Encoding>    selectedEncoding;
+        bool                    encodingFound = false;
+        for (shared_ptr<Encoding> encoding: _encodingsCapability)
+        {
+            if (encoding->_encodingJobKey == stol(encodingJobKeyIt->second))
+            {
+                encodingFound = true;
+                selectedEncoding = encoding;
+                
+                break;
+            }
+        }
+
+        if (!encodingFound)
+        {
+            string errorMessage = string("No encoding found")
+                    + ", encodingJobKey: " + encodingJobKeyIt->second
+            ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(400, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        int encodingProgress;
+        try
+        {
+            encodingProgress = selectedEncoding->_ffmpeg->getEncodingProgress();
+        }
+        catch(FFMpegEncodingStatusNotAvailable e)
+        {
+            string errorMessage = string("_ffmpeg->getEncodingProgress failed")
+                + ", e.what(): " + e.what()
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(400, errorMessage);
+
+            throw e;
+        }
+        catch(exception e)
+        {
+            string errorMessage = string("_ffmpeg->getEncodingProgress failed")
+                + ", e.what(): " + e.what()
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(400, errorMessage);
+
+            throw e;
+        }
+        
+        string responseBody = string("{ ")
+                + "\"encodingProgress\": " + to_string(encodingProgress) + " "
+                + "}";
+        
+        sendSuccess(200, responseBody);
     }
     else
     {
@@ -244,10 +332,10 @@ void FFMPEGEncoder::encodeContent(
 
         string responseBody = string("{ ")
                 + "\"ingestionJobKey\": " + to_string(ingestionJobKey) + " "
-                //  + "\"encodingElapsedInSeconds\": " + to_string(chrono::duration<seconds>(endEncoding-startEncoding)) + " "
+                + "\"ffmpegEncoderHost\": \"" + System::getHostName() + "\" "
                 + "}";
 
-        sendSuccess(201, responseBody);
+        sendSuccess(200, responseBody);
         
         encoding->_running = false;
     }

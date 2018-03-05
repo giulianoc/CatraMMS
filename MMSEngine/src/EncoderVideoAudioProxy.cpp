@@ -13,6 +13,14 @@
 
 #include <fstream>
 #include <sstream>
+#ifdef __LOCALENCODER__
+#else
+    #include <curlpp/cURLpp.hpp>
+    #include <curlpp/Easy.hpp>
+    #include <curlpp/Options.hpp>
+    #include <curlpp/Exception.hpp>
+    #include <curlpp/Infos.hpp>
+#endif
 #include "catralibraries/ProcessUtility.h"
 #include "catralibraries/Convert.h"
 #include "EncoderVideoAudioProxy.h"
@@ -302,7 +310,7 @@ string EncoderVideoAudioProxy::encodeContentVideoAudio()
     return stagingEncodedAssetPathName;
 }
 
-int EncoderVideoAudioProxy::getEncodingProgress()
+int EncoderVideoAudioProxy::getEncodingProgress(int64_t encodingJobKey)
 {
     int encodingProgress = 0;
     
@@ -328,7 +336,132 @@ int EncoderVideoAudioProxy::getEncodingProgress()
             throw e;
         }
     #else
-        return 0;       // call http rest
+        string ffmpegEncoderURL;
+        ostringstream response;
+        try
+        {
+            // string ffmpegEncoderHost = _configuration["ffmpeg"].get("encoderHost", "").asString();
+            int ffmpegEncoderPort = _configuration["ffmpeg"].get("encoderPort", "").asInt();
+            string ffmpegEncoderURI = _configuration["ffmpeg"].get("encoderURI", "").asString();
+            ffmpegEncoderURL = 
+                    string("http://")
+                    + _currentUsedFFMpegEncoderHost + ":"
+                    + to_string(ffmpegEncoderPort)
+                    + ffmpegEncoderURI
+                    + "/" + to_string(encodingJobKey)
+            ;
+            
+            list<string> header;
+
+            {
+                string encoderUser = _configuration["ffmpeg"].get("encoderUser", "").asString();
+                string encoderPassword = _configuration["ffmpeg"].get("encoderPassword", "").asString();
+                string userPasswordEncoded = Convert::base64_encode(encoderUser + ":" + encoderPassword);
+                string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
+
+                header.push_back(basicAuthorization);
+            }
+            
+            curlpp::Cleanup cleaner;
+            curlpp::Easy request;
+
+            // Setting the URL to retrive.
+            request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
+
+            request.setOpt(new curlpp::options::HttpHeader(header));
+
+            request.setOpt(new curlpp::options::WriteStream(&response));
+
+            chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
+
+            _logger->info(__FILEREF__ + "Encoding media file"
+                    + ", ffmpegEncoderURL: " + ffmpegEncoderURL
+            );
+            request.perform();
+            chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
+            _logger->info(__FILEREF__ + "Encoded media file"
+                    + ", ffmpegEncoderURL: " + ffmpegEncoderURL
+                    + ", encodingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count())
+            );
+            
+            try
+            {
+                Json::Value encodeProgressResponse;
+                
+                Json::CharReaderBuilder builder;
+                Json::CharReader* reader = builder.newCharReader();
+                string errors;
+
+                bool parsingSuccessful = reader->parse(response.str().c_str(),
+                        response.str().c_str() + response.str().size(), 
+                        &encodeProgressResponse, &errors);
+                delete reader;
+
+                if (!parsingSuccessful)
+                {
+                    string errorMessage = __FILEREF__ + "failed to parse the response body"
+                            + ", response.str(): " + response.str();
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+                
+                encodingProgress = encodeProgressResponse.get("encodingProgress", "XXX").asInt();
+            }
+            catch(...)
+            {
+                string errorMessage = string("response Body json is not well format")
+                        + ", response.str(): " + response.str()
+                        ;
+                _logger->error(__FILEREF__ + errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+        catch (curlpp::LogicError & e) 
+        {
+            _logger->error(__FILEREF__ + "Progress URL failed (LogicError)"
+                + ", encodingJobKey: " + to_string(encodingJobKey) 
+                + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+                + ", exception: " + e.what()
+                + ", response.str(): " + response.str()
+            );
+            
+            throw e;
+        }
+        catch (curlpp::RuntimeError & e) 
+        {
+            _logger->error(__FILEREF__ + "Progress URL failed (RuntimeError)"
+                + ", encodingJobKey: " + to_string(encodingJobKey) 
+                + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+                + ", exception: " + e.what()
+                + ", response.str(): " + response.str()
+            );
+
+            throw e;
+        }
+        catch (runtime_error e)
+        {
+            _logger->error(__FILEREF__ + "Progress URL failed (exception)"
+                + ", encodingJobKey: " + to_string(encodingJobKey) 
+                + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+                + ", exception: " + e.what()
+                + ", response.str(): " + response.str()
+            );
+
+            throw e;
+        }
+        catch (exception e)
+        {
+            _logger->error(__FILEREF__ + "Progress URL failed (exception)"
+                + ", encodingJobKey: " + to_string(encodingJobKey) 
+                + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+                + ", exception: " + e.what()
+                + ", response.str(): " + response.str()
+            );
+
+            throw e;
+        }
     #endif
 
     return encodingProgress;
@@ -475,12 +608,13 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
         }
     #else
         string ffmpegEncoderURL;
-		try
-		{
+        ostringstream response;
+        try
+        {
             string ffmpegEncoderHost = _configuration["ffmpeg"].get("encoderHost", "").asString();
             int ffmpegEncoderPort = _configuration["ffmpeg"].get("encoderPort", "").asInt();
-            ffmpegEncoderURI = _configuration["ffmpeg"].get("encoderURI", "").asString();
-            string ffmpegEncoderURL = 
+            string ffmpegEncoderURI = _configuration["ffmpeg"].get("encoderURI", "").asString();
+            ffmpegEncoderURL = 
                     string("http://")
                     + ffmpegEncoderHost + ":"
                     + to_string(ffmpegEncoderPort)
@@ -553,39 +687,74 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                 header.push_back(basicAuthorization);
             }
             
-			curlpp::Cleanup cleaner;
-			curlpp::Easy request;
+            curlpp::Cleanup cleaner;
+            curlpp::Easy request;
 
-			// Setting the URL to retrive.
-			request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
+            // Setting the URL to retrive.
+            request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
 
             request.setOpt(new curlpp::options::HttpHeader(header));
             request.setOpt(new curlpp::options::PostFields(body));
             request.setOpt(new curlpp::options::PostFieldSize(body.length()));
 
-            ostringstream response;
             request.setOpt(new curlpp::options::WriteStream(&response));
 
             chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
 
-			_logger->info(__FILEREF__ + "Encoding media file"
-				+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
-				+ ", body: " + body
-			);
-			request.perform();
+            _logger->info(__FILEREF__ + "Encoding media file"
+                    + ", ffmpegEncoderURL: " + ffmpegEncoderURL
+                    + ", body: " + body
+            );
+            request.perform();
             chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
-			_logger->info(__FILEREF__ + "Encoded media file"
-				+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
-				+ ", body: " + body
-				+ ", encodingDuration (secs): " + to_string(chrono::duration<seconds>(endEncoding - startEncoding))
-			);
-		}
+            _logger->info(__FILEREF__ + "Encoded media file"
+                    + ", ffmpegEncoderURL: " + ffmpegEncoderURL
+                    + ", body: " + body
+                    + ", encodingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count())
+            );
+            
+            try
+            {
+                Json::Value encodeContentResponse;
+                
+                Json::CharReaderBuilder builder;
+                Json::CharReader* reader = builder.newCharReader();
+                string errors;
+
+                bool parsingSuccessful = reader->parse(response.str().c_str(),
+                        response.str().c_str() + response.str().size(), 
+                        &encodeContentResponse, &errors);
+                delete reader;
+
+                if (!parsingSuccessful)
+                {
+                    string errorMessage = __FILEREF__ + "failed to parse the response body"
+                            + ", response.str(): " + response.str();
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+                
+                _currentUsedFFMpegEncoderHost = encodeContentResponse.get("ffmpegEncoderHost", "XXX").asString();
+            }
+            catch(...)
+            {
+                string errorMessage = string("response Body json is not well format")
+                        + ", response.str(): " + response.str()
+                        ;
+                _logger->error(__FILEREF__ + errorMessage);
+
+                // encoding is finished, no exception is raised in case the response is not parsed
+                // throw runtime_error(errorMessage);
+            }
+        }
         catch (curlpp::LogicError & e) 
         {
             _logger->error(__FILEREF__ + "Encoding URL failed (LogicError)"
                 + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
                 + ", exception: " + e.what()
+                + ", response.str(): " + response.str()
             );
             
             throw e;
@@ -596,6 +765,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                 + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
                 + ", exception: " + e.what()
+                + ", response.str(): " + response.str()
             );
 
             throw e;
@@ -606,6 +776,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                 + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
                 + ", exception: " + e.what()
+                + ", response.str(): " + response.str()
             );
 
             throw e;

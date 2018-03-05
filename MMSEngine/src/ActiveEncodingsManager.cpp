@@ -102,7 +102,8 @@ void ActiveEncodingsManager::operator()()
                     {
                         try
                         {
-                            int encodingPercentage = encodingJob->_encoderVideoAudioProxy.getEncodingProgress();
+                            int encodingPercentage = encodingJob->_encoderVideoAudioProxy
+                                .getEncodingProgress(encodingJob->_encodingItem->_encodingJobKey);
                             
                             _mmsEngineDBFacade->updateEncodingJobProgress (encodingJob->_encodingItem->_encodingJobKey, 
                                 encodingPercentage);
