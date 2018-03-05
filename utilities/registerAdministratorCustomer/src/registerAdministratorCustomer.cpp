@@ -1,7 +1,6 @@
 
 #include <fstream>
 #include "MMSEngineDBFacade.h"
-#include "MMSEngine.h"
 #include "catralibraries/Convert.h"
 
 Json::Value loadConfigurationFile(const char* configurationPathName);
@@ -28,13 +27,64 @@ int main (int iArgc, char *pArgv [])
     shared_ptr<MMSEngineDBFacade>       mmsEngineDBFacade = make_shared<MMSEngineDBFacade>(
             configuration, logger);
 
+    /*
     logger->info(__FILEREF__ + "Creating MMSEngine"
             );
     shared_ptr<MMSEngine>       mmsEngine = make_shared<MMSEngine>(mmsEngineDBFacade, logger);
-
+     */
     string emailAddress = "giulianoc@catrasoftware.it";
+    string customerName = "Admin";
     logger->info(__FILEREF__ + "Creating Administrator Customer"
             );
+    tuple<int64_t,int64_t,string> customerKeyUserKeyAndConfirmationCode;
+    {
+        string customerDirectoryName;
+
+        customerDirectoryName.resize(customerName.size());
+
+        transform(
+            customerName.begin(), 
+            customerName.end(), 
+            customerDirectoryName.begin(), 
+            [](unsigned char c){
+                if (isalpha(c)) 
+                    return c; 
+                else 
+                    return (unsigned char) '_'; } 
+        );
+
+        try
+        {
+            customerKeyUserKeyAndConfirmationCode = mmsEngineDBFacade->registerCustomer(
+                customerName, 
+                customerDirectoryName,
+                "",                             // string street,
+                "",                             // string city,
+                "",                             // string state,
+                "",                             // string zip,
+                "",                             // string phone,
+                "",                             // string countryCode,
+                MMSEngineDBFacade::CustomerType::IngestionAndDelivery,  // MMSEngineDBFacade::CustomerType customerType
+                "",                             // string deliveryURL,
+                MMSEngineDBFacade::EncodingPriority::High,   //  MMSEngineDBFacade::EncodingPriority maxEncodingPriority,
+                MMSEngineDBFacade::EncodingPeriod::Daily,       //  MMSEngineDBFacade::EncodingPeriod encodingPeriod,
+                100,                            // long maxIngestionsNumber,
+                100,                            // long maxStorageInGB,
+                "",                             // string languageCode,
+                "admin",                        // string userName,
+                "admin_2018",                   // string userPassword,
+                emailAddress,                   // string userEmailAddress,
+                chrono::system_clock::now() + chrono::hours(24 * 365 * 20)     // chrono::system_clock::time_point userExpirationDate
+            );
+        }
+        catch(exception e)
+        {
+            logger->error(__FILEREF__ + "mmsEngineDBFacade->registerCustomer failed");
+            
+            return 1;
+        }
+    }
+        /*
     tuple<int64_t,int64_t,string> customerKeyUserKeyAndConfirmationCode =
             mmsEngine->registerCustomer(
                 "Admin",                       // string customerName,
@@ -56,20 +106,31 @@ int main (int iArgc, char *pArgv [])
                 emailAddress,                   // string userEmailAddress,
                 chrono::system_clock::now() + chrono::hours(24 * 365 * 20)     // chrono::system_clock::time_point userExpirationDate
     );
+    */
 
     logger->info(__FILEREF__ + "Confirm Customer"
             );
-    mmsEngine->confirmCustomer(get<2>(customerKeyUserKeyAndConfirmationCode));
+    mmsEngineDBFacade->confirmCustomer(get<2>(customerKeyUserKeyAndConfirmationCode));
+    // mmsEngine->confirmCustomer(get<2>(customerKeyUserKeyAndConfirmationCode));
     
     bool adminAPI = true;
     bool userAPI = true;
     logger->info(__FILEREF__ + "Create APIKey"
             );
+    /*
     string apiKey = mmsEngine->createAPIKey(
             get<0>(customerKeyUserKeyAndConfirmationCode),
             get<1>(customerKeyUserKeyAndConfirmationCode),
             adminAPI,
             userAPI,
+            chrono::system_clock::now() + chrono::hours(24 * 365 * 20)  // apiKeyExpirationDate
+    );
+    */
+    string apiKey = mmsEngineDBFacade->createAPIKey(
+            get<0>(customerKeyUserKeyAndConfirmationCode), 
+            get<1>(customerKeyUserKeyAndConfirmationCode),
+            adminAPI,
+            userAPI, 
             chrono::system_clock::now() + chrono::hours(24 * 365 * 20)  // apiKeyExpirationDate
     );
     

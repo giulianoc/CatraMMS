@@ -15,9 +15,18 @@
 #define FFMpeg_h
 
 #include <string>
-#include "MMSEngineDBFacade.h"
-#include "MMSStorage.h"
+#include "spdlog/spdlog.h"
 #include "json/json.h"
+
+#ifndef __FILEREF__
+    #ifdef __APPLE__
+        #define __FILEREF__ string("[") + string(__FILE__).substr(string(__FILE__).find_last_of("/") + 1) + ":" + to_string(__LINE__) + "] "
+    #else
+        #define __FILEREF__ string("[") + basename(__FILE__) + ":" + to_string(__LINE__) + "] "
+    #endif
+#endif
+
+using namespace std;
 
 struct FFMpegEncodingStatusNotAvailable: public exception {
     char const* what() const throw() 
@@ -29,8 +38,6 @@ struct FFMpegEncodingStatusNotAvailable: public exception {
 class FFMpeg {
 public:
     FFMpeg(Json::Value configuration,
-            shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
-            shared_ptr<MMSStorage> mmsStorage,
             shared_ptr<spdlog::logger> logger);
     
     ~FFMpeg();
@@ -41,7 +48,7 @@ public:
         string encodedFileName,
         string stagingEncodedAssetPathName,
         string encodingProfileDetails,
-        MMSEngineDBFacade::ContentType contentType,
+        bool isVideo,   // if false it means is audio
         int64_t physicalPathKey,
         string customerDirectoryName,
         string relativePath,
@@ -75,8 +82,6 @@ public:
 
 private:
     shared_ptr<spdlog::logger>  _logger;
-    shared_ptr<MMSEngineDBFacade>   _mmsEngineDBFacade;
-    shared_ptr<MMSStorage>      _mmsStorage;
     string          _ffmpegPath;
     int             _charsToBeReadFromFfmpegErrorOutput;
     bool            _twoPasses;
@@ -93,7 +98,7 @@ private:
         string stagingEncodedAssetPathName,
         
         string encodingProfileDetails,
-        MMSEngineDBFacade::ContentType contentType,
+        bool isVideo,   // if false it means is audio
         
         bool& segmentFileFormat,
         string& ffmpegFileFormatParameter,
@@ -115,6 +120,7 @@ private:
     string getLastPartOfFile(
         string pathFileName, int lastCharsToBeRead);
     
+    bool isMetadataPresent(Json::Value root, string field);
 };
 
 #endif

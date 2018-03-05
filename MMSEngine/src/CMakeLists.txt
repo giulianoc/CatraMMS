@@ -24,7 +24,7 @@ SET (SOURCES
 	Customer.cpp
 	MMSStorage.cpp
 	MMSEngineDBFacade.cpp
-	MMSEngine.cpp
+	#MMSEngine.cpp
 	ActiveEncodingsManager.cpp
 	EncoderVideoAudioProxy.cpp
 )
@@ -32,7 +32,7 @@ SET (HEADERS
 	Customer.h
 	MMSStorage.h
 	MMSEngineDBFacade.h
-	MMSEngine.h
+	#MMSEngine.h
 	ActiveEncodingsManager.h
 	EncoderVideoAudioProxy.h
 )
@@ -41,6 +41,7 @@ include_directories ("${PROJECT_SOURCE_DIR}/../spdlog/include")
 include_directories ("${PROJECT_SOURCE_DIR}/FFMpeg/src")
 include_directories ("${PROJECT_SOURCE_DIR}/../usr_local/include")
 if (APPLE)
+	include_directories ("${PROJECT_SOURCE_DIR}/MMSEngine/src")
 	include_directories ("${PROJECT_SOURCE_DIR}/../mysql-connector-c++-1.1.9-macos10.12-x86-64bit/include")
 	include_directories ("/usr/local/Cellar/imagemagick/7.0.7-22/include/ImageMagick-7")
 else()
@@ -56,6 +57,7 @@ endif()
 add_library (MMSEngine SHARED ${SOURCES} ${HEADERS})
 
 if (APPLE)
+	target_link_libraries (MMSEngine FFMpeg)
 	target_link_libraries (MMSEngine ErrMsg)
 	target_link_libraries (MMSEngine Tools)
 	target_link_libraries (MMSEngine mysqlcppconn)

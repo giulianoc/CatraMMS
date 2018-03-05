@@ -67,10 +67,11 @@ APICommon::APICommon(const char* configurationPathName)
     _mmsEngineDBFacade = make_shared<MMSEngineDBFacade>(
             _configuration, _logger);
 
+    /*
     _logger->info(__FILEREF__ + "Creating MMSEngine"
             );
     _mmsEngine = make_shared<MMSEngine>(_mmsEngineDBFacade, _logger);
-    
+    */
     _logger->info(__FILEREF__ + "Creating MMSStorage"
             );
     _mmsStorage = make_shared<MMSStorage>(
@@ -228,7 +229,8 @@ int APICommon::listen()
             string custormerKey = usernameAndPassword.substr(0, userNameSeparator);
             string apiKey = usernameAndPassword.substr(userNameSeparator + 1);
 
-            customerAndFlags = _mmsEngine->checkAPIKey (apiKey);
+            // customerAndFlags = _mmsEngine->checkAPIKey (apiKey);
+            customerAndFlags = _mmsEngineDBFacade->checkAPIKey(apiKey);
             
             if (get<0>(customerAndFlags)->_customerKey != stol(custormerKey))
             {
@@ -447,7 +449,8 @@ int APICommon::manageBinaryRequest()
         string custormerKey = usernameAndPassword.substr(0, userNameSeparator);
         string apiKey = usernameAndPassword.substr(userNameSeparator + 1);
 
-        customerAndFlags = _mmsEngine->checkAPIKey (apiKey);
+        // customerAndFlags = _mmsEngine->checkAPIKey (apiKey);
+        customerAndFlags = _mmsEngineDBFacade->checkAPIKey(apiKey);
 
         if (get<0>(customerAndFlags)->_customerKey != stol(custormerKey))
         {

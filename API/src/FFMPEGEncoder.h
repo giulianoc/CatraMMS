@@ -41,9 +41,20 @@ public:
     );
     
 private:
-    shared_ptr<FFMpeg>      _ffmpeg;
-    
-    void encodeContent(string requestBody);
+    struct Encoding
+    {
+        bool                    _running;
+        int64_t                 _encodingJobKey;
+        shared_ptr<FFMpeg>      _ffmpeg;
+    };
+
+    mutex                       _encodingMutex;
+    int                         _maxEncodingsCapability;
+    vector<shared_ptr<Encoding>>    _encodingsCapability;
+
+    void encodeContent(
+        shared_ptr<Encoding> encoding,
+        string requestBody);
 };
 
 #endif

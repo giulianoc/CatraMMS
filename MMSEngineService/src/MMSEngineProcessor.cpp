@@ -1305,8 +1305,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
     {
         try
         {
-            FFMpeg ffmpeg (_configuration, _mmsEngineDBFacade,
-                _mmsStorage, _logger);
+            FFMpeg ffmpeg (_configuration, _logger);
             videoOrAudioDurationInMilliSeconds = 
                 ffmpeg.getVideoOrAudioDurationInMilliSeconds(mmsAssetPathName);
         }
@@ -1607,8 +1606,7 @@ void MMSEngineProcessor::handleGenerateImageToIngestEvent (
             + generateImageToIngestEvent->getImageFileName()
     ;
 
-    FFMpeg ffmpeg (_configuration, _mmsEngineDBFacade,
-        _mmsStorage, _logger);
+    FFMpeg ffmpeg (_configuration, _logger);
     
     ffmpeg.generateScreenshotToIngest(
             imagePathName,

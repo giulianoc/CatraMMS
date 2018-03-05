@@ -32,8 +32,16 @@ int main(int argc, char** argv)
 
 FFMPEGEncoder::FFMPEGEncoder(const char* configurationPathName): APICommon(configurationPathName) 
 {
-    _ffmpeg = make_shared<FFMpeg>(_configuration, _mmsEngineDBFacade,
-        _mmsStorage, _logger);
+    _maxEncodingsCapability =  _configuration["ffmpeg"].get("maxEncodingsCapability", 0).asInt();
+
+    for (int encodingIndex = 0; encodingIndex < _maxEncodingsCapability; encodingIndex++)
+    {
+        shared_ptr<Encoding>    encoding = make_shared<Encoding>();
+        encoding->_running   = false;
+        encoding->_ffmpeg   = make_shared<FFMpeg>(_configuration, _logger);
+
+        _encodingsCapability.push_back(encoding);
+    }
 }
 
 FFMPEGEncoder::~FFMPEGEncoder() {
@@ -95,7 +103,38 @@ void FFMPEGEncoder::manageRequestAndResponse(
             throw runtime_error(errorMessage);
         }
         
-        encodeContent(requestBody);
+        lock_guard<mutex> locker(_encodingMutex);
+
+        shared_ptr<Encoding>    selectedEncoding;
+        bool                    encodingFound = false;
+        for (shared_ptr<Encoding> encoding: _encodingsCapability)
+        {
+            if (!encoding->_running)
+            {
+                encodingFound = true;
+                selectedEncoding = encoding;
+                
+                break;
+            }
+        }
+
+        if (!encodingFound)
+        {
+            string errorMessage = string("All encoding are running, no encoding available")
+            ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(400, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        
+        thread encodeContentThread(&FFMPEGEncoder::encodeContent, this, 
+                                selectedEncoding, requestBody);
+        encodeContentThread.detach();
+        
+        // to make sure thread is able to set encoding->running to true
+        this_thread::sleep_for(chrono::seconds(3));
     }
     else
     {
@@ -111,6 +150,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 }
 
 void FFMPEGEncoder::encodeContent(
+        shared_ptr<Encoding> encoding,
         string requestBody)
 {
     string api = "encodeContent";
@@ -121,6 +161,7 @@ void FFMPEGEncoder::encodeContent(
 
     try
     {
+        encoding->_running = true;
         /*
         {
             "mmsSourceAssetPathName": "...",
@@ -187,13 +228,13 @@ void FFMPEGEncoder::encodeContent(
         int64_t ingestionJobKey = encodingMedatada.get("ingestionJobKey", -1).asInt64();
 
 		// chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
-        _ffmpeg->encodeContent(
+        encoding->_ffmpeg->encodeContent(
                 mmsSourceAssetPathName,
                 durationInMilliSeconds,
                 encodedFileName,
                 stagingEncodedAssetPathName,
                 encodingProfileDetails,
-                contentType,
+                contentType == MMSEngineDBFacade::ContentType::Video,
                 physicalPathKey,
                 customerDirectoryName,
                 relativePath,
@@ -207,9 +248,13 @@ void FFMPEGEncoder::encodeContent(
                 + "}";
 
         sendSuccess(201, responseBody);
+        
+        encoding->_running = false;
     }
     catch(runtime_error e)
     {
+        encoding->_running = false;
+
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
             + ", requestBody: " + requestBody
@@ -225,6 +270,8 @@ void FFMPEGEncoder::encodeContent(
     }
     catch(exception e)
     {
+        encoding->_running = false;
+
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
             + ", requestBody: " + requestBody
@@ -239,4 +286,3 @@ void FFMPEGEncoder::encodeContent(
         throw runtime_error(errorMessage);
     }
 }
-

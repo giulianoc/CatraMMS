@@ -57,8 +57,7 @@ void EncoderVideoAudioProxy::setData(
         
         _pRunningEncodingsNumber  = pRunningEncodingsNumber;
         
-        _ffmpeg = make_shared<FFMpeg>(configuration, mmsEngineDBFacade,
-            mmsStorage, logger);
+        _ffmpeg = make_shared<FFMpeg>(configuration, logger);
     #endif
 }
 
@@ -431,7 +430,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                 encodedFileName,
                 stagingEncodedAssetPathName,
                 _encodingItem->_details,
-                _encodingItem->_contentType,
+                _encodingItem->_contentType == MMSEngineDBFacade::ContentType::Video,
                 _encodingItem->_physicalPathKey,
                 _encodingItem->_customer->_directoryName,
                 _encodingItem->_relativePath,

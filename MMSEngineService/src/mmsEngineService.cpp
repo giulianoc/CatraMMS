@@ -10,7 +10,7 @@
 #include "MMSEngineDBFacade.h"
 #include "ActiveEncodingsManager.h"
 #include "MMSStorage.h"
-#include "MMSEngine.h"
+// #include "MMSEngine.h"
 
 Json::Value loadConfigurationFile(const char* configurationPathName);
 
@@ -65,10 +65,12 @@ int main (int iArgc, char *pArgv [])
     shared_ptr<MMSStorage>       mmsStorage = make_shared<MMSStorage>(
             configuration, logger);
 
+    /*
     logger->info(__FILEREF__ + "Creating MMSEngine"
             );
     shared_ptr<MMSEngine>       mmsEngine = make_shared<MMSEngine>(mmsEngineDBFacade, logger);
-        
+    */
+    
     logger->info(__FILEREF__ + "Creating MultiEventsSet"
         + ", addDestination: " + MMSENGINEPROCESSORNAME
             );

@@ -15,7 +15,7 @@
 #define APICommon_h
 
 #include <unordered_map>
-#include "MMSEngine.h"
+// #include "MMSEngine.h"
 #include "MMSStorage.h"
 #include "spdlog/spdlog.h"
 
@@ -58,7 +58,7 @@ protected:
     Json::Value                     _configuration;
     shared_ptr<spdlog::logger>      _logger;
     shared_ptr<MMSEngineDBFacade>   _mmsEngineDBFacade;
-    shared_ptr<MMSEngine>           _mmsEngine;
+    // shared_ptr<MMSEngine>           _mmsEngine;
     shared_ptr<MMSStorage>          _mmsStorage;
 
     unsigned long long   _maxBinaryContentLength;

@@ -12,6 +12,7 @@
  */
 
 #include <fstream>
+#include <sstream>
 #include <regex>
 #include "catralibraries/ProcessUtility.h"
 #include "catralibraries/FileIO.h"
@@ -19,13 +20,9 @@
 
 
 FFMpeg::FFMpeg(Json::Value configuration,
-        shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
-        shared_ptr<MMSStorage> mmsStorage,
         shared_ptr<spdlog::logger> logger) 
 {
     _logger             = logger;
-    _mmsEngineDBFacade  = mmsEngineDBFacade;
-    _mmsStorage     = mmsStorage;
 
     _ffmpegPath = configuration["ffmpeg"].get("path", "").asString();
     _charsToBeReadFromFfmpegErrorOutput     = 1024;
@@ -51,7 +48,7 @@ void FFMpeg::encodeContent(
         string encodedFileName,
         string stagingEncodedAssetPathName,
         string encodingProfileDetails,
-        MMSEngineDBFacade::ContentType contentType,
+        bool isVideo,   // if false it means is audio
         int64_t physicalPathKey,
         string customerDirectoryName,
         string relativePath,
@@ -85,7 +82,7 @@ void FFMpeg::encodeContent(
             stagingEncodedAssetPathName,
 
             encodingProfileDetails,
-            contentType,
+            isVideo,
 
             segmentFileFormat,
             ffmpegFileFormatParameter,
@@ -104,9 +101,24 @@ void FFMpeg::encodeContent(
             ffmpegAudioBitRateParameter
         );
 
-        string ffmpegoutputPathName = string("")
+        string stagingEncodedAssetPath;
+        {
+            size_t fileNameIndex = stagingEncodedAssetPathName.find_last_of("/");
+            if (fileNameIndex == string::npos)
+            {
+                string errorMessage = __FILEREF__ + "No fileName find in the staging encoded asset path name"
+                        + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            
+            stagingEncodedAssetPath = stagingEncodedAssetPathName.substr(0, fileNameIndex);
+        }
+        _outputFfmpegPathFileName = string(stagingEncodedAssetPath)
                 + to_string(physicalPathKey)
                 + ".ffmpegoutput";
+        /*
         _outputFfmpegPathFileName = _mmsStorage->getStagingAssetPathName (
             customerDirectoryName,
             relativePath,
@@ -115,6 +127,7 @@ void FFMpeg::encodeContent(
             -1,         // long long llPhysicalPathKey,
             true // removeLinuxPathIfExist
         );
+         */
 
         if (segmentFileFormat)
         {
@@ -198,7 +211,7 @@ void FFMpeg::encodeContent(
             string ffmpegExecuteCommand;
             if (_twoPasses)
             {
-                string passLogFileName = string("")
+                string ffmpegPassLogPathFileName = string(stagingEncodedAssetPath)
                     + to_string(physicalPathKey)
                     + "_"
                     + encodedFileName
@@ -206,6 +219,7 @@ void FFMpeg::encodeContent(
                     ;
 
                 // bool removeLinuxPathIfExist = true;
+                /*
                 string ffmpegPassLogPathFileName = _mmsStorage->getStagingAssetPathName (
                     customerDirectoryName,
                     relativePath,
@@ -214,6 +228,7 @@ void FFMpeg::encodeContent(
                     -1,         // long long llPhysicalPathKey,
                     true    // removeLinuxPathIfExist
                 );
+                 */
 
                 ffmpegExecuteCommand =
                         _ffmpegPath + "/ffmpeg "
@@ -808,7 +823,7 @@ void FFMpeg::settingFfmpegPatameters(
         string stagingEncodedAssetPathName,
         
         string encodingProfileDetails,
-        MMSEngineDBFacade::ContentType contentType,
+        bool isVideo,   // if false it means is audio
         
         bool& segmentFileFormat,
         string& ffmpegFileFormatParameter,
@@ -860,7 +875,7 @@ void FFMpeg::settingFfmpegPatameters(
     string fileFormat;
     {
         field = "fileFormat";
-        if (!_mmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
+        if (!isMetadataPresent(encodingProfileRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field;
@@ -901,10 +916,10 @@ void FFMpeg::settingFfmpegPatameters(
         }
     }
 
-    if (contentType == MMSEngineDBFacade::ContentType::Video)
+    if (isVideo)
     {
         field = "video";
-        if (!_mmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
+        if (!isMetadataPresent(encodingProfileRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field;
@@ -919,7 +934,7 @@ void FFMpeg::settingFfmpegPatameters(
         string codec;
         {
             field = "codec";
-            if (!_mmsEngineDBFacade->isMetadataPresent(videoRoot, field))
+            if (!isMetadataPresent(videoRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -940,7 +955,7 @@ void FFMpeg::settingFfmpegPatameters(
         // profile
         {
             field = "profile";
-            if (_mmsEngineDBFacade->isMetadataPresent(videoRoot, field))
+            if (isMetadataPresent(videoRoot, field))
             {
                 string profile = videoRoot.get(field, "XXX").asString();
 
@@ -971,7 +986,7 @@ void FFMpeg::settingFfmpegPatameters(
         // resolution
         {
             field = "width";
-            if (!_mmsEngineDBFacade->isMetadataPresent(videoRoot, field))
+            if (!isMetadataPresent(videoRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -984,7 +999,7 @@ void FFMpeg::settingFfmpegPatameters(
                 width   = "-2";     // h264 requires always a even width/height
         
             field = "height";
-            if (!_mmsEngineDBFacade->isMetadataPresent(videoRoot, field))
+            if (!isMetadataPresent(videoRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -1004,7 +1019,7 @@ void FFMpeg::settingFfmpegPatameters(
         // bitRate
         {
             field = "bitRate";
-            if (!_mmsEngineDBFacade->isMetadataPresent(videoRoot, field))
+            if (!isMetadataPresent(videoRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -1023,7 +1038,7 @@ void FFMpeg::settingFfmpegPatameters(
         // bitRate
         {
             field = "twoPasses";
-            if (!_mmsEngineDBFacade->isMetadataPresent(videoRoot, field) 
+            if (!isMetadataPresent(videoRoot, field) 
                     && fileFormat != "segment") // twoPasses is used ONLY if it is NOT segment
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -1040,7 +1055,7 @@ void FFMpeg::settingFfmpegPatameters(
         // maxRate
         {
             field = "maxRate";
-            if (_mmsEngineDBFacade->isMetadataPresent(videoRoot, field))
+            if (isMetadataPresent(videoRoot, field))
             {
                 string maxRate = videoRoot.get(field, "XXX").asString();
 
@@ -1053,7 +1068,7 @@ void FFMpeg::settingFfmpegPatameters(
         // bufSize
         {
             field = "bufSize";
-            if (_mmsEngineDBFacade->isMetadataPresent(videoRoot, field))
+            if (isMetadataPresent(videoRoot, field))
             {
                 string bufSize = videoRoot.get(field, "XXX").asString();
 
@@ -1067,7 +1082,7 @@ void FFMpeg::settingFfmpegPatameters(
         // frameRate
         {
             field = "frameRate";
-            if (_mmsEngineDBFacade->isMetadataPresent(videoRoot, field))
+            if (isMetadataPresent(videoRoot, field))
             {
                 string frameRate = videoRoot.get(field, "XXX").asString();
 
@@ -1080,7 +1095,7 @@ void FFMpeg::settingFfmpegPatameters(
                 // keyFrameIntervalInSeconds
                 {
                     field = "keyFrameIntervalInSeconds";
-                    if (_mmsEngineDBFacade->isMetadataPresent(videoRoot, field))
+                    if (isMetadataPresent(videoRoot, field))
                     {
                         string keyFrameIntervalInSeconds = videoRoot.get(field, "XXX").asString();
 
@@ -1096,11 +1111,10 @@ void FFMpeg::settingFfmpegPatameters(
          */
     }
     
-    if (contentType == MMSEngineDBFacade::ContentType::Video ||
-            contentType == MMSEngineDBFacade::ContentType::Audio)
+    // if (contentType == "video" || contentType == "audio")
     {
         field = "audio";
-        if (!_mmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
+        if (!isMetadataPresent(encodingProfileRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field;
@@ -1114,7 +1128,7 @@ void FFMpeg::settingFfmpegPatameters(
         // codec
         {
             field = "codec";
-            if (!_mmsEngineDBFacade->isMetadataPresent(audioRoot, field))
+            if (!isMetadataPresent(audioRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -1135,7 +1149,7 @@ void FFMpeg::settingFfmpegPatameters(
         // bitRate
         {
             field = "bitRate";
-            if (!_mmsEngineDBFacade->isMetadataPresent(audioRoot, field))
+            if (!isMetadataPresent(audioRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + field;
@@ -1299,4 +1313,13 @@ void FFMpeg::encodingAudioCodecValidation(string codec,
         
         throw runtime_error(errorMessage);
     }
+}
+
+bool FFMpeg::isMetadataPresent(Json::Value root, string field)
+{
+    if (root.isObject() && root.isMember(field) && !root[field].isNull()
+)
+        return true;
+    else
+        return false;
 }

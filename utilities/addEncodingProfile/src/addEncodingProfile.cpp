@@ -1,7 +1,6 @@
 
 #include <fstream>
 #include "MMSEngineDBFacade.h"
-#include "MMSEngine.h"
 
 Json::Value loadConfigurationFile(const char* configurationPathName);
 
@@ -29,10 +28,13 @@ int main (int iArgc, char *pArgv [])
 
     shared_ptr<Customer> customer = mmsEngineDBFacade->getCustomer("Warner");
     
+    /*
     logger->info(__FILEREF__ + "Creating MMSEngine"
             );
     shared_ptr<MMSEngine>       mmsEngine = make_shared<MMSEngine>(mmsEngineDBFacade, logger);
-
+     */
+    
+    /*
     mmsEngine->addFFMPEGVideoEncodingProfile(
         customer,
         "",                         // string encodingProfileSet,  // "": default Customer family, != "": named customer family
@@ -69,6 +71,53 @@ int main (int iArgc, char *pArgv [])
                                                         // if Aspect is false the proportion are maintained, the width is fixed and the height will be calculated
         "NoInterlace"                // interlaceType: NoInterlace, LineInterlace, PlaneInterlace, PartitionInterlace
     );
+     */
+    /*
+    try
+    {
+        FFMpeg::encodingFileFormatValidation(fileFormat, _logger);
+        FFMpeg::encodingVideoCodecValidation(videoCodec, _logger);
+        FFMpeg::encodingVideoProfileValidation(videoCodec, videoProfile, _logger);
+        FFMpeg::encodingAudioCodecValidation(audioCodec, _logger);
+
+        string details = getVideoEncodingProfileDetails(
+            fileFormat,
+                
+            videoCodec,
+            videoProfile,
+            videoWidth,
+            videoHeight,
+            videoBitRate,
+            twoPasses,
+            videoMaxRate,
+            videoBufSize,
+            videoFrameRate,
+            videoKeyFrameIntervalInSeconds,
+
+            audioCodec,
+            audioBitRate
+        );
+
+        int64_t encodingProfileKey = _mmsEngineDBFacade->addVideoEncodingProfile(
+            customer,
+            encodingProfileSet,
+            encodingTechnology,
+            details,
+            label,
+            videoWidth,
+            videoHeight,
+            videoCodec,
+            audioCodec);      
+        
+        _logger->info(__FILEREF__ + "Created the video/audio encoding profile"
+            + ", encodingProfileKey: " + to_string(encodingProfileKey)
+        );
+    }
+    catch(...)
+    {
+        _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addVideoAudioEncodeProfile failed");
+    }
+     */
 
     logger->info(__FILEREF__ + "Shutdown done"
             );

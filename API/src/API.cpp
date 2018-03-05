@@ -386,9 +386,25 @@ void API::registerCustomer(string requestBody)
 
         try
         {
+            string customerDirectoryName;
+
+            customerDirectoryName.resize(name.size());
+
+            transform(
+                name.begin(), 
+                name.end(), 
+                customerDirectoryName.begin(), 
+                [](unsigned char c){
+                    if (isalpha(c)) 
+                        return c; 
+                    else 
+                        return (unsigned char) '_'; } 
+            );
+
             tuple<int64_t,int64_t,string> customerKeyUserKeyAndConfirmationCode = 
-                _mmsEngine->registerCustomer(
-                    name,                       // string customerName,
+                _mmsEngineDBFacade->registerCustomer(
+                    name, 
+                    customerDirectoryName,
                     "",                             // string street,
                     "",                             // string city,
                     "",                             // string state,
@@ -406,7 +422,7 @@ void API::registerCustomer(string requestBody)
                     password,                       // string userPassword,
                     email,                          // string userEmailAddress,
                     chrono::system_clock::now() + chrono::hours(24 * 365 * 10)     // chrono::system_clock::time_point userExpirationDate
-            );
+                );
 
             string responseBody = string("{ ")
                 + "\"customerKey\": " + to_string(get<0>(customerKeyUserKeyAndConfirmationCode)) + " "
@@ -500,7 +516,7 @@ void API::confirmCustomer(unordered_map<string, string> queryParameters)
 
         try
         {
-            _mmsEngine->confirmCustomer(confirmationCodeIt->second);
+            _mmsEngineDBFacade->confirmCustomer(confirmationCodeIt->second);
 
             string responseBody;
             sendSuccess(200, responseBody);
@@ -605,11 +621,11 @@ void API::createAPIKey(unordered_map<string, string> queryParameters)
             chrono::system_clock::time_point apiKeyExpirationDate = 
                     chrono::system_clock::now() + chrono::hours(24 * 365 * 20);
             
-            string apiKey = _mmsEngine->createAPIKey(
-                    stol(customerKeyIt->second), 
-                    stol(userKeyIt->second), 
-                    adminAPI,
-                    userAPI,
+            string apiKey = _mmsEngineDBFacade->createAPIKey(
+                    stol(customerKeyIt->second),
+                    stol(userKeyIt->second),
+                    adminAPI, 
+                    userAPI, 
                     apiKeyExpirationDate);
 
             string responseBody = string("{ ")
@@ -682,10 +698,10 @@ void API::ingestContent(
 
     try
     { 
-        int64_t ingestionJobKey = _mmsEngine->addIngestionJob (
-                customer->_customerKey, 
-                requestBody, 
-                MMSEngineDBFacade::IngestionType::Unknown, 
+        int64_t ingestionJobKey = _mmsEngineDBFacade->addIngestionJob(
+                customer->_customerKey,
+                requestBody,
+                MMSEngineDBFacade::IngestionType::Unknown,
                 MMSEngineDBFacade::IngestionStatus::Start_Ingestion);
 
         string responseBody = string("{ ")
