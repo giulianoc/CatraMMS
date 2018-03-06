@@ -16,9 +16,12 @@
 #include "catralibraries/System.h"
 #include "FFMPEGEncoder.h"
 
+extern char** environ;
+
 int main(int argc, char** argv) 
 {
-    const char* configurationPathName = getenv("MMS_CONFIGPATHNAME");
+    // const char* configurationPathName = getenv("MMS_CONFIGPATHNAME");
+    const char* configurationPathName = "/home/giuliano/catramms/cfg/api.cfg";
     if (configurationPathName == nullptr)
     {
         cerr << "MMS FFMPEGEncoder: the MMS_CONFIGPATHNAME environment variable is not defined" << endl;

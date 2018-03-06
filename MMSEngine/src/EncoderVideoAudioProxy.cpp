@@ -662,11 +662,11 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                 }
                 encodingMedatada["encodingProfileDetails"] = encodingDetails;
                 encodingMedatada["contentType"] = MMSEngineDBFacade::toString(_encodingItem->_contentType);
-                encodingMedatada["physicalPathKey"] = _encodingItem->_physicalPathKey;
+                encodingMedatada["physicalPathKey"] = (int64_t) (_encodingItem->_physicalPathKey);
                 encodingMedatada["customerDirectoryName"] = _encodingItem->_customer->_directoryName;
                 encodingMedatada["relativePath"] = _encodingItem->_relativePath;
-                encodingMedatada["encodingJobKey"] = _encodingItem->_encodingJobKey;
-                encodingMedatada["ingestionJobKey"] = _encodingItem->_ingestionJobKey;
+                encodingMedatada["encodingJobKey"] = (int64_t) (_encodingItem->_encodingJobKey);
+                encodingMedatada["ingestionJobKey"] = (int64_t) (_encodingItem->_ingestionJobKey);
 
                 {
                     Json::StreamWriterBuilder wbuilder;

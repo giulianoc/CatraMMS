@@ -53,7 +53,7 @@ public:
         tuple<shared_ptr<Customer>,bool,bool>& customerAndFlags,
         unsigned long contentLength
     ) = 0;
-
+    
 protected:
     Json::Value                     _configuration;
     shared_ptr<spdlog::logger>      _logger;
@@ -78,10 +78,11 @@ private:
     void fillEnvironmentDetails(
         const char * const * envp, 
         unordered_map<string, string>& requestDetails);
+    
     void fillQueryString(
         string queryString,
         unordered_map<string, string>& queryParameters);
-
+    
     string getHtmlStandardMessage(int htmlResponseCode);
 
     static size_t emailPayloadFeed(void *ptr, size_t size, size_t nmemb, void *userp);

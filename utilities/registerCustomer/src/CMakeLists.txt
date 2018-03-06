@@ -27,9 +27,9 @@ SET (SOURCES
 SET (HEADERS
 )
 
-include_directories ("${PROJECT_SOURCE_DIR}/../usr_local/include")
 include_directories ("${PROJECT_SOURCE_DIR}/../spdlog/include")
 include_directories ("${PROJECT_SOURCE_DIR}/MMSEngine/src")
+include_directories ("${PROJECT_SOURCE_DIR}/../usr_local/include")
 if (APPLE)
 	include_directories ("${PROJECT_SOURCE_DIR}/../mysql-connector-c++-1.1.9-macos10.12-x86-64bit/include")
 else()
@@ -47,6 +47,8 @@ add_executable(registerCustomer ${SOURCES} ${HEADERS})
 
 target_link_libraries (registerCustomer MMSEngine)
 target_link_libraries (registerCustomer FFMpeg)
+target_link_libraries (registerCustomer curl)
+target_link_libraries (registerCustomer curlpp)
 target_link_libraries (registerCustomer mysqlcppconn)
 target_link_libraries (registerCustomer jsoncpp)
 if (APPLE)

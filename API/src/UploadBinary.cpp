@@ -16,7 +16,8 @@
 
 int main(int argc, char** argv) 
 {
-    const char* configurationPathName = getenv("MMS_CONFIGPATHNAME");
+    // const char* configurationPathName = getenv("MMS_CONFIGPATHNAME");
+    const char* configurationPathName = "/home/giuliano/catramms/cfg/api.cfg";
     if (configurationPathName == nullptr)
     {
         cerr << "MMS API: the MMS_CONFIGPATHNAME environment variable is not defined" << endl;
@@ -31,8 +32,8 @@ int main(int argc, char** argv)
 
 UploadBinary::UploadBinary(const char* configurationPathName): APICommon(configurationPathName) 
 {
-    _binaryBufferLength             = _configuration["binary"].get("binaryBufferLength", "XXX").asInt();
-    _progressUpdatePeriodInSeconds  = _configuration["binary"].get("progressUpdatePeriodInSeconds", "XXX").asInt();
+    _binaryBufferLength             = _configuration["uploadBinary"].get("binaryBufferLength", "XXX").asInt();
+    _progressUpdatePeriodInSeconds  = _configuration["uploadBinary"].get("progressUpdatePeriodInSeconds", "XXX").asInt();
 }
 
 UploadBinary::~UploadBinary() {

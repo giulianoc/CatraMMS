@@ -29,7 +29,7 @@ APICommon::APICommon(const char* configurationPathName)
     
     string logPathName =  _configuration["log"].get("pathName", "XXX").asString();
     
-    // auto logger = spdlog::stdout_logger_mt("mmsEngineService");
+    // _logger = spdlog::stdout_logger_mt("mmsEngineService");
     _logger = spdlog::daily_logger_mt("API", logPathName.c_str(), 11, 20);
     
     // trigger flush if the log severity is error or higher
@@ -42,7 +42,6 @@ APICommon::APICommon(const char* configurationPathName)
         spdlog::set_level(spdlog::level::info); // trace, debug, info, warn, err, critical, off
     else if (logLevel == "err")
         spdlog::set_level(spdlog::level::err); // trace, debug, info, warn, err, critical, off
-
     string pattern =  _configuration["log"].get("pattern", "XXX").asString();
     spdlog::set_pattern(pattern);
 
@@ -81,7 +80,7 @@ APICommon::APICommon(const char* configurationPathName)
     _managedRequestsNumber = 0;
     _processId = getpid();
     _maxAPIContentLength = _configuration["api"].get("maxContentLength", "XXX").asInt64();
-    _maxBinaryContentLength = _configuration["binary"].get("maxContentLength", "XXX").asInt64();
+    _maxBinaryContentLength = _configuration["uploadBinary"].get("maxContentLength", "XXX").asInt64();
 }
 
 APICommon::~APICommon() {
