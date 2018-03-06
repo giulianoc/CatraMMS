@@ -1,6 +1,6 @@
 
 #include "CheckEncodingTimes.h"
-#include "catralibraries/Event.h"
+#include "catralibraries/Event2.h"
 
 
 CheckEncodingTimes:: CheckEncodingTimes (unsigned long ulPeriodInMilliSecs,
@@ -27,7 +27,7 @@ void CheckEncodingTimes:: handleTimeOut (void)
         return;
     }
 
-    shared_ptr<Event>    event = _multiEventsSet->getEventsFactory()->getFreeEvent<Event>(MMSENGINE_EVENTTYPEIDENTIFIER_CHECKENCODINGEVENT);
+    shared_ptr<Event2>    event = _multiEventsSet->getEventsFactory()->getFreeEvent<Event2>(MMSENGINE_EVENTTYPEIDENTIFIER_CHECKENCODINGEVENT);
 
     event->setSource(MMSENGINE_CHECKENCODINGTIMES_SOURCE);
     event->setDestination(MMSENGINEPROCESSORNAME);

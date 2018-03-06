@@ -43,7 +43,7 @@ if (APPLE)
 	include_directories ("/usr/local/Cellar/imagemagick/7.0.7-22/include/ImageMagick-7")
 else()
 	include_directories ("/app/5/ThirdPartySoftware/mysql-connector-c++-1.1.9-linux-ubuntu16.10-x86-64bit/include")
-	include_directories ("/app/7/DevelopmentWorkingArea/usr_local/include/ImageMagick-7")
+	include_directories ("${PROJECT_SOURCE_DIR}/../usr_local/include/ImageMagick-7")
 endif()
 
 link_directories ("${PROJECT_SOURCE_DIR}/../usr_local/lib")

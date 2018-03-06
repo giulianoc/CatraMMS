@@ -1,6 +1,6 @@
 
 #include "CheckIngestionTimes.h"
-#include "catralibraries/Event.h"
+#include "catralibraries/Event2.h"
 
 
 CheckIngestionTimes:: CheckIngestionTimes (unsigned long ulPeriodInMilliSecs,
@@ -27,7 +27,7 @@ void CheckIngestionTimes:: handleTimeOut (void)
         return;
     }
 
-    shared_ptr<Event>    event = _multiEventsSet->getEventsFactory()->getFreeEvent<Event>(MMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTIONEVENT);
+    shared_ptr<Event2>    event = _multiEventsSet->getEventsFactory()->getFreeEvent<Event2>(MMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTIONEVENT);
 
     event->setSource(MMSENGINE_CHECKINGESTIONTIMES_SOURCE);
     event->setDestination(MMSENGINEPROCESSORNAME);

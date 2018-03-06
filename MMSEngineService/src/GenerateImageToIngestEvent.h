@@ -25,14 +25,14 @@
 #define GenerateImageToIngestEvent_h
 
 #include <iostream>
-#include "catralibraries/Event.h"
+#include "catralibraries/Event2.h"
         
 using namespace std;
 
 #define MMSENGINE_EVENTTYPEIDENTIFIER_GENERATEIMAGETOINGESTEVENT	4
 
 
-class GenerateImageToIngestEvent: public Event {
+class GenerateImageToIngestEvent: public Event2 {
 private:
     string                  _mmsVideoPathName;
     shared_ptr<Customer>    _customer;

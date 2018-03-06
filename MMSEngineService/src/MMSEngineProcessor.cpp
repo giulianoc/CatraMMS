@@ -58,7 +58,7 @@ void MMSEngineProcessor::operator ()()
     while(!endEvent)
     {
         // cout << "Calling getAndRemoveFirstEvent" << endl;
-        shared_ptr<Event> event = _multiEventsSet->getAndRemoveFirstEvent(MMSENGINEPROCESSORNAME, blocking, milliSecondsToBlock);
+        shared_ptr<Event2> event = _multiEventsSet->getAndRemoveFirstEvent(MMSENGINEPROCESSORNAME, blocking, milliSecondsToBlock);
         if (event == nullptr)
         {
             // cout << "No event found or event not yet expired" << endl;
@@ -83,7 +83,7 @@ void MMSEngineProcessor::operator ()()
                     );
                 }
 
-                _multiEventsSet->getEventsFactory()->releaseEvent<Event>(event);
+                _multiEventsSet->getEventsFactory()->releaseEvent<Event2>(event);
 
             }
             break;
@@ -122,7 +122,7 @@ void MMSEngineProcessor::operator ()()
                     );
                 }
 
-                _multiEventsSet->getEventsFactory()->releaseEvent<Event>(event);
+                _multiEventsSet->getEventsFactory()->releaseEvent<Event2>(event);
 
             }
             break;
@@ -205,7 +205,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                         localAssetIngestionEvent->setMetadataContent(metaDataContent);
 
-                        shared_ptr<Event>    event = dynamic_pointer_cast<Event>(localAssetIngestionEvent);
+                        shared_ptr<Event2>    event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
                         _multiEventsSet->addEvent(event);
 
                         _logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
@@ -1576,7 +1576,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                         generateImageToIngestEvent->setSourceImageWidth(sourceImageWidth);
                         generateImageToIngestEvent->setSourceImageHeight(sourceImageHeight);
 
-                        shared_ptr<Event>    event = dynamic_pointer_cast<Event>(generateImageToIngestEvent);
+                        shared_ptr<Event2>    event = dynamic_pointer_cast<Event2>(generateImageToIngestEvent);
                         _multiEventsSet->addEvent(event);
 
                         _logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (GENERATEIMAGETOINGESTEVENT) to generate the screenshot"

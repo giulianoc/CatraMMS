@@ -25,7 +25,7 @@
 #define LocalAssetIngestionEvent_h
 
 #include <iostream>
-#include "catralibraries/Event.h"
+#include "catralibraries/Event2.h"
 #include "MMSEngineDBFacade.h"
         
 using namespace std;
@@ -33,7 +33,7 @@ using namespace std;
 #define MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT	2
 
 
-class LocalAssetIngestionEvent: public Event {
+class LocalAssetIngestionEvent: public Event2 {
 private:    
     int64_t                 _ingestionJobKey;
     shared_ptr<Customer>    _customer;
