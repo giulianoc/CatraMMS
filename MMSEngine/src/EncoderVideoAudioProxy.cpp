@@ -625,7 +625,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                 Json::Value encodingMedatada;
                 
                 encodingMedatada["mmsSourceAssetPathName"] = mmsSourceAssetPathName;
-                encodingMedatada["durationInMilliSeconds"] = _encodingItem->_durationInMilliSeconds;
+                encodingMedatada["durationInMilliSeconds"] = (Json::LargestUInt) (_encodingItem->_durationInMilliSeconds);
                 encodingMedatada["encodedFileName"] = encodedFileName;
                 encodingMedatada["stagingEncodedAssetPathName"] = stagingEncodedAssetPathName;
                 Json::Value encodingDetails;
@@ -662,11 +662,11 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                 }
                 encodingMedatada["encodingProfileDetails"] = encodingDetails;
                 encodingMedatada["contentType"] = MMSEngineDBFacade::toString(_encodingItem->_contentType);
-                encodingMedatada["physicalPathKey"] = (int64_t) (_encodingItem->_physicalPathKey);
+                encodingMedatada["physicalPathKey"] = (Json::LargestUInt) (_encodingItem->_physicalPathKey);
                 encodingMedatada["customerDirectoryName"] = _encodingItem->_customer->_directoryName;
                 encodingMedatada["relativePath"] = _encodingItem->_relativePath;
-                encodingMedatada["encodingJobKey"] = (int64_t) (_encodingItem->_encodingJobKey);
-                encodingMedatada["ingestionJobKey"] = (int64_t) (_encodingItem->_ingestionJobKey);
+                encodingMedatada["encodingJobKey"] = (Json::LargestUInt) (_encodingItem->_encodingJobKey);
+                encodingMedatada["ingestionJobKey"] = (Json::LargestUInt) (_encodingItem->_ingestionJobKey);
 
                 {
                     Json::StreamWriterBuilder wbuilder;

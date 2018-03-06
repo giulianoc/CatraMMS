@@ -12,7 +12,7 @@
 #include "ActiveEncodingsManager.h"
 #include "LocalAssetIngestionEvent.h"
 #include "GenerateImageToIngestEvent.h"
-#include "json/json.h"
+#include "jsoncpp/json/json.h"
 
 #define MMSENGINEPROCESSORNAME    "MMSEngineProcessor"
 

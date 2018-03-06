@@ -16,7 +16,7 @@
 
 #include <string>
 #include "spdlog/spdlog.h"
-#include "json/json.h"
+#include "jsoncpp/json/json.h"
 
 #ifndef __FILEREF__
     #ifdef __APPLE__
