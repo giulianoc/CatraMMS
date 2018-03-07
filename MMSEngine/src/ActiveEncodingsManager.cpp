@@ -729,7 +729,9 @@ void ActiveEncodingsManager::readingImageProfile(
         if (!parsingSuccessful)
         {
             string errorMessage = __FILEREF__ + "failed to parse the encoder details"
-                    + ", details: " + profileDetails;
+                    + ", errors: " + errors
+                    + ", details: " + profileDetails
+                    ;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);

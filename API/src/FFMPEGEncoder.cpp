@@ -287,7 +287,9 @@ void FFMPEGEncoder::encodeContent(
             if (!parsingSuccessful)
             {
                 string errorMessage = __FILEREF__ + "failed to parse the requestBody"
-                        + ", requestBody: " + requestBody;
+                        + ", errors: " + errors
+                        + ", requestBody: " + requestBody
+                        ;
                 _logger->error(errorMessage);
 
                 throw runtime_error(errorMessage);

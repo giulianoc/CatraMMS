@@ -217,9 +217,10 @@ void API::registerCustomer(string requestBody)
 
             if (!parsingSuccessful)
             {
-                string errorMessage = string("Json metadata failed during the parsing"
-                        ", json data: " + requestBody
-                        );
+                string errorMessage = string("Json metadata failed during the parsing")
+                        + ", errors: " + errors
+                        + ", json data: " + requestBody
+                        ;
                 _logger->error(__FILEREF__ + errorMessage);
 
                 sendError(400, errorMessage);

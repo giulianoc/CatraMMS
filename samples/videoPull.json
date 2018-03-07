@@ -1,31 +1,51 @@
 {
-	"Type": "ContentIngestion",         // mandatory
-	"Version": "1.0",           // mandatory
+	// mandatory
+	"Type": "ContentIngestion",
+	// mandatory
+	"Version": "1.0"
 	"ContentIngestion": {
-		"Title": "RiscaldamentoDiMaradona.mpg",            // mandatory
-		"SubTitle": "aaaa",            // optional
-		"Ingester": "aaaa",         // optional
-		"Keywords": "aaa",          // optional
-		"Description": "aaa",       // optional
+		// mandatory
+		"Title": "RiscaldamentoDiMaradona.mpg",
+		// optional
+		"SubTitle": "aaaa",
+		// optional
+		"Ingester": "aaaa",
+		// optional
+		"Keywords": "aaa",
+		// optional
+		"Description": "aaa",
 
-		"SourceReference": "http://mediaww.rsi.ch/rsi/unrestricted/2018/02/15/2523221.mp4", // mandatory, filename or URL (http/ftp)
-		"ContentType": "video",     // mandatory: "video" or "audio" or "image"
-		"Screenshots": [		// optional, if present only in case of video
+		// mandatory, filename or URL (http/ftp/move/copy)
+		"SourceReference": "http://mediaww.rsi.ch/rsi/unrestricted/2018/02/15/2523221.mp4",
+		// mandatory: "video" or "audio" or "image"
+		"ContentType": "video",
+		// optional, if present only in case of video
+		"Screenshots": [
 			{
-				"TimePositionInSeconds": 123.34,		// mandatory
-				"EncodingProfilesSet": "customerDefault",	// mandatory
-				"SourceImageWidth": 176,		// mandatory
-				"SourceImageHeight": 144		// mandatory
+				// mandatory 
+				"TimePositionInSeconds": 123.34,
+				// mandatory
+				"EncodingProfilesSet": "customerDefault",
+				// mandatory
+				"SourceImageWidth": 176,
+				// mandatory
+				"SourceImageHeight": 144
 			}
 		],
-		"LogicalType": "Advertising",     // optional
-		"MD5FileCheckSum": null,	// "6f60b0d5ed8925d032da926c78c8c67d",  // optional
-		"FileSizeInBytes": null,	// 1379043332,   // optional
+		// optional
+		"LogicalType": "Advertising",
+		// "6f60b0d5ed8925d032da926c78c8c67d",  // optional
+		"MD5FileCheckSum": null,
+		// 1379043332,   // optional
+		"FileSizeInBytes": null,
 
-		"EncodingProfilesSet": "customerDefault",  // mandatory: "systemDefault" or "customerDefault" or <custom name>
-		"EncodingPriority": "low",               // optional: "low", "default", "high"
+		// mandatory: "systemDefault" or "customerDefault" or <custom name>
+		"EncodingProfilesSet": "customerDefault",
+		// optional: "low", "default", "high"
+		"EncodingPriority": "low",
 
-		"ContentProviderName": "default",    // optional
+		// optional
+		"ContentProviderName": "default",
 
 		"Territories": {
 			"default": {
@@ -34,17 +54,26 @@
 			}
 		},
 
-		"Delivery": "FTP",      // optional: "FTP"
-		"FTP": {                // mandatory only if "Delivery" is "FTP"
-			"Hostname": "aaa",  // mandatory only if "Delivery" is "FTP": hostname or IP address
-			"Port": null,       // optional
-			"User": "aaa",      // mandatory only if "Delivery" is "FTP"
-			"Password": "bbb"   // mandatory only if "Delivery" is "FTP"
+		// optional: "FTP"
+		"Delivery": "FTP",
+		// mandatory only if "Delivery" is "FTP"
+		"FTP": {
+			// mandatory only if "Delivery" is "FTP": hostname or IP address
+			"Hostname": "aaa",
+			// optional
+			"Port": null,
+			// mandatory only if "Delivery" is "FTP"
+			"User": "aaa",
+			// mandatory only if "Delivery" is "FTP"
+			"Password": "bbb"
 		},
 
-		"Notification": "EMail",      // optional: "EMail
-		"EMail": {              // mandatory only if "Notification" is "EMail"
-			"Address": "giulianoc@catrasoftware.it"  // mandatory only if "Notification" is "EMail"
+		// optional: "EMail
+		"Notification": "EMail",
+		// mandatory only if "Notification" is "EMail"
+		"EMail": {
+			// mandatory only if "Notification" is "EMail"
+			"Address": "giulianoc@catrasoftware.it"
 		}
 	}
 }

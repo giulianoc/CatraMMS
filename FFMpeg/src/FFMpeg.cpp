@@ -858,7 +858,9 @@ void FFMpeg::settingFfmpegPatameters(
         if (!parsingSuccessful)
         {
             string errorMessage = __FILEREF__ + "failed to parse the encoder details"
-                    + ", encodingProfileDetails: " + encodingProfileDetails;
+                    + ", errors: " + errors
+                    + ", encodingProfileDetails: " + encodingProfileDetails
+                    ;
             _logger->error(errorMessage);
             
             throw runtime_error(errorMessage);

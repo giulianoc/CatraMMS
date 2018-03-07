@@ -418,7 +418,9 @@ int EncoderVideoAudioProxy::getEncodingProgress(int64_t encodingJobKey)
                 if (!parsingSuccessful)
                 {
                     string errorMessage = __FILEREF__ + "failed to parse the response body"
-                            + ", response.str(): " + response.str();
+                            + ", errors: " + errors
+                            + ", response.str(): " + response.str()
+                            ;
                     _logger->error(errorMessage);
 
                     throw runtime_error(errorMessage);
@@ -671,7 +673,9 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                         if (!parsingSuccessful)
                         {
                             string errorMessage = __FILEREF__ + "failed to parse the _encodingItem->_details"
-                                    + ", _encodingItem->_details: " + _encodingItem->_details;
+                                    + ", errors: " + errors
+                                    + ", _encodingItem->_details: " + _encodingItem->_details
+                                    ;
                             _logger->error(errorMessage);
 
                             throw runtime_error(errorMessage);
@@ -762,7 +766,9 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                 if (!parsingSuccessful)
                 {
                     string errorMessage = __FILEREF__ + "failed to parse the response body"
-                            + ", response.str(): " + response.str();
+                            + ", errors: " + errors
+                            + ", response.str(): " + response.str()
+                            ;
                     _logger->error(errorMessage);
 
                     throw runtime_error(errorMessage);

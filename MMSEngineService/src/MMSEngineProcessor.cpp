@@ -231,8 +231,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         if (!parsingSuccessful)
                         {
                             string errorMessage = __FILEREF__ + "failed to parse the metadata"
-                                    + ", metaDataContent: " + metaDataContent
                                     + ", errors: " + errors
+                                    + ", metaDataContent: " + metaDataContent
                                     ;
                             _logger->error(errorMessage);
 
@@ -1088,7 +1088,9 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         if (!parsingSuccessful)
         {
             string errorMessage = __FILEREF__ + "failed to parse the metadata"
-                    + ", metaDataContent: " + localAssetIngestionEvent->getMetadataContent();
+                    + ", errors: " + errors
+                    + ", metaDataContent: " + localAssetIngestionEvent->getMetadataContent()
+                    ;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
