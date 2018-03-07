@@ -17,8 +17,7 @@
 int main(int argc, char** argv) 
 {
 
-    // const char* configurationPathName = getenv("MMS_CONFIGPATHNAME");
-    const char* configurationPathName = "/home/giuliano/catramms/cfg/api.cfg";
+    const char* configurationPathName = getenv("MMS_CONFIGPATHNAME");
     if (configurationPathName == nullptr)
     {
         cerr << "MMS API: the MMS_CONFIGPATHNAME environment variable is not defined" << endl;
