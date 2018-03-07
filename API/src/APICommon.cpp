@@ -595,9 +595,13 @@ void APICommon::sendSuccess(int htmlResponseCode, string responseBody)
             + getHtmlStandardMessage(htmlResponseCode)
             + endLine;
 
+    string contentType;
+    if (responseBody != "")
+        contentType = string("Content-Type: application/json; charset=utf-8") + endLine;
+    
     string completeHttpResponse =
             httpStatus
-            + "Content-Type: application/json; charset=utf-8" + endLine
+            + contentType
             + "Content-Length: " + to_string(responseBody.length()) + endLine
             + endLine
             + responseBody;
@@ -796,17 +800,16 @@ void APICommon:: sendEmail(string to, string subject, vector<string>& emailBody)
     //      --insecure
     
     // string emailServerURL = "smtp://smtp.gmail.com:587";
-    string emailServerURL = "smtps://smtp.gmail.com:465";
-    string userName = "giulianocatrambone@gmail.com";
-    string password = "12_Giulia";
-    string from = "giulianocatrambone@gmail.com";
+    string emailProtocol = _configuration["EmailNotification"].get("protocol", "XXX").asString();
+    string emailServer = _configuration["EmailNotification"].get("server", "XXX").asString();
+    int emailPort = _configuration["EmailNotification"].get("port", "XXX").asInt();
+    string userName = _configuration["EmailNotification"].get("userName", "XXX").asString();
+    string password = _configuration["EmailNotification"].get("password", "XXX").asString();
+    string from = _configuration["EmailNotification"].get("from", "XXX").asString();
     // string to = "giulianoc@catrasoftware.it";
-    string cc = "giulianocatrambone@gmail.com";
-    // string subject = "This is the subject";
-//    vector<string> emailBody;
-//    emailBody.push_back("Hi John,");
-//    emailBody.push_back("<p>I’m sending this mail with curl thru my gmail account.</p>");
-//    emailBody.push_back("Bye!");
+    string cc = _configuration["EmailNotification"].get("cc", "XXX").asString();
+    
+    string emailServerURL = emailProtocol + "://" + emailServer + ":" + to_string(emailPort);
     
 
     CURL *curl;

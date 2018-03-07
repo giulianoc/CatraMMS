@@ -189,24 +189,24 @@ void MMSEngineDBFacade::getTerritories(shared_ptr<Customer> customer)
 
 tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerCustomer(
 	string customerName,
-        string customerDirectoryName,
+    string customerDirectoryName,
 	string street,
-        string city,
-        string state,
+    string city,
+    string state,
 	string zip,
-        string phone,
-        string countryCode,
-        CustomerType customerType,
+    string phone,
+    string countryCode,
+    CustomerType customerType,
 	string deliveryURL,
 	EncodingPriority maxEncodingPriority,
-        EncodingPeriod encodingPeriod,
+    EncodingPeriod encodingPeriod,
 	long maxIngestionsNumber,
-        long maxStorageInGB,
+    long maxStorageInGB,
 	string languageCode,
-        string userName,
-        string userPassword,
-        string userEmailAddress,
-        chrono::system_clock::time_point userExpirationDate
+    string userName,
+    string userPassword,
+    string userEmailAddress,
+    chrono::system_clock::time_point userExpirationDate
 )
 {
     int64_t         customerKey;

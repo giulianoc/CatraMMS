@@ -414,6 +414,11 @@ void API::registerCustomer(string requestBody)
                         return (unsigned char) '_'; } 
             );
 
+            _logger->info(__FILEREF__ + "Registering Customer"
+                + ", name: " + name
+                + ", email: " + email
+            );
+            
             tuple<int64_t,int64_t,string> customerKeyUserKeyAndConfirmationCode = 
                 _mmsEngineDBFacade->registerCustomer(
                     name, 
