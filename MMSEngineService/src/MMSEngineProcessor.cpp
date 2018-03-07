@@ -231,7 +231,9 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         if (!parsingSuccessful)
                         {
                             string errorMessage = __FILEREF__ + "failed to parse the metadata"
-                                    + ", metaDataContent: " + metaDataContent;
+                                    + ", metaDataContent: " + metaDataContent
+                                    + ", errors: " + errors
+                                    ;
                             _logger->error(errorMessage);
 
                             throw runtime_error(errorMessage);
