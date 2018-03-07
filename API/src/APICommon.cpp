@@ -33,7 +33,7 @@ APICommon::APICommon(const char* configurationPathName)
     //    + ", log->pathName: " + logPathName
     // );
     
-    // _logger = spdlog::stdout_logger_mt("mmsEngineService");
+    // _logger = spdlog::stdout_logger_mt("API");
     _logger = spdlog::daily_logger_mt("API", logPathName.c_str(), 11, 20);
     
     // trigger flush if the log severity is error or higher
@@ -216,9 +216,12 @@ int APICommon::listen()
 
             if ((it = requestDetails.find("HTTP_AUTHORIZATION")) == requestDetails.end())
             {
-                _logger->error(__FILEREF__ + "No APIKey present into the request");
+                if ((it = requestDetails.find("HTTP_X_AUTHORIZATION")) == requestDetails.end())
+                {
+                    _logger->error(__FILEREF__ + "No APIKey present into the request");
 
-                throw NoAPIKeyPresentIntoRequest();
+                    throw NoAPIKeyPresentIntoRequest();
+                }
             }
 
             string authorizationPrefix = "Basic ";
