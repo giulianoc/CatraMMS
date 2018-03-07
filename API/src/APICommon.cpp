@@ -28,9 +28,10 @@ APICommon::APICommon(const char* configurationPathName)
     _configuration = loadConfigurationFile(configurationPathName);
     
     string logPathName =  _configuration["log"].get("pathName", "XXX").asString();
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", log->pathName: " + logPathName
-    );
+    // _logger not initialized yet
+    // _logger->info(__FILEREF__ + "Configuration item"
+    //    + ", log->pathName: " + logPathName
+    // );
     
     // _logger = spdlog::stdout_logger_mt("mmsEngineService");
     _logger = spdlog::daily_logger_mt("API", logPathName.c_str(), 11, 20);
