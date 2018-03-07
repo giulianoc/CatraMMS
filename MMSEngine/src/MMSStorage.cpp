@@ -51,7 +51,7 @@ MMSStorage::MMSStorage(
 
 
         _logger->info(__FILEREF__ + "Creating directory (if needed)"
-            + ", MMS_0000Path: " + MMS_0000Path
+            + ", MMS_0000 Path: " + MMS_0000Path
         );
         FileIO::createDirectory(MMS_0000Path,
                 S_IRUSR | S_IWUSR | S_IXUSR |

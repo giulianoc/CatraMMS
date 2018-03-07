@@ -34,19 +34,31 @@ int main(int argc, char** argv)
 API::API(const char* configurationPathName): APICommon(configurationPathName) 
 {
     string encodingPriority =  _configuration["api"].get("encodingPriorityCustomerDefaultValue", "XXX").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->encodingPriorityCustomerDefaultValue: " + encodingPriority
+    );
     if (encodingPriority == "low")
         _encodingPriorityCustomerDefaultValue = MMSEngineDBFacade::EncodingPriority::Low;
     else
         _encodingPriorityCustomerDefaultValue = MMSEngineDBFacade::EncodingPriority::Low;
 
     string encodingPeriod =  _configuration["api"].get("encodingPeriodCustomerDefaultValue", "XXX").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->encodingPeriodCustomerDefaultValue: " + encodingPeriod
+    );
     if (encodingPeriod == "daily")
         _encodingPeriodCustomerDefaultValue = MMSEngineDBFacade::EncodingPeriod::Daily;
     else
         _encodingPeriodCustomerDefaultValue = MMSEngineDBFacade::EncodingPeriod::Daily;
 
     _maxIngestionsNumberCustomerDefaultValue = _configuration["api"].get("maxIngestionsNumberCustomerDefaultValue", "XXX").asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->maxIngestionsNumberCustomerDefaultValue: " + to_string(_maxIngestionsNumberCustomerDefaultValue)
+    );
     _maxStorageInGBCustomerDefaultValue = _configuration["api"].get("maxStorageInGBCustomerDefaultValue", "XXX").asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->maxStorageInGBCustomerDefaultValue: " + to_string(_maxStorageInGBCustomerDefaultValue)
+    );
 }
 
 API::~API() {

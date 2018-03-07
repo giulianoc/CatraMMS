@@ -28,6 +28,9 @@ APICommon::APICommon(const char* configurationPathName)
     _configuration = loadConfigurationFile(configurationPathName);
     
     string logPathName =  _configuration["log"].get("pathName", "XXX").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", log->pathName: " + logPathName
+    );
     
     // _logger = spdlog::stdout_logger_mt("mmsEngineService");
     _logger = spdlog::daily_logger_mt("API", logPathName.c_str(), 11, 20);
@@ -36,6 +39,9 @@ APICommon::APICommon(const char* configurationPathName)
     _logger->flush_on(spdlog::level::trace);
     
     string logLevel =  _configuration["log"].get("level", "XXX").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", log->level: " + logLevel
+    );
     if (logLevel == "debug")
         spdlog::set_level(spdlog::level::debug); // trace, debug, info, warn, err, critical, off
     else if (logLevel == "info")
@@ -43,6 +49,9 @@ APICommon::APICommon(const char* configurationPathName)
     else if (logLevel == "err")
         spdlog::set_level(spdlog::level::err); // trace, debug, info, warn, err, critical, off
     string pattern =  _configuration["log"].get("pattern", "XXX").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", log->pattern: " + pattern
+    );
     spdlog::set_pattern(pattern);
 
     // globally register the loggers so so the can be accessed using spdlog::get(logger_name)
@@ -80,7 +89,13 @@ APICommon::APICommon(const char* configurationPathName)
     _managedRequestsNumber = 0;
     _processId = getpid();
     _maxAPIContentLength = _configuration["api"].get("maxContentLength", "XXX").asInt64();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->maxContentLength: " + to_string(_maxAPIContentLength)
+    );
     _maxBinaryContentLength = _configuration["uploadBinary"].get("maxContentLength", "XXX").asInt64();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", uploadBinary->maxContentLength: " + to_string(_maxBinaryContentLength)
+    );
 }
 
 APICommon::~APICommon() {
@@ -92,6 +107,9 @@ int APICommon::listen()
     streambuf* cin_streambuf  = cin.rdbuf();
     streambuf* cout_streambuf = cout.rdbuf();
     streambuf* cerr_streambuf = cerr.rdbuf();
+
+    _logger->info(__FILEREF__ + "APICommon::listen"
+    );        
 
     FCGX_Request request;
 

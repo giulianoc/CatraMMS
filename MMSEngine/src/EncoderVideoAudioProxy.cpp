@@ -58,7 +58,13 @@ void EncoderVideoAudioProxy::setData(
     _encodingItem           = encodingItem;
     
     _mp4Encoder             = _configuration["encoding"].get("mp4Encoder", "").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", encoding->mp4Encoder: " + _mp4Encoder
+    );
     _mpeg2TSEncoder         = _configuration["encoding"].get("mpeg2TSEncoder", "").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", encoding->mpeg2TSEncoder: " + _mpeg2TSEncoder
+    );
         
     #ifdef __LOCALENCODER__
         _ffmpegMaxCapacity      = 1;
@@ -342,7 +348,13 @@ int EncoderVideoAudioProxy::getEncodingProgress(int64_t encodingJobKey)
         {
             // string ffmpegEncoderHost = _configuration["ffmpeg"].get("encoderHost", "").asString();
             int ffmpegEncoderPort = _configuration["ffmpeg"].get("encoderPort", "").asInt();
+            _logger->info(__FILEREF__ + "Configuration item"
+                + ", ffmpeg->encoderPort: " + to_string(ffmpegEncoderPort)
+            );
             string ffmpegEncoderURI = _configuration["ffmpeg"].get("encoderURI", "").asString();
+            _logger->info(__FILEREF__ + "Configuration item"
+                + ", ffmpeg->encoderURI: " + ffmpegEncoderURI
+            );
             ffmpegEncoderURL = 
                     string("http://")
                     + _currentUsedFFMpegEncoderHost + ":"
@@ -355,7 +367,13 @@ int EncoderVideoAudioProxy::getEncodingProgress(int64_t encodingJobKey)
 
             {
                 string encoderUser = _configuration["ffmpeg"].get("encoderUser", "").asString();
+                _logger->info(__FILEREF__ + "Configuration item"
+                    + ", ffmpeg->encoderUser: " + encoderUser
+                );
                 string encoderPassword = _configuration["ffmpeg"].get("encoderPassword", "").asString();
+                _logger->info(__FILEREF__ + "Configuration item"
+                    + ", ffmpeg->encoderPassword: " + "..."
+                );
                 string userPasswordEncoded = Convert::base64_encode(encoderUser + ":" + encoderPassword);
                 string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
 
@@ -612,8 +630,17 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
         try
         {
             string ffmpegEncoderHost = _configuration["ffmpeg"].get("encoderHost", "").asString();
+            _logger->info(__FILEREF__ + "Configuration item"
+                + ", ffmpeg->encoderHost: " + ffmpegEncoderHost
+            );
             int ffmpegEncoderPort = _configuration["ffmpeg"].get("encoderPort", "").asInt();
+            _logger->info(__FILEREF__ + "Configuration item"
+                + ", ffmpeg->encoderPort: " + to_string(ffmpegEncoderPort)
+            );
             string ffmpegEncoderURI = _configuration["ffmpeg"].get("encoderURI", "").asString();
+            _logger->info(__FILEREF__ + "Configuration item"
+                + ", ffmpeg->encoderURI: " + ffmpegEncoderURI
+            );
             ffmpegEncoderURL = 
                     string("http://")
                     + ffmpegEncoderHost + ":"
@@ -680,7 +707,13 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
             header.push_back("Content-Type: application/json");
             {
                 string encoderUser = _configuration["ffmpeg"].get("encoderUser", "").asString();
+                _logger->info(__FILEREF__ + "Configuration item"
+                    + ", ffmpeg->encoderUser: " + encoderUser
+                );
                 string encoderPassword = _configuration["ffmpeg"].get("encoderPassword", "").asString();
+                _logger->info(__FILEREF__ + "Configuration item"
+                    + ", ffmpeg->encoderPassword: " + "..."
+                );
                 string userPasswordEncoded = Convert::base64_encode(encoderUser + ":" + encoderPassword);
                 string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
 

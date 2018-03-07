@@ -37,6 +37,9 @@ int main(int argc, char** argv)
 FFMPEGEncoder::FFMPEGEncoder(const char* configurationPathName): APICommon(configurationPathName) 
 {
     _maxEncodingsCapability =  _configuration["ffmpeg"].get("maxEncodingsCapability", 0).asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", ffmpeg->maxEncodingsCapability: " + to_string(_maxEncodingsCapability)
+    );
 
     for (int encodingIndex = 0; encodingIndex < _maxEncodingsCapability; encodingIndex++)
     {

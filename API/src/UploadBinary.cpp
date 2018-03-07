@@ -33,7 +33,13 @@ int main(int argc, char** argv)
 UploadBinary::UploadBinary(const char* configurationPathName): APICommon(configurationPathName) 
 {
     _binaryBufferLength             = _configuration["uploadBinary"].get("binaryBufferLength", "XXX").asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", uploadBinary->binaryBufferLength: " + to_string(_binaryBufferLength)
+    );
     _progressUpdatePeriodInSeconds  = _configuration["uploadBinary"].get("progressUpdatePeriodInSeconds", "XXX").asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", uploadBinary->progressUpdatePeriodInSeconds: " + to_string(_progressUpdatePeriodInSeconds)
+    );
 }
 
 UploadBinary::~UploadBinary() {
