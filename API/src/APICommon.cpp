@@ -216,12 +216,9 @@ int APICommon::listen()
 
             if ((it = requestDetails.find("HTTP_AUTHORIZATION")) == requestDetails.end())
             {
-                if ((it = requestDetails.find("HTTP_X_AUTHORIZATION")) == requestDetails.end())
-                {
-                    _logger->error(__FILEREF__ + "No APIKey present into the request");
+                _logger->error(__FILEREF__ + "No APIKey present into the request");
 
-                    throw NoAPIKeyPresentIntoRequest();
-                }
+                throw NoAPIKeyPresentIntoRequest();
             }
 
             string authorizationPrefix = "Basic ";
@@ -274,7 +271,7 @@ int APICommon::listen()
             string errorMessage = e.what();
             _logger->error(__FILEREF__ + errorMessage);
 
-            sendError(400, errorMessage);   // bad request
+            sendError(401, errorMessage);   // bad request
 
             // throw runtime_error(errorMessage);
             continue;
