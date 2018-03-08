@@ -460,7 +460,7 @@ public:
     );
 
     void getIngestionsToBeManaged(
-        vector<tuple<int64_t,shared_ptr<Customer>,string,string,IngestionStatus>>& ingestionsToBeManaged,
+        vector<tuple<int64_t,shared_ptr<Customer>,string,IngestionStatus>>& ingestionsToBeManaged,
         string processorMMS,
         int maxIngestionJobs);
 
@@ -478,7 +478,6 @@ public:
 
     void updateIngestionJob (
         int64_t ingestionJobKey,
-        string sourceReference,
         IngestionType ingestionType,
         IngestionStatus newIngestionStatus,
         string errorMessage,

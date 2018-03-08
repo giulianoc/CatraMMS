@@ -1380,7 +1380,7 @@ int64_t MMSEngineDBFacade::addImageEncodingProfile(
 }
 
 void MMSEngineDBFacade::getIngestionsToBeManaged(
-        vector<tuple<int64_t,shared_ptr<Customer>,string,string,IngestionStatus>>& ingestionsToBeManaged,
+        vector<tuple<int64_t,shared_ptr<Customer>,string,IngestionStatus>>& ingestionsToBeManaged,
         string processorMMS,
         int maxIngestionJobs)
 {
@@ -1424,7 +1424,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 
         {
             lastSQLCommand = 
-                "select IngestionJobKey, CustomerKey, MetaDataContent, SourceReference, Status from MMS_IngestionJobs where ProcessorMMS = ?";
+                "select IngestionJobKey, CustomerKey, MetaDataContent, Status from MMS_IngestionJobs where ProcessorMMS = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, processorMMS);
@@ -1435,13 +1435,12 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                 int64_t ingestionJobKey     = resultSet->getInt64("IngestionJobKey");
                 int64_t customerKey         = resultSet->getInt64("CustomerKey");
                 string metaDataContent      = resultSet->getString("MetaDataContent");
-                string sourceReference      = resultSet->getString("SourceReference");
                 IngestionStatus ingestionStatus     = MMSEngineDBFacade::toIngestionStatus(resultSet->getString("Status"));
 
                 shared_ptr<Customer> customer = getCustomer(customerKey);
                 
-                tuple<int64_t,shared_ptr<Customer>,string,string,IngestionStatus> ingestionToBeManaged
-                        = make_tuple(ingestionJobKey, customer, metaDataContent, sourceReference, ingestionStatus);
+                tuple<int64_t,shared_ptr<Customer>,string,IngestionStatus> ingestionToBeManaged
+                        = make_tuple(ingestionJobKey, customer, metaDataContent, ingestionStatus);
                 
                 ingestionsToBeManaged.push_back(ingestionToBeManaged);
             }
@@ -1574,8 +1573,8 @@ int64_t MMSEngineDBFacade::addIngestionJob (
         
         {
             lastSQLCommand = 
-                "insert into MMS_IngestionJobs (IngestionJobKey, CustomerKey, MediaItemKey, MetaDataContent, SourceReference, IngestionType, StartIngestion, EndIngestion, DownloadingProgress, UploadProgress, SourceBinaryTransferred, ProcessorMMS, Status, ErrorMessage) values ("
-                                               "NULL,            ?,           NULL,         ?,               NULL,            ?,             NULL,           NULL,         NULL,                NULL,           0,                       NULL,         ?,      NULL)";
+                "insert into MMS_IngestionJobs (IngestionJobKey, CustomerKey, MediaItemKey, MetaDataContent, IngestionType, StartIngestion, EndIngestion, DownloadingProgress, UploadProgress, SourceBinaryTransferred, ProcessorMMS, Status, ErrorMessage) values ("
+                                               "NULL,            ?,           NULL,         ?,               ?,             NULL,           NULL,         NULL,                NULL,           0,                       NULL,         ?,      NULL)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -1783,7 +1782,6 @@ void MMSEngineDBFacade::updateIngestionJob (
 
 void MMSEngineDBFacade::updateIngestionJob (
         int64_t ingestionJobKey,
-        string sourceReference,
         IngestionType ingestionType,
         IngestionStatus newIngestionStatus,
         string errorMessage,
@@ -1825,14 +1823,10 @@ void MMSEngineDBFacade::updateIngestionJob (
         if (finalState)
         {
             lastSQLCommand = 
-                "update MMS_IngestionJobs set SourceReference = ?, IngestionType = ?, Status = ?, EndIngestion = NOW(), ProcessorMMS = ?, ErrorMessage = ? where IngestionJobKey = ?";
+                "update MMS_IngestionJobs set IngestionType = ?, Status = ?, EndIngestion = NOW(), ProcessorMMS = ?, ErrorMessage = ? where IngestionJobKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            if (sourceReference == "")
-                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-            else
-                preparedStatement->setString(queryParameterIndex++, sourceReference);
             preparedStatement->setInt(queryParameterIndex++, static_cast<int>(ingestionType));
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(newIngestionStatus));
             if (processorMMS == "")
@@ -1863,14 +1857,10 @@ void MMSEngineDBFacade::updateIngestionJob (
         else
         {
             lastSQLCommand = 
-                "update MMS_IngestionJobs set SourceReference = ?, IngestionType = ?, Status = ?, ProcessorMMS = ?, ErrorMessage = ? where IngestionJobKey = ?";
+                "update MMS_IngestionJobs set IngestionType = ?, Status = ?, ProcessorMMS = ?, ErrorMessage = ? where IngestionJobKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            if (sourceReference == "")
-                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-            else
-                preparedStatement->setString(queryParameterIndex++, sourceReference);
             preparedStatement->setInt(queryParameterIndex++, static_cast<int>(ingestionType));
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(newIngestionStatus));
             if (processorMMS == "")
@@ -4405,7 +4395,6 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "CustomerKey			BIGINT UNSIGNED NOT NULL,"
                     "MediaItemKey			BIGINT UNSIGNED NULL,"
                     "MetaDataContent                    TEXT CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
-                    "SourceReference                    VARCHAR (1024) NULL,"
                     "IngestionType                      TINYINT (2) NULL,"
                     "StartIngestion			TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "EndIngestion			DATETIME NULL,"

@@ -1,7 +1,6 @@
 
 #include <fstream>
 #include <sstream>
-#include <regex>
 #include <curlpp/cURLpp.hpp>
 #include <curlpp/Easy.hpp>
 #include <curlpp/Options.hpp>
@@ -162,12 +161,12 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
     
     try
     {
-        vector<tuple<int64_t,shared_ptr<Customer>,string,string,MMSEngineDBFacade::IngestionStatus>> ingestionsToBeManaged;
+        vector<tuple<int64_t,shared_ptr<Customer>,string,MMSEngineDBFacade::IngestionStatus>> ingestionsToBeManaged;
         
         _mmsEngineDBFacade->getIngestionsToBeManaged(ingestionsToBeManaged, 
                 _processorMMS, _maxIngestionJobsPerEvent);
         
-        for (tuple<int64_t,shared_ptr<Customer>,string,string,MMSEngineDBFacade::IngestionStatus> ingestionToBeManaged:
+        for (tuple<int64_t,shared_ptr<Customer>,string,MMSEngineDBFacade::IngestionStatus> ingestionToBeManaged:
                 ingestionsToBeManaged)
         {
             int64_t ingestionJobKey;
@@ -178,8 +177,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                 string sourceReference;
                 MMSEngineDBFacade::IngestionStatus ingestionStatus;
 
-                tie(ingestionJobKey, customer, metaDataContent,
-                        sourceReference, ingestionStatus) = ingestionToBeManaged;
+                tie(ingestionJobKey, customer, metaDataContent, ingestionStatus) = ingestionToBeManaged;
                 
                 _logger->info(__FILEREF__ + "json to be processed"
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -312,7 +310,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                     }
 
                     MMSEngineDBFacade::IngestionStatus nextIngestionStatus;
-                    string mediaSourceReference;
+                    string mediaSourceURL;
                     string mediaSourceFileName;
                     string md5FileCheckSum;
                     int fileSizeInBytes;
@@ -324,7 +322,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 ingestionTypeAndContentType.first, metadataRoot);
 
                         tie(nextIngestionStatus,
-                                mediaSourceReference, mediaSourceFileName, 
+                                mediaSourceURL, mediaSourceFileName, 
                                 md5FileCheckSum, fileSizeInBytes) = mediaSourceDetails;                        
                     }
                     catch(runtime_error e)
@@ -337,14 +335,12 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                         _logger->info(__FILEREF__ + "Update IngestionJob"
                             + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                            + ", SourceReference: " + ""
                             + ", IngestionType: " + MMSEngineDBFacade::toString(ingestionTypeAndContentType.first)
                             + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
                             + ", errorMessage: " + errorMessage
                             + ", processorMMS: " + ""
                         );                            
                         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                                "", // SourceReference
                                 ingestionTypeAndContentType.first,
                                 MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
                                 errorMessage,
@@ -363,14 +359,12 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                         _logger->info(__FILEREF__ + "Update IngestionJob"
                             + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                            + ", SourceReference: " + ""
                             + ", IngestionType: " + MMSEngineDBFacade::toString(ingestionTypeAndContentType.first)
                             + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
                             + ", errorMessage: " + errorMessage
                             + ", processorMMS: " + ""
                         );                            
                         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                                "", // SourceReference
                                 ingestionTypeAndContentType.first,
                                 MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
                                 errorMessage,
@@ -382,9 +376,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                     try
                     {
-                        // mediaSourceReference could be a URL or a filename.
-                        // In this last case, it will be the same as mediaSourceFileName
-
                         if (nextIngestionStatus == MMSEngineDBFacade::IngestionStatus::SourceDownloadingInProgress)
                         {
                             string errorMessage = "";
@@ -392,21 +383,20 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             
                             _logger->info(__FILEREF__ + "Update IngestionJob"
                                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                + ", SourceReference: " + mediaSourceReference
                                 + ", IngestionType: " + MMSEngineDBFacade::toString(ingestionTypeAndContentType.first)
                                 + ", IngestionStatus: " + MMSEngineDBFacade::toString(nextIngestionStatus)
                                 + ", errorMessage: " + errorMessage
                                 + ", processorMMS: " + processorMMS
                             );                            
                             _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                                    mediaSourceReference, ingestionTypeAndContentType.first,
+                                    ingestionTypeAndContentType.first,
                                     nextIngestionStatus, 
                                     errorMessage,
                                     processorMMS
                                     );
 
                             thread downloadMediaSource(&MMSEngineProcessor::downloadMediaSourceFile, this, 
-                                mediaSourceReference, ingestionJobKey, customer);
+                                mediaSourceURL, ingestionJobKey, customer);
                             downloadMediaSource.detach();
                         }
                         else if (nextIngestionStatus == MMSEngineDBFacade::IngestionStatus::SourceMovingInProgress)
@@ -416,21 +406,20 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                             _logger->info(__FILEREF__ + "Update IngestionJob"
                                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                + ", SourceReference: " + mediaSourceReference
                                 + ", IngestionType: " + MMSEngineDBFacade::toString(ingestionTypeAndContentType.first)
                                 + ", IngestionStatus: " + MMSEngineDBFacade::toString(nextIngestionStatus)
                                 + ", errorMessage: " + errorMessage
                                 + ", processorMMS: " + processorMMS
                             );                            
                             _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                                    mediaSourceReference, ingestionTypeAndContentType.first,
+                                    ingestionTypeAndContentType.first,
                                     nextIngestionStatus, 
                                     errorMessage,
                                     processorMMS
                                     );
 
                             thread moveMediaSource(&MMSEngineProcessor::moveMediaSourceFile, this, 
-                                mediaSourceReference, ingestionJobKey, customer);
+                                mediaSourceURL, ingestionJobKey, customer);
                             moveMediaSource.detach();
                         }
                         else if (nextIngestionStatus == MMSEngineDBFacade::IngestionStatus::SourceCopingInProgress)
@@ -440,21 +429,20 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                             _logger->info(__FILEREF__ + "Update IngestionJob"
                                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                + ", SourceReference: " + mediaSourceReference
                                 + ", IngestionType: " + MMSEngineDBFacade::toString(ingestionTypeAndContentType.first)
                                 + ", IngestionStatus: " + MMSEngineDBFacade::toString(nextIngestionStatus)
                                 + ", errorMessage: " + errorMessage
                                 + ", processorMMS: " + processorMMS
                             );                            
                             _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                                    mediaSourceReference, ingestionTypeAndContentType.first,
+                                    ingestionTypeAndContentType.first,
                                     nextIngestionStatus, 
                                     errorMessage,
                                     processorMMS
                                     );
 
                             thread copyMediaSource(&MMSEngineProcessor::copyMediaSourceFile, this, 
-                                mediaSourceReference, ingestionJobKey, customer);
+                                mediaSourceURL, ingestionJobKey, customer);
                             copyMediaSource.detach();
                         }
                         else // if (nextIngestionStatus == MMSEngineDBFacade::IngestionStatus::SourceUploadingInProgress)
@@ -464,14 +452,13 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                             _logger->info(__FILEREF__ + "Update IngestionJob"
                                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                + ", SourceReference: " + mediaSourceReference
                                 + ", IngestionType: " + MMSEngineDBFacade::toString(ingestionTypeAndContentType.first)
                                 + ", IngestionStatus: " + MMSEngineDBFacade::toString(nextIngestionStatus)
                                 + ", errorMessage: " + errorMessage
                                 + ", processorMMS: " + processorMMS
                             );                            
                             _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                                    mediaSourceReference, ingestionTypeAndContentType.first,
+                                    ingestionTypeAndContentType.first,
                                     nextIngestionStatus, 
                                     errorMessage,
                                     processorMMS
@@ -1140,7 +1127,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
     }
 
     MMSEngineDBFacade::IngestionStatus nextIngestionStatus;
-    string mediaSourceReference;
+    string mediaSourceURL;
     string mediaSourceFileName;
     string md5FileCheckSum;
     int fileSizeInBytes;
@@ -1152,7 +1139,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                 ingestionTypeAndContentType.first, metadataRoot);
         
         tie(nextIngestionStatus,
-                mediaSourceReference, mediaSourceFileName, 
+                mediaSourceURL, mediaSourceFileName, 
                 md5FileCheckSum, fileSizeInBytes) = mediaSourceDetails;                        
     }
     catch(runtime_error e)
@@ -1650,7 +1637,7 @@ string MMSEngineProcessor::generateImageMetadataToIngest(
             + "\"ContentIngestion\": {"
                 + "\"Title\": \"" + title + "\","
                 + "\"Ingester\": \"MMSEngine\","
-                + "\"SourceReference\": \"move://" + imagePathName + "\","
+                + "\"SourceURL\": \"move://" + imagePathName + "\","
                 + "\"ContentType\": \"image\","
                 + "\"EncodingProfilesSet\": \"" + encodingProfilesSet + "\""
             + "}"
@@ -1754,7 +1741,7 @@ MMSEngineDBFacade::ContentType MMSEngineProcessor::validateContentIngestionMetad
     
     vector<string> contentIngestionMandatoryFields = {
         "Title",
-        "SourceReference",
+        "SourceFileName",
         "ContentType",
         "EncodingProfilesSet"
     };
@@ -1928,7 +1915,7 @@ tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> MMSEngine
         Json::Value root)        
 {
     MMSEngineDBFacade::IngestionStatus nextIngestionStatus;
-    string mediaSourceReference;    // URL or local file name
+    string mediaSourceURL;
     string mediaSourceFileName;
     
     string field = "ContentIngestion";
@@ -1936,65 +1923,32 @@ tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> MMSEngine
 
     if (ingestionType == MMSEngineDBFacade::IngestionType::ContentIngestion)
     {
-        field = "SourceReference";
-        mediaSourceReference = contentIngestion.get(field, "XXX").asString();
+        field = "SourceURL";
+        if (_mmsEngineDBFacade->isMetadataPresent(contentIngestion, field))
+            mediaSourceURL = contentIngestion.get(field, "XXX").asString();
         
+        field = "SourceFileName";
+        mediaSourceFileName = contentIngestion.get(field, "XXX").asString();
+
         string httpPrefix ("http://");
         string ftpPrefix ("ftp://");
         string movePrefix("move://");   // move:///dir1/dir2/.../file
         string copyPrefix("copy://");
-        if (!mediaSourceReference.compare(0, httpPrefix.size(), httpPrefix)
-                || !mediaSourceReference.compare(0, ftpPrefix.size(), ftpPrefix))
+        if (!mediaSourceURL.compare(0, httpPrefix.size(), httpPrefix)
+                || !mediaSourceURL.compare(0, ftpPrefix.size(), ftpPrefix))
         {
             nextIngestionStatus = MMSEngineDBFacade::IngestionStatus::SourceDownloadingInProgress;
-            
-            // mediaSourceFileName
-            {
-                smatch m;
-                
-                regex e (R"(^(([^:\/?#]+):)?(//([^\/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?)", std::regex::extended);
-                
-                if (!regex_search(mediaSourceReference, m, e))
-                {
-                    string errorMessage = __FILEREF__ + "mediaSourceReference URL format is wrong"
-                            + ", mediaSourceReference: " + mediaSourceReference;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }
-                
-                string path = m[5].str();
-                if (path.back() == '/')
-                    path.pop_back();
-                
-                size_t fileNameIndex = path.find_last_of("/");
-                if (fileNameIndex == string::npos)
-                {
-                    string errorMessage = __FILEREF__ + "No fileName find in the mediaSourceReference"
-                            + ", mediaSourceReference: " + mediaSourceReference;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }
-
-                mediaSourceFileName = path.substr(fileNameIndex + 1);
-            }
         }
-        else if (!mediaSourceReference.compare(0, movePrefix.size(), movePrefix))
+        else if (!mediaSourceURL.compare(0, movePrefix.size(), movePrefix))
         {
-            nextIngestionStatus = MMSEngineDBFacade::IngestionStatus::SourceMovingInProgress;
-            
-            mediaSourceFileName = mediaSourceReference.substr(movePrefix.size());
+            nextIngestionStatus = MMSEngineDBFacade::IngestionStatus::SourceMovingInProgress;            
         }
-        else if (!mediaSourceReference.compare(0, copyPrefix.size(), copyPrefix))
+        else if (!mediaSourceURL.compare(0, copyPrefix.size(), copyPrefix))
         {
             nextIngestionStatus = MMSEngineDBFacade::IngestionStatus::SourceCopingInProgress;
-            
-            mediaSourceFileName = mediaSourceReference.substr(copyPrefix.size());
         }
         else
         {
-            mediaSourceFileName = mediaSourceReference;
             nextIngestionStatus = MMSEngineDBFacade::IngestionStatus::SourceUploadingInProgress;
         }
     }   
@@ -2024,14 +1978,14 @@ tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> MMSEngine
 
     tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> mediaSourceDetails;
     get<0>(mediaSourceDetails) = nextIngestionStatus;
-    get<1>(mediaSourceDetails) = mediaSourceReference;
+    get<1>(mediaSourceDetails) = mediaSourceURL;
     get<2>(mediaSourceDetails) = mediaSourceFileName;
     get<3>(mediaSourceDetails) = md5FileCheckSum;
     get<4>(mediaSourceDetails) = fileSizeInBytes;
 
     _logger->info(__FILEREF__ + "media source file to be processed"
         + ", nextIngestionStatus: " + MMSEngineDBFacade::toString(get<0>(mediaSourceDetails))
-        + ", mediaSourceReference: " + get<1>(mediaSourceDetails)
+        + ", mediaSourceURL: " + get<1>(mediaSourceDetails)
         + ", mediaSourceFileName: " + get<2>(mediaSourceDetails)
         + ", md5FileCheckSum: " + get<3>(mediaSourceDetails)
         + ", fileSizeInBytes: " + to_string(get<4>(mediaSourceDetails))

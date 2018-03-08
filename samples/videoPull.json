@@ -15,8 +15,10 @@
 		// optional
 		"Description": "aaa",
 
-		// mandatory, filename or URL (http/ftp/move/copy)
-		"SourceReference": "http://mediaww.rsi.ch/rsi/unrestricted/2018/02/15/2523221.mp4",
+		// mandatory in case of a pull (http/https/ftp/ftps/move/copy)
+		"SourceURL": "http://mediaww.rsi.ch/rsi/unrestricted/2018/02/15/2523221.mp4",
+		// mandatory
+		"SourceFileName": "2523221.mp4",
 		// mandatory: "video" or "audio" or "image"
 		"ContentType": "video",
 		// optional, if present only in case of video
