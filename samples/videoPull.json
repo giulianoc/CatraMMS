@@ -1,80 +1,44 @@
 {
-	// mandatory
 	"Type": "ContentIngestion",
-	// mandatory
-	"Version": "1.0"
+	"Version": "1.0",
 	"ContentIngestion": {
-		// mandatory
 		"Title": "RiscaldamentoDiMaradona.mpg",
-		// optional
 		"SubTitle": "aaaa",
-		// optional
 		"Ingester": "aaaa",
-		// optional
 		"Keywords": "aaa",
-		// optional
 		"Description": "aaa",
-
-		// mandatory in case of a pull (http/https/ftp/ftps/move/copy)
 		"SourceURL": "http://mediaww.rsi.ch/rsi/unrestricted/2018/02/15/2523221.mp4",
-		// mandatory
 		"SourceFileName": "2523221.mp4",
-		// mandatory: "video" or "audio" or "image"
 		"ContentType": "video",
-		// optional, if present only in case of video
 		"Screenshots": [
 			{
-				// mandatory 
 				"TimePositionInSeconds": 123.34,
-				// mandatory
 				"EncodingProfilesSet": "customerDefault",
-				// mandatory
 				"SourceImageWidth": 176,
-				// mandatory
 				"SourceImageHeight": 144
 			}
 		],
-		// optional
 		"LogicalType": "Advertising",
-		// "6f60b0d5ed8925d032da926c78c8c67d",  // optional
 		"MD5FileCheckSum": null,
-		// 1379043332,   // optional
 		"FileSizeInBytes": null,
-
-		// mandatory: "systemDefault" or "customerDefault" or <custom name>
 		"EncodingProfilesSet": "customerDefault",
-		// optional: "low", "default", "high"
 		"EncodingPriority": "low",
-
-		// optional
 		"ContentProviderName": "default",
-
 		"Territories": {
 			"default": {
 			"startPublishing": "NOW",
 			"endPublishing": "FOREVER"
 			}
 		},
-
-		// optional: "FTP"
 		"Delivery": "FTP",
-		// mandatory only if "Delivery" is "FTP"
 		"FTP": {
-			// mandatory only if "Delivery" is "FTP": hostname or IP address
 			"Hostname": "aaa",
-			// optional
 			"Port": null,
-			// mandatory only if "Delivery" is "FTP"
 			"User": "aaa",
-			// mandatory only if "Delivery" is "FTP"
 			"Password": "bbb"
 		},
-
-		// optional: "EMail
 		"Notification": "EMail",
-		// mandatory only if "Notification" is "EMail"
 		"EMail": {
-			// mandatory only if "Notification" is "EMail"
 			"Address": "giulianoc@catrasoftware.it"
 		}
 	}
