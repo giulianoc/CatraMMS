@@ -27,9 +27,20 @@ int main (int iArgc, char *pArgv [])
     Json::Value configuration = loadConfigurationFile(pArgv[1]);
 
     string logPathName =  configuration["log"].get("pathName", "XXX").asString();
+    bool stdout =  configuration["log"].get("stdout", "XXX").asBool();
     
+    std::vector<spdlog::sink_ptr> sinks;
+    auto dailySink = make_shared<spdlog::sinks::daily_file_sink_mt> (logPathName.c_str(), 11, 20);
+    sinks.push_back(dailySink);
+    if (stdout)
+    {
+        auto stdoutSink = spdlog::sinks::stdout_sink_mt::instance();
+        sinks.push_back(stdoutSink);
+    }
+    auto logger = std::make_shared<spdlog::logger>("mmsEngineService", begin(sinks), end(sinks));
+
     // auto logger = spdlog::stdout_logger_mt("mmsEngineService");
-    auto logger = spdlog::daily_logger_mt("mmsEngineService", logPathName.c_str(), 11, 20);
+    // auto logger = spdlog::daily_logger_mt("mmsEngineService", logPathName.c_str(), 11, 20);
     
     // trigger flush if the log severity is error or higher
     logger->flush_on(spdlog::level::trace);
