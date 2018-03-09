@@ -1407,27 +1407,16 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 
         {
             lastSQLCommand = 
-                "update MMS_IngestionJobs set ProcessorMMS = ? where ProcessorMMS is null "
-                    "and (Status = ? or (Status in (?, ?, ?, ?) and SourceBinaryTransferred = 1)) limit ?";
+                "select IngestionJobKey, CustomerKey, MetaDataContent, Status from MMS_IngestionJobs where ProcessorMMS is null "
+                    "and (Status = ? or (Status in (?, ?, ?, ?) and SourceBinaryTransferred = 1)) limit ? for update";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++, processorMMS);
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::Start_Ingestion));
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress));
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress));
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress));
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress));
             preparedStatement->setInt(queryParameterIndex++, maxIngestionJobs);
-
-            int rowsUpdated = preparedStatement->executeUpdate();
-        }
-
-        {
-            lastSQLCommand = 
-                "select IngestionJobKey, CustomerKey, MetaDataContent, Status from MMS_IngestionJobs where ProcessorMMS = ?";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++, processorMMS);
 
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             while (resultSet->next())
@@ -1443,6 +1432,29 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                         = make_tuple(ingestionJobKey, customer, metaDataContent, ingestionStatus);
                 
                 ingestionsToBeManaged.push_back(ingestionToBeManaged);
+            }
+        }
+
+        for (tuple<int64_t,shared_ptr<Customer>,string,IngestionStatus> ingestionToBeManaged:
+            ingestionsToBeManaged)
+        {
+            lastSQLCommand = 
+                "update MMS_IngestionJobs set ProcessorMMS = ? where IngestionJobKey is IngestionJobKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, get<0>(ingestionToBeManaged));
+
+            int rowsUpdated = preparedStatement->executeUpdate();
+            if (rowsUpdated != 1)
+            {
+                string errorMessage = __FILEREF__ + "no update was done"
+                        + ", ingestionJobKey: " + to_string(get<0>(ingestionToBeManaged))
+                        + ", rowsUpdated: " + to_string(rowsUpdated)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
             }
         }
 
