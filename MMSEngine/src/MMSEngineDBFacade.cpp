@@ -1449,7 +1449,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
             if (rowsUpdated != 1)
             {
                 string errorMessage = __FILEREF__ + "no update was done"
-                        + ", processorMMS: " + processorMMS)
+                        + ", processorMMS: " + processorMMS
                         + ", ingestionJobKey: " + to_string(get<0>(ingestionToBeManaged))
                         + ", rowsUpdated: " + to_string(rowsUpdated)
                         + ", lastSQLCommand: " + lastSQLCommand
