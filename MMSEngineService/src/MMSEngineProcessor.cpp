@@ -1392,12 +1392,92 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
     {
         try
         {
+            _logger->info(__FILEREF__ + "Processing through Magick"
+                + ", mmsAssetPathName: " + mmsAssetPathName
+            );
             Magick:: Image      imageToEncode;
 
             imageToEncode. read (mmsAssetPathName.c_str());
 
             imageWidth	= imageToEncode. columns ();
             imageHeight	= imageToEncode. rows ();
+        }
+        catch( Magick::WarningCoder &e )
+        {
+            // Process coder warning while loading file (e.g. TIFF warning)
+            // Maybe the user will be interested in these warnings (or not).
+            // If a warning is produced while loading an image, the image
+            // can normally still be used (but not if the warning was about
+            // something important!)
+            _logger->error(__FILEREF__ + "ImageMagick failed to retrieve width and height failed"
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+                + ", e.what(): " + e.what()
+            );
+
+            _logger->info(__FILEREF__ + "Remove file"
+                + ", mmsAssetPathName: " + mmsAssetPathName
+            );
+            FileIO::remove(mmsAssetPathName);
+
+            _logger->info(__FILEREF__ + "Update IngestionJob"
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+                + ", IngestionStatus: " + "End_IngestionFailure"
+                + ", errorMessage: " + e.what()
+            );                            
+            _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+                    MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                    e.what(), "" // ProcessorMMS
+            );
+
+            throw e;
+        }
+        catch( Magick::Warning &e )
+        {
+            _logger->error(__FILEREF__ + "ImageMagick failed to retrieve width and height failed"
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+                + ", e.what(): " + e.what()
+            );
+
+            _logger->info(__FILEREF__ + "Remove file"
+                + ", mmsAssetPathName: " + mmsAssetPathName
+            );
+            FileIO::remove(mmsAssetPathName);
+
+            _logger->info(__FILEREF__ + "Update IngestionJob"
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+                + ", IngestionStatus: " + "End_IngestionFailure"
+                + ", errorMessage: " + e.what()
+            );                            
+            _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+                    MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                    e.what(), "" // ProcessorMMS
+            );
+
+            throw e;
+        }
+        catch( Magick::ErrorFileOpen &e ) 
+        { 
+            _logger->error(__FILEREF__ + "ImageMagick failed to retrieve width and height failed"
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+                + ", e.what(): " + e.what()
+            );
+
+            _logger->info(__FILEREF__ + "Remove file"
+                + ", mmsAssetPathName: " + mmsAssetPathName
+            );
+            FileIO::remove(mmsAssetPathName);
+
+            _logger->info(__FILEREF__ + "Update IngestionJob"
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+                + ", IngestionStatus: " + "End_IngestionFailure"
+                + ", errorMessage: " + e.what()
+            );                            
+            _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+                    MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                    e.what(), "" // ProcessorMMS
+            );
+
+            throw e;
         }
         catch(exception e)
         {
@@ -2057,7 +2137,7 @@ tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> MMSEngine
     get<3>(mediaSourceDetails) = md5FileCheckSum;
     get<4>(mediaSourceDetails) = fileSizeInBytes;
 
-    _logger->info(__FILEREF__ + "media source file to be processed"
+    _logger->info(__FILEREF__ + "media source details"
         + ", nextIngestionStatus: " + MMSEngineDBFacade::toString(get<0>(mediaSourceDetails))
         + ", mediaSourceURL: " + get<1>(mediaSourceDetails)
         + ", mediaSourceFileName: " + get<2>(mediaSourceDetails)
