@@ -3604,13 +3604,15 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
         }
 
         {
+            IngestionStatus newIngestionStatus = IngestionStatus::QueuedForEncoding;
+            
             lastSQLCommand = 
                 "update MMS_IngestionJobs set MediaItemKey = ?, Status = ? where IngestionJobKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
-            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::QueuedForEncoding));
+            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(newIngestionStatus));
             preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 
             int rowsUpdated = preparedStatement->executeUpdate();
@@ -3626,6 +3628,11 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
 
                 throw runtime_error(errorMessage);                    
             }
+
+            _logger->info(__FILEREF__ + "Update IngestionJobs"
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", newIngestionStatus: " + MMSEngineDBFacade::toString(newIngestionStatus)
+            );
         }
 
         // conn->_sqlConnection->commit(); OR execute COMMIT

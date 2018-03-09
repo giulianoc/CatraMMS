@@ -235,6 +235,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         if (!parsingSuccessful)
                         {
                             string errorMessage = __FILEREF__ + "failed to parse the metadata"
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                     + ", errors: " + errors
                                     + ", metaDataContent: " + metaDataContent
                                     ;
@@ -246,6 +247,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                     catch(...)
                     {
                         string errorMessage = string("metadata json is not well format")
+                                + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                 + ", metaDataContent: " + metaDataContent
                                 ;
                         _logger->error(__FILEREF__ + errorMessage);
@@ -273,6 +275,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                     catch(runtime_error e)
                     {
                         _logger->error(__FILEREF__ + "validateMetadata failed"
+                                + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                 + ", exception: " + e.what()
                         );
 
@@ -295,6 +298,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                     catch(exception e)
                     {
                         _logger->error(__FILEREF__ + "validateMetadata failed"
+                                + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                 + ", exception: " + e.what()
                         );
 
@@ -334,6 +338,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                     catch(runtime_error e)
                     {
                         _logger->error(__FILEREF__ + "getMediaSourceDetails failed"
+                                + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                 + ", exception: " + e.what()
                         );
 
@@ -358,6 +363,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                     catch(exception e)
                     {
                         _logger->error(__FILEREF__ + "getMediaSourceDetails failed"
+                                + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                 + ", exception: " + e.what()
                         );
 
@@ -474,6 +480,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                     catch(exception e)
                     {
                         _logger->error(__FILEREF__ + "Downloading media source or update Ingestion job failed"
+                                + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                 + ", exception: " + e.what()
                         );
 
@@ -484,8 +491,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
             catch(exception e)
             {
                 _logger->error(__FILEREF__ + "Exception managing the Ingestion entry"
-                    + ", exception: " + e.what()
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", exception: " + e.what()
                 );
             }
         }
@@ -1047,6 +1054,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
     catch(runtime_error e)
     {
         _logger->error(__FILEREF__ + "checkCustomerMaxIngestionNumber failed"
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
                 + ", exception: " + e.what()
         );
         string errorMessage = e.what();
@@ -1066,6 +1074,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
     catch(exception e)
     {
         _logger->error(__FILEREF__ + "checkCustomerMaxIngestionNumber failed"
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
                 + ", exception: " + e.what()
         );
         string errorMessage = e.what();
@@ -1100,6 +1109,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         if (!parsingSuccessful)
         {
             string errorMessage = __FILEREF__ + "failed to parse the metadata"
+                    + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
                     + ", errors: " + errors
                     + ", metaDataContent: " + localAssetIngestionEvent->getMetadataContent()
                     ;
@@ -1113,6 +1123,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
     catch(runtime_error e)
     {
         _logger->error(__FILEREF__ + "validateMetadata failed"
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
                 + ", exception: " + e.what()
         );
 
@@ -1133,6 +1144,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
     catch(exception e)
     {
         _logger->error(__FILEREF__ + "validateMetadata failed"
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
                 + ", exception: " + e.what()
         );
 
@@ -1170,6 +1182,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
     catch(runtime_error e)
     {
         _logger->error(__FILEREF__ + "getMediaSourceDetails failed"
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
                 + ", exception: " + e.what()
         );
 
@@ -1190,6 +1203,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
     catch(exception e)
     {
         _logger->error(__FILEREF__ + "getMediaSourceDetails failed"
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
                 + ", exception: " + e.what()
         );
 
@@ -1225,6 +1239,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
     catch(runtime_error e)
     {
         _logger->error(__FILEREF__ + "validateMediaSourceFile failed"
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
                 + ", exception: " + e.what()
         );
 
@@ -1245,6 +1260,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
     catch(exception e)
     {
         _logger->error(__FILEREF__ + "validateMediaSourceFile failed"
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
                 + ", exception: " + e.what()
         );
 
@@ -1327,7 +1343,9 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         }
         catch(runtime_error e)
         {
-            _logger->error(__FILEREF__ + "EncoderVideoAudioProxy::getVideoOrAudioDurationInMilliSeconds failed");
+            _logger->error(__FILEREF__ + "EncoderVideoAudioProxy::getVideoOrAudioDurationInMilliSeconds failed"
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+            );
 
             _logger->info(__FILEREF__ + "Remove file"
                 + ", mmsAssetPathName: " + mmsAssetPathName
@@ -1348,7 +1366,9 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         }
         catch(exception e)
         {
-            _logger->error(__FILEREF__ + "EncoderVideoAudioProxy::getVideoOrAudioDurationInMilliSeconds failed");
+            _logger->error(__FILEREF__ + "EncoderVideoAudioProxy::getVideoOrAudioDurationInMilliSeconds failed"
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+            );
 
             _logger->info(__FILEREF__ + "Remove file"
                 + ", mmsAssetPathName: " + mmsAssetPathName
@@ -1381,7 +1401,9 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         }
         catch(exception e)
         {
-            _logger->error(__FILEREF__ + "ImageMagick failed to retrieve width and height failed");
+            _logger->error(__FILEREF__ + "ImageMagick failed to retrieve width and height failed"
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+            );
 
             _logger->info(__FILEREF__ + "Remove file"
                 + ", mmsAssetPathName: " + mmsAssetPathName
@@ -1410,6 +1432,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                 inCaseOfLinkHasItToBeRead);   
 
         _logger->info(__FILEREF__ + "_mmsEngineDBFacade->saveIngestedContentMetadata..."
+            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
         );
 
         pair<int64_t,int64_t> mediaItemKeyAndPhysicalPathKey =
@@ -1429,13 +1452,16 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         mediaItemKey = mediaItemKeyAndPhysicalPathKey.first;
         
         _logger->info(__FILEREF__ + "Added a new ingested content"
+            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
             + ", mediaItemKey: " + to_string(mediaItemKeyAndPhysicalPathKey.first)
             + ", physicalPathKey: " + to_string(mediaItemKeyAndPhysicalPathKey.second)
         );
     }
     catch(runtime_error e)
     {
-        _logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveIngestedContentMetadata failed");
+        _logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveIngestedContentMetadata failed"
+            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+        );
 
         _logger->info(__FILEREF__ + "Remove file"
             + ", mmsAssetPathName: " + mmsAssetPathName
@@ -1456,7 +1482,9 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
     }
     catch(exception e)
     {
-        _logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveIngestedContentMetadata failed");
+        _logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveIngestedContentMetadata failed"
+            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+        );
 
         _logger->info(__FILEREF__ + "Remove file"
             + ", mmsAssetPathName: " + mmsAssetPathName
@@ -1491,6 +1519,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             if (!_mmsEngineDBFacade->isMetadataPresent(contentIngestion, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
                         + ", Field: " + field;
                 _logger->error(errorMessage);
 
@@ -1499,6 +1528,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             string videoTitle = contentIngestion.get(field, "XXX").asString();
 
             _logger->info(__FILEREF__ + "Processing the screenshots"
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
                 + ", screenshots.size(): " + to_string(screenshots.size())
             );
             
@@ -1512,6 +1542,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                     if (!_mmsEngineDBFacade->isMetadataPresent(screenshot, field))
                     {
                         string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
                                 + ", Field: " + field;
                         _logger->error(errorMessage);
 
@@ -1530,6 +1561,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                     if (!_mmsEngineDBFacade->isMetadataPresent(screenshot, field))
                     {
                         string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
                                 + ", Field: " + field;
                         _logger->error(errorMessage);
 
@@ -1541,6 +1573,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                     if (!_mmsEngineDBFacade->isMetadataPresent(screenshot, field))
                     {
                         string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
                                 + ", Field: " + field;
                         _logger->error(errorMessage);
 
@@ -1551,6 +1584,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                     if (videoOrAudioDurationInMilliSeconds < timePositionInSeconds * 1000)
                     {
                         string errorMessage = __FILEREF__ + "Screenshot was not generated because timePositionInSeconds is bigger than the video duration"
+                                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
                                 + ", video mediaItemKey: " + to_string(mediaItemKey)
                                 + ", timePositionInSeconds: " + to_string(timePositionInSeconds)
                                 + ", videoOrAudioDurationInMilliSeconds: " + to_string(videoOrAudioDurationInMilliSeconds)
@@ -1596,6 +1630,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                         _multiEventsSet->addEvent(event);
 
                         _logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (GENERATEIMAGETOINGESTEVENT) to generate the screenshot"
+                            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
                             + ", imageFileName: " + imageFileName
                             + ", getEventKey().first: " + to_string(event->getEventKey().first)
                             + ", getEventKey().second: " + to_string(event->getEventKey().second));
@@ -2210,6 +2245,7 @@ RESUMING FILE TRANSFERS
 
             _logger->info(__FILEREF__ + "Update IngestionJob"
                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", customerIngestionBinaryPathName: " + customerIngestionBinaryPathName
                 + ", downloadingCompleted: " + to_string(downloadingCompleted)
             );                            
             _mmsEngineDBFacade->updateIngestionJobSourceBinaryTransferred (
