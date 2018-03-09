@@ -1442,12 +1442,14 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                 "update MMS_IngestionJobs set ProcessorMMS = ? where IngestionJobKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, processorMMS);
             preparedStatement->setInt64(queryParameterIndex++, get<0>(ingestionToBeManaged));
 
             int rowsUpdated = preparedStatement->executeUpdate();
             if (rowsUpdated != 1)
             {
                 string errorMessage = __FILEREF__ + "no update was done"
+                        + ", processorMMS: " + processorMMS)
                         + ", ingestionJobKey: " + to_string(get<0>(ingestionToBeManaged))
                         + ", rowsUpdated: " + to_string(rowsUpdated)
                         + ", lastSQLCommand: " + lastSQLCommand
