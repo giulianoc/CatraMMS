@@ -3028,14 +3028,11 @@ string MMSEngineDBFacade::checkCustomerMaxIngestionNumber (
             }
         }
         
-        _connectionPool->unborrow(conn);
-
         if (!ingestionsAllowed)
         {
             string errorMessage = __FILEREF__ + "Reached the max number of Ingestions in your period"
                 + ", maxIngestionsNumber: " + to_string(maxIngestionsNumber)
                 + ", encodingPeriod: " + to_string(static_cast<int>(encodingPeriod))
-                + ", lastSQLCommand: " + lastSQLCommand
             ;
             _logger->error(errorMessage);
             
@@ -3050,6 +3047,8 @@ string MMSEngineDBFacade::checkCustomerMaxIngestionNumber (
             
             relativePathToBeUsed = pCurrentRelativePath;
         }
+        
+        _connectionPool->unborrow(conn);
     }
     catch(sql::SQLException se)
     {
@@ -3063,6 +3062,16 @@ string MMSEngineDBFacade::checkCustomerMaxIngestionNumber (
         );
 
         throw se;
+    }    
+    catch(runtime_error e)
+    {
+        _connectionPool->unborrow(conn);
+
+        _logger->error(__FILEREF__ + "exception"
+            + ", e.what: " + e.what()
+        );
+
+        throw e;
     }    
     catch(exception e)
     {        

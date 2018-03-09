@@ -62,6 +62,7 @@ private:
     string generateImageMetadataToIngest(
         string title,
         string imagePathName,
+        string imageFileName,
         string encodingProfilesSet
     );
 

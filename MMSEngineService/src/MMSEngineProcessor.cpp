@@ -96,6 +96,12 @@ void MMSEngineProcessor::operator ()()
                 {
                     handleLocalAssetIngestionEvent (localAssetIngestionEvent);
                 }
+                catch(runtime_error e)
+                {
+                    _logger->error(__FILEREF__ + "handleLocalAssetIngestionEvent failed"
+                        + ", exception: " + e.what()
+                    );
+                }
                 catch(exception e)
                 {
                     _logger->error(__FILEREF__ + "handleLocalAssetIngestionEvent failed"
@@ -1038,6 +1044,25 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         relativePathToBeUsed = _mmsEngineDBFacade->checkCustomerMaxIngestionNumber (
                 localAssetIngestionEvent->getCustomer()->_customerKey);
     }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "checkCustomerMaxIngestionNumber failed"
+                + ", exception: " + e.what()
+        );
+        string errorMessage = e.what();
+
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+            + ", IngestionStatus: " + "End_CustomerReachedHisMaxIngestionNumber"
+            + ", errorMessage: " + e.what()
+        );                            
+        _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+                MMSEngineDBFacade::IngestionStatus::End_CustomerReachedHisMaxIngestionNumber,
+                e.what(), "" // processorMMS
+        );
+
+        throw e;
+    }
     catch(exception e)
     {
         _logger->error(__FILEREF__ + "checkCustomerMaxIngestionNumber failed"
@@ -1614,19 +1639,32 @@ void MMSEngineProcessor::handleGenerateImageToIngestEvent (
     string metaDataContent = generateImageMetadataToIngest(
             generateImageToIngestEvent->getImageTitle(),
             imagePathName,
+            generateImageToIngestEvent->getImageFileName(),
             generateImageToIngestEvent->getEncodingProfilesSet()
     );
     
+    _logger->info(__FILEREF__ + "Adding ingestionJob"
+        + ", customerKey: " + to_string(generateImageToIngestEvent->getCustomer()->_customerKey)
+        + ", metaDataContent: " + metaDataContent
+    );
+
     int64_t ingestionJobKey = _mmsEngineDBFacade->addIngestionJob (
             generateImageToIngestEvent->getCustomer()->_customerKey, 
             metaDataContent, 
             MMSEngineDBFacade::IngestionType::ContentIngestion, 
             MMSEngineDBFacade::IngestionStatus::Start_Ingestion);
+
+    _logger->info(__FILEREF__ + "Added ingestionJob"
+        + ", customerKey: " + to_string(generateImageToIngestEvent->getCustomer()->_customerKey)
+        + ", metaDataContent: " + metaDataContent
+        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+    );
 }
 
 string MMSEngineProcessor::generateImageMetadataToIngest(
         string title,
         string imagePathName,
+        string imageFileName,
         string encodingProfilesSet
 )
 {
@@ -1638,6 +1676,7 @@ string MMSEngineProcessor::generateImageMetadataToIngest(
                 + "\"Title\": \"" + title + "\","
                 + "\"Ingester\": \"MMSEngine\","
                 + "\"SourceURL\": \"move://" + imagePathName + "\","
+                + "\"SourceFileName\": \"" + imageFileName + "\","
                 + "\"ContentType\": \"image\","
                 + "\"EncodingProfilesSet\": \"" + encodingProfilesSet + "\""
             + "}"
