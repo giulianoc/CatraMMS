@@ -2394,12 +2394,26 @@ void MMSEngineProcessor::moveMediaSourceFile(string sourceReferenceURL,
             .append(".binary")
             ;
 
+        string movePrefix("move://");
+        if (sourceReferenceURL.compare(0, movePrefix.size(), movePrefix))
+        {
+            string errorMessage = string("sourceReferenceURL is not a move reference")
+                + ", ingestionJobKey: " + to_string(ingestionJobKey) 
+                + ", sourceReferenceURL: " + sourceReferenceURL 
+            ;
+            
+            _logger->error(__FILEREF__ + errorMessage);
+            
+            throw runtime_error(errorMessage);
+        }
+        string sourcePathName = sourceReferenceURL.substr(movePrefix.length());
+                
         _logger->info(__FILEREF__ + "Moving"
-            + ", sourceReferenceURL: " + sourceReferenceURL
+            + ", sourcePathName: " + sourcePathName
             + ", customerIngestionBinaryPathName: " + customerIngestionBinaryPathName
         );
         
-        FileIO::moveFile(sourceReferenceURL, customerIngestionBinaryPathName);
+        FileIO::moveFile(sourcePathName, customerIngestionBinaryPathName);
             
         _logger->info(__FILEREF__ + "Update IngestionJob"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -2461,12 +2475,26 @@ void MMSEngineProcessor::copyMediaSourceFile(string sourceReferenceURL,
             .append(".binary")
             ;
 
+        string copyPrefix("copy://");
+        if (sourceReferenceURL.compare(0, copyPrefix.size(), copyPrefix))
+        {
+            string errorMessage = string("sourceReferenceURL is not a copy reference")
+                + ", ingestionJobKey: " + to_string(ingestionJobKey) 
+                + ", sourceReferenceURL: " + sourceReferenceURL 
+            ;
+            
+            _logger->error(__FILEREF__ + errorMessage);
+            
+            throw runtime_error(errorMessage);
+        }
+        string sourcePathName = sourceReferenceURL.substr(copyPrefix.length());
+
         _logger->info(__FILEREF__ + "Coping"
-            + ", sourceReferenceURL: " + sourceReferenceURL
+            + ", sourcePathName: " + sourcePathName
             + ", customerIngestionBinaryPathName: " + customerIngestionBinaryPathName
         );
         
-        FileIO::copyFile(sourceReferenceURL, customerIngestionBinaryPathName);
+        FileIO::copyFile(sourcePathName, customerIngestionBinaryPathName);
             
         _logger->info(__FILEREF__ + "Update IngestionJob"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
