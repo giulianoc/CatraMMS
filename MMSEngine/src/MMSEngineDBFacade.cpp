@@ -1439,7 +1439,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
             ingestionsToBeManaged)
         {
             lastSQLCommand = 
-                "update MMS_IngestionJobs set ProcessorMMS = ? where IngestionJobKey is IngestionJobKey = ?";
+                "update MMS_IngestionJobs set ProcessorMMS = ? where IngestionJobKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, get<0>(ingestionToBeManaged));
