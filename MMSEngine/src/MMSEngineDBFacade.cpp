@@ -1587,8 +1587,8 @@ int64_t MMSEngineDBFacade::addIngestionJob (
         
         {
             lastSQLCommand = 
-                "insert into MMS_IngestionJobs (IngestionJobKey, CustomerKey, MediaItemKey, MetaDataContent, IngestionType, StartIngestion, EndIngestion, DownloadingProgress, UploadProgress, SourceBinaryTransferred, ProcessorMMS, Status, ErrorMessage) values ("
-                                               "NULL,            ?,           NULL,         ?,               ?,             NULL,           NULL,         NULL,                NULL,           0,                       NULL,         ?,      NULL)";
+                "insert into MMS_IngestionJobs (IngestionJobKey, CustomerKey, MediaItemKey, MetaDataContent, IngestionType, StartIngestion, EndIngestion, DownloadingProgress, UploadingProgress, SourceBinaryTransferred, ProcessorMMS, Status, ErrorMessage) values ("
+                                               "NULL,            ?,           NULL,         ?,               ?,             NULL,           NULL,         NULL,                NULL,              0,                       NULL,         ?,      NULL)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
