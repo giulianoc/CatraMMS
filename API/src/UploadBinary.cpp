@@ -184,7 +184,7 @@ void UploadBinary::getBinaryAndResponse(
                 }
                 else
                 {
-                    _logger->info(__FILEREF__ + "Resume is NOT enabled (No X-CatraMMS-Resume header found)"
+                    _logger->info(__FILEREF__ + "Resume flag is NOT present (No X-CatraMMS-Resume header found)"
                     );
                 }
             }
