@@ -485,11 +485,11 @@ public:
 
     bool updateIngestionJobSourceDownloadingInProgress (
         int64_t ingestionJobKey,
-        int downloadingPercentage);
+        double downloadingPercentage);
 
     void updateIngestionJobSourceUploadingInProgress (
         int64_t ingestionJobKey,
-        int uploadingPercentage);
+        double uploadingPercentage);
 
     void updateIngestionJobSourceBinaryTransferred (
         int64_t ingestionJobKey,

@@ -2270,7 +2270,7 @@ RESUMING FILE TRANSFERS
                 request.setOpt(new curlpp::options::Url(sourceReferenceURL));
 
                 chrono::system_clock::time_point lastProgressUpdate = chrono::system_clock::now();
-                int lastPercentageUpdated = -1;
+                double lastPercentageUpdated = -1.0;
                 curlpp::types::ProgressFunctionFunctor functor = bind(&MMSEngineProcessor::progressCallback, this,
                         ingestionJobKey, lastProgressUpdate, lastPercentageUpdated, downloadingStoppedByUser,
                         placeholders::_1, placeholders::_2, placeholders::_3, placeholders::_4);
@@ -2301,7 +2301,7 @@ RESUMING FILE TRANSFERS
                 request.setOpt(new curlpp::options::Url(sourceReferenceURL));
 
                 chrono::system_clock::time_point lastTimeProgressUpdate = chrono::system_clock::now();
-                int lastPercentageUpdated = -1;
+                double lastPercentageUpdated = -1.0;
                 curlpp::types::ProgressFunctionFunctor functor = bind(&MMSEngineProcessor::progressCallback, this,
                         ingestionJobKey, lastTimeProgressUpdate, lastPercentageUpdated, downloadingStoppedByUser,
                         placeholders::_1, placeholders::_2, placeholders::_3, placeholders::_4);
@@ -2627,7 +2627,7 @@ void MMSEngineProcessor::copyMediaSourceFile(string sourceReferenceURL,
 int MMSEngineProcessor::progressCallback(
         int64_t ingestionJobKey,
         chrono::system_clock::time_point& lastTimeProgressUpdate, 
-        int& lastPercentageUpdated, bool& downloadingStoppedByUser,
+        double& lastPercentageUpdated, bool& downloadingStoppedByUser,
         double dltotal, double dlnow,
         double ultotal, double ulnow)
 {
@@ -2639,7 +2639,9 @@ int MMSEngineProcessor::progressCallback(
             || now - lastTimeProgressUpdate >= chrono::seconds(_progressUpdatePeriodInSeconds)))
     {
         double progress = (dlnow / dltotal) * 100;
-        int downloadingPercentage = floorf(progress * 100) / 100;
+        // int downloadingPercentage = floorf(progress * 100) / 100;
+        // this is to have one decimal in the percentage
+        double downloadingPercentage = ((double) ((int) (progress * 10))) / 10;
 
         _logger->info(__FILEREF__ + "Download still running"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)

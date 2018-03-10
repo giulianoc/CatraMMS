@@ -1937,7 +1937,7 @@ void MMSEngineDBFacade::updateIngestionJob (
 
 bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress (
         int64_t ingestionJobKey,
-        int downloadingPercentage)
+        double downloadingPercentage)
 {
     
     bool        toBeCancelled = false;
@@ -2032,7 +2032,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress (
 
 void MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress (
         int64_t ingestionJobKey,
-        int uploadingPercentage)
+        double uploadingPercentage)
 {
     
     string      lastSQLCommand;
@@ -4428,8 +4428,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "IngestionType              TINYINT (2) NULL,"
                     "StartIngestion             TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "EndIngestion               DATETIME NULL,"
-                    "DownloadingProgress        INT NULL,"
-                    "UploadingProgress          INT NULL,"
+                    "DownloadingProgress        DECIMAL(3,1) NULL,"
+                    "UploadingProgress          DECIMAL(3,1) NULL,"
                     "SourceBinaryTransferred    INT NOT NULL,"
                     "ProcessorMMS               VARCHAR (128) NULL,"
                     "Status           			VARCHAR (64) NOT NULL,"

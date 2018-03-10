@@ -90,7 +90,7 @@ private:
     int progressCallback(
         int64_t ingestionJobKey,
         chrono::system_clock::time_point& lastTimeProgressUpdate, 
-        int& lastPercentageUpdated, bool& downloadingStoppedByUser,
+        double& lastPercentageUpdated, bool& downloadingStoppedByUser,
         double dltotal, double dlnow,
         double ultotal, double ulnow);
 
