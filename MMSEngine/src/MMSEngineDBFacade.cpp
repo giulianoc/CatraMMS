@@ -1954,7 +1954,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress (
                 "update MMS_IngestionJobs set DownloadingProgress = ? where IngestionJobKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt(queryParameterIndex++, downloadingPercentage);
+            preparedStatement->setDouble(queryParameterIndex++, downloadingPercentage);
             preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 
             int rowsUpdated = preparedStatement->executeUpdate();
@@ -2048,7 +2048,7 @@ void MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress (
                 "update MMS_IngestionJobs set UploadingProgress = ? where IngestionJobKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt(queryParameterIndex++, uploadingPercentage);
+            preparedStatement->setDouble(queryParameterIndex++, uploadingPercentage);
             preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 
             int rowsUpdated = preparedStatement->executeUpdate();
