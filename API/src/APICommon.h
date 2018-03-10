@@ -15,7 +15,7 @@
 #define APICommon_h
 
 #include <unordered_map>
-// #include "MMSEngine.h"
+#include "fcgio.h"
 #include "MMSStorage.h"
 #include "spdlog/spdlog.h"
 
@@ -37,6 +37,7 @@ public:
     int manageBinaryRequest();
 
     virtual void manageRequestAndResponse(
+        shared_ptr<FCGX_Request> request,
         string requestURI,
         string requestMethod,
         unordered_map<string, string> queryParameters,
@@ -64,8 +65,11 @@ protected:
 
     unsigned long long   _maxBinaryContentLength;
 
+    void sendSuccess(shared_ptr<FCGX_Request> request, int htmlResponseCode, string responseBody);
     void sendSuccess(int htmlResponseCode, string responseBody);
+    void sendHeadSuccess(shared_ptr<FCGX_Request> request, int htmlResponseCode, unsigned long fileSize);
     void sendHeadSuccess(int htmlResponseCode, unsigned long fileSize);
+    void sendError(shared_ptr<FCGX_Request> request, int htmlResponseCode, string errorMessage);
     void sendError(int htmlResponseCode, string errorMessage);
     void sendEmail(string to, string subject, vector<string>& emailBody);
     

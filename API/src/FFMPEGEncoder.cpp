@@ -73,6 +73,7 @@ void FFMPEGEncoder::getBinaryAndResponse(
 }
 
 void FFMPEGEncoder::manageRequestAndResponse(
+        shared_ptr<FCGX_Request> request,
         string requestURI,
         string requestMethod,
         unordered_map<string, string> queryParameters,
@@ -89,7 +90,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         string errorMessage = string("The 'method' parameter is not found");
         _logger->error(__FILEREF__ + errorMessage);
 
-        sendError(400, errorMessage);
+        sendError(request, 400, errorMessage);
 
         throw runtime_error(errorMessage);
     }
@@ -105,7 +106,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
                     );
             _logger->error(__FILEREF__ + errorMessage);
 
-            sendError(403, errorMessage);
+            sendError(request, 403, errorMessage);
 
             throw runtime_error(errorMessage);
         }
@@ -131,13 +132,13 @@ void FFMPEGEncoder::manageRequestAndResponse(
             ;
             _logger->error(__FILEREF__ + errorMessage);
 
-            sendError(400, errorMessage);
+            sendError(request, 400, errorMessage);
 
             throw runtime_error(errorMessage);
         }
         
         thread encodeContentThread(&FFMPEGEncoder::encodeContent, this, 
-                                selectedEncoding, requestBody);
+                                request, selectedEncoding, requestBody);
         encodeContentThread.detach();
         
         // to make sure thread is able to set encoding->running to true
@@ -153,7 +154,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
                     );
             _logger->error(__FILEREF__ + errorMessage);
 
-            sendError(403, errorMessage);
+            sendError(request, 403, errorMessage);
 
             throw runtime_error(errorMessage);
         }
@@ -164,7 +165,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
             string errorMessage = string("The 'encodingJobKey' parameter is not found");
             _logger->error(__FILEREF__ + errorMessage);
 
-            sendError(400, errorMessage);
+            sendError(request, 400, errorMessage);
 
             throw runtime_error(errorMessage);
         }
@@ -191,7 +192,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
             ;
             _logger->error(__FILEREF__ + errorMessage);
 
-            sendError(400, errorMessage);
+            sendError(request, 400, errorMessage);
 
             throw runtime_error(errorMessage);
         }
@@ -208,7 +209,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
                     ;
             _logger->error(__FILEREF__ + errorMessage);
 
-            sendError(400, errorMessage);
+            sendError(request, 400, errorMessage);
 
             throw e;
         }
@@ -219,7 +220,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
                     ;
             _logger->error(__FILEREF__ + errorMessage);
 
-            sendError(400, errorMessage);
+            sendError(request, 400, errorMessage);
 
             throw e;
         }
@@ -228,7 +229,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
                 + "\"encodingProgress\": " + to_string(encodingProgress) + " "
                 + "}";
         
-        sendSuccess(200, responseBody);
+        sendSuccess(request, 200, responseBody);
     }
     else
     {
@@ -237,13 +238,14 @@ void FFMPEGEncoder::manageRequestAndResponse(
             + ", requestMethod: " +requestMethod;
         _logger->error(__FILEREF__ + errorMessage);
 
-        sendError(400, errorMessage);
+        sendError(request, 400, errorMessage);
 
         throw runtime_error(errorMessage);
     }
 }
 
 void FFMPEGEncoder::encodeContent(
+        shared_ptr<FCGX_Request> request,
         shared_ptr<Encoding> encoding,
         string requestBody)
 {
@@ -343,7 +345,7 @@ void FFMPEGEncoder::encodeContent(
                 + "\"ffmpegEncoderHost\": \"" + System::getHostName() + "\" "
                 + "}";
 
-        sendSuccess(200, responseBody);
+        sendSuccess(request, 200, responseBody);
         
         encoding->_running = false;
     }
@@ -360,7 +362,7 @@ void FFMPEGEncoder::encodeContent(
         string errorMessage = string("Internal server error");
         _logger->error(__FILEREF__ + errorMessage);
 
-        sendError(500, errorMessage);
+        sendError(request, 500, errorMessage);
 
         throw runtime_error(errorMessage);
     }
@@ -377,7 +379,7 @@ void FFMPEGEncoder::encodeContent(
         string errorMessage = string("Internal server error");
         _logger->error(__FILEREF__ + errorMessage);
 
-        sendError(500, errorMessage);
+        sendError(request, 500, errorMessage);
 
         throw runtime_error(errorMessage);
     }

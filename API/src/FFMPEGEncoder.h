@@ -32,6 +32,7 @@ public:
         unsigned long contentLength);
 
     virtual void manageRequestAndResponse(
+            shared_ptr<FCGX_Request> request,
             string requestURI,
             string requestMethod,
             unordered_map<string, string> queryParameters,
@@ -54,6 +55,7 @@ private:
     vector<shared_ptr<Encoding>>    _encodingsCapability;
 
     void encodeContent(
+        shared_ptr<FCGX_Request> request,
         shared_ptr<Encoding> encoding,
         string requestBody);
 };

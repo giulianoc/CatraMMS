@@ -45,6 +45,7 @@ UploadBinary::~UploadBinary() {
 }
 
 void UploadBinary::manageRequestAndResponse(
+        shared_ptr<FCGX_Request> request,
         string requestURI,
         string requestMethod,
         unordered_map<string, string> queryParameters,
@@ -59,7 +60,7 @@ void UploadBinary::manageRequestAndResponse(
     string errorMessage = string("Internal server error");
     _logger->error(__FILEREF__ + errorMessage);
 
-    sendError(500, errorMessage);
+    sendError(request, 500, errorMessage);
 
     throw runtime_error(errorMessage);
 }

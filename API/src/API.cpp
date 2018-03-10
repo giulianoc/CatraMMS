@@ -93,6 +93,7 @@ void API::getBinaryAndResponse(
 }
 
 void API::manageRequestAndResponse(
+        shared_ptr<FCGX_Request> request,
         string requestURI,
         string requestMethod,
         unordered_map<string, string> queryParameters,
@@ -109,7 +110,7 @@ void API::manageRequestAndResponse(
         string errorMessage = string("The 'method' parameter is not found");
         _logger->error(__FILEREF__ + errorMessage);
 
-        sendError(400, errorMessage);
+        sendError(request, 400, errorMessage);
 
         throw runtime_error(errorMessage);
     }
@@ -125,12 +126,12 @@ void API::manageRequestAndResponse(
                     );
             _logger->error(__FILEREF__ + errorMessage);
 
-            sendError(403, errorMessage);
+            sendError(request, 403, errorMessage);
 
             throw runtime_error(errorMessage);
         }
         
-        registerCustomer(requestBody);
+        registerCustomer(request, requestBody);
     }
     else if (method == "confirmCustomer")
     {
@@ -142,12 +143,12 @@ void API::manageRequestAndResponse(
                     );
             _logger->error(__FILEREF__ + errorMessage);
 
-            sendError(403, errorMessage);
+            sendError(request, 403, errorMessage);
 
             throw runtime_error(errorMessage);
         }
         
-        confirmCustomer(queryParameters);
+        confirmCustomer(request, queryParameters);
     }
     else if (method == "createAPIKey")
     {
@@ -159,12 +160,12 @@ void API::manageRequestAndResponse(
                     );
             _logger->error(__FILEREF__ + errorMessage);
 
-            sendError(403, errorMessage);
+            sendError(request, 403, errorMessage);
 
             throw runtime_error(errorMessage);
         }
         
-        createAPIKey(queryParameters);
+        createAPIKey(request, queryParameters);
     }
     else if (method == "ingestContent")
     {
@@ -176,12 +177,12 @@ void API::manageRequestAndResponse(
                     );
             _logger->error(__FILEREF__ + errorMessage);
 
-            sendError(403, errorMessage);
+            sendError(request, 403, errorMessage);
 
             throw runtime_error(errorMessage);
         }
         
-        ingestContent(get<0>(customerAndFlags), queryParameters, requestBody);
+        ingestContent(request, get<0>(customerAndFlags), queryParameters, requestBody);
     }
     else if (method == "uploadBinary")
     {
@@ -193,13 +194,13 @@ void API::manageRequestAndResponse(
                     );
             _logger->error(__FILEREF__ + errorMessage);
 
-            sendError(403, errorMessage);
+            sendError(request, 403, errorMessage);
 
             throw runtime_error(errorMessage);
         }
         
         thread uploaBinaryThread (&API::uploadBinary, this, 
-            requestMethod, xCatraMMSResumeHeader,
+            request, requestMethod, xCatraMMSResumeHeader,
             ref(queryParameters), ref(customerAndFlags), contentLength);
         uploaBinaryThread.detach();
     }
@@ -210,13 +211,15 @@ void API::manageRequestAndResponse(
             + ", requestMethod: " +requestMethod;
         _logger->error(__FILEREF__ + errorMessage);
 
-        sendError(400, errorMessage);
+        sendError(request, 400, errorMessage);
 
         throw runtime_error(errorMessage);
     }
 }
 
-void API::registerCustomer(string requestBody)
+void API::registerCustomer(
+        shared_ptr<FCGX_Request> request,
+        string requestBody)
 {
     string api = "registerCustomer";
 
@@ -254,7 +257,7 @@ void API::registerCustomer(string requestBody)
                         ;
                 _logger->error(__FILEREF__ + errorMessage);
 
-                sendError(400, errorMessage);
+                sendError(request, 400, errorMessage);
 
                 throw runtime_error(errorMessage);
             }
@@ -266,7 +269,7 @@ void API::registerCustomer(string requestBody)
                     );
             _logger->error(__FILEREF__ + errorMessage);
 
-            sendError(400, errorMessage);
+            sendError(request, 400, errorMessage);
 
             throw runtime_error(errorMessage);
         }
@@ -286,7 +289,7 @@ void API::registerCustomer(string requestBody)
                             + ", Field: " + field;
                     _logger->error(__FILEREF__ + errorMessage);
 
-                    sendError(400, errorMessage);
+                    sendError(request, 400, errorMessage);
 
                     throw runtime_error(errorMessage);
                 }
@@ -323,7 +326,7 @@ void API::registerCustomer(string requestBody)
                             ;
                     _logger->error(__FILEREF__ + errorMessage);
 
-                    sendError(400, errorMessage);
+                    sendError(request, 400, errorMessage);
 
                     throw runtime_error(errorMessage);
                 }
@@ -356,7 +359,7 @@ void API::registerCustomer(string requestBody)
                             ;
                     _logger->error(__FILEREF__ + errorMessage);
 
-                    sendError(400, errorMessage);
+                    sendError(request, 400, errorMessage);
 
                     throw runtime_error(errorMessage);
                 }
@@ -389,7 +392,7 @@ void API::registerCustomer(string requestBody)
                             ;
                     _logger->error(__FILEREF__ + errorMessage);
 
-                    sendError(400, errorMessage);
+                    sendError(request, 400, errorMessage);
 
                     throw runtime_error(errorMessage);
                 }
@@ -422,7 +425,7 @@ void API::registerCustomer(string requestBody)
                             ;
                     _logger->error(__FILEREF__ + errorMessage);
 
-                    sendError(400, errorMessage);
+                    sendError(request, 400, errorMessage);
 
                     throw runtime_error(errorMessage);
                 }
@@ -477,7 +480,7 @@ void API::registerCustomer(string requestBody)
             string responseBody = string("{ ")
                 + "\"customerKey\": " + to_string(get<0>(customerKeyUserKeyAndConfirmationCode)) + " "
                 + "}";
-            sendSuccess(201, responseBody);
+            sendSuccess(request, 201, responseBody);
             
             string to = "giulianoc@catrasoftware.it";
             string subject = "Confirmation code";
@@ -499,7 +502,7 @@ void API::registerCustomer(string requestBody)
             string errorMessage = string("Internal server error");
             _logger->error(__FILEREF__ + errorMessage);
 
-            sendError(500, errorMessage);
+            sendError(request, 500, errorMessage);
 
             throw runtime_error(errorMessage);
         }
@@ -512,7 +515,7 @@ void API::registerCustomer(string requestBody)
             string errorMessage = string("Internal server error");
             _logger->error(__FILEREF__ + errorMessage);
 
-            sendError(500, errorMessage);
+            sendError(request, 500, errorMessage);
 
             throw runtime_error(errorMessage);
         }
@@ -538,13 +541,15 @@ void API::registerCustomer(string requestBody)
         string errorMessage = string("Internal server error");
         _logger->error(__FILEREF__ + errorMessage);
 
-        sendError(500, errorMessage);
+        sendError(request, 500, errorMessage);
 
         throw runtime_error(errorMessage);
     }
 }
 
-void API::confirmCustomer(unordered_map<string, string> queryParameters)
+void API::confirmCustomer(
+        shared_ptr<FCGX_Request> request,
+        unordered_map<string, string> queryParameters)
 {
     string api = "confirmCustomer";
 
@@ -559,7 +564,7 @@ void API::confirmCustomer(unordered_map<string, string> queryParameters)
             string errorMessage = string("The 'confirmationeCode' parameter is not found");
             _logger->error(__FILEREF__ + errorMessage);
 
-            sendError(400, errorMessage);
+            sendError(request, 400, errorMessage);
 
             throw runtime_error(errorMessage);
         }
@@ -569,7 +574,7 @@ void API::confirmCustomer(unordered_map<string, string> queryParameters)
             _mmsEngineDBFacade->confirmCustomer(confirmationCodeIt->second);
 
             string responseBody;
-            sendSuccess(200, responseBody);
+            sendSuccess(request, 200, responseBody);
             
             string to = "giulianoc@catrasoftware.it";
             string subject = "Welcome";
@@ -590,7 +595,7 @@ void API::confirmCustomer(unordered_map<string, string> queryParameters)
             string errorMessage = string("Internal server error");
             _logger->error(__FILEREF__ + errorMessage);
 
-            sendError(500, errorMessage);
+            sendError(request, 500, errorMessage);
 
             throw runtime_error(errorMessage);
         }
@@ -603,7 +608,7 @@ void API::confirmCustomer(unordered_map<string, string> queryParameters)
             string errorMessage = string("Internal server error");
             _logger->error(__FILEREF__ + errorMessage);
 
-            sendError(500, errorMessage);
+            sendError(request, 500, errorMessage);
 
             throw runtime_error(errorMessage);
         }
@@ -627,13 +632,15 @@ void API::confirmCustomer(unordered_map<string, string> queryParameters)
         string errorMessage = string("Internal server error");
         _logger->error(__FILEREF__ + errorMessage);
 
-        sendError(500, errorMessage);
+        sendError(request, 500, errorMessage);
 
         throw runtime_error(errorMessage);
     }
 }
 
-void API::createAPIKey(unordered_map<string, string> queryParameters)
+void API::createAPIKey(
+        shared_ptr<FCGX_Request> request,
+        unordered_map<string, string> queryParameters)
 {
     string api = "createAPIKey";
 
@@ -648,7 +655,7 @@ void API::createAPIKey(unordered_map<string, string> queryParameters)
             string errorMessage = string("The 'customerKey' parameter is not found");
             _logger->error(__FILEREF__ + errorMessage);
 
-            sendError(400, errorMessage);
+            sendError(request, 400, errorMessage);
 
             throw runtime_error(errorMessage);
         }
@@ -659,7 +666,7 @@ void API::createAPIKey(unordered_map<string, string> queryParameters)
             string errorMessage = string("The 'userKey' parameter is not found");
             _logger->error(__FILEREF__ + errorMessage);
 
-            sendError(400, errorMessage);
+            sendError(request, 400, errorMessage);
 
             throw runtime_error(errorMessage);
         }
@@ -681,7 +688,7 @@ void API::createAPIKey(unordered_map<string, string> queryParameters)
             string responseBody = string("{ ")
                 + "\"apiKey\": \"" + apiKey + "\" "
                 + "}";
-            sendSuccess(201, responseBody);
+            sendSuccess(request, 201, responseBody);
         }
         catch(runtime_error e)
         {
@@ -692,7 +699,7 @@ void API::createAPIKey(unordered_map<string, string> queryParameters)
             string errorMessage = string("Internal server error");
             _logger->error(__FILEREF__ + errorMessage);
 
-            sendError(500, errorMessage);
+            sendError(request, 500, errorMessage);
 
             throw runtime_error(errorMessage);
         }
@@ -705,7 +712,7 @@ void API::createAPIKey(unordered_map<string, string> queryParameters)
             string errorMessage = string("Internal server error");
             _logger->error(__FILEREF__ + errorMessage);
 
-            sendError(500, errorMessage);
+            sendError(request, 500, errorMessage);
 
             throw runtime_error(errorMessage);
         }
@@ -729,13 +736,14 @@ void API::createAPIKey(unordered_map<string, string> queryParameters)
         string errorMessage = string("Internal server error");
         _logger->error(__FILEREF__ + errorMessage);
 
-        sendError(500, errorMessage);
+        sendError(request, 500, errorMessage);
 
         throw runtime_error(errorMessage);
     }
 }
 
 void API::ingestContent(
+        shared_ptr<FCGX_Request> request,
         shared_ptr<Customer> customer,
         unordered_map<string, string> queryParameters,
         string requestBody)
@@ -758,7 +766,7 @@ void API::ingestContent(
                 + "\"ingestionJobKey\": " + to_string(ingestionJobKey) + " "
                 + "}";
 
-        sendSuccess(201, responseBody);
+        sendSuccess(request, 201, responseBody);
     }
     catch(runtime_error e)
     {
@@ -771,7 +779,7 @@ void API::ingestContent(
         string errorMessage = string("Internal server error");
         _logger->error(__FILEREF__ + errorMessage);
 
-        sendError(500, errorMessage);
+        sendError(request, 500, errorMessage);
 
         throw runtime_error(errorMessage);
     }
@@ -786,13 +794,14 @@ void API::ingestContent(
         string errorMessage = string("Internal server error");
         _logger->error(__FILEREF__ + errorMessage);
 
-        sendError(500, errorMessage);
+        sendError(request, 500, errorMessage);
 
         throw runtime_error(errorMessage);
     }
 }
 
 void API::uploadBinary(
+        shared_ptr<FCGX_Request> request,
         string requestMethod,
         string xCatraMMSResumeHeader,
         unordered_map<string, string>& queryParameters,
@@ -812,7 +821,7 @@ void API::uploadBinary(
             string errorMessage = string("'ingestionJobKey' URI parameter is missing");
             _logger->error(__FILEREF__ + errorMessage);
 
-            sendError(400, errorMessage);
+            sendError(request, 400, errorMessage);
 
             throw runtime_error(errorMessage);            
         }
@@ -849,12 +858,12 @@ void API::uploadBinary(
                 ;
                 _logger->error(__FILEREF__ + errorMessage);
 
-                sendError(500, errorMessage);
+                sendError(request, 500, errorMessage);
 
                 throw runtime_error(errorMessage);            
             }
 
-            sendHeadSuccess(200, fileSize);
+            sendHeadSuccess(request, 200, fileSize);
         }
         else
         {
@@ -942,7 +951,7 @@ void API::uploadBinary(
                         ;
                         _logger->error(__FILEREF__ + errorMessage);
 
-                        sendError(400, errorMessage);
+                        sendError(request, 400, errorMessage);
 
                         throw runtime_error(errorMessage);            
                     }
@@ -1024,7 +1033,7 @@ void API::uploadBinary(
                 + "\"writtenBytes\": " + to_string(totalRead) + ", "
                 + "\"elapsedUploadInSeconds\": " + to_string(elapsedUploadInSeconds) + " "
                 + "}";
-            sendSuccess(201, responseBody);
+            sendSuccess(request, 201, responseBody);
         }
     }
     catch (exception e)
@@ -1040,7 +1049,7 @@ void API::uploadBinary(
         string errorMessage = string("Internal server error");
         _logger->error(__FILEREF__ + errorMessage);
 
-        sendError(500, errorMessage);
+        sendError(request, 500, errorMessage);
 
         throw runtime_error(errorMessage);
     }    

@@ -16,7 +16,6 @@
 #include <sstream>
 #include <fstream>
 #include <curl/curl.h>
-#include "fcgio.h"
 #include "catralibraries/Convert.h"
 #include "APICommon.h"
 
@@ -105,34 +104,49 @@ APICommon::~APICommon() {
 int APICommon::listen()
 {    
     // Backup the stdio streambufs
-    streambuf* cin_streambuf  = cin.rdbuf();
-    streambuf* cout_streambuf = cout.rdbuf();
-    streambuf* cerr_streambuf = cerr.rdbuf();
+//    streambuf* cin_streambuf  = cin.rdbuf();
+//    streambuf* cout_streambuf = cout.rdbuf();
+//    streambuf* cerr_streambuf = cerr.rdbuf();
 
     _logger->info(__FILEREF__ + "APICommon::listen"
     );        
 
-    FCGX_Request request;
-
     FCGX_Init();
-    FCGX_InitRequest(&request, 0, 0);
 
-    while (FCGX_Accept_r(&request) == 0) 
+    bool shutdown = false;
+    
+    while (!shutdown)
     {
-        _managedRequestsNumber++;
+        shared_ptr<FCGX_Request> request = make_shared<FCGX_Request>();
+
+        FCGX_InitRequest(request.get(), 0, 0);
+
+        int returnAcceptCode = FCGX_Accept_r(request.get());
+        _logger->info(__FILEREF__ + "FCGX_Accept_r"
+            + ", returnAcceptCode: " + to_string(returnAcceptCode)
+        );
         
+        if (returnAcceptCode != 0)
+        {
+            shutdown = true;
+            
+            continue;
+        }
+        
+        _managedRequestsNumber++;
+
         _logger->info(__FILEREF__ + "Request managed"
             + ", _managedRequestsNumber: " + to_string(_managedRequestsNumber)
             + ", _processId: " + to_string(_processId)
         );        
 
-        fcgi_streambuf cin_fcgi_streambuf(request.in);
-        fcgi_streambuf cout_fcgi_streambuf(request.out);
-        fcgi_streambuf cerr_fcgi_streambuf(request.err);
+//        fcgi_streambuf cin_fcgi_streambuf(request->in);
+//        fcgi_streambuf cout_fcgi_streambuf(request->out);
+//        fcgi_streambuf cerr_fcgi_streambuf(request->err);
 
-        cin.rdbuf(&cin_fcgi_streambuf);
-        cout.rdbuf(&cout_fcgi_streambuf);
-        cerr.rdbuf(&cerr_fcgi_streambuf);
+//        cin.rdbuf(&cin_fcgi_streambuf);
+//        cout.rdbuf(&cout_fcgi_streambuf);
+//        cerr.rdbuf(&cerr_fcgi_streambuf);
 
         unordered_map<string, string> requestDetails;
         unordered_map<string, string> processDetails;
@@ -142,7 +156,7 @@ int APICommon::listen()
         unsigned long   contentLength = 0;
         try
         {
-            fillEnvironmentDetails(request.envp, requestDetails);
+            fillEnvironmentDetails(request->envp, requestDetails);
             fillEnvironmentDetails(environ, processDetails);
 
             {
@@ -172,7 +186,7 @@ int APICommon::listen()
                                 ;
 
                                 _logger->error(__FILEREF__ + errorMessage);
-                                
+
                                 throw runtime_error(errorMessage);
                             }
                             else if (requestToUploadBinary && contentLength > _maxBinaryContentLength)
@@ -183,7 +197,7 @@ int APICommon::listen()
                                 ;
 
                                 _logger->error(__FILEREF__ + errorMessage);
-                                
+
                                 throw runtime_error(errorMessage);
                             }
                         }
@@ -241,7 +255,7 @@ int APICommon::listen()
             string errorMessage = e.what();
             _logger->error(__FILEREF__ + errorMessage);
 
-            sendError(500, e.what());
+            sendError(request, 500, e.what());
 
             // throw runtime_error(errorMessage);
             continue;
@@ -251,12 +265,12 @@ int APICommon::listen()
             string errorMessage = string("Internal server error");
             _logger->error(__FILEREF__ + errorMessage);
 
-            sendError(500, errorMessage);
+            sendError(request, 500, errorMessage);
 
             // throw runtime_error(errorMessage);
             continue;
         }
-        
+
         tuple<shared_ptr<Customer>,bool, bool> customerAndFlags;
         try
         {
@@ -291,13 +305,13 @@ int APICommon::listen()
 
                 throw NoAPIKeyPresentIntoRequest();
             }
-            
+
             string custormerKey = usernameAndPassword.substr(0, userNameSeparator);
             string apiKey = usernameAndPassword.substr(userNameSeparator + 1);
 
             // customerAndFlags = _mmsEngine->checkAPIKey (apiKey);
             customerAndFlags = _mmsEngineDBFacade->checkAPIKey(apiKey);
-            
+
             if (get<0>(customerAndFlags)->_customerKey != stol(custormerKey))
             {
                 _logger->error(__FILEREF__ + "Username (CustomerKey) is not the same Customer the apiKey is referring"
@@ -307,7 +321,7 @@ int APICommon::listen()
 
                 throw NoAPIKeyPresentIntoRequest();
             }        
-            
+
             _logger->info(__FILEREF__ + "APIKey and Customer verified successful");
         }
         catch(NoAPIKeyPresentIntoRequest e)
@@ -319,7 +333,7 @@ int APICommon::listen()
             string errorMessage = e.what();
             _logger->error(__FILEREF__ + errorMessage);
 
-            sendError(401, errorMessage);   // bad request
+            sendError(request, 401, errorMessage);   // bad request
 
             // throw runtime_error(errorMessage);
             continue;
@@ -329,11 +343,11 @@ int APICommon::listen()
             _logger->error(__FILEREF__ + "_mmsEngine->checkAPIKey failed"
                 + ", e.what(): " + e.what()
             );
-            
+
             string errorMessage = e.what();
             _logger->error(__FILEREF__ + errorMessage);
 
-            sendError(401, errorMessage);   // unauthorized
+            sendError(request, 401, errorMessage);   // unauthorized
 
             //  throw runtime_error(errorMessage);
             continue;
@@ -347,7 +361,7 @@ int APICommon::listen()
             string errorMessage = string("Internal server error");
             _logger->error(__FILEREF__ + errorMessage);
 
-            sendError(500, errorMessage);
+            sendError(request, 500, errorMessage);
 
             // throw runtime_error(errorMessage);
             continue;
@@ -361,7 +375,7 @@ int APICommon::listen()
             string errorMessage = string("Internal server error");
             _logger->error(__FILEREF__ + errorMessage);
 
-            sendError(500, errorMessage);
+            sendError(request, 500, errorMessage);
 
             //  throw runtime_error(errorMessage);
             continue;
@@ -386,7 +400,7 @@ int APICommon::listen()
                     xCatraMMSResumeHeader = it->second;
             }
 
-            manageRequestAndResponse(requestURI, requestMethod, queryParameters,
+            manageRequestAndResponse(request, requestURI, requestMethod, queryParameters,
                     customerAndFlags, contentLength, requestBody,
                     xCatraMMSResumeHeader);            
         }
@@ -407,9 +421,9 @@ int APICommon::listen()
     }
 
    // restore stdio streambufs
-    cin.rdbuf(cin_streambuf);
-    cout.rdbuf(cout_streambuf);
-    cerr.rdbuf(cerr_streambuf);
+//    cin.rdbuf(cin_streambuf);
+//    cout.rdbuf(cout_streambuf);
+//    cerr.rdbuf(cerr_streambuf);
 
 
     return 0;
@@ -650,6 +664,43 @@ bool APICommon::requestToUploadBinary(unordered_map<string, string> queryParamet
     return requestToUploadBinary;
 }
 
+void APICommon::sendSuccess(shared_ptr<FCGX_Request> request, int htmlResponseCode, string responseBody)
+{
+    string endLine = "\r\n";
+    
+//    string httpStatus =
+//            string("HTTP/1.1 ")
+//            + to_string(htmlResponseCode) + " "
+//            + getHtmlStandardMessage(htmlResponseCode)
+//            + endLine;
+
+    string httpStatus =
+            string("Status: ")
+            + to_string(htmlResponseCode) + " "
+            + getHtmlStandardMessage(htmlResponseCode)
+            + endLine;
+
+    string contentType;
+    if (responseBody != "")
+        contentType = string("Content-Type: application/json; charset=utf-8") + endLine;
+    
+    string completeHttpResponse =
+            httpStatus
+            + contentType
+            + "Content-Length: " + to_string(responseBody.length()) + endLine
+            + endLine
+            + responseBody;
+
+    _logger->info(__FILEREF__ + "HTTP Success"
+        + ", response: " + completeHttpResponse
+    );
+
+    FCGX_FPrintF(request->out, completeHttpResponse.c_str());
+    FCGX_Finish_r(request.get());                                                                              
+    
+//    cout << completeHttpResponse;
+}
+
 void APICommon::sendSuccess(int htmlResponseCode, string responseBody)
 {
     string endLine = "\r\n";
@@ -684,6 +735,36 @@ void APICommon::sendSuccess(int htmlResponseCode, string responseBody)
     cout << completeHttpResponse;
 }
 
+void APICommon::sendHeadSuccess(shared_ptr<FCGX_Request> request, int htmlResponseCode, unsigned long fileSize)
+{
+    string endLine = "\r\n";
+    
+//    string httpStatus =
+//            string("HTTP/1.1 ")
+//            + to_string(htmlResponseCode) + " "
+//            + getHtmlStandardMessage(htmlResponseCode)
+//            + endLine;
+
+    string httpStatus =
+            string("Status: ")
+            + to_string(htmlResponseCode) + " "
+            + getHtmlStandardMessage(htmlResponseCode)
+            + endLine;
+
+    string completeHttpResponse =
+            httpStatus
+            + "X-CatraMMS-Resume: " + to_string(fileSize) + endLine
+            + endLine;
+
+    _logger->info(__FILEREF__ + "HTTP HEAD Success"
+        + ", response: " + completeHttpResponse
+    );
+
+    FCGX_FPrintF(request->out, completeHttpResponse.c_str());
+    FCGX_Finish_r(request.get());                                                                              
+//    cout << completeHttpResponse;
+}
+
 void APICommon::sendHeadSuccess(int htmlResponseCode, unsigned long fileSize)
 {
     string endLine = "\r\n";
@@ -710,6 +791,45 @@ void APICommon::sendHeadSuccess(int htmlResponseCode, unsigned long fileSize)
     );
 
     cout << completeHttpResponse;
+}
+
+void APICommon::sendError(shared_ptr<FCGX_Request> request, int htmlResponseCode, string errorMessage)
+{
+    string endLine = "\r\n";
+
+    string responseBody =
+            string("{ ")
+            + "\"status\": " + to_string(htmlResponseCode) + ", "
+            + "\"error\": " + "\"" + errorMessage + "\"" + " "
+            + "}";
+    
+//    string httpStatus =
+//            string("HTTP/1.1 ")
+//            + to_string(htmlResponseCode) + " "
+//            + getHtmlStandardMessage(htmlResponseCode)
+//            + endLine;
+    string httpStatus =
+            string("Status: ")
+            + to_string(htmlResponseCode) + " "
+            + getHtmlStandardMessage(htmlResponseCode)
+            + endLine;
+
+    string completeHttpResponse =
+            httpStatus
+            + "Content-Type: application/json; charset=utf-8" + endLine
+            + "Content-Length: " + to_string(responseBody.length()) + endLine
+            + endLine
+            + responseBody
+            ;
+    
+    _logger->info(__FILEREF__ + "HTTP Error"
+        + ", response: " + completeHttpResponse
+    );
+
+    FCGX_FPrintF(request->out, completeHttpResponse.c_str());
+    FCGX_Finish_r(request.get());
+    
+//    cout << completeHttpResponse;
 }
 
 void APICommon::sendError(int htmlResponseCode, string errorMessage)
