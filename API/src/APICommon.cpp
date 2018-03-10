@@ -164,32 +164,45 @@ int APICommon::listen()
                         if (it->second != "")
                         {
                             contentLength = stol(it->second);
-                            if (contentLength > _maxAPIContentLength)
+                            if (!requestToUploadBinary && contentLength > _maxAPIContentLength)
                             {
-                                _logger->error(__FILEREF__ + "ContentLength too long, it will be truncated and data will be lost"
+                                string errorMessage = string("No binary request, ContentLength too long")
                                     + ", contentLength: " + to_string(contentLength)
                                     + ", _maxAPIContentLength: " + to_string(_maxAPIContentLength)
-                                );
+                                ;
 
-                                contentLength = _maxAPIContentLength;
+                                _logger->error(__FILEREF__ + errorMessage);
+                                
+                                throw runtime_error(errorMessage);
+                            }
+                            else if (requestToUploadBinary && contentLength > _maxBinaryContentLength)
+                            {
+                                string errorMessage = string("Binary request, ContentLength too long")
+                                    + ", contentLength: " + to_string(contentLength)
+                                    + ", _maxBinaryContentLength: " + to_string(_maxBinaryContentLength)
+                                ;
+
+                                _logger->error(__FILEREF__ + errorMessage);
+                                
+                                throw runtime_error(errorMessage);
                             }
                         }
                         else
                         {
-                            _logger->error(__FILEREF__ + "Content-Length header is enpty");
+                            string errorMessage("Content-Length header is empty");
 
-                            contentLength = _maxAPIContentLength;
+                            _logger->error(__FILEREF__ + errorMessage);
 
-                            throw ContentLengthHeaderNotPresent();
+                            throw runtime_error(errorMessage);
                         }
                     }
                     else
                     {
-                        _logger->error(__FILEREF__ + "Content-Length header is not present");
-                        
-                        contentLength = _maxAPIContentLength;
-                        
-                        throw ContentLengthHeaderNotPresent();
+                        string errorMessage("Content-Length header is missing");
+
+                        _logger->error(__FILEREF__ + errorMessage);
+
+                        throw runtime_error(errorMessage);
                     }
 
                     if (!requestToUploadBinary)
@@ -223,7 +236,7 @@ int APICommon::listen()
 //                );
             }
         }
-        catch(ContentLengthHeaderNotPresent e)
+        catch(runtime_error& e)
         {
             string errorMessage = e.what();
             _logger->error(__FILEREF__ + errorMessage);

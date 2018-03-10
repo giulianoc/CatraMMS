@@ -26,13 +26,6 @@ struct NoAPIKeyPresentIntoRequest: public exception {
     }; 
 };
 
-struct ContentLengthHeaderNotPresent: public exception {    
-    char const* what() const throw() 
-    {
-        return "The Content-Length header is not present";
-    }; 
-};
-
 class APICommon {
 public:
     APICommon(const char* configurationPathName);
