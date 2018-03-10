@@ -78,7 +78,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
         unordered_map<string, string> queryParameters,
         tuple<shared_ptr<Customer>,bool,bool>& customerAndFlags,
         unsigned long contentLength,
-        string requestBody
+        string requestBody,
+        string xCatraMMSResumeHeader
 )
 {
     

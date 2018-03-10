@@ -26,6 +26,13 @@ struct NoAPIKeyPresentIntoRequest: public exception {
     }; 
 };
 
+struct ContentLengthHeaderNotPresent: public exception {    
+    char const* what() const throw() 
+    {
+        return "The Content-Length header is not present";
+    }; 
+};
+
 class APICommon {
 public:
     APICommon(const char* configurationPathName);
@@ -42,7 +49,8 @@ public:
         unordered_map<string, string> queryParameters,
         tuple<shared_ptr<Customer>,bool,bool>& customerAndFlags,
         unsigned long contentLength,
-        string requestBody
+        string requestBody,
+        string xCatraMMSResumeHeader
     ) = 0;
     
     virtual void getBinaryAndResponse(
@@ -83,6 +91,8 @@ private:
         string queryString,
         unordered_map<string, string>& queryParameters);
     
+    bool requestToUploadBinary(unordered_map<string, string> queryParameters);
+
     string getHtmlStandardMessage(int htmlResponseCode);
 
     static size_t emailPayloadFeed(void *ptr, size_t size, size_t nmemb, void *userp);

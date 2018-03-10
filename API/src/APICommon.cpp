@@ -136,13 +136,24 @@ int APICommon::listen()
 
         unordered_map<string, string> requestDetails;
         unordered_map<string, string> processDetails;
+        unordered_map<string, string> queryParameters;
+        bool            requestToUploadBinary;
         string          requestBody;
         unsigned long   contentLength = 0;
         try
         {
             fillEnvironmentDetails(request.envp, requestDetails);
             fillEnvironmentDetails(environ, processDetails);
-        
+
+            {
+                unordered_map<string, string>::iterator it;
+
+                if ((it = requestDetails.find("QUERY_STRING")) != requestDetails.end())
+                    fillQueryString(it->second, queryParameters);
+
+                requestToUploadBinary = this->requestToUploadBinary(queryParameters);
+            }
+
             {
                 unordered_map<string, string>::iterator it;
                 if ((it = requestDetails.find("REQUEST_METHOD")) != requestDetails.end() &&
@@ -164,11 +175,24 @@ int APICommon::listen()
                             }
                         }
                         else
+                        {
+                            _logger->error(__FILEREF__ + "Content-Length header is enpty");
+
                             contentLength = _maxAPIContentLength;
+
+                            throw ContentLengthHeaderNotPresent();
+                        }
                     }
                     else
+                    {
+                        _logger->error(__FILEREF__ + "Content-Length header is not present");
+                        
                         contentLength = _maxAPIContentLength;
+                        
+                        throw ContentLengthHeaderNotPresent();
+                    }
 
+                    if (!requestToUploadBinary)
                     {
                         char* content = new char[contentLength];
 
@@ -181,6 +205,7 @@ int APICommon::listen()
                     }
                 }
 
+                if (!requestToUploadBinary)
                 {
                     // Chew up any remaining stdin - this shouldn't be necessary
                     // but is because mod_fastcgi doesn't handle it correctly.
@@ -197,6 +222,16 @@ int APICommon::listen()
 //                    + ", requestBody: " + requestBody
 //                );
             }
+        }
+        catch(ContentLengthHeaderNotPresent e)
+        {
+            string errorMessage = e.what();
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(500, e.what());
+
+            // throw runtime_error(errorMessage);
+            continue;
         }
         catch(exception e)
         {
@@ -321,7 +356,6 @@ int APICommon::listen()
 
         try
         {
-            unordered_map<string, string> queryParameters;
             unordered_map<string, string>::iterator it;
 
             string requestURI;
@@ -332,11 +366,16 @@ int APICommon::listen()
             if ((it = requestDetails.find("REQUEST_METHOD")) != requestDetails.end())
                 requestMethod = it->second;
 
-            if ((it = requestDetails.find("QUERY_STRING")) != requestDetails.end())
-                fillQueryString(it->second, queryParameters);
+            string xCatraMMSResumeHeader;
+            if (requestToUploadBinary)
+            {
+                if ((it = processDetails.find("HTTP_X_CATRAMMS_RESUME")) != processDetails.end())
+                    xCatraMMSResumeHeader = it->second;
+            }
 
             manageRequestAndResponse(requestURI, requestMethod, queryParameters,
-                    customerAndFlags, contentLength, requestBody);            
+                    customerAndFlags, contentLength, requestBody,
+                    xCatraMMSResumeHeader);            
         }
         catch(runtime_error e)
         {
@@ -574,6 +613,28 @@ int APICommon::manageBinaryRequest()
 
 
     return 0;
+}
+
+bool APICommon::requestToUploadBinary(unordered_map<string, string> queryParameters)
+{
+    bool requestToUploadBinary = false;
+    
+    auto methodIt = queryParameters.find("method");
+    if (methodIt == queryParameters.end())
+    {
+        requestToUploadBinary       = false;
+    }
+    else
+    {
+        string method = methodIt->second;
+
+        if (method == "uploadBinary")
+        {
+            requestToUploadBinary       = true;
+        }
+    }
+    
+    return requestToUploadBinary;
 }
 
 void APICommon::sendSuccess(int htmlResponseCode, string responseBody)

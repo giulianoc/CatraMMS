@@ -36,7 +36,8 @@ public:
             unordered_map<string, string> queryParameters,
             tuple<shared_ptr<Customer>,bool,bool>& customerAndFlags,
             unsigned long contentLength,
-            string requestBody
+            string requestBody,
+            string xCatraMMSResumeHeader
     );
     
 private:
@@ -44,6 +45,8 @@ private:
     MMSEngineDBFacade::EncodingPeriod _encodingPeriodCustomerDefaultValue;
     int _maxIngestionsNumberCustomerDefaultValue;
     int _maxStorageInGBCustomerDefaultValue;
+    unsigned long       _binaryBufferLength;
+    unsigned long       _progressUpdatePeriodInSeconds;
 
     void registerCustomer(string requestBody);
     
@@ -55,6 +58,14 @@ private:
             shared_ptr<Customer> customer,
             unordered_map<string, string> queryParameters,
             string requestBody);
+    
+    void uploadBinary(
+        string requestMethod,
+        string xCatraMMSResumeHeader,
+        unordered_map<string, string>& queryParameters,
+        tuple<shared_ptr<Customer>,bool,bool>& customerAndFlags,
+        unsigned long contentLength
+    );
 };
 
 #endif /* POSTCUSTOMER_H */

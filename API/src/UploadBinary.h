@@ -23,12 +23,13 @@ public:
     ~UploadBinary();
     
     virtual void manageRequestAndResponse(
-        string requestURI,
-        string requestMethod,
-        unordered_map<string, string> queryParameters,
-        tuple<shared_ptr<Customer>,bool,bool>& customerAndFlags,
-        unsigned long contentLength,
-        string requestBody);
+            string requestURI,
+            string requestMethod,
+            unordered_map<string, string> queryParameters,
+            tuple<shared_ptr<Customer>,bool,bool>& customerAndFlags,
+            unsigned long contentLength,
+            string requestBody,
+            string xCatraMMSResumeHeader);
 
     virtual void getBinaryAndResponse(
             string requestURI,
