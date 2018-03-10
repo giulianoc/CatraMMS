@@ -265,13 +265,14 @@ void UploadBinary::getBinaryAndResponse(
                     {
                         chrono::system_clock::time_point now = chrono::system_clock::now();
 
-                        if (now - uploadStartTime >= chrono::seconds(_progressUpdatePeriodInSeconds))
+                        if (now - lastTimeProgressUpdate >= chrono::seconds(_progressUpdatePeriodInSeconds))
                         {
                             double progress = (totalRead / contentLength) * 100;
-                            int uploadingPercentage = floorf(progress * 100) / 100;
+                            int uploadingPercentage = floorf(progress * 1000) / 1000;
 
                             _logger->info(__FILEREF__ + "Upload still running"
                                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                + ", progress: " + to_string(progress)
                                 + ", uploadingPercentage: " + to_string(uploadingPercentage)
                                 + ", totalRead: " + to_string(totalRead)
                                 + ", contentLength: " + to_string(contentLength)
