@@ -189,8 +189,9 @@ int APICommon::operator()()
                     {
                         char* content = new char[contentLength];
 
-                        cin.read(content, contentLength);
-                        contentLength = cin.gcount();     // Returns the number of characters extracted by the last unformatted input operation
+                        contentLength = FCGX_GetStr(content, contentLength, request.in);
+                        // cin.read(content, contentLength);
+                        // contentLength = cin.gcount();     // Returns the number of characters extracted by the last unformatted input operation
 
                         requestBody.assign(content, contentLength);
 
@@ -205,9 +206,9 @@ int APICommon::operator()()
 
                     // ignore() doesn't set the eof bit in some versions of glibc++
                     // so use gcount() instead of eof()...
-                    do 
-                        cin.ignore(1024); 
-                    while (cin.gcount() == 1024);
+//                    do 
+//                        cin.ignore(1024); 
+//                    while (cin.gcount() == 1024);
                 }
 
 //                _logger->info(__FILEREF__ + "Request body"

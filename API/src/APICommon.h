@@ -14,11 +14,12 @@
 #ifndef APICommon_h
 #define APICommon_h
 
+#include <stdlib.h>
+#include "fcgi_stdio.h"
 #include <unordered_map>
-#include "fcgi_config.h"
-#include "fcgiapp.h"
 #include "MMSStorage.h"
 #include "spdlog/spdlog.h"
+#include "fcgi_config.h"
 
 struct NoAPIKeyPresentIntoRequest: public exception {    
     char const* what() const throw() 

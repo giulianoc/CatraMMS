@@ -1018,8 +1018,9 @@ void API::uploadBinary(
                     else
                         bytesToBeRead = contentLength - totalRead;
 
-                    cin.read(buffer, bytesToBeRead);
-                    currentRead = cin.gcount();
+                    currentRead = FCGX_GetStr(buffer, bytesToBeRead, request.in);
+                    // cin.read(buffer, bytesToBeRead);
+                    // currentRead = cin.gcount();
                     if (currentRead != bytesToBeRead)
                     {
                         // this should never happen because it will be against the content-length
