@@ -54,7 +54,13 @@ int APICommon::operator()()
 //    streambuf* cout_streambuf = cout.rdbuf();
 //    streambuf* cerr_streambuf = cerr.rdbuf();
 
-    pid_t processId = getpid();
+    string sThreadId;
+    {
+        thread::id threadId = this_thread::get_id();
+        stringstream ss;
+        ss << threadId;
+        sThreadId = ss.str();
+    }
 
     FCGX_Request request;
 
@@ -68,12 +74,12 @@ int APICommon::operator()()
         int returnAcceptCode;
         {
             _logger->info(__FILEREF__ + "APICommon::ready"
-                + ", processId: " + to_string(processId)
+                + ", threadId: " + sThreadId
             );        
             lock_guard<mutex> locker(*_fcgiAcceptMutex);
             
             _logger->info(__FILEREF__ + "APICommon::listen"
-                + ", processId: " + to_string(processId)
+                + ", threadId: " + sThreadId
             );        
 
             returnAcceptCode = FCGX_Accept_r(&request);
@@ -93,7 +99,7 @@ int APICommon::operator()()
 
         _logger->info(__FILEREF__ + "Request managed"
             + ", _managedRequestsNumber: " + to_string(_managedRequestsNumber)
-            + ", processId: " + to_string(processId)
+            + ", threadId: " + sThreadId
         );        
 
 //        fcgi_streambuf cin_fcgi_streambuf(request->in);
