@@ -267,7 +267,7 @@ void API::manageRequestAndResponse(
 
             throw runtime_error(errorMessage);
         }
-        
+                
         uploadBinary(request, requestMethod, xCatraMMSResumeHeader,
             queryParameters, customerAndFlags, contentLength);
     }

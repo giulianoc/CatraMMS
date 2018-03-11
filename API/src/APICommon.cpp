@@ -32,7 +32,6 @@ APICommon::APICommon(Json::Value configuration,
     _logger             = logger;
 
     _managedRequestsNumber = 0;
-    _processId = getpid();
     _maxAPIContentLength = _configuration["api"].get("maxContentLength", "XXX").asInt64();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->maxContentLength: " + to_string(_maxAPIContentLength)
@@ -53,6 +52,8 @@ int APICommon::operator()()
 //    streambuf* cout_streambuf = cout.rdbuf();
 //    streambuf* cerr_streambuf = cerr.rdbuf();
 
+    pid_t processId = getpid();
+
     _logger->info(__FILEREF__ + "APICommon::listen"
     );        
 
@@ -63,6 +64,8 @@ int APICommon::operator()()
     bool shutdown = false;    
     while (!shutdown)
     {
+#ifdef TEST
+#else
         int returnAcceptCode = FCGX_Accept_r(&request);
         _logger->info(__FILEREF__ + "FCGX_Accept_r"
             + ", returnAcceptCode: " + to_string(returnAcceptCode)
@@ -74,12 +77,12 @@ int APICommon::operator()()
             
             continue;
         }
-        
+#endif        
         _managedRequestsNumber++;
 
         _logger->info(__FILEREF__ + "Request managed"
             + ", _managedRequestsNumber: " + to_string(_managedRequestsNumber)
-            + ", _processId: " + to_string(_processId)
+            + ", processId: " + to_string(processId)
         );        
 
 //        fcgi_streambuf cin_fcgi_streambuf(request->in);
@@ -91,7 +94,7 @@ int APICommon::operator()()
 //        cerr.rdbuf(&cerr_fcgi_streambuf);
 
         unordered_map<string, string> requestDetails;
-        unordered_map<string, string> processDetails;
+        // unordered_map<string, string> processDetails;
         unordered_map<string, string> queryParameters;
         bool            requestToUploadBinary;
         string          requestBody;
@@ -99,7 +102,8 @@ int APICommon::operator()()
         try
         {
             fillEnvironmentDetails(request.envp, requestDetails);
-            fillEnvironmentDetails(environ, processDetails);
+            // fillEnvironmentDetails(environ, processDetails);
+            fillEnvironmentDetails(environ, requestDetails);
 
             {
                 unordered_map<string, string>::iterator it;
@@ -338,7 +342,7 @@ int APICommon::operator()()
             string xCatraMMSResumeHeader;
             if (requestToUploadBinary)
             {
-                if ((it = processDetails.find("HTTP_X_CATRAMMS_RESUME")) != processDetails.end())
+                if ((it = requestDetails.find("HTTP_X_CATRAMMS_RESUME")) != requestDetails.end())
                     xCatraMMSResumeHeader = it->second;
             }
 
@@ -376,28 +380,30 @@ int APICommon::operator()()
 int APICommon::manageBinaryRequest()
 {    
 
+    pid_t processId = getpid();
+
     _managedRequestsNumber++;
 
     _logger->info(__FILEREF__ + "manageBinaryRequest"
         + ", _managedRequestsNumber: " + to_string(_managedRequestsNumber)
-        + ", _processId: " + to_string(_processId)
+        + ", processId: " + to_string(processId)
     );        
 
-    // unordered_map<string, string> requestDetails;
-    unordered_map<string, string> processDetails;
+    unordered_map<string, string> requestDetails;
+    // unordered_map<string, string> processDetails;
     string          requestBody;
     unsigned long   contentLength = 0;
     try
     {
         // fillEnvironmentDetails(request.envp, requestDetails);
-        fillEnvironmentDetails(environ, processDetails);
+        fillEnvironmentDetails(environ, requestDetails);
 
         {
             unordered_map<string, string>::iterator it;
-            if ((it = processDetails.find("REQUEST_METHOD")) != processDetails.end() &&
+            if ((it = requestDetails.find("REQUEST_METHOD")) != requestDetails.end() &&
                     (it->second == "POST" || it->second == "PUT"))
             {                
-                if ((it = processDetails.find("CONTENT_LENGTH")) != processDetails.end())
+                if ((it = requestDetails.find("CONTENT_LENGTH")) != requestDetails.end())
                 {
                     if (it->second != "")
                     {
@@ -444,7 +450,7 @@ int APICommon::manageBinaryRequest()
     {
         unordered_map<string, string>::iterator it;
 
-        if ((it = processDetails.find("HTTP_AUTHORIZATION")) == processDetails.end())
+        if ((it = requestDetails.find("HTTP_AUTHORIZATION")) == requestDetails.end())
         {
             _logger->error(__FILEREF__ + "No APIKey present into the request");
 
@@ -551,18 +557,18 @@ int APICommon::manageBinaryRequest()
         unordered_map<string, string>::iterator it;
 
         string requestURI;
-        if ((it = processDetails.find("REQUEST_URI")) != processDetails.end())
+        if ((it = requestDetails.find("REQUEST_URI")) != requestDetails.end())
             requestURI = it->second;
 
         string requestMethod;
-        if ((it = processDetails.find("REQUEST_METHOD")) != processDetails.end())
+        if ((it = requestDetails.find("REQUEST_METHOD")) != requestDetails.end())
             requestMethod = it->second;
 
-        if ((it = processDetails.find("QUERY_STRING")) != processDetails.end())
+        if ((it = requestDetails.find("QUERY_STRING")) != requestDetails.end())
             fillQueryString(it->second, queryParameters);
 
         string xCatraMMSResumeHeader;
-        if ((it = processDetails.find("HTTP_X_CATRAMMS_RESUME")) != processDetails.end())
+        if ((it = requestDetails.find("HTTP_X_CATRAMMS_RESUME")) != requestDetails.end())
             xCatraMMSResumeHeader = it->second;
 
         getBinaryAndResponse(requestURI, requestMethod, 

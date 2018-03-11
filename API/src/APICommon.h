@@ -15,7 +15,8 @@
 #define APICommon_h
 
 #include <unordered_map>
-#include "fcgio.h"
+#include "fcgi_config.h"
+#include "fcgiapp.h"
 #include "MMSStorage.h"
 #include "spdlog/spdlog.h"
 
@@ -79,7 +80,6 @@ protected:
     
 private:
     int             _managedRequestsNumber;
-    long            _processId;
     unsigned long   _maxAPIContentLength;
     
     void fillEnvironmentDetails(
