@@ -45,7 +45,7 @@ UploadBinary::~UploadBinary() {
 }
 
 void UploadBinary::manageRequestAndResponse(
-        shared_ptr<FCGX_Request> request,
+        FCGX_Request& request,
         string requestURI,
         string requestMethod,
         unordered_map<string, string> queryParameters,

@@ -31,7 +31,7 @@ public:
         unsigned long contentLength);
 
     virtual void manageRequestAndResponse(
-            shared_ptr<FCGX_Request> request,
+            FCGX_Request& request,
             string requestURI,
             string requestMethod,
             unordered_map<string, string> queryParameters,
@@ -50,29 +50,29 @@ private:
     unsigned long       _progressUpdatePeriodInSeconds;
 
     void registerCustomer(
-        shared_ptr<FCGX_Request> request,
+        FCGX_Request& request,
         string requestBody);
     
     void confirmCustomer(
-        shared_ptr<FCGX_Request> request,
+        FCGX_Request& request,
         unordered_map<string, string> queryParameters);
 
     void createAPIKey(
-        shared_ptr<FCGX_Request> request,
+        FCGX_Request& request,
         unordered_map<string, string> queryParameters);
 
     void ingestContent(
-        shared_ptr<FCGX_Request> request,
+        FCGX_Request& request,
         shared_ptr<Customer> customer,
         unordered_map<string, string> queryParameters,
         string requestBody);
     
     void uploadBinary(
-        shared_ptr<FCGX_Request> request,
+        FCGX_Request& request,
         string requestMethod,
         string xCatraMMSResumeHeader,
-        unordered_map<string, string>& queryParameters,
-        tuple<shared_ptr<Customer>,bool,bool>& customerAndFlags,
+        unordered_map<string, string> queryParameters,
+        tuple<shared_ptr<Customer>,bool,bool> customerAndFlags,
         unsigned long contentLength
     );
 };

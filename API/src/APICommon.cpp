@@ -101,7 +101,7 @@ APICommon::APICommon(const char* configurationPathName)
 APICommon::~APICommon() {
 }
 
-int APICommon::listen()
+int APICommon::operator()()
 {    
     // Backup the stdio streambufs
 //    streambuf* cin_streambuf  = cin.rdbuf();
@@ -111,17 +111,14 @@ int APICommon::listen()
     _logger->info(__FILEREF__ + "APICommon::listen"
     );        
 
-    FCGX_Init();
+    FCGX_Request request;
 
-    bool shutdown = false;
-    
+    FCGX_InitRequest(&request, 0, 0);
+
+    bool shutdown = false;    
     while (!shutdown)
     {
-        shared_ptr<FCGX_Request> request = make_shared<FCGX_Request>();
-
-        FCGX_InitRequest(request.get(), 0, 0);
-
-        int returnAcceptCode = FCGX_Accept_r(request.get());
+        int returnAcceptCode = FCGX_Accept_r(&request);
         _logger->info(__FILEREF__ + "FCGX_Accept_r"
             + ", returnAcceptCode: " + to_string(returnAcceptCode)
         );
@@ -156,7 +153,7 @@ int APICommon::listen()
         unsigned long   contentLength = 0;
         try
         {
-            fillEnvironmentDetails(request->envp, requestDetails);
+            fillEnvironmentDetails(request.envp, requestDetails);
             fillEnvironmentDetails(environ, processDetails);
 
             {
@@ -417,7 +414,9 @@ int APICommon::listen()
             );
         }
 
-        // Note: the fcgi_streambuf destructor will auto flush
+         FCGX_Finish_r(&request);
+
+         // Note: the fcgi_streambuf destructor will auto flush
     }
 
    // restore stdio streambufs
@@ -664,7 +663,7 @@ bool APICommon::requestToUploadBinary(unordered_map<string, string> queryParamet
     return requestToUploadBinary;
 }
 
-void APICommon::sendSuccess(shared_ptr<FCGX_Request> request, int htmlResponseCode, string responseBody)
+void APICommon::sendSuccess(FCGX_Request& request, int htmlResponseCode, string responseBody)
 {
     string endLine = "\r\n";
     
@@ -695,8 +694,7 @@ void APICommon::sendSuccess(shared_ptr<FCGX_Request> request, int htmlResponseCo
         + ", response: " + completeHttpResponse
     );
 
-    FCGX_FPrintF(request->out, completeHttpResponse.c_str());
-    FCGX_Finish_r(request.get());                                                                              
+    FCGX_FPrintF(request.out, completeHttpResponse.c_str());
     
 //    cout << completeHttpResponse;
 }
@@ -735,7 +733,7 @@ void APICommon::sendSuccess(int htmlResponseCode, string responseBody)
     cout << completeHttpResponse;
 }
 
-void APICommon::sendHeadSuccess(shared_ptr<FCGX_Request> request, int htmlResponseCode, unsigned long fileSize)
+void APICommon::sendHeadSuccess(FCGX_Request& request, int htmlResponseCode, unsigned long fileSize)
 {
     string endLine = "\r\n";
     
@@ -760,8 +758,7 @@ void APICommon::sendHeadSuccess(shared_ptr<FCGX_Request> request, int htmlRespon
         + ", response: " + completeHttpResponse
     );
 
-    FCGX_FPrintF(request->out, completeHttpResponse.c_str());
-    FCGX_Finish_r(request.get());                                                                              
+    FCGX_FPrintF(request.out, completeHttpResponse.c_str());
 //    cout << completeHttpResponse;
 }
 
@@ -793,7 +790,7 @@ void APICommon::sendHeadSuccess(int htmlResponseCode, unsigned long fileSize)
     cout << completeHttpResponse;
 }
 
-void APICommon::sendError(shared_ptr<FCGX_Request> request, int htmlResponseCode, string errorMessage)
+void APICommon::sendError(FCGX_Request& request, int htmlResponseCode, string errorMessage)
 {
     string endLine = "\r\n";
 
@@ -826,8 +823,7 @@ void APICommon::sendError(shared_ptr<FCGX_Request> request, int htmlResponseCode
         + ", response: " + completeHttpResponse
     );
 
-    FCGX_FPrintF(request->out, completeHttpResponse.c_str());
-    FCGX_Finish_r(request.get());
+    FCGX_FPrintF(request.out, completeHttpResponse.c_str());
     
 //    cout << completeHttpResponse;
 }

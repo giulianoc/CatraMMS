@@ -25,9 +25,11 @@ int main(int argc, char** argv)
         return 1;
     }
     
+    FCGX_Init();
+
     API api(configurationPathName);
 
-    return api.listen();
+    return api();
 }
 
 API::API(const char* configurationPathName): APICommon(configurationPathName) 
@@ -93,7 +95,7 @@ void API::getBinaryAndResponse(
 }
 
 void API::manageRequestAndResponse(
-        shared_ptr<FCGX_Request> request,
+        FCGX_Request& request,
         string requestURI,
         string requestMethod,
         unordered_map<string, string> queryParameters,
@@ -199,10 +201,8 @@ void API::manageRequestAndResponse(
             throw runtime_error(errorMessage);
         }
         
-        thread uploaBinaryThread (&API::uploadBinary, this, 
-            request, requestMethod, xCatraMMSResumeHeader,
-            ref(queryParameters), ref(customerAndFlags), contentLength);
-        uploaBinaryThread.detach();
+        uploadBinary(request, requestMethod, xCatraMMSResumeHeader,
+            queryParameters, customerAndFlags, contentLength);
     }
     else
     {
@@ -218,7 +218,7 @@ void API::manageRequestAndResponse(
 }
 
 void API::registerCustomer(
-        shared_ptr<FCGX_Request> request,
+        FCGX_Request& request,
         string requestBody)
 {
     string api = "registerCustomer";
@@ -548,7 +548,7 @@ void API::registerCustomer(
 }
 
 void API::confirmCustomer(
-        shared_ptr<FCGX_Request> request,
+        FCGX_Request& request,
         unordered_map<string, string> queryParameters)
 {
     string api = "confirmCustomer";
@@ -639,7 +639,7 @@ void API::confirmCustomer(
 }
 
 void API::createAPIKey(
-        shared_ptr<FCGX_Request> request,
+        FCGX_Request& request,
         unordered_map<string, string> queryParameters)
 {
     string api = "createAPIKey";
@@ -743,7 +743,7 @@ void API::createAPIKey(
 }
 
 void API::ingestContent(
-        shared_ptr<FCGX_Request> request,
+        FCGX_Request& request,
         shared_ptr<Customer> customer,
         unordered_map<string, string> queryParameters,
         string requestBody)
@@ -801,11 +801,11 @@ void API::ingestContent(
 }
 
 void API::uploadBinary(
-        shared_ptr<FCGX_Request> request,
+        FCGX_Request& request,
         string requestMethod,
         string xCatraMMSResumeHeader,
-        unordered_map<string, string>& queryParameters,
-        tuple<shared_ptr<Customer>,bool,bool>& customerAndFlags,
+        unordered_map<string, string> queryParameters,
+        tuple<shared_ptr<Customer>,bool,bool> customerAndFlags,
         unsigned long contentLength
 )
 {

@@ -28,9 +28,11 @@ int main(int argc, char** argv)
         return 1;
     }
     
+    FCGX_Init();
+
     FFMPEGEncoder ffmpegEncoder(configurationPathName);
 
-    return ffmpegEncoder.listen();
+    return ffmpegEncoder();
 }
 
 FFMPEGEncoder::FFMPEGEncoder(const char* configurationPathName): APICommon(configurationPathName) 
@@ -73,7 +75,7 @@ void FFMPEGEncoder::getBinaryAndResponse(
 }
 
 void FFMPEGEncoder::manageRequestAndResponse(
-        shared_ptr<FCGX_Request> request,
+        FCGX_Request& request,
         string requestURI,
         string requestMethod,
         unordered_map<string, string> queryParameters,
@@ -137,12 +139,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
             throw runtime_error(errorMessage);
         }
         
-        thread encodeContentThread(&FFMPEGEncoder::encodeContent, this, 
-                                request, selectedEncoding, requestBody);
-        encodeContentThread.detach();
-        
-        // to make sure thread is able to set encoding->running to true
-        this_thread::sleep_for(chrono::seconds(1));
+        encodeContent(request, selectedEncoding, requestBody);
     }
     else if (method == "encodingProgress")
     {
@@ -245,7 +242,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 }
 
 void FFMPEGEncoder::encodeContent(
-        shared_ptr<FCGX_Request> request,
+        FCGX_Request& request,
         shared_ptr<Encoding> encoding,
         string requestBody)
 {
