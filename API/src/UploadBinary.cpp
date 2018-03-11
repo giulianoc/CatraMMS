@@ -80,22 +80,27 @@ int main(int argc, char** argv)
     shared_ptr<MMSStorage> mmsStorage = make_shared<MMSStorage>(
             configuration, logger);
 
+    mutex fcgiAcceptMutex;
+
     UploadBinary binary(configuration, 
             mmsEngineDBFacade,
             mmsStorage,
+            &fcgiAcceptMutex,
             logger);
     
     return binary.manageBinaryRequest();
 }
 
 UploadBinary::UploadBinary(Json::Value configuration, 
-            shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
-            shared_ptr<MMSStorage> mmsStorage,
-            shared_ptr<spdlog::logger> logger)
+        shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
+        shared_ptr<MMSStorage> mmsStorage,
+        mutex* fcgiAcceptMutex,
+        shared_ptr<spdlog::logger> logger)
     : APICommon(configuration, 
-            mmsEngineDBFacade,
-            mmsStorage,
-            logger) 
+        mmsEngineDBFacade,
+        mmsStorage,
+        fcgiAcceptMutex,
+        logger) 
 {
     _binaryBufferLength             = _configuration["uploadBinary"].get("binaryBufferLength", "XXX").asInt();
     _logger->info(__FILEREF__ + "Configuration item"

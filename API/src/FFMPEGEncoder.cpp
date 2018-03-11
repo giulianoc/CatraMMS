@@ -86,22 +86,27 @@ int main(int argc, char** argv)
     
     FCGX_Init();
 
+    mutex fcgiAcceptMutex;
+
     FFMPEGEncoder ffmpegEncoder(configuration, 
             mmsEngineDBFacade,
             mmsStorage,
+            &fcgiAcceptMutex,
             logger);
 
     return ffmpegEncoder();
 }
 
 FFMPEGEncoder::FFMPEGEncoder(Json::Value configuration, 
-            shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
-            shared_ptr<MMSStorage> mmsStorage,
-            shared_ptr<spdlog::logger> logger)
+        shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
+        shared_ptr<MMSStorage> mmsStorage,
+        mutex* fcgiAcceptMutex,
+        shared_ptr<spdlog::logger> logger)
     : APICommon(configuration, 
-            mmsEngineDBFacade,
-            mmsStorage,
-            logger) 
+        mmsEngineDBFacade,
+        mmsStorage,
+        fcgiAcceptMutex,
+        logger) 
 {
     _maxEncodingsCapability =  _configuration["ffmpeg"].get("maxEncodingsCapability", 0).asInt();
     _logger->info(__FILEREF__ + "Configuration item"

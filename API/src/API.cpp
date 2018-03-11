@@ -83,22 +83,35 @@ int main(int argc, char** argv)
 
     FCGX_Init();
 
-    API api(configuration, 
+    mutex fcgiAcceptMutex;
+    
+    API api_2(configuration, 
             mmsEngineDBFacade,
             mmsStorage,
+            &fcgiAcceptMutex,
             logger
             );
+    // return api();
+    thread apiThread_2 (api_2);
 
-    return api();
+    API api_1(configuration, 
+            mmsEngineDBFacade,
+            mmsStorage,
+            &fcgiAcceptMutex,
+            logger
+            );
+    return api_1();
 }
 
 API::API(Json::Value configuration, 
             shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
             shared_ptr<MMSStorage> mmsStorage,
+            mutex* fcgiAcceptMutex,
             shared_ptr<spdlog::logger> logger)
     :APICommon(configuration, 
             mmsEngineDBFacade,
             mmsStorage,
+            fcgiAcceptMutex,
             logger) 
 {
     string encodingPriority =  _configuration["api"].get("encodingPriorityCustomerDefaultValue", "XXX").asString();

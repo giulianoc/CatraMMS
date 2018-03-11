@@ -32,6 +32,7 @@ public:
     APICommon(Json::Value configuration, 
             shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
             shared_ptr<MMSStorage> mmsStorage,
+            mutex* fcgiAcceptMutex,
             shared_ptr<spdlog::logger> logger);
     
     virtual ~APICommon();
@@ -65,6 +66,7 @@ public:
 protected:
     Json::Value                     _configuration;
     shared_ptr<spdlog::logger>      _logger;
+    mutex*                          _fcgiAcceptMutex;
     shared_ptr<MMSEngineDBFacade>   _mmsEngineDBFacade;
     shared_ptr<MMSStorage>          _mmsStorage;
 

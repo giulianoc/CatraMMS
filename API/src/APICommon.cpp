@@ -24,11 +24,13 @@ extern char** environ;
 APICommon::APICommon(Json::Value configuration, 
             shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
             shared_ptr<MMSStorage> mmsStorage,
+            mutex* fcgiAcceptMutex,
             shared_ptr<spdlog::logger> logger)
 {
     _configuration      = configuration;
     _mmsEngineDBFacade  = mmsEngineDBFacade;
     _mmsStorage         = mmsStorage;
+    _fcgiAcceptMutex    = fcgiAcceptMutex;
     _logger             = logger;
 
     _managedRequestsNumber = 0;
@@ -66,7 +68,12 @@ int APICommon::operator()()
     {
 #ifdef TEST
 #else
-        int returnAcceptCode = FCGX_Accept_r(&request);
+        int returnAcceptCode;
+        {
+            lock_guard<mutex> locker(*_fcgiAcceptMutex);
+            
+            returnAcceptCode = FCGX_Accept_r(&request);
+        }
         _logger->info(__FILEREF__ + "FCGX_Accept_r"
             + ", returnAcceptCode: " + to_string(returnAcceptCode)
         );
@@ -101,7 +108,10 @@ int APICommon::operator()()
         unsigned long   contentLength = 0;
         try
         {
+#ifdef TEST
+#else
             fillEnvironmentDetails(request.envp, requestDetails);
+#endif        
             // fillEnvironmentDetails(environ, processDetails);
             fillEnvironmentDetails(environ, requestDetails);
 

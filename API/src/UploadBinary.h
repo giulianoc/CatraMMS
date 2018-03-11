@@ -19,9 +19,10 @@
 class UploadBinary: public APICommon {
 public:
     UploadBinary(Json::Value configuration, 
-            shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
-            shared_ptr<MMSStorage> mmsStorage,
-            shared_ptr<spdlog::logger> logger);
+        shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
+        shared_ptr<MMSStorage> mmsStorage,
+        mutex* fcgiAcceptMutex,
+        shared_ptr<spdlog::logger> logger);
     
     ~UploadBinary();
     
