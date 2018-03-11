@@ -21,70 +21,15 @@
 
 extern char** environ;
 
-APICommon::APICommon(const char* configurationPathName)
+APICommon::APICommon(Json::Value configuration, 
+            shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
+            shared_ptr<MMSStorage> mmsStorage,
+            shared_ptr<spdlog::logger> logger)
 {
-    
-    _configuration = loadConfigurationFile(configurationPathName);
-    
-    string logPathName =  _configuration["log"].get("pathName", "XXX").asString();
-    // _logger not initialized yet
-    // _logger->info(__FILEREF__ + "Configuration item"
-    //    + ", log->pathName: " + logPathName
-    // );
-    
-    // _logger = spdlog::stdout_logger_mt("API");
-    _logger = spdlog::daily_logger_mt("API", logPathName.c_str(), 11, 20);
-    
-    // trigger flush if the log severity is error or higher
-    _logger->flush_on(spdlog::level::trace);
-    
-    string logLevel =  _configuration["log"].get("level", "XXX").asString();
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", log->level: " + logLevel
-    );
-    if (logLevel == "debug")
-        spdlog::set_level(spdlog::level::debug); // trace, debug, info, warn, err, critical, off
-    else if (logLevel == "info")
-        spdlog::set_level(spdlog::level::info); // trace, debug, info, warn, err, critical, off
-    else if (logLevel == "err")
-        spdlog::set_level(spdlog::level::err); // trace, debug, info, warn, err, critical, off
-    string pattern =  _configuration["log"].get("pattern", "XXX").asString();
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", log->pattern: " + pattern
-    );
-    spdlog::set_pattern(pattern);
-
-    // globally register the loggers so so the can be accessed using spdlog::get(logger_name)
-    // spdlog::register_logger(logger);
-
-    /*
-    // the log is written in the apache error log (stderr)
-    _logger = spdlog::stderr_logger_mt("API");
-
-    // make sure only responses are written to the standard output
-    spdlog::set_level(spdlog::level::trace);
-    
-    spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%n] [%l] [tid %t] %v");
-    
-    // globally register the loggers so so the can be accessed using spdlog::get(logger_name)
-    // spdlog::register_logger(logger);
-     */
-
-    _logger->info(__FILEREF__ + "Creating MMSEngineDBFacade"
-            );
-    _mmsEngineDBFacade = make_shared<MMSEngineDBFacade>(
-            _configuration, _logger);
-
-    /*
-    _logger->info(__FILEREF__ + "Creating MMSEngine"
-            );
-    _mmsEngine = make_shared<MMSEngine>(_mmsEngineDBFacade, _logger);
-    */
-    _logger->info(__FILEREF__ + "Creating MMSStorage"
-            );
-    _mmsStorage = make_shared<MMSStorage>(
-            _configuration,
-            _logger);
+    _configuration      = configuration;
+    _mmsEngineDBFacade  = mmsEngineDBFacade;
+    _mmsStorage         = mmsStorage;
+    _logger             = logger;
 
     _managedRequestsNumber = 0;
     _processId = getpid();

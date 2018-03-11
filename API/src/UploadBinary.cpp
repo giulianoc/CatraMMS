@@ -23,13 +23,79 @@ int main(int argc, char** argv)
         
         return 1;
     }
+    
+    Json::Value configuration = APICommon::loadConfigurationFile(configurationPathName);
+    
+    string logPathName =  configuration["log"].get("pathName", "XXX").asString();
+    // _logger not initialized yet
+    // _logger->info(__FILEREF__ + "Configuration item"
+    //    + ", log->pathName: " + logPathName
+    // );
+    
+    // shared_ptr<spdlog::logger> logger = spdlog::stdout_logger_mt("API");
+    shared_ptr<spdlog::logger> logger = spdlog::daily_logger_mt("API", logPathName.c_str(), 11, 20);
+    
+    // trigger flush if the log severity is error or higher
+    logger->flush_on(spdlog::level::trace);
+    
+    string logLevel =  configuration["log"].get("level", "XXX").asString();
+    logger->info(__FILEREF__ + "Configuration item"
+        + ", log->level: " + logLevel
+    );
+    if (logLevel == "debug")
+        spdlog::set_level(spdlog::level::debug); // trace, debug, info, warn, err, critical, off
+    else if (logLevel == "info")
+        spdlog::set_level(spdlog::level::info); // trace, debug, info, warn, err, critical, off
+    else if (logLevel == "err")
+        spdlog::set_level(spdlog::level::err); // trace, debug, info, warn, err, critical, off
+    string pattern =  configuration["log"].get("pattern", "XXX").asString();
+    logger->info(__FILEREF__ + "Configuration item"
+        + ", log->pattern: " + pattern
+    );
+    spdlog::set_pattern(pattern);
 
-    UploadBinary binary(configurationPathName);
+    // globally register the loggers so so the can be accessed using spdlog::get(logger_name)
+    // spdlog::register_logger(logger);
+
+    /*
+    // the log is written in the apache error log (stderr)
+    _logger = spdlog::stderr_logger_mt("API");
+
+    // make sure only responses are written to the standard output
+    spdlog::set_level(spdlog::level::trace);
+    
+    spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%n] [%l] [tid %t] %v");
+    
+    // globally register the loggers so so the can be accessed using spdlog::get(logger_name)
+    // spdlog::register_logger(logger);
+     */
+
+    logger->info(__FILEREF__ + "Creating MMSEngineDBFacade"
+            );
+    shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade = make_shared<MMSEngineDBFacade>(
+            configuration, logger);
+
+    logger->info(__FILEREF__ + "Creating MMSStorage"
+            );
+    shared_ptr<MMSStorage> mmsStorage = make_shared<MMSStorage>(
+            configuration, logger);
+
+    UploadBinary binary(configuration, 
+            mmsEngineDBFacade,
+            mmsStorage,
+            logger);
     
     return binary.manageBinaryRequest();
 }
 
-UploadBinary::UploadBinary(const char* configurationPathName): APICommon(configurationPathName) 
+UploadBinary::UploadBinary(Json::Value configuration, 
+            shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
+            shared_ptr<MMSStorage> mmsStorage,
+            shared_ptr<spdlog::logger> logger)
+    : APICommon(configuration, 
+            mmsEngineDBFacade,
+            mmsStorage,
+            logger) 
 {
     _binaryBufferLength             = _configuration["uploadBinary"].get("binaryBufferLength", "XXX").asInt();
     _logger->info(__FILEREF__ + "Configuration item"

@@ -28,7 +28,10 @@ struct NoAPIKeyPresentIntoRequest: public exception {
 
 class APICommon {
 public:
-    APICommon(const char* configurationPathName);
+    APICommon(Json::Value configuration, 
+            shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
+            shared_ptr<MMSStorage> mmsStorage,
+            shared_ptr<spdlog::logger> logger);
     
     virtual ~APICommon();
     
@@ -56,11 +59,12 @@ public:
         unsigned long contentLength
     ) = 0;
     
+    static Json::Value loadConfigurationFile(const char* configurationPathName);
+    
 protected:
     Json::Value                     _configuration;
     shared_ptr<spdlog::logger>      _logger;
     shared_ptr<MMSEngineDBFacade>   _mmsEngineDBFacade;
-    // shared_ptr<MMSEngine>           _mmsEngine;
     shared_ptr<MMSStorage>          _mmsStorage;
 
     unsigned long long   _maxBinaryContentLength;
@@ -77,8 +81,6 @@ private:
     int             _managedRequestsNumber;
     long            _processId;
     unsigned long   _maxAPIContentLength;
-
-    Json::Value loadConfigurationFile(const char* configurationPathName);
     
     void fillEnvironmentDetails(
         const char * const * envp, 

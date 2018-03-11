@@ -18,7 +18,10 @@
 
 class API: public APICommon {
 public:
-    API(const char* configurationPathName);
+    API(Json::Value configuration, 
+            shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
+            shared_ptr<MMSStorage> mmsStorage,
+            shared_ptr<spdlog::logger> logger);
     
     ~API();
     

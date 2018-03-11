@@ -18,7 +18,10 @@
 
 class UploadBinary: public APICommon {
 public:
-    UploadBinary(const char* configurationPathName);
+    UploadBinary(Json::Value configuration, 
+            shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
+            shared_ptr<MMSStorage> mmsStorage,
+            shared_ptr<spdlog::logger> logger);
     
     ~UploadBinary();
     

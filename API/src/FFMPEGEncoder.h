@@ -19,7 +19,10 @@
 
 class FFMPEGEncoder: public APICommon {
 public:
-    FFMPEGEncoder(const char* configurationPathName);
+    FFMPEGEncoder(Json::Value configuration, 
+            shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
+            shared_ptr<MMSStorage> mmsStorage,
+            shared_ptr<spdlog::logger> logger);
     
     ~FFMPEGEncoder();
     
