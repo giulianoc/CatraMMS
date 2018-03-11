@@ -38,9 +38,10 @@ APICommon::APICommon(Json::Value configuration,
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->maxContentLength: " + to_string(_maxAPIContentLength)
     );
-    _maxBinaryContentLength = _configuration["uploadBinary"].get("maxContentLength", "XXX").asInt64();
+    Json::Value api = _configuration["api"];
+    _maxBinaryContentLength = api["binary"].get("maxContentLength", "XXX").asInt64();
     _logger->info(__FILEREF__ + "Configuration item"
-        + ", uploadBinary->maxContentLength: " + to_string(_maxBinaryContentLength)
+        + ", api->binary->maxContentLength: " + to_string(_maxBinaryContentLength)
     );
 }
 
@@ -69,8 +70,6 @@ int APICommon::operator()()
     bool shutdown = false;    
     while (!shutdown)
     {
-#ifdef TEST
-#else
         int returnAcceptCode;
         {
             _logger->info(__FILEREF__ + "APICommon::ready"
@@ -94,7 +93,7 @@ int APICommon::operator()()
             
             continue;
         }
-#endif        
+
         _managedRequestsNumber++;
 
         _logger->info(__FILEREF__ + "Request managed"
@@ -118,10 +117,7 @@ int APICommon::operator()()
         unsigned long   contentLength = 0;
         try
         {
-#ifdef TEST
-#else
             fillEnvironmentDetails(request.envp, requestDetails);
-#endif        
             // fillEnvironmentDetails(environ, processDetails);
             fillEnvironmentDetails(environ, requestDetails);
 
@@ -384,6 +380,10 @@ int APICommon::operator()()
             );
         }
 
+        _logger->info(__FILEREF__ + "APICommon::request finished"
+            + ", threadId: " + sThreadId
+        );
+        
          FCGX_Finish_r(&request);
 
          // Note: the fcgi_streambuf destructor will auto flush

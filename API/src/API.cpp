@@ -83,16 +83,28 @@ int main(int argc, char** argv)
 
     FCGX_Init();
 
+    int threadsNumber = configuration["api"].get("threadsNumber", 1).asInt();
+    logger->info(__FILEREF__ + "Configuration item"
+        + ", api->threadsNumber: " + to_string(threadsNumber)
+    );
+
     mutex fcgiAcceptMutex;
     
-    API api_2(configuration, 
+    vector<shared_ptr<API>> apis;
+    vector<thread> apiThreads;
+    
+    for (int threadIndex = 1; threadIndex < threadsNumber; threadIndex++)
+    {
+        shared_ptr<API> api = make_shared<API>(configuration, 
             mmsEngineDBFacade,
             mmsStorage,
             &fcgiAcceptMutex,
             logger
             );
-    // return api();
-    thread apiThread_2 (api_2);
+        
+        apis.push_back(api);
+        apiThreads.push_back(thread(&API::operator(), api));
+    }
 
     API api_1(configuration, 
             mmsEngineDBFacade,
@@ -141,13 +153,14 @@ API::API(Json::Value configuration,
         + ", api->maxStorageInGBCustomerDefaultValue: " + to_string(_maxStorageInGBCustomerDefaultValue)
     );
 
-    _binaryBufferLength             = _configuration["uploadBinary"].get("binaryBufferLength", "XXX").asInt();
+    Json::Value api = _configuration["api"];
+    _binaryBufferLength             = api["binary"].get("binaryBufferLength", "XXX").asInt();
     _logger->info(__FILEREF__ + "Configuration item"
-        + ", uploadBinary->binaryBufferLength: " + to_string(_binaryBufferLength)
+        + ", api->binary->binaryBufferLength: " + to_string(_binaryBufferLength)
     );
-    _progressUpdatePeriodInSeconds  = _configuration["uploadBinary"].get("progressUpdatePeriodInSeconds", "XXX").asInt();
+    _progressUpdatePeriodInSeconds  = api["binary"].get("progressUpdatePeriodInSeconds", "XXX").asInt();
     _logger->info(__FILEREF__ + "Configuration item"
-        + ", uploadBinary->progressUpdatePeriodInSeconds: " + to_string(_progressUpdatePeriodInSeconds)
+        + ", api->binary->progressUpdatePeriodInSeconds: " + to_string(_progressUpdatePeriodInSeconds)
     );
 
 }
@@ -186,6 +199,13 @@ void API::manageRequestAndResponse(
 )
 {
     
+    _logger->error(__FILEREF__ + "Received manageRequestAndResponse"
+        + ", requestURI: " + requestURI
+        + ", requestMethod: " + requestMethod
+        + ", contentLength: " + to_string(contentLength)
+        + ", xCatraMMSResumeHeader: " + xCatraMMSResumeHeader
+    );
+
     auto methodIt = queryParameters.find("method");
     if (methodIt == queryParameters.end())
     {

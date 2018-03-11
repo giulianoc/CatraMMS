@@ -102,13 +102,14 @@ UploadBinary::UploadBinary(Json::Value configuration,
         fcgiAcceptMutex,
         logger) 
 {
-    _binaryBufferLength             = _configuration["uploadBinary"].get("binaryBufferLength", "XXX").asInt();
+    Json::Value api = _configuration["api"];
+    _binaryBufferLength             = api["binary"].get("binaryBufferLength", "XXX").asInt();
     _logger->info(__FILEREF__ + "Configuration item"
-        + ", uploadBinary->binaryBufferLength: " + to_string(_binaryBufferLength)
+        + ", api->binary->binaryBufferLength: " + to_string(_binaryBufferLength)
     );
-    _progressUpdatePeriodInSeconds  = _configuration["uploadBinary"].get("progressUpdatePeriodInSeconds", "XXX").asInt();
+    _progressUpdatePeriodInSeconds  = api["binary"].get("progressUpdatePeriodInSeconds", "XXX").asInt();
     _logger->info(__FILEREF__ + "Configuration item"
-        + ", uploadBinary->progressUpdatePeriodInSeconds: " + to_string(_progressUpdatePeriodInSeconds)
+        + ", api->binary->progressUpdatePeriodInSeconds: " + to_string(_progressUpdatePeriodInSeconds)
     );
 }
 

@@ -20,6 +20,8 @@
 # License is allowed only after express negotiation of conditions
 # with the authors.
 
+ADD_DEFINITIONS(-DNO_FCGI_DEFINES)
+
 SET (COMMON_SOURCES
 	APICommon.cpp
 )
