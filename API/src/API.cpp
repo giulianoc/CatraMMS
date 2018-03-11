@@ -28,13 +28,19 @@ int main(int argc, char** argv)
     Json::Value configuration = APICommon::loadConfigurationFile(configurationPathName);
     
     string logPathName =  configuration["log"].get("pathName", "XXX").asString();
-    // _logger not initialized yet
-    // _logger->info(__FILEREF__ + "Configuration item"
-    //    + ", log->pathName: " + logPathName
-    // );
+    bool stdout =  configuration["log"].get("stdout", "XXX").asBool();
     
+    std::vector<spdlog::sink_ptr> sinks;
+    auto dailySink = make_shared<spdlog::sinks::daily_file_sink_mt> (logPathName.c_str(), 11, 20);
+    sinks.push_back(dailySink);
+    if (stdout)
+    {
+        auto stdoutSink = spdlog::sinks::stdout_sink_mt::instance();
+        sinks.push_back(stdoutSink);
+    }
+    auto logger = std::make_shared<spdlog::logger>("API", begin(sinks), end(sinks));
     // shared_ptr<spdlog::logger> logger = spdlog::stdout_logger_mt("API");
-    shared_ptr<spdlog::logger> logger = spdlog::daily_logger_mt("API", logPathName.c_str(), 11, 20);
+    // shared_ptr<spdlog::logger> logger = spdlog::daily_logger_mt("API", logPathName.c_str(), 11, 20);
     
     // trigger flush if the log severity is error or higher
     logger->flush_on(spdlog::level::trace);
@@ -93,7 +99,7 @@ int main(int argc, char** argv)
     vector<shared_ptr<API>> apis;
     vector<thread> apiThreads;
     
-    for (int threadIndex = 1; threadIndex < threadsNumber; threadIndex++)
+    for (int threadIndex = 0; threadIndex < threadsNumber; threadIndex++)
     {
         shared_ptr<API> api = make_shared<API>(configuration, 
             mmsEngineDBFacade,
@@ -106,13 +112,15 @@ int main(int argc, char** argv)
         apiThreads.push_back(thread(&API::operator(), api));
     }
 
-    API api_1(configuration, 
-            mmsEngineDBFacade,
-            mmsStorage,
-            &fcgiAcceptMutex,
-            logger
-            );
-    return api_1();
+    // shutdown should be managed in some way:
+    // - mod_fcgid send just one shutdown, so only one thread will go down
+    // - mod_fastcgi ???
+    if (threadsNumber > 0)
+        apiThreads[0].join();
+
+    logger->info(__FILEREF__ + "API shutdown");
+
+    return 0;
 }
 
 API::API(Json::Value configuration, 
