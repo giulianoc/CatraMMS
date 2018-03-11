@@ -56,9 +56,6 @@ int APICommon::operator()()
 
     pid_t processId = getpid();
 
-    _logger->info(__FILEREF__ + "APICommon::listen"
-    );        
-
     FCGX_Request request;
 
     FCGX_InitRequest(&request, 0, 0);
@@ -70,8 +67,15 @@ int APICommon::operator()()
 #else
         int returnAcceptCode;
         {
+            _logger->info(__FILEREF__ + "APICommon::ready"
+                + ", processId: " + to_string(processId)
+            );        
             lock_guard<mutex> locker(*_fcgiAcceptMutex);
             
+            _logger->info(__FILEREF__ + "APICommon::listen"
+                + ", processId: " + to_string(processId)
+            );        
+
             returnAcceptCode = FCGX_Accept_r(&request);
         }
         _logger->info(__FILEREF__ + "FCGX_Accept_r"
