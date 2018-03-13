@@ -474,6 +474,10 @@ void API::fileUploadProgressCheck()
                     _logger->info(__FILEREF__ + "Lastchar"
                             + ", last: " + to_string(lastChar)
                     );
+                    lastChar = response.str().back();
+                    _logger->info(__FILEREF__ + "Lastchar"
+                            + ", last: " + to_string(lastChar)
+                    );
                     
                     bool parsingSuccessful = reader->parse(response.str().c_str(),
                             response.str().c_str() + response.str().size(), 
