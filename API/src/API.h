@@ -20,7 +20,7 @@ class API: public APICommon {
 public:
     struct FileUploadProgressData {
         mutex                       _mutex;
-        vector<pair<int64_t,int>>   _filesUploadProgressToBeMonitored;
+        vector<tuple<int64_t,double,int>>   _filesUploadProgressToBeMonitored;
     };
     
     API(Json::Value configuration, 

@@ -280,11 +280,12 @@ void API::manageRequestAndResponse(
                 try
                 {
                     int64_t ingestionJobKey = stol(originalURIIt->second.substr(ingestionJobKeyIndex + 1));
+                    double                      _lastPercentageUpdated = 0;
                     int callFailures = 0;
                     
                     lock_guard<mutex> locker(_fileUploadProgressData->_mutex);
                     
-                    _fileUploadProgressData->_filesUploadProgressToBeMonitored.push_back(make_pair(ingestionJobKey, callFailures));
+                    _fileUploadProgressData->_filesUploadProgressToBeMonitored.push_back(make_tuple(ingestionJobKey, _lastPercentageUpdated, callFailures));
                     _logger->info(__FILEREF__ + "Added upload file progress to be monitored"
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     );
@@ -412,9 +413,12 @@ void API::fileUploadProgressCheck()
         for (auto itr = _fileUploadProgressData->_filesUploadProgressToBeMonitored.begin(); 
                 itr != _fileUploadProgressData->_filesUploadProgressToBeMonitored.end(); )
         {
-            int64_t ingestionJobKey = itr->first;
-            int callFailures = itr->second;
+            int64_t ingestionJobKey;
+            double lastPercentageUpdated;
+            int callFailures;
 
+            tie(ingestionJobKey, lastPercentageUpdated, callFailures) = *itr;
+            
             if (callFailures >= _maxProgressCallFailures)
             {
                 _logger->error(__FILEREF__ + "fileUploadProgressCheck: remove entry because of too many call failures"
@@ -468,6 +472,11 @@ void API::fileUploadProgressCheck()
                     Json::CharReader* reader = builder.newCharReader();
                     string errors;
 
+                    int lastChar = response.str().back();
+                    _logger->info(__FILEREF__ + "Lastchar"
+                            + ", last: " + to_string(lastChar)
+                    );
+                    
                     bool parsingSuccessful = reader->parse(response.str().c_str(),
                             response.str().c_str() + response.str().size(), 
                             &uploadProgressResponse, &errors);
@@ -484,7 +493,49 @@ void API::fileUploadProgressCheck()
                         throw runtime_error(errorMessage);
                     }
 
-                    // encodingProgress = encodeProgressResponse.get("encodingProgress", "XXX").asInt();
+                    string state = uploadProgressResponse.get("state", "XXX").asString();
+                    int64_t received = uploadProgressResponse.get("received", "XXX").asInt64();
+                    int64_t size = uploadProgressResponse.get("size", "XXX").asInt64();
+
+                    if (state != "uploading")
+                    {
+                        string errorMessage = string("file upload progress. State is wrong")
+                            + ", state: " + state
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", callFailures: " + to_string(callFailures)
+                            + ", progressURL: " + progressURL
+                            + ", progressIdHeader: " + progressIdHeader
+                        ;
+                        _logger->error(__FILEREF__ + errorMessage);
+
+                        throw runtime_error(errorMessage);
+                    }
+                        
+                    double progress = ((double) received / (double) size) * 100;
+                    // int uploadingPercentage = floorf(progress * 100) / 100;
+                    // this is to have one decimal in the percentage
+                    double uploadingPercentage = ((double) ((int) (progress * 10))) / 10;
+
+                    _logger->info(__FILEREF__ + "Upload still running"
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", progress: " + to_string(progress)
+                        + ", uploadingPercentage: " + to_string(uploadingPercentage)
+                        + ", lastPercentageUpdated: " + to_string(lastPercentageUpdated)
+                        + ", received: " + to_string(received)
+                        + ", size: " + to_string(size)
+                    );
+
+                    if (lastPercentageUpdated != uploadingPercentage)
+                    {
+                        _logger->info(__FILEREF__ + "Update IngestionJob"
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", uploadingPercentage: " + to_string(uploadingPercentage)
+                        );                            
+                        _mmsEngineDBFacade->updateIngestionJobSourceUploadingInProgress (
+                            ingestionJobKey, uploadingPercentage);
+
+                        lastPercentageUpdated = uploadingPercentage;
+                    }
                 }
                 catch(...)
                 {
@@ -495,35 +546,6 @@ void API::fileUploadProgressCheck()
 
                     throw runtime_error(errorMessage);
                 }
-
-                /*
-                double progress = ((double) totalRead / (double) contentLength) * 100;
-                // int uploadingPercentage = floorf(progress * 100) / 100;
-                // this is to have one decimal in the percentage
-                double uploadingPercentage = ((double) ((int) (progress * 10))) / 10;
-
-                _logger->info(__FILEREF__ + "Upload still running"
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", progress: " + to_string(progress)
-                    + ", uploadingPercentage: " + to_string(uploadingPercentage)
-                    + ", totalRead: " + to_string(totalRead)
-                    + ", contentLength: " + to_string(contentLength)
-                );
-
-                lastTimeProgressUpdate = now;
-
-                if (lastPercentageUpdated != uploadingPercentage)
-                {
-                    _logger->info(__FILEREF__ + "Update IngestionJob"
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", uploadingPercentage: " + to_string(uploadingPercentage)
-                    );                            
-                    _mmsEngineDBFacade->updateIngestionJobSourceUploadingInProgress (
-                        ingestionJobKey, uploadingPercentage);
-
-                    lastPercentageUpdated = uploadingPercentage;
-                }
-                */            
             }
             catch (curlpp::LogicError & e) 
             {
@@ -533,7 +555,7 @@ void API::fileUploadProgressCheck()
                     + ", exception: " + e.what()
                 );
 
-                itr->second = callFailures + 1;
+                callFailures++;
             }
             catch (curlpp::RuntimeError & e) 
             {
@@ -543,7 +565,7 @@ void API::fileUploadProgressCheck()
                     + ", exception: " + e.what()
                 );
 
-                itr->second = callFailures + 1;
+                callFailures++;
             }
             catch (runtime_error e)
             {
@@ -553,7 +575,7 @@ void API::fileUploadProgressCheck()
                     + ", exception: " + e.what()
                 );
 
-                itr->second = callFailures + 1;
+                callFailures++;
             }
             catch (exception e)
             {
@@ -563,7 +585,7 @@ void API::fileUploadProgressCheck()
                     + ", exception: " + e.what()
                 );
 
-                itr->second = callFailures + 1;
+                callFailures++;
             }
         }
     }
