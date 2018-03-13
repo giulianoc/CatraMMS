@@ -91,6 +91,8 @@ int APICommon::operator()()
         {
             shutdown = true;
             
+            FCGX_Finish_r(&request);
+            
             continue;
         }
 
@@ -115,6 +117,7 @@ int APICommon::operator()()
         bool            requestToUploadBinary;
         string          requestBody;
         unsigned long   contentLength = 0;
+        bool checkAuthorizationRequest;
         try
         {
             fillEnvironmentDetails(request.envp, requestDetails);
@@ -130,6 +133,9 @@ int APICommon::operator()()
                 requestToUploadBinary = this->requestToUploadBinary(queryParameters);
             }
 
+            checkAuthorizationRequest = isCheckAuthorizationRequest(requestDetails);
+
+            if (!checkAuthorizationRequest)
             {
                 unordered_map<string, string>::iterator it;
                 if ((it = requestDetails.find("REQUEST_METHOD")) != requestDetails.end() &&
@@ -148,7 +154,7 @@ int APICommon::operator()()
                                 ;
 
                                 _logger->error(__FILEREF__ + errorMessage);
-
+            
                                 throw runtime_error(errorMessage);
                             }
                             else if (requestToUploadBinary && contentLength > _maxBinaryContentLength)
@@ -159,7 +165,7 @@ int APICommon::operator()()
                                 ;
 
                                 _logger->error(__FILEREF__ + errorMessage);
-
+            
                                 throw runtime_error(errorMessage);
                             }
                         }
@@ -168,7 +174,7 @@ int APICommon::operator()()
                             string errorMessage("Content-Length header is empty");
 
                             _logger->error(__FILEREF__ + errorMessage);
-
+            
                             throw runtime_error(errorMessage);
                         }
                     }
@@ -177,7 +183,7 @@ int APICommon::operator()()
                         string errorMessage("Content-Length header is missing");
 
                         _logger->error(__FILEREF__ + errorMessage);
-
+            
                         throw runtime_error(errorMessage);
                     }
 
@@ -220,6 +226,8 @@ int APICommon::operator()()
 
             sendError(request, 500, e.what());
 
+            FCGX_Finish_r(&request);
+            
             // throw runtime_error(errorMessage);
             continue;
         }
@@ -230,6 +238,8 @@ int APICommon::operator()()
 
             sendError(request, 500, errorMessage);
 
+            FCGX_Finish_r(&request);
+            
             // throw runtime_error(errorMessage);
             continue;
         }
@@ -298,6 +308,8 @@ int APICommon::operator()()
 
             sendError(request, 401, errorMessage);   // bad request
 
+            FCGX_Finish_r(&request);
+            
             // throw runtime_error(errorMessage);
             continue;
         }
@@ -312,6 +324,8 @@ int APICommon::operator()()
 
             sendError(request, 401, errorMessage);   // unauthorized
 
+            FCGX_Finish_r(&request);
+            
             //  throw runtime_error(errorMessage);
             continue;
         }
@@ -326,6 +340,8 @@ int APICommon::operator()()
 
             sendError(request, 500, errorMessage);
 
+            FCGX_Finish_r(&request);
+            
             // throw runtime_error(errorMessage);
             continue;
         }
@@ -340,10 +356,26 @@ int APICommon::operator()()
 
             sendError(request, 500, errorMessage);
 
+            FCGX_Finish_r(&request);
+            
             //  throw runtime_error(errorMessage);
             continue;
         }
 
+        if (checkAuthorizationRequest)
+        {
+            _logger->error(__FILEREF__ + "checkAuthorization: success"
+            );
+
+            string responseBody;
+            sendSuccess(request, 200, responseBody);
+
+            FCGX_Finish_r(&request);
+            
+            //  throw runtime_error(errorMessage);
+            continue;
+        }
+        
         try
         {
             unordered_map<string, string>::iterator it;
@@ -384,7 +416,7 @@ int APICommon::operator()()
             + ", threadId: " + sThreadId
         );
         
-         FCGX_Finish_r(&request);
+        FCGX_Finish_r(&request);
 
          // Note: the fcgi_streambuf destructor will auto flush
     }
@@ -611,6 +643,23 @@ int APICommon::manageBinaryRequest()
 
 
     return 0;
+}
+
+bool APICommon::isCheckAuthorizationRequest(
+    unordered_map<string, string>& requestDetails)
+{
+    bool checkAuthorizationRequest = false;
+    string checkAuthorizationScript = "checkAuthorization";
+    
+    unordered_map<string, string>::iterator it;
+
+    if ((it = requestDetails.find("SCRIPT_NAME")) != requestDetails.end())
+    {
+        if (it->second == checkAuthorizationScript)
+            checkAuthorizationRequest = true;
+    }
+
+    return checkAuthorizationRequest;
 }
 
 bool APICommon::requestToUploadBinary(unordered_map<string, string> queryParameters)

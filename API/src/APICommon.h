@@ -95,10 +95,11 @@ private:
     
     bool requestToUploadBinary(unordered_map<string, string> queryParameters);
 
+    bool isCheckAuthorizationRequest(unordered_map<string, string>& requestDetails);
+
     string getHtmlStandardMessage(int htmlResponseCode);
 
     static size_t emailPayloadFeed(void *ptr, size_t size, size_t nmemb, void *userp);
 };
 
 #endif
-
