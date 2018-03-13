@@ -431,8 +431,6 @@ void API::fileUploadProgressCheck()
                 continue;
             }
             
-            itr++;
-
             try 
             {
                 string progressURL = string("http://localhost:") + to_string(_webServerPort) + _progressURI;
@@ -555,7 +553,7 @@ void API::fileUploadProgressCheck()
                     + ", exception: " + e.what()
                 );
 
-                callFailures++;
+                get<2>(*itr) = ++callFailures;
             }
             catch (curlpp::RuntimeError & e) 
             {
@@ -565,7 +563,7 @@ void API::fileUploadProgressCheck()
                     + ", exception: " + e.what()
                 );
 
-                callFailures++;
+                get<2>(*itr) = ++callFailures;
             }
             catch (runtime_error e)
             {
@@ -575,7 +573,7 @@ void API::fileUploadProgressCheck()
                     + ", exception: " + e.what()
                 );
 
-                callFailures++;
+                get<2>(*itr) = ++callFailures;
             }
             catch (exception e)
             {
@@ -585,8 +583,10 @@ void API::fileUploadProgressCheck()
                     + ", exception: " + e.what()
                 );
 
-                callFailures++;
+                get<2>(*itr) = ++callFailures;
             }
+
+            itr++;
         }
     }
 }
