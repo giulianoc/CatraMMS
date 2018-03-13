@@ -18,11 +18,16 @@
 
 class API: public APICommon {
 public:
+    struct FileUploadProgressData {
+        mutex                       _mutex;
+        vector<pair<int64_t,int>>   _filesUploadProgressToBeMonitored;
+    };
+    
     API(Json::Value configuration, 
             shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
             shared_ptr<MMSStorage> mmsStorage,
             mutex* fcgiAcceptMutex,
-            mutex* fileUploadProgress,
+            FileUploadProgressData* fileUploadProgressData,
             shared_ptr<spdlog::logger> logger);
     
     ~API();
@@ -51,9 +56,6 @@ public:
     void stopUploadFileProgressThread();
 
 private:
-    mutex*      _fileUploadProgress;
-    vector<pair<int64_t,int>> _fileUploadProgressToBeMonitored;
-    
     MMSEngineDBFacade::EncodingPriority _encodingPriorityCustomerDefaultValue;
     MMSEngineDBFacade::EncodingPeriod _encodingPeriodCustomerDefaultValue;
     int _maxIngestionsNumberCustomerDefaultValue;
@@ -64,6 +66,8 @@ private:
     bool                _fileUploadProgressThreadShutdown;
     int                 _maxProgressCallFailures;
     string              _progressURI;
+    FileUploadProgressData*     _fileUploadProgressData;
+    
 
     void registerCustomer(
         FCGX_Request& request,

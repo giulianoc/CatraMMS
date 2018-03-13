@@ -101,7 +101,7 @@ int main(int argc, char** argv)
     );
 
     mutex fcgiAcceptMutex;
-    mutex fileUploadProgress;
+    API::FileUploadProgressData fileUploadProgressData;
     
     vector<shared_ptr<API>> apis;
     vector<thread> apiThreads;
@@ -112,7 +112,7 @@ int main(int argc, char** argv)
                 mmsEngineDBFacade,
                 mmsStorage,
                 &fcgiAcceptMutex,
-                &fileUploadProgress,
+                &fileUploadProgressData,
                 logger
             );
 
@@ -141,7 +141,7 @@ API::API(Json::Value configuration,
             shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
             shared_ptr<MMSStorage> mmsStorage,
             mutex* fcgiAcceptMutex,
-            mutex* fileUploadProgress,
+            FileUploadProgressData* fileUploadProgressData,
             shared_ptr<spdlog::logger> logger)
     :APICommon(configuration, 
             mmsEngineDBFacade,
@@ -199,7 +199,7 @@ API::API(Json::Value configuration,
     );
     
 
-    _fileUploadProgress     = fileUploadProgress;
+    _fileUploadProgressData     = fileUploadProgressData;
     _fileUploadProgressThreadShutdown       = false;
 }
 
@@ -282,9 +282,9 @@ void API::manageRequestAndResponse(
                     int64_t ingestionJobKey = stol(originalURIIt->second.substr(ingestionJobKeyIndex + 1));
                     int callFailures = 0;
                     
-                    lock_guard<mutex> locker(*_fileUploadProgress);
+                    lock_guard<mutex> locker(_fileUploadProgressData->_mutex);
                     
-                    _fileUploadProgressToBeMonitored.push_back(make_pair(ingestionJobKey, callFailures));
+                    _fileUploadProgressData->_filesUploadProgressToBeMonitored.push_back(make_pair(ingestionJobKey, callFailures));
                     _logger->info(__FILEREF__ + "Added upload file progress to be monitored"
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     );
@@ -407,9 +407,10 @@ void API::fileUploadProgressCheck()
     {
         this_thread::sleep_for(chrono::seconds(_progressUpdatePeriodInSeconds));
         
-        lock_guard<mutex> locker(*_fileUploadProgress);
+        lock_guard<mutex> locker(_fileUploadProgressData->_mutex);
 
-        for (auto itr = _fileUploadProgressToBeMonitored.begin(); itr != _fileUploadProgressToBeMonitored.end(); )
+        for (auto itr = _fileUploadProgressData->_filesUploadProgressToBeMonitored.begin(); 
+                itr != _fileUploadProgressData->_filesUploadProgressToBeMonitored.end(); )
         {
             int64_t ingestionJobKey = itr->first;
             int callFailures = itr->second;
@@ -421,7 +422,7 @@ void API::fileUploadProgressCheck()
                     + ", callFailures: " + to_string(callFailures)
                     + ", _maxProgressCallFailures: " + to_string(_maxProgressCallFailures)
                 );
-                itr = _fileUploadProgressToBeMonitored.erase(itr);	// returns iterator to the next element
+                itr = _fileUploadProgressData->_filesUploadProgressToBeMonitored.erase(itr);	// returns iterator to the next element
                 
                 continue;
             }
