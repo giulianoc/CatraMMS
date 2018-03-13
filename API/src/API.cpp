@@ -414,8 +414,12 @@ void API::fileUploadProgressCheck()
                 itr != _fileUploadProgressData->_filesUploadProgressToBeMonitored.end(); )
         {
             int64_t ingestionJobKey;
+            
             double lastPercentageUpdated;
+            const int lastPercentageUpdatedTupleIndex = 1;
+            
             int callFailures;
+            const int callFailuresTupleIndex = 2;
 
             tie(ingestionJobKey, lastPercentageUpdated, callFailures) = *itr;
             
@@ -456,10 +460,16 @@ void API::fileUploadProgressCheck()
                 request.setOpt(new curlpp::options::WriteStream(&response));
                 request.perform();
 
+                string sResponse = response.str();
+
+                // LF and CR create problems to the json parser...
+                while (sResponse.back() == 10 || sResponse.back() == 13)
+                    sResponse.pop_back();
+                
                 _logger->info(__FILEREF__ + "Call for upload progress response"
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", callFailures: " + to_string(callFailures)
-                    + ", response.str(): " + response.str()
+                    + ", sResponse: " + sResponse
                 );
 
                 try
@@ -469,18 +479,9 @@ void API::fileUploadProgressCheck()
                     Json::CharReaderBuilder builder;
                     Json::CharReader* reader = builder.newCharReader();
                     string errors;
-
-                    int lastChar = response.str().back();
-                    _logger->info(__FILEREF__ + "Lastchar"
-                            + ", last: " + to_string(lastChar)
-                    );
-                    lastChar = response.str().back();
-                    _logger->info(__FILEREF__ + "Lastchar"
-                            + ", last: " + to_string(lastChar)
-                    );
                     
-                    bool parsingSuccessful = reader->parse(response.str().c_str(),
-                            response.str().c_str() + response.str().size(), 
+                    bool parsingSuccessful = reader->parse(sResponse.c_str(),
+                            sResponse.c_str() + sResponse.size(), 
                             &uploadProgressResponse, &errors);
                     delete reader;
 
@@ -488,7 +489,7 @@ void API::fileUploadProgressCheck()
                     {
                         string errorMessage = __FILEREF__ + "failed to parse the response body"
                                 + ", errors: " + errors
-                                + ", response.str(): " + response.str()
+                                + ", sResponse: " + sResponse
                                 ;
                         _logger->error(errorMessage);
 
@@ -536,13 +537,13 @@ void API::fileUploadProgressCheck()
                         _mmsEngineDBFacade->updateIngestionJobSourceUploadingInProgress (
                             ingestionJobKey, uploadingPercentage);
 
-                        lastPercentageUpdated = uploadingPercentage;
+                        get<lastPercentageUpdatedTupleIndex>(*itr) = uploadingPercentage;
                     }
                 }
                 catch(...)
                 {
                     string errorMessage = string("response Body json is not well format")
-                            + ", response.str(): " + response.str()
+                            + ", sResponse: " + sResponse
                             ;
                     _logger->error(__FILEREF__ + errorMessage);
 
@@ -557,7 +558,7 @@ void API::fileUploadProgressCheck()
                     + ", exception: " + e.what()
                 );
 
-                get<2>(*itr) = ++callFailures;
+                get<callFailuresTupleIndex>(*itr) = ++callFailures;
             }
             catch (curlpp::RuntimeError & e) 
             {
@@ -567,7 +568,7 @@ void API::fileUploadProgressCheck()
                     + ", exception: " + e.what()
                 );
 
-                get<2>(*itr) = ++callFailures;
+                get<callFailuresTupleIndex>(*itr) = ++callFailures;
             }
             catch (runtime_error e)
             {
@@ -577,7 +578,7 @@ void API::fileUploadProgressCheck()
                     + ", exception: " + e.what()
                 );
 
-                get<2>(*itr) = ++callFailures;
+                get<callFailuresTupleIndex>(*itr) = ++callFailures;
             }
             catch (exception e)
             {
@@ -587,7 +588,7 @@ void API::fileUploadProgressCheck()
                     + ", exception: " + e.what()
                 );
 
-                get<2>(*itr) = ++callFailures;
+                get<callFailuresTupleIndex>(*itr) = ++callFailures;
             }
 
             itr++;
