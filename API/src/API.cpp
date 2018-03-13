@@ -12,6 +12,12 @@
  */
 
 #include <fstream>
+#include <sstream>
+#include <curlpp/cURLpp.hpp>
+#include <curlpp/Easy.hpp>
+#include <curlpp/Options.hpp>
+#include <curlpp/Exception.hpp>
+#include <curlpp/Infos.hpp>
 #include "API.h"
 
 int main(int argc, char** argv) 
@@ -95,6 +101,7 @@ int main(int argc, char** argv)
     );
 
     mutex fcgiAcceptMutex;
+    mutex uploadFileProgress;
     
     vector<shared_ptr<API>> apis;
     vector<thread> apiThreads;
@@ -102,12 +109,13 @@ int main(int argc, char** argv)
     for (int threadIndex = 0; threadIndex < threadsNumber; threadIndex++)
     {
         shared_ptr<API> api = make_shared<API>(configuration, 
-            mmsEngineDBFacade,
-            mmsStorage,
-            &fcgiAcceptMutex,
-            logger
+                mmsEngineDBFacade,
+                mmsStorage,
+                &fcgiAcceptMutex,
+                &uploadFileProgress,
+                logger
             );
-        
+
         apis.push_back(api);
         apiThreads.push_back(thread(&API::operator(), api));
     }
@@ -116,7 +124,13 @@ int main(int argc, char** argv)
     // - mod_fcgid send just one shutdown, so only one thread will go down
     // - mod_fastcgi ???
     if (threadsNumber > 0)
+    {
+        thread uploadFileProgressThread(&API::uploadFileProgressCheck, apis[0]);
+        
         apiThreads[0].join();
+        
+        apis[0]->stopUploadFileProgressThread();
+    }
 
     logger->info(__FILEREF__ + "API shutdown");
 
@@ -127,6 +141,7 @@ API::API(Json::Value configuration,
             shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
             shared_ptr<MMSStorage> mmsStorage,
             mutex* fcgiAcceptMutex,
+            mutex* uploadFileProgress,
             shared_ptr<spdlog::logger> logger)
     :APICommon(configuration, 
             mmsEngineDBFacade,
@@ -170,10 +185,28 @@ API::API(Json::Value configuration,
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->binary->progressUpdatePeriodInSeconds: " + to_string(_progressUpdatePeriodInSeconds)
     );
+    _webServerPort  = api["binary"].get("webServerPort", "XXX").asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->binary->webServerPort: " + to_string(_webServerPort)
+    );
+    _maxProgressCallFailures  = api["binary"].get("maxProgressCallFailures", "XXX").asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->binary->maxProgressCallFailures: " + to_string(_maxProgressCallFailures)
+    );
+    
 
+    _uploadFileProgress     = uploadFileProgress;
+    _uploadFileProgressThreadShutdown       = false;
 }
 
 API::~API() {
+}
+
+void API::stopUploadFileProgressThread()
+{
+    _uploadFileProgressThreadShutdown       = true;
+    
+    this_thread::sleep_for(chrono::seconds(_progressUpdatePeriodInSeconds));
 }
 
 void API::getBinaryAndResponse(
@@ -203,7 +236,8 @@ void API::manageRequestAndResponse(
         tuple<shared_ptr<Customer>,bool,bool>& customerAndFlags,
         unsigned long contentLength,
         string requestBody,
-        string xCatraMMSResumeHeader
+        string xCatraMMSResumeHeader,
+        unordered_map<string, string>& requestDetails
 )
 {
     
@@ -226,7 +260,44 @@ void API::manageRequestAndResponse(
     }
     string method = methodIt->second;
 
-    if (method == "registerCustomer")
+    if (method == "authorization")
+    {
+        // since we are here, for sure user is authorized
+        
+        // retrieve the ingestionJobKey from the original URL to monitor the progress file upload
+        auto originalURIIt = requestDetails.find("HTTP_X_ORIGINAL_URI");
+        if (originalURIIt != requestDetails.end())
+        {
+            // originalURI is like /catramms/binary/16
+            int ingestionJobKeyIndex = originalURIIt->second.find_last_of("/");
+            
+            if (ingestionJobKeyIndex != string::npos)
+            {
+                try
+                {
+                    int64_t ingestionJobKey = stol(originalURIIt->second.substr(ingestionJobKeyIndex + 1));
+                    int callFailures = 0;
+                    
+                    lock_guard<mutex> locker(*_uploadFileProgress);
+                    
+                    uploadFileProgressToBeMonitored.push_back(make_pair(ingestionJobKey, callFailures));
+                    _logger->info(__FILEREF__ + "Added upload file progress to be monitored"
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    );
+                }
+                catch (exception e)
+                {
+                    _logger->error(__FILEREF__ + "Ingestion job key not found"
+                        + ", originalURIIt->second: " + originalURIIt->second
+                    );
+                }
+            }
+        }        
+        
+        string responseBody;
+        sendSuccess(request, 200, responseBody);
+    }
+    else if (method == "registerCustomer")
     {
         bool isAdminAPI = get<1>(customerAndFlags);
         if (!isAdminAPI)
@@ -322,6 +393,168 @@ void API::manageRequestAndResponse(
         sendError(request, 400, errorMessage);
 
         throw runtime_error(errorMessage);
+    }
+}
+
+void API::uploadFileProgressCheck()
+{
+
+    while (!_uploadFileProgressThreadShutdown)
+    {
+        this_thread::sleep_for(chrono::seconds(_progressUpdatePeriodInSeconds));
+
+        lock_guard<mutex> locker(*_uploadFileProgress);
+
+        for (auto itr = uploadFileProgressToBeMonitored.begin(); itr != uploadFileProgressToBeMonitored.end(); )
+        {
+            int64_t ingestionJobKey = itr->first;
+            int callFailures = itr->second;
+
+            if (callFailures >= _maxProgressCallFailures)
+            {
+                _logger->error(__FILEREF__ + "uploadFileProgressCheck: remove entry because of too many call failures"
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", callFailures: " + to_string(callFailures)
+                    + ", _maxProgressCallFailures: " + to_string(_maxProgressCallFailures)
+                );
+                itr = uploadFileProgressToBeMonitored.erase(itr);	// returns iterator to the next element
+                
+                continue;
+            }
+
+            try 
+            {
+                _logger->info(__FILEREF__ + "Call for upload progress"
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", callFailures: " + to_string(callFailures)
+                );
+
+                curlpp::Cleanup cleaner;
+                curlpp::Easy request;
+                ostringstream response;
+
+                string progressURL = string("http://localhost:") + to_string(_webServerPort) + "/progress";
+                list<string> header;
+                header.push_back(string("X-Progress-ID: ") + to_string(ingestionJobKey));
+
+                // Setting the URL to retrive.
+                request.setOpt(new curlpp::options::Url(progressURL));
+                request.setOpt(new curlpp::options::HttpHeader(header));
+                request.setOpt(new curlpp::options::WriteStream(&response));
+                request.perform();
+
+                _logger->info(__FILEREF__ + "Call for upload progress response"
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", callFailures: " + to_string(callFailures)
+                    + ", response.str(): " + response.str()
+                );
+
+                try
+                {
+                    Json::Value uploadProgressResponse;
+
+                    Json::CharReaderBuilder builder;
+                    Json::CharReader* reader = builder.newCharReader();
+                    string errors;
+
+                    bool parsingSuccessful = reader->parse(response.str().c_str(),
+                            response.str().c_str() + response.str().size(), 
+                            &uploadProgressResponse, &errors);
+                    delete reader;
+
+                    if (!parsingSuccessful)
+                    {
+                        string errorMessage = __FILEREF__ + "failed to parse the response body"
+                                + ", errors: " + errors
+                                + ", response.str(): " + response.str()
+                                ;
+                        _logger->error(errorMessage);
+
+                        throw runtime_error(errorMessage);
+                    }
+
+                    // encodingProgress = encodeProgressResponse.get("encodingProgress", "XXX").asInt();
+                }
+                catch(...)
+                {
+                    string errorMessage = string("response Body json is not well format")
+                            + ", response.str(): " + response.str()
+                            ;
+                    _logger->error(__FILEREF__ + errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+
+                /*
+                double progress = ((double) totalRead / (double) contentLength) * 100;
+                // int uploadingPercentage = floorf(progress * 100) / 100;
+                // this is to have one decimal in the percentage
+                double uploadingPercentage = ((double) ((int) (progress * 10))) / 10;
+
+                _logger->info(__FILEREF__ + "Upload still running"
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", progress: " + to_string(progress)
+                    + ", uploadingPercentage: " + to_string(uploadingPercentage)
+                    + ", totalRead: " + to_string(totalRead)
+                    + ", contentLength: " + to_string(contentLength)
+                );
+
+                lastTimeProgressUpdate = now;
+
+                if (lastPercentageUpdated != uploadingPercentage)
+                {
+                    _logger->info(__FILEREF__ + "Update IngestionJob"
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", uploadingPercentage: " + to_string(uploadingPercentage)
+                    );                            
+                    _mmsEngineDBFacade->updateIngestionJobSourceUploadingInProgress (
+                        ingestionJobKey, uploadingPercentage);
+
+                    lastPercentageUpdated = uploadingPercentage;
+                }
+                */            
+            }
+            catch (curlpp::LogicError & e) 
+            {
+                _logger->error(__FILEREF__ + "Call for upload progress failed (LogicError)"
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", callFailures: " + to_string(callFailures)
+                    + ", exception: " + e.what()
+                );
+
+                itr->second = callFailures + 1;
+            }
+            catch (curlpp::RuntimeError & e) 
+            {
+                _logger->error(__FILEREF__ + "Call for upload progress failed (RuntimeError)"
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", callFailures: " + to_string(callFailures)
+                    + ", exception: " + e.what()
+                );
+
+                itr->second = callFailures + 1;
+            }
+            catch (runtime_error e)
+            {
+                _logger->error(__FILEREF__ + "Call for upload progress failed (runtime_error)"
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", callFailures: " + to_string(callFailures)
+                    + ", exception: " + e.what()
+                );
+
+                itr->second = callFailures + 1;
+            }
+            catch (exception e)
+            {
+                _logger->error(__FILEREF__ + "Call for upload progress failed (exception)"
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", callFailures: " + to_string(callFailures)
+                    + ", exception: " + e.what()
+                );
+
+                itr->second = callFailures + 1;
+            }
+        }
     }
 }
 

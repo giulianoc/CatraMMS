@@ -34,7 +34,9 @@ public:
             tuple<shared_ptr<Customer>,bool,bool>& customerAndFlags,
             unsigned long contentLength,
             string requestBody,
-            string xCatraMMSResumeHeader);
+            string xCatraMMSResumeHeader,
+            unordered_map<string, string>& requestDetails
+    );
 
     virtual void getBinaryAndResponse(
             string requestURI,

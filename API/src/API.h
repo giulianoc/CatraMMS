@@ -22,6 +22,7 @@ public:
             shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
             shared_ptr<MMSStorage> mmsStorage,
             mutex* fcgiAcceptMutex,
+            mutex* uploadFileProgress,
             shared_ptr<spdlog::logger> logger);
     
     ~API();
@@ -42,16 +43,26 @@ public:
             tuple<shared_ptr<Customer>,bool,bool>& customerAndFlags,
             unsigned long contentLength,
             string requestBody,
-            string xCatraMMSResumeHeader
+            string xCatraMMSResumeHeader,
+            unordered_map<string, string>& requestDetails
     );
     
+    void uploadFileProgressCheck();
+    void stopUploadFileProgressThread();
+
 private:
+    mutex*      _uploadFileProgress;
+    vector<pair<int64_t,int>> uploadFileProgressToBeMonitored;
+    
     MMSEngineDBFacade::EncodingPriority _encodingPriorityCustomerDefaultValue;
     MMSEngineDBFacade::EncodingPeriod _encodingPeriodCustomerDefaultValue;
     int _maxIngestionsNumberCustomerDefaultValue;
     int _maxStorageInGBCustomerDefaultValue;
     unsigned long       _binaryBufferLength;
     unsigned long       _progressUpdatePeriodInSeconds;
+    int                 _webServerPort;
+    bool                _uploadFileProgressThreadShutdown;
+    int                 _maxProgressCallFailures;
 
     void registerCustomer(
         FCGX_Request& request,

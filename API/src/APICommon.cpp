@@ -117,7 +117,6 @@ int APICommon::operator()()
         bool            requestToUploadBinary;
         string          requestBody;
         unsigned long   contentLength = 0;
-        bool checkAuthorizationRequest;
         try
         {
             fillEnvironmentDetails(request.envp, requestDetails);
@@ -133,9 +132,6 @@ int APICommon::operator()()
                 requestToUploadBinary = this->requestToUploadBinary(queryParameters);
             }
 
-            checkAuthorizationRequest = isCheckAuthorizationRequest(requestDetails);
-
-            if (!checkAuthorizationRequest)
             {
                 unordered_map<string, string>::iterator it;
                 if ((it = requestDetails.find("REQUEST_METHOD")) != requestDetails.end() &&
@@ -361,20 +357,6 @@ int APICommon::operator()()
             //  throw runtime_error(errorMessage);
             continue;
         }
-
-        if (checkAuthorizationRequest)
-        {
-            _logger->error(__FILEREF__ + "checkAuthorization: success"
-            );
-
-            string responseBody;
-            sendSuccess(request, 200, responseBody);
-
-            FCGX_Finish_r(&request);
-            
-            //  throw runtime_error(errorMessage);
-            continue;
-        }
         
         try
         {
@@ -397,7 +379,7 @@ int APICommon::operator()()
 
             manageRequestAndResponse(request, requestURI, requestMethod, queryParameters,
                     customerAndFlags, contentLength, requestBody,
-                    xCatraMMSResumeHeader);            
+                    xCatraMMSResumeHeader, requestDetails);            
         }
         catch(runtime_error e)
         {
@@ -645,24 +627,7 @@ int APICommon::manageBinaryRequest()
     return 0;
 }
 
-bool APICommon::isCheckAuthorizationRequest(
-    unordered_map<string, string>& requestDetails)
-{
-    bool checkAuthorizationRequest = false;
-    string checkAuthorizationScript = "checkAuthorization";
-    
-    unordered_map<string, string>::iterator it;
-
-    if ((it = requestDetails.find("SCRIPT_NAME")) != requestDetails.end())
-    {
-        if (it->second == checkAuthorizationScript)
-            checkAuthorizationRequest = true;
-    }
-
-    return checkAuthorizationRequest;
-}
-
-bool APICommon::requestToUploadBinary(unordered_map<string, string> queryParameters)
+bool APICommon::requestToUploadBinary(unordered_map<string, string>& queryParameters)
 {
     bool requestToUploadBinary = false;
     

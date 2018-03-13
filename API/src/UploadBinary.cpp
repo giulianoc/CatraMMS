@@ -131,7 +131,8 @@ void UploadBinary::manageRequestAndResponse(
         tuple<shared_ptr<Customer>,bool,bool>& customerAndFlags,
         unsigned long contentLength,
         string requestBody,
-        string xCatraMMSResumeHeader
+        string xCatraMMSResumeHeader,
+        unordered_map<string, string>& requestDetails
 )
 {
     _logger->error(__FILEREF__ + "UploadBinary application is able to manage ONLY UploadBinary requests");

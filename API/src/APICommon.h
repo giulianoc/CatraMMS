@@ -50,7 +50,8 @@ public:
         tuple<shared_ptr<Customer>,bool,bool>& customerAndFlags,
         unsigned long contentLength,
         string requestBody,
-        string xCatraMMSResumeHeader
+        string xCatraMMSResumeHeader,
+        unordered_map<string, string>& requestDetails
     ) = 0;
     
     virtual void getBinaryAndResponse(
@@ -93,9 +94,7 @@ private:
         string queryString,
         unordered_map<string, string>& queryParameters);
     
-    bool requestToUploadBinary(unordered_map<string, string> queryParameters);
-
-    bool isCheckAuthorizationRequest(unordered_map<string, string>& requestDetails);
+    bool requestToUploadBinary(unordered_map<string, string>& queryParameters);
 
     string getHtmlStandardMessage(int htmlResponseCode);
 
