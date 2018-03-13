@@ -101,7 +101,7 @@ int main(int argc, char** argv)
     );
 
     mutex fcgiAcceptMutex;
-    mutex uploadFileProgress;
+    mutex fileUploadProgress;
     
     vector<shared_ptr<API>> apis;
     vector<thread> apiThreads;
@@ -112,7 +112,7 @@ int main(int argc, char** argv)
                 mmsEngineDBFacade,
                 mmsStorage,
                 &fcgiAcceptMutex,
-                &uploadFileProgress,
+                &fileUploadProgress,
                 logger
             );
 
@@ -125,7 +125,7 @@ int main(int argc, char** argv)
     // - mod_fastcgi ???
     if (threadsNumber > 0)
     {
-        thread uploadFileProgressThread(&API::uploadFileProgressCheck, apis[0]);
+        thread fileUploadProgressThread(&API::fileUploadProgressCheck, apis[0]);
         
         apiThreads[0].join();
         
@@ -141,7 +141,7 @@ API::API(Json::Value configuration,
             shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
             shared_ptr<MMSStorage> mmsStorage,
             mutex* fcgiAcceptMutex,
-            mutex* uploadFileProgress,
+            mutex* fileUploadProgress,
             shared_ptr<spdlog::logger> logger)
     :APICommon(configuration, 
             mmsEngineDBFacade,
@@ -193,10 +193,14 @@ API::API(Json::Value configuration,
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->binary->maxProgressCallFailures: " + to_string(_maxProgressCallFailures)
     );
+    _progressURI  = api["binary"].get("progressURI", "XXX").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->binary->progressURI: " + _progressURI
+    );
     
 
-    _uploadFileProgress     = uploadFileProgress;
-    _uploadFileProgressThreadShutdown       = false;
+    _fileUploadProgress     = fileUploadProgress;
+    _fileUploadProgressThreadShutdown       = false;
 }
 
 API::~API() {
@@ -204,7 +208,7 @@ API::~API() {
 
 void API::stopUploadFileProgressThread()
 {
-    _uploadFileProgressThreadShutdown       = true;
+    _fileUploadProgressThreadShutdown       = true;
     
     this_thread::sleep_for(chrono::seconds(_progressUpdatePeriodInSeconds));
 }
@@ -278,9 +282,9 @@ void API::manageRequestAndResponse(
                     int64_t ingestionJobKey = stol(originalURIIt->second.substr(ingestionJobKeyIndex + 1));
                     int callFailures = 0;
                     
-                    lock_guard<mutex> locker(*_uploadFileProgress);
+                    lock_guard<mutex> locker(*_fileUploadProgress);
                     
-                    uploadFileProgressToBeMonitored.push_back(make_pair(ingestionJobKey, callFailures));
+                    _fileUploadProgressToBeMonitored.push_back(make_pair(ingestionJobKey, callFailures));
                     _logger->info(__FILEREF__ + "Added upload file progress to be monitored"
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     );
@@ -396,46 +400,52 @@ void API::manageRequestAndResponse(
     }
 }
 
-void API::uploadFileProgressCheck()
+void API::fileUploadProgressCheck()
 {
 
-    while (!_uploadFileProgressThreadShutdown)
+    while (!_fileUploadProgressThreadShutdown)
     {
         this_thread::sleep_for(chrono::seconds(_progressUpdatePeriodInSeconds));
+        
+        lock_guard<mutex> locker(*_fileUploadProgress);
 
-        lock_guard<mutex> locker(*_uploadFileProgress);
-
-        for (auto itr = uploadFileProgressToBeMonitored.begin(); itr != uploadFileProgressToBeMonitored.end(); )
+        for (auto itr = _fileUploadProgressToBeMonitored.begin(); itr != _fileUploadProgressToBeMonitored.end(); )
         {
             int64_t ingestionJobKey = itr->first;
             int callFailures = itr->second;
 
             if (callFailures >= _maxProgressCallFailures)
             {
-                _logger->error(__FILEREF__ + "uploadFileProgressCheck: remove entry because of too many call failures"
+                _logger->error(__FILEREF__ + "fileUploadProgressCheck: remove entry because of too many call failures"
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", callFailures: " + to_string(callFailures)
                     + ", _maxProgressCallFailures: " + to_string(_maxProgressCallFailures)
                 );
-                itr = uploadFileProgressToBeMonitored.erase(itr);	// returns iterator to the next element
+                itr = _fileUploadProgressToBeMonitored.erase(itr);	// returns iterator to the next element
                 
                 continue;
             }
+            
+            itr++;
 
             try 
             {
+                string progressURL = string("http://localhost:") + to_string(_webServerPort) + _progressURI;
+                string progressIdHeader = string("X-Progress-ID: ") + to_string(ingestionJobKey);
+
                 _logger->info(__FILEREF__ + "Call for upload progress"
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", callFailures: " + to_string(callFailures)
+                    + ", progressURL: " + progressURL
+                    + ", progressIdHeader: " + progressIdHeader
                 );
 
                 curlpp::Cleanup cleaner;
                 curlpp::Easy request;
                 ostringstream response;
 
-                string progressURL = string("http://localhost:") + to_string(_webServerPort) + "/progress";
                 list<string> header;
-                header.push_back(string("X-Progress-ID: ") + to_string(ingestionJobKey));
+                header.push_back(progressIdHeader);
 
                 // Setting the URL to retrive.
                 request.setOpt(new curlpp::options::Url(progressURL));
