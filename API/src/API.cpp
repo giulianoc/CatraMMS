@@ -248,6 +248,7 @@ void API::manageRequestAndResponse(
     _logger->error(__FILEREF__ + "Received manageRequestAndResponse"
         + ", requestURI: " + requestURI
         + ", requestMethod: " + requestMethod
+        + ", requestBody: " + requestBody
         + ", contentLength: " + to_string(contentLength)
         + ", xCatraMMSResumeHeader: " + xCatraMMSResumeHeader
     );
