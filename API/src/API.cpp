@@ -1220,7 +1220,7 @@ void API::uploadBinary(
 {
     string api = "uploadBinary";
 
-    char* buffer = nullptr;
+    // char* buffer = nullptr;
 
     try
     {
@@ -1248,6 +1248,75 @@ void API::uploadBinary(
         }
         string binaryPathFile = binaryPathFileIt->second;
 
+        // Content-Range: bytes 0-99999/100000
+        bool contentRangePresent = false;
+        int64_t contentRangeStart  = -1;
+        int64_t contentRangeEnd  = -1;
+        int64_t contentRangeSize  = -1;
+        auto contentRangeIt = requestDetails.find("HTTP_CONTENT_RANGE");
+        if (contentRangeIt != requestDetails.end())
+        {
+            try
+            {
+                string contentRange = contentRangeIt->second;
+
+                string prefix ("bytes ");
+                if (contentRange.compare(0, prefix.size(), prefix) != 0)
+                {
+                    string errorMessage = string("Content-Range does not start with 'bytes '")
+                            + ", contentRange: " + contentRange
+                            ;
+                    _logger->error(__FILEREF__ + errorMessage);
+                    
+                    throw exception(errorMessage);
+                }
+
+                int startIndex = prefix.size();
+                int endIndex = contentRange.find("-", startIndex);
+                if (endIndex == string::npos)
+                {
+                    string errorMessage = string("Content-Range does not have '-'")
+                            + ", contentRange: " + contentRange
+                            ;
+                    _logger->error(__FILEREF__ + errorMessage);
+                    
+                    throw exception(errorMessage);
+                }
+                
+                contentRangeStart = stol(contentRange.substr(startIndex, endIndex - startIndex));
+
+                endIndex++;
+                int sizeIndex = contentRange.find("/", endIndex);
+                if (sizeIndex == string::npos)
+                {
+                    string errorMessage = string("Content-Range does not have '/'")
+                            + ", contentRange: " + contentRange
+                            ;
+                    _logger->error(__FILEREF__ + errorMessage);
+                    
+                    throw exception(errorMessage);
+                }
+                
+                contentRangeEnd = stol(contentRange.substr(endIndex, sizeIndex - endIndex));
+
+                sizeIndex++;
+                contentRangeSize = stol(contentRange.substr(sizeIndex));
+
+                contentRangePresent = true;
+            }
+            catch(exception e)
+            {
+                string errorMessage = string("Content-Range is not well done. Expected format: 'Content-Range: bytes <start>-<end>/<size>'")
+                    + ", contentRange: " + contentRange
+                ;
+                _logger->error(__FILEREF__ + errorMessage);
+
+                sendError(request, 500, errorMessage);
+
+                throw runtime_error(errorMessage);            
+            }
+        }
+
         shared_ptr<Customer> customer = get<0>(customerAndFlags);
         string customerIngestionBinaryPathName = _mmsStorage->getCustomerIngestionRepository(customer);
         customerIngestionBinaryPathName
@@ -1255,27 +1324,133 @@ void API::uploadBinary(
                 .append(to_string(ingestionJobKey))
                 .append(".binary")
                 ;
-                
-        try
+             
+        if (!contentRangePresent)
         {
-            _logger->info(__FILEREF__ + "Moving file"
-                + ", binaryPathFile: " + binaryPathFile
-                + ", customerIngestionBinaryPathName: " + customerIngestionBinaryPathName
-            );
+            try
+            {
+                _logger->info(__FILEREF__ + "Moving file"
+                    + ", binaryPathFile: " + binaryPathFile
+                    + ", customerIngestionBinaryPathName: " + customerIngestionBinaryPathName
+                );
 
-            FileIO::moveFile(binaryPathFile, customerIngestionBinaryPathName);
+                FileIO::moveFile(binaryPathFile, customerIngestionBinaryPathName);
+            }
+            catch(exception e)
+            {
+                string errorMessage = string("Error to move file")
+                    + ", binaryPathFile: " + binaryPathFile
+                    + ", customerIngestionBinaryPathName: " + customerIngestionBinaryPathName
+                ;
+                _logger->error(__FILEREF__ + errorMessage);
+
+                sendError(request, 500, errorMessage);
+
+                throw runtime_error(errorMessage);            
+            }
+
+            bool sourceBinaryTransferred = true;
+            _logger->info(__FILEREF__ + "Update IngestionJob"
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", sourceBinaryTransferred: " + to_string(sourceBinaryTransferred)
+            );                            
+            _mmsEngineDBFacade->updateIngestionJobSourceBinaryTransferred (
+                ingestionJobKey, sourceBinaryTransferred);
         }
-        catch(exception e)
+        else
         {
-            string errorMessage = string("Error to move file")
-                + ", binaryPathFile: " + binaryPathFile
-                + ", customerIngestionBinaryPathName: " + customerIngestionBinaryPathName
-            ;
-            _logger->error(__FILEREF__ + errorMessage);
+            //  Content-Range is present
+            
+            if (FileIO::isFileExisting (customerIngestionBinaryPathName))
+            {
+                bool inCaseOfLinkHasItToBeRead  = false;
+                unsigned long fileSizeInBytes = getFileSizeInBytes (
+                    customerIngestionBinaryPathName, inCaseOfLinkHasItToBeRead);
+                
+                if (contentRangeStart != fileSizeInBytes)
+                {
+                    string errorMessage = string("This is NOT the next expected chunk because Content-Range start is different from fileSizeInBytes")
+                        + ", contentRangeStart: " + to_string(contentRangeStart)
+                        + ", fileSizeInBytes: " + to_string(fileSizeInBytes)
+                    ;
+                    _logger->error(__FILEREF__ + errorMessage);
 
-            sendError(request, 500, errorMessage);
+                    sendError(request, 500, errorMessage);
 
-            throw runtime_error(errorMessage);            
+                    throw runtime_error(errorMessage);            
+                }
+                
+                try
+                {
+                    _logger->info(__FILEREF__ + "Concat file"
+                        + ", customerIngestionBinaryPathName: " + customerIngestionBinaryPathName
+                        + ", binaryPathFile: " + binaryPathFile
+                    );
+
+                    FileIO::concatFile(customerIngestionBinaryPathName, binaryPathFile);
+                }
+                catch(exception e)
+                {
+                    string errorMessage = string("Error to concat file")
+                        + ", customerIngestionBinaryPathName: " + customerIngestionBinaryPathName
+                        + ", binaryPathFile: " + binaryPathFile
+                    ;
+                    _logger->error(__FILEREF__ + errorMessage);
+
+                    sendError(request, 500, errorMessage);
+
+                    throw runtime_error(errorMessage);            
+                }
+            }
+            else
+            {
+                // binary file does not exist, so this is the first chunk
+                
+                if (contentRangeStart != 0)
+                {
+                    string errorMessage = string("This is the first chunk of the file and Content-Range start has to be 0")
+                        + ", contentRangeStart: " + contentRangeStart
+                    ;
+                    _logger->error(__FILEREF__ + errorMessage);
+
+                    sendError(request, 500, errorMessage);
+
+                    throw runtime_error(errorMessage);            
+                }
+                
+                try
+                {
+                    _logger->info(__FILEREF__ + "Moving file"
+                        + ", binaryPathFile: " + binaryPathFile
+                        + ", customerIngestionBinaryPathName: " + customerIngestionBinaryPathName
+                    );
+
+                    FileIO::moveFile(binaryPathFile, customerIngestionBinaryPathName);
+                }
+                catch(exception e)
+                {
+                    string errorMessage = string("Error to move file")
+                        + ", binaryPathFile: " + binaryPathFile
+                        + ", customerIngestionBinaryPathName: " + customerIngestionBinaryPathName
+                    ;
+                    _logger->error(__FILEREF__ + errorMessage);
+
+                    sendError(request, 500, errorMessage);
+
+                    throw runtime_error(errorMessage);            
+                }
+            }
+            
+            if (contentRangeEnd + 1 == contentRangeSize)
+            {
+                bool sourceBinaryTransferred = true;
+                _logger->info(__FILEREF__ + "Update IngestionJob"
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", sourceBinaryTransferred: " + to_string(sourceBinaryTransferred)
+                );                            
+                _mmsEngineDBFacade->updateIngestionJobSourceBinaryTransferred (
+                    ingestionJobKey, sourceBinaryTransferred);
+            }
         }
         
         string responseBody;
@@ -1481,9 +1656,6 @@ void API::uploadBinary(
     }
     catch (exception e)
     {
-        if (buffer != nullptr)
-            delete [] buffer;
-
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
             + ", e.what(): " + e.what()
