@@ -114,7 +114,7 @@ int APICommon::operator()()
         unordered_map<string, string> requestDetails;
         // unordered_map<string, string> processDetails;
         unordered_map<string, string> queryParameters;
-        bool            requestToUploadBinary;
+        // bool            requestToUploadBinary;
         string          requestBody;
         unsigned long   contentLength = 0;
         try
@@ -129,7 +129,7 @@ int APICommon::operator()()
                 if ((it = requestDetails.find("QUERY_STRING")) != requestDetails.end())
                     fillQueryString(it->second, queryParameters);
 
-                requestToUploadBinary = this->requestToUploadBinary(queryParameters);
+                // requestToUploadBinary = this->requestToUploadBinary(queryParameters);
             }
 
             {
@@ -142,7 +142,7 @@ int APICommon::operator()()
                         if (it->second != "")
                         {
                             contentLength = stol(it->second);
-                            if (!requestToUploadBinary && contentLength > _maxAPIContentLength)
+                            if (/* !requestToUploadBinary && */ contentLength > _maxAPIContentLength)
                             {
                                 string errorMessage = string("No binary request, ContentLength too long")
                                     + ", contentLength: " + to_string(contentLength)
@@ -153,6 +153,7 @@ int APICommon::operator()()
             
                                 throw runtime_error(errorMessage);
                             }
+                            /*
                             else if (requestToUploadBinary && contentLength > _maxBinaryContentLength)
                             {
                                 string errorMessage = string("Binary request, ContentLength too long")
@@ -164,6 +165,7 @@ int APICommon::operator()()
             
                                 throw runtime_error(errorMessage);
                             }
+                             */
                         }
                         else
                         {
@@ -183,7 +185,7 @@ int APICommon::operator()()
                         throw runtime_error(errorMessage);
                     }
 
-                    if (!requestToUploadBinary)
+                    // if (!requestToUploadBinary)
                     {
                         char* content = new char[contentLength];
 
@@ -197,7 +199,7 @@ int APICommon::operator()()
                     }
                 }
 
-                if (!requestToUploadBinary)
+                // if (!requestToUploadBinary)
                 {
                     // Chew up any remaining stdin - this shouldn't be necessary
                     // but is because mod_fastcgi doesn't handle it correctly.
@@ -371,11 +373,13 @@ int APICommon::operator()()
                 requestMethod = it->second;
 
             string xCatraMMSResumeHeader;
+            /*
             if (requestToUploadBinary)
             {
                 if ((it = requestDetails.find("HTTP_X_CATRAMMS_RESUME")) != requestDetails.end())
                     xCatraMMSResumeHeader = it->second;
             }
+             */
 
             manageRequestAndResponse(request, requestURI, requestMethod, queryParameters,
                     customerAndFlags, contentLength, requestBody,
@@ -627,6 +631,7 @@ int APICommon::manageBinaryRequest()
     return 0;
 }
 
+/*
 bool APICommon::requestToUploadBinary(unordered_map<string, string>& queryParameters)
 {
     bool requestToUploadBinary = false;
@@ -648,6 +653,7 @@ bool APICommon::requestToUploadBinary(unordered_map<string, string>& queryParame
     
     return requestToUploadBinary;
 }
+ */
 
 void APICommon::sendSuccess(FCGX_Request& request, int htmlResponseCode, string responseBody)
 {

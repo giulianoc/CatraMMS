@@ -93,7 +93,8 @@ private:
         string xCatraMMSResumeHeader,
         unordered_map<string, string> queryParameters,
         tuple<shared_ptr<Customer>,bool,bool> customerAndFlags,
-        unsigned long contentLength
+        // unsigned long contentLength,
+            unordered_map<string, string>& requestDetails
     );
 };
 

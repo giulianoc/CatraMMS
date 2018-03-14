@@ -386,7 +386,8 @@ void API::manageRequestAndResponse(
         }
                 
         uploadBinary(request, requestMethod, xCatraMMSResumeHeader,
-            queryParameters, customerAndFlags, contentLength);
+            queryParameters, customerAndFlags, // contentLength,
+                requestDetails);
     }
     else
     {
@@ -417,6 +418,7 @@ void API::fileUploadProgressCheck()
             
             double lastPercentageUpdated;
             const int lastPercentageUpdatedTupleIndex = 1;
+            bool iteratorAlreadyUpdated = false;
             
             int callFailures;
             const int callFailuresTupleIndex = 2;
@@ -496,11 +498,62 @@ void API::fileUploadProgressCheck()
                         throw runtime_error(errorMessage);
                     }
 
+                    // { "state" : "uploading", "received" : 731195032, "size" : 745871360 }
+                    // At the end: { "state" : "done" }
                     string state = uploadProgressResponse.get("state", "XXX").asString();
-                    int64_t received = uploadProgressResponse.get("received", "XXX").asInt64();
-                    int64_t size = uploadProgressResponse.get("size", "XXX").asInt64();
+                    if (state == "done")
+                    {
+                        double progress = 100.0;
+                        double uploadingPercentage = 100.0;
+                        
+                        _logger->info(__FILEREF__ + "Upload just finished"
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", progress: " + to_string(progress)
+                        );
 
-                    if (state != "uploading")
+                        _logger->info(__FILEREF__ + "Update IngestionJob"
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", uploadingPercentage: " + to_string(uploadingPercentage)
+                        );                            
+                        _mmsEngineDBFacade->updateIngestionJobSourceUploadingInProgress (
+                            ingestionJobKey, uploadingPercentage);
+
+                        itr = _fileUploadProgressData->_filesUploadProgressToBeMonitored.erase(itr);	// returns iterator to the next element
+                        
+                        iteratorAlreadyUpdated = true;
+                    }
+                    else if (state == "uploading")
+                    {
+                        int64_t received = uploadProgressResponse.get("received", "XXX").asInt64();
+                        int64_t size = uploadProgressResponse.get("size", "XXX").asInt64();
+
+                        double progress = ((double) received / (double) size) * 100;
+                        // int uploadingPercentage = floorf(progress * 100) / 100;
+                        // this is to have one decimal in the percentage
+                        double uploadingPercentage = ((double) ((int) (progress * 10))) / 10;
+
+                        _logger->info(__FILEREF__ + "Upload still running"
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", progress: " + to_string(progress)
+                            + ", uploadingPercentage: " + to_string(uploadingPercentage)
+                            + ", lastPercentageUpdated: " + to_string(lastPercentageUpdated)
+                            + ", received: " + to_string(received)
+                            + ", size: " + to_string(size)
+                        );
+
+                        if (lastPercentageUpdated != uploadingPercentage)
+                        {
+                            _logger->info(__FILEREF__ + "Update IngestionJob"
+                                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                + ", uploadingPercentage: " + to_string(uploadingPercentage)
+                            );                            
+                            _mmsEngineDBFacade->updateIngestionJobSourceUploadingInProgress (
+                                ingestionJobKey, uploadingPercentage);
+
+                            get<lastPercentageUpdatedTupleIndex>(*itr) = uploadingPercentage;
+                        }
+                    }
+                    else
                     {
                         string errorMessage = string("file upload progress. State is wrong")
                             + ", state: " + state
@@ -512,32 +565,6 @@ void API::fileUploadProgressCheck()
                         _logger->error(__FILEREF__ + errorMessage);
 
                         throw runtime_error(errorMessage);
-                    }
-                        
-                    double progress = ((double) received / (double) size) * 100;
-                    // int uploadingPercentage = floorf(progress * 100) / 100;
-                    // this is to have one decimal in the percentage
-                    double uploadingPercentage = ((double) ((int) (progress * 10))) / 10;
-
-                    _logger->info(__FILEREF__ + "Upload still running"
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", progress: " + to_string(progress)
-                        + ", uploadingPercentage: " + to_string(uploadingPercentage)
-                        + ", lastPercentageUpdated: " + to_string(lastPercentageUpdated)
-                        + ", received: " + to_string(received)
-                        + ", size: " + to_string(size)
-                    );
-
-                    if (lastPercentageUpdated != uploadingPercentage)
-                    {
-                        _logger->info(__FILEREF__ + "Update IngestionJob"
-                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                            + ", uploadingPercentage: " + to_string(uploadingPercentage)
-                        );                            
-                        _mmsEngineDBFacade->updateIngestionJobSourceUploadingInProgress (
-                            ingestionJobKey, uploadingPercentage);
-
-                        get<lastPercentageUpdatedTupleIndex>(*itr) = uploadingPercentage;
                     }
                 }
                 catch(...)
@@ -591,7 +618,8 @@ void API::fileUploadProgressCheck()
                 get<callFailuresTupleIndex>(*itr) = ++callFailures;
             }
 
-            itr++;
+            if (!iteratorAlreadyUpdated)
+                itr++;
         }
     }
 }
@@ -1185,7 +1213,8 @@ void API::uploadBinary(
         string xCatraMMSResumeHeader,
         unordered_map<string, string> queryParameters,
         tuple<shared_ptr<Customer>,bool,bool> customerAndFlags,
-        unsigned long contentLength
+        // unsigned long contentLength,
+        unordered_map<string, string>& requestDetails
 )
 {
     string api = "uploadBinary";
@@ -1206,6 +1235,18 @@ void API::uploadBinary(
         }
         int64_t ingestionJobKey = stol(ingestionJobKeyIt->second);
 
+        auto binaryPathFileIt = requestDetails.find("HTTP_X_FILE");
+        if (binaryPathFileIt == requestDetails.end())
+        {
+            string errorMessage = string("'HTTP_X_FILE' item is missing");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);            
+        }
+        string binaryPathFile = binaryPathFileIt->second;
+
         shared_ptr<Customer> customer = get<0>(customerAndFlags);
         string customerIngestionBinaryPathName = _mmsStorage->getCustomerIngestionRepository(customer);
         customerIngestionBinaryPathName
@@ -1213,11 +1254,33 @@ void API::uploadBinary(
                 .append(to_string(ingestionJobKey))
                 .append(".binary")
                 ;
+                
+        try
+        {
+            _logger->info(__FILEREF__ + "Moving file"
+                + ", binaryPathFile: " + binaryPathFile
+                + ", customerIngestionBinaryPathName: " + customerIngestionBinaryPathName
+            );
+
+            FileIO::moveFile(binaryPathFile, customerIngestionBinaryPathName);
+        }
+        catch(exception e)
+        {
+            string errorMessage = string("Error to move file")
+                + ", binaryPathFile: " + binaryPathFile
+                + ", customerIngestionBinaryPathName: " + customerIngestionBinaryPathName
+            ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);            
+        }
         
-        _logger->info(__FILEREF__ + "Customer Ingestion Binary path name"
-            + ", customerIngestionBinaryPathName: " + customerIngestionBinaryPathName
-        );
-        
+        string responseBody;
+        sendSuccess(request, 201, responseBody);
+
+        /*
         if (requestMethod == "HEAD")
         {
             unsigned long fileSize = 0;
@@ -1387,18 +1450,16 @@ void API::uploadBinary(
                 + ", elapsedUploadInSeconds: " + to_string(elapsedUploadInSeconds)
             );
 
-            /*
-            {
-                // Chew up any remaining stdin - this shouldn't be necessary
-                // but is because mod_fastcgi doesn't handle it correctly.
-
-                // ignore() doesn't set the eof bit in some versions of glibc++
-                // so use gcount() instead of eof()...
-                do 
-                    cin.ignore(bufferLength); 
-                while (cin.gcount() == bufferLength);
-            }    
-            */
+//            {
+//                // Chew up any remaining stdin - this shouldn't be necessary
+//                // but is because mod_fastcgi doesn't handle it correctly.
+//
+//                // ignore() doesn't set the eof bit in some versions of glibc++
+//                // so use gcount() instead of eof()...
+//                do 
+//                    cin.ignore(bufferLength); 
+//                while (cin.gcount() == bufferLength);
+//            }    
 
             bool sourceBinaryTransferred = true;
             _logger->info(__FILEREF__ + "Update IngestionJob"
@@ -1415,6 +1476,7 @@ void API::uploadBinary(
                 + "}";
             sendSuccess(request, 201, responseBody);
         }
+        */
     }
     catch (exception e)
     {
