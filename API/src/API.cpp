@@ -501,6 +501,7 @@ void API::fileUploadProgressCheck()
 
                     // { "state" : "uploading", "received" : 731195032, "size" : 745871360 }
                     // At the end: { "state" : "done" }
+                    // In case of error: { "state" : "error", "status" : 500 }
                     string state = uploadProgressResponse.get("state", "XXX").asString();
                     if (state == "done")
                     {
@@ -521,6 +522,17 @@ void API::fileUploadProgressCheck()
 
                         itr = _fileUploadProgressData->_filesUploadProgressToBeMonitored.erase(itr);	// returns iterator to the next element
                         
+                        iteratorAlreadyUpdated = true;
+                    }
+                    else if (state == "error")
+                    {
+                        _logger->error(__FILEREF__ + "fileUploadProgressCheck: remove entry because state is 'error'"
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", callFailures: " + to_string(callFailures)
+                            + ", _maxProgressCallFailures: " + to_string(_maxProgressCallFailures)
+                        );
+                        itr = _fileUploadProgressData->_filesUploadProgressToBeMonitored.erase(itr);	// returns iterator to the next element
+
                         iteratorAlreadyUpdated = true;
                     }
                     else if (state == "uploading")
