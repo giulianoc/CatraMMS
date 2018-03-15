@@ -1379,14 +1379,30 @@ void API::uploadBinary(
                 }
                 
                 bool inCaseOfLinkHasItToBeRead  = false;
-                unsigned long fileSizeInBytes = FileIO::getFileSizeInBytes (
+                unsigned long customerIngestionBinarySizeInBytes = FileIO::getFileSizeInBytes (
                     customerIngestionBinaryPathName, inCaseOfLinkHasItToBeRead);
+                unsigned long binarySizeInBytes = FileIO::getFileSizeInBytes (
+                    binaryPathFile, inCaseOfLinkHasItToBeRead);
                 
-                if (contentRangeStart != fileSizeInBytes)
+                if (contentRangeStart != customerIngestionBinarySizeInBytes)
                 {
                     string errorMessage = string("This is NOT the next expected chunk because Content-Range start is different from fileSizeInBytes")
                         + ", contentRangeStart: " + to_string(contentRangeStart)
-                        + ", fileSizeInBytes: " + to_string(fileSizeInBytes)
+                        + ", customerIngestionBinarySizeInBytes: " + to_string(customerIngestionBinarySizeInBytes)
+                    ;
+                    _logger->error(__FILEREF__ + errorMessage);
+
+                    sendError(request, 500, errorMessage);
+
+                    throw runtime_error(errorMessage);            
+                }
+                
+                if (contentRangeEnd - contentRangeStart + 1 != binarySizeInBytes)
+                {
+                    string errorMessage = string("The size specified by Content-Range start and end is not consistent with the size of the binary ingested")
+                        + ", contentRangeStart: " + to_string(contentRangeStart)
+                        + ", contentRangeEnd: " + to_string(contentRangeEnd)
+                        + ", binarySizeInBytes: " + to_string(binarySizeInBytes)
                     ;
                     _logger->error(__FILEREF__ + errorMessage);
 
