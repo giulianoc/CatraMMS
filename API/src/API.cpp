@@ -1369,11 +1369,20 @@ void API::uploadBinary(
             
             if (FileIO::fileExisting (customerIngestionBinaryPathName))
             {
+                if (contentRangeStart == 0)
+                {
+                    // content is reset
+                    ofstream osDestStream(customerIngestionBinaryPathName.c_str(), 
+                            ofstream::binary | ofstream::trunc);
+
+                    osDestStream.close();
+                }
+                
                 bool inCaseOfLinkHasItToBeRead  = false;
                 unsigned long fileSizeInBytes = FileIO::getFileSizeInBytes (
                     customerIngestionBinaryPathName, inCaseOfLinkHasItToBeRead);
                 
-                if (contentRangeStart + 1 != fileSizeInBytes)
+                if (contentRangeStart != fileSizeInBytes)
                 {
                     string errorMessage = string("This is NOT the next expected chunk because Content-Range start is different from fileSizeInBytes")
                         + ", contentRangeStart: " + to_string(contentRangeStart)
