@@ -1256,10 +1256,9 @@ void API::uploadBinary(
         auto contentRangeIt = requestDetails.find("HTTP_CONTENT_RANGE");
         if (contentRangeIt != requestDetails.end())
         {
+            string contentRange = contentRangeIt->second;
             try
             {
-                string contentRange = contentRangeIt->second;
-
                 string prefix ("bytes ");
                 if (contentRange.compare(0, prefix.size(), prefix) != 0)
                 {
@@ -1268,7 +1267,7 @@ void API::uploadBinary(
                             ;
                     _logger->error(__FILEREF__ + errorMessage);
                     
-                    throw exception(errorMessage);
+                    throw runtime_error(errorMessage);
                 }
 
                 int startIndex = prefix.size();
@@ -1280,7 +1279,7 @@ void API::uploadBinary(
                             ;
                     _logger->error(__FILEREF__ + errorMessage);
                     
-                    throw exception(errorMessage);
+                    throw runtime_error(errorMessage);
                 }
                 
                 contentRangeStart = stol(contentRange.substr(startIndex, endIndex - startIndex));
@@ -1294,7 +1293,7 @@ void API::uploadBinary(
                             ;
                     _logger->error(__FILEREF__ + errorMessage);
                     
-                    throw exception(errorMessage);
+                    throw runtime_error(errorMessage);
                 }
                 
                 contentRangeEnd = stol(contentRange.substr(endIndex, sizeIndex - endIndex));
@@ -1302,7 +1301,7 @@ void API::uploadBinary(
                 sizeIndex++;
                 contentRangeSize = stol(contentRange.substr(sizeIndex));
 
-                contentRangePresent = true;
+                contentRangePresent = true;                
             }
             catch(exception e)
             {
@@ -1316,6 +1315,13 @@ void API::uploadBinary(
                 throw runtime_error(errorMessage);            
             }
         }
+
+        _logger->info(__FILEREF__ + "Content-Range details"
+            + ", contentRangePresent: " + to_string(contentRangePresent)
+            + ", contentRangeStart: " + to_string(contentRangeStart)
+            + ", contentRangeEnd: " + to_string(contentRangeEnd)
+            + ", contentRangeSize: " + to_string(contentRangeSize)
+        );
 
         shared_ptr<Customer> customer = get<0>(customerAndFlags);
         string customerIngestionBinaryPathName = _mmsStorage->getCustomerIngestionRepository(customer);
@@ -1361,13 +1367,13 @@ void API::uploadBinary(
         {
             //  Content-Range is present
             
-            if (FileIO::isFileExisting (customerIngestionBinaryPathName))
+            if (FileIO::fileExisting (customerIngestionBinaryPathName))
             {
                 bool inCaseOfLinkHasItToBeRead  = false;
-                unsigned long fileSizeInBytes = getFileSizeInBytes (
+                unsigned long fileSizeInBytes = FileIO::getFileSizeInBytes (
                     customerIngestionBinaryPathName, inCaseOfLinkHasItToBeRead);
                 
-                if (contentRangeStart != fileSizeInBytes)
+                if (contentRangeStart + 1 != fileSizeInBytes)
                 {
                     string errorMessage = string("This is NOT the next expected chunk because Content-Range start is different from fileSizeInBytes")
                         + ", contentRangeStart: " + to_string(contentRangeStart)
@@ -1382,12 +1388,15 @@ void API::uploadBinary(
                 
                 try
                 {
+                    bool removeSrcFileAfterConcat = true;
+                    
                     _logger->info(__FILEREF__ + "Concat file"
                         + ", customerIngestionBinaryPathName: " + customerIngestionBinaryPathName
                         + ", binaryPathFile: " + binaryPathFile
+                        + ", removeSrcFileAfterConcat: " + to_string(removeSrcFileAfterConcat)
                     );
 
-                    FileIO::concatFile(customerIngestionBinaryPathName, binaryPathFile);
+                    FileIO::concatFile(customerIngestionBinaryPathName, binaryPathFile, removeSrcFileAfterConcat);
                 }
                 catch(exception e)
                 {
@@ -1409,7 +1418,7 @@ void API::uploadBinary(
                 if (contentRangeStart != 0)
                 {
                     string errorMessage = string("This is the first chunk of the file and Content-Range start has to be 0")
-                        + ", contentRangeStart: " + contentRangeStart
+                        + ", contentRangeStart: " + to_string(contentRangeStart)
                     ;
                     _logger->error(__FILEREF__ + errorMessage);
 
@@ -1654,6 +1663,20 @@ void API::uploadBinary(
         }
         */
     }
+    catch (runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }    
     catch (exception e)
     {
         _logger->error(__FILEREF__ + "API failed"
