@@ -19,8 +19,18 @@
 class API: public APICommon {
 public:
     struct FileUploadProgressData {
+        struct RequestData {
+            int64_t     _ingestionJobKey;
+            double      _lastPercentageUpdated;
+            int         _callFailures;
+            bool        _contentRangePresent;
+            int64_t     _contentRangeStart;
+            int64_t     _contentRangeEnd;
+            int64_t     _contentRangeSize;
+        };
+        
         mutex                       _mutex;
-        vector<tuple<int64_t,double,int>>   _filesUploadProgressToBeMonitored;
+        vector<RequestData>   _filesUploadProgressToBeMonitored;
     };
     
     API(Json::Value configuration, 
@@ -96,6 +106,11 @@ private:
         // unsigned long contentLength,
             unordered_map<string, string>& requestDetails
     );
+    
+    void parseContentRange(string contentRange,
+        int64_t& contentRangeStart,
+        int64_t& contentRangeEnd,
+        int64_t& contentRangeSize);
 };
 
 #endif /* POSTCUSTOMER_H */

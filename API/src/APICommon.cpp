@@ -743,7 +743,7 @@ void APICommon::sendHeadSuccess(FCGX_Request& request, int htmlResponseCode, uns
 
     string completeHttpResponse =
             httpStatus
-            + "X-CatraMMS-Resume: " + to_string(fileSize) + endLine
+            + "Content-Range: bytes 0-" + to_string(fileSize) + endLine
             + endLine;
 
     _logger->info(__FILEREF__ + "HTTP HEAD Success"

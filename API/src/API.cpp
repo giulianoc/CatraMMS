@@ -280,15 +280,55 @@ void API::manageRequestAndResponse(
             {
                 try
                 {
-                    int64_t ingestionJobKey = stol(originalURIIt->second.substr(ingestionJobKeyIndex + 1));
-                    double                      _lastPercentageUpdated = 0;
-                    int callFailures = 0;
+                    struct FileUploadProgressData::RequestData requestData;
+
+                    requestData._ingestionJobKey = stol(originalURIIt->second.substr(ingestionJobKeyIndex + 1));
+                    requestData._lastPercentageUpdated = 0;
+                    requestData._callFailures = 0;
                     
-                    lock_guard<mutex> locker(_fileUploadProgressData->_mutex);
+                    // Content-Range: bytes 0-99999/100000
+                    requestData._contentRangePresent = false;
+                    requestData._contentRangeStart  = -1;
+                    requestData._contentRangeEnd  = -1;
+                    requestData._contentRangeSize  = -1;
+                    auto contentRangeIt = requestDetails.find("HTTP_CONTENT_RANGE");
+                    if (contentRangeIt != requestDetails.end())
+                    {
+                        string contentRange = contentRangeIt->second;
+                        try
+                        {
+                            parseContentRange(contentRange,
+                                requestData._contentRangeStart,
+                                requestData._contentRangeEnd,
+                                requestData._contentRangeSize);
+
+                            requestData._contentRangePresent = true;                
+                        }
+                        catch(exception e)
+                        {
+                            string errorMessage = string("Content-Range is not well done. Expected format: 'Content-Range: bytes <start>-<end>/<size>'")
+                                + ", contentRange: " + contentRange
+                            ;
+                            _logger->error(__FILEREF__ + errorMessage);
+
+                            sendError(request, 500, errorMessage);
+
+                            throw runtime_error(errorMessage);            
+                        }
+                    }
+
+                    _logger->info(__FILEREF__ + "Content-Range details"
+                        + ", contentRangePresent: " + to_string(requestData._contentRangePresent)
+                        + ", contentRangeStart: " + to_string(requestData._contentRangeStart)
+                        + ", contentRangeEnd: " + to_string(requestData._contentRangeEnd)
+                        + ", contentRangeSize: " + to_string(requestData._contentRangeSize)
+                    );
                     
-                    _fileUploadProgressData->_filesUploadProgressToBeMonitored.push_back(make_tuple(ingestionJobKey, _lastPercentageUpdated, callFailures));
+                    lock_guard<mutex> locker(_fileUploadProgressData->_mutex);                    
+
+                    _fileUploadProgressData->_filesUploadProgressToBeMonitored.push_back(requestData);
                     _logger->info(__FILEREF__ + "Added upload file progress to be monitored"
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", ingestionJobKey: " + to_string(requestData._ingestionJobKey)
                     );
                 }
                 catch (exception e)
@@ -414,23 +454,14 @@ void API::fileUploadProgressCheck()
 
         for (auto itr = _fileUploadProgressData->_filesUploadProgressToBeMonitored.begin(); 
                 itr != _fileUploadProgressData->_filesUploadProgressToBeMonitored.end(); )
-        {
-            int64_t ingestionJobKey;
-            
-            double lastPercentageUpdated;
-            const int lastPercentageUpdatedTupleIndex = 1;
+        {            
             bool iteratorAlreadyUpdated = false;
-            
-            int callFailures;
-            const int callFailuresTupleIndex = 2;
-
-            tie(ingestionJobKey, lastPercentageUpdated, callFailures) = *itr;
-            
-            if (callFailures >= _maxProgressCallFailures)
+                        
+            if (itr->_callFailures >= _maxProgressCallFailures)
             {
                 _logger->error(__FILEREF__ + "fileUploadProgressCheck: remove entry because of too many call failures"
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", callFailures: " + to_string(callFailures)
+                    + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
+                    + ", callFailures: " + to_string(itr->_callFailures)
                     + ", _maxProgressCallFailures: " + to_string(_maxProgressCallFailures)
                 );
                 itr = _fileUploadProgressData->_filesUploadProgressToBeMonitored.erase(itr);	// returns iterator to the next element
@@ -441,11 +472,11 @@ void API::fileUploadProgressCheck()
             try 
             {
                 string progressURL = string("http://localhost:") + to_string(_webServerPort) + _progressURI;
-                string progressIdHeader = string("X-Progress-ID: ") + to_string(ingestionJobKey);
+                string progressIdHeader = string("X-Progress-ID: ") + to_string(itr->_ingestionJobKey);
 
                 _logger->info(__FILEREF__ + "Call for upload progress"
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", callFailures: " + to_string(callFailures)
+                    + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
+                    + ", callFailures: " + to_string(itr->_callFailures)
                     + ", progressURL: " + progressURL
                     + ", progressIdHeader: " + progressIdHeader
                 );
@@ -470,8 +501,8 @@ void API::fileUploadProgressCheck()
                     sResponse.pop_back();
                 
                 _logger->info(__FILEREF__ + "Call for upload progress response"
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", callFailures: " + to_string(callFailures)
+                    + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
+                    + ", callFailures: " + to_string(itr->_callFailures)
                     + ", sResponse: " + sResponse
                 );
 
@@ -509,16 +540,16 @@ void API::fileUploadProgressCheck()
                         double uploadingPercentage = 100.0;
                         
                         _logger->info(__FILEREF__ + "Upload just finished"
-                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
                             + ", progress: " + to_string(progress)
                         );
 
                         _logger->info(__FILEREF__ + "Update IngestionJob"
-                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
                             + ", uploadingPercentage: " + to_string(uploadingPercentage)
                         );                            
                         _mmsEngineDBFacade->updateIngestionJobSourceUploadingInProgress (
-                            ingestionJobKey, uploadingPercentage);
+                            itr->_ingestionJobKey, uploadingPercentage);
 
                         itr = _fileUploadProgressData->_filesUploadProgressToBeMonitored.erase(itr);	// returns iterator to the next element
                         
@@ -527,8 +558,8 @@ void API::fileUploadProgressCheck()
                     else if (state == "error")
                     {
                         _logger->error(__FILEREF__ + "fileUploadProgressCheck: remove entry because state is 'error'"
-                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                            + ", callFailures: " + to_string(callFailures)
+                            + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
+                            + ", callFailures: " + to_string(itr->_callFailures)
                             + ", _maxProgressCallFailures: " + to_string(_maxProgressCallFailures)
                         );
                         itr = _fileUploadProgressData->_filesUploadProgressToBeMonitored.erase(itr);	// returns iterator to the next element
@@ -538,40 +569,53 @@ void API::fileUploadProgressCheck()
                     else if (state == "uploading")
                     {
                         int64_t received = uploadProgressResponse.get("received", "XXX").asInt64();
+                        int64_t absoluteReceived = -1;
+                        if (itr->_contentRangePresent)
+                            absoluteReceived    = received + itr->_contentRangeStart;
                         int64_t size = uploadProgressResponse.get("size", "XXX").asInt64();
+                        int64_t absoluteSize = -1;
+                        if (itr->_contentRangePresent)
+                            absoluteSize    = itr->_contentRangeSize;
 
-                        double progress = ((double) received / (double) size) * 100;
+                        double progress;
+                        if (itr->_contentRangePresent)
+                            progress = ((double) absoluteReceived / (double) absoluteSize) * 100;
+                        else
+                            progress = ((double) received / (double) size) * 100;
+                            
                         // int uploadingPercentage = floorf(progress * 100) / 100;
                         // this is to have one decimal in the percentage
                         double uploadingPercentage = ((double) ((int) (progress * 10))) / 10;
 
                         _logger->info(__FILEREF__ + "Upload still running"
-                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
                             + ", progress: " + to_string(progress)
                             + ", uploadingPercentage: " + to_string(uploadingPercentage)
-                            + ", lastPercentageUpdated: " + to_string(lastPercentageUpdated)
+                            + ", lastPercentageUpdated: " + to_string(itr->_lastPercentageUpdated)
                             + ", received: " + to_string(received)
                             + ", size: " + to_string(size)
+                            + ", absoluteReceived: " + to_string(absoluteReceived)
+                            + ", absoluteSize: " + to_string(absoluteSize)
                         );
 
-                        if (lastPercentageUpdated != uploadingPercentage)
+                        if (itr->_lastPercentageUpdated != uploadingPercentage)
                         {
                             _logger->info(__FILEREF__ + "Update IngestionJob"
-                                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
                                 + ", uploadingPercentage: " + to_string(uploadingPercentage)
                             );                            
                             _mmsEngineDBFacade->updateIngestionJobSourceUploadingInProgress (
-                                ingestionJobKey, uploadingPercentage);
+                                itr->_ingestionJobKey, uploadingPercentage);
 
-                            get<lastPercentageUpdatedTupleIndex>(*itr) = uploadingPercentage;
+                            itr->_lastPercentageUpdated = uploadingPercentage;
                         }
                     }
                     else
                     {
                         string errorMessage = string("file upload progress. State is wrong")
                             + ", state: " + state
-                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                            + ", callFailures: " + to_string(callFailures)
+                            + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
+                            + ", callFailures: " + to_string(itr->_callFailures)
                             + ", progressURL: " + progressURL
                             + ", progressIdHeader: " + progressIdHeader
                         ;
@@ -593,42 +637,42 @@ void API::fileUploadProgressCheck()
             catch (curlpp::LogicError & e) 
             {
                 _logger->error(__FILEREF__ + "Call for upload progress failed (LogicError)"
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", callFailures: " + to_string(callFailures)
+                    + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
+                    + ", callFailures: " + to_string(itr->_callFailures)
                     + ", exception: " + e.what()
                 );
 
-                get<callFailuresTupleIndex>(*itr) = ++callFailures;
+                itr->_callFailures = itr->_callFailures + 1;
             }
             catch (curlpp::RuntimeError & e) 
             {
                 _logger->error(__FILEREF__ + "Call for upload progress failed (RuntimeError)"
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", callFailures: " + to_string(callFailures)
+                    + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
+                    + ", callFailures: " + to_string(itr->_callFailures)
                     + ", exception: " + e.what()
                 );
 
-                get<callFailuresTupleIndex>(*itr) = ++callFailures;
+                itr->_callFailures = itr->_callFailures + 1;
             }
             catch (runtime_error e)
             {
                 _logger->error(__FILEREF__ + "Call for upload progress failed (runtime_error)"
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", callFailures: " + to_string(callFailures)
+                    + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
+                    + ", callFailures: " + to_string(itr->_callFailures)
                     + ", exception: " + e.what()
                 );
 
-                get<callFailuresTupleIndex>(*itr) = ++callFailures;
+                itr->_callFailures = itr->_callFailures + 1;
             }
             catch (exception e)
             {
                 _logger->error(__FILEREF__ + "Call for upload progress failed (exception)"
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", callFailures: " + to_string(callFailures)
+                    + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
+                    + ", callFailures: " + to_string(itr->_callFailures)
                     + ", exception: " + e.what()
                 );
 
-                get<callFailuresTupleIndex>(*itr) = ++callFailures;
+                itr->_callFailures = itr->_callFailures + 1;
             }
 
             if (!iteratorAlreadyUpdated)
@@ -1271,47 +1315,10 @@ void API::uploadBinary(
             string contentRange = contentRangeIt->second;
             try
             {
-                string prefix ("bytes ");
-                if (contentRange.compare(0, prefix.size(), prefix) != 0)
-                {
-                    string errorMessage = string("Content-Range does not start with 'bytes '")
-                            + ", contentRange: " + contentRange
-                            ;
-                    _logger->error(__FILEREF__ + errorMessage);
-                    
-                    throw runtime_error(errorMessage);
-                }
-
-                int startIndex = prefix.size();
-                int endIndex = contentRange.find("-", startIndex);
-                if (endIndex == string::npos)
-                {
-                    string errorMessage = string("Content-Range does not have '-'")
-                            + ", contentRange: " + contentRange
-                            ;
-                    _logger->error(__FILEREF__ + errorMessage);
-                    
-                    throw runtime_error(errorMessage);
-                }
-                
-                contentRangeStart = stol(contentRange.substr(startIndex, endIndex - startIndex));
-
-                endIndex++;
-                int sizeIndex = contentRange.find("/", endIndex);
-                if (sizeIndex == string::npos)
-                {
-                    string errorMessage = string("Content-Range does not have '/'")
-                            + ", contentRange: " + contentRange
-                            ;
-                    _logger->error(__FILEREF__ + errorMessage);
-                    
-                    throw runtime_error(errorMessage);
-                }
-                
-                contentRangeEnd = stol(contentRange.substr(endIndex, sizeIndex - endIndex));
-
-                sizeIndex++;
-                contentRangeSize = stol(contentRange.substr(sizeIndex));
+                parseContentRange(contentRange,
+                    contentRangeStart,
+                    contentRangeEnd,
+                    contentRangeSize);
 
                 contentRangePresent = true;                
             }
@@ -1729,3 +1736,70 @@ void API::uploadBinary(
         throw runtime_error(errorMessage);
     }    
 }
+
+void API::parseContentRange(string contentRange,
+        int64_t& contentRangeStart,
+        int64_t& contentRangeEnd,
+        int64_t& contentRangeSize)
+{
+    // Content-Range: bytes 0-99999/100000
+
+    contentRangeStart   = -1;
+    contentRangeEnd     = -1;
+    contentRangeSize    = -1;
+
+    try
+    {
+        string prefix ("bytes ");
+        if (contentRange.compare(0, prefix.size(), prefix) != 0)
+        {
+            string errorMessage = string("Content-Range does not start with 'bytes '")
+                    + ", contentRange: " + contentRange
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        int startIndex = prefix.size();
+        int endIndex = contentRange.find("-", startIndex);
+        if (endIndex == string::npos)
+        {
+            string errorMessage = string("Content-Range does not have '-'")
+                    + ", contentRange: " + contentRange
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        contentRangeStart = stol(contentRange.substr(startIndex, endIndex - startIndex));
+
+        endIndex++;
+        int sizeIndex = contentRange.find("/", endIndex);
+        if (sizeIndex == string::npos)
+        {
+            string errorMessage = string("Content-Range does not have '/'")
+                    + ", contentRange: " + contentRange
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        contentRangeEnd = stol(contentRange.substr(endIndex, sizeIndex - endIndex));
+
+        sizeIndex++;
+        contentRangeSize = stol(contentRange.substr(sizeIndex));
+    }
+    catch(exception e)
+    {
+        string errorMessage = string("Content-Range is not well done. Expected format: 'Content-Range: bytes <start>-<end>/<size>'")
+            + ", contentRange: " + contentRange
+        ;
+        _logger->error(__FILEREF__ + errorMessage);
+
+        throw runtime_error(errorMessage);            
+    }
+}
+
