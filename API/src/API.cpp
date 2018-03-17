@@ -269,23 +269,23 @@ void API::manageRequestAndResponse(
     {
         // since we are here, for sure user is authorized
         
-        // retrieve the ingestionJobKey from the original URL to monitor the progress file upload
+        // retrieve the HTTP_X_ORIGINAL_METHOD to retrieve the progress id (set in the nginx server configuration)
+        auto progressIdIt = requestDetails.find("HTTP_X_ORIGINAL_METHOD");
         auto originalURIIt = requestDetails.find("HTTP_X_ORIGINAL_URI");
-        if (originalURIIt != requestDetails.end())
+        if (progressIdIt != requestDetails.end() && originalURIIt != requestDetails.end())
         {
-            // originalURI is like /catramms/binary/16
             int ingestionJobKeyIndex = originalURIIt->second.find_last_of("/");
-            
             if (ingestionJobKeyIndex != string::npos)
             {
                 try
                 {
                     struct FileUploadProgressData::RequestData requestData;
 
+                    requestData._progressId = progressIdIt->second;
                     requestData._ingestionJobKey = stol(originalURIIt->second.substr(ingestionJobKeyIndex + 1));
                     requestData._lastPercentageUpdated = 0;
                     requestData._callFailures = 0;
-                    
+
                     // Content-Range: bytes 0-99999/100000
                     requestData._contentRangePresent = false;
                     requestData._contentRangeStart  = -1;
@@ -323,18 +323,18 @@ void API::manageRequestAndResponse(
                         + ", contentRangeEnd: " + to_string(requestData._contentRangeEnd)
                         + ", contentRangeSize: " + to_string(requestData._contentRangeSize)
                     );
-                    
+
                     lock_guard<mutex> locker(_fileUploadProgressData->_mutex);                    
 
                     _fileUploadProgressData->_filesUploadProgressToBeMonitored.push_back(requestData);
                     _logger->info(__FILEREF__ + "Added upload file progress to be monitored"
-                        + ", ingestionJobKey: " + to_string(requestData._ingestionJobKey)
+                        + ", _progressId: " + requestData._progressId
                     );
                 }
                 catch (exception e)
                 {
-                    _logger->error(__FILEREF__ + "Ingestion job key not found"
-                        + ", originalURIIt->second: " + originalURIIt->second
+                    _logger->error(__FILEREF__ + "ProgressId not found"
+                        + ", progressIdIt->second: " + progressIdIt->second
                     );
                 }
             }
@@ -461,6 +461,7 @@ void API::fileUploadProgressCheck()
             {
                 _logger->error(__FILEREF__ + "fileUploadProgressCheck: remove entry because of too many call failures"
                     + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
+                    + ", progressId: " + itr->_progressId
                     + ", callFailures: " + to_string(itr->_callFailures)
                     + ", _maxProgressCallFailures: " + to_string(_maxProgressCallFailures)
                 );
@@ -472,10 +473,11 @@ void API::fileUploadProgressCheck()
             try 
             {
                 string progressURL = string("http://localhost:") + to_string(_webServerPort) + _progressURI;
-                string progressIdHeader = string("X-Progress-ID: ") + to_string(itr->_ingestionJobKey);
+                string progressIdHeader = string("X-Progress-ID: ") + itr->_progressId;
 
                 _logger->info(__FILEREF__ + "Call for upload progress"
                     + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
+                    + ", progressId: " + itr->_progressId
                     + ", callFailures: " + to_string(itr->_callFailures)
                     + ", progressURL: " + progressURL
                     + ", progressIdHeader: " + progressIdHeader
@@ -502,6 +504,7 @@ void API::fileUploadProgressCheck()
                 
                 _logger->info(__FILEREF__ + "Call for upload progress response"
                     + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
+                    + ", progressId: " + itr->_progressId
                     + ", callFailures: " + to_string(itr->_callFailures)
                     + ", sResponse: " + sResponse
                 );
@@ -541,11 +544,13 @@ void API::fileUploadProgressCheck()
                         
                         _logger->info(__FILEREF__ + "Upload just finished"
                             + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
+                            + ", progressId: " + itr->_progressId
                             + ", progress: " + to_string(progress)
                         );
 
                         _logger->info(__FILEREF__ + "Update IngestionJob"
                             + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
+                            + ", progressId: " + itr->_progressId
                             + ", uploadingPercentage: " + to_string(uploadingPercentage)
                         );                            
                         _mmsEngineDBFacade->updateIngestionJobSourceUploadingInProgress (
@@ -559,6 +564,7 @@ void API::fileUploadProgressCheck()
                     {
                         _logger->error(__FILEREF__ + "fileUploadProgressCheck: remove entry because state is 'error'"
                             + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
+                            + ", progressId: " + itr->_progressId
                             + ", callFailures: " + to_string(itr->_callFailures)
                             + ", _maxProgressCallFailures: " + to_string(_maxProgressCallFailures)
                         );
@@ -590,6 +596,7 @@ void API::fileUploadProgressCheck()
 
                         _logger->info(__FILEREF__ + "Upload still running"
                             + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
+                            + ", progressId: " + itr->_progressId
                             + ", relativeProgress: " + to_string(relativeProgress)
                             + ", relativeUploadingPercentage: " + to_string(relativeUploadingPercentage)
                             + ", lastPercentageUpdated: " + to_string(itr->_lastPercentageUpdated)
@@ -602,6 +609,7 @@ void API::fileUploadProgressCheck()
                         {
                             _logger->info(__FILEREF__ + "Upload still running"
                                 + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
+                                + ", progressId: " + itr->_progressId
                                 + ", absoluteProgress: " + to_string(absoluteProgress)
                                 + ", absoluteUploadingPercentage: " + to_string(absoluteUploadingPercentage)
                                 + ", lastPercentageUpdated: " + to_string(itr->_lastPercentageUpdated)
@@ -618,6 +626,7 @@ void API::fileUploadProgressCheck()
                             {
                                 _logger->info(__FILEREF__ + "Update IngestionJob"
                                     + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
+                                    + ", progressId: " + itr->_progressId
                                     + ", absoluteUploadingPercentage: " + to_string(absoluteUploadingPercentage)
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJobSourceUploadingInProgress (
@@ -632,6 +641,7 @@ void API::fileUploadProgressCheck()
                             {
                                 _logger->info(__FILEREF__ + "Update IngestionJob"
                                     + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
+                                    + ", progressId: " + itr->_progressId
                                     + ", relativeUploadingPercentage: " + to_string(relativeUploadingPercentage)
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJobSourceUploadingInProgress (
@@ -646,6 +656,7 @@ void API::fileUploadProgressCheck()
                         string errorMessage = string("file upload progress. State is wrong")
                             + ", state: " + state
                             + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
+                            + ", progressId: " + itr->_progressId
                             + ", callFailures: " + to_string(itr->_callFailures)
                             + ", progressURL: " + progressURL
                             + ", progressIdHeader: " + progressIdHeader
@@ -669,6 +680,7 @@ void API::fileUploadProgressCheck()
             {
                 _logger->error(__FILEREF__ + "Call for upload progress failed (LogicError)"
                     + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
+                    + ", progressId: " + itr->_progressId
                     + ", callFailures: " + to_string(itr->_callFailures)
                     + ", exception: " + e.what()
                 );
@@ -679,6 +691,7 @@ void API::fileUploadProgressCheck()
             {
                 _logger->error(__FILEREF__ + "Call for upload progress failed (RuntimeError)"
                     + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
+                    + ", progressId: " + itr->_progressId
                     + ", callFailures: " + to_string(itr->_callFailures)
                     + ", exception: " + e.what()
                 );
@@ -689,6 +702,7 @@ void API::fileUploadProgressCheck()
             {
                 _logger->error(__FILEREF__ + "Call for upload progress failed (runtime_error)"
                     + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
+                    + ", progressId: " + itr->_progressId
                     + ", callFailures: " + to_string(itr->_callFailures)
                     + ", exception: " + e.what()
                 );
@@ -699,6 +713,7 @@ void API::fileUploadProgressCheck()
             {
                 _logger->error(__FILEREF__ + "Call for upload progress failed (exception)"
                     + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
+                    + ", progressId: " + itr->_progressId
                     + ", callFailures: " + to_string(itr->_callFailures)
                     + ", exception: " + e.what()
                 );

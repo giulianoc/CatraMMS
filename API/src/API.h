@@ -21,6 +21,7 @@ public:
     struct FileUploadProgressData {
         struct RequestData {
             int64_t     _ingestionJobKey;
+            string      _progressId;
             double      _lastPercentageUpdated;
             int         _callFailures;
             bool        _contentRangePresent;
