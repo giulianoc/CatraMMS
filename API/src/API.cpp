@@ -539,22 +539,63 @@ void API::fileUploadProgressCheck()
                     string state = uploadProgressResponse.get("state", "XXX").asString();
                     if (state == "done")
                     {
-                        double progress = 100.0;
-                        double uploadingPercentage = 100.0;
+                        double relativeProgress = 100.0;
+                        double relativeUploadingPercentage = 100.0;
                         
+                        int64_t absoluteReceived = -1;
+                        if (itr->_contentRangePresent)
+                            absoluteReceived    = itr->_contentRangeEnd;
+                        int64_t absoluteSize = -1;
+                        if (itr->_contentRangePresent)
+                            absoluteSize    = itr->_contentRangeSize;
+
+                        double absoluteProgress;
+                        if (itr->_contentRangePresent)
+                            absoluteProgress = ((double) absoluteReceived / (double) absoluteSize) * 100;
+                            
+                        // this is to have one decimal in the percentage
+                        double absoluteUploadingPercentage;
+                        if (itr->_contentRangePresent)
+                            absoluteUploadingPercentage = ((double) ((int) (absoluteProgress * 10))) / 10;
+
                         _logger->info(__FILEREF__ + "Upload just finished"
                             + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
                             + ", progressId: " + itr->_progressId
-                            + ", progress: " + to_string(progress)
+                            + ", relativeProgress: " + to_string(relativeProgress)
+                            + ", relativeUploadingPercentage: " + to_string(relativeUploadingPercentage)
+                            + ", lastPercentageUpdated: " + to_string(itr->_lastPercentageUpdated)
                         );
+                        if (itr->_contentRangePresent)
+                        {
+                            _logger->info(__FILEREF__ + "Upload just finished"
+                                + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
+                                + ", progressId: " + itr->_progressId
+                                + ", absoluteProgress: " + to_string(absoluteProgress)
+                                + ", absoluteUploadingPercentage: " + to_string(absoluteUploadingPercentage)
+                                + ", lastPercentageUpdated: " + to_string(itr->_lastPercentageUpdated)
+                            );
+                        }
 
-                        _logger->info(__FILEREF__ + "Update IngestionJob"
-                            + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
-                            + ", progressId: " + itr->_progressId
-                            + ", uploadingPercentage: " + to_string(uploadingPercentage)
-                        );                            
-                        _mmsEngineDBFacade->updateIngestionJobSourceUploadingInProgress (
-                            itr->_ingestionJobKey, uploadingPercentage);
+                        if (itr->_contentRangePresent)
+                        {
+                            _logger->info(__FILEREF__ + "Update IngestionJob"
+                                + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
+                                + ", progressId: " + itr->_progressId
+                                + ", absoluteUploadingPercentage: " + to_string(absoluteUploadingPercentage)
+                            );                            
+                            _mmsEngineDBFacade->updateIngestionJobSourceUploadingInProgress (
+                                itr->_ingestionJobKey, absoluteUploadingPercentage);
+                        }
+                        else
+                        {
+                            _logger->info(__FILEREF__ + "Update IngestionJob"
+                                + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
+                                + ", progressId: " + itr->_progressId
+                                + ", relativeUploadingPercentage: " + to_string(relativeUploadingPercentage)
+                            );                            
+                            _mmsEngineDBFacade->updateIngestionJobSourceUploadingInProgress (
+                                itr->_ingestionJobKey, relativeUploadingPercentage);
+                        }
 
                         itr = _fileUploadProgressData->_filesUploadProgressToBeMonitored.erase(itr);	// returns iterator to the next element
                         
@@ -602,8 +643,6 @@ void API::fileUploadProgressCheck()
                             + ", lastPercentageUpdated: " + to_string(itr->_lastPercentageUpdated)
                             + ", relativeReceived: " + to_string(relativeReceived)
                             + ", relativeSize: " + to_string(relativeSize)
-                            + ", relativeReceived: " + to_string(relativeReceived)
-                            + ", relativeSize: " + to_string(relativeSize)
                         );
                         if (itr->_contentRangePresent)
                         {
@@ -613,8 +652,6 @@ void API::fileUploadProgressCheck()
                                 + ", absoluteProgress: " + to_string(absoluteProgress)
                                 + ", absoluteUploadingPercentage: " + to_string(absoluteUploadingPercentage)
                                 + ", lastPercentageUpdated: " + to_string(itr->_lastPercentageUpdated)
-                                + ", absoluteReceived: " + to_string(absoluteReceived)
-                                + ", absoluteSize: " + to_string(absoluteSize)
                                 + ", absoluteReceived: " + to_string(absoluteReceived)
                                 + ", absoluteSize: " + to_string(absoluteSize)
                             );
