@@ -558,20 +558,25 @@ void API::fileUploadProgressCheck()
                         if (itr->_contentRangePresent)
                             absoluteUploadingPercentage = ((double) ((int) (absoluteProgress * 10))) / 10;
 
-                        _logger->info(__FILEREF__ + "Upload just finished"
-                            + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
-                            + ", progressId: " + itr->_progressId
-                            + ", relativeProgress: " + to_string(relativeProgress)
-                            + ", relativeUploadingPercentage: " + to_string(relativeUploadingPercentage)
-                            + ", lastPercentageUpdated: " + to_string(itr->_lastPercentageUpdated)
-                        );
                         if (itr->_contentRangePresent)
                         {
                             _logger->info(__FILEREF__ + "Upload just finished"
                                 + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
                                 + ", progressId: " + itr->_progressId
+                                + ", relativeProgress: " + to_string(relativeProgress)
+                                + ", relativeUploadingPercentage: " + to_string(relativeUploadingPercentage)
                                 + ", absoluteProgress: " + to_string(absoluteProgress)
                                 + ", absoluteUploadingPercentage: " + to_string(absoluteUploadingPercentage)
+                                + ", lastPercentageUpdated: " + to_string(itr->_lastPercentageUpdated)
+                            );
+                        }
+                        else
+                        {
+                            _logger->info(__FILEREF__ + "Upload just finished"
+                                + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
+                                + ", progressId: " + itr->_progressId
+                                + ", relativeProgress: " + to_string(relativeProgress)
+                                + ", relativeUploadingPercentage: " + to_string(relativeUploadingPercentage)
                                 + ", lastPercentageUpdated: " + to_string(itr->_lastPercentageUpdated)
                             );
                         }
@@ -635,25 +640,32 @@ void API::fileUploadProgressCheck()
                         if (itr->_contentRangePresent)
                             absoluteUploadingPercentage = ((double) ((int) (absoluteProgress * 10))) / 10;
 
-                        _logger->info(__FILEREF__ + "Upload still running"
-                            + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
-                            + ", progressId: " + itr->_progressId
-                            + ", relativeProgress: " + to_string(relativeProgress)
-                            + ", relativeUploadingPercentage: " + to_string(relativeUploadingPercentage)
-                            + ", lastPercentageUpdated: " + to_string(itr->_lastPercentageUpdated)
-                            + ", relativeReceived: " + to_string(relativeReceived)
-                            + ", relativeSize: " + to_string(relativeSize)
-                        );
                         if (itr->_contentRangePresent)
                         {
                             _logger->info(__FILEREF__ + "Upload still running"
                                 + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
                                 + ", progressId: " + itr->_progressId
+                                + ", relativeProgress: " + to_string(relativeProgress)
                                 + ", absoluteProgress: " + to_string(absoluteProgress)
-                                + ", absoluteUploadingPercentage: " + to_string(absoluteUploadingPercentage)
                                 + ", lastPercentageUpdated: " + to_string(itr->_lastPercentageUpdated)
+                                + ", relativeReceived: " + to_string(relativeReceived)
                                 + ", absoluteReceived: " + to_string(absoluteReceived)
+                                + ", relativeSize: " + to_string(relativeSize)
                                 + ", absoluteSize: " + to_string(absoluteSize)
+                                + ", relativeUploadingPercentage: " + to_string(relativeUploadingPercentage)
+                                + ", absoluteUploadingPercentage: " + to_string(absoluteUploadingPercentage)
+                            );
+                        }
+                        else
+                        {
+                            _logger->info(__FILEREF__ + "Upload still running"
+                                + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
+                                + ", progressId: " + itr->_progressId
+                                + ", relativeProgress: " + to_string(relativeProgress)
+                                + ", lastPercentageUpdated: " + to_string(itr->_lastPercentageUpdated)
+                                + ", relativeReceived: " + to_string(relativeReceived)
+                                + ", relativeSize: " + to_string(relativeSize)
+                                + ", relativeUploadingPercentage: " + to_string(relativeUploadingPercentage)
                             );
                         }
 
