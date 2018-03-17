@@ -1447,6 +1447,7 @@ void API::uploadBinary(
                     throw runtime_error(errorMessage);            
                 }
                 
+                /*
                 if (contentRangeEnd - contentRangeStart + 1 != binarySizeInBytes)
                 {
                     string errorMessage = string("The size specified by Content-Range start and end is not consistent with the size of the binary ingested")
@@ -1460,6 +1461,7 @@ void API::uploadBinary(
 
                     throw runtime_error(errorMessage);            
                 }
+                 */
                 
                 try
                 {
