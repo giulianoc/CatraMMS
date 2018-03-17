@@ -24,9 +24,9 @@ public:
             double      _lastPercentageUpdated;
             int         _callFailures;
             bool        _contentRangePresent;
-            int64_t     _contentRangeStart;
-            int64_t     _contentRangeEnd;
-            int64_t     _contentRangeSize;
+            long long   _contentRangeStart;
+            long long   _contentRangeEnd;
+            long long   _contentRangeSize;
         };
         
         mutex                       _mutex;
@@ -108,9 +108,9 @@ private:
     );
     
     void parseContentRange(string contentRange,
-        int64_t& contentRangeStart,
-        int64_t& contentRangeEnd,
-        int64_t& contentRangeSize);
+        long long& contentRangeStart,
+        long long& contentRangeEnd,
+        long long& contentRangeSize);
 };
 
 #endif /* POSTCUSTOMER_H */

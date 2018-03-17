@@ -568,46 +568,77 @@ void API::fileUploadProgressCheck()
                     }
                     else if (state == "uploading")
                     {
-                        int64_t received = uploadProgressResponse.get("received", "XXX").asInt64();
+                        int64_t relativeReceived = uploadProgressResponse.get("received", "XXX").asInt64();
                         int64_t absoluteReceived = -1;
                         if (itr->_contentRangePresent)
-                            absoluteReceived    = received + itr->_contentRangeStart;
-                        int64_t size = uploadProgressResponse.get("size", "XXX").asInt64();
+                            absoluteReceived    = relativeReceived + itr->_contentRangeStart;
+                        int64_t relativeSize = uploadProgressResponse.get("size", "XXX").asInt64();
                         int64_t absoluteSize = -1;
                         if (itr->_contentRangePresent)
                             absoluteSize    = itr->_contentRangeSize;
 
-                        double progress;
+                        double relativeProgress = ((double) relativeReceived / (double) relativeSize) * 100;
+                        double absoluteProgress;
                         if (itr->_contentRangePresent)
-                            progress = ((double) absoluteReceived / (double) absoluteSize) * 100;
-                        else
-                            progress = ((double) received / (double) size) * 100;
+                            absoluteProgress = ((double) absoluteReceived / (double) absoluteSize) * 100;
                             
-                        // int uploadingPercentage = floorf(progress * 100) / 100;
                         // this is to have one decimal in the percentage
-                        double uploadingPercentage = ((double) ((int) (progress * 10))) / 10;
+                        double relativeUploadingPercentage = ((double) ((int) (relativeProgress * 10))) / 10;
+                        double absoluteUploadingPercentage;
+                        if (itr->_contentRangePresent)
+                            absoluteUploadingPercentage = ((double) ((int) (absoluteProgress * 10))) / 10;
 
                         _logger->info(__FILEREF__ + "Upload still running"
                             + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
-                            + ", progress: " + to_string(progress)
-                            + ", uploadingPercentage: " + to_string(uploadingPercentage)
+                            + ", relativeProgress: " + to_string(relativeProgress)
+                            + ", relativeUploadingPercentage: " + to_string(relativeUploadingPercentage)
                             + ", lastPercentageUpdated: " + to_string(itr->_lastPercentageUpdated)
-                            + ", received: " + to_string(received)
-                            + ", size: " + to_string(size)
-                            + ", absoluteReceived: " + to_string(absoluteReceived)
-                            + ", absoluteSize: " + to_string(absoluteSize)
+                            + ", relativeReceived: " + to_string(relativeReceived)
+                            + ", relativeSize: " + to_string(relativeSize)
+                            + ", relativeReceived: " + to_string(relativeReceived)
+                            + ", relativeSize: " + to_string(relativeSize)
                         );
-
-                        if (itr->_lastPercentageUpdated != uploadingPercentage)
+                        if (itr->_contentRangePresent)
                         {
-                            _logger->info(__FILEREF__ + "Update IngestionJob"
+                            _logger->info(__FILEREF__ + "Upload still running"
                                 + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
-                                + ", uploadingPercentage: " + to_string(uploadingPercentage)
-                            );                            
-                            _mmsEngineDBFacade->updateIngestionJobSourceUploadingInProgress (
-                                itr->_ingestionJobKey, uploadingPercentage);
+                                + ", absoluteProgress: " + to_string(absoluteProgress)
+                                + ", absoluteUploadingPercentage: " + to_string(absoluteUploadingPercentage)
+                                + ", lastPercentageUpdated: " + to_string(itr->_lastPercentageUpdated)
+                                + ", absoluteReceived: " + to_string(absoluteReceived)
+                                + ", absoluteSize: " + to_string(absoluteSize)
+                                + ", absoluteReceived: " + to_string(absoluteReceived)
+                                + ", absoluteSize: " + to_string(absoluteSize)
+                            );
+                        }
 
-                            itr->_lastPercentageUpdated = uploadingPercentage;
+                        if (itr->_contentRangePresent)
+                        {
+                            if (itr->_lastPercentageUpdated != absoluteUploadingPercentage)
+                            {
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
+                                    + ", absoluteUploadingPercentage: " + to_string(absoluteUploadingPercentage)
+                                );                            
+                                _mmsEngineDBFacade->updateIngestionJobSourceUploadingInProgress (
+                                    itr->_ingestionJobKey, absoluteUploadingPercentage);
+
+                                itr->_lastPercentageUpdated = absoluteUploadingPercentage;
+                            }
+                        }
+                        else
+                        {
+                            if (itr->_lastPercentageUpdated != relativeUploadingPercentage)
+                            {
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
+                                    + ", relativeUploadingPercentage: " + to_string(relativeUploadingPercentage)
+                                );                            
+                                _mmsEngineDBFacade->updateIngestionJobSourceUploadingInProgress (
+                                    itr->_ingestionJobKey, relativeUploadingPercentage);
+
+                                itr->_lastPercentageUpdated = relativeUploadingPercentage;
+                            }
                         }
                     }
                     else
@@ -1306,9 +1337,9 @@ void API::uploadBinary(
 
         // Content-Range: bytes 0-99999/100000
         bool contentRangePresent = false;
-        int64_t contentRangeStart  = -1;
-        int64_t contentRangeEnd  = -1;
-        int64_t contentRangeSize  = -1;
+        long long contentRangeStart  = -1;
+        long long contentRangeEnd  = -1;
+        long long contentRangeSize  = -1;
         auto contentRangeIt = requestDetails.find("HTTP_CONTENT_RANGE");
         if (contentRangeIt != requestDetails.end())
         {
@@ -1738,9 +1769,9 @@ void API::uploadBinary(
 }
 
 void API::parseContentRange(string contentRange,
-        int64_t& contentRangeStart,
-        int64_t& contentRangeEnd,
-        int64_t& contentRangeSize)
+        long long& contentRangeStart,
+        long long& contentRangeEnd,
+        long long& contentRangeSize)
 {
     // Content-Range: bytes 0-99999/100000
 
@@ -1773,7 +1804,7 @@ void API::parseContentRange(string contentRange,
             throw runtime_error(errorMessage);
         }
 
-        contentRangeStart = stol(contentRange.substr(startIndex, endIndex - startIndex));
+        contentRangeStart = stoll(contentRange.substr(startIndex, endIndex - startIndex));
 
         endIndex++;
         int sizeIndex = contentRange.find("/", endIndex);
@@ -1787,10 +1818,10 @@ void API::parseContentRange(string contentRange,
             throw runtime_error(errorMessage);
         }
 
-        contentRangeEnd = stol(contentRange.substr(endIndex, sizeIndex - endIndex));
+        contentRangeEnd = stoll(contentRange.substr(endIndex, sizeIndex - endIndex));
 
         sizeIndex++;
-        contentRangeSize = stol(contentRange.substr(sizeIndex));
+        contentRangeSize = stoll(contentRange.substr(sizeIndex));
     }
     catch(exception e)
     {
