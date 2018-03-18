@@ -23,8 +23,8 @@ MMSStorage::MMSStorage(
     _downloadRootRepository = _storage + "DownloadRepository/";
     _streamingRootRepository = _storage + "StreamingRepository/";
 
-    _errorRootRepository = _storage + "MMSWorkingAreaRepository/Errors/";
-    _doneRootRepository = _storage + "MMSWorkingAreaRepository/Done/";
+    // ingestionWorkingAreaRepository is used by nginx to save the temporary upload files
+    string ingestionWorkingAreaRepository = _storage + "MMSWorkingAreaRepository/Ingestion/";
     _stagingRootRepository = _storage + "MMSWorkingAreaRepository/Staging/";
 
     _profilesRootRepository = _storage + "MMSRepository/EncodingProfiles/";
@@ -73,16 +73,9 @@ MMSStorage::MMSStorage(
             S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 
     _logger->info(__FILEREF__ + "Creating directory (if needed)"
-        + ", _errorRootRepository: " + _errorRootRepository
+        + ", ingestionWorkingAreaRepository: " + ingestionWorkingAreaRepository
     );
-    FileIO::createDirectory(_errorRootRepository,
-            S_IRUSR | S_IWUSR | S_IXUSR |
-            S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-
-    _logger->info(__FILEREF__ + "Creating directory (if needed)"
-        + ", _doneRootRepository: " + _doneRootRepository
-    );
-    FileIO::createDirectory(_doneRootRepository,
+    FileIO::createDirectory(ingestionWorkingAreaRepository,
             S_IRUSR | S_IWUSR | S_IXUSR |
             S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 
@@ -192,14 +185,6 @@ string MMSStorage::getStagingRootRepository(void) {
     return _stagingRootRepository;
 }
 
-string MMSStorage::getErrorRootRepository(void) {
-    return _errorRootRepository;
-}
-
-string MMSStorage::getDoneRootRepository(void) {
-    return _doneRootRepository;
-}
-
 void MMSStorage::moveContentInRepository(
         string filePathName,
         RepositoryType rtRepositoryType,
@@ -251,14 +236,6 @@ string MMSStorage::getRepository(RepositoryType rtRepositoryType)
         {
             return _stagingRootRepository;
         }
-        case RepositoryType::MMSREP_REPOSITORYTYPE_DONE:
-        {
-            return _doneRootRepository;
-        }
-        case RepositoryType::MMSREP_REPOSITORYTYPE_ERRORS:
-        {
-            return _errorRootRepository;
-        }
         case RepositoryType::MMSREP_REPOSITORYTYPE_INGESTION:
         {
             return _ingestionRootRepository;
@@ -293,9 +270,7 @@ void MMSStorage::contentInRepository(
 
     DateTime::get_tm_LocalTime(&tmDateTime, &ulMilliSecs);
 
-    if (rtRepositoryType == RepositoryType::MMSREP_REPOSITORYTYPE_DONE ||
-            rtRepositoryType == RepositoryType::MMSREP_REPOSITORYTYPE_STAGING ||
-            rtRepositoryType == RepositoryType::MMSREP_REPOSITORYTYPE_ERRORS) 
+    if (rtRepositoryType == RepositoryType::MMSREP_REPOSITORYTYPE_STAGING) 
     {
         char pDateTime [64];
         bool directoryExisting;
@@ -324,30 +299,6 @@ void MMSStorage::contentInRepository(
         }
 
         metaDataFileInDestRepository.append("/");
-
-        if (rtRepositoryType == RepositoryType::MMSREP_REPOSITORYTYPE_DONE) 
-        {
-            sprintf(pDateTime, "%02lu",
-                    (unsigned long) (tmDateTime. tm_hour));
-
-            metaDataFileInDestRepository.append(pDateTime);
-
-            if (!FileIO::directoryExisting(metaDataFileInDestRepository)) 
-            {
-                _logger->info(__FILEREF__ + "Create directory"
-                    + ", metaDataFileInDestRepository: " + metaDataFileInDestRepository
-                );
-
-                bool noErrorIfExists = true;
-                bool recursive = true;
-                FileIO::createDirectory(metaDataFileInDestRepository,
-                        S_IRUSR | S_IWUSR | S_IXUSR |
-                        S_IRGRP | S_IXGRP |
-                        S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-            }
-
-            metaDataFileInDestRepository.append("/");
-        }
     }
 
     if (addDateTimeToFileName) 

@@ -20,8 +20,6 @@ public:
         MMSREP_REPOSITORYTYPE_DOWNLOAD,
         MMSREP_REPOSITORYTYPE_STREAMING,
         MMSREP_REPOSITORYTYPE_STAGING,
-        MMSREP_REPOSITORYTYPE_DONE,
-        MMSREP_REPOSITORYTYPE_ERRORS,
         MMSREP_REPOSITORYTYPE_INGESTION,
 
         MMSREP_REPOSITORYTYPE_NUMBER
@@ -134,8 +132,6 @@ private:
     string                      _downloadRootRepository;
     string                      _streamingRootRepository;
     string                      _stagingRootRepository;
-    string                      _doneRootRepository;
-    string                      _errorRootRepository;
     string                      _ingestionRootRepository;
     string                      _profilesRootRepository;
 
