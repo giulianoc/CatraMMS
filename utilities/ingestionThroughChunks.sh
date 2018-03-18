@@ -30,7 +30,7 @@ elif [ $# -ne 4 ]; then
 fi
 
 mmsHostName=mms.calber.org
-mmsPort=8080
+mmsPort=80
 sleepingInSecondsInCaseOfIngestionError=5
 maxRetriesNumber=3
 
@@ -67,6 +67,7 @@ while [  $ingestionNumber -lt $totalIngestionsNumber ]; do
 			startChunkIngestion=$(date -u +%s)
 
 			echo "$(date +%Y-%m-%d-%H:%M:%S): IngestionNumber $ingestionNumber/$totalIngestionsNumber, bytes $contentRangeStart-$contentRangeEnd/$binaryFileSize"
+			echo "command: dd status=none if=$binaryFilePathName bs=1024 iflag=skip_bytes,count_bytes skip=$contentRangeStart count=$((contentRangeEnd - contentRangeStart + 1)) | curl -s -o /dev/null -w \"%{response_code}\" -X POST -H \"$contentRange\" -u 2:SU1.8ZO1O2zRs.gL_nWYV4AZ0uU_dy89CRjqmaXv4J58iATp~6RBlhCbd.HP3sbnxT --data-binary @- \"http://$mmsHostName:$mmsPort/catramms/binary/$ingestionJobKey\""
 			responseCode=$(dd status=none if=$binaryFilePathName bs=1024 iflag=skip_bytes,count_bytes skip=$contentRangeStart count=$((contentRangeEnd - contentRangeStart + 1)) | curl -s -o /dev/null -w "%{response_code}" -X POST -H "$contentRange" -u 2:SU1.8ZO1O2zRs.gL_nWYV4AZ0uU_dy89CRjqmaXv4J58iATp~6RBlhCbd.HP3sbnxT --data-binary @- "http://$mmsHostName:$mmsPort/catramms/binary/$ingestionJobKey")
 			#echo "responseCode: $responseCode"
 

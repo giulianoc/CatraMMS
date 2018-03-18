@@ -23,8 +23,6 @@ MMSStorage::MMSStorage(
     _downloadRootRepository = _storage + "DownloadRepository/";
     _streamingRootRepository = _storage + "StreamingRepository/";
 
-    // ingestionWorkingAreaRepository is used by nginx to save the temporary upload files
-    string ingestionWorkingAreaRepository = _storage + "MMSWorkingAreaRepository/Ingestion/";
     _stagingRootRepository = _storage + "MMSWorkingAreaRepository/Staging/";
 
     _profilesRootRepository = _storage + "MMSRepository/EncodingProfiles/";
@@ -69,13 +67,6 @@ MMSStorage::MMSStorage(
         + ", _streamingRootRepository: " + _streamingRootRepository
     );
     FileIO::createDirectory(_streamingRootRepository,
-            S_IRUSR | S_IWUSR | S_IXUSR |
-            S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
-
-    _logger->info(__FILEREF__ + "Creating directory (if needed)"
-        + ", ingestionWorkingAreaRepository: " + ingestionWorkingAreaRepository
-    );
-    FileIO::createDirectory(ingestionWorkingAreaRepository,
             S_IRUSR | S_IWUSR | S_IXUSR |
             S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
 

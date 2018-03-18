@@ -2,6 +2,7 @@
 #include <thread>
 #include <fstream>
 
+#include "catralibraries/Service.h"
 #include "catralibraries/Scheduler2.h"
 
 #include "MMSEngineProcessor.h"
@@ -10,21 +11,44 @@
 #include "MMSEngineDBFacade.h"
 #include "ActiveEncodingsManager.h"
 #include "MMSStorage.h"
-// #include "MMSEngine.h"
 
-Json::Value loadConfigurationFile(const char* configurationPathName);
+Json::Value loadConfigurationFile(string configurationPathName);
 
 int main (int iArgc, char *pArgv [])
 {
     
-    if (iArgc != 2)
+    if (iArgc != 2 && iArgc != 3)
     {
-        cerr << "Usage: " << pArgv[0] << " config-path-name" << endl;
+        cerr << "Usage: " 
+                << pArgv[0] 
+                << " --nodaemon " 
+                << "config-path-name" 
+                << endl;
         
         return 1;
     }
     
-    Json::Value configuration = loadConfigurationFile(pArgv[1]);
+    bool noDaemon = false;
+    string configPathName;
+    
+    if (iArgc == 2)
+    {
+        configPathName = pArgv[1];
+    }
+    else if (iArgc == 3)
+    {
+        if (strcmp (pArgv[1], "--nodaemon"))
+            noDaemon = true;
+
+        configPathName = pArgv[2];
+    }
+    
+    string pidFilePathName = "/tmp/cmsEngine.pid";
+    
+    if (!noDaemon)
+        Service::launchUnixDaemon(pidFilePathName);
+
+    Json::Value configuration = loadConfigurationFile(configPathName);
 
     string logPathName =  configuration["log"].get("pathName", "XXX").asString();
     bool stdout =  configuration["log"].get("stdout", "XXX").asBool();
@@ -153,13 +177,13 @@ int main (int iArgc, char *pArgv [])
     return 0;
 }
 
-Json::Value loadConfigurationFile(const char* configurationPathName)
+Json::Value loadConfigurationFile(string configurationPathName)
 {
     Json::Value configurationJson;
     
     try
     {
-        ifstream configurationFile(configurationPathName, std::ifstream::binary);
+        ifstream configurationFile(configurationPathName.c_str(), std::ifstream::binary);
         configurationFile >> configurationJson;
     }
     catch(...)
