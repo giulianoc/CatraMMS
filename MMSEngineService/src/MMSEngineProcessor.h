@@ -48,6 +48,7 @@ private:
     int                     _secondsWaitingAmongDownloadingAttempt;
 
     int                     _maxIngestionJobsPerEvent;
+    int                     _maxIngestionJobsWithDependencyToCheckPerEvent;
     
     void handleCheckIngestionEvent();
 

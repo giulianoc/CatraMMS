@@ -1380,9 +1380,10 @@ int64_t MMSEngineDBFacade::addImageEncodingProfile(
 }
 
 void MMSEngineDBFacade::getIngestionsToBeManaged(
-        vector<tuple<int64_t,shared_ptr<Customer>,string,IngestionStatus>>& ingestionsToBeManaged,
+        vector<tuple<int64_t,shared_ptr<Customer>,string,IngestionStatus,string>>& ingestionsToBeManaged,
         string processorMMS,
-        int maxIngestionJobs)
+        int maxIngestionJobs,
+        int maxIngestionJobsWithDependencyToCheck)
 {
     string      lastSQLCommand;
     bool        autoCommit = true;
@@ -1405,52 +1406,125 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
             statement->execute(lastSQLCommand);
         }
 
+        // ingested jobs that do not have to wait a dependency
         {
-            lastSQLCommand = 
-                "select IngestionJobKey, CustomerKey, MetaDataContent, Status from MMS_IngestionJobs where ProcessorMMS is null "
-                    "and (Status = ? or (Status in (?, ?, ?, ?) and SourceBinaryTransferred = 1)) limit ? for update";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::Start_Ingestion));
-            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress));
-            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress));
-            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress));
-            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress));
-            preparedStatement->setInt(queryParameterIndex++, maxIngestionJobs);
-
-            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-            while (resultSet->next())
             {
-                int64_t ingestionJobKey     = resultSet->getInt64("IngestionJobKey");
-                int64_t customerKey         = resultSet->getInt64("CustomerKey");
-                string metaDataContent      = resultSet->getString("MetaDataContent");
-                IngestionStatus ingestionStatus     = MMSEngineDBFacade::toIngestionStatus(resultSet->getString("Status"));
+                lastSQLCommand = 
+                    "select IngestionJobKey, CustomerKey, MetaDataContent, Status from MMS_IngestionJobs where "
+                        "ProcessorMMS is null and MediaItemKeysDependency is null "
+                        "and (Status = ? or (Status in (?, ?, ?, ?) and SourceBinaryTransferred = 1)) limit ? for update";
+                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                int queryParameterIndex = 1;
+                preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::Start_Ingestion));
+                preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress));
+                preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress));
+                preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress));
+                preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress));
+                preparedStatement->setInt(queryParameterIndex++, maxIngestionJobs);
 
-                shared_ptr<Customer> customer = getCustomer(customerKey);
-                
-                tuple<int64_t,shared_ptr<Customer>,string,IngestionStatus> ingestionToBeManaged
-                        = make_tuple(ingestionJobKey, customer, metaDataContent, ingestionStatus);
-                
-                ingestionsToBeManaged.push_back(ingestionToBeManaged);
+                shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+                while (resultSet->next())
+                {
+                    int64_t ingestionJobKey     = resultSet->getInt64("IngestionJobKey");
+                    int64_t customerKey         = resultSet->getInt64("CustomerKey");
+                    string metaDataContent      = resultSet->getString("MetaDataContent");
+                    IngestionStatus ingestionStatus     = MMSEngineDBFacade::toIngestionStatus(resultSet->getString("Status"));
+                    string mediaItemKeysDependency      = "";
+
+                    shared_ptr<Customer> customer = getCustomer(customerKey);
+
+                    tuple<int64_t,shared_ptr<Customer>,string,IngestionStatus,string> ingestionToBeManaged
+                            = make_tuple(ingestionJobKey, customer, metaDataContent, ingestionStatus, mediaItemKeysDependency);
+
+                    ingestionsToBeManaged.push_back(ingestionToBeManaged);
+                }
             }
         }
 
-        for (tuple<int64_t,shared_ptr<Customer>,string,IngestionStatus> ingestionToBeManaged:
+        // ingestion jobs that need to wait at least one dependency
+        {
+            {
+                lastSQLCommand = 
+                    "select IngestionJobKey, CustomerKey, MetaDataContent, MediaItemKeysDependency, Status, IngestionType from MMS_IngestionJobs where "
+                        "ProcessorMMS is null and MediaItemKeysDependency is not null "
+                        "and Status = ? limit ? for update";
+                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                int queryParameterIndex = 1;
+                preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::Start_Ingestion));
+                preparedStatement->setInt(queryParameterIndex++, maxIngestionJobsWithDependencyToCheck);
+
+                shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+                while (resultSet->next())
+                {
+                    int64_t ingestionJobKey     = resultSet->getInt64("IngestionJobKey");
+                    int64_t customerKey         = resultSet->getInt64("CustomerKey");
+                    string metaDataContent      = resultSet->getString("MetaDataContent");
+                    IngestionStatus ingestionStatus     = MMSEngineDBFacade::toIngestionStatus(resultSet->getString("Status"));
+                    string mediaItemKeysDependency;
+                    shared_ptr<Customer> customer = getCustomer(customerKey);
+
+                    mediaItemKeysDependency = resultSet->getString("MediaItemKeysDependency");
+
+                    bool ingestionToBeManaged = false;
+                    
+                    if (mediaItemKeysDependency != "")
+                    {
+                        if (resultSet->getInt("IngestionType") == static_cast<int>(MMSEngineDBFacade::IngestionType::Screenshot))
+                        {
+                            // mediaItemKeysDependency has to contain just one MIK
+                            int64_t mediaItemKey = stoll(mediaItemKeysDependency);
+
+                            lastSQLCommand = 
+                                "select  from MMS_MediaItemKeys where MediaItemKey = ?";
+                            shared_ptr<sql::PreparedStatement> preparedStatementMediaItems (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                            int queryParameterIndex = 1;
+                            preparedStatementMediaItems->setInt64(queryParameterIndex++, mediaItemKey);
+
+                            shared_ptr<sql::ResultSet> resultSetMediaItems (preparedStatementMediaItems->executeQuery());
+                            if (resultSetMediaItems->next())
+                            {
+                                ingestionToBeManaged = true;
+                            }
+                        }
+                    }
+                        
+                    if (ingestionToBeManaged)
+                    {
+                        tuple<int64_t,shared_ptr<Customer>,string,IngestionStatus,string> ingestionToBeManaged
+                                = make_tuple(ingestionJobKey, customer, metaDataContent, ingestionStatus, mediaItemKeysDependency);
+
+                        ingestionsToBeManaged.push_back(ingestionToBeManaged);
+                    }
+                }
+            }
+        }
+
+        for (tuple<int64_t,shared_ptr<Customer>,string,IngestionStatus,string> ingestionToBeManaged:
             ingestionsToBeManaged)
         {
+            int64_t ingestionJobKey;
+            shared_ptr<Customer> customer;
+            string metaDataContent;
+            string sourceReference;
+            MMSEngineDBFacade::IngestionStatus ingestionStatus;
+            string mediaItemKeysDependency;
+
+            tie(ingestionJobKey, customer, metaDataContent, ingestionStatus, 
+                    mediaItemKeysDependency) = ingestionToBeManaged;
+
             lastSQLCommand = 
                 "update MMS_IngestionJobs set ProcessorMMS = ? where IngestionJobKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, processorMMS);
-            preparedStatement->setInt64(queryParameterIndex++, get<0>(ingestionToBeManaged));
+            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 
             int rowsUpdated = preparedStatement->executeUpdate();
             if (rowsUpdated != 1)
             {
                 string errorMessage = __FILEREF__ + "no update was done"
                         + ", processorMMS: " + processorMMS
-                        + ", ingestionJobKey: " + to_string(get<0>(ingestionToBeManaged))
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
                         + ", rowsUpdated: " + to_string(rowsUpdated)
                         + ", lastSQLCommand: " + lastSQLCommand
                 ;
@@ -1459,7 +1533,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                 throw runtime_error(errorMessage);                    
             }
         }
-
+        
         // conn->_sqlConnection->commit(); OR execute COMMIT
         {
             lastSQLCommand = 
@@ -1587,8 +1661,8 @@ int64_t MMSEngineDBFacade::addIngestionJob (
         
         {
             lastSQLCommand = 
-                "insert into MMS_IngestionJobs (IngestionJobKey, CustomerKey, MediaItemKey, MetaDataContent, IngestionType, StartIngestion, EndIngestion, DownloadingProgress, UploadingProgress, SourceBinaryTransferred, ProcessorMMS, Status, ErrorMessage) values ("
-                                               "NULL,            ?,           NULL,         ?,               ?,             NULL,           NULL,         NULL,                NULL,              0,                       NULL,         ?,      NULL)";
+                "insert into MMS_IngestionJobs (IngestionJobKey, CustomerKey, MediaItemKey, MetaDataContent, MediaItemKeysDependency, IngestionType, StartIngestion, EndIngestion, DownloadingProgress, UploadingProgress, SourceBinaryTransferred, ProcessorMMS, Status, ErrorMessage) values ("
+                                               "NULL,            ?,           NULL,         ?,               NULL,                    ?,             NULL,           NULL,         NULL,                NULL,              0,                       NULL,         ?,      NULL)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -3317,6 +3391,28 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
         
         int64_t mediaItemKey = getLastInsertId(conn);
 
+        // ExternalKey
+        {            
+            if (isMetadataPresent(contentIngestion, "UniqueName"))
+            {
+                string externalKey = contentIngestion.get("UniqueName", "XXX").asString();
+                if (externalKey != "")
+                {
+                    lastSQLCommand = 
+                        "insert into MMS_ExternalKeyMapping (CustomerKey, MediaItemKey, ExternalKey) values ("
+                        "?, ?, ?)";
+
+                    shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                    int queryParameterIndex = 1;
+                    preparedStatement->setInt64(queryParameterIndex++, customer->_customerKey);
+                    preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+                    preparedStatement->setString(queryParameterIndex++, externalKey);
+
+                    preparedStatement->executeUpdate();
+                }
+            }
+        }
+        
         {
             if (contentType == ContentType::Video)
             {
@@ -4425,6 +4521,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "CustomerKey                BIGINT UNSIGNED NOT NULL,"
                     "MediaItemKey               BIGINT UNSIGNED NULL,"
                     "MetaDataContent            TEXT CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
+                    "MediaItemKeysDependency    VARCHAR (128) NULL,"
                     "IngestionType              TINYINT (2) NULL,"
                     "StartIngestion             TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "EndIngestion               DATETIME NULL,"
@@ -4569,6 +4666,55 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         {
             lastSQLCommand = 
                 "create index MMS_MediaItems_idx4 on MMS_MediaItems (ContentType, Title)";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
+        try
+        {
+            // create table MMS_ExternalKeyMapping
+            // CustomerKey is the owner of the content
+            lastSQLCommand = 
+                "create table if not exists MMS_ExternalKeyMapping ("
+                    "CustomerKey			BIGINT UNSIGNED NOT NULL,"
+                    "MediaItemKey 	 		BIGINT UNSIGNED NOT NULL,"
+                    "ExternalKey			VARCHAR (64) NOT NULL,"
+                    "constraint MMS_ExternalKeyMapping_PK PRIMARY KEY (CustomerKey, MediaItemKey), " 
+                    "constraint MMS_ExternalKeyMapping_FK foreign key (CustomerKey) "
+                        "references MMS_Customers (CustomerKey) on delete cascade, "
+                    "constraint MMS_ExternalKeyMapping_FK2 foreign key (MediaItemKey) "
+                        "references MMS_MediaItems (MediaItemKey) on delete cascade) "
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+        
+        try
+        {
+            lastSQLCommand = 
+                "create unique index MMS_ExternalKeyMapping_idx on MMS_ExternalKeyMapping (CustomerKey, ExternalKey)";
             statement->execute(lastSQLCommand);
         }
         catch(sql::SQLException se)
@@ -5186,20 +5332,6 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             constraint MMS_MediaItemsCustomerMapping_FK2 foreign key (CustomerKey) 
                     references MMS_Customers (CustomerKey) on delete cascade)
             ENGINE=InnoDB;
-
-    # create table MMS_ExternalKeyMapping
-    # CustomerKey is the owner of the content
-    create table if not exists MMS_ExternalKeyMapping (
-            CustomerKey				BIGINT UNSIGNED NOT NULL,
-            MediaItemKey 	 			BIGINT UNSIGNED NOT NULL,
-            ExternalKey				VARCHAR (64) NOT NULL,
-            constraint MMS_ExternalKeyMapping_PK PRIMARY KEY (CustomerKey, MediaItemKey), 
-            constraint MMS_ExternalKeyMapping_FK foreign key (CustomerKey) 
-                    references MMS_Customers (CustomerKey) on delete cascade, 
-            constraint MMS_ExternalKeyMapping_FK2 foreign key (MediaItemKey) 
-                    references MMS_MediaItems (MediaItemKey) on delete cascade) 
-            ENGINE=InnoDB;
-    create unique index MMS_ExternalKeyMapping_idx on MMS_ExternalKeyMapping (CustomerKey, ExternalKey);
 
     # create table MediaItemsRemoved
     create table if not exists MMS_MediaItemsRemoved (

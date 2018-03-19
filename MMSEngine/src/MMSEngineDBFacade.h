@@ -253,8 +253,9 @@ public:
     enum class IngestionType {
         Unknown                 = 0,    // in case json was not able to be parsed
         ContentIngestion        = 1,
-        ContentUpdate           = 2,
-        ContentRemove           = 3
+        Screenshot              = 2,
+        ContentUpdate           = 3,
+        ContentRemove           = 4
     };
     static const char* toString(const IngestionType& ingestionType)
     {
@@ -460,9 +461,10 @@ public:
     );
 
     void getIngestionsToBeManaged(
-        vector<tuple<int64_t,shared_ptr<Customer>,string,IngestionStatus>>& ingestionsToBeManaged,
+        vector<tuple<int64_t,shared_ptr<Customer>,string,IngestionStatus,string>>& ingestionsToBeManaged,
         string processorMMS,
-        int maxIngestionJobs);
+        int maxIngestionJobs,
+        int maxIngestionJobsWithDependencyToCheck);
 
     int64_t addIngestionJob (
 	int64_t customerKey,
