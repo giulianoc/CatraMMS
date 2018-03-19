@@ -498,10 +498,123 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                     }
                     else if (ingestionTypeAndContentType.first == MMSEngineDBFacade::IngestionType::Screenshot)
                     {
-                        // get the reference key
-                        // check if it exists
-                        // 
-                        
+                        if (mediaItemKeysDependency == "")
+                        {
+                            // mediaItemKeysDependency will be filled
+                        }
+                        else
+                        {
+                            // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
+                            try
+                            {
+                                metadataRoot
+                                Json::Value screenshot = screenshots[screenshotIndex];
+
+                                field = "TimePositionInSeconds";
+                                if (!_mmsEngineDBFacade->isMetadataPresent(screenshot, field))
+                                {
+                                    string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                                            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+                                            + ", Field: " + field;
+                                    _logger->error(errorMessage);
+
+                                    throw runtime_error(errorMessage);
+                                }
+                                double timePositionInSeconds = screenshot.get(field, "XXX").asDouble();
+
+                                field = "EncodingProfilesSet";
+                                string encodingProfilesSet;
+                                if (!_mmsEngineDBFacade->isMetadataPresent(screenshot, field))
+                                    encodingProfilesSet = "customerDefault";
+                                else
+                                    encodingProfilesSet = screenshot.get(field, "XXX").asString();
+
+                                field = "SourceImageWidth";
+                                if (!_mmsEngineDBFacade->isMetadataPresent(screenshot, field))
+                                {
+                                    string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                                            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+                                            + ", Field: " + field;
+                                    _logger->error(errorMessage);
+
+                                    throw runtime_error(errorMessage);
+                                }
+                                int sourceImageWidth = screenshot.get(field, "XXX").asInt();
+
+                                field = "SourceImageHeight";
+                                if (!_mmsEngineDBFacade->isMetadataPresent(screenshot, field))
+                                {
+                                    string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                                            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+                                            + ", Field: " + field;
+                                    _logger->error(errorMessage);
+
+                                    throw runtime_error(errorMessage);
+                                }
+                                int sourceImageHeight = screenshot.get(field, "XXX").asInt();
+
+                                if (videoOrAudioDurationInMilliSeconds < timePositionInSeconds * 1000)
+                                {
+                                    string errorMessage = __FILEREF__ + "Screenshot was not generated because timePositionInSeconds is bigger than the video duration"
+                                            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+                                            + ", video mediaItemKey: " + to_string(mediaItemKey)
+                                            + ", timePositionInSeconds: " + to_string(timePositionInSeconds)
+                                            + ", videoOrAudioDurationInMilliSeconds: " + to_string(videoOrAudioDurationInMilliSeconds)
+                                    ;
+                                    _logger->error(errorMessage);
+
+                                    throw runtime_error(errorMessage);
+                                }
+
+                                string imageFileName;
+                                {
+                                    size_t fileExtensionIndex = mediaSourceFileName.find_last_of(".");
+                                    if (fileExtensionIndex == string::npos)
+                                        imageFileName.append(mediaSourceFileName);
+                                    else
+                                        imageFileName.append(mediaSourceFileName.substr(0, fileExtensionIndex));
+                                    imageFileName
+                                            .append("_")
+                                            .append(to_string(screenshotIndex + 1))
+                                            .append(".jpg")
+                                    ;
+                                }
+
+                                {
+                                    shared_ptr<GenerateImageToIngestEvent>    generateImageToIngestEvent = _multiEventsSet->getEventsFactory()
+                                            ->getFreeEvent<GenerateImageToIngestEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_GENERATEIMAGETOINGESTEVENT);
+
+                                    generateImageToIngestEvent->setSource(MMSENGINEPROCESSORNAME);
+                                    generateImageToIngestEvent->setDestination(MMSENGINEPROCESSORNAME);
+                                    generateImageToIngestEvent->setExpirationTimePoint(chrono::system_clock::now());
+
+                                    generateImageToIngestEvent->setCmsVideoPathName(mmsAssetPathName);
+                                    generateImageToIngestEvent->setCustomer(localAssetIngestionEvent->getCustomer());
+                                    generateImageToIngestEvent->setImageFileName(imageFileName);
+                                    generateImageToIngestEvent->setImageTitle(videoTitle + " image #" + to_string(screenshotIndex + 1));
+
+                                    generateImageToIngestEvent->setTimePositionInSeconds(timePositionInSeconds);
+                                    generateImageToIngestEvent->setEncodingProfilesSet(encodingProfilesSet);
+                                    generateImageToIngestEvent->setSourceImageWidth(sourceImageWidth);
+                                    generateImageToIngestEvent->setSourceImageHeight(sourceImageHeight);
+
+                                    shared_ptr<Event2>    event = dynamic_pointer_cast<Event2>(generateImageToIngestEvent);
+                                    _multiEventsSet->addEvent(event);
+
+                                    _logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (GENERATEIMAGETOINGESTEVENT) to generate the screenshot"
+                                        + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+                                        + ", imageFileName: " + imageFileName
+                                        + ", getEventKey().first: " + to_string(event->getEventKey().first)
+                                        + ", getEventKey().second: " + to_string(event->getEventKey().second));
+                                }
+                            }
+                            catch(exception e)
+                            {
+                                _logger->error(__FILEREF__ + "Prepare generation image to ingest failed"
+                                    + ", screenshotIndex: " + to_string(screenshotIndex)
+                                );
+                            }
+                        }
                     }
                     else
                     {
