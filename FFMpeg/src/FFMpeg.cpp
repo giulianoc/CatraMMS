@@ -628,8 +628,7 @@ int FFMpeg::getEncodingProgress()
     return encodingPercentage;
 }
 
-int64_t FFMpeg::getVideoOrAudioDurationInMilliSeconds(
-    string mmsAssetPathName)
+tuple<int64_t,int,int> FFMpeg::getMediaInfo(string mmsAssetPathName)
 {
     size_t fileNameIndex = mmsAssetPathName.find_last_of("/");
     if (fileNameIndex == string::npos)
@@ -643,8 +642,8 @@ int64_t FFMpeg::getVideoOrAudioDurationInMilliSeconds(
     
     string sourceFileName = mmsAssetPathName.substr(fileNameIndex + 1);
 
-    string      durationPathFileName =
-            string("/tmp/") + sourceFileName + ".duration";
+    string      detailsPathFileName =
+            string("/tmp/") + sourceFileName + ".json";
     
     /*
      * ffprobe:
@@ -658,9 +657,10 @@ int64_t FFMpeg::getVideoOrAudioDurationInMilliSeconds(
     */
     string ffprobeExecuteCommand = 
             _ffmpegPath + "/ffprobe "
-            + "-v quiet -print_format compact=print_section=0:nokey=1:escape=csv -show_entries format=duration "
+            // + "-v quiet -print_format compact=print_section=0:nokey=1:escape=csv -show_entries format=duration "
+            + "-v quiet -print_format json -show_streams -show_format "
             + mmsAssetPathName + " "
-            + "> " + durationPathFileName 
+            + "> " + detailsPathFileName 
             + " 2>&1"
             ;
 
@@ -689,7 +689,7 @@ int64_t FFMpeg::getVideoOrAudioDurationInMilliSeconds(
     catch(exception e)
     {
         string lastPartOfFfmpegOutputFile = getLastPartOfFile(
-                durationPathFileName, _charsToBeReadFromFfmpegErrorOutput);
+                detailsPathFileName, _charsToBeReadFromFfmpegErrorOutput);
         string errorMessage = __FILEREF__ + "ffprobe command failed"
                 + ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
                 + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
@@ -697,32 +697,251 @@ int64_t FFMpeg::getVideoOrAudioDurationInMilliSeconds(
         _logger->error(errorMessage);
 
         bool exceptionInCaseOfError = false;
-        FileIO::remove(durationPathFileName, exceptionInCaseOfError);
+        FileIO::remove(detailsPathFileName, exceptionInCaseOfError);
 
         throw e;
     }
 
-    int64_t      videoOrAudioDurationInMilliSeconds;
-    {        
-        ifstream durationFile(durationPathFileName);
+    int64_t durationInMilliSeconds;
+    int width;
+    int height;
+    {
+        // json output will be like:
+        /*
+            {
+                "streams": [
+                    {
+                        "index": 0,
+                        "codec_name": "mpeg4",
+                        "codec_long_name": "MPEG-4 part 2",
+                        "profile": "Advanced Simple Profile",
+                        "codec_type": "video",
+                        "codec_time_base": "1/25",
+                        "codec_tag_string": "XVID",
+                        "codec_tag": "0x44495658",
+                        "width": 712,
+                        "height": 288,
+                        "coded_width": 712,
+                        "coded_height": 288,
+                        "has_b_frames": 1,
+                        "sample_aspect_ratio": "1:1",
+                        "display_aspect_ratio": "89:36",
+                        "pix_fmt": "yuv420p",
+                        "level": 5,
+                        "chroma_location": "left",
+                        "refs": 1,
+                        "quarter_sample": "false",
+                        "divx_packed": "false",
+                        "r_frame_rate": "25/1",
+                        "avg_frame_rate": "25/1",
+                        "time_base": "1/25",
+                        "start_pts": 0,
+                        "start_time": "0.000000",
+                        "duration_ts": 142100,
+                        "duration": "5684.000000",
+                        "bit_rate": "873606",
+                        "nb_frames": "142100",
+                        "disposition": {
+                            "default": 0,
+                            "dub": 0,
+                            "original": 0,
+                            "comment": 0,
+                            "lyrics": 0,
+                            "karaoke": 0,
+                            "forced": 0,
+                            "hearing_impaired": 0,
+                            "visual_impaired": 0,
+                            "clean_effects": 0,
+                            "attached_pic": 0,
+                            "timed_thumbnails": 0
+                        }
+                    },
+                    {
+                        "index": 1,
+                        "codec_name": "mp3",
+                        "codec_long_name": "MP3 (MPEG audio layer 3)",
+                        "codec_type": "audio",
+                        "codec_time_base": "1/48000",
+                        "codec_tag_string": "U[0][0][0]",
+                        "codec_tag": "0x0055",
+                        "sample_fmt": "s16p",
+                        "sample_rate": "48000",
+                        "channels": 2,
+                        "channel_layout": "stereo",
+                        "bits_per_sample": 0,
+                        "r_frame_rate": "0/0",
+                        "avg_frame_rate": "0/0",
+                        "time_base": "3/125",
+                        "start_pts": 0,
+                        "start_time": "0.000000",
+                        "duration_ts": 236822,
+                        "duration": "5683.728000",
+                        "bit_rate": "163312",
+                        "nb_frames": "236822",
+                        "disposition": {
+                            "default": 0,
+                            "dub": 0,
+                            "original": 0,
+                            "comment": 0,
+                            "lyrics": 0,
+                            "karaoke": 0,
+                            "forced": 0,
+                            "hearing_impaired": 0,
+                            "visual_impaired": 0,
+                            "clean_effects": 0,
+                            "attached_pic": 0,
+                            "timed_thumbnails": 0
+                        }
+                    }
+                ],
+                "format": {
+                    "filename": "/Users/multi/VitadaCamper.avi",
+                    "nb_streams": 2,
+                    "nb_programs": 0,
+                    "format_name": "avi",
+                    "format_long_name": "AVI (Audio Video Interleaved)",
+                    "start_time": "0.000000",
+                    "duration": "5684.000000",
+                    "size": "745871360",
+                    "bit_rate": "1049783",
+                    "probe_score": 100,
+                    "tags": {
+                        "encoder": "VirtualDubMod 1.5.10.2 (build 2540/release)"
+                    }
+                }
+            }
+         */
+
+        ifstream detailsFile(detailsPathFileName);
         stringstream buffer;
-        buffer << durationFile.rdbuf();
+        buffer << detailsFile.rdbuf();
         
-        _logger->info(__FILEREF__ + "Duration found"
+        _logger->info(__FILEREF__ + "Details found"
             + ", mmsAssetPathName: " + mmsAssetPathName
-            + ", durationInSeconds: " + buffer.str()
+            + ", details: " + buffer.str()
         );
 
-        double durationInSeconds = atof(buffer.str().c_str());
+        Json::Value detailsRoot;
+        try
+        {
+            Json::CharReaderBuilder builder;
+            Json::CharReader* reader = builder.newCharReader();
+            string errors;
+
+            bool parsingSuccessful = reader->parse(buffer.str().c_str(),
+                    buffer.str().c_str() + buffer.str().size(), 
+                    &detailsRoot, &errors);
+            delete reader;
+
+            if (!parsingSuccessful)
+            {
+                string errorMessage = __FILEREF__ + "failed to parse the media details"
+                        + ", mmsAssetPathName: " + mmsAssetPathName
+                        + ", errors: " + errors
+                        + ", buffer.str(): " + buffer.str()
+                        ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+        catch(...)
+        {
+            string errorMessage = string("media json is not well format")
+                    + ", mmsAssetPathName: " + mmsAssetPathName
+                    + ", buffer.str(): " + buffer.str()
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
         
-        videoOrAudioDurationInMilliSeconds  = durationInSeconds * 1000;
-        
+        string field = "format";
+        if (!isMetadataPresent(detailsRoot, field))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", mmsAssetPathName: " + mmsAssetPathName
+                    + ", Field: " + field;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        Json::Value formatRoot = detailsRoot[field];
+
+        field = "duration";
+        if (!isMetadataPresent(formatRoot, field))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", mmsAssetPathName: " + mmsAssetPathName
+                    + ", Field: " + field;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        string duration = formatRoot.get(field, "XXX").asString();
+        durationInMilliSeconds = atoll(duration.c_str()) * 1000;
+
+        field = "streams";
+        if (!isMetadataPresent(detailsRoot, field))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", mmsAssetPathName: " + mmsAssetPathName
+                    + ", Field: " + field;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        Json::Value streamsRoot = detailsRoot[field];
+        for(int streamIndex = 0; streamIndex < streamsRoot.size(); streamIndex++) 
+        {
+            Json::Value streamRoot = streamsRoot[streamIndex];
+            
+            field = "codec_type";
+            if (!isMetadataPresent(streamRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", mmsAssetPathName: " + mmsAssetPathName
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            string codecType = streamRoot.get(field, "XXX").asString();
+            
+            if (codecType != "video")
+                continue;
+            
+            field = "width";
+            if (!isMetadataPresent(streamRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", mmsAssetPathName: " + mmsAssetPathName
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            width = streamRoot.get(field, "XXX").asInt();
+            
+            field = "height";
+            if (!isMetadataPresent(streamRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", mmsAssetPathName: " + mmsAssetPathName
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            height = streamRoot.get(field, "XXX").asInt();
+        }
+
         bool exceptionInCaseOfError = false;
-        FileIO::remove(durationPathFileName, exceptionInCaseOfError);
+        FileIO::remove(detailsPathFileName, exceptionInCaseOfError);
     }
 
     
-    return videoOrAudioDurationInMilliSeconds;
+    return make_tuple(durationInMilliSeconds, width, height);
 }
 
 void FFMpeg::generateScreenshotToIngest(

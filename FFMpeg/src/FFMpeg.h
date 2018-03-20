@@ -57,8 +57,7 @@ public:
 
     int getEncodingProgress();
 
-    int64_t getVideoOrAudioDurationInMilliSeconds(
-        string mmsAssetPathName);
+    tuple<int64_t,int,int> getMediaInfo(string mmsAssetPathName);
 
     void generateScreenshotToIngest(
         string imagePathName,

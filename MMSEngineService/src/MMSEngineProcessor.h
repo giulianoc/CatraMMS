@@ -57,14 +57,17 @@ private:
 
     void handleCheckEncodingEvent ();
 
-    void handleGenerateImageToIngestEvent (
-        shared_ptr<GenerateImageToIngestEvent> generateImageToIngestEvent);
-
     string generateImageMetadataToIngest(
-        string title,
-        string imagePathName,
-        string imageFileName,
-        string encodingProfilesSet
+        int64_t ingestionJobKey,
+        Json::Value screenshotRoot,
+        string imageFileName
+    );
+
+    void generateAndIngestScreenshot(
+        int64_t ingestionJobKey,
+        shared_ptr<Customer> customer,
+        Json::Value metadataRoot,
+        int64_t sourceMediaItemKey
     );
 
     pair<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType>  validateMetadata(Json::Value root);

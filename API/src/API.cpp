@@ -91,7 +91,7 @@ int main(int argc, char** argv)
     logger->info(__FILEREF__ + "Creating MMSStorage"
             );
     shared_ptr<MMSStorage> mmsStorage = make_shared<MMSStorage>(
-            configuration, logger);
+            configuration, mmsEngineDBFacade, logger);
 
     FCGX_Init();
 

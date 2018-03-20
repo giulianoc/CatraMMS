@@ -6,10 +6,12 @@
 
 MMSStorage::MMSStorage(
         Json::Value configuration,
+        shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
         shared_ptr<spdlog::logger> logger) 
 {
 
     _logger             = logger;
+    _mmsEngineDBFacade  = mmsEngineDBFacade;
 
     _hostName = System::getHostName();
 
@@ -148,6 +150,25 @@ string MMSStorage::getDownloadRootRepository(void) {
 
 string MMSStorage::getIngestionRootRepository(void) {
     return _ingestionRootRepository;
+}
+
+string MMSStorage::getPhysicalPath(int64_t mediaItemKey,
+        int64_t encodingProfileKey)
+{    
+    tuple<int,string,string,string> storageDetails =
+        _mmsEngineDBFacade->getStorageDetails(mediaItemKey, encodingProfileKey);
+
+    int mmsPartitionNumber;
+    string customerDirectoryName;
+    string relativePath;
+    string fileName;
+    tie(mmsPartitionNumber, customerDirectoryName, relativePath, fileName) = storageDetails;
+
+    return getMMSAssetPathName(
+        mmsPartitionNumber,
+        customerDirectoryName,
+        relativePath,
+        fileName);
 }
 
 string MMSStorage::getCustomerIngestionRepository(shared_ptr<Customer> customer)

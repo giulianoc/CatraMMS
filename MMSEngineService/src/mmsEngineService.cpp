@@ -88,23 +88,10 @@ int main (int iArgc, char *pArgv [])
     shared_ptr<MMSEngineDBFacade>       mmsEngineDBFacade = make_shared<MMSEngineDBFacade>(
             configuration, logger);
     
-    /*
-    #ifdef __APPLE__
-        string storageRootPath ("/Users/multi/GestioneProgetti/Development/catrasoftware/storage/");
-    #else
-        string storageRootPath ("/home/giuliano/storage/");
-    #endif
-     */
     logger->info(__FILEREF__ + "Creating MMSStorage"
             );
     shared_ptr<MMSStorage>       mmsStorage = make_shared<MMSStorage>(
-            configuration, logger);
-
-    /*
-    logger->info(__FILEREF__ + "Creating MMSEngine"
-            );
-    shared_ptr<MMSEngine>       mmsEngine = make_shared<MMSEngine>(mmsEngineDBFacade, logger);
-    */
+            configuration, mmsEngineDBFacade, logger);
     
     logger->info(__FILEREF__ + "Creating MultiEventsSet"
         + ", addDestination: " + MMSENGINEPROCESSORNAME

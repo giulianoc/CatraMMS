@@ -28,6 +28,7 @@ public:
 public:
     MMSStorage (
             Json::Value configuration,
+            shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
             shared_ptr<spdlog::logger> logger);
 
     ~MMSStorage (void);
@@ -50,6 +51,9 @@ public:
 
     string getDoneRootRepository (void);
 
+    string getPhysicalPath(int64_t mediaItemKey,
+        int64_t encodingProfileKey);
+    
     void refreshPartitionsFreeSizes (void);
 
     void moveContentInRepository (
@@ -124,6 +128,7 @@ public:
 
 private:
     shared_ptr<spdlog::logger>  _logger;
+    shared_ptr<MMSEngineDBFacade>   _mmsEngineDBFacade;
 
     string                      _hostName;
 

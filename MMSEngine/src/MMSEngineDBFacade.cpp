@@ -3293,7 +3293,11 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                 logicalType = contentIngestion.get("LogicalType", "XXX").asString();
 
             {
-                encodingProfilesSet = contentIngestion.get("EncodingProfilesSet", "XXX").asString();
+                if (isMetadataPresent(contentIngestion, "EncodingProfilesSet"))
+                    encodingProfilesSet = contentIngestion.get("EncodingProfilesSet", "XXX").asString();
+                else
+                    encodingProfilesSet = "customerDefault";
+                
                 if (encodingProfilesSet == "systemDefault")
                 {
                     lastSQLCommand = 
@@ -3799,6 +3803,99 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
     }
     
     return mediaItemKeyAndPhysicalPathKey;
+}
+
+tuple<int,string,string,string> MMSEngineDBFacade::getStorageDetails(
+        int64_t mediaItemKey,
+        int64_t encodingProfileKey
+)
+{
+        
+    string      lastSQLCommand;
+
+    shared_ptr<MySQLConnection> conn;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+
+        int64_t customerKey;
+        int mmsPartitionNumber;
+        string relativePath;
+        string fileName;
+        {
+            lastSQLCommand = 
+                "select mi.CustomerKey, pp.MMSPartitionNumber, pp.RelativePath, pp.FileName "
+                "from MMS_MediaItems mi, MMS_PhysicalPaths pp "
+                "where mi.mediaItemKey = pp.mediaItemKey and mi.MediaItemKey = ? and pp.EncodingProfileKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+            if (encodingProfileKey == -1)
+                preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
+            else
+                preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
+            
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                customerKey = resultSet->getInt64("CustomerKey");
+                mmsPartitionNumber = resultSet->getInt("MMSPartitionNumber");
+                relativePath = resultSet->getString("RelativePath");
+                fileName = resultSet->getString("FileName");
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "MediaItemKey/EncodingProfileKey are not present"
+                    + ", mediaItemKey: " + to_string(mediaItemKey)
+                    + ", encodingProfileKey: " + to_string(encodingProfileKey)
+                    + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }
+        }
+
+        shared_ptr<Customer> customer = getCustomer(customerKey);
+
+        _connectionPool->unborrow(conn);
+
+        return make_tuple(mmsPartitionNumber, customer->_directoryName, relativePath, fileName);
+    }
+    catch(sql::SQLException se)
+    {
+        _connectionPool->unborrow(conn);
+
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw se;
+    }    
+    catch(runtime_error e)
+    {
+        _connectionPool->unborrow(conn);
+
+        _logger->error(__FILEREF__ + "exception"
+            + ", e.what: " + e.what()
+        );
+
+        throw e;
+    }    
+    catch(exception e)
+    {        
+        _connectionPool->unborrow(conn);
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
+    }        
 }
 
 int64_t MMSEngineDBFacade::saveEncodedContentMetadata(

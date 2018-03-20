@@ -525,6 +525,11 @@ public:
         int imageWidth,
         int imageHeight);
 
+    tuple<int,string,string,string> getStorageDetails(
+        int64_t mediaItemKey,
+        int64_t encodingProfileKey
+    );
+
     int64_t saveEncodedContentMetadata(
         int64_t customerKey,
         int64_t mediaItemKey,
