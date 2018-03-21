@@ -945,6 +945,11 @@ tuple<int64_t,int,int> FFMpeg::getMediaInfo(string mmsAssetPathName)
         FileIO::remove(detailsPathFileName, exceptionInCaseOfError);
     }
 
+    _logger->info(__FILEREF__ + "FFMpeg::getMediaInfo"
+        + ", durationInMilliSeconds: " + to_string(durationInMilliSeconds)
+        + ", width: " + to_string(width)
+        + ", height: " + to_string(height)
+    );
     
     return make_tuple(durationInMilliSeconds, width, height);
 }

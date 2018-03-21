@@ -3489,7 +3489,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             lastSQLCommand = 
                 "insert into MMS_MediaItems (MediaItemKey, UniqueName, CustomerKey, ContentProviderKey, Title, Ingester, Keywords, " 
                 "IngestionDate, ContentType, EncodingProfilesSetKey) values ("
-                "NULL, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?)";
+                "NULL, ?, ?, ?, ?, ?, ?, NULL, ?, ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -3599,7 +3599,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
 
             lastSQLCommand = 
                 "insert into MMS_PhysicalPaths(PhysicalPathKey, MediaItemKey, DRM, FileName, RelativePath, MMSPartitionNumber, SizeInBytes, EncodingProfileKey, CreationDate) values ("
-		"NULL, ?, ?, ?, ?, ?, ?, ?, NOW())";
+                "NULL, ?, ?, ?, ?, ?, ?, ?, NOW())";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -3822,7 +3822,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
 
             lastSQLCommand = 
                 "insert into MMS_EncodingJobs(EncodingJobKey, IngestionJobKey, SourcePhysicalPathKey, EncodingPriority, EncodingProfileKey, EncodingJobStart, EncodingJobEnd, EncodingProgress, Status, ProcessorMMS, FailuresNumber) "
-	        "select                       NULL,           ?,               ?,                     ?,                EncodingProfileKey, NULL,             NULL,           NULL,     ?,      NULL,         0 "
+                "select                       NULL,           ?,               ?,                     ?,                EncodingProfileKey, NULL,             NULL,           NULL,     ?,      NULL,         0 "
                 "from MMS_EncodingProfilesSetMapping where EncodingProfilesSetKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
