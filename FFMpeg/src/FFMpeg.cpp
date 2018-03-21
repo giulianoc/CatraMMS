@@ -821,6 +821,11 @@ tuple<int64_t,int,int> FFMpeg::getMediaInfo(string mmsAssetPathName)
             + ", details: " + buffer.str()
         );
 
+        string mediaDetails = buffer.str();
+        // LF and CR create problems to the json parser...
+        while (mediaDetails.back() == 10 || mediaDetails.back() == 13)
+            mediaDetails.pop_back();
+
         Json::Value detailsRoot;
         try
         {
@@ -828,8 +833,8 @@ tuple<int64_t,int,int> FFMpeg::getMediaInfo(string mmsAssetPathName)
             Json::CharReader* reader = builder.newCharReader();
             string errors;
 
-            bool parsingSuccessful = reader->parse(buffer.str().c_str(),
-                    buffer.str().c_str() + buffer.str().size(), 
+            bool parsingSuccessful = reader->parse(mediaDetails.c_str(),
+                    mediaDetails.c_str() + mediaDetails.size(), 
                     &detailsRoot, &errors);
             delete reader;
 
@@ -838,7 +843,7 @@ tuple<int64_t,int,int> FFMpeg::getMediaInfo(string mmsAssetPathName)
                 string errorMessage = __FILEREF__ + "failed to parse the media details"
                         + ", mmsAssetPathName: " + mmsAssetPathName
                         + ", errors: " + errors
-                        + ", buffer.str(): " + buffer.str()
+                        + ", mediaDetails: " + mediaDetails
                         ;
                 _logger->error(errorMessage);
 
@@ -849,7 +854,7 @@ tuple<int64_t,int,int> FFMpeg::getMediaInfo(string mmsAssetPathName)
         {
             string errorMessage = string("media json is not well format")
                     + ", mmsAssetPathName: " + mmsAssetPathName
-                    + ", buffer.str(): " + buffer.str()
+                    + ", mediaDetails: " + mediaDetails
                     ;
             _logger->error(__FILEREF__ + errorMessage);
 

@@ -1,7 +1,7 @@
 {
         "Type": "ContentIngestion",
         "ContentIngestion": {
-                "SourceURL": "https://github.com/mediaelement/mediaelement-files/blob/master/big_buck_bunny.mp4?raw=true",
+                "SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
                 "SourceFileName": "123456.mp4",
                 "ContentType": "video",
                 "userData": { "MyData": "this is my data" },
