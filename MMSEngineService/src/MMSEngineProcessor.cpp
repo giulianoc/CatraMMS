@@ -1827,11 +1827,16 @@ tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> MMSEngine
         mediaSourceFileName = contentIngestion.get(field, "XXX").asString();
 
         string httpPrefix ("http://");
+        string httpsPrefix ("https://");
         string ftpPrefix ("ftp://");
+        string ftpsPrefix ("ftps://");
         string movePrefix("move://");   // move:///dir1/dir2/.../file
         string copyPrefix("copy://");
         if (!mediaSourceURL.compare(0, httpPrefix.size(), httpPrefix)
-                || !mediaSourceURL.compare(0, ftpPrefix.size(), ftpPrefix))
+                || !mediaSourceURL.compare(0, httpsPrefix.size(), httpsPrefix)
+                || !mediaSourceURL.compare(0, ftpPrefix.size(), ftpPrefix)
+                || !mediaSourceURL.compare(0, ftpsPrefix.size(), ftpsPrefix)
+                )
         {
             nextIngestionStatus = MMSEngineDBFacade::IngestionStatus::SourceDownloadingInProgress;
         }
