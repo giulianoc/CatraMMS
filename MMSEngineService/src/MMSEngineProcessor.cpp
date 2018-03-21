@@ -274,10 +274,17 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         throw runtime_error(errorMessage);
                     }
 
-                    pair<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType> ingestionTypeAndContentType;
+                    tuple<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType,vector<int64_t>>
+                            ingestionTypeContentTypeAndDependencies;
+                    MMSEngineDBFacade::IngestionType ingestionType;
+                    MMSEngineDBFacade::ContentType contentType;
+                    vector<int64_t> dependencies;
                     try
                     {
-                        ingestionTypeAndContentType = validateMetadata(metadataRoot);
+                        ingestionTypeContentTypeAndDependencies = validateMetadata(metadataRoot);
+                        
+                        tie(ingestionType, contentType, dependencies) =
+                                ingestionTypeContentTypeAndDependencies;
                     }
                     catch(runtime_error e)
                     {
@@ -326,7 +333,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         throw runtime_error(errorMessage);
                     }
 
-                    if (ingestionTypeAndContentType.first ==
+                    if (ingestionType ==
                             MMSEngineDBFacade::IngestionType::ContentIngestion)
                     {
                         MMSEngineDBFacade::IngestionStatus nextIngestionStatus;
@@ -339,7 +346,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> mediaSourceDetails;
 
                             mediaSourceDetails = getMediaSourceDetails(customer,
-                                    ingestionTypeAndContentType.first, metadataRoot);
+                                    ingestionType, metadataRoot);
 
                             tie(nextIngestionStatus,
                                     mediaSourceURL, mediaSourceFileName, 
@@ -356,13 +363,13 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                             _logger->info(__FILEREF__ + "Update IngestionJob"
                                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                + ", IngestionType: " + MMSEngineDBFacade::toString(ingestionTypeAndContentType.first)
+                                + ", IngestionType: " + MMSEngineDBFacade::toString(ingestionType)
                                 + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
                                 + ", errorMessage: " + errorMessage
                                 + ", processorMMS: " + ""
                             );                            
                             _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                                    ingestionTypeAndContentType.first,
+                                    ingestionType,
                                     MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
                                     errorMessage,
                                     "" // processorMMS
@@ -381,13 +388,13 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                             _logger->info(__FILEREF__ + "Update IngestionJob"
                                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                + ", IngestionType: " + MMSEngineDBFacade::toString(ingestionTypeAndContentType.first)
+                                + ", IngestionType: " + MMSEngineDBFacade::toString(ingestionType)
                                 + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
                                 + ", errorMessage: " + errorMessage
                                 + ", processorMMS: " + ""
                             );                            
                             _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                                    ingestionTypeAndContentType.first,
+                                    ingestionType,
                                     MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
                                     errorMessage,
                                     "" // processorMMS
@@ -405,13 +412,13 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 _logger->info(__FILEREF__ + "Update IngestionJob"
                                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                    + ", IngestionType: " + MMSEngineDBFacade::toString(ingestionTypeAndContentType.first)
+                                    + ", IngestionType: " + MMSEngineDBFacade::toString(ingestionType)
                                     + ", IngestionStatus: " + MMSEngineDBFacade::toString(nextIngestionStatus)
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + processorMMS
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                                        ingestionTypeAndContentType.first,
+                                        ingestionType,
                                         nextIngestionStatus, 
                                         errorMessage,
                                         processorMMS
@@ -428,13 +435,13 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 _logger->info(__FILEREF__ + "Update IngestionJob"
                                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                    + ", IngestionType: " + MMSEngineDBFacade::toString(ingestionTypeAndContentType.first)
+                                    + ", IngestionType: " + MMSEngineDBFacade::toString(ingestionType)
                                     + ", IngestionStatus: " + MMSEngineDBFacade::toString(nextIngestionStatus)
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + processorMMS
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                                        ingestionTypeAndContentType.first,
+                                        ingestionType,
                                         nextIngestionStatus, 
                                         errorMessage,
                                         processorMMS
@@ -451,13 +458,13 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 _logger->info(__FILEREF__ + "Update IngestionJob"
                                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                    + ", IngestionType: " + MMSEngineDBFacade::toString(ingestionTypeAndContentType.first)
+                                    + ", IngestionType: " + MMSEngineDBFacade::toString(ingestionType)
                                     + ", IngestionStatus: " + MMSEngineDBFacade::toString(nextIngestionStatus)
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + processorMMS
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                                        ingestionTypeAndContentType.first,
+                                        ingestionType,
                                         nextIngestionStatus, 
                                         errorMessage,
                                         processorMMS
@@ -474,13 +481,13 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 _logger->info(__FILEREF__ + "Update IngestionJob"
                                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                    + ", IngestionType: " + MMSEngineDBFacade::toString(ingestionTypeAndContentType.first)
+                                    + ", IngestionType: " + MMSEngineDBFacade::toString(ingestionType)
                                     + ", IngestionStatus: " + MMSEngineDBFacade::toString(nextIngestionStatus)
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + processorMMS
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                                        ingestionTypeAndContentType.first,
+                                        ingestionType,
                                         nextIngestionStatus, 
                                         errorMessage,
                                         processorMMS
@@ -498,12 +505,26 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             throw runtime_error(errorMessage);
                         }
                     }
-                    else if (ingestionTypeAndContentType.first == 
+                    else if (ingestionType == 
                             MMSEngineDBFacade::IngestionType::Screenshot)
                     {
                         if (mediaItemKeysDependency == "")
                         {
                             // mediaItemKeysDependency will be filled
+                            
+                            // we are sure we have one element inside the vector because metadata were validated
+                            string dependency = to_string(dependencies.back());
+                            string processorMMS = "";
+
+                            _logger->info(__FILEREF__ + "Update IngestionJob"
+                                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                + ", dependency: " + dependency
+                                + ", processorMMS: " + processorMMS
+                            );                            
+                            _mmsEngineDBFacade->updateIngestionJobDependencies (ingestionJobKey, 
+                                    dependency,
+                                    processorMMS
+                                    );
                         }
                         else
                         {
@@ -529,13 +550,13 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 _logger->info(__FILEREF__ + "Update IngestionJob"
                                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                    + ", IngestionType: " + MMSEngineDBFacade::toString(ingestionTypeAndContentType.first)
+                                    + ", IngestionType: " + MMSEngineDBFacade::toString(ingestionType)
                                     + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                                        ingestionTypeAndContentType.first,
+                                        ingestionType,
                                         MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
                                         errorMessage,
                                         "" // processorMMS
@@ -549,7 +570,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                     {
                         string errorMessage = string("Unknown IngestionType")
                                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                + ", ingestionTypeAndContentType.first: " + MMSEngineDBFacade::toString(ingestionTypeAndContentType.first);
+                                + ", ingestionType: " + MMSEngineDBFacade::toString(ingestionType);
                         _logger->error(__FILEREF__ + errorMessage);
 
                         _logger->info(__FILEREF__ + "Update IngestionJob"
@@ -642,7 +663,11 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
     }
                     
     string      metadataFileContent;
-    pair<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType> ingestionTypeAndContentType;
+    tuple<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType,vector<int64_t>>
+            ingestionTypeContentTypeAndDependencies;
+    MMSEngineDBFacade::IngestionType ingestionType;
+    MMSEngineDBFacade::ContentType contentType;
+    vector<int64_t> dependencies;
     Json::Value metadataRoot;
     try
     {
@@ -667,7 +692,10 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             throw runtime_error(errorMessage);
         }
 
-        ingestionTypeAndContentType = validateMetadata(metadataRoot);
+        ingestionTypeContentTypeAndDependencies = validateMetadata(metadataRoot);
+        
+        tie(ingestionType, contentType, dependencies) =
+                ingestionTypeContentTypeAndDependencies;
     }
     catch(runtime_error e)
     {
@@ -722,7 +750,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int>
             mediaSourceDetails = getMediaSourceDetails(
                 localAssetIngestionEvent->getCustomer(),
-                ingestionTypeAndContentType.first, metadataRoot);
+                ingestionType, metadataRoot);
         
         tie(nextIngestionStatus,
                 mediaSourceURL, mediaSourceFileName, 
@@ -881,8 +909,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
     int64_t videoOrAudioDurationInMilliSeconds = -1;
     int imageWidth = -1;
     int imageHeight = -1;
-    if (ingestionTypeAndContentType.second == MMSEngineDBFacade::ContentType::Video 
-            || ingestionTypeAndContentType.second == MMSEngineDBFacade::ContentType::Audio)
+    if (contentType == MMSEngineDBFacade::ContentType::Video 
+            || contentType == MMSEngineDBFacade::ContentType::Audio)
     {
         try
         {
@@ -940,7 +968,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             throw e;
         }
     }
-    else if (ingestionTypeAndContentType.second == MMSEngineDBFacade::ContentType::Image)
+    else if (contentType == MMSEngineDBFacade::ContentType::Image)
     {
         try
         {
@@ -1495,7 +1523,6 @@ string MMSEngineProcessor::generateImageMetadataToIngest(
     string imageMetadata = string("")
         + "{"
             + "\"Type\": \"ContentIngestion\","
-            + "\"Version\": \"1.0\","
             + "\"ContentIngestion\": {"
                 + "\"Title\": \"" + title + "\","
                 + "\"ContentType\": \"image\","
@@ -1542,13 +1569,15 @@ void MMSEngineProcessor::handleCheckEncodingEvent ()
     _pActiveEncodingsManager->addEncodingItems(encodingItems);
 }
 
-pair<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType> MMSEngineProcessor::validateMetadata(
-    Json::Value metadataRoot)
+tuple<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType,vector<int64_t>> 
+        MMSEngineProcessor::validateMetadata(Json::Value metadataRoot)
 {
-    pair<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType> ingestionTypeAndContentType;
+    tuple<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType,vector<int64_t>> 
+            ingestionTypeContentTypeAndDependencies;
     
     MMSEngineDBFacade::IngestionType    ingestionType;
     MMSEngineDBFacade::ContentType      contentType;
+    vector<int64_t>                     dependencies;
 
     string field = "Type";
     if (!_mmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
@@ -1563,9 +1592,9 @@ pair<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType> MMSEngineP
     string type = metadataRoot.get("Type", "XXX").asString();
     if (type == "ContentIngestion")
         ingestionType = MMSEngineDBFacade::IngestionType::ContentIngestion;
+    else if (type == "Screenshot")
+        ingestionType = MMSEngineDBFacade::IngestionType::Screenshot;
     /*
-    else if (type == "ContentUpdate")
-        ingestionType = MMSEngineDBFacade::IngestionType::ContentUpdate;
     else if (type == "ContentRemove")
         ingestionType = MMSEngineDBFacade::IngestionType::ContentRemove;
     */
@@ -1578,17 +1607,6 @@ pair<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType> MMSEngineP
         throw runtime_error(errorMessage);
     }
 
-    field = "Version";
-    if (!_mmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
-    {
-        string errorMessage = __FILEREF__ + "Field is not present or it is wrong"
-                + ", Field: " + field;
-        _logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-
-    // MMSEngineDBFacade::ContentType contentType = MMSEngineDBFacade::ContentType::Video;
     if (ingestionType == MMSEngineDBFacade::IngestionType::ContentIngestion)
     {
         string field = "ContentIngestion";
@@ -1601,16 +1619,31 @@ pair<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType> MMSEngineP
             throw runtime_error(errorMessage);
         }
 
-        Json::Value contentIngestion = metadataRoot[field]; 
+        Json::Value contentIngestionRoot = metadataRoot[field]; 
 
-        contentType = validateContentIngestionMetadata(contentIngestion);
+        contentType = validateContentIngestionMetadata(contentIngestionRoot);
+    }
+    else if (ingestionType == MMSEngineDBFacade::IngestionType::Screenshot)
+    {
+        string field = "Screenshot";
+        if (!_mmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        Json::Value screenshotRoot = metadataRoot[field]; 
+
+        contentType = validateScreenshotMetadata(screenshotRoot, dependencies);
     }
     
-    ingestionTypeAndContentType.first = ingestionType;
-    ingestionTypeAndContentType.second = contentType;
+    ingestionTypeContentTypeAndDependencies = make_tuple(ingestionType, contentType, dependencies);
 
     
-    return ingestionTypeAndContentType;
+    return ingestionTypeContentTypeAndDependencies;
 }
 
 MMSEngineDBFacade::ContentType MMSEngineProcessor::validateContentIngestionMetadata(
@@ -1620,17 +1653,17 @@ MMSEngineDBFacade::ContentType MMSEngineProcessor::validateContentIngestionMetad
     
     MMSEngineDBFacade::ContentType         contentType;
     
-    vector<string> contentIngestionMandatoryFields = {
-        "Title",
+    vector<string> mandatoryFields = {
+        "SourceURL",
         "SourceFileName",
         "ContentType"
     };
-    for (string contentIngestionField: contentIngestionMandatoryFields)
+    for (string mandatoryField: mandatoryFields)
     {
-        if (!_mmsEngineDBFacade->isMetadataPresent(contentIngestion, contentIngestionField))
+        if (!_mmsEngineDBFacade->isMetadataPresent(contentIngestion, mandatoryField))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + contentIngestionField;
+                    + ", Field: " + mandatoryField;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -1673,6 +1706,86 @@ MMSEngineDBFacade::ContentType MMSEngineProcessor::validateContentIngestionMetad
             }
         }
     }
+
+    /*
+    // Territories
+    {
+        field = "Territories";
+        if (isMetadataPresent(contentIngestion, field))
+        {
+            const Json::Value territories = contentIngestion[field];
+            
+            for( Json::ValueIterator itr = territories.begin() ; itr != territories.end() ; itr++ ) 
+            {
+                Json::Value territory = territories[territoryIndex];
+            }
+        
+    }
+    */
+            
+    return contentType;
+}
+
+MMSEngineDBFacade::ContentType MMSEngineProcessor::validateScreenshotMetadata(
+    Json::Value screenshotRoot, vector<int64_t>& dependencies)
+{
+    // see sample in directory samples
+    
+    MMSEngineDBFacade::ContentType         contentType;
+    
+    vector<string> mandatoryFields = {
+        "UniqueName",
+        "SourceFileName"
+    };
+    for (string mandatoryField: mandatoryFields)
+    {
+        if (!_mmsEngineDBFacade->isMetadataPresent(screenshotRoot, mandatoryField))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + mandatoryField;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+
+    string field = "UniqueName";
+    string uniqueName = screenshotRoot.get(field, "XXX").asString();
+    
+    pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndcontentType;
+    try
+    {
+        mediaItemKeyAndcontentType = _mmsEngineDBFacade->getMediaItemKeyDetails(uniqueName);        
+    }
+    catch(MediaItemKeyNotFound e)
+    {
+        string errorMessage = __FILEREF__ + "UniqueName was not found"
+                + ", uniqueName: " + uniqueName;
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->getMediaItemKeyDetails failed"
+                + ", uniqueName: " + uniqueName;
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    
+    if (mediaItemKeyAndcontentType.second != MMSEngineDBFacade::ContentType::Video)
+    {
+        string errorMessage = __FILEREF__ + "UniqueName does not refer a video content"
+                + ", uniqueName: " + uniqueName;
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    
+    dependencies.push_back(mediaItemKeyAndcontentType.first);
+
+    contentType = MMSEngineDBFacade::ContentType::Image;
 
     /*
     // Territories

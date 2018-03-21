@@ -1,5 +1,5 @@
 {
-"Type": "Screenshot",
+	"Type": "Screenshot",
 	"Version": "1.0",
 	"Screenshot": {
 		// UniqueName or MediaItemKey has to be present and it identifies the video by which the screenshot has to be generated
@@ -16,7 +16,6 @@
 		"Description": "aaa",
 		"LogicalType": "Advertising",
 		"EncodingProfilesSet": "customerDefault",
-		"EncodingPriority": "low",
 		"ContentProviderName": "default",
 		"Territories": {
 			"default": {

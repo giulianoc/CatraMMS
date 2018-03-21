@@ -1475,7 +1475,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                             int64_t mediaItemKey = stoll(mediaItemKeysDependency);
 
                             lastSQLCommand = 
-                                "select  from MMS_MediaItemKeys where MediaItemKey = ?";
+                                "select MediaItemKey from MMS_MediaItems where MediaItemKey = ?";
                             shared_ptr<sql::PreparedStatement> preparedStatementMediaItems (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                             int queryParameterIndex = 1;
                             preparedStatementMediaItems->setInt64(queryParameterIndex++, mediaItemKey);
@@ -2009,6 +2009,76 @@ void MMSEngineDBFacade::updateIngestionJob (
     }    
 }
 
+void MMSEngineDBFacade::updateIngestionJobDependencies (
+        int64_t ingestionJobKey,
+        string dependencies,
+        string processorMMS)
+{
+    
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+
+        {
+            lastSQLCommand = 
+                "update MMS_IngestionJobs set MediaItemKeysDependency = ?, ProcessorMMS = ? where IngestionJobKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, dependencies);
+            if (processorMMS == "")
+                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+            else
+                preparedStatement->setString(queryParameterIndex++, processorMMS);
+            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+
+            int rowsUpdated = preparedStatement->executeUpdate();
+            if (rowsUpdated != 1)
+            {
+                // we tried to update a value but the same value was already in the table,
+                // in this case rowsUpdated will be 0
+                string errorMessage = __FILEREF__ + "no update was done"
+                        + ", dependencies: " + dependencies
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", rowsUpdated: " + to_string(rowsUpdated)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->warn(errorMessage);
+
+                // throw runtime_error(errorMessage);                    
+            }
+        }
+        
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        _connectionPool->unborrow(conn);
+
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw se;
+    }
+    catch(exception e)
+    {
+        _connectionPool->unborrow(conn);
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
+    }
+}
+
 bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress (
         int64_t ingestionJobKey,
         double downloadingPercentage)
@@ -2232,6 +2302,73 @@ void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred (
 
         throw e;
     }
+}
+
+pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyDetails(
+    string uniqueName)
+{
+    string      lastSQLCommand;
+        
+    shared_ptr<MySQLConnection> conn;
+    
+    pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndcontentType;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+
+        {
+            lastSQLCommand = 
+                "select MediaItemKey, ContentType from MMS_MediaItems where UniqueName = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, uniqueName);
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                mediaItemKeyAndcontentType.first = resultSet->getInt64("MediaItemKey");
+                mediaItemKeyAndcontentType.second = MMSEngineDBFacade::toContentType(resultSet->getString("ContentType"));
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "MediaItemKey is not found"
+                    + ", uniqueName: " + uniqueName
+                    + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw MediaItemKeyNotFound();                    
+            }            
+        }
+
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        _connectionPool->unborrow(conn);
+
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw se;
+    }
+    catch(exception e)
+    {
+        _connectionPool->unborrow(conn);
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
+    }
+    
+    return mediaItemKeyAndcontentType;
 }
 
 void MMSEngineDBFacade::getEncodingJobs(
@@ -3250,29 +3387,24 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
         _logger->info(__FILEREF__ + "Insert into MMS_MediaItems...");
         ContentType contentType;
         int64_t encodingProfileSetKey;
+        string uniqueName;
         {
             string title = "";
-            string subTitle = "";
             string ingester = "";
             string keywords = "";
-            string description = "";
             string sContentType;
-            string logicalType = "";
             string encodingProfilesSet;
+
+            if (isMetadataPresent(contentIngestion, "UniqueName"))
+                uniqueName = contentIngestion.get("UniqueName", "XXX").asString();
 
             title = contentIngestion.get("Title", "XXX").asString();
             
-            if (isMetadataPresent(contentIngestion, "SubTitle"))
-                subTitle = contentIngestion.get("SubTitle", "XXX").asString();
-
             if (isMetadataPresent(contentIngestion, "Ingester"))
                 ingester = contentIngestion.get("Ingester", "XXX").asString();
 
             if (isMetadataPresent(contentIngestion, "Keywords"))
                 keywords = contentIngestion.get("Keywords", "XXX").asString();
-
-            if (isMetadataPresent(contentIngestion, "Description"))
-                description = contentIngestion.get("Description", "XXX").asString();
 
             sContentType = contentIngestion.get("ContentType", "XXX").asString();
             try
@@ -3288,9 +3420,6 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
 
                 throw runtime_error(errorMessage);                    
             }            
-
-            if (isMetadataPresent(contentIngestion, "LogicalType"))
-                logicalType = contentIngestion.get("LogicalType", "XXX").asString();
 
             {
                 if (isMetadataPresent(contentIngestion, "EncodingProfilesSet"))
@@ -3358,19 +3487,16 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
 
 
             lastSQLCommand = 
-                "insert into MMS_MediaItems (MediaItemKey, CustomerKey, ContentProviderKey, GenreKey, Title, SubTitle, Ingester, Keywords, Description, " 
-                "IngestionDate, ContentType, LogicalType, EncodingProfilesSetKey) values ("
-                "NULL, ?, ?, NULL, ?, ?, ?, ?, ?, NULL, ?, ?, ?)";
+                "insert into MMS_MediaItems (MediaItemKey, UniqueName, CustomerKey, ContentProviderKey, Title, Ingester, Keywords, " 
+                "IngestionDate, ContentType, EncodingProfilesSetKey) values ("
+                "NULL, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, uniqueName);
             preparedStatement->setInt64(queryParameterIndex++, customer->_customerKey);
             preparedStatement->setInt64(queryParameterIndex++, contentProviderKey);
             preparedStatement->setString(queryParameterIndex++, title);
-            if (subTitle == "")
-                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-            else
-                preparedStatement->setString(queryParameterIndex++, subTitle);
             if (ingester == "")
                 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
             else
@@ -3379,15 +3505,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
             else
                 preparedStatement->setString(queryParameterIndex++, keywords);
-            if (description == "")
-                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-            else
-                preparedStatement->setString(queryParameterIndex++, description);
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
-            if (logicalType == "")
-                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-            else
-                preparedStatement->setString(queryParameterIndex++, logicalType);
             preparedStatement->setInt64(queryParameterIndex++, encodingProfileSetKey);
 
             preparedStatement->executeUpdate();
@@ -3395,25 +3513,26 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
         
         int64_t mediaItemKey = getLastInsertId(conn);
 
-        // ExternalKey
-        {            
-            if (isMetadataPresent(contentIngestion, "UniqueName"))
+        if (uniqueName == "")
+        {
+            lastSQLCommand = 
+                "update MMS_MediaItems set UniqueName = ? where MediaItemKey = ?";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, to_string(mediaItemKey));
+
+            int rowsUpdated = preparedStatement->executeUpdate();
+            if (rowsUpdated != 1)
             {
-                string externalKey = contentIngestion.get("UniqueName", "XXX").asString();
-                if (externalKey != "")
-                {
-                    lastSQLCommand = 
-                        "insert into MMS_ExternalKeyMapping (CustomerKey, MediaItemKey, ExternalKey) values ("
-                        "?, ?, ?)";
+                string errorMessage = __FILEREF__ + "no update was done"
+                        + ", mediaItemKey: " + to_string(mediaItemKey)
+                        + ", rowsUpdated: " + to_string(rowsUpdated)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
 
-                    shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                    int queryParameterIndex = 1;
-                    preparedStatement->setInt64(queryParameterIndex++, customer->_customerKey);
-                    preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
-                    preparedStatement->setString(queryParameterIndex++, externalKey);
-
-                    preparedStatement->executeUpdate();
-                }
+                throw runtime_error(errorMessage);                    
             }
         }
         
@@ -4649,30 +4768,6 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
         try
         {
-            lastSQLCommand = 
-                "create table if not exists MMS_Genres ("
-                    "GenreKey				BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
-                    "Name				VARCHAR (128) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
-                    "constraint MMS_Genres_PK PRIMARY KEY (GenreKey), "
-                    "UNIQUE (Name)) "
-                    "ENGINE=InnoDB";
-            statement->execute(lastSQLCommand);
-        }
-        catch(sql::SQLException se)
-        {
-            if (isRealDBError(se.what()))
-            {
-                _logger->error(__FILEREF__ + "SQL exception"
-                    + ", lastSQLCommand: " + lastSQLCommand
-                    + ", se.what(): " + se.what()
-                );
-
-                throw se;
-            }
-        }
-
-        try
-        {
             // CustomerKey is the owner of the content
             // ContentType: 0: video, 1: audio, 2: image, 3: application, 4: ringtone (it uses the same audio tables),
             //		5: playlist, 6: live
@@ -4684,17 +4779,14 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             lastSQLCommand = 
                 "create table if not exists MMS_MediaItems ("
                     "MediaItemKey  			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "UniqueName      			VARCHAR (256) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
                     "CustomerKey			BIGINT UNSIGNED NOT NULL,"
                     "ContentProviderKey			BIGINT UNSIGNED NOT NULL,"
-                    "GenreKey				BIGINT UNSIGNED NULL,"
                     "Title      			VARCHAR (256) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
-                    "SubTitle				MEDIUMTEXT CHARACTER SET utf8 COLLATE utf8_bin NULL,"
                     "Ingester				VARCHAR (128) NULL,"
                     "Keywords				VARCHAR (128) CHARACTER SET utf8 COLLATE utf8_bin NULL,"
-                    "Description			TEXT CHARACTER SET utf8 COLLATE utf8_bin NULL,"
                     "IngestionDate			TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "ContentType                        VARCHAR (32) NOT NULL,"
-                    "LogicalType			VARCHAR (32) NULL,"
                     "EncodingProfilesSetKey		BIGINT UNSIGNED NULL,"
                     "constraint MMS_MediaItems_PK PRIMARY KEY (MediaItemKey), "
                     "constraint MMS_MediaItems_FK foreign key (CustomerKey) "
@@ -4703,8 +4795,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                         "references MMS_ContentProviders (ContentProviderKey), "
                     "constraint MMS_MediaItems_FK3 foreign key (EncodingProfilesSetKey) "
                         "references MMS_EncodingProfilesSet (EncodingProfilesSetKey), "
-                    "constraint MMS_MediaItems_FK4 foreign key (GenreKey) "
-                        "references MMS_Genres (GenreKey)) "
+                    "UNIQUE (UniqueName)) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
@@ -4724,7 +4815,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         try
         {
             lastSQLCommand = 
-                "create index MMS_MediaItems_idx2 on MMS_MediaItems (ContentType, LogicalType, IngestionDate)";
+                "create index MMS_MediaItems_idx2 on MMS_MediaItems (ContentType, IngestionDate)";
             statement->execute(lastSQLCommand);
         }
         catch(sql::SQLException se)
@@ -4763,55 +4854,6 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         {
             lastSQLCommand = 
                 "create index MMS_MediaItems_idx4 on MMS_MediaItems (ContentType, Title)";
-            statement->execute(lastSQLCommand);
-        }
-        catch(sql::SQLException se)
-        {
-            if (isRealDBError(se.what()))
-            {
-                _logger->error(__FILEREF__ + "SQL exception"
-                    + ", lastSQLCommand: " + lastSQLCommand
-                    + ", se.what(): " + se.what()
-                );
-
-                throw se;
-            }
-        }
-
-        try
-        {
-            // create table MMS_ExternalKeyMapping
-            // CustomerKey is the owner of the content
-            lastSQLCommand = 
-                "create table if not exists MMS_ExternalKeyMapping ("
-                    "CustomerKey			BIGINT UNSIGNED NOT NULL,"
-                    "MediaItemKey 	 		BIGINT UNSIGNED NOT NULL,"
-                    "ExternalKey			VARCHAR (64) NOT NULL,"
-                    "constraint MMS_ExternalKeyMapping_PK PRIMARY KEY (CustomerKey, MediaItemKey), " 
-                    "constraint MMS_ExternalKeyMapping_FK foreign key (CustomerKey) "
-                        "references MMS_Customers (CustomerKey) on delete cascade, "
-                    "constraint MMS_ExternalKeyMapping_FK2 foreign key (MediaItemKey) "
-                        "references MMS_MediaItems (MediaItemKey) on delete cascade) "
-                    "ENGINE=InnoDB";
-            statement->execute(lastSQLCommand);
-        }
-        catch(sql::SQLException se)
-        {
-            if (isRealDBError(se.what()))
-            {
-                _logger->error(__FILEREF__ + "SQL exception"
-                    + ", lastSQLCommand: " + lastSQLCommand
-                    + ", se.what(): " + se.what()
-                );
-
-                throw se;
-            }
-        }
-        
-        try
-        {
-            lastSQLCommand = 
-                "create unique index MMS_ExternalKeyMapping_idx on MMS_ExternalKeyMapping (CustomerKey, ExternalKey)";
             statement->execute(lastSQLCommand);
         }
         catch(sql::SQLException se)

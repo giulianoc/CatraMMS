@@ -3,6 +3,7 @@
 #define MMSEngineProcessor_h
 
 #include <string>
+#include <vector>
 // #define SPDLOG_DEBUG_ON
 // #define SPDLOG_TRACE_ON
 #include "spdlog/spdlog.h"
@@ -70,9 +71,13 @@ private:
         int64_t sourceMediaItemKey
     );
 
-    pair<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType>  validateMetadata(Json::Value root);
+    tuple<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType,vector<int64_t>>  
+            validateMetadata(Json::Value root);
 
     MMSEngineDBFacade::ContentType validateContentIngestionMetadata(Json::Value encoding);
+
+    MMSEngineDBFacade::ContentType validateScreenshotMetadata(
+        Json::Value screenshotRoot, vector<int64_t>& dependencies);
 
     tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> getMediaSourceDetails(
         shared_ptr<Customer> customer,

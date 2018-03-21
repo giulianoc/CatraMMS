@@ -39,6 +39,13 @@ struct APIKeyNotFoundOrExpired: public exception {
     }; 
 };
 
+struct MediaItemKeyNotFound: public exception {    
+    char const* what() const throw() 
+    {
+        return "MediaItemKey was not found";
+    }; 
+};
+
 class MMSEngineDBFacade {
 
 public:
@@ -485,6 +492,11 @@ public:
         string errorMessage,
         string processorMMS);
 
+    void updateIngestionJobDependencies (
+        int64_t ingestionJobKey,
+        string dependencies,
+        string processorMMS);
+    
     bool updateIngestionJobSourceDownloadingInProgress (
         int64_t ingestionJobKey,
         double downloadingPercentage);
@@ -497,6 +509,8 @@ public:
         int64_t ingestionJobKey,
         bool sourceBinaryTransferred);
 
+    pair<int64_t,MMSEngineDBFacade::ContentType> getMediaItemKeyDetails(string uniqueName);
+    
     void getEncodingJobs(
         bool resetToBeDone,
         string processorMMS,
