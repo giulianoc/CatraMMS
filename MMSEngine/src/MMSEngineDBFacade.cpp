@@ -4779,7 +4779,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             lastSQLCommand = 
                 "create table if not exists MMS_MediaItems ("
                     "MediaItemKey  			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
-                    "UniqueName      			VARCHAR (256) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
+                    "UniqueName      			VARCHAR (128) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
                     "CustomerKey			BIGINT UNSIGNED NOT NULL,"
                     "ContentProviderKey			BIGINT UNSIGNED NOT NULL,"
                     "Title      			VARCHAR (256) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"

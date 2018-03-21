@@ -37,7 +37,7 @@ int main (int iArgc, char *pArgv [])
     }
     else if (iArgc == 3)
     {
-        if (strcmp (pArgv[1], "--nodaemon"))
+        if (!strcmp (pArgv[1], "--nodaemon"))
             noDaemon = true;
 
         configPathName = pArgv[2];
