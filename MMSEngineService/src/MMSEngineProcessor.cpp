@@ -2015,6 +2015,12 @@ RESUMING FILE TRANSFERS
 
                 // Setting the URL to retrive.
                 request.setOpt(new curlpp::options::Url(sourceReferenceURL));
+                string httpsPrefix("https");
+                if (sourceReferenceURL.compare(0, httpsPrefix.size(), httpsPrefix) == 0)
+                {
+                    _logger->info(__FILEREF__ + "Setting SslEngineDefault");
+                    request.setOpt(new curlpp::options::SslEngineDefault());
+                }
 
                 chrono::system_clock::time_point lastProgressUpdate = chrono::system_clock::now();
                 double lastPercentageUpdated = -1.0;
@@ -2046,6 +2052,12 @@ RESUMING FILE TRANSFERS
 
                 // Setting the URL to retrive.
                 request.setOpt(new curlpp::options::Url(sourceReferenceURL));
+                string httpsPrefix("https");
+                if (sourceReferenceURL.compare(0, httpsPrefix.size(), httpsPrefix) == 0)
+                {
+                    _logger->info(__FILEREF__ + "Setting SslEngineDefault");
+                    request.setOpt(new curlpp::options::SslEngineDefault());
+                }
 
                 chrono::system_clock::time_point lastTimeProgressUpdate = chrono::system_clock::now();
                 double lastPercentageUpdated = -1.0;
