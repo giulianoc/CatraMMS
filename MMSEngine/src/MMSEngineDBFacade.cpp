@@ -3520,7 +3520,8 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++, to_string(mediaItemKey));
+            preparedStatement->setString(queryParameterIndex++,mediaItemKey to_string(mediaItemKey));
+            preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
 
             int rowsUpdated = preparedStatement->executeUpdate();
             if (rowsUpdated != 1)
