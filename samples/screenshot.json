@@ -1,28 +1,8 @@
 {
 	"Type": "Screenshot",
-	"Version": "1.0",
 	"Screenshot": {
-		// UniqueName or MediaItemKey has to be present and it identifies the video by which the screenshot has to be generated
-		"UniqueName": "...",
-		"MediaItemKey": 2345,
-
-		"TimePositionInSeconds": 123.34,	// mandatory
-		"SourceFileName": "1.jpg",
-
-		"Title": "RiscaldamentoDiMaradona.mpg",
-		"SubTitle": "aaaa",
-		"Ingester": "aaaa",
-		"Keywords": "aaa",
-		"Description": "aaa",
-		"LogicalType": "Advertising",
-		"EncodingProfilesSet": "customerDefault",
-		"ContentProviderName": "default",
-		"Territories": {
-			"default": {
-			"startPublishing": "NOW",
-			"endPublishing": "FOREVER"
-			}
-		}
+		"UniqueName": "13",
+		"SourceFileName": "2523221.jpg",
+		"userData": { }
 	}
 }
-

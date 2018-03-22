@@ -411,6 +411,23 @@ void API::manageRequestAndResponse(
         
         ingestContent(request, get<0>(customerAndFlags), queryParameters, requestBody);
     }
+    else if (method == "ingestCommand")
+    {
+        bool isUserAPI = get<2>(customerAndFlags);
+        if (!isUserAPI)
+        {
+            string errorMessage = string("APIKey flags does not have the USER permission"
+                    ", isUserAPI: " + to_string(isUserAPI)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        
+        ingestCommand(request, get<0>(customerAndFlags), queryParameters, requestBody);
+    }
     else if (method == "uploadBinary")
     {
         bool isUserAPI = get<2>(customerAndFlags);
@@ -1308,6 +1325,64 @@ void API::ingestContent(
         string requestBody)
 {
     string api = "ingestContent";
+
+    _logger->info(__FILEREF__ + "Received " + api
+        + ", requestBody: " + requestBody
+    );
+
+    try
+    { 
+        int64_t ingestionJobKey = _mmsEngineDBFacade->addIngestionJob(
+                customer->_customerKey,
+                requestBody,
+                MMSEngineDBFacade::IngestionType::Unknown,
+                MMSEngineDBFacade::IngestionStatus::Start_Ingestion);
+
+        string responseBody = string("{ ")
+                + "\"ingestionJobKey\": " + to_string(ingestionJobKey) + " "
+                + "}";
+
+        sendSuccess(request, 201, responseBody);
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::ingestCommand(
+        FCGX_Request& request,
+        shared_ptr<Customer> customer,
+        unordered_map<string, string> queryParameters,
+        string requestBody)
+{
+    string api = "ingestCommand";
 
     _logger->info(__FILEREF__ + "Received " + api
         + ", requestBody: " + requestBody
