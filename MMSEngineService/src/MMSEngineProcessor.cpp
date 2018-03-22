@@ -906,7 +906,19 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         throw e;
     }
 
-    int64_t videoOrAudioDurationInMilliSeconds = -1;
+    int64_t durationInMilliSeconds = -1;
+    long bitRate;
+    string videoCodecName;
+    string videoProfile;
+    int videoWidth = -1;
+    int videoHeight = -1;
+    string videoAvgFrameRate;
+    long videoBitRate;
+    string audioCodecName;
+    long audioSampleRate;
+    int audioChannels;
+    long audioBitRate;
+
     int imageWidth = -1;
     int imageHeight = -1;
     if (contentType == MMSEngineDBFacade::ContentType::Video 
@@ -915,11 +927,12 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         try
         {
             FFMpeg ffmpeg (_configuration, _logger);
-            tuple<int64_t,int,int> mediaInfo = ffmpeg.getMediaInfo(mmsAssetPathName);
+            tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> mediaInfo =
+                ffmpeg.getMediaInfo(mmsAssetPathName);
 
-            int width;
-            int height;
-            tie(videoOrAudioDurationInMilliSeconds, width, height) = mediaInfo;
+            tie(durationInMilliSeconds, bitRate, 
+                videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
+                audioCodecName, audioSampleRate, audioChannels, audioBitRate) = mediaInfo;
         }
         catch(runtime_error e)
         {
@@ -966,7 +979,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             );
 
             throw e;
-        }
+        }        
     }
     else if (contentType == MMSEngineDBFacade::ContentType::Image)
     {
@@ -1104,13 +1117,28 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                     mediaSourceFileName,
                     mmsPartitionIndexUsed,
                     sizeInBytes,
-                    videoOrAudioDurationInMilliSeconds,
+                
+                    // video-audio
+                    durationInMilliSeconds,
+                    bitRate,
+                    videoCodecName,
+                    videoProfile,
+                    videoWidth,
+                    videoHeight,
+                    videoAvgFrameRate,
+                    videoBitRate,
+                    audioCodecName,
+                    audioSampleRate,
+                    audioChannels,
+                    audioBitRate,
+
+                    // image
                     imageWidth,
                     imageHeight
         );
-        
+
         mediaItemKey = mediaItemKeyAndPhysicalPathKey.first;
-        
+
         _logger->info(__FILEREF__ + "Added a new ingested content"
             + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
             + ", mediaItemKey: " + to_string(mediaItemKeyAndPhysicalPathKey.first)
@@ -1127,7 +1155,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             + ", mmsAssetPathName: " + mmsAssetPathName
         );
         FileIO::remove(mmsAssetPathName);
-        
+
         _logger->info(__FILEREF__ + "Update IngestionJob"
             + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
             + ", IngestionStatus: " + "End_IngestionFailure"
@@ -1137,7 +1165,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what(), "" // ProcessorMMS
         );
-        
+
         throw e;
     }
     catch(exception e)
@@ -1150,7 +1178,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             + ", mmsAssetPathName: " + mmsAssetPathName
         );
         FileIO::remove(mmsAssetPathName);
-        
+
         _logger->info(__FILEREF__ + "Update IngestionJob"
             + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
             + ", IngestionStatus: " + "End_IngestionFailure"
@@ -1160,7 +1188,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what(), "" // ProcessorMMS
         );
-        
+
         throw e;
     }
     
@@ -1341,10 +1369,22 @@ void MMSEngineProcessor::generateAndIngestScreenshot(
         int videoHeight;
         try
         {
-            FFMpeg ffmpeg (_configuration, _logger);
-            tuple<int64_t,int,int> mediaInfo = ffmpeg.getMediaInfo(sourcePhysicalPath);
-
-            tie(durationInMilliSeconds, videoWidth, videoHeight) = mediaInfo;
+            long bitRate;
+            string videoCodecName;
+            string videoProfile;
+            string videoAvgFrameRate;
+            long videoBitRate;
+            string audioCodecName;
+            long audioSampleRate;
+            int audioChannels;
+            long audioBitRate;
+        
+            tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
+                videoDetails = _mmsEngineDBFacade->getVideoDetails(sourceMediaItemKey);
+            
+            tie(durationInMilliSeconds, bitRate,
+                videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
+                audioCodecName, audioSampleRate, audioChannels, audioBitRate) = videoDetails;
         }
         catch(runtime_error e)
         {

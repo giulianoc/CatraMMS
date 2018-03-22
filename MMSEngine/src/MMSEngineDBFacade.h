@@ -510,7 +510,10 @@ public:
         bool sourceBinaryTransferred);
 
     pair<int64_t,MMSEngineDBFacade::ContentType> getMediaItemKeyDetails(string uniqueName);
-    
+
+    tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> getVideoDetails(
+        int64_t mediaItemKey);
+
     void getEncodingJobs(
         bool resetToBeDone,
         string processorMMS,
@@ -535,9 +538,25 @@ public:
         string mediaSourceFileName,
         int mmsPartitionIndexUsed,
         unsigned long sizeInBytes,
-        int64_t videoOrAudioDurationInMilliSeconds,
+        
+        // video-audio
+        int64_t durationInMilliSeconds,
+        long bitRate,
+        string videoCodecName,
+        string videoProfile,
+        int videoWidth,
+        int videoHeight,
+        string videoAvgFrameRate,
+        long videoBitRate,
+        string audioCodecName,
+        long audioSampleRate,
+        int audioChannels,
+        long audioBitRate,
+
+        // image
         int imageWidth,
-        int imageHeight);
+        int imageHeight
+    );
 
     tuple<int,string,string,string> getStorageDetails(
         int64_t mediaItemKey,

@@ -628,7 +628,7 @@ int FFMpeg::getEncodingProgress()
     return encodingPercentage;
 }
 
-tuple<int64_t,int,int> FFMpeg::getMediaInfo(string mmsAssetPathName)
+tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpeg::getMediaInfo(string mmsAssetPathName)
 {
     size_t fileNameIndex = mmsAssetPathName.find_last_of("/");
     if (fileNameIndex == string::npos)
@@ -702,9 +702,18 @@ tuple<int64_t,int,int> FFMpeg::getMediaInfo(string mmsAssetPathName)
         throw e;
     }
 
-    int64_t durationInMilliSeconds;
-    int width;
-    int height;
+    int64_t durationInMilliSeconds = -1;
+    long bitRate;
+    string videoCodecName;
+    string videoProfile;
+    int videoWidth = -1;
+    int videoHeight = -1;
+    string videoAvgFrameRate;
+    long videoBitRate;
+    string audioCodecName;
+    long audioSampleRate;
+    int audioChannels;
+    long audioBitRate;
     {
         // json output will be like:
         /*
@@ -886,6 +895,19 @@ tuple<int64_t,int,int> FFMpeg::getMediaInfo(string mmsAssetPathName)
         string duration = formatRoot.get(field, "XXX").asString();
         durationInMilliSeconds = atoll(duration.c_str()) * 1000;
 
+        field = "bit_rate";
+        if (!isMetadataPresent(formatRoot, field))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", mmsAssetPathName: " + mmsAssetPathName
+                    + ", Field: " + field;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        string bit_rate = formatRoot.get(field, "XXX").asString();
+        bitRate = atoll(bit_rate.c_str());
+        
         field = "streams";
         if (!isMetadataPresent(detailsRoot, field))
         {
@@ -897,6 +919,8 @@ tuple<int64_t,int,int> FFMpeg::getMediaInfo(string mmsAssetPathName)
             throw runtime_error(errorMessage);
         }
         Json::Value streamsRoot = detailsRoot[field];
+        bool videoFound = false;
+        bool audioFound = false;
         for(int streamIndex = 0; streamIndex < streamsRoot.size(); streamIndex++) 
         {
             Json::Value streamRoot = streamsRoot[streamIndex];
@@ -913,45 +937,182 @@ tuple<int64_t,int,int> FFMpeg::getMediaInfo(string mmsAssetPathName)
             }
             string codecType = streamRoot.get(field, "XXX").asString();
             
-            if (codecType != "video")
-                continue;
-            
-            field = "width";
-            if (!isMetadataPresent(streamRoot, field))
+            if (codecType == "video" && !videoFound)
             {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                        + ", mmsAssetPathName: " + mmsAssetPathName
-                        + ", Field: " + field;
-                _logger->error(errorMessage);
+                videoFound = true;
 
-                throw runtime_error(errorMessage);
+                field = "codec_name";
+                if (!isMetadataPresent(streamRoot, field))
+                {
+                    string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                            + ", mmsAssetPathName: " + mmsAssetPathName
+                            + ", Field: " + field;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+                videoCodecName = streamRoot.get(field, "XXX").asString();
+
+                field = "profile";
+                if (!isMetadataPresent(streamRoot, field))
+                {
+                    string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                            + ", mmsAssetPathName: " + mmsAssetPathName
+                            + ", Field: " + field;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+                videoProfile = streamRoot.get(field, "XXX").asString();
+
+                field = "width";
+                if (!isMetadataPresent(streamRoot, field))
+                {
+                    string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                            + ", mmsAssetPathName: " + mmsAssetPathName
+                            + ", Field: " + field;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+                videoWidth = streamRoot.get(field, "XXX").asInt();
+
+                field = "height";
+                if (!isMetadataPresent(streamRoot, field))
+                {
+                    string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                            + ", mmsAssetPathName: " + mmsAssetPathName
+                            + ", Field: " + field;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+                videoHeight = streamRoot.get(field, "XXX").asInt();
+                
+                field = "avg_frame_rate";
+                if (!isMetadataPresent(streamRoot, field))
+                {
+                    string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                            + ", mmsAssetPathName: " + mmsAssetPathName
+                            + ", Field: " + field;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+                videoAvgFrameRate = streamRoot.get(field, "XXX").asString();
+
+                field = "bit_rate";
+                if (!isMetadataPresent(streamRoot, field))
+                {
+                    string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                            + ", mmsAssetPathName: " + mmsAssetPathName
+                            + ", Field: " + field;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+                videoBitRate = stol(streamRoot.get(field, "XXX").asString());
             }
-            width = streamRoot.get(field, "XXX").asInt();
-            
-            field = "height";
-            if (!isMetadataPresent(streamRoot, field))
+            else if (codecType == "audio" && !audioFound)
             {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                        + ", mmsAssetPathName: " + mmsAssetPathName
-                        + ", Field: " + field;
-                _logger->error(errorMessage);
+                audioFound = true;
 
-                throw runtime_error(errorMessage);
+                field = "codec_name";
+                if (!isMetadataPresent(streamRoot, field))
+                {
+                    string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                            + ", mmsAssetPathName: " + mmsAssetPathName
+                            + ", Field: " + field;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+                audioCodecName = streamRoot.get(field, "XXX").asString();
+
+                field = "sample_rate";
+                if (!isMetadataPresent(streamRoot, field))
+                {
+                    string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                            + ", mmsAssetPathName: " + mmsAssetPathName
+                            + ", Field: " + field;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+                audioSampleRate = stol(streamRoot.get(field, "XXX").asString());
+
+                field = "channels";
+                if (!isMetadataPresent(streamRoot, field))
+                {
+                    string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                            + ", mmsAssetPathName: " + mmsAssetPathName
+                            + ", Field: " + field;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+                audioChannels = streamRoot.get(field, "XXX").asInt();
+                
+                field = "bit_rate";
+                if (!isMetadataPresent(streamRoot, field))
+                {
+                    string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                            + ", mmsAssetPathName: " + mmsAssetPathName
+                            + ", Field: " + field;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+                audioBitRate = stol(streamRoot.get(field, "XXX").asString());
             }
-            height = streamRoot.get(field, "XXX").asInt();
         }
 
         bool exceptionInCaseOfError = false;
         FileIO::remove(detailsPathFileName, exceptionInCaseOfError);
     }
 
+    /*
+    if (durationInMilliSeconds == -1)
+    {
+        string errorMessage = __FILEREF__ + "durationInMilliSeconds was not able to be retrieved from media"
+                + ", mmsAssetPathName: " + mmsAssetPathName
+                + ", durationInMilliSeconds: " + to_string(durationInMilliSeconds);
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    else if (width == -1 || height == -1)
+    {
+        string errorMessage = __FILEREF__ + "width/height were not able to be retrieved from media"
+                + ", mmsAssetPathName: " + mmsAssetPathName
+                + ", width: " + to_string(width)
+                + ", height: " + to_string(height)
+                ;
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+     */
+    
     _logger->info(__FILEREF__ + "FFMpeg::getMediaInfo"
         + ", durationInMilliSeconds: " + to_string(durationInMilliSeconds)
-        + ", width: " + to_string(width)
-        + ", height: " + to_string(height)
+        + ", bitRate: " + to_string(bitRate)
+        + ", videoCodecName: " + videoCodecName
+        + ", videoProfile: " + videoProfile
+        + ", videoWidth: " + to_string(videoWidth)
+        + ", videoHeight: " + to_string(videoHeight)
+        + ", videoAvgFrameRate: " + videoAvgFrameRate
+        + ", videoBitRate: " + to_string(videoBitRate)
+        + ", audioCodecName: " + audioCodecName
+        + ", audioSampleRate: " + to_string(audioSampleRate)
+        + ", audioChannels: " + to_string(audioChannels)
+        + ", audioBitRate: " + to_string(audioBitRate)
     );
     
-    return make_tuple(durationInMilliSeconds, width, height);
+    return make_tuple(durationInMilliSeconds, bitRate, 
+            videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
+            audioCodecName, audioSampleRate, audioChannels, audioBitRate
+            );
 }
 
 void FFMpeg::generateScreenshotToIngest(

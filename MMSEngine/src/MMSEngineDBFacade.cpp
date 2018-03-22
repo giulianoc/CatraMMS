@@ -2371,6 +2371,99 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
     return mediaItemKeyAndcontentType;
 }
 
+tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> MMSEngineDBFacade::getVideoDetails(
+    int64_t mediaItemKey)
+{
+    string      lastSQLCommand;
+        
+    shared_ptr<MySQLConnection> conn;
+    
+    try
+    {
+        conn = _connectionPool->borrow();	
+
+        int64_t durationInMilliSeconds;
+        long bitRate;
+        string videoCodecName;
+        string videoProfile;
+        int videoWidth;
+        int videoHeight;
+        string videoAvgFrameRate;
+        long videoBitRate;
+        string audioCodecName;
+        long audioSampleRate;
+        int audioChannels;
+        long audioBitRate;
+
+        {
+            lastSQLCommand = 
+                "select DurationInMilliSeconds, BitRate, Width, Height, AvgFrameRate, "
+                "VideoCodecName, VideoProfile, VideoBitRate, "
+                "AudioCodecName, AudioSampleRate, AudioChannels, AudioBitRate "
+                "from MMS_MediaItems where MediaItemKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                durationInMilliSeconds = resultSet->getInt64("DurationInMilliSeconds");
+                bitRate = resultSet->getInt("BitRate");
+                videoCodecName = resultSet->getString("VideoCodecName");
+                videoProfile = resultSet->getString("VideoProfile");
+                videoWidth = resultSet->getInt("Width");
+                videoHeight = resultSet->getInt("Height");
+                videoAvgFrameRate = resultSet->getString("AvgFrameRate");
+                videoBitRate = resultSet->getInt("VideoBitRate");
+                audioCodecName = resultSet->getString("AudioCodecName");
+                audioSampleRate = resultSet->getInt("AudioSampleRate");
+                audioChannels = resultSet->getInt("AudioChannels");
+                audioBitRate = resultSet->getInt("AudioBitRate");
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "MediaItemKey is not found"
+                    + ", mediaItemKey: " + to_string(mediaItemKey)
+                    + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw MediaItemKeyNotFound();                    
+            }            
+        }
+
+        _connectionPool->unborrow(conn);
+        
+        return make_tuple(durationInMilliSeconds, bitRate,
+            videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
+            audioCodecName, audioSampleRate, audioChannels, audioBitRate);
+    }
+    catch(sql::SQLException se)
+    {
+        _connectionPool->unborrow(conn);
+
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw se;
+    }
+    catch(exception e)
+    {
+        _connectionPool->unborrow(conn);
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
+    }    
+}
+
 void MMSEngineDBFacade::getEncodingJobs(
         bool resetToBeDone,
         string processorMMS,
@@ -3320,10 +3413,25 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
         string mediaSourceFileName,
         int mmsPartitionIndexUsed,
         unsigned long sizeInBytes,
-        int64_t videoOrAudioDurationInMilliSeconds,
+
+        // video-audio
+        int64_t durationInMilliSeconds,
+        long bitRate,
+        string videoCodecName,
+        string videoProfile,
+        int videoWidth,
+        int videoHeight,
+        string videoAvgFrameRate,
+        long videoBitRate,
+        string audioCodecName,
+        long audioSampleRate,
+        int audioChannels,
+        long audioBitRate,
+
+        // image
         int imageWidth,
         int imageHeight
-)
+        )
 {
     pair<int64_t,int64_t> mediaItemKeyAndPhysicalPathKey;
     
@@ -3541,32 +3649,94 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             if (contentType == ContentType::Video)
             {
                 lastSQLCommand = 
-                    "insert into MMS_VideoItems (MediaItemKey, DurationInMilliSeconds) values ("
-                    "?, ?)";
+                    "insert into MMS_VideoItems (MediaItemKey, DurationInMilliSeconds, BitRate, Width, Height, AvgFrameRate, "
+                    "VideoCodecName, VideoProfile, VideoBitRate, "
+                    "AudioCodecName, AudioSampleRate, AudioChannels, AudioBitRate) values ("
+                    "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
                 preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
-                if (videoOrAudioDurationInMilliSeconds == -1)
+                if (durationInMilliSeconds == -1)
                     preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
                 else
-                    preparedStatement->setInt64(queryParameterIndex++, videoOrAudioDurationInMilliSeconds);
+                    preparedStatement->setInt64(queryParameterIndex++, durationInMilliSeconds);
+                if (bitRate == -1)
+                    preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
+                else
+                    preparedStatement->setInt(queryParameterIndex++, bitRate);
+                if (videoWidth == -1)
+                    preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
+                else
+                    preparedStatement->setInt(queryParameterIndex++, videoWidth);
+                if (videoHeight == -1)
+                    preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
+                else
+                    preparedStatement->setInt(queryParameterIndex++, videoHeight);
+                if (videoAvgFrameRate == "")
+                    preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+                else
+                    preparedStatement->setString(queryParameterIndex++, videoAvgFrameRate);
+                if (videoCodecName == "")
+                    preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+                else
+                    preparedStatement->setString(queryParameterIndex++, videoCodecName);
+                if (videoProfile == "")
+                    preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+                else
+                    preparedStatement->setString(queryParameterIndex++, videoProfile);
+                if (videoBitRate == -1)
+                    preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
+                else
+                    preparedStatement->setInt(queryParameterIndex++, videoBitRate);
+                if (audioCodecName == "")
+                    preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+                else
+                    preparedStatement->setString(queryParameterIndex++, audioCodecName);
+                if (audioSampleRate == -1)
+                    preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
+                else
+                    preparedStatement->setInt(queryParameterIndex++, audioSampleRate);
+                if (audioChannels == -1)
+                    preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
+                else
+                    preparedStatement->setInt(queryParameterIndex++, audioChannels);
+                if (audioBitRate == -1)
+                    preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
+                else
+                    preparedStatement->setInt(queryParameterIndex++, audioBitRate);
 
                 preparedStatement->executeUpdate();
             }
             else if (contentType == ContentType::Audio)
             {
                 lastSQLCommand = 
-                    "insert into MMS_AudioItems (MediaItemKey, DurationInMilliSeconds) values ("
-                    "?, ?)";
+                    "insert into MMS_AudioItems (MediaItemKey, DurationInMilliSeconds, CodecName, BitRate, SampleRate, Channels) values ("
+                    "?, ?, ?, ?, ?, ?)";
 
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
                 preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
-                if (videoOrAudioDurationInMilliSeconds == -1)
+                if (durationInMilliSeconds == -1)
                     preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
                 else
-                    preparedStatement->setInt64(queryParameterIndex++, videoOrAudioDurationInMilliSeconds);
+                    preparedStatement->setInt64(queryParameterIndex++, durationInMilliSeconds);
+                if (audioCodecName == "")
+                    preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+                else
+                    preparedStatement->setString(queryParameterIndex++, audioCodecName);
+                if (audioBitRate == -1)
+                    preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
+                else
+                    preparedStatement->setInt(queryParameterIndex++, audioBitRate);
+                if (audioSampleRate == -1)
+                    preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
+                else
+                    preparedStatement->setInt(queryParameterIndex++, audioSampleRate);
+                if (audioChannels == -1)
+                    preparedStatement->setNull(queryParameterIndex++, sql::DataType::INTEGER);
+                else
+                    preparedStatement->setInt(queryParameterIndex++, audioChannels);
 
                 preparedStatement->executeUpdate();
             }
@@ -4964,6 +5134,17 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create table if not exists MMS_VideoItems ("
                     "MediaItemKey			BIGINT UNSIGNED NOT NULL,"
                     "DurationInMilliSeconds		BIGINT NULL,"
+                    "BitRate            		INT NULL,"
+                    "Width              		INT NULL,"
+                    "Height             		INT NULL,"
+                    "AvgFrameRate			VARCHAR (64) NULL,"
+                    "VideoCodecName			VARCHAR (64) NULL,"
+                    "VideoBitRate             		INT NULL,"
+                    "VideoProfile			VARCHAR (128) NULL,"
+                    "AudioCodecName			VARCHAR (64) NULL,"
+                    "AudioBitRate             		INT NULL,"
+                    "AudioSampleRate             	INT NULL,"
+                    "AudioChannels             		INT NULL,"
                     "constraint MMS_VideoItems_PK PRIMARY KEY (MediaItemKey), "
                     "constraint MMS_VideoItems_FK foreign key (MediaItemKey) "
                         "references MMS_MediaItems (MediaItemKey) on delete cascade) "
@@ -4989,6 +5170,10 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create table if not exists MMS_AudioItems ("
                     "MediaItemKey			BIGINT UNSIGNED NOT NULL,"
                     "DurationInMilliSeconds		BIGINT NULL,"
+                    "CodecName          		VARCHAR (64) NULL,"
+                    "BitRate             		INT NULL,"
+                    "SampleRate                  	INT NULL,"
+                    "Channels             		INT NULL,"
                     "constraint MMS_AudioItems_PK PRIMARY KEY (MediaItemKey), "
                     "constraint MMS_AudioItems_FK foreign key (MediaItemKey) "
                         "references MMS_MediaItems (MediaItemKey) on delete cascade) "

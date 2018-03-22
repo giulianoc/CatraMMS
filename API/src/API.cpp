@@ -661,11 +661,11 @@ void API::fileUploadProgressCheck()
                             _logger->info(__FILEREF__ + "Upload still running"
                                 + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
                                 + ", progressId: " + itr->_progressId
-                                + ", relativeProgress: " + to_string(relativeProgress)
+                                + ", progress: " + to_string(relativeProgress)
                                 + ", lastPercentageUpdated: " + to_string(itr->_lastPercentageUpdated)
-                                + ", relativeReceived: " + to_string(relativeReceived)
-                                + ", relativeSize: " + to_string(relativeSize)
-                                + ", relativeUploadingPercentage: " + to_string(relativeUploadingPercentage)
+                                + ", received: " + to_string(relativeReceived)
+                                + ", size: " + to_string(relativeSize)
+                                + ", uploadingPercentage: " + to_string(relativeUploadingPercentage)
                             );
                         }
 
@@ -691,7 +691,7 @@ void API::fileUploadProgressCheck()
                                 _logger->info(__FILEREF__ + "Update IngestionJob"
                                     + ", ingestionJobKey: " + to_string(itr->_ingestionJobKey)
                                     + ", progressId: " + itr->_progressId
-                                    + ", relativeUploadingPercentage: " + to_string(relativeUploadingPercentage)
+                                    + ", uploadingPercentage: " + to_string(relativeUploadingPercentage)
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJobSourceUploadingInProgress (
                                     itr->_ingestionJobKey, relativeUploadingPercentage);

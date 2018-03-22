@@ -57,7 +57,7 @@ public:
 
     int getEncodingProgress();
 
-    tuple<int64_t,int,int> getMediaInfo(string mmsAssetPathName);
+    tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> getMediaInfo(string mmsAssetPathName);
 
     void generateScreenshotToIngest(
         string imagePathName,
