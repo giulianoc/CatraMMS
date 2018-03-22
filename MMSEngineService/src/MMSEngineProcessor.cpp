@@ -1654,7 +1654,7 @@ MMSEngineDBFacade::ContentType MMSEngineProcessor::validateContentIngestionMetad
     MMSEngineDBFacade::ContentType         contentType;
     
     vector<string> mandatoryFields = {
-        "SourceURL",
+        // "SourceURL",     it is optional in case of push
         "SourceFileName",
         "ContentType"
     };

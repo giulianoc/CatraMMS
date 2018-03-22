@@ -1,51 +1,9 @@
 {
-    "Type": "ContentIngestion",         // mandatory
-    "Version": "1.0",           // mandatory
-    "ContentIngestion": {
-        "Title": "RiscaldamentoDiMaradona.mpg",            // mandatory
-        "SubTitle": "aaaa",            // optional
-        "Ingester": "aaaa",         // optional
-        "Keywords": "aaa",          // optional
-        "Description": "aaa",       // optional
-
-        "SourceFileName": "RiscaldamentoDiMaradona.mpg", // mandatory, filename or URL (http/ftp)
-        "ContentType": "video",     // mandatory: "video" or "audio" or "image"
-	"Screenshots": [		// optional, if present only in case of video
-		{
-			"TimePositionInSeconds": 123.34,		// mandatory
-			"EncodingProfilesSet": "customerDefault",	// mandatory
-			"SourceImageWidth": 176,		// mandatory
-			"SourceImageHeight": 144		// mandatory
-		}
-	],
-        "LogicalType": "Advertising",     // optional
-        "MD5FileCheckSum": null,	// "6f60b0d5ed8925d032da926c78c8c67d",  // optional
-        "FileSizeInBytes": null,	// 1379043332,   // optional
-
-        "EncodingProfilesSet": "customerDefault",  // mandatory: "systemDefault" or "customerDefault" or <custom name>
-        "EncodingPriority": "low",               // optional: "low", "default", "high"
-
-        "ContentProviderName": "default",    // optional
-
-        "Territories": {
-            "default": {
-                "startPublishing": "NOW",
-                "endPublishing": "FOREVER"
-            }
-        },
-
-        "Delivery": "FTP",      // optional: "FTP"
-        "FTP": {                // mandatory only if "Delivery" is "FTP"
-            "Hostname": "aaa",  // mandatory only if "Delivery" is "FTP": hostname or IP address
-            "Port": null,       // optional
-            "User": "aaa",      // mandatory only if "Delivery" is "FTP"
-            "Password": "bbb"   // mandatory only if "Delivery" is "FTP"
-        },
-
-        "Notification": "EMail",      // optional: "EMail
-        "EMail": {              // mandatory only if "Notification" is "EMail"
-            "Address": "giulianoc@catrasoftware.it"  // mandatory only if "Notification" is "EMail"
-        }
-    }
+	        "Type": "ContentIngestion",
+			        "ContentIngestion": {
+						                "SourceFileName": "765432.mp4",
+										                "ContentType": "video",
+														                "userData": { "MyData": "this is my data" },
+																		                "Title": "Maradona"
+																						       }
 }
-
