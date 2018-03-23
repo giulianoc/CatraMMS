@@ -272,6 +272,8 @@ public:
                 return "Unknown";
             case IngestionType::ContentIngestion:
                 return "ContentIngestion";
+            case IngestionType::Screenshot:
+                return "Screenshot";
             case IngestionType::ContentUpdate:
                 return "ContentUpdate";
             case IngestionType::ContentRemove:

@@ -538,6 +538,31 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                         metadataRoot, 
                                         sourceMediaItemKey);
                             }
+                            catch(runtime_error e)
+                            {
+                                _logger->error(__FILEREF__ + "generateAndIngestScreenshot failed"
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionType: " + MMSEngineDBFacade::toString(ingestionType)
+                                    + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        ingestionType,
+                                        MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
+                                        errorMessage,
+                                        "" // processorMMS
+                                        );
+
+                                throw runtime_error(errorMessage);
+                            }
                             catch(exception e)
                             {
                                 _logger->error(__FILEREF__ + "generateAndIngestScreenshot failed"
@@ -1480,6 +1505,14 @@ void MMSEngineProcessor::generateAndIngestScreenshot(
                 + ", getEventKey().first: " + to_string(event->getEventKey().first)
                 + ", getEventKey().second: " + to_string(event->getEventKey().second));
         }
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "generateAndIngestScreenshot failed"
+            + ", e.what(): " + e.what()
+        );
+        
+        throw e;
     }
     catch(exception e)
     {
