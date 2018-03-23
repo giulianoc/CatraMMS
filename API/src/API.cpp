@@ -394,7 +394,7 @@ void API::manageRequestAndResponse(
         
         createAPIKey(request, queryParameters);
     }
-    else if (method == "ingestContent")
+    else if (method == "ingestion")
     {
         bool isUserAPI = get<2>(customerAndFlags);
         if (!isUserAPI)
@@ -409,24 +409,7 @@ void API::manageRequestAndResponse(
             throw runtime_error(errorMessage);
         }
         
-        ingestContent(request, get<0>(customerAndFlags), queryParameters, requestBody);
-    }
-    else if (method == "ingestCommand")
-    {
-        bool isUserAPI = get<2>(customerAndFlags);
-        if (!isUserAPI)
-        {
-            string errorMessage = string("APIKey flags does not have the USER permission"
-                    ", isUserAPI: " + to_string(isUserAPI)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 403, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        
-        ingestCommand(request, get<0>(customerAndFlags), queryParameters, requestBody);
+        ingestion(request, get<0>(customerAndFlags), queryParameters, requestBody);
     }
     else if (method == "uploadBinary")
     {
@@ -1318,87 +1301,125 @@ void API::createAPIKey(
     }
 }
 
-void API::ingestContent(
+void API::ingestion(
         FCGX_Request& request,
         shared_ptr<Customer> customer,
         unordered_map<string, string> queryParameters,
         string requestBody)
 {
-    string api = "ingestContent";
+    string api = "ingestion";
 
     _logger->info(__FILEREF__ + "Received " + api
         + ", requestBody: " + requestBody
     );
 
     try
-    { 
-        int64_t ingestionJobKey = _mmsEngineDBFacade->addIngestionJob(
-                customer->_customerKey,
-                requestBody,
-                MMSEngineDBFacade::IngestionType::Unknown,
-                MMSEngineDBFacade::IngestionStatus::Start_Ingestion);
-
-        string responseBody = string("{ ")
-                + "\"ingestionJobKey\": " + to_string(ingestionJobKey) + " "
-                + "}";
-
-        sendSuccess(request, 201, responseBody);
-    }
-    catch(runtime_error e)
     {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
-        );
+        Json::Value requestBodyRoot;
+        try
+        {
+            Json::CharReaderBuilder builder;
+            Json::CharReader* reader = builder.newCharReader();
+            string errors;
 
-        string errorMessage = string("Internal server error");
-        _logger->error(__FILEREF__ + errorMessage);
+            bool parsingSuccessful = reader->parse(requestBody.c_str(),
+                    requestBody.c_str() + requestBody.size(), 
+                    &requestBodyRoot, &errors);
+            delete reader;
 
-        sendError(request, 500, errorMessage);
+            if (!parsingSuccessful)
+            {
+                string errorMessage = __FILEREF__ + "failed to parse the requestBody"
+                        + ", errors: " + errors
+                        + ", requestBody: " + requestBody
+                        ;
+                _logger->error(errorMessage);
 
-        throw runtime_error(errorMessage);
-    }
-    catch(exception e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
-        );
+                throw runtime_error(errorMessage);
+            }
+        }
+        catch(...)
+        {
+            string errorMessage = string("requestBody json is not well format")
+                    + ", requestBody: " + requestBody
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
 
-        string errorMessage = string("Internal server error");
-        _logger->error(__FILEREF__ + errorMessage);
+            _logger->info(__FILEREF__ + "add IngestionJob"
+                + ", requestBody: " + requestBody
+                + ", IngestionType: " + "Unknown"
+                + ", IngestionStatus: " + "End_ValidationMetadataFailed"
+                + ", errorMessage: " + errorMessage
+            );
+            _mmsEngineDBFacade->addIngestionJob (customer->_customerKey,
+                    requestBody,
+                    MMSEngineDBFacade::IngestionType::Unknown,
+                    MMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed, 
+                    errorMessage
+            );
 
-        sendError(request, 500, errorMessage);
+            throw runtime_error(errorMessage);
+        }
 
-        throw runtime_error(errorMessage);
-    }
-}
+        string responseBody = string("[");        
+        
+        if (requestBodyRoot.isArray())
+        {
+            for (int ingestionIndex = 0; ingestionIndex < requestBodyRoot.size(); ++ingestionIndex)
+            {                
+                Json::StreamWriterBuilder wbuilder;
 
-void API::ingestCommand(
-        FCGX_Request& request,
-        shared_ptr<Customer> customer,
-        unordered_map<string, string> queryParameters,
-        string requestBody)
-{
-    string api = "ingestCommand";
+                string singleIngestion = Json::writeString(wbuilder, requestBodyRoot[ingestionIndex]);
+                
+                string errorMessage = "";
+            
+                _logger->info(__FILEREF__ + "add IngestionJob"
+                    + ", singleIngestion: " + singleIngestion
+                    + ", IngestionType: " + "Unknown"
+                    + ", IngestionStatus: " + "Start_Ingestion"
+                    + ", errorMessage: " + errorMessage
+                );
+                
+                int64_t ingestionJobKey = _mmsEngineDBFacade->addIngestionJob(
+                        customer->_customerKey,
+                        singleIngestion,
+                        MMSEngineDBFacade::IngestionType::Unknown,
+                        MMSEngineDBFacade::IngestionStatus::Start_Ingestion,
+                        errorMessage);
 
-    _logger->info(__FILEREF__ + "Received " + api
-        + ", requestBody: " + requestBody
-    );
+                if (ingestionIndex == 0)
+                    responseBody += string(" { ");
+                else
+                    responseBody += string(", { ");
+                responseBody +=
+                    + "\"ingestionJobKey\": " + to_string(ingestionJobKey) + " "
+                    + "}";
+            }
+        }
+        else
+        {
+            string errorMessage = "";
+            
+            _logger->info(__FILEREF__ + "add IngestionJob"
+                + ", requestBody: " + requestBody
+                + ", IngestionType: " + "Unknown"
+                + ", IngestionStatus: " + "Start_Ingestion"
+                + ", errorMessage: " + errorMessage
+            );
+                
+            int64_t ingestionJobKey = _mmsEngineDBFacade->addIngestionJob(
+                    customer->_customerKey,
+                    requestBody,
+                    MMSEngineDBFacade::IngestionType::Unknown,
+                    MMSEngineDBFacade::IngestionStatus::Start_Ingestion,
+                    errorMessage);
+                        
+            responseBody += string(" { ")
+                    + "\"ingestionJobKey\": " + to_string(ingestionJobKey) + " "
+                    + "}";
+        }
 
-    try
-    { 
-        int64_t ingestionJobKey = _mmsEngineDBFacade->addIngestionJob(
-                customer->_customerKey,
-                requestBody,
-                MMSEngineDBFacade::IngestionType::Unknown,
-                MMSEngineDBFacade::IngestionStatus::Start_Ingestion);
-
-        string responseBody = string("{ ")
-                + "\"ingestionJobKey\": " + to_string(ingestionJobKey) + " "
-                + "}";
+        responseBody += " ]";        
 
         sendSuccess(request, 201, responseBody);
     }

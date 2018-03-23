@@ -92,18 +92,12 @@ private:
         FCGX_Request& request,
         unordered_map<string, string> queryParameters);
 
-    void ingestContent(
+    void ingestion(
         FCGX_Request& request,
         shared_ptr<Customer> customer,
         unordered_map<string, string> queryParameters,
         string requestBody);
-    
-    void ingestCommand(
-        FCGX_Request& request,
-        shared_ptr<Customer> customer,
-        unordered_map<string, string> queryParameters,
-        string requestBody);
-    
+        
     void uploadBinary(
         FCGX_Request& request,
         string requestMethod,

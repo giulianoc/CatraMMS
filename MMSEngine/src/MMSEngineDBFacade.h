@@ -479,7 +479,8 @@ public:
 	int64_t customerKey,
         string metadataContent,
         IngestionType ingestionType,
-        IngestionStatus ingestionStatus);
+        IngestionStatus ingestionStatus,
+        string errorMessage);
 
     void updateIngestionJob (
         int64_t ingestionJobKey,

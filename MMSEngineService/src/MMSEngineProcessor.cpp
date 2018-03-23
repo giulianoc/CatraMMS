@@ -931,22 +931,22 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
     }
 
     int64_t durationInMilliSeconds = -1;
-    long bitRate;
+    long bitRate = -1;
     string videoCodecName;
     string videoProfile;
     int videoWidth = -1;
     int videoHeight = -1;
     string videoAvgFrameRate;
-    long videoBitRate;
+    long videoBitRate = -1;
     string audioCodecName;
-    long audioSampleRate;
-    int audioChannels;
-    long audioBitRate;
+    long audioSampleRate = -1;
+    int audioChannels = -1;
+    long audioBitRate = -1;
 
     int imageWidth = -1;
     int imageHeight = -1;
     string imageFormat;
-    int imageQuality;
+    int imageQuality = -1;
     if (contentType == MMSEngineDBFacade::ContentType::Video 
             || contentType == MMSEngineDBFacade::ContentType::Audio)
     {

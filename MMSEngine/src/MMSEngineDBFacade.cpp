@@ -1587,7 +1587,8 @@ int64_t MMSEngineDBFacade::addIngestionJob (
 	int64_t customerKey,
         string metadataContent,
         IngestionType ingestionType,
-        IngestionStatus ingestionStatus
+        IngestionStatus ingestionStatus,
+        string errorMessage
 )
 {
     int64_t         ingestionJobKey;
@@ -1599,6 +1600,17 @@ int64_t MMSEngineDBFacade::addIngestionJob (
 
     try
     {
+        string errorMessageForSQL;
+        if (errorMessage == "")
+            errorMessageForSQL = errorMessage;
+        else
+        {
+            if (errorMessageForSQL.length() >= 1024)
+                errorMessageForSQL.substr(0, 1024);
+            else
+                errorMessageForSQL = errorMessage;
+        }
+
         conn = _connectionPool->borrow();	
 
         autoCommit = false;
@@ -1662,7 +1674,7 @@ int64_t MMSEngineDBFacade::addIngestionJob (
         {
             lastSQLCommand = 
                 "insert into MMS_IngestionJobs (IngestionJobKey, CustomerKey, MediaItemKey, MetaDataContent, MediaItemKeysDependency, IngestionType, StartIngestion, EndIngestion, DownloadingProgress, UploadingProgress, SourceBinaryTransferred, ProcessorMMS, Status, ErrorMessage) values ("
-                                               "NULL,            ?,           NULL,         ?,               NULL,                    ?,             NULL,           NULL,         NULL,                NULL,              0,                       NULL,         ?,      NULL)";
+                                               "NULL,            ?,           NULL,         ?,               NULL,                    ?,             NULL,           NULL,         NULL,                NULL,              0,                       NULL,         ?,      ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -1670,6 +1682,10 @@ int64_t MMSEngineDBFacade::addIngestionJob (
             preparedStatement->setString(queryParameterIndex++, metadataContent);
             preparedStatement->setInt(queryParameterIndex++, static_cast<int>(ingestionType));
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(ingestionStatus));
+            if (errorMessageForSQL == "")
+                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+            else
+                preparedStatement->setString(queryParameterIndex++, errorMessageForSQL);
 
             preparedStatement->executeUpdate();
         }
