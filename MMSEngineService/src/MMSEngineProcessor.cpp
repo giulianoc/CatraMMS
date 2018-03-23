@@ -1134,6 +1134,28 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 
         _logger->info(__FILEREF__ + "_mmsEngineDBFacade->saveIngestedContentMetadata..."
             + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+            + ", relativePathToBeUsed: " + relativePathToBeUsed
+            + ", mediaSourceFileName: " + mediaSourceFileName
+            + ", mmsPartitionIndexUsed: " + to_string(mmsPartitionIndexUsed)
+            + ", sizeInBytes: " + to_string(sizeInBytes)
+
+            + ", durationInMilliSeconds: " + to_string(durationInMilliSeconds)
+            + ", bitRate: " + to_string(bitRate)
+            + ", videoCodecName: " + videoCodecName
+            + ", videoProfile: " + videoProfile
+            + ", videoWidth: " + to_string(videoWidth)
+            + ", videoHeight: " + to_string(videoHeight)
+            + ", videoAvgFrameRate: " + videoAvgFrameRate
+            + ", videoBitRate: " + to_string(videoBitRate)
+            + ", audioCodecName: " + audioCodecName
+            + ", audioSampleRate: " + to_string(audioSampleRate)
+            + ", audioChannels: " + to_string(audioChannels)
+            + ", audioBitRate: " + to_string(audioBitRate)
+
+            + ", imageWidth: " + to_string(imageWidth)
+            + ", imageHeight: " + to_string(imageHeight)
+            + ", imageFormat: " + imageFormat
+            + ", imageQuality: " + to_string(imageQuality)
         );
 
         pair<int64_t,int64_t> mediaItemKeyAndPhysicalPathKey =
