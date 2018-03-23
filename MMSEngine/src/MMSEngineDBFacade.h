@@ -492,6 +492,10 @@ public:
 
     void updateIngestionJob (
         int64_t ingestionJobKey,
+        string processorMMS);
+
+    void updateIngestionJob (
+        int64_t ingestionJobKey,
         IngestionStatus newIngestionStatus,
         string errorMessage,
         string processorMMS);

@@ -337,6 +337,13 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                     if (dependencyNotFound)
                     {
                         // checking on a date? and setting to error after a while?
+                        _logger->info(__FILEREF__ + "Update IngestionJob"
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", processorMMS: " + ""
+                        );                            
+                        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
+                                "" // processorMMS
+                                );
                     }
                     else
                     {
