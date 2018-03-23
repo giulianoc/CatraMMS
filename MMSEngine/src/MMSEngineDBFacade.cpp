@@ -2356,7 +2356,7 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
                 ;
                 _logger->error(errorMessage);
 
-                throw MediaItemKeyNotFound();                    
+                throw MediaItemKeyNotFound(errorMessage);                    
             }            
         }
 
@@ -2374,6 +2374,16 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
         );
 
         throw se;
+    }
+    catch(MediaItemKeyNotFound e)
+    {
+        _connectionPool->unborrow(conn);
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
     }
     catch(exception e)
     {
@@ -2447,7 +2457,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> MMSEn
                 ;
                 _logger->error(errorMessage);
 
-                throw MediaItemKeyNotFound();                    
+                throw MediaItemKeyNotFound(errorMessage);                    
             }            
         }
 

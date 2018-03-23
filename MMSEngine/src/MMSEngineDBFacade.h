@@ -39,10 +39,18 @@ struct APIKeyNotFoundOrExpired: public exception {
     }; 
 };
 
-struct MediaItemKeyNotFound: public exception {    
+struct MediaItemKeyNotFound: public exception { 
+    
+    string _errorMessage;
+    
+    MediaItemKeyNotFound(string errorMessage)
+    {
+        _errorMessage = errorMessage;
+    }
+    
     char const* what() const throw() 
     {
-        return "MediaItemKey was not found";
+        return _errorMessage.c_str();
     }; 
 };
 
