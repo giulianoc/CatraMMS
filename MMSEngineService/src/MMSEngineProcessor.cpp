@@ -1589,28 +1589,29 @@ string MMSEngineProcessor::generateImageMetadataToIngest(
         + "{"
             + "\"Type\": \"ContentIngestion\","
             + "\"ContentIngestion\": {"
-                + "\"Title\": \"" + title + "\","
                 + "\"ContentType\": \"image\","
-                + "\"SourceFileName\": \"" + imageFileName + "\","
+                + "\"SourceFileName\": \"" + imageFileName + "\""
             ;
+    if (title != "")
+        imageMetadata += ", \"Title\": \"" + title + "\"";
     if (subTitle != "")
-        imageMetadata += "\"SubTitle\": \"" + subTitle + "\",";
+        imageMetadata += ", \"SubTitle\": \"" + subTitle + "\"";
     if (ingester != "")
-        imageMetadata += "\"Ingester\": \"" + ingester + "\",";
+        imageMetadata += ", \"Ingester\": \"" + ingester + "\"";
     if (keywords != "")
-        imageMetadata += "\"Keywords\": \"" + keywords + "\",";
+        imageMetadata += ", \"Keywords\": \"" + keywords + "\"";
     if (description != "")
-        imageMetadata += "\"Description\": \"" + description + "\",";
+        imageMetadata += ", \"Description\": \"" + description + "\"";
     if (logicalType != "")
-        imageMetadata += "\"LogicalType\": \"" + logicalType + "\",";
+        imageMetadata += ", \"LogicalType\": \"" + logicalType + "\"";
     if (encodingProfilesSet != "")
-        imageMetadata += "\"EncodingProfilesSet\": \"" + encodingProfilesSet + "\",";
+        imageMetadata += ", \"EncodingProfilesSet\": \"" + encodingProfilesSet + "\"";
     if (encodingPriority != "")
-        imageMetadata += "\"EncodingPriority\": \"" + encodingPriority + "\",";
+        imageMetadata += ", \"EncodingPriority\": \"" + encodingPriority + "\"";
     if (contentProviderName != "")
-        imageMetadata += "\"ContentProviderName\": \"" + contentProviderName + "\",";
+        imageMetadata += ", \"ContentProviderName\": \"" + contentProviderName + "\"";
     if (territories != "")
-        imageMetadata += "\"Territories\": \"" + territories + "\",";
+        imageMetadata += ", \"Territories\": \"" + territories + "\"";
                             
     imageMetadata +=
             string("}")
