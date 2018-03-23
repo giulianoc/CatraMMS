@@ -2402,7 +2402,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> MMSEn
                 "select DurationInMilliSeconds, BitRate, Width, Height, AvgFrameRate, "
                 "VideoCodecName, VideoProfile, VideoBitRate, "
                 "AudioCodecName, AudioSampleRate, AudioChannels, AudioBitRate "
-                "from MMS_MediaItems where MediaItemKey = ?";
+                "from MMS_VideoItems where MediaItemKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
