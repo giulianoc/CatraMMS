@@ -1529,17 +1529,10 @@ string MMSEngineProcessor::generateImageMetadataToIngest(
         string imageFileName
 )
 {
+    string title;
     string field = "title";
-    if (!_mmsEngineDBFacade->isMetadataPresent(screenshotRoot, field))
-    {
-        string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", Field: " + field;
-        _logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-    string title = screenshotRoot.get(field, "XXX").asString();
+    if (_mmsEngineDBFacade->isMetadataPresent(screenshotRoot, field))
+        title = screenshotRoot.get(field, "XXX").asString();
     
     string subTitle;
     field = "SubTitle";
@@ -1623,6 +1616,11 @@ string MMSEngineProcessor::generateImageMetadataToIngest(
             string("}")
         + "}"
     ;
+    
+    _logger->info(__FILEREF__ + "Image metadata generated"
+        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+        + ", imageMetadata: " + imageMetadata
+            );
 
     return imageMetadata;
 }
