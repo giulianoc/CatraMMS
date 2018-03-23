@@ -60,8 +60,7 @@ private:
 
     string generateImageMetadataToIngest(
         int64_t ingestionJobKey,
-        Json::Value screenshotRoot,
-        string imageFileName
+        Json::Value screenshotRoot
     );
 
     void generateAndIngestScreenshot(

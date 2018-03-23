@@ -1446,22 +1446,11 @@ void MMSEngineProcessor::generateAndIngestScreenshot(
             throw runtime_error(errorMessage);
         }
 
-        field = "SourceFileName";
-        if (!_mmsEngineDBFacade->isMetadataPresent(screenshotRoot, field))
-        {
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", Field: " + field;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        string imageFileName = screenshotRoot.get(field, "XXX").asString();
-
         string imagePathName = _mmsStorage->getCustomerIngestionRepository(
                 customer)
                 + "/"
-                + imageFileName
+                + to_string(ingestionJobKey)
+                + ".binary"
         ;
 
         FFMpeg ffmpeg (_configuration, _logger);
@@ -1480,8 +1469,7 @@ void MMSEngineProcessor::generateAndIngestScreenshot(
 
         string imageMetaDataContent = generateImageMetadataToIngest(
                 ingestionJobKey,
-                screenshotRoot,
-                imageFileName
+                screenshotRoot
         );
         
         {
@@ -1525,12 +1513,23 @@ void MMSEngineProcessor::generateAndIngestScreenshot(
 
 string MMSEngineProcessor::generateImageMetadataToIngest(
         int64_t ingestionJobKey,
-        Json::Value screenshotRoot,
-        string imageFileName
+        Json::Value screenshotRoot
 )
 {
+    string field = "SourceFileName";
+    if (!_mmsEngineDBFacade->isMetadataPresent(screenshotRoot, field))
+    {
+        string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", Field: " + field;
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    string imageFileName = screenshotRoot.get(field, "XXX").asString();
+        
     string title;
-    string field = "title";
+    field = "title";
     if (_mmsEngineDBFacade->isMetadataPresent(screenshotRoot, field))
         title = screenshotRoot.get(field, "XXX").asString();
     
@@ -1587,10 +1586,10 @@ string MMSEngineProcessor::generateImageMetadataToIngest(
     
     string imageMetadata = string("")
         + "{"
-            + "\"Type\": \"ContentIngestion\","
-            + "\"ContentIngestion\": {"
-                + "\"ContentType\": \"image\","
-                + "\"SourceFileName\": \"" + imageFileName + "\""
+            + "\"Type\": \"ContentIngestion\""
+            + ", \"ContentIngestion\": {"
+                + "\"ContentType\": \"image\""
+                + ", \"SourceFileName\": \"" + imageFileName + "\""
             ;
     if (title != "")
         imageMetadata += ", \"Title\": \"" + title + "\"";
