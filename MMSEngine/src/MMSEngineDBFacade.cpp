@@ -4116,16 +4116,16 @@ tuple<int,string,string,string> MMSEngineDBFacade::getStorageDetails(
         string relativePath;
         string fileName;
         {
-            lastSQLCommand = 
+            lastSQLCommand = string("") +
                 "select mi.CustomerKey, pp.MMSPartitionNumber, pp.RelativePath, pp.FileName "
                 "from MMS_MediaItems mi, MMS_PhysicalPaths pp "
-                "where mi.mediaItemKey = pp.mediaItemKey and mi.MediaItemKey = ? and pp.EncodingProfileKey = ?";
+                "where mi.mediaItemKey = pp.mediaItemKey and mi.MediaItemKey = ? "
+                "and pp.EncodingProfileKey " + (encodingProfileKey == -1 ? "is null" : "= ?");
+
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
-            if (encodingProfileKey == -1)
-                preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
-            else
+            if (encodingProfileKey != -1)
                 preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
             
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
