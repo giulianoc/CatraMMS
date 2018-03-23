@@ -518,13 +518,12 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                             _logger->info(__FILEREF__ + "Update IngestionJob"
                                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                + ", IngestionType: " + MMSEngineDBFacade::toString(ingestionType)
                                 + ", dependency: " + dependency
                                 + ", processorMMS: " + processorMMS
                             );                            
-                            _mmsEngineDBFacade->updateIngestionJobDependencies (ingestionJobKey, 
-                                    dependency,
-                                    processorMMS
-                                    );
+                            _mmsEngineDBFacade->updateIngestionJobTypeAndDependencies (ingestionJobKey, 
+                                    ingestionType, dependency, processorMMS);
                         }
                         else
                         {

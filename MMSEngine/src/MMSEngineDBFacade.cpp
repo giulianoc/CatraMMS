@@ -2009,8 +2009,9 @@ void MMSEngineDBFacade::updateIngestionJob (
     }    
 }
 
-void MMSEngineDBFacade::updateIngestionJobDependencies (
+void MMSEngineDBFacade::updateIngestionJobTypeAndDependencies (
         int64_t ingestionJobKey,
+        IngestionType ingestionType,
         string dependencies,
         string processorMMS)
 {
@@ -2025,9 +2026,10 @@ void MMSEngineDBFacade::updateIngestionJobDependencies (
 
         {
             lastSQLCommand = 
-                "update MMS_IngestionJobs set MediaItemKeysDependency = ?, ProcessorMMS = ? where IngestionJobKey = ?";
+                "update MMS_IngestionJobs set IngestionType = ?, MediaItemKeysDependency = ?, ProcessorMMS = ? where IngestionJobKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
+            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(ingestionType));
             preparedStatement->setString(queryParameterIndex++, dependencies);
             if (processorMMS == "")
                 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);

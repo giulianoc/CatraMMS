@@ -492,8 +492,9 @@ public:
         string errorMessage,
         string processorMMS);
 
-    void updateIngestionJobDependencies (
+    void updateIngestionJobTypeAndDependencies (
         int64_t ingestionJobKey,
+        IngestionType ingestionType,
         string dependencies,
         string processorMMS);
     
