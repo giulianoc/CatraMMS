@@ -558,7 +558,9 @@ public:
 
         // image
         int imageWidth,
-        int imageHeight
+        int imageHeight,
+        string imageFormat,
+        int imageQuality
     );
 
     tuple<int,string,string,string> getStorageDetails(

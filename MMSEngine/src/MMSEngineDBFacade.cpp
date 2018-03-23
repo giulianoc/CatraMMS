@@ -3432,7 +3432,9 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
 
         // image
         int imageWidth,
-        int imageHeight
+        int imageHeight,
+        string imageFormat,
+        int imageQuality
         )
 {
     pair<int64_t,int64_t> mediaItemKeyAndPhysicalPathKey;
@@ -3745,14 +3747,16 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             else if (contentType == ContentType::Image)
             {
                 lastSQLCommand = 
-                    "insert into MMS_ImageItems (MediaItemKey, Width, Height) values ("
-                    "?, ?, ?)";
+                    "insert into MMS_ImageItems (MediaItemKey, Width, Height, Format, Quality) values ("
+                    "?, ?, ?, ?, ?)";
 
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
                 preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
                 preparedStatement->setInt64(queryParameterIndex++, imageWidth);
                 preparedStatement->setInt64(queryParameterIndex++, imageHeight);
+                preparedStatement->setString(queryParameterIndex++, imageFormat);
+                preparedStatement->setInt(queryParameterIndex++, imageQuality);
 
                 preparedStatement->executeUpdate();
             }
@@ -5199,9 +5203,11 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         {
             lastSQLCommand = 
                 "create table if not exists MMS_ImageItems ("
-                    "MediaItemKey				BIGINT UNSIGNED NOT NULL,"
-                    "Width						INT NOT NULL,"
-                    "Height						INT NOT NULL,"
+                    "MediaItemKey			BIGINT UNSIGNED NOT NULL,"
+                    "Width				INT NOT NULL,"
+                    "Height				INT NOT NULL,"
+                    "Format                       	VARCHAR (64) NULL,"
+                    "Quality				INT NOT NULL,"
                     "constraint MMS_ImageItems_PK PRIMARY KEY (MediaItemKey), "
                     "constraint MMS_ImageItems_FK foreign key (MediaItemKey) "
                         "references MMS_MediaItems (MediaItemKey) on delete cascade) "

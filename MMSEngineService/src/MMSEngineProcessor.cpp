@@ -945,6 +945,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 
     int imageWidth = -1;
     int imageHeight = -1;
+    string imageFormat;
+    int imageQuality;
     if (contentType == MMSEngineDBFacade::ContentType::Video 
             || contentType == MMSEngineDBFacade::ContentType::Audio)
     {
@@ -1012,12 +1014,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             _logger->info(__FILEREF__ + "Processing through Magick"
                 + ", mmsAssetPathName: " + mmsAssetPathName
             );
-            Magick:: Image      imageToEncode;
+            Magick::Image      imageToEncode;
 
-            imageToEncode. read (mmsAssetPathName.c_str());
+            imageToEncode.read (mmsAssetPathName.c_str());
 
-            imageWidth	= imageToEncode. columns ();
-            imageHeight	= imageToEncode. rows ();
+            imageWidth	= imageToEncode.columns();
+            imageHeight	= imageToEncode.rows();
+            imageFormat = imageToEncode.magick();
+            imageQuality = imageToEncode.quality();
         }
         catch( Magick::WarningCoder &e )
         {
@@ -1158,7 +1162,9 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 
                     // image
                     imageWidth,
-                    imageHeight
+                    imageHeight,
+                    imageFormat,
+                    imageQuality
         );
 
         mediaItemKey = mediaItemKeyAndPhysicalPathKey.first;
