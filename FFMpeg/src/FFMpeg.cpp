@@ -1115,13 +1115,30 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
             );
 }
 
-void FFMpeg::generateScreenshotToIngest(
-    string imagePathName,
-    double timePositionInSeconds,
-    int sourceImageWidth,
-    int sourceImageHeight,
-    string mmsAssetPathName)
+vector<string> FFMpeg::generateScreenshotsToIngest(
+        string imageDirecotry,
+        string imageFileName,
+        double startTimeInSeconds,
+        int framesNumber,
+        string videoFilter,
+        int periodInSeconds,
+        bool mjpeg,
+        int imageWidth,
+        int imageHeight,
+        string mmsAssetPathName)
 {
+    vector<string> generatedScreenshotFileNames;
+    
+    string localImageFileName = imageFileName;
+
+    size_t extensionIndex = localImageFileName.find_last_of(".");
+    
+    string outputFfmpegPathFileName =
+            string("/tmp/")
+            + localImageFileName
+            + ".generateScreenshot.log"
+            ;
+    
     // ffmpeg -y -i [source.wmv] -f mjpeg -ss [10] -vframes 1 -an -s [176x144] [thumbnail_image.jpg]
     // -y: overwrite output files
     // -i: input file name
@@ -1130,28 +1147,55 @@ void FFMpeg::generateScreenshotToIngest(
     // -vframes: set the number of video frames to record
     // -an: disable audio
     // -s set frame size (WxH or abbreviation)
-
-    size_t extensionIndex = imagePathName.find_last_of("/");
-    if (extensionIndex == string::npos)
+    
+    string imageBaseFileName;
+    if (mjpeg)
     {
-        string errorMessage = __FILEREF__ + "No extension find in the asset file name"
-                + ", imagePathName: " + imagePathName;
-        _logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
+        if (extensionIndex == string::npos ||
+                (extensionIndex != string::npos && localImageFileName.substr(extensionIndex) != ".mjpeg"))
+            localImageFileName.append(".mjpeg");
     }
-    string outputFfmpegPathFileName =
-            string("/tmp/")
-            + imagePathName.substr(extensionIndex + 1)
-            + ".generateScreenshot.log"
-            ;
+    else
+    {
+        if (framesNumber == -1 || framesNumber > 1)
+        {
+            if (extensionIndex != string::npos)
+            {
+                imageBaseFileName = localImageFileName.substr(0, extensionIndex);
+
+                localImageFileName.insert(extensionIndex, ".%04d");                
+            }
+            else
+            {
+                imageBaseFileName = localImageFileName;
+
+                localImageFileName.append(".%04d").append(".jpg");      // default is jpg
+            }
+        }
+    }
+
+    string videoFilterParameters;
+    if (videoFilter == "PeriodicFrame")
+    {
+        videoFilterParameters = "-vf fps=1/" + to_string(periodInSeconds) + " ";
+    }
+    else if (videoFilter == "All-I-Frames")
+    {
+        if (mjpeg)
+            videoFilterParameters = "-vf \"select='eq(pict_type,PICT_TYPE_I)'\" ";
+        else
+            videoFilterParameters = "-vf \"select='eq(pict_type,PICT_TYPE_I)'\" -vsync vfr ";
+    }
     
     string ffmpegExecuteCommand = 
             _ffmpegPath + "/ffmpeg "
             + "-y -i " + mmsAssetPathName + " "
-            + "-f mjpeg -ss " + to_string(timePositionInSeconds) + " "
-            + "-vframes 1 -an -s " + to_string(sourceImageWidth) + "x" + to_string(sourceImageHeight) + " "
-            + imagePathName + " "
+            + "-ss " + to_string(startTimeInSeconds) + " "
+            + (framesNumber != -1 ? ("-vframes " + to_string(framesNumber)) : "") + " "
+            + videoFilterParameters
+            + (mjpeg ? "-f mjpeg " : "")
+            + "-an -s " + to_string(imageWidth) + "x" + to_string(imageHeight) + " "
+            + imageDirecotry + "/" + localImageFileName + " "
             + "> " + outputFfmpegPathFileName + " "
             + "2>&1"
             ;
@@ -1194,9 +1238,57 @@ void FFMpeg::generateScreenshotToIngest(
         throw e;
     }
 
+    if (mjpeg || framesNumber == 1)
+        generatedScreenshotFileNames.push_back(localImagePathName.substr(fileNameIndex + 1));
+    else
+    {
+        // get files from file system
+    
+        try
+        {
+            DirectoryEntryType_t detDirectoryEntryType;
+            shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (imageDirecotry + "/");
+            
+            while ()
+            {
+                string directoryEntry = FileIO::readDirectory (directory,
+                    &detDirectoryEntryType);
+                if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
+                    continue;
+                
+                if (directoryEntry.compare(0, imageBaseFileName.size(), imageBaseFileName) == 0)
+                    generatedScreenshotFileNames.push_back(directoryEntry);
+            }
+            
+            FileIO::closeDirectory (directory);
+        }
+        catch(DirectoryListFinished e)
+        {
+            
+        }
+        catch(runtime_error e)
+        {
+            string errorMessage = __FILEREF__ + "listing directory failed"
+                   + ", e.what(): " + e.what()
+            ;
+            _logger->error(errorMessage);
+
+...
+            bool exceptionInCaseOfError = false;
+            FileIO::remove(outputFfmpegPathFileName, exceptionInCaseOfError);
+
+            throw e;
+        }
+        catch(exception e)
+        {
+            
+        }
+    }
+    
+    /*
     bool inCaseOfLinkHasItToBeRead = false;
     unsigned long ulFileSize = FileIO::getFileSizeInBytes (
-        imagePathName, inCaseOfLinkHasItToBeRead);
+        localImagePathName, inCaseOfLinkHasItToBeRead);
 
     if (ulFileSize == 0)
     {
@@ -1206,7 +1298,10 @@ void FFMpeg::generateScreenshotToIngest(
         _logger->error(errorMessage);
 
         throw runtime_error(errorMessage);
-    }    
+    } 
+    */ 
+    
+    return generatedScreenshotFileNames;
 }
 
 void FFMpeg::settingFfmpegPatameters(

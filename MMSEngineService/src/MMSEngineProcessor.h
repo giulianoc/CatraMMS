@@ -64,7 +64,7 @@ private:
         string imageFileName
     );
 
-    void generateAndIngestScreenshot(
+    void generateAndIngestScreenshots(
         int64_t ingestionJobKey,
         shared_ptr<Customer> customer,
         Json::Value metadataRoot,

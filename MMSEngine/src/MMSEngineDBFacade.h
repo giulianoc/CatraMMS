@@ -260,7 +260,7 @@ public:
     enum class IngestionType {
         Unknown                 = 0,    // in case json was not able to be parsed
         ContentIngestion        = 1,
-        Screenshot              = 2,
+        Screenshots             = 2,
         ContentUpdate           = 3,
         ContentRemove           = 4
     };
@@ -272,6 +272,8 @@ public:
                 return "Unknown";
             case IngestionType::ContentIngestion:
                 return "ContentIngestion";
+            case IngestionType::Screenshots:
+                return "Screenshots";
             case IngestionType::ContentUpdate:
                 return "ContentUpdate";
             case IngestionType::ContentRemove:

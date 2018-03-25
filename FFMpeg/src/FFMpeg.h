@@ -59,11 +59,15 @@ public:
 
     tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> getMediaInfo(string mmsAssetPathName);
 
-    void generateScreenshotToIngest(
+    vector<string> generateScreenshotsToIngest(
         string imagePathName,
-        double timePositionInSeconds,
-        int sourceImageWidth,
-        int sourceImageHeight,
+        double startTimeInSeconds,
+        int framesNumber,
+        string videoFilter,
+        int periodInSeconds,
+        bool mjpeg,
+        int imageWidth,
+        int imageHeight,
         string mmsAssetPathName);
 
     static void encodingFileFormatValidation(string fileFormat,
