@@ -4,9 +4,19 @@
         "ContentIngestion": {
                 "SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
                 "SourceFileName": "123456.mp4",
+		"UniqueName": "101",
                 "ContentType": "video",
                 "userData": { "MyData": "this is my data" },
                 "Title": "Maradona"
        }
+},
+{
+	"Type": "Screenshot",
+	"Screenshot": {
+		"UniqueName": "101",
+		"TimePositionInSeconds": 3,
+		"SourceFileName": "2523221.jpg",
+		"userData": { }
+	}
 }
 ]

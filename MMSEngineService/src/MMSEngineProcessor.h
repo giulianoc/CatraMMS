@@ -60,8 +60,7 @@ private:
 
     string generateImageMetadataToIngest(
         int64_t ingestionJobKey,
-        Json::Value screenshotRoot,
-        string imageFileName
+        Json::Value screenshotRoot
     );
 
     void generateAndIngestScreenshots(
@@ -71,12 +70,12 @@ private:
         int64_t sourceMediaItemKey
     );
 
-    tuple<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType,vector<int64_t>>  
+    tuple<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType,vector<int64_t>,bool>  
             validateMetadata(Json::Value root);
 
     MMSEngineDBFacade::ContentType validateContentIngestionMetadata(Json::Value encoding);
 
-    MMSEngineDBFacade::ContentType validateScreenshotMetadata(
+    pair<MMSEngineDBFacade::ContentType,bool> validateScreenshotMetadata(
         Json::Value screenshotRoot, vector<int64_t>& dependencies);
 
     tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> getMediaSourceDetails(

@@ -2,6 +2,10 @@
 	"Type": "Screenshot",
 	"Screenshot": {
 		"UniqueName": "7",
+<<<<<<< HEAD
+=======
+		"TimePositionInSeconds": 3,
+>>>>>>> 58eb72cffa6a8e71cf5fc036771b49a79c5563bc
 		"SourceFileName": "2523221.jpg",
 		"userData": { }
 	}

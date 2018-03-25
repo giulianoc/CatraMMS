@@ -1587,7 +1587,8 @@ int64_t MMSEngineDBFacade::addIngestionJob (
 	int64_t customerKey,
         string metadataContent,
         IngestionType ingestionType,
-        IngestionStatus ingestionStatus
+        IngestionStatus ingestionStatus,
+        string errorMessage
 )
 {
     int64_t         ingestionJobKey;
@@ -1599,6 +1600,17 @@ int64_t MMSEngineDBFacade::addIngestionJob (
 
     try
     {
+        string errorMessageForSQL;
+        if (errorMessage == "")
+            errorMessageForSQL = errorMessage;
+        else
+        {
+            if (errorMessageForSQL.length() >= 1024)
+                errorMessageForSQL.substr(0, 1024);
+            else
+                errorMessageForSQL = errorMessage;
+        }
+
         conn = _connectionPool->borrow();	
 
         autoCommit = false;
@@ -1662,7 +1674,7 @@ int64_t MMSEngineDBFacade::addIngestionJob (
         {
             lastSQLCommand = 
                 "insert into MMS_IngestionJobs (IngestionJobKey, CustomerKey, MediaItemKey, MetaDataContent, MediaItemKeysDependency, IngestionType, StartIngestion, EndIngestion, DownloadingProgress, UploadingProgress, SourceBinaryTransferred, ProcessorMMS, Status, ErrorMessage) values ("
-                                               "NULL,            ?,           NULL,         ?,               NULL,                    ?,             NULL,           NULL,         NULL,                NULL,              0,                       NULL,         ?,      NULL)";
+                                               "NULL,            ?,           NULL,         ?,               NULL,                    ?,             NULL,           NULL,         NULL,                NULL,              0,                       NULL,         ?,      ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -1670,6 +1682,10 @@ int64_t MMSEngineDBFacade::addIngestionJob (
             preparedStatement->setString(queryParameterIndex++, metadataContent);
             preparedStatement->setInt(queryParameterIndex++, static_cast<int>(ingestionType));
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(ingestionStatus));
+            if (errorMessageForSQL == "")
+                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+            else
+                preparedStatement->setString(queryParameterIndex++, errorMessageForSQL);
 
             preparedStatement->executeUpdate();
         }
@@ -1728,6 +1744,78 @@ int64_t MMSEngineDBFacade::addIngestionJob (
     }
     
     return ingestionJobKey;
+}
+
+void MMSEngineDBFacade::updateIngestionJob (
+        int64_t ingestionJobKey,
+        string processorMMS
+)
+{    
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+
+        {
+            lastSQLCommand = 
+                "update MMS_IngestionJobs set ProcessorMMS = ? where IngestionJobKey = ?";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            if (processorMMS == "")
+                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+            else
+                preparedStatement->setString(queryParameterIndex++, processorMMS);
+            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+
+            int rowsUpdated = preparedStatement->executeUpdate();
+            if (rowsUpdated != 1)
+            {
+                string errorMessage = __FILEREF__ + "no update was done"
+                        + ", processorMMS: " + processorMMS
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", rowsUpdated: " + to_string(rowsUpdated)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }
+        }
+        
+        _logger->info(__FILEREF__ + "IngestionJob updated successful"
+            + ", processorMMS: " + processorMMS
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            );
+
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        _connectionPool->unborrow(conn);
+
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw se;
+    }    
+    catch(exception e)
+    {        
+        _connectionPool->unborrow(conn);
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
+    }    
 }
 
 void MMSEngineDBFacade::updateIngestionJob (
@@ -2009,8 +2097,9 @@ void MMSEngineDBFacade::updateIngestionJob (
     }    
 }
 
-void MMSEngineDBFacade::updateIngestionJobDependencies (
+void MMSEngineDBFacade::updateIngestionJobTypeAndDependencies (
         int64_t ingestionJobKey,
+        IngestionType ingestionType,
         string dependencies,
         string processorMMS)
 {
@@ -2025,9 +2114,10 @@ void MMSEngineDBFacade::updateIngestionJobDependencies (
 
         {
             lastSQLCommand = 
-                "update MMS_IngestionJobs set MediaItemKeysDependency = ?, ProcessorMMS = ? where IngestionJobKey = ?";
+                "update MMS_IngestionJobs set IngestionType = ?, MediaItemKeysDependency = ?, ProcessorMMS = ? where IngestionJobKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
+            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(ingestionType));
             preparedStatement->setString(queryParameterIndex++, dependencies);
             if (processorMMS == "")
                 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
@@ -2338,7 +2428,7 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
                 ;
                 _logger->error(errorMessage);
 
-                throw MediaItemKeyNotFound();                    
+                throw MediaItemKeyNotFound(errorMessage);                    
             }            
         }
 
@@ -2356,6 +2446,16 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
         );
 
         throw se;
+    }
+    catch(MediaItemKeyNotFound e)
+    {
+        _connectionPool->unborrow(conn);
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
     }
     catch(exception e)
     {
@@ -2400,7 +2500,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> MMSEn
                 "select DurationInMilliSeconds, BitRate, Width, Height, AvgFrameRate, "
                 "VideoCodecName, VideoProfile, VideoBitRate, "
                 "AudioCodecName, AudioSampleRate, AudioChannels, AudioBitRate "
-                "from MMS_MediaItems where MediaItemKey = ?";
+                "from MMS_VideoItems where MediaItemKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
@@ -2429,7 +2529,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> MMSEn
                 ;
                 _logger->error(errorMessage);
 
-                throw MediaItemKeyNotFound();                    
+                throw MediaItemKeyNotFound(errorMessage);                    
             }            
         }
 
@@ -3430,7 +3530,9 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
 
         // image
         int imageWidth,
-        int imageHeight
+        int imageHeight,
+        string imageFormat,
+        int imageQuality
         )
 {
     pair<int64_t,int64_t> mediaItemKeyAndPhysicalPathKey;
@@ -3743,14 +3845,16 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             else if (contentType == ContentType::Image)
             {
                 lastSQLCommand = 
-                    "insert into MMS_ImageItems (MediaItemKey, Width, Height) values ("
-                    "?, ?, ?)";
+                    "insert into MMS_ImageItems (MediaItemKey, Width, Height, Format, Quality) values ("
+                    "?, ?, ?, ?, ?)";
 
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
                 preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
                 preparedStatement->setInt64(queryParameterIndex++, imageWidth);
                 preparedStatement->setInt64(queryParameterIndex++, imageHeight);
+                preparedStatement->setString(queryParameterIndex++, imageFormat);
+                preparedStatement->setInt(queryParameterIndex++, imageQuality);
 
                 preparedStatement->executeUpdate();
             }
@@ -4114,16 +4218,16 @@ tuple<int,string,string,string> MMSEngineDBFacade::getStorageDetails(
         string relativePath;
         string fileName;
         {
-            lastSQLCommand = 
+            lastSQLCommand = string("") +
                 "select mi.CustomerKey, pp.MMSPartitionNumber, pp.RelativePath, pp.FileName "
                 "from MMS_MediaItems mi, MMS_PhysicalPaths pp "
-                "where mi.mediaItemKey = pp.mediaItemKey and mi.MediaItemKey = ? and pp.EncodingProfileKey = ?";
+                "where mi.mediaItemKey = pp.mediaItemKey and mi.MediaItemKey = ? "
+                "and pp.EncodingProfileKey " + (encodingProfileKey == -1 ? "is null" : "= ?");
+
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
-            if (encodingProfileKey == -1)
-                preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
-            else
+            if (encodingProfileKey != -1)
                 preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
             
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
@@ -5197,9 +5301,11 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         {
             lastSQLCommand = 
                 "create table if not exists MMS_ImageItems ("
-                    "MediaItemKey				BIGINT UNSIGNED NOT NULL,"
-                    "Width						INT NOT NULL,"
-                    "Height						INT NOT NULL,"
+                    "MediaItemKey			BIGINT UNSIGNED NOT NULL,"
+                    "Width				INT NOT NULL,"
+                    "Height				INT NOT NULL,"
+                    "Format                       	VARCHAR (64) NULL,"
+                    "Quality				INT NOT NULL,"
                     "constraint MMS_ImageItems_PK PRIMARY KEY (MediaItemKey), "
                     "constraint MMS_ImageItems_FK foreign key (MediaItemKey) "
                         "references MMS_MediaItems (MediaItemKey) on delete cascade) "

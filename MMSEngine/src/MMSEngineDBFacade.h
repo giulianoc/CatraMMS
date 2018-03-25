@@ -39,10 +39,18 @@ struct APIKeyNotFoundOrExpired: public exception {
     }; 
 };
 
-struct MediaItemKeyNotFound: public exception {    
+struct MediaItemKeyNotFound: public exception { 
+    
+    string _errorMessage;
+    
+    MediaItemKeyNotFound(string errorMessage)
+    {
+        _errorMessage = errorMessage;
+    }
+    
     char const* what() const throw() 
     {
-        return "MediaItemKey was not found";
+        return _errorMessage.c_str();
     }; 
 };
 
@@ -272,8 +280,13 @@ public:
                 return "Unknown";
             case IngestionType::ContentIngestion:
                 return "ContentIngestion";
+<<<<<<< HEAD
             case IngestionType::Screenshots:
                 return "Screenshots";
+=======
+            case IngestionType::Screenshot:
+                return "Screenshot";
+>>>>>>> 58eb72cffa6a8e71cf5fc036771b49a79c5563bc
             case IngestionType::ContentUpdate:
                 return "ContentUpdate";
             case IngestionType::ContentRemove:
@@ -479,7 +492,12 @@ public:
 	int64_t customerKey,
         string metadataContent,
         IngestionType ingestionType,
-        IngestionStatus ingestionStatus);
+        IngestionStatus ingestionStatus,
+        string errorMessage);
+
+    void updateIngestionJob (
+        int64_t ingestionJobKey,
+        string processorMMS);
 
     void updateIngestionJob (
         int64_t ingestionJobKey,
@@ -494,8 +512,9 @@ public:
         string errorMessage,
         string processorMMS);
 
-    void updateIngestionJobDependencies (
+    void updateIngestionJobTypeAndDependencies (
         int64_t ingestionJobKey,
+        IngestionType ingestionType,
         string dependencies,
         string processorMMS);
     
@@ -557,7 +576,9 @@ public:
 
         // image
         int imageWidth,
-        int imageHeight
+        int imageHeight,
+        string imageFormat,
+        int imageQuality
     );
 
     tuple<int,string,string,string> getStorageDetails(
