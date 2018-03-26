@@ -1994,7 +1994,6 @@ tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> MMSEngine
     {
         string errorMessage = __FILEREF__ + "ingestionType is wrong"
                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", ingestionType: " + to_string(static_cast<int>(ingestionType));
         _logger->error(errorMessage);
 
@@ -2024,6 +2023,7 @@ tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> MMSEngine
     get<4>(mediaSourceDetails) = fileSizeInBytes;
 
     _logger->info(__FILEREF__ + "media source details"
+        + ", ingestionJobKey: " + to_string(ingestionJobKey)
         + ", nextIngestionStatus: " + MMSEngineDBFacade::toString(get<0>(mediaSourceDetails))
         + ", mediaSourceURL: " + get<1>(mediaSourceDetails)
         + ", mediaSourceFileName: " + get<2>(mediaSourceDetails)
