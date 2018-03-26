@@ -39,6 +39,7 @@ private:
     shared_ptr<Customer>    _customer;
 
     string                  _metadataContent;
+    string                  _sourceFileName;
 
 public:
     void setMetadataContent(string metadataContent)
@@ -48,6 +49,15 @@ public:
     string getMetadataContent()
     {
         return _metadataContent;
+    }
+
+    void setSourceFileName(string sourceFileName)
+    {
+        _sourceFileName   = sourceFileName;
+    }
+    string getSourceFileName()
+    {
+        return _sourceFileName;
     }
 
     void setIngestionJobKey(int64_t ingestionJobKey)

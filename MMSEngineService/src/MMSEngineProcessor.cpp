@@ -203,6 +203,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                 {
                     // source binary download or uploaded terminated
 
+                    string sourceFileName = to_string(ingestionJobKey) + ".binary";
+
                     {
                         shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
                                 ->getFreeEvent<LocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
@@ -212,6 +214,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
 
                         localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
+                        localAssetIngestionEvent->setSourceFileName(sourceFileName);
                         localAssetIngestionEvent->setCustomer(customer);
 
                         localAssetIngestionEvent->setMetadataContent(metaDataContent);
@@ -850,8 +853,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                 localAssetIngestionEvent->getCustomer());
         customerIngestionBinaryPathName
                 .append("/")
-                .append(to_string(localAssetIngestionEvent->getIngestionJobKey()))
-                .append(".binary")
+                .append(localAssetIngestionEvent->getSourceFileName())
                 ;
 
         validateMediaSourceFile(customerIngestionBinaryPathName,
@@ -1441,6 +1443,7 @@ void MMSEngineProcessor::generateAndIngestScreenshots(
                 localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
 
                 localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
+                localAssetIngestionEvent->setSourceFileName(generatedScreenshotFileName);
                 localAssetIngestionEvent->setCustomer(customer);
 
                 localAssetIngestionEvent->setMetadataContent(imageMetaDataContent);
