@@ -1469,7 +1469,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                     
                     if (mediaItemKeysDependency != "")
                     {
-                        if (resultSet->getInt("IngestionType") == static_cast<int>(MMSEngineDBFacade::IngestionType::Screenshot))
+                        if (resultSet->getInt("IngestionType") == static_cast<int>(MMSEngineDBFacade::IngestionType::Screenshots))
                         {
                             // mediaItemKeysDependency has to contain just one MIK
                             int64_t mediaItemKey = stoll(mediaItemKeysDependency);

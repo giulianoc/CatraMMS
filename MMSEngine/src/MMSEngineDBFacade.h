@@ -280,13 +280,8 @@ public:
                 return "Unknown";
             case IngestionType::ContentIngestion:
                 return "ContentIngestion";
-<<<<<<< HEAD
             case IngestionType::Screenshots:
                 return "Screenshots";
-=======
-            case IngestionType::Screenshot:
-                return "Screenshot";
->>>>>>> 58eb72cffa6a8e71cf5fc036771b49a79c5563bc
             case IngestionType::ContentUpdate:
                 return "ContentUpdate";
             case IngestionType::ContentRemove:

@@ -336,6 +336,9 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                     if (dependencyNotFound)
                     {
+                        // the ingestionJob depends on one or more MIKs and, at least one
+                        // was not found
+                        
                         // checking on a date? and setting to error after a while?
                         _logger->info(__FILEREF__ + "Update IngestionJob"
                             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -520,11 +523,12 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             }
                         }
                         else if (ingestionType == 
-                                MMSEngineDBFacade::IngestionType::Screenshot)
+                                MMSEngineDBFacade::IngestionType::Screenshots)
                         {
                             if (mediaItemKeysDependency == "")
                             {
-                                // mediaItemKeysDependency will be filled
+                                // mediaItemKeysDependency (coming from DB) will be filled here
+                                // using the value in the dependencies vector (just filled by validation)
 
                                 // we are sure we have one element inside the vector because metadata were validated
                                 string dependency = to_string(dependencies.back());
@@ -546,7 +550,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 {
                                     int64_t sourceMediaItemKey = stoll(mediaItemKeysDependency);
 
-                                    generateAndIngestScreenshot(
+                                    generateAndIngestScreenshots(
                                             ingestionJobKey, 
                                             customer, 
                                             metadataRoot, 
@@ -554,7 +558,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 }
                                 catch(runtime_error e)
                                 {
-                                    _logger->error(__FILEREF__ + "generateAndIngestScreenshot failed"
+                                    _logger->error(__FILEREF__ + "generateAndIngestScreenshots failed"
                                             + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                             + ", exception: " + e.what()
                                     );
@@ -579,7 +583,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 }
                                 catch(exception e)
                                 {
-                                    _logger->error(__FILEREF__ + "generateAndIngestScreenshot failed"
+                                    _logger->error(__FILEREF__ + "generateAndIngestScreenshots failed"
                                             + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                             + ", exception: " + e.what()
                                     );
@@ -611,23 +615,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     + ", ingestionType: " + MMSEngineDBFacade::toString(ingestionType);
                             _logger->error(__FILEREF__ + errorMessage);
 
-<<<<<<< HEAD
-                            throw runtime_error(errorMessage);
-                        }
-                    }
-                    else if (ingestionType == 
-                            MMSEngineDBFacade::IngestionType::Screenshots)
-                    {
-                        if (mediaItemKeysDependency == "")
-                        {
-                            // mediaItemKeysDependency will be filled
-                            
-                            // we are sure we have one element inside the vector because metadata were validated
-                            string dependency = to_string(dependencies.back());
-                            string processorMMS = "";
-
-=======
->>>>>>> 58eb72cffa6a8e71cf5fc036771b49a79c5563bc
                             _logger->info(__FILEREF__ + "Update IngestionJob"
                                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                 + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
@@ -639,45 +626,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     errorMessage,
                                     "" // processorMMS
                                     );
-<<<<<<< HEAD
-                        }
-                        else
-                        {
-                            // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
-                            try
-                            {
-                                int64_t sourceMediaItemKey = stoll(mediaItemKeysDependency);
-                                
-                                generateAndIngestScreenshots(
-                                        ingestionJobKey, 
-                                        customer, 
-                                        metadataRoot, 
-                                        sourceMediaItemKey);
-                            }
-                            catch(exception e)
-                            {
-                                _logger->error(__FILEREF__ + "generateAndIngestScreenshots failed"
-                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                        + ", exception: " + e.what()
-                                );
-
-                                string errorMessage = e.what();
-
-                                _logger->info(__FILEREF__ + "Update IngestionJob"
-                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                    + ", IngestionType: " + MMSEngineDBFacade::toString(ingestionType)
-                                    + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
-                                    + ", errorMessage: " + errorMessage
-                                    + ", processorMMS: " + ""
-                                );                            
-                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                                        ingestionType,
-                                        MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
-                                        errorMessage,
-                                        "" // processorMMS
-                                        );
-=======
->>>>>>> 58eb72cffa6a8e71cf5fc036771b49a79c5563bc
 
                             throw runtime_error(errorMessage);
                         }
@@ -1336,7 +1284,7 @@ void MMSEngineProcessor::generateAndIngestScreenshots(
             startTimeInSeconds = screenshotsRoot.get(field, "XXX").asDouble();
         }
 
-        string videoFilter = -1;
+        string videoFilter;
         field = "VideoFilter";
         if (_mmsEngineDBFacade->isMetadataPresent(screenshotsRoot, field))
         {
@@ -1439,7 +1387,6 @@ void MMSEngineProcessor::generateAndIngestScreenshots(
             throw runtime_error(errorMessage);
         }
 
-<<<<<<< HEAD
         field = "SourceFileName";
         if (!_mmsEngineDBFacade->isMetadataPresent(screenshotsRoot, field))
         {
@@ -1450,24 +1397,16 @@ void MMSEngineProcessor::generateAndIngestScreenshots(
 
             throw runtime_error(errorMessage);
         }
-        string imageFileName = screenshotsRoot.get(field, "XXX").asString();
+        string sourceFileName = screenshotsRoot.get(field, "XXX").asString();
 
         string customerIngestionRepository = _mmsStorage->getCustomerIngestionRepository(
                 customer);
-=======
-        string imagePathName = _mmsStorage->getCustomerIngestionRepository(
-                customer)
-                + "/"
-                + to_string(ingestionJobKey)
-                + ".binary"
->>>>>>> 58eb72cffa6a8e71cf5fc036771b49a79c5563bc
-        ;
 
         FFMpeg ffmpeg (_configuration, _logger);
 
         vector<string> generatedScreenshotFileNames = ffmpeg.generateScreenshotsToIngest(
                 customerIngestionRepository,
-                imageFileName,
+                sourceFileName,
                 startTimeInSeconds,
                 framesNumber,
                 videoFilter,
@@ -1478,35 +1417,42 @@ void MMSEngineProcessor::generateAndIngestScreenshots(
                 sourcePhysicalPath
         );
 
-        _logger->info(__FILEREF__ + "Generated Screenshot to ingest"
-            + ", imagePathName: " + imagePathName
+        _logger->info(__FILEREF__ + "generateScreenshotsToIngest done"
+            + ", generatedScreenshotFileNames.size: " + to_string(generatedScreenshotFileNames.size())
         );
-
-        string imageMetaDataContent = generateImageMetadataToIngest(
-                ingestionJobKey,
-                screenshotRoot
-        );
-        
+        for (string generatedScreenshotFileName: generatedScreenshotFileNames)
         {
-            shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
-                    ->getFreeEvent<LocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
+            _logger->info(__FILEREF__ + "Generated Screenshot to ingest"
+                + ", generatedScreenshotFileName: " + generatedScreenshotFileName
+            );
 
-            localAssetIngestionEvent->setSource(MMSENGINEPROCESSORNAME);
-            localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
-            localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
+            string imageMetaDataContent = generateImageMetadataToIngest(
+                    ingestionJobKey,
+                    generatedScreenshotFileName,
+                    screenshotsRoot
+            );
 
-            localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
-            localAssetIngestionEvent->setCustomer(customer);
+            {
+                shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
+                        ->getFreeEvent<LocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
 
-            localAssetIngestionEvent->setMetadataContent(imageMetaDataContent);
+                localAssetIngestionEvent->setSource(MMSENGINEPROCESSORNAME);
+                localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
+                localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
 
-            shared_ptr<Event2>    event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
-            _multiEventsSet->addEvent(event);
+                localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
+                localAssetIngestionEvent->setCustomer(customer);
 
-            _logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
-                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", getEventKey().first: " + to_string(event->getEventKey().first)
-                + ", getEventKey().second: " + to_string(event->getEventKey().second));
+                localAssetIngestionEvent->setMetadataContent(imageMetaDataContent);
+
+                shared_ptr<Event2>    event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
+                _multiEventsSet->addEvent(event);
+
+                _logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", getEventKey().first: " + to_string(event->getEventKey().first)
+                    + ", getEventKey().second: " + to_string(event->getEventKey().second));
+            }
         }
     }
     catch(runtime_error e)
@@ -1528,74 +1474,63 @@ void MMSEngineProcessor::generateAndIngestScreenshots(
 
 string MMSEngineProcessor::generateImageMetadataToIngest(
         int64_t ingestionJobKey,
-        Json::Value screenshotRoot
+        string sourceFileName,
+        Json::Value screenshotsRoot
 )
 {
-    string field = "SourceFileName";
-    if (!_mmsEngineDBFacade->isMetadataPresent(screenshotRoot, field))
-    {
-        string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", Field: " + field;
-        _logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-    string imageFileName = screenshotRoot.get(field, "XXX").asString();
-        
     string title;
-    field = "title";
-    if (_mmsEngineDBFacade->isMetadataPresent(screenshotRoot, field))
-        title = screenshotRoot.get(field, "XXX").asString();
+    string field = "title";
+    if (_mmsEngineDBFacade->isMetadataPresent(screenshotsRoot, field))
+        title = screenshotsRoot.get(field, "XXX").asString();
     
     string subTitle;
     field = "SubTitle";
-    if (_mmsEngineDBFacade->isMetadataPresent(screenshotRoot, field))
-        subTitle = screenshotRoot.get(field, "XXX").asString();
+    if (_mmsEngineDBFacade->isMetadataPresent(screenshotsRoot, field))
+        subTitle = screenshotsRoot.get(field, "XXX").asString();
 
     string ingester;
     field = "Ingester";
-    if (_mmsEngineDBFacade->isMetadataPresent(screenshotRoot, field))
-        ingester = screenshotRoot.get(field, "XXX").asString();
+    if (_mmsEngineDBFacade->isMetadataPresent(screenshotsRoot, field))
+        ingester = screenshotsRoot.get(field, "XXX").asString();
 
     string keywords;
     field = "Keywords";
-    if (_mmsEngineDBFacade->isMetadataPresent(screenshotRoot, field))
-        keywords = screenshotRoot.get(field, "XXX").asString();
+    if (_mmsEngineDBFacade->isMetadataPresent(screenshotsRoot, field))
+        keywords = screenshotsRoot.get(field, "XXX").asString();
 
     string description;
     field = "Description";
-    if (_mmsEngineDBFacade->isMetadataPresent(screenshotRoot, field))
-        description = screenshotRoot.get(field, "XXX").asString();
+    if (_mmsEngineDBFacade->isMetadataPresent(screenshotsRoot, field))
+        description = screenshotsRoot.get(field, "XXX").asString();
 
     string logicalType;
     field = "LogicalType";
-    if (_mmsEngineDBFacade->isMetadataPresent(screenshotRoot, field))
-        logicalType = screenshotRoot.get(field, "XXX").asString();
+    if (_mmsEngineDBFacade->isMetadataPresent(screenshotsRoot, field))
+        logicalType = screenshotsRoot.get(field, "XXX").asString();
 
     string encodingProfilesSet;
     field = "EncodingProfilesSet";
-    if (_mmsEngineDBFacade->isMetadataPresent(screenshotRoot, field))
-        encodingProfilesSet = screenshotRoot.get(field, "XXX").asString();
+    if (_mmsEngineDBFacade->isMetadataPresent(screenshotsRoot, field))
+        encodingProfilesSet = screenshotsRoot.get(field, "XXX").asString();
 
     string encodingPriority;
     field = "EncodingPriority";
-    if (_mmsEngineDBFacade->isMetadataPresent(screenshotRoot, field))
-        encodingPriority = screenshotRoot.get(field, "XXX").asString();
+    if (_mmsEngineDBFacade->isMetadataPresent(screenshotsRoot, field))
+        encodingPriority = screenshotsRoot.get(field, "XXX").asString();
 
     string contentProviderName;
     field = "ContentProviderName";
-    if (_mmsEngineDBFacade->isMetadataPresent(screenshotRoot, field))
-        contentProviderName = screenshotRoot.get(field, "XXX").asString();
+    if (_mmsEngineDBFacade->isMetadataPresent(screenshotsRoot, field))
+        contentProviderName = screenshotsRoot.get(field, "XXX").asString();
     
     string territories;
     field = "Territories";
-    if (_mmsEngineDBFacade->isMetadataPresent(screenshotRoot, field))
+    if (_mmsEngineDBFacade->isMetadataPresent(screenshotsRoot, field))
     {
         {
             Json::StreamWriterBuilder wbuilder;
             
-            territories = Json::writeString(wbuilder, screenshotRoot[field]);
+            territories = Json::writeString(wbuilder, screenshotsRoot[field]);
         }
     }
     
@@ -1604,7 +1539,7 @@ string MMSEngineProcessor::generateImageMetadataToIngest(
             + "\"Type\": \"ContentIngestion\""
             + ", \"ContentIngestion\": {"
                 + "\"ContentType\": \"image\""
-                + ", \"SourceFileName\": \"" + imageFileName + "\""
+                + ", \"SourceFileName\": \"" + sourceFileName + "\""
             ;
     if (title != "")
         imageMetadata += ", \"Title\": \"" + title + "\"";
@@ -1678,8 +1613,8 @@ tuple<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType,vector<int
     string type = metadataRoot.get("Type", "XXX").asString();
     if (type == "ContentIngestion")
         ingestionType = MMSEngineDBFacade::IngestionType::ContentIngestion;
-    else if (type == "Screenshot")
-        ingestionType = MMSEngineDBFacade::IngestionType::Screenshot;
+    else if (type == "Screenshots")
+        ingestionType = MMSEngineDBFacade::IngestionType::Screenshots;
     /*
     else if (type == "ContentRemove")
         ingestionType = MMSEngineDBFacade::IngestionType::ContentRemove;
@@ -1711,9 +1646,9 @@ tuple<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType,vector<int
 
         contentType = validateContentIngestionMetadata(contentIngestionRoot);
     }
-    else if (ingestionType == MMSEngineDBFacade::IngestionType::Screenshot)
+    else if (ingestionType == MMSEngineDBFacade::IngestionType::Screenshots)
     {
-        string field = "Screenshot";
+        string field = "Screenshots";
         if (!_mmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -1723,10 +1658,10 @@ tuple<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType,vector<int
             throw runtime_error(errorMessage);
         }
 
-        Json::Value screenshotRoot = metadataRoot[field]; 
+        Json::Value screenshotsRoot = metadataRoot[field]; 
 
         pair<MMSEngineDBFacade::ContentType,bool> contentTypeAndDependencyNotFound =
-            validateScreenshotMetadata(screenshotRoot, dependencies);
+            validateScreenshotsMetadata(screenshotsRoot, dependencies);
         
         contentType = contentTypeAndDependencyNotFound.first;
         dependencyNotFound = contentTypeAndDependencyNotFound.second;
@@ -1818,8 +1753,8 @@ MMSEngineDBFacade::ContentType MMSEngineProcessor::validateContentIngestionMetad
     return contentType;
 }
 
-pair<MMSEngineDBFacade::ContentType,bool> MMSEngineProcessor::validateScreenshotMetadata(
-    Json::Value screenshotRoot, vector<int64_t>& dependencies)
+pair<MMSEngineDBFacade::ContentType,bool> MMSEngineProcessor::validateScreenshotsMetadata(
+    Json::Value screenshotsRoot, vector<int64_t>& dependencies)
 {
     // see sample in directory samples
     
@@ -1832,7 +1767,7 @@ pair<MMSEngineDBFacade::ContentType,bool> MMSEngineProcessor::validateScreenshot
     };
     for (string mandatoryField: mandatoryFields)
     {
-        if (!_mmsEngineDBFacade->isMetadataPresent(screenshotRoot, mandatoryField))
+        if (!_mmsEngineDBFacade->isMetadataPresent(screenshotsRoot, mandatoryField))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + mandatoryField;
@@ -1843,7 +1778,7 @@ pair<MMSEngineDBFacade::ContentType,bool> MMSEngineProcessor::validateScreenshot
     }
 
     string field = "ReferenceUniqueName";
-    string referenceUniqueName = screenshotRoot.get(field, "XXX").asString();
+    string referenceUniqueName = screenshotsRoot.get(field, "XXX").asString();
     
     dependencyNotFound = false;
     pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndcontentType;
@@ -1853,15 +1788,9 @@ pair<MMSEngineDBFacade::ContentType,bool> MMSEngineProcessor::validateScreenshot
     }
     catch(MediaItemKeyNotFound e)
     {
-<<<<<<< HEAD
         string errorMessage = __FILEREF__ + "ReferenceUniqueName was not found"
                 + ", referenceUniqueName: " + referenceUniqueName;
         _logger->error(errorMessage);
-=======
-        string errorMessage = __FILEREF__ + "UniqueName was not found"
-                + ", uniqueName: " + uniqueName;
-        _logger->warn(errorMessage);
->>>>>>> 58eb72cffa6a8e71cf5fc036771b49a79c5563bc
 
         dependencyNotFound      = true;
         // throw runtime_error(errorMessage);
@@ -1879,22 +1808,35 @@ pair<MMSEngineDBFacade::ContentType,bool> MMSEngineProcessor::validateScreenshot
 
     if (!dependencyNotFound)
     {
-<<<<<<< HEAD
-        string errorMessage = __FILEREF__ + "ReferenceUniqueName does not refer a video content"
-                + ", referenceUniqueName: " + referenceUniqueName;
-        _logger->error(errorMessage);
-=======
         if (mediaItemKeyAndcontentType.second != MMSEngineDBFacade::ContentType::Video)
         {
-            string errorMessage = __FILEREF__ + "UniqueName does not refer a video content"
-                    + ", uniqueName: " + uniqueName;
+            string errorMessage = __FILEREF__ + "ReferenceUniqueName does not refer a video content"
+                + ", referenceUniqueName: " + referenceUniqueName;
             _logger->error(errorMessage);
->>>>>>> 58eb72cffa6a8e71cf5fc036771b49a79c5563bc
 
             throw runtime_error(errorMessage);
         }
 
         dependencies.push_back(mediaItemKeyAndcontentType.first);
+    }
+
+    string videoFilter;
+    field = "VideoFilter";
+    if (_mmsEngineDBFacade->isMetadataPresent(screenshotsRoot, field))
+    {
+        videoFilter = screenshotsRoot.get(field, "XXX").asString();
+    }
+
+    int periodInSeconds = -1;
+    field = "PeriodInSeconds";
+    if (!_mmsEngineDBFacade->isMetadataPresent(screenshotsRoot, field)
+            && videoFilter == "PeriodicFrame")
+    {
+        string errorMessage = __FILEREF__ + "VideoFilter is PeriodicFrame but PeriodInSeconds does not exist"
+            + ", videoFilter: " + videoFilter;
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
     }
 
     /*

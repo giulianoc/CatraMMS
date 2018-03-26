@@ -1238,51 +1238,58 @@ vector<string> FFMpeg::generateScreenshotsToIngest(
         throw e;
     }
 
+    bool exceptionInCaseOfError = false;
+    FileIO::remove(outputFfmpegPathFileName, exceptionInCaseOfError);
+    
     if (mjpeg || framesNumber == 1)
-        generatedScreenshotFileNames.push_back(localImagePathName.substr(fileNameIndex + 1));
+        generatedScreenshotFileNames.push_back(localImageFileName);
     else
     {
         // get files from file system
     
-        try
+        FileIO::DirectoryEntryType_t detDirectoryEntryType;
+        shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (imageDirecotry + "/");
+
+        bool scanDirectoryFinished = false;
+        while (!scanDirectoryFinished)
         {
-            DirectoryEntryType_t detDirectoryEntryType;
-            shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (imageDirecotry + "/");
-            
-            while ()
+            string directoryEntry;
+            try
             {
                 string directoryEntry = FileIO::readDirectory (directory,
                     &detDirectoryEntryType);
+                
                 if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
                     continue;
-                
+
                 if (directoryEntry.compare(0, imageBaseFileName.size(), imageBaseFileName) == 0)
                     generatedScreenshotFileNames.push_back(directoryEntry);
             }
-            
-            FileIO::closeDirectory (directory);
-        }
-        catch(DirectoryListFinished e)
-        {
-            
-        }
-        catch(runtime_error e)
-        {
-            string errorMessage = __FILEREF__ + "listing directory failed"
-                   + ", e.what(): " + e.what()
-            ;
-            _logger->error(errorMessage);
+            catch(DirectoryListFinished e)
+            {
+                scanDirectoryFinished = true;
+            }
+            catch(runtime_error e)
+            {
+                string errorMessage = __FILEREF__ + "listing directory failed"
+                       + ", e.what(): " + e.what()
+                ;
+                _logger->error(errorMessage);
 
-...
-            bool exceptionInCaseOfError = false;
-            FileIO::remove(outputFfmpegPathFileName, exceptionInCaseOfError);
+                throw e;
+            }
+            catch(exception e)
+            {
+                string errorMessage = __FILEREF__ + "listing directory failed"
+                       + ", e.what(): " + e.what()
+                ;
+                _logger->error(errorMessage);
 
-            throw e;
+                throw e;
+            }
         }
-        catch(exception e)
-        {
-            
-        }
+
+        FileIO::closeDirectory (directory);
     }
     
     /*

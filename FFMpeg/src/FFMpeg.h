@@ -60,7 +60,8 @@ public:
     tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> getMediaInfo(string mmsAssetPathName);
 
     vector<string> generateScreenshotsToIngest(
-        string imagePathName,
+        string imageDirecotry,
+        string imageFileName,
         double startTimeInSeconds,
         int framesNumber,
         string videoFilter,
