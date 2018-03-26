@@ -73,19 +73,21 @@ private:
     );
 
     tuple<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType,vector<int64_t>,bool>  
-            validateMetadata(Json::Value root);
+            validateMetadata(int64_t ingestionJobKey, Json::Value root);
 
-    MMSEngineDBFacade::ContentType validateContentIngestionMetadata(Json::Value encoding);
+    MMSEngineDBFacade::ContentType validateContentIngestionMetadata(
+        int64_t ingestionJobKey, Json::Value encoding);
 
     pair<MMSEngineDBFacade::ContentType,bool> validateScreenshotsMetadata(
-        Json::Value screenshotRoot, vector<int64_t>& dependencies);
+        int64_t ingestionJobKey, Json::Value screenshotRoot, vector<int64_t>& dependencies);
 
     tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> getMediaSourceDetails(
-        shared_ptr<Customer> customer,
+        int64_t ingestionJobKey, shared_ptr<Customer> customer,
         MMSEngineDBFacade::IngestionType ingestionType,
         Json::Value root);
 
-    void validateMediaSourceFile (string ftpDirectoryMediaSourceFileName,
+    void validateMediaSourceFile (int64_t ingestionJobKey,
+        string ftpDirectoryMediaSourceFileName,
         string md5FileCheckSum, int fileSizeInBytes);
 
     bool isMetadataPresent(Json::Value root, string field);

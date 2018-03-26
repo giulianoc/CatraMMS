@@ -288,7 +288,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                     bool dependencyNotFound;
                     try
                     {
-                        ingestionTypeContentTypeAndDependencies = validateMetadata(metadataRoot);
+                        ingestionTypeContentTypeAndDependencies = validateMetadata(
+                                ingestionJobKey, metadataRoot);
                         
                         tie(ingestionType, contentType, dependencies, dependencyNotFound) =
                                 ingestionTypeContentTypeAndDependencies;
@@ -413,7 +414,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             {
                                 tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> mediaSourceDetails;
 
-                                mediaSourceDetails = getMediaSourceDetails(customer,
+                                mediaSourceDetails = getMediaSourceDetails(
+                                        ingestionJobKey, customer,
                                         ingestionType, metadataRoot);
 
                                 tie(nextIngestionStatus,
@@ -787,7 +789,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             throw runtime_error(errorMessage);
         }
 
-        ingestionTypeContentTypeAndDependencies = validateMetadata(metadataRoot);
+        ingestionTypeContentTypeAndDependencies = validateMetadata(
+                localAssetIngestionEvent->getIngestionJobKey(), metadataRoot);
         
         tie(ingestionType, contentType, dependencies, dependencyNotFound) =
                 ingestionTypeContentTypeAndDependencies;
@@ -844,6 +847,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
     {
         tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int>
             mediaSourceDetails = getMediaSourceDetails(
+                localAssetIngestionEvent->getIngestionJobKey(),
                 localAssetIngestionEvent->getCustomer(),
                 ingestionType, metadataRoot);
         
@@ -904,7 +908,9 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                 .append(localAssetIngestionEvent->getSourceFileName())
                 ;
 
-        validateMediaSourceFile(customerIngestionBinaryPathName,
+        validateMediaSourceFile(
+                localAssetIngestionEvent->getIngestionJobKey(),
+                customerIngestionBinaryPathName,
                 md5FileCheckSum, fileSizeInBytes);
     }
     catch(runtime_error e)
@@ -1654,7 +1660,7 @@ void MMSEngineProcessor::handleCheckEncodingEvent ()
 }
 
 tuple<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType,vector<int64_t>,bool> 
-        MMSEngineProcessor::validateMetadata(Json::Value metadataRoot)
+        MMSEngineProcessor::validateMetadata(int64_t ingestionJobKey, Json::Value metadataRoot)
 {
     tuple<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType,vector<int64_t>,bool> 
             ingestionTypeContentTypeAndDependencies;
@@ -1668,6 +1674,7 @@ tuple<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType,vector<int
     if (!_mmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
     {
         string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", Field: " + field;
         _logger->error(errorMessage);
 
@@ -1686,6 +1693,7 @@ tuple<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType,vector<int
     else
     {
         string errorMessage = __FILEREF__ + "Field 'Type' is wrong"
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", Type: " + type;
         _logger->error(errorMessage);
 
@@ -1700,6 +1708,7 @@ tuple<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType,vector<int
         if (!_mmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", Field: " + field;
             _logger->error(errorMessage);
 
@@ -1708,7 +1717,8 @@ tuple<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType,vector<int
 
         Json::Value contentIngestionRoot = metadataRoot[field]; 
 
-        contentType = validateContentIngestionMetadata(contentIngestionRoot);
+        contentType = validateContentIngestionMetadata(
+                ingestionJobKey, contentIngestionRoot);
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::Screenshots)
     {
@@ -1716,6 +1726,7 @@ tuple<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType,vector<int
         if (!_mmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", Field: " + field;
             _logger->error(errorMessage);
 
@@ -1725,7 +1736,7 @@ tuple<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType,vector<int
         Json::Value screenshotsRoot = metadataRoot[field]; 
 
         pair<MMSEngineDBFacade::ContentType,bool> contentTypeAndDependencyNotFound =
-            validateScreenshotsMetadata(screenshotsRoot, dependencies);
+            validateScreenshotsMetadata(ingestionJobKey, screenshotsRoot, dependencies);
         
         contentType = contentTypeAndDependencyNotFound.first;
         dependencyNotFound = contentTypeAndDependencyNotFound.second;
@@ -1738,7 +1749,7 @@ tuple<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType,vector<int
 }
 
 MMSEngineDBFacade::ContentType MMSEngineProcessor::validateContentIngestionMetadata(
-    Json::Value contentIngestion)
+    int64_t ingestionJobKey, Json::Value contentIngestion)
 {
     // see sample in directory samples
     
@@ -1754,6 +1765,7 @@ MMSEngineDBFacade::ContentType MMSEngineProcessor::validateContentIngestionMetad
         if (!_mmsEngineDBFacade->isMetadataPresent(contentIngestion, mandatoryField))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", Field: " + mandatoryField;
             _logger->error(errorMessage);
 
@@ -1769,6 +1781,7 @@ MMSEngineDBFacade::ContentType MMSEngineProcessor::validateContentIngestionMetad
     catch(exception e)
     {
         string errorMessage = __FILEREF__ + "Field 'ContentType' is wrong"
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", sContentType: " + sContentType;
         _logger->error(errorMessage);
 
@@ -1790,6 +1803,7 @@ MMSEngineDBFacade::ContentType MMSEngineProcessor::validateContentIngestionMetad
             catch(exception e)
             {
                 string errorMessage = __FILEREF__ + "Field 'EncodingPriority' is wrong"
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
                         + ", EncodingPriority: " + encodingPriority;
                 _logger->error(errorMessage);
 
@@ -1818,7 +1832,7 @@ MMSEngineDBFacade::ContentType MMSEngineProcessor::validateContentIngestionMetad
 }
 
 pair<MMSEngineDBFacade::ContentType,bool> MMSEngineProcessor::validateScreenshotsMetadata(
-    Json::Value screenshotsRoot, vector<int64_t>& dependencies)
+    int64_t ingestionJobKey, Json::Value screenshotsRoot, vector<int64_t>& dependencies)
 {
     // see sample in directory samples
     
@@ -1834,6 +1848,7 @@ pair<MMSEngineDBFacade::ContentType,bool> MMSEngineProcessor::validateScreenshot
         if (!_mmsEngineDBFacade->isMetadataPresent(screenshotsRoot, mandatoryField))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", Field: " + mandatoryField;
             _logger->error(errorMessage);
 
@@ -1855,6 +1870,7 @@ pair<MMSEngineDBFacade::ContentType,bool> MMSEngineProcessor::validateScreenshot
     catch(MediaItemKeyNotFound e)
     {
         string errorMessage = __FILEREF__ + "ReferenceUniqueName was not found"
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", referenceUniqueName: " + referenceUniqueName;
         _logger->warn(errorMessage);
 
@@ -1864,6 +1880,7 @@ pair<MMSEngineDBFacade::ContentType,bool> MMSEngineProcessor::validateScreenshot
     catch(exception e)
     {
         string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->getMediaItemKeyDetails failed"
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", referenceUniqueName: " + referenceUniqueName;
         _logger->error(errorMessage);
 
@@ -1877,6 +1894,7 @@ pair<MMSEngineDBFacade::ContentType,bool> MMSEngineProcessor::validateScreenshot
         if (mediaItemKeyAndcontentType.second != MMSEngineDBFacade::ContentType::Video)
         {
             string errorMessage = __FILEREF__ + "ReferenceUniqueName does not refer a video content"
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", referenceUniqueName: " + referenceUniqueName;
             _logger->error(errorMessage);
 
@@ -1899,6 +1917,7 @@ pair<MMSEngineDBFacade::ContentType,bool> MMSEngineProcessor::validateScreenshot
             && videoFilter == "PeriodicFrame")
     {
         string errorMessage = __FILEREF__ + "VideoFilter is PeriodicFrame but PeriodInSeconds does not exist"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", videoFilter: " + videoFilter;
         _logger->error(errorMessage);
 
@@ -1925,7 +1944,7 @@ pair<MMSEngineDBFacade::ContentType,bool> MMSEngineProcessor::validateScreenshot
 }
 
 tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> MMSEngineProcessor::getMediaSourceDetails(
-        shared_ptr<Customer> customer, MMSEngineDBFacade::IngestionType ingestionType,
+        int64_t ingestionJobKey, shared_ptr<Customer> customer, MMSEngineDBFacade::IngestionType ingestionType,
         Json::Value root)        
 {
     MMSEngineDBFacade::IngestionStatus nextIngestionStatus;
@@ -1974,6 +1993,8 @@ tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> MMSEngine
     else
     {
         string errorMessage = __FILEREF__ + "ingestionType is wrong"
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", ingestionType: " + to_string(static_cast<int>(ingestionType));
         _logger->error(errorMessage);
 
@@ -2014,12 +2035,14 @@ tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> MMSEngine
     return mediaSourceDetails;
 }
 
-void MMSEngineProcessor::validateMediaSourceFile (string ftpDirectoryMediaSourceFileName,
+void MMSEngineProcessor::validateMediaSourceFile (int64_t ingestionJobKey,
+        string ftpDirectoryMediaSourceFileName,
         string md5FileCheckSum, int fileSizeInBytes)
 {
     if (!FileIO::fileExisting(ftpDirectoryMediaSourceFileName))
     {
         string errorMessage = __FILEREF__ + "Media Source file does not exist (it was not uploaded yet)"
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", ftpDirectoryMediaSourceFileName: " + ftpDirectoryMediaSourceFileName;
         _logger->error(errorMessage);
 
@@ -2036,6 +2059,7 @@ void MMSEngineProcessor::validateMediaSourceFile (string ftpDirectoryMediaSource
         if (md5FileCheckSum != md5RealDigest)
         {
             string errorMessage = __FILEREF__ + "MD5 check failed"
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", ftpDirectoryMediaSourceFileName: " + ftpDirectoryMediaSourceFileName
                 + ", md5FileCheckSum: " + md5FileCheckSum
                 + ", md5RealDigest: " + md5RealDigest
@@ -2054,6 +2078,7 @@ void MMSEngineProcessor::validateMediaSourceFile (string ftpDirectoryMediaSource
         if (fileSizeInBytes != realFileSizeInBytes)
         {
             string errorMessage = __FILEREF__ + "FileSize check failed"
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", ftpDirectoryMediaSourceFileName: " + ftpDirectoryMediaSourceFileName
                 + ", fileSizeInBytes: " + to_string(fileSizeInBytes)
                 + ", realFileSizeInBytes: " + to_string(realFileSizeInBytes)
@@ -2108,6 +2133,7 @@ RESUMING FILE TRANSFERS
         try 
         {
             _logger->info(__FILEREF__ + "Downloading"
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", sourceReferenceURL: " + sourceReferenceURL
                 + ", attempt: " + to_string(attemptIndex + 1)
                 + ", _maxDownloadAttemptNumber: " + to_string(_maxDownloadAttemptNumber)
@@ -2151,13 +2177,16 @@ RESUMING FILE TRANSFERS
                 request.setOpt(new curlpp::options::NoProgress(0L));
 
                 _logger->info(__FILEREF__ + "Downloading media file"
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", sourceReferenceURL: " + sourceReferenceURL
                 );
                 request.perform();
             }
             else
             {
-                _logger->warn(__FILEREF__ + "Coming from a download failure, trying to Resume");
+                _logger->warn(__FILEREF__ + "Coming from a download failure, trying to Resume"
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                );
                 
                 ofstream mediaSourceFileStream(customerIngestionBinaryPathName, ofstream::binary | ofstream::app);
 
@@ -2192,6 +2221,7 @@ RESUMING FILE TRANSFERS
                     request.setOpt(new curlpp::options::ResumeFrom(fileSize));
                 
                 _logger->info(__FILEREF__ + "Resume Download media file"
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", sourceReferenceURL: " + sourceReferenceURL
                     + ", resuming from fileSize: " + to_string(fileSize)
                 );
@@ -2226,6 +2256,7 @@ RESUMING FILE TRANSFERS
                 if (attemptIndex + 1 == _maxDownloadAttemptNumber)
                 {
                     _logger->info(__FILEREF__ + "Reached the max number of download attempts"
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
                         + ", _maxDownloadAttemptNumber: " + to_string(_maxDownloadAttemptNumber)
                     );
                     
@@ -2268,6 +2299,7 @@ RESUMING FILE TRANSFERS
                 if (attemptIndex + 1 == _maxDownloadAttemptNumber)
                 {
                     _logger->info(__FILEREF__ + "Reached the max number of download attempts"
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
                         + ", _maxDownloadAttemptNumber: " + to_string(_maxDownloadAttemptNumber)
                     );
                     
@@ -2310,6 +2342,7 @@ RESUMING FILE TRANSFERS
                 if (attemptIndex + 1 == _maxDownloadAttemptNumber)
                 {
                     _logger->info(__FILEREF__ + "Reached the max number of download attempts"
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
                         + ", _maxDownloadAttemptNumber: " + to_string(_maxDownloadAttemptNumber)
                     );
                     
@@ -2366,6 +2399,7 @@ void MMSEngineProcessor::moveMediaSourceFile(string sourceReferenceURL,
         string sourcePathName = sourceReferenceURL.substr(movePrefix.length());
                 
         _logger->info(__FILEREF__ + "Moving"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", sourcePathName: " + sourcePathName
             + ", customerIngestionBinaryPathName: " + customerIngestionBinaryPathName
         );
@@ -2447,6 +2481,7 @@ void MMSEngineProcessor::copyMediaSourceFile(string sourceReferenceURL,
         string sourcePathName = sourceReferenceURL.substr(copyPrefix.length());
 
         _logger->info(__FILEREF__ + "Coping"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", sourcePathName: " + sourcePathName
             + ", customerIngestionBinaryPathName: " + customerIngestionBinaryPathName
         );
