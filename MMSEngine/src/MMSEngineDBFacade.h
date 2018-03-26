@@ -478,7 +478,7 @@ public:
     );
 
     void getIngestionsToBeManaged(
-        vector<tuple<int64_t,shared_ptr<Customer>,string,IngestionStatus,string>>& ingestionsToBeManaged,
+        vector<tuple<int64_t,string,shared_ptr<Customer>,string,IngestionStatus,string>>& ingestionsToBeManaged,
         string processorMMS,
         int maxIngestionJobs,
         int maxIngestionJobsWithDependencyToCheck);
@@ -525,7 +525,8 @@ public:
         int64_t ingestionJobKey,
         bool sourceBinaryTransferred);
 
-    pair<int64_t,MMSEngineDBFacade::ContentType> getMediaItemKeyDetails(string uniqueName);
+    pair<int64_t,MMSEngineDBFacade::ContentType> getMediaItemKeyDetails(
+    string uniqueName, bool warningIfMissing);
 
     tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> getVideoDetails(
         int64_t mediaItemKey);

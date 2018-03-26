@@ -50,6 +50,7 @@ private:
 
     int                     _maxIngestionJobsPerEvent;
     int                     _maxIngestionJobsWithDependencyToCheckPerEvent;
+    int                     _dependencyExpirationInHours;
     
     void handleCheckIngestionEvent();
 

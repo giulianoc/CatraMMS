@@ -1380,7 +1380,7 @@ int64_t MMSEngineDBFacade::addImageEncodingProfile(
 }
 
 void MMSEngineDBFacade::getIngestionsToBeManaged(
-        vector<tuple<int64_t,shared_ptr<Customer>,string,IngestionStatus,string>>& ingestionsToBeManaged,
+        vector<tuple<int64_t,string,shared_ptr<Customer>,string,IngestionStatus,string>>& ingestionsToBeManaged,
         string processorMMS,
         int maxIngestionJobs,
         int maxIngestionJobsWithDependencyToCheck)
@@ -1410,7 +1410,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
         {
             {
                 lastSQLCommand = 
-                    "select IngestionJobKey, CustomerKey, MetaDataContent, Status from MMS_IngestionJobs where "
+                    "select IngestionJobKey, DATE_FORMAT(StartIngestion, '%Y-%m-%d %H:%i:%s') as StartIngestion, CustomerKey, MetaDataContent, Status from MMS_IngestionJobs where "
                         "ProcessorMMS is null and MediaItemKeysDependency is null "
                         "and (Status = ? or (Status in (?, ?, ?, ?) and SourceBinaryTransferred = 1)) limit ? for update";
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -1426,6 +1426,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                 while (resultSet->next())
                 {
                     int64_t ingestionJobKey     = resultSet->getInt64("IngestionJobKey");
+                    string startIngestion       = resultSet->getString("StartIngestion");
                     int64_t customerKey         = resultSet->getInt64("CustomerKey");
                     string metaDataContent      = resultSet->getString("MetaDataContent");
                     IngestionStatus ingestionStatus     = MMSEngineDBFacade::toIngestionStatus(resultSet->getString("Status"));
@@ -1433,8 +1434,8 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 
                     shared_ptr<Customer> customer = getCustomer(customerKey);
 
-                    tuple<int64_t,shared_ptr<Customer>,string,IngestionStatus,string> ingestionToBeManaged
-                            = make_tuple(ingestionJobKey, customer, metaDataContent, ingestionStatus, mediaItemKeysDependency);
+                    tuple<int64_t,string,shared_ptr<Customer>,string,IngestionStatus,string> ingestionToBeManaged
+                            = make_tuple(ingestionJobKey, startIngestion, customer, metaDataContent, ingestionStatus, mediaItemKeysDependency);
 
                     ingestionsToBeManaged.push_back(ingestionToBeManaged);
                 }
@@ -1445,7 +1446,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
         {
             {
                 lastSQLCommand = 
-                    "select IngestionJobKey, CustomerKey, MetaDataContent, MediaItemKeysDependency, Status, IngestionType from MMS_IngestionJobs where "
+                    "select IngestionJobKey, DATE_FORMAT(StartIngestion, '%Y-%m-%d %H:%i:%s') as StartIngestion, CustomerKey, MetaDataContent, MediaItemKeysDependency, Status, IngestionType from MMS_IngestionJobs where "
                         "ProcessorMMS is null and MediaItemKeysDependency is not null "
                         "and Status = ? limit ? for update";
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -1457,6 +1458,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                 while (resultSet->next())
                 {
                     int64_t ingestionJobKey     = resultSet->getInt64("IngestionJobKey");
+                    string startIngestion       = resultSet->getString("StartIngestion");
                     int64_t customerKey         = resultSet->getInt64("CustomerKey");
                     string metaDataContent      = resultSet->getString("MetaDataContent");
                     IngestionStatus ingestionStatus     = MMSEngineDBFacade::toIngestionStatus(resultSet->getString("Status"));
@@ -1490,8 +1492,8 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                         
                     if (ingestionToBeManaged)
                     {
-                        tuple<int64_t,shared_ptr<Customer>,string,IngestionStatus,string> ingestionToBeManaged
-                                = make_tuple(ingestionJobKey, customer, metaDataContent, ingestionStatus, mediaItemKeysDependency);
+                        tuple<int64_t,string,shared_ptr<Customer>,string,IngestionStatus,string> ingestionToBeManaged
+                                = make_tuple(ingestionJobKey, startIngestion, customer, metaDataContent, ingestionStatus, mediaItemKeysDependency);
 
                         ingestionsToBeManaged.push_back(ingestionToBeManaged);
                     }
@@ -1499,17 +1501,18 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
             }
         }
 
-        for (tuple<int64_t,shared_ptr<Customer>,string,IngestionStatus,string> ingestionToBeManaged:
+        for (tuple<int64_t,string,shared_ptr<Customer>,string,IngestionStatus,string> ingestionToBeManaged:
             ingestionsToBeManaged)
         {
             int64_t ingestionJobKey;
+            string startIngestion;
             shared_ptr<Customer> customer;
             string metaDataContent;
             string sourceReference;
             MMSEngineDBFacade::IngestionStatus ingestionStatus;
             string mediaItemKeysDependency;
 
-            tie(ingestionJobKey, customer, metaDataContent, ingestionStatus, 
+            tie(ingestionJobKey, startIngestion, customer, metaDataContent, ingestionStatus, 
                     mediaItemKeysDependency) = ingestionToBeManaged;
 
             lastSQLCommand = 
@@ -2395,7 +2398,7 @@ void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred (
 }
 
 pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyDetails(
-    string uniqueName)
+    string uniqueName, bool warningIfMissing)
 {
     string      lastSQLCommand;
         
@@ -2426,7 +2429,10 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
                     + ", uniqueName: " + uniqueName
                     + ", lastSQLCommand: " + lastSQLCommand
                 ;
-                _logger->error(errorMessage);
+                if (warningIfMissing)
+                    _logger->warn(errorMessage);
+                else
+                    _logger->error(errorMessage);
 
                 throw MediaItemKeyNotFound(errorMessage);                    
             }            
@@ -2451,9 +2457,14 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
     {
         _connectionPool->unborrow(conn);
         
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", lastSQLCommand: " + lastSQLCommand
-        );
+        if (warningIfMissing)
+            _logger->warn(__FILEREF__ + "SQL exception"
+                + ", lastSQLCommand: " + lastSQLCommand
+            );
+        else
+            _logger->error(__FILEREF__ + "SQL exception"
+                + ", lastSQLCommand: " + lastSQLCommand
+            );
 
         throw e;
     }

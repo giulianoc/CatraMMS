@@ -38,6 +38,8 @@ MMSEngineProcessor::MMSEngineProcessor(
     
     _maxIngestionJobsPerEvent       = configuration["mms"].get("maxIngestionJobsPerEvent", 5).asInt();
     _maxIngestionJobsWithDependencyToCheckPerEvent = configuration["mms"].get("maxIngestionJobsWithDependencyToCheckPerEvent", 5).asInt();
+
+    _dependencyExpirationInHours       = configuration["mms"].get("dependencyExpirationInHours", 5).asInt();
 }
 
 MMSEngineProcessor::~MMSEngineProcessor()
@@ -170,26 +172,27 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
     
     try
     {
-        vector<tuple<int64_t,shared_ptr<Customer>,string,MMSEngineDBFacade::IngestionStatus,string>> 
+        vector<tuple<int64_t,string,shared_ptr<Customer>,string,MMSEngineDBFacade::IngestionStatus,string>> 
                 ingestionsToBeManaged;
         
         _mmsEngineDBFacade->getIngestionsToBeManaged(ingestionsToBeManaged, 
                 _processorMMS, _maxIngestionJobsPerEvent, 
                 _maxIngestionJobsWithDependencyToCheckPerEvent);
         
-        for (tuple<int64_t,shared_ptr<Customer>,string,MMSEngineDBFacade::IngestionStatus,string> 
+        for (tuple<int64_t,string,shared_ptr<Customer>,string,MMSEngineDBFacade::IngestionStatus,string> 
                 ingestionToBeManaged: ingestionsToBeManaged)
         {
             int64_t ingestionJobKey;
             try
             {
                 shared_ptr<Customer> customer;
+                string startIngestion;
                 string metaDataContent;
                 string sourceReference;
                 MMSEngineDBFacade::IngestionStatus ingestionStatus;
                 string mediaItemKeysDependency;
 
-                tie(ingestionJobKey, customer, metaDataContent, ingestionStatus, 
+                tie(ingestionJobKey, startIngestion, customer, metaDataContent, ingestionStatus, 
                         mediaItemKeysDependency) = ingestionToBeManaged;
                 
                 _logger->info(__FILEREF__ + "json to be processed"
@@ -342,14 +345,59 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         // the ingestionJob depends on one or more MIKs and, at least one
                         // was not found
                         
-                        // checking on a date? and setting to error after a while?
-                        _logger->info(__FILEREF__ + "Update IngestionJob"
-                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                            + ", processorMMS: " + ""
-                        );                            
-                        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
-                                "" // processorMMS
-                                );
+                        char        retentionDateTime [64];
+                        {
+                            chrono::system_clock::time_point now = chrono::system_clock::now();
+                            chrono::system_clock::time_point tpRetentionDateTime = now - chrono::hours(_dependencyExpirationInHours);
+
+                            time_t retentionUtcTime = chrono::system_clock::to_time_t(tpRetentionDateTime);
+
+                            tm          retentionTmDateTime;
+
+                            localtime_r (&retentionUtcTime, &retentionTmDateTime);
+
+                            sprintf (retentionDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
+                                    retentionTmDateTime. tm_year + 1900,
+                                    retentionTmDateTime. tm_mon + 1,
+                                    retentionTmDateTime. tm_mday,
+                                    retentionTmDateTime. tm_hour,
+                                    retentionTmDateTime. tm_min,
+                                    retentionTmDateTime. tm_sec);
+                        }
+                        
+                        string strRetentionDateTime = string(retentionDateTime);
+                        if (startIngestion < strRetentionDateTime)
+                        {
+                            string errorMessage = string("IngestionJob waiting a dependency expired")
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", startIngestion: " + startIngestion
+                                    + ", retentionDateTime: " + strRetentionDateTime
+                                    ;
+                            
+                            _logger->error(__FILEREF__ + errorMessage);
+                        
+                            _logger->info(__FILEREF__ + "Update IngestionJob"
+                                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                + ", IngestionStatus: " + "End_ValidationMetadataFailed"
+                                + ", errorMessage: " + errorMessage
+                                + ", processorMMS: " + ""
+                            );
+                            _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                    MMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed, 
+                                    errorMessage,
+                                    "" // processorMMS
+                            );
+                        }
+                        else
+                        {
+                            _logger->info(__FILEREF__ + "Update IngestionJob"
+                                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                + ", processorMMS: " + ""
+                            );                            
+                            _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
+                                    "" // processorMMS
+                                    );
+                        }
                     }
                     else
                     {
@@ -1787,13 +1835,15 @@ pair<MMSEngineDBFacade::ContentType,bool> MMSEngineProcessor::validateScreenshot
     pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndcontentType;
     try
     {
-        mediaItemKeyAndcontentType = _mmsEngineDBFacade->getMediaItemKeyDetails(referenceUniqueName);        
+        bool warningIfMissing = true;
+        mediaItemKeyAndcontentType = _mmsEngineDBFacade->getMediaItemKeyDetails(
+                referenceUniqueName, warningIfMissing);        
     }
     catch(MediaItemKeyNotFound e)
     {
         string errorMessage = __FILEREF__ + "ReferenceUniqueName was not found"
                 + ", referenceUniqueName: " + referenceUniqueName;
-        _logger->error(errorMessage);
+        _logger->warn(errorMessage);
 
         dependencyNotFound      = true;
         // throw runtime_error(errorMessage);
