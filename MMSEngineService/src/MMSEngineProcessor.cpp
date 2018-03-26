@@ -1037,6 +1037,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             );
 
             _logger->info(__FILEREF__ + "Remove file"
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
                 + ", mmsAssetPathName: " + mmsAssetPathName
             );
             FileIO::remove(mmsAssetPathName);
@@ -1060,6 +1061,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             );
 
             _logger->info(__FILEREF__ + "Remove file"
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
                 + ", mmsAssetPathName: " + mmsAssetPathName
             );
             FileIO::remove(mmsAssetPathName);
@@ -1082,6 +1084,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         try
         {
             _logger->info(__FILEREF__ + "Processing through Magick"
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
                 + ", mmsAssetPathName: " + mmsAssetPathName
             );
             Magick::Image      imageToEncode;
@@ -1106,6 +1109,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             );
 
             _logger->info(__FILEREF__ + "Remove file"
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
                 + ", mmsAssetPathName: " + mmsAssetPathName
             );
             FileIO::remove(mmsAssetPathName);
@@ -1130,6 +1134,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             );
 
             _logger->info(__FILEREF__ + "Remove file"
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
                 + ", mmsAssetPathName: " + mmsAssetPathName
             );
             FileIO::remove(mmsAssetPathName);
@@ -1154,6 +1159,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             );
 
             _logger->info(__FILEREF__ + "Remove file"
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
                 + ", mmsAssetPathName: " + mmsAssetPathName
             );
             FileIO::remove(mmsAssetPathName);
@@ -1177,6 +1183,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             );
 
             _logger->info(__FILEREF__ + "Remove file"
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
                 + ", mmsAssetPathName: " + mmsAssetPathName
             );
             FileIO::remove(mmsAssetPathName);
@@ -1274,6 +1281,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         );
 
         _logger->info(__FILEREF__ + "Remove file"
+            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
             + ", mmsAssetPathName: " + mmsAssetPathName
         );
         FileIO::remove(mmsAssetPathName);
@@ -1297,6 +1305,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         );
 
         _logger->info(__FILEREF__ + "Remove file"
+            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
             + ", mmsAssetPathName: " + mmsAssetPathName
         );
         FileIO::remove(mmsAssetPathName);
@@ -1468,11 +1477,13 @@ void MMSEngineProcessor::generateAndIngestScreenshots(
         );
 
         _logger->info(__FILEREF__ + "generateScreenshotsToIngest done"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", generatedScreenshotFileNames.size: " + to_string(generatedScreenshotFileNames.size())
         );
         for (string generatedScreenshotFileName: generatedScreenshotFileNames)
         {
             _logger->info(__FILEREF__ + "Generated Screenshot to ingest"
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", generatedScreenshotFileName: " + generatedScreenshotFileName
             );
 
@@ -1509,6 +1520,7 @@ void MMSEngineProcessor::generateAndIngestScreenshots(
     catch(runtime_error e)
     {
         _logger->error(__FILEREF__ + "generateAndIngestScreenshot failed"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", e.what(): " + e.what()
         );
         
@@ -1517,6 +1529,7 @@ void MMSEngineProcessor::generateAndIngestScreenshots(
     catch(exception e)
     {
         _logger->error(__FILEREF__ + "generateAndIngestScreenshot failed"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );
         
         throw e;
