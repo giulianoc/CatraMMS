@@ -1495,6 +1495,7 @@ void MMSEngineProcessor::generateAndIngestScreenshots(
 
             string imageMetaDataContent = generateImageMetadataToIngest(
                     ingestionJobKey,
+                    mjpeg,
                     generatedScreenshotFileName,
                     screenshotsRoot
             );
@@ -1544,6 +1545,7 @@ void MMSEngineProcessor::generateAndIngestScreenshots(
 
 string MMSEngineProcessor::generateImageMetadataToIngest(
         int64_t ingestionJobKey,
+        bool mjpeg,
         string sourceFileName,
         Json::Value screenshotsRoot
 )
@@ -1608,7 +1610,7 @@ string MMSEngineProcessor::generateImageMetadataToIngest(
         + "{"
             + "\"Type\": \"ContentIngestion\""
             + ", \"ContentIngestion\": {"
-                + "\"ContentType\": \"image\""
+                + "\"ContentType\": \"" + (mjpeg ? "video" : "image") + "\""
                 + ", \"SourceFileName\": \"" + sourceFileName + "\""
             ;
     if (title != "")
@@ -1891,9 +1893,6 @@ pair<MMSEngineDBFacade::ContentType,bool> MMSEngineProcessor::validateScreenshot
     if (_mmsEngineDBFacade->isMetadataPresent(screenshotsRoot, field))
     {
         bool mjpeg = screenshotsRoot.get(field, "XXX").asBool();
-        _logger->info(__FILEREF__ + "aaaaaaaaaaaaaaaaaaaaa"
-            + ", mjpeg: " + to_string(mjpeg)
-        );
         if (mjpeg)
             contentType = MMSEngineDBFacade::ContentType::Video;
         else
@@ -1901,8 +1900,6 @@ pair<MMSEngineDBFacade::ContentType,bool> MMSEngineProcessor::validateScreenshot
     }
     else
     {
-        _logger->info(__FILEREF__ + "bbbbbbbbbbbbbbbbbbbbbbbbb"
-        );
         contentType = MMSEngineDBFacade::ContentType::Image;
     }
 

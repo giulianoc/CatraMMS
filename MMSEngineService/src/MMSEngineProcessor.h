@@ -61,6 +61,7 @@ private:
 
     string generateImageMetadataToIngest(
         int64_t ingestionJobKey,
+        bool mjpeg,
         string sourceFileName,
         Json::Value screenshotRoot
     );
