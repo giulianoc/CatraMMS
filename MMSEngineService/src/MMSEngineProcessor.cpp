@@ -1887,7 +1887,19 @@ pair<MMSEngineDBFacade::ContentType,bool> MMSEngineProcessor::validateScreenshot
         throw runtime_error(errorMessage);
     }
     
-    contentType = MMSEngineDBFacade::ContentType::Image;
+    field = "M-JPEG";
+    if (_mmsEngineDBFacade->isMetadataPresent(screenshotsRoot, field))
+    {
+        bool mjpeg = screenshotsRoot.get(field, "XXX").asBool();
+        if (mjpeg)
+            contentType = MMSEngineDBFacade::ContentType::Video;
+        else
+            contentType = MMSEngineDBFacade::ContentType::Image;
+    }
+    else
+    {
+        contentType = MMSEngineDBFacade::ContentType::Image;
+    }
 
     if (!dependencyNotFound)
     {
