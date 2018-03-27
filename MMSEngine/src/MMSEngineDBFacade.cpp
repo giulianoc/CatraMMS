@@ -4623,6 +4623,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "creationDate                   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "confirmationCode               VARCHAR (64) NOT NULL,"
                     "constraint MMS_ConfirmationCode_PK PRIMARY KEY (customerKey),"
+                    "constraint MMS_ConfirmationCode_FK foreign key (customerKey) "
+                        "references MMS_Customer (customerKey) on delete cascade, "
                     "UNIQUE (confirmationCode))"
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);    
