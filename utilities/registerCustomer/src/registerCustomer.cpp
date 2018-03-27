@@ -79,27 +79,56 @@ int main (int iArgc, char *pArgv [])
 
         try
         {
-            mmsEngineDBFacade->registerCustomer(
-                customerName, 
-                customerDirectoryName,
-                "",                             // string street,
-                "",                             // string city,
-                "",                             // string state,
-                "",                             // string zip,
-                "",                             // string phone,
-                "",                             // string countryCode,
-                MMSEngineDBFacade::CustomerType::IngestionAndDelivery,  // MMSEngineDBFacade::CustomerType customerType
-                "",                             // string deliveryURL,
-                MMSEngineDBFacade::EncodingPriority::High,   //  MMSEngineDBFacade::EncodingPriority maxEncodingPriority,
-                MMSEngineDBFacade::EncodingPeriod::Daily,       //  MMSEngineDBFacade::EncodingPeriod encodingPeriod,
-                1000,                            // long maxIngestionsNumber,
-                10,                            // long maxStorageInGB,
-                "",                             // string languageCode,
-                userName,                        // string userName,
-                password,                   // string userPassword,
-                emailAddress,                   // string userEmailAddress,
-                chrono::system_clock::now() + chrono::hours(24 * 365 * 20)     // chrono::system_clock::time_point userExpirationDate
-            );
+            tuple<int64_t,int64_t,string> customerKeyUserKeyAndConfirmationCode =
+                mmsEngineDBFacade->registerCustomer(
+                    customerName, 
+                    customerDirectoryName,
+                    "",                             // string street,
+                    "",                             // string city,
+                    "",                             // string state,
+                    "",                             // string zip,
+                    "",                             // string phone,
+                    "",                             // string countryCode,
+                    MMSEngineDBFacade::CustomerType::IngestionAndDelivery,  // MMSEngineDBFacade::CustomerType customerType
+                    "",                             // string deliveryURL,
+                    MMSEngineDBFacade::EncodingPriority::High,   //  MMSEngineDBFacade::EncodingPriority maxEncodingPriority,
+                    MMSEngineDBFacade::EncodingPeriod::Daily,       //  MMSEngineDBFacade::EncodingPeriod encodingPeriod,
+                    1000,                            // long maxIngestionsNumber,
+                    10,                            // long maxStorageInGB,
+                    "",                             // string languageCode,
+                    userName,                        // string userName,
+                    password,                   // string userPassword,
+                    emailAddress,                   // string userEmailAddress,
+                    chrono::system_clock::now() + chrono::hours(24 * 365 * 20)     // chrono::system_clock::time_point userExpirationDate
+                );
+            
+            int64_t customerKey = get<0>(customerKeyUserKeyAndConfirmationCode);
+            int64_t userKey = get<1>(customerKeyUserKeyAndConfirmationCode);
+            string confirmationCode = get<2>(customerKeyUserKeyAndConfirmationCode);
+            
+            cout << "Customer registered" << endl;
+            cout << "CustomerKey: " << to_string(customerKey) << endl;
+            cout << "UserKey: " << to_string(userKey) << endl;
+            cout << "ConfirmationCode: " << confirmationCode << endl;
+
+            mmsEngineDBFacade->confirmCustomer(confirmationCode);
+            
+            cout << "Customer confirmed" << endl;
+            
+            bool adminAPI = false; 
+            bool userAPI = true;
+            chrono::system_clock::time_point apiKeyExpirationDate = 
+                    chrono::system_clock::now() + chrono::hours(24 * 365 * 20);
+            
+            string apiKey = mmsEngineDBFacade->createAPIKey(
+                    customerKey,
+                    userKey,
+                    adminAPI, 
+                    userAPI, 
+                    apiKeyExpirationDate);
+
+            cout << "Created API Key" << endl;
+            cout << "API Key: " << apiKey << endl;
         }
         catch(exception e)
         {
