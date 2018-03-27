@@ -869,46 +869,8 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
 
             throw runtime_error(errorMessage);
         }
-        
-        string field = "format";
-        if (!isMetadataPresent(detailsRoot, field))
-        {
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", mmsAssetPathName: " + mmsAssetPathName
-                    + ", Field: " + field;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        Json::Value formatRoot = detailsRoot[field];
-
-        field = "duration";
-        if (!isMetadataPresent(formatRoot, field))
-        {
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", mmsAssetPathName: " + mmsAssetPathName
-                    + ", Field: " + field;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        string duration = formatRoot.get(field, "XXX").asString();
-        durationInMilliSeconds = atoll(duration.c_str()) * 1000;
-
-        field = "bit_rate";
-        if (!isMetadataPresent(formatRoot, field))
-        {
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", mmsAssetPathName: " + mmsAssetPathName
-                    + ", Field: " + field;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        string bit_rate = formatRoot.get(field, "XXX").asString();
-        bitRate = atoll(bit_rate.c_str());
-        
-        field = "streams";
+                
+        string field = "streams";
         if (!isMetadataPresent(detailsRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -956,14 +918,18 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
                 field = "profile";
                 if (!isMetadataPresent(streamRoot, field))
                 {
-                    string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                            + ", mmsAssetPathName: " + mmsAssetPathName
-                            + ", Field: " + field;
-                    _logger->error(errorMessage);
+                    if (videoCodecName != "mjpeg")
+                    {
+                        string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                                + ", mmsAssetPathName: " + mmsAssetPathName
+                                + ", Field: " + field;
+                        _logger->error(errorMessage);
 
-                    throw runtime_error(errorMessage);
+                        throw runtime_error(errorMessage);
+                    }
                 }
-                videoProfile = streamRoot.get(field, "XXX").asString();
+                else
+                    videoProfile = streamRoot.get(field, "XXX").asString();
 
                 field = "width";
                 if (!isMetadataPresent(streamRoot, field))
@@ -1004,14 +970,18 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
                 field = "bit_rate";
                 if (!isMetadataPresent(streamRoot, field))
                 {
-                    string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                            + ", mmsAssetPathName: " + mmsAssetPathName
-                            + ", Field: " + field;
-                    _logger->error(errorMessage);
+                    if (videoCodecName != "mjpeg")
+                    {
+                        string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                                + ", mmsAssetPathName: " + mmsAssetPathName
+                                + ", Field: " + field;
+                        _logger->error(errorMessage);
 
-                    throw runtime_error(errorMessage);
+                        throw runtime_error(errorMessage);
+                    }
                 }
-                videoBitRate = stol(streamRoot.get(field, "XXX").asString());
+                else
+                    videoBitRate = stol(streamRoot.get(field, "XXX").asString());
             }
             else if (codecType == "audio" && !audioFound)
             {
@@ -1065,6 +1035,60 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
                 }
                 audioBitRate = stol(streamRoot.get(field, "XXX").asString());
             }
+        }
+
+        field = "format";
+        if (!isMetadataPresent(detailsRoot, field))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", mmsAssetPathName: " + mmsAssetPathName
+                    + ", Field: " + field;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        Json::Value formatRoot = detailsRoot[field];
+
+        field = "duration";
+        if (!isMetadataPresent(formatRoot, field))
+        {
+            if (videoCodecName != "" && videoCodecName != "mjpeg")
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", mmsAssetPathName: " + mmsAssetPathName
+                    + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            
+            durationInMilliSeconds = 0;
+        }
+        else
+        {
+            string duration = formatRoot.get(field, "XXX").asString();
+            durationInMilliSeconds = atoll(duration.c_str()) * 1000;
+        }
+
+        field = "bit_rate";
+        if (!isMetadataPresent(formatRoot, field))
+        {
+            if (videoCodecName != "" && videoCodecName != "mjpeg")
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", mmsAssetPathName: " + mmsAssetPathName
+                    + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            
+            bitRate = 0;
+        }
+        else
+        {
+            string bit_rate = formatRoot.get(field, "XXX").asString();
+            bitRate = atoll(bit_rate.c_str());
         }
 
         bool exceptionInCaseOfError = false;
