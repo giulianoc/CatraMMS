@@ -7,14 +7,20 @@ Json::Value loadConfigurationFile(const char* configurationPathName);
 int main (int iArgc, char *pArgv [])
 {
 
-    if (iArgc != 2)
+    if (iArgc != 6)
     {
-        cerr << "Usage: " << pArgv[0] << " config-path-name" << endl;
+        cerr << "Usage: " << pArgv[0] << " config-path-name customerName userName password emailAddress" << endl;
         
         return 1;
     }
     
-    Json::Value configuration = loadConfigurationFile(pArgv[1]);
+    string configPathName = pArgv[1];
+    string customerName = pArgv[2];
+    string userName = pArgv[3];
+    string password = pArgv[4];
+    string emailAddress = pArgv[5];
+
+    Json::Value configuration = loadConfigurationFile(configPathName.c_str());
 
     auto logger = spdlog::stdout_logger_mt("registerCustomer");
     spdlog::set_level(spdlog::level::trace);
@@ -55,7 +61,7 @@ int main (int iArgc, char *pArgv [])
     );
      */
     {
-        string customerName = "Warner";
+        // string customerName = "Warner";
         string customerDirectoryName;
 
         customerDirectoryName.resize(customerName.size());
@@ -86,12 +92,12 @@ int main (int iArgc, char *pArgv [])
                 "",                             // string deliveryURL,
                 MMSEngineDBFacade::EncodingPriority::High,   //  MMSEngineDBFacade::EncodingPriority maxEncodingPriority,
                 MMSEngineDBFacade::EncodingPeriod::Daily,       //  MMSEngineDBFacade::EncodingPeriod encodingPeriod,
-                10,                            // long maxIngestionsNumber,
+                1000,                            // long maxIngestionsNumber,
                 10,                            // long maxStorageInGB,
                 "",                             // string languageCode,
-                "giuliano",                        // string userName,
-                "giuliano",                   // string userPassword,
-                "giulianoc@catrasoftware.it",                   // string userEmailAddress,
+                userName,                        // string userName,
+                password,                   // string userPassword,
+                emailAddress,                   // string userEmailAddress,
                 chrono::system_clock::now() + chrono::hours(24 * 365 * 20)     // chrono::system_clock::time_point userExpirationDate
             );
         }
