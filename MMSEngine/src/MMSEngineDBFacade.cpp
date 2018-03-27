@@ -60,7 +60,7 @@ vector<shared_ptr<Customer>> MMSEngineDBFacade::getCustomers()
     shared_ptr<MySQLConnection> conn = _connectionPool->borrow();	
 
     string lastSQLCommand =
-        "select CustomerKey, Name, DirectoryName, MaxStorageInGB, MaxEncodingPriority from MMS_Customers where IsEnabled = 1 and CustomerType in (1, 2)";
+        "select customerKey, name, directoryName, maxStorageInGB, maxEncodingPriority from MMS_Customer where isEnabled = 1 and customerType in (1, 2)";
     shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
     shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 
@@ -72,11 +72,11 @@ vector<shared_ptr<Customer>> MMSEngineDBFacade::getCustomers()
         
         customers.push_back(customer);
         
-        customer->_customerKey = resultSet->getInt("CustomerKey");
-        customer->_name = resultSet->getString("Name");
-        customer->_directoryName = resultSet->getString("DirectoryName");
-        customer->_maxStorageInGB = resultSet->getInt("MaxStorageInGB");
-        customer->_maxEncodingPriority = static_cast<int>(MMSEngineDBFacade::toEncodingPriority(resultSet->getString("MaxEncodingPriority")));
+        customer->_customerKey = resultSet->getInt("customerKey");
+        customer->_name = resultSet->getString("name");
+        customer->_directoryName = resultSet->getString("directoryName");
+        customer->_maxStorageInGB = resultSet->getInt("maxStorageInGB");
+        customer->_maxEncodingPriority = static_cast<int>(MMSEngineDBFacade::toEncodingPriority(resultSet->getString("maxEncodingPriority")));
 
         getTerritories(customer);
     }
@@ -91,7 +91,7 @@ shared_ptr<Customer> MMSEngineDBFacade::getCustomer(int64_t customerKey)
     shared_ptr<MySQLConnection> conn = _connectionPool->borrow();	
 
     string lastSQLCommand =
-        "select CustomerKey, Name, DirectoryName, MaxStorageInGB, MaxEncodingPriority from MMS_Customers where CustomerKey = ?";
+        "select customerKey, name, directoryName, maxStorageInGB, maxEncodingPriority from MMS_Customer where customerKey = ?";
     shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
     int queryParameterIndex = 1;
     preparedStatement->setInt64(queryParameterIndex++, customerKey);
@@ -101,11 +101,11 @@ shared_ptr<Customer> MMSEngineDBFacade::getCustomer(int64_t customerKey)
     
     if (resultSet->next())
     {
-        customer->_customerKey = resultSet->getInt("CustomerKey");
-        customer->_name = resultSet->getString("Name");
-        customer->_directoryName = resultSet->getString("DirectoryName");
-        customer->_maxStorageInGB = resultSet->getInt("MaxStorageInGB");
-        customer->_maxEncodingPriority = static_cast<int>(MMSEngineDBFacade::toEncodingPriority(resultSet->getString("MaxEncodingPriority")));
+        customer->_customerKey = resultSet->getInt("customerKey");
+        customer->_name = resultSet->getString("name");
+        customer->_directoryName = resultSet->getString("directoryName");
+        customer->_maxStorageInGB = resultSet->getInt("maxStorageInGB");
+        customer->_maxEncodingPriority = static_cast<int>(MMSEngineDBFacade::toEncodingPriority(resultSet->getString("maxEncodingPriority")));
 
         getTerritories(customer);
     }
@@ -132,7 +132,7 @@ shared_ptr<Customer> MMSEngineDBFacade::getCustomer(string customerName)
     shared_ptr<MySQLConnection> conn = _connectionPool->borrow();	
 
     string lastSQLCommand =
-        "select CustomerKey, Name, DirectoryName, MaxStorageInGB, MaxEncodingPriority from MMS_Customers where Name = ?";
+        "select customerKey, name, directoryName, maxStorageInGB, maxEncodingPriority from MMS_Customer where name = ?";
     shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
     int queryParameterIndex = 1;
     preparedStatement->setString(queryParameterIndex++, customerName);
@@ -142,11 +142,11 @@ shared_ptr<Customer> MMSEngineDBFacade::getCustomer(string customerName)
     
     if (resultSet->next())
     {
-        customer->_customerKey = resultSet->getInt("CustomerKey");
-        customer->_name = resultSet->getString("Name");
-        customer->_directoryName = resultSet->getString("DirectoryName");
-        customer->_maxStorageInGB = resultSet->getInt("MaxStorageInGB");
-        customer->_maxEncodingPriority = static_cast<int>(MMSEngineDBFacade::toEncodingPriority(resultSet->getString("MaxEncodingPriority")));
+        customer->_customerKey = resultSet->getInt("customerKey");
+        customer->_name = resultSet->getString("name");
+        customer->_directoryName = resultSet->getString("directoryName");
+        customer->_maxStorageInGB = resultSet->getInt("maxStorageInGB");
+        customer->_maxEncodingPriority = static_cast<int>(MMSEngineDBFacade::toEncodingPriority(resultSet->getString("maxEncodingPriority")));
 
         getTerritories(customer);
     }
@@ -173,7 +173,7 @@ void MMSEngineDBFacade::getTerritories(shared_ptr<Customer> customer)
     shared_ptr<MySQLConnection> conn = _connectionPool->borrow();	
 
     string lastSQLCommand =
-        "select TerritoryKey, Name from MMS_Territories t where CustomerKey = ?";
+        "select territoryKey, name from MMS_Territory t where customerKey = ?";
     shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(
         lastSQLCommand));
     preparedStatement->setInt(1, customer->_customerKey);
@@ -181,7 +181,7 @@ void MMSEngineDBFacade::getTerritories(shared_ptr<Customer> customer)
 
     while (resultSet->next())
     {
-        customer->_territories.insert(make_pair(resultSet->getInt("TerritoryKey"), resultSet->getString("Name")));
+        customer->_territories.insert(make_pair(resultSet->getInt("territoryKey"), resultSet->getString("name")));
     }
 
     _connectionPool->unborrow(conn);
@@ -237,8 +237,8 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerCustomer(
             bool enabled = false;
             
             lastSQLCommand = 
-                    "insert into MMS_Customers ("
-                    "CustomerKey, CreationDate, Name, DirectoryName, Street, City, State, ZIP, Phone, CountryCode, CustomerType, DeliveryURL, IsEnabled, MaxEncodingPriority, EncodingPeriod, MaxIngestionsNumber, MaxStorageInGB, CurrentStorageUsageInGB, LanguageCode) values ("
+                    "insert into MMS_Customer ("
+                    "customerKey, creationDate, name, directoryName, street, city, state, zip, phone, countryCode, customerType, deliveryURL, isEnabled, maxEncodingPriority, encodingPeriod, maxIngestionsNumber, maxStorageInGB, currentStorageUsageInGB, languageCode) values ("
                     "NULL, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -291,7 +291,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerCustomer(
         confirmationCode = to_string(e());
         {
             lastSQLCommand = 
-                    "insert into MMS_ConfirmationCodes (CustomerKey, CreationDate, ConfirmationCode) values ("
+                    "insert into MMS_ConfirmationCode (customerKey, creationDate, confirmationCode) values ("
                     "?, NOW(), ?)";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -303,7 +303,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerCustomer(
 
         {
             lastSQLCommand = 
-                    "insert into MMS_CustomerMoreInfo (CustomerKey, CurrentDirLevel1, CurrentDirLevel2, CurrentDirLevel3, StartDateTime, EndDateTime, CurrentIngestionsNumber) values ("
+                    "insert into MMS_CustomerMoreInfo (customerKey, currentDirLevel1, currentDirLevel2, currentDirLevel3, startDateTime, endDateTime, currentIngestionsNumber) values ("
                     "?, 0, 0, 0, NOW(), NOW(), 0)";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -314,7 +314,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerCustomer(
 
         {
             lastSQLCommand = 
-                "insert into MMS_ContentProviders (ContentProviderKey, CustomerKey, Name) values ("
+                "insert into MMS_ContentProvider (contentProviderKey, customerKey, name) values ("
                 "NULL, ?, ?)";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -350,7 +350,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerCustomer(
             {
                 {
                     lastSQLCommand = 
-                        "insert into MMS_EncodingProfilesSet (EncodingProfilesSetKey, ContentType, CustomerKey, Name) values ("
+                        "insert into MMS_EncodingProfilesSet (encodingProfilesSetKey, contentType, customerKey, name) values ("
                         "NULL, ?, ?, NULL)";
                     shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
@@ -364,9 +364,9 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerCustomer(
 		// by default this new customer will inherited the profiles associated to 'global' 
                 {
                     lastSQLCommand = 
-                        "insert into MMS_EncodingProfilesSetMapping (EncodingProfilesSetKey, EncodingProfileKey) " 
-                        "(select ?, EncodingProfileKey from MMS_EncodingProfilesSetMapping where EncodingProfilesSetKey = " 
-                            "(select EncodingProfilesSetKey from MMS_EncodingProfilesSet where ContentType = ? and CustomerKey is null and Name is null))";
+                        "insert into MMS_EncodingProfilesSetMapping (encodingProfilesSetKey, encodingProfileKey) " 
+                        "(select ?, encodingProfileKey from MMS_EncodingProfilesSetMapping where encodingProfilesSetKey = " 
+                            "(select encodingProfilesSetKey from MMS_EncodingProfilesSet where contentType = ? and customerKey is null and name is null))";
                     shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
                     preparedStatement->setInt64(queryParameterIndex++, encodingProfilesSetKey);
@@ -446,7 +446,7 @@ void MMSEngineDBFacade::confirmCustomer(
         int64_t     customerKey;
         {
             lastSQLCommand = 
-                "select CustomerKey from MMS_ConfirmationCodes where ConfirmationCode = ? and DATE_ADD(CreationDate, INTERVAL ? DAY) >= NOW()";
+                "select customerKey from MMS_ConfirmationCode where confirmationCode = ? and DATE_ADD(creationDate, INTERVAL ? DAY) >= NOW()";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -456,7 +456,7 @@ void MMSEngineDBFacade::confirmCustomer(
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
-                customerKey = resultSet->getInt64("CustomerKey");
+                customerKey = resultSet->getInt64("customerKey");
             }
             else
             {
@@ -475,7 +475,7 @@ void MMSEngineDBFacade::confirmCustomer(
             bool enabled = true;
             
             lastSQLCommand = 
-                "update MMS_Customers set IsEnabled = ? where CustomerKey = ?";
+                "update MMS_Customer set isEnabled = ? where customerKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt(queryParameterIndex++, enabled);
@@ -537,7 +537,7 @@ int64_t MMSEngineDBFacade::addTerritory (
     {
         {
             lastSQLCommand = 
-                "insert into MMS_Territories (TerritoryKey, CustomerKey, Name, Currency) values ("
+                "insert into MMS_Territory (territoryKey, customerKey, name, currency) values ("
     		"NULL, ?, ?, ?)";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -595,7 +595,7 @@ int64_t MMSEngineDBFacade::addUser (
     {
         {
             lastSQLCommand = 
-                "insert into MMS_Users2 (UserKey, UserName, Password, CustomerKey, Type, EMailAddress, CreationDate, ExpirationDate) values ("
+                "insert into MMS_User (userKey, userName, password, customerKey, type, eMailAddress, creationDate, expirationDate) values ("
                 "NULL, ?, ?, ?, ?, ?, NULL, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'))";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -669,7 +669,7 @@ bool MMSEngineDBFacade::isLoginValid(
 
         {
             lastSQLCommand = 
-                "select UserKey from MMS_Users2 where EMailAddress = ? and Password = ?";
+                "select userKey from MMS_User where eMailAddress = ? and password = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, emailAddress);
@@ -678,7 +678,7 @@ bool MMSEngineDBFacade::isLoginValid(
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
-                int64_t userKey = resultSet->getInt("UserKey");
+                int64_t userKey = resultSet->getInt("userKey");
                 
                 isLoginValid = true;
             }
@@ -730,7 +730,7 @@ string MMSEngineDBFacade::getPassword(string emailAddress)
 
         {
             lastSQLCommand = 
-                "select Password from MMS_Users2 where EMailAddress = ?";
+                "select password from MMS_User where eMailAddress = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, emailAddress);
@@ -738,7 +738,7 @@ string MMSEngineDBFacade::getPassword(string emailAddress)
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
-                password = resultSet->getString("Password");
+                password = resultSet->getString("password");
             }
             else
             {
@@ -802,7 +802,7 @@ string MMSEngineDBFacade::createAPIKey (
         string emailAddress;
         {
             lastSQLCommand = 
-                "select EMailAddress from MMS_Users2 where CustomerKey = ? and UserKey = ?";
+                "select eMailAddress from MMS_User where customerKey = ? and userKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, customerKey);
@@ -811,7 +811,7 @@ string MMSEngineDBFacade::createAPIKey (
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
-                emailAddress = resultSet->getString("EMailAddress");
+                emailAddress = resultSet->getString("eMailAddress");
             }
             else
             {
@@ -847,7 +847,7 @@ string MMSEngineDBFacade::createAPIKey (
             }
             
             lastSQLCommand = 
-                "insert into MMS_APIKeys (APIKey, UserKey, Flags, CreationDate, ExpirationDate) values ("
+                "insert into MMS_APIKey (apiKey, userKey, flags, creationDate, expirationDate) values ("
                 "?, ?, ?, NULL, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'))";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -920,7 +920,7 @@ tuple<shared_ptr<Customer>,bool,bool> MMSEngineDBFacade::checkAPIKey (string api
         
         {
             lastSQLCommand = 
-                "select UserKey, Flags from MMS_APIKeys where APIKey = ? and ExpirationDate >= NOW()";
+                "select userKey, flags from MMS_APIKey where apiKey = ? and expirationDate >= NOW()";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, apiKey);
@@ -928,8 +928,8 @@ tuple<shared_ptr<Customer>,bool,bool> MMSEngineDBFacade::checkAPIKey (string api
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
-                userKey = resultSet->getInt64("UserKey");
-                flags = resultSet->getString("Flags");
+                userKey = resultSet->getInt64("userKey");
+                flags = resultSet->getString("flags");
             }
             else
             {
@@ -947,7 +947,7 @@ tuple<shared_ptr<Customer>,bool,bool> MMSEngineDBFacade::checkAPIKey (string api
         
         {
             lastSQLCommand = 
-                "select c.CustomerKey from MMS_Customers c, MMS_Users2 u where c.CustomerKey = u.CustomerKey and u.UserKey = ?";
+                "select c.customerKey from MMS_Customer c, MMS_User u where c.customerKey = u.customerKey and u.userKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, userKey);
@@ -955,11 +955,11 @@ tuple<shared_ptr<Customer>,bool,bool> MMSEngineDBFacade::checkAPIKey (string api
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
-                customerKey = resultSet->getInt64("CustomerKey");
+                customerKey = resultSet->getInt64("customerKey");
             }
             else
             {
-                string errorMessage = __FILEREF__ + "CustomerKey is not present"
+                string errorMessage = __FILEREF__ + "customerKey is not present"
                     + ", userKey: " + to_string(userKey)
                     + ", lastSQLCommand: " + lastSQLCommand
                 ;
@@ -1058,7 +1058,7 @@ int64_t MMSEngineDBFacade::addVideoEncodingProfile(
         {
             lastSQLCommand = 
                     "insert into MMS_EncodingProfiles ("
-                    "EncodingProfileKey, ContentType, Technology, Details, Label, Width, Height, VideoCodec, AudioCodec) values ("
+                    "encodingProfileKey, contentType, technology, details, label, width, height, videoCodec, audioCodec) values ("
                     "NULL, ?, ?, ?, ?, ?, ?, ?, ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -1091,7 +1091,7 @@ int64_t MMSEngineDBFacade::addVideoEncodingProfile(
         if (encodingProfileSet == "")   // default Customer family
         {
             lastSQLCommand = 
-                "select EncodingProfilesSetKey from MMS_EncodingProfilesSet where ContentType = ? and CustomerKey = ? and Name is null";
+                "select encodingProfilesSetKey from MMS_EncodingProfilesSet where contentType = ? and customerKey = ? and name is null";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
@@ -1099,11 +1099,11 @@ int64_t MMSEngineDBFacade::addVideoEncodingProfile(
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
-                encodingProfilesSetKey = resultSet->getInt64("EncodingProfilesSetKey");
+                encodingProfilesSetKey = resultSet->getInt64("encodingProfilesSetKey");
             }
             else
             {
-                string errorMessage = __FILEREF__ + "EncodingProfilesSetKey is not present"
+                string errorMessage = __FILEREF__ + "encodingProfilesSetKey is not present"
                     + ", contentType: " + MMSEngineDBFacade::toString(contentType)
                     + ", customer->_customerKey: " + to_string(customer->_customerKey)
                     + ", lastSQLCommand: " + lastSQLCommand
@@ -1116,7 +1116,7 @@ int64_t MMSEngineDBFacade::addVideoEncodingProfile(
         else
         {
             lastSQLCommand = 
-                "select EncodingProfilesSetKey from MMS_EncodingProfilesSet where ContentType = ? and CustomerKey = ? and Name = ?";
+                "select encodingProfilesSetKey from MMS_EncodingProfilesSet where contentType = ? and customerKey = ? and name = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
@@ -1125,12 +1125,12 @@ int64_t MMSEngineDBFacade::addVideoEncodingProfile(
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
-                encodingProfilesSetKey = resultSet->getInt64("EncodingProfilesSetKey");
+                encodingProfilesSetKey = resultSet->getInt64("encodingProfilesSetKey");
             }
             else
             {
                 lastSQLCommand = 
-                    "insert into MMS_EncodingProfilesSet (EncodingProfilesSetKey, ContentType, CustomerKey, Name) values (NULL, ?, ?, ?)";
+                    "insert into MMS_EncodingProfilesSet (encodingProfilesSetKey, contentType, customerKey, name) values (NULL, ?, ?, ?)";
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
                 preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
@@ -1144,7 +1144,7 @@ int64_t MMSEngineDBFacade::addVideoEncodingProfile(
         
         {
             lastSQLCommand = 
-                "insert into MMS_EncodingProfilesSetMapping (EncodingProfilesSetKey, EncodingProfileKey)  values (?, ?)";
+                "insert into MMS_EncodingProfilesSetMapping (encodingProfilesSetKey, encodingProfileKey)  values (?, ?)";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, encodingProfilesSetKey);
@@ -1240,7 +1240,7 @@ int64_t MMSEngineDBFacade::addImageEncodingProfile(
         {
             lastSQLCommand = 
                     "insert into MMS_EncodingProfiles ("
-                    "EncodingProfileKey, ContentType, Technology, Details, Label, Width, Height, VideoCodec, AudioCodec) values ("
+                    "encodingProfileKey, contentType, technology, details, label, width, height, videoCodec, audioCodec) values ("
                     "NULL,               ?,           ?,          ?,       ?,     ?,     ?,      NULL,       NULL)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -1265,7 +1265,7 @@ int64_t MMSEngineDBFacade::addImageEncodingProfile(
         if (encodingProfileSet == "")   // default Customer family
         {
             lastSQLCommand = 
-                "select EncodingProfilesSetKey from MMS_EncodingProfilesSet where ContentType = ? and CustomerKey = ? and Name is null";
+                "select encodingProfilesSetKey from MMS_EncodingProfilesSet where contentType = ? and customerKey = ? and name is null";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
@@ -1273,11 +1273,11 @@ int64_t MMSEngineDBFacade::addImageEncodingProfile(
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
-                encodingProfilesSetKey = resultSet->getInt64("EncodingProfilesSetKey");
+                encodingProfilesSetKey = resultSet->getInt64("encodingProfilesSetKey");
             }
             else
             {
-                string errorMessage = __FILEREF__ + "EncodingProfilesSetKey is not present"
+                string errorMessage = __FILEREF__ + "encodingProfilesSetKey is not present"
                     + ", contentType: " + MMSEngineDBFacade::toString(contentType)
                     + ", customer->_customerKey: " + to_string(customer->_customerKey)
                     + ", lastSQLCommand: " + lastSQLCommand
@@ -1290,7 +1290,7 @@ int64_t MMSEngineDBFacade::addImageEncodingProfile(
         else
         {
             lastSQLCommand = 
-                "select EncodingProfilesSetKey from MMS_EncodingProfilesSet where ContentType = ? and CustomerKey = ? and Name = ?";
+                "select encodingProfilesSetKey from MMS_EncodingProfilesSet where contentType = ? and customerKey = ? and name = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
@@ -1299,12 +1299,12 @@ int64_t MMSEngineDBFacade::addImageEncodingProfile(
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
-                encodingProfilesSetKey = resultSet->getInt64("EncodingProfilesSetKey");
+                encodingProfilesSetKey = resultSet->getInt64("encodingProfilesSetKey");
             }
             else
             {
                 lastSQLCommand = 
-                    "insert into MMS_EncodingProfilesSet (EncodingProfilesSetKey, ContentType, CustomerKey, Name) values (NULL, ?, ?, ?)";
+                    "insert into MMS_EncodingProfilesSet (encodingProfilesSetKey, contentType, customerKey, name) values (NULL, ?, ?, ?)";
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
                 preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
@@ -1318,7 +1318,7 @@ int64_t MMSEngineDBFacade::addImageEncodingProfile(
         
         {
             lastSQLCommand = 
-                "insert into MMS_EncodingProfilesSetMapping (EncodingProfilesSetKey, EncodingProfileKey)  values (?, ?)";
+                "insert into MMS_EncodingProfilesSetMapping (encodingProfilesSetKey, encodingProfileKey)  values (?, ?)";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, encodingProfilesSetKey);
@@ -1410,9 +1410,9 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
         {
             {
                 lastSQLCommand = 
-                    "select IngestionJobKey, DATE_FORMAT(StartIngestion, '%Y-%m-%d %H:%i:%s') as StartIngestion, CustomerKey, MetaDataContent, Status from MMS_IngestionJobs where "
-                        "ProcessorMMS is null and MediaItemKeysDependency is null "
-                        "and (Status = ? or (Status in (?, ?, ?, ?) and SourceBinaryTransferred = 1)) limit ? for update";
+                    "select ingestionJobKey, DATE_FORMAT(startIngestion, '%Y-%m-%d %H:%i:%s') as startIngestion, customerKey, metaDataContent, status from MMS_IngestionJob where "
+                        "processorMMS is null and mediaItemKeysDependency is null "
+                        "and (status = ? or (status in (?, ?, ?, ?) and sourceBinaryTransferred = 1)) limit ? for update";
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
                 preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::Start_Ingestion));
@@ -1425,11 +1425,11 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                 shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
                 while (resultSet->next())
                 {
-                    int64_t ingestionJobKey     = resultSet->getInt64("IngestionJobKey");
-                    string startIngestion       = resultSet->getString("StartIngestion");
-                    int64_t customerKey         = resultSet->getInt64("CustomerKey");
-                    string metaDataContent      = resultSet->getString("MetaDataContent");
-                    IngestionStatus ingestionStatus     = MMSEngineDBFacade::toIngestionStatus(resultSet->getString("Status"));
+                    int64_t ingestionJobKey     = resultSet->getInt64("ingestionJobKey");
+                    string startIngestion       = resultSet->getString("startIngestion");
+                    int64_t customerKey         = resultSet->getInt64("customerKey");
+                    string metaDataContent      = resultSet->getString("metaDataContent");
+                    IngestionStatus ingestionStatus     = MMSEngineDBFacade::toIngestionStatus(resultSet->getString("status"));
                     string mediaItemKeysDependency      = "";
 
                     shared_ptr<Customer> customer = getCustomer(customerKey);
@@ -1446,9 +1446,9 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
         {
             {
                 lastSQLCommand = 
-                    "select IngestionJobKey, DATE_FORMAT(StartIngestion, '%Y-%m-%d %H:%i:%s') as StartIngestion, CustomerKey, MetaDataContent, MediaItemKeysDependency, Status, IngestionType from MMS_IngestionJobs where "
-                        "ProcessorMMS is null and MediaItemKeysDependency is not null "
-                        "and Status = ? limit ? for update";
+                    "select ingestionJobKey, DATE_FORMAT(startIngestion, '%Y-%m-%d %H:%i:%s') as startIngestion, customerKey, metaDataContent, mediaItemKeysDependency, status, ingestionType from MMS_IngestionJob where "
+                        "processorMMS is null and mediaItemKeysDependency is not null "
+                        "and status = ? limit ? for update";
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
                 preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::Start_Ingestion));
@@ -1457,27 +1457,27 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                 shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
                 while (resultSet->next())
                 {
-                    int64_t ingestionJobKey     = resultSet->getInt64("IngestionJobKey");
-                    string startIngestion       = resultSet->getString("StartIngestion");
-                    int64_t customerKey         = resultSet->getInt64("CustomerKey");
-                    string metaDataContent      = resultSet->getString("MetaDataContent");
-                    IngestionStatus ingestionStatus     = MMSEngineDBFacade::toIngestionStatus(resultSet->getString("Status"));
+                    int64_t ingestionJobKey     = resultSet->getInt64("ingestionJobKey");
+                    string startIngestion       = resultSet->getString("startIngestion");
+                    int64_t customerKey         = resultSet->getInt64("customerKey");
+                    string metaDataContent      = resultSet->getString("metaDataContent");
+                    IngestionStatus ingestionStatus     = MMSEngineDBFacade::toIngestionStatus(resultSet->getString("status"));
                     string mediaItemKeysDependency;
                     shared_ptr<Customer> customer = getCustomer(customerKey);
 
-                    mediaItemKeysDependency = resultSet->getString("MediaItemKeysDependency");
+                    mediaItemKeysDependency = resultSet->getString("mediaItemKeysDependency");
 
                     bool ingestionToBeManaged = false;
                     
                     if (mediaItemKeysDependency != "")
                     {
-                        if (resultSet->getInt("IngestionType") == static_cast<int>(MMSEngineDBFacade::IngestionType::Screenshots))
+                        if (resultSet->getInt("ingestionType") == static_cast<int>(MMSEngineDBFacade::IngestionType::Screenshots))
                         {
                             // mediaItemKeysDependency has to contain just one MIK
                             int64_t mediaItemKey = stoll(mediaItemKeysDependency);
 
                             lastSQLCommand = 
-                                "select MediaItemKey from MMS_MediaItems where MediaItemKey = ?";
+                                "select mediaItemKey from MMS_MediaItem where mediaItemKey = ?";
                             shared_ptr<sql::PreparedStatement> preparedStatementMediaItems (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                             int queryParameterIndex = 1;
                             preparedStatementMediaItems->setInt64(queryParameterIndex++, mediaItemKey);
@@ -1516,7 +1516,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                     mediaItemKeysDependency) = ingestionToBeManaged;
 
             lastSQLCommand = 
-                "update MMS_IngestionJobs set ProcessorMMS = ? where IngestionJobKey = ?";
+                "update MMS_IngestionJob set processorMMS = ? where ingestionJobKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, processorMMS);
@@ -1628,7 +1628,7 @@ int64_t MMSEngineDBFacade::addIngestionJob (
 
         {
             lastSQLCommand = 
-                "select c.IsEnabled, c.CustomerType from MMS_Customers c where c.CustomerKey = ?";
+                "select c.isEnabled, c.customerType from MMS_Customer c where c.customerKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, customerKey);
@@ -1636,8 +1636,8 @@ int64_t MMSEngineDBFacade::addIngestionJob (
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
-                int isEnabled = resultSet->getInt("IsEnabled");
-                int customerType = resultSet->getInt("CustomerType");
+                int isEnabled = resultSet->getInt("isEnabled");
+                int customerType = resultSet->getInt("customerType");
                 
                 if (isEnabled != 1)
                 {
@@ -1676,7 +1676,7 @@ int64_t MMSEngineDBFacade::addIngestionJob (
         
         {
             lastSQLCommand = 
-                "insert into MMS_IngestionJobs (IngestionJobKey, CustomerKey, MediaItemKey, MetaDataContent, MediaItemKeysDependency, IngestionType, StartIngestion, EndIngestion, DownloadingProgress, UploadingProgress, SourceBinaryTransferred, ProcessorMMS, Status, ErrorMessage) values ("
+                "insert into MMS_IngestionJob (ingestionJobKey, customerKey, mediaItemKey, metaDataContent, mediaItemKeysDependency, ingestionType, startIngestion, endIngestion, downloadingProgress, uploadingProgress, sourceBinaryTransferred, processorMMS, status, errorMessage) values ("
                                                "NULL,            ?,           NULL,         ?,               NULL,                    ?,             NULL,           NULL,         NULL,                NULL,              0,                       NULL,         ?,      ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -1764,7 +1764,7 @@ void MMSEngineDBFacade::updateIngestionJob (
 
         {
             lastSQLCommand = 
-                "update MMS_IngestionJobs set ProcessorMMS = ? where IngestionJobKey = ?";
+                "update MMS_IngestionJob set processorMMS = ? where ingestionJobKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -1863,7 +1863,7 @@ void MMSEngineDBFacade::updateIngestionJob (
         if (finalState)
         {
             lastSQLCommand = 
-                "update MMS_IngestionJobs set Status = ?, EndIngestion = NOW(), ProcessorMMS = ?, ErrorMessage = ? where IngestionJobKey = ?";
+                "update MMS_IngestionJob set status = ?, endIngestion = NOW(), processorMMS = ?, errorMessage = ? where ingestionJobKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -1896,7 +1896,7 @@ void MMSEngineDBFacade::updateIngestionJob (
         else
         {
             lastSQLCommand = 
-                "update MMS_IngestionJobs set Status = ?, ProcessorMMS = ?, ErrorMessage = ? where IngestionJobKey = ?";
+                "update MMS_IngestionJob set status = ?, processorMMS = ?, errorMessage = ? where ingestionJobKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -2002,7 +2002,7 @@ void MMSEngineDBFacade::updateIngestionJob (
         if (finalState)
         {
             lastSQLCommand = 
-                "update MMS_IngestionJobs set IngestionType = ?, Status = ?, EndIngestion = NOW(), ProcessorMMS = ?, ErrorMessage = ? where IngestionJobKey = ?";
+                "update MMS_IngestionJob set ingestionType = ?, status = ?, endIngestion = NOW(), processorMMS = ?, errorMessage = ? where ingestionJobKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -2036,7 +2036,7 @@ void MMSEngineDBFacade::updateIngestionJob (
         else
         {
             lastSQLCommand = 
-                "update MMS_IngestionJobs set IngestionType = ?, Status = ?, ProcessorMMS = ?, ErrorMessage = ? where IngestionJobKey = ?";
+                "update MMS_IngestionJob set ingestionType = ?, status = ?, processorMMS = ?, errorMessage = ? where ingestionJobKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -2117,7 +2117,7 @@ void MMSEngineDBFacade::updateIngestionJobTypeAndDependencies (
 
         {
             lastSQLCommand = 
-                "update MMS_IngestionJobs set IngestionType = ?, MediaItemKeysDependency = ?, ProcessorMMS = ? where IngestionJobKey = ?";
+                "update MMS_IngestionJob set ingestionType = ?, mediaItemKeysDependency = ?, processorMMS = ? where ingestionJobKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt(queryParameterIndex++, static_cast<int>(ingestionType));
@@ -2188,7 +2188,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress (
 
         {
             lastSQLCommand = 
-                "update MMS_IngestionJobs set DownloadingProgress = ? where IngestionJobKey = ?";
+                "update MMS_IngestionJob set downloadingProgress = ? where ingestionJobKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setDouble(queryParameterIndex++, downloadingPercentage);
@@ -2213,7 +2213,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress (
         
         {
             lastSQLCommand = 
-                "select Status from MMS_IngestionJobs where IngestionJobKey = ?";
+                "select status from MMS_IngestionJob where ingestionJobKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
@@ -2282,7 +2282,7 @@ void MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress (
 
         {
             lastSQLCommand = 
-                "update MMS_IngestionJobs set UploadingProgress = ? where IngestionJobKey = ?";
+                "update MMS_IngestionJob set uploadingProgress = ? where ingestionJobKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setDouble(queryParameterIndex++, uploadingPercentage);
@@ -2347,7 +2347,7 @@ void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred (
 
         {
             lastSQLCommand = 
-                "update MMS_IngestionJobs set SourceBinaryTransferred = ? where IngestionJobKey = ?";
+                "update MMS_IngestionJob set sourceBinaryTransferred = ? where ingestionJobKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt(queryParameterIndex++, sourceBinaryTransferred ? 1 : 0);
@@ -2412,7 +2412,7 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
 
         {
             lastSQLCommand = 
-                "select MediaItemKey, ContentType from MMS_MediaItems where UniqueName = ?";
+                "select mediaItemKey, contentType from MMS_MediaItem where uniqueName = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, uniqueName);
@@ -2420,8 +2420,8 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
-                mediaItemKeyAndcontentType.first = resultSet->getInt64("MediaItemKey");
-                mediaItemKeyAndcontentType.second = MMSEngineDBFacade::toContentType(resultSet->getString("ContentType"));
+                mediaItemKeyAndcontentType.first = resultSet->getInt64("mediaItemKey");
+                mediaItemKeyAndcontentType.second = MMSEngineDBFacade::toContentType(resultSet->getString("contentType"));
             }
             else
             {
@@ -2508,10 +2508,10 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> MMSEn
 
         {
             lastSQLCommand = 
-                "select DurationInMilliSeconds, BitRate, Width, Height, AvgFrameRate, "
-                "VideoCodecName, VideoProfile, VideoBitRate, "
-                "AudioCodecName, AudioSampleRate, AudioChannels, AudioBitRate "
-                "from MMS_VideoItems where MediaItemKey = ?";
+                "select durationInMilliSeconds, bitRate, width, height, avgFrameRate, "
+                "videoCodecName, videoProfile, videoBitRate, "
+                "audioCodecName, audioSampleRate, audioChannels, audioBitRate "
+                "from MMS_VideoItem where mediaItemKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
@@ -2519,18 +2519,18 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> MMSEn
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
-                durationInMilliSeconds = resultSet->getInt64("DurationInMilliSeconds");
-                bitRate = resultSet->getInt("BitRate");
-                videoCodecName = resultSet->getString("VideoCodecName");
-                videoProfile = resultSet->getString("VideoProfile");
-                videoWidth = resultSet->getInt("Width");
-                videoHeight = resultSet->getInt("Height");
-                videoAvgFrameRate = resultSet->getString("AvgFrameRate");
-                videoBitRate = resultSet->getInt("VideoBitRate");
-                audioCodecName = resultSet->getString("AudioCodecName");
-                audioSampleRate = resultSet->getInt("AudioSampleRate");
-                audioChannels = resultSet->getInt("AudioChannels");
-                audioBitRate = resultSet->getInt("AudioBitRate");
+                durationInMilliSeconds = resultSet->getInt64("durationInMilliSeconds");
+                bitRate = resultSet->getInt("bitRate");
+                videoCodecName = resultSet->getString("videoCodecName");
+                videoProfile = resultSet->getString("videoProfile");
+                videoWidth = resultSet->getInt("width");
+                videoHeight = resultSet->getInt("height");
+                videoAvgFrameRate = resultSet->getString("avgFrameRate");
+                videoBitRate = resultSet->getInt("videoBitRate");
+                audioCodecName = resultSet->getString("audioCodecName");
+                audioSampleRate = resultSet->getInt("audioSampleRate");
+                audioChannels = resultSet->getInt("audioChannels");
+                audioBitRate = resultSet->getInt("audioBitRate");
             }
             else
             {
@@ -2603,7 +2603,7 @@ void MMSEngineDBFacade::getEncodingJobs(
         if (resetToBeDone)
         {
             lastSQLCommand = 
-                "update MMS_EncodingJobs set Status = ?, ProcessorMMS = null where ProcessorMMS = ? and Status = ?";
+                "update MMS_EncodingJob set status = ?, processorMMS = null where processorMMS = ? and status = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
@@ -2612,7 +2612,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
             int rowsReset = preparedStatement->executeUpdate();            
             if (rowsReset > 0)
-                _logger->warn(__FILEREF__ + "Rows (MMS_EncodingJobs) that were reset"
+                _logger->warn(__FILEREF__ + "Rows (MMS_EncodingJob) that were reset"
                     + ", rowsReset: " + to_string(rowsReset)
                 );
         }
@@ -2621,7 +2621,7 @@ void MMSEngineDBFacade::getEncodingJobs(
             int retentionDaysToReset = 7;
             
             lastSQLCommand = 
-                "update MMS_EncodingJobs set Status = ?, ProcessorMMS = null where ProcessorMMS = ? and Status = ? and DATE_ADD(EncodingJobStart, INTERVAL ? DAY) <= NOW()";
+                "update MMS_EncodingJob set status = ?, processorMMS = null where processorMMS = ? and status = ? and DATE_ADD(encodingJobStart, INTERVAL ? DAY) <= NOW()";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
@@ -2631,16 +2631,16 @@ void MMSEngineDBFacade::getEncodingJobs(
 
             int rowsExpired = preparedStatement->executeUpdate();            
             if (rowsExpired > 0)
-                _logger->warn(__FILEREF__ + "Rows (MMS_EncodingJobs) that were expired"
+                _logger->warn(__FILEREF__ + "Rows (MMS_EncodingJob) that were expired"
                     + ", rowsExpired: " + to_string(rowsExpired)
                 );
         }
         
         {
             lastSQLCommand = 
-                "select EncodingJobKey, IngestionJobKey, SourcePhysicalPathKey, EncodingPriority, EncodingProfileKey from MMS_EncodingJobs " 
-                "where ProcessorMMS is null and Status = ? and EncodingJobStart <= NOW() "
-                "order by EncodingPriority desc, EncodingJobStart asc, FailuresNumber asc for update";
+                "select encodingJobKey, ingestionJobKey, sourcePhysicalPathKey, encodingPriority, encodingProfileKey from MMS_EncodingJob " 
+                "where processorMMS is null and status = ? and encodingJobStart <= NOW() "
+                "order by encodingPriority desc, encodingJobStart asc, failuresNumber asc for update";
             shared_ptr<sql::PreparedStatement> preparedStatementEncoding (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatementEncoding->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
@@ -2651,16 +2651,16 @@ void MMSEngineDBFacade::getEncodingJobs(
                 shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem =
                         make_shared<MMSEngineDBFacade::EncodingItem>();
                 
-                encodingItem->_encodingJobKey = encodingResultSet->getInt64("EncodingJobKey");
-                encodingItem->_ingestionJobKey = encodingResultSet->getInt64("IngestionJobKey");
-                encodingItem->_physicalPathKey = encodingResultSet->getInt64("SourcePhysicalPathKey");
-                encodingItem->_encodingPriority = static_cast<EncodingPriority>(encodingResultSet->getInt("EncodingPriority"));
-                encodingItem->_encodingProfileKey = encodingResultSet->getInt64("EncodingProfileKey");
+                encodingItem->_encodingJobKey = encodingResultSet->getInt64("encodingJobKey");
+                encodingItem->_ingestionJobKey = encodingResultSet->getInt64("ingestionJobKey");
+                encodingItem->_physicalPathKey = encodingResultSet->getInt64("sourcePhysicalPathKey");
+                encodingItem->_encodingPriority = static_cast<EncodingPriority>(encodingResultSet->getInt("encodingPriority"));
+                encodingItem->_encodingProfileKey = encodingResultSet->getInt64("ncodingProfileKey");
                 
                 {
                     lastSQLCommand = 
-                        "select m.CustomerKey, m.ContentType, p.MMSPartitionNumber, p.MediaItemKey, p.FileName, p.RelativePath "
-                        "from MMS_MediaItems m, MMS_PhysicalPaths p where m.MediaItemKey = p.MediaItemKey and p.PhysicalPathKey = ?";
+                        "select m.customerKey, m.contentType, p.partitionNumber, p.mediaItemKey, p.fileName, p.relativePath "
+                        "from MMS_MediaItem m, MMS_PhysicalPath p where m.mediaItemKey = p.mediaItemKey and p.physicalPathKey = ?";
                     shared_ptr<sql::PreparedStatement> preparedStatementPhysicalPath (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
                     preparedStatementPhysicalPath->setInt64(queryParameterIndex++, encodingItem->_physicalPathKey);
@@ -2668,12 +2668,12 @@ void MMSEngineDBFacade::getEncodingJobs(
                     shared_ptr<sql::ResultSet> physicalPathResultSet (preparedStatementPhysicalPath->executeQuery());
                     if (physicalPathResultSet->next())
                     {
-                        encodingItem->_contentType = MMSEngineDBFacade::toContentType(physicalPathResultSet->getString("ContentType"));
-                        encodingItem->_customer = getCustomer(physicalPathResultSet->getInt64("CustomerKey"));
-                        encodingItem->_mmsPartitionNumber = physicalPathResultSet->getInt("MMSPartitionNumber");
-                        encodingItem->_mediaItemKey = physicalPathResultSet->getInt64("MediaItemKey");
-                        encodingItem->_fileName = physicalPathResultSet->getString("FileName");
-                        encodingItem->_relativePath = physicalPathResultSet->getString("RelativePath");
+                        encodingItem->_contentType = MMSEngineDBFacade::toContentType(physicalPathResultSet->getString("contentType"));
+                        encodingItem->_customer = getCustomer(physicalPathResultSet->getInt64("customerKey"));
+                        encodingItem->_mmsPartitionNumber = physicalPathResultSet->getInt("partitionNumber");
+                        encodingItem->_mediaItemKey = physicalPathResultSet->getInt64("mediaItemKey");
+                        encodingItem->_fileName = physicalPathResultSet->getString("fileName");
+                        encodingItem->_relativePath = physicalPathResultSet->getString("relativePath");
                     }
                     else
                     {
@@ -2690,7 +2690,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                 if (encodingItem->_contentType == ContentType::Video)
                 {
                     lastSQLCommand = 
-                        "select DurationInMilliSeconds from MMS_VideoItems where MediaItemKey = ?";
+                        "select durationInMilliSeconds from MMS_VideoItem where mediaItemKey = ?";
                     shared_ptr<sql::PreparedStatement> preparedStatementVideo (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
                     preparedStatementVideo->setInt64(queryParameterIndex++, encodingItem->_mediaItemKey);
@@ -2698,7 +2698,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                     shared_ptr<sql::ResultSet> videoResultSet (preparedStatementVideo->executeQuery());
                     if (videoResultSet->next())
                     {
-                        encodingItem->_durationInMilliSeconds = videoResultSet->getInt64("DurationInMilliSeconds");
+                        encodingItem->_durationInMilliSeconds = videoResultSet->getInt64("durationInMilliSeconds");
                     }
                     else
                     {
@@ -2714,7 +2714,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                 else if (encodingItem->_contentType == ContentType::Audio)
                 {
                     lastSQLCommand = 
-                        "select DurationInMilliSeconds from MMS_AudioItems where MediaItemKey = ?";
+                        "select durationInMilliSeconds from MMS_AudioItem where mediaItemKey = ?";
                     shared_ptr<sql::PreparedStatement> preparedStatementAudio (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
                     preparedStatementAudio->setInt64(queryParameterIndex++, encodingItem->_mediaItemKey);
@@ -2722,7 +2722,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                     shared_ptr<sql::ResultSet> audioResultSet (preparedStatementAudio->executeQuery());
                     if (audioResultSet->next())
                     {
-                        encodingItem->_durationInMilliSeconds = audioResultSet->getInt64("DurationInMilliSeconds");
+                        encodingItem->_durationInMilliSeconds = audioResultSet->getInt64("durationInMilliSeconds");
                     }
                     else
                     {
@@ -2738,7 +2738,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
                 {
                     lastSQLCommand = 
-                        "select Technology, Details from MMS_EncodingProfiles where EncodingProfileKey = ?";
+                        "select technology, details from MMS_EncodingProfiles where encodingProfileKey = ?";
                     shared_ptr<sql::PreparedStatement> preparedStatementEncodingProfile (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
                     preparedStatementEncodingProfile->setInt64(queryParameterIndex++, encodingItem->_encodingProfileKey);
@@ -2746,8 +2746,8 @@ void MMSEngineDBFacade::getEncodingJobs(
                     shared_ptr<sql::ResultSet> encodingProfilesResultSet (preparedStatementEncodingProfile->executeQuery());
                     if (encodingProfilesResultSet->next())
                     {
-                        encodingItem->_encodingProfileTechnology = static_cast<EncodingTechnology>(encodingProfilesResultSet->getInt("Technology"));
-                        encodingItem->_details = encodingProfilesResultSet->getString("Details");
+                        encodingItem->_encodingProfileTechnology = static_cast<EncodingTechnology>(encodingProfilesResultSet->getInt("technology"));
+                        encodingItem->_details = encodingProfilesResultSet->getString("details");
                     }
                     else
                     {
@@ -2765,7 +2765,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                 
                 {
                     lastSQLCommand = 
-                        "update MMS_EncodingJobs set Status = ?, ProcessorMMS = ?, EncodingJobStart = NULL where EncodingJobKey = ? and ProcessorMMS is null";
+                        "update MMS_EncodingJob set status = ?, processorMMS = ?, encodingJobStart = NULL where encodingJobKey = ? and processorMMS is null";
                     shared_ptr<sql::PreparedStatement> preparedStatementUpdateEncoding (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
                     preparedStatementUpdateEncoding->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::Processing));
@@ -2873,7 +2873,7 @@ int MMSEngineDBFacade::updateEncodingJob (
         {
             {
                 lastSQLCommand = 
-                    "select FailuresNumber from MMS_EncodingJobs where EncodingJobKey = ? for update";
+                    "select failuresNumber from MMS_EncodingJob where encodingJobKey = ? for update";
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
                 preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
@@ -2905,7 +2905,7 @@ int MMSEngineDBFacade::updateEncodingJob (
 
             {
                 lastSQLCommand = 
-                    "update MMS_EncodingJobs set Status = ?, ProcessorMMS = NULL, FailuresNumber = ?, EncodingProgress = NULL where EncodingJobKey = ? and Status = ?";
+                    "update MMS_EncodingJob set status = ?, processorMMS = NULL, failuresNumber = ?, encodingProgress = NULL where encodingJobKey = ? and status = ?";
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
                 preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(newEncodingStatus));
@@ -2939,7 +2939,7 @@ int MMSEngineDBFacade::updateEncodingJob (
             newEncodingStatus       = EncodingStatus::ToBeProcessed;
             
             lastSQLCommand = 
-                "update MMS_EncodingJobs set Status = ?, ProcessorMMS = NULL, EncodingProgress = NULL where EncodingJobKey = ? and Status = ?";
+                "update MMS_EncodingJob set status = ?, processorMMS = NULL, encodingProgress = NULL where encodingJobKey = ? and status = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
                 preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(newEncodingStatus));
@@ -2969,7 +2969,7 @@ int MMSEngineDBFacade::updateEncodingJob (
             newEncodingStatus       = EncodingStatus::End_ProcessedSuccessful;
 
             lastSQLCommand = 
-                "update MMS_EncodingJobs set Status = ?, ProcessorMMS = NULL, EncodingJobEnd = NOW(), EncodingProgress = 100 where EncodingJobKey = ? and Status = ?";
+                "update MMS_EncodingJob set status = ?, processorMMS = NULL, encodingJobEnd = NOW(), encodingProgress = 100 where encodingJobKey = ? and status = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(newEncodingStatus));
@@ -2998,7 +2998,7 @@ int MMSEngineDBFacade::updateEncodingJob (
         if (newEncodingStatus == EncodingStatus::End_ProcessedSuccessful || newEncodingStatus == EncodingStatus::End_Failed)
         {
             lastSQLCommand = 
-                "select count(*) from MMS_EncodingJobs where IngestionJobKey = ? and (Status <> ? and Status <> ?)";
+                "select count(*) from MMS_EncodingJob where ingestionJobKey = ? and (status <> ? and status <> ?)";
             shared_ptr<sql::PreparedStatement> preparedStatementEncoding (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatementEncoding->setInt64(queryParameterIndex++, ingestionJobKey);
@@ -3011,7 +3011,7 @@ int MMSEngineDBFacade::updateEncodingJob (
                 if (resultSetEncoding->getInt(1) == 0)  // ingestionJob is finished
                 {
                     lastSQLCommand = 
-                        "select count(*) from MMS_EncodingJobs where IngestionJobKey = ? and Status = ?";
+                        "select count(*) from MMS_EncodingJob where ingestionJobKey = ? and status = ?";
                     shared_ptr<sql::PreparedStatement> preparedStatementIngestion (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
                     preparedStatementIngestion->setInt64(queryParameterIndex++, ingestionJobKey);
@@ -3122,7 +3122,7 @@ void MMSEngineDBFacade::updateEncodingJobProgress (
 
         {
             lastSQLCommand = 
-                "update MMS_EncodingJobs set EncodingProgress = ? where EncodingJobKey = ?";
+                "update MMS_EncodingJob set encodingProgress = ? where encodingJobKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt(queryParameterIndex++, encodingPercentage);
@@ -3195,10 +3195,10 @@ string MMSEngineDBFacade::checkCustomerMaxIngestionNumber (
 
         {
             lastSQLCommand = 
-                "select c.MaxIngestionsNumber, cmi.CurrentIngestionsNumber, c.EncodingPeriod, " 
-                    "DATE_FORMAT(cmi.StartDateTime, '%Y-%m-%d %H:%i:%s') as LocalStartDateTime, DATE_FORMAT(cmi.EndDateTime, '%Y-%m-%d %H:%i:%s') as LocalEndDateTime, "
-                    "cmi.CurrentDirLevel1, cmi.CurrentDirLevel2, cmi.CurrentDirLevel3 "
-                "from MMS_Customers c, MMS_CustomerMoreInfo cmi where c.CustomerKey = cmi.CustomerKey and c.CustomerKey = ?";
+                "select c.maxIngestionsNumber, cmi.currentIngestionsNumber, c.encodingPeriod, " 
+                    "DATE_FORMAT(cmi.startDateTime, '%Y-%m-%d %H:%i:%s') as LocalStartDateTime, DATE_FORMAT(cmi.endDateTime, '%Y-%m-%d %H:%i:%s') as LocalEndDateTime, "
+                    "cmi.currentDirLevel1, cmi.currentDirLevel2, cmi.currentDirLevel3 "
+                "from MMS_Customer c, MMS_CustomerMoreInfo cmi where c.customerKey = cmi.customerKey and c.customerKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, customerKey);
@@ -3206,14 +3206,14 @@ string MMSEngineDBFacade::checkCustomerMaxIngestionNumber (
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
-                maxIngestionsNumber = resultSet->getInt("MaxIngestionsNumber");
-                currentIngestionsNumber = resultSet->getInt("CurrentIngestionsNumber");
-                encodingPeriod = resultSet->getInt("EncodingPeriod");
+                maxIngestionsNumber = resultSet->getInt("maxIngestionsNumber");
+                currentIngestionsNumber = resultSet->getInt("currentIngestionsNumber");
+                encodingPeriod = resultSet->getInt("encodingPeriod");
                 periodStartDateTime = resultSet->getString("LocalStartDateTime");
                 periodEndDateTime = resultSet->getString("LocalEndDateTime");                
-                currentDirLevel1 = resultSet->getInt("CurrentDirLevel1");
-                currentDirLevel2 = resultSet->getInt("CurrentDirLevel2");
-                currentDirLevel3 = resultSet->getInt("CurrentDirLevel3");
+                currentDirLevel1 = resultSet->getInt("currentDirLevel1");
+                currentDirLevel2 = resultSet->getInt("currentDirLevel2");
+                currentDirLevel3 = resultSet->getInt("currentDirLevel3");
             }
             else
             {
@@ -3431,9 +3431,9 @@ string MMSEngineDBFacade::checkCustomerMaxIngestionNumber (
         if (periodExpired)
         {
             lastSQLCommand = 
-                "update MMS_CustomerMoreInfo set CurrentIngestionsNumber = 0, "
-                "StartDateTime = STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'), EndDateTime = STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S') "
-                "where CustomerKey = ?";
+                "update MMS_CustomerMoreInfo set currentIngestionsNumber = 0, "
+                "startDateTime = STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'), endDateTime = STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S') "
+                "where customerKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -3581,7 +3581,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                 contentProviderName = _defaultContentProviderName;
 
             lastSQLCommand = 
-                "select ContentProviderKey from MMS_ContentProviders where CustomerKey = ? and Name = ?";
+                "select contentProviderKey from MMS_ContentProvider where customerKey = ? and name = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, customer->_customerKey);
@@ -3590,7 +3590,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
-                contentProviderKey = resultSet->getInt64("ContentProviderKey");
+                contentProviderKey = resultSet->getInt64("contentProviderKey");
             }
             else
             {
@@ -3605,7 +3605,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             }            
         }
 
-        _logger->info(__FILEREF__ + "Insert into MMS_MediaItems...");
+        _logger->info(__FILEREF__ + "Insert into MMS_MediaItem...");
         ContentType contentType;
         int64_t encodingProfileSetKey;
         string uniqueName;
@@ -3651,7 +3651,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                 if (encodingProfilesSet == "systemDefault")
                 {
                     lastSQLCommand = 
-                        "select EncodingProfilesSetKey from MMS_EncodingProfilesSet where ContentType = ? and CustomerKey is null and Name is null";
+                        "select encodingProfilesSetKey from MMS_EncodingProfilesSet where contentType = ? and customerKey is null and name is null";
                     shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
                     preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
@@ -3659,7 +3659,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                 else if (encodingProfilesSet == "customerDefault")
                 {
                     lastSQLCommand = 
-                        "select EncodingProfilesSetKey from MMS_EncodingProfilesSet where ContentType = ? and CustomerKey = ? and Name is null";
+                        "select encodingProfilesSetKey from MMS_EncodingProfilesSet where contentType = ? and customerKey = ? and name is null";
                     shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
                     preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
@@ -3668,7 +3668,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                 else
                 {
                     lastSQLCommand = 
-                        "select EncodingProfilesSetKey from MMS_EncodingProfilesSet where ContentType = ? and CustomerKey = ? and Name = ?";
+                        "select encodingProfilesSetKey from MMS_EncodingProfilesSet where contentType = ? and customerKey = ? and name = ?";
                 }
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
@@ -3690,11 +3690,11 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                 shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
                 if (resultSet->next())
                 {
-                    encodingProfileSetKey = resultSet->getInt64("EncodingProfilesSetKey");
+                    encodingProfileSetKey = resultSet->getInt64("encodingProfilesSetKey");
                 }
                 else
                 {
-                    string errorMessage = __FILEREF__ + "EncodingProfilesSetKey is not present"
+                    string errorMessage = __FILEREF__ + "encodingProfilesSetKey is not present"
                         + ", contentType: " + MMSEngineDBFacade::toString(contentType)
                         + ", customer->_customerKey: " + to_string(customer->_customerKey)
                         + ", encodingProfilesSet: " + encodingProfilesSet
@@ -3708,8 +3708,8 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
 
 
             lastSQLCommand = 
-                "insert into MMS_MediaItems (MediaItemKey, UniqueName, CustomerKey, ContentProviderKey, Title, Ingester, Keywords, " 
-                "IngestionDate, ContentType, EncodingProfilesSetKey) values ("
+                "insert into MMS_MediaItem (mediaItemKey, uniqueName, customerKey, contentProviderKey, title, ingester, keywords, " 
+                "ingestionDate, contentType, encodingProfilesSetKey) values ("
                 "NULL, ?, ?, ?, ?, ?, ?, NULL, ?, ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -3737,7 +3737,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
         if (uniqueName == "")
         {
             lastSQLCommand = 
-                "update MMS_MediaItems set UniqueName = ? where MediaItemKey = ?";
+                "update MMS_MediaItem set uniqueName = ? where mediaItemKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -3762,9 +3762,9 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             if (contentType == ContentType::Video)
             {
                 lastSQLCommand = 
-                    "insert into MMS_VideoItems (MediaItemKey, DurationInMilliSeconds, BitRate, Width, Height, AvgFrameRate, "
-                    "VideoCodecName, VideoProfile, VideoBitRate, "
-                    "AudioCodecName, AudioSampleRate, AudioChannels, AudioBitRate) values ("
+                    "insert into MMS_VideoItem (mediaItemKey, durationInMilliSeconds, bitRate, width, height, avgFrameRate, "
+                    "videoCodecName, videoProfile, videoBitRate, "
+                    "audioCodecName, audioSampleRate, audioChannels, audioBitRate) values ("
                     "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -3824,7 +3824,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             else if (contentType == ContentType::Audio)
             {
                 lastSQLCommand = 
-                    "insert into MMS_AudioItems (MediaItemKey, DurationInMilliSeconds, CodecName, BitRate, SampleRate, Channels) values ("
+                    "insert into MMS_AudioItem (mediaItemKey, durationInMilliSeconds, codecName, bitRate, sampleRate, channels) values ("
                     "?, ?, ?, ?, ?, ?)";
 
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -3856,7 +3856,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             else if (contentType == ContentType::Image)
             {
                 lastSQLCommand = 
-                    "insert into MMS_ImageItems (MediaItemKey, Width, Height, Format, Quality) values ("
+                    "insert into MMS_ImageItem (mediaItemKey, width, height, format, quality) values ("
                     "?, ?, ?, ?, ?)";
 
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -3884,7 +3884,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             int drm = 0;
 
             lastSQLCommand = 
-                "insert into MMS_PhysicalPaths(PhysicalPathKey, MediaItemKey, DRM, FileName, RelativePath, MMSPartitionNumber, SizeInBytes, EncodingProfileKey, CreationDate) values ("
+                "insert into MMS_PhysicalPath(physicalPathKey, mediaItemKey, drm, fileName, relativePath, partitionNumber, sizeInBytes, encodingProfileKey, creationDate) values ("
                 "NULL, ?, ?, ?, ?, ?, ?, ?, NOW())";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -3910,7 +3910,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                 const Json::Value territories = contentIngestion[field];
                 
                 lastSQLCommand = 
-                    "select TerritoryKey, Name from MMS_Territories where CustomerKey = ?";
+                    "select territoryKey, name from MMS_Territory where customerKey = ?";
                 shared_ptr<sql::PreparedStatement> preparedStatementTerrirories (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
                 preparedStatementTerrirories->setInt64(queryParameterIndex++, customer->_customerKey);
@@ -3918,8 +3918,8 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                 shared_ptr<sql::ResultSet> resultSetTerritories (preparedStatementTerrirories->executeQuery());
                 while (resultSetTerritories->next())
                 {
-                    int64_t territoryKey = resultSetTerritories->getInt64("TerritoryKey");
-                    string territoryName = resultSetTerritories->getString("Name");
+                    int64_t territoryKey = resultSetTerritories->getInt64("territoryKey");
+                    string territoryName = resultSetTerritories->getString("name");
 
                     string startPublishing = "NOW";
                     string endPublishing = "FOREVER";
@@ -3981,7 +3981,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                     
                     {
                         lastSQLCommand = 
-                            "insert into MMS_DefaultTerritoryInfo(DefaultTerritoryInfoKey, MediaItemKey, TerritoryKey, StartPublishing, EndPublishing) values ("
+                            "insert into MMS_DefaultTerritoryInfo(defaultTerritoryInfoKey, mediaItemKey, territoryKey, startPublishing, endPublishing) values ("
                             "NULL, ?, ?, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'), STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'))";
 
                         shared_ptr<sql::PreparedStatement> preparedStatementDefaultTerritory (conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -4004,8 +4004,8 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
 
             {
                 lastSQLCommand = 
-                    "select CurrentDirLevel1, CurrentDirLevel2, CurrentDirLevel3 "
-                    "from MMS_CustomerMoreInfo where CustomerKey = ?";
+                    "select currentDirLevel1, currentDirLevel2, currentDirLevel3 "
+                    "from MMS_CustomerMoreInfo where customerKey = ?";
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
                 preparedStatement->setInt64(queryParameterIndex++, customer->_customerKey);
@@ -4013,9 +4013,9 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                 shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
                 if (resultSet->next())
                 {
-                    currentDirLevel1 = resultSet->getInt("CurrentDirLevel1");
-                    currentDirLevel2 = resultSet->getInt("CurrentDirLevel2");
-                    currentDirLevel3 = resultSet->getInt("CurrentDirLevel3");
+                    currentDirLevel1 = resultSet->getInt("currentDirLevel1");
+                    currentDirLevel2 = resultSet->getInt("currentDirLevel2");
+                    currentDirLevel3 = resultSet->getInt("currentDirLevel3");
                 }
                 else
                 {
@@ -4058,9 +4058,9 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
 
             {
                 lastSQLCommand = 
-                    "update MMS_CustomerMoreInfo set CurrentDirLevel1 = ?, CurrentDirLevel2 = ?, "
-                    "CurrentDirLevel3 = ?, CurrentIngestionsNumber = CurrentIngestionsNumber + 1 "
-                    "where CustomerKey = ?";
+                    "update MMS_CustomerMoreInfo set currentDirLevel1 = ?, currentDirLevel2 = ?, "
+                    "currentDirLevel3 = ?, currentIngestionsNumber = currentIngestionsNumber + 1 "
+                    "where customerKey = ?";
 
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
@@ -4107,9 +4107,9 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                 encodingPriority = EncodingPriority::Medium;
 
             lastSQLCommand = 
-                "insert into MMS_EncodingJobs(EncodingJobKey, IngestionJobKey, SourcePhysicalPathKey, EncodingPriority, EncodingProfileKey, EncodingJobStart, EncodingJobEnd, EncodingProgress, Status, ProcessorMMS, FailuresNumber) "
-                "select                       NULL,           ?,               ?,                     ?,                EncodingProfileKey, NULL,             NULL,           NULL,     ?,      NULL,         0 "
-                "from MMS_EncodingProfilesSetMapping where EncodingProfilesSetKey = ?";
+                "insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, sourcePhysicalPathKey, encodingPriority, encodingProfileKey, encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, failuresNumber) "
+                "select                       NULL,           ?,               ?,                     ?,                encodingProfileKey, NULL,             NULL,           NULL,     ?,      NULL,         0 "
+                "from MMS_EncodingProfilesSetMapping where encodingProfilesSetKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -4126,7 +4126,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             IngestionStatus newIngestionStatus = IngestionStatus::QueuedForEncoding;
             
             lastSQLCommand = 
-                "update MMS_IngestionJobs set MediaItemKey = ?, Status = ? where IngestionJobKey = ?";
+                "update MMS_IngestionJob set mediaItemKey = ?, status = ? where ingestionJobKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -4230,10 +4230,10 @@ tuple<int,string,string,string> MMSEngineDBFacade::getStorageDetails(
         string fileName;
         {
             lastSQLCommand = string("") +
-                "select mi.CustomerKey, pp.MMSPartitionNumber, pp.RelativePath, pp.FileName "
-                "from MMS_MediaItems mi, MMS_PhysicalPaths pp "
-                "where mi.mediaItemKey = pp.mediaItemKey and mi.MediaItemKey = ? "
-                "and pp.EncodingProfileKey " + (encodingProfileKey == -1 ? "is null" : "= ?");
+                "select mi.customerKey, pp.partitionNumber, pp.relativePath, pp.fileName "
+                "from MMS_MediaItem mi, MMS_PhysicalPath pp "
+                "where mi.mediaItemKey = pp.mediaItemKey and mi.mediaItemKey = ? "
+                "and pp.encodingProfileKey " + (encodingProfileKey == -1 ? "is null" : "= ?");
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -4244,10 +4244,10 @@ tuple<int,string,string,string> MMSEngineDBFacade::getStorageDetails(
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
-                customerKey = resultSet->getInt64("CustomerKey");
-                mmsPartitionNumber = resultSet->getInt("MMSPartitionNumber");
-                relativePath = resultSet->getString("RelativePath");
-                fileName = resultSet->getString("FileName");
+                customerKey = resultSet->getInt64("customerKey");
+                mmsPartitionNumber = resultSet->getInt("partitionNumber");
+                relativePath = resultSet->getString("relativePath");
+                fileName = resultSet->getString("fileName");
             }
             else
             {
@@ -4337,7 +4337,7 @@ int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
             int drm = 0;
 
             lastSQLCommand = 
-                "insert into MMS_PhysicalPaths(PhysicalPathKey, MediaItemKey, DRM, FileName, RelativePath, MMSPartitionNumber, SizeInBytes, EncodingProfileKey, CreationDate) values ("
+                "insert into MMS_PhysicalPath(physicalPathKey, mediaItemKey, drm, fileName, relativePath, partitionNumber, sizeInBytes, encodingProfileKey, creationDate) values ("
         	"NULL, ?, ?, ?, ?, ?, ?, ?, NOW())";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -4358,8 +4358,8 @@ int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
         // publishing territories
         {
             lastSQLCommand = 
-                "select t.TerritoryKey, t.Name, DATE_FORMAT(d.StartPublishing, '%Y-%m-%d %H:%i:%s') as StartPublishing, DATE_FORMAT(d.EndPublishing, '%Y-%m-%d %H:%i:%s') as EndPublishing from MMS_Territories t, MMS_DefaultTerritoryInfo d "
-                "where t.TerritoryKey = d.TerritoryKey and t.CustomerKey = ? and d.MediaItemKey = ?";
+                "select t.territoryKey, t.name, DATE_FORMAT(d.startPublishing, '%Y-%m-%d %H:%i:%s') as startPublishing, DATE_FORMAT(d.endPublishing, '%Y-%m-%d %H:%i:%s') as endPublishing from MMS_Territory t, MMS_DefaultTerritoryInfo d "
+                "where t.territoryKey = d.territoryKey and t.customerKey = ? and d.mediaItemKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatementTerritory (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatementTerritory->setInt64(queryParameterIndex++, customerKey);
@@ -4368,13 +4368,13 @@ int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
             shared_ptr<sql::ResultSet> resultSetTerritory (preparedStatementTerritory->executeQuery());
             while (resultSetTerritory->next())
             {
-                int64_t territoryKey = resultSetTerritory->getInt64("TerritoryKey");
-                string territoryName = resultSetTerritory->getString("Name");
-                string startPublishing = resultSetTerritory->getString("StartPublishing");
-                string endPublishing = resultSetTerritory->getString("EndPublishing");
+                int64_t territoryKey = resultSetTerritory->getInt64("territoryKey");
+                string territoryName = resultSetTerritory->getString("name");
+                string startPublishing = resultSetTerritory->getString("startPublishing");
+                string endPublishing = resultSetTerritory->getString("endPublishing");
                 
                 lastSQLCommand = 
-                    "select PublishingStatus from MMS_Publishing2 where MediaItemKey = ? and TerritoryKey = ?";
+                    "select publishingStatus from MMS_Publishing where mediaItemKey = ? and territoryKey = ?";
                 shared_ptr<sql::PreparedStatement> preparedStatementPublishing (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
                 preparedStatementPublishing->setInt64(queryParameterIndex++, mediaItemKey);
@@ -4388,7 +4388,7 @@ int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
                     if (publishingStatus == 1)
                     {
                         lastSQLCommand = 
-                            "update MMS_Publishing2 set PublishingStatus = 0 where MediaItemKey = ? and TerritoryKey = ?";
+                            "update MMS_Publishing set publishingStatus = 0 where mediaItemKey = ? and territoryKey = ?";
 
                         shared_ptr<sql::PreparedStatement> preparedStatementUpdatePublishing (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                         int queryParameterIndex = 1;
@@ -4413,7 +4413,7 @@ int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
                 else
                 {
                     lastSQLCommand = 
-                        "insert into MMS_Publishing2 (PublishingKey, MediaItemKey, TerritoryKey, StartPublishing, EndPublishing, PublishingStatus) values ("
+                        "insert into MMS_Publishing (publishingKey, mediaItemKey, territoryKey, startPublishing, endPublishing, publishingStatus) values ("
 	        	"NULL, ?, ?, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'), STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'), 0)";
 
                     shared_ptr<sql::PreparedStatement> preparedStatementInsertPublishing (conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -4553,34 +4553,33 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
         try
         {
-            // MaxEncodingPriority (0: low, 1: default, 2: high)
-            // CustomerType: (0: Live Sessions only, 1: Ingestion + Delivery, 2: Encoding Only)
-            // EncodingPeriod: 0: Daily, 1: Weekly, 2: Monthly
+            // maxEncodingPriority (0: low, 1: default, 2: high)
+            // customerType: (0: Live Sessions only, 1: Ingestion + Delivery, 2: Encoding Only)
+            // encodingPeriod: 0: Daily, 1: Weekly, 2: Monthly
 
             lastSQLCommand = 
-                "create table if not exists MMS_Customers ("
-                    "CustomerKey                    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
-                    "CreationDate                   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
-                    "Name                           VARCHAR (64) NOT NULL,"
-                    "DirectoryName                  VARCHAR (64) NOT NULL,"
-                    "Street                         VARCHAR (128) NULL,"
-                    "City                           VARCHAR (64) NULL,"
-                    "State                          VARCHAR (64) NULL,"
-                    "ZIP                            VARCHAR (32) NULL,"
-                    "Phone                          VARCHAR (32) NULL,"
-                    "CountryCode                    VARCHAR (64) NULL,"
-                    "CustomerType                   TINYINT NOT NULL,"
-                    "DeliveryURL                    VARCHAR (256) NULL,"
-                    "IsEnabled                      TINYINT (1) NOT NULL,"
-                    "MaxEncodingPriority            VARCHAR (32) NOT NULL,"
-                    "EncodingPeriod                 TINYINT NOT NULL,"
-                    "MaxIngestionsNumber            INT NOT NULL,"
-                    "MaxStorageInGB                 INT NOT NULL,"
-                    "CurrentStorageUsageInGB        INT DEFAULT 0,"
-                    "SuperDeliveryRights            INT DEFAULT 0,"
-                    "LanguageCode                   VARCHAR (16) NOT NULL,"
-                    "constraint MMS_Customers_PK PRIMARY KEY (CustomerKey),"
-                    "UNIQUE (Name))"
+                "create table if not exists MMS_Customer ("
+                    "customerKey                    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "creationDate                   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+                    "name                           VARCHAR (64) NOT NULL,"
+                    "directoryName                  VARCHAR (64) NOT NULL,"
+                    "street                         VARCHAR (128) NULL,"
+                    "city                           VARCHAR (64) NULL,"
+                    "state                          VARCHAR (64) NULL,"
+                    "zip                            VARCHAR (32) NULL,"
+                    "phone                          VARCHAR (32) NULL,"
+                    "countryCode                    VARCHAR (64) NULL,"
+                    "customerType                   TINYINT NOT NULL,"
+                    "deliveryURL                    VARCHAR (256) NULL,"
+                    "isEnabled                      TINYINT (1) NOT NULL,"
+                    "maxEncodingPriority            VARCHAR (32) NOT NULL,"
+                    "encodingPeriod                 TINYINT NOT NULL,"
+                    "maxIngestionsNumber            INT NOT NULL,"
+                    "maxStorageInGB                 INT NOT NULL,"
+                    "currentStorageUsageInGB        INT DEFAULT 0,"
+                    "languageCode                   VARCHAR (16) NOT NULL,"
+                    "constraint MMS_Customer_PK PRIMARY KEY (customerKey),"
+                    "UNIQUE (name))"
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);    
         }
@@ -4600,7 +4599,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         try
         {
             lastSQLCommand = 
-                "create unique index MMS_Customers_idx on MMS_Customers (DirectoryName)";
+                "create unique index MMS_Customer_idx on MMS_Customer (directoryName)";
             statement->execute(lastSQLCommand);    
         }
         catch(sql::SQLException se)
@@ -4619,12 +4618,12 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         try
         {
             lastSQLCommand = 
-                "create table if not exists MMS_ConfirmationCodes ("
-                    "CustomerKey                    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
-                    "CreationDate                   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
-                    "ConfirmationCode               VARCHAR (64) NOT NULL,"
-                    "constraint MMS_ConfirmationCodes_PK PRIMARY KEY (CustomerKey),"
-                    "UNIQUE (ConfirmationCode))"
+                "create table if not exists MMS_ConfirmationCode ("
+                    "customerKey                    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "creationDate                   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+                    "confirmationCode               VARCHAR (64) NOT NULL,"
+                    "constraint MMS_ConfirmationCode_PK PRIMARY KEY (customerKey),"
+                    "UNIQUE (confirmationCode))"
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);    
         }
@@ -4648,15 +4647,15 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             // - customer not having territories (we will have just one row in this table with Name set as 'default')
             // - customer having at least one territory (we will as much rows in this table according the number of territories)
             lastSQLCommand = 
-                "create table if not exists MMS_Territories ("
-                    "TerritoryKey  				BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
-                    "CustomerKey  				BIGINT UNSIGNED NOT NULL,"
-                    "Name					VARCHAR (64) NOT NULL,"
-                    "Currency					VARCHAR (16) DEFAULT NULL,"
-                    "constraint MMS_Territories_PK PRIMARY KEY (TerritoryKey),"
-                    "constraint MMS_Territories_FK foreign key (CustomerKey) "
-                        "references MMS_Customers (CustomerKey) on delete cascade, "
-                    "UNIQUE (CustomerKey, Name))"
+                "create table if not exists MMS_Territory ("
+                    "territoryKey  				BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "customerKey  				BIGINT UNSIGNED NOT NULL,"
+                    "name					VARCHAR (64) NOT NULL,"
+                    "currency					VARCHAR (16) DEFAULT NULL,"
+                    "constraint MMS_Territory_PK PRIMARY KEY (territoryKey),"
+                    "constraint MMS_Territory_FK foreign key (customerKey) "
+                        "references MMS_Customer (customerKey) on delete cascade, "
+                    "UNIQUE (customerKey, name))"
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
@@ -4676,21 +4675,21 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         try
         {
             // create table MMS_CustomerMoreInfo. This table was created to move the fields
-            //		that are updated during the ingestion from MMS_Customers.
-            //		That will avoid to put a lock in the MMS_Customers during the update
-            //		since the MMS_Customers is a wide used table
+            //		that are updated during the ingestion from MMS_Customer.
+            //		That will avoid to put a lock in the MMS_Customer during the update
+            //		since the MMS_Customer is a wide used table
             lastSQLCommand = 
                 "create table if not exists MMS_CustomerMoreInfo ("
-                    "CustomerKey  			BIGINT UNSIGNED NOT NULL,"
-                    "CurrentDirLevel1			INT NOT NULL,"
-                    "CurrentDirLevel2			INT NOT NULL,"
-                    "CurrentDirLevel3			INT NOT NULL,"
-                    "StartDateTime			DATETIME NOT NULL,"
-                    "EndDateTime			DATETIME NOT NULL,"
-                    "CurrentIngestionsNumber	INT NOT NULL,"
-                    "constraint MMS_CustomerMoreInfo_PK PRIMARY KEY (CustomerKey), "
-                    "constraint MMS_CustomerMoreInfo_FK foreign key (CustomerKey) "
-                        "references MMS_Customers (CustomerKey) on delete cascade) "
+                    "customerKey  			BIGINT UNSIGNED NOT NULL,"
+                    "currentDirLevel1			INT NOT NULL,"
+                    "currentDirLevel2			INT NOT NULL,"
+                    "currentDirLevel3			INT NOT NULL,"
+                    "startDateTime			DATETIME NOT NULL,"
+                    "endDateTime			DATETIME NOT NULL,"
+                    "currentIngestionsNumber	INT NOT NULL,"
+                    "constraint MMS_CustomerMoreInfo_PK PRIMARY KEY (customerKey), "
+                    "constraint MMS_CustomerMoreInfo_FK foreign key (customerKey) "
+                        "references MMS_Customer (customerKey) on delete cascade) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
@@ -4709,7 +4708,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
         try
         {
-            // create table MMS_Users2
+            // create table MMS_User
             // Type (bits: ...9876543210)
             //      bit 0: MMSAdministrator
             //      bin 1: MMSUser
@@ -4717,19 +4716,19 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             //      bit 3: MMSEditorialUser
             //      bit 4: BillingAdministrator
             lastSQLCommand = 
-                "create table if not exists MMS_Users2 ("
-                    "UserKey				BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
-                    "EMailAddress				VARCHAR (128) NULL,"
-                    "Password				VARCHAR (128) NOT NULL,"
-                    "UserName				VARCHAR (128) NOT NULL,"
-                    "CustomerKey                            BIGINT UNSIGNED NOT NULL,"
-                    "Type					INT NOT NULL,"
-                    "CreationDate				TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
-                    "ExpirationDate				DATETIME NOT NULL,"
-                    "constraint MMS_Users2_PK PRIMARY KEY (UserKey), "
-                    "constraint MMS_Users2_FK foreign key (CustomerKey) "
-                        "references MMS_Customers (CustomerKey) on delete cascade, "
-                    "UNIQUE (EMailAddress))"
+                "create table if not exists MMS_User ("
+                    "userKey				BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "eMailAddress				VARCHAR (128) NULL,"
+                    "password				VARCHAR (128) NOT NULL,"
+                    "userName				VARCHAR (128) NOT NULL,"
+                    "customerKey                            BIGINT UNSIGNED NOT NULL,"
+                    "type					INT NOT NULL,"
+                    "creationDate				TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+                    "expirationDate				DATETIME NOT NULL,"
+                    "constraint MMS_User_PK PRIMARY KEY (userKey), "
+                    "constraint MMS_User_FK foreign key (customerKey) "
+                        "references MMS_Customer (customerKey) on delete cascade, "
+                    "UNIQUE (eMailAddress))"
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
@@ -4749,7 +4748,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         try
         {
             lastSQLCommand = 
-                "create unique index MMS_Users2_idx on MMS_Users2 (CustomerKey, UserName)";
+                "create unique index MMS_User_idx on MMS_User (customerKey, userName)";
             statement->execute(lastSQLCommand);
         }
         catch(sql::SQLException se)
@@ -4768,15 +4767,15 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         try
         {
             lastSQLCommand = 
-                "create table if not exists MMS_APIKeys ("
-                    "APIKey                     VARCHAR (128) NOT NULL,"
-                    "UserKey                    BIGINT UNSIGNED NOT NULL,"
-                    "Flags			SET('ADMIN_API', 'USER_API') NOT NULL,"
-                    "CreationDate		TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
-                    "ExpirationDate		DATETIME NOT NULL,"
-                    "constraint MMS_APIKeys_PK PRIMARY KEY (APIKey), "
-                    "constraint MMS_APIKeys_FK foreign key (UserKey) "
-                        "references MMS_Users2 (UserKey) on delete cascade) "
+                "create table if not exists MMS_APIKey ("
+                    "apiKey                     VARCHAR (128) NOT NULL,"
+                    "userKey                    BIGINT UNSIGNED NOT NULL,"
+                    "flags			SET('ADMIN_API', 'USER_API') NOT NULL,"
+                    "creationDate		TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+                    "expirationDate		DATETIME NOT NULL,"
+                    "constraint MMS_APIKey_PK PRIMARY KEY (apiKey), "
+                    "constraint MMS_APIKey_FK foreign key (userKey) "
+                        "references MMS_User (userKey) on delete cascade) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
@@ -4796,14 +4795,14 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         try
         {
             lastSQLCommand = 
-                "create table if not exists MMS_ContentProviders ("
-                    "ContentProviderKey                     BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
-                    "CustomerKey                            BIGINT UNSIGNED NOT NULL,"
-                    "Name					VARCHAR (64) NOT NULL,"
-                    "constraint MMS_ContentProviders_PK PRIMARY KEY (ContentProviderKey), "
-                    "constraint MMS_ContentProviders_FK foreign key (CustomerKey) "
-                        "references MMS_Customers (CustomerKey) on delete cascade, "
-                    "UNIQUE (CustomerKey, Name))" 
+                "create table if not exists MMS_ContentProvider ("
+                    "contentProviderKey                     BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "customerKey                            BIGINT UNSIGNED NOT NULL,"
+                    "name					VARCHAR (64) NOT NULL,"
+                    "constraint MMS_ContentProvider_PK PRIMARY KEY (contentProviderKey), "
+                    "constraint MMS_ContentProvider_FK foreign key (customerKey) "
+                        "references MMS_Customer (customerKey) on delete cascade, "
+                    "UNIQUE (customerKey, name))" 
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
@@ -4860,17 +4859,17 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             //  Temporary fields used by XHP: Width, Height, VideoCodec, AudioCodec
             lastSQLCommand = 
                 "create table if not exists MMS_EncodingProfiles ("
-                    "EncodingProfileKey  		BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
-                    "ContentType			VARCHAR (32) NOT NULL,"
-                    "Technology         		TINYINT NOT NULL,"
-                    "Details    			VARCHAR (512) NOT NULL,"
-                    "Label				VARCHAR (64) NULL,"
-                    "Width				INT NOT NULL DEFAULT 0,"
-                    "Height				INT NOT NULL DEFAULT 0,"
-                    "VideoCodec			VARCHAR (32) null,"
-                    "AudioCodec			VARCHAR (32) null,"
-                    "constraint MMS_EncodingProfiles_PK PRIMARY KEY (EncodingProfileKey), "
-                    "UNIQUE (ContentType, Technology, Details)) "
+                    "encodingProfileKey  		BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "contentType			VARCHAR (32) NOT NULL,"
+                    "technology         		TINYINT NOT NULL,"
+                    "details    			VARCHAR (512) NOT NULL,"
+                    "label				VARCHAR (64) NULL,"
+                    "width				INT NOT NULL DEFAULT 0,"
+                    "height				INT NOT NULL DEFAULT 0,"
+                    "videoCodec			VARCHAR (32) null,"
+                    "audioCodec			VARCHAR (32) null,"
+                    "constraint MMS_EncodingProfile_PK PRIMARY KEY (encodingProfileKey), "
+                    "UNIQUE (contentType, technology, details)) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
@@ -4889,20 +4888,20 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
         try
         {
-            // CustomerKey and Name
+            // customerKey and name
             //      both NULL: global/system EncodingProfiles for the ContentType
-            //      only Name NULL: Customer default EncodingProfiles for the ContentType
+            //      only name NULL: Customer default EncodingProfiles for the ContentType
             //      both different by NULL: named Customer EncodingProfiles for the ContentType
             lastSQLCommand = 
                 "create table if not exists MMS_EncodingProfilesSet ("
-                    "EncodingProfilesSetKey  	BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
-                    "ContentType				VARCHAR (32) NOT NULL,"
-                    "CustomerKey  				BIGINT UNSIGNED NULL,"
-                    "Name						VARCHAR (64) NULL,"
-                    "constraint MMS_EncodingProfilesSet_PK PRIMARY KEY (EncodingProfilesSetKey)," 
-                    "constraint MMS_EncodingProfilesSet_FK foreign key (CustomerKey) "
-                        "references MMS_Customers (CustomerKey) on delete cascade, "
-                    "UNIQUE (ContentType, CustomerKey, Name)) "
+                    "encodingProfilesSetKey  	BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "contentType				VARCHAR (32) NOT NULL,"
+                    "customerKey  				BIGINT UNSIGNED NULL,"
+                    "name						VARCHAR (64) NULL,"
+                    "constraint MMS_EncodingProfilesSet_PK PRIMARY KEY (encodingProfilesSetKey)," 
+                    "constraint MMS_EncodingProfilesSet_FK foreign key (customerKey) "
+                        "references MMS_Customer (customerKey) on delete cascade, "
+                    "UNIQUE (contentType, customerKey, name)) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
@@ -4929,7 +4928,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 int     encodingProfilesSetCount = -1;
                 {
                     lastSQLCommand = 
-                        "select count(*) from MMS_EncodingProfilesSet where ContentType = ? and CustomerKey is NULL and Name is NULL";
+                        "select count(*) from MMS_EncodingProfilesSet where contentType = ? and customerKey is NULL and name is NULL";
                     shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
                     preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
@@ -4944,7 +4943,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 if (encodingProfilesSetCount == 0)
                 {
                     lastSQLCommand = 
-                        "insert into MMS_EncodingProfilesSet (EncodingProfilesSetKey, ContentType, CustomerKey, Name) values (NULL, ?, NULL, NULL)";
+                        "insert into MMS_EncodingProfilesSet (encodingProfilesSetKey, contentType, customerKey, name) values (NULL, ?, NULL, NULL)";
                     shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
                     preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
@@ -4970,13 +4969,13 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             // EncodingProfiles associated to each family (EncodingProfilesSet)
             lastSQLCommand = 
                 "create table if not exists MMS_EncodingProfilesSetMapping ("
-                    "EncodingProfilesSetKey  	BIGINT UNSIGNED NOT NULL,"
-                    "EncodingProfileKey			BIGINT UNSIGNED NOT NULL,"
-                    "constraint MMS_EncodingProfilesSetMapping_PK PRIMARY KEY (EncodingProfilesSetKey, EncodingProfileKey), "
-                    "constraint MMS_EncodingProfilesSetMapping_FK1 foreign key (EncodingProfilesSetKey) "
-                        "references MMS_EncodingProfilesSet (EncodingProfilesSetKey), "
-                    "constraint MMS_EncodingProfilesSetMapping_FK2 foreign key (EncodingProfileKey) "
-                        "references MMS_EncodingProfiles (EncodingProfileKey) on delete cascade) "
+                    "encodingProfilesSetKey  	BIGINT UNSIGNED NOT NULL,"
+                    "encodingProfileKey			BIGINT UNSIGNED NOT NULL,"
+                    "constraint MMS_EncodingProfilesSetMapping_PK PRIMARY KEY (encodingProfilesSetKey, encodingProfileKey), "
+                    "constraint MMS_EncodingProfilesSetMapping_FK1 foreign key (encodingProfilesSetKey) "
+                        "references MMS_EncodingProfilesSet (encodingProfilesSetKey), "
+                    "constraint MMS_EncodingProfilesSetMapping_FK2 foreign key (encodingProfileKey) "
+                        "references MMS_EncodingProfiles (encodingProfileKey) on delete cascade) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
@@ -5018,24 +5017,24 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             //      for a content that was already ingested previously. In this scenario we do not have
             //      any meta data file.
             lastSQLCommand = 
-                "create table if not exists MMS_IngestionJobs ("
-                    "IngestionJobKey  			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
-                    "CustomerKey                BIGINT UNSIGNED NOT NULL,"
-                    "MediaItemKey               BIGINT UNSIGNED NULL,"
-                    "MetaDataContent            TEXT CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
-                    "MediaItemKeysDependency    VARCHAR (128) NULL,"
-                    "IngestionType              TINYINT (2) NULL,"
-                    "StartIngestion             TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
-                    "EndIngestion               DATETIME NULL,"
-                    "DownloadingProgress        DECIMAL(3,1) NULL,"
-                    "UploadingProgress          DECIMAL(3,1) NULL,"
-                    "SourceBinaryTransferred    INT NOT NULL,"
-                    "ProcessorMMS               VARCHAR (128) NULL,"
-                    "Status           			VARCHAR (64) NOT NULL,"
-                    "ErrorMessage               VARCHAR (1024) NULL,"
-                    "constraint MMS_IngestionJobs_PK PRIMARY KEY (IngestionJobKey), "
-                    "constraint MMS_IngestionJobs_FK foreign key (CustomerKey) "
-                        "references MMS_Customers (CustomerKey) on delete cascade) "	   	        				
+                "create table if not exists MMS_IngestionJob ("
+                    "ingestionJobKey  			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "customerKey                BIGINT UNSIGNED NOT NULL,"
+                    "mediaItemKey               BIGINT UNSIGNED NULL,"
+                    "metaDataContent            TEXT CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
+                    "mediaItemKeysDependency    VARCHAR (128) NULL,"
+                    "ingestionType              TINYINT (2) NULL,"
+                    "startIngestion             TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+                    "endIngestion               DATETIME NULL,"
+                    "downloadingProgress        DECIMAL(3,1) NULL,"
+                    "uploadingProgress          DECIMAL(3,1) NULL,"
+                    "sourceBinaryTransferred    INT NOT NULL,"
+                    "processorMMS               VARCHAR (128) NULL,"
+                    "status           			VARCHAR (64) NOT NULL,"
+                    "errorMessage               VARCHAR (1024) NULL,"
+                    "constraint MMS_IngestionJob_PK PRIMARY KEY (ingestionJobKey), "
+                    "constraint MMS_IngestionJob_FK foreign key (customerKey) "
+                        "references MMS_Customer (customerKey) on delete cascade) "	   	        				
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
@@ -5054,7 +5053,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
         try
         {
-            // CustomerKey is the owner of the content
+            // customerKey is the owner of the content
             // ContentType: 0: video, 1: audio, 2: image, 3: application, 4: ringtone (it uses the same audio tables),
             //		5: playlist, 6: live
             // IngestedRelativePath MUST start always with '/' and ends always with '/'
@@ -5063,25 +5062,25 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             // if EncodingProfilesSet is NULL, it means the ingested content is already encoded
             // The ContentProviderKey is the entity owner of the content. For example H3G is our customer and EMI is the ContentProvider.
             lastSQLCommand = 
-                "create table if not exists MMS_MediaItems ("
-                    "MediaItemKey  			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
-                    "UniqueName      			VARCHAR (128) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
-                    "CustomerKey			BIGINT UNSIGNED NOT NULL,"
-                    "ContentProviderKey			BIGINT UNSIGNED NOT NULL,"
-                    "Title      			VARCHAR (256) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
-                    "Ingester				VARCHAR (128) NULL,"
-                    "Keywords				VARCHAR (128) CHARACTER SET utf8 COLLATE utf8_bin NULL,"
-                    "IngestionDate			TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
-                    "ContentType                        VARCHAR (32) NOT NULL,"
-                    "EncodingProfilesSetKey		BIGINT UNSIGNED NULL,"
-                    "constraint MMS_MediaItems_PK PRIMARY KEY (MediaItemKey), "
-                    "constraint MMS_MediaItems_FK foreign key (CustomerKey) "
-                        "references MMS_Customers (CustomerKey) on delete cascade, "
-                    "constraint MMS_MediaItems_FK2 foreign key (ContentProviderKey) "
-                        "references MMS_ContentProviders (ContentProviderKey), "
-                    "constraint MMS_MediaItems_FK3 foreign key (EncodingProfilesSetKey) "
-                        "references MMS_EncodingProfilesSet (EncodingProfilesSetKey), "
-                    "UNIQUE (UniqueName)) "
+                "create table if not exists MMS_MediaItem ("
+                    "mediaItemKey  			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "uniqueName      			VARCHAR (128) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
+                    "customerKey			BIGINT UNSIGNED NOT NULL,"
+                    "contentProviderKey			BIGINT UNSIGNED NOT NULL,"
+                    "title      			VARCHAR (256) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
+                    "ingester				VARCHAR (128) NULL,"
+                    "keywords				VARCHAR (128) CHARACTER SET utf8 COLLATE utf8_bin NULL,"
+                    "ingestionDate			TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+                    "contentType                        VARCHAR (32) NOT NULL,"
+                    "encodingProfilesSetKey		BIGINT UNSIGNED NULL,"
+                    "constraint MMS_MediaItem_PK PRIMARY KEY (mediaItemKey), "
+                    "constraint MMS_MediaItem_FK foreign key (customerKey) "
+                        "references MMS_Customer (customerKey) on delete cascade, "
+                    "constraint MMS_MediaItem_FK2 foreign key (contentProviderKey) "
+                        "references MMS_ContentProvider (contentProviderKey), "
+                    "constraint MMS_MediaItem_FK3 foreign key (encodingProfilesSetKey) "
+                        "references MMS_EncodingProfilesSet (encodingProfilesSetKey), "
+                    "UNIQUE (uniqueName)) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
@@ -5101,7 +5100,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         try
         {
             lastSQLCommand = 
-                "create index MMS_MediaItems_idx2 on MMS_MediaItems (ContentType, IngestionDate)";
+                "create index MMS_MediaItem_idx2 on MMS_MediaItem (contentType, ingestionDate)";
             statement->execute(lastSQLCommand);
         }
         catch(sql::SQLException se)
@@ -5120,7 +5119,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         try
         {
             lastSQLCommand = 
-                "create index MMS_MediaItems_idx3 on MMS_MediaItems (ContentType, IngestionDate)";
+                "create index MMS_MediaItem_idx3 on MMS_MediaItem (contentType, ingestionDate)";
             statement->execute(lastSQLCommand);
         }
         catch(sql::SQLException se)
@@ -5139,7 +5138,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         try
         {
             lastSQLCommand = 
-                "create index MMS_MediaItems_idx4 on MMS_MediaItems (ContentType, Title)";
+                "create index MMS_MediaItem_idx4 on MMS_MediaItem (contentType, title)";
             statement->execute(lastSQLCommand);
         }
         catch(sql::SQLException se)
@@ -5169,24 +5168,24 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             //  supporting really multi profiles: rtsp, hls, adobe. So for every different profiles, we will
             //  create just an alias
             lastSQLCommand = 
-                "create table if not exists MMS_PhysicalPaths ("
-                    "PhysicalPathKey  			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
-                    "MediaItemKey			BIGINT UNSIGNED NOT NULL,"
-                    "DRM	             		TINYINT NOT NULL,"
-                    "FileName				VARCHAR (128) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
-                    "RelativePath			VARCHAR (256) NOT NULL,"
-                    "MMSPartitionNumber			INT NULL,"
-                    "SizeInBytes			BIGINT UNSIGNED NOT NULL,"
-                    "EncodingProfileKey			BIGINT UNSIGNED NULL,"
-                    "IsAlias				INT NOT NULL DEFAULT 0,"
-                    "CreationDate			TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
-                    "constraint MMS_PhysicalPaths_PK PRIMARY KEY (PhysicalPathKey), "
-                    "constraint MMS_PhysicalPaths_FK foreign key (MediaItemKey) "
-                        "references MMS_MediaItems (MediaItemKey) on delete cascade, "
-                    "constraint MMS_PhysicalPaths_FK2 foreign key (EncodingProfileKey) "
-                        "references MMS_EncodingProfiles (EncodingProfileKey), "
-                    "UNIQUE (MediaItemKey, RelativePath, FileName, IsAlias), "
-                    "UNIQUE (MediaItemKey, EncodingProfileKey)) "	// it is not possible to have the same content using the same encoding profile key
+                "create table if not exists MMS_PhysicalPath ("
+                    "physicalPathKey  			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "mediaItemKey			BIGINT UNSIGNED NOT NULL,"
+                    "drm	             		TINYINT NOT NULL,"
+                    "fileName				VARCHAR (128) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
+                    "relativePath			VARCHAR (256) NOT NULL,"
+                    "partitionNumber			INT NULL,"
+                    "sizeInBytes			BIGINT UNSIGNED NOT NULL,"
+                    "encodingProfileKey			BIGINT UNSIGNED NULL,"
+                    "isAlias				INT NOT NULL DEFAULT 0,"
+                    "creationDate			TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+                    "constraint MMS_PhysicalPath_PK PRIMARY KEY (physicalPathKey), "
+                    "constraint MMS_PhysicalPath_FK foreign key (mediaItemKey) "
+                        "references MMS_MediaItem (mediaItemKey) on delete cascade, "
+                    "constraint MMS_PhysicalPath_FK2 foreign key (encodingProfileKey) "
+                        "references MMS_EncodingProfiles (encodingProfileKey), "
+                    "UNIQUE (mediaItemKey, relativePath, fileName, isAlias), "
+                    "UNIQUE (mediaItemKey, encodingProfileKey)) "	// it is not possible to have the same content using the same encoding profile key
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
@@ -5207,7 +5206,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         {
             // that index is important for the periodical select done by 'checkPublishing'
             lastSQLCommand = 
-                "create index MMS_PhysicalPaths_idx2 on MMS_PhysicalPaths (MediaItemKey, PhysicalPathKey, EncodingProfileKey, MMSPartitionNumber)";
+                "create index MMS_PhysicalPath_idx2 on MMS_PhysicalPath (mediaItemKey, physicalPathKey, encodingProfileKey, partitionNumber)";
             statement->execute(lastSQLCommand);
         }
         catch(sql::SQLException se)
@@ -5227,7 +5226,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         {
             // that index is important for the periodical select done by 'checkPublishing'
             lastSQLCommand = 
-                "create index MMS_PhysicalPaths_idx3 on MMS_PhysicalPaths (RelativePath, FileName)";
+                "create index MMS_PhysicalPath_idx3 on MMS_PhysicalPath (relativePath, fileName)";
             statement->execute(lastSQLCommand);
         }
         catch(sql::SQLException se)
@@ -5246,23 +5245,23 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         try
         {
             lastSQLCommand = 
-                "create table if not exists MMS_VideoItems ("
-                    "MediaItemKey			BIGINT UNSIGNED NOT NULL,"
-                    "DurationInMilliSeconds		BIGINT NULL,"
-                    "BitRate            		INT NULL,"
-                    "Width              		INT NULL,"
-                    "Height             		INT NULL,"
-                    "AvgFrameRate			VARCHAR (64) NULL,"
-                    "VideoCodecName			VARCHAR (64) NULL,"
-                    "VideoBitRate             		INT NULL,"
-                    "VideoProfile			VARCHAR (128) NULL,"
-                    "AudioCodecName			VARCHAR (64) NULL,"
-                    "AudioBitRate             		INT NULL,"
-                    "AudioSampleRate             	INT NULL,"
-                    "AudioChannels             		INT NULL,"
-                    "constraint MMS_VideoItems_PK PRIMARY KEY (MediaItemKey), "
-                    "constraint MMS_VideoItems_FK foreign key (MediaItemKey) "
-                        "references MMS_MediaItems (MediaItemKey) on delete cascade) "
+                "create table if not exists MMS_VideoItem ("
+                    "mediaItemKey			BIGINT UNSIGNED NOT NULL,"
+                    "durationInMilliSeconds		BIGINT NULL,"
+                    "bitRate            		INT NULL,"
+                    "width              		INT NULL,"
+                    "height             		INT NULL,"
+                    "avgFrameRate			VARCHAR (64) NULL,"
+                    "videoCodecName			VARCHAR (64) NULL,"
+                    "videoBitRate             		INT NULL,"
+                    "videoProfile			VARCHAR (128) NULL,"
+                    "audioCodecName			VARCHAR (64) NULL,"
+                    "audioBitRate             		INT NULL,"
+                    "audioSampleRate             	INT NULL,"
+                    "audioChannels             		INT NULL,"
+                    "constraint MMS_VideoItem_PK PRIMARY KEY (mediaItemKey), "
+                    "constraint MMS_VideoItem_FK foreign key (mediaItemKey) "
+                        "references MMS_MediaItem (mediaItemKey) on delete cascade) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
@@ -5282,16 +5281,16 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         try
         {
             lastSQLCommand = 
-                "create table if not exists MMS_AudioItems ("
-                    "MediaItemKey			BIGINT UNSIGNED NOT NULL,"
-                    "DurationInMilliSeconds		BIGINT NULL,"
-                    "CodecName          		VARCHAR (64) NULL,"
-                    "BitRate             		INT NULL,"
-                    "SampleRate                  	INT NULL,"
-                    "Channels             		INT NULL,"
-                    "constraint MMS_AudioItems_PK PRIMARY KEY (MediaItemKey), "
-                    "constraint MMS_AudioItems_FK foreign key (MediaItemKey) "
-                        "references MMS_MediaItems (MediaItemKey) on delete cascade) "
+                "create table if not exists MMS_AudioItem ("
+                    "mediaItemKey			BIGINT UNSIGNED NOT NULL,"
+                    "durationInMilliSeconds		BIGINT NULL,"
+                    "codecName          		VARCHAR (64) NULL,"
+                    "bitRate             		INT NULL,"
+                    "sampleRate                  	INT NULL,"
+                    "channels             		INT NULL,"
+                    "constraint MMS_AudioItem_PK PRIMARY KEY (mediaItemKey), "
+                    "constraint MMS_AudioItem_FK foreign key (mediaItemKey) "
+                        "references MMS_MediaItem (mediaItemKey) on delete cascade) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
@@ -5311,15 +5310,15 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         try
         {
             lastSQLCommand = 
-                "create table if not exists MMS_ImageItems ("
-                    "MediaItemKey			BIGINT UNSIGNED NOT NULL,"
-                    "Width				INT NOT NULL,"
-                    "Height				INT NOT NULL,"
-                    "Format                       	VARCHAR (64) NULL,"
-                    "Quality				INT NOT NULL,"
-                    "constraint MMS_ImageItems_PK PRIMARY KEY (MediaItemKey), "
-                    "constraint MMS_ImageItems_FK foreign key (MediaItemKey) "
-                        "references MMS_MediaItems (MediaItemKey) on delete cascade) "
+                "create table if not exists MMS_ImageItem ("
+                    "mediaItemKey			BIGINT UNSIGNED NOT NULL,"
+                    "width				INT NOT NULL,"
+                    "height				INT NOT NULL,"
+                    "format                       	VARCHAR (64) NULL,"
+                    "quality				INT NOT NULL,"
+                    "constraint MMS_ImageItem_PK PRIMARY KEY (mediaItemKey), "
+                    "constraint MMS_ImageItem_FK foreign key (mediaItemKey) "
+                        "references MMS_MediaItem (mediaItemKey) on delete cascade) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
@@ -5341,9 +5340,9 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             // Reservecredit is not NULL only in case of PayPerEvent or Bundle. In these cases, it will be 0 or 1.
             lastSQLCommand = 
                 "create table if not exists MMS_DefaultTerritoryInfo ("
-                    "DefaultTerritoryInfoKey  			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
-                    "MediaItemKey				BIGINT UNSIGNED NOT NULL,"
-                    "TerritoryKey				BIGINT UNSIGNED NOT NULL,"
+                    "defaultTerritoryInfoKey  			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "mediaItemKey				BIGINT UNSIGNED NOT NULL,"
+                    "territoryKey				BIGINT UNSIGNED NOT NULL,"
                     /*
                     "DownloadChargingKey1			BIGINT UNSIGNED NOT NULL,"
                     "DownloadChargingKey2			BIGINT UNSIGNED NOT NULL,"
@@ -5358,13 +5357,13 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "StreamingMaxRetries			INT NOT NULL,"
                     "StreamingTTLInSeconds			INT NOT NULL,"
                     */
-                    "StartPublishing				DATETIME NOT NULL,"
-                    "EndPublishing				DATETIME NOT NULL,"
-                    "constraint MMS_DefaultTerritoryInfo_PK PRIMARY KEY (DefaultTerritoryInfoKey), "
-                    "constraint MMS_DefaultTerritoryInfo_FK foreign key (MediaItemKey) "
-                        "references MMS_MediaItems (MediaItemKey) on delete cascade, "
-                    "constraint MMS_DefaultTerritoryInfo_FK2 foreign key (TerritoryKey) "
-                        "references MMS_Territories (TerritoryKey) on delete cascade, "
+                    "startPublishing				DATETIME NOT NULL,"
+                    "endPublishing				DATETIME NOT NULL,"
+                    "constraint MMS_DefaultTerritoryInfo_PK PRIMARY KEY (defaultTerritoryInfoKey), "
+                    "constraint MMS_DefaultTerritoryInfo_FK foreign key (mediaItemKey) "
+                        "references MMS_MediaItem (mediaItemKey) on delete cascade, "
+                    "constraint MMS_DefaultTerritoryInfo_FK2 foreign key (territoryKey) "
+                        "references MMS_Territory (territoryKey) on delete cascade, "
                     /*
                     "constraint MMS_DefaultTerritoryInfo_FK3 foreign key (DownloadChargingKey1) "
                         "references ChargingInfo (ChargingKey), "
@@ -5375,7 +5374,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "constraint MMS_DefaultTerritoryInfo_FK6 foreign key (StreamingChargingKey2) "
                         "references ChargingInfo (ChargingKey), "
                      */
-                    "UNIQUE (MediaItemKey, TerritoryKey)) "
+                    "UNIQUE (mediaItemKey, territoryKey)) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
@@ -5396,22 +5395,22 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         {
             // PublishingStatus. 0: not published, 1: published
             // In this table it is considered the publishing 'per content'.
-            // In MMS_Publishing2, a content is considered published if all his profiles are published.
+            // In MMS_Publishing, a content is considered published if all his profiles are published.
             lastSQLCommand = 
-                "create table if not exists MMS_Publishing2 ("
-                    "PublishingKey                  BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
-                    "MediaItemKey                   BIGINT UNSIGNED NOT NULL,"
-                    "TerritoryKey                   BIGINT UNSIGNED NOT NULL,"
-                    "StartPublishing                DATETIME NOT NULL,"
-                    "EndPublishing                  DATETIME NOT NULL,"
-                    "PublishingStatus               TINYINT (1) NOT NULL,"
-                    "ProcessorMMS                   VARCHAR (128) NULL,"
-                    "constraint MMS_Publishing2_PK PRIMARY KEY (PublishingKey), "
-                    "constraint MMS_Publishing2_FK foreign key (MediaItemKey) "
-                        "references MMS_MediaItems (MediaItemKey) on delete cascade, "
-                    "constraint MMS_Publishing2_FK2 foreign key (TerritoryKey) "
-                        "references MMS_Territories (TerritoryKey) on delete cascade, "
-                    "UNIQUE (MediaItemKey, TerritoryKey)) "
+                "create table if not exists MMS_Publishing ("
+                    "publishingKey                  BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "mediaItemKey                   BIGINT UNSIGNED NOT NULL,"
+                    "territoryKey                   BIGINT UNSIGNED NOT NULL,"
+                    "startPublishing                DATETIME NOT NULL,"
+                    "endPublishing                  DATETIME NOT NULL,"
+                    "publishingStatus               TINYINT (1) NOT NULL,"
+                    "processorMMS                   VARCHAR (128) NULL,"
+                    "constraint MMS_Publishing_PK PRIMARY KEY (publishingKey), "
+                    "constraint MMS_Publishing_FK foreign key (mediaItemKey) "
+                        "references MMS_MediaItem (mediaItemKey) on delete cascade, "
+                    "constraint MMS_Publishing_FK2 foreign key (territoryKey) "
+                        "references MMS_Territory (territoryKey) on delete cascade, "
+                    "UNIQUE (mediaItemKey, territoryKey)) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
@@ -5432,9 +5431,9 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         {
             // PublishingStatus. 0: not published, 1: published
             // In this table it is considered the publishing 'per content'.
-            // In MMS_Publishing2, a content is considered published if all his profiles are published.
+            // In MMS_Publishing, a content is considered published if all his profiles are published.
             lastSQLCommand = 
-                "create index MMS_Publishing2_idx2 on MMS_Publishing2 (MediaItemKey, StartPublishing, EndPublishing, PublishingStatus)";
+                "create index MMS_Publishing_idx2 on MMS_Publishing (mediaItemKey, startPublishing, endPublishing, publishingStatus)";
             statement->execute(lastSQLCommand);
         }
         catch(sql::SQLException se)
@@ -5454,9 +5453,9 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         {
             // PublishingStatus. 0: not published, 1: published
             // In this table it is considered the publishing 'per content'.
-            // In MMS_Publishing2, a content is considered published if all his profiles are published.
+            // In MMS_Publishing, a content is considered published if all his profiles are published.
             lastSQLCommand = 
-                "create index MMS_Publishing2_idx3 on MMS_Publishing2 (PublishingStatus, StartPublishing, EndPublishing)";
+                "create index MMS_Publishing_idx3 on MMS_Publishing (publishingStatus, startPublishing, endPublishing)";
             statement->execute(lastSQLCommand);
         }
         catch(sql::SQLException se)
@@ -5476,9 +5475,9 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         {
             // PublishingStatus. 0: not published, 1: published
             // In this table it is considered the publishing 'per content'.
-            // In MMS_Publishing2, a content is considered published if all his profiles are published.
+            // In MMS_Publishing, a content is considered published if all his profiles are published.
             lastSQLCommand = 
-                "create index MMS_Publishing2_idx4 on MMS_Publishing2 (PublishingStatus, EndPublishing, StartPublishing)";            
+                "create index MMS_Publishing_idx4 on MMS_Publishing (publishingStatus, endPublishing, startPublishing)";            
             statement->execute(lastSQLCommand);
         }
         catch(sql::SQLException se)
@@ -5496,13 +5495,13 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
         try
         {
-            // The MMS_EncodingJobs table include all the contents that have to be encoded
+            // The MMS_EncodingJob table include all the contents that have to be encoded
             //  OriginatingProcedure.
             //      0: ContentIngestion1_0
-            //          Used fields: FileName, RelativePath, CustomerKey, PhysicalPathKey, EncodingProfileKey
+            //          Used fields: FileName, RelativePath, customerKey, PhysicalPathKey, EncodingProfileKey
             //          The other fields will be NULL
             //      1: Encoding1_0
-            //          Used fields: FileName, RelativePath, CustomerKey, FTPIPAddress (optional), FTPPort (optional),
+            //          Used fields: FileName, RelativePath, customerKey, FTPIPAddress (optional), FTPPort (optional),
             //              FTPUser (optional), FTPPassword (optional), EncodingProfileKey
             //          The other fields will be NULL
             //  RelativePath: it is the relative path of the original uncompressed file name
@@ -5519,29 +5518,29 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             //      1: default
             //      2: high
             lastSQLCommand = 
-                "create table if not exists MMS_EncodingJobs ("
-                    "EncodingJobKey  			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
-                    "IngestionJobKey			BIGINT UNSIGNED NOT NULL,"
-                    "SourcePhysicalPathKey		BIGINT UNSIGNED NULL,"
-                    "EncodingPriority			TINYINT NOT NULL,"
-                    "EncodingProfileKey			BIGINT UNSIGNED NOT NULL,"
-                    "EncodingJobStart			TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
-                    "EncodingJobEnd			DATETIME NULL,"
-                    "EncodingProgress                   INT NULL,"
-                    "Status           			VARCHAR (64) NOT NULL,"
-                    "ProcessorMMS			VARCHAR (128) NULL,"
-                    "FailuresNumber           	INT NOT NULL,"
-                    "constraint MMS_EncodingJobs_PK PRIMARY KEY (EncodingJobKey), "
-                    "constraint MMS_EncodingJobs_FK foreign key (IngestionJobKey) "
-                        "references MMS_IngestionJobs (IngestionJobKey) on delete cascade, "
-                    "constraint MMS_EncodingJobs_FK3 foreign key (SourcePhysicalPathKey) "
+                "create table if not exists MMS_EncodingJob ("
+                    "encodingJobKey  			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "ingestionJobKey			BIGINT UNSIGNED NOT NULL,"
+                    "sourcePhysicalPathKey		BIGINT UNSIGNED NULL,"
+                    "encodingPriority			TINYINT NOT NULL,"
+                    "encodingProfileKey			BIGINT UNSIGNED NOT NULL,"
+                    "encodingJobStart			TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+                    "encodingJobEnd			DATETIME NULL,"
+                    "encodingProgress                   INT NULL,"
+                    "status           			VARCHAR (64) NOT NULL,"
+                    "processorMMS			VARCHAR (128) NULL,"
+                    "failuresNumber           	INT NOT NULL,"
+                    "constraint MMS_EncodingJob_PK PRIMARY KEY (encodingJobKey), "
+                    "constraint MMS_EncodingJob_FK foreign key (ingestionJobKey) "
+                        "references MMS_IngestionJob (ingestionJobKey) on delete cascade, "
+                    "constraint MMS_EncodingJob_FK3 foreign key (sourcePhysicalPathKey) "
                     // on delete cascade is necessary because when the ingestion fails, it is important that the 'removeMediaItemMetaData'
                     //      remove the rows from this table too, otherwise we will be flooded by the errors: PartitionNumber is null
                     // The consequence is that when the PhysicalPath is removed in general, also the rows from this table will be removed
-                        "references MMS_PhysicalPaths (PhysicalPathKey) on delete cascade, "
-                    "constraint MMS_EncodingJobs_FK4 foreign key (EncodingProfileKey) "
-                        "references MMS_EncodingProfiles (EncodingProfileKey) on delete cascade, "
-                    "UNIQUE (SourcePhysicalPathKey, EncodingProfileKey)) "
+                        "references MMS_PhysicalPath (physicalPathKey) on delete cascade, "
+                    "constraint MMS_EncodingJob_FK4 foreign key (encodingProfileKey) "
+                        "references MMS_EncodingProfiles (encodingProfileKey) on delete cascade, "
+                    "UNIQUE (sourcePhysicalPathKey, encodingProfileKey)) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
@@ -5563,7 +5562,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             // that index is important because it will be used by the query looking every 15 seconds if there are
             // contents to be encoded
             lastSQLCommand = 
-                "create index MMS_EncodingJobs_idx2 on MMS_EncodingJobs (Status, ProcessorMMS, FailuresNumber, EncodingJobStart)";
+                "create index MMS_EncodingJob_idx2 on MMS_EncodingJob (status, processorMMS, failuresNumber, encodingJobStart)";
             statement->execute(lastSQLCommand);
         }
         catch(sql::SQLException se)
@@ -5582,18 +5581,18 @@ void MMSEngineDBFacade::createTablesIfNeeded()
     
         /*
     # create table MMS_HTTPSessions
-    # One session is per UserKey and UserAgent
+    # One session is per userKey and UserAgent
     create table if not exists MMS_HTTPSessions (
             HTTPSessionKey				BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            UserKey					BIGINT UNSIGNED NOT NULL,
+            userKey					BIGINT UNSIGNED NOT NULL,
             UserAgent					VARCHAR (512) NOT NULL,
             CreationDate				TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             ExpirationDate				DATETIME NOT NULL,
             constraint MMS_HTTPSessions_PK PRIMARY KEY (HTTPSessionKey), 
-            constraint MMS_HTTPSessions_FK foreign key (UserKey) 
-                    references MMS_Users2 (UserKey) on delete cascade) 
+            constraint MMS_HTTPSessions_FK foreign key (userKey) 
+                    references MMS_User (userKey) on delete cascade) 
             ENGINE=InnoDB;
-    create unique index MMS_HTTPSessions_idx on MMS_HTTPSessions (UserKey, UserAgent);
+    create unique index MMS_HTTPSessions_idx on MMS_HTTPSessions (userKey, UserAgent);
 
     # create table MMS_ReportsConfiguration
     # Type. 0: Billing Statistics, 1: Content Access, 2: Active Users,
@@ -5603,22 +5602,22 @@ void MMSEngineDBFacade::createTablesIfNeeded()
     # EmailAddresses. List of email addresses separated by ‘;’
     create table if not exists MMS_ReportsConfiguration (
             ReportConfigurationKey		BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            CustomerKey             	BIGINT UNSIGNED NOT NULL,
+            customerKey             	BIGINT UNSIGNED NOT NULL,
             Type						INT NOT NULL,
             Period						INT NOT NULL,
             TimeOfDay					INT NOT NULL,
             Format						INT NOT NULL,
             EmailAddresses				VARCHAR (1024) NULL,
             constraint MMS_ReportsConfiguration_PK PRIMARY KEY (ReportConfigurationKey), 
-            constraint MMS_ReportsConfiguration_FK foreign key (CustomerKey) 
-                    references MMS_Customers (CustomerKey) on delete cascade, 
-            UNIQUE (CustomerKey, Type, Period)) 
+            constraint MMS_ReportsConfiguration_FK foreign key (customerKey) 
+                    references MMS_Customers (customerKey) on delete cascade, 
+            UNIQUE (customerKey, Type, Period)) 
             ENGINE=InnoDB;
 
     # create table MMS_ReportURLCategory
     create table if not exists MMS_ReportURLCategory (
             ReportURLCategoryKey		BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            Name             			VARCHAR (128) NOT NULL,
+            name             			VARCHAR (128) NOT NULL,
             URLsPattern				VARCHAR (512) NOT NULL,
             ReportConfigurationKey		BIGINT UNSIGNED NOT NULL,
             constraint MMS_ReportURLCategory_PK PRIMARY KEY (ReportURLCategoryKey), 
@@ -5628,7 +5627,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
     # create table MMS_CustomersSharable
     create table if not exists MMS_CustomersSharable (
-            CustomerKeyOwner			BIGINT UNSIGNED NOT NULL,
+            customerKeyOwner			BIGINT UNSIGNED NOT NULL,
             CustomerKeySharable		BIGINT UNSIGNED NOT NULL,
             constraint MMS_CustomersSharable_PK PRIMARY KEY (CustomerKeyOwner, CustomerKeySharable), 
             constraint MMS_CustomersSharable_FK1 foreign key (CustomerKeyOwner) 
@@ -5716,7 +5715,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             constraint MMS_HandsetsProfilesMapping_FK2 foreign key (HandsetFamilyKey) 
                     references MMS_HandsetsFamilies (HandsetFamilyKey) on delete cascade, 
             constraint MMS_HandsetsProfilesMapping_FK3 foreign key (EncodingProfileKey) 
-                    references MMS_EncodingProfiles (EncodingProfileKey), 
+                    references MMS_EncodingProfiles (encodingProfileKey), 
             UNIQUE (CustomerKey, ContentType, HandsetFamilyKey, NetworkCoverage, EncodingProfileKey, Priority)) 
             ENGINE=InnoDB;
 
@@ -5726,13 +5725,13 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             TranslationKey				BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             GenreKey 	 				BIGINT UNSIGNED NOT NULL,
             Field						VARCHAR (64) NOT NULL,
-            LanguageCode				VARCHAR (16) NOT NULL,
+            languageCode				VARCHAR (16) NOT NULL,
             Translation				TEXT CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
             constraint MMS_GenresTranslation_PK PRIMARY KEY (TranslationKey), 
             constraint MMS_GenresTranslation_FK foreign key (GenreKey) 
                     references MMS_Genres (GenreKey) on delete cascade) 
             ENGINE=InnoDB;
-    create unique index MMS_GenresTranslation_idx on MMS_GenresTranslation (GenreKey, Field, LanguageCode);
+    create unique index MMS_GenresTranslation_idx on MMS_GenresTranslation (GenreKey, Field, languageCode);
 
 
     # create table MMS_MediaItemsTranslation
@@ -5740,13 +5739,13 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             TranslationKey				BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             MediaItemKey 	 			BIGINT UNSIGNED NOT NULL,
             Field						VARCHAR (64) NOT NULL,
-            LanguageCode				VARCHAR (16) NOT NULL,
+            languageCode				VARCHAR (16) NOT NULL,
             Translation				TEXT CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
             constraint MMS_MediaItemsTranslation_PK PRIMARY KEY (TranslationKey), 
             constraint MMS_MediaItemsTranslation_FK foreign key (MediaItemKey) 
                     references MMS_MediaItems (MediaItemKey) on delete cascade) 
             ENGINE=InnoDB;
-    create unique index MMS_MediaItemsTranslation_idx on MMS_MediaItemsTranslation (MediaItemKey, Field, LanguageCode);
+    create unique index MMS_MediaItemsTranslation_idx on MMS_MediaItemsTranslation (MediaItemKey, Field, languageCode);
 
     # create table MMS_GenresMediaItemsMapping
     create table if not exists MMS_GenresMediaItemsMapping (
@@ -5762,12 +5761,12 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             ENGINE=InnoDB;
 
     # create table MMS_MediaItemsCustomerMapping
-    # CustomerType could be 0 (Owner of the content) or 1 (User of the shared content)
+    # customerType could be 0 (Owner of the content) or 1 (User of the shared content)
     # MMS_MediaItemsCustomerMapping table will contain one row for the Customer Ownerof the content and one row for each shared content
     create table if not exists MMS_MediaItemsCustomerMapping (
             MediaItemKey				BIGINT UNSIGNED NOT NULL,
             CustomerKey				BIGINT UNSIGNED NOT NULL,
-            CustomerType				TINYINT NOT NULL,
+            customerType				TINYINT NOT NULL,
             constraint MMS_MediaItemsCustomerMapping_PK PRIMARY KEY (MediaItemKey, CustomerKey), 
             constraint MMS_MediaItemsCustomerMapping_FK1 foreign key (MediaItemKey) 
                     references MMS_MediaItems (MediaItemKey) on delete cascade, 
@@ -5816,9 +5815,9 @@ void MMSEngineDBFacade::createTablesIfNeeded()
     # This table will be used to set cross references between MidiaItems
     create table if not exists MMS_3SWESubscriptions (
             ThreeSWESubscriptionKey  	BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            Name						VARCHAR (64) NOT NULL,
+            name						VARCHAR (64) NOT NULL,
             constraint MMS_3SWESubscriptions_PK PRIMARY KEY (ThreeSWESubscriptionKey), 
-            UNIQUE (Name)) 
+            UNIQUE (name)) 
             ENGINE=InnoDB;
 
     # create table MMS_3SWESubscriptionsMapping
@@ -5853,27 +5852,27 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             ENGINE=InnoDB;
 
     # create table MMS_Advertisements
-    # TerritoryKey: if NULL the ads is valid for any territory
+    # territoryKey: if NULL the ads is valid for any territory
     # Type:
     #		0: pre-roll
     #		1: post-roll
     create table if not exists MMS_Advertisements (
             AdvertisementKey			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             CustomerKey				BIGINT UNSIGNED NOT NULL,
-            TerritoryKey				BIGINT UNSIGNED NULL,
-            Name						VARCHAR (32) NOT NULL,
+            territoryKey				BIGINT UNSIGNED NULL,
+            name						VARCHAR (32) NOT NULL,
             ContentType				TINYINT NOT NULL,
-            IsEnabled	                TINYINT (1) NOT NULL,
+            isEnabled	                TINYINT (1) NOT NULL,
             Type						TINYINT NOT NULL,
             ValidityStart				TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
             ValidityEnd				TIMESTAMP NOT NULL,
             constraint MMS_Advertisements_PK PRIMARY KEY (AdvertisementKey), 
             constraint MMS_Advertisements_FK foreign key (CustomerKey) 
                     references MMS_Customers (CustomerKey) on delete cascade, 
-            constraint MMS_Advertisements_FK2 foreign key (TerritoryKey) 
-                    references MMS_Territories (TerritoryKey) on delete cascade) 
+            constraint MMS_Advertisements_FK2 foreign key (territoryKey) 
+                    references MMS_Territory (territoryKey) on delete cascade) 
             ENGINE=InnoDB;
-    create unique index MMS_Advertisements_idx on MMS_Advertisements (CustomerKey, TerritoryKey, Name);
+    create unique index MMS_Advertisements_idx on MMS_Advertisements (CustomerKey, territoryKey, name);
 
     # create table MMS_AdvertisementAdvertisings
     create table if not exists MMS_Advertisement_Ads (
@@ -5915,7 +5914,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             RequestAuthorizationKey	BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             CustomerKey				BIGINT UNSIGNED NOT NULL,
             PlayerIP					VARCHAR (16) NULL,
-            TerritoryKey				BIGINT UNSIGNED NOT NULL,
+            territoryKey				BIGINT UNSIGNED NOT NULL,
             Shuffling					TINYINT NULL,
             PartyID					VARCHAR (64) NOT NULL,
             MSISDN						VARCHAR (32) NULL,
@@ -5923,7 +5922,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             ExternalKey				VARCHAR (64) NULL,
             EncodingProfileKey			BIGINT UNSIGNED NULL,
             EncodingLabel				VARCHAR (64) NULL,
-            LanguageCode				VARCHAR (16) NULL,
+            languageCode				VARCHAR (16) NULL,
             DeliveryMethod				TINYINT NULL,
             PreviewSeconds				INT NULL,
             SwitchingType				TINYINT NOT NULL default 0,
@@ -5979,12 +5978,12 @@ void MMSEngineDBFacade::createTablesIfNeeded()
     create table if not exists MMS_MediaItemsPublishing (
             MediaItemPublishingKey		BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE,
             MediaItemKey				BIGINT UNSIGNED NOT NULL,
-            TerritoryKey				BIGINT UNSIGNED NOT NULL,
-            constraint MMS_MediaItemsPublishing_PK PRIMARY KEY (TerritoryKey, MediaItemKey), 
+            territoryKey				BIGINT UNSIGNED NOT NULL,
+            constraint MMS_MediaItemsPublishing_PK PRIMARY KEY (territoryKey, MediaItemKey), 
             constraint MMS_MediaItemsPublishing_FK1 foreign key (MediaItemKey) 
                     references MMS_MediaItems (MediaItemKey) on delete cascade, 
-            constraint MMS_MediaItemsPublishing_FK2 foreign key (TerritoryKey) 
-                    references MMS_Territories (TerritoryKey) on delete cascade)
+            constraint MMS_MediaItemsPublishing_FK2 foreign key (territoryKey) 
+                    references MMS_Territory (territoryKey) on delete cascade)
             ENGINE=InnoDB;
 
     // Done by a Zoli music SQL script:
@@ -5993,9 +5992,9 @@ void MMSEngineDBFacade::createTablesIfNeeded()
     //	ADD COLUMN Popularity DECIMAL(12, 2) NOT NULL DEFAULT 0,
     //	ADD COLUMN LastAccess DATETIME NOT NULL DEFAULT 0;
     //ALTER TABLE MMS_MediaItemsPublishing 
-    //	ADD KEY idx_AccessCount (TerritoryKey, AccessCount),
-    //	ADD KEY idx_Popularity (TerritoryKey, Popularity),
-    //	ADD KEY idx_LastAccess (TerritoryKey, LastAccess);
+    //	ADD KEY idx_AccessCount (territoryKey, AccessCount),
+    //	ADD KEY idx_Popularity (territoryKey, Popularity),
+    //	ADD KEY idx_LastAccess (territoryKey, LastAccess);
 
 
     # create table MediaItemsBillingInfo
@@ -6004,7 +6003,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             MediaItemsBillingInfoKey  	BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             PhysicalPathKey			BIGINT UNSIGNED NOT NULL,
             DeliveryMethod				TINYINT NOT NULL,
-            TerritoryKey				BIGINT UNSIGNED NOT NULL,
+            territoryKey				BIGINT UNSIGNED NOT NULL,
             ChargingKey1				BIGINT UNSIGNED NOT NULL,
             ChargingKey2				BIGINT UNSIGNED NOT NULL,
             ReserveCredit				TINYINT (1) NULL,
@@ -6013,14 +6012,14 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             TTLInSeconds				INT NOT NULL,
             constraint MMS_MediaItemsBillingInfo_PK PRIMARY KEY (MediaItemsBillingInfoKey), 
             constraint MMS_MediaItemsBillingInfo_FK foreign key (PhysicalPathKey) 
-                    references MMS_PhysicalPaths (PhysicalPathKey) on delete cascade, 
-            constraint MMS_MediaItemsBillingInfo_FK2 foreign key (TerritoryKey) 
-                    references MMS_Territories (TerritoryKey) on delete cascade, 
+                    references MMS_PhysicalPath (physicalPathKey) on delete cascade, 
+            constraint MMS_MediaItemsBillingInfo_FK2 foreign key (territoryKey) 
+                    references MMS_Territory (territoryKey) on delete cascade, 
             constraint MMS_MediaItemsBillingInfo_FK3 foreign key (ChargingKey1) 
                     references ChargingInfo (ChargingKey), 
             constraint MMS_MediaItemsBillingInfo_FK4 foreign key (ChargingKey2) 
                     references ChargingInfo (ChargingKey), 
-            UNIQUE (PhysicalPathKey, DeliveryMethod, TerritoryKey)) 
+            UNIQUE (PhysicalPathKey, DeliveryMethod, territoryKey)) 
             ENGINE=InnoDB;
 
 
@@ -6035,11 +6034,11 @@ void MMSEngineDBFacade::createTablesIfNeeded()
     # create table MMS_Artists
     create table if not exists MMS_Artists (
             ArtistKey  				BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            Name						VARCHAR (255) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
+            name						VARCHAR (255) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
             Country					VARCHAR (128) NULL,
             HomePageURL				VARCHAR (256) NULL,
             constraint MMS_Artists_PK PRIMARY KEY (ArtistKey), 
-            UNIQUE (Name)) 
+            UNIQUE (name)) 
             ENGINE=InnoDB;
 
 
@@ -6048,13 +6047,13 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             TranslationKey				BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             ArtistKey 	 				BIGINT UNSIGNED NOT NULL,
             Field						VARCHAR (64) NOT NULL,
-            LanguageCode				VARCHAR (16) NOT NULL,
+            languageCode				VARCHAR (16) NOT NULL,
             Translation				TEXT CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
             constraint MMS_ArtistsTranslation_PK PRIMARY KEY (TranslationKey), 
             constraint MMS_ArtistsTranslation_FK foreign key (ArtistKey) 
                     references MMS_Artists (ArtistKey) on delete cascade) 
             ENGINE=InnoDB;
-    create unique index MMS_ArtistsTranslation_idx on MMS_ArtistsTranslation (ArtistKey, Field, LanguageCode);
+    create unique index MMS_ArtistsTranslation_idx on MMS_ArtistsTranslation (ArtistKey, Field, languageCode);
 
     # create table MMS_CustomerCatalogMoreInfo
     # GlobalHomePage: 0 or 1 (it specifies if his home page has to be the global one or his private home page)
@@ -6092,16 +6091,16 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             ENGINE=InnoDB;
 
     # create table MMS_PresentationWorkspaces
-    # Name: if NULL, it is the Production Workspace
+    # name: if NULL, it is the Production Workspace
     create table if not exists MMS_PresentationWorkspaces (
             PresentationWorkspaceKey	BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             CustomerKey				BIGINT UNSIGNED NOT NULL,
-            Name						VARCHAR (128) NULL,
+            name						VARCHAR (128) NULL,
             constraint MMS_PresentationWorkspaces_PK PRIMARY KEY (PresentationWorkspaceKey), 
             constraint MMS_PresentationWorkspaces_FK foreign key (CustomerKey) 
                     references MMS_Customers (CustomerKey) on delete cascade) 
             ENGINE=InnoDB;
-    create unique index MMS_PresentationWorkspaces_idx on MMS_PresentationWorkspaces (CustomerKey, Name);
+    create unique index MMS_PresentationWorkspaces_idx on MMS_PresentationWorkspaces (CustomerKey, name);
 
     # create table MMS_PresentationItems
     # PresentationItemType: see PresentationItemType in MMSClient.h
@@ -6211,13 +6210,13 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             TranslationKey				BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             MediaItemKey 	 			BIGINT UNSIGNED NOT NULL,
             Field						VARCHAR (64) NOT NULL,
-            LanguageCode				VARCHAR (16) NOT NULL,
+            languageCode				VARCHAR (16) NOT NULL,
             Translation				MEDIUMTEXT CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
             constraint MMS_SubTitlesTranslation_PK PRIMARY KEY (TranslationKey), 
             constraint MMS_SubTitlesTranslation_FK foreign key (MediaItemKey) 
                     references MMS_MediaItems (MediaItemKey) on delete cascade) 
             ENGINE=InnoDB;
-    create unique index MMS_SubTitlesTranslation_idx on MMS_SubTitlesTranslation (MediaItemKey, Field, LanguageCode);
+    create unique index MMS_SubTitlesTranslation_idx on MMS_SubTitlesTranslation (MediaItemKey, Field, languageCode);
 
 
     # create table ApplicationItems
@@ -6236,7 +6235,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             JadFile					TEXT NULL,
             constraint MMS_ApplicationHandsetsMapping_PK PRIMARY KEY (PhysicalPathKey, HandsetKey), 
             constraint MMS_ApplicationHandsetsMapping_FK foreign key (PhysicalPathKey) 
-                    references MMS_PhysicalPaths (PhysicalPathKey) on delete cascade, 
+                    references MMS_PhysicalPath (physicalPathKey) on delete cascade, 
             constraint MMS_ApplicationHandsetsMapping_FK2 foreign key (HandsetKey) 
                     references MMS_Handsets (HandsetKey)) 
             ENGINE=InnoDB;

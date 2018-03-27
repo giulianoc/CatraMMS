@@ -703,17 +703,17 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
     }
 
     int64_t durationInMilliSeconds = -1;
-    long bitRate;
+    long bitRate = -1;
     string videoCodecName;
     string videoProfile;
     int videoWidth = -1;
     int videoHeight = -1;
     string videoAvgFrameRate;
-    long videoBitRate;
+    long videoBitRate = -1;
     string audioCodecName;
-    long audioSampleRate;
-    int audioChannels;
-    long audioBitRate;
+    long audioSampleRate = -1;
+    int audioChannels = -1;
+    long audioBitRate = -1;
     {
         // json output will be like:
         /*
@@ -1060,9 +1060,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
                 _logger->error(errorMessage);
 
                 throw runtime_error(errorMessage);
-            }
-            
-            durationInMilliSeconds = 0;
+            }            
         }
         else
         {
@@ -1081,9 +1079,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
                 _logger->error(errorMessage);
 
                 throw runtime_error(errorMessage);
-            }
-            
-            bitRate = 0;
+            }            
         }
         else
         {
