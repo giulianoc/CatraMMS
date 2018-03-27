@@ -1586,15 +1586,12 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
     }        
 }
 
-int64_t MMSEngineDBFacade::addIngestionJob (
-	int64_t customerKey,
-        string metadataContent,
-        IngestionType ingestionType,
-        IngestionStatus ingestionStatus,
-        string errorMessage
+vector<pair<int64_t,string>> MMSEngineDBFacade::addIngestionJobs (
+    	int64_t customerKey,
+        vector<tuple<string, string, MMSEngineDBFacade::IngestionType, int64_t>>& ingestionJobsData
 )
 {
-    int64_t         ingestionJobKey;
+    vector<pair<int64_t, string>>         ingestionJobKeys;
     
     string      lastSQLCommand;
     
@@ -1603,17 +1600,6 @@ int64_t MMSEngineDBFacade::addIngestionJob (
 
     try
     {
-        string errorMessageForSQL;
-        if (errorMessage == "")
-            errorMessageForSQL = errorMessage;
-        else
-        {
-            if (errorMessageForSQL.length() >= 1024)
-                errorMessageForSQL.substr(0, 1024);
-            else
-                errorMessageForSQL = errorMessage;
-        }
-
         conn = _connectionPool->borrow();	
 
         autoCommit = false;
@@ -1673,28 +1659,59 @@ int64_t MMSEngineDBFacade::addIngestionJob (
                 throw runtime_error(errorMessage);                    
             }            
         }
-        
+
+        string metadataContent,
+        IngestionType ingestionType,
+        IngestionStatus ingestionStatus,
+        int64_t dependOnIngestionJobKey,
+        string errorMessage
+        for (tuple<string, string, MMSEngineDBFacade::IngestionType, int64_t>>& ingestionJobData: ingestionJobsData)
         {
-            lastSQLCommand = 
-                "insert into MMS_IngestionJob (ingestionJobKey, customerKey, mediaItemKey, metaDataContent, mediaItemKeysDependency, ingestionType, startIngestion, endIngestion, downloadingProgress, uploadingProgress, sourceBinaryTransferred, processorMMS, status, errorMessage) values ("
-                                               "NULL,            ?,           NULL,         ?,               NULL,                    ?,             NULL,           NULL,         NULL,                NULL,              0,                       NULL,         ?,      ?)";
+            {
+                string label;
+                string metadataContent;
+                MMSEngineDBFacade::IngestionType ingestionType;
+                int64_t dependOnIngestionJobKey;
 
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, customerKey);
-            preparedStatement->setString(queryParameterIndex++, metadataContent);
-            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(ingestionType));
-            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(ingestionStatus));
-            if (errorMessageForSQL == "")
-                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-            else
-                preparedStatement->setString(queryParameterIndex++, errorMessageForSQL);
+                tie(label, metadataContent, ingestionType, dependOnIngestionJobKey) = ingestionJobData;
 
-            preparedStatement->executeUpdate();
+                lastSQLCommand = 
+                    "insert into MMS_IngestionJob (ingestionJobKey, customerKey, label, mediaItemKey, metaDataContent, ingestionType, startIngestion, endIngestion, downloadingProgress, uploadingProgress, sourceBinaryTransferred, processorMMS, status, errorMessage) values ("
+                                                  "NULL,            ?,           ?,     NULL,         ?,               ?,             NULL,           NULL,         NULL,                NULL,              0,                       NULL,         ?,      NULL)";
+
+                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                int queryParameterIndex = 1;
+                preparedStatement->setInt64(queryParameterIndex++, customerKey);
+                if (label == "")
+                    preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+                else
+                    preparedStatement->setString(queryParameterIndex++, label);
+                preparedStatement->setString(queryParameterIndex++, metadataContent);
+                preparedStatement->setInt(queryParameterIndex++, static_cast<int>(ingestionType));
+                preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(MMSEngineDBFacade::IngestionStatus::Start_Ingestion));
+
+                preparedStatement->executeUpdate();
+            }
+
+            ingestionJobKey = getLastInsertId(conn);
+            
+            ingestionJobKeys.push_back(make_pair(ingestionJobKey, label));
+
+            if (dependOnIngestionJobKey != -1)
+            {
+                lastSQLCommand = 
+                    "insert into MMS_IngestionJobDependency (ingestionJobKey, dependOnIngestionJobKey) values ("
+                    "?, ?)";
+
+                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                int queryParameterIndex = 1;
+                preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+                preparedStatement->setInt64(queryParameterIndex++, dependOnIngestionJobKey);
+
+                preparedStatement->executeUpdate();
+            }
         }
         
-        ingestionJobKey = getLastInsertId(conn);
-
         // conn->_sqlConnection->commit(); OR execute COMMIT
         {
             lastSQLCommand = 
@@ -1746,7 +1763,7 @@ int64_t MMSEngineDBFacade::addIngestionJob (
         throw e;
     }
     
-    return ingestionJobKey;
+    return ingestionJobKeys;
 }
 
 void MMSEngineDBFacade::updateIngestionJob (
@@ -5022,9 +5039,9 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create table if not exists MMS_IngestionJob ("
                     "ingestionJobKey  			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "customerKey                BIGINT UNSIGNED NOT NULL,"
+                    "label                      VARCHAR (128) NULL,"
                     "mediaItemKey               BIGINT UNSIGNED NULL,"
                     "metaDataContent            TEXT CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
-                    "mediaItemKeysDependency    VARCHAR (128) NULL,"
                     "ingestionType              TINYINT (2) NULL,"
                     "startIngestion             TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "endIngestion               DATETIME NULL,"
@@ -5037,6 +5054,33 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "constraint MMS_IngestionJob_PK PRIMARY KEY (ingestionJobKey), "
                     "constraint MMS_IngestionJob_FK foreign key (customerKey) "
                         "references MMS_Customer (customerKey) on delete cascade) "	   	        				
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
+        try
+        {
+            lastSQLCommand = 
+                "create table if not exists MMS_IngestionJobDependency ("
+                    "ingestionJobKey  			BIGINT UNSIGNED NOT NULL,"
+                    "dependOnIngestionJobKey    BIGINT UNSIGNED NOT NULL,"
+                    "constraint MMS_IngestionJob_PK PRIMARY KEY (ingestionJobKey, dependOnIngestionJobKey), "
+                    "constraint MMS_IngestionJobDependency_FK foreign key (ingestionJobKey) "
+                        "references MMS_IngestionJob (ingestionJobKey) on delete cascade), "	   	        				
+                    "constraint MMS_IngestionJobDependency_FK2 foreign key (dependOnIngestionJobKey) "
+                        "references MMS_IngestionJob (ingestionJobKey) on delete cascade) "	   	        				
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }

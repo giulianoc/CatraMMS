@@ -290,6 +290,25 @@ public:
             throw runtime_error(string("Wrong IngestionType"));
         }
     }
+    static IngestionType toIngestionType(const string& ingestionType)
+    {
+        string lowerCase;
+        lowerCase.resize(ingestionType.size());
+        transform(ingestionType.begin(), ingestionType.end(), lowerCase.begin(), [](unsigned char c){return tolower(c); } );
+
+        if (lowerCase == "contentingestion")
+            return IngestionType::ContentIngestion;
+        else if (lowerCase == "screenshots")
+            return IngestionType::Screenshots;
+        else if (lowerCase == "contentupdate")
+            return IngestionType::ContentUpdate;
+        else if (lowerCase == "contentremove")
+            return IngestionType::ContentRemove;
+        else
+            throw runtime_error(string("Wrong IngestionType")
+                    + ", ingestionType: " + ingestionType
+                    );
+    }
 
     enum class IngestionStatus {
         Start_Ingestion,    
@@ -483,12 +502,9 @@ public:
         int maxIngestionJobs,
         int maxIngestionJobsWithDependencyToCheck);
 
-    int64_t addIngestionJob (
-	int64_t customerKey,
-        string metadataContent,
-        IngestionType ingestionType,
-        IngestionStatus ingestionStatus,
-        string errorMessage);
+    vector<pair<int64_t,string>> addIngestionJobs (
+    	int64_t customerKey,
+        vector<tuple<string, string, MMSEngineDBFacade::IngestionType, int64_t>>& ingestionJobsData);
 
     void updateIngestionJob (
         int64_t ingestionJobKey,

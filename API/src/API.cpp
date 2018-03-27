@@ -1345,6 +1345,218 @@ void API::ingestion(
                     ;
             _logger->error(__FILEREF__ + errorMessage);
 
+            /*
+            int64_t dependOnIngestionJobKey = -1;
+            _logger->info(__FILEREF__ + "add IngestionJob"
+                + ", requestBody: " + requestBody
+                + ", IngestionType: " + "Unknown"
+                + ", IngestionStatus: " + "End_ValidationMetadataFailed"
+                + ", dependOnIngestionJobKey: " + dependOnIngestionJobKey
+                + ", errorMessage: " + errorMessage
+            );
+            _mmsEngineDBFacade->addIngestionJob (customer->_customerKey,
+                    requestBody,
+                    MMSEngineDBFacade::IngestionType::Unknown,
+                    MMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed,
+                    dependOnIngestionJobKey,
+                    errorMessage
+            );
+             */
+
+            throw runtime_error(errorMessage);
+        }
+
+        vector<tuple<string, string, MMSEngineDBFacade::IngestionType, int64_t>> ingestionJobsData;
+        vector<pair<int64_t,string>> ingestionJobKeys;
+
+        try
+        {
+            string field = "Task";
+            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            Json::Value taskRoot = requestBodyRoot[field]; 
+            
+            ingestionTask(customer, taskRoot, -1, ingestionJobs);
+            
+            _logger->info(__FILEREF__ + "add IngestionJobs...");
+
+            ingestionJobKeys = _mmsEngineDBFacade->addIngestionJobs(
+                    customer->_customerKey,
+                    ingestionJobsData);
+        }
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + "request body parsing failed"
+                + ", e.what(): " + e.what()
+            );
+
+            throw e;
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "request body parsing failed"
+                + ", e.what(): " + e.what()
+            );
+
+            throw e;
+        }
+
+        string responseBody;        
+              
+        for (pair<int64_t, string> ingestionJobKey: ingestionJobKeys)
+        {
+            if (responseBody != "")
+                responseBody += string(", ");
+            responseBody +=
+                    + "{ "
+                    + "\"ingestionJobKey\": " + to_string(ingestionJobKey.first) + ", "
+                    + "\"label\": \"" + ingestionJobKey.second + "\" "
+                    + "}";
+        }
+        responseBody.insert(0, "[ ");        
+        responseBody += " ]";        
+
+        sendSuccess(request, 201, responseBody);
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::ingestionTask(shared_ptr<Customer> customer, Json::Value taskRoot, 
+        int64_t dependOnIngestionJobKey,
+        vector<tuple<string, string, MMSEngineDBFacade::IngestionType, int64_t>>& ingestionJobsData)
+{
+    string label;
+    string field = "Label";
+    if (_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
+    {
+        label = taskRoot.get(field, "XXX").asString();
+    }
+
+    field = "Type";
+    if (!_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
+    {
+        string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                + ", Field: " + field;
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    string type = taskRoot.get(field, "XXX").asString();
+
+    if (!_mmsEngineDBFacade->isMetadataPresent(taskRoot, type))
+    {
+        string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                + ", Field: " + field;
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    
+    Json::StreamWriterBuilder wbuilder;
+
+    string taskMetadata = Json::writeString(wbuilder, taskRoot[type]);
+
+    string errorMessage = "";
+
+    _logger->info(__FILEREF__ + "add IngestionJob"
+        + ", label: " + label
+        + ", taskMetadata: " + taskMetadata
+        + ", IngestionType: " + type
+        + ", dependOnIngestionJobKey: " + dependOnIngestionJobKey
+    );
+
+    ingestionJobsData.push_back(make_tuple(label, taskMetadata, MMSEngineDBFacade::toIngestionType(type), dependOnIngestionJobKey));
+    
+    field = "OnSuccessTask";
+    if (_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
+    {
+        Json::Value onSuccessTaskRoot = taskRoot[field]; 
+        
+        ingestionTask(customer, onSuccessTaskRoot, ingestionJobKey, responseBody);
+    }
+
+}
+
+/*
+void API::ingestion(
+        FCGX_Request& request,
+        shared_ptr<Customer> customer,
+        unordered_map<string, string> queryParameters,
+        string requestBody)
+{
+    string api = "ingestion";
+
+    _logger->info(__FILEREF__ + "Received " + api
+        + ", requestBody: " + requestBody
+    );
+
+    try
+    {
+        Json::Value requestBodyRoot;
+        try
+        {
+            Json::CharReaderBuilder builder;
+            Json::CharReader* reader = builder.newCharReader();
+            string errors;
+
+            bool parsingSuccessful = reader->parse(requestBody.c_str(),
+                    requestBody.c_str() + requestBody.size(), 
+                    &requestBodyRoot, &errors);
+            delete reader;
+
+            if (!parsingSuccessful)
+            {
+                string errorMessage = __FILEREF__ + "failed to parse the requestBody"
+                        + ", errors: " + errors
+                        + ", requestBody: " + requestBody
+                        ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+        catch(...)
+        {
+            string errorMessage = string("requestBody json is not well format")
+                    + ", requestBody: " + requestBody
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
+
             _logger->info(__FILEREF__ + "add IngestionJob"
                 + ", requestBody: " + requestBody
                 + ", IngestionType: " + "Unknown"
@@ -1454,6 +1666,7 @@ void API::ingestion(
         throw runtime_error(errorMessage);
     }
 }
+ */
 
 void API::uploadBinary(
         FCGX_Request& request,
