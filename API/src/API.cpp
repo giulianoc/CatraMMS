@@ -1366,11 +1366,13 @@ void API::ingestion(
             throw runtime_error(errorMessage);
         }
 
-        vector<tuple<string, string, MMSEngineDBFacade::IngestionType, int64_t>> ingestionJobsData;
-        vector<pair<int64_t,string>> ingestionJobKeys;
+        string responseBody;        
+        shared_ptr<MySQLConnection> conn;
 
         try
         {
+            conn = _mmsEngineDBFacade->beginIngestionJobs();
+
             string field = "Task";
             if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
             {
@@ -1380,18 +1382,24 @@ void API::ingestion(
 
                 throw runtime_error(errorMessage);
             }
-            Json::Value taskRoot = requestBodyRoot[field]; 
-            
-            ingestionTask(customer, taskRoot, -1, ingestionJobs);
-            
-            _logger->info(__FILEREF__ + "add IngestionJobs...");
+            Json::Value taskRoot = requestBodyRoot[field];                        
+    
+            int dependOnIngestionJobKey = -1;
+            int localDependOnSuccess = 0;   // it is not important since dependOnIngestionJobKey is -1
+            ingestionTask(conn, customer, taskRoot, dependOnIngestionJobKey, 
+                    localDependOnSuccess, responseBody);            
 
-            ingestionJobKeys = _mmsEngineDBFacade->addIngestionJobs(
-                    customer->_customerKey,
-                    ingestionJobsData);
+            bool commit = true;
+            _mmsEngineDBFacade->endIngestionJobs(conn, commit);
+            
+            responseBody.insert(0, "[ ");
+            responseBody += "] ";
         }
         catch(runtime_error e)
         {
+            bool commit = false;
+            _mmsEngineDBFacade->endIngestionJobs(conn, commit);
+
             _logger->error(__FILEREF__ + "request body parsing failed"
                 + ", e.what(): " + e.what()
             );
@@ -1400,27 +1408,15 @@ void API::ingestion(
         }
         catch(exception e)
         {
+            bool commit = false;
+            _mmsEngineDBFacade->endIngestionJobs(conn, commit);
+
             _logger->error(__FILEREF__ + "request body parsing failed"
                 + ", e.what(): " + e.what()
             );
 
             throw e;
         }
-
-        string responseBody;        
-              
-        for (pair<int64_t, string> ingestionJobKey: ingestionJobKeys)
-        {
-            if (responseBody != "")
-                responseBody += string(", ");
-            responseBody +=
-                    + "{ "
-                    + "\"ingestionJobKey\": " + to_string(ingestionJobKey.first) + ", "
-                    + "\"label\": \"" + ingestionJobKey.second + "\" "
-                    + "}";
-        }
-        responseBody.insert(0, "[ ");        
-        responseBody += " ]";        
 
         sendSuccess(request, 201, responseBody);
     }
@@ -1456,9 +1452,10 @@ void API::ingestion(
     }
 }
 
-void API::ingestionTask(shared_ptr<Customer> customer, Json::Value taskRoot, 
-        int64_t dependOnIngestionJobKey,
-        vector<tuple<string, string, MMSEngineDBFacade::IngestionType, int64_t>>& ingestionJobsData)
+void API::ingestionTask(shared_ptr<MySQLConnection> conn,
+        shared_ptr<Customer> customer, Json::Value taskRoot, 
+        int64_t dependOnIngestionJobKey, int dependOnSuccess,
+        string& responseBody)
 {
     string label;
     string field = "Label";
@@ -1486,10 +1483,20 @@ void API::ingestionTask(shared_ptr<Customer> customer, Json::Value taskRoot,
 
         throw runtime_error(errorMessage);
     }
-    
-    Json::StreamWriterBuilder wbuilder;
 
-    string taskMetadata = Json::writeString(wbuilder, taskRoot[type]);
+    bool referenceToBeAdded = true;
+    field = "ReferenceMediaItemKey";
+    if (_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
+    {
+        referenceToBeAdded = false;
+    }
+
+    string taskMetadata;
+    {
+        Json::StreamWriterBuilder wbuilder;
+
+        taskMetadata = Json::writeString(wbuilder, taskRoot[type]);        
+    }
 
     string errorMessage = "";
 
@@ -1497,19 +1504,45 @@ void API::ingestionTask(shared_ptr<Customer> customer, Json::Value taskRoot,
         + ", label: " + label
         + ", taskMetadata: " + taskMetadata
         + ", IngestionType: " + type
-        + ", dependOnIngestionJobKey: " + dependOnIngestionJobKey
+        + ", dependOnIngestionJobKey: " + to_string(dependOnIngestionJobKey)
+        + ", dependOnSuccess: " + to_string(dependOnSuccess)
     );
-
-    ingestionJobsData.push_back(make_tuple(label, taskMetadata, MMSEngineDBFacade::toIngestionType(type), dependOnIngestionJobKey));
     
+    int64_t localDependOnIngestionJobKey = _mmsEngineDBFacade->addIngestionJob(conn,
+            customer->_customerKey, label, taskMetadata, MMSEngineDBFacade::toIngestionType(type), 
+            dependOnIngestionJobKey, dependOnSuccess);
+    
+    if (dependOnIngestionJobKey != -1 && referenceToBeAdded)
+    {
+        taskRoot["ReferenceIngestionJobKey"] = dependOnIngestionJobKey;
+        
+        {
+            Json::StreamWriterBuilder wbuilder;
+
+            taskMetadata = Json::writeString(wbuilder, taskRoot[type]);        
+        }
+        
+        _mmsEngineDBFacade->updateIngestionJobMetadataContent(conn, localDependOnIngestionJobKey, taskMetadata);
+    }
+
+    if (responseBody != "")
+        responseBody += ", ";
+    
+    responseBody +=
+            (string("{ ")
+            + "\"ingestionJobKey\": " + to_string(localDependOnIngestionJobKey) + ", "
+            + "\"label\": \"" + label + "\" "
+            + "}");
+            
     field = "OnSuccessTask";
     if (_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
     {
         Json::Value onSuccessTaskRoot = taskRoot[field]; 
         
-        ingestionTask(customer, onSuccessTaskRoot, ingestionJobKey, responseBody);
+        int localDependOnSuccess = 1;
+        ingestionTask(conn, customer, onSuccessTaskRoot, 
+                localDependOnIngestionJobKey, localDependOnSuccess, responseBody);
     }
-
 }
 
 /*

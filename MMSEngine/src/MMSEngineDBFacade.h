@@ -419,6 +419,21 @@ public:
                     + ", ingestionStatus: " + ingestionStatus
                     );
     }
+    static bool isIngestionStatusFinalState(const IngestionStatus& ingestionStatus)
+    {
+        string prefix = "End";
+        string sIngestionStatus = MMSEngineDBFacade::toString(ingestionStatus);
+        
+        return (sIngestionStatus.compare(0, prefix.size(), prefix) == 0);
+    }
+    static bool isIngestionStatusSuccess(const IngestionStatus& ingestionStatus)
+    {
+        return (ingestionStatus == IngestionStatus::End_IngestionSuccess);
+    }
+    static bool isIngestionStatusFailed(const IngestionStatus& ingestionStatus)
+    {
+        return (isIngestionStatusFinalState(ingestionStatus) && ingestionStatus != IngestionStatus::End_IngestionSuccess);
+    }
 
 public:
     MMSEngineDBFacade(
@@ -497,38 +512,45 @@ public:
     );
 
     void getIngestionsToBeManaged(
-        vector<tuple<int64_t,string,shared_ptr<Customer>,string,IngestionStatus,string>>& ingestionsToBeManaged,
+        vector<tuple<int64_t,string,shared_ptr<Customer>,string,IngestionStatus>>& ingestionsToBeManaged,
         string processorMMS,
-        int maxIngestionJobs,
-        int maxIngestionJobsWithDependencyToCheck);
+        int maxIngestionJobs
+        // int maxIngestionJobsWithDependencyToCheck
+    );
 
-    vector<pair<int64_t,string>> addIngestionJobs (
-    	int64_t customerKey,
-        vector<tuple<string, string, MMSEngineDBFacade::IngestionType, int64_t>>& ingestionJobsData);
-
-    void updateIngestionJob (
-        int64_t ingestionJobKey,
-        string processorMMS);
-
-    void updateIngestionJob (
-        int64_t ingestionJobKey,
-        IngestionStatus newIngestionStatus,
-        string errorMessage,
-        string processorMMS);
-
-    void updateIngestionJob (
-        int64_t ingestionJobKey,
-        IngestionType ingestionType,
-        IngestionStatus newIngestionStatus,
-        string errorMessage,
-        string processorMMS);
-
-    void updateIngestionJobTypeAndDependencies (
-        int64_t ingestionJobKey,
-        IngestionType ingestionType,
-        string dependencies,
-        string processorMMS);
+    shared_ptr<MySQLConnection> beginIngestionJobs ();
     
+    int64_t addIngestionJob (shared_ptr<MySQLConnection> conn,
+    	int64_t customerKey, string label, string metadataContent,
+        MMSEngineDBFacade::IngestionType ingestionType, 
+        int64_t dependOnIngestionJobKey, int dependOnSuccess
+    );
+
+    void updateIngestionJobMetadataContent (
+        shared_ptr<MySQLConnection> conn,
+        int64_t ingestionJobKey,
+        string metadataContent);
+
+    shared_ptr<MySQLConnection> endIngestionJobs (
+        shared_ptr<MySQLConnection> conn, bool commit);
+
+    void updateIngestionJob (
+        int64_t ingestionJobKey,
+        string processorMMS);
+
+    void updateIngestionJob (
+        int64_t ingestionJobKey,
+        IngestionStatus newIngestionStatus,
+        string errorMessage,
+        string processorMMS);
+
+    void updateIngestionJob (
+        int64_t ingestionJobKey,
+        IngestionType ingestionType,
+        IngestionStatus newIngestionStatus,
+        string errorMessage,
+        string processorMMS);
+
     bool updateIngestionJobSourceDownloadingInProgress (
         int64_t ingestionJobKey,
         double downloadingPercentage);
@@ -541,8 +563,11 @@ public:
         int64_t ingestionJobKey,
         bool sourceBinaryTransferred);
 
-    pair<int64_t,MMSEngineDBFacade::ContentType> getMediaItemKeyDetails(
-    string uniqueName, bool warningIfMissing);
+    MMSEngineDBFacade::ContentType getMediaItemKeyDetails(
+        int64_t referenceMediaItemKey, bool warningIfMissing);
+    
+    pair<int64_t,MMSEngineDBFacade::ContentType> getMediaItemKeyDetailsByIngestionJobKey(
+        int64_t referenceIngestionJobKey, bool warningIfMissing);
 
     tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> getVideoDetails(
         int64_t mediaItemKey);

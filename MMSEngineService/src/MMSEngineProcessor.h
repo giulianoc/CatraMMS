@@ -49,7 +49,7 @@ private:
     int                     _secondsWaitingAmongDownloadingAttempt;
 
     int                     _maxIngestionJobsPerEvent;
-    int                     _maxIngestionJobsWithDependencyToCheckPerEvent;
+    // int                     _maxIngestionJobsWithDependencyToCheckPerEvent;
     int                     _dependencyExpirationInHours;
     
     void handleCheckIngestionEvent();
@@ -70,16 +70,16 @@ private:
         int64_t ingestionJobKey,
         shared_ptr<Customer> customer,
         Json::Value metadataRoot,
-        int64_t sourceMediaItemKey
+        vector<int64_t>& dependencies
     );
 
-    tuple<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType,vector<int64_t>,bool>  
+    tuple<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType,vector<int64_t>>  
             validateMetadata(int64_t ingestionJobKey, Json::Value root);
 
     MMSEngineDBFacade::ContentType validateContentIngestionMetadata(
         int64_t ingestionJobKey, Json::Value encoding);
 
-    pair<MMSEngineDBFacade::ContentType,bool> validateScreenshotsMetadata(
+    MMSEngineDBFacade::ContentType validateScreenshotsMetadata(
         int64_t ingestionJobKey, Json::Value screenshotRoot, vector<int64_t>& dependencies);
 
     tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> getMediaSourceDetails(

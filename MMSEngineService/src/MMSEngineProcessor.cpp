@@ -37,7 +37,7 @@ MMSEngineProcessor::MMSEngineProcessor(
     _secondsWaitingAmongDownloadingAttempt  = configuration["download"].get("secondsWaitingAmongDownloadingAttempt", 5).asInt();
     
     _maxIngestionJobsPerEvent       = configuration["mms"].get("maxIngestionJobsPerEvent", 5).asInt();
-    _maxIngestionJobsWithDependencyToCheckPerEvent = configuration["mms"].get("maxIngestionJobsWithDependencyToCheckPerEvent", 5).asInt();
+    // _maxIngestionJobsWithDependencyToCheckPerEvent = configuration["mms"].get("maxIngestionJobsWithDependencyToCheckPerEvent", 5).asInt();
 
     _dependencyExpirationInHours       = configuration["mms"].get("dependencyExpirationInHours", 5).asInt();
 }
@@ -172,14 +172,15 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
     
     try
     {
-        vector<tuple<int64_t,string,shared_ptr<Customer>,string,MMSEngineDBFacade::IngestionStatus,string>> 
+        vector<tuple<int64_t,string,shared_ptr<Customer>,string,MMSEngineDBFacade::IngestionStatus>> 
                 ingestionsToBeManaged;
         
         _mmsEngineDBFacade->getIngestionsToBeManaged(ingestionsToBeManaged, 
-                _processorMMS, _maxIngestionJobsPerEvent, 
-                _maxIngestionJobsWithDependencyToCheckPerEvent);
+                _processorMMS, _maxIngestionJobsPerEvent 
+                // _maxIngestionJobsWithDependencyToCheckPerEvent
+        );
         
-        for (tuple<int64_t,string,shared_ptr<Customer>,string,MMSEngineDBFacade::IngestionStatus,string> 
+        for (tuple<int64_t,string,shared_ptr<Customer>,string,MMSEngineDBFacade::IngestionStatus> 
                 ingestionToBeManaged: ingestionsToBeManaged)
         {
             int64_t ingestionJobKey;
@@ -190,10 +191,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                 string metaDataContent;
                 string sourceReference;
                 MMSEngineDBFacade::IngestionStatus ingestionStatus;
-                string mediaItemKeysDependency;
 
-                tie(ingestionJobKey, startIngestion, customer, metaDataContent, ingestionStatus, 
-                        mediaItemKeysDependency) = ingestionToBeManaged;
+                tie(ingestionJobKey, startIngestion, customer, metaDataContent, ingestionStatus) = ingestionToBeManaged;
                 
                 _logger->info(__FILEREF__ + "json to be processed"
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -280,18 +279,17 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         throw runtime_error(errorMessage);
                     }
 
-                    tuple<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType,vector<int64_t>,bool>
+                    tuple<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType,vector<int64_t>>
                             ingestionTypeContentTypeAndDependencies;
                     MMSEngineDBFacade::IngestionType ingestionType;
                     MMSEngineDBFacade::ContentType contentType;
                     vector<int64_t> dependencies;
-                    bool dependencyNotFound;
                     try
                     {
                         ingestionTypeContentTypeAndDependencies = validateMetadata(
                                 ingestionJobKey, metadataRoot);
                         
-                        tie(ingestionType, contentType, dependencies, dependencyNotFound) =
+                        tie(ingestionType, contentType, dependencies) =
                                 ingestionTypeContentTypeAndDependencies;
                     }
                     catch(runtime_error e)
@@ -341,6 +339,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         throw runtime_error(errorMessage);
                     }
 
+                    /* to be removed
                     if (dependencyNotFound)
                     {
                         // the ingestionJob depends on one or more MIKs and, at least one
@@ -401,6 +400,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         }
                     }
                     else
+                     */
                     {
                         if (ingestionType ==
                                 MMSEngineDBFacade::IngestionType::ContentIngestion)
@@ -578,6 +578,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         else if (ingestionType == 
                                 MMSEngineDBFacade::IngestionType::Screenshots)
                         {
+                            /* to be removed
                             if (mediaItemKeysDependency == "")
                             {
                                 // mediaItemKeysDependency (coming from DB) will be filled here
@@ -597,17 +598,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                         ingestionType, dependency, processorMMS);
                             }
                             else
+                             */
                             {
                                 // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
                                 try
                                 {
-                                    int64_t sourceMediaItemKey = stoll(mediaItemKeysDependency);
-
                                     generateAndIngestScreenshots(
                                             ingestionJobKey, 
                                             customer, 
                                             metadataRoot, 
-                                            sourceMediaItemKey);
+                                            dependencies);
                                 }
                                 catch(runtime_error e)
                                 {
@@ -759,7 +759,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
     }
                     
     string      metadataFileContent;
-    tuple<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType,vector<int64_t>,bool>
+    tuple<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType,vector<int64_t>>
             ingestionTypeContentTypeAndDependencies;
     MMSEngineDBFacade::IngestionType ingestionType;
     MMSEngineDBFacade::ContentType contentType;
@@ -792,7 +792,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         ingestionTypeContentTypeAndDependencies = validateMetadata(
                 localAssetIngestionEvent->getIngestionJobKey(), metadataRoot);
         
-        tie(ingestionType, contentType, dependencies, dependencyNotFound) =
+        tie(ingestionType, contentType, dependencies) =
                 ingestionTypeContentTypeAndDependencies;
     }
     catch(runtime_error e)
@@ -1334,7 +1334,7 @@ void MMSEngineProcessor::generateAndIngestScreenshots(
         int64_t ingestionJobKey,
         shared_ptr<Customer> customer,
         Json::Value metadataRoot,
-        int64_t sourceMediaItemKey
+        vector<int64_t>& dependencies
 )
 {
     try
@@ -1391,6 +1391,8 @@ void MMSEngineProcessor::generateAndIngestScreenshots(
             height = screenshotsRoot.get(field, "XXX").asInt();
         }
 
+        int64_t sourceMediaItemKey = dependencies.back();
+        
         int64_t encodingProfileKey = -1;
         string sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourceMediaItemKey, encodingProfileKey);
 
@@ -1661,16 +1663,15 @@ void MMSEngineProcessor::handleCheckEncodingEvent ()
     _pActiveEncodingsManager->addEncodingItems(encodingItems);
 }
 
-tuple<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType,vector<int64_t>,bool> 
+tuple<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType,vector<int64_t>> 
         MMSEngineProcessor::validateMetadata(int64_t ingestionJobKey, Json::Value metadataRoot)
 {
-    tuple<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType,vector<int64_t>,bool> 
+    tuple<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType,vector<int64_t>> 
             ingestionTypeContentTypeAndDependencies;
     
     MMSEngineDBFacade::IngestionType    ingestionType;
     MMSEngineDBFacade::ContentType      contentType;
     vector<int64_t>                     dependencies;
-    bool                                dependencyNotFound;
 
     string field = "Type";
     if (!_mmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
@@ -1701,8 +1702,6 @@ tuple<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType,vector<int
 
         throw runtime_error(errorMessage);
     }
-
-    dependencyNotFound = false;
     
     if (ingestionType == MMSEngineDBFacade::IngestionType::ContentIngestion)
     {
@@ -1737,14 +1736,11 @@ tuple<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType,vector<int
 
         Json::Value screenshotsRoot = metadataRoot[field]; 
 
-        pair<MMSEngineDBFacade::ContentType,bool> contentTypeAndDependencyNotFound =
-            validateScreenshotsMetadata(ingestionJobKey, screenshotsRoot, dependencies);
-        
-        contentType = contentTypeAndDependencyNotFound.first;
-        dependencyNotFound = contentTypeAndDependencyNotFound.second;
+        MMSEngineDBFacade::ContentType contentType =
+            validateScreenshotsMetadata(ingestionJobKey, screenshotsRoot, dependencies);        
     }
     
-    ingestionTypeContentTypeAndDependencies = make_tuple(ingestionType, contentType, dependencies, dependencyNotFound);
+    ingestionTypeContentTypeAndDependencies = make_tuple(ingestionType, contentType, dependencies);
 
     
     return ingestionTypeContentTypeAndDependencies;
@@ -1833,13 +1829,12 @@ MMSEngineDBFacade::ContentType MMSEngineProcessor::validateContentIngestionMetad
     return contentType;
 }
 
-pair<MMSEngineDBFacade::ContentType,bool> MMSEngineProcessor::validateScreenshotsMetadata(
+MMSEngineDBFacade::ContentType MMSEngineProcessor::validateScreenshotsMetadata(
     int64_t ingestionJobKey, Json::Value screenshotsRoot, vector<int64_t>& dependencies)
 {
     // see sample in directory samples
     
     MMSEngineDBFacade::ContentType      contentType;
-    bool                                dependencyNotFound;
     
     vector<string> mandatoryFields = {
         "ReferenceUniqueName",
@@ -1858,32 +1853,68 @@ pair<MMSEngineDBFacade::ContentType,bool> MMSEngineProcessor::validateScreenshot
         }
     }
 
-    string field = "ReferenceUniqueName";
-    string referenceUniqueName = screenshotsRoot.get(field, "XXX").asString();
+    int64_t referenceMediaItemKey = -1;
+    int64_t referenceIngestionJobKey = -1;
+    string field = "ReferenceMediaItemKey";
+    if (!_mmsEngineDBFacade->isMetadataPresent(screenshotsRoot, field))
+    {
+        field = "ReferenceIngestionJobKey";
+        if (!_mmsEngineDBFacade->isMetadataPresent(screenshotsRoot, field))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", Field: " + "Reference...";
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        else
+        {
+            referenceIngestionJobKey = screenshotsRoot.get(field, "XXX").asInt64();
+        }        
+    }
+    else
+    {
+        referenceMediaItemKey = screenshotsRoot.get(field, "XXX").asInt64();    
+    }
     
-    dependencyNotFound = false;
-    pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndcontentType;
+    int64_t mediaItemKey;
     try
     {
         bool warningIfMissing = true;
-        mediaItemKeyAndcontentType = _mmsEngineDBFacade->getMediaItemKeyDetails(
-                referenceUniqueName, warningIfMissing);        
+        if (referenceMediaItemKey != -1)
+        {
+            mediaItemKey = referenceMediaItemKey;
+            contentType = _mmsEngineDBFacade->getMediaItemKeyDetails(
+                referenceMediaItemKey, warningIfMissing); 
+        }
+        else
+        {
+            pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
+                    _mmsEngineDBFacade->getMediaItemKeyDetailsByIngestionJobKey(
+                    referenceIngestionJobKey, warningIfMissing);  
+            
+            mediaItemKey = mediaItemKeyAndContentType.first;
+            contentType = mediaItemKeyAndContentType.second;
+        }
     }
-    catch(MediaItemKeyNotFound e)
+    catch(runtime_error e)
     {
-        string errorMessage = __FILEREF__ + "ReferenceUniqueName was not found"
+        string errorMessage = __FILEREF__ + "Reference... was not found"
                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", referenceUniqueName: " + referenceUniqueName;
+                + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
+                ;
         _logger->warn(errorMessage);
 
-        dependencyNotFound      = true;
-        // throw runtime_error(errorMessage);
+        throw runtime_error(errorMessage);
     }
     catch(exception e)
     {
         string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->getMediaItemKeyDetails failed"
                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", referenceUniqueName: " + referenceUniqueName;
+                + ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
+                + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
+                ;
         _logger->error(errorMessage);
 
         throw runtime_error(errorMessage);
@@ -1903,20 +1934,18 @@ pair<MMSEngineDBFacade::ContentType,bool> MMSEngineProcessor::validateScreenshot
         contentType = MMSEngineDBFacade::ContentType::Image;
     }
 
-    if (!dependencyNotFound)
+    if (contentType != MMSEngineDBFacade::ContentType::Video)
     {
-        if (mediaItemKeyAndcontentType.second != MMSEngineDBFacade::ContentType::Video)
-        {
-            string errorMessage = __FILEREF__ + "ReferenceUniqueName does not refer a video content"
-                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", referenceUniqueName: " + referenceUniqueName;
-            _logger->error(errorMessage);
+        string errorMessage = __FILEREF__ + "Reference... does not refer a video content"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
+            + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey);
+        _logger->error(errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
-
-        dependencies.push_back(mediaItemKeyAndcontentType.first);
+        throw runtime_error(errorMessage);
     }
+
+    dependencies.push_back(mediaItemKey);
 
     string videoFilter;
     field = "VideoFilter";
@@ -1954,7 +1983,7 @@ pair<MMSEngineDBFacade::ContentType,bool> MMSEngineProcessor::validateScreenshot
     }
     */
             
-    return make_pair(contentType, dependencyNotFound);
+    return contentType;
 }
 
 tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> MMSEngineProcessor::getMediaSourceDetails(
