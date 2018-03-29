@@ -754,7 +754,6 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
     string      metadataFileContent;
     pair<MMSEngineDBFacade::ContentType,vector<int64_t>>
             contentTypeAndDependencies;
-    MMSEngineDBFacade::IngestionType ingestionType;
     MMSEngineDBFacade::ContentType contentType;
     vector<int64_t> dependencies;
     Json::Value metadataRoot;
@@ -843,7 +842,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             mediaSourceDetails = getMediaSourceDetails(
                 localAssetIngestionEvent->getIngestionJobKey(),
                 localAssetIngestionEvent->getCustomer(),
-                ingestionType, metadataRoot);
+                localAssetIngestionEvent->getIngestionType(), metadataRoot);
         
         tie(nextIngestionStatus,
                 mediaSourceURL, mediaSourceFileName, 
