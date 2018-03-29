@@ -1409,6 +1409,10 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 
         // ingested jobs that do not have to wait a dependency
         {
+            int mysqlOffset = 0;
+            int mysqlRowCount = maxIngestionJobs;
+            bool noMoreRowsReturned = false;
+            while(ingestionsToBeManaged.size() < maxIngestionJobs && !noMoreRowsReturned)
             {
                 lastSQLCommand = 
                     "select ij.ingestionJobKey, DATE_FORMAT(ij.startIngestion, '%Y-%m-%d %H:%i:%s') as startIngestion, "
@@ -1416,7 +1420,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                         "from MMS_IngestionJob ij, MMS_IngestionJobDependency ijd "
                         "where ij.ingestionJobKey = ijd.ingestionJobKey and ij.processorMMS is null "
                         "and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) "
-                        "limit ? for update";
+                        "limit ?, ? for update";
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
                 preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::Start_Ingestion));
@@ -1424,11 +1428,18 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                 preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress));
                 preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress));
                 preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress));
-                preparedStatement->setInt(queryParameterIndex++, maxIngestionJobs);
+                preparedStatement->setInt(queryParameterIndex++, mysqlOffset);
+                preparedStatement->setInt(queryParameterIndex++, mysqlRowCount);
 
+                noMoreRowsReturned = true;
+                mysqlOffset *= maxIngestionJobs;
+                
                 shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
                 while (resultSet->next())
                 {
+                    if (noMoreRowsReturned)
+                        noMoreRowsReturned = false;
+                
                     int64_t ingestionJobKey     = resultSet->getInt64("ingestionJobKey");
                     string startIngestion       = resultSet->getString("startIngestion");
                     int64_t customerKey         = resultSet->getInt64("customerKey");
@@ -1476,7 +1487,6 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 
                         ingestionsToBeManaged.push_back(ingestionToBeManaged);
                     }
-                    
                 }
             }
         }
