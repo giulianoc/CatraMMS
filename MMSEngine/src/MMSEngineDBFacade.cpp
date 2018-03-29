@@ -1432,7 +1432,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                 preparedStatement->setInt(queryParameterIndex++, mysqlRowCount);
 
                 noMoreRowsReturned = true;
-                mysqlOffset *= maxIngestionJobs;
+                mysqlOffset += maxIngestionJobs;
                 
                 shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
                 while (resultSet->next())
