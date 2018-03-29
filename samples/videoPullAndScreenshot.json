@@ -16,7 +16,6 @@
 		"OnSuccessTask": {
 			"Type": "Screenshots",
 			"Screenshots": {
-				"ReferenceUniqueName": "105",
 				"StartTimeInSeconds": 3.5,
 				"FramesNumber": 4,
 				"SourceFileName": "123.jpg",

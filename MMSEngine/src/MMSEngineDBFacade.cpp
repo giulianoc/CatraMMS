@@ -1447,7 +1447,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                     else
                     {
                         int64_t dependOnIngestionJobKey     = resultSet->getInt64("dependOnIngestionJobKey");
-                        int dependOnSuccess                 = resultSet->getInt64("dependOnSuccess");
+                        int dependOnSuccess                 = resultSet->getInt("dependOnSuccess");
                         
                         lastSQLCommand = 
                             "select status from MMS_IngestionJob where ingestionJobKey = ?";
@@ -1799,7 +1799,7 @@ int64_t MMSEngineDBFacade::addIngestionJob (
                 int queryParameterIndex = 1;
                 preparedStatement->setInt64(queryParameterIndex++, customerKey);
                 preparedStatement->setString(queryParameterIndex++, metadataContent);
-                preparedStatement->setInt(queryParameterIndex++, static_cast<int>(ingestionType));
+                preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(ingestionType));
                 preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(MMSEngineDBFacade::IngestionStatus::Start_Ingestion));
 
                 preparedStatement->executeUpdate();
@@ -2140,7 +2140,7 @@ void MMSEngineDBFacade::updateIngestionJob (
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(ingestionType));
+            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(ingestionType));
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(newIngestionStatus));
             if (processorMMS == "")
                 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
@@ -2174,7 +2174,7 @@ void MMSEngineDBFacade::updateIngestionJob (
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(ingestionType));
+            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(ingestionType));
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(newIngestionStatus));
             if (processorMMS == "")
                 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
@@ -5171,7 +5171,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "customerKey                BIGINT UNSIGNED NOT NULL,"
                     "mediaItemKey               BIGINT UNSIGNED NULL,"
                     "metaDataContent            TEXT CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
-                    "ingestionType              TINYINT (2) NULL,"
+                    "ingestionType              VARCHAR (64) NOT NULL,"
                     "startIngestion             TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "endIngestion               DATETIME NULL,"
                     "downloadingProgress        DECIMAL(3,1) NULL,"
