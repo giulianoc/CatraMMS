@@ -1494,7 +1494,7 @@ void API::ingestionTask(shared_ptr<MySQLConnection> conn,
     
     if (dependOnIngestionJobKey != -1 && referenceToBeAdded)
     {
-        taskRoot["ReferenceIngestionJobKey"] = dependOnIngestionJobKey;
+        taskRoot[type]["ReferenceIngestionJobKey"] = dependOnIngestionJobKey;
         
         {
             Json::StreamWriterBuilder wbuilder;
@@ -1502,6 +1502,10 @@ void API::ingestionTask(shared_ptr<MySQLConnection> conn,
             taskMetadata = Json::writeString(wbuilder, taskRoot[type]);        
         }
         
+        _logger->info(__FILEREF__ + "update IngestionJob"
+            + ", localDependOnIngestionJobKey: " + to_string(localDependOnIngestionJobKey)
+            + ", taskMetadata: " + taskMetadata
+        );
         _mmsEngineDBFacade->updateIngestionJobMetadataContent(conn, localDependOnIngestionJobKey, taskMetadata);
     }
 
