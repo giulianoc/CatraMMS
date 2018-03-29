@@ -241,7 +241,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                 }
                 else    // Start_TaskQueued
                 {
-                    Json::Value metadataRoot;
+                    Json::Value typeRoot;
                     try
                     {
                         Json::CharReaderBuilder builder;
@@ -250,7 +250,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                         bool parsingSuccessful = reader->parse(metaDataContent.c_str(),
                                 metaDataContent.c_str() + metaDataContent.size(), 
-                                &metadataRoot, &errors);
+                                &typeRoot, &errors);
                         delete reader;
 
                         if (!parsingSuccessful)
@@ -297,7 +297,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         Validator validator(_logger, _mmsEngineDBFacade);
                         
                         contentTypeAndDependencies = validator.validateTaskMetadata(
-                                ingestionType, metadataRoot);
+                                ingestionType, typeRoot);
                         
                         tie(contentType, dependencies) = contentTypeAndDependencies;
                     }
@@ -425,7 +425,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 mediaSourceDetails = getMediaSourceDetails(
                                         ingestionJobKey, customer,
-                                        ingestionType, metadataRoot);
+                                        ingestionType, typeRoot);
 
                                 tie(nextIngestionStatus,
                                         mediaSourceURL, mediaSourceFileName, 
@@ -603,7 +603,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     generateAndIngestScreenshots(
                                             ingestionJobKey, 
                                             customer, 
-                                            metadataRoot, 
+                                            typeRoot, 
                                             dependencies);
                                 }
                                 catch(runtime_error e)
@@ -756,7 +756,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             contentTypeAndDependencies;
     MMSEngineDBFacade::ContentType contentType;
     vector<int64_t> dependencies;
-    Json::Value metadataRoot;
+    Json::Value typeRoot;
     try
     {
         Json::CharReaderBuilder builder;
@@ -765,7 +765,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 
         bool parsingSuccessful = reader->parse(localAssetIngestionEvent->getMetadataContent().c_str(),
                 localAssetIngestionEvent->getMetadataContent().c_str() + localAssetIngestionEvent->getMetadataContent().size(), 
-                &metadataRoot, &errors);
+                &typeRoot, &errors);
         delete reader;
 
         if (!parsingSuccessful)
@@ -783,7 +783,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         Validator validator(_logger, _mmsEngineDBFacade);
         
         contentTypeAndDependencies = validator.validateTaskMetadata(
-                localAssetIngestionEvent->getIngestionType(), metadataRoot);
+                localAssetIngestionEvent->getIngestionType(), typeRoot);
         
         tie(contentType, dependencies) =
                 contentTypeAndDependencies;
@@ -842,7 +842,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             mediaSourceDetails = getMediaSourceDetails(
                 localAssetIngestionEvent->getIngestionJobKey(),
                 localAssetIngestionEvent->getCustomer(),
-                localAssetIngestionEvent->getIngestionType(), metadataRoot);
+                localAssetIngestionEvent->getIngestionType(), typeRoot);
         
         tie(nextIngestionStatus,
                 mediaSourceURL, mediaSourceFileName, 
@@ -1238,7 +1238,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                 _mmsEngineDBFacade->saveIngestedContentMetadata (
                     localAssetIngestionEvent->getCustomer(),
                     localAssetIngestionEvent->getIngestionJobKey(),
-                    metadataRoot,
+                    typeRoot,
                     relativePathToBeUsed,
                     mediaSourceFileName,
                     mmsPartitionIndexUsed,
@@ -1326,62 +1326,59 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 void MMSEngineProcessor::generateAndIngestScreenshots(
         int64_t ingestionJobKey,
         shared_ptr<Customer> customer,
-        Json::Value metadataRoot,
+        Json::Value typeRoot,
         vector<int64_t>& dependencies
 )
 {
     try
     {
-        string field = "Screenshots";
-        Json::Value screenshotsRoot = metadataRoot[field];
-
         double startTimeInSeconds = 0;
-        field = "StartTimeInSeconds";
-        if (_mmsEngineDBFacade->isMetadataPresent(screenshotsRoot, field))
+        string field = "StartTimeInSeconds";
+        if (_mmsEngineDBFacade->isMetadataPresent(typeRoot, field))
         {
-            startTimeInSeconds = screenshotsRoot.get(field, "XXX").asDouble();
+            startTimeInSeconds = typeRoot.get(field, "XXX").asDouble();
         }
 
         string videoFilter;
         field = "VideoFilter";
-        if (_mmsEngineDBFacade->isMetadataPresent(screenshotsRoot, field))
+        if (_mmsEngineDBFacade->isMetadataPresent(typeRoot, field))
         {
-            videoFilter = screenshotsRoot.get(field, "XXX").asString();
+            videoFilter = typeRoot.get(field, "XXX").asString();
         }
 
         int framesNumber = -1;
         field = "FramesNumber";
-        if (_mmsEngineDBFacade->isMetadataPresent(screenshotsRoot, field))
+        if (_mmsEngineDBFacade->isMetadataPresent(typeRoot, field))
         {
-            framesNumber = screenshotsRoot.get(field, "XXX").asInt();
+            framesNumber = typeRoot.get(field, "XXX").asInt();
         }
 
         int periodInSeconds = -1;
         field = "PeriodInSeconds";
-        if (_mmsEngineDBFacade->isMetadataPresent(screenshotsRoot, field))
+        if (_mmsEngineDBFacade->isMetadataPresent(typeRoot, field))
         {
-            periodInSeconds = screenshotsRoot.get(field, "XXX").asInt();
+            periodInSeconds = typeRoot.get(field, "XXX").asInt();
         }
 
         bool mjpeg = false;
         field = "M-JPEG";
-        if (_mmsEngineDBFacade->isMetadataPresent(screenshotsRoot, field))
+        if (_mmsEngineDBFacade->isMetadataPresent(typeRoot, field))
         {
-            mjpeg = screenshotsRoot.get(field, "XXX").asBool();
+            mjpeg = typeRoot.get(field, "XXX").asBool();
         }
 
         int width = -1;
         field = "Width";
-        if (_mmsEngineDBFacade->isMetadataPresent(screenshotsRoot, field))
+        if (_mmsEngineDBFacade->isMetadataPresent(typeRoot, field))
         {
-            width = screenshotsRoot.get(field, "XXX").asInt();
+            width = typeRoot.get(field, "XXX").asInt();
         }
 
         int height = -1;
         field = "Height";
-        if (_mmsEngineDBFacade->isMetadataPresent(screenshotsRoot, field))
+        if (_mmsEngineDBFacade->isMetadataPresent(typeRoot, field))
         {
-            height = screenshotsRoot.get(field, "XXX").asInt();
+            height = typeRoot.get(field, "XXX").asInt();
         }
 
         int64_t sourceMediaItemKey = dependencies.back();
@@ -1448,7 +1445,7 @@ void MMSEngineProcessor::generateAndIngestScreenshots(
         }
 
         field = "SourceFileName";
-        if (!_mmsEngineDBFacade->isMetadataPresent(screenshotsRoot, field))
+        if (!_mmsEngineDBFacade->isMetadataPresent(typeRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -1457,7 +1454,7 @@ void MMSEngineProcessor::generateAndIngestScreenshots(
 
             throw runtime_error(errorMessage);
         }
-        string sourceFileName = screenshotsRoot.get(field, "XXX").asString();
+        string sourceFileName = typeRoot.get(field, "XXX").asString();
 
         string customerIngestionRepository = _mmsStorage->getCustomerIngestionRepository(
                 customer);
@@ -1492,7 +1489,7 @@ void MMSEngineProcessor::generateAndIngestScreenshots(
                     ingestionJobKey,
                     mjpeg,
                     generatedScreenshotFileName,
-                    screenshotsRoot
+                    typeRoot
             );
 
             {
