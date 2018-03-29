@@ -512,7 +512,7 @@ public:
     );
 
     void getIngestionsToBeManaged(
-        vector<tuple<int64_t,string,shared_ptr<Customer>,string,IngestionStatus>>& ingestionsToBeManaged,
+        vector<tuple<int64_t,string,shared_ptr<Customer>,string, IngestionType, IngestionStatus>>& ingestionsToBeManaged,
         string processorMMS,
         int maxIngestionJobs
         // int maxIngestionJobsWithDependencyToCheck

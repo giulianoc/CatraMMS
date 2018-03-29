@@ -1,26 +1,3 @@
-[
-	{
-		"Type": "ContentIngestion",
-		"ContentIngestion": {
-			"SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
-			"SourceFileName": "123456.mp4",
-			"UniqueName": "105",
-			"ContentType": "video",
-			"userData": { "MyData": "this is my data" },
-			"Title": "Maradona"
-		}
-	},
-	{
-		"Type": "Screenshots",
-		"Screenshots": {
-			"ReferenceUniqueName": "105",
-			"StartTimeInSeconds": 3.5,
-			"FramesNumber": 4,
-			"SourceFileName": "123.jpg",
-			"userData": { }
-		}
-	}
-]
 {
 	"Type": "Process",
 

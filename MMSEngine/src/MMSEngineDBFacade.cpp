@@ -1380,7 +1380,7 @@ int64_t MMSEngineDBFacade::addImageEncodingProfile(
 }
 
 void MMSEngineDBFacade::getIngestionsToBeManaged(
-        vector<tuple<int64_t,string,shared_ptr<Customer>,string,IngestionStatus>>& ingestionsToBeManaged,
+        vector<tuple<int64_t, string, shared_ptr<Customer>, string, IngestionType, IngestionStatus>>& ingestionsToBeManaged,
         string processorMMS,
         int maxIngestionJobs
         // int maxIngestionJobsWithDependencyToCheck
@@ -1412,7 +1412,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
             {
                 lastSQLCommand = 
                     "select ij.ingestionJobKey, DATE_FORMAT(ij.startIngestion, '%Y-%m-%d %H:%i:%s') as startIngestion, "
-                        "ij.customerKey, ij.metaDataContent, ij.status, ijd.dependOnIngestionJobKey, ijd.dependOnSuccess "
+                        "ij.customerKey, ij.metaDataContent, ij.status, ij.ingestionType, ijd.dependOnIngestionJobKey, ijd.dependOnSuccess "
                         "from MMS_IngestionJob ij, MMS_IngestionJobDependency ijd "
                         "where ij.ingestionJobKey = ijd.ingestionJobKey and ij.processorMMS is null "
                         "and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) "
@@ -1434,6 +1434,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                     int64_t customerKey         = resultSet->getInt64("customerKey");
                     string metaDataContent      = resultSet->getString("metaDataContent");
                     IngestionStatus ingestionStatus     = MMSEngineDBFacade::toIngestionStatus(resultSet->getString("status"));
+                    IngestionType ingestionType     = MMSEngineDBFacade::toIngestionType(resultSet->getString("ingestionType"));
 
                     bool ingestionJobToBeManaged = false;
                     
@@ -1470,8 +1471,8 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                     {
                         shared_ptr<Customer> customer = getCustomer(customerKey);
 
-                        tuple<int64_t,string,shared_ptr<Customer>,string,IngestionStatus> ingestionToBeManaged
-                                = make_tuple(ingestionJobKey, startIngestion, customer, metaDataContent, ingestionStatus);
+                        tuple<int64_t, string, shared_ptr<Customer>, string, IngestionType, IngestionStatus> ingestionToBeManaged
+                                = make_tuple(ingestionJobKey, startIngestion, customer, metaDataContent, ingestionType, ingestionStatus);
 
                         ingestionsToBeManaged.push_back(ingestionToBeManaged);
                     }
@@ -1541,7 +1542,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
         }
          */
 
-        for (tuple<int64_t,string,shared_ptr<Customer>,string,IngestionStatus> ingestionToBeManaged:
+        for (tuple<int64_t, string, shared_ptr<Customer>, string, IngestionType, IngestionStatus> ingestionToBeManaged:
             ingestionsToBeManaged)
         {
             int64_t ingestionJobKey;
@@ -1550,8 +1551,9 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
             string metaDataContent;
             string sourceReference;
             MMSEngineDBFacade::IngestionStatus ingestionStatus;
+            MMSEngineDBFacade::IngestionType ingestionType;
 
-            tie(ingestionJobKey, startIngestion, customer, metaDataContent, ingestionStatus) = ingestionToBeManaged;
+            tie(ingestionJobKey, startIngestion, customer, metaDataContent, ingestionType, ingestionStatus) = ingestionToBeManaged;
 
             lastSQLCommand = 
                 "update MMS_IngestionJob set processorMMS = ? where ingestionJobKey = ?";
@@ -5207,7 +5209,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "dependOnSuccess                    TINYINT (1) NOT NULL,"
                     "constraint MMS_IngestionJob_PK PRIMARY KEY (ingestionJobKey, dependOnIngestionJobKey), "
                     "constraint MMS_IngestionJobDependency_FK foreign key (ingestionJobKey) "
-                        "references MMS_IngestionJob (ingestionJobKey) on delete cascade), "	   	        				
+                        "references MMS_IngestionJob (ingestionJobKey) on delete cascade, "	   	        				
                     "constraint MMS_IngestionJobDependency_FK2 foreign key (dependOnIngestionJobKey) "
                         "references MMS_IngestionJob (ingestionJobKey) on delete cascade) "	   	        				
                     "ENGINE=InnoDB";

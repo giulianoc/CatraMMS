@@ -46,12 +46,9 @@ void Validator::validateProcessMetadata(Json::Value processRoot)
     validateTaskMetadata(taskRoot);
 }
 
-tuple<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType,vector<int64_t>> 
+pair<MMSEngineDBFacade::ContentType,vector<int64_t>> 
         Validator::validateTaskMetadata(Json::Value taskRoot)
 {
-    tuple<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType,vector<int64_t>> 
-            ingestionTypeContentTypeAndDependencies;
-    
     MMSEngineDBFacade::IngestionType    ingestionType;
     MMSEngineDBFacade::ContentType      contentType;
     vector<int64_t>                     dependencies;
@@ -83,7 +80,17 @@ tuple<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType,vector<int
 
         throw runtime_error(errorMessage);
     }
-    
+        
+    return validateTaskMetadata(ingestionType, taskRoot);
+}
+
+pair<MMSEngineDBFacade::ContentType,vector<int64_t>> 
+        Validator::validateTaskMetadata(
+        MMSEngineDBFacade::IngestionType ingestionType, Json::Value taskRoot)
+{
+    MMSEngineDBFacade::ContentType      contentType;
+    vector<int64_t>                     dependencies;
+
     if (ingestionType == MMSEngineDBFacade::IngestionType::ContentIngestion)
     {
         string field = "ContentIngestion";
@@ -118,11 +125,17 @@ tuple<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType,vector<int
         MMSEngineDBFacade::ContentType contentType =
             validateScreenshotsMetadata(screenshotsRoot, dependencies);        
     }
-    
-    ingestionTypeContentTypeAndDependencies = make_tuple(ingestionType, contentType, dependencies);
+    else
+    {
+        string errorMessage = __FILEREF__ + "Unknown IngestionType"
+                + ", ingestionType: " + MMSEngineDBFacade::toString(ingestionType);
+        _logger->error(errorMessage);
 
+        throw runtime_error(errorMessage);
+    }
     
-    return ingestionTypeContentTypeAndDependencies;
+    
+    return make_pair(contentType, dependencies);
 }
 
 MMSEngineDBFacade::ContentType Validator::validateContentIngestionMetadata(

@@ -173,7 +173,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
     
     try
     {
-        vector<tuple<int64_t,string,shared_ptr<Customer>,string,MMSEngineDBFacade::IngestionStatus>> 
+        vector<tuple<int64_t,string,shared_ptr<Customer>,string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus>> 
                 ingestionsToBeManaged;
         
         _mmsEngineDBFacade->getIngestionsToBeManaged(ingestionsToBeManaged, 
@@ -181,7 +181,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                 // _maxIngestionJobsWithDependencyToCheckPerEvent
         );
         
-        for (tuple<int64_t,string,shared_ptr<Customer>,string,MMSEngineDBFacade::IngestionStatus> 
+        for (tuple<int64_t, string, shared_ptr<Customer>, string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus> 
                 ingestionToBeManaged: ingestionsToBeManaged)
         {
             int64_t ingestionJobKey;
@@ -191,9 +191,11 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                 string startIngestion;
                 string metaDataContent;
                 string sourceReference;
+                MMSEngineDBFacade::IngestionType ingestionType;
                 MMSEngineDBFacade::IngestionStatus ingestionStatus;
 
-                tie(ingestionJobKey, startIngestion, customer, metaDataContent, ingestionStatus) = ingestionToBeManaged;
+                tie(ingestionJobKey, startIngestion, customer, metaDataContent,
+                        ingestionType, ingestionStatus) = ingestionToBeManaged;
                 
                 _logger->info(__FILEREF__ + "json to be processed"
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -219,6 +221,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
                         localAssetIngestionEvent->setSourceFileName(sourceFileName);
                         localAssetIngestionEvent->setCustomer(customer);
+                        localAssetIngestionEvent->setIngestionType(ingestionType);
 
                         localAssetIngestionEvent->setMetadataContent(metaDataContent);
 
@@ -280,20 +283,18 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         throw runtime_error(errorMessage);
                     }
 
-                    tuple<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType,vector<int64_t>>
-                            ingestionTypeContentTypeAndDependencies;
-                    MMSEngineDBFacade::IngestionType ingestionType;
+                    pair<MMSEngineDBFacade::ContentType,vector<int64_t>>
+                            contentTypeAndDependencies;
                     MMSEngineDBFacade::ContentType contentType;
                     vector<int64_t> dependencies;
                     try
                     {
                         Validator validator(_logger, _mmsEngineDBFacade);
                         
-                        ingestionTypeContentTypeAndDependencies = validator.validateTaskMetadata(
-                                metadataRoot);
+                        contentTypeAndDependencies = validator.validateTaskMetadata(
+                                ingestionType, metadataRoot);
                         
-                        tie(ingestionType, contentType, dependencies) =
-                                ingestionTypeContentTypeAndDependencies;
+                        tie(contentType, dependencies) = contentTypeAndDependencies;
                     }
                     catch(runtime_error e)
                     {
@@ -436,13 +437,11 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 _logger->info(__FILEREF__ + "Update IngestionJob"
                                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                    + ", IngestionType: " + MMSEngineDBFacade::toString(ingestionType)
                                     + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                                        ingestionType,
                                         MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
                                         errorMessage,
                                         "" // processorMMS
@@ -461,13 +460,11 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 _logger->info(__FILEREF__ + "Update IngestionJob"
                                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                    + ", IngestionType: " + MMSEngineDBFacade::toString(ingestionType)
                                     + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                                        ingestionType,
                                         MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
                                         errorMessage,
                                         "" // processorMMS
@@ -485,13 +482,11 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                     _logger->info(__FILEREF__ + "Update IngestionJob"
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                        + ", IngestionType: " + MMSEngineDBFacade::toString(ingestionType)
                                         + ", IngestionStatus: " + MMSEngineDBFacade::toString(nextIngestionStatus)
                                         + ", errorMessage: " + errorMessage
                                         + ", processorMMS: " + processorMMS
                                     );                            
                                     _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                                            ingestionType,
                                             nextIngestionStatus, 
                                             errorMessage,
                                             processorMMS
@@ -508,13 +503,11 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                     _logger->info(__FILEREF__ + "Update IngestionJob"
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                        + ", IngestionType: " + MMSEngineDBFacade::toString(ingestionType)
                                         + ", IngestionStatus: " + MMSEngineDBFacade::toString(nextIngestionStatus)
                                         + ", errorMessage: " + errorMessage
                                         + ", processorMMS: " + processorMMS
                                     );                            
                                     _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                                            ingestionType,
                                             nextIngestionStatus, 
                                             errorMessage,
                                             processorMMS
@@ -531,13 +524,11 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                     _logger->info(__FILEREF__ + "Update IngestionJob"
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                        + ", IngestionType: " + MMSEngineDBFacade::toString(ingestionType)
                                         + ", IngestionStatus: " + MMSEngineDBFacade::toString(nextIngestionStatus)
                                         + ", errorMessage: " + errorMessage
                                         + ", processorMMS: " + processorMMS
                                     );                            
                                     _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                                            ingestionType,
                                             nextIngestionStatus, 
                                             errorMessage,
                                             processorMMS
@@ -554,13 +545,11 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                     _logger->info(__FILEREF__ + "Update IngestionJob"
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                        + ", IngestionType: " + MMSEngineDBFacade::toString(ingestionType)
                                         + ", IngestionStatus: " + MMSEngineDBFacade::toString(nextIngestionStatus)
                                         + ", errorMessage: " + errorMessage
                                         + ", processorMMS: " + processorMMS
                                     );                            
                                     _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                                            ingestionType,
                                             nextIngestionStatus, 
                                             errorMessage,
                                             processorMMS
@@ -623,13 +612,11 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                     _logger->info(__FILEREF__ + "Update IngestionJob"
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                        + ", IngestionType: " + MMSEngineDBFacade::toString(ingestionType)
                                         + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
                                         + ", errorMessage: " + errorMessage
                                         + ", processorMMS: " + ""
                                     );                            
                                     _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                                            ingestionType,
                                             MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
                                             errorMessage,
                                             "" // processorMMS
@@ -648,13 +635,11 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                     _logger->info(__FILEREF__ + "Update IngestionJob"
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                        + ", IngestionType: " + MMSEngineDBFacade::toString(ingestionType)
                                         + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
                                         + ", errorMessage: " + errorMessage
                                         + ", processorMMS: " + ""
                                     );                            
                                     _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                                            ingestionType,
                                             MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
                                             errorMessage,
                                             "" // processorMMS
@@ -762,12 +747,11 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
     }
                     
     string      metadataFileContent;
-    tuple<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType,vector<int64_t>>
-            ingestionTypeContentTypeAndDependencies;
+    pair<MMSEngineDBFacade::ContentType,vector<int64_t>>
+            contentTypeAndDependencies;
     MMSEngineDBFacade::IngestionType ingestionType;
     MMSEngineDBFacade::ContentType contentType;
     vector<int64_t> dependencies;
-    bool dependencyNotFound;
     Json::Value metadataRoot;
     try
     {
@@ -794,11 +778,11 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 
         Validator validator(_logger, _mmsEngineDBFacade);
         
-        ingestionTypeContentTypeAndDependencies = validator.validateTaskMetadata(
-                metadataRoot);
+        contentTypeAndDependencies = validator.validateTaskMetadata(
+                localAssetIngestionEvent->getIngestionType(), metadataRoot);
         
-        tie(ingestionType, contentType, dependencies) =
-                ingestionTypeContentTypeAndDependencies;
+        tie(contentType, dependencies) =
+                contentTypeAndDependencies;
     }
     catch(runtime_error e)
     {
@@ -1518,6 +1502,7 @@ void MMSEngineProcessor::generateAndIngestScreenshots(
                 localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
                 localAssetIngestionEvent->setSourceFileName(generatedScreenshotFileName);
                 localAssetIngestionEvent->setCustomer(customer);
+                localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::ContentIngestion);
 
                 localAssetIngestionEvent->setMetadataContent(imageMetaDataContent);
 
@@ -1615,10 +1600,8 @@ string MMSEngineProcessor::generateImageMetadataToIngest(
     
     string imageMetadata = string("")
         + "{"
-            + "\"Type\": \"ContentIngestion\""
-            + ", \"ContentIngestion\": {"
-                + "\"ContentType\": \"" + (mjpeg ? "video" : "image") + "\""
-                + ", \"SourceFileName\": \"" + sourceFileName + "\""
+            + "\"ContentType\": \"" + (mjpeg ? "video" : "image") + "\""
+            + ", \"SourceFileName\": \"" + sourceFileName + "\""
             ;
     if (title != "")
         imageMetadata += ", \"Title\": \"" + title + "\"";
@@ -1642,8 +1625,7 @@ string MMSEngineProcessor::generateImageMetadataToIngest(
         imageMetadata += ", \"Territories\": \"" + territories + "\"";
                             
     imageMetadata +=
-            string("}")
-        + "}"
+        string("}")
     ;
     
     _logger->info(__FILEREF__ + "Image metadata generated"

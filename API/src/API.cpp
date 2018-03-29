@@ -246,7 +246,7 @@ void API::manageRequestAndResponse(
 )
 {
     
-    _logger->error(__FILEREF__ + "Received manageRequestAndResponse"
+    _logger->info(__FILEREF__ + "Received manageRequestAndResponse"
         + ", requestURI: " + requestURI
         + ", requestMethod: " + requestMethod
         + ", requestBody: " + requestBody

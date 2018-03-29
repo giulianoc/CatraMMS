@@ -37,11 +37,21 @@ class LocalAssetIngestionEvent: public Event2 {
 private:    
     int64_t                 _ingestionJobKey;
     shared_ptr<Customer>    _customer;
+    MMSEngineDBFacade::IngestionType _ingestionType;
 
     string                  _metadataContent;
     string                  _sourceFileName;
 
 public:
+    void setIngestionType(MMSEngineDBFacade::IngestionType ingestionType)
+    {
+        _ingestionType   = ingestionType;
+    }
+    MMSEngineDBFacade::IngestionType getIngestionType()
+    {
+        return _ingestionType;
+    }
+
     void setMetadataContent(string metadataContent)
     {
         _metadataContent   = metadataContent;
