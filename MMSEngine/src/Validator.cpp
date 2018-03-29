@@ -231,9 +231,7 @@ MMSEngineDBFacade::ContentType Validator::validateScreenshotsMetadata(
     Json::Value screenshotsRoot, vector<int64_t>& dependencies)
 {
     // see sample in directory samples
-    
-    MMSEngineDBFacade::ContentType      contentType;
-    
+        
     vector<string> mandatoryFields = {
         "SourceFileName"
     };
@@ -273,14 +271,13 @@ MMSEngineDBFacade::ContentType Validator::validateScreenshotsMetadata(
         referenceMediaItemKey = screenshotsRoot.get(field, "XXX").asInt64();    
     }
     
-    int64_t mediaItemKey;
+    MMSEngineDBFacade::ContentType      referenceContentType;
     try
     {
         bool warningIfMissing = true;
         if (referenceMediaItemKey != -1)
         {
-            mediaItemKey = referenceMediaItemKey;
-            contentType = _mmsEngineDBFacade->getMediaItemKeyDetails(
+            referenceContentType = _mmsEngineDBFacade->getMediaItemKeyDetails(
                 referenceMediaItemKey, warningIfMissing); 
         }
         else
@@ -289,8 +286,8 @@ MMSEngineDBFacade::ContentType Validator::validateScreenshotsMetadata(
                     _mmsEngineDBFacade->getMediaItemKeyDetailsByIngestionJobKey(
                     referenceIngestionJobKey, warningIfMissing);  
             
-            mediaItemKey = mediaItemKeyAndContentType.first;
-            contentType = mediaItemKeyAndContentType.second;
+            referenceMediaItemKey = mediaItemKeyAndContentType.first;
+            referenceContentType = mediaItemKeyAndContentType.second;
         }
     }
     catch(runtime_error e)
@@ -313,31 +310,35 @@ MMSEngineDBFacade::ContentType Validator::validateScreenshotsMetadata(
         throw runtime_error(errorMessage);
     }
     
+    MMSEngineDBFacade::ContentType      screenshotContentType;
+
     field = "M-JPEG";
     if (isMetadataPresent(screenshotsRoot, field))
     {
         bool mjpeg = screenshotsRoot.get(field, "XXX").asBool();
         if (mjpeg)
-            contentType = MMSEngineDBFacade::ContentType::Video;
+            screenshotContentType = MMSEngineDBFacade::ContentType::Video;
         else
-            contentType = MMSEngineDBFacade::ContentType::Image;
+            screenshotContentType = MMSEngineDBFacade::ContentType::Image;
     }
     else
     {
-        contentType = MMSEngineDBFacade::ContentType::Image;
+        screenshotContentType = MMSEngineDBFacade::ContentType::Image;
     }
 
-    if (contentType != MMSEngineDBFacade::ContentType::Video)
+    if (referenceContentType != MMSEngineDBFacade::ContentType::Video)
     {
         string errorMessage = __FILEREF__ + "Reference... does not refer a video content"
             + ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
-            + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey);
+            + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
+            + ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
+                ;
         _logger->error(errorMessage);
 
         throw runtime_error(errorMessage);
     }
 
-    dependencies.push_back(mediaItemKey);
+    dependencies.push_back(referenceMediaItemKey);
 
     string videoFilter;
     field = "VideoFilter";
@@ -374,7 +375,7 @@ MMSEngineDBFacade::ContentType Validator::validateScreenshotsMetadata(
     }
     */
             
-    return contentType;
+    return screenshotContentType;
 }
 
 bool Validator::isMetadataPresent(Json::Value root, string field)
