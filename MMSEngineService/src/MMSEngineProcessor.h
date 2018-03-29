@@ -73,15 +73,6 @@ private:
         vector<int64_t>& dependencies
     );
 
-    tuple<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType,vector<int64_t>>  
-            validateMetadata(int64_t ingestionJobKey, Json::Value root);
-
-    MMSEngineDBFacade::ContentType validateContentIngestionMetadata(
-        int64_t ingestionJobKey, Json::Value encoding);
-
-    MMSEngineDBFacade::ContentType validateScreenshotsMetadata(
-        int64_t ingestionJobKey, Json::Value screenshotRoot, vector<int64_t>& dependencies);
-
     tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> getMediaSourceDetails(
         int64_t ingestionJobKey, shared_ptr<Customer> customer,
         MMSEngineDBFacade::IngestionType ingestionType,

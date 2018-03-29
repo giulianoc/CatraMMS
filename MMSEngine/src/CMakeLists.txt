@@ -24,7 +24,7 @@ SET (SOURCES
 	Customer.cpp
 	MMSStorage.cpp
 	MMSEngineDBFacade.cpp
-	#MMSEngine.cpp
+	Validator.cpp
 	ActiveEncodingsManager.cpp
 	EncoderVideoAudioProxy.cpp
 )
@@ -32,7 +32,7 @@ SET (HEADERS
 	Customer.h
 	MMSStorage.h
 	MMSEngineDBFacade.h
-	#MMSEngine.h
+	Validator.h
 	ActiveEncodingsManager.h
 	EncoderVideoAudioProxy.h
 )

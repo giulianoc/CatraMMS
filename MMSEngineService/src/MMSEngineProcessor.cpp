@@ -8,6 +8,7 @@
 #include <curlpp/Infos.hpp>
 #include "catralibraries/System.h"
 #include "FFMpeg.h"
+#include "Validator.h"
 #include "MMSEngineProcessor.h"
 #include "CheckIngestionTimes.h"
 #include "CheckEncodingTimes.h"
@@ -286,8 +287,10 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                     vector<int64_t> dependencies;
                     try
                     {
-                        ingestionTypeContentTypeAndDependencies = validateMetadata(
-                                ingestionJobKey, metadataRoot);
+                        Validator validator(_logger, _mmsEngineDBFacade);
+                        
+                        ingestionTypeContentTypeAndDependencies = validator.validateTaskMetadata(
+                                metadataRoot);
                         
                         tie(ingestionType, contentType, dependencies) =
                                 ingestionTypeContentTypeAndDependencies;
@@ -789,8 +792,10 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             throw runtime_error(errorMessage);
         }
 
-        ingestionTypeContentTypeAndDependencies = validateMetadata(
-                localAssetIngestionEvent->getIngestionJobKey(), metadataRoot);
+        Validator validator(_logger, _mmsEngineDBFacade);
+        
+        ingestionTypeContentTypeAndDependencies = validator.validateTaskMetadata(
+                metadataRoot);
         
         tie(ingestionType, contentType, dependencies) =
                 ingestionTypeContentTypeAndDependencies;
@@ -1661,329 +1666,6 @@ void MMSEngineProcessor::handleCheckEncodingEvent ()
     _firstGetEncodingJob = false;
 
     _pActiveEncodingsManager->addEncodingItems(encodingItems);
-}
-
-tuple<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType,vector<int64_t>> 
-        MMSEngineProcessor::validateMetadata(int64_t ingestionJobKey, Json::Value metadataRoot)
-{
-    tuple<MMSEngineDBFacade::IngestionType,MMSEngineDBFacade::ContentType,vector<int64_t>> 
-            ingestionTypeContentTypeAndDependencies;
-    
-    MMSEngineDBFacade::IngestionType    ingestionType;
-    MMSEngineDBFacade::ContentType      contentType;
-    vector<int64_t>                     dependencies;
-
-    string field = "Type";
-    if (!_mmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
-    {
-        string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", Field: " + field;
-        _logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-
-    string type = metadataRoot.get("Type", "XXX").asString();
-    if (type == "ContentIngestion")
-        ingestionType = MMSEngineDBFacade::IngestionType::ContentIngestion;
-    else if (type == "Screenshots")
-        ingestionType = MMSEngineDBFacade::IngestionType::Screenshots;
-    /*
-    else if (type == "ContentRemove")
-        ingestionType = MMSEngineDBFacade::IngestionType::ContentRemove;
-    */
-    else
-    {
-        string errorMessage = __FILEREF__ + "Field 'Type' is wrong"
-                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", Type: " + type;
-        _logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-    
-    if (ingestionType == MMSEngineDBFacade::IngestionType::ContentIngestion)
-    {
-        string field = "ContentIngestion";
-        if (!_mmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
-        {
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", Field: " + field;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-
-        Json::Value contentIngestionRoot = metadataRoot[field]; 
-
-        contentType = validateContentIngestionMetadata(
-                ingestionJobKey, contentIngestionRoot);
-    }
-    else if (ingestionType == MMSEngineDBFacade::IngestionType::Screenshots)
-    {
-        string field = "Screenshots";
-        if (!_mmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
-        {
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", Field: " + field;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-
-        Json::Value screenshotsRoot = metadataRoot[field]; 
-
-        MMSEngineDBFacade::ContentType contentType =
-            validateScreenshotsMetadata(ingestionJobKey, screenshotsRoot, dependencies);        
-    }
-    
-    ingestionTypeContentTypeAndDependencies = make_tuple(ingestionType, contentType, dependencies);
-
-    
-    return ingestionTypeContentTypeAndDependencies;
-}
-
-MMSEngineDBFacade::ContentType MMSEngineProcessor::validateContentIngestionMetadata(
-    int64_t ingestionJobKey, Json::Value contentIngestion)
-{
-    // see sample in directory samples
-    
-    MMSEngineDBFacade::ContentType         contentType;
-    
-    vector<string> mandatoryFields = {
-        // "SourceURL",     it is optional in case of push
-        "SourceFileName",
-        "ContentType"
-    };
-    for (string mandatoryField: mandatoryFields)
-    {
-        if (!_mmsEngineDBFacade->isMetadataPresent(contentIngestion, mandatoryField))
-        {
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", Field: " + mandatoryField;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-    }
-
-    string sContentType = contentIngestion.get("ContentType", "XXX").asString();
-    try
-    {
-        contentType = MMSEngineDBFacade::toContentType(sContentType);
-    }
-    catch(exception e)
-    {
-        string errorMessage = __FILEREF__ + "Field 'ContentType' is wrong"
-                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", sContentType: " + sContentType;
-        _logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-
-    string field;
-    if (contentType == MMSEngineDBFacade::ContentType::Video 
-            || contentType == MMSEngineDBFacade::ContentType::Audio)
-    {
-        field = "EncodingPriority";
-        if (_mmsEngineDBFacade->isMetadataPresent(contentIngestion, field))
-        {
-            string encodingPriority = contentIngestion.get(field, "XXX").asString();
-            try
-            {
-                MMSEngineDBFacade::toEncodingPriority(encodingPriority);    // it generate an exception in case of wrong string
-            }
-            catch(exception e)
-            {
-                string errorMessage = __FILEREF__ + "Field 'EncodingPriority' is wrong"
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", EncodingPriority: " + encodingPriority;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-        }
-    }
-
-    /*
-    // Territories
-    {
-        field = "Territories";
-        if (isMetadataPresent(contentIngestion, field))
-        {
-            const Json::Value territories = contentIngestion[field];
-            
-            for( Json::ValueIterator itr = territories.begin() ; itr != territories.end() ; itr++ ) 
-            {
-                Json::Value territory = territories[territoryIndex];
-            }
-        
-    }
-    */
-            
-    return contentType;
-}
-
-MMSEngineDBFacade::ContentType MMSEngineProcessor::validateScreenshotsMetadata(
-    int64_t ingestionJobKey, Json::Value screenshotsRoot, vector<int64_t>& dependencies)
-{
-    // see sample in directory samples
-    
-    MMSEngineDBFacade::ContentType      contentType;
-    
-    vector<string> mandatoryFields = {
-        "ReferenceUniqueName",
-        "SourceFileName"
-    };
-    for (string mandatoryField: mandatoryFields)
-    {
-        if (!_mmsEngineDBFacade->isMetadataPresent(screenshotsRoot, mandatoryField))
-        {
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", Field: " + mandatoryField;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-    }
-
-    int64_t referenceMediaItemKey = -1;
-    int64_t referenceIngestionJobKey = -1;
-    string field = "ReferenceMediaItemKey";
-    if (!_mmsEngineDBFacade->isMetadataPresent(screenshotsRoot, field))
-    {
-        field = "ReferenceIngestionJobKey";
-        if (!_mmsEngineDBFacade->isMetadataPresent(screenshotsRoot, field))
-        {
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", Field: " + "Reference...";
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        else
-        {
-            referenceIngestionJobKey = screenshotsRoot.get(field, "XXX").asInt64();
-        }        
-    }
-    else
-    {
-        referenceMediaItemKey = screenshotsRoot.get(field, "XXX").asInt64();    
-    }
-    
-    int64_t mediaItemKey;
-    try
-    {
-        bool warningIfMissing = true;
-        if (referenceMediaItemKey != -1)
-        {
-            mediaItemKey = referenceMediaItemKey;
-            contentType = _mmsEngineDBFacade->getMediaItemKeyDetails(
-                referenceMediaItemKey, warningIfMissing); 
-        }
-        else
-        {
-            pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
-                    _mmsEngineDBFacade->getMediaItemKeyDetailsByIngestionJobKey(
-                    referenceIngestionJobKey, warningIfMissing);  
-            
-            mediaItemKey = mediaItemKeyAndContentType.first;
-            contentType = mediaItemKeyAndContentType.second;
-        }
-    }
-    catch(runtime_error e)
-    {
-        string errorMessage = __FILEREF__ + "Reference... was not found"
-                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
-                ;
-        _logger->warn(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-    catch(exception e)
-    {
-        string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->getMediaItemKeyDetails failed"
-                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
-                + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
-                ;
-        _logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-    
-    field = "M-JPEG";
-    if (_mmsEngineDBFacade->isMetadataPresent(screenshotsRoot, field))
-    {
-        bool mjpeg = screenshotsRoot.get(field, "XXX").asBool();
-        if (mjpeg)
-            contentType = MMSEngineDBFacade::ContentType::Video;
-        else
-            contentType = MMSEngineDBFacade::ContentType::Image;
-    }
-    else
-    {
-        contentType = MMSEngineDBFacade::ContentType::Image;
-    }
-
-    if (contentType != MMSEngineDBFacade::ContentType::Video)
-    {
-        string errorMessage = __FILEREF__ + "Reference... does not refer a video content"
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
-            + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey);
-        _logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-
-    dependencies.push_back(mediaItemKey);
-
-    string videoFilter;
-    field = "VideoFilter";
-    if (_mmsEngineDBFacade->isMetadataPresent(screenshotsRoot, field))
-    {
-        videoFilter = screenshotsRoot.get(field, "XXX").asString();
-    }
-
-    int periodInSeconds = -1;
-    field = "PeriodInSeconds";
-    if (!_mmsEngineDBFacade->isMetadataPresent(screenshotsRoot, field)
-            && videoFilter == "PeriodicFrame")
-    {
-        string errorMessage = __FILEREF__ + "VideoFilter is PeriodicFrame but PeriodInSeconds does not exist"
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", videoFilter: " + videoFilter;
-        _logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-
-    /*
-    // Territories
-    {
-        field = "Territories";
-        if (isMetadataPresent(contentIngestion, field))
-        {
-            const Json::Value territories = contentIngestion[field];
-            
-            for( Json::ValueIterator itr = territories.begin() ; itr != territories.end() ; itr++ ) 
-            {
-                Json::Value territory = territories[territoryIndex];
-            }
-        
-    }
-    */
-            
-    return contentType;
 }
 
 tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> MMSEngineProcessor::getMediaSourceDetails(

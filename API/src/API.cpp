@@ -18,6 +18,7 @@
 #include <curlpp/Options.hpp>
 #include <curlpp/Exception.hpp>
 #include <curlpp/Infos.hpp>
+#include "Validator.h"
 #include "API.h"
 
 int main(int argc, char** argv) 
@@ -1373,15 +1374,11 @@ void API::ingestion(
         {
             conn = _mmsEngineDBFacade->beginIngestionJobs();
 
-            string field = "Task";
-            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                        + ", Field: " + field;
-                _logger->error(errorMessage);
+            Validator validator(_logger, _mmsEngineDBFacade);
 
-                throw runtime_error(errorMessage);
-            }
+            validator.validateProcessMetadata(requestBodyRoot);
+        
+            string field = "Task";
             Json::Value taskRoot = requestBodyRoot[field];                        
     
             int dependOnIngestionJobKey = -1;
@@ -1465,24 +1462,7 @@ void API::ingestionTask(shared_ptr<MySQLConnection> conn,
     }
 
     field = "Type";
-    if (!_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
-    {
-        string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                + ", Field: " + field;
-        _logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
     string type = taskRoot.get(field, "XXX").asString();
-
-    if (!_mmsEngineDBFacade->isMetadataPresent(taskRoot, type))
-    {
-        string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                + ", Field: " + field;
-        _logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
 
     bool referenceToBeAdded = true;
     field = "ReferenceMediaItemKey";
