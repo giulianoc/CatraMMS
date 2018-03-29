@@ -235,7 +235,6 @@ MMSEngineDBFacade::ContentType Validator::validateScreenshotsMetadata(
     MMSEngineDBFacade::ContentType      contentType;
     
     vector<string> mandatoryFields = {
-        "ReferenceUniqueName",
         "SourceFileName"
     };
     for (string mandatoryField: mandatoryFields)

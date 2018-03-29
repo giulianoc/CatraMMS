@@ -311,16 +311,12 @@ public:
     }
 
     enum class IngestionStatus {
-        Start_Ingestion,    
+        Start_TaskQueued,    
         
         SourceDownloadingInProgress,
         SourceMovingInProgress,
         SourceCopingInProgress,
         SourceUploadingInProgress,
-
-        QueuedForEncoding,   
-            // metadata ingestion is finished (saved into DB), media source is in MMS repository
-
 
         End_DownloadCancelledByUser,   
             // User cancelled the media source downloading
@@ -345,15 +341,15 @@ public:
             // Content was ingested successful but at least one encoding failed
             // One encoding is considered a failure only after MaxFailuresNumer attempts
         
-        End_IngestionSuccess
+        End_TaskSuccess
             // Ingestion and encodings successful
     };
     static const char* toString(const IngestionStatus& ingestionStatus)
     {
         switch (ingestionStatus)
         {
-            case IngestionStatus::Start_Ingestion:
-                return "Start_Ingestion";
+            case IngestionStatus::Start_TaskQueued:
+                return "Start_TaskQueued";
             case IngestionStatus::SourceDownloadingInProgress:
                 return "SourceDownloadingInProgress";
             case IngestionStatus::SourceMovingInProgress:
@@ -362,8 +358,6 @@ public:
                 return "SourceCopingInProgress";
             case IngestionStatus::SourceUploadingInProgress:
                 return "SourceUploadingInProgress";
-            case IngestionStatus::QueuedForEncoding:
-                return "QueuedForEncoding";
             case IngestionStatus::End_DownloadCancelledByUser:
                 return "End_DownloadCancelledByUser";
             case IngestionStatus::End_ValidationMetadataFailed:
@@ -376,8 +370,8 @@ public:
                 return "End_IngestionFailure";
             case IngestionStatus::End_IngestionSuccess_AtLeastOneEncodingProfileError:
                 return "End_IngestionSuccess_AtLeastOneEncodingProfileError";
-            case IngestionStatus::End_IngestionSuccess:
-                return "End_IngestionSuccess";
+            case IngestionStatus::End_TaskSuccess:
+                return "End_TaskSuccess";
             default:
             throw runtime_error(string("Wrong IngestionStatus"));
         }
@@ -388,8 +382,8 @@ public:
         lowerCase.resize(ingestionStatus.size());
         transform(ingestionStatus.begin(), ingestionStatus.end(), lowerCase.begin(), [](unsigned char c){return tolower(c); } );
 
-        if (lowerCase == "start_ingestion")
-            return IngestionStatus::Start_Ingestion;
+        if (lowerCase == "start_taskqueued")
+            return IngestionStatus::Start_TaskQueued;
         else if (lowerCase == "sourcedownloadinginprogress")
             return IngestionStatus::SourceDownloadingInProgress;
         else if (lowerCase == "sourcemovinginprogress")
@@ -398,8 +392,6 @@ public:
             return IngestionStatus::SourceCopingInProgress;
         else if (lowerCase == "sourceuploadinginprogress")
             return IngestionStatus::SourceUploadingInProgress;
-        else if (lowerCase == "queuedforencoding")
-            return IngestionStatus::QueuedForEncoding;
         else if (lowerCase == "end_downloadcancelledbyuser")
             return IngestionStatus::End_DownloadCancelledByUser;
         else if (lowerCase == "end_validationmetadatafailed")
@@ -412,8 +404,8 @@ public:
             return IngestionStatus::End_IngestionFailure;
         else if (lowerCase == "end_ingestionsuccess_atleastoneencodingprofileerror")
             return IngestionStatus::End_IngestionSuccess_AtLeastOneEncodingProfileError;
-        else if (lowerCase == "end_ingestionsuccess")
-            return IngestionStatus::End_IngestionSuccess;
+        else if (lowerCase == "end_tasksuccess")
+            return IngestionStatus::End_TaskSuccess;
         else
             throw runtime_error(string("Wrong IngestionStatus")
                     + ", ingestionStatus: " + ingestionStatus
@@ -428,11 +420,11 @@ public:
     }
     static bool isIngestionStatusSuccess(const IngestionStatus& ingestionStatus)
     {
-        return (ingestionStatus == IngestionStatus::End_IngestionSuccess);
+        return (ingestionStatus == IngestionStatus::End_TaskSuccess);
     }
     static bool isIngestionStatusFailed(const IngestionStatus& ingestionStatus)
     {
-        return (isIngestionStatusFinalState(ingestionStatus) && ingestionStatus != IngestionStatus::End_IngestionSuccess);
+        return (isIngestionStatusFinalState(ingestionStatus) && ingestionStatus != IngestionStatus::End_TaskSuccess);
     }
 
 public:

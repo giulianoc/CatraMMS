@@ -1423,7 +1423,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                         "limit ?, ? for update";
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
-                preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::Start_Ingestion));
+                preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::Start_TaskQueued));
                 preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress));
                 preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress));
                 preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress));
@@ -1810,7 +1810,7 @@ int64_t MMSEngineDBFacade::addIngestionJob (
                 preparedStatement->setInt64(queryParameterIndex++, customerKey);
                 preparedStatement->setString(queryParameterIndex++, metadataContent);
                 preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(ingestionType));
-                preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(MMSEngineDBFacade::IngestionStatus::Start_Ingestion));
+                preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(MMSEngineDBFacade::IngestionStatus::Start_TaskQueued));
 
                 preparedStatement->executeUpdate();
             }
@@ -3180,7 +3180,7 @@ int MMSEngineDBFacade::updateEncodingJob (
                         IngestionStatus ingestionStatus;
                         
                         if (resultSetIngestion->getInt(1) == 0)  // no failures
-                            ingestionStatus = IngestionStatus::End_IngestionSuccess;
+                            ingestionStatus = IngestionStatus::End_TaskSuccess;
                         else
                             ingestionStatus = IngestionStatus::End_IngestionSuccess_AtLeastOneEncodingProfileError;
 
@@ -4278,7 +4278,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
         }
 
         {
-            IngestionStatus newIngestionStatus = IngestionStatus::QueuedForEncoding;
+            IngestionStatus newIngestionStatus = IngestionStatus::End_TaskSuccess;
             
             lastSQLCommand = 
                 "update MMS_IngestionJob set mediaItemKey = ?, status = ? where ingestionJobKey = ?";

@@ -239,7 +239,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             + ", getEventKey().second: " + to_string(event->getEventKey().second));
                     }
                 }
-                else    // Start_Ingestion
+                else    // Start_TaskQueued
                 {
                     Json::Value metadataRoot;
                     try
