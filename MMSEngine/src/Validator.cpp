@@ -65,9 +65,41 @@ pair<MMSEngineDBFacade::ContentType,vector<int64_t>>
 
     string type = taskRoot.get("Type", "XXX").asString();
     if (type == "ContentIngestion")
+    {
         ingestionType = MMSEngineDBFacade::IngestionType::ContentIngestion;
+        
+        field = "ContentIngestion";
+        if (!isMetadataPresent(taskRoot, field))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        Json::Value contentIngestionRoot = taskRoot[field]; 
+        
+        contentType = validateContentIngestionMetadata(
+                contentIngestionRoot);
+    }
     else if (type == "Screenshots")
+    {
         ingestionType = MMSEngineDBFacade::IngestionType::Screenshots;
+        
+        field = "Screenshots";
+        if (!isMetadataPresent(taskRoot, field))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        Json::Value screenshotsRoot = taskRoot[field]; 
+        contentType = validateScreenshotsMetadata(screenshotsRoot, dependencies);        
+    }
     /*
     else if (type == "ContentRemove")
         ingestionType = MMSEngineDBFacade::IngestionType::ContentRemove;
@@ -81,49 +113,26 @@ pair<MMSEngineDBFacade::ContentType,vector<int64_t>>
         throw runtime_error(errorMessage);
     }
         
-    return validateTaskMetadata(ingestionType, taskRoot);
+    return make_pair(contentType, dependencies);
 }
 
 pair<MMSEngineDBFacade::ContentType,vector<int64_t>> 
         Validator::validateTaskMetadata(
-        MMSEngineDBFacade::IngestionType ingestionType, Json::Value taskRoot)
+        MMSEngineDBFacade::IngestionType ingestionType, Json::Value typeRoot)
 {
     MMSEngineDBFacade::ContentType      contentType;
     vector<int64_t>                     dependencies;
 
     if (ingestionType == MMSEngineDBFacade::IngestionType::ContentIngestion)
     {
-        string field = "ContentIngestion";
-        if (!isMetadataPresent(taskRoot, field))
-        {
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + field;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-
-        Json::Value contentIngestionRoot = taskRoot[field]; 
 
         contentType = validateContentIngestionMetadata(
-                contentIngestionRoot);
+                typeRoot);
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::Screenshots)
     {
-        string field = "Screenshots";
-        if (!isMetadataPresent(taskRoot, field))
-        {
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + field;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-
-        Json::Value screenshotsRoot = taskRoot[field]; 
-
         MMSEngineDBFacade::ContentType contentType =
-            validateScreenshotsMetadata(screenshotsRoot, dependencies);        
+            validateScreenshotsMetadata(typeRoot, dependencies);        
     }
     else
     {
