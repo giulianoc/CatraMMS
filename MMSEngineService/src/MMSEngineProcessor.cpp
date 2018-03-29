@@ -199,6 +199,11 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                 
                 _logger->info(__FILEREF__ + "json to be processed"
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", startIngestion: " + startIngestion
+                    + ", customer->_customerKey: " + to_string(customer->_customerKey)
+                    + ", metaDataContent: " + metaDataContent
+                    + ", ingestionType: " + MMSEngineDBFacade::toString(ingestionType)
+                    + ", ingestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
                 );
 
                 if (ingestionStatus == MMSEngineDBFacade::IngestionStatus::SourceDownloadingInProgress
@@ -1699,7 +1704,7 @@ tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> MMSEngine
     {
         string errorMessage = __FILEREF__ + "ingestionType is wrong"
                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", ingestionType: " + to_string(static_cast<int>(ingestionType));
+                + ", ingestionType: " + MMSEngineDBFacade::toString(ingestionType);
         _logger->error(errorMessage);
 
         throw runtime_error(errorMessage);

@@ -1542,7 +1542,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
         }
          */
 
-        for (tuple<int64_t, string, shared_ptr<Customer>, string, IngestionType, IngestionStatus> ingestionToBeManaged:
+        for (tuple<int64_t, string, shared_ptr<Customer>, string, IngestionType, IngestionStatus>& ingestionToBeManaged:
             ingestionsToBeManaged)
         {
             int64_t ingestionJobKey;
