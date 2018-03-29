@@ -1652,23 +1652,21 @@ void MMSEngineProcessor::handleCheckEncodingEvent ()
 
 tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> MMSEngineProcessor::getMediaSourceDetails(
         int64_t ingestionJobKey, shared_ptr<Customer> customer, MMSEngineDBFacade::IngestionType ingestionType,
-        Json::Value root)        
+        Json::Value typeRoot)        
 {
     MMSEngineDBFacade::IngestionStatus nextIngestionStatus;
     string mediaSourceURL;
     string mediaSourceFileName;
     
-    string field = "ContentIngestion";
-    Json::Value contentIngestion = root[field]; 
-
+    string field;
     if (ingestionType == MMSEngineDBFacade::IngestionType::ContentIngestion)
     {
         field = "SourceURL";
-        if (_mmsEngineDBFacade->isMetadataPresent(contentIngestion, field))
-            mediaSourceURL = contentIngestion.get(field, "XXX").asString();
+        if (_mmsEngineDBFacade->isMetadataPresent(typeRoot, field))
+            mediaSourceURL = typeRoot.get(field, "XXX").asString();
         
         field = "SourceFileName";
-        mediaSourceFileName = contentIngestion.get(field, "XXX").asString();
+        mediaSourceFileName = typeRoot.get(field, "XXX").asString();
 
         string httpPrefix ("http://");
         string httpsPrefix ("https://");
@@ -1709,18 +1707,18 @@ tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> MMSEngine
 
     string md5FileCheckSum;
     field = "MD5FileCheckSum";
-    if (_mmsEngineDBFacade->isMetadataPresent(contentIngestion, field))
+    if (_mmsEngineDBFacade->isMetadataPresent(typeRoot, field))
     {
         MD5         md5;
         char        md5RealDigest [32 + 1];
 
-        md5FileCheckSum = contentIngestion.get(field, "XXX").asString();
+        md5FileCheckSum = typeRoot.get(field, "XXX").asString();
     }
 
     int fileSizeInBytes = -1;
     field = "FileSizeInBytes";
-    if (_mmsEngineDBFacade->isMetadataPresent(contentIngestion, field))
-        fileSizeInBytes = contentIngestion.get(field, 3).asInt();
+    if (_mmsEngineDBFacade->isMetadataPresent(typeRoot, field))
+        fileSizeInBytes = typeRoot.get(field, 3).asInt();
 
     tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> mediaSourceDetails;
     get<0>(mediaSourceDetails) = nextIngestionStatus;
