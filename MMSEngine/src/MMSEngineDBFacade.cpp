@@ -5203,11 +5203,12 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         {
             lastSQLCommand = 
                 "create table if not exists MMS_IngestionJobDependency ("
+                    "ingestionJobDependency  			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "ingestionJobKey  			BIGINT UNSIGNED NOT NULL,"
                     "label                              VARCHAR (128) NULL,"
                     "dependOnIngestionJobKey            BIGINT UNSIGNED NULL,"
                     "dependOnSuccess                    TINYINT (1) NOT NULL,"
-                    "constraint MMS_IngestionJob_PK PRIMARY KEY (ingestionJobKey, dependOnIngestionJobKey), "
+                    "constraint MMS_IngestionJob_PK PRIMARY KEY (ingestionJobDependency), "
                     "constraint MMS_IngestionJobDependency_FK foreign key (ingestionJobKey) "
                         "references MMS_IngestionJob (ingestionJobKey) on delete cascade, "	   	        				
                     "constraint MMS_IngestionJobDependency_FK2 foreign key (dependOnIngestionJobKey) "
@@ -5227,6 +5228,25 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 throw se;
             }
         }
+
+        try
+        {
+            lastSQLCommand = 
+                "create index MMS_IngestionJobDependency_idx on MMS_IngestionJobDependency (ingestionJobKey)";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }    
 
         try
         {
