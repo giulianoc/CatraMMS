@@ -591,7 +591,7 @@ public:
     pair<int64_t,int64_t> saveIngestedContentMetadata(
         shared_ptr<Customer> customer,
         int64_t ingestionJobKey,
-        Json::Value metadataRoot,
+        Json::Value typeRoot,
         string relativePath,
         string mediaSourceFileName,
         int mmsPartitionIndexUsed,

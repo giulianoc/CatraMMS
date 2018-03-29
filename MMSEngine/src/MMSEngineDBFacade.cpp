@@ -3676,7 +3676,7 @@ string MMSEngineDBFacade::checkCustomerMaxIngestionNumber (
 pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
         shared_ptr<Customer> customer,
         int64_t ingestionJobKey,
-        Json::Value metadataRoot,
+        Json::Value typeRoot,
         string relativePath,
         string mediaSourceFileName,
         int mmsPartitionIndexUsed,
@@ -3724,16 +3724,14 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             statement->execute(lastSQLCommand);
         }
 
-        Json::Value contentIngestion = metadataRoot["ContentIngestion"]; 
-
         _logger->info(__FILEREF__ + "Retrieving contentProviderKey...");
         // get ContentProviderKey
         int64_t contentProviderKey;
         {
             string contentProviderName;
             
-            if (isMetadataPresent(contentIngestion, "ContentProviderName"))
-                contentProviderName = contentIngestion.get("ContentProviderName", "XXX").asString();
+            if (isMetadataPresent(typeRoot, "ContentProviderName"))
+                contentProviderName = typeRoot.get("ContentProviderName", "XXX").asString();
             else
                 contentProviderName = _defaultContentProviderName;
 
@@ -3773,18 +3771,18 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             string sContentType;
             string encodingProfilesSet;
 
-            if (isMetadataPresent(contentIngestion, "UniqueName"))
-                uniqueName = contentIngestion.get("UniqueName", "XXX").asString();
+            if (isMetadataPresent(typeRoot, "UniqueName"))
+                uniqueName = typeRoot.get("UniqueName", "XXX").asString();
 
-            title = contentIngestion.get("Title", "XXX").asString();
+            title = typeRoot.get("Title", "XXX").asString();
             
-            if (isMetadataPresent(contentIngestion, "Ingester"))
-                ingester = contentIngestion.get("Ingester", "XXX").asString();
+            if (isMetadataPresent(typeRoot, "Ingester"))
+                ingester = typeRoot.get("Ingester", "XXX").asString();
 
-            if (isMetadataPresent(contentIngestion, "Keywords"))
-                keywords = contentIngestion.get("Keywords", "XXX").asString();
+            if (isMetadataPresent(typeRoot, "Keywords"))
+                keywords = typeRoot.get("Keywords", "XXX").asString();
 
-            sContentType = contentIngestion.get("ContentType", "XXX").asString();
+            sContentType = typeRoot.get("ContentType", "XXX").asString();
             try
             {
                 contentType = MMSEngineDBFacade::toContentType(sContentType);
@@ -3800,8 +3798,8 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             }            
 
             {
-                if (isMetadataPresent(contentIngestion, "EncodingProfilesSet"))
-                    encodingProfilesSet = contentIngestion.get("EncodingProfilesSet", "XXX").asString();
+                if (isMetadataPresent(typeRoot, "EncodingProfilesSet"))
+                    encodingProfilesSet = typeRoot.get("EncodingProfilesSet", "XXX").asString();
                 else
                     encodingProfilesSet = "customerDefault";
                 
@@ -4062,9 +4060,9 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
         // territories
         {
             string field = "Territories";
-            if (isMetadataPresent(contentIngestion, field))
+            if (isMetadataPresent(typeRoot, field))
             {
-                const Json::Value territories = contentIngestion[field];
+                const Json::Value territories = typeRoot[field];
                 
                 lastSQLCommand = 
                     "select territoryKey, name from MMS_Territory where customerKey = ?";
@@ -4249,9 +4247,9 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             if (contentType == ContentType::Video || contentType == ContentType::Audio)
             {
                 string field = "EncodingPriority";
-                if (isMetadataPresent(contentIngestion, field))
+                if (isMetadataPresent(typeRoot, field))
                 {
-                    string strEncodingPriority = contentIngestion.get(field, "XXX").asString();
+                    string strEncodingPriority = typeRoot.get(field, "XXX").asString();
                     encodingPriority = MMSEngineDBFacade::toEncodingPriority(strEncodingPriority);
 
                     if (static_cast<int>(encodingPriority) > customer->_maxEncodingPriority)
