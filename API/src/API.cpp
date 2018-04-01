@@ -1358,11 +1358,15 @@ _logger->info(__FILEREF__ + "3...");
                     for(Json::Value::iterator it = variablesRoot.begin(); it != variablesRoot.end(); ++it)
                     {
                         Json::Value key = it.key();
+_logger->info(__FILEREF__ + key.toStyledString());
                         Json::Value value = (*it);
+_logger->info(__FILEREF__ + value.toStyledString());
 
                         string variableToBeSearched = string("\\${") + key.toStyledString() + "}";
+_logger->info(__FILEREF__ + "4...");
 
                         localRequestBody = regex_replace(localRequestBody, regex(variableToBeSearched), value.toStyledString());
+_logger->info(__FILEREF__ + "5...");
                     }
                     
                     _logger->info(__FILEREF__ + "requestBody after the replacement of the variables"
