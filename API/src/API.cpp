@@ -13,6 +13,7 @@
 
 #include <fstream>
 #include <sstream>
+#include <regex>
 #include <curlpp/cURLpp.hpp>
 #include <curlpp/Easy.hpp>
 #include <curlpp/Options.hpp>
@@ -1338,6 +1339,8 @@ void API::ingestion(
 
                 throw runtime_error(errorMessage);
             }
+
+            requestBodyRoot = applyVariables(requestBody, requestBodyRoot);
         }
         catch(...)
         {
@@ -1371,7 +1374,7 @@ void API::ingestion(
         shared_ptr<MySQLConnection> conn;
 
         try
-        {
+        {            
             conn = _mmsEngineDBFacade->beginIngestionJobs();
 
             Validator validator(_logger, _mmsEngineDBFacade);
@@ -1447,6 +1450,84 @@ void API::ingestion(
 
         throw runtime_error(errorMessage);
     }
+}
+
+Json::Value API::applyVariables(string requestBody, Json::Value processRoot)
+{
+    string field = "Variables";
+    if (!_mmsEngineDBFacade->isMetadataPresent(processRoot, field))
+    {
+        return processRoot;
+    }
+    
+    Json::Value variablesRoot = processRoot[field];
+    if (variablesRoot.begin() == variablesRoot.end())
+    {
+        return processRoot;
+    }
+
+    for(Json::Value::iterator it = variablesRoot.begin(); it != variablesRoot.end(); ++it)
+    {
+        Json::Value key = it.key();
+        Json::Value value = (*it);
+
+        string variableToBeSearched = string("\\${") + key.toStyledString() + "}";
+        
+        requestBody = regex_replace(requestBody, regex(variableToBeSearched), value.toStyledString());
+    }
+    
+    Json::Value requestBodyRoot;
+    try
+    {
+        Json::CharReaderBuilder builder;
+        Json::CharReader* reader = builder.newCharReader();
+        string errors;
+
+        bool parsingSuccessful = reader->parse(requestBody.c_str(),
+                requestBody.c_str() + requestBody.size(), 
+                &requestBodyRoot, &errors);
+        delete reader;
+
+        if (!parsingSuccessful)
+        {
+            string errorMessage = __FILEREF__ + "failed to parse the requestBody"
+                    + ", errors: " + errors
+                    + ", requestBody: " + requestBody
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+    catch(...)
+    {
+        string errorMessage = string("requestBody json is not well format")
+                + ", requestBody: " + requestBody
+                ;
+        _logger->error(__FILEREF__ + errorMessage);
+
+        /*
+        int64_t dependOnIngestionJobKey = -1;
+        _logger->info(__FILEREF__ + "add IngestionJob"
+            + ", requestBody: " + requestBody
+            + ", IngestionType: " + "Unknown"
+            + ", IngestionStatus: " + "End_ValidationMetadataFailed"
+            + ", dependOnIngestionJobKey: " + dependOnIngestionJobKey
+            + ", errorMessage: " + errorMessage
+        );
+        _mmsEngineDBFacade->addIngestionJob (customer->_customerKey,
+                requestBody,
+                MMSEngineDBFacade::IngestionType::Unknown,
+                MMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed,
+                dependOnIngestionJobKey,
+                errorMessage
+        );
+         */
+
+        throw runtime_error(errorMessage);
+    }
+    
+    return requestBodyRoot;
 }
 
 void API::ingestionTask(shared_ptr<MySQLConnection> conn,

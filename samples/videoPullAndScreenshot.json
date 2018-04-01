@@ -6,7 +6,7 @@
 	"Task": {
 		"Label": "nome univoco del task all'interno del processo", 
         	"Type": "ContentIngestion",
-        	"ContentIngestion": {
+        	"Parameters": {
                 	"SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
                 	"SourceFileName": "123456.mp4",
                 	"ContentType": "video",

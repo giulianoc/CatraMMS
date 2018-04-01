@@ -1,17 +1,18 @@
 {
 	"Type": "Process",
-
-	"UniqueName": "nome univoco del processo", 
-
+	"Label": "1",
+	"Vars": {  
+		"Title": "My Title of the content"
+	},
 	"Task": {
-		"Label": "nome univoco del task all'interno del processo", 
-        "Type": "ContentIngestion",
-        "ContentIngestion": {
-                "SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
-                "SourceFileName": "123456.mp4",
-                "ContentType": "video",
-                "userData": { "MyData": "this is my data" },
-                "Title": "Maradona"
+		"Label": "nome univoco del task all'interno del processo",
+		"Type": "ContentIngestion",
+		"Parameters": {
+			"SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
+			"SourceFileName": "123456.mp4",
+			"ContentType": "video",
+			"userData": { "MyData": "this is my data" },
+			"Title": "${Title}"
 		}
 	}
 }

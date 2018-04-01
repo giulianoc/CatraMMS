@@ -117,6 +117,8 @@ private:
         long long& contentRangeStart,
         long long& contentRangeEnd,
         long long& contentRangeSize);
+    
+    Json::Value applyVariables(string requestBody, Json::Value processRoot);
 };
 
 #endif /* POSTCUSTOMER_H */

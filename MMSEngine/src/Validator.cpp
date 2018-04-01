@@ -68,7 +68,7 @@ pair<MMSEngineDBFacade::ContentType,vector<int64_t>>
     {
         ingestionType = MMSEngineDBFacade::IngestionType::ContentIngestion;
         
-        field = "ContentIngestion";
+        field = "Parameters";
         if (!isMetadataPresent(taskRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
