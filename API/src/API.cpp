@@ -1350,6 +1350,9 @@ void API::ingestion(
                 {
                     string localRequestBody = requestBody;
                     
+                    _logger->info(__FILEREF__ + "variables processing..."
+                    );
+                    
                     for(Json::Value::iterator it = variablesRoot.begin(); it != variablesRoot.end(); ++it)
                     {
                         Json::Value key = it.key();
