@@ -1360,6 +1360,10 @@ void API::ingestion(
                         localRequestBody = regex_replace(localRequestBody, regex(variableToBeSearched), value.toStyledString());
                     }
                     
+                    _logger->info(__FILEREF__ + "requestBody after the replacement of the variables"
+                        + ", localRequestBody: " + localRequestBody
+                    );
+                    
                     {
                         Json::CharReaderBuilder builder;
                         Json::CharReader* reader = builder.newCharReader();
@@ -1413,7 +1417,7 @@ void API::ingestion(
             throw runtime_error(errorMessage);
         }
 
-        string responseBody;
+        string responseBody;    
         shared_ptr<MySQLConnection> conn;
 
         try
