@@ -1345,12 +1345,9 @@ void API::ingestion(
             string field = "Variables";
             if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
             {
-_logger->info(__FILEREF__ + "1...");
                 Json::Value variablesRoot = requestBodyRoot[field];
-_logger->info(__FILEREF__ + "2...");
                 if (variablesRoot.begin() != variablesRoot.end())
                 {
-_logger->info(__FILEREF__ + "3...");
                     string localRequestBody = requestBody;
                     
                     _logger->info(__FILEREF__ + "variables processing...");
@@ -1358,12 +1355,10 @@ _logger->info(__FILEREF__ + "3...");
                     for(Json::Value::iterator it = variablesRoot.begin(); it != variablesRoot.end(); ++it)
                     {
                         Json::Value key = it.key();
-_logger->info(__FILEREF__ + key.toStyledString());
                         Json::Value value = (*it);
-_logger->info(__FILEREF__ + value.toStyledString());
 
-                        string variableToBeSearched = string("\\${") + key.toStyledString() + "}";
-_logger->info(__FILEREF__ + "4...");
+                        string variableToBeSearched = string("${") + key.toStyledString() + "}";
+_logger->info(__FILEREF__ + variableToBeSearched);
 
                         localRequestBody = regex_replace(localRequestBody, regex(variableToBeSearched), value.toStyledString());
 _logger->info(__FILEREF__ + "5...");
