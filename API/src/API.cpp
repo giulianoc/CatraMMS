@@ -1345,13 +1345,15 @@ void API::ingestion(
             string field = "Variables";
             if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
             {
+_logger->info(__FILEREF__ + "1...");
                 Json::Value variablesRoot = requestBodyRoot[field];
+_logger->info(__FILEREF__ + "2...");
                 if (variablesRoot.begin() != variablesRoot.end())
                 {
+_logger->info(__FILEREF__ + "3...");
                     string localRequestBody = requestBody;
                     
-                    _logger->info(__FILEREF__ + "variables processing..."
-                    );
+                    _logger->info(__FILEREF__ + "variables processing...");
                     
                     for(Json::Value::iterator it = variablesRoot.begin(); it != variablesRoot.end(); ++it)
                     {
