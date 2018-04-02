@@ -1356,11 +1356,17 @@ void API::ingestion(
                     {
                         Json::Value key = it.key();
                         Json::Value value = (*it);
+                        
+                        Json::StreamWriterBuilder wbuilder;
+                        string sKey = Json::writeString(wbuilder, key);        
+                        string sValue = Json::writeString(wbuilder, value);        
+                        
+                        string variableToBeSearched = string("\\$\\{") + sKey + "\\}";
 
-                        string variableToBeSearched = string("${") + key.toStyledString() + "}";
-_logger->info(__FILEREF__ + variableToBeSearched);
+                        _logger->info(__FILEREF__ + variableToBeSearched);
+                        _logger->info(__FILEREF__ + sValue);
 
-                        localRequestBody = regex_replace(localRequestBody, regex(variableToBeSearched), value.toStyledString());
+                        localRequestBody = regex_replace(localRequestBody, regex(variableToBeSearched), sValue);
 _logger->info(__FILEREF__ + "5...");
                     }
                     
