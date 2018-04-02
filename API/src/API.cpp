@@ -1370,7 +1370,11 @@ void API::ingestion(
                         string variableToBeReplaced = string("\\$\\{") + sKey + "\\}";
                         localRequestBody = regex_replace(localRequestBody, regex(variableToBeReplaced), sValue);
                          */
-                        string variableToBeReplaced = string("${") + sKey + "\\}";
+                        string variableToBeReplaced = string("${") + sKey + "}";
+                        _logger->info(__FILEREF__ + "requestBody, replace"
+                            + ", variableToBeReplaced: " + variableToBeReplaced
+                            + ", sValue: " + sValue
+                        );
                         size_t index = 0;
                         while (true) 
                         {
