@@ -241,7 +241,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                 }
                 else    // Start_TaskQueued
                 {
-                    Json::Value typeRoot;
+                    Json::Value parametersRoot;
                     try
                     {
                         Json::CharReaderBuilder builder;
@@ -250,7 +250,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                         bool parsingSuccessful = reader->parse(metaDataContent.c_str(),
                                 metaDataContent.c_str() + metaDataContent.size(), 
-                                &typeRoot, &errors);
+                                &parametersRoot, &errors);
                         delete reader;
 
                         if (!parsingSuccessful)
@@ -297,7 +297,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         Validator validator(_logger, _mmsEngineDBFacade);
                         
                         contentTypeAndDependencies = validator.validateTaskMetadata(
-                                ingestionType, typeRoot);
+                                ingestionType, parametersRoot);
                         
                         tie(contentType, dependencies) = contentTypeAndDependencies;
                     }
@@ -425,7 +425,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 mediaSourceDetails = getMediaSourceDetails(
                                         ingestionJobKey, customer,
-                                        ingestionType, typeRoot);
+                                        ingestionType, parametersRoot);
 
                                 tie(nextIngestionStatus,
                                         mediaSourceURL, mediaSourceFileName, 
@@ -603,7 +603,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                     generateAndIngestFrame(
                                             ingestionJobKey, 
                                             customer, 
-                                            typeRoot, 
+                                            parametersRoot, 
                                             dependencies);
                                 }
                                 catch(runtime_error e)
@@ -756,7 +756,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             contentTypeAndDependencies;
     MMSEngineDBFacade::ContentType contentType;
     vector<int64_t> dependencies;
-    Json::Value typeRoot;
+    Json::Value parametersRoot;
     try
     {
         Json::CharReaderBuilder builder;
@@ -765,7 +765,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 
         bool parsingSuccessful = reader->parse(localAssetIngestionEvent->getMetadataContent().c_str(),
                 localAssetIngestionEvent->getMetadataContent().c_str() + localAssetIngestionEvent->getMetadataContent().size(), 
-                &typeRoot, &errors);
+                &parametersRoot, &errors);
         delete reader;
 
         if (!parsingSuccessful)
@@ -783,7 +783,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         Validator validator(_logger, _mmsEngineDBFacade);
         
         contentTypeAndDependencies = validator.validateTaskMetadata(
-                localAssetIngestionEvent->getIngestionType(), typeRoot);
+                localAssetIngestionEvent->getIngestionType(), parametersRoot);
         
         tie(contentType, dependencies) =
                 contentTypeAndDependencies;
@@ -842,7 +842,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             mediaSourceDetails = getMediaSourceDetails(
                 localAssetIngestionEvent->getIngestionJobKey(),
                 localAssetIngestionEvent->getCustomer(),
-                localAssetIngestionEvent->getIngestionType(), typeRoot);
+                localAssetIngestionEvent->getIngestionType(), parametersRoot);
         
         tie(nextIngestionStatus,
                 mediaSourceURL, mediaSourceFileName, 
@@ -1238,7 +1238,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                 _mmsEngineDBFacade->saveIngestedContentMetadata (
                     localAssetIngestionEvent->getCustomer(),
                     localAssetIngestionEvent->getIngestionJobKey(),
-                    typeRoot,
+                    parametersRoot,
                     relativePathToBeUsed,
                     mediaSourceFileName,
                     mmsPartitionIndexUsed,
@@ -1326,7 +1326,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 void MMSEngineProcessor::generateAndIngestFrame(
         int64_t ingestionJobKey,
         shared_ptr<Customer> customer,
-        Json::Value typeRoot,
+        Json::Value parametersRoot,
         vector<int64_t>& dependencies
 )
 {
@@ -1334,9 +1334,9 @@ void MMSEngineProcessor::generateAndIngestFrame(
     {
         double instantInSeconds = 0;
         string field = "InstantInSeconds";
-        if (_mmsEngineDBFacade->isMetadataPresent(typeRoot, field))
+        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
         {
-            instantInSeconds = typeRoot.get(field, "XXX").asDouble();
+            instantInSeconds = parametersRoot.get(field, "XXX").asDouble();
         }
 
         string videoFilter;
@@ -1346,16 +1346,16 @@ void MMSEngineProcessor::generateAndIngestFrame(
 
         int width = -1;
         field = "Width";
-        if (_mmsEngineDBFacade->isMetadataPresent(typeRoot, field))
+        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
         {
-            width = typeRoot.get(field, "XXX").asInt();
+            width = parametersRoot.get(field, "XXX").asInt();
         }
 
         int height = -1;
         field = "Height";
-        if (_mmsEngineDBFacade->isMetadataPresent(typeRoot, field))
+        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
         {
-            height = typeRoot.get(field, "XXX").asInt();
+            height = parametersRoot.get(field, "XXX").asInt();
         }
 
         int64_t sourceMediaItemKey = dependencies.back();
@@ -1422,7 +1422,7 @@ void MMSEngineProcessor::generateAndIngestFrame(
         }
 
         field = "SourceFileName";
-        if (!_mmsEngineDBFacade->isMetadataPresent(typeRoot, field))
+        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -1431,7 +1431,7 @@ void MMSEngineProcessor::generateAndIngestFrame(
 
             throw runtime_error(errorMessage);
         }
-        string sourceFileName = typeRoot.get(field, "XXX").asString();
+        string sourceFileName = parametersRoot.get(field, "XXX").asString();
 
         string customerIngestionRepository = _mmsStorage->getCustomerIngestionRepository(
                 customer);
@@ -1466,7 +1466,7 @@ void MMSEngineProcessor::generateAndIngestFrame(
                     ingestionJobKey,
                     mjpeg,
                     generatedFrameFileName,
-                    typeRoot
+                    parametersRoot
             );
 
             {
@@ -1616,7 +1616,7 @@ void MMSEngineProcessor::handleCheckEncodingEvent ()
 
 tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> MMSEngineProcessor::getMediaSourceDetails(
         int64_t ingestionJobKey, shared_ptr<Customer> customer, MMSEngineDBFacade::IngestionType ingestionType,
-        Json::Value typeRoot)        
+        Json::Value parametersRoot)        
 {
     MMSEngineDBFacade::IngestionStatus nextIngestionStatus;
     string mediaSourceURL;
@@ -1626,11 +1626,11 @@ tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> MMSEngine
     if (ingestionType == MMSEngineDBFacade::IngestionType::ContentIngestion)
     {
         field = "SourceURL";
-        if (_mmsEngineDBFacade->isMetadataPresent(typeRoot, field))
-            mediaSourceURL = typeRoot.get(field, "XXX").asString();
+        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            mediaSourceURL = parametersRoot.get(field, "XXX").asString();
         
         field = "SourceFileName";
-        mediaSourceFileName = typeRoot.get(field, "XXX").asString();
+        mediaSourceFileName = parametersRoot.get(field, "XXX").asString();
 
         string httpPrefix ("http://");
         string httpsPrefix ("https://");
@@ -1671,18 +1671,18 @@ tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> MMSEngine
 
     string md5FileCheckSum;
     field = "MD5FileCheckSum";
-    if (_mmsEngineDBFacade->isMetadataPresent(typeRoot, field))
+    if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
     {
         MD5         md5;
         char        md5RealDigest [32 + 1];
 
-        md5FileCheckSum = typeRoot.get(field, "XXX").asString();
+        md5FileCheckSum = parametersRoot.get(field, "XXX").asString();
     }
 
     int fileSizeInBytes = -1;
     field = "FileSizeInBytes";
-    if (_mmsEngineDBFacade->isMetadataPresent(typeRoot, field))
-        fileSizeInBytes = typeRoot.get(field, 3).asInt();
+    if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        fileSizeInBytes = parametersRoot.get(field, 3).asInt();
 
     tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> mediaSourceDetails;
     get<0>(mediaSourceDetails) = nextIngestionStatus;

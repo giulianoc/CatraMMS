@@ -63,13 +63,13 @@ private:
         int64_t ingestionJobKey,
         bool mjpeg,
         string sourceFileName,
-        Json::Value screenshotRoot
+        Json::Value parametersRoot
     );
 
     void generateAndIngestFrame(
         int64_t ingestionJobKey,
         shared_ptr<Customer> customer,
-        Json::Value metadataRoot,
+        Json::Value parametersRoot,
         vector<int64_t>& dependencies
     );
 

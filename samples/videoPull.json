@@ -5,7 +5,7 @@
 		"Title": "My Title of the content"
 	},
 	"Task": {
-		"Label": "nome univoco del task all'interno del processo",
+		"Label": "...",
 		"Type": "ContentIngestion",
 		"Parameters": {
 			"SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
