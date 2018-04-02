@@ -2639,6 +2639,91 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
     return mediaItemKeyAndContentType;
 }
 
+pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyDetailsByUniqueName(
+    string referenceUniqueName, bool warningIfMissing)
+{
+    string      lastSQLCommand;
+        
+    shared_ptr<MySQLConnection> conn;
+    
+    pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+
+        {
+            lastSQLCommand = 
+                "select mediaItemKey, contentType from MMS_MediaItem where uniqueName = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, referenceUniqueName);
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                mediaItemKeyAndContentType.first = resultSet->getInt64("mediaItemKey");
+                mediaItemKeyAndContentType.second = MMSEngineDBFacade::toContentType(resultSet->getString("contentType"));
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "MediaItemKey is not found"
+                    + ", referenceUniqueName: " + referenceUniqueName
+                    + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                if (warningIfMissing)
+                    _logger->warn(errorMessage);
+                else
+                    _logger->error(errorMessage);
+
+                throw MediaItemKeyNotFound(errorMessage);                    
+            }            
+        }
+
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        _connectionPool->unborrow(conn);
+
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw se;
+    }
+    catch(MediaItemKeyNotFound e)
+    {
+        _connectionPool->unborrow(conn);
+        
+        if (warningIfMissing)
+            _logger->warn(__FILEREF__ + "SQL exception"
+                + ", lastSQLCommand: " + lastSQLCommand
+            );
+        else
+            _logger->error(__FILEREF__ + "SQL exception"
+                + ", lastSQLCommand: " + lastSQLCommand
+            );
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _connectionPool->unborrow(conn);
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
+    }
+    
+    return mediaItemKeyAndContentType;
+}
+
 tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> MMSEngineDBFacade::getVideoDetails(
     int64_t mediaItemKey)
 {

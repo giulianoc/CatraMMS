@@ -1135,7 +1135,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
             );
 }
 
-vector<string> FFMpeg::generateScreenshotsToIngest(
+vector<string> FFMpeg::generateFramesToIngest(
         string imageDirecotry,
         string imageFileName,
         double startTimeInSeconds,
@@ -1147,7 +1147,7 @@ vector<string> FFMpeg::generateScreenshotsToIngest(
         int imageHeight,
         string mmsAssetPathName)
 {
-    vector<string> generatedScreenshotFileNames;
+    vector<string> generatedFramesFileNames;
     
     string localImageFileName = imageFileName;
 
@@ -1156,7 +1156,7 @@ vector<string> FFMpeg::generateScreenshotsToIngest(
     string outputFfmpegPathFileName =
             string("/tmp/")
             + localImageFileName
-            + ".generateScreenshot.log"
+            + ".generateFrame.log"
             ;
     
     // ffmpeg -y -i [source.wmv] -f mjpeg -ss [10] -vframes 1 -an -s [176x144] [thumbnail_image.jpg]
@@ -1262,7 +1262,7 @@ vector<string> FFMpeg::generateScreenshotsToIngest(
     FileIO::remove(outputFfmpegPathFileName, exceptionInCaseOfError);
     
     if (mjpeg || framesNumber == 1)
-        generatedScreenshotFileNames.push_back(localImageFileName);
+        generatedFramesFileNames.push_back(localImageFileName);
     else
     {
         // get files from file system
@@ -1283,7 +1283,7 @@ vector<string> FFMpeg::generateScreenshotsToIngest(
                     continue;
 
                 if (directoryEntry.compare(0, imageBaseFileName.size(), imageBaseFileName) == 0)
-                    generatedScreenshotFileNames.push_back(directoryEntry);
+                    generatedFramesFileNames.push_back(directoryEntry);
             }
             catch(DirectoryListFinished e)
             {
@@ -1328,7 +1328,7 @@ vector<string> FFMpeg::generateScreenshotsToIngest(
     } 
     */ 
     
-    return generatedScreenshotFileNames;
+    return generatedFramesFileNames;
 }
 
 void FFMpeg::settingFfmpegPatameters(

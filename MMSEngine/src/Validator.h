@@ -37,8 +37,8 @@ public:
     MMSEngineDBFacade::ContentType validateContentIngestionMetadata(
         Json::Value contentIngestionRoot);
 
-    MMSEngineDBFacade::ContentType validateScreenshotsMetadata(
-        Json::Value screenshotsRoot, vector<int64_t>& dependencies);
+    MMSEngineDBFacade::ContentType validateFrameMetadata(
+        Json::Value frameRoot, vector<int64_t>& dependencies);
 
 private:
     shared_ptr<spdlog::logger>          _logger;

@@ -1592,16 +1592,54 @@ void API::ingestionTask(shared_ptr<MySQLConnection> conn,
             + "\"ingestionJobKey\": " + to_string(localDependOnIngestionJobKey) + ", "
             + "\"label\": \"" + label + "\" "
             + "}");
-            
-    field = "OnSuccessTask";
+
+    field = "OnSuccess";
     if (_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
     {
-        Json::Value onSuccessTaskRoot = taskRoot[field]; 
+        Json::Value onSuccessRoot = taskRoot[field];
         
-        int localDependOnSuccess = 1;
-        ingestionTask(conn, customer, onSuccessTaskRoot, 
-                localDependOnIngestionJobKey, localDependOnSuccess, responseBody);
-    }
+        field = "Task";
+        if (_mmsEngineDBFacade->isMetadataPresent(onSuccessRoot, field))
+        {
+            Json::Value onSuccessTaskRoot = onSuccessRoot[field]; 
+
+            int localDependOnSuccess = 1;
+            ingestionTask(conn, customer, onSuccessTaskRoot, 
+                    localDependOnIngestionJobKey, localDependOnSuccess, responseBody);
+        }
+    }    
+
+    field = "OnError";
+    if (_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
+    {
+        Json::Value onErrorRoot = taskRoot[field];
+        
+        field = "Task";
+        if (_mmsEngineDBFacade->isMetadataPresent(onErrorRoot, field))
+        {
+            Json::Value onErrorTaskRoot = onErrorRoot[field]; 
+
+            int localDependOnSuccess = 0;
+            ingestionTask(conn, customer, onErrorTaskRoot, 
+                    localDependOnIngestionJobKey, localDependOnSuccess, responseBody);
+        }
+    }    
+    
+    field = "OnComplete";
+    if (_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
+    {
+        Json::Value onCompleteRoot = taskRoot[field];
+        
+        field = "Task";
+        if (_mmsEngineDBFacade->isMetadataPresent(onCompleteRoot, field))
+        {
+            Json::Value onCompleteTaskRoot = onCompleteRoot[field]; 
+
+            int localDependOnSuccess = -1;
+            ingestionTask(conn, customer, onCompleteTaskRoot, 
+                    localDependOnIngestionJobKey, localDependOnSuccess, responseBody);
+        }
+    }    
 }
 
 /*

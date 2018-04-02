@@ -268,7 +268,7 @@ public:
     enum class IngestionType {
         Unknown                 = 0,    // in case json was not able to be parsed
         ContentIngestion        = 1,
-        Screenshots             = 2,
+        Frame                   = 2,
         ContentUpdate           = 3,
         ContentRemove           = 4
     };
@@ -280,8 +280,8 @@ public:
                 return "Unknown";
             case IngestionType::ContentIngestion:
                 return "ContentIngestion";
-            case IngestionType::Screenshots:
-                return "Screenshots";
+            case IngestionType::Frame:
+                return "Frame";
             case IngestionType::ContentUpdate:
                 return "ContentUpdate";
             case IngestionType::ContentRemove:
@@ -298,8 +298,8 @@ public:
 
         if (lowerCase == "contentingestion")
             return IngestionType::ContentIngestion;
-        else if (lowerCase == "screenshots")
-            return IngestionType::Screenshots;
+        else if (lowerCase == "frame")
+            return IngestionType::Frame;
         else if (lowerCase == "contentupdate")
             return IngestionType::ContentUpdate;
         else if (lowerCase == "contentremove")
@@ -561,6 +561,9 @@ public:
     pair<int64_t,MMSEngineDBFacade::ContentType> getMediaItemKeyDetailsByIngestionJobKey(
         int64_t referenceIngestionJobKey, bool warningIfMissing);
 
+    pair<int64_t,MMSEngineDBFacade::ContentType> getMediaItemKeyDetailsByUniqueName(
+        string referenceUniqueName, bool warningIfMissing);
+    
     tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> getVideoDetails(
         int64_t mediaItemKey);
 

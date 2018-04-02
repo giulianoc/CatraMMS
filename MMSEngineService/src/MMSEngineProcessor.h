@@ -66,7 +66,7 @@ private:
         Json::Value screenshotRoot
     );
 
-    void generateAndIngestScreenshots(
+    void generateAndIngestFrame(
         int64_t ingestionJobKey,
         shared_ptr<Customer> customer,
         Json::Value metadataRoot,
