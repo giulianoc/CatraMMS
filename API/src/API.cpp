@@ -13,8 +13,8 @@
 
 #include <fstream>
 #include <sstream>
-#include <algorithm>
-#include <regex>
+// #include <algorithm>
+// #include <regex>
 #include <curlpp/cURLpp.hpp>
 #include <curlpp/Easy.hpp>
 #include <curlpp/Options.hpp>
@@ -1366,18 +1366,25 @@ void API::ingestion(
                         if (sValue.length() > 2)    // to remove the first and last "
                             sValue = sValue.substr(1, sValue.length() - 2);
                         
-                        string variableToBeSearched = string("\\$\\{") + sKey + "\\}";
+                        /*
+                        string variableToBeReplaced = string("\\$\\{") + sKey + "\\}";
+                        localRequestBody = regex_replace(localRequestBody, regex(variableToBeReplaced), sValue);
+                         */
+                        string variableToBeReplaced = string("${") + sKey + "\\}";
+                        size_t index = 0;
+                        while (true) 
+                        {
+                             /* Locate the substring to replace. */
+                             index = localRequestBody.find(variableToBeReplaced, index);
+                             if (index == string::npos) 
+                                 break;
 
-                        _logger->info(__FILEREF__ + variableToBeSearched);
-                        _logger->info(__FILEREF__ + sValue);
+                             /* Make the replacement. */
+                             localRequestBody.replace(index, variableToBeReplaced.length(), sValue);
 
-                    _logger->info(__FILEREF__ + "requestBody before the replacement of the variables"
-                        + ", localRequestBody: " + localRequestBody
-                    );
-                        localRequestBody = regex_replace(localRequestBody, regex(variableToBeSearched), sValue);
-                    _logger->info(__FILEREF__ + "requestBody after the replacement of the variables"
-                        + ", localRequestBody: " + localRequestBody
-                    );
+                             /* Advance index forward so the next iteration doesn't pick it up as well. */
+                             index += sValue.length();
+                        }
                     }
                     
                     _logger->info(__FILEREF__ + "requestBody after the replacement of the variables"
