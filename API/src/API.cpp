@@ -1568,7 +1568,9 @@ void API::ingestionTask(shared_ptr<MySQLConnection> conn,
     
     if (dependOnIngestionJobKey != -1 && referenceToBeAdded)
     {
-        taskRoot[type]["ReferenceIngestionJobKey"] = dependOnIngestionJobKey;
+        field = "Parameters";
+        string addedField = "ReferenceIngestionJobKey";
+        taskRoot[field][addedField] = dependOnIngestionJobKey;
         
         {
             Json::StreamWriterBuilder wbuilder;
