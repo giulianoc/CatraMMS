@@ -1365,7 +1365,7 @@ void API::ingestion(
                         if (sValue.length() > 2)    // to remove the first and last "
                             sValue = sValue.substr(1, sValue.length() - 2);
                         
-                        string variableToBeSearched = string("\\$\\{") + sKey + "\\}";
+                        string variableToBeSearched = string("\\\\$\\\\{") + sKey + "\\\\}";
 
                         _logger->info(__FILEREF__ + variableToBeSearched);
                         _logger->info(__FILEREF__ + sValue);
