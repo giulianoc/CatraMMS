@@ -1340,7 +1340,7 @@ void MMSEngineProcessor::generateAndIngestFrame(
         }
 
         string videoFilter;
-        int framesNumber = -1;
+        int framesNumber = 1;
         int periodInSeconds = -1;
         bool mjpeg = false;
 
@@ -1451,13 +1451,13 @@ void MMSEngineProcessor::generateAndIngestFrame(
                 sourcePhysicalPath
         );
 
-        _logger->info(__FILEREF__ + "generateScreenshotsToIngest done"
+        _logger->info(__FILEREF__ + "generateFramesToIngest done"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", generatedFramesFileNames.size: " + to_string(generatedFramesFileNames.size())
         );
         for (string generatedFrameFileName: generatedFramesFileNames)
         {
-            _logger->info(__FILEREF__ + "Generated Screenshot to ingest"
+            _logger->info(__FILEREF__ + "Generated Frame to ingest"
                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", generatedFrameFileName: " + generatedFrameFileName
             );
