@@ -1548,7 +1548,8 @@ void API::ingestionTask(shared_ptr<MySQLConnection> conn,
     {
         Json::StreamWriterBuilder wbuilder;
 
-        taskMetadata = Json::writeString(wbuilder, taskRoot[type]);        
+        field = "Parameters";
+        taskMetadata = Json::writeString(wbuilder, taskRoot[field]);        
     }
 
     string errorMessage = "";
@@ -1572,7 +1573,8 @@ void API::ingestionTask(shared_ptr<MySQLConnection> conn,
         {
             Json::StreamWriterBuilder wbuilder;
 
-            taskMetadata = Json::writeString(wbuilder, taskRoot[type]);        
+            field = "Parameters";
+            taskMetadata = Json::writeString(wbuilder, taskRoot[field]);        
         }
         
         _logger->info(__FILEREF__ + "update IngestionJob"
