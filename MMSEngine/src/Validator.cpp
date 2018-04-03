@@ -100,10 +100,23 @@ pair<MMSEngineDBFacade::ContentType,vector<int64_t>>
         Json::Value frameRoot = taskRoot[field]; 
         contentType = validateFrameMetadata(frameRoot, dependencies);        
     }
-    /*
-    else if (type == "ContentRemove")
-        ingestionType = MMSEngineDBFacade::IngestionType::ContentRemove;
-    */
+    else if (type == "Periodical-Frames")
+    {
+        ingestionType = MMSEngineDBFacade::IngestionType::Frame;
+        
+        field = "Parameters";
+        if (!isMetadataPresent(taskRoot, field))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        Json::Value frameRoot = taskRoot[field]; 
+        contentType = validatePeriodicalFramesMetadata(frameRoot, dependencies);        
+    }
     else
     {
         string errorMessage = __FILEREF__ + "Field 'Type' is wrong"
