@@ -573,7 +573,9 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             }
                         }
                         else if (ingestionType == 
-                                MMSEngineDBFacade::IngestionType::Frame)
+                                MMSEngineDBFacade::IngestionType::Frame
+                                || ingestionType == 
+                                MMSEngineDBFacade::IngestionType::PeriodicalFrames)
                         {
                             /* to be removed
                             if (mediaItemKeysDependency == "")
@@ -600,15 +602,16 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
                                 try
                                 {
-                                    generateAndIngestFrame(
+                                    generateAndIngestFrames(
                                             ingestionJobKey, 
                                             customer, 
+                                            ingestionType,
                                             parametersRoot, 
                                             dependencies);
                                 }
                                 catch(runtime_error e)
                                 {
-                                    _logger->error(__FILEREF__ + "generateAndIngestFrame failed"
+                                    _logger->error(__FILEREF__ + "generateAndIngestFrames failed"
                                             + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                             + ", exception: " + e.what()
                                     );
@@ -631,7 +634,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 }
                                 catch(exception e)
                                 {
-                                    _logger->error(__FILEREF__ + "generateAndIngestFrame failed"
+                                    _logger->error(__FILEREF__ + "generateAndIngestFrames failed"
                                             + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                             + ", exception: " + e.what()
                                     );
@@ -1323,25 +1326,76 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
     }    
 }
 
-void MMSEngineProcessor::generateAndIngestFrame(
+void MMSEngineProcessor::generateAndIngestFrames(
         int64_t ingestionJobKey,
         shared_ptr<Customer> customer,
+        MMSEngineDBFacade::IngestionType ingestionType,
         Json::Value parametersRoot,
         vector<int64_t>& dependencies
 )
 {
     try
     {
-        double instantInSeconds = 0;
-        string field = "InstantInSeconds";
-        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        string field;
+        
+        int periodInSeconds = -1;
+        if (ingestionType == MMSEngineDBFacade::IngestionType::Frame)
         {
-            instantInSeconds = parametersRoot.get(field, "XXX").asDouble();
+        }
+        else
+        {
+            field = "PeriodInSeconds";
+            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            periodInSeconds = parametersRoot.get(field, "XXX").asInt();
+        }
+            
+        double startTimeInSeconds = 0;
+        if (ingestionType == MMSEngineDBFacade::IngestionType::Frame)
+        {
+            field = "InstantInSeconds";
+            if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            {
+                startTimeInSeconds = parametersRoot.get(field, "XXX").asDouble();
+            }
+        }
+        else
+        {
+            field = "StartTimeInSeconds";
+            if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            {
+                startTimeInSeconds = parametersRoot.get(field, "XXX").asDouble();
+            }
+        }
+
+        int maxFramesNumber = -1;
+        if (ingestionType == MMSEngineDBFacade::IngestionType::Frame)
+        {
+        }
+        else
+        {
+            field = "MaxFramesNumber";
+            if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            {
+                maxFramesNumber = parametersRoot.get(field, "XXX").asInt();
+            }
         }
 
         string videoFilter;
-        int framesNumber = 1;
-        int periodInSeconds = -1;
+        if (ingestionType == MMSEngineDBFacade::IngestionType::Frame)
+        {
+        }
+        else
+        {
+            videoFilter = "PeriodicFrame";
+        }
+
         bool mjpeg = false;
 
         int width = -1;
@@ -1408,12 +1462,12 @@ void MMSEngineProcessor::generateAndIngestFrame(
             throw runtime_error(errorMessage);
         }
 
-        if (durationInMilliSeconds < instantInSeconds * 1000)
+        if (durationInMilliSeconds < startTimeInSeconds * 1000)
         {
             string errorMessage = __FILEREF__ + "Frame was not generated because instantInSeconds is bigger than the video duration"
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", video sourceMediaItemKey: " + to_string(sourceMediaItemKey)
-                    + ", instantInSeconds: " + to_string(instantInSeconds)
+                    + ", startTimeInSeconds: " + to_string(startTimeInSeconds)
                     + ", durationInMilliSeconds: " + to_string(durationInMilliSeconds)
             ;
             _logger->error(errorMessage);
@@ -1441,8 +1495,8 @@ void MMSEngineProcessor::generateAndIngestFrame(
         vector<string> generatedFramesFileNames = ffmpeg.generateFramesToIngest(
                 customerIngestionRepository,
                 sourceFileName,
-                instantInSeconds,
-                framesNumber,
+                startTimeInSeconds,
+                maxFramesNumber,
                 videoFilter,
                 periodInSeconds,
                 mjpeg,

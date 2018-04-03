@@ -269,8 +269,9 @@ public:
         Unknown                 = 0,    // in case json was not able to be parsed
         ContentIngestion        = 1,
         Frame                   = 2,
-        ContentUpdate           = 3,
-        ContentRemove           = 4
+        PeriodicalFrames        = 3,
+        ContentUpdate           = 50,
+        ContentRemove           = 60
     };
     static const char* toString(const IngestionType& ingestionType)
     {
@@ -282,6 +283,8 @@ public:
                 return "ContentIngestion";
             case IngestionType::Frame:
                 return "Frame";
+            case IngestionType::PeriodicalFrames:
+                return "PeriodicalFrames";
             case IngestionType::ContentUpdate:
                 return "ContentUpdate";
             case IngestionType::ContentRemove:
@@ -300,6 +303,8 @@ public:
             return IngestionType::ContentIngestion;
         else if (lowerCase == "frame")
             return IngestionType::Frame;
+        else if (lowerCase == "periodicalframes")
+            return IngestionType::PeriodicalFrames;
         else if (lowerCase == "contentupdate")
             return IngestionType::ContentUpdate;
         else if (lowerCase == "contentremove")

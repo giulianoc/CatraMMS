@@ -66,12 +66,12 @@ private:
         Json::Value parametersRoot
     );
 
-    void generateAndIngestFrame(
+    void generateAndIngestFrames(
         int64_t ingestionJobKey,
         shared_ptr<Customer> customer,
+        MMSEngineDBFacade::IngestionType ingestionType,
         Json::Value parametersRoot,
-        vector<int64_t>& dependencies
-    );
+        vector<int64_t>& dependencies);
 
     tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> getMediaSourceDetails(
         int64_t ingestionJobKey, shared_ptr<Customer> customer,

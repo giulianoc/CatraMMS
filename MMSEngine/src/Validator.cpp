@@ -134,6 +134,11 @@ pair<MMSEngineDBFacade::ContentType,vector<int64_t>>
         MMSEngineDBFacade::ContentType contentType =
             validateFrameMetadata(typeRoot, dependencies);        
     }
+    else if (ingestionType == MMSEngineDBFacade::IngestionType::PeriodicalFrames)
+    {
+        MMSEngineDBFacade::ContentType contentType =
+            validatePeriodicalFramesMetadata(typeRoot, dependencies);        
+    }
     else
     {
         string errorMessage = __FILEREF__ + "Unknown IngestionType"
@@ -234,6 +239,144 @@ MMSEngineDBFacade::ContentType Validator::validateFrameMetadata(
         
     vector<string> mandatoryFields = {
         "SourceFileName"
+    };
+    for (string mandatoryField: mandatoryFields)
+    {
+        if (!isMetadataPresent(frameRoot, mandatoryField))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + mandatoryField;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+
+    int64_t referenceMediaItemKey = -1;
+    int64_t referenceIngestionJobKey = -1;
+    string referenceUniqueName = "";
+    string field = "ReferenceMediaItemKey";
+    if (!isMetadataPresent(frameRoot, field))
+    {
+        field = "ReferenceIngestionJobKey";
+        if (!isMetadataPresent(frameRoot, field))
+        {
+            field = "ReferenceUniqueName";
+            if (!isMetadataPresent(frameRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + "Reference...";
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            else
+            {
+                referenceUniqueName = frameRoot.get(field, "XXX").asString();
+            }        
+        }
+        else
+        {
+            referenceIngestionJobKey = frameRoot.get(field, "XXX").asInt64();
+        }        
+    }
+    else
+    {
+        referenceMediaItemKey = frameRoot.get(field, "XXX").asInt64();    
+    }
+    
+    MMSEngineDBFacade::ContentType      referenceContentType;
+    try
+    {
+        bool warningIfMissing = true;
+        if (referenceMediaItemKey != -1)
+        {
+            referenceContentType = _mmsEngineDBFacade->getMediaItemKeyDetails(
+                referenceMediaItemKey, warningIfMissing); 
+        }
+        else if (referenceIngestionJobKey != -1)
+        {
+            pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
+                    _mmsEngineDBFacade->getMediaItemKeyDetailsByIngestionJobKey(
+                    referenceIngestionJobKey, warningIfMissing);  
+            
+            referenceMediaItemKey = mediaItemKeyAndContentType.first;
+            referenceContentType = mediaItemKeyAndContentType.second;
+        }
+        else // if (referenceUniqueName != "")
+        {
+            pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
+                    _mmsEngineDBFacade->getMediaItemKeyDetailsByUniqueName(
+                    referenceUniqueName, warningIfMissing);  
+            
+            referenceMediaItemKey = mediaItemKeyAndContentType.first;
+            referenceContentType = mediaItemKeyAndContentType.second;
+        }
+    }
+    catch(runtime_error e)
+    {
+        string errorMessage = __FILEREF__ + "Reference... was not found"
+                + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
+                ;
+        _logger->warn(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->getMediaItemKeyDetails failed"
+                + ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
+                + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
+                ;
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    
+    MMSEngineDBFacade::ContentType      frameContentType = MMSEngineDBFacade::ContentType::Image;
+
+    if (referenceContentType != MMSEngineDBFacade::ContentType::Video)
+    {
+        string errorMessage = __FILEREF__ + "Reference... does not refer a video content"
+            + ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
+            + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
+            + ", referenceUniqueName: " + referenceUniqueName
+            + ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
+                ;
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+
+    dependencies.push_back(referenceMediaItemKey);
+
+    /*
+    // Territories
+    {
+        field = "Territories";
+        if (isMetadataPresent(contentIngestion, field))
+        {
+            const Json::Value territories = contentIngestion[field];
+            
+            for( Json::ValueIterator itr = territories.begin() ; itr != territories.end() ; itr++ ) 
+            {
+                Json::Value territory = territories[territoryIndex];
+            }
+        
+    }
+    */
+            
+    return frameContentType;
+}
+
+MMSEngineDBFacade::ContentType Validator::validatePeriodicalFramesMetadata(
+    Json::Value frameRoot, vector<int64_t>& dependencies)
+{
+    // see sample in directory samples
+        
+    vector<string> mandatoryFields = {
+        "SourceFileName",
+        "PeriodInSeconds"
     };
     for (string mandatoryField: mandatoryFields)
     {

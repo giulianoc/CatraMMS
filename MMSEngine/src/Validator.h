@@ -40,6 +40,9 @@ public:
     MMSEngineDBFacade::ContentType validateFrameMetadata(
         Json::Value frameRoot, vector<int64_t>& dependencies);
 
+    MMSEngineDBFacade::ContentType validatePeriodicalFramesMetadata(
+        Json::Value frameRoot, vector<int64_t>& dependencies);
+    
 private:
     shared_ptr<spdlog::logger>          _logger;
     shared_ptr<MMSEngineDBFacade>       _mmsEngineDBFacade;
