@@ -100,7 +100,7 @@ pair<MMSEngineDBFacade::ContentType,vector<int64_t>>
         Json::Value frameRoot = taskRoot[field]; 
         contentType = validateFrameMetadata(frameRoot, dependencies);        
     }
-    else if (type == "Periodical-Frames")
+    else if (type == "PeriodicalFrames")
     {
         ingestionType = MMSEngineDBFacade::IngestionType::Frame;
         
