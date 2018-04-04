@@ -284,7 +284,7 @@ public:
             case IngestionType::Frame:
                 return "Frame";
             case IngestionType::PeriodicalFrames:
-                return "PeriodicalFrames";
+                return "Periodical-Frames";
             case IngestionType::ContentUpdate:
                 return "ContentUpdate";
             case IngestionType::ContentRemove:
@@ -303,7 +303,7 @@ public:
             return IngestionType::ContentIngestion;
         else if (lowerCase == "frame")
             return IngestionType::Frame;
-        else if (lowerCase == "periodicalframes")
+        else if (lowerCase == "periodical-frames")
             return IngestionType::PeriodicalFrames;
         else if (lowerCase == "contentupdate")
             return IngestionType::ContentUpdate;
