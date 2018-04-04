@@ -572,12 +572,11 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 throw runtime_error(errorMessage);
                             }
                         }
-                        else if (ingestionType == 
-                                MMSEngineDBFacade::IngestionType::Frame
-                                || ingestionType == 
-                                MMSEngineDBFacade::IngestionType::PeriodicalFrames
-                                || ingestionType == 
-                                MMSEngineDBFacade::IngestionType::IFrames
+                        else if (ingestionType == MMSEngineDBFacade::IngestionType::Frame
+                                || ingestionType == MMSEngineDBFacade::IngestionType::PeriodicalFrames
+                                || ingestionType == MMSEngineDBFacade::IngestionType::IFrames
+                                || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByPeriodicalFrames
+                                || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByIFrames
                                 )
                         {
                             /* to be removed
@@ -1345,7 +1344,8 @@ void MMSEngineProcessor::generateAndIngestFrames(
         if (ingestionType == MMSEngineDBFacade::IngestionType::Frame)
         {
         }
-        else if (ingestionType == MMSEngineDBFacade::IngestionType::PeriodicalFrames)
+        else if (ingestionType == MMSEngineDBFacade::IngestionType::PeriodicalFrames
+                || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByPeriodicalFrames)
         {
             field = "PeriodInSeconds";
             if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
@@ -1358,7 +1358,7 @@ void MMSEngineProcessor::generateAndIngestFrames(
             }
             periodInSeconds = parametersRoot.get(field, "XXX").asInt();
         }
-        else // if (ingestionType == MMSEngineDBFacade::IngestionType::IFrames)
+        else // if (ingestionType == MMSEngineDBFacade::IngestionType::IFrames || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByIFrames)
         {
             
         }
@@ -1373,7 +1373,9 @@ void MMSEngineProcessor::generateAndIngestFrames(
             }
         }
         else if (ingestionType == MMSEngineDBFacade::IngestionType::PeriodicalFrames
-                || ingestionType == MMSEngineDBFacade::IngestionType::IFrames)
+                || ingestionType == MMSEngineDBFacade::IngestionType::IFrames
+                || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByPeriodicalFrames
+                || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByIFrames)
         {
             field = "StartTimeInSeconds";
             if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
@@ -1387,7 +1389,9 @@ void MMSEngineProcessor::generateAndIngestFrames(
         {
         }
         else if (ingestionType == MMSEngineDBFacade::IngestionType::PeriodicalFrames
-                || ingestionType == MMSEngineDBFacade::IngestionType::IFrames)
+                || ingestionType == MMSEngineDBFacade::IngestionType::IFrames
+                || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByPeriodicalFrames
+                || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByIFrames)
         {
             field = "MaxFramesNumber";
             if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
@@ -1409,7 +1413,16 @@ void MMSEngineProcessor::generateAndIngestFrames(
             videoFilter = "All-I-Frames";
         }
 
-        bool mjpeg = false;
+        bool mjpeg;
+        if (ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByPeriodicalFrames
+                || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByIFrames)
+        {
+            mjpeg = true;
+        }
+        else
+        {
+            mjpeg = false;
+        }
 
         int width = -1;
         field = "Width";

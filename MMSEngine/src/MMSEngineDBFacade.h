@@ -271,6 +271,8 @@ public:
         Frame                   = 2,
         PeriodicalFrames        = 3,
         IFrames                 = 4,
+        MotionJPEGByPeriodicalFrames        = 5,
+        MotionJPEGByIFrames                 = 6,
         ContentUpdate           = 50,
         ContentRemove           = 60
     };
@@ -288,6 +290,10 @@ public:
                 return "Periodical-Frames";
             case IngestionType::IFrames:
                 return "I-Frames";
+            case IngestionType::MotionJPEGByPeriodicalFrames:
+                return "Motion-JPEG-by-Periodical-Frames";
+            case IngestionType::MotionJPEGByIFrames:
+                return "Motion-JPEG-by-I-Frames";
             case IngestionType::ContentUpdate:
                 return "ContentUpdate";
             case IngestionType::ContentRemove:
@@ -310,6 +316,10 @@ public:
             return IngestionType::PeriodicalFrames;
         else if (lowerCase == "i-frames")
             return IngestionType::IFrames;
+        else if (lowerCase == "motion-jpeg-by-periodical-frames")
+            return IngestionType::MotionJPEGByPeriodicalFrames;
+        else if (lowerCase == "motion-jpeg-by-i-frames")
+            return IngestionType::MotionJPEGByIFrames;
         else if (lowerCase == "contentupdate")
             return IngestionType::ContentUpdate;
         else if (lowerCase == "contentremove")

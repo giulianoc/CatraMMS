@@ -116,9 +116,43 @@ pair<MMSEngineDBFacade::ContentType,vector<int64_t>>
         Json::Value parametersRoot = taskRoot[field]; 
         contentType = validatePeriodicalFramesMetadata(parametersRoot, dependencies);        
     }
+    else if (type == "Motion-JPEG-by-Periodical-Frames")
+    {
+        ingestionType = MMSEngineDBFacade::IngestionType::MotionJPEGByPeriodicalFrames;
+        
+        field = "Parameters";
+        if (!isMetadataPresent(taskRoot, field))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        Json::Value parametersRoot = taskRoot[field]; 
+        contentType = validatePeriodicalFramesMetadata(parametersRoot, dependencies);        
+    }
     else if (type == "I-Frames")
     {
         ingestionType = MMSEngineDBFacade::IngestionType::IFrames;
+        
+        field = "Parameters";
+        if (!isMetadataPresent(taskRoot, field))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        Json::Value parametersRoot = taskRoot[field]; 
+        contentType = validateIFramesMetadata(parametersRoot, dependencies);        
+    }
+    else if (type == "Motion-JPEG-by-I-Frames")
+    {
+        ingestionType = MMSEngineDBFacade::IngestionType::MotionJPEGByIFrames;
         
         field = "Parameters";
         if (!isMetadataPresent(taskRoot, field))
@@ -163,12 +197,14 @@ pair<MMSEngineDBFacade::ContentType,vector<int64_t>>
         MMSEngineDBFacade::ContentType contentType =
             validateFrameMetadata(parametersRoot, dependencies);        
     }
-    else if (ingestionType == MMSEngineDBFacade::IngestionType::PeriodicalFrames)
+    else if (ingestionType == MMSEngineDBFacade::IngestionType::PeriodicalFrames
+            || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByPeriodicalFrames)
     {
         MMSEngineDBFacade::ContentType contentType =
             validatePeriodicalFramesMetadata(parametersRoot, dependencies);        
     }
-    else if (ingestionType == MMSEngineDBFacade::IngestionType::IFrames)
+    else if (ingestionType == MMSEngineDBFacade::IngestionType::IFrames
+            || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByIFrames)
     {
         MMSEngineDBFacade::ContentType contentType =
             validateIFramesMetadata(parametersRoot, dependencies);        
