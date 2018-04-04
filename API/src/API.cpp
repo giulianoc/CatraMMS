@@ -1574,7 +1574,7 @@ int64_t API::ingestionTask(shared_ptr<MySQLConnection> conn,
         + ", label: " + label
         + ", taskMetadata: " + taskMetadata
         + ", IngestionType: " + type
-        + ", dependOnIngestionJobKeys: " + to_string(dependOnIngestionJobKeys.size())
+        + ", dependOnIngestionJobKeys.size(): " + to_string(dependOnIngestionJobKeys.size())
         + ", dependOnSuccess: " + to_string(dependOnSuccess)
     );
     

@@ -330,7 +330,8 @@ MMSEngineDBFacade::ContentType Validator::validateFrameMetadata(
     // see sample in directory samples
         
     vector<string> mandatoryFields = {
-        "SourceFileName"
+        "SourceFileName",
+        "References"
     };
     for (string mandatoryField: mandatoryFields)
     {
@@ -344,17 +345,30 @@ MMSEngineDBFacade::ContentType Validator::validateFrameMetadata(
         }
     }
 
+    string field = "References";
+    Json::Value referencesRoot = parametersRoot[field];
+    if (referencesRoot.size() != 1)
+    {
+        string errorMessage = __FILEREF__ + "No correct number of References"
+                + ", referencesRoot.size: " + to_string(referencesRoot.size());
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    
+    Json::Value referenceRoot = referencesRoot[0];
+    
     int64_t referenceMediaItemKey = -1;
     int64_t referenceIngestionJobKey = -1;
     string referenceUniqueName = "";
-    string field = "ReferenceMediaItemKey";
-    if (!isMetadataPresent(parametersRoot, field))
+    field = "ReferenceMediaItemKey";
+    if (!isMetadataPresent(referenceRoot, field))
     {
         field = "ReferenceIngestionJobKey";
-        if (!isMetadataPresent(parametersRoot, field))
+        if (!isMetadataPresent(referenceRoot, field))
         {
             field = "ReferenceUniqueName";
-            if (!isMetadataPresent(parametersRoot, field))
+            if (!isMetadataPresent(referenceRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + "Reference...";
@@ -364,17 +378,17 @@ MMSEngineDBFacade::ContentType Validator::validateFrameMetadata(
             }
             else
             {
-                referenceUniqueName = parametersRoot.get(field, "XXX").asString();
+                referenceUniqueName = referenceRoot.get(field, "XXX").asString();
             }        
         }
         else
         {
-            referenceIngestionJobKey = parametersRoot.get(field, "XXX").asInt64();
+            referenceIngestionJobKey = referenceRoot.get(field, "XXX").asInt64();
         }        
     }
     else
     {
-        referenceMediaItemKey = parametersRoot.get(field, "XXX").asInt64();    
+        referenceMediaItemKey = referenceRoot.get(field, "XXX").asInt64();    
     }
     
     MMSEngineDBFacade::ContentType      referenceContentType;
@@ -468,7 +482,8 @@ MMSEngineDBFacade::ContentType Validator::validatePeriodicalFramesMetadata(
         
     vector<string> mandatoryFields = {
         "SourceFileName",
-        "PeriodInSeconds"
+        "PeriodInSeconds",
+        "References"
     };
     for (string mandatoryField: mandatoryFields)
     {
@@ -482,17 +497,30 @@ MMSEngineDBFacade::ContentType Validator::validatePeriodicalFramesMetadata(
         }
     }
 
+    string field = "References";
+    Json::Value referencesRoot = parametersRoot[field];
+    if (referencesRoot.size() != 1)
+    {
+        string errorMessage = __FILEREF__ + "No correct number of References"
+                + ", referencesRoot.size: " + to_string(referencesRoot.size());
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    
+    Json::Value referenceRoot = referencesRoot[0];
+
     int64_t referenceMediaItemKey = -1;
     int64_t referenceIngestionJobKey = -1;
     string referenceUniqueName = "";
-    string field = "ReferenceMediaItemKey";
-    if (!isMetadataPresent(parametersRoot, field))
+    field = "ReferenceMediaItemKey";
+    if (!isMetadataPresent(referenceRoot, field))
     {
         field = "ReferenceIngestionJobKey";
-        if (!isMetadataPresent(parametersRoot, field))
+        if (!isMetadataPresent(referenceRoot, field))
         {
             field = "ReferenceUniqueName";
-            if (!isMetadataPresent(parametersRoot, field))
+            if (!isMetadataPresent(referenceRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + "Reference...";
@@ -502,17 +530,17 @@ MMSEngineDBFacade::ContentType Validator::validatePeriodicalFramesMetadata(
             }
             else
             {
-                referenceUniqueName = parametersRoot.get(field, "XXX").asString();
+                referenceUniqueName = referenceRoot.get(field, "XXX").asString();
             }        
         }
         else
         {
-            referenceIngestionJobKey = parametersRoot.get(field, "XXX").asInt64();
+            referenceIngestionJobKey = referenceRoot.get(field, "XXX").asInt64();
         }        
     }
     else
     {
-        referenceMediaItemKey = parametersRoot.get(field, "XXX").asInt64();    
+        referenceMediaItemKey = referenceRoot.get(field, "XXX").asInt64();    
     }
     
     MMSEngineDBFacade::ContentType      referenceContentType;
@@ -605,7 +633,8 @@ MMSEngineDBFacade::ContentType Validator::validateIFramesMetadata(
     // see sample in directory samples
         
     vector<string> mandatoryFields = {
-        "SourceFileName"
+        "SourceFileName",
+        "References"
     };
     for (string mandatoryField: mandatoryFields)
     {
@@ -619,17 +648,30 @@ MMSEngineDBFacade::ContentType Validator::validateIFramesMetadata(
         }
     }
 
+    string field = "References";
+    Json::Value referencesRoot = parametersRoot[field];
+    if (referencesRoot.size() != 1)
+    {
+        string errorMessage = __FILEREF__ + "No correct number of References"
+                + ", referencesRoot.size: " + to_string(referencesRoot.size());
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    
+    Json::Value referenceRoot = referencesRoot[0];
+
     int64_t referenceMediaItemKey = -1;
     int64_t referenceIngestionJobKey = -1;
     string referenceUniqueName = "";
-    string field = "ReferenceMediaItemKey";
-    if (!isMetadataPresent(parametersRoot, field))
+    field = "ReferenceMediaItemKey";
+    if (!isMetadataPresent(referenceRoot, field))
     {
         field = "ReferenceIngestionJobKey";
-        if (!isMetadataPresent(parametersRoot, field))
+        if (!isMetadataPresent(referenceRoot, field))
         {
             field = "ReferenceUniqueName";
-            if (!isMetadataPresent(parametersRoot, field))
+            if (!isMetadataPresent(referenceRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
                         + ", Field: " + "Reference...";
@@ -639,17 +681,17 @@ MMSEngineDBFacade::ContentType Validator::validateIFramesMetadata(
             }
             else
             {
-                referenceUniqueName = parametersRoot.get(field, "XXX").asString();
+                referenceUniqueName = referenceRoot.get(field, "XXX").asString();
             }        
         }
         else
         {
-            referenceIngestionJobKey = parametersRoot.get(field, "XXX").asInt64();
+            referenceIngestionJobKey = referenceRoot.get(field, "XXX").asInt64();
         }        
     }
     else
     {
-        referenceMediaItemKey = parametersRoot.get(field, "XXX").asInt64();    
+        referenceMediaItemKey = referenceRoot.get(field, "XXX").asInt64();    
     }
     
     MMSEngineDBFacade::ContentType      referenceContentType;
@@ -742,7 +784,8 @@ MMSEngineDBFacade::ContentType Validator::validateConcatDemuxerMetadata(
     // see sample in directory samples
         
     vector<string> mandatoryFields = {
-        "SourceFileName"
+        "SourceFileName",
+        "References"
     };
     for (string mandatoryField: mandatoryFields)
     {
@@ -757,14 +800,6 @@ MMSEngineDBFacade::ContentType Validator::validateConcatDemuxerMetadata(
     }
 
     string field = "References";
-    if (!isMetadataPresent(parametersRoot, field))
-    {
-        string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                + ", Field: " + field;
-        _logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
     Json::Value referencesRoot = parametersRoot[field];
     if (referencesRoot.size() == 0)
     {
