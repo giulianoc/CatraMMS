@@ -98,11 +98,20 @@ private:
         unordered_map<string, string> queryParameters,
         string requestBody);
 
-    void ingestionTask(shared_ptr<MySQLConnection> conn,
+    int64_t ingestionTask(shared_ptr<MySQLConnection> conn,
         shared_ptr<Customer> customer, Json::Value taskRoot, 
-        int64_t dependOnIngestionJobKey, int dependOnSuccess,
+        vector<int64_t> dependOnIngestionJobKeys, int dependOnSuccess,
         string& responseBody);
         
+    void ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
+        shared_ptr<Customer> customer, Json::Value groupOfTasksRoot, 
+        vector <int64_t> dependOnIngestionJobKeys, int dependOnSuccess,
+        string& responseBody);
+
+    void ingestionEvents(shared_ptr<MySQLConnection> conn,
+        shared_ptr<Customer> customer, Json::Value taskOrGroupOfTasksRoot, 
+        vector<int64_t> dependOnIngestionJobKeys, string& responseBody);
+
     void uploadBinary(
         FCGX_Request& request,
         string requestMethod,

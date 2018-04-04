@@ -273,6 +273,7 @@ public:
         IFrames                 = 4,
         MotionJPEGByPeriodicalFrames        = 5,
         MotionJPEGByIFrames                 = 6,
+        ConcatDemuxer           = 7,
         ContentUpdate           = 50,
         ContentRemove           = 60
     };
@@ -294,6 +295,8 @@ public:
                 return "Motion-JPEG-by-Periodical-Frames";
             case IngestionType::MotionJPEGByIFrames:
                 return "Motion-JPEG-by-I-Frames";
+            case IngestionType::ConcatDemuxer:
+                return "Concat-Demuxer";
             case IngestionType::ContentUpdate:
                 return "ContentUpdate";
             case IngestionType::ContentRemove:
@@ -320,6 +323,8 @@ public:
             return IngestionType::MotionJPEGByPeriodicalFrames;
         else if (lowerCase == "motion-jpeg-by-i-frames")
             return IngestionType::MotionJPEGByIFrames;
+        else if (lowerCase == "concat-demuxer")
+            return IngestionType::ConcatDemuxer;
         else if (lowerCase == "contentupdate")
             return IngestionType::ContentUpdate;
         else if (lowerCase == "contentremove")
@@ -535,7 +540,7 @@ public:
     int64_t addIngestionJob (shared_ptr<MySQLConnection> conn,
     	int64_t customerKey, string label, string metadataContent,
         MMSEngineDBFacade::IngestionType ingestionType, 
-        int64_t dependOnIngestionJobKey, int dependOnSuccess
+        vector<int64_t> dependOnIngestionJobKeys, int dependOnSuccess
     );
 
     void updateIngestionJobMetadataContent (

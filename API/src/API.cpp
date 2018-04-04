@@ -1451,13 +1451,36 @@ void API::ingestion(
 
             validator.validateProcessMetadata(requestBodyRoot);
         
-            string field = "Task";
-            Json::Value taskRoot = requestBodyRoot[field];                        
-    
-            int dependOnIngestionJobKey = -1;
-            int localDependOnSuccess = 0;   // it is not important since dependOnIngestionJobKey is -1
-            ingestionTask(conn, customer, taskRoot, dependOnIngestionJobKey, 
-                    localDependOnSuccess, responseBody);            
+            string taskField = "Task";
+            string groupOfTasksField = "GroupOfTasks";
+            if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, taskField))
+            {
+                Json::Value taskRoot = requestBodyRoot[taskField];                        
+
+                vector<int64_t> dependOnIngestionJobKeys;
+                int localDependOnSuccess = 0;   // it is not important since dependOnIngestionJobKey is -1
+                ingestionTask(conn, customer, taskRoot, dependOnIngestionJobKeys, 
+                        localDependOnSuccess, responseBody);            
+            }
+            else if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, groupOfTasksField))
+            {
+                Json::Value groupOfTasksRoot = requestBodyRoot[groupOfTasksField];                        
+
+                vector<int64_t> dependOnIngestionJobKeys;
+                int localDependOnSuccess = 0;   // it is not important since dependOnIngestionJobKey is -1
+                ingestionGroupOfTasks(conn, customer, groupOfTasksRoot, dependOnIngestionJobKeys, 
+                        localDependOnSuccess, responseBody);            
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "Both Fields are not present or are null"
+                        + ", Field: " + taskField
+                        + ", Field: " + groupOfTasksField
+                        ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
 
             bool commit = true;
             _mmsEngineDBFacade->endIngestionJobs(conn, commit);
@@ -1522,9 +1545,9 @@ void API::ingestion(
     }
 }
 
-void API::ingestionTask(shared_ptr<MySQLConnection> conn,
+int64_t API::ingestionTask(shared_ptr<MySQLConnection> conn,
         shared_ptr<Customer> customer, Json::Value taskRoot, 
-        int64_t dependOnIngestionJobKey, int dependOnSuccess,
+        vector<int64_t> dependOnIngestionJobKeys, int dependOnSuccess,
         string& responseBody)
 {
     string label;
@@ -1536,13 +1559,6 @@ void API::ingestionTask(shared_ptr<MySQLConnection> conn,
 
     field = "Type";
     string type = taskRoot.get(field, "XXX").asString();
-
-    bool referenceToBeAdded = true;
-    field = "ReferenceMediaItemKey";
-    if (_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
-    {
-        referenceToBeAdded = false;
-    }
 
     string taskMetadata;
     {
@@ -1558,19 +1574,30 @@ void API::ingestionTask(shared_ptr<MySQLConnection> conn,
         + ", label: " + label
         + ", taskMetadata: " + taskMetadata
         + ", IngestionType: " + type
-        + ", dependOnIngestionJobKey: " + to_string(dependOnIngestionJobKey)
+        + ", dependOnIngestionJobKeys: " + to_string(dependOnIngestionJobKeys.size())
         + ", dependOnSuccess: " + to_string(dependOnSuccess)
     );
     
     int64_t localDependOnIngestionJobKey = _mmsEngineDBFacade->addIngestionJob(conn,
             customer->_customerKey, label, taskMetadata, MMSEngineDBFacade::toIngestionType(type), 
-            dependOnIngestionJobKey, dependOnSuccess);
+            dependOnIngestionJobKeys, dependOnSuccess);
     
-    if (dependOnIngestionJobKey != -1 && referenceToBeAdded)
+    if (dependOnIngestionJobKeys.size() > 0)
     {
+        Json::Value referencesRoot(Json::arrayValue);
+        
+        for (int referenceIndex = 0; referenceIndex < dependOnIngestionJobKeys.size(); ++referenceIndex)
+        {
+            Json::Value referenceRoot;
+            string addedField = "ReferenceIngestionJobKey";
+            referenceRoot[addedField] = dependOnIngestionJobKeys.at(referenceIndex);
+            
+            referencesRoot.append(referenceRoot);
+        }
+        
         field = "Parameters";
-        string addedField = "ReferenceIngestionJobKey";
-        taskRoot[field][addedField] = dependOnIngestionJobKey;
+        string arrayField = "References";
+        taskRoot[field][arrayField] = referencesRoot;
         
         {
             Json::StreamWriterBuilder wbuilder;
@@ -1595,51 +1622,120 @@ void API::ingestionTask(shared_ptr<MySQLConnection> conn,
             + "\"label\": \"" + label + "\" "
             + "}");
 
-    field = "OnSuccess";
-    if (_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
+    vector<int64_t> localDependOnIngestionJobKeys;
+    localDependOnIngestionJobKeys.push_back(localDependOnIngestionJobKey);
+    ingestionEvents(conn, customer, taskRoot, 
+        localDependOnIngestionJobKeys, responseBody);
+    
+    return localDependOnIngestionJobKey;
+}
+
+void API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
+        shared_ptr<Customer> customer, Json::Value groupOfTasksRoot, 
+        vector<int64_t> dependOnIngestionJobKeys, int dependOnSuccess,
+        string& responseBody)
+{
+    if (groupOfTasksRoot.size() == 0)
     {
-        Json::Value onSuccessRoot = taskRoot[field];
+        string errorMessage = __FILEREF__ + "No Tasks are present inside the GroupOfTasks item";
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+
+    vector<int64_t> localDependOnIngestionJobKeys;
+    for (int taskIndex = 0; taskIndex < groupOfTasksRoot.size(); ++taskIndex)
+    {
+        Json::Value taskRoot = groupOfTasksRoot[taskIndex];
         
-        field = "Task";
-        if (_mmsEngineDBFacade->isMetadataPresent(onSuccessRoot, field))
+        int64_t localDependOnIngestionJobKey = ingestionTask(
+                conn, customer, taskRoot, dependOnIngestionJobKeys, 
+                dependOnSuccess, responseBody);    
+
+        localDependOnIngestionJobKeys.push_back(localDependOnIngestionJobKey);
+    }
+
+    ingestionEvents(conn, customer, groupOfTasksRoot, 
+        localDependOnIngestionJobKeys, responseBody);
+}    
+
+void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
+        shared_ptr<Customer> customer, Json::Value taskOrGroupOfTasksRoot, 
+        vector<int64_t> dependOnIngestionJobKeys, string& responseBody)
+{
+
+    string field = "OnSuccess";
+    if (_mmsEngineDBFacade->isMetadataPresent(taskOrGroupOfTasksRoot, field))
+    {
+        Json::Value onSuccessRoot = taskOrGroupOfTasksRoot[field];
+        
+        string taskField = "Task";
+        string groupOfTasksField = "GroupOfTasks";
+        if (_mmsEngineDBFacade->isMetadataPresent(onSuccessRoot, taskField))
         {
-            Json::Value onSuccessTaskRoot = onSuccessRoot[field]; 
+            Json::Value onSuccessTaskRoot = onSuccessRoot[taskField];                        
 
             int localDependOnSuccess = 1;
-            ingestionTask(conn, customer, onSuccessTaskRoot, 
-                    localDependOnIngestionJobKey, localDependOnSuccess, responseBody);
+            ingestionTask(conn, customer, onSuccessTaskRoot, dependOnIngestionJobKeys, 
+                    localDependOnSuccess, responseBody);            
         }
-    }    
+        else if (_mmsEngineDBFacade->isMetadataPresent(onSuccessRoot, groupOfTasksField))
+        {
+            Json::Value onSuccessGroupOfTasksRoot = onSuccessRoot[groupOfTasksField];                        
+
+            int localDependOnSuccess = 1;
+            ingestionGroupOfTasks(conn, customer, onSuccessGroupOfTasksRoot, dependOnIngestionJobKeys, 
+                    localDependOnSuccess, responseBody);            
+        }
+    }
 
     field = "OnError";
-    if (_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
+    if (_mmsEngineDBFacade->isMetadataPresent(taskOrGroupOfTasksRoot, field))
     {
-        Json::Value onErrorRoot = taskRoot[field];
+        Json::Value onErrorRoot = taskOrGroupOfTasksRoot[field];
         
-        field = "Task";
-        if (_mmsEngineDBFacade->isMetadataPresent(onErrorRoot, field))
+        string taskField = "Task";
+        string groupOfTasksField = "GroupOfTasks";
+        if (_mmsEngineDBFacade->isMetadataPresent(onErrorRoot, taskField))
         {
-            Json::Value onErrorTaskRoot = onErrorRoot[field]; 
+            Json::Value onErrorTaskRoot = onErrorRoot[taskField];                        
 
             int localDependOnSuccess = 0;
-            ingestionTask(conn, customer, onErrorTaskRoot, 
-                    localDependOnIngestionJobKey, localDependOnSuccess, responseBody);
+            ingestionTask(conn, customer, onErrorTaskRoot, dependOnIngestionJobKeys, 
+                    localDependOnSuccess, responseBody);            
+        }
+        else if (_mmsEngineDBFacade->isMetadataPresent(onErrorRoot, groupOfTasksField))
+        {
+            Json::Value onErrorGroupOfTasksRoot = onErrorRoot[groupOfTasksField];                        
+
+            int localDependOnSuccess = 0;
+            ingestionGroupOfTasks(conn, customer, onErrorGroupOfTasksRoot, dependOnIngestionJobKeys, 
+                    localDependOnSuccess, responseBody);            
         }
     }    
     
     field = "OnComplete";
-    if (_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
+    if (_mmsEngineDBFacade->isMetadataPresent(taskOrGroupOfTasksRoot, field))
     {
-        Json::Value onCompleteRoot = taskRoot[field];
+        Json::Value onCompleteRoot = taskOrGroupOfTasksRoot[field];
         
-        field = "Task";
-        if (_mmsEngineDBFacade->isMetadataPresent(onCompleteRoot, field))
+        string taskField = "Task";
+        string groupOfTasksField = "GroupOfTasks";
+        if (_mmsEngineDBFacade->isMetadataPresent(onCompleteRoot, taskField))
         {
-            Json::Value onCompleteTaskRoot = onCompleteRoot[field]; 
+            Json::Value onCompleteTaskRoot = onCompleteRoot[taskField];                        
 
             int localDependOnSuccess = -1;
-            ingestionTask(conn, customer, onCompleteTaskRoot, 
-                    localDependOnIngestionJobKey, localDependOnSuccess, responseBody);
+            ingestionTask(conn, customer, onCompleteTaskRoot, dependOnIngestionJobKeys, 
+                    localDependOnSuccess, responseBody);            
+        }
+        else if (_mmsEngineDBFacade->isMetadataPresent(onCompleteRoot, groupOfTasksField))
+        {
+            Json::Value onCompleteGroupOfTasksRoot = onCompleteRoot[groupOfTasksField];                        
+
+            int localDependOnSuccess = -1;
+            ingestionGroupOfTasks(conn, customer, onCompleteGroupOfTasksRoot, dependOnIngestionJobKeys, 
+                    localDependOnSuccess, responseBody);            
         }
     }    
 }

@@ -1740,7 +1740,7 @@ int64_t MMSEngineDBFacade::addIngestionJob (
         shared_ptr<MySQLConnection> conn,
     	int64_t customerKey, string label, string metadataContent,
         MMSEngineDBFacade::IngestionType ingestionType, 
-        int64_t dependOnIngestionJobKey, int dependOnSuccess
+        vector<int64_t> dependOnIngestionJobKeys, int dependOnSuccess
 )
 {
     int64_t     ingestionJobKey;
@@ -1818,6 +1818,7 @@ int64_t MMSEngineDBFacade::addIngestionJob (
             ingestionJobKey = getLastInsertId(conn);
             
             {
+                int64_t dependOnIngestionJobKey = -1;
                 lastSQLCommand = 
                     "insert into MMS_IngestionJobDependency (ingestionJobKey, label, dependOnIngestionJobKey, dependOnSuccess) values ("
                     "?, ?, ?, ?)";

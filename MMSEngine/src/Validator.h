@@ -47,6 +47,9 @@ public:
     MMSEngineDBFacade::ContentType validateIFramesMetadata(
         Json::Value parametersRoot, vector<int64_t>& dependencies);
 
+    MMSEngineDBFacade::ContentType validateConcatDemuxerMetadata(
+        Json::Value parametersRoot, vector<int64_t>& dependencies);
+
 private:
     shared_ptr<spdlog::logger>          _logger;
     shared_ptr<MMSEngineDBFacade>       _mmsEngineDBFacade;
