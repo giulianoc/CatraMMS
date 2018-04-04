@@ -64,7 +64,7 @@ pair<MMSEngineDBFacade::ContentType,vector<int64_t>>
     }
 
     string type = taskRoot.get("Type", "XXX").asString();
-    if (type == "ContentIngestion")
+    if (type == "Content-Ingestion")
     {
         ingestionType = MMSEngineDBFacade::IngestionType::ContentIngestion;
         

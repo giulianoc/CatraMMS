@@ -280,7 +280,7 @@ public:
             case IngestionType::Unknown:
                 return "Unknown";
             case IngestionType::ContentIngestion:
-                return "ContentIngestion";
+                return "Content-Ingestion";
             case IngestionType::Frame:
                 return "Frame";
             case IngestionType::PeriodicalFrames:
@@ -299,7 +299,7 @@ public:
         lowerCase.resize(ingestionType.size());
         transform(ingestionType.begin(), ingestionType.end(), lowerCase.begin(), [](unsigned char c){return tolower(c); } );
 
-        if (lowerCase == "contentingestion")
+        if (lowerCase == "content-ingestion")
             return IngestionType::ContentIngestion;
         else if (lowerCase == "frame")
             return IngestionType::Frame;
