@@ -32,17 +32,21 @@ public:
             validateTaskMetadata(Json::Value taskRoot);
 
     pair<MMSEngineDBFacade::ContentType,vector<int64_t>> 
-        validateTaskMetadata(MMSEngineDBFacade::IngestionType ingestionType, Json::Value taskRoot);
+        validateTaskMetadata(MMSEngineDBFacade::IngestionType ingestionType, 
+        Json::Value parametersRoot);
 
     MMSEngineDBFacade::ContentType validateContentIngestionMetadata(
-        Json::Value contentIngestionRoot);
+        Json::Value parametersRoot);
 
     MMSEngineDBFacade::ContentType validateFrameMetadata(
-        Json::Value frameRoot, vector<int64_t>& dependencies);
+        Json::Value parametersRoot, vector<int64_t>& dependencies);
 
     MMSEngineDBFacade::ContentType validatePeriodicalFramesMetadata(
-        Json::Value frameRoot, vector<int64_t>& dependencies);
+        Json::Value parametersRoot, vector<int64_t>& dependencies);
     
+    MMSEngineDBFacade::ContentType validateIFramesMetadata(
+        Json::Value parametersRoot, vector<int64_t>& dependencies);
+
 private:
     shared_ptr<spdlog::logger>          _logger;
     shared_ptr<MMSEngineDBFacade>       _mmsEngineDBFacade;

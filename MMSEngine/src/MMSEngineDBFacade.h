@@ -270,6 +270,7 @@ public:
         ContentIngestion        = 1,
         Frame                   = 2,
         PeriodicalFrames        = 3,
+        IFrames                 = 4,
         ContentUpdate           = 50,
         ContentRemove           = 60
     };
@@ -285,6 +286,8 @@ public:
                 return "Frame";
             case IngestionType::PeriodicalFrames:
                 return "Periodical-Frames";
+            case IngestionType::IFrames:
+                return "I-Frames";
             case IngestionType::ContentUpdate:
                 return "ContentUpdate";
             case IngestionType::ContentRemove:
@@ -305,6 +308,8 @@ public:
             return IngestionType::Frame;
         else if (lowerCase == "periodical-frames")
             return IngestionType::PeriodicalFrames;
+        else if (lowerCase == "i-frames")
+            return IngestionType::IFrames;
         else if (lowerCase == "contentupdate")
             return IngestionType::ContentUpdate;
         else if (lowerCase == "contentremove")
