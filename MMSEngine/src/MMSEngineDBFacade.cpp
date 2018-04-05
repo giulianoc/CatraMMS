@@ -1458,10 +1458,10 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                     shared_ptr<sql::ResultSet> resultSetDependency (preparedStatementDependency->executeQuery());
                     while (resultSetDependency->next())
                     {
-                        if (!resultSet->isNull("dependOnIngestionJobKey"))
+                        if (!resultSetDependency->isNull("dependOnIngestionJobKey"))
                         {
-                            int64_t dependOnIngestionJobKey     = resultSet->getInt64("dependOnIngestionJobKey");
-                            int dependOnSuccess                 = resultSet->getInt("dependOnSuccess");
+                            int64_t dependOnIngestionJobKey     = resultSetDependency->getInt64("dependOnIngestionJobKey");
+                            int dependOnSuccess                 = resultSetDependency->getInt("dependOnSuccess");
 
                             lastSQLCommand = 
                                 "select status from MMS_IngestionJob where ingestionJobKey = ?";
