@@ -994,17 +994,17 @@ MMSEngineDBFacade::ContentType Validator::validateConcatDemuxerMetadata(
                     }
                     else
                     {
-                        referenceUniqueName = parametersRoot.get(field, "XXX").asString();
+                        referenceUniqueName = referenceRoot.get(field, "XXX").asString();
                     }        
                 }
                 else
                 {
-                    referenceIngestionJobKey = parametersRoot.get(field, "XXX").asInt64();
+                    referenceIngestionJobKey = referenceRoot.get(field, "XXX").asInt64();
                 }        
             }
             else
             {
-                referenceMediaItemKey = parametersRoot.get(field, "XXX").asInt64();    
+                referenceMediaItemKey = referenceRoot.get(field, "XXX").asInt64();    
             }
 
             MMSEngineDBFacade::ContentType      referenceContentType;
@@ -1056,9 +1056,10 @@ MMSEngineDBFacade::ContentType Validator::validateConcatDemuxerMetadata(
             }
 
 
-            if (referenceContentType != MMSEngineDBFacade::ContentType::Video)
+            if (referenceContentType != MMSEngineDBFacade::ContentType::Video
+                    && referenceContentType != MMSEngineDBFacade::ContentType::Audio)
             {
-                string errorMessage = __FILEREF__ + "Reference... does not refer a video content"
+                string errorMessage = __FILEREF__ + "Reference... does not refer a video or audio content"
                     + ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
                     + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
                     + ", referenceUniqueName: " + referenceUniqueName

@@ -7,7 +7,8 @@
         "TitleOfConcatVideo": "My Title of the concat video content"
     },
     "GroupOfTasks": {
-        "ParallelTasks": [
+		"ExecutionType": "parallel",
+        "Tasks": [
             {
                 "Label": "...",
                 "Type": "Content-Ingestion",
