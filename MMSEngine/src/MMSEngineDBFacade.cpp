@@ -1415,11 +1415,11 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
             while(ingestionsToBeManaged.size() < maxIngestionJobs && !noMoreRowsReturned)
             {
                 lastSQLCommand = 
-                    "select ij.ingestionJobKey, DATE_FORMAT(ij.startIngestion, '%Y-%m-%d %H:%i:%s') as startIngestion, "
-                        "ij.customerKey, ij.metaDataContent, ij.status, ij.ingestionType, ijd.dependOnIngestionJobKey, ijd.dependOnSuccess "
-                        "from MMS_IngestionJob ij, MMS_IngestionJobDependency ijd "
-                        "where ij.ingestionJobKey = ijd.ingestionJobKey and ij.processorMMS is null "
-                        "and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) "
+                    "select ingestionJobKey, DATE_FORMAT(startIngestion, '%Y-%m-%d %H:%i:%s') as startIngestion, "
+                        "customerKey, metaDataContent, status, ingestionType "
+                        "from MMS_IngestionJob "
+                        "where processorMMS is null "
+                        "and (status = ? or (status in (?, ?, ?, ?) and sourceBinaryTransferred = 1)) "
                         "limit ?, ? for update";
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
@@ -1450,7 +1450,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                     bool ingestionJobToBeManaged = true;
 
                     lastSQLCommand = 
-                        "select dependOnIngestionJobKey, dependOnSuccess from MMS_IngestionJobDependency where ingestionJobKey = ? order by orderNumber";
+                        "select dependOnIngestionJobKey, dependOnSuccess from MMS_IngestionJobDependency where ingestionJobKey = ? order by orderNumber asc";
                     shared_ptr<sql::PreparedStatement> preparedStatementDependency (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
                     preparedStatementDependency->setInt64(queryParameterIndex++, ingestionJobKey);
