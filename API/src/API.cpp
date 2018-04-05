@@ -1673,7 +1673,7 @@ void API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
         localDependOnIngestionJobKeys.push_back(localDependOnIngestionJobKey);
     }
 
-    ingestionEvents(conn, customer, tasksRoot, 
+    ingestionEvents(conn, customer, groupOfTasksRoot, 
         localDependOnIngestionJobKeys, responseBody);
 }    
 
