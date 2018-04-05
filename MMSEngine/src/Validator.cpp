@@ -722,10 +722,23 @@ MMSEngineDBFacade::ContentType Validator::validateIFramesMetadata(
             referenceContentType = mediaItemKeyAndContentType.second;
         }
     }
+    catch(MediaItemKeyNotFound e)
+    {
+        string errorMessage = __FILEREF__ + "Reference was not found"
+                + ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
+                + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
+                + ", referenceUniqueName: " + referenceUniqueName
+                ;
+        _logger->warn(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
     catch(runtime_error e)
     {
-        string errorMessage = __FILEREF__ + "Reference... was not found"
+        string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->getMediaItemKeyDetails failed"
+                + ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
                 + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
+                + ", referenceUniqueName: " + referenceUniqueName
                 ;
         _logger->warn(errorMessage);
 
@@ -736,6 +749,7 @@ MMSEngineDBFacade::ContentType Validator::validateIFramesMetadata(
         string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->getMediaItemKeyDetails failed"
                 + ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
                 + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
+                + ", referenceUniqueName: " + referenceUniqueName
                 ;
         _logger->error(errorMessage);
 
