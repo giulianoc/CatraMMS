@@ -1,0 +1,118 @@
+server {
+	listen 80;
+
+	root /home/giuliano/catramms;
+	#index index.html index.htm;
+
+	# Make site accessible from http://localhost/
+	server_name mms.calber.org;
+
+	access_log   /home/giuliano/catramms/logs/catramms.access.log main;
+	error_log    /home/giuliano/catramms/logs/catramms.error.log notice;
+
+	client_max_body_size 1G;
+
+	location /catramms {
+		if ($request_method = POST) {
+			rewrite ^/catramms/uploadedBinary/?$ /api last;
+		}
+
+		if ($request_method = POST) {
+			rewrite ^/catramms/customer/?$ /api?method=registerCustomer last;
+		}
+
+		if ($request_method = PUT) {
+			rewrite ^/catramms/customer/([0-9]+)/([0-9]+)/?$ /api?method=confirmCustomer&confirmationeCode=$2 last;
+		}
+
+		if ($request_method = POST) {
+			rewrite ^/catramms/customer/([0-9]+)/([0-9]+)/apiKey/?$ /api?method=createAPIKey&customerKey=$1&userKey=$2 last;
+		}
+
+		if ($request_method = POST) {
+			rewrite ^/catramms/ingestion/?$ /api?method=ingestion last;
+		}
+	}
+
+	location /catramms/binary {
+		if ($request_method = POST) {
+			set $XProgressID "$msec";
+			rewrite ^/catramms/binary/([0-9]+)/?$ /catramms/binary/toBeAuthorized?method=uploadBinary&ingestionJobKey=$1&X-Progress-ID=$XProgressID last;
+		}
+#		if ($request_method = HEAD) {
+#			rewrite ^/catramms/binary/([0-9]+)/?$ /upload?method=uploadBinary&ingestionJobKey=$1 last;
+#		}
+
+		location /catramms/binary/toBeAuthorized {
+			internal;
+
+    			auth_request /catramms/binary/checkAuthorization;
+			#auth_request_set $auth_status $upstream_status;
+
+			client_body_temp_path /tmp;
+
+			# When set to the value on, temporary files are not removed after request processing
+			#The value clean does it.
+			client_body_in_file_only clean;
+
+			proxy_pass_request_headers on;	
+
+			# where the POST data was written to
+			proxy_set_header X-FILE $request_body_file;
+
+			proxy_redirect off;
+			proxy_set_body off;
+			proxy_http_version 1.1;
+			proxy_pass http://127.0.0.1:8080/catramms/uploadedBinary;
+
+			## Track uploads for this location on the zone defined
+			## up to 30 seconds after they have been finished
+			## In case of Upload using Content-Range, the X-Progress-Id (ingestionKey) will be the same,
+			## so two upload requests using Content-Range has to be done at least with 5 seconds of interval
+			## otherwise the 'upload progress' module will return an error.
+			## This directive must be the last directive of the location.
+			track_uploads uploads 30s;
+		}
+
+		location = /catramms/binary/checkAuthorization {
+			internal;
+
+			proxy_pass http://127.0.0.1:8080/catramms/binary/authorization;
+			proxy_pass_request_body off;
+			proxy_set_header Content-Length "";
+			#proxy_set_header X-Original-METHOD $request_method;
+			proxy_set_header X-Original-METHOD $XProgressID;
+			proxy_set_header X-Original-URI $request_uri;
+		}
+
+		location /catramms/binary/authorization {
+			allow 127.0.0.1;
+			deny all;
+			if ($request_method = GET) {
+				rewrite ^/catramms/binary/authorization/?$ /api?method=authorization last;
+			}
+		}
+
+		location ^~ /catramms/binary/uploadProgress {
+			allow 127.0.0.1;
+			deny all;
+			upload_progress_json_output;
+			report_uploads uploads;
+		}
+	}
+
+	location /api {
+		internal;
+
+      		fastcgi_pass   127.0.0.1:8000;
+		include /usr/local/nginx/conf/fastcgi_params;
+	}
+
+	location /upload {
+		internal;
+
+      		fastcgi_pass   127.0.0.1:8000;
+		include /usr/local/nginx/conf/fastcgi_params;
+	}
+}
+

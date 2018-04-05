@@ -1,0 +1,20 @@
+{
+	"Type": "Process",
+	"Label": "1",
+	"Variables": {
+		"Title": "My Title of the content"
+	},
+	"Task": {
+		"Label": "my label",
+		"Type": "Motion-JPEG-by-Periodical-Frames",
+		"Parameters": {
+			"SourceFileName": "123456.jpg",
+			"ReferenceMediaItemKey": 11,
+			"StartTimeInSeconds": 1.5,
+			"PeriodInSeconds": 2,
+			"MaxFramesNumber": 5,
+			"userData": { "MyData": "this is my data" },
+			"Title": "${Title}"
+		}
+	}
+}

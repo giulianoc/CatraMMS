@@ -411,8 +411,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                     else
                      */
                     {
-                        if (ingestionType ==
-                                MMSEngineDBFacade::IngestionType::ContentIngestion)
+                        if (ingestionType == MMSEngineDBFacade::IngestionType::ContentIngestion)
                         {
                             MMSEngineDBFacade::IngestionStatus nextIngestionStatus;
                             string mediaSourceURL;
@@ -848,8 +847,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         contentTypeAndDependencies = validator.validateTaskMetadata(
                 localAssetIngestionEvent->getIngestionType(), parametersRoot);
         
-        tie(contentType, dependencies) =
-                contentTypeAndDependencies;
+        tie(contentType, dependencies) = contentTypeAndDependencies;
     }
     catch(runtime_error e)
     {
@@ -1670,26 +1668,54 @@ void MMSEngineProcessor::generateAndIngestConcatenation(
             throw runtime_error(errorMessage);
         }
         
-        bool video;
+        MMSEngineDBFacade::ContentType concatContentType;
+        bool concatContentTypeInitialized = false;
+        vector<string> sourcePhysicalPaths;
         
-        ...
-        
-        string concatenationListPathName =
-            string("/tmp/")
-            + to_string(ingestionJobKey)
-            + ".concatList.txt"
-            ;
-        ofstream concatListFile(concatenationListPathName.c_str(), ofstream::trunc);
         for (int64_t sourceMediaItemKey: dependencies)
         {
             int64_t encodingProfileKey = -1;
             string sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourceMediaItemKey, encodingProfileKey);
 
-            concatListFile << "file '" << sourcePhysicalPath << "'" << endl;
-        }
-        concatListFile.close();
+            sourcePhysicalPaths.push_back(sourcePhysicalPath);
+            
+            bool warningIfMissing = false;
+            
+            MMSEngineDBFacade::ContentType contentType = _mmsEngineDBFacade->getMediaItemKeyDetails(
+                sourceMediaItemKey, warningIfMissing);
+            
+            if (!concatContentTypeInitialized)
+            {
+                concatContentType = contentType;
+                if (concatContentType != MMSEngineDBFacade::ContentType::Video
+                        && concatContentType != MMSEngineDBFacade::ContentType::Audio)
+                {
+                    string errorMessage = __FILEREF__ + "It is not possible to concatenate a media that is not video or audio"
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", concatContentType: " + MMSEngineDBFacade::toString(concatContentType)
+                            ;
+                    _logger->error(errorMessage);
 
-        field = "SourceFileName";
+                    throw runtime_error(errorMessage);
+                }
+            }
+            else
+            {
+                if (concatContentType != contentType)
+                {
+                    string errorMessage = __FILEREF__ + "Not all the References have the same ContentType"
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", contentType: " + MMSEngineDBFacade::toString(contentType)
+                            + ", concatContentType: " + MMSEngineDBFacade::toString(concatContentType)
+                            ;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+            }
+        }
+
+        string field = "SourceFileName";
         if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -1703,11 +1729,10 @@ void MMSEngineProcessor::generateAndIngestConcatenation(
 
         string customerIngestionRepository = _mmsStorage->getCustomerIngestionRepository(
                 customer);
-
         string concatenatedMediaPathName = customerIngestionRepository + "/" + sourceFileName;
         
         FFMpeg ffmpeg (_configuration, _logger);
-        ffmpeg.generateConcatMediaToIngest(concatenationListPathName, concatenatedMediaPathName);
+        ffmpeg.generateConcatMediaToIngest(ingestionJobKey, sourcePhysicalPaths, concatenatedMediaPathName);
 
         _logger->info(__FILEREF__ + "generateConcatMediaToIngest done"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -1716,7 +1741,7 @@ void MMSEngineProcessor::generateAndIngestConcatenation(
 
         string mediaMetaDataContent = generateMediaMetadataToIngest(
                 ingestionJobKey,
-                video,
+                concatContentType == MMSEngineDBFacade::ContentType::Video ? true : false,
                 sourceFileName,
                 parametersRoot
         );
@@ -1926,7 +1951,7 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
     if (territories != "")
         mediaMetadata += ", \"Territories\": \"" + territories + "\"";
                             
-    imageMetadata +=
+    mediaMetadata +=
         string("}")
     ;
     

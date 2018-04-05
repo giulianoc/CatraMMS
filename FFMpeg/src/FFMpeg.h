@@ -72,7 +72,8 @@ public:
         string mmsAssetPathName);
 
     void generateConcatMediaToIngest(
-        string concatenationListPathName,
+        int64_t ingestionJobKey,
+        vector<string>& sourcePhysicalPaths,
         string concatenatedMediaPathName);
 
     static void encodingFileFormatValidation(string fileFormat,

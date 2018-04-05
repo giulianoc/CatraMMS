@@ -13,8 +13,6 @@
 
 #include <fstream>
 #include <sstream>
-// #include <algorithm>
-// #include <regex>
 #include <curlpp/cURLpp.hpp>
 #include <curlpp/Easy.hpp>
 #include <curlpp/Options.hpp>

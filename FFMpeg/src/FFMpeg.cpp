@@ -1332,12 +1332,26 @@ vector<string> FFMpeg::generateFramesToIngest(
 }
 
 void FFMpeg::generateConcatMediaToIngest(
-        string concatenationListPathName,
+        int64_t ingestionJobKey,
+        vector<string>& sourcePhysicalPaths,
         string concatenatedMediaPathName)
-{    
+{
+    string concatenationListPathName =
+        string("/tmp/")
+        + to_string(ingestionJobKey)
+        + ".concatList.txt"
+        ;
+        
+    ofstream concatListFile(concatenationListPathName.c_str(), ofstream::trunc);
+    for (string sourcePhysicalPath: sourcePhysicalPaths)
+    {
+        concatListFile << "file '" << sourcePhysicalPath << "'" << endl;
+    }
+    concatListFile.close();
+
     string outputFfmpegPathFileName =
             string("/tmp/")
-            + localImageFileName
+            + to_string(ingestionJobKey)
             + ".concat.log"
             ;
     

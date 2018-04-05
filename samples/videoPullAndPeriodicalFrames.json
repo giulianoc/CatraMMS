@@ -1,0 +1,32 @@
+{
+	"Type": "Process",
+	"Label": "1",
+	"Variables": {
+		"TitleOfVideo": "My Title of the video content",
+		"TitleOfFrame": "My Title of the frame content"
+	},
+	"Task": {
+		"Label": "...",
+		"Type": "Content-Ingestion",
+		"Parameters": {
+			"SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
+			"SourceFileName": "123456.mp4",
+			"ContentType": "video",
+			"userData": { "MyData": "this is my video data" },
+			"Title": "${TitleOfVideo}"
+		},
+		"OnSuccess": {
+			"Task": {
+				"Type": "Periodical-Frames",
+				"Parameters": {
+					"SourceFileName": "123456.jpg",
+					"StartTimeInSeconds": 2.5,
+					"PeriodInSeconds": 2,
+					"MaxFramesNumber": 5,
+					"userData": { "MyData": "this is my frame data" },
+					"Title": "${TitleOfFrame}"
+				}
+			}
+		}
+	}
+}
