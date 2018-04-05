@@ -1447,6 +1447,10 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                     IngestionStatus ingestionStatus     = MMSEngineDBFacade::toIngestionStatus(resultSet->getString("status"));
                     IngestionType ingestionType     = MMSEngineDBFacade::toIngestionType(resultSet->getString("ingestionType"));
 
+                    _logger->info(__FILEREF__ + "Analyzing dependencies for the IngestionJob"
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    );
+                    
                     bool ingestionJobToBeManaged = true;
 
                     lastSQLCommand = 
@@ -1474,16 +1478,25 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                             {
                                 IngestionStatus ingestionStatusDependency     = MMSEngineDBFacade::toIngestionStatus(resultSetIngestionJob->getString("status"));
 
-                                if (!(dependOnSuccess && MMSEngineDBFacade::isIngestionStatusSuccess(ingestionStatusDependency)))
+                                if (MMSEngineDBFacade::isIngestionStatusFinalState(ingestionStatusDependency))
                                 {
-                                    ingestionJobToBeManaged = false;
-                                    
-                                    break;
+                                    if (dependOnSuccess && MMSEngineDBFacade::isIngestionStatusFailed(ingestionStatusDependency))
+                                    {
+                                        ingestionJobToBeManaged = false;
+
+                                        break;
+                                    }
+                                    else if (!dependOnSuccess && MMSEngineDBFacade::isIngestionStatusSuccess(ingestionStatusDependency))
+                                    {
+                                        ingestionJobToBeManaged = false;
+
+                                        break;
+                                    }
                                 }
-                                else if (!(!dependOnSuccess && MMSEngineDBFacade::isIngestionStatusFailed(ingestionStatusDependency)))
+                                else
                                 {
                                     ingestionJobToBeManaged = false;
-                                    
+
                                     break;
                                 }
                             }
