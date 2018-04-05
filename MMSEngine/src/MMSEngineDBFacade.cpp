@@ -1450,7 +1450,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                     bool ingestionJobToBeManaged = true;
 
                     lastSQLCommand = 
-                        "select dependOnIngestionJobKey, dependOnSuccess from MMS_IngestionJobDependency where ingestionJobKey = ?";
+                        "select dependOnIngestionJobKey, dependOnSuccess from MMS_IngestionJobDependency where ingestionJobKey = ? order by orderNumber";
                     shared_ptr<sql::PreparedStatement> preparedStatementDependency (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
                     preparedStatementDependency->setInt64(queryParameterIndex++, ingestionJobKey);
@@ -1832,35 +1832,42 @@ int64_t MMSEngineDBFacade::addIngestionJob (
             {
                 if (dependOnIngestionJobKeys.size() == 0)
                 {
+                    int orderNumber = 0;
+
                     lastSQLCommand = 
-                        "insert into MMS_IngestionJobDependency (ingestionJobKey, label, dependOnIngestionJobKey, dependOnSuccess) values ("
-                        "?, ?, ?, ?)";
+                        "insert into MMS_IngestionJobDependency (ingestionJobKey, label, dependOnIngestionJobKey, orderNumber, dependOnSuccess) values ("
+                        "?, ?, ?, ?, ?)";
 
                     shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
                     preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
                     preparedStatement->setString(queryParameterIndex++, label);
                     preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
+                    preparedStatement->setInt(queryParameterIndex++, orderNumber);
                     preparedStatement->setInt(queryParameterIndex++, dependOnSuccess);
 
                     preparedStatement->executeUpdate();
                 }
                 else
                 {
+                    int orderNumber = 0;
                     for (int64_t dependOnIngestionJobKey: dependOnIngestionJobKeys)
                     {
                         lastSQLCommand = 
-                            "insert into MMS_IngestionJobDependency (ingestionJobKey, label, dependOnIngestionJobKey, dependOnSuccess) values ("
-                            "?, ?, ?, ?)";
+                            "insert into MMS_IngestionJobDependency (ingestionJobKey, label, dependOnIngestionJobKey, orderNumber, dependOnSuccess) values ("
+                            "?, ?, ?, ?, ?)";
 
                         shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                         int queryParameterIndex = 1;
                         preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
                         preparedStatement->setString(queryParameterIndex++, label);
                         preparedStatement->setInt64(queryParameterIndex++, dependOnIngestionJobKey);
+                        preparedStatement->setInt(queryParameterIndex++, orderNumber);
                         preparedStatement->setInt(queryParameterIndex++, dependOnSuccess);
 
                         preparedStatement->executeUpdate();
+                        
+                        orderNumber++;
                     }
                 }
             }
@@ -5330,6 +5337,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ingestionJobKey  			BIGINT UNSIGNED NOT NULL,"
                     "label                              VARCHAR (128) NULL,"
                     "dependOnIngestionJobKey            BIGINT UNSIGNED NULL,"
+                    "orderNumber                        INT UNSIGNED NOT NULL,"
                     "dependOnSuccess                    TINYINT (1) NOT NULL,"
                     "constraint MMS_IngestionJob_PK PRIMARY KEY (ingestionJobDependency), "
                     "constraint MMS_IngestionJobDependency_FK foreign key (ingestionJobKey) "

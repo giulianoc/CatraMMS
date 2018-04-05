@@ -659,6 +659,64 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 }
                             }
                         }
+                        else if (ingestionType == MMSEngineDBFacade::IngestionType::ConcatDemuxer)
+                        {
+                            // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
+                            try
+                            {
+                                generateAndIngestConcatenation(
+                                        ingestionJobKey, 
+                                        customer, 
+                                        parametersRoot, 
+                                        dependencies);
+                            }
+                            catch(runtime_error e)
+                            {
+                                _logger->error(__FILEREF__ + "generateAndIngestConcatenation failed"
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
+                                        errorMessage,
+                                        "" // processorMMS
+                                        );
+
+                                throw runtime_error(errorMessage);
+                            }
+                            catch(exception e)
+                            {
+                                _logger->error(__FILEREF__ + "generateAndIngestConcatenation failed"
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
+                                        errorMessage,
+                                        "" // processorMMS
+                                        );
+
+                                throw runtime_error(errorMessage);
+                            }
+                        }
                         else
                         {
                             string errorMessage = string("Unknown IngestionType")
@@ -1593,6 +1651,119 @@ void MMSEngineProcessor::generateAndIngestFrames(
     }
 }
 
+void MMSEngineProcessor::generateAndIngestConcatenation(
+        int64_t ingestionJobKey,
+        shared_ptr<Customer> customer,
+        Json::Value parametersRoot,
+        vector<int64_t>& dependencies
+)
+{
+    try
+    {
+        if (dependencies.size() == 0)
+        {
+            string errorMessage = __FILEREF__ + "No configured any media to be concatenated"
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", dependencies.size: " + to_string(dependencies.size());
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        
+        bool video;
+        
+        ...
+        
+        string concatenationListPathName =
+            string("/tmp/")
+            + to_string(ingestionJobKey)
+            + ".concatList.txt"
+            ;
+        ofstream concatListFile(concatenationListPathName.c_str(), ofstream::trunc);
+        for (int64_t sourceMediaItemKey: dependencies)
+        {
+            int64_t encodingProfileKey = -1;
+            string sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourceMediaItemKey, encodingProfileKey);
+
+            concatListFile << "file '" << sourcePhysicalPath << "'" << endl;
+        }
+        concatListFile.close();
+
+        field = "SourceFileName";
+        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", Field: " + field;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        string sourceFileName = parametersRoot.get(field, "XXX").asString();
+
+        string customerIngestionRepository = _mmsStorage->getCustomerIngestionRepository(
+                customer);
+
+        string concatenatedMediaPathName = customerIngestionRepository + "/" + sourceFileName;
+        
+        FFMpeg ffmpeg (_configuration, _logger);
+        ffmpeg.generateConcatMediaToIngest(concatenationListPathName, concatenatedMediaPathName);
+
+        _logger->info(__FILEREF__ + "generateConcatMediaToIngest done"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", concatenatedMediaPathName: " + concatenatedMediaPathName
+        );
+
+        string mediaMetaDataContent = generateMediaMetadataToIngest(
+                ingestionJobKey,
+                video,
+                sourceFileName,
+                parametersRoot
+        );
+
+        {
+            shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
+                    ->getFreeEvent<LocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
+
+            localAssetIngestionEvent->setSource(MMSENGINEPROCESSORNAME);
+            localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
+            localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
+
+            localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
+            localAssetIngestionEvent->setSourceFileName(sourceFileName);
+            localAssetIngestionEvent->setCustomer(customer);
+            localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::ContentIngestion);
+
+            localAssetIngestionEvent->setMetadataContent(mediaMetaDataContent);
+
+            shared_ptr<Event2>    event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
+            _multiEventsSet->addEvent(event);
+
+            _logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", getEventKey().first: " + to_string(event->getEventKey().first)
+                + ", getEventKey().second: " + to_string(event->getEventKey().second));
+        }
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "generateAndIngestConcatenation failed"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
+        );
+        
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "generateAndIngestConcatenation failed"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+        );
+        
+        throw e;
+    }
+}
+
 string MMSEngineProcessor::generateImageMetadataToIngest(
         int64_t ingestionJobKey,
         bool mjpeg,
@@ -1678,6 +1849,93 @@ string MMSEngineProcessor::generateImageMetadataToIngest(
             );
 
     return imageMetadata;
+}
+
+string MMSEngineProcessor::generateMediaMetadataToIngest(
+        int64_t ingestionJobKey,
+        bool video,
+        string sourceFileName,
+        Json::Value parametersRoot
+)
+{
+    string title;
+    string field = "title";
+    if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        title = parametersRoot.get(field, "XXX").asString();
+    
+    string subTitle;
+    field = "SubTitle";
+    if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        subTitle = parametersRoot.get(field, "XXX").asString();
+
+    string ingester;
+    field = "Ingester";
+    if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        ingester = parametersRoot.get(field, "XXX").asString();
+
+    string keywords;
+    field = "Keywords";
+    if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        keywords = parametersRoot.get(field, "XXX").asString();
+
+    string description;
+    field = "Description";
+    if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        description = parametersRoot.get(field, "XXX").asString();
+
+    string logicalType;
+    field = "LogicalType";
+    if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        logicalType = parametersRoot.get(field, "XXX").asString();
+
+    string contentProviderName;
+    field = "ContentProviderName";
+    if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        contentProviderName = parametersRoot.get(field, "XXX").asString();
+    
+    string territories;
+    field = "Territories";
+    if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+    {
+        {
+            Json::StreamWriterBuilder wbuilder;
+            
+            territories = Json::writeString(wbuilder, parametersRoot[field]);
+        }
+    }
+    
+    string mediaMetadata = string("")
+        + "{"
+            + "\"ContentType\": \"" + (video ? "video" : "audio") + "\""
+            + ", \"SourceFileName\": \"" + sourceFileName + "\""
+            ;
+    if (title != "")
+        mediaMetadata += ", \"Title\": \"" + title + "\"";
+    if (subTitle != "")
+        mediaMetadata += ", \"SubTitle\": \"" + subTitle + "\"";
+    if (ingester != "")
+        mediaMetadata += ", \"Ingester\": \"" + ingester + "\"";
+    if (keywords != "")
+        mediaMetadata += ", \"Keywords\": \"" + keywords + "\"";
+    if (description != "")
+        mediaMetadata += ", \"Description\": \"" + description + "\"";
+    if (logicalType != "")
+        mediaMetadata += ", \"LogicalType\": \"" + logicalType + "\"";
+    if (contentProviderName != "")
+        mediaMetadata += ", \"ContentProviderName\": \"" + contentProviderName + "\"";
+    if (territories != "")
+        mediaMetadata += ", \"Territories\": \"" + territories + "\"";
+                            
+    imageMetadata +=
+        string("}")
+    ;
+    
+    _logger->info(__FILEREF__ + "Media metadata generated"
+        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+        + ", mediaMetadata: " + mediaMetadata
+            );
+
+    return mediaMetadata;
 }
 
 void MMSEngineProcessor::handleCheckEncodingEvent ()

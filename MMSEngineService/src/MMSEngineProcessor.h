@@ -66,10 +66,22 @@ private:
         Json::Value parametersRoot
     );
 
+    string generateMediaMetadataToIngest(
+        int64_t ingestionJobKey,
+        bool video,
+        string sourceFileName,
+        Json::Value parametersRoot);
+
     void generateAndIngestFrames(
         int64_t ingestionJobKey,
         shared_ptr<Customer> customer,
         MMSEngineDBFacade::IngestionType ingestionType,
+        Json::Value parametersRoot,
+        vector<int64_t>& dependencies);
+
+    void generateAndIngestConcatenation(
+        int64_t ingestionJobKey,
+        shared_ptr<Customer> customer,
         Json::Value parametersRoot,
         vector<int64_t>& dependencies);
 

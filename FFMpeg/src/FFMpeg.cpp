@@ -1331,6 +1331,70 @@ vector<string> FFMpeg::generateFramesToIngest(
     return generatedFramesFileNames;
 }
 
+void FFMpeg::generateConcatMediaToIngest(
+        string concatenationListPathName,
+        string concatenatedMediaPathName)
+{    
+    string outputFfmpegPathFileName =
+            string("/tmp/")
+            + localImageFileName
+            + ".concat.log"
+            ;
+    
+    // Then you can stream copy or re-encode your files
+    // The -safe 0 above is not required if the paths are relative
+    // ffmpeg -f concat -safe 0 -i mylist.txt -c copy output
+
+    string ffmpegExecuteCommand = 
+            _ffmpegPath + "/ffmpeg "
+            + "-f concat -safe 0 -i " + concatenationListPathName + " "
+            + "-c copy " + concatenatedMediaPathName + " "
+            + "> " + outputFfmpegPathFileName + " "
+            + "2>&1"
+            ;
+
+    #ifdef __APPLE__
+        ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
+    #endif
+
+    _logger->info(__FILEREF__ + "Executing ffmpeg command"
+        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+    );
+
+    try
+    {
+        int executeCommandStatus = ProcessUtility::execute (ffmpegExecuteCommand);
+        if (executeCommandStatus != 0)
+        {
+            string errorMessage = __FILEREF__ + "ffmpeg command failed"
+                    + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+            ;
+
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+    catch(exception e)
+    {
+        string lastPartOfFfmpegOutputFile = getLastPartOfFile(
+                outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
+        string errorMessage = __FILEREF__ + "ffmpeg command failed"
+                + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+                + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+        ;
+        _logger->error(errorMessage);
+
+        bool exceptionInCaseOfError = false;
+        FileIO::remove(outputFfmpegPathFileName, exceptionInCaseOfError);
+
+        throw e;
+    }
+
+    bool exceptionInCaseOfError = false;
+    FileIO::remove(outputFfmpegPathFileName, exceptionInCaseOfError);    
+}
+
 void FFMpeg::settingFfmpegPatameters(
         string stagingEncodedAssetPathName,
         

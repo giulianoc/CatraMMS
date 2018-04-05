@@ -1606,10 +1606,13 @@ int64_t API::ingestionTask(shared_ptr<MySQLConnection> conn,
             taskMetadata = Json::writeString(wbuilder, taskRoot[field]);        
         }
         
+        /*
+         * commented because already logged in mmsEngineDBFacade
         _logger->info(__FILEREF__ + "update IngestionJob"
             + ", localDependOnIngestionJobKey: " + to_string(localDependOnIngestionJobKey)
             + ", taskMetadata: " + taskMetadata
         );
+         */
         _mmsEngineDBFacade->updateIngestionJobMetadataContent(conn, localDependOnIngestionJobKey, taskMetadata);
     }
 

@@ -71,6 +71,10 @@ public:
         int imageHeight,
         string mmsAssetPathName);
 
+    void generateConcatMediaToIngest(
+        string concatenationListPathName,
+        string concatenatedMediaPathName);
+
     static void encodingFileFormatValidation(string fileFormat,
         shared_ptr<spdlog::logger> logger);
 

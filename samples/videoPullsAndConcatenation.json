@@ -1,0 +1,45 @@
+{
+    "Type": "Process",
+    "Label": "1",
+    "Variables": {
+        "TitleOfVideo_1": "My Title of the video_1 content",
+        "TitleOfVideo_2": "My Title of the video_2 content",
+        "TitleOfConcatVideo": "My Title of the concat video content"
+    },
+    "GroupOfTasks": {
+        "ParallelTasks": [
+            {
+                "Label": "...",
+                "Type": "Content-Ingestion",
+                "Parameters": {
+                    "SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
+                    "SourceFileName": "123456.mp4",
+                    "ContentType": "video",
+                    "userData": { "MyData": "this is my video data" },
+                    "Title": "${TitleOfVideo_1}"
+                }
+            },
+            {
+                "Label": "...",
+                "Type": "Content-Ingestion",
+                "Parameters": {
+                    "SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
+                    "SourceFileName": "123456.mp4",
+                    "ContentType": "video",
+                    "userData": { "MyData": "this is my video data" },
+                    "Title": "${TitleOfVideo_2}"
+                }
+            }
+        ],
+        "OnSuccess": {
+            "Task": {
+                "Type": "Concat-Demuxer",
+                "Parameters": {
+                    "SourceFileName": "123456.jpg",
+                    "userData": { "MyData": "this is my frame data" },
+                    "Title": "${TitleOfConcatVideo}"
+                }
+            }
+        }
+    }
+}
