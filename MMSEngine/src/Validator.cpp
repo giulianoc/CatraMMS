@@ -32,8 +32,36 @@ void Validator::validateProcessMetadata(Json::Value processRoot)
 {
     // check Process metadata
     
-    string field = "Task";
-    if (!isMetadataPresent(processRoot, field))
+    string taskField = "Task";
+    string groupOfTasksField = "GroupOfTasks";
+    if (_mmsEngineDBFacade->isMetadataPresent(processRoot, taskField))
+    {
+        Json::Value taskRoot = processRoot[taskField];  
+
+        validateTaskMetadata(taskRoot);
+    }
+    else if (_mmsEngineDBFacade->isMetadataPresent(processRoot, groupOfTasksField))
+    {
+        Json::Value groupOfTasksRoot = processRoot[groupOfTasksField];  
+
+        validateGroupOfTasksMetadata(groupOfTasksRoot);
+    }
+    else
+    {
+        string errorMessage = __FILEREF__ + "Both Fields are not present or are null"
+                + ", Field: " + taskField
+                + ", Field: " + groupOfTasksField
+                ;
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void Validator::validateGroupOfTasksMetadata(Json::Value groupOfTasksRoot)
+{
+    string field = "ParallelTasks";
+    if (!isMetadataPresent(groupOfTasksRoot, field))
     {
         string errorMessage = __FILEREF__ + "Field is not present or it is null"
                 + ", Field: " + field;
@@ -41,9 +69,83 @@ void Validator::validateProcessMetadata(Json::Value processRoot)
 
         throw runtime_error(errorMessage);
     }
-    Json::Value taskRoot = processRoot[field];  
+
+    Json::Value parallelTasksRoot = groupOfTasksRoot[field];
     
-    validateTaskMetadata(taskRoot);
+    for (int taskIndex = 0; taskIndex < parallelTasksRoot.size(); ++taskIndex)
+    {
+        Json::Value taskRoot = parallelTasksRoot[taskIndex];
+        
+        validateTaskMetadata(taskRoot);
+    }
+    
+    validateEvents(groupOfTasksRoot);
+}
+
+void Validator::validateEvents(Json::Value taskOrGroupOfTasksRoot)
+{
+    string field = "OnSuccess";
+    if (_mmsEngineDBFacade->isMetadataPresent(taskOrGroupOfTasksRoot, field))
+    {
+        Json::Value onSuccessRoot = taskOrGroupOfTasksRoot[field];
+        
+        string taskField = "Task";
+        string groupOfTasksField = "GroupOfTasks";
+        if (_mmsEngineDBFacade->isMetadataPresent(onSuccessRoot, taskField))
+        {
+            Json::Value onSuccessTaskRoot = onSuccessRoot[taskField];                        
+
+            validateTaskMetadata(onSuccessTaskRoot);
+        }
+        else if (_mmsEngineDBFacade->isMetadataPresent(onSuccessRoot, groupOfTasksField))
+        {
+            Json::Value onSuccessGroupOfTasksRoot = onSuccessRoot[groupOfTasksField];                        
+
+            validateGroupOfTasksMetadata(onSuccessGroupOfTasksRoot);
+        }
+    }
+
+    field = "OnError";
+    if (_mmsEngineDBFacade->isMetadataPresent(taskOrGroupOfTasksRoot, field))
+    {
+        Json::Value onErrorRoot = taskOrGroupOfTasksRoot[field];
+        
+        string taskField = "Task";
+        string groupOfTasksField = "GroupOfTasks";
+        if (_mmsEngineDBFacade->isMetadataPresent(onErrorRoot, taskField))
+        {
+            Json::Value onErrorTaskRoot = onErrorRoot[taskField];                        
+
+            validateTaskMetadata(onErrorTaskRoot);
+        }
+        else if (_mmsEngineDBFacade->isMetadataPresent(onErrorRoot, groupOfTasksField))
+        {
+            Json::Value onErrorGroupOfTasksRoot = onErrorRoot[groupOfTasksField];                        
+
+            validateGroupOfTasksMetadata(onErrorGroupOfTasksRoot);
+        }
+    }    
+    
+    field = "OnComplete";
+    if (_mmsEngineDBFacade->isMetadataPresent(taskOrGroupOfTasksRoot, field))
+    {
+        Json::Value onCompleteRoot = taskOrGroupOfTasksRoot[field];
+        
+        string taskField = "Task";
+        string groupOfTasksField = "GroupOfTasks";
+        if (_mmsEngineDBFacade->isMetadataPresent(onCompleteRoot, taskField))
+        {
+            Json::Value onCompleteTaskRoot = onCompleteRoot[taskField];                        
+
+            validateTaskMetadata(onCompleteTaskRoot);
+        }
+        else if (_mmsEngineDBFacade->isMetadataPresent(onCompleteRoot, groupOfTasksField))
+        {
+            Json::Value onCompleteGroupOfTasksRoot = onCompleteRoot[groupOfTasksField];                        
+
+            validateGroupOfTasksMetadata(onCompleteGroupOfTasksRoot);
+        }
+    }    
 }
 
 pair<MMSEngineDBFacade::ContentType,vector<int64_t>> 
@@ -193,6 +295,8 @@ pair<MMSEngineDBFacade::ContentType,vector<int64_t>>
         throw runtime_error(errorMessage);
     }
         
+    validateEvents(taskRoot);
+    
     return make_pair(contentType, dependencies);
 }
 

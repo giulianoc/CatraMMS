@@ -1830,7 +1830,7 @@ int64_t MMSEngineDBFacade::addIngestionJob (
             ingestionJobKey = getLastInsertId(conn);
             
             {
-                for (int64_t dependOnIngestionJobKey: dependOnIngestionJobKeys)
+                if (dependOnIngestionJobKeys.size() == 0)
                 {
                     lastSQLCommand = 
                         "insert into MMS_IngestionJobDependency (ingestionJobKey, label, dependOnIngestionJobKey, dependOnSuccess) values ("
@@ -1840,13 +1840,28 @@ int64_t MMSEngineDBFacade::addIngestionJob (
                     int queryParameterIndex = 1;
                     preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
                     preparedStatement->setString(queryParameterIndex++, label);
-                    if (dependOnIngestionJobKey == -1)
-                        preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
-                    else
-                        preparedStatement->setInt64(queryParameterIndex++, dependOnIngestionJobKey);
+                    preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
                     preparedStatement->setInt(queryParameterIndex++, dependOnSuccess);
 
                     preparedStatement->executeUpdate();
+                }
+                else
+                {
+                    for (int64_t dependOnIngestionJobKey: dependOnIngestionJobKeys)
+                    {
+                        lastSQLCommand = 
+                            "insert into MMS_IngestionJobDependency (ingestionJobKey, label, dependOnIngestionJobKey, dependOnSuccess) values ("
+                            "?, ?, ?, ?)";
+
+                        shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                        int queryParameterIndex = 1;
+                        preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+                        preparedStatement->setString(queryParameterIndex++, label);
+                        preparedStatement->setInt64(queryParameterIndex++, dependOnIngestionJobKey);
+                        preparedStatement->setInt(queryParameterIndex++, dependOnSuccess);
+
+                        preparedStatement->executeUpdate();
+                    }
                 }
             }
         }        

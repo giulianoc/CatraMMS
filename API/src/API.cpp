@@ -1464,12 +1464,12 @@ void API::ingestion(
             }
             else if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, groupOfTasksField))
             {
-                Json::Value groupOfTasksRoot = requestBodyRoot[groupOfTasksField];                        
-
+                Json::Value groupOfTasksRoot = requestBodyRoot[groupOfTasksField];
+                
                 vector<int64_t> dependOnIngestionJobKeys;
                 int localDependOnSuccess = 0;   // it is not important since dependOnIngestionJobKey is -1
                 ingestionGroupOfTasks(conn, customer, groupOfTasksRoot, dependOnIngestionJobKeys, 
-                        localDependOnSuccess, responseBody);            
+                        localDependOnSuccess, responseBody); 
             }
             else
             {
@@ -1635,7 +1635,25 @@ void API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
         vector<int64_t> dependOnIngestionJobKeys, int dependOnSuccess,
         string& responseBody)
 {
-    if (groupOfTasksRoot.size() == 0)
+    bool parallelTasks;
+    
+    string field = "ParallelTasks";
+    if (_mmsEngineDBFacade->isMetadataPresent(groupOfTasksRoot, field))
+    {
+        parallelTasks = true;
+    }
+    else
+    {
+        string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                + ", Field: " + field;
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    
+    Json::Value tasksRoot = groupOfTasksRoot[field];
+                
+    if (tasksRoot.size() == 0)
     {
         string errorMessage = __FILEREF__ + "No Tasks are present inside the GroupOfTasks item";
         _logger->error(errorMessage);
@@ -1644,9 +1662,9 @@ void API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
     }
 
     vector<int64_t> localDependOnIngestionJobKeys;
-    for (int taskIndex = 0; taskIndex < groupOfTasksRoot.size(); ++taskIndex)
+    for (int taskIndex = 0; taskIndex < tasksRoot.size(); ++taskIndex)
     {
-        Json::Value taskRoot = groupOfTasksRoot[taskIndex];
+        Json::Value taskRoot = tasksRoot[taskIndex];
         
         int64_t localDependOnIngestionJobKey = ingestionTask(
                 conn, customer, taskRoot, dependOnIngestionJobKeys, 
@@ -1655,7 +1673,7 @@ void API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
         localDependOnIngestionJobKeys.push_back(localDependOnIngestionJobKey);
     }
 
-    ingestionEvents(conn, customer, groupOfTasksRoot, 
+    ingestionEvents(conn, customer, tasksRoot, 
         localDependOnIngestionJobKeys, responseBody);
 }    
 

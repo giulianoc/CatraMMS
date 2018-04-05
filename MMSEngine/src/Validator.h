@@ -28,8 +28,12 @@ public:
     
     void validateProcessMetadata(Json::Value processRoot);
 
+    void validateGroupOfTasksMetadata(Json::Value groupOfTasksRoot);
+
     pair<MMSEngineDBFacade::ContentType,vector<int64_t>>  
             validateTaskMetadata(Json::Value taskRoot);
+
+    void validateEvents(Json::Value taskOrGroupOfTasksRoot);
 
     pair<MMSEngineDBFacade::ContentType,vector<int64_t>> 
         validateTaskMetadata(MMSEngineDBFacade::IngestionType ingestionType, 
