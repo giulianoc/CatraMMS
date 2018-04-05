@@ -1450,7 +1450,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                     bool ingestionJobToBeManaged = true;
 
                     lastSQLCommand = 
-                        "select dependOnIngestionJobKey, dependOnSuccess MMS_IngestionJobDependency where ingestionJobKey = ?";
+                        "select dependOnIngestionJobKey, dependOnSuccess from MMS_IngestionJobDependency where ingestionJobKey = ?";
                     shared_ptr<sql::PreparedStatement> preparedStatementDependency (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
                     preparedStatementDependency->setInt64(queryParameterIndex++, ingestionJobKey);
