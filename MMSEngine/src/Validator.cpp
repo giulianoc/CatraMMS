@@ -60,8 +60,8 @@ void Validator::validateProcessMetadata(Json::Value processRoot)
 
 void Validator::validateGroupOfTasksMetadata(Json::Value groupOfTasksRoot)
 {
-    string field = "ParallelTasks";
-    if (!isMetadataPresent(groupOfTasksRoot, field))
+    string field = "ExecutionType";
+    if (!_mmsEngineDBFacade->isMetadataPresent(groupOfTasksRoot, field))
     {
         string errorMessage = __FILEREF__ + "Field is not present or it is null"
                 + ", Field: " + field;
@@ -70,11 +70,39 @@ void Validator::validateGroupOfTasksMetadata(Json::Value groupOfTasksRoot)
         throw runtime_error(errorMessage);
     }
 
-    Json::Value parallelTasksRoot = groupOfTasksRoot[field];
-    
-    for (int taskIndex = 0; taskIndex < parallelTasksRoot.size(); ++taskIndex)
+    string executionType = groupOfTasksRoot.get(field, "XXX").asString();
+    if (executionType != "parallel")
     {
-        Json::Value taskRoot = parallelTasksRoot[taskIndex];
+        string errorMessage = __FILEREF__ + "executionType field is wrong"
+                + ", executionType: " + executionType;
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+
+    field = "Tasks";
+    if (!_mmsEngineDBFacade->isMetadataPresent(groupOfTasksRoot, field))
+    {
+        string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                + ", Field: " + field;
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    
+    Json::Value tasksRoot = groupOfTasksRoot[field];
+    
+    if (tasksRoot.size() == 0)
+    {
+        string errorMessage = __FILEREF__ + "No Tasks are present inside the GroupOfTasks item";
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+
+    for (int taskIndex = 0; taskIndex < tasksRoot.size(); ++taskIndex)
+    {
+        Json::Value taskRoot = tasksRoot[taskIndex];
         
         validateTaskMetadata(taskRoot);
     }

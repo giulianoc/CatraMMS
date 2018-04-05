@@ -35,7 +35,7 @@
             "Task": {
                 "Type": "Concat-Demuxer",
                 "Parameters": {
-                    "SourceFileName": "123456.jpg",
+                    "SourceFileName": "123456.mp4",
                     "userData": { "MyData": "this is my frame data" },
                     "Title": "${TitleOfConcatVideo}"
                 }

@@ -1638,12 +1638,30 @@ void API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 {
     bool parallelTasks;
     
-    string field = "ParallelTasks";
-    if (_mmsEngineDBFacade->isMetadataPresent(groupOfTasksRoot, field))
+    string field = "ExecutionType";
+    if (!_mmsEngineDBFacade->isMetadataPresent(groupOfTasksRoot, field))
     {
-        parallelTasks = true;
+        string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                + ", Field: " + field;
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
     }
+
+    string executionType = groupOfTasksRoot.get(field, "XXX").asString();
+    if (executionType == "parallel")
+        parallelTasks = true;
     else
+    {
+        string errorMessage = __FILEREF__ + "executionType field is wrong"
+                + ", executionType: " + executionType;
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+
+    field = "Tasks";
+    if (!_mmsEngineDBFacade->isMetadataPresent(groupOfTasksRoot, field))
     {
         string errorMessage = __FILEREF__ + "Field is not present or it is null"
                 + ", Field: " + field;

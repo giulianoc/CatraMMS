@@ -1447,9 +1447,11 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                     IngestionStatus ingestionStatus     = MMSEngineDBFacade::toIngestionStatus(resultSet->getString("status"));
                     IngestionType ingestionType     = MMSEngineDBFacade::toIngestionType(resultSet->getString("ingestionType"));
 
+                    /*
                     _logger->info(__FILEREF__ + "Analyzing dependencies for the IngestionJob"
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     );
+                     */
                     
                     bool ingestionJobToBeManaged = true;
 
