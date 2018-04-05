@@ -434,8 +434,7 @@ MMSEngineDBFacade::ContentType Validator::validateFrameMetadata(
     // see sample in directory samples
         
     vector<string> mandatoryFields = {
-        "SourceFileName",
-        "References"
+        "SourceFileName"
     };
     for (string mandatoryField: mandatoryFields)
     {
@@ -449,492 +448,27 @@ MMSEngineDBFacade::ContentType Validator::validateFrameMetadata(
         }
     }
 
+    // References is optional because in case of dependency managed automatically
+    // by MMS (i.e.: onSuccess)
     string field = "References";
-    Json::Value referencesRoot = parametersRoot[field];
-    if (referencesRoot.size() != 1)
+    if (isMetadataPresent(parametersRoot, field))
     {
-        string errorMessage = __FILEREF__ + "No correct number of References"
-                + ", referencesRoot.size: " + to_string(referencesRoot.size());
-        _logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-    
-    Json::Value referenceRoot = referencesRoot[0];
-    
-    int64_t referenceMediaItemKey = -1;
-    int64_t referenceIngestionJobKey = -1;
-    string referenceUniqueName = "";
-    field = "ReferenceMediaItemKey";
-    if (!isMetadataPresent(referenceRoot, field))
-    {
-        field = "ReferenceIngestionJobKey";
-        if (!isMetadataPresent(referenceRoot, field))
+        Json::Value referencesRoot = parametersRoot[field];
+        if (referencesRoot.size() != 1)
         {
-            field = "ReferenceUniqueName";
-            if (!isMetadataPresent(referenceRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                        + ", Field: " + "Reference...";
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-            else
-            {
-                referenceUniqueName = referenceRoot.get(field, "XXX").asString();
-            }        
-        }
-        else
-        {
-            referenceIngestionJobKey = referenceRoot.get(field, "XXX").asInt64();
-        }        
-    }
-    else
-    {
-        referenceMediaItemKey = referenceRoot.get(field, "XXX").asInt64();    
-    }
-    
-    MMSEngineDBFacade::ContentType      referenceContentType;
-    try
-    {
-        bool warningIfMissing = true;
-        if (referenceMediaItemKey != -1)
-        {
-            referenceContentType = _mmsEngineDBFacade->getMediaItemKeyDetails(
-                referenceMediaItemKey, warningIfMissing); 
-        }
-        else if (referenceIngestionJobKey != -1)
-        {
-            pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
-                    _mmsEngineDBFacade->getMediaItemKeyDetailsByIngestionJobKey(
-                    referenceIngestionJobKey, warningIfMissing);  
-            
-            referenceMediaItemKey = mediaItemKeyAndContentType.first;
-            referenceContentType = mediaItemKeyAndContentType.second;
-        }
-        else // if (referenceUniqueName != "")
-        {
-            pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
-                    _mmsEngineDBFacade->getMediaItemKeyDetailsByUniqueName(
-                    referenceUniqueName, warningIfMissing);  
-            
-            referenceMediaItemKey = mediaItemKeyAndContentType.first;
-            referenceContentType = mediaItemKeyAndContentType.second;
-        }
-    }
-    catch(runtime_error e)
-    {
-        string errorMessage = __FILEREF__ + "Reference... was not found"
-                + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
-                ;
-        _logger->warn(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-    catch(exception e)
-    {
-        string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->getMediaItemKeyDetails failed"
-                + ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
-                + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
-                ;
-        _logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-    
-    MMSEngineDBFacade::ContentType      frameContentType = MMSEngineDBFacade::ContentType::Image;
-
-    if (referenceContentType != MMSEngineDBFacade::ContentType::Video)
-    {
-        string errorMessage = __FILEREF__ + "Reference... does not refer a video content"
-            + ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
-            + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
-            + ", referenceUniqueName: " + referenceUniqueName
-            + ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
-                ;
-        _logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-
-    dependencies.push_back(referenceMediaItemKey);
-
-    /*
-    // Territories
-    {
-        field = "Territories";
-        if (isMetadataPresent(contentIngestion, field))
-        {
-            const Json::Value territories = contentIngestion[field];
-            
-            for( Json::ValueIterator itr = territories.begin() ; itr != territories.end() ; itr++ ) 
-            {
-                Json::Value territory = territories[territoryIndex];
-            }
-        
-    }
-    */
-            
-    return frameContentType;
-}
-
-MMSEngineDBFacade::ContentType Validator::validatePeriodicalFramesMetadata(
-    Json::Value parametersRoot, vector<int64_t>& dependencies)
-{
-    // see sample in directory samples
-        
-    vector<string> mandatoryFields = {
-        "SourceFileName",
-        "PeriodInSeconds",
-        "References"
-    };
-    for (string mandatoryField: mandatoryFields)
-    {
-        if (!isMetadataPresent(parametersRoot, mandatoryField))
-        {
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + mandatoryField;
+            string errorMessage = __FILEREF__ + "No correct number of References"
+                    + ", referencesRoot.size: " + to_string(referencesRoot.size());
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
         }
-    }
 
-    string field = "References";
-    Json::Value referencesRoot = parametersRoot[field];
-    if (referencesRoot.size() != 1)
-    {
-        string errorMessage = __FILEREF__ + "No correct number of References"
-                + ", referencesRoot.size: " + to_string(referencesRoot.size());
-        _logger->error(errorMessage);
+        Json::Value referenceRoot = referencesRoot[0];
 
-        throw runtime_error(errorMessage);
-    }
-    
-    Json::Value referenceRoot = referencesRoot[0];
-
-    int64_t referenceMediaItemKey = -1;
-    int64_t referenceIngestionJobKey = -1;
-    string referenceUniqueName = "";
-    field = "ReferenceMediaItemKey";
-    if (!isMetadataPresent(referenceRoot, field))
-    {
-        field = "ReferenceIngestionJobKey";
-        if (!isMetadataPresent(referenceRoot, field))
-        {
-            field = "ReferenceUniqueName";
-            if (!isMetadataPresent(referenceRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                        + ", Field: " + "Reference...";
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-            else
-            {
-                referenceUniqueName = referenceRoot.get(field, "XXX").asString();
-            }        
-        }
-        else
-        {
-            referenceIngestionJobKey = referenceRoot.get(field, "XXX").asInt64();
-        }        
-    }
-    else
-    {
-        referenceMediaItemKey = referenceRoot.get(field, "XXX").asInt64();    
-    }
-    
-    MMSEngineDBFacade::ContentType      referenceContentType;
-    try
-    {
-        bool warningIfMissing = true;
-        if (referenceMediaItemKey != -1)
-        {
-            referenceContentType = _mmsEngineDBFacade->getMediaItemKeyDetails(
-                referenceMediaItemKey, warningIfMissing); 
-        }
-        else if (referenceIngestionJobKey != -1)
-        {
-            pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
-                    _mmsEngineDBFacade->getMediaItemKeyDetailsByIngestionJobKey(
-                    referenceIngestionJobKey, warningIfMissing);  
-            
-            referenceMediaItemKey = mediaItemKeyAndContentType.first;
-            referenceContentType = mediaItemKeyAndContentType.second;
-        }
-        else // if (referenceUniqueName != "")
-        {
-            pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
-                    _mmsEngineDBFacade->getMediaItemKeyDetailsByUniqueName(
-                    referenceUniqueName, warningIfMissing);  
-            
-            referenceMediaItemKey = mediaItemKeyAndContentType.first;
-            referenceContentType = mediaItemKeyAndContentType.second;
-        }
-    }
-    catch(runtime_error e)
-    {
-        string errorMessage = __FILEREF__ + "Reference... was not found"
-                + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
-                ;
-        _logger->warn(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-    catch(exception e)
-    {
-        string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->getMediaItemKeyDetails failed"
-                + ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
-                + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
-                ;
-        _logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-    
-    MMSEngineDBFacade::ContentType      frameContentType = MMSEngineDBFacade::ContentType::Image;
-
-    if (referenceContentType != MMSEngineDBFacade::ContentType::Video)
-    {
-        string errorMessage = __FILEREF__ + "Reference... does not refer a video content"
-            + ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
-            + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
-            + ", referenceUniqueName: " + referenceUniqueName
-            + ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
-                ;
-        _logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-
-    dependencies.push_back(referenceMediaItemKey);
-
-    /*
-    // Territories
-    {
-        field = "Territories";
-        if (isMetadataPresent(contentIngestion, field))
-        {
-            const Json::Value territories = contentIngestion[field];
-            
-            for( Json::ValueIterator itr = territories.begin() ; itr != territories.end() ; itr++ ) 
-            {
-                Json::Value territory = territories[territoryIndex];
-            }
-        
-    }
-    */
-            
-    return frameContentType;
-}
-
-MMSEngineDBFacade::ContentType Validator::validateIFramesMetadata(
-    Json::Value parametersRoot, vector<int64_t>& dependencies)
-{
-    // see sample in directory samples
-        
-    vector<string> mandatoryFields = {
-        "SourceFileName",
-        "References"
-    };
-    for (string mandatoryField: mandatoryFields)
-    {
-        if (!isMetadataPresent(parametersRoot, mandatoryField))
-        {
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + mandatoryField;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-    }
-
-    string field = "References";
-    Json::Value referencesRoot = parametersRoot[field];
-    if (referencesRoot.size() != 1)
-    {
-        string errorMessage = __FILEREF__ + "No correct number of References"
-                + ", referencesRoot.size: " + to_string(referencesRoot.size());
-        _logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-    
-    Json::Value referenceRoot = referencesRoot[0];
-
-    int64_t referenceMediaItemKey = -1;
-    int64_t referenceIngestionJobKey = -1;
-    string referenceUniqueName = "";
-    field = "ReferenceMediaItemKey";
-    if (!isMetadataPresent(referenceRoot, field))
-    {
-        field = "ReferenceIngestionJobKey";
-        if (!isMetadataPresent(referenceRoot, field))
-        {
-            field = "ReferenceUniqueName";
-            if (!isMetadataPresent(referenceRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                        + ", Field: " + "Reference...";
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-            else
-            {
-                referenceUniqueName = referenceRoot.get(field, "XXX").asString();
-            }        
-        }
-        else
-        {
-            referenceIngestionJobKey = referenceRoot.get(field, "XXX").asInt64();
-        }        
-    }
-    else
-    {
-        referenceMediaItemKey = referenceRoot.get(field, "XXX").asInt64();    
-    }
-    
-    MMSEngineDBFacade::ContentType      referenceContentType;
-    try
-    {
-        bool warningIfMissing = true;
-        if (referenceMediaItemKey != -1)
-        {
-            referenceContentType = _mmsEngineDBFacade->getMediaItemKeyDetails(
-                referenceMediaItemKey, warningIfMissing); 
-        }
-        else if (referenceIngestionJobKey != -1)
-        {
-            pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
-                    _mmsEngineDBFacade->getMediaItemKeyDetailsByIngestionJobKey(
-                    referenceIngestionJobKey, warningIfMissing);  
-            
-            referenceMediaItemKey = mediaItemKeyAndContentType.first;
-            referenceContentType = mediaItemKeyAndContentType.second;
-        }
-        else // if (referenceUniqueName != "")
-        {
-            pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
-                    _mmsEngineDBFacade->getMediaItemKeyDetailsByUniqueName(
-                    referenceUniqueName, warningIfMissing);  
-            
-            referenceMediaItemKey = mediaItemKeyAndContentType.first;
-            referenceContentType = mediaItemKeyAndContentType.second;
-        }
-    }
-    catch(MediaItemKeyNotFound e)
-    {
-        string errorMessage = __FILEREF__ + "Reference was not found"
-                + ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
-                + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
-                + ", referenceUniqueName: " + referenceUniqueName
-                ;
-        _logger->warn(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-    catch(runtime_error e)
-    {
-        string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->getMediaItemKeyDetails failed"
-                + ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
-                + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
-                + ", referenceUniqueName: " + referenceUniqueName
-                ;
-        _logger->warn(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-    catch(exception e)
-    {
-        string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->getMediaItemKeyDetails failed"
-                + ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
-                + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
-                + ", referenceUniqueName: " + referenceUniqueName
-                ;
-        _logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-    
-    MMSEngineDBFacade::ContentType      frameContentType = MMSEngineDBFacade::ContentType::Image;
-
-    if (referenceContentType != MMSEngineDBFacade::ContentType::Video)
-    {
-        string errorMessage = __FILEREF__ + "Reference... does not refer a video content"
-            + ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
-            + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
-            + ", referenceUniqueName: " + referenceUniqueName
-            + ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
-                ;
-        _logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-
-    dependencies.push_back(referenceMediaItemKey);
-
-    /*
-    // Territories
-    {
-        field = "Territories";
-        if (isMetadataPresent(contentIngestion, field))
-        {
-            const Json::Value territories = contentIngestion[field];
-            
-            for( Json::ValueIterator itr = territories.begin() ; itr != territories.end() ; itr++ ) 
-            {
-                Json::Value territory = territories[territoryIndex];
-            }
-        
-    }
-    */
-            
-    return frameContentType;
-}
-
-MMSEngineDBFacade::ContentType Validator::validateConcatDemuxerMetadata(
-    Json::Value parametersRoot, vector<int64_t>& dependencies)
-{
-    // see sample in directory samples
-        
-    vector<string> mandatoryFields = {
-        "SourceFileName",
-        "References"
-    };
-    for (string mandatoryField: mandatoryFields)
-    {
-        if (!isMetadataPresent(parametersRoot, mandatoryField))
-        {
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + mandatoryField;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-    }
-
-    string field = "References";
-    Json::Value referencesRoot = parametersRoot[field];
-    if (referencesRoot.size() == 0)
-    {
-        string errorMessage = __FILEREF__ + "Field is present but it does not have any element"
-                + ", Field: " + field;
-        _logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-    for (int referenceIndex = 0; referenceIndex < referencesRoot.size(); referenceIndex++)
-    {
-        Json::Value referenceRoot = referencesRoot[referenceIndex];
-        
         int64_t referenceMediaItemKey = -1;
         int64_t referenceIngestionJobKey = -1;
         string referenceUniqueName = "";
-        string field = "ReferenceMediaItemKey";
+        field = "ReferenceMediaItemKey";
         if (!isMetadataPresent(referenceRoot, field))
         {
             field = "ReferenceIngestionJobKey";
@@ -951,17 +485,17 @@ MMSEngineDBFacade::ContentType Validator::validateConcatDemuxerMetadata(
                 }
                 else
                 {
-                    referenceUniqueName = parametersRoot.get(field, "XXX").asString();
+                    referenceUniqueName = referenceRoot.get(field, "XXX").asString();
                 }        
             }
             else
             {
-                referenceIngestionJobKey = parametersRoot.get(field, "XXX").asInt64();
+                referenceIngestionJobKey = referenceRoot.get(field, "XXX").asInt64();
             }        
         }
         else
         {
-            referenceMediaItemKey = parametersRoot.get(field, "XXX").asInt64();    
+            referenceMediaItemKey = referenceRoot.get(field, "XXX").asInt64();    
         }
 
         MMSEngineDBFacade::ContentType      referenceContentType;
@@ -1011,7 +545,162 @@ MMSEngineDBFacade::ContentType Validator::validateConcatDemuxerMetadata(
 
             throw runtime_error(errorMessage);
         }
+        
+        if (referenceContentType != MMSEngineDBFacade::ContentType::Video)
+        {
+            string errorMessage = __FILEREF__ + "Reference... does not refer a video content"
+                + ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
+                + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
+                + ", referenceUniqueName: " + referenceUniqueName
+                + ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
+                    ;
+            _logger->error(errorMessage);
 
+            throw runtime_error(errorMessage);
+        }
+
+        dependencies.push_back(referenceMediaItemKey);
+    }
+    
+    MMSEngineDBFacade::ContentType      frameContentType = MMSEngineDBFacade::ContentType::Image;
+
+    /*
+    // Territories
+    {
+        field = "Territories";
+        if (isMetadataPresent(contentIngestion, field))
+        {
+            const Json::Value territories = contentIngestion[field];
+            
+            for( Json::ValueIterator itr = territories.begin() ; itr != territories.end() ; itr++ ) 
+            {
+                Json::Value territory = territories[territoryIndex];
+            }
+        
+    }
+    */
+            
+    return frameContentType;
+}
+
+MMSEngineDBFacade::ContentType Validator::validatePeriodicalFramesMetadata(
+    Json::Value parametersRoot, vector<int64_t>& dependencies)
+{
+    // see sample in directory samples
+        
+    vector<string> mandatoryFields = {
+        "SourceFileName",
+        "PeriodInSeconds"
+    };
+    for (string mandatoryField: mandatoryFields)
+    {
+        if (!isMetadataPresent(parametersRoot, mandatoryField))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + mandatoryField;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+
+    // References is optional because in case of dependency managed automatically
+    // by MMS (i.e.: onSuccess)
+    string field = "References";
+    if (isMetadataPresent(parametersRoot, field))
+    {
+        Json::Value referencesRoot = parametersRoot[field];
+        if (referencesRoot.size() != 1)
+        {
+            string errorMessage = __FILEREF__ + "No correct number of References"
+                    + ", referencesRoot.size: " + to_string(referencesRoot.size());
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        Json::Value referenceRoot = referencesRoot[0];
+
+        int64_t referenceMediaItemKey = -1;
+        int64_t referenceIngestionJobKey = -1;
+        string referenceUniqueName = "";
+        field = "ReferenceMediaItemKey";
+        if (!isMetadataPresent(referenceRoot, field))
+        {
+            field = "ReferenceIngestionJobKey";
+            if (!isMetadataPresent(referenceRoot, field))
+            {
+                field = "ReferenceUniqueName";
+                if (!isMetadataPresent(referenceRoot, field))
+                {
+                    string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                            + ", Field: " + "Reference...";
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+                else
+                {
+                    referenceUniqueName = referenceRoot.get(field, "XXX").asString();
+                }        
+            }
+            else
+            {
+                referenceIngestionJobKey = referenceRoot.get(field, "XXX").asInt64();
+            }        
+        }
+        else
+        {
+            referenceMediaItemKey = referenceRoot.get(field, "XXX").asInt64();    
+        }
+        
+        MMSEngineDBFacade::ContentType      referenceContentType;
+        try
+        {
+            bool warningIfMissing = true;
+            if (referenceMediaItemKey != -1)
+            {
+                referenceContentType = _mmsEngineDBFacade->getMediaItemKeyDetails(
+                    referenceMediaItemKey, warningIfMissing); 
+            }
+            else if (referenceIngestionJobKey != -1)
+            {
+                pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
+                        _mmsEngineDBFacade->getMediaItemKeyDetailsByIngestionJobKey(
+                        referenceIngestionJobKey, warningIfMissing);  
+
+                referenceMediaItemKey = mediaItemKeyAndContentType.first;
+                referenceContentType = mediaItemKeyAndContentType.second;
+            }
+            else // if (referenceUniqueName != "")
+            {
+                pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
+                        _mmsEngineDBFacade->getMediaItemKeyDetailsByUniqueName(
+                        referenceUniqueName, warningIfMissing);  
+
+                referenceMediaItemKey = mediaItemKeyAndContentType.first;
+                referenceContentType = mediaItemKeyAndContentType.second;
+            }
+        }
+        catch(runtime_error e)
+        {
+            string errorMessage = __FILEREF__ + "Reference... was not found"
+                    + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
+                    ;
+            _logger->warn(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        catch(exception e)
+        {
+            string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->getMediaItemKeyDetails failed"
+                    + ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
+                    + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
 
         if (referenceContentType != MMSEngineDBFacade::ContentType::Video)
         {
@@ -1027,6 +716,333 @@ MMSEngineDBFacade::ContentType Validator::validateConcatDemuxerMetadata(
         }
 
         dependencies.push_back(referenceMediaItemKey);
+    }
+        
+    MMSEngineDBFacade::ContentType      frameContentType = MMSEngineDBFacade::ContentType::Image;
+
+    /*
+    // Territories
+    {
+        field = "Territories";
+        if (isMetadataPresent(contentIngestion, field))
+        {
+            const Json::Value territories = contentIngestion[field];
+            
+            for( Json::ValueIterator itr = territories.begin() ; itr != territories.end() ; itr++ ) 
+            {
+                Json::Value territory = territories[territoryIndex];
+            }
+        
+    }
+    */
+            
+    return frameContentType;
+}
+
+MMSEngineDBFacade::ContentType Validator::validateIFramesMetadata(
+    Json::Value parametersRoot, vector<int64_t>& dependencies)
+{
+    // see sample in directory samples
+        
+    vector<string> mandatoryFields = {
+        "SourceFileName"
+    };
+    for (string mandatoryField: mandatoryFields)
+    {
+        if (!isMetadataPresent(parametersRoot, mandatoryField))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + mandatoryField;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+
+    // References is optional because in case of dependency managed automatically
+    // by MMS (i.e.: onSuccess)
+    string field = "References";
+    if (isMetadataPresent(parametersRoot, field))
+    {
+        Json::Value referencesRoot = parametersRoot[field];
+        if (referencesRoot.size() != 1)
+        {
+            string errorMessage = __FILEREF__ + "No correct number of References"
+                    + ", referencesRoot.size: " + to_string(referencesRoot.size());
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        Json::Value referenceRoot = referencesRoot[0];
+
+        int64_t referenceMediaItemKey = -1;
+        int64_t referenceIngestionJobKey = -1;
+        string referenceUniqueName = "";
+        field = "ReferenceMediaItemKey";
+        if (!isMetadataPresent(referenceRoot, field))
+        {
+            field = "ReferenceIngestionJobKey";
+            if (!isMetadataPresent(referenceRoot, field))
+            {
+                field = "ReferenceUniqueName";
+                if (!isMetadataPresent(referenceRoot, field))
+                {
+                    string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                            + ", Field: " + "Reference...";
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+                else
+                {
+                    referenceUniqueName = referenceRoot.get(field, "XXX").asString();
+                }        
+            }
+            else
+            {
+                referenceIngestionJobKey = referenceRoot.get(field, "XXX").asInt64();
+            }        
+        }
+        else
+        {
+            referenceMediaItemKey = referenceRoot.get(field, "XXX").asInt64();    
+        }
+
+        MMSEngineDBFacade::ContentType      referenceContentType;
+        try
+        {
+            bool warningIfMissing = true;
+            if (referenceMediaItemKey != -1)
+            {
+                referenceContentType = _mmsEngineDBFacade->getMediaItemKeyDetails(
+                    referenceMediaItemKey, warningIfMissing); 
+            }
+            else if (referenceIngestionJobKey != -1)
+            {
+                pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
+                        _mmsEngineDBFacade->getMediaItemKeyDetailsByIngestionJobKey(
+                        referenceIngestionJobKey, warningIfMissing);  
+
+                referenceMediaItemKey = mediaItemKeyAndContentType.first;
+                referenceContentType = mediaItemKeyAndContentType.second;
+            }
+            else // if (referenceUniqueName != "")
+            {
+                pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
+                        _mmsEngineDBFacade->getMediaItemKeyDetailsByUniqueName(
+                        referenceUniqueName, warningIfMissing);  
+
+                referenceMediaItemKey = mediaItemKeyAndContentType.first;
+                referenceContentType = mediaItemKeyAndContentType.second;
+            }
+        }
+        catch(MediaItemKeyNotFound e)
+        {
+            string errorMessage = __FILEREF__ + "Reference was not found"
+                    + ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
+                    + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
+                    + ", referenceUniqueName: " + referenceUniqueName
+                    ;
+            _logger->warn(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        catch(runtime_error e)
+        {
+            string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->getMediaItemKeyDetails failed"
+                    + ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
+                    + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
+                    + ", referenceUniqueName: " + referenceUniqueName
+                    ;
+            _logger->warn(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        catch(exception e)
+        {
+            string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->getMediaItemKeyDetails failed"
+                    + ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
+                    + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
+                    + ", referenceUniqueName: " + referenceUniqueName
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        if (referenceContentType != MMSEngineDBFacade::ContentType::Video)
+        {
+            string errorMessage = __FILEREF__ + "Reference... does not refer a video content"
+                + ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
+                + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
+                + ", referenceUniqueName: " + referenceUniqueName
+                + ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        dependencies.push_back(referenceMediaItemKey);
+    }
+    
+    MMSEngineDBFacade::ContentType      frameContentType = MMSEngineDBFacade::ContentType::Image;
+
+    /*
+    // Territories
+    {
+        field = "Territories";
+        if (isMetadataPresent(contentIngestion, field))
+        {
+            const Json::Value territories = contentIngestion[field];
+            
+            for( Json::ValueIterator itr = territories.begin() ; itr != territories.end() ; itr++ ) 
+            {
+                Json::Value territory = territories[territoryIndex];
+            }
+        
+    }
+    */
+            
+    return frameContentType;
+}
+
+MMSEngineDBFacade::ContentType Validator::validateConcatDemuxerMetadata(
+    Json::Value parametersRoot, vector<int64_t>& dependencies)
+{
+    // see sample in directory samples
+        
+    vector<string> mandatoryFields = {
+        "SourceFileName"
+    };
+    for (string mandatoryField: mandatoryFields)
+    {
+        if (!isMetadataPresent(parametersRoot, mandatoryField))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + mandatoryField;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+
+    // References is optional because in case of dependency managed automatically
+    // by MMS (i.e.: onSuccess)
+    string field = "References";
+    if (isMetadataPresent(parametersRoot, field))
+    {
+        Json::Value referencesRoot = parametersRoot[field];
+        if (referencesRoot.size() == 0)
+        {
+            string errorMessage = __FILEREF__ + "Field is present but it does not have any element"
+                    + ", Field: " + field;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        for (int referenceIndex = 0; referenceIndex < referencesRoot.size(); referenceIndex++)
+        {
+            Json::Value referenceRoot = referencesRoot[referenceIndex];
+
+            int64_t referenceMediaItemKey = -1;
+            int64_t referenceIngestionJobKey = -1;
+            string referenceUniqueName = "";
+            string field = "ReferenceMediaItemKey";
+            if (!isMetadataPresent(referenceRoot, field))
+            {
+                field = "ReferenceIngestionJobKey";
+                if (!isMetadataPresent(referenceRoot, field))
+                {
+                    field = "ReferenceUniqueName";
+                    if (!isMetadataPresent(referenceRoot, field))
+                    {
+                        string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                                + ", Field: " + "Reference...";
+                        _logger->error(errorMessage);
+
+                        throw runtime_error(errorMessage);
+                    }
+                    else
+                    {
+                        referenceUniqueName = parametersRoot.get(field, "XXX").asString();
+                    }        
+                }
+                else
+                {
+                    referenceIngestionJobKey = parametersRoot.get(field, "XXX").asInt64();
+                }        
+            }
+            else
+            {
+                referenceMediaItemKey = parametersRoot.get(field, "XXX").asInt64();    
+            }
+
+            MMSEngineDBFacade::ContentType      referenceContentType;
+            try
+            {
+                bool warningIfMissing = true;
+                if (referenceMediaItemKey != -1)
+                {
+                    referenceContentType = _mmsEngineDBFacade->getMediaItemKeyDetails(
+                        referenceMediaItemKey, warningIfMissing); 
+                }
+                else if (referenceIngestionJobKey != -1)
+                {
+                    pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
+                            _mmsEngineDBFacade->getMediaItemKeyDetailsByIngestionJobKey(
+                            referenceIngestionJobKey, warningIfMissing);  
+
+                    referenceMediaItemKey = mediaItemKeyAndContentType.first;
+                    referenceContentType = mediaItemKeyAndContentType.second;
+                }
+                else // if (referenceUniqueName != "")
+                {
+                    pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
+                            _mmsEngineDBFacade->getMediaItemKeyDetailsByUniqueName(
+                            referenceUniqueName, warningIfMissing);  
+
+                    referenceMediaItemKey = mediaItemKeyAndContentType.first;
+                    referenceContentType = mediaItemKeyAndContentType.second;
+                }
+            }
+            catch(runtime_error e)
+            {
+                string errorMessage = __FILEREF__ + "Reference... was not found"
+                        + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
+                        ;
+                _logger->warn(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            catch(exception e)
+            {
+                string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->getMediaItemKeyDetails failed"
+                        + ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
+                        + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
+                        ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+
+
+            if (referenceContentType != MMSEngineDBFacade::ContentType::Video)
+            {
+                string errorMessage = __FILEREF__ + "Reference... does not refer a video content"
+                    + ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
+                    + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
+                    + ", referenceUniqueName: " + referenceUniqueName
+                    + ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
+                        ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+
+            dependencies.push_back(referenceMediaItemKey);
+        }
     }
 
     MMSEngineDBFacade::ContentType      contentType = MMSEngineDBFacade::ContentType::Video;
