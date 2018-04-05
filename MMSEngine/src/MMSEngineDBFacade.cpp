@@ -1447,34 +1447,46 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                     IngestionStatus ingestionStatus     = MMSEngineDBFacade::toIngestionStatus(resultSet->getString("status"));
                     IngestionType ingestionType     = MMSEngineDBFacade::toIngestionType(resultSet->getString("ingestionType"));
 
-                    bool ingestionJobToBeManaged = false;
-                    
-                    if (resultSet->isNull("dependOnIngestionJobKey"))
-                    {
-                        // there is no dependency
-                        
-                        ingestionJobToBeManaged = true;
-                    }
-                    else
-                    {
-                        int64_t dependOnIngestionJobKey     = resultSet->getInt64("dependOnIngestionJobKey");
-                        int dependOnSuccess                 = resultSet->getInt("dependOnSuccess");
-                        
-                        lastSQLCommand = 
-                            "select status from MMS_IngestionJob where ingestionJobKey = ?";
-                        shared_ptr<sql::PreparedStatement> preparedStatementDependency (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                        int queryParameterIndex = 1;
-                        preparedStatementDependency->setInt64(queryParameterIndex++, dependOnIngestionJobKey);
+                    bool ingestionJobToBeManaged = true;
 
-                        shared_ptr<sql::ResultSet> resultSetDependency (preparedStatementDependency->executeQuery());
-                        if (resultSetDependency->next())
+                    lastSQLCommand = 
+                        "select dependOnIngestionJobKey, dependOnSuccess MMS_IngestionJobDependency where ingestionJobKey = ?";
+                    shared_ptr<sql::PreparedStatement> preparedStatementDependency (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                    int queryParameterIndex = 1;
+                    preparedStatementDependency->setInt64(queryParameterIndex++, ingestionJobKey);
+
+                    shared_ptr<sql::ResultSet> resultSetDependency (preparedStatementDependency->executeQuery());
+                    while (resultSetDependency->next())
+                    {
+                        if (!resultSet->isNull("dependOnIngestionJobKey"))
                         {
-                            IngestionStatus ingestionStatusDependency     = MMSEngineDBFacade::toIngestionStatus(resultSetDependency->getString("status"));
-                            
-                            if (dependOnSuccess && MMSEngineDBFacade::isIngestionStatusSuccess(ingestionStatusDependency))
-                                ingestionJobToBeManaged = true;
-                            else if (!dependOnSuccess && MMSEngineDBFacade::isIngestionStatusFailed(ingestionStatusDependency))
-                                ingestionJobToBeManaged = true;
+                            int64_t dependOnIngestionJobKey     = resultSet->getInt64("dependOnIngestionJobKey");
+                            int dependOnSuccess                 = resultSet->getInt("dependOnSuccess");
+
+                            lastSQLCommand = 
+                                "select status from MMS_IngestionJob where ingestionJobKey = ?";
+                            shared_ptr<sql::PreparedStatement> preparedStatementIngestionJob (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                            int queryParameterIndex = 1;
+                            preparedStatementIngestionJob->setInt64(queryParameterIndex++, dependOnIngestionJobKey);
+
+                            shared_ptr<sql::ResultSet> resultSetIngestionJob (preparedStatementIngestionJob->executeQuery());
+                            if (resultSetIngestionJob->next())
+                            {
+                                IngestionStatus ingestionStatusDependency     = MMSEngineDBFacade::toIngestionStatus(resultSetIngestionJob->getString("status"));
+
+                                if (!(dependOnSuccess && MMSEngineDBFacade::isIngestionStatusSuccess(ingestionStatusDependency)))
+                                {
+                                    ingestionJobToBeManaged = false;
+                                    
+                                    break;
+                                }
+                                else if (!(!dependOnSuccess && MMSEngineDBFacade::isIngestionStatusFailed(ingestionStatusDependency)))
+                                {
+                                    ingestionJobToBeManaged = false;
+                                    
+                                    break;
+                                }
+                            }
                         }
                     }
                     
@@ -1818,22 +1830,24 @@ int64_t MMSEngineDBFacade::addIngestionJob (
             ingestionJobKey = getLastInsertId(conn);
             
             {
-                int64_t dependOnIngestionJobKey = -1;
-                lastSQLCommand = 
-                    "insert into MMS_IngestionJobDependency (ingestionJobKey, label, dependOnIngestionJobKey, dependOnSuccess) values ("
-                    "?, ?, ?, ?)";
+                for (int64_t dependOnIngestionJobKey: dependOnIngestionJobKeys)
+                {
+                    lastSQLCommand = 
+                        "insert into MMS_IngestionJobDependency (ingestionJobKey, label, dependOnIngestionJobKey, dependOnSuccess) values ("
+                        "?, ?, ?, ?)";
 
-                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                int queryParameterIndex = 1;
-                preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
-                preparedStatement->setString(queryParameterIndex++, label);
-                if (dependOnIngestionJobKey == -1)
-                    preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
-                else
-                    preparedStatement->setInt64(queryParameterIndex++, dependOnIngestionJobKey);
-                preparedStatement->setInt(queryParameterIndex++, dependOnSuccess);
+                    shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                    int queryParameterIndex = 1;
+                    preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+                    preparedStatement->setString(queryParameterIndex++, label);
+                    if (dependOnIngestionJobKey == -1)
+                        preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
+                    else
+                        preparedStatement->setInt64(queryParameterIndex++, dependOnIngestionJobKey);
+                    preparedStatement->setInt(queryParameterIndex++, dependOnSuccess);
 
-                preparedStatement->executeUpdate();
+                    preparedStatement->executeUpdate();
+                }
             }
         }        
     }
