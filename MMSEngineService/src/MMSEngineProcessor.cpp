@@ -1658,6 +1658,7 @@ void MMSEngineProcessor::generateAndIngestConcatenation(
 {
     try
     {
+        _logger->error(__FILEREF__ + "1");
         if (dependencies.size() == 0)
         {
             string errorMessage = __FILEREF__ + "No configured any media to be concatenated"
@@ -1715,6 +1716,7 @@ void MMSEngineProcessor::generateAndIngestConcatenation(
             }
         }
 
+        _logger->error(__FILEREF__ + "2");
         string field = "SourceFileName";
         if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
         {

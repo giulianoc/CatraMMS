@@ -1513,7 +1513,7 @@ void API::ingestion(
                     + "ingestionRootKey: " + to_string(ingestionRootKey)
                     + ", [ ";
             responseBody.insert(0, beginOfResponseBody);
-            responseBody += "] }";
+            responseBody += " ] }";
         }
         catch(runtime_error e)
         {

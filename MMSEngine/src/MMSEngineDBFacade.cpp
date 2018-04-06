@@ -1909,12 +1909,13 @@ int64_t MMSEngineDBFacade::addIngestionJob (
         {
             {
                 lastSQLCommand = 
-                    "insert into MMS_IngestionJob (ingestionJobKey, ingestionRootKey, mediaItemKey, metaDataContent, ingestionType, startIngestion, endIngestion, downloadingProgress, uploadingProgress, sourceBinaryTransferred, processorMMS, status, errorMessage) values ("
-                                                  "NULL,            ?,           NULL,         ?,               ?,             NULL,           NULL,         NULL,                NULL,              0,                       NULL,         ?,      NULL)";
+                    "insert into MMS_IngestionJob (ingestionJobKey, ingestionRootKey, label, mediaItemKey, metaDataContent, ingestionType, startIngestion, endIngestion, downloadingProgress, uploadingProgress, sourceBinaryTransferred, processorMMS, status, errorMessage) values ("
+                                                  "NULL,            ?,                ?,     NULL,         ?,               ?,             NULL,           NULL,         NULL,                NULL,              0,                       NULL,         ?,      NULL)";
 
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
                 preparedStatement->setInt64(queryParameterIndex++, ingestionRootKey);
+                preparedStatement->setString(queryParameterIndex++, label);
                 preparedStatement->setString(queryParameterIndex++, metadataContent);
                 preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(ingestionType));
                 preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(MMSEngineDBFacade::IngestionStatus::Start_TaskQueued));
@@ -1930,13 +1931,12 @@ int64_t MMSEngineDBFacade::addIngestionJob (
                     int orderNumber = 0;
 
                     lastSQLCommand = 
-                        "insert into MMS_IngestionJobDependency (ingestionJobKey, label, dependOnIngestionJobKey, orderNumber, dependOnSuccess) values ("
-                        "?, ?, ?, ?, ?)";
+                        "insert into MMS_IngestionJobDependency (ingestionJobKey, dependOnIngestionJobKey, orderNumber, dependOnSuccess) values ("
+                        "?, ?, ?, ?)";
 
                     shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
                     preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
-                    preparedStatement->setString(queryParameterIndex++, label);
                     preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
                     preparedStatement->setInt(queryParameterIndex++, orderNumber);
                     preparedStatement->setInt(queryParameterIndex++, dependOnSuccess);
@@ -1949,13 +1949,12 @@ int64_t MMSEngineDBFacade::addIngestionJob (
                     for (int64_t dependOnIngestionJobKey: dependOnIngestionJobKeys)
                     {
                         lastSQLCommand = 
-                            "insert into MMS_IngestionJobDependency (ingestionJobKey, label, dependOnIngestionJobKey, orderNumber, dependOnSuccess) values ("
-                            "?, ?, ?, ?, ?)";
+                            "insert into MMS_IngestionJobDependency (ingestionJobKey, dependOnIngestionJobKey, orderNumber, dependOnSuccess) values ("
+                            "?, ?, ?, ?)";
 
                         shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                         int queryParameterIndex = 1;
                         preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
-                        preparedStatement->setString(queryParameterIndex++, label);
                         preparedStatement->setInt64(queryParameterIndex++, dependOnIngestionJobKey);
                         preparedStatement->setInt(queryParameterIndex++, orderNumber);
                         preparedStatement->setInt(queryParameterIndex++, dependOnSuccess);
@@ -5418,6 +5417,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create table if not exists MMS_IngestionJob ("
                     "ingestionJobKey  			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "ingestionRootKey                BIGINT UNSIGNED NOT NULL,"
+                    "label                              VARCHAR (128) NULL,"
                     "mediaItemKey               BIGINT UNSIGNED NULL,"
                     "metaDataContent            TEXT CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
                     "ingestionType              VARCHAR (64) NOT NULL,"
@@ -5454,7 +5454,6 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create table if not exists MMS_IngestionJobDependency ("
                     "ingestionJobDependency  			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "ingestionJobKey  			BIGINT UNSIGNED NOT NULL,"
-                    "label                              VARCHAR (128) NULL,"
                     "dependOnIngestionJobKey            BIGINT UNSIGNED NULL,"
                     "orderNumber                        INT UNSIGNED NOT NULL,"
                     "dependOnSuccess                    TINYINT (1) NOT NULL,"
