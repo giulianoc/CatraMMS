@@ -1509,8 +1509,11 @@ void API::ingestion(
             bool commit = true;
             _mmsEngineDBFacade->endIngestionJobs(conn, commit);
             
-            responseBody.insert(0, "[ ");
-            responseBody += "] ";
+            string beginOfResponseBody = string("{ ")
+                    + "ingestionRootKey: " + to_string(ingestionRootKey)
+                    + ", [ ";
+            responseBody.insert(0, beginOfResponseBody);
+            responseBody += "] }";
         }
         catch(runtime_error e)
         {
