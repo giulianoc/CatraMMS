@@ -1416,7 +1416,6 @@ void API::ingestion(
                     }
                 }
             }
-
         }
         catch(runtime_error e)
         {
@@ -1446,9 +1445,36 @@ void API::ingestion(
             conn = _mmsEngineDBFacade->beginIngestionJobs();
 
             Validator validator(_logger, _mmsEngineDBFacade);
-
-            validator.validateProcessMetadata(requestBodyRoot);
+            validator.validateRootMetadata(requestBodyRoot);
         
+            string field = "Type";
+            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }    
+            string rootType = requestBodyRoot.get(field, "XXX").asString();
+
+            string rootLabel;
+            field = "Label";
+            if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            {
+                rootLabel = requestBodyRoot.get(field, "XXX").asString();
+            }    
+            
+            bool rootLabelDuplication = true;
+            field = "LabelDuplication";
+            if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            {
+                rootLabelDuplication = requestBodyRoot.get(field, "XXX").asBool();
+            }    
+            
+            int64_t ingestionRootKey = _mmsEngineDBFacade->addIngestionRoot(conn,
+                customer->_customerKey, rootType, rootLabel, rootLabelDuplication);
+    
             string taskField = "Task";
             string groupOfTasksField = "GroupOfTasks";
             if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, taskField))
@@ -1457,7 +1483,7 @@ void API::ingestion(
 
                 vector<int64_t> dependOnIngestionJobKeys;
                 int localDependOnSuccess = 0;   // it is not important since dependOnIngestionJobKey is -1
-                ingestionTask(conn, customer, taskRoot, dependOnIngestionJobKeys, 
+                ingestionTask(conn, customer, ingestionRootKey, taskRoot, dependOnIngestionJobKeys, 
                         localDependOnSuccess, responseBody);            
             }
             else if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, groupOfTasksField))
@@ -1466,7 +1492,7 @@ void API::ingestion(
                 
                 vector<int64_t> dependOnIngestionJobKeys;
                 int localDependOnSuccess = 0;   // it is not important since dependOnIngestionJobKey is -1
-                ingestionGroupOfTasks(conn, customer, groupOfTasksRoot, dependOnIngestionJobKeys, 
+                ingestionGroupOfTasks(conn, customer, ingestionRootKey, groupOfTasksRoot, dependOnIngestionJobKeys, 
                         localDependOnSuccess, responseBody); 
             }
             else
@@ -1544,7 +1570,7 @@ void API::ingestion(
 }
 
 int64_t API::ingestionTask(shared_ptr<MySQLConnection> conn,
-        shared_ptr<Customer> customer, Json::Value taskRoot, 
+        shared_ptr<Customer> customer, int64_t ingestionRootKey, Json::Value taskRoot, 
         vector<int64_t> dependOnIngestionJobKeys, int dependOnSuccess,
         string& responseBody)
 {
@@ -1577,7 +1603,7 @@ int64_t API::ingestionTask(shared_ptr<MySQLConnection> conn,
     );
     
     int64_t localDependOnIngestionJobKey = _mmsEngineDBFacade->addIngestionJob(conn,
-            customer->_customerKey, label, taskMetadata, MMSEngineDBFacade::toIngestionType(type), 
+            customer->_customerKey, ingestionRootKey, label, taskMetadata, MMSEngineDBFacade::toIngestionType(type), 
             dependOnIngestionJobKeys, dependOnSuccess);
     
     if (dependOnIngestionJobKeys.size() > 0)
@@ -1625,14 +1651,15 @@ int64_t API::ingestionTask(shared_ptr<MySQLConnection> conn,
 
     vector<int64_t> localDependOnIngestionJobKeys;
     localDependOnIngestionJobKeys.push_back(localDependOnIngestionJobKey);
-    ingestionEvents(conn, customer, taskRoot, 
+    ingestionEvents(conn, customer, ingestionRootKey, taskRoot, 
         localDependOnIngestionJobKeys, responseBody);
     
     return localDependOnIngestionJobKey;
 }
 
 void API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
-        shared_ptr<Customer> customer, Json::Value groupOfTasksRoot, 
+        shared_ptr<Customer> customer, int64_t ingestionRootKey,
+        Json::Value groupOfTasksRoot, 
         vector<int64_t> dependOnIngestionJobKeys, int dependOnSuccess,
         string& responseBody)
 {
@@ -1686,18 +1713,18 @@ void API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
         Json::Value taskRoot = tasksRoot[taskIndex];
         
         int64_t localDependOnIngestionJobKey = ingestionTask(
-                conn, customer, taskRoot, dependOnIngestionJobKeys, 
+                conn, customer, ingestionRootKey, taskRoot, dependOnIngestionJobKeys, 
                 dependOnSuccess, responseBody);    
 
         localDependOnIngestionJobKeys.push_back(localDependOnIngestionJobKey);
     }
 
-    ingestionEvents(conn, customer, groupOfTasksRoot, 
+    ingestionEvents(conn, customer, ingestionRootKey, groupOfTasksRoot, 
         localDependOnIngestionJobKeys, responseBody);
 }    
 
 void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
-        shared_ptr<Customer> customer, Json::Value taskOrGroupOfTasksRoot, 
+        shared_ptr<Customer> customer, int64_t ingestionRootKey, Json::Value taskOrGroupOfTasksRoot, 
         vector<int64_t> dependOnIngestionJobKeys, string& responseBody)
 {
 
@@ -1713,7 +1740,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
             Json::Value onSuccessTaskRoot = onSuccessRoot[taskField];                        
 
             int localDependOnSuccess = 1;
-            ingestionTask(conn, customer, onSuccessTaskRoot, dependOnIngestionJobKeys, 
+            ingestionTask(conn, customer, ingestionRootKey, onSuccessTaskRoot, dependOnIngestionJobKeys, 
                     localDependOnSuccess, responseBody);            
         }
         else if (_mmsEngineDBFacade->isMetadataPresent(onSuccessRoot, groupOfTasksField))
@@ -1721,7 +1748,8 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
             Json::Value onSuccessGroupOfTasksRoot = onSuccessRoot[groupOfTasksField];                        
 
             int localDependOnSuccess = 1;
-            ingestionGroupOfTasks(conn, customer, onSuccessGroupOfTasksRoot, dependOnIngestionJobKeys, 
+            ingestionGroupOfTasks(conn, customer, ingestionRootKey,
+                    onSuccessGroupOfTasksRoot, dependOnIngestionJobKeys, 
                     localDependOnSuccess, responseBody);            
         }
     }
@@ -1738,7 +1766,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
             Json::Value onErrorTaskRoot = onErrorRoot[taskField];                        
 
             int localDependOnSuccess = 0;
-            ingestionTask(conn, customer, onErrorTaskRoot, dependOnIngestionJobKeys, 
+            ingestionTask(conn, customer, ingestionRootKey, onErrorTaskRoot, dependOnIngestionJobKeys, 
                     localDependOnSuccess, responseBody);            
         }
         else if (_mmsEngineDBFacade->isMetadataPresent(onErrorRoot, groupOfTasksField))
@@ -1746,7 +1774,8 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
             Json::Value onErrorGroupOfTasksRoot = onErrorRoot[groupOfTasksField];                        
 
             int localDependOnSuccess = 0;
-            ingestionGroupOfTasks(conn, customer, onErrorGroupOfTasksRoot, dependOnIngestionJobKeys, 
+            ingestionGroupOfTasks(conn, customer, ingestionRootKey,
+                    onErrorGroupOfTasksRoot, dependOnIngestionJobKeys, 
                     localDependOnSuccess, responseBody);            
         }
     }    
@@ -1763,7 +1792,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
             Json::Value onCompleteTaskRoot = onCompleteRoot[taskField];                        
 
             int localDependOnSuccess = -1;
-            ingestionTask(conn, customer, onCompleteTaskRoot, dependOnIngestionJobKeys, 
+            ingestionTask(conn, customer, ingestionRootKey, onCompleteTaskRoot, dependOnIngestionJobKeys, 
                     localDependOnSuccess, responseBody);            
         }
         else if (_mmsEngineDBFacade->isMetadataPresent(onCompleteRoot, groupOfTasksField))
@@ -1771,7 +1800,8 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
             Json::Value onCompleteGroupOfTasksRoot = onCompleteRoot[groupOfTasksField];                        
 
             int localDependOnSuccess = -1;
-            ingestionGroupOfTasks(conn, customer, onCompleteGroupOfTasksRoot, dependOnIngestionJobKeys, 
+            ingestionGroupOfTasks(conn, customer, ingestionRootKey,
+                    onCompleteGroupOfTasksRoot, dependOnIngestionJobKeys, 
                     localDependOnSuccess, responseBody);            
         }
     }    

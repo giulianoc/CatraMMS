@@ -1415,11 +1415,11 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
             while(ingestionsToBeManaged.size() < maxIngestionJobs && !noMoreRowsReturned)
             {
                 lastSQLCommand = 
-                    "select ingestionJobKey, DATE_FORMAT(startIngestion, '%Y-%m-%d %H:%i:%s') as startIngestion, "
-                        "customerKey, metaDataContent, status, ingestionType "
-                        "from MMS_IngestionJob "
-                        "where processorMMS is null "
-                        "and (status = ? or (status in (?, ?, ?, ?) and sourceBinaryTransferred = 1)) "
+                    "select ij.ingestionJobKey, DATE_FORMAT(ij.startIngestion, '%Y-%m-%d %H:%i:%s') as startIngestion, "
+                        "ir.customerKey, ij.metaDataContent, ij.status, ij.ingestionType "
+                        "from MMS_IngestionRoot ir, MMS_IngestionJob ij "
+                        "where ir.ingestionRootKey = ij.ingestionRootKey and ij.processorMMS is null "
+                        "and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) "
                         "limit ?, ? for update";
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
@@ -1763,9 +1763,89 @@ shared_ptr<MySQLConnection> MMSEngineDBFacade::endIngestionJobs (
     return conn;    
 }
 
-int64_t MMSEngineDBFacade::addIngestionJob (
+int64_t MMSEngineDBFacade::addIngestionRoot (
         shared_ptr<MySQLConnection> conn,
-    	int64_t customerKey, string label, string metadataContent,
+    	int64_t customerKey, string rootType, string rootLabel,
+        bool rootLabelDuplication
+)
+{
+    int64_t     ingestionRootKey;
+    
+    string      lastSQLCommand;
+    
+    try
+    {
+        if (!rootLabelDuplication)
+        {
+            lastSQLCommand = 
+                "select ingestionRootKey from MMS_IngestionRoot where customerKey = ? and label = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, customerKey);
+            preparedStatement->setString(queryParameterIndex++, rootLabel);
+            
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                int64_t ingestionRootKey = resultSet->getInt64("ingestionRootKey");
+                
+                {
+                    string errorMessage = __FILEREF__ + "IngestionRoot is already present"
+                        + ", ingestionRootKey: " + to_string(ingestionRootKey)
+                        + ", rootLabel: " + rootLabel
+                        + ", lastSQLCommand: " + lastSQLCommand
+                    ;
+                    _logger->error(errorMessage);
+                    
+                    throw runtime_error(errorMessage);                    
+                }
+            }
+        }
+
+        {
+            {
+                lastSQLCommand = 
+                    "insert into MMS_IngestionRoot (ingestionRootKey, customerKey, type, label) values ("
+                    "NULL, ?, ?, ?)";
+
+                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                int queryParameterIndex = 1;
+                preparedStatement->setInt64(queryParameterIndex++, customerKey);
+                preparedStatement->setString(queryParameterIndex++, rootType);
+                preparedStatement->setString(queryParameterIndex++, rootLabel);
+
+                preparedStatement->executeUpdate();
+            }
+
+            ingestionRootKey = getLastInsertId(conn);           
+        }        
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw se;
+    }
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
+    }
+    
+    return ingestionRootKey;
+}
+
+int64_t MMSEngineDBFacade::addIngestionJob (
+        shared_ptr<MySQLConnection> conn, int64_t customerKey,
+    	int64_t ingestionRootKey, string label, string metadataContent,
         MMSEngineDBFacade::IngestionType ingestionType, 
         vector<int64_t> dependOnIngestionJobKeys, int dependOnSuccess
 )
@@ -1829,12 +1909,12 @@ int64_t MMSEngineDBFacade::addIngestionJob (
         {
             {
                 lastSQLCommand = 
-                    "insert into MMS_IngestionJob (ingestionJobKey, customerKey, mediaItemKey, metaDataContent, ingestionType, startIngestion, endIngestion, downloadingProgress, uploadingProgress, sourceBinaryTransferred, processorMMS, status, errorMessage) values ("
+                    "insert into MMS_IngestionJob (ingestionJobKey, ingestionRootKey, mediaItemKey, metaDataContent, ingestionType, startIngestion, endIngestion, downloadingProgress, uploadingProgress, sourceBinaryTransferred, processorMMS, status, errorMessage) values ("
                                                   "NULL,            ?,           NULL,         ?,               ?,             NULL,           NULL,         NULL,                NULL,              0,                       NULL,         ?,      NULL)";
 
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
-                preparedStatement->setInt64(queryParameterIndex++, customerKey);
+                preparedStatement->setInt64(queryParameterIndex++, ingestionRootKey);
                 preparedStatement->setString(queryParameterIndex++, metadataContent);
                 preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(ingestionType));
                 preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(MMSEngineDBFacade::IngestionStatus::Start_TaskQueued));
@@ -5288,32 +5368,56 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         
         try
         {
-            // Status.
-            //  1: StartIingestion
-            //  2: MetaDataSavedInDB
-            //  3: MediaFileMovedInMMS
-            //  8: End_IngestionFailure  # nothing done
-            //  9: End_IngestionSrcSuccess_EncodingError (we will have this state if just one of the encoding failed.
-            //      One encoding is considered a failure only after that the MaxFailuresNumer for this encoding is reached)
-            //  10: End_IngestionSuccess  # all done
-            // So, at the beginning the status is 1
-            //      from 1 it could become 2 or 8 in case of failure
-            //      from 2 it could become 3 or 8 in case of failure
-            //      from 3 it could become 10 or 9 in case of encoding failure
-            //      The final states are 8, 9 and 10
-            // IngestionType could be:
-            //      NULL: XML not parsed yet to know the type
-            //      0: insert
-            //      1: update
-            //      2. remove
-            // MetaDataFileName could be null to implement the following scenario done through XHP GUI:
-            //      allow the user to extend the content specifying a new encoding profile to be used
-            //      for a content that was already ingested previously. In this scenario we do not have
-            //      any meta data file.
+            lastSQLCommand = 
+                "create table if not exists MMS_IngestionRoot ("
+                    "ingestionRootKey           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "customerKey                BIGINT UNSIGNED NOT NULL,"
+                    "type                       VARCHAR (64) NOT NULL,"
+                    "label                      VARCHAR (128) NULL,"
+                    "constraint MMS_IngestionRoot_PK PRIMARY KEY (ingestionRootKey), "
+                    "constraint MMS_IngestionRoot_FK foreign key (customerKey) "
+                        "references MMS_Customer (customerKey) on delete cascade) "	   	        				
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
+        try
+        {
+            lastSQLCommand = 
+                "create index MMS_IngestionRoot_idx on MMS_IngestionRoot (customerKey, label)";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }    
+
+        try
+        {
             lastSQLCommand = 
                 "create table if not exists MMS_IngestionJob ("
                     "ingestionJobKey  			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
-                    "customerKey                BIGINT UNSIGNED NOT NULL,"
+                    "ingestionRootKey                BIGINT UNSIGNED NOT NULL,"
                     "mediaItemKey               BIGINT UNSIGNED NULL,"
                     "metaDataContent            TEXT CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
                     "ingestionType              VARCHAR (64) NOT NULL,"
@@ -5326,8 +5430,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "status           			VARCHAR (64) NOT NULL,"
                     "errorMessage               VARCHAR (1024) NULL,"
                     "constraint MMS_IngestionJob_PK PRIMARY KEY (ingestionJobKey), "
-                    "constraint MMS_IngestionJob_FK foreign key (customerKey) "
-                        "references MMS_Customer (customerKey) on delete cascade) "	   	        				
+                    "constraint MMS_IngestionJob_FK foreign key (ingestionRootKey) "
+                        "references MMS_IngestionRoot (ingestionRootKey) on delete cascade) "	   	        				
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }

@@ -1,5 +1,5 @@
 {
-	"Type": "Process",
+	"Type": "Workflow",
 	"Label": "1",
 	"Variables": {  
 		"TitleOfVideo": "My Title of the content",

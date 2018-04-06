@@ -99,17 +99,20 @@ private:
         string requestBody);
 
     int64_t ingestionTask(shared_ptr<MySQLConnection> conn,
-        shared_ptr<Customer> customer, Json::Value taskRoot, 
+        shared_ptr<Customer> customer, int64_t ingestionRootKey,
+            Json::Value taskRoot, 
         vector<int64_t> dependOnIngestionJobKeys, int dependOnSuccess,
         string& responseBody);
         
     void ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
-        shared_ptr<Customer> customer, Json::Value groupOfTasksRoot, 
+        shared_ptr<Customer> customer, int64_t ingestionRootKey,
+            Json::Value groupOfTasksRoot, 
         vector <int64_t> dependOnIngestionJobKeys, int dependOnSuccess,
         string& responseBody);
 
     void ingestionEvents(shared_ptr<MySQLConnection> conn,
-        shared_ptr<Customer> customer, Json::Value taskOrGroupOfTasksRoot, 
+        shared_ptr<Customer> customer, int64_t ingestionRootKey,
+            Json::Value taskOrGroupOfTasksRoot, 
         vector<int64_t> dependOnIngestionJobKeys, string& responseBody);
 
     void uploadBinary(

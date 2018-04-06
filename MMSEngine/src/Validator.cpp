@@ -28,21 +28,38 @@ Validator::Validator(const Validator& orig) {
 Validator::~Validator() {
 }
 
-void Validator::validateProcessMetadata(Json::Value processRoot)
-{
-    // check Process metadata
+void Validator::validateRootMetadata(Json::Value root)
+{    
+    string field = "Type";
+    if (!_mmsEngineDBFacade->isMetadataPresent(root, field))
+    {
+        string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                + ", Field: " + field;
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }    
+    string type = root.get(field, "XXX").asString();
+    if (type != "Workflow")
+    {
+        string errorMessage = __FILEREF__ + "Type field is wrong"
+                + ", Type: " + type;
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
     
     string taskField = "Task";
     string groupOfTasksField = "GroupOfTasks";
-    if (_mmsEngineDBFacade->isMetadataPresent(processRoot, taskField))
+    if (_mmsEngineDBFacade->isMetadataPresent(root, taskField))
     {
-        Json::Value taskRoot = processRoot[taskField];  
+        Json::Value taskRoot = root[taskField];  
 
         validateTaskMetadata(taskRoot);
     }
-    else if (_mmsEngineDBFacade->isMetadataPresent(processRoot, groupOfTasksField))
+    else if (_mmsEngineDBFacade->isMetadataPresent(root, groupOfTasksField))
     {
-        Json::Value groupOfTasksRoot = processRoot[groupOfTasksField];  
+        Json::Value groupOfTasksRoot = root[groupOfTasksField];  
 
         validateGroupOfTasksMetadata(groupOfTasksRoot);
     }

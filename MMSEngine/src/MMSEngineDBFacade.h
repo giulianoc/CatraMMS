@@ -537,8 +537,14 @@ public:
 
     shared_ptr<MySQLConnection> beginIngestionJobs ();
     
+    int64_t addIngestionRoot (
+        shared_ptr<MySQLConnection> conn,
+    	int64_t customerKey, string rootType, string rootLabel,
+        bool rootLabelDuplication);
+
     int64_t addIngestionJob (shared_ptr<MySQLConnection> conn,
-    	int64_t customerKey, string label, string metadataContent,
+    	int64_t customerKey, int64_t ingestionRootKey, 
+        string label, string metadataContent,
         MMSEngineDBFacade::IngestionType ingestionType, 
         vector<int64_t> dependOnIngestionJobKeys, int dependOnSuccess
     );

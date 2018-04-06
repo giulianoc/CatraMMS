@@ -26,7 +26,7 @@ public:
     Validator(const Validator& orig);
     virtual ~Validator();
     
-    void validateProcessMetadata(Json::Value processRoot);
+    void validateRootMetadata(Json::Value root);
 
     void validateGroupOfTasksMetadata(Json::Value groupOfTasksRoot);
 
