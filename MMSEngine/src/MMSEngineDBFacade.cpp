@@ -1931,15 +1931,15 @@ int64_t MMSEngineDBFacade::addIngestionJob (
                     int orderNumber = 0;
 
                     lastSQLCommand = 
-                        "insert into MMS_IngestionJobDependency (ingestionJobKey, dependOnIngestionJobKey, orderNumber, dependOnSuccess) values ("
-                        "?, ?, ?, ?)";
+                        "insert into MMS_IngestionJobDependency (ingestionJobDependencyKey, ingestionJobKey, dependOnSuccess, dependOnIngestionJobKey, orderNumber) values ("
+                        "NULL, ?, ?, ?, ?)";
 
                     shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
                     preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+                    preparedStatement->setInt(queryParameterIndex++, dependOnSuccess);
                     preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
                     preparedStatement->setInt(queryParameterIndex++, orderNumber);
-                    preparedStatement->setInt(queryParameterIndex++, dependOnSuccess);
 
                     preparedStatement->executeUpdate();
                 }
@@ -1949,15 +1949,15 @@ int64_t MMSEngineDBFacade::addIngestionJob (
                     for (int64_t dependOnIngestionJobKey: dependOnIngestionJobKeys)
                     {
                         lastSQLCommand = 
-                            "insert into MMS_IngestionJobDependency (ingestionJobKey, dependOnIngestionJobKey, orderNumber, dependOnSuccess) values ("
-                            "?, ?, ?, ?)";
+                            "insert into MMS_IngestionJobDependency (ingestionJobDependencyKey, ingestionJobKey, dependOnSuccess, dependOnIngestionJobKey, orderNumber) values ("
+                            "NULL, ?, ?, ?, ?)";
 
                         shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                         int queryParameterIndex = 1;
                         preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+                        preparedStatement->setInt(queryParameterIndex++, dependOnSuccess);
                         preparedStatement->setInt64(queryParameterIndex++, dependOnIngestionJobKey);
                         preparedStatement->setInt(queryParameterIndex++, orderNumber);
-                        preparedStatement->setInt(queryParameterIndex++, dependOnSuccess);
 
                         preparedStatement->executeUpdate();
                         
@@ -2180,6 +2180,35 @@ void MMSEngineDBFacade::updateIngestionJob (
 
                 throw runtime_error(errorMessage);                    
             }
+            
+            {
+                int dependOnSuccess;
+
+                if (MMSEngineDBFacade::isIngestionStatusSuccess(newIngestionStatus))
+                {
+                    // set to NotToBeExecuted the tasks depending on this task on failure
+
+                    dependOnSuccess = 0;
+                }
+                else
+                {
+                    // set to NotToBeExecuted the tasks depending on this task on success
+
+                    dependOnSuccess = 1;
+                }
+
+                lastSQLCommand = 
+                    "update MMS_IngestionJob set status = ?, endIngestion = NOW() where ingestionJobKey in "
+                    "(select ingestionJobKey from MMS_IngestionJobDependency where dependOnIngestionJobKey = ? and dependOnSuccess = ?)";
+
+                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                int queryParameterIndex = 1;
+                preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(MMSEngineDBFacade::IngestionStatus::End_NotToBeExecuted));
+                preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+                preparedStatement->setInt(queryParameterIndex++, dependOnSuccess);
+
+                int rowsUpdated = preparedStatement->executeUpdate();
+            }            
         }
         else
         {
@@ -2307,6 +2336,35 @@ void MMSEngineDBFacade::updateIngestionJob (
 
                 throw runtime_error(errorMessage);                    
             }
+            
+            {
+                int dependOnSuccess;
+
+                if (MMSEngineDBFacade::isIngestionStatusSuccess(newIngestionStatus))
+                {
+                    // set to NotToBeExecuted the tasks depending on this task on failure
+
+                    dependOnSuccess = 0;
+                }
+                else
+                {
+                    // set to NotToBeExecuted the tasks depending on this task on success
+
+                    dependOnSuccess = 1;
+                }
+
+                lastSQLCommand = 
+                    "update MMS_IngestionJob set status = ?, endIngestion = NOW() where ingestionJobKey in "
+                    "(select ingestionJobKey from MMS_IngestionJobDependency where dependOnIngestionJobKey = ? and dependOnSuccess = ?)";
+
+                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                int queryParameterIndex = 1;
+                preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(MMSEngineDBFacade::IngestionStatus::End_NotToBeExecuted));
+                preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+                preparedStatement->setInt(queryParameterIndex++, dependOnSuccess);
+
+                int rowsUpdated = preparedStatement->executeUpdate();
+            }            
         }
         else
         {
@@ -5452,12 +5510,12 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         {
             lastSQLCommand = 
                 "create table if not exists MMS_IngestionJobDependency ("
-                    "ingestionJobDependency  			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "ingestionJobDependencyKey  	BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "ingestionJobKey  			BIGINT UNSIGNED NOT NULL,"
+                    "dependOnSuccess                    TINYINT (1) NOT NULL,"
                     "dependOnIngestionJobKey            BIGINT UNSIGNED NULL,"
                     "orderNumber                        INT UNSIGNED NOT NULL,"
-                    "dependOnSuccess                    TINYINT (1) NOT NULL,"
-                    "constraint MMS_IngestionJob_PK PRIMARY KEY (ingestionJobDependency), "
+                    "constraint MMS_IngestionJob_PK PRIMARY KEY (ingestionJobDependencyKey), "
                     "constraint MMS_IngestionJobDependency_FK foreign key (ingestionJobKey) "
                         "references MMS_IngestionJob (ingestionJobKey) on delete cascade, "	   	        				
                     "constraint MMS_IngestionJobDependency_FK2 foreign key (dependOnIngestionJobKey) "

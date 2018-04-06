@@ -344,30 +344,20 @@ public:
         SourceUploadingInProgress,
 
         End_DownloadCancelledByUser,   
-            // User cancelled the media source downloading
 
         End_ValidationMetadataFailed,   
-            // Validation metadata failed.
-            // MediaSource (if present) remains in FTP repository in case the json would be ingested again (MediaSource would be remove by retention)
 
         End_ValidationMediaSourceFailed,   
-            // validation media source failed, metadata is moved in ErrorArea
-            // MediaSource (if present) remains in FTP repository in case the json would be ingested again (MediaSource would be remove by retention)
 
         End_CustomerReachedHisMaxIngestionNumber,
-            // validation media source failed, metadata is moved in ErrorArea
-            // MediaSource (if present) remains in FTP repository in case the json would be ingested again (MediaSource would be remove by retention)
         
         End_IngestionFailure,                    // nothing done
-            // validation media source failed, metadata is moved in ErrorArea
-            // MediaSource (if present) remains in FTP repository in case the json would be ingested again (MediaSource would be remove by retention)
 
         End_IngestionSuccess_AtLeastOneEncodingProfileError,    
-            // Content was ingested successful but at least one encoding failed
-            // One encoding is considered a failure only after MaxFailuresNumer attempts
+        
+        End_NotToBeExecuted,    // because of dependencies    
         
         End_TaskSuccess
-            // Ingestion and encodings successful
     };
     static const char* toString(const IngestionStatus& ingestionStatus)
     {
@@ -395,6 +385,8 @@ public:
                 return "End_IngestionFailure";
             case IngestionStatus::End_IngestionSuccess_AtLeastOneEncodingProfileError:
                 return "End_IngestionSuccess_AtLeastOneEncodingProfileError";
+            case IngestionStatus::End_NotToBeExecuted:
+                return "End_NotToBeExecuted";
             case IngestionStatus::End_TaskSuccess:
                 return "End_TaskSuccess";
             default:
@@ -429,6 +421,8 @@ public:
             return IngestionStatus::End_IngestionFailure;
         else if (lowerCase == "end_ingestionsuccess_atleastoneencodingprofileerror")
             return IngestionStatus::End_IngestionSuccess_AtLeastOneEncodingProfileError;
+        else if (lowerCase == "end_nottobeexecuted")
+            return IngestionStatus::End_NotToBeExecuted;
         else if (lowerCase == "end_tasksuccess")
             return IngestionStatus::End_TaskSuccess;
         else
