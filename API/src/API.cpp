@@ -1510,8 +1510,11 @@ void API::ingestion(
             _mmsEngineDBFacade->endIngestionJobs(conn, commit);
             
             string beginOfResponseBody = string("{ ")
+                + "\"workflow\": { "
                     + "ingestionRootKey: " + to_string(ingestionRootKey)
-                    + ", [ ";
+                    + "label: " + rootLabel + " "
+                    + "}, "
+                    + "\"taks\": [ ";
             responseBody.insert(0, beginOfResponseBody);
             responseBody += " ] }";
         }

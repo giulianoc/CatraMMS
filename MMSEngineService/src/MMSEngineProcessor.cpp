@@ -1138,10 +1138,10 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                 videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
                 audioCodecName, audioSampleRate, audioChannels, audioBitRate) = mediaInfo;
             
-            if (audioCodecName == "")
-                contentType = MMSEngineDBFacade::ContentType::Video;
-            else
+            if (videoCodecName == "")
                 contentType = MMSEngineDBFacade::ContentType::Audio;
+            else
+                contentType = MMSEngineDBFacade::ContentType::Video;
         }
         catch(runtime_error e)
         {
@@ -1743,9 +1743,9 @@ void MMSEngineProcessor::generateAndIngestConcatenation(
 {
     try
     {
-        if (dependencies.size() == 0)
+        if (dependencies.size() < 2)
         {
-            string errorMessage = __FILEREF__ + "No configured any media to be concatenated"
+            string errorMessage = __FILEREF__ + "No enough media to be concatenated"
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", dependencies.size: " + to_string(dependencies.size());
             _logger->error(errorMessage);
