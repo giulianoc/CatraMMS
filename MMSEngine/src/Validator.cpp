@@ -28,6 +28,70 @@ Validator::Validator(const Validator& orig) {
 Validator::~Validator() {
 }
 
+bool Validator::isVideoAudioMedia(string mediaSourceFileName)
+{
+    // see https://en.wikipedia.org/wiki/Video_file_format
+    vector<string> suffixes = {
+        ".webm",
+        ".mkv",
+        ".flv",
+        ".vob",
+        ".ogv",
+        ".ogg",
+        ".avi",
+        ".mov",
+        ".wmv",
+        ".yuv",
+        ".mp4",
+        ".m4p ",
+        ".mpg",
+        ".mp2",
+        ".mpeg",
+        ".m4v",
+        ".3gp",
+        ".3g2",
+        ".mxf"
+    };
+
+    string lowerCaseMediaSourceFileName;
+    lowerCaseMediaSourceFileName.resize(mediaSourceFileName.size());
+    transform(mediaSourceFileName.begin(), mediaSourceFileName.end(), lowerCaseMediaSourceFileName.begin(), [](unsigned char c){return tolower(c); } );
+    for (string suffix: suffixes)
+    {
+        if (lowerCaseMediaSourceFileName.size() >= suffix.size() 
+                && 0 == lowerCaseMediaSourceFileName.compare(lowerCaseMediaSourceFileName.size()-suffix.size(), suffix.size(), suffix)) 
+            return true;
+    }
+    
+    return false;
+}
+
+bool Validator::isImageMedia(string mediaSourceFileName)
+{
+    // see https://en.wikipedia.org/wiki/Video_file_format
+    vector<string> suffixes = {
+        ".jpg",
+        ".jpeg",
+        ".tif",
+        ".tiff",
+        ".bmp",
+        ".gif",
+        ".png"
+    };
+
+    string lowerCaseMediaSourceFileName;
+    lowerCaseMediaSourceFileName.resize(mediaSourceFileName.size());
+    transform(mediaSourceFileName.begin(), mediaSourceFileName.end(), lowerCaseMediaSourceFileName.begin(), [](unsigned char c){return tolower(c); } );
+    for (string suffix: suffixes)
+    {
+        if (lowerCaseMediaSourceFileName.size() >= suffix.size() 
+                && 0 == lowerCaseMediaSourceFileName.compare(lowerCaseMediaSourceFileName.size()-suffix.size(), suffix.size(), suffix)) 
+            return true;
+    }
+    
+    return false;
+}
+
 void Validator::validateRootMetadata(Json::Value root)
 {    
     string field = "Type";
@@ -193,11 +257,9 @@ void Validator::validateEvents(Json::Value taskOrGroupOfTasksRoot)
     }    
 }
 
-pair<MMSEngineDBFacade::ContentType,vector<int64_t>> 
-        Validator::validateTaskMetadata(Json::Value taskRoot)
+vector<int64_t> Validator::validateTaskMetadata(Json::Value taskRoot)
 {
     MMSEngineDBFacade::IngestionType    ingestionType;
-    MMSEngineDBFacade::ContentType      contentType;
     vector<int64_t>                     dependencies;
 
     string field = "Type";
@@ -226,8 +288,7 @@ pair<MMSEngineDBFacade::ContentType,vector<int64_t>>
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        contentType = validateContentIngestionMetadata(
-                parametersRoot);
+        validateContentIngestionMetadata(parametersRoot);
     }
     else if (type == "Frame")
     {
@@ -244,7 +305,7 @@ pair<MMSEngineDBFacade::ContentType,vector<int64_t>>
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        contentType = validateFrameMetadata(parametersRoot, dependencies);        
+        validateFrameMetadata(parametersRoot, dependencies);        
     }
     else if (type == "Periodical-Frames")
     {
@@ -261,7 +322,7 @@ pair<MMSEngineDBFacade::ContentType,vector<int64_t>>
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        contentType = validatePeriodicalFramesMetadata(parametersRoot, dependencies);        
+        validatePeriodicalFramesMetadata(parametersRoot, dependencies);        
     }
     else if (type == "Motion-JPEG-by-Periodical-Frames")
     {
@@ -278,7 +339,7 @@ pair<MMSEngineDBFacade::ContentType,vector<int64_t>>
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        contentType = validatePeriodicalFramesMetadata(parametersRoot, dependencies);        
+        validatePeriodicalFramesMetadata(parametersRoot, dependencies);        
     }
     else if (type == "I-Frames")
     {
@@ -295,7 +356,7 @@ pair<MMSEngineDBFacade::ContentType,vector<int64_t>>
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        contentType = validateIFramesMetadata(parametersRoot, dependencies);        
+        validateIFramesMetadata(parametersRoot, dependencies);        
     }
     else if (type == "Motion-JPEG-by-I-Frames")
     {
@@ -312,7 +373,7 @@ pair<MMSEngineDBFacade::ContentType,vector<int64_t>>
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        contentType = validateIFramesMetadata(parametersRoot, dependencies);        
+        validateIFramesMetadata(parametersRoot, dependencies);        
     }
     else if (type == "Concat-Demuxer")
     {
@@ -329,7 +390,24 @@ pair<MMSEngineDBFacade::ContentType,vector<int64_t>>
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        contentType = validateConcatDemuxerMetadata(parametersRoot, dependencies);        
+        validateConcatDemuxerMetadata(parametersRoot, dependencies);        
+    }
+    else if (type == "Cut")
+    {
+        ingestionType = MMSEngineDBFacade::IngestionType::Cut;
+        
+        field = "Parameters";
+        if (!isMetadataPresent(taskRoot, field))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        Json::Value parametersRoot = taskRoot[field]; 
+        validateCutMetadata(parametersRoot, dependencies);        
     }
     else
     {
@@ -342,43 +420,35 @@ pair<MMSEngineDBFacade::ContentType,vector<int64_t>>
         
     validateEvents(taskRoot);
     
-    return make_pair(contentType, dependencies);
+    return dependencies;
 }
 
-pair<MMSEngineDBFacade::ContentType,vector<int64_t>> 
-        Validator::validateTaskMetadata(
+vector<int64_t> Validator::validateTaskMetadata(
         MMSEngineDBFacade::IngestionType ingestionType, Json::Value parametersRoot)
 {
-    MMSEngineDBFacade::ContentType      contentType;
     vector<int64_t>                     dependencies;
 
     if (ingestionType == MMSEngineDBFacade::IngestionType::ContentIngestion)
     {
-
-        contentType = validateContentIngestionMetadata(
-                parametersRoot);
+        validateContentIngestionMetadata(parametersRoot);
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::Frame)
     {
-        MMSEngineDBFacade::ContentType contentType =
-            validateFrameMetadata(parametersRoot, dependencies);        
+        validateFrameMetadata(parametersRoot, dependencies);        
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::PeriodicalFrames
             || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByPeriodicalFrames)
     {
-        MMSEngineDBFacade::ContentType contentType =
-            validatePeriodicalFramesMetadata(parametersRoot, dependencies);        
+        validatePeriodicalFramesMetadata(parametersRoot, dependencies);        
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::IFrames
             || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByIFrames)
     {
-        MMSEngineDBFacade::ContentType contentType =
-            validateIFramesMetadata(parametersRoot, dependencies);        
+        validateIFramesMetadata(parametersRoot, dependencies);        
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::ConcatDemuxer)
     {
-        MMSEngineDBFacade::ContentType contentType =
-            validateConcatDemuxerMetadata(parametersRoot, dependencies);        
+        validateConcatDemuxerMetadata(parametersRoot, dependencies);        
     }
     else
     {
@@ -390,20 +460,15 @@ pair<MMSEngineDBFacade::ContentType,vector<int64_t>>
     }
     
     
-    return make_pair(contentType, dependencies);
+    return dependencies;
 }
 
-MMSEngineDBFacade::ContentType Validator::validateContentIngestionMetadata(
+void Validator::validateContentIngestionMetadata(
     Json::Value parametersRoot)
 {
-    // see sample in directory samples
-    
-    MMSEngineDBFacade::ContentType         contentType;
-    
     vector<string> mandatoryFields = {
         // "SourceURL",     it is optional in case of push
-        "SourceFileName",
-        "ContentType"
+        "SourceFileName"
     };
     for (string mandatoryField: mandatoryFields)
     {
@@ -416,41 +481,35 @@ MMSEngineDBFacade::ContentType Validator::validateContentIngestionMetadata(
             throw runtime_error(errorMessage);
         }
     }
+    string field = "SourceFileName";
+    string sourceFileName = parametersRoot.get(field, "XXX").asString();
 
-    string sContentType = parametersRoot.get("ContentType", "XXX").asString();
-    try
+    if (!isVideoAudioMedia(sourceFileName)
+            && !isImageMedia(sourceFileName))
     {
-        contentType = MMSEngineDBFacade::toContentType(sContentType);
-    }
-    catch(exception e)
-    {
-        string errorMessage = __FILEREF__ + "Field 'ContentType' is wrong"
-                + ", sContentType: " + sContentType;
-        _logger->error(errorMessage);
-
+        string errorMessage = string("Unknown sourceFileName extension")
+            + ", sourceFileName: " + sourceFileName
+        ;
+        _logger->error(__FILEREF__ + errorMessage);
+        
         throw runtime_error(errorMessage);
     }
 
-    string field;
-    if (contentType == MMSEngineDBFacade::ContentType::Video 
-            || contentType == MMSEngineDBFacade::ContentType::Audio)
+    field = "EncodingPriority";
+    if (isMetadataPresent(parametersRoot, field))
     {
-        field = "EncodingPriority";
-        if (isMetadataPresent(parametersRoot, field))
+        string encodingPriority = parametersRoot.get(field, "XXX").asString();
+        try
         {
-            string encodingPriority = parametersRoot.get(field, "XXX").asString();
-            try
-            {
-                MMSEngineDBFacade::toEncodingPriority(encodingPriority);    // it generate an exception in case of wrong string
-            }
-            catch(exception e)
-            {
-                string errorMessage = __FILEREF__ + "Field 'EncodingPriority' is wrong"
-                        + ", EncodingPriority: " + encodingPriority;
-                _logger->error(errorMessage);
+            MMSEngineDBFacade::toEncodingPriority(encodingPriority);    // it generate an exception in case of wrong string
+        }
+        catch(exception e)
+        {
+            string errorMessage = __FILEREF__ + "Field 'EncodingPriority' is wrong"
+                    + ", EncodingPriority: " + encodingPriority;
+            _logger->error(errorMessage);
 
-                throw runtime_error(errorMessage);
-            }
+            throw runtime_error(errorMessage);
         }
     }
 
@@ -468,12 +527,10 @@ MMSEngineDBFacade::ContentType Validator::validateContentIngestionMetadata(
             }
         
     }
-    */
-            
-    return contentType;
+    */            
 }
 
-MMSEngineDBFacade::ContentType Validator::validateFrameMetadata(
+void Validator::validateFrameMetadata(
     Json::Value parametersRoot, vector<int64_t>& dependencies)
 {
     // see sample in directory samples
@@ -493,9 +550,23 @@ MMSEngineDBFacade::ContentType Validator::validateFrameMetadata(
         }
     }
 
+    string field = "SourceFileName";
+    string sourceFileName = parametersRoot.get(field, "XXX").asString();
+
+    if (!isVideoAudioMedia(sourceFileName)
+            && !isImageMedia(sourceFileName))
+    {
+        string errorMessage = string("Unknown sourceFileName extension")
+            + ", sourceFileName: " + sourceFileName
+        ;
+        _logger->error(__FILEREF__ + errorMessage);
+        
+        throw runtime_error(errorMessage);
+    }
+    
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
-    string field = "References";
+    field = "References";
     if (isMetadataPresent(parametersRoot, field))
     {
         Json::Value referencesRoot = parametersRoot[field];
@@ -607,8 +678,6 @@ MMSEngineDBFacade::ContentType Validator::validateFrameMetadata(
         dependencies.push_back(referenceMediaItemKey);
     }
     
-    MMSEngineDBFacade::ContentType      frameContentType = MMSEngineDBFacade::ContentType::Image;
-
     /*
     // Territories
     {
@@ -624,15 +693,11 @@ MMSEngineDBFacade::ContentType Validator::validateFrameMetadata(
         
     }
     */
-            
-    return frameContentType;
 }
 
-MMSEngineDBFacade::ContentType Validator::validatePeriodicalFramesMetadata(
+void Validator::validatePeriodicalFramesMetadata(
     Json::Value parametersRoot, vector<int64_t>& dependencies)
 {
-    // see sample in directory samples
-        
     vector<string> mandatoryFields = {
         "SourceFileName",
         "PeriodInSeconds"
@@ -649,9 +714,23 @@ MMSEngineDBFacade::ContentType Validator::validatePeriodicalFramesMetadata(
         }
     }
 
+    string field = "SourceFileName";
+    string sourceFileName = parametersRoot.get(field, "XXX").asString();
+
+    if (!isVideoAudioMedia(sourceFileName)
+            && !isImageMedia(sourceFileName))
+    {
+        string errorMessage = string("Unknown sourceFileName extension")
+            + ", sourceFileName: " + sourceFileName
+        ;
+        _logger->error(__FILEREF__ + errorMessage);
+        
+        throw runtime_error(errorMessage);
+    }
+    
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
-    string field = "References";
+    field = "References";
     if (isMetadataPresent(parametersRoot, field))
     {
         Json::Value referencesRoot = parametersRoot[field];
@@ -763,8 +842,6 @@ MMSEngineDBFacade::ContentType Validator::validatePeriodicalFramesMetadata(
         dependencies.push_back(referenceMediaItemKey);
     }
         
-    MMSEngineDBFacade::ContentType      frameContentType = MMSEngineDBFacade::ContentType::Image;
-
     /*
     // Territories
     {
@@ -780,11 +857,9 @@ MMSEngineDBFacade::ContentType Validator::validatePeriodicalFramesMetadata(
         
     }
     */
-            
-    return frameContentType;
 }
 
-MMSEngineDBFacade::ContentType Validator::validateIFramesMetadata(
+void Validator::validateIFramesMetadata(
     Json::Value parametersRoot, vector<int64_t>& dependencies)
 {
     // see sample in directory samples
@@ -804,9 +879,23 @@ MMSEngineDBFacade::ContentType Validator::validateIFramesMetadata(
         }
     }
 
+    string field = "SourceFileName";
+    string sourceFileName = parametersRoot.get(field, "XXX").asString();
+
+    if (!isVideoAudioMedia(sourceFileName)
+            && !isImageMedia(sourceFileName))
+    {
+        string errorMessage = string("Unknown sourceFileName extension")
+            + ", sourceFileName: " + sourceFileName
+        ;
+        _logger->error(__FILEREF__ + errorMessage);
+        
+        throw runtime_error(errorMessage);
+    }
+    
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
-    string field = "References";
+    field = "References";
     if (isMetadataPresent(parametersRoot, field))
     {
         Json::Value referencesRoot = parametersRoot[field];
@@ -932,8 +1021,6 @@ MMSEngineDBFacade::ContentType Validator::validateIFramesMetadata(
         dependencies.push_back(referenceMediaItemKey);
     }
     
-    MMSEngineDBFacade::ContentType      frameContentType = MMSEngineDBFacade::ContentType::Image;
-
     /*
     // Territories
     {
@@ -949,11 +1036,9 @@ MMSEngineDBFacade::ContentType Validator::validateIFramesMetadata(
         
     }
     */
-            
-    return frameContentType;
 }
 
-MMSEngineDBFacade::ContentType Validator::validateConcatDemuxerMetadata(
+void Validator::validateConcatDemuxerMetadata(
     Json::Value parametersRoot, vector<int64_t>& dependencies)
 {
     // see sample in directory samples
@@ -973,15 +1058,29 @@ MMSEngineDBFacade::ContentType Validator::validateConcatDemuxerMetadata(
         }
     }
 
+    string field = "SourceFileName";
+    string sourceFileName = parametersRoot.get(field, "XXX").asString();
+
+    if (!isVideoAudioMedia(sourceFileName)
+            && !isImageMedia(sourceFileName))
+    {
+        string errorMessage = string("Unknown sourceFileName extension")
+            + ", sourceFileName: " + sourceFileName
+        ;
+        _logger->error(__FILEREF__ + errorMessage);
+        
+        throw runtime_error(errorMessage);
+    }
+    
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
-    string field = "References";
+    field = "References";
     if (isMetadataPresent(parametersRoot, field))
     {
         Json::Value referencesRoot = parametersRoot[field];
-        if (referencesRoot.size() == 0)
+        if (referencesRoot.size() < 2)
         {
-            string errorMessage = __FILEREF__ + "Field is present but it does not have any element"
+            string errorMessage = __FILEREF__ + "Field is present but it does not have enough elements (2)"
                     + ", Field: " + field;
             _logger->error(errorMessage);
 
@@ -1091,8 +1190,6 @@ MMSEngineDBFacade::ContentType Validator::validateConcatDemuxerMetadata(
         }
     }
 
-    MMSEngineDBFacade::ContentType      contentType = MMSEngineDBFacade::ContentType::Video;
-    
     /*
     // Territories
     {
@@ -1108,8 +1205,195 @@ MMSEngineDBFacade::ContentType Validator::validateConcatDemuxerMetadata(
         
     }
     */
+}
+
+void Validator::validateCutMetadata(
+    Json::Value parametersRoot, vector<int64_t>& dependencies)
+{
+    // see sample in directory samples
+        
+    vector<string> mandatoryFields = {
+        "SourceFileName"
+    };
+    for (string mandatoryField: mandatoryFields)
+    {
+        if (!isMetadataPresent(parametersRoot, mandatoryField))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + mandatoryField;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+    
+    string field = "SourceFileName";
+    string sourceFileName = parametersRoot.get(field, "XXX").asString();
+
+    if (!isVideoAudioMedia(sourceFileName)
+            && !isImageMedia(sourceFileName))
+    {
+        string errorMessage = string("Unknown sourceFileName extension")
+            + ", sourceFileName: " + sourceFileName
+        ;
+        _logger->error(__FILEREF__ + errorMessage);
+        
+        throw runtime_error(errorMessage);
+    }
+    
+    field = "StartTimeInSeconds";
+    if (!isMetadataPresent(parametersRoot, field))
+    {
+        string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                + ", Field: " + field;
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+
+    string endTimeInSecondsField = "EndTimeInSeconds";
+    string framesNumberField = "FramesNumber";
+    if (!isMetadataPresent(parametersRoot, endTimeInSecondsField)
+            && !isMetadataPresent(parametersRoot, framesNumberField))
+    {
+        string errorMessage = __FILEREF__ + "Both fields are not present or it is null"
+                + ", Field: " + endTimeInSecondsField
+                + ", Field: " + framesNumberField
+                ;
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+
+    // References is optional because in case of dependency managed automatically
+    // by MMS (i.e.: onSuccess)
+    field = "References";
+    if (isMetadataPresent(parametersRoot, field))
+    {
+        Json::Value referencesRoot = parametersRoot[field];
+        if (referencesRoot.size() != 1)
+        {
+            string errorMessage = __FILEREF__ + "No correct number of References"
+                    + ", referencesRoot.size: " + to_string(referencesRoot.size());
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        Json::Value referenceRoot = referencesRoot[0];
+
+        int64_t referenceMediaItemKey = -1;
+        int64_t referenceIngestionJobKey = -1;
+        string referenceUniqueName = "";
+        field = "ReferenceMediaItemKey";
+        if (!isMetadataPresent(referenceRoot, field))
+        {
+            field = "ReferenceIngestionJobKey";
+            if (!isMetadataPresent(referenceRoot, field))
+            {
+                field = "ReferenceUniqueName";
+                if (!isMetadataPresent(referenceRoot, field))
+                {
+                    string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                            + ", Field: " + "Reference...";
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+                else
+                {
+                    referenceUniqueName = referenceRoot.get(field, "XXX").asString();
+                }        
+            }
+            else
+            {
+                referenceIngestionJobKey = referenceRoot.get(field, "XXX").asInt64();
+            }        
+        }
+        else
+        {
+            referenceMediaItemKey = referenceRoot.get(field, "XXX").asInt64();    
+        }
+        
+        MMSEngineDBFacade::ContentType      referenceContentType;
+        try
+        {
+            bool warningIfMissing = true;
+            if (referenceMediaItemKey != -1)
+            {
+                referenceContentType = _mmsEngineDBFacade->getMediaItemKeyDetails(
+                    referenceMediaItemKey, warningIfMissing); 
+            }
+            else if (referenceIngestionJobKey != -1)
+            {
+                pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
+                        _mmsEngineDBFacade->getMediaItemKeyDetailsByIngestionJobKey(
+                        referenceIngestionJobKey, warningIfMissing);  
+
+                referenceMediaItemKey = mediaItemKeyAndContentType.first;
+                referenceContentType = mediaItemKeyAndContentType.second;
+            }
+            else // if (referenceUniqueName != "")
+            {
+                pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
+                        _mmsEngineDBFacade->getMediaItemKeyDetailsByUniqueName(
+                        referenceUniqueName, warningIfMissing);  
+
+                referenceMediaItemKey = mediaItemKeyAndContentType.first;
+                referenceContentType = mediaItemKeyAndContentType.second;
+            }
+        }
+        catch(runtime_error e)
+        {
+            string errorMessage = __FILEREF__ + "Reference... was not found"
+                    + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
+                    ;
+            _logger->warn(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        catch(exception e)
+        {
+            string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->getMediaItemKeyDetails failed"
+                    + ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
+                    + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        if (referenceContentType != MMSEngineDBFacade::ContentType::Video)
+        {
+            string errorMessage = __FILEREF__ + "Reference... does not refer a video content"
+                + ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
+                + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
+                + ", referenceUniqueName: " + referenceUniqueName
+                + ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        dependencies.push_back(referenceMediaItemKey);
+    }
+        
+    /*
+    // Territories
+    {
+        field = "Territories";
+        if (isMetadataPresent(contentIngestion, field))
+        {
+            const Json::Value territories = contentIngestion[field];
             
-    return contentType;
+            for( Json::ValueIterator itr = territories.begin() ; itr != territories.end() ; itr++ ) 
+            {
+                Json::Value territory = territories[territoryIndex];
+            }
+        
+    }
+    */
 }
 
 bool Validator::isMetadataPresent(Json::Value root, string field)

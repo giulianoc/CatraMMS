@@ -288,18 +288,13 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         throw runtime_error(errorMessage);
                     }
 
-                    pair<MMSEngineDBFacade::ContentType,vector<int64_t>>
-                            contentTypeAndDependencies;
-                    MMSEngineDBFacade::ContentType contentType;
                     vector<int64_t> dependencies;
                     try
                     {
                         Validator validator(_logger, _mmsEngineDBFacade);
                         
-                        contentTypeAndDependencies = validator.validateTaskMetadata(
-                                ingestionType, parametersRoot);
-                        
-                        tie(contentType, dependencies) = contentTypeAndDependencies;
+                        dependencies = validator.validateTaskMetadata(
+                                ingestionType, parametersRoot);                        
                     }
                     catch(runtime_error e)
                     {
@@ -716,6 +711,64 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 throw runtime_error(errorMessage);
                             }
                         }
+                        else if (ingestionType == MMSEngineDBFacade::IngestionType::Cut)
+                        {
+                            // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
+                            try
+                            {
+                                generateAndIngestCutMedia(
+                                        ingestionJobKey, 
+                                        customer, 
+                                        parametersRoot, 
+                                        dependencies);
+                            }
+                            catch(runtime_error e)
+                            {
+                                _logger->error(__FILEREF__ + "generateAndIngestCutMedia failed"
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
+                                        errorMessage,
+                                        "" // processorMMS
+                                        );
+
+                                throw runtime_error(errorMessage);
+                            }
+                            catch(exception e)
+                            {
+                                _logger->error(__FILEREF__ + "generateAndIngestCutMedia failed"
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
+                                        errorMessage,
+                                        "" // processorMMS
+                                        );
+
+                                throw runtime_error(errorMessage);
+                            }
+                        }
                         else
                         {
                             string errorMessage = string("Unknown IngestionType")
@@ -814,11 +867,9 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
     }
                     
     string      metadataFileContent;
-    pair<MMSEngineDBFacade::ContentType,vector<int64_t>>
-            contentTypeAndDependencies;
-    MMSEngineDBFacade::ContentType contentType;
     vector<int64_t> dependencies;
     Json::Value parametersRoot;
+    Validator validator(_logger, _mmsEngineDBFacade);
     try
     {
         Json::CharReaderBuilder builder;
@@ -841,13 +892,9 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 
             throw runtime_error(errorMessage);
         }
-
-        Validator validator(_logger, _mmsEngineDBFacade);
         
-        contentTypeAndDependencies = validator.validateTaskMetadata(
+        dependencies = validator.validateTaskMetadata(
                 localAssetIngestionEvent->getIngestionType(), parametersRoot);
-        
-        tie(contentType, dependencies) = contentTypeAndDependencies;
     }
     catch(runtime_error e)
     {
@@ -1060,6 +1107,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         throw e;
     }
 
+    MMSEngineDBFacade::ContentType contentType;
+    
     int64_t durationInMilliSeconds = -1;
     long bitRate = -1;
     string videoCodecName;
@@ -1077,8 +1126,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
     int imageHeight = -1;
     string imageFormat;
     int imageQuality = -1;
-    if (contentType == MMSEngineDBFacade::ContentType::Video 
-            || contentType == MMSEngineDBFacade::ContentType::Audio)
+    if (validator.isVideoAudioMedia(mediaSourceFileName))
     {
         try
         {
@@ -1089,6 +1137,11 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             tie(durationInMilliSeconds, bitRate, 
                 videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
                 audioCodecName, audioSampleRate, audioChannels, audioBitRate) = mediaInfo;
+            
+            if (audioCodecName == "")
+                contentType = MMSEngineDBFacade::ContentType::Video;
+            else
+                contentType = MMSEngineDBFacade::ContentType::Audio;
         }
         catch(runtime_error e)
         {
@@ -1139,7 +1192,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             throw e;
         }        
     }
-    else if (contentType == MMSEngineDBFacade::ContentType::Image)
+    else if (validator.isImageMedia(mediaSourceFileName))
     {
         try
         {
@@ -1155,6 +1208,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             imageHeight	= imageToEncode.rows();
             imageFormat = imageToEncode.magick();
             imageQuality = imageToEncode.quality();
+            
+            contentType = MMSEngineDBFacade::ContentType::Image;
         }
         catch( Magick::WarningCoder &e )
         {
@@ -1261,6 +1316,33 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             throw e;
         }
     }
+    else
+    {
+        string errorMessage = string("Unknown mediaSourceFileName extension")
+            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+            + ", mediaSourceFileName: " + mediaSourceFileName
+        ;
+
+        _logger->error(__FILEREF__ + errorMessage);
+        
+        _logger->info(__FILEREF__ + "Remove file"
+            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+            + ", mmsAssetPathName: " + mmsAssetPathName
+        );
+        FileIO::remove(mmsAssetPathName);
+
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + errorMessage
+        );                            
+        _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                errorMessage, "" // ProcessorMMS
+        );
+
+        throw runtime_error(errorMessage);
+    }
 
     int64_t mediaItemKey;
     try
@@ -1271,6 +1353,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 
         _logger->info(__FILEREF__ + "_mmsEngineDBFacade->saveIngestedContentMetadata..."
             + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+            + ", contentType: " + MMSEngineDBFacade::toString(contentType)
             + ", relativePathToBeUsed: " + relativePathToBeUsed
             + ", mediaSourceFileName: " + mediaSourceFileName
             + ", mmsPartitionIndexUsed: " + to_string(mmsPartitionIndexUsed)
@@ -1299,6 +1382,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                 _mmsEngineDBFacade->saveIngestedContentMetadata (
                     localAssetIngestionEvent->getCustomer(),
                     localAssetIngestionEvent->getIngestionJobKey(),
+                    contentType,
                     parametersRoot,
                     relativePathToBeUsed,
                     mediaSourceFileName,
@@ -1523,7 +1607,7 @@ void MMSEngineProcessor::generateAndIngestFrames(
         }
         catch(runtime_error e)
         {
-            string errorMessage = __FILEREF__ + "EncoderVideoAudioProxy::getMediaInfo failed"
+            string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->getVideoDetails failed"
                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", e.what(): " + e.what()
             ;
@@ -1534,7 +1618,7 @@ void MMSEngineProcessor::generateAndIngestFrames(
         }
         catch(exception e)
         {
-            string errorMessage = __FILEREF__ + "EncoderVideoAudioProxy::getMediaInfo failed"
+            string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->getVideoDetails failed"
                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", e.what(): " + e.what()
             ;
@@ -1575,6 +1659,7 @@ void MMSEngineProcessor::generateAndIngestFrames(
         FFMpeg ffmpeg (_configuration, _logger);
 
         vector<string> generatedFramesFileNames = ffmpeg.generateFramesToIngest(
+                ingestionJobKey,
                 customerIngestionRepository,
                 sourceFileName,
                 startTimeInSeconds,
@@ -1742,6 +1827,219 @@ void MMSEngineProcessor::generateAndIngestConcatenation(
         string mediaMetaDataContent = generateMediaMetadataToIngest(
                 ingestionJobKey,
                 concatContentType == MMSEngineDBFacade::ContentType::Video ? true : false,
+                sourceFileName,
+                parametersRoot
+        );
+
+        {
+            shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
+                    ->getFreeEvent<LocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
+
+            localAssetIngestionEvent->setSource(MMSENGINEPROCESSORNAME);
+            localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
+            localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
+
+            localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
+            localAssetIngestionEvent->setSourceFileName(sourceFileName);
+            localAssetIngestionEvent->setCustomer(customer);
+            localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::ContentIngestion);
+
+            localAssetIngestionEvent->setMetadataContent(mediaMetaDataContent);
+
+            shared_ptr<Event2>    event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
+            _multiEventsSet->addEvent(event);
+
+            _logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", getEventKey().first: " + to_string(event->getEventKey().first)
+                + ", getEventKey().second: " + to_string(event->getEventKey().second));
+        }
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "generateAndIngestConcatenation failed"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
+        );
+        
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "generateAndIngestConcatenation failed"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+        );
+        
+        throw e;
+    }
+}
+
+void MMSEngineProcessor::generateAndIngestCutMedia(
+        int64_t ingestionJobKey,
+        shared_ptr<Customer> customer,
+        Json::Value parametersRoot,
+        vector<int64_t>& dependencies
+)
+{
+    try
+    {
+        if (dependencies.size() == 0)
+        {
+            string errorMessage = __FILEREF__ + "No configured any media to be concatenated"
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", dependencies.size: " + to_string(dependencies.size());
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        
+        int64_t sourceMediaItemKey = dependencies.back();
+
+        int64_t encodingProfileKey = -1;
+        string sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourceMediaItemKey, encodingProfileKey);
+
+        bool warningIfMissing = false;
+
+        MMSEngineDBFacade::ContentType contentType = _mmsEngineDBFacade->getMediaItemKeyDetails(
+            sourceMediaItemKey, warningIfMissing);
+
+        if (contentType != MMSEngineDBFacade::ContentType::Video
+                && contentType != MMSEngineDBFacade::ContentType::Audio)
+        {
+            string errorMessage = __FILEREF__ + "It is not possible to cut a media that is not video or audio"
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", contentType: " + MMSEngineDBFacade::toString(contentType)
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        double startTimeInSeconds;
+        string field = "StartTimeInSeconds";
+        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", Field: " + field;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        startTimeInSeconds = parametersRoot.get(field, "XXX").asDouble();
+
+        double endTimeInSeconds = -1;
+        field = "EndTimeInSeconds";
+        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+            endTimeInSeconds = parametersRoot.get(field, "XXX").asDouble();
+        }
+        
+        int framesNumber = -1;
+        field = "FramesNumber";
+        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+            framesNumber = parametersRoot.get(field, "XXX").asInt();
+        }
+        
+        if (endTimeInSeconds == -1 && framesNumber == -1)
+        {
+            string errorMessage = __FILEREF__ + "Both 'EndTimeInSeconds' and 'FramesNumber' fields are not present or it is null"
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        int64_t durationInMilliSeconds;
+        try
+        {
+            int videoWidth;
+            int videoHeight;
+            long bitRate;
+            string videoCodecName;
+            string videoProfile;
+            string videoAvgFrameRate;
+            long videoBitRate;
+            string audioCodecName;
+            long audioSampleRate;
+            int audioChannels;
+            long audioBitRate;
+        
+            tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
+                videoDetails = _mmsEngineDBFacade->getVideoDetails(sourceMediaItemKey);
+            
+            tie(durationInMilliSeconds, bitRate,
+                videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
+                audioCodecName, audioSampleRate, audioChannels, audioBitRate) = videoDetails;
+        }
+        catch(runtime_error e)
+        {
+            string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->getVideoDetails failed"
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", e.what(): " + e.what()
+            ;
+
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        catch(exception e)
+        {
+            string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->getVideoDetails failed"
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", e.what(): " + e.what()
+            ;
+
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        if (durationInMilliSeconds < startTimeInSeconds * 1000
+                || (endTimeInSeconds != -1 && durationInMilliSeconds < endTimeInSeconds * 1000))
+        {
+            string errorMessage = __FILEREF__ + "Cut was not done because startTimeInSeconds or endTimeInSeconds is bigger than the video duration"
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", video sourceMediaItemKey: " + to_string(sourceMediaItemKey)
+                    + ", startTimeInSeconds: " + to_string(startTimeInSeconds)
+                    + ", endTimeInSeconds: " + to_string(endTimeInSeconds)
+                    + ", durationInMilliSeconds: " + to_string(durationInMilliSeconds)
+            ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        field = "SourceFileName";
+        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", Field: " + field;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        string sourceFileName = parametersRoot.get(field, "XXX").asString();
+
+        string customerIngestionRepository = _mmsStorage->getCustomerIngestionRepository(
+                customer);
+        string cutMediaPathName = customerIngestionRepository + "/" + sourceFileName;
+        
+        FFMpeg ffmpeg (_configuration, _logger);
+        ffmpeg.generateCutMediaToIngest(ingestionJobKey, sourcePhysicalPath, 
+                startTimeInSeconds, endTimeInSeconds, framesNumber,
+                cutMediaPathName);
+
+        _logger->info(__FILEREF__ + "generateCutMediaToIngest done"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", cutMediaPathName: " + cutMediaPathName
+        );
+
+        string mediaMetaDataContent = generateMediaMetadataToIngest(
+                ingestionJobKey,
+                contentType == MMSEngineDBFacade::ContentType::Video ? true : false,
                 sourceFileName,
                 parametersRoot
         );

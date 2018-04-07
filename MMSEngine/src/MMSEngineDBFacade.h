@@ -274,6 +274,7 @@ public:
         MotionJPEGByPeriodicalFrames        = 5,
         MotionJPEGByIFrames                 = 6,
         ConcatDemuxer           = 7,
+        Cut                     = 8,
         ContentUpdate           = 50,
         ContentRemove           = 60
     };
@@ -297,6 +298,8 @@ public:
                 return "Motion-JPEG-by-I-Frames";
             case IngestionType::ConcatDemuxer:
                 return "Concat-Demuxer";
+            case IngestionType::Cut:
+                return "Cut";
             case IngestionType::ContentUpdate:
                 return "ContentUpdate";
             case IngestionType::ContentRemove:
@@ -325,6 +328,8 @@ public:
             return IngestionType::MotionJPEGByIFrames;
         else if (lowerCase == "concat-demuxer")
             return IngestionType::ConcatDemuxer;
+        else if (lowerCase == "cut")
+            return IngestionType::Cut;
         else if (lowerCase == "contentupdate")
             return IngestionType::ContentUpdate;
         else if (lowerCase == "contentremove")
@@ -611,6 +616,7 @@ public:
     pair<int64_t,int64_t> saveIngestedContentMetadata(
         shared_ptr<Customer> customer,
         int64_t ingestionJobKey,
+        MMSEngineDBFacade::ContentType contentType,
         Json::Value typeRoot,
         string relativePath,
         string mediaSourceFileName,

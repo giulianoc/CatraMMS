@@ -26,32 +26,36 @@ public:
     Validator(const Validator& orig);
     virtual ~Validator();
     
+    bool isVideoAudioMedia(string mediaSourceFileName);
+    
+    bool isImageMedia(string mediaSourceFileName);
+
     void validateRootMetadata(Json::Value root);
 
     void validateGroupOfTasksMetadata(Json::Value groupOfTasksRoot);
 
-    pair<MMSEngineDBFacade::ContentType,vector<int64_t>>  
-            validateTaskMetadata(Json::Value taskRoot);
+    vector<int64_t> validateTaskMetadata(Json::Value taskRoot);
 
     void validateEvents(Json::Value taskOrGroupOfTasksRoot);
 
-    pair<MMSEngineDBFacade::ContentType,vector<int64_t>> 
-        validateTaskMetadata(MMSEngineDBFacade::IngestionType ingestionType, 
+    vector<int64_t> validateTaskMetadata(
+        MMSEngineDBFacade::IngestionType ingestionType, 
         Json::Value parametersRoot);
 
-    MMSEngineDBFacade::ContentType validateContentIngestionMetadata(
-        Json::Value parametersRoot);
+    void validateContentIngestionMetadata(Json::Value parametersRoot);
 
-    MMSEngineDBFacade::ContentType validateFrameMetadata(
-        Json::Value parametersRoot, vector<int64_t>& dependencies);
+    void validateFrameMetadata(Json::Value parametersRoot, vector<int64_t>& dependencies);
 
-    MMSEngineDBFacade::ContentType validatePeriodicalFramesMetadata(
+    void validatePeriodicalFramesMetadata(
         Json::Value parametersRoot, vector<int64_t>& dependencies);
     
-    MMSEngineDBFacade::ContentType validateIFramesMetadata(
+    void validateIFramesMetadata(
         Json::Value parametersRoot, vector<int64_t>& dependencies);
 
-    MMSEngineDBFacade::ContentType validateConcatDemuxerMetadata(
+    void validateConcatDemuxerMetadata(
+        Json::Value parametersRoot, vector<int64_t>& dependencies);
+
+    void validateCutMetadata(
         Json::Value parametersRoot, vector<int64_t>& dependencies);
 
 private:

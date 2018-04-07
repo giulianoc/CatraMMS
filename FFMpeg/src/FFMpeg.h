@@ -60,6 +60,7 @@ public:
     tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> getMediaInfo(string mmsAssetPathName);
 
     vector<string> generateFramesToIngest(
+        int64_t ingestionJobKey,
         string imageDirecotry,
         string imageFileName,
         double startTimeInSeconds,
@@ -75,6 +76,14 @@ public:
         int64_t ingestionJobKey,
         vector<string>& sourcePhysicalPaths,
         string concatenatedMediaPathName);
+
+    void generateCutMediaToIngest(
+        int64_t ingestionJobKey,
+        string sourcePhysicalPath,
+        double startTimeInSeconds,
+        double endTimeInSeconds,
+        int framesNumber,
+        string cutMediaPathName);
 
     static void encodingFileFormatValidation(string fileFormat,
         shared_ptr<spdlog::logger> logger);

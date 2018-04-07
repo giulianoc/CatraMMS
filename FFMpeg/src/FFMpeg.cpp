@@ -1136,6 +1136,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
 }
 
 vector<string> FFMpeg::generateFramesToIngest(
+        int64_t ingestionJobKey,
         string imageDirecotry,
         string imageFileName,
         double startTimeInSeconds,
@@ -1155,19 +1156,10 @@ vector<string> FFMpeg::generateFramesToIngest(
     
     string outputFfmpegPathFileName =
             string("/tmp/")
-            + localImageFileName
+            + to_string(ingestionJobKey)
             + ".generateFrame.log"
             ;
-    
-    // ffmpeg -y -i [source.wmv] -f mjpeg -ss [10] -vframes 1 -an -s [176x144] [thumbnail_image.jpg]
-    // -y: overwrite output files
-    // -i: input file name
-    // -f: force format
-    // -ss: set the start time offset
-    // -vframes: set the number of video frames to record
-    // -an: disable audio
-    // -s set frame size (WxH or abbreviation)
-    
+        
     string imageBaseFileName;
     if (mjpeg)
     {
@@ -1207,9 +1199,22 @@ vector<string> FFMpeg::generateFramesToIngest(
             videoFilterParameters = "-vf \"select='eq(pict_type,PICT_TYPE_I)'\" -vsync vfr ";
     }
     
+    /*
+        ffmpeg -y -i [source.wmv] -f mjpeg -ss [10] -vframes 1 -an -s [176x144] [thumbnail_image.jpg]
+        -y: overwrite output files
+        -i: input file name
+        -f: force format
+        -ss: When used as an output option (before an output url), decodes but discards input 
+            until the timestamps reach position.
+            Format: HH:MM:SS.xxx (xxx are decimals of seconds) or in seconds (sec.decimals)
+        -vframes: set the number of video frames to record
+        -an: disable audio
+        -s set frame size (WxH or abbreviation)
+     */
     string ffmpegExecuteCommand = 
             _ffmpegPath + "/ffmpeg "
-            + "-y -i " + mmsAssetPathName + " "
+            + "-y " 
+            + "-i " + mmsAssetPathName + " "
             + "-ss " + to_string(startTimeInSeconds) + " "
             + (framesNumber != -1 ? ("-vframes " + to_string(framesNumber)) : "") + " "
             + videoFilterParameters
@@ -1363,6 +1368,78 @@ void FFMpeg::generateConcatMediaToIngest(
             _ffmpegPath + "/ffmpeg "
             + "-f concat -safe 0 -i " + concatenationListPathName + " "
             + "-c copy " + concatenatedMediaPathName + " "
+            + "> " + outputFfmpegPathFileName + " "
+            + "2>&1"
+            ;
+
+    #ifdef __APPLE__
+        ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
+    #endif
+
+    _logger->info(__FILEREF__ + "Executing ffmpeg command"
+        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+    );
+
+    try
+    {
+        int executeCommandStatus = ProcessUtility::execute (ffmpegExecuteCommand);
+        if (executeCommandStatus != 0)
+        {
+            string errorMessage = __FILEREF__ + "ffmpeg command failed"
+                    + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+            ;
+
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+    catch(exception e)
+    {
+        string lastPartOfFfmpegOutputFile = getLastPartOfFile(
+                outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
+        string errorMessage = __FILEREF__ + "ffmpeg command failed"
+                + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+                + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+        ;
+        _logger->error(errorMessage);
+
+        bool exceptionInCaseOfError = false;
+        FileIO::remove(outputFfmpegPathFileName, exceptionInCaseOfError);
+
+        throw e;
+    }
+
+    bool exceptionInCaseOfError = false;
+    FileIO::remove(outputFfmpegPathFileName, exceptionInCaseOfError);    
+}
+
+void FFMpeg::generateCutMediaToIngest(
+        int64_t ingestionJobKey,
+        string sourcePhysicalPath,
+        double startTimeInSeconds,
+        double endTimeInSeconds,
+        int framesNumber,
+        string cutMediaPathName)
+{
+
+    string outputFfmpegPathFileName =
+            string("/tmp/")
+            + to_string(ingestionJobKey)
+            + ".cut.log"
+            ;
+
+    /*
+        -ss: When used as an output option (before an output url), decodes but discards input 
+            until the timestamps reach position.
+            Format: HH:MM:SS.xxx (xxx are decimals of seconds) or in seconds (sec.decimals)
+    */
+    string ffmpegExecuteCommand = 
+            _ffmpegPath + "/ffmpeg "
+            + "-i " + cutMediaPathName + " "
+            + "-ss " + to_string(startTimeInSeconds) + " "
+            + (framesNumber != -1 ? ("-vframes " + to_string(framesNumber) + " ") : ("-to " + to_string(endTimeInSeconds) + " "))
+            + "-c copy " + cutMediaPathName + " "
             + "> " + outputFfmpegPathFileName + " "
             + "2>&1"
             ;

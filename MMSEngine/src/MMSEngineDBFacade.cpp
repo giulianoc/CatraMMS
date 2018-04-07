@@ -3949,7 +3949,8 @@ string MMSEngineDBFacade::checkCustomerMaxIngestionNumber (
 
 pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
         shared_ptr<Customer> customer,
-        int64_t ingestionJobKey,
+        int64_t ingestionJobKey,        
+        MMSEngineDBFacade::ContentType contentType,
         Json::Value typeRoot,
         string relativePath,
         string mediaSourceFileName,
@@ -4035,7 +4036,6 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
         }
 
         _logger->info(__FILEREF__ + "Insert into MMS_MediaItem...");
-        ContentType contentType;
         int64_t encodingProfileSetKey;
         string uniqueName;
         {
@@ -4055,21 +4055,6 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
 
             if (isMetadataPresent(typeRoot, "Keywords"))
                 keywords = typeRoot.get("Keywords", "XXX").asString();
-
-            sContentType = typeRoot.get("ContentType", "XXX").asString();
-            try
-            {
-                contentType = MMSEngineDBFacade::toContentType(sContentType);
-            }
-            catch(exception e)
-            {
-                string errorMessage = __FILEREF__ + "ContentType is wrong"
-                    + ", sContentType: " + sContentType
-                ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);                    
-            }            
 
             {
                 if (isMetadataPresent(typeRoot, "EncodingProfilesSet"))
