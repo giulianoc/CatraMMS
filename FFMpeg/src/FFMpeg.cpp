@@ -1265,7 +1265,7 @@ vector<string> FFMpeg::generateFramesToIngest(
 
     bool exceptionInCaseOfError = false;
     FileIO::remove(outputFfmpegPathFileName, exceptionInCaseOfError);
-    
+     
     if (mjpeg || framesNumber == 1)
         generatedFramesFileNames.push_back(localImageFileName);
     else
@@ -1287,7 +1287,7 @@ vector<string> FFMpeg::generateFramesToIngest(
                 if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
                     continue;
 
-                if (directoryEntry.compare(0, imageBaseFileName.size(), imageBaseFileName) == 0)
+                if (directoryEntry.size() >= imageBaseFileName.size() && 0 == directoryEntry.compare(0, imageBaseFileName.size(), imageBaseFileName))
                     generatedFramesFileNames.push_back(directoryEntry);
             }
             catch(DirectoryListFinished e)

@@ -255,7 +255,7 @@ int APICommon::operator()()
             }
 
             string authorizationPrefix = "Basic ";
-            if (it->second.compare(0, authorizationPrefix.size(), authorizationPrefix) != 0)
+            if (!(it->second.size() >= authorizationPrefix.size() && 0 == it->second.compare(0, authorizationPrefix.size(), authorizationPrefix)))
             {
                 _logger->error(__FILEREF__ + "No 'Basic' authorization is present into the request"
                     + ", Authorization: " + it->second
@@ -497,7 +497,7 @@ int APICommon::manageBinaryRequest()
         }
 
         string authorizationPrefix = "Basic ";
-        if (it->second.compare(0, authorizationPrefix.size(), authorizationPrefix) != 0)
+        if (!(it->second.size() >= authorizationPrefix.size() && 0 == it->second.compare(0, authorizationPrefix.size(), authorizationPrefix)))
         {
             _logger->error(__FILEREF__ + "No 'Basic' authorization is present into the request"
                 + ", Authorization: " + it->second

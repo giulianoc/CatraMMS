@@ -1511,10 +1511,10 @@ void API::ingestion(
             
             string beginOfResponseBody = string("{ ")
                 + "\"workflow\": { "
-                    + "ingestionRootKey: " + to_string(ingestionRootKey)
-                    + "label: " + rootLabel + " "
+                    + "\"ingestionRootKey\": " + to_string(ingestionRootKey)
+                    + ", \"label\": \"" + rootLabel + "\" "
                     + "}, "
-                    + "\"taks\": [ ";
+                    + "\"tasks\": [ ";
             responseBody.insert(0, beginOfResponseBody);
             responseBody += " ] }";
         }
@@ -2458,7 +2458,7 @@ void API::parseContentRange(string contentRange,
     try
     {
         string prefix ("bytes ");
-        if (contentRange.compare(0, prefix.size(), prefix) != 0)
+        if (!(contentRange.size() >= prefix.size() && 0 == contentRange.compare(0, prefix.size(), prefix)))
         {
             string errorMessage = string("Content-Range does not start with 'bytes '")
                     + ", contentRange: " + contentRange

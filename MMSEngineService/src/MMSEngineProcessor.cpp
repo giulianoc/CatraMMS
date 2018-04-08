@@ -1,6 +1,7 @@
 
 #include <fstream>
 #include <sstream>
+#include <regex>
 #include <curlpp/cURLpp.hpp>
 #include <curlpp/Easy.hpp>
 #include <curlpp/Options.hpp>
@@ -1656,12 +1657,25 @@ void MMSEngineProcessor::generateAndIngestFrames(
         string customerIngestionRepository = _mmsStorage->getCustomerIngestionRepository(
                 customer);
 
+        string temporaryFileName;
+        string textToBeReplaced;
+        string textToReplace;
+        {
+            temporaryFileName = to_string(ingestionJobKey) + ".binary";
+            size_t extensionIndex = sourceFileName.find_last_of(".");
+            if (extensionIndex != string::npos)
+                temporaryFileName.append(sourceFileName.substr(extensionIndex));
+
+            textToBeReplaced = to_string(ingestionJobKey) + ".binary";
+            textToReplace = sourceFileName.substr(0, extensionIndex);
+        }
+        
         FFMpeg ffmpeg (_configuration, _logger);
 
         vector<string> generatedFramesFileNames = ffmpeg.generateFramesToIngest(
                 ingestionJobKey,
                 customerIngestionRepository,
-                sourceFileName,
+                temporaryFileName,
                 startTimeInSeconds,
                 maxFramesNumber,
                 videoFilter,
@@ -1681,7 +1695,11 @@ void MMSEngineProcessor::generateAndIngestFrames(
             _logger->info(__FILEREF__ + "Generated Frame to ingest"
                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", generatedFrameFileName: " + generatedFrameFileName
+                + ", textToBeReplaced: " + textToBeReplaced
+                + ", textToReplace: " + textToReplace
             );
+
+            generatedFrameFileName = regex_replace(generatedFrameFileName, regex(textToBeReplaced), textToReplace);
 
             string imageMetaDataContent = generateImageMetadataToIngest(
                     ingestionJobKey,
@@ -1814,7 +1832,9 @@ void MMSEngineProcessor::generateAndIngestConcatenation(
 
         string customerIngestionRepository = _mmsStorage->getCustomerIngestionRepository(
                 customer);
-        string concatenatedMediaPathName = customerIngestionRepository + "/" + sourceFileName;
+        string concatenatedMediaPathName = customerIngestionRepository + "/" 
+                + to_string(ingestionJobKey)
+                + ".binary";
         
         FFMpeg ffmpeg (_configuration, _logger);
         ffmpeg.generateConcatMediaToIngest(ingestionJobKey, sourcePhysicalPaths, concatenatedMediaPathName);
@@ -2025,7 +2045,9 @@ void MMSEngineProcessor::generateAndIngestCutMedia(
 
         string customerIngestionRepository = _mmsStorage->getCustomerIngestionRepository(
                 customer);
-        string cutMediaPathName = customerIngestionRepository + "/" + sourceFileName;
+        string cutMediaPathName = customerIngestionRepository + "/"
+                + to_string(ingestionJobKey)
+                + ".binary";
         
         FFMpeg ffmpeg (_configuration, _logger);
         ffmpeg.generateCutMediaToIngest(ingestionJobKey, sourcePhysicalPath, 
@@ -2299,19 +2321,19 @@ tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> MMSEngine
         string ftpsPrefix ("ftps://");
         string movePrefix("move://");   // move:///dir1/dir2/.../file
         string copyPrefix("copy://");
-        if (!mediaSourceURL.compare(0, httpPrefix.size(), httpPrefix)
-                || !mediaSourceURL.compare(0, httpsPrefix.size(), httpsPrefix)
-                || !mediaSourceURL.compare(0, ftpPrefix.size(), ftpPrefix)
-                || !mediaSourceURL.compare(0, ftpsPrefix.size(), ftpsPrefix)
+        if ((mediaSourceURL.size() >= httpPrefix.size() && 0 == mediaSourceURL.compare(0, httpPrefix.size(), httpPrefix))
+                || (mediaSourceURL.size() >= httpsPrefix.size() && 0 == mediaSourceURL.compare(0, httpsPrefix.size(), httpsPrefix))
+                || (mediaSourceURL.size() >= ftpPrefix.size() && 0 == mediaSourceURL.compare(0, ftpPrefix.size(), ftpPrefix))
+                || (mediaSourceURL.size() >= ftpsPrefix.size() && 0 == mediaSourceURL.compare(0, ftpsPrefix.size(), ftpsPrefix))
                 )
         {
             nextIngestionStatus = MMSEngineDBFacade::IngestionStatus::SourceDownloadingInProgress;
         }
-        else if (!mediaSourceURL.compare(0, movePrefix.size(), movePrefix))
+        else if (mediaSourceURL.size() >= movePrefix.size() && 0 == mediaSourceURL.compare(0, movePrefix.size(), movePrefix))
         {
             nextIngestionStatus = MMSEngineDBFacade::IngestionStatus::SourceMovingInProgress;            
         }
-        else if (!mediaSourceURL.compare(0, copyPrefix.size(), copyPrefix))
+        else if (mediaSourceURL.size() >= copyPrefix.size() && 0 == mediaSourceURL.compare(0, copyPrefix.size(), copyPrefix))
         {
             nextIngestionStatus = MMSEngineDBFacade::IngestionStatus::SourceCopingInProgress;
         }
@@ -2490,7 +2512,7 @@ RESUMING FILE TRANSFERS
                 // Setting the URL to retrive.
                 request.setOpt(new curlpp::options::Url(sourceReferenceURL));
                 string httpsPrefix("https");
-                if (sourceReferenceURL.compare(0, httpsPrefix.size(), httpsPrefix) == 0)
+                if (sourceReferenceURL.size() >= httpsPrefix.size() && 0 == sourceReferenceURL.compare(0, httpsPrefix.size(), httpsPrefix))
                 {
                     _logger->info(__FILEREF__ + "Setting SslEngineDefault");
                     request.setOpt(new curlpp::options::SslEngineDefault());
@@ -2530,7 +2552,7 @@ RESUMING FILE TRANSFERS
                 // Setting the URL to retrive.
                 request.setOpt(new curlpp::options::Url(sourceReferenceURL));
                 string httpsPrefix("https");
-                if (sourceReferenceURL.compare(0, httpsPrefix.size(), httpsPrefix) == 0)
+                if (sourceReferenceURL.size() >= httpsPrefix.size() && 0 == sourceReferenceURL.compare(0, httpsPrefix.size(), httpsPrefix))
                 {
                     _logger->info(__FILEREF__ + "Setting SslEngineDefault");
                     request.setOpt(new curlpp::options::SslEngineDefault());
@@ -2715,7 +2737,7 @@ void MMSEngineProcessor::moveMediaSourceFile(string sourceReferenceURL,
             ;
 
         string movePrefix("move://");
-        if (sourceReferenceURL.compare(0, movePrefix.size(), movePrefix))
+        if (!(sourceReferenceURL.size() >= movePrefix.size() && 0 == sourceReferenceURL.compare(0, movePrefix.size(), movePrefix)))
         {
             string errorMessage = string("sourceReferenceURL is not a move reference")
                 + ", ingestionJobKey: " + to_string(ingestionJobKey) 
@@ -2797,7 +2819,7 @@ void MMSEngineProcessor::copyMediaSourceFile(string sourceReferenceURL,
             ;
 
         string copyPrefix("copy://");
-        if (sourceReferenceURL.compare(0, copyPrefix.size(), copyPrefix))
+        if (!(sourceReferenceURL.size() >= copyPrefix.size() && 0 == sourceReferenceURL.compare(0, copyPrefix.size(), copyPrefix)))
         {
             string errorMessage = string("sourceReferenceURL is not a copy reference")
                 + ", ingestionJobKey: " + to_string(ingestionJobKey) 

@@ -440,7 +440,7 @@ public:
         string prefix = "End";
         string sIngestionStatus = MMSEngineDBFacade::toString(ingestionStatus);
         
-        return (sIngestionStatus.compare(0, prefix.size(), prefix) == 0);
+        return (sIngestionStatus.size() >= prefix.size() && 0 == sIngestionStatus.compare(0, prefix.size(), prefix));
     }
     static bool isIngestionStatusSuccess(const IngestionStatus& ingestionStatus)
     {
