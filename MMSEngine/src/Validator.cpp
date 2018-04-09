@@ -47,6 +47,7 @@ bool Validator::isVideoAudioMedia(string mediaSourceFileName)
         ".mpg",
         ".mp2",
         ".mpeg",
+        ".mjpeg",
         ".m4v",
         ".3gp",
         ".3g2",

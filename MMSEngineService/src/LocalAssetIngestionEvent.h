@@ -41,8 +41,18 @@ private:
 
     string                  _metadataContent;
     string                  _sourceFileName;
+    bool                    _customerIngestionBinarySourceFileNameToBeUsed;
 
 public:
+    void setCustomerIngestionBinarySourceFileNameToBeUsed(bool customerIngestionBinarySourceFileNameToBeUsed)
+    {
+        _customerIngestionBinarySourceFileNameToBeUsed   = customerIngestionBinarySourceFileNameToBeUsed;
+    }
+    bool getCustomerIngestionBinarySourceFileNameToBeUsed()
+    {
+        return _customerIngestionBinarySourceFileNameToBeUsed;
+    }
+
     void setIngestionType(MMSEngineDBFacade::IngestionType ingestionType)
     {
         _ingestionType   = ingestionType;

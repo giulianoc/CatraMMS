@@ -226,6 +226,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                         localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
                         localAssetIngestionEvent->setSourceFileName(sourceFileName);
+                        localAssetIngestionEvent->setCustomerIngestionBinarySourceFileNameToBeUsed(false);
                         localAssetIngestionEvent->setCustomer(customer);
                         localAssetIngestionEvent->setIngestionType(ingestionType);
 
@@ -1000,6 +1001,9 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         throw e;
     }
 
+    if (localAssetIngestionEvent->getCustomerIngestionBinarySourceFileNameToBeUsed()) 
+        mediaSourceFileName = localAssetIngestionEvent->getSourceFileName();
+
     string customerIngestionBinaryPathName;
     try
     {
@@ -1718,6 +1722,7 @@ void MMSEngineProcessor::generateAndIngestFrames(
 
                 localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
                 localAssetIngestionEvent->setSourceFileName(generatedFrameFileName);
+                localAssetIngestionEvent->setCustomerIngestionBinarySourceFileNameToBeUsed(true);
                 localAssetIngestionEvent->setCustomer(customer);
                 localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::ContentIngestion);
 
@@ -1867,6 +1872,7 @@ void MMSEngineProcessor::generateAndIngestConcatenation(
 
             localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
             localAssetIngestionEvent->setSourceFileName(localSourceFileName);
+            localAssetIngestionEvent->setCustomerIngestionBinarySourceFileNameToBeUsed(false);
             localAssetIngestionEvent->setCustomer(customer);
             localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::ContentIngestion);
 
@@ -2088,6 +2094,7 @@ void MMSEngineProcessor::generateAndIngestCutMedia(
 
             localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
             localAssetIngestionEvent->setSourceFileName(localSourceFileName);
+            localAssetIngestionEvent->setCustomerIngestionBinarySourceFileNameToBeUsed(false);
             localAssetIngestionEvent->setCustomer(customer);
             localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::ContentIngestion);
 
