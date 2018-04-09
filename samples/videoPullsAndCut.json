@@ -3,7 +3,7 @@
     "Label": "1",
     "Variables": {
         "TitleOfVideo": "My Title of the video content",
-        "TitleOfFrame": "My Title of the frame content"
+        "TitleOfCut": "My Title of the cut content"
     },
     "Task": {
         "Label": "...",
@@ -16,14 +16,13 @@
         },
         "OnSuccess": {
             "Task": {
-                "Type": "Periodical-Frames",
+                "Type": "Cut",
                 "Parameters": {
-                    "SourceFileName": "123456.jpg",
-                    "StartTimeInSeconds": 2.5,
-                    "PeriodInSeconds": 2,
-                    "MaxFramesNumber": 5,
+                    "SourceFileName": "123456.mp4",
+                    "StartTimeInSeconds": 1.0,
+                    "EndTimeInSeconds": 5.0,
                     "userData": { "MyData": "this is my frame data" },
-                    "Title": "${TitleOfFrame}"
+                    "Title": "${TitleOfCut}"
                 }
             }
         }
