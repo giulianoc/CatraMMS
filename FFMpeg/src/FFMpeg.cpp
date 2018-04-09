@@ -1436,7 +1436,7 @@ void FFMpeg::generateCutMediaToIngest(
     */
     string ffmpegExecuteCommand = 
             _ffmpegPath + "/ffmpeg "
-            + "-i " + cutMediaPathName + " "
+            + "-i " + sourcePhysicalPath + " "
             + "-ss " + to_string(startTimeInSeconds) + " "
             + (framesNumber != -1 ? ("-vframes " + to_string(framesNumber) + " ") : ("-to " + to_string(endTimeInSeconds) + " "))
             + "-c copy " + cutMediaPathName + " "
