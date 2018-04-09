@@ -1831,19 +1831,35 @@ void MMSEngineProcessor::generateAndIngestConcatenation(
         string sourceFileName = parametersRoot.get(field, "XXX").asString();
 
         string customerIngestionRepository = _mmsStorage->getCustomerIngestionRepository(
-                customer);
+            customer);
         string concatenatedMediaPathName = customerIngestionRepository + "/" 
                 + to_string(ingestionJobKey)
                 + ".binary";
         
+        string ffmpefConcatenatedMediaPathName = concatenatedMediaPathName;
+        size_t extensionIndex = sourceFileName.find_last_of(".");
+        if (extensionIndex != string::npos)
+            ffmpefConcatenatedMediaPathName.append(sourceFileName.substr(extensionIndex));
+
         FFMpeg ffmpeg (_configuration, _logger);
-        ffmpeg.generateConcatMediaToIngest(ingestionJobKey, sourcePhysicalPaths, concatenatedMediaPathName);
+        ffmpeg.generateConcatMediaToIngest(ingestionJobKey, sourcePhysicalPaths, ffmpefConcatenatedMediaPathName);
 
         _logger->info(__FILEREF__ + "generateConcatMediaToIngest done"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", concatenatedMediaPathName: " + concatenatedMediaPathName
+            + ", ffmpefConcatenatedMediaPathName: " + ffmpefConcatenatedMediaPathName
         );
 
+        // move is because LocalAssetIngestionEvent expects a file like <key>.binary
+        {
+            _logger->info(__FILEREF__ + "Moving"
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", ffmpefConcatenatedMediaPathName: " + ffmpefConcatenatedMediaPathName
+                + ", concatenatedMediaPathName: " + concatenatedMediaPathName
+            );
+
+            FileIO::moveFile(ffmpefConcatenatedMediaPathName, concatenatedMediaPathName);
+        }
+                
         string mediaMetaDataContent = generateMediaMetadataToIngest(
                 ingestionJobKey,
                 concatContentType == MMSEngineDBFacade::ContentType::Video ? true : false,
@@ -2049,16 +2065,32 @@ void MMSEngineProcessor::generateAndIngestCutMedia(
                 + to_string(ingestionJobKey)
                 + ".binary";
         
+        string ffmpefCutMediaPathName = cutMediaPathName;
+        size_t extensionIndex = sourceFileName.find_last_of(".");
+        if (extensionIndex != string::npos)
+            ffmpefCutMediaPathName.append(sourceFileName.substr(extensionIndex));
+        
         FFMpeg ffmpeg (_configuration, _logger);
         ffmpeg.generateCutMediaToIngest(ingestionJobKey, sourcePhysicalPath, 
                 startTimeInSeconds, endTimeInSeconds, framesNumber,
-                cutMediaPathName);
+                ffmpefCutMediaPathName);
 
         _logger->info(__FILEREF__ + "generateCutMediaToIngest done"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", cutMediaPathName: " + cutMediaPathName
+            + ", ffmpefCutMediaPathName: " + ffmpefCutMediaPathName
         );
 
+        // move is because LocalAssetIngestionEvent expects a file like <key>.binary
+        {
+            _logger->info(__FILEREF__ + "Moving"
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", ffmpefCutMediaPathName: " + ffmpefCutMediaPathName
+                + ", cutMediaPathName: " + cutMediaPathName
+            );
+
+            FileIO::moveFile(ffmpefCutMediaPathName, cutMediaPathName);
+        }
+        
         string mediaMetaDataContent = generateMediaMetadataToIngest(
                 ingestionJobKey,
                 contentType == MMSEngineDBFacade::ContentType::Video ? true : false,
