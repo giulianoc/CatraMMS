@@ -450,6 +450,10 @@ vector<int64_t> Validator::validateTaskMetadata(
     {
         validateConcatDemuxerMetadata(parametersRoot, dependencies);        
     }
+    else if (ingestionType == MMSEngineDBFacade::IngestionType::Cut)
+    {
+        validateCutMetadata(parametersRoot, dependencies);        
+    }
     else
     {
         string errorMessage = __FILEREF__ + "Unknown IngestionType"
