@@ -1,7 +1,6 @@
 
 #include <fstream>
 #include <sstream>
-#include <regex>
 #include <curlpp/cURLpp.hpp>
 #include <curlpp/Easy.hpp>
 #include <curlpp/Options.hpp>
@@ -1704,7 +1703,8 @@ void MMSEngineProcessor::generateAndIngestFrames(
                 + ", textToReplace: " + textToReplace
             );
 
-            generatedFrameFileName = regex_replace(generatedFrameFileName, regex(textToBeReplaced), textToReplace);
+            if (generatedFrameFileName.find(textToBeReplaced) != string::npos)
+                generatedFrameFileName.replace(generatedFrameFileName.find(textToBeReplaced), textToBeReplaced.length(), textToReplace);
 
             _logger->info(__FILEREF__ + "Generated Frame to ingest"
                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
