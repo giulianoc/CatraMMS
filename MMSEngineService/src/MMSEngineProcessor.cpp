@@ -902,6 +902,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
     {
         _logger->error(__FILEREF__ + "validateMetadata failed"
                 + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+                + ", localAssetIngestionEvent->getMetadataContent(): " + localAssetIngestionEvent->getMetadataContent()
                 + ", exception: " + e.what()
         );
 
