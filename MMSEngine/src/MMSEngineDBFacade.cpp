@@ -1447,11 +1447,11 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                     IngestionStatus ingestionStatus     = MMSEngineDBFacade::toIngestionStatus(resultSet->getString("status"));
                     IngestionType ingestionType     = MMSEngineDBFacade::toIngestionType(resultSet->getString("ingestionType"));
 
-                    /*
+                    /**/
                     _logger->info(__FILEREF__ + "Analyzing dependencies for the IngestionJob"
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     );
-                     */
+                    /**/
                     
                     bool ingestionJobToBeManaged = true;
 
@@ -1478,7 +1478,16 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                             shared_ptr<sql::ResultSet> resultSetIngestionJob (preparedStatementIngestionJob->executeQuery());
                             if (resultSetIngestionJob->next())
                             {
-                                IngestionStatus ingestionStatusDependency     = MMSEngineDBFacade::toIngestionStatus(resultSetIngestionJob->getString("status"));
+                                string sStatus = resultSetIngestionJob->getString("status");
+                                
+                                _logger->info(__FILEREF__ + "Dependency for the IngestionJob"
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", dependOnIngestionJobKey: " + to_string(dependOnIngestionJobKey)
+                                    + ", dependOnSuccess: " + to_string(dependOnSuccess)
+                                    + ", status (dependOnIngestionJobKey): " + sStatus
+                                );
+                                
+                                IngestionStatus ingestionStatusDependency     = MMSEngineDBFacade::toIngestionStatus(sStatus);
 
                                 if (MMSEngineDBFacade::isIngestionStatusFinalState(ingestionStatusDependency))
                                 {
@@ -1502,6 +1511,22 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                                     break;
                                 }
                             }
+                            else
+                            {
+                                _logger->info(__FILEREF__ + "Dependency for the IngestionJob"
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", dependOnIngestionJobKey: " + to_string(dependOnIngestionJobKey)
+                                    + ", dependOnSuccess: " + to_string(dependOnSuccess)
+                                    + ", status: " + "no row"
+                                );
+                            }
+                        }
+                        else
+                        {
+                            _logger->info(__FILEREF__ + "Dependency for the IngestionJob"
+                                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                + ", dependOnIngestionJobKey: " + "null"
+                            );
                         }
                     }
                     
