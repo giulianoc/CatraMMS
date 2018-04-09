@@ -1706,6 +1706,11 @@ void MMSEngineProcessor::generateAndIngestFrames(
 
             generatedFrameFileName = regex_replace(generatedFrameFileName, regex(textToBeReplaced), textToReplace);
 
+            _logger->info(__FILEREF__ + "Generated Frame to ingest"
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", new generatedFrameFileName: " + generatedFrameFileName
+            );
+            
             string imageMetaDataContent = generateImageMetadataToIngest(
                     ingestionJobKey,
                     mjpeg,
