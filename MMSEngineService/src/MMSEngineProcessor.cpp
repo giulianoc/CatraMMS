@@ -224,8 +224,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
 
                         localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
-                        localAssetIngestionEvent->setSourceFileName(sourceFileName);
-                        localAssetIngestionEvent->setCustomerIngestionBinarySourceFileNameToBeUsed(false);
+                        localAssetIngestionEvent->setIngestionSourceFileName(sourceFileName);
+                        localAssetIngestionEvent->setMMSSourceFileName("");
                         localAssetIngestionEvent->setCustomer(customer);
                         localAssetIngestionEvent->setIngestionType(ingestionType);
 
@@ -1001,8 +1001,8 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         throw e;
     }
 
-    if (localAssetIngestionEvent->getCustomerIngestionBinarySourceFileNameToBeUsed()) 
-        mediaSourceFileName = localAssetIngestionEvent->getSourceFileName();
+    if (localAssetIngestionEvent->getMMSSourceFileName() != "") 
+        mediaSourceFileName = localAssetIngestionEvent->getMMSSourceFileName();
 
     string customerIngestionBinaryPathName;
     try
@@ -1011,7 +1011,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                 localAssetIngestionEvent->getCustomer());
         customerIngestionBinaryPathName
                 .append("/")
-                .append(localAssetIngestionEvent->getSourceFileName())
+                .append(localAssetIngestionEvent->getIngestionSourceFileName())
                 ;
 
         validateMediaSourceFile(
@@ -1703,8 +1703,10 @@ void MMSEngineProcessor::generateAndIngestFrames(
                 + ", textToReplace: " + textToReplace
             );
 
-            if (generatedFrameFileName.find(textToBeReplaced) != string::npos)
-                generatedFrameFileName.replace(generatedFrameFileName.find(textToBeReplaced), textToBeReplaced.length(), textToReplace);
+            string mmsSourceFileName = generatedFrameFileName;
+            
+            if (mmsSourceFileName.find(textToBeReplaced) != string::npos)
+                mmsSourceFileName.replace(mmsSourceFileName.find(textToBeReplaced), textToBeReplaced.length(), textToReplace);
 
             _logger->info(__FILEREF__ + "Generated Frame to ingest"
                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -1727,8 +1729,8 @@ void MMSEngineProcessor::generateAndIngestFrames(
                 localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
 
                 localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
-                localAssetIngestionEvent->setSourceFileName(generatedFrameFileName);
-                localAssetIngestionEvent->setCustomerIngestionBinarySourceFileNameToBeUsed(true);
+                localAssetIngestionEvent->setIngestionSourceFileName(generatedFrameFileName);
+                localAssetIngestionEvent->setMMSSourceFileName(mmsSourceFileName);
                 localAssetIngestionEvent->setCustomer(customer);
                 localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::ContentIngestion);
 
@@ -1877,8 +1879,8 @@ void MMSEngineProcessor::generateAndIngestConcatenation(
             localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
 
             localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
-            localAssetIngestionEvent->setSourceFileName(localSourceFileName);
-            localAssetIngestionEvent->setCustomerIngestionBinarySourceFileNameToBeUsed(false);
+            localAssetIngestionEvent->setIngestionSourceFileName(localSourceFileName);
+            localAssetIngestionEvent->setMMSSourceFileName("");
             localAssetIngestionEvent->setCustomer(customer);
             localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::ContentIngestion);
 
@@ -2099,8 +2101,8 @@ void MMSEngineProcessor::generateAndIngestCutMedia(
             localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
 
             localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
-            localAssetIngestionEvent->setSourceFileName(localSourceFileName);
-            localAssetIngestionEvent->setCustomerIngestionBinarySourceFileNameToBeUsed(false);
+            localAssetIngestionEvent->setIngestionSourceFileName(localSourceFileName);
+            localAssetIngestionEvent->setMMSSourceFileName("");
             localAssetIngestionEvent->setCustomer(customer);
             localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::ContentIngestion);
 

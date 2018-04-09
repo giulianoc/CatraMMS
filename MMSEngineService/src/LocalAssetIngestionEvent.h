@@ -40,17 +40,17 @@ private:
     MMSEngineDBFacade::IngestionType _ingestionType;
 
     string                  _metadataContent;
-    string                  _sourceFileName;
-    bool                    _customerIngestionBinarySourceFileNameToBeUsed;
+    string                  _ingestionSourceFileName;
+    string                  _mmsSourceFileName;
 
 public:
-    void setCustomerIngestionBinarySourceFileNameToBeUsed(bool customerIngestionBinarySourceFileNameToBeUsed)
+    void setMMSSourceFileName(string mmsSourceFileName)
     {
-        _customerIngestionBinarySourceFileNameToBeUsed   = customerIngestionBinarySourceFileNameToBeUsed;
+        _mmsSourceFileName   = mmsSourceFileName;
     }
-    bool getCustomerIngestionBinarySourceFileNameToBeUsed()
+    string getMMSSourceFileName()
     {
-        return _customerIngestionBinarySourceFileNameToBeUsed;
+        return _mmsSourceFileName;
     }
 
     void setIngestionType(MMSEngineDBFacade::IngestionType ingestionType)
@@ -71,13 +71,13 @@ public:
         return _metadataContent;
     }
 
-    void setSourceFileName(string sourceFileName)
+    void setIngestionSourceFileName(string ingestionSourceFileName)
     {
-        _sourceFileName   = sourceFileName;
+        _ingestionSourceFileName   = ingestionSourceFileName;
     }
-    string getSourceFileName()
+    string getIngestionSourceFileName()
     {
-        return _sourceFileName;
+        return _ingestionSourceFileName;
     }
 
     void setIngestionJobKey(int64_t ingestionJobKey)
