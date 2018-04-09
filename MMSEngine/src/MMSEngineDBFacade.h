@@ -272,9 +272,10 @@ public:
         PeriodicalFrames        = 3,
         IFrames                 = 4,
         MotionJPEGByPeriodicalFrames        = 5,
-        MotionJPEGByIFrames                 = 6,
-        ConcatDemuxer           = 7,
-        Cut                     = 8,
+        MotionJPEGByIFrames     = 6,
+        Slideshow               = 7,
+        ConcatDemuxer           = 8,
+        Cut                     = 9,
         ContentUpdate           = 50,
         ContentRemove           = 60
     };
@@ -296,6 +297,8 @@ public:
                 return "Motion-JPEG-by-Periodical-Frames";
             case IngestionType::MotionJPEGByIFrames:
                 return "Motion-JPEG-by-I-Frames";
+            case IngestionType::Slideshow:
+                return "Slideshow";
             case IngestionType::ConcatDemuxer:
                 return "Concat-Demuxer";
             case IngestionType::Cut:
@@ -326,6 +329,8 @@ public:
             return IngestionType::MotionJPEGByPeriodicalFrames;
         else if (lowerCase == "motion-jpeg-by-i-frames")
             return IngestionType::MotionJPEGByIFrames;
+        else if (lowerCase == "slideshow")
+            return IngestionType::Slideshow;
         else if (lowerCase == "concat-demuxer")
             return IngestionType::ConcatDemuxer;
         else if (lowerCase == "cut")

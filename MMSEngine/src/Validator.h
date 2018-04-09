@@ -52,6 +52,9 @@ public:
     void validateIFramesMetadata(
         Json::Value parametersRoot, vector<int64_t>& dependencies);
 
+    void validateSlideshowMetadata(
+        Json::Value parametersRoot, vector<int64_t>& dependencies);
+    
     void validateConcatDemuxerMetadata(
         Json::Value parametersRoot, vector<int64_t>& dependencies);
 

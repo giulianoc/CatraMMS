@@ -77,6 +77,11 @@ public:
         vector<string>& sourcePhysicalPaths,
         string concatenatedMediaPathName);
 
+    void generateSlideshowMediaToIngest(
+        int64_t ingestionJobKey,
+        vector<string>& sourcePhysicalPaths,
+        string slideshowMediaPathName);
+
     void generateCutMediaToIngest(
         int64_t ingestionJobKey,
         string sourcePhysicalPath,

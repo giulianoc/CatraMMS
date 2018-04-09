@@ -654,6 +654,64 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 }
                             }
                         }
+                        else if (ingestionType == MMSEngineDBFacade::IngestionType::Slideshow)
+                        {
+                            // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
+                            try
+                            {
+                                generateAndIngestSlideshow(
+                                        ingestionJobKey, 
+                                        customer, 
+                                        parametersRoot, 
+                                        dependencies);
+                            }
+                            catch(runtime_error e)
+                            {
+                                _logger->error(__FILEREF__ + "generateAndIngestSlideshow failed"
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
+                                        errorMessage,
+                                        "" // processorMMS
+                                        );
+
+                                throw runtime_error(errorMessage);
+                            }
+                            catch(exception e)
+                            {
+                                _logger->error(__FILEREF__ + "generateAndIngestSlideshow failed"
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
+                                        errorMessage,
+                                        "" // processorMMS
+                                        );
+
+                                throw runtime_error(errorMessage);
+                            }
+                        }
                         else if (ingestionType == MMSEngineDBFacade::IngestionType::ConcatDemuxer)
                         {
                             // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
@@ -1758,6 +1816,154 @@ void MMSEngineProcessor::generateAndIngestFrames(
     catch(exception e)
     {
         _logger->error(__FILEREF__ + "generateAndIngestFrame failed"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+        );
+        
+        throw e;
+    }
+}
+
+void MMSEngineProcessor::generateAndIngestSlideshow(
+        int64_t ingestionJobKey,
+        shared_ptr<Customer> customer,
+        Json::Value parametersRoot,
+        vector<int64_t>& dependencies
+)
+{
+    try
+    {
+        if (dependencies.size() == 0)
+        {
+            string errorMessage = __FILEREF__ + "No images found"
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", dependencies.size: " + to_string(dependencies.size());
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        
+        MMSEngineDBFacade::ContentType slideshowContentType;
+        bool slideshowContentTypeInitialized = false;
+        vector<string> sourcePhysicalPaths;
+        
+        for (int64_t sourceMediaItemKey: dependencies)
+        {
+            int64_t encodingProfileKey = -1;
+            string sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourceMediaItemKey, encodingProfileKey);
+
+            sourcePhysicalPaths.push_back(sourcePhysicalPath);
+            
+            bool warningIfMissing = false;
+            
+            MMSEngineDBFacade::ContentType contentType = _mmsEngineDBFacade->getMediaItemKeyDetails(
+                sourceMediaItemKey, warningIfMissing);
+            
+            if (!slideshowContentTypeInitialized)
+            {
+                slideshowContentType = contentType;
+                if (slideshowContentType != MMSEngineDBFacade::ContentType::Image)
+                {
+                    string errorMessage = __FILEREF__ + "It is not possible to build a slideshow with a media that is not an Image"
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", slideshowContentType: " + MMSEngineDBFacade::toString(slideshowContentType)
+                            ;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+            }
+            else
+            {
+                if (slideshowContentType != contentType)
+                {
+                    string errorMessage = __FILEREF__ + "Not all the References have the same ContentType"
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", contentType: " + MMSEngineDBFacade::toString(contentType)
+                            + ", slideshowContentType: " + MMSEngineDBFacade::toString(slideshowContentType)
+                            ;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+            }
+        }
+
+        string field = "SourceFileName";
+        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", Field: " + field;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        string sourceFileName = parametersRoot.get(field, "XXX").asString();
+
+        string localSourceFileName = to_string(ingestionJobKey)
+                + ".binary"
+                ;
+        size_t extensionIndex = sourceFileName.find_last_of(".");
+        if (extensionIndex != string::npos)
+            localSourceFileName.append(sourceFileName.substr(extensionIndex));
+        
+        string customerIngestionRepository = _mmsStorage->getCustomerIngestionRepository(
+            customer);
+        string slideshowMediaPathName = customerIngestionRepository + "/" 
+                + localSourceFileName;
+        
+        FFMpeg ffmpeg (_configuration, _logger);
+        ffmpeg.generateSlideshowMediaToIngest(ingestionJobKey, sourcePhysicalPaths, slideshowMediaPathName);
+
+        _logger->info(__FILEREF__ + "generateSlideshowMediaToIngest done"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", slideshowMediaPathName: " + slideshowMediaPathName
+        );
+                
+        string mediaMetaDataContent = generateMediaMetadataToIngest(
+                ingestionJobKey,
+                true,
+                sourceFileName,
+                parametersRoot
+        );
+
+        {
+            shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
+                    ->getFreeEvent<LocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
+
+            localAssetIngestionEvent->setSource(MMSENGINEPROCESSORNAME);
+            localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
+            localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
+
+            localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
+            localAssetIngestionEvent->setIngestionSourceFileName(localSourceFileName);
+            localAssetIngestionEvent->setMMSSourceFileName("");
+            localAssetIngestionEvent->setCustomer(customer);
+            localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::ContentIngestion);
+
+            localAssetIngestionEvent->setMetadataContent(mediaMetaDataContent);
+
+            shared_ptr<Event2>    event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
+            _multiEventsSet->addEvent(event);
+
+            _logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", getEventKey().first: " + to_string(event->getEventKey().first)
+                + ", getEventKey().second: " + to_string(event->getEventKey().second));
+        }
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "generateAndIngestConcatenation failed"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
+        );
+        
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "generateAndIngestConcatenation failed"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );
         

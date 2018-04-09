@@ -79,6 +79,12 @@ private:
         Json::Value parametersRoot,
         vector<int64_t>& dependencies);
 
+    void generateAndIngestSlideshow(
+        int64_t ingestionJobKey,
+        shared_ptr<Customer> customer,
+        Json::Value parametersRoot,
+        vector<int64_t>& dependencies);
+
     void generateAndIngestConcatenation(
         int64_t ingestionJobKey,
         shared_ptr<Customer> customer,
