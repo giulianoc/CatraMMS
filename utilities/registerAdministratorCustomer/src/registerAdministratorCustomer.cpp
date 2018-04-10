@@ -17,7 +17,7 @@ int main (int iArgc, char *pArgv [])
     
     Json::Value configuration = loadConfigurationFile(pArgv[1]);
 
-    auto logger = spdlog::stdout_logger_mt("registerAdministratorCustomer");
+    auto logger = spdlog::stdout_logger_mt("registerAdministratorWorkspace");
     spdlog::set_level(spdlog::level::trace);
     // globally register the loggers so so the can be accessed using spdlog::get(logger_name)
     // spdlog::register_logger(logger);
@@ -33,19 +33,19 @@ int main (int iArgc, char *pArgv [])
     shared_ptr<MMSEngine>       mmsEngine = make_shared<MMSEngine>(mmsEngineDBFacade, logger);
      */
     string emailAddress = "giulianoc@catrasoftware.it";
-    string customerName = "Admin";
-    logger->info(__FILEREF__ + "Creating Administrator Customer"
+    string workspaceName = "Admin";
+    logger->info(__FILEREF__ + "Creating Administrator Workspace"
             );
-    tuple<int64_t,int64_t,string> customerKeyUserKeyAndConfirmationCode;
+    tuple<int64_t,int64_t,string> workspaceKeyUserKeyAndConfirmationCode;
     {
-        string customerDirectoryName;
+        string workspaceDirectoryName;
 
-        customerDirectoryName.resize(customerName.size());
+        workspaceDirectoryName.resize(workspaceName.size());
 
         transform(
-            customerName.begin(), 
-            customerName.end(), 
-            customerDirectoryName.begin(), 
+            workspaceName.begin(), 
+            workspaceName.end(), 
+            workspaceDirectoryName.begin(), 
             [](unsigned char c){
                 if (isalpha(c)) 
                     return c; 
@@ -55,16 +55,16 @@ int main (int iArgc, char *pArgv [])
 
         try
         {
-            customerKeyUserKeyAndConfirmationCode = mmsEngineDBFacade->registerCustomer(
-                customerName, 
-                customerDirectoryName,
+            workspaceKeyUserKeyAndConfirmationCode = mmsEngineDBFacade->registerWorkspace(
+                workspaceName, 
+                workspaceDirectoryName,
                 "",                             // string street,
                 "",                             // string city,
                 "",                             // string state,
                 "",                             // string zip,
                 "",                             // string phone,
                 "",                             // string countryCode,
-                MMSEngineDBFacade::CustomerType::IngestionAndDelivery,  // MMSEngineDBFacade::CustomerType customerType
+                MMSEngineDBFacade::WorkspaceType::IngestionAndDelivery,  // MMSEngineDBFacade::WorkspaceType workspaceType
                 "",                             // string deliveryURL,
                 MMSEngineDBFacade::EncodingPriority::High,   //  MMSEngineDBFacade::EncodingPriority maxEncodingPriority,
                 MMSEngineDBFacade::EncodingPeriod::Daily,       //  MMSEngineDBFacade::EncodingPeriod encodingPeriod,
@@ -79,22 +79,22 @@ int main (int iArgc, char *pArgv [])
         }
         catch(exception e)
         {
-            logger->error(__FILEREF__ + "mmsEngineDBFacade->registerCustomer failed");
+            logger->error(__FILEREF__ + "mmsEngineDBFacade->registerWorkspace failed");
             
             return 1;
         }
     }
         /*
-    tuple<int64_t,int64_t,string> customerKeyUserKeyAndConfirmationCode =
-            mmsEngine->registerCustomer(
-                "Admin",                       // string customerName,
+    tuple<int64_t,int64_t,string> workspaceKeyUserKeyAndConfirmationCode =
+            mmsEngine->registerWorkspace(
+                "Admin",                       // string workspaceName,
                 "",                             // string street,
                 "",                             // string city,
                 "",                             // string state,
                 "",                             // string zip,
                 "",                             // string phone,
                 "",                             // string countryCode,
-                MMSEngineDBFacade::CustomerType::IngestionAndDelivery,  // MMSEngineDBFacade::CustomerType customerType
+                MMSEngineDBFacade::WorkspaceType::IngestionAndDelivery,  // MMSEngineDBFacade::WorkspaceType workspaceType
                 "",                             // string deliveryURL,
                 MMSEngineDBFacade::EncodingPriority::High,   //  MMSEngineDBFacade::EncodingPriority maxEncodingPriority,
                 MMSEngineDBFacade::EncodingPeriod::Daily,       //  MMSEngineDBFacade::EncodingPeriod encodingPeriod,
@@ -108,10 +108,10 @@ int main (int iArgc, char *pArgv [])
     );
     */
 
-    logger->info(__FILEREF__ + "Confirm Customer"
+    logger->info(__FILEREF__ + "Confirm Workspace"
             );
-    mmsEngineDBFacade->confirmCustomer(get<2>(customerKeyUserKeyAndConfirmationCode));
-    // mmsEngine->confirmCustomer(get<2>(customerKeyUserKeyAndConfirmationCode));
+    mmsEngineDBFacade->confirmWorkspace(get<2>(workspaceKeyUserKeyAndConfirmationCode));
+    // mmsEngine->confirmWorkspace(get<2>(workspaceKeyUserKeyAndConfirmationCode));
     
     bool adminAPI = true;
     bool userAPI = true;
@@ -119,22 +119,22 @@ int main (int iArgc, char *pArgv [])
             );
     /*
     string apiKey = mmsEngine->createAPIKey(
-            get<0>(customerKeyUserKeyAndConfirmationCode),
-            get<1>(customerKeyUserKeyAndConfirmationCode),
+            get<0>(workspaceKeyUserKeyAndConfirmationCode),
+            get<1>(workspaceKeyUserKeyAndConfirmationCode),
             adminAPI,
             userAPI,
             chrono::system_clock::now() + chrono::hours(24 * 365 * 20)  // apiKeyExpirationDate
     );
     */
     string apiKey = mmsEngineDBFacade->createAPIKey(
-            get<0>(customerKeyUserKeyAndConfirmationCode), 
-            get<1>(customerKeyUserKeyAndConfirmationCode),
+            get<0>(workspaceKeyUserKeyAndConfirmationCode), 
+            get<1>(workspaceKeyUserKeyAndConfirmationCode),
             adminAPI,
             userAPI, 
             chrono::system_clock::now() + chrono::hours(24 * 365 * 20)  // apiKeyExpirationDate
     );
     
-    cout << "Username (CustomerKey): " + to_string(get<0>(customerKeyUserKeyAndConfirmationCode)) << endl;
+    cout << "Username (WorkspaceKey): " + to_string(get<0>(workspaceKeyUserKeyAndConfirmationCode)) << endl;
     cout << "Password (Administrator APIKey): " << apiKey << endl;
 
     logger->info(__FILEREF__ + "Shutdown done"

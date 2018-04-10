@@ -47,7 +47,7 @@ public:
         string requestURI,
         string requestMethod,
         unordered_map<string, string> queryParameters,
-        tuple<shared_ptr<Customer>,bool,bool>& customerAndFlags,
+        tuple<shared_ptr<Workspace>,bool,bool>& workspaceAndFlags,
         unsigned long contentLength,
         string requestBody,
         string xCatraMMSResumeHeader,
@@ -59,7 +59,7 @@ public:
         string requestMethod,
         string xCatraMMSResumeHeader,
         unordered_map<string, string> queryParameters,
-        tuple<shared_ptr<Customer>,bool,bool>& customerAndFlags,
+        tuple<shared_ptr<Workspace>,bool,bool>& workspaceAndFlags,
         unsigned long contentLength
     ) = 0;
     

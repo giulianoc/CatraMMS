@@ -18,7 +18,7 @@
 #include <memory>
 #include <vector>
 #include "spdlog/spdlog.h"
-#include "Customer.h"
+#include "Workspace.h"
 #include "catralibraries/MySQLConnection.h"
 #include "json/json.h"
 
@@ -242,7 +242,7 @@ public:
         unsigned long                           _mmsPartitionNumber;
         string                                  _fileName;
         string                                  _relativePath;
-        shared_ptr<Customer>                    _customer;
+        shared_ptr<Workspace>                   _workspace;
         long long                               _mediaItemKey;
         long long                               _physicalPathKey;
         int64_t                                 _durationInMilliSeconds;
@@ -259,7 +259,7 @@ public:
         string                                  _details;
     } ;
 
-    enum class CustomerType {
+    enum class WorkspaceType {
         LiveSessionOnly         = 0,
         IngestionAndDelivery    = 1,
         EncodingOnly            = 2
@@ -359,7 +359,7 @@ public:
 
         End_ValidationMediaSourceFailed,   
 
-        End_CustomerReachedHisMaxIngestionNumber,
+        End_WorkspaceReachedHisMaxIngestionNumber,
         
         End_IngestionFailure,                    // nothing done
 
@@ -389,8 +389,8 @@ public:
                 return "End_ValidationMetadataFailed";
             case IngestionStatus::End_ValidationMediaSourceFailed:
                 return "End_ValidationMediaSourceFailed";
-            case IngestionStatus::End_CustomerReachedHisMaxIngestionNumber:
-                return "End_CustomerReachedHisMaxIngestionNumber";
+            case IngestionStatus::End_WorkspaceReachedHisMaxIngestionNumber:
+                return "End_WorkspaceReachedHisMaxIngestionNumber";
             case IngestionStatus::End_IngestionFailure:
                 return "End_IngestionFailure";
             case IngestionStatus::End_IngestionSuccess_AtLeastOneEncodingProfileError:
@@ -425,8 +425,8 @@ public:
             return IngestionStatus::End_ValidationMetadataFailed;
         else if (lowerCase == "end_validationmediasourcefailed")
             return IngestionStatus::End_ValidationMediaSourceFailed;
-        else if (lowerCase == "end_customerreachedhismaxingestionnumber")
-            return IngestionStatus::End_CustomerReachedHisMaxIngestionNumber;
+        else if (lowerCase == "end_workspacereachedhismaxingestionnumber")
+            return IngestionStatus::End_WorkspaceReachedHisMaxIngestionNumber;
         else if (lowerCase == "end_ingestionfailure")
             return IngestionStatus::End_IngestionFailure;
         else if (lowerCase == "end_ingestionsuccess_atleastoneencodingprofileerror")
@@ -464,24 +464,24 @@ public:
 
     ~MMSEngineDBFacade();
 
-    vector<shared_ptr<Customer>> getCustomers();
+    // vector<shared_ptr<Customer>> getCustomers();
     
-    shared_ptr<Customer> getCustomer(int64_t customerKey);
+    shared_ptr<Workspace> getWorkspace(int64_t workspaceKey);
 
-    shared_ptr<Customer> getCustomer(string customerName);
+    shared_ptr<Workspace> getWorkspace(string workspaceName);
 
     bool isMetadataPresent(Json::Value root, string field);
 
-    tuple<int64_t,int64_t,string> registerCustomer(
-	string customerName,
-        string customerDirectoryName,
+    tuple<int64_t,int64_t,string> registerWorkspace(
+	string workspaceName,
+        string workspaceDirectoryName,
 	string street,
         string city,
         string state,
 	string zip,
         string phone,
         string countryCode,
-        CustomerType customerType,
+        WorkspaceType workspaceType,
 	string deliveryURL,
 	EncodingPriority maxEncodingPriority,
         EncodingPeriod encodingPeriod,
@@ -494,7 +494,7 @@ public:
         chrono::system_clock::time_point userExpirationDate
     );
     
-    void confirmCustomer(string confirmationCode);
+    void confirmWorkspace(string confirmationCode);
 
     bool isLoginValid(
         string emailAddress,
@@ -503,16 +503,16 @@ public:
     string getPassword(string emailAddress);
 
     string createAPIKey (
-        int64_t customerKey,
+        int64_t workspaceKey,
         int64_t userKey,
         bool adminAPI, 
         bool userAPI,
         chrono::system_clock::time_point expirationDate);
 
-    tuple<shared_ptr<Customer>,bool,bool> checkAPIKey (string apiKey);
+    tuple<shared_ptr<Workspace>,bool,bool> checkAPIKey (string apiKey);
 
     int64_t addVideoEncodingProfile(
-        shared_ptr<Customer> customer,
+        shared_ptr<Workspace> workspace,
         string encodingProfileSet,
         EncodingTechnology encodingTechnology,
         string details,
@@ -524,7 +524,7 @@ public:
     );
 
     int64_t addImageEncodingProfile(
-        shared_ptr<Customer> customer,
+        shared_ptr<Workspace> workspace,
         string encodingProfileSet,
         string details,
         string label,
@@ -533,7 +533,7 @@ public:
     );
 
     void getIngestionsToBeManaged(
-        vector<tuple<int64_t,string,shared_ptr<Customer>,string, IngestionType, IngestionStatus>>& ingestionsToBeManaged,
+        vector<tuple<int64_t,string,shared_ptr<Workspace>,string, IngestionType, IngestionStatus>>& ingestionsToBeManaged,
         string processorMMS,
         int maxIngestionJobs
         // int maxIngestionJobsWithDependencyToCheck
@@ -543,11 +543,11 @@ public:
     
     int64_t addIngestionRoot (
         shared_ptr<MySQLConnection> conn,
-    	int64_t customerKey, string rootType, string rootLabel,
+    	int64_t workspaceKey, string rootType, string rootLabel,
         bool rootLabelDuplication);
 
     int64_t addIngestionJob (shared_ptr<MySQLConnection> conn,
-    	int64_t customerKey, int64_t ingestionRootKey, 
+    	int64_t workspaceKey, int64_t ingestionRootKey, 
         string label, string metadataContent,
         MMSEngineDBFacade::IngestionType ingestionType, 
         vector<int64_t> dependOnIngestionJobKeys, int dependOnSuccess
@@ -616,10 +616,10 @@ public:
         int64_t encodingJobKey,
         int encodingPercentage);
 
-    string checkCustomerMaxIngestionNumber (int64_t customerKey);
+    string checkWorkspaceMaxIngestionNumber (int64_t workspaceKey);
 
     pair<int64_t,int64_t> saveIngestedContentMetadata(
-        shared_ptr<Customer> customer,
+        shared_ptr<Workspace> workspace,
         int64_t ingestionJobKey,
         MMSEngineDBFacade::ContentType contentType,
         Json::Value typeRoot,
@@ -655,7 +655,7 @@ public:
     );
 
     int64_t saveEncodedContentMetadata(
-        int64_t customerKey,
+        int64_t workspaceKey,
         int64_t mediaItemKey,
         string encodedFileName,
         string relativePath,
@@ -671,7 +671,7 @@ private:
     int                             _maxEncodingFailures;
     int                             _confirmationCodeRetentionInDays;
 
-    void getTerritories(shared_ptr<Customer> customer);
+    void getTerritories(shared_ptr<Workspace> workspace);
 
     void createTablesIfNeeded();
 
@@ -681,13 +681,13 @@ private:
 
     int64_t addTerritory (
 	shared_ptr<MySQLConnection> conn,
-        int64_t customerKey,
+        int64_t workspaceKey,
         string territoryName
     );
 
     int64_t addUser (
 	shared_ptr<MySQLConnection> conn,
-        int64_t customerKey,
+        int64_t workspaceKey,
         string userName,
         string password,
         int type,

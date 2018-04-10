@@ -7,7 +7,7 @@
 #include <vector>
 #include "spdlog/spdlog.h"
 #include "catralibraries/FileIO.h"
-#include "Customer.h"
+#include "Workspace.h"
 #include "MMSEngineDBFacade.h"
 
 
@@ -33,7 +33,7 @@ public:
 
     ~MMSStorage (void);
 
-    string getCustomerIngestionRepository(shared_ptr<Customer> customer);
+    string getWorkspaceIngestionRepository(shared_ptr<Workspace> workspace);
     
     //    const char *getIPhoneAliasForLive (void);
 
@@ -59,18 +59,18 @@ public:
     void moveContentInRepository (
         string filePathName,
         RepositoryType rtRepositoryType,
-        string customerDirectoryName,
+        string workspaceDirectoryName,
         bool addDateTimeToFileName);
 
     void copyFileInRepository (
 	string filePathName,
 	RepositoryType rtRepositoryType,
-	string customerDirectoryName,
+	string workspaceDirectoryName,
 	bool addDateTimeToFileName);
 
     string moveAssetInMMSRepository (
         string sourceAssetPathName,
-        string customerDirectoryName,
+        string workspaceDirectoryName,
         string destinationFileName,
         string relativePath,
 
@@ -78,18 +78,18 @@ public:
         unsigned long *pulMMSPartitionIndexUsed,	// OUT if bIsPartitionIndexToBeCalculated is true, IN is bIsPartitionIndexToBeCalculated is false
 
         bool deliveryRepositoriesToo,
-        Customer::TerritoriesHashMap& phmTerritories
+        Workspace::TerritoriesHashMap& phmTerritories
     );
 
     string getMMSAssetPathName (
 	unsigned long ulPartitionNumber,
-	string customerDirectoryName,
+	string workspaceDirectoryName,
 	string relativePath,		// using '/'
 	string fileName);
 
     string getDownloadLinkPathName (
 	unsigned long ulPartitionNumber,
-	string customerDirectoryName,
+	string workspaceDirectoryName,
 	string territoryName,
 	string relativePath,
 	string fileName,
@@ -97,7 +97,7 @@ public:
 
     string getStreamingLinkPathName (
 	unsigned long ulPartitionNumber,	// IN
-	string customerDirectoryName,	// IN
+	string workspaceDirectoryName,	// IN
 	string territoryName,	// IN
 	string relativePath,	// IN
 	string fileName);	// IN
@@ -108,7 +108,7 @@ public:
     // to clean/remove that path if already existing in order
     // to give to the encoder a clean place where to write
     string getStagingAssetPathName (
-	string customerDirectoryName,
+	string workspaceDirectoryName,
 	string relativePath,
 	string fileName,                // may be empty ("")
 	long long llMediaItemKey,       // used only if fileName is ""
@@ -123,8 +123,8 @@ public:
         MMSEngineDBFacade::ContentType contentType,
         long long llEncodingProfileKey);
 
-    unsigned long getCustomerStorageUsage (
-	string customerDirectoryName);
+    unsigned long getWorkspaceStorageUsage (
+	string workspaceDirectoryName);
 
 private:
     shared_ptr<spdlog::logger>  _logger;
@@ -151,7 +151,7 @@ private:
 	unsigned long ulIsCopyOrMove,
 	string contentPathName,
 	RepositoryType rtRepositoryType,
-	string customerDirectoryName,
+	string workspaceDirectoryName,
 	bool addDateTimeToFileName);
 
     string getRepository(RepositoryType rtRepositoryType);
@@ -159,9 +159,9 @@ private:
     string creatingDirsUsingTerritories (
 	unsigned long ulCurrentMMSPartitionIndex,
 	string relativePath,
-	string customerDirectoryName,
+	string workspaceDirectoryName,
 	bool deliveryRepositoriesToo,
-	Customer::TerritoriesHashMap& phmTerritories);
+	Workspace::TerritoriesHashMap& phmTerritories);
 
 
 } ;

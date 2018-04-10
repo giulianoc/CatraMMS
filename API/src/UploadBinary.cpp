@@ -128,7 +128,7 @@ void UploadBinary::manageRequestAndResponse(
         string requestURI,
         string requestMethod,
         unordered_map<string, string> queryParameters,
-        tuple<shared_ptr<Customer>,bool,bool>& customerAndFlags,
+        tuple<shared_ptr<Workspace>,bool,bool>& workspaceAndFlags,
         unsigned long contentLength,
         string requestBody,
         string xCatraMMSResumeHeader,
@@ -150,7 +150,7 @@ void UploadBinary::getBinaryAndResponse(
         string requestMethod,
         string xCatraMMSResumeHeader,
         unordered_map<string, string> queryParameters,
-        tuple<shared_ptr<Customer>,bool,bool>& customerAndFlags,
+        tuple<shared_ptr<Workspace>,bool,bool>& workspaceAndFlags,
         unsigned long contentLength
 )
 {
@@ -180,16 +180,16 @@ void UploadBinary::getBinaryAndResponse(
         }
         int64_t ingestionJobKey = stol(ingestionJobKeyIt->second);
 
-        shared_ptr<Customer> customer = get<0>(customerAndFlags);
-        string customerIngestionBinaryPathName = _mmsStorage->getCustomerIngestionRepository(customer);
-        customerIngestionBinaryPathName
+        shared_ptr<Workspace> workspace = get<0>(workspaceAndFlags);
+        string workspaceIngestionBinaryPathName = _mmsStorage->getWorkspaceIngestionRepository(workspace);
+        workspaceIngestionBinaryPathName
                 .append("/")
                 .append(to_string(ingestionJobKey))
                 .append(".binary")
                 ;
         
-        _logger->info(__FILEREF__ + "Customer Ingestion Binary path name"
-            + ", customerIngestionBinaryPathName: " + customerIngestionBinaryPathName
+        _logger->info(__FILEREF__ + "Workspace Ingestion Binary path name"
+            + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
         );
         
         if (requestMethod == "HEAD")
@@ -197,17 +197,17 @@ void UploadBinary::getBinaryAndResponse(
             unsigned long fileSize = 0;
             try
             {
-                if (FileIO::fileExisting(customerIngestionBinaryPathName))
+                if (FileIO::fileExisting(workspaceIngestionBinaryPathName))
                 {
                     bool inCaseOfLinkHasItToBeRead = false;
                     fileSize = FileIO::getFileSizeInBytes (
-                        customerIngestionBinaryPathName, inCaseOfLinkHasItToBeRead);
+                        workspaceIngestionBinaryPathName, inCaseOfLinkHasItToBeRead);
                 }
             }
             catch(exception e)
             {
                 string errorMessage = string("Error to retrieve the file size")
-                    + ", customerIngestionBinaryPathName: " + customerIngestionBinaryPathName
+                    + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
                 ;
                 _logger->error(__FILEREF__ + errorMessage);
 
@@ -229,17 +229,17 @@ void UploadBinary::getBinaryAndResponse(
                     unsigned long fileSize = 0;
                     try
                     {
-                        if (FileIO::fileExisting(customerIngestionBinaryPathName))
+                        if (FileIO::fileExisting(workspaceIngestionBinaryPathName))
                         {
                             bool inCaseOfLinkHasItToBeRead = false;
                             fileSize = FileIO::getFileSizeInBytes (
-                                customerIngestionBinaryPathName, inCaseOfLinkHasItToBeRead);
+                                workspaceIngestionBinaryPathName, inCaseOfLinkHasItToBeRead);
                         }
                     }
                     catch(exception e)
                     {
                         string errorMessage = string("Error to retrieve the file size")
-                            + ", customerIngestionBinaryPathName: " + customerIngestionBinaryPathName
+                            + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
                         ;
                         _logger->error(__FILEREF__ + errorMessage);
     //
@@ -271,7 +271,7 @@ void UploadBinary::getBinaryAndResponse(
                 }
             }
             
-            ofstream binaryFileStream(customerIngestionBinaryPathName, 
+            ofstream binaryFileStream(workspaceIngestionBinaryPathName, 
                     resume ? (ofstream::binary | ofstream::app) : (ofstream::binary | ofstream::trunc));
             buffer = new char [_binaryBufferLength];
 

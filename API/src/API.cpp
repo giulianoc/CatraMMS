@@ -150,31 +150,31 @@ API::API(Json::Value configuration,
             fcgiAcceptMutex,
             logger) 
 {
-    string encodingPriority =  _configuration["api"].get("encodingPriorityCustomerDefaultValue", "XXX").asString();
+    string encodingPriority =  _configuration["api"].get("encodingPriorityWorkspaceDefaultValue", "XXX").asString();
     _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->encodingPriorityCustomerDefaultValue: " + encodingPriority
+        + ", api->encodingPriorityWorkspaceDefaultValue: " + encodingPriority
     );
     if (encodingPriority == "low")
-        _encodingPriorityCustomerDefaultValue = MMSEngineDBFacade::EncodingPriority::Low;
+        _encodingPriorityWorkspaceDefaultValue = MMSEngineDBFacade::EncodingPriority::Low;
     else
-        _encodingPriorityCustomerDefaultValue = MMSEngineDBFacade::EncodingPriority::Low;
+        _encodingPriorityWorkspaceDefaultValue = MMSEngineDBFacade::EncodingPriority::Low;
 
-    string encodingPeriod =  _configuration["api"].get("encodingPeriodCustomerDefaultValue", "XXX").asString();
+    string encodingPeriod =  _configuration["api"].get("encodingPeriodWorkspaceDefaultValue", "XXX").asString();
     _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->encodingPeriodCustomerDefaultValue: " + encodingPeriod
+        + ", api->encodingPeriodWorkspaceDefaultValue: " + encodingPeriod
     );
     if (encodingPeriod == "daily")
-        _encodingPeriodCustomerDefaultValue = MMSEngineDBFacade::EncodingPeriod::Daily;
+        _encodingPeriodWorkspaceDefaultValue = MMSEngineDBFacade::EncodingPeriod::Daily;
     else
-        _encodingPeriodCustomerDefaultValue = MMSEngineDBFacade::EncodingPeriod::Daily;
+        _encodingPeriodWorkspaceDefaultValue = MMSEngineDBFacade::EncodingPeriod::Daily;
 
-    _maxIngestionsNumberCustomerDefaultValue = _configuration["api"].get("maxIngestionsNumberCustomerDefaultValue", "XXX").asInt();
+    _maxIngestionsNumberWorkspaceDefaultValue = _configuration["api"].get("maxIngestionsNumberWorkspaceDefaultValue", "XXX").asInt();
     _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->maxIngestionsNumberCustomerDefaultValue: " + to_string(_maxIngestionsNumberCustomerDefaultValue)
+        + ", api->maxIngestionsNumberWorkspaceDefaultValue: " + to_string(_maxIngestionsNumberWorkspaceDefaultValue)
     );
-    _maxStorageInGBCustomerDefaultValue = _configuration["api"].get("maxStorageInGBCustomerDefaultValue", "XXX").asInt();
+    _maxStorageInGBWorkspaceDefaultValue = _configuration["api"].get("maxStorageInGBWorkspaceDefaultValue", "XXX").asInt();
     _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->maxStorageInGBCustomerDefaultValue: " + to_string(_maxStorageInGBCustomerDefaultValue)
+        + ", api->maxStorageInGBWorkspaceDefaultValue: " + to_string(_maxStorageInGBWorkspaceDefaultValue)
     );
 
     Json::Value api = _configuration["api"];
@@ -219,7 +219,7 @@ void API::getBinaryAndResponse(
         string requestMethod,
         string xCatraMMSResumeHeader,
         unordered_map<string, string> queryParameters,
-        tuple<shared_ptr<Customer>,bool,bool>& customerAndFlags,
+        tuple<shared_ptr<Workspace>,bool,bool>& workspaceAndFlags,
         unsigned long contentLength
 )
 {
@@ -238,7 +238,7 @@ void API::manageRequestAndResponse(
         string requestURI,
         string requestMethod,
         unordered_map<string, string> queryParameters,
-        tuple<shared_ptr<Customer>,bool,bool>& customerAndFlags,
+        tuple<shared_ptr<Workspace>,bool,bool>& workspaceAndFlags,
         unsigned long contentLength,
         string requestBody,
         string xCatraMMSResumeHeader,
@@ -344,9 +344,9 @@ void API::manageRequestAndResponse(
         string responseBody;
         sendSuccess(request, 200, responseBody);
     }
-    else if (method == "registerCustomer")
+    else if (method == "registerWorkspace")
     {
-        bool isAdminAPI = get<1>(customerAndFlags);
+        bool isAdminAPI = get<1>(workspaceAndFlags);
         if (!isAdminAPI)
         {
             string errorMessage = string("APIKey flags does not have the ADMIN permission"
@@ -359,11 +359,11 @@ void API::manageRequestAndResponse(
             throw runtime_error(errorMessage);
         }
         
-        registerCustomer(request, requestBody);
+        registerWorkspace(request, requestBody);
     }
-    else if (method == "confirmCustomer")
+    else if (method == "confirmWorkspace")
     {
-        bool isAdminAPI = get<1>(customerAndFlags);
+        bool isAdminAPI = get<1>(workspaceAndFlags);
         if (!isAdminAPI)
         {
             string errorMessage = string("APIKey flags does not have the ADMIN permission"
@@ -376,11 +376,11 @@ void API::manageRequestAndResponse(
             throw runtime_error(errorMessage);
         }
         
-        confirmCustomer(request, queryParameters);
+        confirmWorkspace(request, queryParameters);
     }
     else if (method == "createAPIKey")
     {
-        bool isAdminAPI = get<1>(customerAndFlags);
+        bool isAdminAPI = get<1>(workspaceAndFlags);
         if (!isAdminAPI)
         {
             string errorMessage = string("APIKey flags does not have the ADMIN permission"
@@ -397,7 +397,7 @@ void API::manageRequestAndResponse(
     }
     else if (method == "ingestion")
     {
-        bool isUserAPI = get<2>(customerAndFlags);
+        bool isUserAPI = get<2>(workspaceAndFlags);
         if (!isUserAPI)
         {
             string errorMessage = string("APIKey flags does not have the USER permission"
@@ -410,11 +410,11 @@ void API::manageRequestAndResponse(
             throw runtime_error(errorMessage);
         }
         
-        ingestion(request, get<0>(customerAndFlags), queryParameters, requestBody);
+        ingestion(request, get<0>(workspaceAndFlags), queryParameters, requestBody);
     }
     else if (method == "uploadBinary")
     {
-        bool isUserAPI = get<2>(customerAndFlags);
+        bool isUserAPI = get<2>(workspaceAndFlags);
         if (!isUserAPI)
         {
             string errorMessage = string("APIKey flags does not have the USER permission"
@@ -428,7 +428,7 @@ void API::manageRequestAndResponse(
         }
                 
         uploadBinary(request, requestMethod, xCatraMMSResumeHeader,
-            queryParameters, customerAndFlags, // contentLength,
+            queryParameters, workspaceAndFlags, // contentLength,
                 requestDetails);
     }
     else
@@ -777,11 +777,11 @@ void API::fileUploadProgressCheck()
     }
 }
 
-void API::registerCustomer(
+void API::registerWorkspace(
         FCGX_Request& request,
         string requestBody)
 {
-    string api = "registerCustomer";
+    string api = "registerWorkspace";
 
     _logger->info(__FILEREF__ + "Received " + api
         + ", requestBody: " + requestBody
@@ -866,10 +866,10 @@ void API::registerCustomer(
             if (!_mmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
             {
                 _logger->info(__FILEREF__ + "encodingPriority is not present, set the default value"
-                    + ", _encodingPriorityCustomerDefaultValue: " + MMSEngineDBFacade::toString(_encodingPriorityCustomerDefaultValue)
+                    + ", _encodingPriorityWorkspaceDefaultValue: " + MMSEngineDBFacade::toString(_encodingPriorityWorkspaceDefaultValue)
                 );
 
-                encodingPriority = _encodingPriorityCustomerDefaultValue;
+                encodingPriority = _encodingPriorityWorkspaceDefaultValue;
             }
             else
             {
@@ -899,10 +899,10 @@ void API::registerCustomer(
             if (!_mmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
             {
                 _logger->info(__FILEREF__ + "encodingPeriod is not present, set the default value"
-                    + ", _encodingPeriodCustomerDefaultValue: " + MMSEngineDBFacade::toString(_encodingPeriodCustomerDefaultValue)
+                    + ", _encodingPeriodWorkspaceDefaultValue: " + MMSEngineDBFacade::toString(_encodingPeriodWorkspaceDefaultValue)
                 );
 
-                encodingPeriod = _encodingPeriodCustomerDefaultValue;
+                encodingPeriod = _encodingPeriodWorkspaceDefaultValue;
             }
             else
             {
@@ -932,10 +932,10 @@ void API::registerCustomer(
             if (!_mmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
             {
                 _logger->info(__FILEREF__ + "MaxIngestionsNumber is not present, set the default value"
-                    + ", _maxIngestionsNumberCustomerDefaultValue: " + to_string(_maxIngestionsNumberCustomerDefaultValue)
+                    + ", _maxIngestionsNumberWorkspaceDefaultValue: " + to_string(_maxIngestionsNumberWorkspaceDefaultValue)
                 );
 
-                maxIngestionsNumber = _maxIngestionsNumberCustomerDefaultValue;
+                maxIngestionsNumber = _maxIngestionsNumberWorkspaceDefaultValue;
             }
             else
             {
@@ -965,10 +965,10 @@ void API::registerCustomer(
             if (!_mmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
             {
                 _logger->info(__FILEREF__ + "MaxStorageInGB is not present, set the default value"
-                    + ", _maxStorageInGBCustomerDefaultValue: " + to_string(_maxStorageInGBCustomerDefaultValue)
+                    + ", _maxStorageInGBWorkspaceDefaultValue: " + to_string(_maxStorageInGBWorkspaceDefaultValue)
                 );
 
-                maxStorageInGB = _maxStorageInGBCustomerDefaultValue;
+                maxStorageInGB = _maxStorageInGBWorkspaceDefaultValue;
             }
             else
             {
@@ -994,14 +994,14 @@ void API::registerCustomer(
 
         try
         {
-            string customerDirectoryName;
+            string workspaceDirectoryName;
 
-            customerDirectoryName.resize(name.size());
+            workspaceDirectoryName.resize(name.size());
 
             transform(
                 name.begin(), 
                 name.end(), 
-                customerDirectoryName.begin(), 
+                workspaceDirectoryName.begin(), 
                 [](unsigned char c){
                     if (isalpha(c)) 
                         return c; 
@@ -1009,22 +1009,22 @@ void API::registerCustomer(
                         return (unsigned char) '_'; } 
             );
 
-            _logger->info(__FILEREF__ + "Registering Customer"
+            _logger->info(__FILEREF__ + "Registering Workspace"
                 + ", name: " + name
                 + ", email: " + email
             );
             
-            tuple<int64_t,int64_t,string> customerKeyUserKeyAndConfirmationCode = 
-                _mmsEngineDBFacade->registerCustomer(
+            tuple<int64_t,int64_t,string> workspaceKeyUserKeyAndConfirmationCode = 
+                _mmsEngineDBFacade->registerWorkspace(
                     name, 
-                    customerDirectoryName,
+                    workspaceDirectoryName,
                     "",                             // string street,
                     "",                             // string city,
                     "",                             // string state,
                     "",                             // string zip,
                     "",                             // string phone,
                     "",                             // string countryCode,
-                    MMSEngineDBFacade::CustomerType::IngestionAndDelivery,  // MMSEngineDBFacade::CustomerType customerType
+                    MMSEngineDBFacade::WorkspaceType::IngestionAndDelivery,  // MMSEngineDBFacade::WorkspaceType workspaceType
                     "",                             // string deliveryURL,
                     encodingPriority,               //  MMSEngineDBFacade::EncodingPriority maxEncodingPriority,
                     encodingPeriod,                 //  MMSEngineDBFacade::EncodingPeriod encodingPeriod,
@@ -1038,7 +1038,7 @@ void API::registerCustomer(
                 );
 
             string responseBody = string("{ ")
-                + "\"customerKey\": " + to_string(get<0>(customerKeyUserKeyAndConfirmationCode)) + " "
+                + "\"workspaceKey\": " + to_string(get<0>(workspaceKeyUserKeyAndConfirmationCode)) + " "
                 + "}";
             sendSuccess(request, 201, responseBody);
             
@@ -1047,8 +1047,8 @@ void API::registerCustomer(
             
             vector<string> emailBody;
             emailBody.push_back("<p>Hi John,</p>");
-            emailBody.push_back(string("<p>This is the confirmation code ") + get<2>(customerKeyUserKeyAndConfirmationCode) + "</p>");
-            emailBody.push_back(string("<p>for the customer key ") + to_string(get<0>(customerKeyUserKeyAndConfirmationCode)) + "</p>");
+            emailBody.push_back(string("<p>This is the confirmation code ") + get<2>(workspaceKeyUserKeyAndConfirmationCode) + "</p>");
+            emailBody.push_back(string("<p>for the workspace key ") + to_string(get<0>(workspaceKeyUserKeyAndConfirmationCode)) + "</p>");
             emailBody.push_back("<p>Bye!</p>");
 
             sendEmail(to, subject, emailBody);
@@ -1107,11 +1107,11 @@ void API::registerCustomer(
     }
 }
 
-void API::confirmCustomer(
+void API::confirmWorkspace(
         FCGX_Request& request,
         unordered_map<string, string> queryParameters)
 {
-    string api = "confirmCustomer";
+    string api = "confirmWorkspace";
 
     _logger->info(__FILEREF__ + "Received " + api
     );
@@ -1131,7 +1131,7 @@ void API::confirmCustomer(
 
         try
         {
-            _mmsEngineDBFacade->confirmCustomer(confirmationCodeIt->second);
+            _mmsEngineDBFacade->confirmWorkspace(confirmationCodeIt->second);
 
             string responseBody;
             sendSuccess(request, 200, responseBody);
@@ -1209,10 +1209,10 @@ void API::createAPIKey(
 
     try
     {
-        auto customerKeyIt = queryParameters.find("customerKey");
-        if (customerKeyIt == queryParameters.end())
+        auto workspaceKeyIt = queryParameters.find("workspaceKey");
+        if (workspaceKeyIt == queryParameters.end())
         {
-            string errorMessage = string("The 'customerKey' parameter is not found");
+            string errorMessage = string("The 'workspaceKey' parameter is not found");
             _logger->error(__FILEREF__ + errorMessage);
 
             sendError(request, 400, errorMessage);
@@ -1239,7 +1239,7 @@ void API::createAPIKey(
                     chrono::system_clock::now() + chrono::hours(24 * 365 * 20);
             
             string apiKey = _mmsEngineDBFacade->createAPIKey(
-                    stol(customerKeyIt->second),
+                    stol(workspaceKeyIt->second),
                     stol(userKeyIt->second),
                     adminAPI, 
                     userAPI, 
@@ -1304,7 +1304,7 @@ void API::createAPIKey(
 
 void API::ingestion(
         FCGX_Request& request,
-        shared_ptr<Customer> customer,
+        shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody)
 {
@@ -1473,7 +1473,7 @@ void API::ingestion(
             }    
             
             int64_t ingestionRootKey = _mmsEngineDBFacade->addIngestionRoot(conn,
-                customer->_customerKey, rootType, rootLabel, rootLabelDuplication);
+                workspace->_workspaceKey, rootType, rootLabel, rootLabelDuplication);
     
             string taskField = "Task";
             string groupOfTasksField = "GroupOfTasks";
@@ -1483,7 +1483,7 @@ void API::ingestion(
 
                 vector<int64_t> dependOnIngestionJobKeys;
                 int localDependOnSuccess = 0;   // it is not important since dependOnIngestionJobKey is -1
-                ingestionTask(conn, customer, ingestionRootKey, taskRoot, dependOnIngestionJobKeys, 
+                ingestionTask(conn, workspace, ingestionRootKey, taskRoot, dependOnIngestionJobKeys, 
                         localDependOnSuccess, responseBody);            
             }
             else if (_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, groupOfTasksField))
@@ -1492,7 +1492,7 @@ void API::ingestion(
                 
                 vector<int64_t> dependOnIngestionJobKeys;
                 int localDependOnSuccess = 0;   // it is not important since dependOnIngestionJobKey is -1
-                ingestionGroupOfTasks(conn, customer, ingestionRootKey, groupOfTasksRoot, dependOnIngestionJobKeys, 
+                ingestionGroupOfTasks(conn, workspace, ingestionRootKey, groupOfTasksRoot, dependOnIngestionJobKeys, 
                         localDependOnSuccess, responseBody); 
             }
             else
@@ -1576,7 +1576,7 @@ void API::ingestion(
 }
 
 int64_t API::ingestionTask(shared_ptr<MySQLConnection> conn,
-        shared_ptr<Customer> customer, int64_t ingestionRootKey, Json::Value taskRoot, 
+        shared_ptr<Workspace> workspace, int64_t ingestionRootKey, Json::Value taskRoot, 
         vector<int64_t> dependOnIngestionJobKeys, int dependOnSuccess,
         string& responseBody)
 {
@@ -1609,7 +1609,7 @@ int64_t API::ingestionTask(shared_ptr<MySQLConnection> conn,
     );
     
     int64_t localDependOnIngestionJobKey = _mmsEngineDBFacade->addIngestionJob(conn,
-            customer->_customerKey, ingestionRootKey, label, taskMetadata, MMSEngineDBFacade::toIngestionType(type), 
+            workspace->_workspaceKey, ingestionRootKey, label, taskMetadata, MMSEngineDBFacade::toIngestionType(type), 
             dependOnIngestionJobKeys, dependOnSuccess);
     
     if (dependOnIngestionJobKeys.size() > 0)
@@ -1657,14 +1657,14 @@ int64_t API::ingestionTask(shared_ptr<MySQLConnection> conn,
 
     vector<int64_t> localDependOnIngestionJobKeys;
     localDependOnIngestionJobKeys.push_back(localDependOnIngestionJobKey);
-    ingestionEvents(conn, customer, ingestionRootKey, taskRoot, 
+    ingestionEvents(conn, workspace, ingestionRootKey, taskRoot, 
         localDependOnIngestionJobKeys, responseBody);
     
     return localDependOnIngestionJobKey;
 }
 
 void API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
-        shared_ptr<Customer> customer, int64_t ingestionRootKey,
+        shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
         Json::Value groupOfTasksRoot, 
         vector<int64_t> dependOnIngestionJobKeys, int dependOnSuccess,
         string& responseBody)
@@ -1719,18 +1719,18 @@ void API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
         Json::Value taskRoot = tasksRoot[taskIndex];
         
         int64_t localDependOnIngestionJobKey = ingestionTask(
-                conn, customer, ingestionRootKey, taskRoot, dependOnIngestionJobKeys, 
+                conn, workspace, ingestionRootKey, taskRoot, dependOnIngestionJobKeys, 
                 dependOnSuccess, responseBody);    
 
         localDependOnIngestionJobKeys.push_back(localDependOnIngestionJobKey);
     }
 
-    ingestionEvents(conn, customer, ingestionRootKey, groupOfTasksRoot, 
+    ingestionEvents(conn, workspace, ingestionRootKey, groupOfTasksRoot, 
         localDependOnIngestionJobKeys, responseBody);
 }    
 
 void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
-        shared_ptr<Customer> customer, int64_t ingestionRootKey, Json::Value taskOrGroupOfTasksRoot, 
+        shared_ptr<Workspace> workspace, int64_t ingestionRootKey, Json::Value taskOrGroupOfTasksRoot, 
         vector<int64_t> dependOnIngestionJobKeys, string& responseBody)
 {
 
@@ -1746,7 +1746,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
             Json::Value onSuccessTaskRoot = onSuccessRoot[taskField];                        
 
             int localDependOnSuccess = 1;
-            ingestionTask(conn, customer, ingestionRootKey, onSuccessTaskRoot, dependOnIngestionJobKeys, 
+            ingestionTask(conn, workspace, ingestionRootKey, onSuccessTaskRoot, dependOnIngestionJobKeys, 
                     localDependOnSuccess, responseBody);            
         }
         else if (_mmsEngineDBFacade->isMetadataPresent(onSuccessRoot, groupOfTasksField))
@@ -1754,7 +1754,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
             Json::Value onSuccessGroupOfTasksRoot = onSuccessRoot[groupOfTasksField];                        
 
             int localDependOnSuccess = 1;
-            ingestionGroupOfTasks(conn, customer, ingestionRootKey,
+            ingestionGroupOfTasks(conn, workspace, ingestionRootKey,
                     onSuccessGroupOfTasksRoot, dependOnIngestionJobKeys, 
                     localDependOnSuccess, responseBody);            
         }
@@ -1772,7 +1772,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
             Json::Value onErrorTaskRoot = onErrorRoot[taskField];                        
 
             int localDependOnSuccess = 0;
-            ingestionTask(conn, customer, ingestionRootKey, onErrorTaskRoot, dependOnIngestionJobKeys, 
+            ingestionTask(conn, workspace, ingestionRootKey, onErrorTaskRoot, dependOnIngestionJobKeys, 
                     localDependOnSuccess, responseBody);            
         }
         else if (_mmsEngineDBFacade->isMetadataPresent(onErrorRoot, groupOfTasksField))
@@ -1780,7 +1780,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
             Json::Value onErrorGroupOfTasksRoot = onErrorRoot[groupOfTasksField];                        
 
             int localDependOnSuccess = 0;
-            ingestionGroupOfTasks(conn, customer, ingestionRootKey,
+            ingestionGroupOfTasks(conn, workspace, ingestionRootKey,
                     onErrorGroupOfTasksRoot, dependOnIngestionJobKeys, 
                     localDependOnSuccess, responseBody);            
         }
@@ -1798,7 +1798,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
             Json::Value onCompleteTaskRoot = onCompleteRoot[taskField];                        
 
             int localDependOnSuccess = -1;
-            ingestionTask(conn, customer, ingestionRootKey, onCompleteTaskRoot, dependOnIngestionJobKeys, 
+            ingestionTask(conn, workspace, ingestionRootKey, onCompleteTaskRoot, dependOnIngestionJobKeys, 
                     localDependOnSuccess, responseBody);            
         }
         else if (_mmsEngineDBFacade->isMetadataPresent(onCompleteRoot, groupOfTasksField))
@@ -1806,7 +1806,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
             Json::Value onCompleteGroupOfTasksRoot = onCompleteRoot[groupOfTasksField];                        
 
             int localDependOnSuccess = -1;
-            ingestionGroupOfTasks(conn, customer, ingestionRootKey,
+            ingestionGroupOfTasks(conn, workspace, ingestionRootKey,
                     onCompleteGroupOfTasksRoot, dependOnIngestionJobKeys, 
                     localDependOnSuccess, responseBody);            
         }
@@ -1816,7 +1816,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
 /*
 void API::ingestion(
         FCGX_Request& request,
-        shared_ptr<Customer> customer,
+        shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody)
 {
@@ -1864,7 +1864,7 @@ void API::ingestion(
                 + ", IngestionStatus: " + "End_ValidationMetadataFailed"
                 + ", errorMessage: " + errorMessage
             );
-            _mmsEngineDBFacade->addIngestionJob (customer->_customerKey,
+            _mmsEngineDBFacade->addIngestionJob (workspace->_workspaceKey,
                     requestBody,
                     MMSEngineDBFacade::IngestionType::Unknown,
                     MMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed, 
@@ -1894,7 +1894,7 @@ void API::ingestion(
                 );
                 
                 int64_t ingestionJobKey = _mmsEngineDBFacade->addIngestionJob(
-                        customer->_customerKey,
+                        workspace->_workspaceKey,
                         singleIngestion,
                         MMSEngineDBFacade::IngestionType::Unknown,
                         MMSEngineDBFacade::IngestionStatus::Start_Ingestion,
@@ -1921,7 +1921,7 @@ void API::ingestion(
             );
                 
             int64_t ingestionJobKey = _mmsEngineDBFacade->addIngestionJob(
-                    customer->_customerKey,
+                    workspace->_workspaceKey,
                     requestBody,
                     MMSEngineDBFacade::IngestionType::Unknown,
                     MMSEngineDBFacade::IngestionStatus::Start_Ingestion,
@@ -1974,7 +1974,7 @@ void API::uploadBinary(
         string requestMethod,
         string xCatraMMSResumeHeader,
         unordered_map<string, string> queryParameters,
-        tuple<shared_ptr<Customer>,bool,bool> customerAndFlags,
+        tuple<shared_ptr<Workspace>,bool,bool> workspaceAndFlags,
         // unsigned long contentLength,
         unordered_map<string, string>& requestDetails
 )
@@ -2047,9 +2047,9 @@ void API::uploadBinary(
             + ", contentRangeSize: " + to_string(contentRangeSize)
         );
 
-        shared_ptr<Customer> customer = get<0>(customerAndFlags);
-        string customerIngestionBinaryPathName = _mmsStorage->getCustomerIngestionRepository(customer);
-        customerIngestionBinaryPathName
+        shared_ptr<Workspace> workspace = get<0>(workspaceAndFlags);
+        string workspaceIngestionBinaryPathName = _mmsStorage->getWorkspaceIngestionRepository(workspace);
+        workspaceIngestionBinaryPathName
                 .append("/")
                 .append(to_string(ingestionJobKey))
                 .append(".binary")
@@ -2061,16 +2061,16 @@ void API::uploadBinary(
             {
                 _logger->info(__FILEREF__ + "Moving file"
                     + ", binaryPathFile: " + binaryPathFile
-                    + ", customerIngestionBinaryPathName: " + customerIngestionBinaryPathName
+                    + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
                 );
 
-                FileIO::moveFile(binaryPathFile, customerIngestionBinaryPathName);
+                FileIO::moveFile(binaryPathFile, workspaceIngestionBinaryPathName);
             }
             catch(exception e)
             {
                 string errorMessage = string("Error to move file")
                     + ", binaryPathFile: " + binaryPathFile
-                    + ", customerIngestionBinaryPathName: " + customerIngestionBinaryPathName
+                    + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
                 ;
                 _logger->error(__FILEREF__ + errorMessage);
 
@@ -2091,28 +2091,28 @@ void API::uploadBinary(
         {
             //  Content-Range is present
             
-            if (FileIO::fileExisting (customerIngestionBinaryPathName))
+            if (FileIO::fileExisting (workspaceIngestionBinaryPathName))
             {
                 if (contentRangeStart == 0)
                 {
                     // content is reset
-                    ofstream osDestStream(customerIngestionBinaryPathName.c_str(), 
+                    ofstream osDestStream(workspaceIngestionBinaryPathName.c_str(), 
                             ofstream::binary | ofstream::trunc);
 
                     osDestStream.close();
                 }
                 
                 bool inCaseOfLinkHasItToBeRead  = false;
-                unsigned long customerIngestionBinarySizeInBytes = FileIO::getFileSizeInBytes (
-                    customerIngestionBinaryPathName, inCaseOfLinkHasItToBeRead);
+                unsigned long workspaceIngestionBinarySizeInBytes = FileIO::getFileSizeInBytes (
+                    workspaceIngestionBinaryPathName, inCaseOfLinkHasItToBeRead);
                 unsigned long binarySizeInBytes = FileIO::getFileSizeInBytes (
                     binaryPathFile, inCaseOfLinkHasItToBeRead);
                 
-                if (contentRangeStart != customerIngestionBinarySizeInBytes)
+                if (contentRangeStart != workspaceIngestionBinarySizeInBytes)
                 {
                     string errorMessage = string("This is NOT the next expected chunk because Content-Range start is different from fileSizeInBytes")
                         + ", contentRangeStart: " + to_string(contentRangeStart)
-                        + ", customerIngestionBinarySizeInBytes: " + to_string(customerIngestionBinarySizeInBytes)
+                        + ", workspaceIngestionBinarySizeInBytes: " + to_string(workspaceIngestionBinarySizeInBytes)
                     ;
                     _logger->error(__FILEREF__ + errorMessage);
 
@@ -2142,17 +2142,17 @@ void API::uploadBinary(
                     bool removeSrcFileAfterConcat = true;
                     
                     _logger->info(__FILEREF__ + "Concat file"
-                        + ", customerIngestionBinaryPathName: " + customerIngestionBinaryPathName
+                        + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
                         + ", binaryPathFile: " + binaryPathFile
                         + ", removeSrcFileAfterConcat: " + to_string(removeSrcFileAfterConcat)
                     );
 
-                    FileIO::concatFile(customerIngestionBinaryPathName, binaryPathFile, removeSrcFileAfterConcat);
+                    FileIO::concatFile(workspaceIngestionBinaryPathName, binaryPathFile, removeSrcFileAfterConcat);
                 }
                 catch(exception e)
                 {
                     string errorMessage = string("Error to concat file")
-                        + ", customerIngestionBinaryPathName: " + customerIngestionBinaryPathName
+                        + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
                         + ", binaryPathFile: " + binaryPathFile
                     ;
                     _logger->error(__FILEREF__ + errorMessage);
@@ -2182,16 +2182,16 @@ void API::uploadBinary(
                 {
                     _logger->info(__FILEREF__ + "Moving file"
                         + ", binaryPathFile: " + binaryPathFile
-                        + ", customerIngestionBinaryPathName: " + customerIngestionBinaryPathName
+                        + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
                     );
 
-                    FileIO::moveFile(binaryPathFile, customerIngestionBinaryPathName);
+                    FileIO::moveFile(binaryPathFile, workspaceIngestionBinaryPathName);
                 }
                 catch(exception e)
                 {
                     string errorMessage = string("Error to move file")
                         + ", binaryPathFile: " + binaryPathFile
-                        + ", customerIngestionBinaryPathName: " + customerIngestionBinaryPathName
+                        + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
                     ;
                     _logger->error(__FILEREF__ + errorMessage);
 
@@ -2222,17 +2222,17 @@ void API::uploadBinary(
             unsigned long fileSize = 0;
             try
             {
-                if (FileIO::fileExisting(customerIngestionBinaryPathName))
+                if (FileIO::fileExisting(workspaceIngestionBinaryPathName))
                 {
                     bool inCaseOfLinkHasItToBeRead = false;
                     fileSize = FileIO::getFileSizeInBytes (
-                        customerIngestionBinaryPathName, inCaseOfLinkHasItToBeRead);
+                        workspaceIngestionBinaryPathName, inCaseOfLinkHasItToBeRead);
                 }
             }
             catch(exception e)
             {
                 string errorMessage = string("Error to retrieve the file size")
-                    + ", customerIngestionBinaryPathName: " + customerIngestionBinaryPathName
+                    + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
                 ;
                 _logger->error(__FILEREF__ + errorMessage);
 
@@ -2254,17 +2254,17 @@ void API::uploadBinary(
                     unsigned long fileSize = 0;
                     try
                     {
-                        if (FileIO::fileExisting(customerIngestionBinaryPathName))
+                        if (FileIO::fileExisting(workspaceIngestionBinaryPathName))
                         {
                             bool inCaseOfLinkHasItToBeRead = false;
                             fileSize = FileIO::getFileSizeInBytes (
-                                customerIngestionBinaryPathName, inCaseOfLinkHasItToBeRead);
+                                workspaceIngestionBinaryPathName, inCaseOfLinkHasItToBeRead);
                         }
                     }
                     catch(exception e)
                     {
                         string errorMessage = string("Error to retrieve the file size")
-                            + ", customerIngestionBinaryPathName: " + customerIngestionBinaryPathName
+                            + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
                         ;
                         _logger->error(__FILEREF__ + errorMessage);
     //
@@ -2296,7 +2296,7 @@ void API::uploadBinary(
                 }
             }
             
-            ofstream binaryFileStream(customerIngestionBinaryPathName, 
+            ofstream binaryFileStream(workspaceIngestionBinaryPathName, 
                     resume ? (ofstream::binary | ofstream::app) : (ofstream::binary | ofstream::trunc));
             buffer = new char [_binaryBufferLength];
 

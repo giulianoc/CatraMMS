@@ -48,7 +48,7 @@ public:
         string requestMethod,
         string xCatraMMSResumeHeader,
         unordered_map<string, string> queryParameters,
-        tuple<shared_ptr<Customer>,bool,bool>& customerAndFlags,
+        tuple<shared_ptr<Workspace>,bool,bool>& workspaceAndFlags,
         unsigned long contentLength);
 
     virtual void manageRequestAndResponse(
@@ -56,7 +56,7 @@ public:
             string requestURI,
             string requestMethod,
             unordered_map<string, string> queryParameters,
-            tuple<shared_ptr<Customer>,bool,bool>& customerAndFlags,
+            tuple<shared_ptr<Workspace>,bool,bool>& workspaceAndFlags,
             unsigned long contentLength,
             string requestBody,
             string xCatraMMSResumeHeader,
@@ -67,10 +67,10 @@ public:
     void stopUploadFileProgressThread();
 
 private:
-    MMSEngineDBFacade::EncodingPriority _encodingPriorityCustomerDefaultValue;
-    MMSEngineDBFacade::EncodingPeriod _encodingPeriodCustomerDefaultValue;
-    int _maxIngestionsNumberCustomerDefaultValue;
-    int _maxStorageInGBCustomerDefaultValue;
+    MMSEngineDBFacade::EncodingPriority _encodingPriorityWorkspaceDefaultValue;
+    MMSEngineDBFacade::EncodingPeriod _encodingPeriodWorkspaceDefaultValue;
+    int _maxIngestionsNumberWorkspaceDefaultValue;
+    int _maxStorageInGBWorkspaceDefaultValue;
     unsigned long       _binaryBufferLength;
     unsigned long       _progressUpdatePeriodInSeconds;
     int                 _webServerPort;
@@ -80,11 +80,11 @@ private:
     FileUploadProgressData*     _fileUploadProgressData;
     
 
-    void registerCustomer(
+    void registerWorkspace(
         FCGX_Request& request,
         string requestBody);
     
-    void confirmCustomer(
+    void confirmWorkspace(
         FCGX_Request& request,
         unordered_map<string, string> queryParameters);
 
@@ -94,24 +94,24 @@ private:
 
     void ingestion(
         FCGX_Request& request,
-        shared_ptr<Customer> customer,
+        shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
 
     int64_t ingestionTask(shared_ptr<MySQLConnection> conn,
-        shared_ptr<Customer> customer, int64_t ingestionRootKey,
+        shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
             Json::Value taskRoot, 
         vector<int64_t> dependOnIngestionJobKeys, int dependOnSuccess,
         string& responseBody);
         
     void ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
-        shared_ptr<Customer> customer, int64_t ingestionRootKey,
+        shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
             Json::Value groupOfTasksRoot, 
         vector <int64_t> dependOnIngestionJobKeys, int dependOnSuccess,
         string& responseBody);
 
     void ingestionEvents(shared_ptr<MySQLConnection> conn,
-        shared_ptr<Customer> customer, int64_t ingestionRootKey,
+        shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
             Json::Value taskOrGroupOfTasksRoot, 
         vector<int64_t> dependOnIngestionJobKeys, string& responseBody);
 
@@ -120,7 +120,7 @@ private:
         string requestMethod,
         string xCatraMMSResumeHeader,
         unordered_map<string, string> queryParameters,
-        tuple<shared_ptr<Customer>,bool,bool> customerAndFlags,
+        tuple<shared_ptr<Workspace>,bool,bool> workspaceAndFlags,
         // unsigned long contentLength,
             unordered_map<string, string>& requestDetails
     );

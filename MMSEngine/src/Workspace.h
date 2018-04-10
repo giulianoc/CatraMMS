@@ -1,17 +1,17 @@
 
-#ifndef Customer_h
-#define Customer_h
+#ifndef Workspace_h
+#define Workspace_h
 
 #include <string>
 #include <unordered_map>
 
 using namespace std;
 
-struct Customer
+struct Workspace
 {   
     using TerritoriesHashMap = unordered_map<long,string>;
 
-    long long               _customerKey;
+    long long               _workspaceKey;
     string                  _name;
     string                  _directoryName;
     unsigned long           _maxStorageInGB;

@@ -159,38 +159,38 @@ string MMSStorage::getPhysicalPath(int64_t mediaItemKey,
         _mmsEngineDBFacade->getStorageDetails(mediaItemKey, encodingProfileKey);
 
     int mmsPartitionNumber;
-    string customerDirectoryName;
+    string workspaceDirectoryName;
     string relativePath;
     string fileName;
-    tie(mmsPartitionNumber, customerDirectoryName, relativePath, fileName) = storageDetails;
+    tie(mmsPartitionNumber, workspaceDirectoryName, relativePath, fileName) = storageDetails;
 
     return getMMSAssetPathName(
         mmsPartitionNumber,
-        customerDirectoryName,
+        workspaceDirectoryName,
         relativePath,
         fileName);
 }
 
-string MMSStorage::getCustomerIngestionRepository(shared_ptr<Customer> customer)
+string MMSStorage::getWorkspaceIngestionRepository(shared_ptr<Workspace> workspace)
 {
-    string customerIngestionDirectory = getIngestionRootRepository();
-    customerIngestionDirectory.append(customer->_name);
+    string workspaceIngestionDirectory = getIngestionRootRepository();
+    workspaceIngestionDirectory.append(workspace->_name);
     
-    if (!FileIO::directoryExisting(customerIngestionDirectory)) 
+    if (!FileIO::directoryExisting(workspaceIngestionDirectory)) 
     {
         _logger->info(__FILEREF__ + "Create directory"
-            + ", customerIngestionDirectory: " + customerIngestionDirectory
+            + ", workspaceIngestionDirectory: " + workspaceIngestionDirectory
         );
 
         bool noErrorIfExists = true;
         bool recursive = true;
-        FileIO::createDirectory(customerIngestionDirectory,
+        FileIO::createDirectory(workspaceIngestionDirectory,
                 S_IRUSR | S_IWUSR | S_IXUSR |
                 S_IRGRP | S_IXGRP |
                 S_IROTH | S_IXOTH, noErrorIfExists, recursive);
     }
 
-    return customerIngestionDirectory;
+    return workspaceIngestionDirectory;
 }
 
 string MMSStorage::getStagingRootRepository(void) {
@@ -200,7 +200,7 @@ string MMSStorage::getStagingRootRepository(void) {
 void MMSStorage::moveContentInRepository(
         string filePathName,
         RepositoryType rtRepositoryType,
-        string customerDirectoryName,
+        string workspaceDirectoryName,
         bool addDateTimeToFileName)
  {
 
@@ -208,14 +208,14 @@ void MMSStorage::moveContentInRepository(
         1,
         filePathName,
         rtRepositoryType,
-        customerDirectoryName,
+        workspaceDirectoryName,
         addDateTimeToFileName);
 }
 
 void MMSStorage::copyFileInRepository(
         string filePathName,
         RepositoryType rtRepositoryType,
-        string customerDirectoryName,
+        string workspaceDirectoryName,
         bool addDateTimeToFileName)
  {
 
@@ -223,7 +223,7 @@ void MMSStorage::copyFileInRepository(
         0,
         filePathName,
         rtRepositoryType,
-        customerDirectoryName,
+        workspaceDirectoryName,
         addDateTimeToFileName);
 }
 
@@ -265,7 +265,7 @@ void MMSStorage::contentInRepository(
         unsigned long ulIsCopyOrMove,
         string contentPathName,
         RepositoryType rtRepositoryType,
-        string customerDirectoryName,
+        string workspaceDirectoryName,
         bool addDateTimeToFileName)
  {
 
@@ -277,7 +277,7 @@ void MMSStorage::contentInRepository(
     // pDestRepository includes the '/' at the end
     string metaDataFileInDestRepository(getRepository(rtRepositoryType));
     metaDataFileInDestRepository
-        .append(customerDirectoryName)
+        .append(workspaceDirectoryName)
         .append("/");
 
     DateTime::get_tm_LocalTime(&tmDateTime, &ulMilliSecs);
@@ -399,7 +399,7 @@ void MMSStorage::contentInRepository(
 
 string MMSStorage::moveAssetInMMSRepository(
         string sourceAssetPathName,
-        string customerDirectoryName,
+        string workspaceDirectoryName,
         string destinationAssetFileName,
         string relativePath,
 
@@ -407,7 +407,7 @@ string MMSStorage::moveAssetInMMSRepository(
         unsigned long *pulMMSPartitionIndexUsed, // OUT if bIsPartitionIndexToBeCalculated is true, IN is bIsPartitionIndexToBeCalculated is false
 
         bool deliveryRepositoriesToo,
-        Customer::TerritoriesHashMap& phmTerritories
+        Workspace::TerritoriesHashMap& phmTerritories
         )
  {
     FileIO::DirectoryEntryType_t detSourceFileType;
@@ -507,14 +507,14 @@ string MMSStorage::moveAssetInMMSRepository(
         // to create the content provider directory and the
         // territories directories (if not already existing)
         mmsAssetPathName = creatingDirsUsingTerritories(*pulMMSPartitionIndexUsed,
-            relativePath, customerDirectoryName, deliveryRepositoriesToo,
+            relativePath, workspaceDirectoryName, deliveryRepositoriesToo,
             phmTerritories);
 
         mmsAssetPathName.append(destinationAssetFileName);
     }
 
     _logger->info(__FILEREF__ + "Selected MMS Partition for the content"
-        + ", customerDirectoryName: " + customerDirectoryName
+        + ", workspaceDirectoryName: " + workspaceDirectoryName
         + ", *pulMMSPartitionIndexUsed: " + to_string(*pulMMSPartitionIndexUsed)
         + ", mmsAssetPathName: " + mmsAssetPathName
         + ", _mmsPartitionsFreeSizeInMB [_ulCurrentMMSPartitionIndex]: " + to_string(_mmsPartitionsFreeSizeInMB [_ulCurrentMMSPartitionIndex])
@@ -574,7 +574,7 @@ string MMSStorage::moveAssetInMMSRepository(
 
 string MMSStorage::getMMSAssetPathName(
         unsigned long ulPartitionNumber,
-        string customerDirectoryName,
+        string workspaceDirectoryName,
         string relativePath, // using '/'
         string fileName)
  {
@@ -586,7 +586,7 @@ string MMSStorage::getMMSAssetPathName(
     string assetPathName(_mmsRootRepository);
     assetPathName
         .append(pMMSPartitionName)
-        .append(customerDirectoryName)
+        .append(workspaceDirectoryName)
         .append(relativePath)
         .append(fileName);
 
@@ -596,7 +596,7 @@ string MMSStorage::getMMSAssetPathName(
 
 string MMSStorage::getDownloadLinkPathName(
         unsigned long ulPartitionNumber,
-        string customerDirectoryName,
+        string workspaceDirectoryName,
         string territoryName,
         string relativePath,
         string fileName,
@@ -613,7 +613,7 @@ string MMSStorage::getDownloadLinkPathName(
         linkPathName = _downloadRootRepository;
         linkPathName
             .append(pMMSPartitionName)
-            .append(customerDirectoryName)
+            .append(workspaceDirectoryName)
             .append("/")
             .append(territoryName)
             .append(relativePath)
@@ -625,7 +625,7 @@ string MMSStorage::getDownloadLinkPathName(
 
         linkPathName = pMMSPartitionName;
         linkPathName
-            .append(customerDirectoryName)
+            .append(workspaceDirectoryName)
             .append("/")
             .append(territoryName)
             .append(relativePath)
@@ -638,7 +638,7 @@ string MMSStorage::getDownloadLinkPathName(
 
 string MMSStorage::getStreamingLinkPathName(
         unsigned long ulPartitionNumber, // IN
-        string customerDirectoryName, // IN
+        string workspaceDirectoryName, // IN
         string territoryName, // IN
         string relativePath, // IN
         string fileName) // IN
@@ -652,7 +652,7 @@ string MMSStorage::getStreamingLinkPathName(
     linkPathName = _streamingRootRepository;
     linkPathName
         .append(pMMSPartitionName)
-        .append(customerDirectoryName)
+        .append(workspaceDirectoryName)
         .append("/")
         .append(territoryName)
         .append(relativePath)
@@ -663,7 +663,7 @@ string MMSStorage::getStreamingLinkPathName(
 }
 
 string MMSStorage::getStagingAssetPathName(
-        string customerDirectoryName,
+        string workspaceDirectoryName,
         string relativePath,
         string fileName,                // may be empty ("")
         long long llMediaItemKey,       // used only if fileName is ""
@@ -712,7 +712,7 @@ string MMSStorage::getStagingAssetPathName(
     {
         assetPathName = _stagingRootRepository;
         assetPathName
-            .append(customerDirectoryName)
+            .append(workspaceDirectoryName)
             .append("/")
             .append(pDateTime)
             .append(relativePath);
@@ -839,27 +839,27 @@ string MMSStorage::getFFMPEGEncodingProfilePathName(
     return encodingProfilePathName;
 }
 
-unsigned long MMSStorage::getCustomerStorageUsage(
-        string customerDirectoryName)
+unsigned long MMSStorage::getWorkspaceStorageUsage(
+        string workspaceDirectoryName)
  {
 
     unsigned long ulStorageUsageInMB;
 
     unsigned long ulMMSPartitionIndex;
     unsigned long long ullDirectoryUsageInBytes;
-    unsigned long long ullCustomerStorageUsageInBytes;
+    unsigned long long ullWorkspaceStorageUsageInBytes;
 
 
     lock_guard<recursive_mutex> locker(_mtMMSPartitions);
 
-    ullCustomerStorageUsageInBytes = 0;
+    ullWorkspaceStorageUsageInBytes = 0;
 
     for (ulMMSPartitionIndex = 0;
             ulMMSPartitionIndex < _mmsPartitionsFreeSizeInMB.size();
             ulMMSPartitionIndex++) 
     {
         string contentProviderPathName = getMMSAssetPathName(
-                ulMMSPartitionIndex, customerDirectoryName,
+                ulMMSPartitionIndex, workspaceDirectoryName,
                 string(""), string(""));
 
         try 
@@ -877,12 +877,12 @@ unsigned long MMSStorage::getCustomerStorageUsage(
                     );
         }
 
-        ullCustomerStorageUsageInBytes += ullDirectoryUsageInBytes;
+        ullWorkspaceStorageUsageInBytes += ullDirectoryUsageInBytes;
     }
 
 
     ulStorageUsageInMB = (unsigned long)
-            (ullCustomerStorageUsageInBytes / (1024 * 1024));
+            (ullWorkspaceStorageUsageInBytes / (1024 * 1024));
 
     return ulStorageUsageInMB;
 }
@@ -923,9 +923,9 @@ void MMSStorage::refreshPartitionsFreeSizes(void)
 string MMSStorage::creatingDirsUsingTerritories(
         unsigned long ulCurrentMMSPartitionIndex,
         string relativePath,
-        string customerDirectoryName,
+        string workspaceDirectoryName,
         bool deliveryRepositoriesToo,
-        Customer::TerritoriesHashMap& phmTerritories)
+        Workspace::TerritoriesHashMap& phmTerritories)
  {
 
     char pMMSPartitionName [64];
@@ -936,7 +936,7 @@ string MMSStorage::creatingDirsUsingTerritories(
     string mmsAssetPathName(_mmsRootRepository);
     mmsAssetPathName
         .append(pMMSPartitionName)
-        .append(customerDirectoryName)
+        .append(workspaceDirectoryName)
         .append(relativePath);
 
     if (!FileIO::directoryExisting(mmsAssetPathName)) 
@@ -958,7 +958,7 @@ string MMSStorage::creatingDirsUsingTerritories(
 
     if (deliveryRepositoriesToo) 
     {
-        Customer::TerritoriesHashMap::iterator it;
+        Workspace::TerritoriesHashMap::iterator it;
 
 
         for (it = phmTerritories.begin(); it != phmTerritories.end(); ++it) 
@@ -968,7 +968,7 @@ string MMSStorage::creatingDirsUsingTerritories(
             string downloadAssetPathName(_downloadRootRepository);
             downloadAssetPathName
                 .append(pMMSPartitionName)
-                .append(customerDirectoryName)
+                .append(workspaceDirectoryName)
                 .append("/")
                 .append(territoryName)
                 .append(relativePath);
@@ -976,7 +976,7 @@ string MMSStorage::creatingDirsUsingTerritories(
             string streamingAssetPathName(_streamingRootRepository);
             streamingAssetPathName
                 .append(pMMSPartitionName)
-                .append(customerDirectoryName)
+                .append(workspaceDirectoryName)
                 .append("/")
                 .append(territoryName)
                 .append(relativePath);

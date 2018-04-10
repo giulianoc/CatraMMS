@@ -138,7 +138,7 @@ void FFMPEGEncoder::getBinaryAndResponse(
         string requestMethod,
         string xCatraMMSResumeHeader,
         unordered_map<string, string> queryParameters,
-        tuple<shared_ptr<Customer>,bool,bool>& customerAndFlags,
+        tuple<shared_ptr<Workspace>,bool,bool>& workspaceAndFlags,
         unsigned long contentLength
 )
 {
@@ -157,7 +157,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         string requestURI,
         string requestMethod,
         unordered_map<string, string> queryParameters,
-        tuple<shared_ptr<Customer>,bool,bool>& customerAndFlags,
+        tuple<shared_ptr<Workspace>,bool,bool>& workspaceAndFlags,
         unsigned long contentLength,
         string requestBody,
         string xCatraMMSResumeHeader,
@@ -179,7 +179,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
     if (method == "encodeContent")
     {
-        bool isAdminAPI = get<1>(customerAndFlags);
+        bool isAdminAPI = get<1>(workspaceAndFlags);
         if (!isAdminAPI)
         {
             string errorMessage = string("APIKey flags does not have the ADMIN permission"
@@ -222,7 +222,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
     }
     else if (method == "encodingProgress")
     {
-        bool isAdminAPI = get<1>(customerAndFlags);
+        bool isAdminAPI = get<1>(workspaceAndFlags);
         if (!isAdminAPI)
         {
             string errorMessage = string("APIKey flags does not have the ADMIN permission"
@@ -345,7 +345,7 @@ void FFMPEGEncoder::encodeContent(
             },
             "contentType": "...",
             "physicalPathKey": 1111,
-            "customerDirectoryName": "...",
+            "workspaceDirectoryName": "...",
             "relativePath": "...",
             "encodingJobKey": 1111,
             "ingestionJobKey": 1111,
@@ -396,7 +396,7 @@ void FFMPEGEncoder::encodeContent(
         }
         MMSEngineDBFacade::ContentType contentType = MMSEngineDBFacade::toContentType(encodingMedatada.get("contentType", "XXX").asString());
         int64_t physicalPathKey = encodingMedatada.get("physicalPathKey", -1).asInt64();
-        string customerDirectoryName = encodingMedatada.get("customerDirectoryName", "XXX").asString();
+        string workspaceDirectoryName = encodingMedatada.get("workspaceDirectoryName", "XXX").asString();
         string relativePath = encodingMedatada.get("relativePath", "XXX").asString();
         int64_t encodingJobKey = encodingMedatada.get("encodingJobKey", -1).asInt64();
         int64_t ingestionJobKey = encodingMedatada.get("ingestionJobKey", -1).asInt64();
@@ -410,7 +410,7 @@ void FFMPEGEncoder::encodeContent(
                 encodingProfileDetails,
                 contentType == MMSEngineDBFacade::ContentType::Video,
                 physicalPathKey,
-                customerDirectoryName,
+                workspaceDirectoryName,
                 relativePath,
                 encodingJobKey,
                 ingestionJobKey);        

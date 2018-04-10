@@ -9,20 +9,20 @@ int main (int iArgc, char *pArgv [])
 
     if (iArgc != 6)
     {
-        cerr << "Usage: " << pArgv[0] << " config-path-name customerName userName password emailAddress" << endl;
+        cerr << "Usage: " << pArgv[0] << " config-path-name workspaceName userName password emailAddress" << endl;
         
         return 1;
     }
     
     string configPathName = pArgv[1];
-    string customerName = pArgv[2];
+    string workspaceName = pArgv[2];
     string userName = pArgv[3];
     string password = pArgv[4];
     string emailAddress = pArgv[5];
 
     Json::Value configuration = loadConfigurationFile(configPathName.c_str());
 
-    auto logger = spdlog::stdout_logger_mt("registerCustomer");
+    auto logger = spdlog::stdout_logger_mt("registerWorkspace");
     spdlog::set_level(spdlog::level::trace);
     // globally register the loggers so so the can be accessed using spdlog::get(logger_name)
     // spdlog::register_logger(logger);
@@ -39,15 +39,15 @@ int main (int iArgc, char *pArgv [])
      */
     
     /*
-    mmsEngine->registerCustomer(
-	"Warner",                       // string customerName,
+    mmsEngine->registerWorkspace(
+	"Warner",                       // string workspaceName,
 	"",                             // string street,
         "",                             // string city,
         "",                             // string state,
 	"",                             // string zip,
         "",                             // string phone,
         "",                             // string countryCode,
-        MMSEngineDBFacade::CustomerType::EncodingOnly,  // MMSEngineDBFacade::CustomerType customerType
+        MMSEngineDBFacade::WorkspaceType::EncodingOnly,  // MMSEngineDBFacade::WorkspaceType workspaceType
 	"",                             // string deliveryURL,
         MMSEngineDBFacade::EncodingPriority::Medium,   //  MMSEngineDBFacade::EncodingPriority maxEncodingPriority,
         MMSEngineDBFacade::EncodingPeriod::Daily,       //  MMSEngineDBFacade::EncodingPeriod encodingPeriod,
@@ -61,15 +61,15 @@ int main (int iArgc, char *pArgv [])
     );
      */
     {
-        // string customerName = "Warner";
-        string customerDirectoryName;
+        // string workspaceName = "Warner";
+        string workspaceDirectoryName;
 
-        customerDirectoryName.resize(customerName.size());
+        workspaceDirectoryName.resize(workspaceName.size());
 
         transform(
-            customerName.begin(), 
-            customerName.end(), 
-            customerDirectoryName.begin(), 
+            workspaceName.begin(), 
+            workspaceName.end(), 
+            workspaceDirectoryName.begin(), 
             [](unsigned char c){
                 if (isalpha(c)) 
                     return c; 
@@ -79,17 +79,17 @@ int main (int iArgc, char *pArgv [])
 
         try
         {
-            tuple<int64_t,int64_t,string> customerKeyUserKeyAndConfirmationCode =
-                mmsEngineDBFacade->registerCustomer(
-                    customerName, 
-                    customerDirectoryName,
+            tuple<int64_t,int64_t,string> workspaceKeyUserKeyAndConfirmationCode =
+                mmsEngineDBFacade->registerWorkspace(
+                    workspaceName, 
+                    workspaceDirectoryName,
                     "",                             // string street,
                     "",                             // string city,
                     "",                             // string state,
                     "",                             // string zip,
                     "",                             // string phone,
                     "",                             // string countryCode,
-                    MMSEngineDBFacade::CustomerType::IngestionAndDelivery,  // MMSEngineDBFacade::CustomerType customerType
+                    MMSEngineDBFacade::WorkspaceType::IngestionAndDelivery,  // MMSEngineDBFacade::WorkspaceType workspaceType
                     "",                             // string deliveryURL,
                     MMSEngineDBFacade::EncodingPriority::High,   //  MMSEngineDBFacade::EncodingPriority maxEncodingPriority,
                     MMSEngineDBFacade::EncodingPeriod::Daily,       //  MMSEngineDBFacade::EncodingPeriod encodingPeriod,
@@ -102,18 +102,18 @@ int main (int iArgc, char *pArgv [])
                     chrono::system_clock::now() + chrono::hours(24 * 365 * 20)     // chrono::system_clock::time_point userExpirationDate
                 );
             
-            int64_t customerKey = get<0>(customerKeyUserKeyAndConfirmationCode);
-            int64_t userKey = get<1>(customerKeyUserKeyAndConfirmationCode);
-            string confirmationCode = get<2>(customerKeyUserKeyAndConfirmationCode);
+            int64_t workspaceKey = get<0>(workspaceKeyUserKeyAndConfirmationCode);
+            int64_t userKey = get<1>(workspaceKeyUserKeyAndConfirmationCode);
+            string confirmationCode = get<2>(workspaceKeyUserKeyAndConfirmationCode);
             
-            cout << "Customer registered" << endl;
-            cout << "CustomerKey: " << to_string(customerKey) << endl;
+            cout << "Workspace registered" << endl;
+            cout << "WorkspaceKey: " << to_string(workspaceKey) << endl;
             cout << "UserKey: " << to_string(userKey) << endl;
             cout << "ConfirmationCode: " << confirmationCode << endl;
 
-            mmsEngineDBFacade->confirmCustomer(confirmationCode);
+            mmsEngineDBFacade->confirmWorkspace(confirmationCode);
             
-            cout << "Customer confirmed" << endl;
+            cout << "Workspace confirmed" << endl;
             
             bool adminAPI = false; 
             bool userAPI = true;
@@ -121,7 +121,7 @@ int main (int iArgc, char *pArgv [])
                     chrono::system_clock::now() + chrono::hours(24 * 365 * 20);
             
             string apiKey = mmsEngineDBFacade->createAPIKey(
-                    customerKey,
+                    workspaceKey,
                     userKey,
                     adminAPI, 
                     userAPI, 
@@ -132,7 +132,7 @@ int main (int iArgc, char *pArgv [])
         }
         catch(exception e)
         {
-            logger->error(__FILEREF__ + "mmsEngineDBFacade->registerCustomer failed");
+            logger->error(__FILEREF__ + "mmsEngineDBFacade->registerWorkspace failed");
             
             return 1;
         }

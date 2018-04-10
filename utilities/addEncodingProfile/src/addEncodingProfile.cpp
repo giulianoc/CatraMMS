@@ -26,7 +26,7 @@ int main (int iArgc, char *pArgv [])
     shared_ptr<MMSEngineDBFacade>       mmsEngineDBFacade = make_shared<MMSEngineDBFacade>(
             configuration, logger);
 
-    shared_ptr<Customer> customer = mmsEngineDBFacade->getCustomer("Warner");
+    shared_ptr<Workspace> workspace = mmsEngineDBFacade->getWorkspace("Warner");
     
     /*
     logger->info(__FILEREF__ + "Creating MMSEngine"
@@ -36,8 +36,8 @@ int main (int iArgc, char *pArgv [])
     
     /*
     mmsEngine->addFFMPEGVideoEncodingProfile(
-        customer,
-        "",                         // string encodingProfileSet,  // "": default Customer family, != "": named customer family
+        workspace,
+        "",                         // string encodingProfileSet,  // "": default Workspace family, != "": named workspace family
         MMSEngineDBFacade::EncodingTechnology::MP4,
 	"",                         // string label,
 
@@ -59,8 +59,8 @@ int main (int iArgc, char *pArgv [])
     );
 
     mmsEngine->addImageEncodingProfile(
-        customer,
-        "",                         // string encodingProfileSet,  // "": default Customer family, != "": named customer family
+        workspace,
+        "",                         // string encodingProfileSet,  // "": default Workspace family, != "": named workspace family
 	"",                         // string label,
 
 	"PNG",                      // string format,
@@ -99,7 +99,7 @@ int main (int iArgc, char *pArgv [])
         );
 
         int64_t encodingProfileKey = _mmsEngineDBFacade->addVideoEncodingProfile(
-            customer,
+            workspace,
             encodingProfileSet,
             encodingTechnology,
             details,

@@ -74,31 +74,31 @@ private:
 
     void generateAndIngestFrames(
         int64_t ingestionJobKey,
-        shared_ptr<Customer> customer,
+        shared_ptr<Workspace> workspace,
         MMSEngineDBFacade::IngestionType ingestionType,
         Json::Value parametersRoot,
         vector<int64_t>& dependencies);
 
     void generateAndIngestSlideshow(
         int64_t ingestionJobKey,
-        shared_ptr<Customer> customer,
+        shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
         vector<int64_t>& dependencies);
 
     void generateAndIngestConcatenation(
         int64_t ingestionJobKey,
-        shared_ptr<Customer> customer,
+        shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
         vector<int64_t>& dependencies);
 
     void generateAndIngestCutMedia(
         int64_t ingestionJobKey,
-        shared_ptr<Customer> customer,
+        shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
         vector<int64_t>& dependencies);
 
     tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> getMediaSourceDetails(
-        int64_t ingestionJobKey, shared_ptr<Customer> customer,
+        int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
         MMSEngineDBFacade::IngestionType ingestionType,
         Json::Value root);
 
@@ -109,11 +109,11 @@ private:
     bool isMetadataPresent(Json::Value root, string field);
 
     void downloadMediaSourceFile(string sourceReferenceURL,
-        int64_t ingestionJobKey, shared_ptr<Customer> customer);
+        int64_t ingestionJobKey, shared_ptr<Workspace> workspace);
     void moveMediaSourceFile(string sourceReferenceURL,
-        int64_t ingestionJobKey, shared_ptr<Customer> customer);
+        int64_t ingestionJobKey, shared_ptr<Workspace> workspace);
     void copyMediaSourceFile(string sourceReferenceURL,
-        int64_t ingestionJobKey, shared_ptr<Customer> customer);
+        int64_t ingestionJobKey, shared_ptr<Workspace> workspace);
 
     int progressCallback(
         int64_t ingestionJobKey,

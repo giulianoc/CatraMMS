@@ -173,7 +173,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
     
     try
     {
-        vector<tuple<int64_t,string,shared_ptr<Customer>,string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus>> 
+        vector<tuple<int64_t,string,shared_ptr<Workspace>,string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus>> 
                 ingestionsToBeManaged;
         
         _mmsEngineDBFacade->getIngestionsToBeManaged(ingestionsToBeManaged, 
@@ -181,26 +181,26 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                 // _maxIngestionJobsWithDependencyToCheckPerEvent
         );
         
-        for (tuple<int64_t, string, shared_ptr<Customer>, string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus> 
+        for (tuple<int64_t, string, shared_ptr<Workspace>, string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus> 
                 ingestionToBeManaged: ingestionsToBeManaged)
         {
             int64_t ingestionJobKey;
             try
             {
-                shared_ptr<Customer> customer;
+                shared_ptr<Workspace> workspace;
                 string startIngestion;
                 string metaDataContent;
                 string sourceReference;
                 MMSEngineDBFacade::IngestionType ingestionType;
                 MMSEngineDBFacade::IngestionStatus ingestionStatus;
 
-                tie(ingestionJobKey, startIngestion, customer, metaDataContent,
+                tie(ingestionJobKey, startIngestion, workspace, metaDataContent,
                         ingestionType, ingestionStatus) = ingestionToBeManaged;
                 
                 _logger->info(__FILEREF__ + "json to be processed"
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", startIngestion: " + startIngestion
-                    + ", customer->_customerKey: " + to_string(customer->_customerKey)
+                    + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
                     + ", metaDataContent: " + metaDataContent
                     + ", ingestionType: " + MMSEngineDBFacade::toString(ingestionType)
                     + ", ingestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
@@ -226,7 +226,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
                         localAssetIngestionEvent->setIngestionSourceFileName(sourceFileName);
                         localAssetIngestionEvent->setMMSSourceFileName("");
-                        localAssetIngestionEvent->setCustomer(customer);
+                        localAssetIngestionEvent->setWorkspace(workspace);
                         localAssetIngestionEvent->setIngestionType(ingestionType);
 
                         localAssetIngestionEvent->setMetadataContent(metaDataContent);
@@ -419,7 +419,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> mediaSourceDetails;
 
                                 mediaSourceDetails = getMediaSourceDetails(
-                                        ingestionJobKey, customer,
+                                        ingestionJobKey, workspace,
                                         ingestionType, parametersRoot);
 
                                 tie(nextIngestionStatus,
@@ -493,7 +493,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                             );
 
                                     thread downloadMediaSource(&MMSEngineProcessor::downloadMediaSourceFile, this, 
-                                        mediaSourceURL, ingestionJobKey, customer);
+                                        mediaSourceURL, ingestionJobKey, workspace);
                                     downloadMediaSource.detach();
                                 }
                                 else if (nextIngestionStatus == MMSEngineDBFacade::IngestionStatus::SourceMovingInProgress)
@@ -514,7 +514,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                             );
 
                                     thread moveMediaSource(&MMSEngineProcessor::moveMediaSourceFile, this, 
-                                        mediaSourceURL, ingestionJobKey, customer);
+                                        mediaSourceURL, ingestionJobKey, workspace);
                                     moveMediaSource.detach();
                                 }
                                 else if (nextIngestionStatus == MMSEngineDBFacade::IngestionStatus::SourceCopingInProgress)
@@ -535,7 +535,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                             );
 
                                     thread copyMediaSource(&MMSEngineProcessor::copyMediaSourceFile, this, 
-                                        mediaSourceURL, ingestionJobKey, customer);
+                                        mediaSourceURL, ingestionJobKey, workspace);
                                     copyMediaSource.detach();
                                 }
                                 else // if (nextIngestionStatus == MMSEngineDBFacade::IngestionStatus::SourceUploadingInProgress)
@@ -601,7 +601,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 {
                                     generateAndIngestFrames(
                                             ingestionJobKey, 
-                                            customer, 
+                                            workspace, 
                                             ingestionType,
                                             parametersRoot, 
                                             dependencies);
@@ -661,7 +661,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             {
                                 generateAndIngestSlideshow(
                                         ingestionJobKey, 
-                                        customer, 
+                                        workspace, 
                                         parametersRoot, 
                                         dependencies);
                             }
@@ -719,7 +719,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             {
                                 generateAndIngestConcatenation(
                                         ingestionJobKey, 
-                                        customer, 
+                                        workspace, 
                                         parametersRoot, 
                                         dependencies);
                             }
@@ -777,7 +777,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             {
                                 generateAndIngestCutMedia(
                                         ingestionJobKey, 
-                                        customer, 
+                                        workspace, 
                                         parametersRoot, 
                                         dependencies);
                             }
@@ -881,12 +881,12 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
     string relativePathToBeUsed;
     try
     {
-        relativePathToBeUsed = _mmsEngineDBFacade->checkCustomerMaxIngestionNumber (
-                localAssetIngestionEvent->getCustomer()->_customerKey);
+        relativePathToBeUsed = _mmsEngineDBFacade->checkWorkspaceMaxIngestionNumber (
+                localAssetIngestionEvent->getWorkspace()->_workspaceKey);
     }
     catch(runtime_error e)
     {
-        _logger->error(__FILEREF__ + "checkCustomerMaxIngestionNumber failed"
+        _logger->error(__FILEREF__ + "checkWorkspaceMaxIngestionNumber failed"
                 + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
                 + ", exception: " + e.what()
         );
@@ -894,11 +894,11 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 
         _logger->info(__FILEREF__ + "Update IngestionJob"
             + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-            + ", IngestionStatus: " + "End_CustomerReachedHisMaxIngestionNumber"
+            + ", IngestionStatus: " + "End_WorkspaceReachedHisMaxIngestionNumber"
             + ", errorMessage: " + e.what()
         );                            
         _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
-                MMSEngineDBFacade::IngestionStatus::End_CustomerReachedHisMaxIngestionNumber,
+                MMSEngineDBFacade::IngestionStatus::End_WorkspaceReachedHisMaxIngestionNumber,
                 e.what(), "" // processorMMS
         );
 
@@ -906,7 +906,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
     }
     catch(exception e)
     {
-        _logger->error(__FILEREF__ + "checkCustomerMaxIngestionNumber failed"
+        _logger->error(__FILEREF__ + "checkWorkspaceMaxIngestionNumber failed"
                 + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
                 + ", exception: " + e.what()
         );
@@ -914,11 +914,11 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 
         _logger->info(__FILEREF__ + "Update IngestionJob"
             + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-            + ", IngestionStatus: " + "End_CustomerReachedHisMaxIngestionNumber"
+            + ", IngestionStatus: " + "End_WorkspaceReachedHisMaxIngestionNumber"
             + ", errorMessage: " + e.what()
         );                            
         _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
-                MMSEngineDBFacade::IngestionStatus::End_CustomerReachedHisMaxIngestionNumber,
+                MMSEngineDBFacade::IngestionStatus::End_WorkspaceReachedHisMaxIngestionNumber,
                 e.what(), "" // processorMMS
         );
 
@@ -1009,7 +1009,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int>
             mediaSourceDetails = getMediaSourceDetails(
                 localAssetIngestionEvent->getIngestionJobKey(),
-                localAssetIngestionEvent->getCustomer(),
+                localAssetIngestionEvent->getWorkspace(),
                 localAssetIngestionEvent->getIngestionType(), parametersRoot);
         
         tie(nextIngestionStatus,
@@ -1062,19 +1062,19 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
     if (localAssetIngestionEvent->getMMSSourceFileName() != "") 
         mediaSourceFileName = localAssetIngestionEvent->getMMSSourceFileName();
 
-    string customerIngestionBinaryPathName;
+    string workspaceIngestionBinaryPathName;
     try
     {
-        customerIngestionBinaryPathName = _mmsStorage->getCustomerIngestionRepository(
-                localAssetIngestionEvent->getCustomer());
-        customerIngestionBinaryPathName
+        workspaceIngestionBinaryPathName = _mmsStorage->getWorkspaceIngestionRepository(
+                localAssetIngestionEvent->getWorkspace());
+        workspaceIngestionBinaryPathName
                 .append("/")
                 .append(localAssetIngestionEvent->getIngestionSourceFileName())
                 ;
 
         validateMediaSourceFile(
                 localAssetIngestionEvent->getIngestionJobKey(),
-                customerIngestionBinaryPathName,
+                workspaceIngestionBinaryPathName,
                 md5FileCheckSum, fileSizeInBytes);
     }
     catch(runtime_error e)
@@ -1127,14 +1127,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         bool partitionIndexToBeCalculated   = true;
         bool deliveryRepositoriesToo        = true;
         mmsAssetPathName = _mmsStorage->moveAssetInMMSRepository(
-            customerIngestionBinaryPathName,
-            localAssetIngestionEvent->getCustomer()->_directoryName,
+            workspaceIngestionBinaryPathName,
+            localAssetIngestionEvent->getWorkspace()->_directoryName,
             mediaSourceFileName,
             relativePathToBeUsed,
             partitionIndexToBeCalculated,
             &mmsPartitionIndexUsed,
             deliveryRepositoriesToo,
-            localAssetIngestionEvent->getCustomer()->_territories
+            localAssetIngestionEvent->getWorkspace()->_territories
             );
     }
     catch(runtime_error e)
@@ -1443,7 +1443,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 
         pair<int64_t,int64_t> mediaItemKeyAndPhysicalPathKey =
                 _mmsEngineDBFacade->saveIngestedContentMetadata (
-                    localAssetIngestionEvent->getCustomer(),
+                    localAssetIngestionEvent->getWorkspace(),
                     localAssetIngestionEvent->getIngestionJobKey(),
                     contentType,
                     parametersRoot,
@@ -1533,7 +1533,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 
 void MMSEngineProcessor::generateAndIngestFrames(
         int64_t ingestionJobKey,
-        shared_ptr<Customer> customer,
+        shared_ptr<Workspace> workspace,
         MMSEngineDBFacade::IngestionType ingestionType,
         Json::Value parametersRoot,
         vector<int64_t>& dependencies
@@ -1716,8 +1716,8 @@ void MMSEngineProcessor::generateAndIngestFrames(
         }
         string sourceFileName = parametersRoot.get(field, "XXX").asString();
 
-        string customerIngestionRepository = _mmsStorage->getCustomerIngestionRepository(
-                customer);
+        string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
+                workspace);
 
         string temporaryFileName;
         string textToBeReplaced;
@@ -1736,7 +1736,7 @@ void MMSEngineProcessor::generateAndIngestFrames(
 
         vector<string> generatedFramesFileNames = ffmpeg.generateFramesToIngest(
                 ingestionJobKey,
-                customerIngestionRepository,
+                workspaceIngestionRepository,
                 temporaryFileName,
                 startTimeInSeconds,
                 maxFramesNumber,
@@ -1789,7 +1789,7 @@ void MMSEngineProcessor::generateAndIngestFrames(
                 localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
                 localAssetIngestionEvent->setIngestionSourceFileName(generatedFrameFileName);
                 localAssetIngestionEvent->setMMSSourceFileName(mmsSourceFileName);
-                localAssetIngestionEvent->setCustomer(customer);
+                localAssetIngestionEvent->setWorkspace(workspace);
                 localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::ContentIngestion);
 
                 localAssetIngestionEvent->setMetadataContent(imageMetaDataContent);
@@ -1825,7 +1825,7 @@ void MMSEngineProcessor::generateAndIngestFrames(
 
 void MMSEngineProcessor::generateAndIngestSlideshow(
         int64_t ingestionJobKey,
-        shared_ptr<Customer> customer,
+        shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
         vector<int64_t>& dependencies
 )
@@ -1921,9 +1921,9 @@ void MMSEngineProcessor::generateAndIngestSlideshow(
         if (extensionIndex != string::npos)
             localSourceFileName.append(sourceFileName.substr(extensionIndex));
         
-        string customerIngestionRepository = _mmsStorage->getCustomerIngestionRepository(
-            customer);
-        string slideshowMediaPathName = customerIngestionRepository + "/" 
+        string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
+            workspace);
+        string slideshowMediaPathName = workspaceIngestionRepository + "/" 
                 + localSourceFileName;
         
         FFMpeg ffmpeg (_configuration, _logger);
@@ -1954,7 +1954,7 @@ void MMSEngineProcessor::generateAndIngestSlideshow(
             localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
             localAssetIngestionEvent->setIngestionSourceFileName(localSourceFileName);
             localAssetIngestionEvent->setMMSSourceFileName("");
-            localAssetIngestionEvent->setCustomer(customer);
+            localAssetIngestionEvent->setWorkspace(workspace);
             localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::ContentIngestion);
 
             localAssetIngestionEvent->setMetadataContent(mediaMetaDataContent);
@@ -1989,7 +1989,7 @@ void MMSEngineProcessor::generateAndIngestSlideshow(
 
 void MMSEngineProcessor::generateAndIngestConcatenation(
         int64_t ingestionJobKey,
-        shared_ptr<Customer> customer,
+        shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
         vector<int64_t>& dependencies
 )
@@ -2072,9 +2072,9 @@ void MMSEngineProcessor::generateAndIngestConcatenation(
         if (extensionIndex != string::npos)
             localSourceFileName.append(sourceFileName.substr(extensionIndex));
         
-        string customerIngestionRepository = _mmsStorage->getCustomerIngestionRepository(
-            customer);
-        string concatenatedMediaPathName = customerIngestionRepository + "/" 
+        string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
+            workspace);
+        string concatenatedMediaPathName = workspaceIngestionRepository + "/" 
                 + localSourceFileName;
         
         FFMpeg ffmpeg (_configuration, _logger);
@@ -2103,7 +2103,7 @@ void MMSEngineProcessor::generateAndIngestConcatenation(
             localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
             localAssetIngestionEvent->setIngestionSourceFileName(localSourceFileName);
             localAssetIngestionEvent->setMMSSourceFileName("");
-            localAssetIngestionEvent->setCustomer(customer);
+            localAssetIngestionEvent->setWorkspace(workspace);
             localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::ContentIngestion);
 
             localAssetIngestionEvent->setMetadataContent(mediaMetaDataContent);
@@ -2138,7 +2138,7 @@ void MMSEngineProcessor::generateAndIngestConcatenation(
 
 void MMSEngineProcessor::generateAndIngestCutMedia(
         int64_t ingestionJobKey,
-        shared_ptr<Customer> customer,
+        shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
         vector<int64_t>& dependencies
 )
@@ -2292,9 +2292,9 @@ void MMSEngineProcessor::generateAndIngestCutMedia(
         if (extensionIndex != string::npos)
             localSourceFileName.append(sourceFileName.substr(extensionIndex));
         
-        string customerIngestionRepository = _mmsStorage->getCustomerIngestionRepository(
-                customer);
-        string cutMediaPathName = customerIngestionRepository + "/"
+        string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
+                workspace);
+        string cutMediaPathName = workspaceIngestionRepository + "/"
                 + localSourceFileName;
         
         FFMpeg ffmpeg (_configuration, _logger);
@@ -2325,7 +2325,7 @@ void MMSEngineProcessor::generateAndIngestCutMedia(
             localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
             localAssetIngestionEvent->setIngestionSourceFileName(localSourceFileName);
             localAssetIngestionEvent->setMMSSourceFileName("");
-            localAssetIngestionEvent->setCustomer(customer);
+            localAssetIngestionEvent->setWorkspace(workspace);
             localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::ContentIngestion);
 
             localAssetIngestionEvent->setMetadataContent(mediaMetaDataContent);
@@ -2547,7 +2547,7 @@ void MMSEngineProcessor::handleCheckEncodingEvent ()
 }
 
 tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> MMSEngineProcessor::getMediaSourceDetails(
-        int64_t ingestionJobKey, shared_ptr<Customer> customer, MMSEngineDBFacade::IngestionType ingestionType,
+        int64_t ingestionJobKey, shared_ptr<Workspace> workspace, MMSEngineDBFacade::IngestionType ingestionType,
         Json::Value parametersRoot)        
 {
     MMSEngineDBFacade::IngestionStatus nextIngestionStatus;
@@ -2691,7 +2691,7 @@ void MMSEngineProcessor::validateMediaSourceFile (int64_t ingestionJobKey,
 }
 
 void MMSEngineProcessor::downloadMediaSourceFile(string sourceReferenceURL,
-        int64_t ingestionJobKey, shared_ptr<Customer> customer)
+        int64_t ingestionJobKey, shared_ptr<Workspace> workspace)
 {
     bool downloadingCompleted = false;
 
@@ -2740,8 +2740,8 @@ RESUMING FILE TRANSFERS
                 + ", _maxDownloadAttemptNumber: " + to_string(_maxDownloadAttemptNumber)
             );
 
-            string customerIngestionBinaryPathName = _mmsStorage->getCustomerIngestionRepository(customer);
-            customerIngestionBinaryPathName
+            string workspaceIngestionBinaryPathName = _mmsStorage->getWorkspaceIngestionRepository(workspace);
+            workspaceIngestionBinaryPathName
                 .append("/")
                 .append(to_string(ingestionJobKey))
                 .append(".binary")
@@ -2749,7 +2749,7 @@ RESUMING FILE TRANSFERS
             
             if (attemptIndex == 0)
             {
-                ofstream mediaSourceFileStream(customerIngestionBinaryPathName, ofstream::binary | ofstream::trunc);
+                ofstream mediaSourceFileStream(workspaceIngestionBinaryPathName, ofstream::binary | ofstream::trunc);
 
                 curlpp::Cleanup cleaner;
                 curlpp::Easy request;
@@ -2789,7 +2789,7 @@ RESUMING FILE TRANSFERS
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 );
                 
-                ofstream mediaSourceFileStream(customerIngestionBinaryPathName, ofstream::binary | ofstream::app);
+                ofstream mediaSourceFileStream(workspaceIngestionBinaryPathName, ofstream::binary | ofstream::app);
 
                 curlpp::Cleanup cleaner;
                 curlpp::Easy request;
@@ -2833,7 +2833,7 @@ RESUMING FILE TRANSFERS
 
             _logger->info(__FILEREF__ + "Update IngestionJob"
                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", customerIngestionBinaryPathName: " + customerIngestionBinaryPathName
+                + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
                 + ", downloadingCompleted: " + to_string(downloadingCompleted)
             );                            
             _mmsEngineDBFacade->updateIngestionJobSourceBinaryTransferred (
@@ -2973,13 +2973,13 @@ RESUMING FILE TRANSFERS
 }
 
 void MMSEngineProcessor::moveMediaSourceFile(string sourceReferenceURL,
-        int64_t ingestionJobKey, shared_ptr<Customer> customer)
+        int64_t ingestionJobKey, shared_ptr<Workspace> workspace)
 {
 
     try 
     {
-        string customerIngestionBinaryPathName = _mmsStorage->getCustomerIngestionRepository(customer);
-        customerIngestionBinaryPathName
+        string workspaceIngestionBinaryPathName = _mmsStorage->getWorkspaceIngestionRepository(workspace);
+        workspaceIngestionBinaryPathName
             .append("/")
             .append(to_string(ingestionJobKey))
             .append(".binary")
@@ -3002,10 +3002,10 @@ void MMSEngineProcessor::moveMediaSourceFile(string sourceReferenceURL,
         _logger->info(__FILEREF__ + "Moving"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", sourcePathName: " + sourcePathName
-            + ", customerIngestionBinaryPathName: " + customerIngestionBinaryPathName
+            + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
         );
         
-        FileIO::moveFile(sourcePathName, customerIngestionBinaryPathName);
+        FileIO::moveFile(sourcePathName, workspaceIngestionBinaryPathName);
             
         _logger->info(__FILEREF__ + "Update IngestionJob"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -3055,13 +3055,13 @@ void MMSEngineProcessor::moveMediaSourceFile(string sourceReferenceURL,
 }
 
 void MMSEngineProcessor::copyMediaSourceFile(string sourceReferenceURL,
-        int64_t ingestionJobKey, shared_ptr<Customer> customer)
+        int64_t ingestionJobKey, shared_ptr<Workspace> workspace)
 {
 
     try 
     {
-        string customerIngestionBinaryPathName = _mmsStorage->getCustomerIngestionRepository(customer);
-        customerIngestionBinaryPathName
+        string workspaceIngestionBinaryPathName = _mmsStorage->getWorkspaceIngestionRepository(workspace);
+        workspaceIngestionBinaryPathName
             .append("/")
             .append(to_string(ingestionJobKey))
             .append(".binary")
@@ -3084,10 +3084,10 @@ void MMSEngineProcessor::copyMediaSourceFile(string sourceReferenceURL,
         _logger->info(__FILEREF__ + "Coping"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", sourcePathName: " + sourcePathName
-            + ", customerIngestionBinaryPathName: " + customerIngestionBinaryPathName
+            + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
         );
         
-        FileIO::copyFile(sourcePathName, customerIngestionBinaryPathName);
+        FileIO::copyFile(sourcePathName, workspaceIngestionBinaryPathName);
             
         _logger->info(__FILEREF__ + "Update IngestionJob"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)

@@ -508,7 +508,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
     {
         mmsSourceAssetPathName = _mmsStorage->getMMSAssetPathName(
             _encodingItem->_mmsPartitionNumber,
-            _encodingItem->_customer->_directoryName,
+            _encodingItem->_workspace->_directoryName,
             _encodingItem->_relativePath,
             _encodingItem->_fileName);
 
@@ -543,7 +543,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 
         bool removeLinuxPathIfExist = true;
         stagingEncodedAssetPathName = _mmsStorage->getStagingAssetPathName(
-            _encodingItem->_customer->_directoryName,
+            _encodingItem->_workspace->_directoryName,
             _encodingItem->_relativePath,
             encodedFileName,
             -1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
@@ -585,7 +585,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                 _encodingItem->_details,
                 _encodingItem->_contentType == MMSEngineDBFacade::ContentType::Video,
                 _encodingItem->_physicalPathKey,
-                _encodingItem->_customer->_directoryName,
+                _encodingItem->_workspace->_directoryName,
                 _encodingItem->_relativePath,
                 _encodingItem->_encodingJobKey,
                 _encodingItem->_ingestionJobKey);
@@ -694,7 +694,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                 encodingMedatada["encodingProfileDetails"] = encodingDetails;
                 encodingMedatada["contentType"] = MMSEngineDBFacade::toString(_encodingItem->_contentType);
                 encodingMedatada["physicalPathKey"] = (Json::LargestUInt) (_encodingItem->_physicalPathKey);
-                encodingMedatada["customerDirectoryName"] = _encodingItem->_customer->_directoryName;
+                encodingMedatada["workspaceDirectoryName"] = _encodingItem->_workspace->_directoryName;
                 encodingMedatada["relativePath"] = _encodingItem->_relativePath;
                 encodingMedatada["encodingJobKey"] = (Json::LargestUInt) (_encodingItem->_encodingJobKey);
                 encodingMedatada["ingestionJobKey"] = (Json::LargestUInt) (_encodingItem->_ingestionJobKey);
@@ -849,7 +849,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEncod
 
         mmsAssetPathName = _mmsStorage->moveAssetInMMSRepository(
             stagingEncodedAssetPathName,
-            _encodingItem->_customer->_directoryName,
+            _encodingItem->_workspace->_directoryName,
             encodedFileName,
             _encodingItem->_relativePath,
 
@@ -857,7 +857,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEncod
             &mmsPartitionIndexUsed, // OUT if bIsPartitionIndexToBeCalculated is true, IN is bIsPartitionIndexToBeCalculated is false
 
             deliveryRepositoriesToo,
-            _encodingItem->_customer->_territories
+            _encodingItem->_workspace->_territories
         );
     }
     catch(exception e)
@@ -905,7 +905,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEncod
 
 
         int64_t encodedPhysicalPathKey = _mmsEngineDBFacade->saveEncodedContentMetadata(
-            _encodingItem->_customer->_customerKey,
+            _encodingItem->_workspace->_workspaceKey,
             _encodingItem->_mediaItemKey,
             encodedFileName,
             _encodingItem->_relativePath,

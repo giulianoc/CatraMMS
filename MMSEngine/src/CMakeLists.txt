@@ -21,7 +21,7 @@
 # with the authors.
 
 SET (SOURCES
-	Customer.cpp
+	Workspace.cpp
 	MMSStorage.cpp
 	MMSEngineDBFacade.cpp
 	Validator.cpp
@@ -29,7 +29,7 @@ SET (SOURCES
 	EncoderVideoAudioProxy.cpp
 )
 SET (HEADERS
-	Customer.h
+	Workspace.h
 	MMSStorage.h
 	MMSEngineDBFacade.h
 	Validator.h

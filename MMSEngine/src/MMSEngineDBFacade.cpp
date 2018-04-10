@@ -55,6 +55,7 @@ MMSEngineDBFacade::~MMSEngineDBFacade()
 {
 }
 
+/*
 vector<shared_ptr<Customer>> MMSEngineDBFacade::getCustomers()
 {
     shared_ptr<MySQLConnection> conn = _connectionPool->borrow();	
@@ -85,36 +86,37 @@ vector<shared_ptr<Customer>> MMSEngineDBFacade::getCustomers()
     
     return customers;
 }
+*/
 
-shared_ptr<Customer> MMSEngineDBFacade::getCustomer(int64_t customerKey)
+shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 {
     shared_ptr<MySQLConnection> conn = _connectionPool->borrow();	
 
     string lastSQLCommand =
-        "select customerKey, name, directoryName, maxStorageInGB, maxEncodingPriority from MMS_Customer where customerKey = ?";
+        "select workspaceKey, name, directoryName, maxStorageInGB, maxEncodingPriority from MMS_Workspace where workspaceKey = ?";
     shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
     int queryParameterIndex = 1;
-    preparedStatement->setInt64(queryParameterIndex++, customerKey);
+    preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
     shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 
-    shared_ptr<Customer>    customer = make_shared<Customer>();
+    shared_ptr<Workspace>    workspace = make_shared<Workspace>();
     
     if (resultSet->next())
     {
-        customer->_customerKey = resultSet->getInt("customerKey");
-        customer->_name = resultSet->getString("name");
-        customer->_directoryName = resultSet->getString("directoryName");
-        customer->_maxStorageInGB = resultSet->getInt("maxStorageInGB");
-        customer->_maxEncodingPriority = static_cast<int>(MMSEngineDBFacade::toEncodingPriority(resultSet->getString("maxEncodingPriority")));
+        workspace->_workspaceKey = resultSet->getInt("workspaceKey");
+        workspace->_name = resultSet->getString("name");
+        workspace->_directoryName = resultSet->getString("directoryName");
+        workspace->_maxStorageInGB = resultSet->getInt("maxStorageInGB");
+        workspace->_maxEncodingPriority = static_cast<int>(MMSEngineDBFacade::toEncodingPriority(resultSet->getString("maxEncodingPriority")));
 
-        getTerritories(customer);
+        getTerritories(workspace);
     }
     else
     {
         _connectionPool->unborrow(conn);
 
         string errorMessage = __FILEREF__ + "select failed"
-                + ", customerKey: " + to_string(customerKey)
+                + ", workspaceKey: " + to_string(workspaceKey)
                 + ", lastSQLCommand: " + lastSQLCommand
         ;
         _logger->error(errorMessage);
@@ -124,38 +126,38 @@ shared_ptr<Customer> MMSEngineDBFacade::getCustomer(int64_t customerKey)
 
     _connectionPool->unborrow(conn);
     
-    return customer;
+    return workspace;
 }
 
-shared_ptr<Customer> MMSEngineDBFacade::getCustomer(string customerName)
+shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(string workspaceName)
 {
     shared_ptr<MySQLConnection> conn = _connectionPool->borrow();	
 
     string lastSQLCommand =
-        "select customerKey, name, directoryName, maxStorageInGB, maxEncodingPriority from MMS_Customer where name = ?";
+        "select workspaceKey, name, directoryName, maxStorageInGB, maxEncodingPriority from MMS_Workspace where name = ?";
     shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
     int queryParameterIndex = 1;
-    preparedStatement->setString(queryParameterIndex++, customerName);
+    preparedStatement->setString(queryParameterIndex++, workspaceName);
     shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 
-    shared_ptr<Customer>    customer = make_shared<Customer>();
+    shared_ptr<Workspace>    workspace = make_shared<Workspace>();
     
     if (resultSet->next())
     {
-        customer->_customerKey = resultSet->getInt("customerKey");
-        customer->_name = resultSet->getString("name");
-        customer->_directoryName = resultSet->getString("directoryName");
-        customer->_maxStorageInGB = resultSet->getInt("maxStorageInGB");
-        customer->_maxEncodingPriority = static_cast<int>(MMSEngineDBFacade::toEncodingPriority(resultSet->getString("maxEncodingPriority")));
+        workspace->_workspaceKey = resultSet->getInt("workspaceKey");
+        workspace->_name = resultSet->getString("name");
+        workspace->_directoryName = resultSet->getString("directoryName");
+        workspace->_maxStorageInGB = resultSet->getInt("maxStorageInGB");
+        workspace->_maxEncodingPriority = static_cast<int>(MMSEngineDBFacade::toEncodingPriority(resultSet->getString("maxEncodingPriority")));
 
-        getTerritories(customer);
+        getTerritories(workspace);
     }
     else
     {
         _connectionPool->unborrow(conn);
 
         string errorMessage = __FILEREF__ + "select failed"
-                + ", customerName: " + customerName
+                + ", workspaceName: " + workspaceName
                 + ", lastSQLCommand: " + lastSQLCommand
         ;
         _logger->error(errorMessage);
@@ -165,38 +167,38 @@ shared_ptr<Customer> MMSEngineDBFacade::getCustomer(string customerName)
 
     _connectionPool->unborrow(conn);
     
-    return customer;
+    return workspace;
 }
 
-void MMSEngineDBFacade::getTerritories(shared_ptr<Customer> customer)
+void MMSEngineDBFacade::getTerritories(shared_ptr<Workspace> workspace)
 {
     shared_ptr<MySQLConnection> conn = _connectionPool->borrow();	
 
     string lastSQLCommand =
-        "select territoryKey, name from MMS_Territory t where customerKey = ?";
+        "select territoryKey, name from MMS_Territory t where workspaceKey = ?";
     shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(
         lastSQLCommand));
-    preparedStatement->setInt(1, customer->_customerKey);
+    preparedStatement->setInt(1, workspace->_workspaceKey);
     shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 
     while (resultSet->next())
     {
-        customer->_territories.insert(make_pair(resultSet->getInt("territoryKey"), resultSet->getString("name")));
+        workspace->_territories.insert(make_pair(resultSet->getInt("territoryKey"), resultSet->getString("name")));
     }
 
     _connectionPool->unborrow(conn);
 }
 
-tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerCustomer(
-	string customerName,
-    string customerDirectoryName,
+tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerWorkspace(
+	string workspaceName,
+    string workspaceDirectoryName,
 	string street,
     string city,
     string state,
 	string zip,
     string phone,
     string countryCode,
-    CustomerType customerType,
+    WorkspaceType workspaceType,
 	string deliveryURL,
 	EncodingPriority maxEncodingPriority,
     EncodingPeriod encodingPeriod,
@@ -209,7 +211,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerCustomer(
     chrono::system_clock::time_point userExpirationDate
 )
 {
-    int64_t         customerKey;
+    int64_t         workspaceKey;
     int64_t         userKey;
     string          confirmationCode;
     int64_t         contentProviderKey;
@@ -237,14 +239,14 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerCustomer(
             bool enabled = false;
             
             lastSQLCommand = 
-                    "insert into MMS_Customer ("
-                    "customerKey, creationDate, name, directoryName, street, city, state, zip, phone, countryCode, customerType, deliveryURL, isEnabled, maxEncodingPriority, encodingPeriod, maxIngestionsNumber, maxStorageInGB, currentStorageUsageInGB, languageCode) values ("
+                    "insert into MMS_Workspace ("
+                    "workspaceKey, creationDate, name, directoryName, street, city, state, zip, phone, countryCode, workspaceType, deliveryURL, isEnabled, maxEncodingPriority, encodingPeriod, maxIngestionsNumber, maxStorageInGB, currentStorageUsageInGB, languageCode) values ("
                     "NULL, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++, customerName);
-            preparedStatement->setString(queryParameterIndex++, customerDirectoryName);
+            preparedStatement->setString(queryParameterIndex++, workspaceName);
+            preparedStatement->setString(queryParameterIndex++, workspaceDirectoryName);
             if (street == "")
                 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
             else
@@ -269,7 +271,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerCustomer(
                 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
             else
                 preparedStatement->setString(queryParameterIndex++, countryCode);
-            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(customerType));
+            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(workspaceType));
             if (deliveryURL == "")
                 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
             else
@@ -284,18 +286,18 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerCustomer(
             preparedStatement->executeUpdate();
         }
 
-        customerKey = getLastInsertId(conn);
+        workspaceKey = getLastInsertId(conn);
 
         unsigned seed = chrono::steady_clock::now().time_since_epoch().count();
         default_random_engine e(seed);
         confirmationCode = to_string(e());
         {
             lastSQLCommand = 
-                    "insert into MMS_ConfirmationCode (customerKey, creationDate, confirmationCode) values ("
+                    "insert into MMS_ConfirmationCode (workspaceKey, creationDate, confirmationCode) values ("
                     "?, NOW(), ?)";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, customerKey);
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setString(queryParameterIndex++, confirmationCode);
 
             preparedStatement->executeUpdate();
@@ -303,22 +305,22 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerCustomer(
 
         {
             lastSQLCommand = 
-                    "insert into MMS_CustomerMoreInfo (customerKey, currentDirLevel1, currentDirLevel2, currentDirLevel3, startDateTime, endDateTime, currentIngestionsNumber) values ("
+                    "insert into MMS_WorkspaceMoreInfo (workspaceKey, currentDirLevel1, currentDirLevel2, currentDirLevel3, startDateTime, endDateTime, currentIngestionsNumber) values ("
                     "?, 0, 0, 0, NOW(), NOW(), 0)";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, customerKey);
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 
             preparedStatement->executeUpdate();
         }
 
         {
             lastSQLCommand = 
-                "insert into MMS_ContentProvider (contentProviderKey, customerKey, name) values ("
+                "insert into MMS_ContentProvider (contentProviderKey, workspaceKey, name) values ("
                 "NULL, ?, ?)";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, customerKey);
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setString(queryParameterIndex++, _defaultContentProviderName);
 
             preparedStatement->executeUpdate();
@@ -328,21 +330,21 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerCustomer(
 
         int64_t territoryKey = addTerritory(
                 conn,
-                customerKey,
+                workspaceKey,
                 _defaultTerritoryName);
         
         int userType = getMMSUser();
         
         userKey = addUser (
                 conn,
-                customerKey,
+                workspaceKey,
                 userName,
                 userPassword,
                 userType,
                 userEmailAddress,
                 userExpirationDate);
 
-        // insert default EncodingProfilesSet per Customer/ContentType
+        // insert default EncodingProfilesSet per Workspace/ContentType
         {
             vector<ContentType> contentTypes = { ContentType::Video, ContentType::Audio, ContentType::Image };
             
@@ -350,23 +352,23 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerCustomer(
             {
                 {
                     lastSQLCommand = 
-                        "insert into MMS_EncodingProfilesSet (encodingProfilesSetKey, contentType, customerKey, name) values ("
+                        "insert into MMS_EncodingProfilesSet (encodingProfilesSetKey, contentType, workspaceKey, name) values ("
                         "NULL, ?, ?, NULL)";
                     shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
                     preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
-                    preparedStatement->setInt64(queryParameterIndex++, customerKey);
+                    preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
                     preparedStatement->executeUpdate();
                 }
                         
                 int64_t encodingProfilesSetKey = getLastInsertId(conn);
 
-		// by default this new customer will inherited the profiles associated to 'global' 
+		// by default this new workspace will inherited the profiles associated to 'global' 
                 {
                     lastSQLCommand = 
                         "insert into MMS_EncodingProfilesSetMapping (encodingProfilesSetKey, encodingProfileKey) " 
                         "(select ?, encodingProfileKey from MMS_EncodingProfilesSetMapping where encodingProfilesSetKey = " 
-                            "(select encodingProfilesSetKey from MMS_EncodingProfilesSet where contentType = ? and customerKey is null and name is null))";
+                            "(select encodingProfilesSetKey from MMS_EncodingProfilesSet where contentType = ? and workspaceKey is null and name is null))";
                     shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
                     preparedStatement->setInt64(queryParameterIndex++, encodingProfilesSetKey);
@@ -426,12 +428,12 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerCustomer(
         throw e;
     }
     
-    tuple<int64_t,int64_t,string> customerKeyUserKeyAndConfirmationCode = make_tuple(customerKey, userKey, confirmationCode);
+    tuple<int64_t,int64_t,string> workspaceKeyUserKeyAndConfirmationCode = make_tuple(workspaceKey, userKey, confirmationCode);
     
-    return customerKeyUserKeyAndConfirmationCode;
+    return workspaceKeyUserKeyAndConfirmationCode;
 }
 
-void MMSEngineDBFacade::confirmCustomer(
+void MMSEngineDBFacade::confirmWorkspace(
     string confirmationCode
 )
 {
@@ -443,10 +445,10 @@ void MMSEngineDBFacade::confirmCustomer(
     {
         conn = _connectionPool->borrow();	
 
-        int64_t     customerKey;
+        int64_t     workspaceKey;
         {
             lastSQLCommand = 
-                "select customerKey from MMS_ConfirmationCode where confirmationCode = ? and DATE_ADD(creationDate, INTERVAL ? DAY) >= NOW()";
+                "select workspaceKey from MMS_ConfirmationCode where confirmationCode = ? and DATE_ADD(creationDate, INTERVAL ? DAY) >= NOW()";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -456,7 +458,7 @@ void MMSEngineDBFacade::confirmCustomer(
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
-                customerKey = resultSet->getInt64("customerKey");
+                workspaceKey = resultSet->getInt64("workspaceKey");
             }
             else
             {
@@ -475,18 +477,18 @@ void MMSEngineDBFacade::confirmCustomer(
             bool enabled = true;
             
             lastSQLCommand = 
-                "update MMS_Customer set isEnabled = ? where customerKey = ?";
+                "update MMS_Workspace set isEnabled = ? where workspaceKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt(queryParameterIndex++, enabled);
-            preparedStatement->setInt64(queryParameterIndex++, customerKey);
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 
             int rowsUpdated = preparedStatement->executeUpdate();
             if (rowsUpdated != 1)
             {
                 string errorMessage = __FILEREF__ + "no update was done"
                         + ", enabled: " + to_string(enabled)
-                        + ", customerKey: " + to_string(customerKey)
+                        + ", workspaceKey: " + to_string(workspaceKey)
                         + ", rowsUpdated: " + to_string(rowsUpdated)
                         + ", lastSQLCommand: " + lastSQLCommand
                 ;
@@ -525,7 +527,7 @@ void MMSEngineDBFacade::confirmCustomer(
 
 int64_t MMSEngineDBFacade::addTerritory (
 	shared_ptr<MySQLConnection> conn,
-        int64_t customerKey,
+        int64_t workspaceKey,
         string territoryName
 )
 {
@@ -537,11 +539,11 @@ int64_t MMSEngineDBFacade::addTerritory (
     {
         {
             lastSQLCommand = 
-                "insert into MMS_Territory (territoryKey, customerKey, name, currency) values ("
+                "insert into MMS_Territory (territoryKey, workspaceKey, name, currency) values ("
     		"NULL, ?, ?, ?)";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, customerKey);
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setString(queryParameterIndex++, territoryName);
             string currency("");
             if (currency == "")
@@ -579,7 +581,7 @@ int64_t MMSEngineDBFacade::addTerritory (
 
 int64_t MMSEngineDBFacade::addUser (
 	shared_ptr<MySQLConnection> conn,
-        int64_t customerKey,
+        int64_t workspaceKey,
         string userName,
         string password,
         int type,
@@ -595,13 +597,13 @@ int64_t MMSEngineDBFacade::addUser (
     {
         {
             lastSQLCommand = 
-                "insert into MMS_User (userKey, userName, password, customerKey, type, eMailAddress, creationDate, expirationDate) values ("
+                "insert into MMS_User (userKey, userName, password, workspaceKey, type, eMailAddress, creationDate, expirationDate) values ("
                 "NULL, ?, ?, ?, ?, ?, NULL, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'))";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, userName);
             preparedStatement->setString(queryParameterIndex++, password);
-            preparedStatement->setInt64(queryParameterIndex++, customerKey);
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setInt(queryParameterIndex++, type);
             if (emailAddress == "")
                 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
@@ -782,7 +784,7 @@ string MMSEngineDBFacade::getPassword(string emailAddress)
 }
 
 string MMSEngineDBFacade::createAPIKey (
-        int64_t customerKey,
+        int64_t workspaceKey,
         int64_t userKey,
         bool adminAPI, 
         bool userAPI,
@@ -802,10 +804,10 @@ string MMSEngineDBFacade::createAPIKey (
         string emailAddress;
         {
             lastSQLCommand = 
-                "select eMailAddress from MMS_User where customerKey = ? and userKey = ?";
+                "select eMailAddress from MMS_User where workspaceKey = ? and userKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, customerKey);
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setInt64(queryParameterIndex++, userKey);
 
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
@@ -815,8 +817,8 @@ string MMSEngineDBFacade::createAPIKey (
             }
             else
             {
-                string errorMessage = __FILEREF__ + "Customer-User are not present"
-                    + ", customerKey: " + to_string(customerKey)
+                string errorMessage = __FILEREF__ + "Workspace-User are not present"
+                    + ", workspaceKey: " + to_string(workspaceKey)
                     + ", userKey: " + to_string(userKey)
                     + ", lastSQLCommand: " + lastSQLCommand
                 ;
@@ -904,9 +906,9 @@ string MMSEngineDBFacade::createAPIKey (
     return apiKey;
 }
 
-tuple<shared_ptr<Customer>,bool,bool> MMSEngineDBFacade::checkAPIKey (string apiKey)
+tuple<shared_ptr<Workspace>,bool,bool> MMSEngineDBFacade::checkAPIKey (string apiKey)
 {
-    shared_ptr<Customer> customer;
+    shared_ptr<Workspace> workspace;
     string          flags;
     string          lastSQLCommand;
 
@@ -943,11 +945,11 @@ tuple<shared_ptr<Customer>,bool,bool> MMSEngineDBFacade::checkAPIKey (string api
             }
         }
 
-        int64_t                 customerKey;
+        int64_t                 workspaceKey;
         
         {
             lastSQLCommand = 
-                "select c.customerKey from MMS_Customer c, MMS_User u where c.customerKey = u.customerKey and u.userKey = ?";
+                "select c.workspaceKey from MMS_Workspace c, MMS_User u where c.workspaceKey = u.workspaceKey and u.userKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, userKey);
@@ -955,11 +957,11 @@ tuple<shared_ptr<Customer>,bool,bool> MMSEngineDBFacade::checkAPIKey (string api
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
-                customerKey = resultSet->getInt64("customerKey");
+                workspaceKey = resultSet->getInt64("workspaceKey");
             }
             else
             {
-                string errorMessage = __FILEREF__ + "customerKey is not present"
+                string errorMessage = __FILEREF__ + "workspaceKey is not present"
                     + ", userKey: " + to_string(userKey)
                     + ", lastSQLCommand: " + lastSQLCommand
                 ;
@@ -969,7 +971,7 @@ tuple<shared_ptr<Customer>,bool,bool> MMSEngineDBFacade::checkAPIKey (string api
             }
         }
 
-        customer = getCustomer(customerKey);
+        workspace = getWorkspace(workspaceKey);
 
         _connectionPool->unborrow(conn);
     }
@@ -1010,19 +1012,19 @@ tuple<shared_ptr<Customer>,bool,bool> MMSEngineDBFacade::checkAPIKey (string api
         throw e;
     }
     
-    tuple<shared_ptr<Customer>,bool,bool> customerAndFlags;
+    tuple<shared_ptr<Workspace>,bool,bool> workspaceAndFlags;
     
-    customerAndFlags = make_tuple(customer,
+    workspaceAndFlags = make_tuple(workspace,
         flags.find("ADMIN_API") == string::npos ? false : true,
         flags.find("USER_API") == string::npos ? false : true
     );
             
-    return customerAndFlags;
+    return workspaceAndFlags;
 }
 
 int64_t MMSEngineDBFacade::addVideoEncodingProfile(
-        shared_ptr<Customer> customer,
-        string encodingProfileSet,  // "": default Customer family, != "": named customer family
+        shared_ptr<Workspace> workspace,
+        string encodingProfileSet,  // "": default Workspace family, != "": named workspace family
         EncodingTechnology encodingTechnology,
         string details,
         string label,
@@ -1088,14 +1090,14 @@ int64_t MMSEngineDBFacade::addVideoEncodingProfile(
         
         int64_t encodingProfilesSetKey;
         
-        if (encodingProfileSet == "")   // default Customer family
+        if (encodingProfileSet == "")   // default Workspace family
         {
             lastSQLCommand = 
-                "select encodingProfilesSetKey from MMS_EncodingProfilesSet where contentType = ? and customerKey = ? and name is null";
+                "select encodingProfilesSetKey from MMS_EncodingProfilesSet where contentType = ? and workspaceKey = ? and name is null";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
-            preparedStatement->setInt64(queryParameterIndex++, customer->_customerKey);
+            preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
@@ -1105,7 +1107,7 @@ int64_t MMSEngineDBFacade::addVideoEncodingProfile(
             {
                 string errorMessage = __FILEREF__ + "encodingProfilesSetKey is not present"
                     + ", contentType: " + MMSEngineDBFacade::toString(contentType)
-                    + ", customer->_customerKey: " + to_string(customer->_customerKey)
+                    + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
                     + ", lastSQLCommand: " + lastSQLCommand
                 ;
                 _logger->error(errorMessage);
@@ -1116,11 +1118,11 @@ int64_t MMSEngineDBFacade::addVideoEncodingProfile(
         else
         {
             lastSQLCommand = 
-                "select encodingProfilesSetKey from MMS_EncodingProfilesSet where contentType = ? and customerKey = ? and name = ?";
+                "select encodingProfilesSetKey from MMS_EncodingProfilesSet where contentType = ? and workspaceKey = ? and name = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
-            preparedStatement->setInt64(queryParameterIndex++, customer->_customerKey);
+            preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
             preparedStatement->setString(queryParameterIndex++, encodingProfileSet);
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
@@ -1130,11 +1132,11 @@ int64_t MMSEngineDBFacade::addVideoEncodingProfile(
             else
             {
                 lastSQLCommand = 
-                    "insert into MMS_EncodingProfilesSet (encodingProfilesSetKey, contentType, customerKey, name) values (NULL, ?, ?, ?)";
+                    "insert into MMS_EncodingProfilesSet (encodingProfilesSetKey, contentType, workspaceKey, name) values (NULL, ?, ?, ?)";
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
                 preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
-                preparedStatement->setInt64(queryParameterIndex++, customer->_customerKey);
+                preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
                 preparedStatement->setString(queryParameterIndex++, encodingProfileSet);
                 preparedStatement->executeUpdate();
  
@@ -1206,7 +1208,7 @@ int64_t MMSEngineDBFacade::addVideoEncodingProfile(
 }
 
 int64_t MMSEngineDBFacade::addImageEncodingProfile(
-    shared_ptr<Customer> customer,
+    shared_ptr<Workspace> workspace,
     string encodingProfileSet,
     string details,
     string label,
@@ -1262,14 +1264,14 @@ int64_t MMSEngineDBFacade::addImageEncodingProfile(
         
         int64_t encodingProfilesSetKey;
         
-        if (encodingProfileSet == "")   // default Customer family
+        if (encodingProfileSet == "")   // default Workspace family
         {
             lastSQLCommand = 
-                "select encodingProfilesSetKey from MMS_EncodingProfilesSet where contentType = ? and customerKey = ? and name is null";
+                "select encodingProfilesSetKey from MMS_EncodingProfilesSet where contentType = ? and workspaceKey = ? and name is null";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
-            preparedStatement->setInt64(queryParameterIndex++, customer->_customerKey);
+            preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
@@ -1279,7 +1281,7 @@ int64_t MMSEngineDBFacade::addImageEncodingProfile(
             {
                 string errorMessage = __FILEREF__ + "encodingProfilesSetKey is not present"
                     + ", contentType: " + MMSEngineDBFacade::toString(contentType)
-                    + ", customer->_customerKey: " + to_string(customer->_customerKey)
+                    + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
                     + ", lastSQLCommand: " + lastSQLCommand
                 ;
                 _logger->error(errorMessage);
@@ -1290,11 +1292,11 @@ int64_t MMSEngineDBFacade::addImageEncodingProfile(
         else
         {
             lastSQLCommand = 
-                "select encodingProfilesSetKey from MMS_EncodingProfilesSet where contentType = ? and customerKey = ? and name = ?";
+                "select encodingProfilesSetKey from MMS_EncodingProfilesSet where contentType = ? and workspaceKey = ? and name = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
-            preparedStatement->setInt64(queryParameterIndex++, customer->_customerKey);
+            preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
             preparedStatement->setString(queryParameterIndex++, encodingProfileSet);
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
@@ -1304,11 +1306,11 @@ int64_t MMSEngineDBFacade::addImageEncodingProfile(
             else
             {
                 lastSQLCommand = 
-                    "insert into MMS_EncodingProfilesSet (encodingProfilesSetKey, contentType, customerKey, name) values (NULL, ?, ?, ?)";
+                    "insert into MMS_EncodingProfilesSet (encodingProfilesSetKey, contentType, workspaceKey, name) values (NULL, ?, ?, ?)";
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
                 preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
-                preparedStatement->setInt64(queryParameterIndex++, customer->_customerKey);
+                preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
                 preparedStatement->setString(queryParameterIndex++, encodingProfileSet);
                 preparedStatement->executeUpdate();
  
@@ -1380,7 +1382,7 @@ int64_t MMSEngineDBFacade::addImageEncodingProfile(
 }
 
 void MMSEngineDBFacade::getIngestionsToBeManaged(
-        vector<tuple<int64_t, string, shared_ptr<Customer>, string, IngestionType, IngestionStatus>>& ingestionsToBeManaged,
+        vector<tuple<int64_t, string, shared_ptr<Workspace>, string, IngestionType, IngestionStatus>>& ingestionsToBeManaged,
         string processorMMS,
         int maxIngestionJobs
         // int maxIngestionJobsWithDependencyToCheck
@@ -1416,7 +1418,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
             {
                 lastSQLCommand = 
                     "select ij.ingestionJobKey, DATE_FORMAT(ij.startIngestion, '%Y-%m-%d %H:%i:%s') as startIngestion, "
-                        "ir.customerKey, ij.metaDataContent, ij.status, ij.ingestionType "
+                        "ir.workspaceKey, ij.metaDataContent, ij.status, ij.ingestionType "
                         "from MMS_IngestionRoot ir, MMS_IngestionJob ij "
                         "where ir.ingestionRootKey = ij.ingestionRootKey and ij.processorMMS is null "
                         "and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) "
@@ -1442,7 +1444,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                 
                     int64_t ingestionJobKey     = resultSet->getInt64("ingestionJobKey");
                     string startIngestion       = resultSet->getString("startIngestion");
-                    int64_t customerKey         = resultSet->getInt64("customerKey");
+                    int64_t workspaceKey         = resultSet->getInt64("workspaceKey");
                     string metaDataContent      = resultSet->getString("metaDataContent");
                     IngestionStatus ingestionStatus     = MMSEngineDBFacade::toIngestionStatus(resultSet->getString("status"));
                     IngestionType ingestionType     = MMSEngineDBFacade::toIngestionType(resultSet->getString("ingestionType"));
@@ -1532,10 +1534,10 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                     
                     if (ingestionJobToBeManaged)
                     {
-                        shared_ptr<Customer> customer = getCustomer(customerKey);
+                        shared_ptr<Workspace> workspace = getWorkspace(workspaceKey);
 
-                        tuple<int64_t, string, shared_ptr<Customer>, string, IngestionType, IngestionStatus> ingestionToBeManaged
-                                = make_tuple(ingestionJobKey, startIngestion, customer, metaDataContent, ingestionType, ingestionStatus);
+                        tuple<int64_t, string, shared_ptr<Workspace>, string, IngestionType, IngestionStatus> ingestionToBeManaged
+                                = make_tuple(ingestionJobKey, startIngestion, workspace, metaDataContent, ingestionType, ingestionStatus);
 
                         ingestionsToBeManaged.push_back(ingestionToBeManaged);
                     }
@@ -1565,7 +1567,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                     string metaDataContent      = resultSet->getString("metaDataContent");
                     IngestionStatus ingestionStatus     = MMSEngineDBFacade::toIngestionStatus(resultSet->getString("status"));
                     string mediaItemKeysDependency;
-                    shared_ptr<Customer> customer = getCustomer(customerKey);
+                    shared_ptr<Workspace> customer = getWorkspace(customerKey);
 
                     mediaItemKeysDependency = resultSet->getString("mediaItemKeysDependency");
 
@@ -1594,7 +1596,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                         
                     if (ingestionToBeManaged)
                     {
-                        tuple<int64_t,string,shared_ptr<Customer>,string,IngestionStatus,string> ingestionToBeManaged
+                        tuple<int64_t,string,shared_ptr<Workspace>,string,IngestionStatus,string> ingestionToBeManaged
                                 = make_tuple(ingestionJobKey, startIngestion, customer, metaDataContent, ingestionStatus, mediaItemKeysDependency);
 
                         ingestionsToBeManaged.push_back(ingestionToBeManaged);
@@ -1604,18 +1606,18 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
         }
          */
 
-        for (tuple<int64_t, string, shared_ptr<Customer>, string, IngestionType, IngestionStatus>& ingestionToBeManaged:
+        for (tuple<int64_t, string, shared_ptr<Workspace>, string, IngestionType, IngestionStatus>& ingestionToBeManaged:
             ingestionsToBeManaged)
         {
             int64_t ingestionJobKey;
             string startIngestion;
-            shared_ptr<Customer> customer;
+            shared_ptr<Workspace> workspace;
             string metaDataContent;
             string sourceReference;
             MMSEngineDBFacade::IngestionStatus ingestionStatus;
             MMSEngineDBFacade::IngestionType ingestionType;
 
-            tie(ingestionJobKey, startIngestion, customer, metaDataContent, ingestionType, ingestionStatus) = ingestionToBeManaged;
+            tie(ingestionJobKey, startIngestion, workspace, metaDataContent, ingestionType, ingestionStatus) = ingestionToBeManaged;
 
             lastSQLCommand = 
                 "update MMS_IngestionJob set processorMMS = ? where ingestionJobKey = ?";
@@ -1790,7 +1792,7 @@ shared_ptr<MySQLConnection> MMSEngineDBFacade::endIngestionJobs (
 
 int64_t MMSEngineDBFacade::addIngestionRoot (
         shared_ptr<MySQLConnection> conn,
-    	int64_t customerKey, string rootType, string rootLabel,
+    	int64_t workspaceKey, string rootType, string rootLabel,
         bool rootLabelDuplication
 )
 {
@@ -1803,10 +1805,10 @@ int64_t MMSEngineDBFacade::addIngestionRoot (
         if (!rootLabelDuplication)
         {
             lastSQLCommand = 
-                "select ingestionRootKey from MMS_IngestionRoot where customerKey = ? and label = ?";
+                "select ingestionRootKey from MMS_IngestionRoot where workspaceKey = ? and label = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, customerKey);
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setString(queryParameterIndex++, rootLabel);
             
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
@@ -1830,12 +1832,12 @@ int64_t MMSEngineDBFacade::addIngestionRoot (
         {
             {
                 lastSQLCommand = 
-                    "insert into MMS_IngestionRoot (ingestionRootKey, customerKey, type, label) values ("
+                    "insert into MMS_IngestionRoot (ingestionRootKey, workspaceKey, type, label) values ("
                     "NULL, ?, ?, ?)";
 
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
-                preparedStatement->setInt64(queryParameterIndex++, customerKey);
+                preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
                 preparedStatement->setString(queryParameterIndex++, rootType);
                 preparedStatement->setString(queryParameterIndex++, rootLabel);
 
@@ -1869,7 +1871,7 @@ int64_t MMSEngineDBFacade::addIngestionRoot (
 }
 
 int64_t MMSEngineDBFacade::addIngestionJob (
-        shared_ptr<MySQLConnection> conn, int64_t customerKey,
+        shared_ptr<MySQLConnection> conn, int64_t workspaceKey,
     	int64_t ingestionRootKey, string label, string metadataContent,
         MMSEngineDBFacade::IngestionType ingestionType, 
         vector<int64_t> dependOnIngestionJobKeys, int dependOnSuccess
@@ -1883,33 +1885,33 @@ int64_t MMSEngineDBFacade::addIngestionJob (
     {
         {
             lastSQLCommand = 
-                "select c.isEnabled, c.customerType from MMS_Customer c where c.customerKey = ?";
+                "select c.isEnabled, c.workspaceType from MMS_Workspace c where c.workspaceKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, customerKey);
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
                 int isEnabled = resultSet->getInt("isEnabled");
-                int customerType = resultSet->getInt("customerType");
+                int workspaceType = resultSet->getInt("workspaceType");
                 
                 if (isEnabled != 1)
                 {
-                    string errorMessage = __FILEREF__ + "Customer is not enabled"
-                        + ", customerKey: " + to_string(customerKey)
+                    string errorMessage = __FILEREF__ + "Workspace is not enabled"
+                        + ", workspaceKey: " + to_string(workspaceKey)
                         + ", lastSQLCommand: " + lastSQLCommand
                     ;
                     _logger->error(errorMessage);
                     
                     throw runtime_error(errorMessage);                    
                 }
-                else if (customerType != static_cast<int>(CustomerType::IngestionAndDelivery) &&
-                        customerType != static_cast<int>(CustomerType::EncodingOnly))
+                else if (workspaceType != static_cast<int>(WorkspaceType::IngestionAndDelivery) &&
+                        workspaceType != static_cast<int>(WorkspaceType::EncodingOnly))
                 {
-                    string errorMessage = __FILEREF__ + "Customer is not enabled to ingest content"
-                        + ", customerKey: " + to_string(customerKey);
-                        + ", customerType: " + to_string(static_cast<int>(customerType))
+                    string errorMessage = __FILEREF__ + "Workspace is not enabled to ingest content"
+                        + ", workspaceKey: " + to_string(workspaceKey);
+                        + ", workspaceType: " + to_string(static_cast<int>(workspaceType))
                         + ", lastSQLCommand: " + lastSQLCommand
                     ;
                     _logger->error(errorMessage);
@@ -1919,8 +1921,8 @@ int64_t MMSEngineDBFacade::addIngestionJob (
             }
             else
             {
-                string errorMessage = __FILEREF__ + "Customer is not present/configured"
-                    + ", customerKey: " + to_string(customerKey)
+                string errorMessage = __FILEREF__ + "Workspace is not present/configured"
+                    + ", workspaceKey: " + to_string(workspaceKey)
                     + ", lastSQLCommand: " + lastSQLCommand
                 ;
                 _logger->error(errorMessage);
@@ -3115,7 +3117,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                 
                 {
                     lastSQLCommand = 
-                        "select m.customerKey, m.contentType, p.partitionNumber, p.mediaItemKey, p.fileName, p.relativePath "
+                        "select m.workspaceKey, m.contentType, p.partitionNumber, p.mediaItemKey, p.fileName, p.relativePath "
                         "from MMS_MediaItem m, MMS_PhysicalPath p where m.mediaItemKey = p.mediaItemKey and p.physicalPathKey = ?";
                     shared_ptr<sql::PreparedStatement> preparedStatementPhysicalPath (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
@@ -3125,7 +3127,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                     if (physicalPathResultSet->next())
                     {
                         encodingItem->_contentType = MMSEngineDBFacade::toContentType(physicalPathResultSet->getString("contentType"));
-                        encodingItem->_customer = getCustomer(physicalPathResultSet->getInt64("customerKey"));
+                        encodingItem->_workspace = getWorkspace(physicalPathResultSet->getInt64("workspaceKey"));
                         encodingItem->_mmsPartitionNumber = physicalPathResultSet->getInt("partitionNumber");
                         encodingItem->_mediaItemKey = physicalPathResultSet->getInt64("mediaItemKey");
                         encodingItem->_fileName = physicalPathResultSet->getString("fileName");
@@ -3627,8 +3629,8 @@ void MMSEngineDBFacade::updateEncodingJobProgress (
     }
 }
 
-string MMSEngineDBFacade::checkCustomerMaxIngestionNumber (
-    int64_t customerKey
+string MMSEngineDBFacade::checkWorkspaceMaxIngestionNumber (
+    int64_t workspaceKey
 )
 {
     string      relativePathToBeUsed;
@@ -3654,10 +3656,10 @@ string MMSEngineDBFacade::checkCustomerMaxIngestionNumber (
                 "select c.maxIngestionsNumber, cmi.currentIngestionsNumber, c.encodingPeriod, " 
                     "DATE_FORMAT(cmi.startDateTime, '%Y-%m-%d %H:%i:%s') as LocalStartDateTime, DATE_FORMAT(cmi.endDateTime, '%Y-%m-%d %H:%i:%s') as LocalEndDateTime, "
                     "cmi.currentDirLevel1, cmi.currentDirLevel2, cmi.currentDirLevel3 "
-                "from MMS_Customer c, MMS_CustomerMoreInfo cmi where c.customerKey = cmi.customerKey and c.customerKey = ?";
+                "from MMS_Workspace c, MMS_WorkspaceMoreInfo cmi where c.workspaceKey = cmi.workspaceKey and c.workspaceKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, customerKey);
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
@@ -3673,8 +3675,8 @@ string MMSEngineDBFacade::checkCustomerMaxIngestionNumber (
             }
             else
             {
-                string errorMessage = __FILEREF__ + "Customer is not present/configured"
-                    + ", customerKey: " + to_string(customerKey)
+                string errorMessage = __FILEREF__ + "Workspace is not present/configured"
+                    + ", workspaceKey: " + to_string(workspaceKey)
                     + ", lastSQLCommand: " + lastSQLCommand
                 ;
                 _logger->error(errorMessage);
@@ -3711,7 +3713,7 @@ string MMSEngineDBFacade::checkCustomerMaxIngestionNumber (
                 
                 if (currentIngestionsNumber >= maxIngestionsNumber)
                 {
-                    // no more ingestions are allowed for this customer
+                    // no more ingestions are allowed for this workspace
 
                     ingestionsAllowed = false;
                 }
@@ -3887,15 +3889,15 @@ string MMSEngineDBFacade::checkCustomerMaxIngestionNumber (
         if (periodExpired)
         {
             lastSQLCommand = 
-                "update MMS_CustomerMoreInfo set currentIngestionsNumber = 0, "
+                "update MMS_WorkspaceMoreInfo set currentIngestionsNumber = 0, "
                 "startDateTime = STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'), endDateTime = STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S') "
-                "where customerKey = ?";
+                "where workspaceKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, newPeriodStartDateTime);
             preparedStatement->setString(queryParameterIndex++, newPeriodEndDateTime);
-            preparedStatement->setInt64(queryParameterIndex++, customerKey);
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 
             int rowsUpdated = preparedStatement->executeUpdate();
             if (rowsUpdated != 1)
@@ -3903,7 +3905,7 @@ string MMSEngineDBFacade::checkCustomerMaxIngestionNumber (
                 string errorMessage = __FILEREF__ + "no update was done"
                         + ", newPeriodStartDateTime: " + newPeriodStartDateTime
                         + ", newPeriodEndDateTime: " + newPeriodEndDateTime
-                        + ", customerKey: " + to_string(customerKey)
+                        + ", workspaceKey: " + to_string(workspaceKey)
                         + ", rowsUpdated: " + to_string(rowsUpdated)
                         + ", lastSQLCommand: " + lastSQLCommand
                 ;
@@ -3973,7 +3975,7 @@ string MMSEngineDBFacade::checkCustomerMaxIngestionNumber (
 }
 
 pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
-        shared_ptr<Customer> customer,
+        shared_ptr<Workspace> workspace,
         int64_t ingestionJobKey,        
         MMSEngineDBFacade::ContentType contentType,
         Json::Value typeRoot,
@@ -4036,10 +4038,10 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                 contentProviderName = _defaultContentProviderName;
 
             lastSQLCommand = 
-                "select contentProviderKey from MMS_ContentProvider where customerKey = ? and name = ?";
+                "select contentProviderKey from MMS_ContentProvider where workspaceKey = ? and name = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, customer->_customerKey);
+            preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
             preparedStatement->setString(queryParameterIndex++, contentProviderName);
             
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
@@ -4050,7 +4052,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             else
             {
                 string errorMessage = __FILEREF__ + "ContentProvider is not present"
-                    + ", customer->_customerKey: " + to_string(customer->_customerKey)
+                    + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
                     + ", contentProviderName: " + contentProviderName
                     + ", lastSQLCommand: " + lastSQLCommand
                 ;
@@ -4085,29 +4087,29 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                 if (isMetadataPresent(typeRoot, "EncodingProfilesSet"))
                     encodingProfilesSet = typeRoot.get("EncodingProfilesSet", "XXX").asString();
                 else
-                    encodingProfilesSet = "customerDefault";
+                    encodingProfilesSet = "workspaceDefault";
                 
                 if (encodingProfilesSet == "systemDefault")
                 {
                     lastSQLCommand = 
-                        "select encodingProfilesSetKey from MMS_EncodingProfilesSet where contentType = ? and customerKey is null and name is null";
+                        "select encodingProfilesSetKey from MMS_EncodingProfilesSet where contentType = ? and workspaceKey is null and name is null";
                     shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
                     preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
                 }
-                else if (encodingProfilesSet == "customerDefault")
+                else if (encodingProfilesSet == "workspaceDefault")
                 {
                     lastSQLCommand = 
-                        "select encodingProfilesSetKey from MMS_EncodingProfilesSet where contentType = ? and customerKey = ? and name is null";
+                        "select encodingProfilesSetKey from MMS_EncodingProfilesSet where contentType = ? and workspaceKey = ? and name is null";
                     shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
                     preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
-                    preparedStatement->setInt64(queryParameterIndex++, customer->_customerKey);
+                    preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
                 }
                 else
                 {
                     lastSQLCommand = 
-                        "select encodingProfilesSetKey from MMS_EncodingProfilesSet where contentType = ? and customerKey = ? and name = ?";
+                        "select encodingProfilesSetKey from MMS_EncodingProfilesSet where contentType = ? and workspaceKey = ? and name = ?";
                 }
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
@@ -4115,15 +4117,15 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                 {
                     preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
                 }
-                else if (encodingProfilesSet == "customerDefault")
+                else if (encodingProfilesSet == "workspaceDefault")
                 {
                     preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
-                    preparedStatement->setInt64(queryParameterIndex++, customer->_customerKey);
+                    preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
                 }
                 else
                 {
                     preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
-                    preparedStatement->setInt64(queryParameterIndex++, customer->_customerKey);
+                    preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
                     preparedStatement->setString(queryParameterIndex++, encodingProfilesSet);
                 }
                 shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
@@ -4135,7 +4137,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                 {
                     string errorMessage = __FILEREF__ + "encodingProfilesSetKey is not present"
                         + ", contentType: " + MMSEngineDBFacade::toString(contentType)
-                        + ", customer->_customerKey: " + to_string(customer->_customerKey)
+                        + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
                         + ", encodingProfilesSet: " + encodingProfilesSet
                         + ", lastSQLCommand: " + lastSQLCommand
                     ;
@@ -4147,14 +4149,14 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
 
 
             lastSQLCommand = 
-                "insert into MMS_MediaItem (mediaItemKey, uniqueName, customerKey, contentProviderKey, title, ingester, keywords, " 
+                "insert into MMS_MediaItem (mediaItemKey, uniqueName, workspaceKey, contentProviderKey, title, ingester, keywords, " 
                 "ingestionDate, contentType, encodingProfilesSetKey) values ("
                 "NULL, ?, ?, ?, ?, ?, ?, NULL, ?, ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, uniqueName);
-            preparedStatement->setInt64(queryParameterIndex++, customer->_customerKey);
+            preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
             preparedStatement->setInt64(queryParameterIndex++, contentProviderKey);
             preparedStatement->setString(queryParameterIndex++, title);
             if (ingester == "")
@@ -4349,10 +4351,10 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                 const Json::Value territories = typeRoot[field];
                 
                 lastSQLCommand = 
-                    "select territoryKey, name from MMS_Territory where customerKey = ?";
+                    "select territoryKey, name from MMS_Territory where workspaceKey = ?";
                 shared_ptr<sql::PreparedStatement> preparedStatementTerrirories (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
-                preparedStatementTerrirories->setInt64(queryParameterIndex++, customer->_customerKey);
+                preparedStatementTerrirories->setInt64(queryParameterIndex++, workspace->_workspaceKey);
 
                 shared_ptr<sql::ResultSet> resultSetTerritories (preparedStatementTerrirories->executeQuery());
                 while (resultSetTerritories->next())
@@ -4444,10 +4446,10 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             {
                 lastSQLCommand = 
                     "select currentDirLevel1, currentDirLevel2, currentDirLevel3 "
-                    "from MMS_CustomerMoreInfo where customerKey = ?";
+                    "from MMS_WorkspaceMoreInfo where workspaceKey = ?";
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
-                preparedStatement->setInt64(queryParameterIndex++, customer->_customerKey);
+                preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
 
                 shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
                 if (resultSet->next())
@@ -4458,8 +4460,8 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                 }
                 else
                 {
-                    string errorMessage = __FILEREF__ + "Customer is not present/configured"
-                        + ", customer->_customerKey: " + to_string(customer->_customerKey)
+                    string errorMessage = __FILEREF__ + "Workspace is not present/configured"
+                        + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
                         + ", lastSQLCommand: " + lastSQLCommand
                     ;
                     _logger->error(errorMessage);
@@ -4497,16 +4499,16 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
 
             {
                 lastSQLCommand = 
-                    "update MMS_CustomerMoreInfo set currentDirLevel1 = ?, currentDirLevel2 = ?, "
+                    "update MMS_WorkspaceMoreInfo set currentDirLevel1 = ?, currentDirLevel2 = ?, "
                     "currentDirLevel3 = ?, currentIngestionsNumber = currentIngestionsNumber + 1 "
-                    "where customerKey = ?";
+                    "where workspaceKey = ?";
 
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
                 preparedStatement->setInt(queryParameterIndex++, currentDirLevel1);
                 preparedStatement->setInt(queryParameterIndex++, currentDirLevel2);
                 preparedStatement->setInt(queryParameterIndex++, currentDirLevel3);
-                preparedStatement->setInt64(queryParameterIndex++, customer->_customerKey);
+                preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
 
                 int rowsUpdated = preparedStatement->executeUpdate();
                 if (rowsUpdated != 1)
@@ -4515,7 +4517,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                             + ", currentDirLevel1: " + to_string(currentDirLevel1)
                             + ", currentDirLevel2: " + to_string(currentDirLevel2)
                             + ", currentDirLevel3: " + to_string(currentDirLevel3)
-                            + ", customer->_customerKey: " + to_string(customer->_customerKey)
+                            + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
                             + ", rowsUpdated: " + to_string(rowsUpdated)
                             + ", lastSQLCommand: " + lastSQLCommand
                     ;
@@ -4536,11 +4538,11 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                     string strEncodingPriority = typeRoot.get(field, "XXX").asString();
                     encodingPriority = MMSEngineDBFacade::toEncodingPriority(strEncodingPriority);
 
-                    if (static_cast<int>(encodingPriority) > customer->_maxEncodingPriority)
-                        encodingPriority = static_cast<EncodingPriority>(customer->_maxEncodingPriority); 
+                    if (static_cast<int>(encodingPriority) > workspace->_maxEncodingPriority)
+                        encodingPriority = static_cast<EncodingPriority>(workspace->_maxEncodingPriority); 
                 }
                 else
-                    encodingPriority = static_cast<EncodingPriority>(customer->_maxEncodingPriority);
+                    encodingPriority = static_cast<EncodingPriority>(workspace->_maxEncodingPriority);
             }
             else
                 encodingPriority = EncodingPriority::Medium;
@@ -4663,13 +4665,13 @@ tuple<int,string,string,string> MMSEngineDBFacade::getStorageDetails(
     {
         conn = _connectionPool->borrow();	
 
-        int64_t customerKey;
+        int64_t workspaceKey;
         int mmsPartitionNumber;
         string relativePath;
         string fileName;
         {
             lastSQLCommand = string("") +
-                "select mi.customerKey, pp.partitionNumber, pp.relativePath, pp.fileName "
+                "select mi.workspaceKey, pp.partitionNumber, pp.relativePath, pp.fileName "
                 "from MMS_MediaItem mi, MMS_PhysicalPath pp "
                 "where mi.mediaItemKey = pp.mediaItemKey and mi.mediaItemKey = ? "
                 "and pp.encodingProfileKey " + (encodingProfileKey == -1 ? "is null" : "= ?");
@@ -4683,7 +4685,7 @@ tuple<int,string,string,string> MMSEngineDBFacade::getStorageDetails(
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
-                customerKey = resultSet->getInt64("customerKey");
+                workspaceKey = resultSet->getInt64("workspaceKey");
                 mmsPartitionNumber = resultSet->getInt("partitionNumber");
                 relativePath = resultSet->getString("relativePath");
                 fileName = resultSet->getString("fileName");
@@ -4701,11 +4703,11 @@ tuple<int,string,string,string> MMSEngineDBFacade::getStorageDetails(
             }
         }
 
-        shared_ptr<Customer> customer = getCustomer(customerKey);
+        shared_ptr<Workspace> workspace = getWorkspace(workspaceKey);
 
         _connectionPool->unborrow(conn);
 
-        return make_tuple(mmsPartitionNumber, customer->_directoryName, relativePath, fileName);
+        return make_tuple(mmsPartitionNumber, workspace->_directoryName, relativePath, fileName);
     }
     catch(sql::SQLException se)
     {
@@ -4743,7 +4745,7 @@ tuple<int,string,string,string> MMSEngineDBFacade::getStorageDetails(
 }
 
 int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
-        int64_t customerKey,
+        int64_t workspaceKey,
         int64_t mediaItemKey,
         string encodedFileName,
         string relativePath,
@@ -4798,10 +4800,10 @@ int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
         {
             lastSQLCommand = 
                 "select t.territoryKey, t.name, DATE_FORMAT(d.startPublishing, '%Y-%m-%d %H:%i:%s') as startPublishing, DATE_FORMAT(d.endPublishing, '%Y-%m-%d %H:%i:%s') as endPublishing from MMS_Territory t, MMS_DefaultTerritoryInfo d "
-                "where t.territoryKey = d.territoryKey and t.customerKey = ? and d.mediaItemKey = ?";
+                "where t.territoryKey = d.territoryKey and t.workspaceKey = ? and d.mediaItemKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatementTerritory (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatementTerritory->setInt64(queryParameterIndex++, customerKey);
+            preparedStatementTerritory->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatementTerritory->setInt64(queryParameterIndex++, mediaItemKey);
 
             shared_ptr<sql::ResultSet> resultSetTerritory (preparedStatementTerritory->executeQuery());
@@ -4993,12 +4995,12 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         try
         {
             // maxEncodingPriority (0: low, 1: default, 2: high)
-            // customerType: (0: Live Sessions only, 1: Ingestion + Delivery, 2: Encoding Only)
+            // workspaceType: (0: Live Sessions only, 1: Ingestion + Delivery, 2: Encoding Only)
             // encodingPeriod: 0: Daily, 1: Weekly, 2: Monthly
 
             lastSQLCommand = 
-                "create table if not exists MMS_Customer ("
-                    "customerKey                    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                "create table if not exists MMS_Workspace ("
+                    "workspaceKey                    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "creationDate                   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "name                           VARCHAR (64) NOT NULL,"
                     "directoryName                  VARCHAR (64) NOT NULL,"
@@ -5008,7 +5010,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "zip                            VARCHAR (32) NULL,"
                     "phone                          VARCHAR (32) NULL,"
                     "countryCode                    VARCHAR (64) NULL,"
-                    "customerType                   TINYINT NOT NULL,"
+                    "workspaceType                   TINYINT NOT NULL,"
                     "deliveryURL                    VARCHAR (256) NULL,"
                     "isEnabled                      TINYINT (1) NOT NULL,"
                     "maxEncodingPriority            VARCHAR (32) NOT NULL,"
@@ -5017,7 +5019,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "maxStorageInGB                 INT NOT NULL,"
                     "currentStorageUsageInGB        INT DEFAULT 0,"
                     "languageCode                   VARCHAR (16) NOT NULL,"
-                    "constraint MMS_Customer_PK PRIMARY KEY (customerKey),"
+                    "constraint MMS_Workspace_PK PRIMARY KEY (workspaceKey),"
                     "UNIQUE (name))"
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);    
@@ -5038,7 +5040,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         try
         {
             lastSQLCommand = 
-                "create unique index MMS_Customer_idx on MMS_Customer (directoryName)";
+                "create unique index MMS_Workspace_idx on MMS_Workspace (directoryName)";
             statement->execute(lastSQLCommand);    
         }
         catch(sql::SQLException se)
@@ -5058,12 +5060,12 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         {
             lastSQLCommand = 
                 "create table if not exists MMS_ConfirmationCode ("
-                    "customerKey                    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "workspaceKey                    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "creationDate                   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "confirmationCode               VARCHAR (64) NOT NULL,"
-                    "constraint MMS_ConfirmationCode_PK PRIMARY KEY (customerKey),"
-                    "constraint MMS_ConfirmationCode_FK foreign key (customerKey) "
-                        "references MMS_Customer (customerKey) on delete cascade, "
+                    "constraint MMS_ConfirmationCode_PK PRIMARY KEY (workspaceKey),"
+                    "constraint MMS_ConfirmationCode_FK foreign key (workspaceKey) "
+                        "references MMS_Workspace (workspaceKey) on delete cascade, "
                     "UNIQUE (confirmationCode))"
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);    
@@ -5083,20 +5085,20 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
         try
         {
-            // The territories are present only if the Customer is a 'Content Provider'.
+            // The territories are present only if the Workspace is a 'Content Provider'.
             // In this case we could have two scenarios:
-            // - customer not having territories (we will have just one row in this table with Name set as 'default')
-            // - customer having at least one territory (we will as much rows in this table according the number of territories)
+            // - workspace not having territories (we will have just one row in this table with Name set as 'default')
+            // - workspace having at least one territory (we will as much rows in this table according the number of territories)
             lastSQLCommand = 
                 "create table if not exists MMS_Territory ("
                     "territoryKey  				BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
-                    "customerKey  				BIGINT UNSIGNED NOT NULL,"
+                    "workspaceKey  				BIGINT UNSIGNED NOT NULL,"
                     "name					VARCHAR (64) NOT NULL,"
                     "currency					VARCHAR (16) DEFAULT NULL,"
                     "constraint MMS_Territory_PK PRIMARY KEY (territoryKey),"
-                    "constraint MMS_Territory_FK foreign key (customerKey) "
-                        "references MMS_Customer (customerKey) on delete cascade, "
-                    "UNIQUE (customerKey, name))"
+                    "constraint MMS_Territory_FK foreign key (workspaceKey) "
+                        "references MMS_Workspace (workspaceKey) on delete cascade, "
+                    "UNIQUE (workspaceKey, name))"
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
@@ -5115,22 +5117,22 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
         try
         {
-            // create table MMS_CustomerMoreInfo. This table was created to move the fields
-            //		that are updated during the ingestion from MMS_Customer.
-            //		That will avoid to put a lock in the MMS_Customer during the update
-            //		since the MMS_Customer is a wide used table
+            // create table MMS_WorkspaceMoreInfo. This table was created to move the fields
+            //		that are updated during the ingestion from MMS_Workspace.
+            //		That will avoid to put a lock in the MMS_Workspace during the update
+            //		since the MMS_Workspace is a wide used table
             lastSQLCommand = 
-                "create table if not exists MMS_CustomerMoreInfo ("
-                    "customerKey  			BIGINT UNSIGNED NOT NULL,"
+                "create table if not exists MMS_WorkspaceMoreInfo ("
+                    "workspaceKey  			BIGINT UNSIGNED NOT NULL,"
                     "currentDirLevel1			INT NOT NULL,"
                     "currentDirLevel2			INT NOT NULL,"
                     "currentDirLevel3			INT NOT NULL,"
                     "startDateTime			DATETIME NOT NULL,"
                     "endDateTime			DATETIME NOT NULL,"
                     "currentIngestionsNumber	INT NOT NULL,"
-                    "constraint MMS_CustomerMoreInfo_PK PRIMARY KEY (customerKey), "
-                    "constraint MMS_CustomerMoreInfo_FK foreign key (customerKey) "
-                        "references MMS_Customer (customerKey) on delete cascade) "
+                    "constraint MMS_WorkspaceMoreInfo_PK PRIMARY KEY (workspaceKey), "
+                    "constraint MMS_WorkspaceMoreInfo_FK foreign key (workspaceKey) "
+                        "references MMS_Workspace (workspaceKey) on delete cascade) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
@@ -5162,13 +5164,13 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "eMailAddress				VARCHAR (128) NULL,"
                     "password				VARCHAR (128) NOT NULL,"
                     "userName				VARCHAR (128) NOT NULL,"
-                    "customerKey                            BIGINT UNSIGNED NOT NULL,"
+                    "workspaceKey                            BIGINT UNSIGNED NOT NULL,"
                     "type					INT NOT NULL,"
                     "creationDate				TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "expirationDate				DATETIME NOT NULL,"
                     "constraint MMS_User_PK PRIMARY KEY (userKey), "
-                    "constraint MMS_User_FK foreign key (customerKey) "
-                        "references MMS_Customer (customerKey) on delete cascade, "
+                    "constraint MMS_User_FK foreign key (workspaceKey) "
+                        "references MMS_Workspace (workspaceKey) on delete cascade, "
                     "UNIQUE (eMailAddress))"
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
@@ -5189,7 +5191,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         try
         {
             lastSQLCommand = 
-                "create unique index MMS_User_idx on MMS_User (customerKey, userName)";
+                "create unique index MMS_User_idx on MMS_User (workspaceKey, userName)";
             statement->execute(lastSQLCommand);
         }
         catch(sql::SQLException se)
@@ -5238,12 +5240,12 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             lastSQLCommand = 
                 "create table if not exists MMS_ContentProvider ("
                     "contentProviderKey                     BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
-                    "customerKey                            BIGINT UNSIGNED NOT NULL,"
+                    "workspaceKey                            BIGINT UNSIGNED NOT NULL,"
                     "name					VARCHAR (64) NOT NULL,"
                     "constraint MMS_ContentProvider_PK PRIMARY KEY (contentProviderKey), "
-                    "constraint MMS_ContentProvider_FK foreign key (customerKey) "
-                        "references MMS_Customer (customerKey) on delete cascade, "
-                    "UNIQUE (customerKey, name))" 
+                    "constraint MMS_ContentProvider_FK foreign key (workspaceKey) "
+                        "references MMS_Workspace (workspaceKey) on delete cascade, "
+                    "UNIQUE (workspaceKey, name))" 
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
@@ -5329,20 +5331,20 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
         try
         {
-            // customerKey and name
+            // workspaceKey and name
             //      both NULL: global/system EncodingProfiles for the ContentType
-            //      only name NULL: Customer default EncodingProfiles for the ContentType
-            //      both different by NULL: named Customer EncodingProfiles for the ContentType
+            //      only name NULL: Workspace default EncodingProfiles for the ContentType
+            //      both different by NULL: named Workspace EncodingProfiles for the ContentType
             lastSQLCommand = 
                 "create table if not exists MMS_EncodingProfilesSet ("
                     "encodingProfilesSetKey  	BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "contentType				VARCHAR (32) NOT NULL,"
-                    "customerKey  				BIGINT UNSIGNED NULL,"
+                    "workspaceKey  				BIGINT UNSIGNED NULL,"
                     "name						VARCHAR (64) NULL,"
                     "constraint MMS_EncodingProfilesSet_PK PRIMARY KEY (encodingProfilesSetKey)," 
-                    "constraint MMS_EncodingProfilesSet_FK foreign key (customerKey) "
-                        "references MMS_Customer (customerKey) on delete cascade, "
-                    "UNIQUE (contentType, customerKey, name)) "
+                    "constraint MMS_EncodingProfilesSet_FK foreign key (workspaceKey) "
+                        "references MMS_Workspace (workspaceKey) on delete cascade, "
+                    "UNIQUE (contentType, workspaceKey, name)) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
@@ -5369,7 +5371,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 int     encodingProfilesSetCount = -1;
                 {
                     lastSQLCommand = 
-                        "select count(*) from MMS_EncodingProfilesSet where contentType = ? and customerKey is NULL and name is NULL";
+                        "select count(*) from MMS_EncodingProfilesSet where contentType = ? and workspaceKey is NULL and name is NULL";
                     shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
                     preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
@@ -5384,7 +5386,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 if (encodingProfilesSetCount == 0)
                 {
                     lastSQLCommand = 
-                        "insert into MMS_EncodingProfilesSet (encodingProfilesSetKey, contentType, customerKey, name) values (NULL, ?, NULL, NULL)";
+                        "insert into MMS_EncodingProfilesSet (encodingProfilesSetKey, contentType, workspaceKey, name) values (NULL, ?, NULL, NULL)";
                     shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
                     preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
@@ -5438,12 +5440,12 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             lastSQLCommand = 
                 "create table if not exists MMS_IngestionRoot ("
                     "ingestionRootKey           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
-                    "customerKey                BIGINT UNSIGNED NOT NULL,"
+                    "workspaceKey                BIGINT UNSIGNED NOT NULL,"
                     "type                       VARCHAR (64) NOT NULL,"
                     "label                      VARCHAR (128) NULL,"
                     "constraint MMS_IngestionRoot_PK PRIMARY KEY (ingestionRootKey), "
-                    "constraint MMS_IngestionRoot_FK foreign key (customerKey) "
-                        "references MMS_Customer (customerKey) on delete cascade) "	   	        				
+                    "constraint MMS_IngestionRoot_FK foreign key (workspaceKey) "
+                        "references MMS_Workspace (workspaceKey) on delete cascade) "	   	        				
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
@@ -5463,7 +5465,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         try
         {
             lastSQLCommand = 
-                "create index MMS_IngestionRoot_idx on MMS_IngestionRoot (customerKey, label)";
+                "create index MMS_IngestionRoot_idx on MMS_IngestionRoot (workspaceKey, label)";
             statement->execute(lastSQLCommand);
         }
         catch(sql::SQLException se)
@@ -5567,19 +5569,19 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
         try
         {
-            // customerKey is the owner of the content
+            // workspaceKey is the owner of the content
             // ContentType: 0: video, 1: audio, 2: image, 3: application, 4: ringtone (it uses the same audio tables),
             //		5: playlist, 6: live
             // IngestedRelativePath MUST start always with '/' and ends always with '/'
             // IngestedFileName and IngestedRelativePath refer the ingested content independently
             //		if it is encoded or uncompressed
             // if EncodingProfilesSet is NULL, it means the ingested content is already encoded
-            // The ContentProviderKey is the entity owner of the content. For example H3G is our customer and EMI is the ContentProvider.
+            // The ContentProviderKey is the entity owner of the content. For example H3G is our workspace and EMI is the ContentProvider.
             lastSQLCommand = 
                 "create table if not exists MMS_MediaItem ("
                     "mediaItemKey  			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "uniqueName      			VARCHAR (128) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
-                    "customerKey			BIGINT UNSIGNED NOT NULL,"
+                    "workspaceKey			BIGINT UNSIGNED NOT NULL,"
                     "contentProviderKey			BIGINT UNSIGNED NOT NULL,"
                     "title      			VARCHAR (256) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
                     "ingester				VARCHAR (128) NULL,"
@@ -5588,8 +5590,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "contentType                        VARCHAR (32) NOT NULL,"
                     "encodingProfilesSetKey		BIGINT UNSIGNED NULL,"
                     "constraint MMS_MediaItem_PK PRIMARY KEY (mediaItemKey), "
-                    "constraint MMS_MediaItem_FK foreign key (customerKey) "
-                        "references MMS_Customer (customerKey) on delete cascade, "
+                    "constraint MMS_MediaItem_FK foreign key (workspaceKey) "
+                        "references MMS_Workspace (workspaceKey) on delete cascade, "
                     "constraint MMS_MediaItem_FK2 foreign key (contentProviderKey) "
                         "references MMS_ContentProvider (contentProviderKey), "
                     "constraint MMS_MediaItem_FK3 foreign key (encodingProfilesSetKey) "
@@ -6124,7 +6126,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             EmailAddresses				VARCHAR (1024) NULL,
             constraint MMS_ReportsConfiguration_PK PRIMARY KEY (ReportConfigurationKey), 
             constraint MMS_ReportsConfiguration_FK foreign key (customerKey) 
-                    references MMS_Customers (customerKey) on delete cascade, 
+                    references MMS_Workspaces (customerKey) on delete cascade, 
             UNIQUE (customerKey, Type, Period)) 
             ENGINE=InnoDB;
 

@@ -242,7 +242,7 @@ int APICommon::operator()()
             continue;
         }
 
-        tuple<shared_ptr<Customer>,bool, bool> customerAndFlags;
+        tuple<shared_ptr<Workspace>,bool, bool> workspaceAndFlags;
         try
         {
             unordered_map<string, string>::iterator it;
@@ -280,12 +280,12 @@ int APICommon::operator()()
             string custormerKey = usernameAndPassword.substr(0, userNameSeparator);
             string apiKey = usernameAndPassword.substr(userNameSeparator + 1);
 
-            // customerAndFlags = _mmsEngine->checkAPIKey (apiKey);
-            customerAndFlags = _mmsEngineDBFacade->checkAPIKey(apiKey);
+            // workspaceAndFlags = _mmsEngine->checkAPIKey (apiKey);
+            workspaceAndFlags = _mmsEngineDBFacade->checkAPIKey(apiKey);
 
-            if (get<0>(customerAndFlags)->_customerKey != stol(custormerKey))
+            if (get<0>(workspaceAndFlags)->_workspaceKey != stol(custormerKey))
             {
-                _logger->error(__FILEREF__ + "Username (CustomerKey) is not the same Customer the apiKey is referring"
+                _logger->error(__FILEREF__ + "Username (WorkspaceKey) is not the same Workspace the apiKey is referring"
                     + ", username (custormerKey): " + custormerKey
                     + ", apiKey: " + apiKey
                 );
@@ -293,7 +293,7 @@ int APICommon::operator()()
                 throw NoAPIKeyPresentIntoRequest();
             }        
 
-            _logger->info(__FILEREF__ + "APIKey and Customer verified successful");
+            _logger->info(__FILEREF__ + "APIKey and Workspace verified successful");
         }
         catch(NoAPIKeyPresentIntoRequest e)
         {
@@ -382,7 +382,7 @@ int APICommon::operator()()
              */
 
             manageRequestAndResponse(request, requestURI, requestMethod, queryParameters,
-                    customerAndFlags, contentLength, requestBody,
+                    workspaceAndFlags, contentLength, requestBody,
                     xCatraMMSResumeHeader, requestDetails);            
         }
         catch(runtime_error e)
@@ -484,7 +484,7 @@ int APICommon::manageBinaryRequest()
         throw runtime_error(errorMessage);
     }
 
-    tuple<shared_ptr<Customer>,bool, bool> customerAndFlags;
+    tuple<shared_ptr<Workspace>,bool, bool> workspaceAndFlags;
     try
     {
         unordered_map<string, string>::iterator it;
@@ -522,12 +522,12 @@ int APICommon::manageBinaryRequest()
         string custormerKey = usernameAndPassword.substr(0, userNameSeparator);
         string apiKey = usernameAndPassword.substr(userNameSeparator + 1);
 
-        // customerAndFlags = _mmsEngine->checkAPIKey (apiKey);
-        customerAndFlags = _mmsEngineDBFacade->checkAPIKey(apiKey);
+        // workspaceAndFlags = _mmsEngine->checkAPIKey (apiKey);
+        workspaceAndFlags = _mmsEngineDBFacade->checkAPIKey(apiKey);
 
-        if (get<0>(customerAndFlags)->_customerKey != stol(custormerKey))
+        if (get<0>(workspaceAndFlags)->_workspaceKey != stol(custormerKey))
         {
-            _logger->error(__FILEREF__ + "Username (CustomerKey) is not the same Customer the apiKey is referring"
+            _logger->error(__FILEREF__ + "Username (WorkspaceKey) is not the same Workspace the apiKey is referring"
                 + ", username (custormerKey): " + custormerKey
                 + ", apiKey: " + apiKey
             );
@@ -535,7 +535,7 @@ int APICommon::manageBinaryRequest()
             throw NoAPIKeyPresentIntoRequest();
         }        
 
-        _logger->info(__FILEREF__ + "APIKey and Customer verified successful");
+        _logger->info(__FILEREF__ + "APIKey and Workspace verified successful");
     }
     catch(NoAPIKeyPresentIntoRequest e)
     {
@@ -612,7 +612,7 @@ int APICommon::manageBinaryRequest()
 
         getBinaryAndResponse(requestURI, requestMethod, 
                 xCatraMMSResumeHeader, queryParameters,
-                customerAndFlags, contentLength);            
+                workspaceAndFlags, contentLength);            
     }
     catch(runtime_error e)
     {

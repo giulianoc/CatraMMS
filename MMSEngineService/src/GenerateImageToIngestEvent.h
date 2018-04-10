@@ -35,7 +35,7 @@ using namespace std;
 class GenerateImageToIngestEvent: public Event2 {
 private:
     string                  _mmsVideoPathName;
-    shared_ptr<Customer>    _customer;
+    shared_ptr<Workspace>    _workspace;
     string                  _imageFileName;
     string                  _imageTitle;
 
@@ -52,11 +52,11 @@ public:
         _mmsVideoPathName = mmsVideoPathName;
     }
 
-    shared_ptr<Customer> getCustomer() {
-        return _customer;
+    shared_ptr<Workspace> getWorkspace() {
+        return _workspace;
     }
-    void setCustomer(shared_ptr<Customer> customer) {
-        _customer = customer;
+    void setWorkspace(shared_ptr<Workspace> workspace) {
+        _workspace = workspace;
     }
 
     string getImageFileName() {

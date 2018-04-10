@@ -36,7 +36,7 @@ using namespace std;
 class LocalAssetIngestionEvent: public Event2 {
 private:    
     int64_t                 _ingestionJobKey;
-    shared_ptr<Customer>    _customer;
+    shared_ptr<Workspace>    _workspace;
     MMSEngineDBFacade::IngestionType _ingestionType;
 
     string                  _metadataContent;
@@ -89,13 +89,13 @@ public:
         return _ingestionJobKey;
     }
 
-    void setCustomer(shared_ptr<Customer> customer)
+    void setWorkspace(shared_ptr<Workspace> workspace)
     {
-        _customer   = customer;
+        _workspace   = workspace;
     }
-    shared_ptr<Customer> getCustomer()
+    shared_ptr<Workspace> getWorkspace()
     {
-        return _customer;
+        return _workspace;
     }
 };
 

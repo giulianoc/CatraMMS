@@ -137,7 +137,7 @@ void ActiveEncodingsManager::operator()()
                             _logger->info(__FILEREF__ + "EncodingJob still running"
                                     + ", elapsed (minutes): " + 
                                         to_string(chrono::duration_cast<chrono::minutes>(chrono::system_clock::now() - encodingJob->_encodingJobStart).count())
-                                    + ", customer: " + encodingJob->_encodingItem->_customer->_name
+                                    + ", workspace: " + encodingJob->_encodingItem->_workspace->_name
                                     + ", _ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey)
                                     + ", _encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
                                     + ", _encodingPriority: " + to_string(static_cast<int>(encodingJob->_encodingItem->_encodingPriority))
@@ -152,7 +152,7 @@ void ActiveEncodingsManager::operator()()
                         chrono::system_clock::time_point        processingItemStart;
 
                         _logger->info(__FILEREF__ + "processEncodingJob"
-                                + ", customer: " + encodingJob->_encodingItem->_customer->_name
+                                + ", workspace: " + encodingJob->_encodingItem->_workspace->_name
                                 + ", _ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey)
                                 + ", _encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
                                 + ", _encodingPriority: " + to_string(static_cast<int>(encodingJob->_encodingItem->_encodingPriority))
@@ -168,7 +168,7 @@ void ActiveEncodingsManager::operator()()
                             _logger->info(__FILEREF__ + "processEncodingJob done"
                                 + ", elapsed (seconds): " + 
                                     to_string(chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - processingItemStart).count())
-                                + ", customer: " + encodingJob->_encodingItem->_customer->_name
+                                + ", workspace: " + encodingJob->_encodingItem->_workspace->_name
                                 + ", _ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey)
                                 + ", _encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
                                 + ", _encodingPriority: " + to_string(static_cast<int>(encodingJob->_encodingItem->_encodingPriority))
@@ -352,7 +352,7 @@ string ActiveEncodingsManager::encodeContentImage(shared_ptr<MMSEngineDBFacade::
     
     string mmsSourceAssetPathName = _mmsStorage->getMMSAssetPathName(
         encodingItem->_mmsPartitionNumber,
-        encodingItem->_customer->_directoryName,
+        encodingItem->_workspace->_directoryName,
         encodingItem->_relativePath,
         encodingItem->_fileName);
 
@@ -422,7 +422,7 @@ string ActiveEncodingsManager::encodeContentImage(shared_ptr<MMSEngineDBFacade::
 
             bool removeLinuxPathIfExist = true;
             stagingEncodedAssetPathName = _mmsStorage->getStagingAssetPathName(
-                encodingItem->_customer->_directoryName,
+                encodingItem->_workspace->_directoryName,
                 encodingItem->_relativePath,
                 encodedFileName,
                 -1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
@@ -452,7 +452,7 @@ string ActiveEncodingsManager::encodeContentImage(shared_ptr<MMSEngineDBFacade::
 
             bool removeLinuxPathIfExist = true;
             stagingEncodedAssetPathName = _mmsStorage->getStagingAssetPathName(
-                encodingItem->_customer->_directoryName,
+                encodingItem->_workspace->_directoryName,
                 encodingItem->_relativePath,
                 encodedFileName,
                 -1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
@@ -524,7 +524,7 @@ void ActiveEncodingsManager::processEncodedImage(
 
         mmsAssetPathName = _mmsStorage->moveAssetInMMSRepository(
             stagingEncodedAssetPathName,
-            encodingItem->_customer->_directoryName,
+            encodingItem->_workspace->_directoryName,
             encodedFileName,
             encodingItem->_relativePath,
 
@@ -532,7 +532,7 @@ void ActiveEncodingsManager::processEncodedImage(
             &mmsPartitionIndexUsed, // OUT if bIsPartitionIndexToBeCalculated is true, IN is bIsPartitionIndexToBeCalculated is false
 
             deliveryRepositoriesToo,
-            encodingItem->_customer->_territories
+            encodingItem->_workspace->_territories
         );
     }
     catch(exception e)
@@ -557,7 +557,7 @@ void ActiveEncodingsManager::processEncodedImage(
         }
 
         int64_t encodedPhysicalPathKey = _mmsEngineDBFacade->saveEncodedContentMetadata(
-            encodingItem->_customer->_customerKey,
+            encodingItem->_workspace->_workspaceKey,
             encodingItem->_mediaItemKey,
             encodedFileName,
             encodingItem->_relativePath,
@@ -635,7 +635,7 @@ void ActiveEncodingsManager::addEncodingItem(shared_ptr<MMSEngineDBFacade::Encod
     }
     
     _logger->info(__FILEREF__ + "Encoding Job Key added"
-        + ", encodingItem->_customer->_name: " + encodingItem->_customer->_name
+        + ", encodingItem->_workspace->_name: " + encodingItem->_workspace->_name
         + ", encodingItem->_ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
         + ", encodingItem->_encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
     );
@@ -650,7 +650,7 @@ unsigned long ActiveEncodingsManager:: addEncodingItems (
     for (shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem: vEncodingItems)
     {
         _logger->info(__FILEREF__ + "Adding Encoding Item"
-            + ", encodingItem->_customer->_name: " + encodingItem->_customer->_name
+            + ", encodingItem->_workspace->_name: " + encodingItem->_workspace->_name
             + ", encodingItem->_ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
             + ", encodingItem->_encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
             + ", encodingItem->_encodingPriority: " + to_string(static_cast<int>(encodingItem->_encodingPriority))
@@ -667,7 +667,7 @@ unsigned long ActiveEncodingsManager:: addEncodingItems (
         catch(MaxEncodingsManagerCapacityReached e)
         {
             _logger->info(__FILEREF__ + "Max Encodings Manager Capacity reached"
-                + ", encodingItem->_customer->_name: " + encodingItem->_customer->_name
+                + ", encodingItem->_workspace->_name: " + encodingItem->_workspace->_name
                 + ", encodingItem->_ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
                 + ", encodingItem->_encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
                 + ", encodingItem->_encodingPriority: " + to_string(static_cast<int>(encodingItem->_encodingPriority))
@@ -682,7 +682,7 @@ unsigned long ActiveEncodingsManager:: addEncodingItems (
         catch(exception e)
         {
             _logger->error(__FILEREF__ + "addEncodingItem failed"
-                + ", encodingItem->_customer->_name: " + encodingItem->_customer->_name
+                + ", encodingItem->_workspace->_name: " + encodingItem->_workspace->_name
                 + ", encodingItem->_ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
                 + ", encodingItem->_encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
                 + ", encodingItem->_encodingPriority: " + to_string(static_cast<int>(encodingItem->_encodingPriority))
