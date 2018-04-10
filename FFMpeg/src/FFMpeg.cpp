@@ -1451,7 +1451,7 @@ void FFMpeg::generateSlideshowMediaToIngest(
 
     string ffmpegExecuteCommand = 
             _ffmpegPath + "/ffmpeg "
-            + "-f concat -i " + slideshowListPathName + " "
+            + "-f concat -safe 0 -i " + slideshowListPathName + " "
             + "-c:v libx264 "
             + "-r " + to_string(outputFrameRate) + " "
             + "-vsync vfr "
