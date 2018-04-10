@@ -189,25 +189,18 @@ void MMSEngineDBFacade::getTerritories(shared_ptr<Workspace> workspace)
     _connectionPool->unborrow(conn);
 }
 
-tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerWorkspace(
-	string workspaceName,
-    string workspaceDirectoryName,
-	string street,
-    string city,
-    string state,
-	string zip,
-    string phone,
-    string countryCode,
-    WorkspaceType workspaceType,
-	string deliveryURL,
-	EncodingPriority maxEncodingPriority,
-    EncodingPeriod encodingPeriod,
-	long maxIngestionsNumber,
-    long maxStorageInGB,
-	string languageCode,
-    string userName,
-    string userPassword,
+tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUser(
     string userEmailAddress,
+    string userPassword,
+    string workspaceName,
+    string workspaceDirectoryName,
+    WorkspaceType workspaceType,
+    string deliveryURL,
+    EncodingPriority maxEncodingPriority,
+    EncodingPeriod encodingPeriod,
+    long maxIngestionsNumber,
+    long maxStorageInGB,
+    string languageCode,
     chrono::system_clock::time_point userExpirationDate
 )
 {
