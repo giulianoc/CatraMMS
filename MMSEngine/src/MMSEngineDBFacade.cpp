@@ -5004,12 +5004,6 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "creationDate                   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "name                           VARCHAR (64) NOT NULL,"
                     "directoryName                  VARCHAR (64) NOT NULL,"
-                    "street                         VARCHAR (128) NULL,"
-                    "city                           VARCHAR (64) NULL,"
-                    "state                          VARCHAR (64) NULL,"
-                    "zip                            VARCHAR (32) NULL,"
-                    "phone                          VARCHAR (32) NULL,"
-                    "countryCode                    VARCHAR (64) NULL,"
                     "workspaceType                   TINYINT NOT NULL,"
                     "deliveryURL                    VARCHAR (256) NULL,"
                     "isEnabled                      TINYINT (1) NOT NULL,"
@@ -5059,12 +5053,92 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         try
         {
             lastSQLCommand = 
+                "create table if not exists MMS_User ("
+                    "userKey				BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "eMailAddress				VARCHAR (128) NULL,"
+                    "password				VARCHAR (128) NOT NULL,"
+                    "creationDate				TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+                    "expirationDate				DATETIME NOT NULL,"
+                    "constraint MMS_User_PK PRIMARY KEY (userKey), "
+                    "UNIQUE (eMailAddress))"
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
+        try
+        {
+            lastSQLCommand = 
+                "create table if not exists MMS_APIKey ("
+                    "apiKey                     VARCHAR (128) NOT NULL,"
+                    "userKey                    BIGINT UNSIGNED NOT NULL,"
+                    "workspaceKey               BIGINT UNSIGNED NOT NULL,"
+                    "flags			SET('ADMIN_API', 'USER_API') NOT NULL,"
+                    "creationDate		TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+                    "expirationDate		DATETIME NOT NULL,"
+                    "constraint MMS_APIKey_PK PRIMARY KEY (apiKey), "
+                    "constraint MMS_APIKey_FK foreign key (userKey) "
+                        "references MMS_User (userKey) on delete cascade, "
+                    "constraint MMS_APIKey_FK2 foreign key (workspaceKey) "
+                        "references MMS_Workspace (workspaceKey) on delete cascade) "
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
+        try
+        {
+            lastSQLCommand = 
+                "create unique index MMS_APIKey_idx on MMS_APIKey (userKey, workspaceKey)";
+            statement->execute(lastSQLCommand);    
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }    
+
+        try
+        {
+            lastSQLCommand = 
                 "create table if not exists MMS_ConfirmationCode ("
-                    "workspaceKey                    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "userKey                        BIGINT UNSIGNED NOT NULL,"
+                    "workspaceKey                   BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "creationDate                   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "confirmationCode               VARCHAR (64) NOT NULL,"
-                    "constraint MMS_ConfirmationCode_PK PRIMARY KEY (workspaceKey),"
-                    "constraint MMS_ConfirmationCode_FK foreign key (workspaceKey) "
+                    "constraint MMS_ConfirmationCode_PK PRIMARY KEY (userKey, workspaceKey),"
+                    "constraint MMS_ConfirmationCode_FK foreign key (userKey) "
+                        "references MMS_User (userKey) on delete cascade, "
+                    "constraint MMS_ConfirmationCode_FK2 foreign key (workspaceKey) "
                         "references MMS_Workspace (workspaceKey) on delete cascade, "
                     "UNIQUE (confirmationCode))"
                     "ENGINE=InnoDB";
@@ -5148,92 +5222,6 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 throw se;
             }
         }    
-
-        try
-        {
-            // create table MMS_User
-            // Type (bits: ...9876543210)
-            //      bit 0: MMSAdministrator
-            //      bin 1: MMSUser
-            //      bit 2: EndUser
-            //      bit 3: MMSEditorialUser
-            //      bit 4: BillingAdministrator
-            lastSQLCommand = 
-                "create table if not exists MMS_User ("
-                    "userKey				BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
-                    "eMailAddress				VARCHAR (128) NULL,"
-                    "password				VARCHAR (128) NOT NULL,"
-                    "userName				VARCHAR (128) NOT NULL,"
-                    "workspaceKey                            BIGINT UNSIGNED NOT NULL,"
-                    "type					INT NOT NULL,"
-                    "creationDate				TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
-                    "expirationDate				DATETIME NOT NULL,"
-                    "constraint MMS_User_PK PRIMARY KEY (userKey), "
-                    "constraint MMS_User_FK foreign key (workspaceKey) "
-                        "references MMS_Workspace (workspaceKey) on delete cascade, "
-                    "UNIQUE (eMailAddress))"
-                    "ENGINE=InnoDB";
-            statement->execute(lastSQLCommand);
-        }
-        catch(sql::SQLException se)
-        {
-            if (isRealDBError(se.what()))
-            {
-                _logger->error(__FILEREF__ + "SQL exception"
-                    + ", lastSQLCommand: " + lastSQLCommand
-                    + ", se.what(): " + se.what()
-                );
-
-                throw se;
-            }
-        }
-
-        try
-        {
-            lastSQLCommand = 
-                "create unique index MMS_User_idx on MMS_User (workspaceKey, userName)";
-            statement->execute(lastSQLCommand);
-        }
-        catch(sql::SQLException se)
-        {
-            if (isRealDBError(se.what()))
-            {
-                _logger->error(__FILEREF__ + "SQL exception"
-                    + ", lastSQLCommand: " + lastSQLCommand
-                    + ", se.what(): " + se.what()
-                );
-
-                throw se;
-            }
-        }    
-
-        try
-        {
-            lastSQLCommand = 
-                "create table if not exists MMS_APIKey ("
-                    "apiKey                     VARCHAR (128) NOT NULL,"
-                    "userKey                    BIGINT UNSIGNED NOT NULL,"
-                    "flags			SET('ADMIN_API', 'USER_API') NOT NULL,"
-                    "creationDate		TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
-                    "expirationDate		DATETIME NOT NULL,"
-                    "constraint MMS_APIKey_PK PRIMARY KEY (apiKey), "
-                    "constraint MMS_APIKey_FK foreign key (userKey) "
-                        "references MMS_User (userKey) on delete cascade) "
-                    "ENGINE=InnoDB";
-            statement->execute(lastSQLCommand);
-        }
-        catch(sql::SQLException se)
-        {
-            if (isRealDBError(se.what()))
-            {
-                _logger->error(__FILEREF__ + "SQL exception"
-                    + ", lastSQLCommand: " + lastSQLCommand
-                    + ", se.what(): " + se.what()
-                );
-
-                throw se;
-            }
-        }
 
         try
         {
