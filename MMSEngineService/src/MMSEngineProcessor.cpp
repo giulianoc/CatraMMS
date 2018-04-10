@@ -1888,7 +1888,21 @@ void MMSEngineProcessor::generateAndIngestSlideshow(
             }
         }
 
-        string field = "SourceFileName";
+        int durationOfEachSlideInSeconds = 5;
+        string field = "DurationOfEachSlideInSeconds";
+        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+            durationOfEachSlideInSeconds = parametersRoot.get(field, "XXX").asInt();
+        }
+
+        int outputFrameRate = 30;
+        field = "OutputFrameRate";
+        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+            outputFrameRate = parametersRoot.get(field, "XXX").asInt();
+        }
+
+        field = "SourceFileName";
         if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -1913,7 +1927,9 @@ void MMSEngineProcessor::generateAndIngestSlideshow(
                 + localSourceFileName;
         
         FFMpeg ffmpeg (_configuration, _logger);
-        ffmpeg.generateSlideshowMediaToIngest(ingestionJobKey, sourcePhysicalPaths, slideshowMediaPathName);
+        ffmpeg.generateSlideshowMediaToIngest(ingestionJobKey, 
+                sourcePhysicalPaths, durationOfEachSlideInSeconds, outputFrameRate,
+                slideshowMediaPathName);
 
         _logger->info(__FILEREF__ + "generateSlideshowMediaToIngest done"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)

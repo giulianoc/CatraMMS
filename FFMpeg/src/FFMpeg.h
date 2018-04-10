@@ -80,6 +80,8 @@ public:
     void generateSlideshowMediaToIngest(
         int64_t ingestionJobKey,
         vector<string>& sourcePhysicalPaths,
+        int durationOfEachSlideInSeconds, 
+        int outputFrameRate,
         string slideshowMediaPathName);
 
     void generateCutMediaToIngest(
