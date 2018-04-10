@@ -344,7 +344,7 @@ void API::manageRequestAndResponse(
         string responseBody;
         sendSuccess(request, 200, responseBody);
     }
-    else if (method == "registerWorkspace")
+    else if (method == "registerUser")
     {
         bool isAdminAPI = get<1>(workspaceAndFlags);
         if (!isAdminAPI)
@@ -359,7 +359,7 @@ void API::manageRequestAndResponse(
             throw runtime_error(errorMessage);
         }
         
-        registerWorkspace(request, requestBody);
+        registerUser(request, requestBody);
     }
     else if (method == "confirmWorkspace")
     {
@@ -777,11 +777,11 @@ void API::fileUploadProgressCheck()
     }
 }
 
-void API::registerWorkspace(
+void API::registerUser(
         FCGX_Request& request,
         string requestBody)
 {
-    string api = "registerWorkspace";
+    string api = "registerUser";
 
     _logger->info(__FILEREF__ + "Received " + api
         + ", requestBody: " + requestBody
@@ -1009,21 +1009,17 @@ void API::registerWorkspace(
                         return (unsigned char) '_'; } 
             );
 
-            _logger->info(__FILEREF__ + "Registering Workspace"
+            _logger->info(__FILEREF__ + "Registering User"
                 + ", name: " + name
                 + ", email: " + email
             );
             
             tuple<int64_t,int64_t,string> workspaceKeyUserKeyAndConfirmationCode = 
-                _mmsEngineDBFacade->registerWorkspace(
-                    name, 
+                _mmsEngineDBFacade->registerUser(
+                    email, 
+                    password,
+                    name,
                     workspaceDirectoryName,
-                    "",                             // string street,
-                    "",                             // string city,
-                    "",                             // string state,
-                    "",                             // string zip,
-                    "",                             // string phone,
-                    "",                             // string countryCode,
                     MMSEngineDBFacade::WorkspaceType::IngestionAndDelivery,  // MMSEngineDBFacade::WorkspaceType workspaceType
                     "",                             // string deliveryURL,
                     encodingPriority,               //  MMSEngineDBFacade::EncodingPriority maxEncodingPriority,
@@ -1031,14 +1027,11 @@ void API::registerWorkspace(
                     maxIngestionsNumber,            // long maxIngestionsNumber,
                     maxStorageInGB,                 // long maxStorageInGB,
                     "",                             // string languageCode,
-                    name,                           // string userName,
-                    password,                       // string userPassword,
-                    email,                          // string userEmailAddress,
                     chrono::system_clock::now() + chrono::hours(24 * 365 * 10)     // chrono::system_clock::time_point userExpirationDate
                 );
 
             string responseBody = string("{ ")
-                + "\"workspaceKey\": " + to_string(get<0>(workspaceKeyUserKeyAndConfirmationCode)) + " "
+                + "\"userKey\": " + to_string(get<1>(workspaceKeyUserKeyAndConfirmationCode)) + " "
                 + "}";
             sendSuccess(request, 201, responseBody);
             

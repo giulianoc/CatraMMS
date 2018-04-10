@@ -80,7 +80,7 @@ private:
     FileUploadProgressData*     _fileUploadProgressData;
     
 
-    void registerWorkspace(
+    void registerUser(
         FCGX_Request& request,
         string requestBody);
     

@@ -677,16 +677,6 @@ private:
         string territoryName
     );
 
-    int64_t addUser (
-	shared_ptr<MySQLConnection> conn,
-        int64_t workspaceKey,
-        string userName,
-        string password,
-        int type,
-        string emailAddress,
-        chrono::system_clock::time_point expirationDate
-    );
-
     bool isMMSAdministratorUser (long lUserType)
     {
         return (lUserType & 0x1) != 0 ? true : false;

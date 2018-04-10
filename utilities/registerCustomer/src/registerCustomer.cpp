@@ -79,6 +79,7 @@ int main (int iArgc, char *pArgv [])
 
         try
         {
+            /*
             tuple<int64_t,int64_t,string> workspaceKeyUserKeyAndConfirmationCode =
                 mmsEngineDBFacade->registerWorkspace(
                     workspaceName, 
@@ -101,7 +102,6 @@ int main (int iArgc, char *pArgv [])
                     emailAddress,                   // string userEmailAddress,
                     chrono::system_clock::now() + chrono::hours(24 * 365 * 20)     // chrono::system_clock::time_point userExpirationDate
                 );
-            
             int64_t workspaceKey = get<0>(workspaceKeyUserKeyAndConfirmationCode);
             int64_t userKey = get<1>(workspaceKeyUserKeyAndConfirmationCode);
             string confirmationCode = get<2>(workspaceKeyUserKeyAndConfirmationCode);
@@ -129,6 +129,7 @@ int main (int iArgc, char *pArgv [])
 
             cout << "Created API Key" << endl;
             cout << "API Key: " << apiKey << endl;
+            */
         }
         catch(exception e)
         {

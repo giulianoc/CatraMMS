@@ -243,121 +243,124 @@ int APICommon::operator()()
         }
 
         tuple<shared_ptr<Workspace>,bool, bool> workspaceAndFlags;
-        try
+        if (!registrationRequest(queryParameters))
         {
-            unordered_map<string, string>::iterator it;
-
-            if ((it = requestDetails.find("HTTP_AUTHORIZATION")) == requestDetails.end())
+            try
             {
-                _logger->error(__FILEREF__ + "No APIKey present into the request");
+                unordered_map<string, string>::iterator it;
 
-                throw NoAPIKeyPresentIntoRequest();
+                if ((it = requestDetails.find("HTTP_AUTHORIZATION")) == requestDetails.end())
+                {
+                    _logger->error(__FILEREF__ + "No APIKey present into the request");
+
+                    throw NoAPIKeyPresentIntoRequest();
+                }
+
+                string authorizationPrefix = "Basic ";
+                if (!(it->second.size() >= authorizationPrefix.size() && 0 == it->second.compare(0, authorizationPrefix.size(), authorizationPrefix)))
+                {
+                    _logger->error(__FILEREF__ + "No 'Basic' authorization is present into the request"
+                        + ", Authorization: " + it->second
+                    );
+
+                    throw NoAPIKeyPresentIntoRequest();
+                }
+
+                string usernameAndPasswordBase64 = it->second.substr(authorizationPrefix.length());
+                string usernameAndPassword = Convert::base64_decode(usernameAndPasswordBase64);
+                size_t userNameSeparator = usernameAndPassword.find(":");
+                if (userNameSeparator == string::npos)
+                {
+                    _logger->error(__FILEREF__ + "Wrong Authentication format"
+                        + ", usernameAndPasswordBase64: " + usernameAndPasswordBase64
+                        + ", usernameAndPassword: " + usernameAndPassword
+                    );
+
+                    throw NoAPIKeyPresentIntoRequest();
+                }
+
+                string custormerKey = usernameAndPassword.substr(0, userNameSeparator);
+                string apiKey = usernameAndPassword.substr(userNameSeparator + 1);
+
+                // workspaceAndFlags = _mmsEngine->checkAPIKey (apiKey);
+                workspaceAndFlags = _mmsEngineDBFacade->checkAPIKey(apiKey);
+
+                if (get<0>(workspaceAndFlags)->_workspaceKey != stol(custormerKey))
+                {
+                    _logger->error(__FILEREF__ + "Username (WorkspaceKey) is not the same Workspace the apiKey is referring"
+                        + ", username (custormerKey): " + custormerKey
+                        + ", apiKey: " + apiKey
+                    );
+
+                    throw NoAPIKeyPresentIntoRequest();
+                }        
+
+                _logger->info(__FILEREF__ + "APIKey and Workspace verified successful");
             }
-
-            string authorizationPrefix = "Basic ";
-            if (!(it->second.size() >= authorizationPrefix.size() && 0 == it->second.compare(0, authorizationPrefix.size(), authorizationPrefix)))
+            catch(NoAPIKeyPresentIntoRequest e)
             {
-                _logger->error(__FILEREF__ + "No 'Basic' authorization is present into the request"
-                    + ", Authorization: " + it->second
+                _logger->error(__FILEREF__ + "APIKey failed"
+                    + ", e.what(): " + e.what()
                 );
 
-                throw NoAPIKeyPresentIntoRequest();
-            }
+                string errorMessage = e.what();
+                _logger->error(__FILEREF__ + errorMessage);
 
-            string usernameAndPasswordBase64 = it->second.substr(authorizationPrefix.length());
-            string usernameAndPassword = Convert::base64_decode(usernameAndPasswordBase64);
-            size_t userNameSeparator = usernameAndPassword.find(":");
-            if (userNameSeparator == string::npos)
+                sendError(request, 401, errorMessage);   // bad request
+
+                FCGX_Finish_r(&request);
+
+                // throw runtime_error(errorMessage);
+                continue;
+            }
+            catch(APIKeyNotFoundOrExpired e)
             {
-                _logger->error(__FILEREF__ + "Wrong Authentication format"
-                    + ", usernameAndPasswordBase64: " + usernameAndPasswordBase64
-                    + ", usernameAndPassword: " + usernameAndPassword
+                _logger->error(__FILEREF__ + "_mmsEngine->checkAPIKey failed"
+                    + ", e.what(): " + e.what()
                 );
 
-                throw NoAPIKeyPresentIntoRequest();
+                string errorMessage = e.what();
+                _logger->error(__FILEREF__ + errorMessage);
+
+                sendError(request, 401, errorMessage);   // unauthorized
+
+                FCGX_Finish_r(&request);
+
+                //  throw runtime_error(errorMessage);
+                continue;
             }
-
-            string custormerKey = usernameAndPassword.substr(0, userNameSeparator);
-            string apiKey = usernameAndPassword.substr(userNameSeparator + 1);
-
-            // workspaceAndFlags = _mmsEngine->checkAPIKey (apiKey);
-            workspaceAndFlags = _mmsEngineDBFacade->checkAPIKey(apiKey);
-
-            if (get<0>(workspaceAndFlags)->_workspaceKey != stol(custormerKey))
+            catch(runtime_error e)
             {
-                _logger->error(__FILEREF__ + "Username (WorkspaceKey) is not the same Workspace the apiKey is referring"
-                    + ", username (custormerKey): " + custormerKey
-                    + ", apiKey: " + apiKey
+                _logger->error(__FILEREF__ + "_mmsEngine->checkAPIKey failed"
+                    + ", e.what(): " + e.what()
                 );
 
-                throw NoAPIKeyPresentIntoRequest();
-            }        
+                string errorMessage = string("Internal server error");
+                _logger->error(__FILEREF__ + errorMessage);
 
-            _logger->info(__FILEREF__ + "APIKey and Workspace verified successful");
-        }
-        catch(NoAPIKeyPresentIntoRequest e)
-        {
-            _logger->error(__FILEREF__ + "APIKey failed"
-                + ", e.what(): " + e.what()
-            );
+                sendError(request, 500, errorMessage);
 
-            string errorMessage = e.what();
-            _logger->error(__FILEREF__ + errorMessage);
+                FCGX_Finish_r(&request);
 
-            sendError(request, 401, errorMessage);   // bad request
+                // throw runtime_error(errorMessage);
+                continue;
+            }
+            catch(exception e)
+            {
+                _logger->error(__FILEREF__ + "_mmsEngine->checkAPIKey failed"
+                    + ", e.what(): " + e.what()
+                );
 
-            FCGX_Finish_r(&request);
-            
-            // throw runtime_error(errorMessage);
-            continue;
-        }
-        catch(APIKeyNotFoundOrExpired e)
-        {
-            _logger->error(__FILEREF__ + "_mmsEngine->checkAPIKey failed"
-                + ", e.what(): " + e.what()
-            );
+                string errorMessage = string("Internal server error");
+                _logger->error(__FILEREF__ + errorMessage);
 
-            string errorMessage = e.what();
-            _logger->error(__FILEREF__ + errorMessage);
+                sendError(request, 500, errorMessage);
 
-            sendError(request, 401, errorMessage);   // unauthorized
+                FCGX_Finish_r(&request);
 
-            FCGX_Finish_r(&request);
-            
-            //  throw runtime_error(errorMessage);
-            continue;
-        }
-        catch(runtime_error e)
-        {
-            _logger->error(__FILEREF__ + "_mmsEngine->checkAPIKey failed"
-                + ", e.what(): " + e.what()
-            );
-
-            string errorMessage = string("Internal server error");
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 500, errorMessage);
-
-            FCGX_Finish_r(&request);
-            
-            // throw runtime_error(errorMessage);
-            continue;
-        }
-        catch(exception e)
-        {
-            _logger->error(__FILEREF__ + "_mmsEngine->checkAPIKey failed"
-                + ", e.what(): " + e.what()
-            );
-
-            string errorMessage = string("Internal server error");
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 500, errorMessage);
-
-            FCGX_Finish_r(&request);
-            
-            //  throw runtime_error(errorMessage);
-            continue;
+                //  throw runtime_error(errorMessage);
+                continue;
+            }
         }
         
         try
@@ -414,6 +417,30 @@ int APICommon::operator()()
 
 
     return 0;
+}
+
+bool APICommon::registrationRequest(
+    unordered_map<string, string> queryParameters
+)
+{
+    bool        registrationRequest = false;
+    
+    auto methodIt = queryParameters.find("method");
+    if (methodIt == queryParameters.end())
+    {
+        string errorMessage = string("The 'method' parameter is not found");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    string method = methodIt->second;
+
+    if (method == "registerUser")
+    {
+        registrationRequest = true;
+    }
+    
+    return registrationRequest;
 }
 
 int APICommon::manageBinaryRequest()

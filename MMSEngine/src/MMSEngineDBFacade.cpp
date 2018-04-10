@@ -229,41 +229,48 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUser(
         }
         
         {
+            lastSQLCommand = 
+                "insert into MMS_User (userKey, eMailAddress, password, creationDate, expirationDate) values ("
+                "NULL, ?, ?, NULL, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'))";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, userEmailAddress);
+            preparedStatement->setString(queryParameterIndex++, userPassword);
+            {
+                tm          tmDateTime;
+                char        strExpirationDate [64];
+                time_t utcTime = chrono::system_clock::to_time_t(userExpirationDate);
+                
+                localtime_r (&utcTime, &tmDateTime);
+
+                sprintf (strExpirationDate, "%04d-%02d-%02d %02d:%02d:%02d",
+                        tmDateTime. tm_year + 1900,
+                        tmDateTime. tm_mon + 1,
+                        tmDateTime. tm_mday,
+                        tmDateTime. tm_hour,
+                        tmDateTime. tm_min,
+                        tmDateTime. tm_sec);
+
+                preparedStatement->setString(queryParameterIndex++, strExpirationDate);
+            }
+            
+            preparedStatement->executeUpdate();
+        }
+        
+        userKey = getLastInsertId(conn);
+        
+        {
             bool enabled = false;
             
             lastSQLCommand = 
                     "insert into MMS_Workspace ("
-                    "workspaceKey, creationDate, name, directoryName, street, city, state, zip, phone, countryCode, workspaceType, deliveryURL, isEnabled, maxEncodingPriority, encodingPeriod, maxIngestionsNumber, maxStorageInGB, currentStorageUsageInGB, languageCode) values ("
-                    "NULL, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)";
+                    "workspaceKey, creationDate, name, directoryName, workspaceType, deliveryURL, isEnabled, maxEncodingPriority, encodingPeriod, maxIngestionsNumber, maxStorageInGB, currentStorageUsageInGB, languageCode) values ("
+                    "NULL,         NULL,         ?,    ?,             ?,             ?,           ?,         ?,                   ?,              ?,                   ?,              0,                       ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, workspaceName);
             preparedStatement->setString(queryParameterIndex++, workspaceDirectoryName);
-            if (street == "")
-                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-            else
-                preparedStatement->setString(queryParameterIndex++, street);
-            if (city == "")
-                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-            else
-                preparedStatement->setString(queryParameterIndex++, city);
-            if (state == "")
-                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-            else
-                preparedStatement->setString(queryParameterIndex++, state);
-            if (zip == "")
-                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-            else
-                preparedStatement->setString(queryParameterIndex++, zip);
-            if (phone == "")
-                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-            else
-                preparedStatement->setString(queryParameterIndex++, phone);
-            if (countryCode == "")
-                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-            else
-                preparedStatement->setString(queryParameterIndex++, countryCode);
             preparedStatement->setInt(queryParameterIndex++, static_cast<int>(workspaceType));
             if (deliveryURL == "")
                 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
@@ -286,10 +293,11 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUser(
         confirmationCode = to_string(e());
         {
             lastSQLCommand = 
-                    "insert into MMS_ConfirmationCode (workspaceKey, creationDate, confirmationCode) values ("
-                    "?, NOW(), ?)";
+                    "insert into MMS_ConfirmationCode (userKey, workspaceKey, creationDate, confirmationCode) values ("
+                    "?, ?, NOW(), ?)";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, userKey);
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setString(queryParameterIndex++, confirmationCode);
 
@@ -325,18 +333,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUser(
                 conn,
                 workspaceKey,
                 _defaultTerritoryName);
-        
-        int userType = getMMSUser();
-        
-        userKey = addUser (
-                conn,
-                workspaceKey,
-                userName,
-                userPassword,
-                userType,
-                userEmailAddress,
-                userExpirationDate);
-
+                
         // insert default EncodingProfilesSet per Workspace/ContentType
         {
             vector<ContentType> contentTypes = { ContentType::Video, ContentType::Audio, ContentType::Image };
@@ -421,7 +418,8 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUser(
         throw e;
     }
     
-    tuple<int64_t,int64_t,string> workspaceKeyUserKeyAndConfirmationCode = make_tuple(workspaceKey, userKey, confirmationCode);
+    tuple<int64_t,int64_t,string> workspaceKeyUserKeyAndConfirmationCode = 
+            make_tuple(workspaceKey, userKey, confirmationCode);
     
     return workspaceKeyUserKeyAndConfirmationCode;
 }
@@ -570,82 +568,6 @@ int64_t MMSEngineDBFacade::addTerritory (
     }
     
     return territoryKey;
-}
-
-int64_t MMSEngineDBFacade::addUser (
-	shared_ptr<MySQLConnection> conn,
-        int64_t workspaceKey,
-        string userName,
-        string password,
-        int type,
-        string emailAddress,
-        chrono::system_clock::time_point expirationDate
-)
-{
-    int64_t         userKey;
-    
-    string      lastSQLCommand;
-
-    try
-    {
-        {
-            lastSQLCommand = 
-                "insert into MMS_User (userKey, userName, password, workspaceKey, type, eMailAddress, creationDate, expirationDate) values ("
-                "NULL, ?, ?, ?, ?, ?, NULL, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'))";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++, userName);
-            preparedStatement->setString(queryParameterIndex++, password);
-            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
-            preparedStatement->setInt(queryParameterIndex++, type);
-            if (emailAddress == "")
-                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-            else
-                preparedStatement->setString(queryParameterIndex++, emailAddress);
-            {
-                tm          tmDateTime;
-                char        strExpirationDate [64];
-                time_t utcTime = chrono::system_clock::to_time_t(expirationDate);
-                
-                localtime_r (&utcTime, &tmDateTime);
-
-                sprintf (strExpirationDate, "%04d-%02d-%02d %02d:%02d:%02d",
-                        tmDateTime. tm_year + 1900,
-                        tmDateTime. tm_mon + 1,
-                        tmDateTime. tm_mday,
-                        tmDateTime. tm_hour,
-                        tmDateTime. tm_min,
-                        tmDateTime. tm_sec);
-
-                preparedStatement->setString(queryParameterIndex++, strExpirationDate);
-            }
-            
-            preparedStatement->executeUpdate();
-        }
-        
-        userKey = getLastInsertId(conn);
-    }
-    catch(sql::SQLException se)
-    {
-        string exceptionMessage(se.what());
-        
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", exceptionMessage: " + exceptionMessage
-        );
-
-        throw se;
-    }
-    catch(exception e)
-    {        
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", lastSQLCommand: " + lastSQLCommand
-        );
-
-        throw e;
-    }
-    
-    return userKey;
 }
 
 bool MMSEngineDBFacade::isLoginValid(

@@ -55,6 +55,7 @@ int main (int iArgc, char *pArgv [])
 
         try
         {
+            /*
             workspaceKeyUserKeyAndConfirmationCode = mmsEngineDBFacade->registerWorkspace(
                 workspaceName, 
                 workspaceDirectoryName,
@@ -76,6 +77,7 @@ int main (int iArgc, char *pArgv [])
                 emailAddress,                   // string userEmailAddress,
                 chrono::system_clock::now() + chrono::hours(24 * 365 * 20)     // chrono::system_clock::time_point userExpirationDate
             );
+             */
         }
         catch(exception e)
         {

@@ -94,6 +94,9 @@ private:
         string queryString,
         unordered_map<string, string>& queryParameters);
     
+    bool registrationRequest(
+        unordered_map<string, string> queryParameters);
+
     // bool requestToUploadBinary(unordered_map<string, string>& queryParameters);
 
     string getHtmlStandardMessage(int htmlResponseCode);
