@@ -346,6 +346,7 @@ void API::manageRequestAndResponse(
     }
     else if (method == "registerUser")
     {
+        /*
         bool isAdminAPI = get<1>(workspaceAndFlags);
         if (!isAdminAPI)
         {
@@ -358,11 +359,13 @@ void API::manageRequestAndResponse(
 
             throw runtime_error(errorMessage);
         }
+        */
         
         registerUser(request, requestBody);
     }
     else if (method == "confirmUser")
     {
+        /*
         bool isAdminAPI = get<1>(workspaceAndFlags);
         if (!isAdminAPI)
         {
@@ -375,6 +378,7 @@ void API::manageRequestAndResponse(
 
             throw runtime_error(errorMessage);
         }
+        */
         
         confirmUser(request, queryParameters);
     }
