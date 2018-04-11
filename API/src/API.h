@@ -126,6 +126,10 @@ private:
             unordered_map<string, string>& requestDetails
     );
     
+    void addVideoAudioEncodingProfile(
+        FCGX_Request& request,
+        string requestBody);
+
     void parseContentRange(string contentRange,
         long long& contentRangeStart,
         long long& contentRangeEnd,

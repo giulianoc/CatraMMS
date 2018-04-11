@@ -2464,6 +2464,172 @@ void API::uploadBinary(
     }    
 }
 
+void API::addVideoAudioEncodingProfile(
+        FCGX_Request& request,
+        string requestBody)
+{
+    string api = "addVideoAudioEncodingProfile";
+
+    _logger->info(__FILEREF__ + "Received " + api
+        + ", requestBody: " + requestBody
+    );
+
+    try
+    {
+        Json::Value metadataRoot;
+        try
+        {
+            Json::CharReaderBuilder builder;
+            Json::CharReader* reader = builder.newCharReader();
+            string errors;
+
+            bool parsingSuccessful = reader->parse(requestBody.c_str(),
+                    requestBody.c_str() + requestBody.size(), 
+                    &metadataRoot, &errors);
+            delete reader;
+
+            if (!parsingSuccessful)
+            {
+                string errorMessage = string("Json metadata failed during the parsing")
+                        + ", errors: " + errors
+                        + ", json data: " + requestBody
+                        ;
+                _logger->error(__FILEREF__ + errorMessage);
+
+                sendError(request, 400, errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+        catch(exception e)
+        {
+            string errorMessage = string("Json metadata failed during the parsing"
+                    ", json data: " + requestBody
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        /*
+        try
+        {
+            string workspaceDirectoryName;
+
+            workspaceDirectoryName.resize(name.size());
+
+            transform(
+                name.begin(), 
+                name.end(), 
+                workspaceDirectoryName.begin(), 
+                [](unsigned char c){
+                    if (isalpha(c)) 
+                        return c; 
+                    else 
+                        return (unsigned char) '_'; } 
+            );
+
+            _logger->info(__FILEREF__ + "Registering User"
+                + ", name: " + name
+                + ", email: " + email
+            );
+            
+            tuple<int64_t,int64_t,string> workspaceKeyUserKeyAndConfirmationCode = 
+                _mmsEngineDBFacade->registerUser(
+                    email, 
+                    password,
+                    name,
+                    workspaceDirectoryName,
+                    MMSEngineDBFacade::WorkspaceType::IngestionAndDelivery,  // MMSEngineDBFacade::WorkspaceType workspaceType
+                    "",                             // string deliveryURL,
+                    encodingPriority,               //  MMSEngineDBFacade::EncodingPriority maxEncodingPriority,
+                    encodingPeriod,                 //  MMSEngineDBFacade::EncodingPeriod encodingPeriod,
+                    maxIngestionsNumber,            // long maxIngestionsNumber,
+                    maxStorageInGB,                 // long maxStorageInGB,
+                    "",                             // string languageCode,
+                    chrono::system_clock::now() + chrono::hours(24 * 365 * 10)     // chrono::system_clock::time_point userExpirationDate
+                );
+
+            _logger->info(__FILEREF__ + "Registered User"
+                + ", name: " + name
+                + ", email: " + email
+                + ", userKey: " + to_string(get<1>(workspaceKeyUserKeyAndConfirmationCode))
+                + ", confirmationCode: " + get<2>(workspaceKeyUserKeyAndConfirmationCode)
+            );
+            
+            string responseBody = string("{ ")
+                + "\"userKey\": " + to_string(get<1>(workspaceKeyUserKeyAndConfirmationCode)) + " "
+                + "}";
+            sendSuccess(request, 201, responseBody);
+            
+            string to = "giulianoc@catrasoftware.it";
+            string subject = "Confirmation code";
+            
+            vector<string> emailBody;
+            emailBody.push_back("<p>Hi John,</p>");
+            emailBody.push_back(string("<p>This is the confirmation code ") + get<2>(workspaceKeyUserKeyAndConfirmationCode) + "</p>");
+            emailBody.push_back(string("<p>for the workspace key ") + to_string(get<0>(workspaceKeyUserKeyAndConfirmationCode)) + "</p>");
+            emailBody.push_back("<p>Bye!</p>");
+
+            sendEmail(to, subject, emailBody);
+        }
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + api + " failed"
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + api + " failed"
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        */
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
 void API::parseContentRange(string contentRange,
         long long& contentRangeStart,
         long long& contentRangeEnd,
