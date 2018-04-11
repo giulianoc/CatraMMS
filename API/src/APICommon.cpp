@@ -443,7 +443,8 @@ bool APICommon::registrationRequest(
     }
     string method = methodIt->second;
 
-    if (method == "registerUser")
+    if (method == "registerUser"
+            || method == "confirmUser")
     {
         registrationRequest = true;
     }
