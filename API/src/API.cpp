@@ -1046,6 +1046,13 @@ void API::registerUser(
                     chrono::system_clock::now() + chrono::hours(24 * 365 * 10)     // chrono::system_clock::time_point userExpirationDate
                 );
 
+            _logger->info(__FILEREF__ + "Registered User"
+                + ", name: " + name
+                + ", email: " + email
+                + ", userKey: " + to_string(get<1>(workspaceKeyUserKeyAndConfirmationCode))
+                + ", confirmationCode: " + get<2>(workspaceKeyUserKeyAndConfirmationCode)
+            );
+            
             string responseBody = string("{ ")
                 + "\"userKey\": " + to_string(get<1>(workspaceKeyUserKeyAndConfirmationCode)) + " "
                 + "}";

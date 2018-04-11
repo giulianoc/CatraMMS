@@ -169,23 +169,31 @@ int APICommon::operator()()
                         }
                         else
                         {
+                            contentLength = 0;
+                            /*
+                             * confirmUser, PUT, does not have any body
                             string errorMessage("Content-Length header is empty");
 
                             _logger->error(__FILEREF__ + errorMessage);
             
                             throw runtime_error(errorMessage);
+                            */
                         }
                     }
                     else
                     {
+                        contentLength = 0;
+                        /*
                         string errorMessage("Content-Length header is missing");
 
                         _logger->error(__FILEREF__ + errorMessage);
             
                         throw runtime_error(errorMessage);
+                        */
                     }
 
                     // if (!requestToUploadBinary)
+                    if (contentLength > 0)
                     {
                         char* content = new char[contentLength];
 
