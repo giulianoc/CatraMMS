@@ -506,10 +506,9 @@ string MMSEngineDBFacade::confirmUser(
         string emailAddress;
         {
             lastSQLCommand = 
-                "select eMailAddress from MMS_User where workspaceKey = ? and userKey = ?";
+                "select eMailAddress from MMS_User where userKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setInt64(queryParameterIndex++, userKey);
 
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
@@ -519,8 +518,7 @@ string MMSEngineDBFacade::confirmUser(
             }
             else
             {
-                string errorMessage = __FILEREF__ + "Workspace-User are not present"
-                    + ", workspaceKey: " + to_string(workspaceKey)
+                string errorMessage = __FILEREF__ + "User are not present"
                     + ", userKey: " + to_string(userKey)
                     + ", lastSQLCommand: " + lastSQLCommand
                 ;
