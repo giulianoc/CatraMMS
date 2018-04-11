@@ -361,7 +361,7 @@ void API::manageRequestAndResponse(
         
         registerUser(request, requestBody);
     }
-    else if (method == "confirmWorkspace")
+    else if (method == "confirmUser")
     {
         bool isAdminAPI = get<1>(workspaceAndFlags);
         if (!isAdminAPI)
@@ -376,8 +376,9 @@ void API::manageRequestAndResponse(
             throw runtime_error(errorMessage);
         }
         
-        confirmWorkspace(request, queryParameters);
+        confirmUser(request, queryParameters);
     }
+    /*
     else if (method == "createAPIKey")
     {
         bool isAdminAPI = get<1>(workspaceAndFlags);
@@ -395,6 +396,7 @@ void API::manageRequestAndResponse(
         
         createAPIKey(request, queryParameters);
     }
+    */
     else if (method == "ingestion")
     {
         bool isUserAPI = get<2>(workspaceAndFlags);
@@ -834,10 +836,10 @@ void API::registerUser(
             throw runtime_error(errorMessage);
         }
 
-        // name, email and password
+        // WorkspaceName, email and password
         {
             vector<string> mandatoryFields = {
-                "Name",
+                "WorkspaceName",
                 "EMail",
                 "Password"
             };
@@ -855,11 +857,13 @@ void API::registerUser(
                 }
             }
 
-            name = metadataRoot.get("Name", "XXX").asString();
+            name = metadataRoot.get("WorkspaceName", "XXX").asString();
             email = metadataRoot.get("EMail", "XXX").asString();
             password = metadataRoot.get("Password", "XXX").asString();
         }
 
+        encodingPriority = MMSEngineDBFacade::EncodingPriority::Medium;
+        /*
         // encodingPriority
         {
             string field = "EncodingPriority";
@@ -892,7 +896,11 @@ void API::registerUser(
                 }
             }
         }
+        */
 
+        encodingPeriod = MMSEngineDBFacade::EncodingPeriod::Daily;
+        maxIngestionsNumber = 1;
+        /*
         // EncodingPeriod
         {
             string field = "EncodingPeriod";
@@ -958,7 +966,10 @@ void API::registerUser(
                 }
             }
         }
+        */
 
+        maxStorageInGB = 1;
+        /*
         // MaxStorageInGB
         {
             string field = "MaxStorageInGB";
@@ -991,6 +1002,7 @@ void API::registerUser(
                 }
             }
         }
+        */
 
         try
         {
@@ -1100,11 +1112,11 @@ void API::registerUser(
     }
 }
 
-void API::confirmWorkspace(
+void API::confirmUser(
         FCGX_Request& request,
         unordered_map<string, string> queryParameters)
 {
-    string api = "confirmWorkspace";
+    string api = "confirmUser";
 
     _logger->info(__FILEREF__ + "Received " + api
     );
@@ -1124,10 +1136,12 @@ void API::confirmWorkspace(
 
         try
         {
-            _mmsEngineDBFacade->confirmWorkspace(confirmationCodeIt->second);
+            string apiKey = _mmsEngineDBFacade->confirmUser(confirmationCodeIt->second);
 
-            string responseBody;
-            sendSuccess(request, 200, responseBody);
+            string responseBody = string("{ ")
+                + "\"apiKey\": \"" + apiKey + "\" "
+                + "}";
+            sendSuccess(request, 201, responseBody);
             
             string to = "giulianoc@catrasoftware.it";
             string subject = "Welcome";
@@ -1191,6 +1205,7 @@ void API::confirmWorkspace(
     }
 }
 
+/*
 void API::createAPIKey(
         FCGX_Request& request,
         unordered_map<string, string> queryParameters)
@@ -1294,6 +1309,7 @@ void API::createAPIKey(
         throw runtime_error(errorMessage);
     }
 }
+ */
 
 void API::ingestion(
         FCGX_Request& request,

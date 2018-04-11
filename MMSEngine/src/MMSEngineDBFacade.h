@@ -486,20 +486,13 @@ public:
         string languageCode,
         chrono::system_clock::time_point userExpirationDate);
     
-    void confirmWorkspace(string confirmationCode);
+    string confirmUser(string confirmationCode);
 
     bool isLoginValid(
         string emailAddress,
         string password);
 
     string getPassword(string emailAddress);
-
-    string createAPIKey (
-        int64_t workspaceKey,
-        int64_t userKey,
-        bool adminAPI, 
-        bool userAPI,
-        chrono::system_clock::time_point expirationDate);
 
     tuple<shared_ptr<Workspace>,bool,bool> checkAPIKey (string apiKey);
 

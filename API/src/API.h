@@ -84,14 +84,15 @@ private:
         FCGX_Request& request,
         string requestBody);
     
-    void confirmWorkspace(
+    void confirmUser(
         FCGX_Request& request,
         unordered_map<string, string> queryParameters);
 
+    /*
     void createAPIKey(
         FCGX_Request& request,
         unordered_map<string, string> queryParameters);
-
+    */
     void ingestion(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,

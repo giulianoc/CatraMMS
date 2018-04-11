@@ -108,7 +108,6 @@ int main (int iArgc, char *pArgv [])
                 emailAddress,                   // string userEmailAddress,
                 chrono::system_clock::now() + chrono::hours(24 * 365 * 20)     // chrono::system_clock::time_point userExpirationDate
     );
-    */
 
     logger->info(__FILEREF__ + "Confirm Workspace"
             );
@@ -119,15 +118,6 @@ int main (int iArgc, char *pArgv [])
     bool userAPI = true;
     logger->info(__FILEREF__ + "Create APIKey"
             );
-    /*
-    string apiKey = mmsEngine->createAPIKey(
-            get<0>(workspaceKeyUserKeyAndConfirmationCode),
-            get<1>(workspaceKeyUserKeyAndConfirmationCode),
-            adminAPI,
-            userAPI,
-            chrono::system_clock::now() + chrono::hours(24 * 365 * 20)  // apiKeyExpirationDate
-    );
-    */
     string apiKey = mmsEngineDBFacade->createAPIKey(
             get<0>(workspaceKeyUserKeyAndConfirmationCode), 
             get<1>(workspaceKeyUserKeyAndConfirmationCode),
@@ -138,6 +128,7 @@ int main (int iArgc, char *pArgv [])
     
     cout << "Username (WorkspaceKey): " + to_string(get<0>(workspaceKeyUserKeyAndConfirmationCode)) << endl;
     cout << "Password (Administrator APIKey): " << apiKey << endl;
+    */
 
     logger->info(__FILEREF__ + "Shutdown done"
             );

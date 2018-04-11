@@ -424,22 +424,35 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUser(
     return workspaceKeyUserKeyAndConfirmationCode;
 }
 
-void MMSEngineDBFacade::confirmWorkspace(
+string MMSEngineDBFacade::confirmUser(
     string confirmationCode
 )
 {
+    string      apiKey;
     string      lastSQLCommand;
     
     shared_ptr<MySQLConnection> conn;
+    bool autoCommit = true;
 
     try
     {
         conn = _connectionPool->borrow();	
 
+        autoCommit = false;
+        // conn->_sqlConnection->setAutoCommit(autoCommit); OR execute the statement START TRANSACTION
+        {
+            lastSQLCommand = 
+                "START TRANSACTION";
+
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute(lastSQLCommand);
+        }
+        
+        int64_t     userKey;
         int64_t     workspaceKey;
         {
             lastSQLCommand = 
-                "select workspaceKey from MMS_ConfirmationCode where confirmationCode = ? and DATE_ADD(creationDate, INTERVAL ? DAY) >= NOW()";
+                "select userKey, workspaceKey from MMS_ConfirmationCode where confirmationCode = ? and DATE_ADD(creationDate, INTERVAL ? DAY) >= NOW()";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -449,6 +462,7 @@ void MMSEngineDBFacade::confirmWorkspace(
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
+                userKey = resultSet->getInt64("userKey");
                 workspaceKey = resultSet->getInt64("workspaceKey");
             }
             else
@@ -489,10 +503,108 @@ void MMSEngineDBFacade::confirmWorkspace(
             }
         }
 
+        string emailAddress;
+        {
+            lastSQLCommand = 
+                "select eMailAddress from MMS_User where workspaceKey = ? and userKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            preparedStatement->setInt64(queryParameterIndex++, userKey);
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                emailAddress = resultSet->getString("eMailAddress");
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "Workspace-User are not present"
+                    + ", workspaceKey: " + to_string(workspaceKey)
+                    + ", userKey: " + to_string(userKey)
+                    + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+
+        {
+            unsigned seed = chrono::steady_clock::now().time_since_epoch().count();
+            default_random_engine e(seed);
+
+            string sourceApiKey = emailAddress + "__SEP__" + to_string(e());
+            apiKey = Encrypt::encrypt(sourceApiKey);
+
+            string flags;
+            {
+                bool adminAPI = false;
+                bool userAPI = false;
+
+                if (adminAPI)
+                    flags.append("ADMIN_API");
+
+                if (userAPI)
+                {
+                    if (flags != "")
+                       flags.append(",");
+                    flags.append("USER_API");
+                }
+            }
+            
+            lastSQLCommand = 
+                "insert into MMS_APIKey (apiKey, userKey, workspaceKey, flags, creationDate, expirationDate) values ("
+                "?, ?, ?, ?, NULL, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'))";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, apiKey);
+            preparedStatement->setInt64(queryParameterIndex++, userKey);
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            preparedStatement->setString(queryParameterIndex++, flags); // ADMIN_API,USER_API
+            {
+                chrono::system_clock::time_point apiKeyExpirationDate =
+                        chrono::system_clock::now() + chrono::hours(24 * 365 * 10);     // chrono::system_clock::time_point userExpirationDate
+
+                tm          tmDateTime;
+                char        strExpirationDate [64];
+                time_t utcTime = chrono::system_clock::to_time_t(apiKeyExpirationDate);
+
+                localtime_r (&utcTime, &tmDateTime);
+
+                sprintf (strExpirationDate, "%04d-%02d-%02d %02d:%02d:%02d",
+                        tmDateTime. tm_year + 1900,
+                        tmDateTime. tm_mon + 1,
+                        tmDateTime. tm_mday,
+                        tmDateTime. tm_hour,
+                        tmDateTime. tm_min,
+                        tmDateTime. tm_sec);
+
+                preparedStatement->setString(queryParameterIndex++, strExpirationDate);
+            }
+
+            preparedStatement->executeUpdate();
+        }
+
+        {
+            lastSQLCommand = 
+                "COMMIT";
+
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute(lastSQLCommand);
+        }
+        autoCommit = true;
+        
         _connectionPool->unborrow(conn);
     }
     catch(sql::SQLException se)
     {
+        if (!autoCommit)
+        {
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute("ROLLBACK");
+        }
+        
         _connectionPool->unborrow(conn);
 
         string exceptionMessage(se.what());
@@ -506,6 +618,12 @@ void MMSEngineDBFacade::confirmWorkspace(
     }
     catch(exception e)
     {
+        if (!autoCommit)
+        {
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute("ROLLBACK");
+        }
+        
         _connectionPool->unborrow(conn);
         
         _logger->error(__FILEREF__ + "SQL exception"
@@ -514,6 +632,101 @@ void MMSEngineDBFacade::confirmWorkspace(
 
         throw e;
     }
+    
+    return apiKey;
+}
+
+tuple<shared_ptr<Workspace>,bool,bool> MMSEngineDBFacade::checkAPIKey (string apiKey)
+{
+    shared_ptr<Workspace> workspace;
+    string          flags;
+    string          lastSQLCommand;
+
+    shared_ptr<MySQLConnection> conn;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+
+        int64_t         userKey;
+        int64_t         workspaceKey;
+        
+        {
+            lastSQLCommand = 
+                "select userKey, workspaceKey, flags from MMS_APIKey where apiKey = ? and expirationDate >= NOW()";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, apiKey);
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                userKey = resultSet->getInt64("userKey");
+                workspaceKey = resultSet->getInt64("workspaceKey");
+                flags = resultSet->getString("flags");
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "apiKey is not present or it is expired"
+                    + ", apiKey: " + apiKey
+                    + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw APIKeyNotFoundOrExpired();
+            }
+        }
+
+        
+        workspace = getWorkspace(workspaceKey);
+
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        _connectionPool->unborrow(conn);
+
+        string exceptionMessage(se.what());
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw se;
+    }
+    catch(APIKeyNotFoundOrExpired e)
+    {        
+        _connectionPool->unborrow(conn);
+
+        string exceptionMessage(e.what());
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw e;
+    }
+    catch(exception e)
+    {        
+        _connectionPool->unborrow(conn);
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
+    }
+    
+    tuple<shared_ptr<Workspace>,bool,bool> workspaceAndFlags;
+    
+    workspaceAndFlags = make_tuple(workspace,
+        flags.find("ADMIN_API") == string::npos ? false : true,
+        flags.find("USER_API") == string::npos ? false : true
+    );
+            
+    return workspaceAndFlags;
 }
 
 int64_t MMSEngineDBFacade::addTerritory (
@@ -696,245 +909,6 @@ string MMSEngineDBFacade::getPassword(string emailAddress)
     }
     
     return password;
-}
-
-string MMSEngineDBFacade::createAPIKey (
-        int64_t workspaceKey,
-        int64_t userKey,
-        bool adminAPI, 
-        bool userAPI,
-        chrono::system_clock::time_point expirationDate
-)
-{
-    string          apiKey;
-    
-    string      lastSQLCommand;
-
-    shared_ptr<MySQLConnection> conn;
-
-    try
-    {
-        conn = _connectionPool->borrow();	
-
-        string emailAddress;
-        {
-            lastSQLCommand = 
-                "select eMailAddress from MMS_User where workspaceKey = ? and userKey = ?";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
-            preparedStatement->setInt64(queryParameterIndex++, userKey);
-
-            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-            if (resultSet->next())
-            {
-                emailAddress = resultSet->getString("eMailAddress");
-            }
-            else
-            {
-                string errorMessage = __FILEREF__ + "Workspace-User are not present"
-                    + ", workspaceKey: " + to_string(workspaceKey)
-                    + ", userKey: " + to_string(userKey)
-                    + ", lastSQLCommand: " + lastSQLCommand
-                ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-        }
-
-        {
-            unsigned seed = chrono::steady_clock::now().time_since_epoch().count();
-            default_random_engine e(seed);
-
-            string sourceApiKey = emailAddress + "__SEP__" + to_string(e());
-            apiKey = Encrypt::encrypt(sourceApiKey);
-
-            string flags;
-            {
-                if (adminAPI)
-                    flags.append("ADMIN_API");
-
-                if (userAPI)
-                {
-                    if (flags != "")
-                       flags.append(",");
-                    flags.append("USER_API");
-                }
-            }
-            
-            lastSQLCommand = 
-                "insert into MMS_APIKey (apiKey, userKey, flags, creationDate, expirationDate) values ("
-                "?, ?, ?, NULL, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'))";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++, apiKey);
-            preparedStatement->setInt64(queryParameterIndex++, userKey);
-            preparedStatement->setString(queryParameterIndex++, flags); // ADMIN_API,USER_API
-            {
-                tm          tmDateTime;
-                char        strExpirationDate [64];
-                time_t utcTime = chrono::system_clock::to_time_t(expirationDate);
-
-                localtime_r (&utcTime, &tmDateTime);
-
-                sprintf (strExpirationDate, "%04d-%02d-%02d %02d:%02d:%02d",
-                        tmDateTime. tm_year + 1900,
-                        tmDateTime. tm_mon + 1,
-                        tmDateTime. tm_mday,
-                        tmDateTime. tm_hour,
-                        tmDateTime. tm_min,
-                        tmDateTime. tm_sec);
-
-                preparedStatement->setString(queryParameterIndex++, strExpirationDate);
-            }
-
-            preparedStatement->executeUpdate();
-        }
-
-        _connectionPool->unborrow(conn);
-    }
-    catch(sql::SQLException se)
-    {
-        _connectionPool->unborrow(conn);
-
-        string exceptionMessage(se.what());
-
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", exceptionMessage: " + exceptionMessage
-        );
-
-        throw se;
-    }
-    catch(exception e)
-    {        
-        _connectionPool->unborrow(conn);
-
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", lastSQLCommand: " + lastSQLCommand
-        );
-
-        throw e;
-    }
-    
-    return apiKey;
-}
-
-tuple<shared_ptr<Workspace>,bool,bool> MMSEngineDBFacade::checkAPIKey (string apiKey)
-{
-    shared_ptr<Workspace> workspace;
-    string          flags;
-    string          lastSQLCommand;
-
-    shared_ptr<MySQLConnection> conn;
-
-    try
-    {
-        conn = _connectionPool->borrow();	
-
-        int64_t         userKey;
-        
-        {
-            lastSQLCommand = 
-                "select userKey, flags from MMS_APIKey where apiKey = ? and expirationDate >= NOW()";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++, apiKey);
-
-            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-            if (resultSet->next())
-            {
-                userKey = resultSet->getInt64("userKey");
-                flags = resultSet->getString("flags");
-            }
-            else
-            {
-                string errorMessage = __FILEREF__ + "apiKey is not present or it is expired"
-                    + ", apiKey: " + apiKey
-                    + ", lastSQLCommand: " + lastSQLCommand
-                ;
-                _logger->error(errorMessage);
-
-                throw APIKeyNotFoundOrExpired();
-            }
-        }
-
-        int64_t                 workspaceKey;
-        
-        {
-            lastSQLCommand = 
-                "select c.workspaceKey from MMS_Workspace c, MMS_User u where c.workspaceKey = u.workspaceKey and u.userKey = ?";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, userKey);
-
-            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-            if (resultSet->next())
-            {
-                workspaceKey = resultSet->getInt64("workspaceKey");
-            }
-            else
-            {
-                string errorMessage = __FILEREF__ + "workspaceKey is not present"
-                    + ", userKey: " + to_string(userKey)
-                    + ", lastSQLCommand: " + lastSQLCommand
-                ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-        }
-
-        workspace = getWorkspace(workspaceKey);
-
-        _connectionPool->unborrow(conn);
-    }
-    catch(sql::SQLException se)
-    {
-        _connectionPool->unborrow(conn);
-
-        string exceptionMessage(se.what());
-
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", exceptionMessage: " + exceptionMessage
-        );
-
-        throw se;
-    }
-    catch(APIKeyNotFoundOrExpired e)
-    {        
-        _connectionPool->unborrow(conn);
-
-        string exceptionMessage(e.what());
-
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", exceptionMessage: " + exceptionMessage
-        );
-
-        throw e;
-    }
-    catch(exception e)
-    {        
-        _connectionPool->unborrow(conn);
-
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", lastSQLCommand: " + lastSQLCommand
-        );
-
-        throw e;
-    }
-    
-    tuple<shared_ptr<Workspace>,bool,bool> workspaceAndFlags;
-    
-    workspaceAndFlags = make_tuple(workspace,
-        flags.find("ADMIN_API") == string::npos ? false : true,
-        flags.find("USER_API") == string::npos ? false : true
-    );
-            
-    return workspaceAndFlags;
 }
 
 int64_t MMSEngineDBFacade::addVideoEncodingProfile(
