@@ -92,7 +92,7 @@ private:
         string stagingEncodedAssetPathName);
 
     void readingImageProfile(
-        string profileDetails,
+        string jsonProfile,
         string& newFormat,
         int& newWidth,
         int& newHeight,

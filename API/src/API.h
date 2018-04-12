@@ -126,8 +126,10 @@ private:
             unordered_map<string, string>& requestDetails
     );
     
-    void addVideoAudioEncodingProfile(
+    void addEncodingProfilesSet(
         FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
         string requestBody);
 
     void parseContentRange(string contentRange,

@@ -382,7 +382,7 @@ string ActiveEncodingsManager::encodeContentImage(shared_ptr<MMSEngineDBFacade::
     string                      sNewInterlaceType;
     Magick::InterlaceType       newInterlaceType;
 
-    readingImageProfile(encodingItem->_details,
+    readingImageProfile(encodingItem->_jsonProfile,
             newImageFormat, newWidth, newHeight, newAspectRatio, sNewInterlaceType, newInterlaceType);
 
     try
@@ -704,7 +704,7 @@ unsigned long ActiveEncodingsManager:: addEncodingItems (
 }
 
 void ActiveEncodingsManager::readingImageProfile(
-        string profileDetails,
+        string jsonProfile,
         string& newFormat,
         int& newWidth,
         int& newHeight,
@@ -721,8 +721,8 @@ void ActiveEncodingsManager::readingImageProfile(
         Json::CharReader* reader = builder.newCharReader();
         string errors;
 
-        bool parsingSuccessful = reader->parse(profileDetails.c_str(),
-                profileDetails.c_str() + profileDetails.size(), 
+        bool parsingSuccessful = reader->parse(jsonProfile.c_str(),
+                jsonProfile.c_str() + jsonProfile.size(), 
                 &encodingProfileRoot, &errors);
         delete reader;
 
@@ -730,7 +730,7 @@ void ActiveEncodingsManager::readingImageProfile(
         {
             string errorMessage = __FILEREF__ + "failed to parse the encoder details"
                     + ", errors: " + errors
-                    + ", details: " + profileDetails
+                    + ", jsonProfile: " + jsonProfile
                     ;
             _logger->error(errorMessage);
 
@@ -740,7 +740,7 @@ void ActiveEncodingsManager::readingImageProfile(
     catch(...)
     {
         throw runtime_error(string("wrong encoding profile json format")
-                + ", profileDetails: " + profileDetails
+                + ", jsonProfile: " + jsonProfile
                 );
     }
 

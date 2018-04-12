@@ -61,12 +61,24 @@ public:
     void validateCutMetadata(
         Json::Value parametersRoot, vector<int64_t>& dependencies);
 
+    void validateEncodingProfilesSetRootMetadata(
+        MMSEngineDBFacade::ContentType contentType, 
+        Json::Value encodingProfilesSetRoot);
+        
 private:
     shared_ptr<spdlog::logger>          _logger;
     shared_ptr<MMSEngineDBFacade>       _mmsEngineDBFacade;
 
     bool isMetadataPresent(Json::Value root, string field);
-
+    
+    void validateEncodingProfileRootVideoMetadata(
+        Json::Value encodingProfileRoot);
+    
+    void validateEncodingProfileRootAudioMetadata(
+        Json::Value encodingProfileRoot);
+    
+    void validateEncodingProfileRootImageMetadata(
+        Json::Value encodingProfileRoot);
 };
 
 #endif /* VALIDATOR_H */

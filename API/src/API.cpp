@@ -437,6 +437,24 @@ void API::manageRequestAndResponse(
             queryParameters, workspaceAndFlags, // contentLength,
                 requestDetails);
     }
+    else if (method == "addEncodingProfilesSet")
+    {
+        bool isUserAPI = get<2>(workspaceAndFlags);
+        if (!isUserAPI)
+        {
+            string errorMessage = string("APIKey flags does not have the USER permission"
+                    ", isUserAPI: " + to_string(isUserAPI)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+                
+        addEncodingProfilesSet(request, get<0>(workspaceAndFlags),
+            queryParameters, requestBody);
+    }
     else
     {
         string errorMessage = string("No API is matched")
@@ -798,6 +816,8 @@ void API::registerUser(
         string name;
         string email;
         string password;
+        string workspaceName;
+        string country;
         MMSEngineDBFacade::EncodingPriority encodingPriority;
         MMSEngineDBFacade::EncodingPeriod encodingPeriod;
         int maxIngestionsNumber;
@@ -840,12 +860,13 @@ void API::registerUser(
             throw runtime_error(errorMessage);
         }
 
-        // WorkspaceName, email and password
         {
             vector<string> mandatoryFields = {
                 "WorkspaceName",
+                "Name",
                 "EMail",
-                "Password"
+                "Password",
+                "Country"
             };
             for (string field: mandatoryFields)
             {
@@ -861,12 +882,14 @@ void API::registerUser(
                 }
             }
 
-            name = metadataRoot.get("WorkspaceName", "XXX").asString();
+            workspaceName = metadataRoot.get("WorkspaceName", "XXX").asString();
             email = metadataRoot.get("EMail", "XXX").asString();
             password = metadataRoot.get("Password", "XXX").asString();
+            name = metadataRoot.get("Name", "XXX").asString();
+            country = metadataRoot.get("Country", "XXX").asString();
         }
 
-        encodingPriority = MMSEngineDBFacade::EncodingPriority::Medium;
+        encodingPriority = _encodingPriorityWorkspaceDefaultValue;
         /*
         // encodingPriority
         {
@@ -902,8 +925,8 @@ void API::registerUser(
         }
         */
 
-        encodingPeriod = MMSEngineDBFacade::EncodingPeriod::Daily;
-        maxIngestionsNumber = 1;
+        encodingPeriod = _encodingPeriodWorkspaceDefaultValue;
+        maxIngestionsNumber = _maxIngestionsNumberWorkspaceDefaultValue;
         /*
         // EncodingPeriod
         {
@@ -972,7 +995,7 @@ void API::registerUser(
         }
         */
 
-        maxStorageInGB = 1;
+        maxStorageInGB = _maxStorageInGBWorkspaceDefaultValue;
         /*
         // MaxStorageInGB
         {
@@ -1012,11 +1035,11 @@ void API::registerUser(
         {
             string workspaceDirectoryName;
 
-            workspaceDirectoryName.resize(name.size());
+            workspaceDirectoryName.resize(workspaceName.size());
 
             transform(
-                name.begin(), 
-                name.end(), 
+                workspaceName.begin(), 
+                workspaceName.end(), 
                 workspaceDirectoryName.begin(), 
                 [](unsigned char c){
                     if (isalpha(c)) 
@@ -1026,15 +1049,17 @@ void API::registerUser(
             );
 
             _logger->info(__FILEREF__ + "Registering User"
-                + ", name: " + name
+                + ", workspaceName: " + workspaceName
                 + ", email: " + email
             );
             
             tuple<int64_t,int64_t,string> workspaceKeyUserKeyAndConfirmationCode = 
                 _mmsEngineDBFacade->registerUser(
+                    name, 
                     email, 
                     password,
-                    name,
+                    country, 
+                    workspaceName,
                     workspaceDirectoryName,
                     MMSEngineDBFacade::WorkspaceType::IngestionAndDelivery,  // MMSEngineDBFacade::WorkspaceType workspaceType
                     "",                             // string deliveryURL,
@@ -1047,7 +1072,7 @@ void API::registerUser(
                 );
 
             _logger->info(__FILEREF__ + "Registered User"
-                + ", name: " + name
+                + ", workspaceName: " + workspaceName
                 + ", email: " + email
                 + ", userKey: " + to_string(get<1>(workspaceKeyUserKeyAndConfirmationCode))
                 + ", confirmationCode: " + get<2>(workspaceKeyUserKeyAndConfirmationCode)
@@ -2464,11 +2489,13 @@ void API::uploadBinary(
     }    
 }
 
-void API::addVideoAudioEncodingProfile(
+void API::addEncodingProfilesSet(
         FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
         string requestBody)
 {
-    string api = "addVideoAudioEncodingProfile";
+    string api = "addEncodingProfilesSet";
 
     _logger->info(__FILEREF__ + "Received " + api
         + ", requestBody: " + requestBody
@@ -2476,132 +2503,217 @@ void API::addVideoAudioEncodingProfile(
 
     try
     {
-        Json::Value metadataRoot;
-        try
+        auto sContentTypeIt = queryParameters.find("contentType");
+        if (sContentTypeIt == queryParameters.end())
         {
-            Json::CharReaderBuilder builder;
-            Json::CharReader* reader = builder.newCharReader();
-            string errors;
-
-            bool parsingSuccessful = reader->parse(requestBody.c_str(),
-                    requestBody.c_str() + requestBody.size(), 
-                    &metadataRoot, &errors);
-            delete reader;
-
-            if (!parsingSuccessful)
-            {
-                string errorMessage = string("Json metadata failed during the parsing")
-                        + ", errors: " + errors
-                        + ", json data: " + requestBody
-                        ;
-                _logger->error(__FILEREF__ + errorMessage);
-
-                sendError(request, 400, errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-        }
-        catch(exception e)
-        {
-            string errorMessage = string("Json metadata failed during the parsing"
-                    ", json data: " + requestBody
-                    );
+            string errorMessage = string("'contentType' URI parameter is missing");
             _logger->error(__FILEREF__ + errorMessage);
 
             sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);            
+        }
+        MMSEngineDBFacade::ContentType contentType = 
+                MMSEngineDBFacade::toContentType(sContentTypeIt->second);
+        
+        Json::Value encodingProfilesSetRoot;
+        try
+        {
+            {
+                Json::CharReaderBuilder builder;
+                Json::CharReader* reader = builder.newCharReader();
+                string errors;
+
+                bool parsingSuccessful = reader->parse(requestBody.c_str(),
+                        requestBody.c_str() + requestBody.size(), 
+                        &encodingProfilesSetRoot, &errors);
+                delete reader;
+
+                if (!parsingSuccessful)
+                {
+                    string errorMessage = __FILEREF__ + "failed to parse the requestBody"
+                            + ", errors: " + errors
+                            + ", requestBody: " + requestBody
+                            ;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+            }
+        }
+        catch(runtime_error e)
+        {
+            string errorMessage = string("requestBody json is not well format")
+                    + ", requestBody: " + requestBody
+                    + ", e.what(): " + e.what()
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        catch(exception e)
+        {
+            string errorMessage = string("requestBody json is not well format")
+                    + ", requestBody: " + requestBody
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
 
             throw runtime_error(errorMessage);
         }
 
         /*
+            {
+                "EncodingProfilesSetName": "Sport",     // mandatory
+                "profiles": [
+                    {
+                        "EncodingProfileName": "Sport",     // mandatory
+                        "fileFormat": "segment", // // mandatory: oppure?
+                        "video": {  // optional
+                            "codec": "libx264",    // mandatory: libx264 or libvpx
+                            "profile": "",  // optional: if libx264: high, baseline, main - if libvpx: best, good
+                            "width": "", // mandatory: it could be event -1 or -2, perchè è una stringa?
+                            "height": "", // mandatory: it could be event -1 or -2, perchè è una stringa?
+                            "bitrate": "",  // mandatory: perchè stringa?
+                            "twoPasses": true, // mandatory only if fileformat is different from segment
+                            "maxRate": "", // optional: perchè è una stringa?
+                            "bufSize": "" // optional: perchè è una stringa?
+                            frameRate?
+                            keyFrameIntervalInSeconds?
+                        }   
+                        "audio": {  // mandatory
+                            "codec": "libaacplus",    // mandatory: libaacplus, libfdk_aac, libvo_aacenc, libvorbis
+                            "bitrate": "",  // mandatory: perchè stringa?
+                            channels?
+                            sampling rate?
+                        }   
+                    }
+                ]
+            }
+            {
+                "EncodingProfilesSetName": "Sport",     // mandatory
+                "profiles": [
+                    {
+                        "EncodingProfileName": "Sport",     // mandatory
+                        "format": "JPG", // mandatory: JPG, GIF, PNG
+                        "width": 200, // mandatory
+                        "height": 300, // mandatory
+                        "aspectRatio": true,  // mandatory
+                        "interlaceType": "NoInterlace", // mandatory: NoInterlace, LineInterlace, PlaneInterlace, PartitionInterlace
+                    }
+                ]
+            }
+        */
+        
+        string responseBody;    
+        shared_ptr<MySQLConnection> conn;
+
         try
-        {
-            string workspaceDirectoryName;
+        {            
+            conn = _mmsEngineDBFacade->beginIngestionJobs();
 
-            workspaceDirectoryName.resize(name.size());
+            Validator validator(_logger, _mmsEngineDBFacade);
+            validator.validateEncodingProfilesSetRootMetadata(contentType, encodingProfilesSetRoot);
+        
+            string field = "EncodingProfilesSetName";
+            if (!_mmsEngineDBFacade->isMetadataPresent(encodingProfilesSetRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
 
-            transform(
-                name.begin(), 
-                name.end(), 
-                workspaceDirectoryName.begin(), 
-                [](unsigned char c){
-                    if (isalpha(c)) 
-                        return c; 
-                    else 
-                        return (unsigned char) '_'; } 
-            );
-
-            _logger->info(__FILEREF__ + "Registering User"
-                + ", name: " + name
-                + ", email: " + email
-            );
+                throw runtime_error(errorMessage);
+            }
+            string encodingProfilesSetName = encodingProfilesSetRoot.get(field, "XXX").asString();
+                        
+            int64_t encodingProfilesSetKey = _mmsEngineDBFacade->addEncodingProfilesSet(conn,
+                    workspace->_workspaceKey, contentType, encodingProfilesSetName);
             
-            tuple<int64_t,int64_t,string> workspaceKeyUserKeyAndConfirmationCode = 
-                _mmsEngineDBFacade->registerUser(
-                    email, 
-                    password,
-                    name,
-                    workspaceDirectoryName,
-                    MMSEngineDBFacade::WorkspaceType::IngestionAndDelivery,  // MMSEngineDBFacade::WorkspaceType workspaceType
-                    "",                             // string deliveryURL,
-                    encodingPriority,               //  MMSEngineDBFacade::EncodingPriority maxEncodingPriority,
-                    encodingPeriod,                 //  MMSEngineDBFacade::EncodingPeriod encodingPeriod,
-                    maxIngestionsNumber,            // long maxIngestionsNumber,
-                    maxStorageInGB,                 // long maxStorageInGB,
-                    "",                             // string languageCode,
-                    chrono::system_clock::now() + chrono::hours(24 * 365 * 10)     // chrono::system_clock::time_point userExpirationDate
-                );
+            field = "profiles";
+            if (_mmsEngineDBFacade->isMetadataPresent(encodingProfilesSetRoot, field))
+            {
+                Json::Value profilesRoot = encodingProfilesSetRoot[field];
 
-            _logger->info(__FILEREF__ + "Registered User"
-                + ", name: " + name
-                + ", email: " + email
-                + ", userKey: " + to_string(get<1>(workspaceKeyUserKeyAndConfirmationCode))
-                + ", confirmationCode: " + get<2>(workspaceKeyUserKeyAndConfirmationCode)
-            );
-            
-            string responseBody = string("{ ")
-                + "\"userKey\": " + to_string(get<1>(workspaceKeyUserKeyAndConfirmationCode)) + " "
-                + "}";
-            sendSuccess(request, 201, responseBody);
-            
-            string to = "giulianoc@catrasoftware.it";
-            string subject = "Confirmation code";
-            
-            vector<string> emailBody;
-            emailBody.push_back("<p>Hi John,</p>");
-            emailBody.push_back(string("<p>This is the confirmation code ") + get<2>(workspaceKeyUserKeyAndConfirmationCode) + "</p>");
-            emailBody.push_back(string("<p>for the workspace key ") + to_string(get<0>(workspaceKeyUserKeyAndConfirmationCode)) + "</p>");
-            emailBody.push_back("<p>Bye!</p>");
+                for (int profileIndex = 0; profileIndex < profilesRoot.size(); profileIndex++)
+                {
+                    Json::Value profileRoot = profilesRoot[profileIndex];
 
-            sendEmail(to, subject, emailBody);
+                    string field = "EncodingProfileName";
+                    if (!_mmsEngineDBFacade->isMetadataPresent(profileRoot, field))
+                    {
+                        string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                                + ", Field: " + field;
+                        _logger->error(errorMessage);
+
+                        throw runtime_error(errorMessage);
+                    }
+                    string encodingProfileName = profileRoot.get(field, "XXX").asString();
+            
+                    MMSEngineDBFacade::EncodingTechnology encodingTechnology;
+                    
+                    if (contentType == MMSEngineDBFacade::ContentType::Image)
+                        encodingTechnology = MMSEngineDBFacade::EncodingTechnology::Image;
+                    else
+                        encodingTechnology = MMSEngineDBFacade::EncodingTechnology::MP4;
+                       
+                    string jsonProfile;
+                    {
+                        Json::StreamWriterBuilder wbuilder;
+
+                        jsonProfile = Json::writeString(wbuilder, profileRoot);
+                    }
+                       
+                    int64_t encodingProfileKey = _mmsEngineDBFacade->addEncodingProfile(
+                        conn, workspace->_workspaceKey, encodingProfileName,
+                        contentType, encodingTechnology, jsonProfile,
+                        encodingProfilesSetKey);
+                    
+                    if (responseBody != "")
+                        responseBody += string(", ");
+                    responseBody += (
+                            string("{ ") 
+                            + "\"encodingProfileKey\": " + to_string(encodingProfileKey)
+                            + ", \"name\": \"" + encodingProfileName + "\" "
+                            + "}"
+                            );
+                }
+            }
+            
+            bool commit = true;
+            _mmsEngineDBFacade->endIngestionJobs(conn, commit);
+            
+            string beginOfResponseBody = string("{ ")
+                + "\"encodingProfilesSet\": { "
+                    + "\"encodingProfilesSetKey\": " + to_string(encodingProfilesSetKey)
+                    + ", \"encodingProfilesSetName\": \"" + encodingProfilesSetName + "\" "
+                    + "}, "
+                    + "\"profiles\": [ ";
+            responseBody.insert(0, beginOfResponseBody);
+            responseBody += " ] }";
         }
         catch(runtime_error e)
         {
-            _logger->error(__FILEREF__ + api + " failed"
+            bool commit = false;
+            _mmsEngineDBFacade->endIngestionJobs(conn, commit);
+
+            _logger->error(__FILEREF__ + "request body parsing failed"
                 + ", e.what(): " + e.what()
             );
 
-            string errorMessage = string("Internal server error");
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 500, errorMessage);
-
-            throw runtime_error(errorMessage);
+            throw e;
         }
         catch(exception e)
         {
-            _logger->error(__FILEREF__ + api + " failed"
+            bool commit = false;
+            _mmsEngineDBFacade->endIngestionJobs(conn, commit);
+
+            _logger->error(__FILEREF__ + "request body parsing failed"
                 + ", e.what(): " + e.what()
             );
 
-            string errorMessage = string("Internal server error");
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 500, errorMessage);
-
-            throw runtime_error(errorMessage);
+            throw e;
         }
-        */
+
+        sendSuccess(request, 201, responseBody);
     }
     catch(runtime_error e)
     {
@@ -2611,7 +2723,12 @@ void API::addVideoAudioEncodingProfile(
             + ", e.what(): " + e.what()
         );
 
-        throw e;
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
     }
     catch(exception e)
     {

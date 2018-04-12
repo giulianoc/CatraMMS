@@ -190,8 +190,10 @@ void MMSEngineDBFacade::getTerritories(shared_ptr<Workspace> workspace)
 }
 
 tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUser(
+    string userName,
     string userEmailAddress,
     string userPassword,
+    string userCountry,
     string workspaceName,
     string workspaceDirectoryName,
     WorkspaceType workspaceType,
@@ -230,12 +232,14 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUser(
         
         {
             lastSQLCommand = 
-                "insert into MMS_User (userKey, eMailAddress, password, creationDate, expirationDate) values ("
+                "insert into MMS_User (userKey, name, eMailAddress, password, country, creationDate, expirationDate) values ("
                 "NULL, ?, ?, NULL, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'))";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, userName);
             preparedStatement->setString(queryParameterIndex++, userEmailAddress);
             preparedStatement->setString(queryParameterIndex++, userPassword);
+            preparedStatement->setString(queryParameterIndex++, userCountry);
             {
                 tm          tmDateTime;
                 char        strExpirationDate [64];
@@ -334,40 +338,6 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUser(
                 workspaceKey,
                 _defaultTerritoryName);
                 
-        // insert default EncodingProfilesSet per Workspace/ContentType
-        {
-            vector<ContentType> contentTypes = { ContentType::Video, ContentType::Audio, ContentType::Image };
-            
-            for (ContentType contentType: contentTypes)
-            {
-                {
-                    lastSQLCommand = 
-                        "insert into MMS_EncodingProfilesSet (encodingProfilesSetKey, contentType, workspaceKey, name) values ("
-                        "NULL, ?, ?, NULL)";
-                    shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                    int queryParameterIndex = 1;
-                    preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
-                    preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
-                    preparedStatement->executeUpdate();
-                }
-                        
-                int64_t encodingProfilesSetKey = getLastInsertId(conn);
-
-		// by default this new workspace will inherited the profiles associated to 'global' 
-                {
-                    lastSQLCommand = 
-                        "insert into MMS_EncodingProfilesSetMapping (encodingProfilesSetKey, encodingProfileKey) " 
-                        "(select ?, encodingProfileKey from MMS_EncodingProfilesSetMapping where encodingProfilesSetKey = " 
-                            "(select encodingProfilesSetKey from MMS_EncodingProfilesSet where contentType = ? and workspaceKey is null and name is null))";
-                    shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                    int queryParameterIndex = 1;
-                    preparedStatement->setInt64(queryParameterIndex++, encodingProfilesSetKey);
-                    preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
-                    preparedStatement->executeUpdate();
-                }
-            }
-        }
-
         // conn->_sqlConnection->commit(); OR execute COMMIT
         {
             lastSQLCommand = 
@@ -909,161 +879,34 @@ string MMSEngineDBFacade::getPassword(string emailAddress)
     return password;
 }
 
-int64_t MMSEngineDBFacade::addVideoEncodingProfile(
-        shared_ptr<Workspace> workspace,
-        string encodingProfileSet,  // "": default Workspace family, != "": named workspace family
-        EncodingTechnology encodingTechnology,
-        string details,
-        string label,
-        int width,
-        int height,
-        string videoCodec,
-        string audioCodec
-)
+int64_t MMSEngineDBFacade::addEncodingProfilesSet (
+        shared_ptr<MySQLConnection> conn, int64_t workspaceKey,
+        MMSEngineDBFacade::ContentType contentType, 
+        string encodingProfilesSetName)
 {
-    int64_t         encodingProfileKey;
-
+    int64_t     encodingProfilesSetKey;
+    
     string      lastSQLCommand;
     
-    shared_ptr<MySQLConnection> conn;
-    bool autoCommit = true;
-
     try
     {
-        conn = _connectionPool->borrow();	
-
-        autoCommit = false;
-        // conn->_sqlConnection->setAutoCommit(autoCommit); OR execute the statement START TRANSACTION
         {
             lastSQLCommand = 
-                "START TRANSACTION";
-
-            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-            statement->execute(lastSQLCommand);
-        }
-        
-        ContentType contentType = ContentType::Video;
-
-        {
-            lastSQLCommand = 
-                    "insert into MMS_EncodingProfiles ("
-                    "encodingProfileKey, contentType, technology, details, label, width, height, videoCodec, audioCodec) values ("
-                    "NULL, ?, ?, ?, ?, ?, ?, ?, ?)";
-
+                "insert into MMS_EncodingProfilesSet (encodingProfilesSetKey, contentType, workspaceKey, name) values ("
+                "NULL, ?, ?, ?)";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
-            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(encodingTechnology));
-            preparedStatement->setString(queryParameterIndex++, details);
-            if (label == "")
-                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-            else
-                preparedStatement->setString(queryParameterIndex++, label);
-            preparedStatement->setInt(queryParameterIndex++, width);
-            preparedStatement->setInt(queryParameterIndex++, height);
-            if (videoCodec == "")
-                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-            else
-                preparedStatement->setString(queryParameterIndex++, videoCodec);
-            if (audioCodec == "")
-                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-            else
-                preparedStatement->setString(queryParameterIndex++, audioCodec);
-
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            preparedStatement->setString(queryParameterIndex++, encodingProfilesSetName);
+            
             preparedStatement->executeUpdate();
         }
         
-        encodingProfileKey = getLastInsertId(conn);
-        
-        int64_t encodingProfilesSetKey;
-        
-        if (encodingProfileSet == "")   // default Workspace family
-        {
-            lastSQLCommand = 
-                "select encodingProfilesSetKey from MMS_EncodingProfilesSet where contentType = ? and workspaceKey = ? and name is null";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
-            preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
-            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-            if (resultSet->next())
-            {
-                encodingProfilesSetKey = resultSet->getInt64("encodingProfilesSetKey");
-            }
-            else
-            {
-                string errorMessage = __FILEREF__ + "encodingProfilesSetKey is not present"
-                    + ", contentType: " + MMSEngineDBFacade::toString(contentType)
-                    + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
-                    + ", lastSQLCommand: " + lastSQLCommand
-                ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);                    
-            }
-        }
-        else
-        {
-            lastSQLCommand = 
-                "select encodingProfilesSetKey from MMS_EncodingProfilesSet where contentType = ? and workspaceKey = ? and name = ?";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
-            preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
-            preparedStatement->setString(queryParameterIndex++, encodingProfileSet);
-            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-            if (resultSet->next())
-            {
-                encodingProfilesSetKey = resultSet->getInt64("encodingProfilesSetKey");
-            }
-            else
-            {
-                lastSQLCommand = 
-                    "insert into MMS_EncodingProfilesSet (encodingProfilesSetKey, contentType, workspaceKey, name) values (NULL, ?, ?, ?)";
-                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                int queryParameterIndex = 1;
-                preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
-                preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
-                preparedStatement->setString(queryParameterIndex++, encodingProfileSet);
-                preparedStatement->executeUpdate();
- 
-                encodingProfilesSetKey = getLastInsertId(conn);
-            }
-        }
-        
-        {
-            lastSQLCommand = 
-                "insert into MMS_EncodingProfilesSetMapping (encodingProfilesSetKey, encodingProfileKey)  values (?, ?)";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, encodingProfilesSetKey);
-            preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
-            preparedStatement->executeUpdate();
-        }
-
-        // conn->_sqlConnection->commit(); OR execute COMMIT
-        {
-            lastSQLCommand = 
-                "COMMIT";
-
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            preparedStatement->executeUpdate();
-        }
-        autoCommit = true;
-
-        _connectionPool->unborrow(conn);
+        encodingProfilesSetKey = getLastInsertId(conn);
     }
     catch(sql::SQLException se)
     {
-        // conn->_sqlConnection->rollback(); OR execute ROLLBACK
-        if (!autoCommit)
-        {
-            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-            statement->execute("ROLLBACK");
-        }
-        
-        _connectionPool->unborrow(conn);
-
         string exceptionMessage(se.what());
         
         _logger->error(__FILEREF__ + "SQL exception"
@@ -1074,16 +917,7 @@ int64_t MMSEngineDBFacade::addVideoEncodingProfile(
         throw se;
     }
     catch(exception e)
-    {
-        // conn->_sqlConnection->rollback(); OR execute ROLLBACK
-        if (!autoCommit)
-        {
-            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-            statement->execute("ROLLBACK");
-        }
-        
-        _connectionPool->unborrow(conn);
-        
+    {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
@@ -1091,120 +925,45 @@ int64_t MMSEngineDBFacade::addVideoEncodingProfile(
         throw e;
     }
     
-    return encodingProfileKey;
+    return encodingProfilesSetKey;
 }
 
-int64_t MMSEngineDBFacade::addImageEncodingProfile(
-    shared_ptr<Workspace> workspace,
-    string encodingProfileSet,
-    string details,
-    string label,
-    int width,
-    int height
+int64_t MMSEngineDBFacade::addEncodingProfile(
+        shared_ptr<MySQLConnection> conn,
+        int64_t workspaceKey,
+        string name,
+        MMSEngineDBFacade::ContentType contentType, 
+        EncodingTechnology encodingTechnology,
+        string jsonProfile,
+        int64_t encodingProfilesSetKey  // -1 if it is not associated to any Set
 )
-{    
+{
     int64_t         encodingProfileKey;
 
     string      lastSQLCommand;
     
-    shared_ptr<MySQLConnection> conn;
-    bool autoCommit = true;
-
     try
     {
-        conn = _connectionPool->borrow();	
-
-        autoCommit = false;
-        // conn->_sqlConnection->setAutoCommit(autoCommit); OR execute the statement START TRANSACTION
-        {
-            lastSQLCommand = 
-                "START TRANSACTION";
-
-            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-            statement->execute(lastSQLCommand);
-        }
-        
-        ContentType contentType = ContentType::Image;
-
         {
             lastSQLCommand = 
                     "insert into MMS_EncodingProfiles ("
-                    "encodingProfileKey, contentType, technology, details, label, width, height, videoCodec, audioCodec) values ("
-                    "NULL,               ?,           ?,          ?,       ?,     ?,     ?,      NULL,       NULL)";
+                    "encodingProfileKey, workspaceKey, name, contentType, technology, jsonProfile) values ("
+                    "NULL, ?, ?, ?, ?, ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+                preparedStatement->setString(queryParameterIndex++, name);
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
-            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(EncodingTechnology::Image));
-            preparedStatement->setString(queryParameterIndex++, details);
-            if (label == "")
-                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-            else
-                preparedStatement->setString(queryParameterIndex++, label);
-            preparedStatement->setInt(queryParameterIndex++, width);
-            preparedStatement->setInt(queryParameterIndex++, height);
+            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(encodingTechnology));
+            preparedStatement->setString(queryParameterIndex++, jsonProfile);
 
             preparedStatement->executeUpdate();
         }
         
         encodingProfileKey = getLastInsertId(conn);
-        
-        int64_t encodingProfilesSetKey;
-        
-        if (encodingProfileSet == "")   // default Workspace family
-        {
-            lastSQLCommand = 
-                "select encodingProfilesSetKey from MMS_EncodingProfilesSet where contentType = ? and workspaceKey = ? and name is null";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
-            preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
-            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-            if (resultSet->next())
-            {
-                encodingProfilesSetKey = resultSet->getInt64("encodingProfilesSetKey");
-            }
-            else
-            {
-                string errorMessage = __FILEREF__ + "encodingProfilesSetKey is not present"
-                    + ", contentType: " + MMSEngineDBFacade::toString(contentType)
-                    + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
-                    + ", lastSQLCommand: " + lastSQLCommand
-                ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);                    
-            }
-        }
-        else
-        {
-            lastSQLCommand = 
-                "select encodingProfilesSetKey from MMS_EncodingProfilesSet where contentType = ? and workspaceKey = ? and name = ?";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
-            preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
-            preparedStatement->setString(queryParameterIndex++, encodingProfileSet);
-            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-            if (resultSet->next())
-            {
-                encodingProfilesSetKey = resultSet->getInt64("encodingProfilesSetKey");
-            }
-            else
-            {
-                lastSQLCommand = 
-                    "insert into MMS_EncodingProfilesSet (encodingProfilesSetKey, contentType, workspaceKey, name) values (NULL, ?, ?, ?)";
-                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                int queryParameterIndex = 1;
-                preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
-                preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
-                preparedStatement->setString(queryParameterIndex++, encodingProfileSet);
-                preparedStatement->executeUpdate();
- 
-                encodingProfilesSetKey = getLastInsertId(conn);
-            }
-        }
-        
+              
+        if (encodingProfilesSetKey != -1)
         {
             lastSQLCommand = 
                 "insert into MMS_EncodingProfilesSetMapping (encodingProfilesSetKey, encodingProfileKey)  values (?, ?)";
@@ -1214,30 +973,9 @@ int64_t MMSEngineDBFacade::addImageEncodingProfile(
             preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
             preparedStatement->executeUpdate();
         }
-
-        // conn->_sqlConnection->commit(); OR execute COMMIT
-        {
-            lastSQLCommand = 
-                "COMMIT";
-
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            preparedStatement->executeUpdate();
-        }
-        autoCommit = true;
-
-        _connectionPool->unborrow(conn);
     }
     catch(sql::SQLException se)
     {
-        // conn->_sqlConnection->rollback(); OR execute ROLLBACK
-        if (!autoCommit)
-        {
-            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-            statement->execute("ROLLBACK");
-        }
-        
-        _connectionPool->unborrow(conn);
-
         string exceptionMessage(se.what());
         
         _logger->error(__FILEREF__ + "SQL exception"
@@ -1249,15 +987,6 @@ int64_t MMSEngineDBFacade::addImageEncodingProfile(
     }
     catch(exception e)
     {
-        // conn->_sqlConnection->rollback(); OR execute ROLLBACK
-        if (!autoCommit)
-        {
-            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-            statement->execute("ROLLBACK");
-        }
-        
-        _connectionPool->unborrow(conn);
-        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
@@ -3083,7 +2812,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
                 {
                     lastSQLCommand = 
-                        "select technology, details from MMS_EncodingProfiles where encodingProfileKey = ?";
+                        "select technology, jsonProfile from MMS_EncodingProfiles where encodingProfileKey = ?";
                     shared_ptr<sql::PreparedStatement> preparedStatementEncodingProfile (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
                     preparedStatementEncodingProfile->setInt64(queryParameterIndex++, encodingItem->_encodingProfileKey);
@@ -3092,7 +2821,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                     if (encodingProfilesResultSet->next())
                     {
                         encodingItem->_encodingProfileTechnology = static_cast<EncodingTechnology>(encodingProfilesResultSet->getInt("technology"));
-                        encodingItem->_details = encodingProfilesResultSet->getString("details");
+                        encodingItem->_jsonProfile = encodingProfilesResultSet->getString("jsonProfile");
                     }
                     else
                     {
@@ -3950,14 +3679,14 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
         }
 
         _logger->info(__FILEREF__ + "Insert into MMS_MediaItem...");
-        int64_t encodingProfileSetKey;
+        // int64_t encodingProfileSetKey;
         string uniqueName;
         {
             string title = "";
             string ingester = "";
             string keywords = "";
             string sContentType;
-            string encodingProfilesSet;
+            // string encodingProfilesSet;
 
             if (isMetadataPresent(typeRoot, "UniqueName"))
                 uniqueName = typeRoot.get("UniqueName", "XXX").asString();
@@ -3970,6 +3699,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             if (isMetadataPresent(typeRoot, "Keywords"))
                 keywords = typeRoot.get("Keywords", "XXX").asString();
 
+            /*
             {
                 if (isMetadataPresent(typeRoot, "EncodingProfilesSet"))
                     encodingProfilesSet = typeRoot.get("EncodingProfilesSet", "XXX").asString();
@@ -4033,12 +3763,13 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                     throw runtime_error(errorMessage);                    
                 }            
             }
+            */
 
 
             lastSQLCommand = 
                 "insert into MMS_MediaItem (mediaItemKey, uniqueName, workspaceKey, contentProviderKey, title, ingester, keywords, " 
-                "ingestionDate, contentType, encodingProfilesSetKey) values ("
-                "NULL, ?, ?, ?, ?, ?, ?, NULL, ?, ?)";
+                "ingestionDate, contentType) values ("
+                "NULL, ?, ?, ?, ?, ?, ?, NULL, ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -4055,7 +3786,6 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             else
                 preparedStatement->setString(queryParameterIndex++, keywords);
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
-            preparedStatement->setInt64(queryParameterIndex++, encodingProfileSetKey);
 
             preparedStatement->executeUpdate();
         }
@@ -4415,6 +4145,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             }
         }
         
+        /*
         {
             EncodingPriority encodingPriority;
             if (contentType == ContentType::Video || contentType == ContentType::Audio)
@@ -4449,6 +4180,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
 
             preparedStatement->executeUpdate();
         }
+        */
 
         {
             IngestionStatus newIngestionStatus = IngestionStatus::End_TaskSuccess;
@@ -4942,10 +4674,12 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             lastSQLCommand = 
                 "create table if not exists MMS_User ("
                     "userKey				BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
-                    "eMailAddress				VARCHAR (128) NULL,"
+                    "name				VARCHAR (128) NULL,"
+                    "eMailAddress			VARCHAR (128) NULL,"
                     "password				VARCHAR (128) NOT NULL,"
-                    "creationDate				TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
-                    "expirationDate				DATETIME NOT NULL,"
+                    "country				VARCHAR (64) NULL,"
+                    "creationDate			TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+                    "expirationDate			DATETIME NOT NULL,"
                     "constraint MMS_User_PK PRIMARY KEY (userKey), "
                     "UNIQUE (eMailAddress))"
                     "ENGINE=InnoDB";
@@ -5146,48 +4880,21 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             //      3: WEBM (VP8 and Vorbis)
             //      4: WindowsMedia,
             //      5: Adobe
-            // The encoding profile format is:
-            //      [<video enc. params>][<audio enc. params>][<image enc. params>][<ringtone enc. params>][<application enc. params>][file format params]
-            //  The <video enc. params> format is:
-            //      _V1<video_codec>_V21<video_bitrate1>_<frame_rate_fps>_..._V2M<video_bitrateM>_<frame_rate_fps>_V3<screen_size>_V5<key_frame_interval_in_seconds>_V6<profile>
-            //      <video_codec>: mpeg4, h263, h264, VP8, wmv
-            //      <video_bitrate1>: 68000, 70000
-            //      <screen_size>: QCIF: 176x144, SQCIF: 128x96, QSIF: 160x120, QVGA: 320x240, HVGA: 480x320, 480x360, CIF: 352x288, VGA: 640x480, SD: 720x576
-            //      <frame_rate_fps>: 15, 12.5, 10, 8
-            //      <key_frame_interval_in_seconds>: 3
-            //      <profile>: baseline, main, high
-            //  The <audio enc. params> format is:
-            //      _A1<audio_codec>_A21<audio_bitrate1>_..._A2N<audio_bitrateN>_A3<Channels>_A4<sampling_rate>_
-            //      <audio_codec>: amr-nb, amr-wb, aac-lc, enh-aacplus, he-aac, wma, vorbis
-            //      <audio_bitrate1>: 12200
-            //      <Channels>: S: Stereo, M: Mono
-            //      <sampling_rate>: 8000, 11025, 32000, 44100, 48000
             //  The <image enc. params> format is:
             //	_I1<image_format>_I2<width>_I3<height>_I4<AspectRatio>_I5<Interlace>
             //	<image_format>: PNG, JPG, GIF
             //	<AspectRatio>: 1, 0
             //	<Interlace>: 0: NoInterlace, 1: LineInterlace, 2: PlaneInterlace, 3: PartitionInterlace
-            //  The <ringtone enc. params> format is:
-            //	...
-            //  The <application enc. params> format is:
-            //	...
-            //  The <file format params> format is:
-            //	_F1<hinter>
-            //	<hinter>: 1, 0
-            //  Temporary fields used by XHP: Width, Height, VideoCodec, AudioCodec
             lastSQLCommand = 
                 "create table if not exists MMS_EncodingProfiles ("
                     "encodingProfileKey  		BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "workspaceKey  			BIGINT UNSIGNED NULL,"
+                    "name				VARCHAR (64) NOT NULL,"
                     "contentType			VARCHAR (32) NOT NULL,"
                     "technology         		TINYINT NOT NULL,"
-                    "details    			VARCHAR (512) NOT NULL,"
-                    "label				VARCHAR (64) NULL,"
-                    "width				INT NOT NULL DEFAULT 0,"
-                    "height				INT NOT NULL DEFAULT 0,"
-                    "videoCodec			VARCHAR (32) null,"
-                    "audioCodec			VARCHAR (32) null,"
+                    "jsonProfile    			VARCHAR (512) NOT NULL,"
                     "constraint MMS_EncodingProfile_PK PRIMARY KEY (encodingProfileKey), "
-                    "UNIQUE (contentType, technology, details)) "
+                    "UNIQUE (workspaceKey, name)) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
@@ -5236,6 +4943,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             }
         }    
 
+        /*
         try
         {
             //  insert global EncodingProfilesSet per ContentType
@@ -5280,7 +4988,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
                 throw se;
             }
-        }    
+        }
+        */    
         
         try
         {
@@ -5445,8 +5154,6 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         try
         {
             // workspaceKey is the owner of the content
-            // ContentType: 0: video, 1: audio, 2: image, 3: application, 4: ringtone (it uses the same audio tables),
-            //		5: playlist, 6: live
             // IngestedRelativePath MUST start always with '/' and ends always with '/'
             // IngestedFileName and IngestedRelativePath refer the ingested content independently
             //		if it is encoded or uncompressed
@@ -5463,14 +5170,11 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "keywords				VARCHAR (128) CHARACTER SET utf8 COLLATE utf8_bin NULL,"
                     "ingestionDate			TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "contentType                        VARCHAR (32) NOT NULL,"
-                    "encodingProfilesSetKey		BIGINT UNSIGNED NULL,"
                     "constraint MMS_MediaItem_PK PRIMARY KEY (mediaItemKey), "
                     "constraint MMS_MediaItem_FK foreign key (workspaceKey) "
                         "references MMS_Workspace (workspaceKey) on delete cascade, "
                     "constraint MMS_MediaItem_FK2 foreign key (contentProviderKey) "
                         "references MMS_ContentProvider (contentProviderKey), "
-                    "constraint MMS_MediaItem_FK3 foreign key (encodingProfilesSetKey) "
-                        "references MMS_EncodingProfilesSet (encodingProfilesSetKey), "
                     "UNIQUE (uniqueName)) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);

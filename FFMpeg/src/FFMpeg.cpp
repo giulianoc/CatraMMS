@@ -1792,7 +1792,7 @@ void FFMpeg::settingFfmpegPatameters(
             ;
         }
 
-        // bitRate
+        // twoPasses
         {
             field = "twoPasses";
             if (!isMetadataPresent(videoRoot, field) 
@@ -2002,7 +2002,8 @@ void FFMpeg::encodingFileFormatValidation(string fileFormat,
 void FFMpeg::encodingVideoCodecValidation(string codec,
         shared_ptr<spdlog::logger> logger)
 {    
-    if (codec != "libx264" && codec != "libvpx")
+    if (codec != "libx264" 
+            && codec != "libvpx")
     {
         string errorMessage = __FILEREF__ + "Video codec is wrong"
                 + ", codec: " + codec;

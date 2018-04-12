@@ -256,7 +256,7 @@ public:
          */
         long long                               _encodingProfileKey;
         MMSEngineDBFacade::EncodingTechnology   _encodingProfileTechnology;
-        string                                  _details;
+        string                                  _jsonProfile;
     } ;
 
     enum class WorkspaceType {
@@ -473,8 +473,10 @@ public:
     bool isMetadataPresent(Json::Value root, string field);
 
     tuple<int64_t,int64_t,string> registerUser(
+        string userName,
         string userEmailAddress,
         string userPassword,
+        string userCountry,
         string workspaceName,
         string workspaceDirectoryName,
         WorkspaceType workspaceType,
@@ -496,25 +498,19 @@ public:
 
     tuple<shared_ptr<Workspace>,bool,bool> checkAPIKey (string apiKey);
 
-    int64_t addVideoEncodingProfile(
-        shared_ptr<Workspace> workspace,
-        string encodingProfileSet,
-        EncodingTechnology encodingTechnology,
-        string details,
-        string label,
-        int width,
-        int height,
-        string videoCodec,
-        string audioCodec
-    );
+    int64_t addEncodingProfilesSet (
+        shared_ptr<MySQLConnection> conn, int64_t workspaceKey,
+        MMSEngineDBFacade::ContentType contentType, 
+        string encodingProfilesSetName);
 
-    int64_t addImageEncodingProfile(
-        shared_ptr<Workspace> workspace,
-        string encodingProfileSet,
-        string details,
-        string label,
-        int width,
-        int height
+    int64_t addEncodingProfile(
+        shared_ptr<MySQLConnection> conn,
+        int64_t workspaceKey,
+        string name,
+        MMSEngineDBFacade::ContentType contentType, 
+        EncodingTechnology encodingTechnology,
+        string jsonProfile,
+        int64_t encodingProfilesSetKey  // -1 if it is not associated to any Set
     );
 
     void getIngestionsToBeManaged(

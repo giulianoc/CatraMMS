@@ -93,6 +93,183 @@ bool Validator::isImageMedia(string mediaSourceFileName)
     return false;
 }
 
+void Validator::validateEncodingProfilesSetRootMetadata(
+    MMSEngineDBFacade::ContentType contentType,
+    Json::Value encodingProfilesSetRoot)
+{
+    vector<string> mandatoryFields = {
+        "EncodingProfilesSetName"
+    };
+    for (string mandatoryField: mandatoryFields)
+    {
+        if (!isMetadataPresent(encodingProfilesSetRoot, mandatoryField))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + mandatoryField;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+
+    string field = "profiles";
+    if (_mmsEngineDBFacade->isMetadataPresent(encodingProfilesSetRoot, field))
+    {
+        Json::Value profilesRoot = encodingProfilesSetRoot[field];
+
+        for (int profileIndex = 0; profileIndex < profilesRoot.size(); profileIndex++)
+        {
+            Json::Value profileRoot = profilesRoot[profileIndex];
+
+            if (contentType == MMSEngineDBFacade::ContentType::Video)
+                validateEncodingProfileRootVideoMetadata(profileRoot);
+            else if (contentType == MMSEngineDBFacade::ContentType::Audio)
+                validateEncodingProfileRootAudioMetadata(profileRoot);
+            else // if (contentType == MMSEngineDBFacade::ContentType::Image)
+                validateEncodingProfileRootImageMetadata(profileRoot);
+        }
+    }
+}
+
+void Validator::validateEncodingProfileRootVideoMetadata(
+    Json::Value encodingProfileRoot)
+{
+    {
+        vector<string> mandatoryFields = {
+            "EncodingProfileName",
+            "fileFormat",
+            "video",
+            "audio"
+        };
+        for (string mandatoryField: mandatoryFields)
+        {
+            if (!isMetadataPresent(encodingProfileRoot, mandatoryField))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + mandatoryField;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+    }
+    
+    {
+        string field = "video";
+        Json::Value encodingProfileVideoRoot = encodingProfileRoot[field];
+
+        vector<string> mandatoryFields = {
+            "codec",
+            "width",
+            "height",
+            "bitrate",
+            "twoPasses"
+        };
+        for (string mandatoryField: mandatoryFields)
+        {
+            if (!isMetadataPresent(encodingProfileVideoRoot, mandatoryField))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + mandatoryField;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+    }
+
+    {
+        string field = "audio";
+        Json::Value encodingProfileAudioRoot = encodingProfileRoot[field];
+
+        vector<string> mandatoryFields = {
+            "codec",
+            "bitrate"
+        };
+        for (string mandatoryField: mandatoryFields)
+        {
+            if (!isMetadataPresent(encodingProfileAudioRoot, mandatoryField))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + mandatoryField;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+    }
+}
+
+void Validator::validateEncodingProfileRootAudioMetadata(
+    Json::Value encodingProfileRoot)
+{
+    {
+        vector<string> mandatoryFields = {
+            "EncodingProfileName",
+            "fileFormat",
+            "audio"
+        };
+        for (string mandatoryField: mandatoryFields)
+        {
+            if (!isMetadataPresent(encodingProfileRoot, mandatoryField))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + mandatoryField;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+    }
+    
+    {
+        string field = "audio";
+        Json::Value encodingProfileAudioRoot = encodingProfileRoot[field];
+
+        vector<string> mandatoryFields = {
+            "codec",
+            "bitrate"
+        };
+        for (string mandatoryField: mandatoryFields)
+        {
+            if (!isMetadataPresent(encodingProfileAudioRoot, mandatoryField))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + mandatoryField;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+    }
+}
+
+void Validator::validateEncodingProfileRootImageMetadata(
+    Json::Value encodingProfileRoot)
+{
+    {
+        vector<string> mandatoryFields = {
+            "EncodingProfileName",
+            "format",
+            "width",
+            "height",
+            "aspectRatio",
+            "interlaceType"
+        };
+        for (string mandatoryField: mandatoryFields)
+        {
+            if (!isMetadataPresent(encodingProfileRoot, mandatoryField))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + mandatoryField;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+    }    
+}
+
 void Validator::validateRootMetadata(Json::Value root)
 {    
     string field = "Type";

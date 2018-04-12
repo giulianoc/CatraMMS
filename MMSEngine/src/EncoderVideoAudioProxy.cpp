@@ -665,16 +665,16 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                         Json::CharReader* reader = builder.newCharReader();
                         string errors;
 
-                        bool parsingSuccessful = reader->parse(_encodingItem->_details.c_str(),
-                                _encodingItem->_details.c_str() + _encodingItem->_details.size(), 
+                        bool parsingSuccessful = reader->parse(_encodingItem->_jsonProfile.c_str(),
+                                _encodingItem->_jsonProfile.c_str() + _encodingItem->_jsonProfile.size(), 
                                 &encodingDetails, &errors);
                         delete reader;
 
                         if (!parsingSuccessful)
                         {
-                            string errorMessage = __FILEREF__ + "failed to parse the _encodingItem->_details"
+                            string errorMessage = __FILEREF__ + "failed to parse the _encodingItem->_jsonProfile"
                                     + ", errors: " + errors
-                                    + ", _encodingItem->_details: " + _encodingItem->_details
+                                    + ", _encodingItem->_jsonProfile: " + _encodingItem->_jsonProfile
                                     ;
                             _logger->error(errorMessage);
 
@@ -683,8 +683,8 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                     }
                     catch(...)
                     {
-                        string errorMessage = string("_encodingItem->_details json is not well format")
-                                + ", _encodingItem->_details: " + _encodingItem->_details
+                        string errorMessage = string("_encodingItem->_jsonProfile json is not well format")
+                                + ", _encodingItem->_jsonProfile: " + _encodingItem->_jsonProfile
                                 ;
                         _logger->error(__FILEREF__ + errorMessage);
 
