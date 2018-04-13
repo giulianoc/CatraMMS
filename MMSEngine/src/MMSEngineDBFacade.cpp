@@ -958,7 +958,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
     {
         {
             lastSQLCommand = 
-                    "insert into MMS_EncodingProfiles ("
+                    "insert into MMS_EncodingProfile ("
                     "encodingProfileKey, workspaceKey, label, contentType, technology, jsonProfile) values ("
                     "NULL, ?, ?, ?, ?, ?)";
 
@@ -2851,7 +2851,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
                 {
                     lastSQLCommand = 
-                        "select technology, jsonProfile from MMS_EncodingProfiles where encodingProfileKey = ?";
+                        "select technology, jsonProfile from MMS_EncodingProfile where encodingProfileKey = ?";
                     shared_ptr<sql::PreparedStatement> preparedStatementEncodingProfile (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
                     preparedStatementEncodingProfile->setInt64(queryParameterIndex++, encodingItem->_encodingProfileKey);
@@ -5060,7 +5060,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             //	<AspectRatio>: 1, 0
             //	<Interlace>: 0: NoInterlace, 1: LineInterlace, 2: PlaneInterlace, 3: PartitionInterlace
             lastSQLCommand = 
-                "create table if not exists MMS_EncodingProfiles ("
+                "create table if not exists MMS_EncodingProfile ("
                     "encodingProfileKey  		BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "workspaceKey  			BIGINT UNSIGNED NULL,"
                     "label				VARCHAR (64) NULL,"
@@ -5175,7 +5175,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "constraint MMS_EncodingProfilesSetMapping_FK1 foreign key (encodingProfilesSetKey) "
                         "references MMS_EncodingProfilesSet (encodingProfilesSetKey), "
                     "constraint MMS_EncodingProfilesSetMapping_FK2 foreign key (encodingProfileKey) "
-                        "references MMS_EncodingProfiles (encodingProfileKey) on delete cascade) "
+                        "references MMS_EncodingProfile (encodingProfileKey) on delete cascade) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
@@ -5451,7 +5451,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "constraint MMS_PhysicalPath_FK foreign key (mediaItemKey) "
                         "references MMS_MediaItem (mediaItemKey) on delete cascade, "
                     "constraint MMS_PhysicalPath_FK2 foreign key (encodingProfileKey) "
-                        "references MMS_EncodingProfiles (encodingProfileKey), "
+                        "references MMS_EncodingProfile (encodingProfileKey), "
                     "UNIQUE (mediaItemKey, relativePath, fileName, isAlias), "
                     "UNIQUE (mediaItemKey, encodingProfileKey)) "	// it is not possible to have the same content using the same encoding profile key
                     "ENGINE=InnoDB";
@@ -5807,7 +5807,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     // The consequence is that when the PhysicalPath is removed in general, also the rows from this table will be removed
                         "references MMS_PhysicalPath (physicalPathKey) on delete cascade, "
                     "constraint MMS_EncodingJob_FK4 foreign key (encodingProfileKey) "
-                        "references MMS_EncodingProfiles (encodingProfileKey) on delete cascade, "
+                        "references MMS_EncodingProfile (encodingProfileKey) on delete cascade, "
                     "UNIQUE (sourcePhysicalPathKey, encodingProfileKey)) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
