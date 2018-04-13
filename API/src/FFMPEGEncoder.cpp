@@ -179,6 +179,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
     if (method == "encodeContent")
     {
+        /*
         bool isAdminAPI = get<1>(workspaceAndFlags);
         if (!isAdminAPI)
         {
@@ -191,6 +192,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
             throw runtime_error(errorMessage);
         }
+        */
         
         lock_guard<mutex> locker(_encodingMutex);
 
@@ -222,6 +224,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
     }
     else if (method == "encodingProgress")
     {
+        /*
         bool isAdminAPI = get<1>(workspaceAndFlags);
         if (!isAdminAPI)
         {
@@ -234,6 +237,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
             throw runtime_error(errorMessage);
         }
+        */
         
         auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
         if (encodingJobKeyIt == queryParameters.end())
