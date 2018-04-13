@@ -873,7 +873,7 @@ void API::registerUser(
                 if (!_mmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
                 {
                     string errorMessage = string("Json field is not present or it is null")
-                            + ", Field: " + field;
+                            + ", Json field: " + field;
                     _logger->error(__FILEREF__ + errorMessage);
 
                     sendError(request, 400, errorMessage);
