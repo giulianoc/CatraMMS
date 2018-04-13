@@ -3458,11 +3458,10 @@ void MMSEngineDBFacade::updateEncodingJobProgress (
     }
 }
 
-string MMSEngineDBFacade::checkWorkspaceMaxIngestionNumber (
+void MMSEngineDBFacade::checkWorkspaceMaxIngestionNumber (
     int64_t workspaceKey
 )
 {
-    string      relativePathToBeUsed;
     string      lastSQLCommand;
 
     shared_ptr<MySQLConnection> conn;
@@ -3474,17 +3473,13 @@ string MMSEngineDBFacade::checkWorkspaceMaxIngestionNumber (
         int encodingPeriod;
         string periodStartDateTime;
         string periodEndDateTime;
-        int currentDirLevel1;
-        int currentDirLevel2;
-        int currentDirLevel3;
 
         conn = _connectionPool->borrow();	
 
         {
             lastSQLCommand = 
                 "select c.maxIngestionsNumber, cmi.currentIngestionsNumber, c.encodingPeriod, " 
-                    "DATE_FORMAT(cmi.startDateTime, '%Y-%m-%d %H:%i:%s') as LocalStartDateTime, DATE_FORMAT(cmi.endDateTime, '%Y-%m-%d %H:%i:%s') as LocalEndDateTime, "
-                    "cmi.currentDirLevel1, cmi.currentDirLevel2, cmi.currentDirLevel3 "
+                    "DATE_FORMAT(cmi.startDateTime, '%Y-%m-%d %H:%i:%s') as LocalStartDateTime, DATE_FORMAT(cmi.endDateTime, '%Y-%m-%d %H:%i:%s') as LocalEndDateTime "
                 "from MMS_Workspace c, MMS_WorkspaceMoreInfo cmi where c.workspaceKey = cmi.workspaceKey and c.workspaceKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -3498,9 +3493,6 @@ string MMSEngineDBFacade::checkWorkspaceMaxIngestionNumber (
                 encodingPeriod = resultSet->getInt("encodingPeriod");
                 periodStartDateTime = resultSet->getString("LocalStartDateTime");
                 periodEndDateTime = resultSet->getString("LocalEndDateTime");                
-                currentDirLevel1 = resultSet->getInt("currentDirLevel1");
-                currentDirLevel2 = resultSet->getInt("currentDirLevel2");
-                currentDirLevel3 = resultSet->getInt("currentDirLevel3");
             }
             else
             {
@@ -3753,6 +3745,86 @@ string MMSEngineDBFacade::checkWorkspaceMaxIngestionNumber (
             _logger->error(errorMessage);
             
             throw runtime_error(errorMessage);
+        }
+                
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        _connectionPool->unborrow(conn);
+
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw se;
+    }    
+    catch(runtime_error e)
+    {
+        _connectionPool->unborrow(conn);
+
+        _logger->error(__FILEREF__ + "exception"
+            + ", e.what: " + e.what()
+        );
+
+        throw e;
+    }    
+    catch(exception e)
+    {        
+        _connectionPool->unborrow(conn);
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
+    }        
+}
+
+string MMSEngineDBFacade::nextRelativePathToBeUsed (
+    int64_t workspaceKey
+)
+{
+    string      relativePathToBeUsed;
+    string      lastSQLCommand;
+
+    shared_ptr<MySQLConnection> conn;
+
+    try
+    {
+        int currentDirLevel1;
+        int currentDirLevel2;
+        int currentDirLevel3;
+
+        conn = _connectionPool->borrow();	
+
+        {
+            lastSQLCommand = 
+                "select currentDirLevel1, currentDirLevel2, currentDirLevel3 from MMS_WorkspaceMoreInfo where cmi.workspaceKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                currentDirLevel1 = resultSet->getInt("currentDirLevel1");
+                currentDirLevel2 = resultSet->getInt("currentDirLevel2");
+                currentDirLevel3 = resultSet->getInt("currentDirLevel3");
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "Workspace is not present/configured"
+                    + ", workspaceKey: " + to_string(workspaceKey)
+                    + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }            
         }
         
         {

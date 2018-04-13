@@ -206,6 +206,52 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                     + ", ingestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
                 );
 
+                try
+                {
+                    _mmsEngineDBFacade->checkWorkspaceMaxIngestionNumber (
+                            workspace->_workspaceKey);
+                }
+                catch(runtime_error e)
+                {
+                    _logger->error(__FILEREF__ + "checkWorkspaceMaxIngestionNumber failed"
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", exception: " + e.what()
+                    );
+                    string errorMessage = e.what();
+
+                    _logger->info(__FILEREF__ + "Update IngestionJob"
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", IngestionStatus: " + "End_WorkspaceReachedHisMaxIngestionNumber"
+                        + ", errorMessage: " + e.what()
+                    );                            
+                    _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
+                            MMSEngineDBFacade::IngestionStatus::End_WorkspaceReachedHisMaxIngestionNumber,
+                            e.what(), "" // processorMMS
+                    );
+
+                    throw e;
+                }
+                catch(exception e)
+                {
+                    _logger->error(__FILEREF__ + "checkWorkspaceMaxIngestionNumber failed"
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", exception: " + e.what()
+                    );
+                    string errorMessage = e.what();
+
+                    _logger->info(__FILEREF__ + "Update IngestionJob"
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", IngestionStatus: " + "End_WorkspaceReachedHisMaxIngestionNumber"
+                        + ", errorMessage: " + e.what()
+                    );                            
+                    _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
+                            MMSEngineDBFacade::IngestionStatus::End_WorkspaceReachedHisMaxIngestionNumber,
+                            e.what(), "" // processorMMS
+                    );
+
+                    throw e;
+                }
+                
                 if (ingestionStatus == MMSEngineDBFacade::IngestionStatus::SourceDownloadingInProgress
                         || ingestionStatus == MMSEngineDBFacade::IngestionStatus::SourceMovingInProgress
                         || ingestionStatus == MMSEngineDBFacade::IngestionStatus::SourceCopingInProgress
@@ -912,53 +958,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 void MMSEngineProcessor::handleLocalAssetIngestionEvent (
     shared_ptr<LocalAssetIngestionEvent> localAssetIngestionEvent)
 {
-    string relativePathToBeUsed;
-    try
-    {
-        relativePathToBeUsed = _mmsEngineDBFacade->checkWorkspaceMaxIngestionNumber (
-                localAssetIngestionEvent->getWorkspace()->_workspaceKey);
-    }
-    catch(runtime_error e)
-    {
-        _logger->error(__FILEREF__ + "checkWorkspaceMaxIngestionNumber failed"
-                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-                + ", exception: " + e.what()
-        );
-        string errorMessage = e.what();
-
-        _logger->info(__FILEREF__ + "Update IngestionJob"
-            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-            + ", IngestionStatus: " + "End_WorkspaceReachedHisMaxIngestionNumber"
-            + ", errorMessage: " + e.what()
-        );                            
-        _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
-                MMSEngineDBFacade::IngestionStatus::End_WorkspaceReachedHisMaxIngestionNumber,
-                e.what(), "" // processorMMS
-        );
-
-        throw e;
-    }
-    catch(exception e)
-    {
-        _logger->error(__FILEREF__ + "checkWorkspaceMaxIngestionNumber failed"
-                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-                + ", exception: " + e.what()
-        );
-        string errorMessage = e.what();
-
-        _logger->info(__FILEREF__ + "Update IngestionJob"
-            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-            + ", IngestionStatus: " + "End_WorkspaceReachedHisMaxIngestionNumber"
-            + ", errorMessage: " + e.what()
-        );                            
-        _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
-                MMSEngineDBFacade::IngestionStatus::End_WorkspaceReachedHisMaxIngestionNumber,
-                e.what(), "" // processorMMS
-        );
-
-        throw e;
-    }
-                    
     string      metadataFileContent;
     vector<int64_t> dependencies;
     Json::Value parametersRoot;
@@ -1154,10 +1153,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         throw e;
     }
 
+    string relativePathToBeUsed;
     unsigned long mmsPartitionIndexUsed;
     string mmsAssetPathName;
     try
     {
+        relativePathToBeUsed = _mmsEngineDBFacade->nextRelativePathToBeUsed (
+                localAssetIngestionEvent->getWorkspace()->_workspaceKey);
+        
         bool partitionIndexToBeCalculated   = true;
         bool deliveryRepositoriesToo        = true;
         mmsAssetPathName = _mmsStorage->moveAssetInMMSRepository(

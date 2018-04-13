@@ -605,7 +605,9 @@ public:
         int64_t encodingJobKey,
         int encodingPercentage);
 
-    string checkWorkspaceMaxIngestionNumber (int64_t workspaceKey);
+    void checkWorkspaceMaxIngestionNumber (int64_t workspaceKey);
+    
+    string nextRelativePathToBeUsed (int64_t workspaceKey);
 
     pair<int64_t,int64_t> saveIngestedContentMetadata(
         shared_ptr<Workspace> workspace,

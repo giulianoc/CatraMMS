@@ -757,7 +757,23 @@ void Validator::validateContentIngestionMetadata(
 void Validator::validateEncodeMetadata(
     Json::Value parametersRoot, vector<int64_t>& dependencies)
 {
-    // see sample in directory samples
+    string field = "EncodingPriority";
+    if (isMetadataPresent(parametersRoot, field))
+    {
+        string encodingPriority = parametersRoot.get(field, "XXX").asString();
+        try
+        {
+            MMSEngineDBFacade::toEncodingPriority(encodingPriority);    // it generate an exception in case of wrong string
+        }
+        catch(exception e)
+        {
+            string errorMessage = __FILEREF__ + "Field 'EncodingPriority' is wrong"
+                    + ", EncodingPriority: " + encodingPriority;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
         
     string encodingProfilesSetKeyField = "EncodingProfilesSetKey";
     string encodingProfileKeyField = "EncodingProfileKey";
@@ -786,7 +802,7 @@ void Validator::validateEncodeMetadata(
 
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
-    string field = "References";
+    field = "References";
     if (isMetadataPresent(parametersRoot, field))
     {
         Json::Value referencesRoot = parametersRoot[field];
