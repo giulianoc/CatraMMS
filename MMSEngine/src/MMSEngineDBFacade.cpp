@@ -958,58 +958,97 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
     {
         {
             lastSQLCommand = 
+                "select encodingProfileKey from MMS_EncodingProfile where workspaceKey =  and label = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            preparedStatement->setString(queryParameterIndex++, label);
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                encodingProfileKey     = resultSet->getInt64("encodingProfileKey");
+                
+                lastSQLCommand = 
+                    "update MMS_EncodingProfile set contentType = ?, technology = ?, jsonProfile = ? where encodingProfileKey = ?";
+
+                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                int queryParameterIndex = 1;
+                preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
+                preparedStatement->setInt(queryParameterIndex++, static_cast<int>(encodingTechnology));
+                preparedStatement->setString(queryParameterIndex++, jsonProfile);
+                preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
+
+                preparedStatement->executeUpdate();
+            }
+            else
+            {
+                lastSQLCommand = 
                     "insert into MMS_EncodingProfile ("
                     "encodingProfileKey, workspaceKey, label, contentType, technology, jsonProfile) values ("
                     "NULL, ?, ?, ?, ?, ?)";
 
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
-                preparedStatement->setString(queryParameterIndex++, label);
-            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
-            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(encodingTechnology));
-            preparedStatement->setString(queryParameterIndex++, jsonProfile);
+                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                int queryParameterIndex = 1;
+                preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+                    preparedStatement->setString(queryParameterIndex++, label);
+                preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
+                preparedStatement->setInt(queryParameterIndex++, static_cast<int>(encodingTechnology));
+                preparedStatement->setString(queryParameterIndex++, jsonProfile);
 
-            preparedStatement->executeUpdate();
+                preparedStatement->executeUpdate();
+
+                encodingProfileKey = getLastInsertId(conn);
+            }
         }
         
-        encodingProfileKey = getLastInsertId(conn);
               
         if (encodingProfilesSetKey != -1)
         {
             {
                 lastSQLCommand = 
-                    "select workspaceKey from MMS_EncodingProfilesSet where encodingProfilesSetKey = ?";
-                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                int queryParameterIndex = 1;
-                preparedStatement->setInt64(queryParameterIndex++, encodingProfilesSetKey);
-                shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-                if (resultSet->next())
-                {
-                    int64_t localWorkspaceKey     = resultSet->getInt64("workspaceKey");
-                    if (localWorkspaceKey != workspaceKey)
-                    {
-                        string errorMessage = __FILEREF__ + "WorkspaceKey does not match "
-                                + ", encodingProfilesSetKey: " + to_string(encodingProfilesSetKey)
-                                + ", workspaceKey: " + to_string(workspaceKey)
-                                + ", localWorkspaceKey: " + to_string(localWorkspaceKey)
-                                + ", lastSQLCommand: " + lastSQLCommand
-                        ;
-                        _logger->error(errorMessage);
-
-                        throw runtime_error(errorMessage);                    
-                    }
-                }
-            }
-            
-            {
-                lastSQLCommand = 
-                    "insert into MMS_EncodingProfilesSetMapping (encodingProfilesSetKey, encodingProfileKey)  values (?, ?)";
+                    "select encodingProfilesSetKey from MMS_EncodingProfilesSetMapping where encodingProfilesSetKey = ? and encodingProfileKey = ?";
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
                 preparedStatement->setInt64(queryParameterIndex++, encodingProfilesSetKey);
                 preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
-                preparedStatement->executeUpdate();
+                shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+                if (!resultSet->next())
+                {
+                    {
+                        lastSQLCommand = 
+                            "select workspaceKey from MMS_EncodingProfilesSet where encodingProfilesSetKey = ?";
+                        shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                        int queryParameterIndex = 1;
+                        preparedStatement->setInt64(queryParameterIndex++, encodingProfilesSetKey);
+                        shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+                        if (resultSet->next())
+                        {
+                            int64_t localWorkspaceKey     = resultSet->getInt64("workspaceKey");
+                            if (localWorkspaceKey != workspaceKey)
+                            {
+                                string errorMessage = __FILEREF__ + "It is not possible to use an EncodingProfilesSet if you are not the owner"
+                                        + ", encodingProfilesSetKey: " + to_string(encodingProfilesSetKey)
+                                        + ", workspaceKey: " + to_string(workspaceKey)
+                                        + ", localWorkspaceKey: " + to_string(localWorkspaceKey)
+                                        + ", lastSQLCommand: " + lastSQLCommand
+                                ;
+                                _logger->error(errorMessage);
+
+                                throw runtime_error(errorMessage);                    
+                            }
+                        }
+                    }
+
+                    {
+                        lastSQLCommand = 
+                            "insert into MMS_EncodingProfilesSetMapping (encodingProfilesSetKey, encodingProfileKey)  values (?, ?)";
+                        shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                        int queryParameterIndex = 1;
+                        preparedStatement->setInt64(queryParameterIndex++, encodingProfilesSetKey);
+                        preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
+                        preparedStatement->executeUpdate();
+                    }
+                }
             }
         }
     }
