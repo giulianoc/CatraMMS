@@ -1677,14 +1677,15 @@ vector<int64_t> API::ingestionTask(shared_ptr<MySQLConnection> conn,
         field = "EncodingPriority";
         if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
         {
-            int requestedEncodingPriority = parametersRoot.get(field, "XXX").asInt();
+            string sRequestedEncodingPriority = parametersRoot.get(field, "XXX").asString();
+            MMSEngineDBFacade::EncodingPriority requestedEncodingPriority = 
+                    MMSEngineDBFacade::toEncodingPriority(sRequestedEncodingPriority);
             
-            if (requestedEncodingPriority > workspace->_maxEncodingPriority)
+            if (static_cast<int>(requestedEncodingPriority) > workspace->_maxEncodingPriority)
                 encodingPriority = MMSEngineDBFacade::toString(
                         static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority));
             else
-                encodingPriority = MMSEngineDBFacade::toString(
-                        static_cast<MMSEngineDBFacade::EncodingPriority>(requestedEncodingPriority));
+                encodingPriority = MMSEngineDBFacade::toString(requestedEncodingPriority);
         }
         else
         {

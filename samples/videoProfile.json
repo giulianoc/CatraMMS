@@ -9,6 +9,22 @@
 				"profile": "high",
 				"width": 720,
 				"height": 480,
+				"bitrate": 256,
+				"twoPasses": true
+			},
+			"audio": {
+				"codec": "libaacplus",
+				"bitrate": 64
+			}   
+		},
+		{
+			"Label": "Profile_2",
+			"fileFormat": "mp4",
+			"video": {
+				"codec": "libx264",
+				"profile": "high",
+				"width": 720,
+				"height": 480,
 				"bitrate": 128,
 				"twoPasses": true
 			},

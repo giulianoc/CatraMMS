@@ -2807,7 +2807,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                 encodingItem->_ingestionJobKey = encodingResultSet->getInt64("ingestionJobKey");
                 encodingItem->_physicalPathKey = encodingResultSet->getInt64("sourcePhysicalPathKey");
                 encodingItem->_encodingPriority = static_cast<EncodingPriority>(encodingResultSet->getInt("encodingPriority"));
-                encodingItem->_encodingProfileKey = encodingResultSet->getInt64("ncodingProfileKey");
+                encodingItem->_encodingProfileKey = encodingResultSet->getInt64("encodingProfileKey");
                 
                 {
                     lastSQLCommand = 
