@@ -508,7 +508,7 @@ string MMSEngineDBFacade::confirmUser(
             string flags;
             {
                 bool adminAPI = false;
-                bool userAPI = false;
+                bool userAPI = true;
 
                 if (adminAPI)
                     flags.append("ADMIN_API");
@@ -4925,7 +4925,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "constraint MMS_EncodingProfilesSet_PK PRIMARY KEY (encodingProfilesSetKey)," 
                     "constraint MMS_EncodingProfilesSet_FK foreign key (workspaceKey) "
                         "references MMS_Workspace (workspaceKey) on delete cascade, "
-                    "UNIQUE (contentType, workspaceKey, name)) "
+                    "UNIQUE (contentType, workspaceKey, label)) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
