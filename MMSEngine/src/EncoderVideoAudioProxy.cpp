@@ -776,6 +776,16 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                 
                 _currentUsedFFMpegEncoderHost = encodeContentResponse.get("ffmpegEncoderHost", "XXX").asString();
             }
+            catch(runtime_error e)
+            {
+                string errorMessage = string("response Body json is not well format")
+                        + ", response.str(): " + response.str()
+                        + ", e.what(): " + e.what()
+                        ;
+                _logger->error(__FILEREF__ + errorMessage);
+
+                throw e;
+            }
             catch(...)
             {
                 string errorMessage = string("response Body json is not well format")
@@ -801,6 +811,17 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
         catch (curlpp::RuntimeError & e) 
         {
             _logger->error(__FILEREF__ + "Encoding URL failed (RuntimeError)"
+                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+                + ", exception: " + e.what()
+                + ", response.str(): " + response.str()
+            );
+
+            throw e;
+        }
+        catch (runtime_error e)
+        {
+            _logger->error(__FILEREF__ + "Encoding URL failed (runtime_error)"
                 + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
                 + ", exception: " + e.what()

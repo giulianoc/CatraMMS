@@ -1,0 +1,27 @@
+{
+	"Type": "Workflow",
+	"Label": "1",
+	"Variables": {
+		"TitleOfVideo": "My Title of the video content"
+	},
+	"Task": {
+		"Label": "My video",
+		"Type": "Content-Ingestion",
+		"Parameters": {
+			"SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
+			"SourceFileName": "123456.mp4",
+			"userData": { "MyData": "this is my video data" },
+			"Title": "${TitleOfVideo}"
+		},
+		"OnSuccess": {
+			"Task": {
+				"Label": "my encode",
+				"Type": "Encode",
+				"Parameters": {
+					"EncodingPriority": 0,
+					"EncodingProfilesSetKey": 2
+				}
+			}
+		}
+	}
+}
