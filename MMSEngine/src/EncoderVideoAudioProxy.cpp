@@ -701,7 +701,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 
                 {
                     Json::StreamWriterBuilder wbuilder;
-
+                    
                     body = Json::writeString(wbuilder, encodingMedatada);
                 }
             }
@@ -744,9 +744,17 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
             );
             request.perform();
             chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
+
+            string sResponse = response.str();
+
+            // LF and CR create problems to the json parser...
+            while (sResponse.back() == 10 || sResponse.back() == 13)
+                sResponse.pop_back();
+
             _logger->info(__FILEREF__ + "Encoded media file"
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
                     + ", body: " + body
+                    + ", sResponse: " + sResponse
                     + ", encodingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count())
             );
             
@@ -758,8 +766,8 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                 Json::CharReader* reader = builder.newCharReader();
                 string errors;
 
-                bool parsingSuccessful = reader->parse(response.str().c_str(),
-                        response.str().c_str() + response.str().size(), 
+                bool parsingSuccessful = reader->parse(sResponse.c_str(),
+                        sResponse.c_str() + sResponse.size(), 
                         &encodeContentResponse, &errors);
                 delete reader;
 
@@ -767,7 +775,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                 {
                     string errorMessage = __FILEREF__ + "failed to parse the response body"
                             + ", errors: " + errors
-                            + ", response.str(): " + response.str()
+                            + ", sResponse: " + sResponse
                             ;
                     _logger->error(errorMessage);
 
@@ -779,7 +787,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
             catch(runtime_error e)
             {
                 string errorMessage = string("response Body json is not well format")
-                        + ", response.str(): " + response.str()
+                        + ", sResponse: " + sResponse
                         + ", e.what(): " + e.what()
                         ;
                 _logger->error(__FILEREF__ + errorMessage);
@@ -789,7 +797,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
             catch(...)
             {
                 string errorMessage = string("response Body json is not well format")
-                        + ", response.str(): " + response.str()
+                        + ", sResponse: " + sResponse
                         ;
                 _logger->error(__FILEREF__ + errorMessage);
 
