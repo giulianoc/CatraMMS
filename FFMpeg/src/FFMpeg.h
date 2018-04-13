@@ -139,7 +139,9 @@ private:
         string& ffmpegVideoKeyFramesRateParameter,
 
         string& ffmpegAudioCodecParameter,
-        string& ffmpegAudioBitRateParameter
+        string& ffmpegAudioBitRateParameter,
+        string& ffmpegAudioChannelsParameter,
+        string& ffmpegAudioSampleRateParameter
     );
     
     string getLastPartOfFile(

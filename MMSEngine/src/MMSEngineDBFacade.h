@@ -501,12 +501,12 @@ public:
     int64_t addEncodingProfilesSet (
         shared_ptr<MySQLConnection> conn, int64_t workspaceKey,
         MMSEngineDBFacade::ContentType contentType, 
-        string encodingProfilesSetName);
+        string label);
 
     int64_t addEncodingProfile(
         shared_ptr<MySQLConnection> conn,
         int64_t workspaceKey,
-        string name,
+        string label,
         MMSEngineDBFacade::ContentType contentType, 
         EncodingTechnology encodingTechnology,
         string jsonProfile,

@@ -882,7 +882,7 @@ string MMSEngineDBFacade::getPassword(string emailAddress)
 int64_t MMSEngineDBFacade::addEncodingProfilesSet (
         shared_ptr<MySQLConnection> conn, int64_t workspaceKey,
         MMSEngineDBFacade::ContentType contentType, 
-        string encodingProfilesSetName)
+        string label)
 {
     int64_t     encodingProfilesSetKey;
     
@@ -892,13 +892,13 @@ int64_t MMSEngineDBFacade::addEncodingProfilesSet (
     {
         {
             lastSQLCommand = 
-                "insert into MMS_EncodingProfilesSet (encodingProfilesSetKey, contentType, workspaceKey, name) values ("
+                "insert into MMS_EncodingProfilesSet (encodingProfilesSetKey, contentType, workspaceKey, label) values ("
                 "NULL, ?, ?, ?)";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
-            preparedStatement->setString(queryParameterIndex++, encodingProfilesSetName);
+            preparedStatement->setString(queryParameterIndex++, label);
             
             preparedStatement->executeUpdate();
         }
@@ -931,7 +931,7 @@ int64_t MMSEngineDBFacade::addEncodingProfilesSet (
 int64_t MMSEngineDBFacade::addEncodingProfile(
         shared_ptr<MySQLConnection> conn,
         int64_t workspaceKey,
-        string name,
+        string label,
         MMSEngineDBFacade::ContentType contentType, 
         EncodingTechnology encodingTechnology,
         string jsonProfile,
@@ -947,13 +947,13 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
         {
             lastSQLCommand = 
                     "insert into MMS_EncodingProfiles ("
-                    "encodingProfileKey, workspaceKey, name, contentType, technology, jsonProfile) values ("
+                    "encodingProfileKey, workspaceKey, label, contentType, technology, jsonProfile) values ("
                     "NULL, ?, ?, ?, ?, ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
-                preparedStatement->setString(queryParameterIndex++, name);
+                preparedStatement->setString(queryParameterIndex++, label);
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
             preparedStatement->setInt(queryParameterIndex++, static_cast<int>(encodingTechnology));
             preparedStatement->setString(queryParameterIndex++, jsonProfile);
@@ -4889,12 +4889,11 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create table if not exists MMS_EncodingProfiles ("
                     "encodingProfileKey  		BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "workspaceKey  			BIGINT UNSIGNED NULL,"
-                    "name				VARCHAR (64) NOT NULL,"
+                    "label				VARCHAR (64) NULL,"
                     "contentType			VARCHAR (32) NOT NULL,"
                     "technology         		TINYINT NOT NULL,"
                     "jsonProfile    			VARCHAR (512) NOT NULL,"
-                    "constraint MMS_EncodingProfile_PK PRIMARY KEY (encodingProfileKey), "
-                    "UNIQUE (workspaceKey, name)) "
+                    "constraint MMS_EncodingProfile_PK PRIMARY KEY (encodingProfileKey)) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
@@ -4921,8 +4920,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create table if not exists MMS_EncodingProfilesSet ("
                     "encodingProfilesSetKey  	BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "contentType				VARCHAR (32) NOT NULL,"
-                    "workspaceKey  				BIGINT UNSIGNED NULL,"
-                    "name						VARCHAR (64) NULL,"
+                    "workspaceKey  				BIGINT UNSIGNED NOT NULL,"
+                    "label					VARCHAR (64) NOT NULL,"
                     "constraint MMS_EncodingProfilesSet_PK PRIMARY KEY (encodingProfilesSetKey)," 
                     "constraint MMS_EncodingProfilesSet_FK foreign key (workspaceKey) "
                         "references MMS_Workspace (workspaceKey) on delete cascade, "

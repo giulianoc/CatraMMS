@@ -98,7 +98,7 @@ void Validator::validateEncodingProfilesSetRootMetadata(
     Json::Value encodingProfilesSetRoot)
 {
     vector<string> mandatoryFields = {
-        "EncodingProfilesSetName"
+        "Label"
     };
     for (string mandatoryField: mandatoryFields)
     {
@@ -136,7 +136,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(
 {
     {
         vector<string> mandatoryFields = {
-            "EncodingProfileName",
+            "Label",
             "fileFormat",
             "video",
             "audio"
@@ -205,7 +205,7 @@ void Validator::validateEncodingProfileRootAudioMetadata(
 {
     {
         vector<string> mandatoryFields = {
-            "EncodingProfileName",
+            "Label",
             "fileFormat",
             "audio"
         };
@@ -249,7 +249,7 @@ void Validator::validateEncodingProfileRootImageMetadata(
 {
     {
         vector<string> mandatoryFields = {
-            "EncodingProfileName",
+            "Label",
             "format",
             "width",
             "height",

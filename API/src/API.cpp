@@ -2563,10 +2563,10 @@ void API::addEncodingProfilesSet(
 
         /*
             {
-                "EncodingProfilesSetName": "Sport",     // mandatory
+                "Label": "Sport",     // mandatory
                 "profiles": [
                     {
-                        "EncodingProfileName": "Sport",     // mandatory
+                        "Label": "Sport",     // mandatory
                         "fileFormat": "segment", // // mandatory: oppure?
                         "video": {  // optional
                             "codec": "libx264",    // mandatory: libx264 or libvpx
@@ -2590,10 +2590,10 @@ void API::addEncodingProfilesSet(
                 ]
             }
             {
-                "EncodingProfilesSetName": "Sport",     // mandatory
+                "Label": "Sport",     // mandatory
                 "profiles": [
                     {
-                        "EncodingProfileName": "Sport",     // mandatory
+                        "Label": "Sport",     // mandatory
                         "format": "JPG", // mandatory: JPG, GIF, PNG
                         "width": 200, // mandatory
                         "height": 300, // mandatory
@@ -2614,7 +2614,7 @@ void API::addEncodingProfilesSet(
             Validator validator(_logger, _mmsEngineDBFacade);
             validator.validateEncodingProfilesSetRootMetadata(contentType, encodingProfilesSetRoot);
         
-            string field = "EncodingProfilesSetName";
+            string field = "Label";
             if (!_mmsEngineDBFacade->isMetadataPresent(encodingProfilesSetRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -2623,10 +2623,10 @@ void API::addEncodingProfilesSet(
 
                 throw runtime_error(errorMessage);
             }
-            string encodingProfilesSetName = encodingProfilesSetRoot.get(field, "XXX").asString();
+            string label = encodingProfilesSetRoot.get(field, "XXX").asString();
                         
             int64_t encodingProfilesSetKey = _mmsEngineDBFacade->addEncodingProfilesSet(conn,
-                    workspace->_workspaceKey, contentType, encodingProfilesSetName);
+                    workspace->_workspaceKey, contentType, label);
             
             field = "profiles";
             if (_mmsEngineDBFacade->isMetadataPresent(encodingProfilesSetRoot, field))
@@ -2637,7 +2637,7 @@ void API::addEncodingProfilesSet(
                 {
                     Json::Value profileRoot = profilesRoot[profileIndex];
 
-                    string field = "EncodingProfileName";
+                    string field = "Label";
                     if (!_mmsEngineDBFacade->isMetadataPresent(profileRoot, field))
                     {
                         string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -2646,7 +2646,7 @@ void API::addEncodingProfilesSet(
 
                         throw runtime_error(errorMessage);
                     }
-                    string encodingProfileName = profileRoot.get(field, "XXX").asString();
+                    string profileLabel = profileRoot.get(field, "XXX").asString();
             
                     MMSEngineDBFacade::EncodingTechnology encodingTechnology;
                     
@@ -2663,7 +2663,7 @@ void API::addEncodingProfilesSet(
                     }
                        
                     int64_t encodingProfileKey = _mmsEngineDBFacade->addEncodingProfile(
-                        conn, workspace->_workspaceKey, encodingProfileName,
+                        conn, workspace->_workspaceKey, profileLabel,
                         contentType, encodingTechnology, jsonProfile,
                         encodingProfilesSetKey);
                     
@@ -2672,7 +2672,7 @@ void API::addEncodingProfilesSet(
                     responseBody += (
                             string("{ ") 
                             + "\"encodingProfileKey\": " + to_string(encodingProfileKey)
-                            + ", \"name\": \"" + encodingProfileName + "\" "
+                            + ", \"label\": \"" + profileLabel + "\" "
                             + "}"
                             );
                 }
@@ -2684,7 +2684,7 @@ void API::addEncodingProfilesSet(
             string beginOfResponseBody = string("{ ")
                 + "\"encodingProfilesSet\": { "
                     + "\"encodingProfilesSetKey\": " + to_string(encodingProfilesSetKey)
-                    + ", \"encodingProfilesSetName\": \"" + encodingProfilesSetName + "\" "
+                    + ", \"label\": \"" + label + "\" "
                     + "}, "
                     + "\"profiles\": [ ";
             responseBody.insert(0, beginOfResponseBody);

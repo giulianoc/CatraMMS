@@ -71,6 +71,9 @@ void FFMpeg::encodeContent(
 
         string ffmpegAudioCodecParameter = "";
         string ffmpegAudioBitRateParameter = "";
+        string ffmpegAudioChannelsParameter = "";
+        string ffmpegAudioSampleRateParameter = "";
+
 
         _currentDurationInMilliSeconds      = durationInMilliSeconds;
         _currentMMSSourceAssetPathName      = mmsSourceAssetPathName;
@@ -98,7 +101,10 @@ void FFMpeg::encodeContent(
             ffmpegVideoKeyFramesRateParameter,
 
             ffmpegAudioCodecParameter,
-            ffmpegAudioBitRateParameter
+            ffmpegAudioBitRateParameter,
+            ffmpegAudioChannelsParameter,
+            ffmpegAudioSampleRateParameter
+
         );
 
         string stagingEncodedAssetPath;
@@ -151,8 +157,12 @@ void FFMpeg::encodeContent(
                     + ffmpegVideoKeyFramesRateParameter
                     + ffmpegVideoResolutionParameter
                     + "-threads 0 "
+
                     + ffmpegAudioCodecParameter
                     + ffmpegAudioBitRateParameter
+                    + ffmpegAudioChannelsParameter
+                    + ffmpegAudioSampleRateParameter
+
                     + ffmpegFileFormatParameter
                     + stagingEncodedSegmentAssetPathName + " "
                     + "> " + _outputFfmpegPathFileName + " "
@@ -304,8 +314,12 @@ void FFMpeg::encodeContent(
                         + ffmpegVideoResolutionParameter
                         + "-threads 0 "
                         + "-pass 2 -passlogfile " + ffmpegPassLogPathFileName + " "
+                        
                         + ffmpegAudioCodecParameter
                         + ffmpegAudioBitRateParameter
+                        + ffmpegAudioChannelsParameter
+                        + ffmpegAudioSampleRateParameter
+                        
                         + ffmpegFileFormatParameter
                         + stagingEncodedAssetPathName + " "
                         + "> " + _outputFfmpegPathFileName 
@@ -371,8 +385,12 @@ void FFMpeg::encodeContent(
                         + ffmpegVideoKeyFramesRateParameter
                         + ffmpegVideoResolutionParameter
                         + "-threads 0 "
+                        
                         + ffmpegAudioCodecParameter
                         + ffmpegAudioBitRateParameter
+                        + ffmpegAudioChannelsParameter
+                        + ffmpegAudioSampleRateParameter
+                        
                         + ffmpegFileFormatParameter
                         + stagingEncodedAssetPathName + " "
                         + "> " + _outputFfmpegPathFileName 
@@ -1594,7 +1612,9 @@ void FFMpeg::settingFfmpegPatameters(
         string& ffmpegVideoKeyFramesRateParameter,
 
         string& ffmpegAudioCodecParameter,
-        string& ffmpegAudioBitRateParameter
+        string& ffmpegAudioBitRateParameter,
+        string& ffmpegAudioChannelsParameter,
+        string& ffmpegAudioSampleRateParameter
 )
 {
     string field;
@@ -1751,9 +1771,9 @@ void FFMpeg::settingFfmpegPatameters(
 
                 throw runtime_error(errorMessage);
             }
-            string width = videoRoot.get(field, "XXX").asString();
-            if (width == "-1" && codec == "libx264")
-                width   = "-2";     // h264 requires always a even width/height
+            int width = videoRoot.get(field, "XXX").asInt();
+            if (width == -1 && codec == "libx264")
+                width   = -2;     // h264 requires always a even width/height
         
             field = "height";
             if (!isMetadataPresent(videoRoot, field))
@@ -1764,18 +1784,18 @@ void FFMpeg::settingFfmpegPatameters(
 
                 throw runtime_error(errorMessage);
             }
-            string height = videoRoot.get(field, "XXX").asString();
-            if (height == "-1" && codec == "libx264")
-                height   = "-2";     // h264 requires always a even width/height
+            int height = videoRoot.get(field, "XXX").asInt();
+            if (height == -1 && codec == "libx264")
+                height   = -2;     // h264 requires always a even width/height
 
             ffmpegVideoResolutionParameter =
-                    "-vf scale=" + width + ":" + height + " "
+                    "-vf scale=" + to_string(width) + ":" + to_string(height) + " "
             ;
         }
 
         // bitRate
         {
-            field = "bitRate";
+            field = "kBitRate";
             if (!isMetadataPresent(videoRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -1785,10 +1805,10 @@ void FFMpeg::settingFfmpegPatameters(
                 throw runtime_error(errorMessage);
             }
 
-            string bitRate = videoRoot.get(field, "XXX").asString();
+            int bitRate = videoRoot.get(field, "XXX").asInt();
 
             ffmpegVideoBitRateParameter =
-                    "-b:v " + bitRate + " "
+                    "-b:v " + to_string(bitRate) + "k "
             ;
         }
 
@@ -1814,10 +1834,10 @@ void FFMpeg::settingFfmpegPatameters(
             field = "maxRate";
             if (isMetadataPresent(videoRoot, field))
             {
-                string maxRate = videoRoot.get(field, "XXX").asString();
+                int maxRate = videoRoot.get(field, "XXX").asInt();
 
                 ffmpegVideoMaxRateParameter =
-                        "-maxrate " + maxRate + " "
+                        "-maxrate " + to_string(maxRate) + "k "
                 ;
             }
         }
@@ -1827,26 +1847,23 @@ void FFMpeg::settingFfmpegPatameters(
             field = "bufSize";
             if (isMetadataPresent(videoRoot, field))
             {
-                string bufSize = videoRoot.get(field, "XXX").asString();
+                int bufSize = videoRoot.get(field, "XXX").asInt();
 
                 ffmpegVideoBufSizeParameter =
-                        "-bufsize " + bufSize + " "
+                        "-bufsize " + to_string(bufSize) + "k "
                 ;
             }
         }
 
-        /*
         // frameRate
         {
             field = "frameRate";
             if (isMetadataPresent(videoRoot, field))
             {
-                string frameRate = videoRoot.get(field, "XXX").asString();
-
-                int iFrameRate = stoi(frameRate);
+                int frameRate = videoRoot.get(field, "XXX").asInt();
 
                 ffmpegVideoFrameRateParameter =
-                        "-r " + frameRate + " "
+                        "-r " + to_string(frameRate) + " "
                 ;
 
                 // keyFrameIntervalInSeconds
@@ -1854,18 +1871,16 @@ void FFMpeg::settingFfmpegPatameters(
                     field = "keyFrameIntervalInSeconds";
                     if (isMetadataPresent(videoRoot, field))
                     {
-                        string keyFrameIntervalInSeconds = videoRoot.get(field, "XXX").asString();
+                        int keyFrameIntervalInSeconds = videoRoot.get(field, "XXX").asInt();
 
-                        int iKeyFrameIntervalInSeconds = stoi(keyFrameIntervalInSeconds);
-
+                        // -g specifies the number of frames in a GOP
                         ffmpegVideoKeyFramesRateParameter =
-                                "-g " + to_string(iFrameRate * iKeyFrameIntervalInSeconds) + " "
+                                "-g " + to_string(frameRate * keyFrameIntervalInSeconds) + " "
                         ;
                     }
                 }
             }
         }
-         */
     }
     
     // if (contentType == "video" || contentType == "audio")
@@ -1893,7 +1908,6 @@ void FFMpeg::settingFfmpegPatameters(
 
                 throw runtime_error(errorMessage);
             }
-
             string codec = audioRoot.get(field, "XXX").asString();
 
             FFMpeg::encodingAudioCodecValidation(codec, _logger);
@@ -1903,9 +1917,9 @@ void FFMpeg::settingFfmpegPatameters(
             ;
         }
 
-        // bitRate
+        // kBitRate
         {
-            field = "bitRate";
+            field = "kBitRate";
             if (!isMetadataPresent(audioRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -1914,12 +1928,37 @@ void FFMpeg::settingFfmpegPatameters(
 
                 throw runtime_error(errorMessage);
             }
-
-            string bitRate = audioRoot.get(field, "XXX").asString();
+            int bitRate = audioRoot.get(field, "XXX").asInt();
 
             ffmpegAudioBitRateParameter =
-                    "-b:a " + bitRate + " "
+                    "-b:a " + to_string(bitRate) + "k "
             ;
+        }
+        
+        // channelsNumber
+        {
+            field = "channelsNumber";
+            if (isMetadataPresent(audioRoot, field))
+            {
+                int channelsNumber = audioRoot.get(field, "XXX").asInt();
+
+                ffmpegAudioChannelsParameter =
+                        "-ac " + to_string(channelsNumber) + " "
+                ;
+            }
+        }
+
+        // sample rate
+        {
+            field = "sampleRate";
+            if (isMetadataPresent(audioRoot, field))
+            {
+                int sampleRate = audioRoot.get(field, "XXX").asInt();
+
+                ffmpegAudioSampleRateParameter =
+                        "-ar " + to_string(sampleRate) + " "
+                ;
+            }
         }
     }
 }
