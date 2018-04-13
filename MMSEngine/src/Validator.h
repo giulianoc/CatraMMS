@@ -44,6 +44,9 @@ public:
 
     void validateContentIngestionMetadata(Json::Value parametersRoot);
 
+    void validateEncodeMetadata(
+        Json::Value parametersRoot, vector<int64_t>& dependencies);
+
     void validateFrameMetadata(Json::Value parametersRoot, vector<int64_t>& dependencies);
 
     void validatePeriodicalFramesMetadata(

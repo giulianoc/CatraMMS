@@ -268,14 +268,15 @@ public:
     enum class IngestionType {
         Unknown                 = 0,    // in case json was not able to be parsed
         ContentIngestion        = 1,
-        Frame                   = 2,
-        PeriodicalFrames        = 3,
-        IFrames                 = 4,
-        MotionJPEGByPeriodicalFrames        = 5,
-        MotionJPEGByIFrames     = 6,
-        Slideshow               = 7,
-        ConcatDemuxer           = 8,
-        Cut                     = 9,
+        Encode                  = 2,
+        Frame                   = 3,
+        PeriodicalFrames        = 4,
+        IFrames                 = 5,
+        MotionJPEGByPeriodicalFrames        = 6,
+        MotionJPEGByIFrames     = 7,
+        Slideshow               = 8,
+        ConcatDemuxer           = 9,
+        Cut                     = 10,
         ContentUpdate           = 50,
         ContentRemove           = 60
     };
@@ -287,6 +288,8 @@ public:
                 return "Unknown";
             case IngestionType::ContentIngestion:
                 return "Content-Ingestion";
+            case IngestionType::Encode:
+                return "Encode";
             case IngestionType::Frame:
                 return "Frame";
             case IngestionType::PeriodicalFrames:
@@ -319,6 +322,8 @@ public:
 
         if (lowerCase == "content-ingestion")
             return IngestionType::ContentIngestion;
+        else if (lowerCase == "encode")
+            return IngestionType::Encode;
         else if (lowerCase == "frame")
             return IngestionType::Frame;
         else if (lowerCase == "periodical-frames")
@@ -362,8 +367,6 @@ public:
         End_WorkspaceReachedHisMaxIngestionNumber,
         
         End_IngestionFailure,                    // nothing done
-
-        End_IngestionSuccess_AtLeastOneEncodingProfileError,    
         
         End_NotToBeExecuted,    // because of dependencies    
         
@@ -393,8 +396,6 @@ public:
                 return "End_WorkspaceReachedHisMaxIngestionNumber";
             case IngestionStatus::End_IngestionFailure:
                 return "End_IngestionFailure";
-            case IngestionStatus::End_IngestionSuccess_AtLeastOneEncodingProfileError:
-                return "End_IngestionSuccess_AtLeastOneEncodingProfileError";
             case IngestionStatus::End_NotToBeExecuted:
                 return "End_NotToBeExecuted";
             case IngestionStatus::End_TaskSuccess:
@@ -429,8 +430,6 @@ public:
             return IngestionStatus::End_WorkspaceReachedHisMaxIngestionNumber;
         else if (lowerCase == "end_ingestionfailure")
             return IngestionStatus::End_IngestionFailure;
-        else if (lowerCase == "end_ingestionsuccess_atleastoneencodingprofileerror")
-            return IngestionStatus::End_IngestionSuccess_AtLeastOneEncodingProfileError;
         else if (lowerCase == "end_nottobeexecuted")
             return IngestionStatus::End_NotToBeExecuted;
         else if (lowerCase == "end_tasksuccess")
@@ -588,6 +587,16 @@ public:
         string processorMMS,
         vector<shared_ptr<MMSEngineDBFacade::EncodingItem>>& encodingItems);
     
+    vector<int64_t> getEncodingProfileKeysBySetKey(
+        int64_t workspaceKey,
+        int64_t encodingProfilesSetKey);
+
+    int addEncodingJob (
+        int64_t ingestionJobKey,
+        int64_t encodingProfileKey,
+        int64_t mediaItemKey,
+        EncodingPriority encodingPriority);
+
     int updateEncodingJob (
         int64_t encodingJobKey,
         EncodingError encodingError,

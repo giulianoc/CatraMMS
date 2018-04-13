@@ -567,6 +567,63 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 throw runtime_error(errorMessage);
                             }
                         }
+                        else if (ingestionType == MMSEngineDBFacade::IngestionType::Encode)
+                        {
+                            try
+                            {
+                                manageEncodeTask(
+                                        ingestionJobKey, 
+                                        workspace, 
+                                        parametersRoot, 
+                                        dependencies);
+                            }
+                            catch(runtime_error e)
+                            {
+                                _logger->error(__FILEREF__ + "manageEncodeTask failed"
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                                        errorMessage,
+                                        "" // processorMMS
+                                        );
+
+                                throw runtime_error(errorMessage);
+                            }
+                            catch(exception e)
+                            {
+                                _logger->error(__FILEREF__ + "manageEncodeTask failed"
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                                        errorMessage,
+                                        "" // processorMMS
+                                        );
+
+                                throw runtime_error(errorMessage);
+                            }
+                        }
                         else if (ingestionType == MMSEngineDBFacade::IngestionType::Frame
                                 || ingestionType == MMSEngineDBFacade::IngestionType::PeriodicalFrames
                                 || ingestionType == MMSEngineDBFacade::IngestionType::IFrames
@@ -574,84 +631,61 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByIFrames
                                 )
                         {
-                            /* to be removed
-                            if (mediaItemKeysDependency == "")
+                            // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
+                            try
                             {
-                                // mediaItemKeysDependency (coming from DB) will be filled here
-                                // using the value in the dependencies vector (just filled by validation)
+                                generateAndIngestFrames(
+                                        ingestionJobKey, 
+                                        workspace, 
+                                        ingestionType,
+                                        parametersRoot, 
+                                        dependencies);
+                            }
+                            catch(runtime_error e)
+                            {
+                                _logger->error(__FILEREF__ + "generateAndIngestFrames failed"
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
 
-                                // we are sure we have one element inside the vector because metadata were validated
-                                string dependency = to_string(dependencies.back());
-                                string processorMMS = "";
+                                string errorMessage = e.what();
 
                                 _logger->info(__FILEREF__ + "Update IngestionJob"
                                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                    + ", IngestionType: " + MMSEngineDBFacade::toString(ingestionType)
-                                    + ", dependency: " + dependency
-                                    + ", processorMMS: " + processorMMS
+                                    + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
                                 );                            
-                                _mmsEngineDBFacade->updateIngestionJobTypeAndDependencies (ingestionJobKey, 
-                                        ingestionType, dependency, processorMMS);
+                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
+                                        errorMessage,
+                                        "" // processorMMS
+                                        );
+
+                                throw runtime_error(errorMessage);
                             }
-                            else
-                             */
+                            catch(exception e)
                             {
-                                // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
-                                try
-                                {
-                                    generateAndIngestFrames(
-                                            ingestionJobKey, 
-                                            workspace, 
-                                            ingestionType,
-                                            parametersRoot, 
-                                            dependencies);
-                                }
-                                catch(runtime_error e)
-                                {
-                                    _logger->error(__FILEREF__ + "generateAndIngestFrames failed"
-                                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                            + ", exception: " + e.what()
-                                    );
-
-                                    string errorMessage = e.what();
-
-                                    _logger->info(__FILEREF__ + "Update IngestionJob"
+                                _logger->error(__FILEREF__ + "generateAndIngestFrames failed"
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                        + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
-                                        + ", errorMessage: " + errorMessage
-                                        + ", processorMMS: " + ""
-                                    );                            
-                                    _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                                            MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
-                                            errorMessage,
-                                            "" // processorMMS
-                                            );
+                                        + ", exception: " + e.what()
+                                );
 
-                                    throw runtime_error(errorMessage);
-                                }
-                                catch(exception e)
-                                {
-                                    _logger->error(__FILEREF__ + "generateAndIngestFrames failed"
-                                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                            + ", exception: " + e.what()
-                                    );
+                                string errorMessage = e.what();
 
-                                    string errorMessage = e.what();
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
+                                        errorMessage,
+                                        "" // processorMMS
+                                        );
 
-                                    _logger->info(__FILEREF__ + "Update IngestionJob"
-                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                        + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
-                                        + ", errorMessage: " + errorMessage
-                                        + ", processorMMS: " + ""
-                                    );                            
-                                    _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                                            MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
-                                            errorMessage,
-                                            "" // processorMMS
-                                            );
-
-                                    throw runtime_error(errorMessage);
-                                }
+                                throw runtime_error(errorMessage);
                             }
                         }
                         else if (ingestionType == MMSEngineDBFacade::IngestionType::Slideshow)
@@ -1529,6 +1563,66 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 
         throw e;
     }    
+}
+
+void MMSEngineProcessor::manageEncodeTask(
+        int64_t ingestionJobKey,
+        shared_ptr<Workspace> workspace,
+        Json::Value parametersRoot,
+        vector<int64_t>& dependencies
+)
+{
+    try
+    {        
+        // This task shall contain EncodingProfileKey.
+        // We cannot have EncodingProfilesSetKey because we replaced it with a GroupOfTasks
+        //  having just EncodingProfileKey        
+        
+        string field = "EncodingProfileKey";
+        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        int64_t encodingProfileKey = parametersRoot.get(field, "XXX").asInt64();
+
+        field = "EncodingPriority";
+        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        MMSEngineDBFacade::EncodingPriority encodingPriority =
+                MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
+
+        int64_t sourceMediaItemKey = dependencies.back();
+    
+        _mmsEngineDBFacade->addEncodingJob (ingestionJobKey,
+            encodingProfileKey, sourceMediaItemKey, encodingPriority);
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "generateAndIngestFrame failed"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
+        );
+        
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "generateAndIngestFrame failed"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+        );
+        
+        throw e;
+    }
 }
 
 void MMSEngineProcessor::generateAndIngestFrames(

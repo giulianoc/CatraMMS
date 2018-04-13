@@ -72,6 +72,12 @@ private:
         string sourceFileName,
         Json::Value parametersRoot);
 
+    void manageEncodeTask(
+        int64_t ingestionJobKey,
+        shared_ptr<Workspace> workspace,
+        Json::Value parametersRoot,
+        vector<int64_t>& dependencies);
+
     void generateAndIngestFrames(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,

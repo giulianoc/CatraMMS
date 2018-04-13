@@ -1620,7 +1620,7 @@ void API::ingestion(
     }
 }
 
-int64_t API::ingestionTask(shared_ptr<MySQLConnection> conn,
+vector<int64_t> API::ingestionTask(shared_ptr<MySQLConnection> conn,
         shared_ptr<Workspace> workspace, int64_t ingestionRootKey, Json::Value taskRoot, 
         vector<int64_t> dependOnIngestionJobKeys, int dependOnSuccess,
         string& responseBody)
@@ -1635,15 +1635,126 @@ int64_t API::ingestionTask(shared_ptr<MySQLConnection> conn,
     field = "Type";
     string type = taskRoot.get(field, "XXX").asString();
 
+    
     string taskMetadata;
+
+    string parametersField = "Parameters";
+    Json::Value parametersRoot;
+    if (_mmsEngineDBFacade->isMetadataPresent(taskRoot, parametersField))
     {
+        parametersRoot = taskRoot[parametersField];
+        
         Json::StreamWriterBuilder wbuilder;
 
-        field = "Parameters";
-        taskMetadata = Json::writeString(wbuilder, taskRoot[field]);        
+        taskMetadata = Json::writeString(wbuilder, parametersRoot);        
     }
+    
+    string encodingProfilesSetKeyField = "EncodingProfilesSetKey";
+    if (type == "Encode"
+            && _mmsEngineDBFacade->isMetadataPresent(taskRoot, parametersField)
+            && _mmsEngineDBFacade->isMetadataPresent(parametersRoot, encodingProfilesSetKeyField)
+            )
+    {
+        // to manage the encode of 'profiles set' we will replace the single Task with
+        // a GroupOfTasks where every task is just for one profile
+        
+        int64_t encodingProfilesSetKey = parametersRoot.get(encodingProfilesSetKeyField, "XXX").asInt64();
+        
+        vector<int64_t> encodingProfilesSetKeys = 
+                _mmsEngineDBFacade->getEncodingProfileKeysBySetKey(
+                workspace->_workspaceKey, encodingProfilesSetKey);
+        
+        if (encodingProfilesSetKeys.size() == 0)
+        {
+            string errorMessage = __FILEREF__ + "No EncodingProfileKey into the EncodingProfilesSetKey"
+                    + ", EncodingProfilesSetKey: " + to_string(encodingProfilesSetKey);
+            _logger->error(errorMessage);
 
-    string errorMessage = "";
+            throw runtime_error(errorMessage);
+        }
+        
+        string encodingPriority;
+        field = "EncodingPriority";
+        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+            int requestedEncodingPriority = parametersRoot.get(field, "XXX").asInt();
+            
+            if (requestedEncodingPriority > workspace->_maxEncodingPriority)
+                encodingPriority = MMSEngineDBFacade::toString(
+                        static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority));
+            else
+                encodingPriority = MMSEngineDBFacade::toString(
+                        static_cast<MMSEngineDBFacade::EncodingPriority>(requestedEncodingPriority));
+        }
+        else
+        {
+            encodingPriority = MMSEngineDBFacade::toString(
+                    static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority));
+        }
+        
+            
+        Json::Value newTasksRoot(Json::arrayValue);
+        
+        for (int64_t encodingProfileKey: encodingProfilesSetKeys)
+        {
+            Json::Value newTaskRoot;
+            string localLabel = label + " - EncodingProfileKey " + to_string(encodingProfileKey);
+
+            field = "Label";
+            newTaskRoot[field] = localLabel;
+            
+            field = "Type";
+            newTaskRoot[field] = "Encode";
+            
+            Json::Value newParametersRoot;
+            
+            field = "References";
+            if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            {
+                newParametersRoot[field] = parametersRoot[field];
+            }
+            
+            field = "EncodingProfileKey";
+            newParametersRoot[field] = encodingProfileKey;
+            
+            field = "EncodingPriority";
+            newParametersRoot[field] = encodingPriority;
+            
+            field = "Parameters";
+            newTaskRoot[field] = newParametersRoot;
+            
+            newTasksRoot.append(newTaskRoot);
+        }
+        
+        Json::Value newGroupOfTasksRoot;
+
+        field = "ExecutionType";
+        newGroupOfTasksRoot[field] = "parallel";
+        
+        field = "Tasks";
+        newGroupOfTasksRoot[field] = newTasksRoot;
+        
+        field = "OnSuccess";
+        if (_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
+        {
+            newGroupOfTasksRoot[field] = taskRoot[field];
+        }
+
+        field = "OnError";
+        if (_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
+        {
+            newGroupOfTasksRoot[field] = taskRoot[field];
+        }
+
+        field = "OnComplete";
+        if (_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
+        {
+            newGroupOfTasksRoot[field] = taskRoot[field];
+        }
+        
+        return ingestionGroupOfTasks(conn, workspace, ingestionRootKey, newGroupOfTasksRoot, dependOnIngestionJobKeys, 
+                dependOnSuccess, responseBody); 
+    }
 
     _logger->info(__FILEREF__ + "add IngestionJob"
         + ", label: " + label
@@ -1652,7 +1763,7 @@ int64_t API::ingestionTask(shared_ptr<MySQLConnection> conn,
         + ", dependOnIngestionJobKeys.size(): " + to_string(dependOnIngestionJobKeys.size())
         + ", dependOnSuccess: " + to_string(dependOnSuccess)
     );
-    
+
     int64_t localDependOnIngestionJobKey = _mmsEngineDBFacade->addIngestionJob(conn,
             workspace->_workspaceKey, ingestionRootKey, label, taskMetadata, MMSEngineDBFacade::toIngestionType(type), 
             dependOnIngestionJobKeys, dependOnSuccess);
@@ -1692,8 +1803,7 @@ int64_t API::ingestionTask(shared_ptr<MySQLConnection> conn,
     }
 
     if (responseBody != "")
-        responseBody += ", ";
-    
+        responseBody += ", ";    
     responseBody +=
             (string("{ ")
             + "\"ingestionJobKey\": " + to_string(localDependOnIngestionJobKey) + ", "
@@ -1702,13 +1812,15 @@ int64_t API::ingestionTask(shared_ptr<MySQLConnection> conn,
 
     vector<int64_t> localDependOnIngestionJobKeys;
     localDependOnIngestionJobKeys.push_back(localDependOnIngestionJobKey);
+    
     ingestionEvents(conn, workspace, ingestionRootKey, taskRoot, 
         localDependOnIngestionJobKeys, responseBody);
     
-    return localDependOnIngestionJobKey;
+    
+    return localDependOnIngestionJobKeys;
 }
 
-void API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
+vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
         shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
         Json::Value groupOfTasksRoot, 
         vector<int64_t> dependOnIngestionJobKeys, int dependOnSuccess,
@@ -1763,15 +1875,18 @@ void API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
     {
         Json::Value taskRoot = tasksRoot[taskIndex];
         
-        int64_t localDependOnIngestionJobKey = ingestionTask(
+        vector<int64_t> ingestionTaskDependOnIngestionJobKey = ingestionTask(
                 conn, workspace, ingestionRootKey, taskRoot, dependOnIngestionJobKeys, 
                 dependOnSuccess, responseBody);    
 
-        localDependOnIngestionJobKeys.push_back(localDependOnIngestionJobKey);
+        for (int64_t localDependOnIngestionJobKey: ingestionTaskDependOnIngestionJobKey)
+            localDependOnIngestionJobKeys.push_back(localDependOnIngestionJobKey);
     }
 
     ingestionEvents(conn, workspace, ingestionRootKey, groupOfTasksRoot, 
         localDependOnIngestionJobKeys, responseBody);
+    
+    return localDependOnIngestionJobKeys;
 }    
 
 void API::ingestionEvents(shared_ptr<MySQLConnection> conn,

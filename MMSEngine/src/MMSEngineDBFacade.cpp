@@ -965,13 +965,40 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
               
         if (encodingProfilesSetKey != -1)
         {
-            lastSQLCommand = 
-                "insert into MMS_EncodingProfilesSetMapping (encodingProfilesSetKey, encodingProfileKey)  values (?, ?)";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, encodingProfilesSetKey);
-            preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
-            preparedStatement->executeUpdate();
+            {
+                lastSQLCommand = 
+                    "select workspaceKey from MMS_EncodingProfilesSet where encodingProfilesSetKey = ?";
+                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                int queryParameterIndex = 1;
+                preparedStatement->setInt64(queryParameterIndex++, encodingProfilesSetKey);
+                shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+                if (resultSet->next())
+                {
+                    int64_t localWorkspaceKey     = resultSet->getInt64("workspaceKey");
+                    if (localWorkspaceKey != workspaceKey)
+                    {
+                        string errorMessage = __FILEREF__ + "WorkspaceKey does not match "
+                                + ", encodingProfilesSetKey: " + to_string(encodingProfilesSetKey)
+                                + ", workspaceKey: " + to_string(workspaceKey)
+                                + ", localWorkspaceKey: " + to_string(localWorkspaceKey)
+                                + ", lastSQLCommand: " + lastSQLCommand
+                        ;
+                        _logger->error(errorMessage);
+
+                        throw runtime_error(errorMessage);                    
+                    }
+                }
+            }
+            
+            {
+                lastSQLCommand = 
+                    "insert into MMS_EncodingProfilesSetMapping (encodingProfilesSetKey, encodingProfileKey)  values (?, ?)";
+                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                int queryParameterIndex = 1;
+                preparedStatement->setInt64(queryParameterIndex++, encodingProfilesSetKey);
+                preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
+                preparedStatement->executeUpdate();
+            }
         }
     }
     catch(sql::SQLException se)
@@ -2915,6 +2942,183 @@ void MMSEngineDBFacade::getEncodingJobs(
     }
 }
 
+vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetKey(
+    int64_t workspaceKey,
+    int64_t encodingProfilesSetKey)
+{
+    vector<int64_t> encodingProfilesSetKeys;
+    
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+
+        {
+            lastSQLCommand = 
+                "select workspaceKey from MMS_EncodingProfilesSet where encodingProfilesSetKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, encodingProfilesSetKey);
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                int64_t localWorkspaceKey     = resultSet->getInt64("workspaceKey");
+                if (localWorkspaceKey != workspaceKey)
+                {
+                    string errorMessage = __FILEREF__ + "WorkspaceKey does not match "
+                            + ", encodingProfilesSetKey: " + to_string(encodingProfilesSetKey)
+                            + ", workspaceKey: " + to_string(workspaceKey)
+                            + ", localWorkspaceKey: " + to_string(localWorkspaceKey)
+                            + ", lastSQLCommand: " + lastSQLCommand
+                    ;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);                    
+                }
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "WorkspaceKey was not found "
+                        + ", workspaceKey: " + to_string(workspaceKey)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }
+        }
+        
+        {
+            lastSQLCommand =
+                "select encodingProfileKey from MMS_EncodingProfilesSetMapping where encodingProfilesSetKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, encodingProfilesSetKey);
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            while (resultSet->next())
+            {
+                encodingProfilesSetKeys.push_back(resultSet->getInt64("encodingProfileKey"));
+            }
+        }
+        
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        _connectionPool->unborrow(conn);
+
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw se;
+    }
+    catch(exception e)
+    {
+        _connectionPool->unborrow(conn);
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
+    }       
+    
+    return encodingProfilesSetKeys;
+}
+
+int MMSEngineDBFacade::addEncodingJob (
+    int64_t ingestionJobKey,
+    int64_t encodingProfileKey,
+    int64_t mediaItemKey,
+    EncodingPriority encodingPriority
+)
+{
+
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+
+        int64_t sourcePhysicalPathKey;
+        {
+            lastSQLCommand =
+                "select physicalPathKey from MMS_PhysicalPath "
+                "where mediaItemKey = ? and encodingProfileKey is null";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                sourcePhysicalPathKey = resultSet->getInt64("physicalPathKey");
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "physicalPathKey not found"
+                        + ", mediaItemKey: " + to_string(mediaItemKey)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }
+        }
+        
+        {
+            lastSQLCommand = 
+                "insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, sourcePhysicalPathKey, encodingPriority, encodingProfileKey, encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, failuresNumber) values ("
+                "NULL, ?, ?, ?, ?, NULL, NULL, NULL, ?, NULL, 0)";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+            preparedStatement->setInt64(queryParameterIndex++, sourcePhysicalPathKey);
+            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(encodingPriority));
+            preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
+            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
+
+            preparedStatement->executeUpdate();
+        }
+        
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        _connectionPool->unborrow(conn);
+
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw se;
+    }
+    catch(exception e)
+    {
+        _connectionPool->unborrow(conn);
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
+    }        
+}
+
 int MMSEngineDBFacade::updateEncodingJob (
         int64_t encodingJobKey,
         EncodingError encodingError,
@@ -3016,9 +3220,9 @@ int MMSEngineDBFacade::updateEncodingJob (
                 "update MMS_EncodingJob set status = ?, processorMMS = NULL, encodingProgress = NULL where encodingJobKey = ? and status = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-                preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(newEncodingStatus));
-                preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
-                preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::Processing));
+            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(newEncodingStatus));
+            preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
+            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::Processing));
 
             int rowsUpdated = preparedStatement->executeUpdate();
             if (rowsUpdated != 1)
@@ -3069,63 +3273,21 @@ int MMSEngineDBFacade::updateEncodingJob (
             );
         }
         
-        if (newEncodingStatus == EncodingStatus::End_ProcessedSuccessful || newEncodingStatus == EncodingStatus::End_Failed)
+        if (newEncodingStatus == EncodingStatus::End_ProcessedSuccessful)
         {
-            lastSQLCommand = 
-                "select count(*) from MMS_EncodingJob where ingestionJobKey = ? and (status <> ? and status <> ?)";
-            shared_ptr<sql::PreparedStatement> preparedStatementEncoding (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatementEncoding->setInt64(queryParameterIndex++, ingestionJobKey);
-            preparedStatementEncoding->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_ProcessedSuccessful));
-            preparedStatementEncoding->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
+            IngestionStatus ingestionStatus = IngestionStatus::End_TaskSuccess;
+            string errorMessage;
+            string processorMMS;
+            
+            updateIngestionJob (ingestionJobKey, ingestionStatus, errorMessage, processorMMS);
+        }
+        else if (newEncodingStatus == EncodingStatus::End_Failed)
+        {
+            IngestionStatus ingestionStatus = IngestionStatus::End_IngestionFailure;
+            string errorMessage;
+            string processorMMS;
 
-            shared_ptr<sql::ResultSet> resultSetEncoding (preparedStatementEncoding->executeQuery());
-            if (resultSetEncoding->next())
-            {
-                if (resultSetEncoding->getInt(1) == 0)  // ingestionJob is finished
-                {
-                    lastSQLCommand = 
-                        "select count(*) from MMS_EncodingJob where ingestionJobKey = ? and status = ?";
-                    shared_ptr<sql::PreparedStatement> preparedStatementIngestion (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                    int queryParameterIndex = 1;
-                    preparedStatementIngestion->setInt64(queryParameterIndex++, ingestionJobKey);
-                    preparedStatementIngestion->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
-
-                    shared_ptr<sql::ResultSet> resultSetIngestion (preparedStatementIngestion->executeQuery());
-                    if (resultSetIngestion->next())
-                    {
-                        IngestionStatus ingestionStatus;
-                        
-                        if (resultSetIngestion->getInt(1) == 0)  // no failures
-                            ingestionStatus = IngestionStatus::End_TaskSuccess;
-                        else
-                            ingestionStatus = IngestionStatus::End_IngestionSuccess_AtLeastOneEncodingProfileError;
-
-                        string errorMessage = "";
-                        updateIngestionJob (ingestionJobKey, ingestionStatus, errorMessage, "" /* processorMMS */);
-                    }
-                    else
-                    {
-                        string errorMessage = __FILEREF__ + "count(*) failure"
-                                + ", IngestionJobKey: " + to_string(encodingJobKey)
-                                + ", lastSQLCommand: " + lastSQLCommand
-                        ;
-                        _logger->error(errorMessage);
-
-                        throw runtime_error(errorMessage);                    
-                    }
-                }
-            }
-            else
-            {
-                string errorMessage = __FILEREF__ + "EncodingJob not found"
-                        + ", EncodingJobKey: " + to_string(encodingJobKey)
-                        + ", lastSQLCommand: " + lastSQLCommand
-                ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);                    
-            }
+            updateIngestionJob (ingestionJobKey, ingestionStatus, errorMessage, processorMMS);
         }
 
         // conn->_sqlConnection->commit(); OR execute COMMIT
