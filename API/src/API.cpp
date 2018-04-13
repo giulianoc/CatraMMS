@@ -2741,7 +2741,7 @@ void API::addEncodingProfilesSet(
             string label = encodingProfilesSetRoot.get(field, "XXX").asString();
                         
             int64_t encodingProfilesSetKey = _mmsEngineDBFacade->addEncodingProfilesSet(conn,
-                    workspace->_workspaceKey, contentType, label);
+                    workspace->_workspaceKey, label);
             
             field = "profiles";
             if (_mmsEngineDBFacade->isMetadataPresent(encodingProfilesSetRoot, field))
