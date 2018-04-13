@@ -1,0 +1,21 @@
+{
+	"Label": "Sport",
+	"profiles": [
+		{
+			"Label": "Profile_1",
+			"fileFormat": "mp4",
+			"video": {
+				"codec": "libx264",
+				"profile": "high",
+				"width": 720,
+				"height": 480,
+				"bitrate": 128,
+				"twoPasses": true
+			},
+			"audio": {
+				"codec": "libaacplus",
+				"bitrate": 64
+			}   
+		}
+	]
+}
