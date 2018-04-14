@@ -23,6 +23,7 @@
 #endif
 #include "catralibraries/ProcessUtility.h"
 #include "catralibraries/Convert.h"
+#include "Validator.h"
 #include "EncoderVideoAudioProxy.h"
 
 
@@ -758,10 +759,9 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                     + ", encodingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count())
             );
             
+            Json::Value encodeContentResponse;
             try
-            {
-                Json::Value encodeContentResponse;
-                
+            {                
                 Json::CharReaderBuilder builder;
                 Json::CharReader* reader = builder.newCharReader();
                 string errors;
@@ -780,9 +780,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                     _logger->error(errorMessage);
 
                     throw runtime_error(errorMessage);
-                }
-                
-                _currentUsedFFMpegEncoderHost = encodeContentResponse.get("ffmpegEncoderHost", "XXX").asString();
+                }               
             }
             catch(runtime_error e)
             {
@@ -804,6 +802,63 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                 // encoding is finished, no exception is raised in case the response is not parsed
                 // throw runtime_error(errorMessage);
             }
+
+            {
+                // same string declared in FFMPEGEncoder.cpp
+                string noEncodingAvailableMessage("__NO-ENCODING-AVAILABLE__");
+            
+                string field = "error";
+                if (Validator::isMetadataPresent(encodeContentResponse, field))
+                {
+                    string error = encodeContentResponse.get(field, "XXX").asString();
+                    
+                    if (error == noEncodingAvailableMessage)
+                    {
+                        string errorMessage = string("No Encodings available")
+                                + ", sResponse: " + sResponse
+                                ;
+                        _logger->error(__FILEREF__ + errorMessage);
+
+                        throw MaxConcurrentJobsReached();
+                    }
+                    else
+                    {
+                        string errorMessage = string("FFMPEGEncoder error")
+                                + ", sResponse: " + sResponse
+                                ;
+                        _logger->error(__FILEREF__ + errorMessage);
+
+                        throw runtime_error(errorMessage);
+                    }                        
+                }
+                else
+                {
+                    string field = "ffmpegEncoderHost";
+                    if (Validator::isMetadataPresent(encodeContentResponse, field))
+                    {
+                        _currentUsedFFMpegEncoderHost = encodeContentResponse.get("ffmpegEncoderHost", "XXX").asString();
+                    }
+                    else
+                    {
+                        string errorMessage = string("Unexpected FFMPEGEncoder response")
+                                + ", sResponse: " + sResponse
+                                ;
+                        _logger->error(__FILEREF__ + errorMessage);
+
+                        throw runtime_error(errorMessage);
+                    }
+                }                        
+            }
+        }
+        catch(MaxConcurrentJobsReached e)
+        {
+            string errorMessage = string("MaxConcurrentJobsReached")
+                + ", response.str(): " + response.str()
+                + ", e.what(): " + e.what()
+                ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw e;
         }
         catch (curlpp::LogicError & e) 
         {

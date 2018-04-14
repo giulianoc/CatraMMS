@@ -68,12 +68,12 @@ public:
         MMSEngineDBFacade::ContentType contentType, 
         Json::Value encodingProfilesSetRoot);
         
+    static bool isMetadataPresent(Json::Value root, string field);
+    
 private:
     shared_ptr<spdlog::logger>          _logger;
     shared_ptr<MMSEngineDBFacade>       _mmsEngineDBFacade;
 
-    bool isMetadataPresent(Json::Value root, string field);
-    
     void validateEncodingProfileRootVideoMetadata(
         Json::Value encodingProfileRoot);
     
