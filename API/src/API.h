@@ -71,7 +71,7 @@ private:
     MMSEngineDBFacade::EncodingPeriod _encodingPeriodWorkspaceDefaultValue;
     int _maxIngestionsNumberWorkspaceDefaultValue;
     int _maxStorageInGBWorkspaceDefaultValue;
-    unsigned long       _binaryBufferLength;
+    // unsigned long       _binaryBufferLength;
     unsigned long       _progressUpdatePeriodInSeconds;
     int                 _webServerPort;
     bool                _fileUploadProgressThreadShutdown;

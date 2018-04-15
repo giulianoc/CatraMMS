@@ -15,11 +15,11 @@
 		},
 		"OnSuccess": {
 			"Task": {
-				"Label": "my encode",
+				"Label": "my label",
 				"Type": "Encode",
 				"Parameters": {
 					"EncodingPriority": "Low",
-					"EncodingProfilesSetKey": 2
+					"EncodingProfilesSetKey": 1
 				}
 			}
 		}

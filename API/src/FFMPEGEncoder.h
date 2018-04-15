@@ -60,7 +60,7 @@ private:
     vector<shared_ptr<Encoding>>    _encodingsCapability;
 
     void encodeContent(
-        FCGX_Request& request,
+        // FCGX_Request& request,
         shared_ptr<Encoding> encoding,
         string requestBody);
 };

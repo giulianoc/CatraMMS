@@ -17,11 +17,11 @@ Json::Value loadConfigurationFile(string configurationPathName);
 int main (int iArgc, char *pArgv [])
 {
     
-    if (iArgc != 2 && iArgc != 3)
+    if (iArgc != 2 && iArgc != 3 && iArgc != 4)
     {
         cerr << "Usage: " 
                 << pArgv[0] 
-                << " --nodaemon " 
+                << " --nodaemon | --pidfile <pid path file name>" 
                 << "config-path-name" 
                 << endl;
         
@@ -29,29 +29,41 @@ int main (int iArgc, char *pArgv [])
     }
     
     bool noDaemon = false;
+    string pidFilePathName;
     string configPathName;
     
     if (iArgc == 2)
     {
+        pidFilePathName = "/tmp/cmsEngine.pid";
+    
         configPathName = pArgv[1];
     }
     else if (iArgc == 3)
     {
+        pidFilePathName = "/tmp/cmsEngine.pid";
+
         if (!strcmp (pArgv[1], "--nodaemon"))
             noDaemon = true;
 
         configPathName = pArgv[2];
     }
-    
-    string pidFilePathName = "/tmp/cmsEngine.pid";
+    else if (iArgc == 4)
+    {
+        if (!strcmp (pArgv[1], "--pidfile"))
+            pidFilePathName = pArgv[2];
+        else
+            pidFilePathName = "/tmp/cmsEngine.pid";
+
+        configPathName = pArgv[3];
+    }
     
     if (!noDaemon)
         Service::launchUnixDaemon(pidFilePathName);
 
     Json::Value configuration = loadConfigurationFile(configPathName);
 
-    string logPathName =  configuration["log"].get("pathName", "XXX").asString();
-    bool stdout =  configuration["log"].get("stdout", "XXX").asBool();
+    string logPathName =  configuration["log"]["mms"].get("pathName", "XXX").asString();
+    bool stdout =  configuration["log"]["mms"].get("stdout", "XXX").asBool();
     
     std::vector<spdlog::sink_ptr> sinks;
     auto dailySink = make_shared<spdlog::sinks::daily_file_sink_mt> (logPathName.c_str(), 11, 20);
@@ -69,7 +81,7 @@ int main (int iArgc, char *pArgv [])
     // trigger flush if the log severity is error or higher
     logger->flush_on(spdlog::level::trace);
     
-    string logLevel =  configuration["log"].get("level", "XXX").asString();
+    string logLevel =  configuration["log"]["mms"].get("level", "XXX").asString();
     if (logLevel == "debug")
         spdlog::set_level(spdlog::level::debug); // trace, debug, info, warn, err, critical, off
     else if (logLevel == "info")
@@ -77,7 +89,7 @@ int main (int iArgc, char *pArgv [])
     else if (logLevel == "err")
         spdlog::set_level(spdlog::level::err); // trace, debug, info, warn, err, critical, off
 
-    string pattern =  configuration["log"].get("pattern", "XXX").asString();
+    string pattern =  configuration["log"]["mms"].get("pattern", "XXX").asString();
     spdlog::set_pattern(pattern);
 
     // globally register the loggers so so the can be accessed using spdlog::get(logger_name)

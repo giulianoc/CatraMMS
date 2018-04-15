@@ -265,7 +265,7 @@ void FFMpeg::encodeContent(
                     ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
                 #endif
 
-                _logger->info(__FILEREF__ + "Executing ffmpeg command"
+                _logger->info(__FILEREF__ + "Executing ffmpeg command (first step)"
                     + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                 );
 
@@ -330,7 +330,7 @@ void FFMpeg::encodeContent(
                     ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
                 #endif
 
-                _logger->info(__FILEREF__ + "Executing ffmpeg command"
+                _logger->info(__FILEREF__ + "Executing ffmpeg command (second step)"
                     + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                 );
 
@@ -470,21 +470,25 @@ void FFMpeg::encodeContent(
             + ", e.what(): " + e.what()
         );
 
-        FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
-
-        _logger->info(__FILEREF__ + "Remove"
-            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-        );
-
-        // file in case of .3gp content OR directory in case of IPhone content
-        if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
+        if (FileIO::fileExisting(stagingEncodedAssetPathName)
+                || FileIO::directoryExisting(stagingEncodedAssetPathName))
         {
-            Boolean_t bRemoveRecursively = true;
-            FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
-        }
-        else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
-        {
-            FileIO::remove(stagingEncodedAssetPathName);
+            FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
+
+            _logger->info(__FILEREF__ + "Remove"
+                + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            );
+
+            // file in case of .3gp content OR directory in case of IPhone content
+            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
+            {
+                Boolean_t bRemoveRecursively = true;
+                FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
+            }
+            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
+            {
+                FileIO::remove(stagingEncodedAssetPathName);
+            }
         }
 
         throw e;
@@ -499,21 +503,25 @@ void FFMpeg::encodeContent(
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
         );
 
-        FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
-
-        _logger->info(__FILEREF__ + "Remove"
-            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-        );
-
-        // file in case of .3gp content OR directory in case of IPhone content
-        if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
+        if (FileIO::fileExisting(stagingEncodedAssetPathName)
+                || FileIO::directoryExisting(stagingEncodedAssetPathName))
         {
-            Boolean_t bRemoveRecursively = true;
-            FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
-        }
-        else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
-        {
-            FileIO::remove(stagingEncodedAssetPathName);
+            FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
+
+            _logger->info(__FILEREF__ + "Remove"
+                + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            );
+
+            // file in case of .3gp content OR directory in case of IPhone content
+            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
+            {
+                Boolean_t bRemoveRecursively = true;
+                FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
+            }
+            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
+            {
+                FileIO::remove(stagingEncodedAssetPathName);
+            }
         }
 
         throw e;
@@ -2097,7 +2105,7 @@ void FFMpeg::encodingVideoProfileValidation(
 void FFMpeg::encodingAudioCodecValidation(string codec,
         shared_ptr<spdlog::logger> logger)
 {    
-    if (codec != "libaacplus" 
+    if (codec != "aac" 
             && codec != "libfdk_aac" 
             && codec != "libvo_aacenc" 
             && codec != "libvorbis"

@@ -122,7 +122,7 @@ void MMSEngineProcessor::operator ()()
 
                 try
                 {
-        		handleCheckEncodingEvent ();
+                    handleCheckEncodingEvent ();
                 }
                 catch(exception e)
                 {
@@ -390,68 +390,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         throw runtime_error(errorMessage);
                     }
 
-                    /* to be removed
-                    if (dependencyNotFound)
-                    {
-                        // the ingestionJob depends on one or more MIKs and, at least one
-                        // was not found
-                        
-                        char        retentionDateTime [64];
-                        {
-                            chrono::system_clock::time_point now = chrono::system_clock::now();
-                            chrono::system_clock::time_point tpRetentionDateTime = now - chrono::hours(_dependencyExpirationInHours);
-
-                            time_t retentionUtcTime = chrono::system_clock::to_time_t(tpRetentionDateTime);
-
-                            tm          retentionTmDateTime;
-
-                            localtime_r (&retentionUtcTime, &retentionTmDateTime);
-
-                            sprintf (retentionDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
-                                    retentionTmDateTime. tm_year + 1900,
-                                    retentionTmDateTime. tm_mon + 1,
-                                    retentionTmDateTime. tm_mday,
-                                    retentionTmDateTime. tm_hour,
-                                    retentionTmDateTime. tm_min,
-                                    retentionTmDateTime. tm_sec);
-                        }
-                        
-                        string strRetentionDateTime = string(retentionDateTime);
-                        if (startIngestion < strRetentionDateTime)
-                        {
-                            string errorMessage = string("IngestionJob waiting a dependency expired")
-                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                    + ", startIngestion: " + startIngestion
-                                    + ", retentionDateTime: " + strRetentionDateTime
-                                    ;
-                            
-                            _logger->error(__FILEREF__ + errorMessage);
-                        
-                            _logger->info(__FILEREF__ + "Update IngestionJob"
-                                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                + ", IngestionStatus: " + "End_ValidationMetadataFailed"
-                                + ", errorMessage: " + errorMessage
-                                + ", processorMMS: " + ""
-                            );
-                            _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                                    MMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed, 
-                                    errorMessage,
-                                    "" // processorMMS
-                            );
-                        }
-                        else
-                        {
-                            _logger->info(__FILEREF__ + "Update IngestionJob"
-                                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                + ", processorMMS: " + ""
-                            );                            
-                            _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
-                                    "" // processorMMS
-                                    );
-                        }
-                    }
-                    else
-                     */
                     {
                         if (ingestionType == MMSEngineDBFacade::IngestionType::ContentIngestion)
                         {
@@ -2935,7 +2873,6 @@ RESUMING FILE TRANSFERS
             );                            
             _mmsEngineDBFacade->updateIngestionJobSourceBinaryTransferred (
                 ingestionJobKey, downloadingCompleted);
-
         }
         catch (curlpp::LogicError & e) 
         {

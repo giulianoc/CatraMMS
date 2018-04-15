@@ -66,6 +66,11 @@ void EncoderVideoAudioProxy::setData(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", encoding->mpeg2TSEncoder: " + _mpeg2TSEncoder
     );
+    
+    _intervalInSecondsToCheckEncodingFinished         = _configuration["encoding"].get("intervalInSecondsToCheckEncodingFinished", "").asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", encoding->intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
+    );
         
     #ifdef __LOCALENCODER__
         _ffmpegMaxCapacity      = 1;
@@ -361,7 +366,7 @@ int EncoderVideoAudioProxy::getEncodingProgress(int64_t encodingJobKey)
                     + _currentUsedFFMpegEncoderHost + ":"
                     + to_string(ffmpegEncoderPort)
                     + ffmpegEncoderURI
-                    + "/" + to_string(encodingJobKey)
+                    + "/progress/" + to_string(encodingJobKey)
             ;
             
             list<string> header;
@@ -393,15 +398,21 @@ int EncoderVideoAudioProxy::getEncodingProgress(int64_t encodingJobKey)
 
             chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
 
-            _logger->info(__FILEREF__ + "Encoding media file"
+            _logger->info(__FILEREF__ + "getEncodingProgress"
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
             );
             request.perform();
             chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
-            _logger->info(__FILEREF__ + "Encoded media file"
+            _logger->info(__FILEREF__ + "getEncodingProgress"
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
                     + ", encodingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count())
+                    + ", response.str: " + response.str()
             );
+            
+            string sResponse = response.str();
+            // LF and CR create problems to the json parser...
+            while (sResponse.back() == 10 || sResponse.back() == 13)
+                sResponse.pop_back();
             
             try
             {
@@ -411,8 +422,8 @@ int EncoderVideoAudioProxy::getEncodingProgress(int64_t encodingJobKey)
                 Json::CharReader* reader = builder.newCharReader();
                 string errors;
 
-                bool parsingSuccessful = reader->parse(response.str().c_str(),
-                        response.str().c_str() + response.str().size(), 
+                bool parsingSuccessful = reader->parse(sResponse.c_str(),
+                        sResponse.c_str() + sResponse.size(), 
                         &encodeProgressResponse, &errors);
                 delete reader;
 
@@ -420,19 +431,90 @@ int EncoderVideoAudioProxy::getEncodingProgress(int64_t encodingJobKey)
                 {
                     string errorMessage = __FILEREF__ + "failed to parse the response body"
                             + ", errors: " + errors
-                            + ", response.str(): " + response.str()
+                            + ", sResponse: " + sResponse
                             ;
                     _logger->error(errorMessage);
 
                     throw runtime_error(errorMessage);
                 }
                 
-                encodingProgress = encodeProgressResponse.get("encodingProgress", "XXX").asInt();
+                string field = "error";
+                if (Validator::isMetadataPresent(encodeProgressResponse, field))
+                {
+                    string error = encodeProgressResponse.get(field, "XXX").asString();
+                    
+                    // same string declared in FFMPEGEncoder.cpp
+                    string noEncodingJobKeyFound("__NO-ENCODINGJOBKEY-FOUND__");
+            
+                    if (error == noEncodingJobKeyFound)
+                    {
+                        string errorMessage = string("No EncodingJobKey found")
+                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                                + ", sResponse: " + sResponse
+                                ;
+                        _logger->warn(__FILEREF__ + errorMessage);
+
+                        throw NoEncodingJobKeyFound();
+                    }
+                    else
+                    {
+                        string errorMessage = string("FFMPEGEncoder error")
+                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                                + ", sResponse: " + sResponse
+                                ;
+                        _logger->error(__FILEREF__ + errorMessage);
+
+                        throw runtime_error(errorMessage);
+                    }                        
+                }
+                else
+                {
+                    string field = "encodingProgress";
+                    if (Validator::isMetadataPresent(encodeProgressResponse, field))
+                    {
+                        encodingProgress = encodeProgressResponse.get("encodingProgress", "XXX").asInt();
+                        
+                        _logger->info(__FILEREF__ + "Retrieving encodingProgress"
+                            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                            + "encodingProgress: " + to_string(encodingProgress)
+                                );                                        
+                    }
+                    else
+                    {
+                        string errorMessage = string("Unexpected FFMPEGEncoder response")
+                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                                + ", sResponse: " + sResponse
+                                ;
+                        _logger->error(__FILEREF__ + errorMessage);
+
+                        throw runtime_error(errorMessage);
+                    }
+                }                        
+            }
+            catch(NoEncodingJobKeyFound e)
+            {
+                string errorMessage = string("NoEncodingJobKeyFound")
+                        + ", sResponse: " + sResponse
+                        + ", e.what(): " + e.what()
+                        ;
+                _logger->warn(__FILEREF__ + errorMessage);
+
+                throw NoEncodingJobKeyFound();
+            }
+            catch(runtime_error e)
+            {
+                string errorMessage = string("runtime_error")
+                        + ", sResponse: " + sResponse
+                        + ", e.what(): " + e.what()
+                        ;
+                _logger->error(__FILEREF__ + errorMessage);
+
+                throw runtime_error(errorMessage);
             }
             catch(...)
             {
                 string errorMessage = string("response Body json is not well format")
-                        + ", response.str(): " + response.str()
+                        + ", sResponse: " + sResponse
                         ;
                 _logger->error(__FILEREF__ + errorMessage);
 
@@ -451,8 +533,21 @@ int EncoderVideoAudioProxy::getEncodingProgress(int64_t encodingJobKey)
             throw e;
         }
         catch (curlpp::RuntimeError & e) 
+        { 
+            string errorMessage = string("Progress URL failed (RuntimeError)")
+                + ", encodingJobKey: " + to_string(encodingJobKey) 
+                + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+                + ", exception: " + e.what()
+                + ", response.str(): " + response.str()
+            ;
+            
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        catch (NoEncodingJobKeyFound e)
         {
-            _logger->error(__FILEREF__ + "Progress URL failed (RuntimeError)"
+            _logger->warn(__FILEREF__ + "Progress URL failed (exception)"
                 + ", encodingJobKey: " + to_string(encodingJobKey) 
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
                 + ", exception: " + e.what()
@@ -517,7 +612,8 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
         if (extensionIndex == string::npos)
         {
             string errorMessage = __FILEREF__ + "No extension find in the asset file name"
-                    + ", _encodingItem->_fileName: " + _encodingItem->_fileName;
+                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                + ", _encodingItem->_fileName: " + _encodingItem->_fileName;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -674,6 +770,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                         if (!parsingSuccessful)
                         {
                             string errorMessage = __FILEREF__ + "failed to parse the _encodingItem->_jsonProfile"
+                                    + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                                     + ", errors: " + errors
                                     + ", _encodingItem->_jsonProfile: " + _encodingItem->_jsonProfile
                                     ;
@@ -685,6 +782,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                     catch(...)
                     {
                         string errorMessage = string("_encodingItem->_jsonProfile json is not well format")
+                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                                 + ", _encodingItem->_jsonProfile: " + _encodingItem->_jsonProfile
                                 ;
                         _logger->error(__FILEREF__ + errorMessage);
@@ -740,25 +838,17 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
             chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
 
             _logger->info(__FILEREF__ + "Encoding media file"
+                    + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
                     + ", body: " + body
             );
             request.perform();
-            chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
 
             string sResponse = response.str();
-
             // LF and CR create problems to the json parser...
             while (sResponse.back() == 10 || sResponse.back() == 13)
                 sResponse.pop_back();
 
-            _logger->info(__FILEREF__ + "Encoded media file"
-                    + ", ffmpegEncoderURL: " + ffmpegEncoderURL
-                    + ", body: " + body
-                    + ", sResponse: " + sResponse
-                    + ", encodingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count())
-            );
-            
             Json::Value encodeContentResponse;
             try
             {                
@@ -774,6 +864,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                 if (!parsingSuccessful)
                 {
                     string errorMessage = __FILEREF__ + "failed to parse the response body"
+                            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                             + ", errors: " + errors
                             + ", sResponse: " + sResponse
                             ;
@@ -785,6 +876,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
             catch(runtime_error e)
             {
                 string errorMessage = string("response Body json is not well format")
+                        + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                         + ", sResponse: " + sResponse
                         + ", e.what(): " + e.what()
                         ;
@@ -795,12 +887,12 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
             catch(...)
             {
                 string errorMessage = string("response Body json is not well format")
+                        + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                         + ", sResponse: " + sResponse
                         ;
                 _logger->error(__FILEREF__ + errorMessage);
 
-                // encoding is finished, no exception is raised in case the response is not parsed
-                // throw runtime_error(errorMessage);
+                throw runtime_error(errorMessage);
             }
 
             {
@@ -815,15 +907,17 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                     if (error == noEncodingAvailableMessage)
                     {
                         string errorMessage = string("No Encodings available")
+                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                                 + ", sResponse: " + sResponse
                                 ;
-                        _logger->error(__FILEREF__ + errorMessage);
+                        _logger->warn(__FILEREF__ + errorMessage);
 
                         throw MaxConcurrentJobsReached();
                     }
                     else
                     {
                         string errorMessage = string("FFMPEGEncoder error")
+                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                                 + ", sResponse: " + sResponse
                                 ;
                         _logger->error(__FILEREF__ + errorMessage);
@@ -837,10 +931,16 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                     if (Validator::isMetadataPresent(encodeContentResponse, field))
                     {
                         _currentUsedFFMpegEncoderHost = encodeContentResponse.get("ffmpegEncoderHost", "XXX").asString();
+                        
+                        _logger->info(__FILEREF__ + "Retrieving ffmpegEncoderHost"
+                            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                            + "_currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
+                                );                                        
                     }
                     else
                     {
                         string errorMessage = string("Unexpected FFMPEGEncoder response")
+                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                                 + ", sResponse: " + sResponse
                                 ;
                         _logger->error(__FILEREF__ + errorMessage);
@@ -849,14 +949,35 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                     }
                 }                        
             }
+            
+            // loop waiting the end of the encoding
+            bool encodingFinished = false;
+            while(!encodingFinished)
+            {
+                this_thread::sleep_for(chrono::seconds(_intervalInSecondsToCheckEncodingFinished));
+                
+                encodingFinished = getEncodingStatus(_encodingItem->_encodingJobKey);
+            }
+            
+            chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
+            
+            _logger->info(__FILEREF__ + "Encoded media file"
+                    + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                    + ", ffmpegEncoderURL: " + ffmpegEncoderURL
+                    + ", body: " + body
+                    + ", sResponse: " + sResponse
+                    + ", encodingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count())
+                    + ", _intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
+            );
         }
         catch(MaxConcurrentJobsReached e)
         {
             string errorMessage = string("MaxConcurrentJobsReached")
+                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                 + ", response.str(): " + response.str()
                 + ", e.what(): " + e.what()
                 ;
-            _logger->error(__FILEREF__ + errorMessage);
+            _logger->warn(__FILEREF__ + errorMessage);
 
             throw e;
         }
@@ -907,6 +1028,161 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
     #endif
 
     return stagingEncodedAssetPathName;
+}
+
+bool EncoderVideoAudioProxy::getEncodingStatus(int64_t encodingJobKey)
+{
+    bool encodingFinished;
+    
+    string ffmpegEncoderURL;
+    ostringstream response;
+    try
+    {
+        // string ffmpegEncoderHost = _configuration["ffmpeg"].get("encoderHost", "").asString();
+        int ffmpegEncoderPort = _configuration["ffmpeg"].get("encoderPort", "").asInt();
+        _logger->info(__FILEREF__ + "Configuration item"
+            + ", ffmpeg->encoderPort: " + to_string(ffmpegEncoderPort)
+        );
+        string ffmpegEncoderURI = _configuration["ffmpeg"].get("encoderURI", "").asString();
+        _logger->info(__FILEREF__ + "Configuration item"
+            + ", ffmpeg->encoderURI: " + ffmpegEncoderURI
+        );
+        ffmpegEncoderURL = 
+                string("http://")
+                + _currentUsedFFMpegEncoderHost + ":"
+                + to_string(ffmpegEncoderPort)
+                + ffmpegEncoderURI
+                + "/status/" + to_string(encodingJobKey)
+        ;
+
+        list<string> header;
+
+        {
+            string encoderUser = _configuration["ffmpeg"].get("encoderUser", "").asString();
+            _logger->info(__FILEREF__ + "Configuration item"
+                + ", ffmpeg->encoderUser: " + encoderUser
+            );
+            string encoderPassword = _configuration["ffmpeg"].get("encoderPassword", "").asString();
+            _logger->info(__FILEREF__ + "Configuration item"
+                + ", ffmpeg->encoderPassword: " + "..."
+            );
+            string userPasswordEncoded = Convert::base64_encode(encoderUser + ":" + encoderPassword);
+            string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
+
+            header.push_back(basicAuthorization);
+        }
+
+        curlpp::Cleanup cleaner;
+        curlpp::Easy request;
+
+        // Setting the URL to retrive.
+        request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
+
+        request.setOpt(new curlpp::options::HttpHeader(header));
+
+        request.setOpt(new curlpp::options::WriteStream(&response));
+
+        chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
+
+        _logger->info(__FILEREF__ + "getEncodingStatus"
+                + ", ffmpegEncoderURL: " + ffmpegEncoderURL
+        );
+        request.perform();
+        chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
+        _logger->info(__FILEREF__ + "getEncodingStatus"
+                + ", ffmpegEncoderURL: " + ffmpegEncoderURL
+                + ", encodingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count())
+        );
+
+        string sResponse = response.str();
+        // LF and CR create problems to the json parser...
+        while (sResponse.back() == 10 || sResponse.back() == 13)
+            sResponse.pop_back();
+            
+        try
+        {
+            Json::Value encodeStatusResponse;
+
+            Json::CharReaderBuilder builder;
+            Json::CharReader* reader = builder.newCharReader();
+            string errors;
+
+            bool parsingSuccessful = reader->parse(sResponse.c_str(),
+                    sResponse.c_str() + sResponse.size(), 
+                    &encodeStatusResponse, &errors);
+            delete reader;
+
+            if (!parsingSuccessful)
+            {
+                string errorMessage = __FILEREF__ + "failed to parse the response body"
+                        + ", errors: " + errors
+                        + ", sResponse: " + sResponse
+                        ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+
+            encodingFinished = encodeStatusResponse.get("encodingFinished", "XXX").asBool();
+        }
+        catch(...)
+        {
+            string errorMessage = string("response Body json is not well format")
+                    + ", sResponse: " + sResponse
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+    catch (curlpp::LogicError & e) 
+    {
+        _logger->error(__FILEREF__ + "Progress URL failed (LogicError)"
+            + ", encodingJobKey: " + to_string(encodingJobKey) 
+            + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+            + ", exception: " + e.what()
+            + ", response.str(): " + response.str()
+        );
+
+        throw e;
+    }
+    catch (curlpp::RuntimeError & e) 
+    { 
+        string errorMessage = string("Progress URL failed (RuntimeError)")
+            + ", encodingJobKey: " + to_string(encodingJobKey) 
+            + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+            + ", exception: " + e.what()
+            + ", response.str(): " + response.str()
+        ;
+
+        _logger->error(__FILEREF__ + errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch (runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "Progress URL failed (exception)"
+            + ", encodingJobKey: " + to_string(encodingJobKey) 
+            + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+            + ", exception: " + e.what()
+            + ", response.str(): " + response.str()
+        );
+
+        throw e;
+    }
+    catch (exception e)
+    {
+        _logger->error(__FILEREF__ + "Progress URL failed (exception)"
+            + ", encodingJobKey: " + to_string(encodingJobKey) 
+            + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+            + ", exception: " + e.what()
+            + ", response.str(): " + response.str()
+        );
+
+        throw e;
+    }
+
+    return encodingFinished;
 }
 
 void EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEncodedAssetPathName)

@@ -4471,7 +4471,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             IngestionStatus newIngestionStatus = IngestionStatus::End_TaskSuccess;
             
             lastSQLCommand = 
-                "update MMS_IngestionJob set mediaItemKey = ?, status = ? where ingestionJobKey = ?";
+                "update MMS_IngestionJob set mediaItemKey = ?, status = ?, endIngestion = NOW() where ingestionJobKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -5361,8 +5361,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ingestionType              VARCHAR (64) NOT NULL,"
                     "startIngestion             TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "endIngestion               DATETIME NULL,"
-                    "downloadingProgress        DECIMAL(3,1) NULL,"
-                    "uploadingProgress          DECIMAL(3,1) NULL,"
+                    "downloadingProgress        DECIMAL(4,1) NULL,"
+                    "uploadingProgress          DECIMAL(4,1) NULL,"
                     "sourceBinaryTransferred    INT NOT NULL,"
                     "processorMMS               VARCHAR (128) NULL,"
                     "status           			VARCHAR (64) NOT NULL,"

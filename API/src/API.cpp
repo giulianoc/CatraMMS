@@ -34,8 +34,8 @@ int main(int argc, char** argv)
     
     Json::Value configuration = APICommon::loadConfigurationFile(configurationPathName);
     
-    string logPathName =  configuration["log"].get("pathName", "XXX").asString();
-    bool stdout =  configuration["log"].get("stdout", "XXX").asBool();
+    string logPathName =  configuration["log"]["api"].get("pathName", "XXX").asString();
+    bool stdout =  configuration["log"]["api"].get("stdout", "XXX").asBool();
     
     std::vector<spdlog::sink_ptr> sinks;
     auto dailySink = make_shared<spdlog::sinks::daily_file_sink_mt> (logPathName.c_str(), 11, 20);
@@ -52,7 +52,7 @@ int main(int argc, char** argv)
     // trigger flush if the log severity is error or higher
     logger->flush_on(spdlog::level::trace);
     
-    string logLevel =  configuration["log"].get("level", "XXX").asString();
+    string logLevel =  configuration["log"]["api"].get("level", "XXX").asString();
     logger->info(__FILEREF__ + "Configuration item"
         + ", log->level: " + logLevel
     );
@@ -62,7 +62,7 @@ int main(int argc, char** argv)
         spdlog::set_level(spdlog::level::info); // trace, debug, info, warn, err, critical, off
     else if (logLevel == "err")
         spdlog::set_level(spdlog::level::err); // trace, debug, info, warn, err, critical, off
-    string pattern =  configuration["log"].get("pattern", "XXX").asString();
+    string pattern =  configuration["log"]["api"].get("pattern", "XXX").asString();
     logger->info(__FILEREF__ + "Configuration item"
         + ", log->pattern: " + pattern
     );
@@ -178,10 +178,10 @@ API::API(Json::Value configuration,
     );
 
     Json::Value api = _configuration["api"];
-    _binaryBufferLength             = api["binary"].get("binaryBufferLength", "XXX").asInt();
-    _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->binary->binaryBufferLength: " + to_string(_binaryBufferLength)
-    );
+    // _binaryBufferLength             = api["binary"].get("binaryBufferLength", "XXX").asInt();
+    // _logger->info(__FILEREF__ + "Configuration item"
+    //    + ", api->binary->binaryBufferLength: " + to_string(_binaryBufferLength)
+    // );
     _progressUpdatePeriodInSeconds  = api["binary"].get("progressUpdatePeriodInSeconds", "XXX").asInt();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->binary->progressUpdatePeriodInSeconds: " + to_string(_progressUpdatePeriodInSeconds)
@@ -194,7 +194,7 @@ API::API(Json::Value configuration,
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->binary->maxProgressCallFailures: " + to_string(_maxProgressCallFailures)
     );
-    _progressURI  = api["binary"].get("progressURI", "XXX").asString();
+        _progressURI  = api["binary"].get("progressURI", "XXX").asString();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->binary->progressURI: " + _progressURI
     );
@@ -2677,49 +2677,6 @@ void API::addEncodingProfilesSet(
             throw runtime_error(errorMessage);
         }
 
-        /*
-            {
-                "Label": "Sport",     // mandatory
-                "profiles": [
-                    {
-                        "Label": "Sport",     // mandatory
-                        "fileFormat": "segment", // // mandatory: oppure?
-                        "video": {  // optional
-                            "codec": "libx264",    // mandatory: libx264 or libvpx
-                            "profile": "",  // optional: if libx264: high, baseline, main - if libvpx: best, good
-                            "width": "", // mandatory: it could be event -1 or -2, perchè è una stringa?
-                            "height": "", // mandatory: it could be event -1 or -2, perchè è una stringa?
-                            "bitrate": "",  // mandatory: perchè stringa?
-                            "twoPasses": true, // mandatory only if fileformat is different from segment
-                            "maxRate": "", // optional: perchè è una stringa?
-                            "bufSize": "" // optional: perchè è una stringa?
-                            frameRate?
-                            keyFrameIntervalInSeconds?
-                        }   
-                        "audio": {  // mandatory
-                            "codec": "libaacplus",    // mandatory: libaacplus, libfdk_aac, libvo_aacenc, libvorbis
-                            "bitrate": "",  // mandatory: perchè stringa?
-                            channels?
-                            sampling rate?
-                        }   
-                    }
-                ]
-            }
-            {
-                "Label": "Sport",     // mandatory
-                "profiles": [
-                    {
-                        "Label": "Sport",     // mandatory
-                        "format": "JPG", // mandatory: JPG, GIF, PNG
-                        "width": 200, // mandatory
-                        "height": 300, // mandatory
-                        "aspectRatio": true,  // mandatory
-                        "interlaceType": "NoInterlace", // mandatory: NoInterlace, LineInterlace, PlaneInterlace, PartitionInterlace
-                    }
-                ]
-            }
-        */
-        
         string responseBody;    
         shared_ptr<MySQLConnection> conn;
 

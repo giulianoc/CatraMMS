@@ -30,8 +30,8 @@ int main(int argc, char** argv)
     
     Json::Value configuration = APICommon::loadConfigurationFile(configurationPathName);
     
-    string logPathName =  configuration["log"].get("pathName", "XXX").asString();
-    bool stdout =  configuration["log"].get("stdout", "XXX").asBool();
+    string logPathName =  configuration["log"]["encoder"].get("pathName", "XXX").asString();
+    bool stdout =  configuration["log"]["encoder"].get("stdout", "XXX").asBool();
     
     std::vector<spdlog::sink_ptr> sinks;
     auto dailySink = make_shared<spdlog::sinks::daily_file_sink_mt> (logPathName.c_str(), 11, 20);
@@ -49,7 +49,7 @@ int main(int argc, char** argv)
     // trigger flush if the log severity is error or higher
     logger->flush_on(spdlog::level::trace);
     
-    string logLevel =  configuration["log"].get("level", "XXX").asString();
+    string logLevel =  configuration["log"]["encoder"].get("level", "XXX").asString();
     logger->info(__FILEREF__ + "Configuration item"
         + ", log->level: " + logLevel
     );
@@ -59,7 +59,7 @@ int main(int argc, char** argv)
         spdlog::set_level(spdlog::level::info); // trace, debug, info, warn, err, critical, off
     else if (logLevel == "err")
         spdlog::set_level(spdlog::level::err); // trace, debug, info, warn, err, critical, off
-    string pattern =  configuration["log"].get("pattern", "XXX").asString();
+    string pattern =  configuration["log"]["encoder"].get("pattern", "XXX").asString();
     logger->info(__FILEREF__ + "Configuration item"
         + ", log->pattern: " + pattern
     );
@@ -221,7 +221,86 @@ void FFMPEGEncoder::manageRequestAndResponse(
             throw runtime_error(noEncodingAvailableMessage);
         }
         
-        encodeContent(request, selectedEncoding, requestBody);
+        try
+        {
+            _logger->info(__FILEREF__ + "Creating encodeContent thread"
+                + ", selectedEncoding->_encodingJobKey: " + to_string(selectedEncoding->_encodingJobKey)
+                + ", requestBody: " + requestBody
+            );
+            thread encodeContentThread(&FFMPEGEncoder::encodeContent, this, selectedEncoding, requestBody);
+            encodeContentThread.detach();
+            
+            // encodeContent(request, selectedEncoding, requestBody);
+            
+            string responseBody = string("{ ")
+                    + "\"encodingJobKey\": " + to_string(selectedEncoding->_encodingJobKey) + " "
+                    + ", \"ffmpegEncoderHost\": \"" + System::getHostName() + "\" "
+                    + "}";
+
+            sendSuccess(request, 200, responseBody);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "encodeContentThread failed"
+                + ", requestBody: " + requestBody
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+    else if (method == "encodingStatus")
+    {
+        auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
+        if (encodingJobKeyIt == queryParameters.end())
+        {
+            string errorMessage = string("The 'encodingJobKey' parameter is not found");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        int64_t encodingJobKey = stol(encodingJobKeyIt->second);
+        
+        lock_guard<mutex> locker(_encodingMutex);
+
+        shared_ptr<Encoding>    selectedEncoding;
+        bool                    encodingFound = false;
+        for (shared_ptr<Encoding> encoding: _encodingsCapability)
+        {
+            if (encoding->_encodingJobKey == encodingJobKey)
+            {
+                encodingFound = true;
+                selectedEncoding = encoding;
+                
+                break;
+            }
+        }
+
+        string responseBody;
+        if (!encodingFound)
+        {
+            responseBody = string("{ ")
+                + "\"encodingJobKey\": " + to_string(encodingJobKey) + " "
+                + ", \"encodingFinished\": true "
+                + "}";
+        }
+        else
+        {
+            responseBody = string("{ ")
+                + "\"encodingJobKey\": " + to_string(selectedEncoding->_encodingJobKey) + " "
+                + ", \"encodingFinished\": false "
+                + "}";
+        }
+
+        sendSuccess(request, 200, responseBody);
     }
     else if (method == "encodingProgress")
     {
@@ -268,14 +347,14 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
         if (!encodingFound)
         {
-            string errorMessage = string("No encoding found")
-                    + ", encodingJobKey: " + encodingJobKeyIt->second
-            ;
-            _logger->error(__FILEREF__ + errorMessage);
+            // same string declared in EncoderVideoAudioProxy.cpp
+            string noEncodingJobKeyFound("__NO-ENCODINGJOBKEY-FOUND__");
+            
+            _logger->error(__FILEREF__ + noEncodingJobKeyFound);
 
-            sendError(request, 400, errorMessage);
+            sendError(request, 400, noEncodingJobKeyFound);
 
-            throw runtime_error(errorMessage);
+            throw runtime_error(noEncodingJobKeyFound);
         }
 
         int encodingProgress;
@@ -326,7 +405,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 }
 
 void FFMPEGEncoder::encodeContent(
-        FCGX_Request& request,
+        // FCGX_Request& request,
         shared_ptr<Encoding> encoding,
         string requestBody)
 {
@@ -421,29 +500,37 @@ void FFMPEGEncoder::encodeContent(
                 ingestionJobKey);        
 		// chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
 
-        string responseBody = string("{ ")
-                + "\"ingestionJobKey\": " + to_string(ingestionJobKey) + " "
-                + "\"ffmpegEncoderHost\": \"" + System::getHostName() + "\" "
-                + "}";
+//        string responseBody = string("{ ")
+//                + "\"ingestionJobKey\": " + to_string(ingestionJobKey) + " "
+//                + ", \"ffmpegEncoderHost\": \"" + System::getHostName() + "\" "
+//                + "}";
 
-        sendSuccess(request, 200, responseBody);
+        // sendSuccess(request, 200, responseBody);
         
         encoding->_running = false;
+        
+        _logger->info(__FILEREF__ + "Encode content finished"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+        );
     }
     catch(runtime_error e)
     {
         encoding->_running = false;
 
-        _logger->error(__FILEREF__ + "API failed"
+        string errorMessage = string ("API failed")
             + ", API: " + api
             + ", requestBody: " + requestBody
             + ", e.what(): " + e.what()
-        );
+        ;
 
+        _logger->error(__FILEREF__ + errorMessage);
+        /*
         string errorMessage = string("Internal server error");
         _logger->error(__FILEREF__ + errorMessage);
 
         sendError(request, 500, errorMessage);
+        */
 
         throw runtime_error(errorMessage);
     }
@@ -451,16 +538,19 @@ void FFMPEGEncoder::encodeContent(
     {
         encoding->_running = false;
 
-        _logger->error(__FILEREF__ + "API failed"
+        string errorMessage = string("API failed")
             + ", API: " + api
             + ", requestBody: " + requestBody
             + ", e.what(): " + e.what()
-        );
+        ;
 
+        _logger->error(__FILEREF__ + errorMessage);
+        /*
         string errorMessage = string("Internal server error");
         _logger->error(__FILEREF__ + errorMessage);
 
         sendError(request, 500, errorMessage);
+         */
 
         throw runtime_error(errorMessage);
     }

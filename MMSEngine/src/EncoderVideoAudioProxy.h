@@ -28,6 +28,13 @@ struct MaxConcurrentJobsReached: public exception {
     }; 
 };
 
+struct NoEncodingJobKeyFound: public exception {
+    char const* what() const throw() 
+    {
+        return "No Encoding Job Key Found";
+    }; 
+};
+
 struct EncoderError: public exception {
     char const* what() const throw() 
     {
@@ -83,6 +90,7 @@ private:
     
     string                              _mp4Encoder;
     string                              _mpeg2TSEncoder;
+    int                                 _intervalInSecondsToCheckEncodingFinished;
     
     #ifdef __LOCALENCODER__
         shared_ptr<FFMpeg>              _ffmpeg;
@@ -96,6 +104,8 @@ private:
     string encodeContent_VideoAudio_through_ffmpeg();
 
     void processEncodedContentVideoAudio(string stagingEncodedAssetPathName);    
+
+    bool getEncodingStatus(int64_t encodingJobKey);
 };
 
 #endif

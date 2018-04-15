@@ -1,14 +1,15 @@
 server {
 	listen 80;
 
-	root /home/giuliano/catramms;
+	root /home/mms/catramms/www;
 	#index index.html index.htm;
 
-	# Make site accessible from http://localhost/
-	server_name mms.calber.org;
+	# server-1 is for the calls directly to the encoder server (progress and status(isFinished))
+	#	we should call the encoder machine as encoder-1, encoder-2, ...
+	server_name mms.catrasoft.cloud server-1;
 
-	access_log   /home/giuliano/catramms/logs/catramms.access.log main;
-	error_log    /home/giuliano/catramms/logs/catramms.error.log notice;
+	access_log   /usr/local/CatraMMS/logs/catramms.access.log main;
+	error_log    /usr/local/CatraMMS/logs/catramms.error.log notice;
 
 	client_max_body_size 1G;
 
@@ -18,19 +19,35 @@ server {
 		}
 
 		if ($request_method = POST) {
-			rewrite ^/catramms/customer/?$ /api?method=registerCustomer last;
+			rewrite ^/catramms/user/?$ /api?method=registerUser last;
 		}
 
 		if ($request_method = PUT) {
-			rewrite ^/catramms/customer/([0-9]+)/([0-9]+)/?$ /api?method=confirmCustomer&confirmationeCode=$2 last;
-		}
-
-		if ($request_method = POST) {
-			rewrite ^/catramms/customer/([0-9]+)/([0-9]+)/apiKey/?$ /api?method=createAPIKey&customerKey=$1&userKey=$2 last;
+			rewrite ^/catramms/user/([0-9]+)/([0-9]+)/?$ /api?method=confirmUser&userKey=$1&confirmationeCode=$2 last;
 		}
 
 		if ($request_method = POST) {
 			rewrite ^/catramms/ingestion/?$ /api?method=ingestion last;
+		}
+
+		if ($request_method = PUT) {
+			rewrite ^/catramms/profilesSet/video/?$ /api?method=addEncodingProfilesSet&contentType=video last;
+		}
+		if ($request_method = PUT) {
+			rewrite ^/catramms/profilesSet/audio/?$ /api?method=addEncodingProfilesSet&contentType=audio last;
+		}
+		if ($request_method = PUT) {
+			rewrite ^/catramms/profilesSet/image/?$ /api?method=addEncodingProfilesSet&contentType=image last;
+		}
+
+		if ($request_method = POST) {
+			rewrite ^/catramms/encoder/?$ /encoder?method=encodeContent last;
+		}
+		if ($request_method = GET) {
+			rewrite ^/catramms/encoder/progress/([0-9]+)/?$ /encoder?method=encodingProgress&encodingJobKey=$1 last;
+		}
+		if ($request_method = GET) {
+			rewrite ^/catramms/encoder/status/([0-9]+)/?$ /encoder?method=encodingStatus&encodingJobKey=$1 last;
 		}
 	}
 
@@ -39,14 +56,14 @@ server {
 			set $XProgressID "$msec";
 			rewrite ^/catramms/binary/([0-9]+)/?$ /catramms/binary/toBeAuthorized?method=uploadBinary&ingestionJobKey=$1&X-Progress-ID=$XProgressID last;
 		}
-#		if ($request_method = HEAD) {
-#			rewrite ^/catramms/binary/([0-9]+)/?$ /upload?method=uploadBinary&ingestionJobKey=$1 last;
-#		}
+		#if ($request_method = HEAD) {
+		#	rewrite ^/catramms/binary/([0-9]+)/?$ /upload?method=uploadBinary&ingestionJobKey=$1 last;
+		#}
 
 		location /catramms/binary/toBeAuthorized {
 			internal;
 
-    			auth_request /catramms/binary/checkAuthorization;
+			auth_request /catramms/binary/checkAuthorization;
 			#auth_request_set $auth_status $upstream_status;
 
 			client_body_temp_path /tmp;
@@ -55,7 +72,7 @@ server {
 			#The value clean does it.
 			client_body_in_file_only clean;
 
-			proxy_pass_request_headers on;	
+			proxy_pass_request_headers on;
 
 			# where the POST data was written to
 			proxy_set_header X-FILE $request_body_file;
@@ -63,7 +80,7 @@ server {
 			proxy_redirect off;
 			proxy_set_body off;
 			proxy_http_version 1.1;
-			proxy_pass http://127.0.0.1:8080/catramms/uploadedBinary;
+			proxy_pass http://127.0.0.1:80/catramms/uploadedBinary;
 
 			## Track uploads for this location on the zone defined
 			## up to 30 seconds after they have been finished
@@ -77,7 +94,7 @@ server {
 		location = /catramms/binary/checkAuthorization {
 			internal;
 
-			proxy_pass http://127.0.0.1:8080/catramms/binary/authorization;
+			proxy_pass http://127.0.0.1:80/catramms/binary/authorization;
 			proxy_pass_request_body off;
 			proxy_set_header Content-Length "";
 			#proxy_set_header X-Original-METHOD $request_method;
@@ -104,14 +121,21 @@ server {
 	location /api {
 		internal;
 
-      		fastcgi_pass   127.0.0.1:8000;
+		fastcgi_pass   127.0.0.1:8010;
 		include /usr/local/nginx/conf/fastcgi_params;
 	}
 
-	location /upload {
+	#location /upload {
+	#	internal;
+	#
+	#	fastcgi_pass   127.0.0.1:8000;
+	#	include /usr/local/nginx/conf/fastcgi_params;
+	#}
+
+	location /encoder {
 		internal;
 
-      		fastcgi_pass   127.0.0.1:8000;
+		fastcgi_pass   127.0.0.1:8020;
 		include /usr/local/nginx/conf/fastcgi_params;
 	}
 }

@@ -9,13 +9,13 @@
 				"profile": "high",
 				"width": 720,
 				"height": 480,
-				"bitrate": 256,
+				"kBitrate": 256,
 				"twoPasses": true
 			},
 			"audio": {
 				"codec": "libaacplus",
-				"bitrate": 64
-			}   
+				"kBitrate": 64
+			}
 		},
 		{
 			"Label": "Profile_2",
@@ -25,13 +25,13 @@
 				"profile": "high",
 				"width": 720,
 				"height": 480,
-				"bitrate": 128,
+				"kBitrate": 128,
 				"twoPasses": true
 			},
 			"audio": {
 				"codec": "libaacplus",
-				"bitrate": 64
-			}   
+				"kBitrate": 64
+			}
 		}
 	]
 }
