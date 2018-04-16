@@ -881,6 +881,7 @@ string MMSEngineDBFacade::getPassword(string emailAddress)
 
 int64_t MMSEngineDBFacade::addEncodingProfilesSet (
         shared_ptr<MySQLConnection> conn, int64_t workspaceKey,
+        MMSEngineDBFacade::ContentType contentType, 
         string label)
 {
     int64_t     encodingProfilesSetKey;
@@ -891,10 +892,11 @@ int64_t MMSEngineDBFacade::addEncodingProfilesSet (
     {
         {
             lastSQLCommand = 
-                "select encodingProfilesSetKey from MMS_EncodingProfilesSet where workspaceKey = ? and label = ?";
+                "select encodingProfilesSetKey from MMS_EncodingProfilesSet where workspaceKey = ? and contentType = ? and label = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
             preparedStatement->setString(queryParameterIndex++, label);
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
@@ -904,11 +906,12 @@ int64_t MMSEngineDBFacade::addEncodingProfilesSet (
             else
             {
                 lastSQLCommand = 
-                    "insert into MMS_EncodingProfilesSet (encodingProfilesSetKey, workspaceKey, label) values ("
+                    "insert into MMS_EncodingProfilesSet (encodingProfilesSetKey, workspaceKey, contentType, label) values ("
                     "NULL, ?, ?)";
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
                 preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+                preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
                 preparedStatement->setString(queryParameterIndex++, label);
 
                 preparedStatement->executeUpdate();
@@ -958,10 +961,11 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
     {
         {
             lastSQLCommand = 
-                "select encodingProfileKey from MMS_EncodingProfile where workspaceKey = ? and label = ?";
+                "select encodingProfileKey from MMS_EncodingProfile where workspaceKey = ? and contentType = ? and label = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
             preparedStatement->setString(queryParameterIndex++, label);
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
@@ -969,11 +973,10 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
                 encodingProfileKey     = resultSet->getInt64("encodingProfileKey");
                 
                 lastSQLCommand = 
-                    "update MMS_EncodingProfile set contentType = ?, technology = ?, jsonProfile = ? where encodingProfileKey = ?";
+                    "update MMS_EncodingProfile set technology = ?, jsonProfile = ? where encodingProfileKey = ?";
 
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
-                preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
                 preparedStatement->setInt(queryParameterIndex++, static_cast<int>(encodingTechnology));
                 preparedStatement->setString(queryParameterIndex++, jsonProfile);
                 preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
@@ -3087,7 +3090,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetKey(
 
 vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(
     int64_t workspaceKey,
-    string encodingProfilesSetLabel)
+    string label)
 {
     vector<int64_t> encodingProfilesSetKeys;
     
@@ -3102,11 +3105,11 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(
         int64_t encodingProfilesSetKey;
         {
             lastSQLCommand = 
-                "select encodingProfilesSetKey from MMS_EncodingProfilesSet where workspaceKey = ? and encodingProfilesSetLabel = ?";
+                "select encodingProfilesSetKey from MMS_EncodingProfilesSet where workspaceKey = ? and label = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
-            preparedStatement->setString(queryParameterIndex++, encodingProfilesSetLabel);
+            preparedStatement->setString(queryParameterIndex++, label);
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
@@ -3116,7 +3119,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(
             {
                 string errorMessage = __FILEREF__ + "WorkspaceKey/encodingProfilesSetLabel was not found "
                         + ", workspaceKey: " + to_string(workspaceKey)
-                        + ", encodingProfilesSetLabel: " + encodingProfilesSetLabel
+                        + ", label: " + label
                         + ", lastSQLCommand: " + lastSQLCommand
                 ;
                 _logger->error(errorMessage);
@@ -4067,73 +4070,6 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             if (isMetadataPresent(typeRoot, "Keywords"))
                 keywords = typeRoot.get("Keywords", "XXX").asString();
 
-            /*
-            {
-                if (isMetadataPresent(typeRoot, "EncodingProfilesSet"))
-                    encodingProfilesSet = typeRoot.get("EncodingProfilesSet", "XXX").asString();
-                else
-                    encodingProfilesSet = "workspaceDefault";
-                
-                if (encodingProfilesSet == "systemDefault")
-                {
-                    lastSQLCommand = 
-                        "select encodingProfilesSetKey from MMS_EncodingProfilesSet where contentType = ? and workspaceKey is null and name is null";
-                    shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                    int queryParameterIndex = 1;
-                    preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
-                }
-                else if (encodingProfilesSet == "workspaceDefault")
-                {
-                    lastSQLCommand = 
-                        "select encodingProfilesSetKey from MMS_EncodingProfilesSet where contentType = ? and workspaceKey = ? and name is null";
-                    shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                    int queryParameterIndex = 1;
-                    preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
-                    preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
-                }
-                else
-                {
-                    lastSQLCommand = 
-                        "select encodingProfilesSetKey from MMS_EncodingProfilesSet where contentType = ? and workspaceKey = ? and name = ?";
-                }
-                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                int queryParameterIndex = 1;
-                if (encodingProfilesSet == "systemDefault")
-                {
-                    preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
-                }
-                else if (encodingProfilesSet == "workspaceDefault")
-                {
-                    preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
-                    preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
-                }
-                else
-                {
-                    preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
-                    preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
-                    preparedStatement->setString(queryParameterIndex++, encodingProfilesSet);
-                }
-                shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-                if (resultSet->next())
-                {
-                    encodingProfileSetKey = resultSet->getInt64("encodingProfilesSetKey");
-                }
-                else
-                {
-                    string errorMessage = __FILEREF__ + "encodingProfilesSetKey is not present"
-                        + ", contentType: " + MMSEngineDBFacade::toString(contentType)
-                        + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
-                        + ", encodingProfilesSet: " + encodingProfilesSet
-                        + ", lastSQLCommand: " + lastSQLCommand
-                    ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);                    
-                }            
-            }
-            */
-
-
             lastSQLCommand = 
                 "insert into MMS_MediaItem (mediaItemKey, uniqueName, workspaceKey, contentProviderKey, title, ingester, keywords, " 
                 "ingestionDate, contentType) values ("
@@ -4513,43 +4449,6 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             }
         }
         
-        /*
-        {
-            EncodingPriority encodingPriority;
-            if (contentType == ContentType::Video || contentType == ContentType::Audio)
-            {
-                string field = "EncodingPriority";
-                if (isMetadataPresent(typeRoot, field))
-                {
-                    string strEncodingPriority = typeRoot.get(field, "XXX").asString();
-                    encodingPriority = MMSEngineDBFacade::toEncodingPriority(strEncodingPriority);
-
-                    if (static_cast<int>(encodingPriority) > workspace->_maxEncodingPriority)
-                        encodingPriority = static_cast<EncodingPriority>(workspace->_maxEncodingPriority); 
-                }
-                else
-                    encodingPriority = static_cast<EncodingPriority>(workspace->_maxEncodingPriority);
-            }
-            else
-                encodingPriority = EncodingPriority::Medium;
-
-            lastSQLCommand = 
-                "insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, sourcePhysicalPathKey, encodingPriority, encodingProfileKey, encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, failuresNumber) "
-                "select                       NULL,           ?,               ?,                     ?,                encodingProfileKey, NULL,             NULL,           NULL,     ?,      NULL,         0 "
-                "from MMS_EncodingProfilesSetMapping where encodingProfilesSetKey = ?";
-
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
-            preparedStatement->setInt64(queryParameterIndex++, physicalPathKey);
-            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(encodingPriority));
-            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
-            preparedStatement->setInt64(queryParameterIndex++, encodingProfileSetKey);
-
-            preparedStatement->executeUpdate();
-        }
-        */
-
         {
             IngestionStatus newIngestionStatus = IngestionStatus::End_TaskSuccess;
             
@@ -4987,7 +4886,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
             lastSQLCommand = 
                 "create table if not exists MMS_TestConnection ("
-                    "workspaceKey                    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT)"
+                    "testConnectionKey          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "constraint MMS_TestConnection_PK PRIMARY KEY (testConnectionKey))"
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);    
         }
@@ -5287,7 +5187,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "technology         		TINYINT NOT NULL,"
                     "jsonProfile    			VARCHAR (512) NOT NULL,"
                     "constraint MMS_EncodingProfile_PK PRIMARY KEY (encodingProfileKey), "
-                    "UNIQUE (workspaceKey, label)) "
+                    "UNIQUE (workspaceKey, contentType, label)) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
@@ -5314,11 +5214,12 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create table if not exists MMS_EncodingProfilesSet ("
                     "encodingProfilesSetKey  	BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "workspaceKey  				BIGINT UNSIGNED NOT NULL,"
+                    "contentType			VARCHAR (32) NOT NULL,"
                     "label					VARCHAR (64) NOT NULL,"
                     "constraint MMS_EncodingProfilesSet_PK PRIMARY KEY (encodingProfilesSetKey)," 
                     "constraint MMS_EncodingProfilesSet_FK foreign key (workspaceKey) "
                         "references MMS_Workspace (workspaceKey) on delete cascade, "
-                    "UNIQUE (workspaceKey, label)) "
+                    "UNIQUE (workspaceKey, contentType, label)) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
@@ -5335,54 +5236,6 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             }
         }    
 
-        /*
-        try
-        {
-            //  insert global EncodingProfilesSet per ContentType
-            vector<ContentType> contentTypes = { ContentType::Video, ContentType::Audio, ContentType::Image };
-            
-            for (ContentType contentType: contentTypes)
-            {
-                int     encodingProfilesSetCount = -1;
-                {
-                    lastSQLCommand = 
-                        "select count(*) from MMS_EncodingProfilesSet where contentType = ? and workspaceKey is NULL and name is NULL";
-                    shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                    int queryParameterIndex = 1;
-                    preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
-
-                    shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-                    if (resultSet->next())
-                    {
-                        encodingProfilesSetCount = resultSet->getInt(1);
-                    }
-                }
-
-                if (encodingProfilesSetCount == 0)
-                {
-                    lastSQLCommand = 
-                        "insert into MMS_EncodingProfilesSet (encodingProfilesSetKey, contentType, workspaceKey, name) values (NULL, ?, NULL, NULL)";
-                    shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                    int queryParameterIndex = 1;
-                    preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
-                    preparedStatement->executeUpdate();
-                }
-            }
-        }
-        catch(sql::SQLException se)
-        {
-            if (isRealDBError(se.what()))
-            {
-                _logger->error(__FILEREF__ + "SQL exception"
-                    + ", lastSQLCommand: " + lastSQLCommand
-                    + ", se.what(): " + se.what()
-                );
-
-                throw se;
-            }
-        }
-        */    
-        
         try
         {
             // EncodingProfiles associated to each family (EncodingProfilesSet)

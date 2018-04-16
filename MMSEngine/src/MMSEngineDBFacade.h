@@ -499,6 +499,7 @@ public:
 
     int64_t addEncodingProfilesSet (
         shared_ptr<MySQLConnection> conn, int64_t workspaceKey,
+        MMSEngineDBFacade::ContentType contentType, 
         string label);
 
     int64_t addEncodingProfile(
@@ -592,7 +593,7 @@ public:
 
     vector<int64_t> getEncodingProfileKeysBySetLabel(
         int64_t workspaceKey,
-        string encodingProfilesSetLabel);
+        string label);
     
     int addEncodingJob (
         int64_t ingestionJobKey,
