@@ -1650,24 +1650,46 @@ vector<int64_t> API::ingestionTask(shared_ptr<MySQLConnection> conn,
     }
     
     string encodingProfilesSetKeyField = "EncodingProfilesSetKey";
+    string encodingProfilesSetLabelField = "EncodingProfilesSetLabel";
     if (type == "Encode"
             && _mmsEngineDBFacade->isMetadataPresent(taskRoot, parametersField)
-            && _mmsEngineDBFacade->isMetadataPresent(parametersRoot, encodingProfilesSetKeyField)
+            && 
+            (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, encodingProfilesSetKeyField)
+            || _mmsEngineDBFacade->isMetadataPresent(parametersRoot, encodingProfilesSetLabelField)
             )
+    )
     {
         // to manage the encode of 'profiles set' we will replace the single Task with
         // a GroupOfTasks where every task is just for one profile
         
-        int64_t encodingProfilesSetKey = parametersRoot.get(encodingProfilesSetKeyField, "XXX").asInt64();
+        string encodingProfilesSetReference;
         
-        vector<int64_t> encodingProfilesSetKeys = 
+        vector<int64_t> encodingProfilesSetKeys;
+        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, encodingProfilesSetKeyField))
+        {
+            int64_t encodingProfilesSetKey = parametersRoot.get(encodingProfilesSetKeyField, "XXX").asInt64();
+        
+            encodingProfilesSetReference = to_string(encodingProfilesSetKey);
+            
+            encodingProfilesSetKeys = 
                 _mmsEngineDBFacade->getEncodingProfileKeysBySetKey(
                 workspace->_workspaceKey, encodingProfilesSetKey);
+        }
+        else // if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, encodingProfilesSetLabelField))
+        {
+            string encodingProfilesSetLabel = parametersRoot.get(encodingProfilesSetLabelField, "XXX").asString();
+        
+            encodingProfilesSetReference = encodingProfilesSetLabel;
+            
+            encodingProfilesSetKeys = 
+                _mmsEngineDBFacade->getEncodingProfileKeysBySetLabel(
+                    workspace->_workspaceKey, encodingProfilesSetLabel);
+        }
         
         if (encodingProfilesSetKeys.size() == 0)
         {
             string errorMessage = __FILEREF__ + "No EncodingProfileKey into the EncodingProfilesSetKey"
-                    + ", EncodingProfilesSetKey: " + to_string(encodingProfilesSetKey);
+                    + ", EncodingProfilesSetKey/EncodingProfilesSetLabel: " + encodingProfilesSetReference;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);

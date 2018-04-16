@@ -3085,6 +3085,89 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetKey(
     return encodingProfilesSetKeys;
 }
 
+vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(
+    int64_t workspaceKey,
+    string encodingProfilesSetLabel)
+{
+    vector<int64_t> encodingProfilesSetKeys;
+    
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+
+        int64_t encodingProfilesSetKey;
+        {
+            lastSQLCommand = 
+                "select encodingProfilesSetKey from MMS_EncodingProfilesSet where workspaceKey = ? and encodingProfilesSetLabel = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            preparedStatement->setString(queryParameterIndex++, encodingProfilesSetLabel);
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                encodingProfilesSetKey     = resultSet->getInt64("encodingProfilesSetKey");
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "WorkspaceKey/encodingProfilesSetLabel was not found "
+                        + ", workspaceKey: " + to_string(workspaceKey)
+                        + ", encodingProfilesSetLabel: " + encodingProfilesSetLabel
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }
+        }
+        
+        {
+            lastSQLCommand =
+                "select encodingProfileKey from MMS_EncodingProfilesSetMapping where encodingProfilesSetKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, encodingProfilesSetKey);
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            while (resultSet->next())
+            {
+                encodingProfilesSetKeys.push_back(resultSet->getInt64("encodingProfileKey"));
+            }
+        }
+        
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        _connectionPool->unborrow(conn);
+
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw se;
+    }
+    catch(exception e)
+    {
+        _connectionPool->unborrow(conn);
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
+    }       
+    
+    return encodingProfilesSetKeys;
+}
+
 int MMSEngineDBFacade::addEncodingJob (
     int64_t ingestionJobKey,
     int64_t encodingProfileKey,
@@ -4895,6 +4978,31 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         conn = _connectionPool->borrow();	
 
         shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+
+        try
+        {
+            // maxEncodingPriority (0: low, 1: default, 2: high)
+            // workspaceType: (0: Live Sessions only, 1: Ingestion + Delivery, 2: Encoding Only)
+            // encodingPeriod: 0: Daily, 1: Weekly, 2: Monthly
+
+            lastSQLCommand = 
+                "create table if not exists MMS_TestConnection ("
+                    "workspaceKey                    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT)"
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);    
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }    
 
         try
         {

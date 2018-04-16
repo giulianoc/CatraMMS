@@ -590,6 +590,10 @@ public:
         int64_t workspaceKey,
         int64_t encodingProfilesSetKey);
 
+    vector<int64_t> getEncodingProfileKeysBySetLabel(
+        int64_t workspaceKey,
+        string encodingProfilesSetLabel);
+    
     int addEncodingJob (
         int64_t ingestionJobKey,
         int64_t encodingProfileKey,
