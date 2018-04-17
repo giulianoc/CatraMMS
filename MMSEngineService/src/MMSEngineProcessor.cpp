@@ -906,8 +906,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         Json::CharReader* reader = builder.newCharReader();
         string errors;
 
-        bool parsingSuccessful = reader->parse(localAssetIngestionEvent->getMetadataContent().c_str(),
-                localAssetIngestionEvent->getMetadataContent().c_str() + localAssetIngestionEvent->getMetadataContent().size(), 
+        string sMetadataContent = localAssetIngestionEvent->getMetadataContent();
+        
+        // LF and CR create problems to the json parser...
+        while (sMetadataContent.back() == 10 || sMetadataContent.back() == 13)
+            sMetadataContent.pop_back();
+        
+        bool parsingSuccessful = reader->parse(sMetadataContent.c_str(),
+                sMetadataContent.c_str() + sMetadataContent.size(), 
                 &parametersRoot, &errors);
         delete reader;
 
@@ -916,7 +922,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             string errorMessage = __FILEREF__ + "failed to parse the metadata"
                     + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
                     + ", errors: " + errors
-                    + ", metaDataContent: " + localAssetIngestionEvent->getMetadataContent()
+                    + ", metaDataContent: " + sMetadataContent
                     ;
             _logger->error(errorMessage);
 
