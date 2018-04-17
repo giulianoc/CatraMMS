@@ -2745,6 +2745,8 @@ size_t WriteCallback(char* ptr, size_t size, size_t nmemb, void *f)
         + ", size: " + to_string(size)
         + ", nmemb: " + to_string(nmemb)
         + ", positionAfter - positionBefore: " + to_string(positionAfter - positionBefore)
+        + ", positionBefore: " + to_string(positionBefore)
+        + ", positionAfter: " + to_string(positionAfter)
             );
     
     return positionAfter - positionBefore;
