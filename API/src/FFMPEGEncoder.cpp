@@ -41,7 +41,7 @@ int main(int argc, char** argv)
         auto stdoutSink = spdlog::sinks::stdout_sink_mt::instance();
         sinks.push_back(stdoutSink);
     }
-    auto logger = std::make_shared<spdlog::logger>("API", begin(sinks), end(sinks));
+    auto logger = std::make_shared<spdlog::logger>("Encoder", begin(sinks), end(sinks));
     
     // shared_ptr<spdlog::logger> logger = spdlog::stdout_logger_mt("API");
     // shared_ptr<spdlog::logger> logger = spdlog::daily_logger_mt("API", logPathName.c_str(), 11, 20);

@@ -44,6 +44,8 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 find_package(LibCrypto)
 find_package(ZLIB)
 
+add_compile_options(-D_FILE_OFFSET_BITS=64)
+
 add_subdirectory(MMSEngine/src)
 add_subdirectory(FFMpeg/src)
 add_subdirectory(MMSEngineService/src)

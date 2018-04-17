@@ -23,13 +23,6 @@
 #include "CheckedMySqlConnection.h"
 #include "json/json.h"
 
-#ifndef __FILEREF__
-    #ifdef __APPLE__
-        #define __FILEREF__ string("[") + string(__FILE__).substr(string(__FILE__).find_last_of("/") + 1) + ":" + to_string(__LINE__) + "] "
-    #else
-        #define __FILEREF__ string("[") + basename(__FILE__) + ":" + to_string(__LINE__) + "] "
-    #endif
-#endif
 
 using namespace std;
 

@@ -888,7 +888,7 @@ int64_t MMSEngineDBFacade::addEncodingProfilesSet (
     int64_t     encodingProfilesSetKey;
     
     string      lastSQLCommand;
-    
+        
     try
     {
         {
@@ -1147,11 +1147,11 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                     IngestionStatus ingestionStatus     = MMSEngineDBFacade::toIngestionStatus(resultSet->getString("status"));
                     IngestionType ingestionType     = MMSEngineDBFacade::toIngestionType(resultSet->getString("ingestionType"));
 
-                    /**/
+                    /*
                     _logger->info(__FILEREF__ + "Analyzing dependencies for the IngestionJob"
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     );
-                    /**/
+                    */
                     
                     bool ingestionJobToBeManaged = true;
 
@@ -1180,12 +1180,14 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                             {
                                 string sStatus = resultSetIngestionJob->getString("status");
                                 
+                                /*
                                 _logger->info(__FILEREF__ + "Dependency for the IngestionJob"
                                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                     + ", dependOnIngestionJobKey: " + to_string(dependOnIngestionJobKey)
                                     + ", dependOnSuccess: " + to_string(dependOnSuccess)
                                     + ", status (dependOnIngestionJobKey): " + sStatus
                                 );
+                                */
                                 
                                 IngestionStatus ingestionStatusDependency     = MMSEngineDBFacade::toIngestionStatus(sStatus);
 

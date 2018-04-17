@@ -2731,7 +2731,7 @@ void MMSEngineProcessor::validateMediaSourceFile (int64_t ingestionJobKey,
     }    
 }
 
-    /*
+static int64_t totalSize = 0;
 size_t WriteCallback(char* ptr, size_t size, size_t nmemb, void *f)
 {
     auto l = spdlog::get("mmsEngineService");
@@ -2741,23 +2741,43 @@ size_t WriteCallback(char* ptr, size_t size, size_t nmemb, void *f)
 
     ofstream *mediaSourceFileStream = (ofstream *) f;
 
-    size_t positionBefore = mediaSourceFileStream->tellp();
-    mediaSourceFileStream->write(ptr, size * nmemb);
-    size_t positionAfter = mediaSourceFileStream->tellp();
+    streamsize toBeWritten = size * nmemb;
+    streamsize written = 1;
+    while (toBeWritten > 0 && written > 0)
+    {
+        // size_t positionBefore = mediaSourceFileStream->tellp();
+        mediaSourceFileStream->write(ptr, toBeWritten);
+        // size_t positionAfter = mediaSourceFileStream->tellp();
+        
+        // written = positionAfter - positionBefore;
+        written = toBeWritten;
+        
+        totalSize += written;
 
+        toBeWritten -= written;
+        
+        if (written <= 0)
+        {
+            l->error(__FILEREF__ + "Writing"
+                + ", toBeWritten: " + to_string(toBeWritten)
+                + ", written: " + to_string(written)
+                + ", totalSize: " + to_string(totalSize)
+                    );
+        }
+    }
+
+/*    
     l->info(__FILEREF__ + "Writing"
         + ", size: " + to_string(size)
         + ", nmemb: " + to_string(nmemb)
-        + ", positionAfter - positionBefore: " + to_string(positionAfter - positionBefore)
-        + ", positionBefore: " + to_string(positionBefore)
-        + ", positionAfter: " + to_string(positionAfter)
+        + ", totalSize: " + to_string(totalSize)
             );
-    
-    return positionAfter - positionBefore;
+*/
+    // return positionAfter - positionBefore;
+    return (size * nmemb);
 
     // return fwrite(ptr, size, nmemb, file);        
 };
-*/
 
 void MMSEngineProcessor::downloadMediaSourceFile(string sourceReferenceURL,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace)
@@ -2818,7 +2838,8 @@ RESUMING FILE TRANSFERS
             
             if (attemptIndex == 0)
             {
-                ofstream mediaSourceFileStream(workspaceIngestionBinaryPathName, ios::binary | ios::trunc);
+                ofstream mediaSourceFileStream(workspaceIngestionBinaryPathName, ofstream::binary | ios::out);
+                mediaSourceFileStream.exceptions(ios::badbit | ios::failbit);   // setting the exception mask
                 // FILE *mediaSourceFileStream = fopen(workspaceIngestionBinaryPathName, "wb");
 
                 curlpp::Cleanup cleaner;
@@ -2826,14 +2847,12 @@ RESUMING FILE TRANSFERS
 
                 // Set the writer callback to enable cURL 
                 // to write result in a memory area
-                request.setOpt(new curlpp::options::WriteStream(&mediaSourceFileStream));
+                // request.setOpt(new curlpp::options::WriteStream(&mediaSourceFileStream));
                 
-                /*
-		curlpp::options::WriteFunctionCurlFunction myFunction(WriteCallback);
-		curlpp::OptionTrait<void *, CURLOPT_WRITEDATA> myData(&mediaSourceFileStream);
-		request.setOpt(myFunction);
-		request.setOpt(myData);
-                 */
+                curlpp::options::WriteFunctionCurlFunction myFunction(WriteCallback);
+                curlpp::OptionTrait<void *, CURLOPT_WRITEDATA> myData(&mediaSourceFileStream);
+                request.setOpt(myFunction);
+                request.setOpt(myData);
 
                 // Setting the URL to retrive.
                 request.setOpt(new curlpp::options::Url(sourceReferenceURL));
@@ -2864,20 +2883,21 @@ RESUMING FILE TRANSFERS
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 );
                 
-                ofstream mediaSourceFileStream(workspaceIngestionBinaryPathName, ios::binary | ios::trunc);
+                ofstream mediaSourceFileStream(workspaceIngestionBinaryPathName, ofstream::binary | ofstream::out);
+                mediaSourceFileStream.exceptions(ios::badbit | ios::failbit);   // setting the exception mask
 
                 curlpp::Cleanup cleaner;
                 curlpp::Easy request;
 
                 // Set the writer callback to enable cURL 
                 // to write result in a memory area
-                request.setOpt(new curlpp::options::WriteStream(&mediaSourceFileStream));
-		/*
+                // request.setOpt(new curlpp::options::WriteStream(&mediaSourceFileStream));
+
                 curlpp::options::WriteFunctionCurlFunction myFunction(WriteCallback);
-		curlpp::OptionTrait<void *, CURLOPT_WRITEDATA> myData(&mediaSourceFileStream);
-		request.setOpt(myFunction);
-		request.setOpt(myData);
-                */
+                curlpp::OptionTrait<void *, CURLOPT_WRITEDATA> myData(&mediaSourceFileStream);
+                request.setOpt(myFunction);
+                request.setOpt(myData);
+
                 // Setting the URL to retrive.
                 request.setOpt(new curlpp::options::Url(sourceReferenceURL));
                 string httpsPrefix("https");
