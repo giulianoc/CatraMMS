@@ -2731,6 +2731,18 @@ void MMSEngineProcessor::validateMediaSourceFile (int64_t ingestionJobKey,
     }    
 }
 
+size_t WriteCallback(char* ptr, size_t size, size_t nmemb, void *f)
+{
+    ofstream *mediaSourceFileStream = (ofstream *) f;
+
+    size_t positionBefore = mediaSourceFileStream->tellp();
+    mediaSourceFileStream->write(ptr, size * nmemb);
+    size_t positionAfter = mediaSourceFileStream->tellp();
+
+    return positionAfter - positionBefore;
+    // return fwrite(ptr, size, nmemb, file);        
+};
+
 void MMSEngineProcessor::downloadMediaSourceFile(string sourceReferenceURL,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace)
 {
@@ -2797,7 +2809,13 @@ RESUMING FILE TRANSFERS
 
                 // Set the writer callback to enable cURL 
                 // to write result in a memory area
-                request.setOpt(new curlpp::options::WriteStream(&mediaSourceFileStream));
+                // request.setOpt(new curlpp::options::WriteStream(&mediaSourceFileStream));
+                
+		curlpp::options::WriteFunctionCurlFunction myFunction(WriteCallback);
+		curlpp::OptionTrait<void *, CURLOPT_WRITEDATA> myData(&mediaSourceFileStream);
+		request.setOpt(myFunction);
+		request.setOpt(myData);
+
 
                 // Setting the URL to retrive.
                 request.setOpt(new curlpp::options::Url(sourceReferenceURL));
@@ -2837,7 +2855,11 @@ RESUMING FILE TRANSFERS
 
                 // Set the writer callback to enable cURL 
                 // to write result in a memory area
-                request.setOpt(new curlpp::options::WriteStream(&mediaSourceFileStream));
+                // request.setOpt(new curlpp::options::WriteStream(&mediaSourceFileStream));
+		curlpp::options::WriteFunctionCurlFunction myFunction(WriteCallback);
+		curlpp::OptionTrait<void *, CURLOPT_WRITEDATA> myData(&mediaSourceFileStream);
+		request.setOpt(myFunction);
+		request.setOpt(myData);
 
                 // Setting the URL to retrive.
                 request.setOpt(new curlpp::options::Url(sourceReferenceURL));
