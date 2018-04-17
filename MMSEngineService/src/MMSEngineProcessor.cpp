@@ -2812,7 +2812,7 @@ RESUMING FILE TRANSFERS
             
             if (attemptIndex == 0)
             {
-                ofstream mediaSourceFileStream(workspaceIngestionBinaryPathName, ofstream::binary | ofstream::trunc);
+                ofstream mediaSourceFileStream(workspaceIngestionBinaryPathName, ios::binary | ios::trunc);
 
                 curlpp::Cleanup cleaner;
                 curlpp::Easy request;
@@ -2858,7 +2858,7 @@ RESUMING FILE TRANSFERS
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 );
                 
-                ofstream mediaSourceFileStream(workspaceIngestionBinaryPathName, ofstream::binary | ofstream::app);
+                ofstream mediaSourceFileStream(workspaceIngestionBinaryPathName, ios::binary | ios::app);
 
                 curlpp::Cleanup cleaner;
                 curlpp::Easy request;
