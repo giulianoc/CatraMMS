@@ -2714,16 +2714,16 @@ void MMSEngineProcessor::validateMediaSourceFile (int64_t ingestionJobKey,
     if (fileSizeInBytes != -1)
     {
         bool inCaseOfLinkHasItToBeRead = false;
-        unsigned long realFileSizeInBytes = 
+        unsigned long downloadedFileSizeInBytes = 
             FileIO:: getFileSizeInBytes (ftpDirectoryMediaSourceFileName, inCaseOfLinkHasItToBeRead);
 
-        if (fileSizeInBytes != realFileSizeInBytes)
+        if (fileSizeInBytes != downloadedFileSizeInBytes)
         {
             string errorMessage = __FILEREF__ + "FileSize check failed"
                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", ftpDirectoryMediaSourceFileName: " + ftpDirectoryMediaSourceFileName
-                + ", fileSizeInBytes: " + to_string(fileSizeInBytes)
-                + ", realFileSizeInBytes: " + to_string(realFileSizeInBytes)
+                + ", metadataFileSizeInBytes: " + to_string(fileSizeInBytes)
+                + ", downloadedFileSizeInBytes: " + to_string(downloadedFileSizeInBytes)
             ;
             _logger->error(errorMessage);
             throw runtime_error(errorMessage);
