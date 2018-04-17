@@ -2,23 +2,23 @@
 
 if [ $# -ne 1 -a $# -ne 2 ]
 then
-	echo "Usage $0 start | stop [nodaemon]"
+	echo "Usage $0 start | stop | status [nodaemon]"
 
 	exit
 fi
 
 command=$1
 
-if [ "$command" != "start" -a "$command" != "stop" ]
+if [ "$command" != "start" -a "$command" != "stop" -a "$command" != "status" ]
 then
-	echo "Usage $0 start | stop [nodaemon]"
+	echo "Usage $0 start | stop | status [nodaemon]"
 
 	exit
 fi
 
 if [ $# -eq 2 -a "$2" != "nodaemon" ]
 then
-	echo "Usage $0 start | stop [nodaemon]"
+	echo "Usage $0 start | stop | status [nodaemon]"
 
 	exit
 fi
@@ -40,6 +40,9 @@ export LD_LIBRARY_PATH=$CatraMMS_PATH/CatraLibraries/lib:$CatraMMS_PATH/CatraMMS
 if [ "$command" == "start" ]
 then
 	$CatraMMS_PATH/CatraMMS/bin/mmsEngineService $OPTIONS $CatraMMS_PATH/CatraMMS/etc/mms.cfg
+elif [ "$command" == "status" ]
+then
+	ps -ef | grep "mmsEngineService"
 elif [ "$command" == "stop" ]
 then
 	#PIDFILE is not created in case of nodaemon

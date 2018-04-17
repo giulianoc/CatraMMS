@@ -2,23 +2,23 @@
 
 if [ $# -ne 1 -a $# -ne 2 ]
 then
-	echo "Usage $0 start | stop [nodaemon]"
+	echo "Usage $0 start | stop | status [nodaemon]"
 
 	exit
 fi
 
 command=$1
 
-if [ "$command" != "start" -a "$command" != "stop" ]
+if [ "$command" != "start" -a "$command" != "stop" -a "$command" != "status" ]
 then
-	echo "Usage $0 start | stop [nodaemon]"
+	echo "Usage $0 start | stop | status [nodaemon]"
 
 	exit
 fi
 
 if [ $# -eq 2 -a "$2" != "nodaemon" ]
 then
-	echo "Usage $0 start | stop [nodaemon]"
+	echo "Usage $0 start | stop | status [nodaemon]"
 
 	exit
 fi
@@ -42,6 +42,9 @@ PORT=8010
 if [ "$command" == "start" ]
 then
 	spawn-fcgi -p $PORT -P $PIDFILE $FORK_OPTION $CatraMMS_PATH/CatraMMS/bin/cgi/api.fcgi
+elif [ "$command" == "status" ]
+then
+	ps -ef | grep "api.fcgi"
 elif [ "$command" == "stop" ]
 then
 	#PIDFILE is not created in case of nodaemon
