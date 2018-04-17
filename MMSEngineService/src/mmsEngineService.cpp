@@ -74,6 +74,8 @@ int main (int iArgc, char *pArgv [])
         sinks.push_back(stdoutSink);
     }
     auto logger = std::make_shared<spdlog::logger>("mmsEngineService", begin(sinks), end(sinks));
+    // globally register the loggers so so the can be accessed using spdlog::get(logger_name)
+    spdlog::register_logger(logger);
 
     // auto logger = spdlog::stdout_logger_mt("mmsEngineService");
     // auto logger = spdlog::daily_logger_mt("mmsEngineService", logPathName.c_str(), 11, 20);
@@ -91,9 +93,6 @@ int main (int iArgc, char *pArgv [])
 
     string pattern =  configuration["log"]["mms"].get("pattern", "XXX").asString();
     spdlog::set_pattern(pattern);
-
-    // globally register the loggers so so the can be accessed using spdlog::get(logger_name)
-    // spdlog::register_logger(logger);
 
     logger->info(__FILEREF__ + "Creating MMSEngineDBFacade"
             );

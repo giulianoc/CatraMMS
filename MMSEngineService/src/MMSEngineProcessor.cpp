@@ -2733,12 +2733,20 @@ void MMSEngineProcessor::validateMediaSourceFile (int64_t ingestionJobKey,
 
 size_t WriteCallback(char* ptr, size_t size, size_t nmemb, void *f)
 {
+    auto l = spdlog::get("mmsEngineService");
+
     ofstream *mediaSourceFileStream = (ofstream *) f;
 
     size_t positionBefore = mediaSourceFileStream->tellp();
     mediaSourceFileStream->write(ptr, size * nmemb);
     size_t positionAfter = mediaSourceFileStream->tellp();
 
+    l->info(__FILEREF__ + "Writing"
+        + ", size: " + to_string(size)
+        + ", nmemb: " + to_string(nmemb)
+        + ", positionAfter - positionBefore: " + to_string(positionAfter - positionBefore)
+            );
+    
     return positionAfter - positionBefore;
     // return fwrite(ptr, size, nmemb, file);        
 };
