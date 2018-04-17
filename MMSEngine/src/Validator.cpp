@@ -776,12 +776,15 @@ void Validator::validateEncodeMetadata(
     }
         
     string encodingProfilesSetKeyField = "EncodingProfilesSetKey";
+    string encodingProfilesSetLabelField = "EncodingProfilesSetLabel";
     string encodingProfileKeyField = "EncodingProfileKey";
     if (!isMetadataPresent(parametersRoot, encodingProfilesSetKeyField)
+            && !isMetadataPresent(parametersRoot, encodingProfilesSetLabelField)
             && !isMetadataPresent(parametersRoot, encodingProfileKeyField))
     {
-        string errorMessage = __FILEREF__ + "Both fields are not present or are null"
+        string errorMessage = __FILEREF__ + "Neither of the following fields are present"
                 + ", Field: " + encodingProfilesSetKeyField
+                + ", Field: " + encodingProfilesSetLabelField
                 + ", Field: " + encodingProfileKeyField
                 ;
         _logger->error(errorMessage);
