@@ -908,7 +908,7 @@ int64_t MMSEngineDBFacade::addEncodingProfilesSet (
             {
                 lastSQLCommand = 
                     "insert into MMS_EncodingProfilesSet (encodingProfilesSetKey, workspaceKey, contentType, label) values ("
-                    "NULL, ?, ?)";
+                    "NULL, ?, ?, ?)";
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
                 preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
