@@ -2731,9 +2731,13 @@ void MMSEngineProcessor::validateMediaSourceFile (int64_t ingestionJobKey,
     }    
 }
 
+    /*
 size_t WriteCallback(char* ptr, size_t size, size_t nmemb, void *f)
 {
     auto l = spdlog::get("mmsEngineService");
+
+    // FILE *file = (FILE *)f;
+    // return fwrite(ptr, size, nmemb, file);
 
     ofstream *mediaSourceFileStream = (ofstream *) f;
 
@@ -2750,8 +2754,10 @@ size_t WriteCallback(char* ptr, size_t size, size_t nmemb, void *f)
             );
     
     return positionAfter - positionBefore;
+
     // return fwrite(ptr, size, nmemb, file);        
 };
+*/
 
 void MMSEngineProcessor::downloadMediaSourceFile(string sourceReferenceURL,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace)
@@ -2812,20 +2818,22 @@ RESUMING FILE TRANSFERS
             
             if (attemptIndex == 0)
             {
-                ofstream mediaSourceFileStream(workspaceIngestionBinaryPathName);
+                ofstream mediaSourceFileStream(workspaceIngestionBinaryPathName, ios::binary | ios::trunc);
+                // FILE *mediaSourceFileStream = fopen(workspaceIngestionBinaryPathName, "wb");
 
                 curlpp::Cleanup cleaner;
                 curlpp::Easy request;
 
                 // Set the writer callback to enable cURL 
                 // to write result in a memory area
-                // request.setOpt(new curlpp::options::WriteStream(&mediaSourceFileStream));
+                request.setOpt(new curlpp::options::WriteStream(&mediaSourceFileStream));
                 
+                /*
 		curlpp::options::WriteFunctionCurlFunction myFunction(WriteCallback);
 		curlpp::OptionTrait<void *, CURLOPT_WRITEDATA> myData(&mediaSourceFileStream);
 		request.setOpt(myFunction);
 		request.setOpt(myData);
-
+                 */
 
                 // Setting the URL to retrive.
                 request.setOpt(new curlpp::options::Url(sourceReferenceURL));
@@ -2844,8 +2852,6 @@ RESUMING FILE TRANSFERS
                 request.setOpt(new curlpp::options::ProgressFunction(curlpp::types::ProgressFunctionFunctor(functor)));
                 request.setOpt(new curlpp::options::NoProgress(0L));
 
-                request.setOpt(new curlpp::options::NoProgress(0L));
-
                 _logger->info(__FILEREF__ + "Downloading media file"
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", sourceReferenceURL: " + sourceReferenceURL
@@ -2858,19 +2864,20 @@ RESUMING FILE TRANSFERS
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 );
                 
-                ofstream mediaSourceFileStream(workspaceIngestionBinaryPathName);
+                ofstream mediaSourceFileStream(workspaceIngestionBinaryPathName, ios::binary | ios::trunc);
 
                 curlpp::Cleanup cleaner;
                 curlpp::Easy request;
 
                 // Set the writer callback to enable cURL 
                 // to write result in a memory area
-                // request.setOpt(new curlpp::options::WriteStream(&mediaSourceFileStream));
-		curlpp::options::WriteFunctionCurlFunction myFunction(WriteCallback);
+                request.setOpt(new curlpp::options::WriteStream(&mediaSourceFileStream));
+		/*
+                curlpp::options::WriteFunctionCurlFunction myFunction(WriteCallback);
 		curlpp::OptionTrait<void *, CURLOPT_WRITEDATA> myData(&mediaSourceFileStream);
 		request.setOpt(myFunction);
 		request.setOpt(myData);
-
+                */
                 // Setting the URL to retrive.
                 request.setOpt(new curlpp::options::Url(sourceReferenceURL));
                 string httpsPrefix("https");

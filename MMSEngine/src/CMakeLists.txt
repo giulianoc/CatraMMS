@@ -39,6 +39,8 @@ SET (HEADERS
 	EncoderVideoAudioProxy.h
 )
 
+add_compile_options(-D_FILE_OFFSET_BITS=64)
+
 include_directories ("${PROJECT_SOURCE_DIR}/../spdlog/include")
 include_directories ("${PROJECT_SOURCE_DIR}/FFMpeg/src")
 include_directories ("${PROJECT_SOURCE_DIR}/../usr_local/include")
