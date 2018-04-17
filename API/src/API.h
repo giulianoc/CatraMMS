@@ -99,19 +99,19 @@ private:
         unordered_map<string, string> queryParameters,
         string requestBody);
 
-    vector<int64_t> ingestionTask(shared_ptr<MySQLConnection> conn,
+    vector<int64_t> ingestionTask(shared_ptr<CheckedMySqlConnection> conn,
         shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
             Json::Value taskRoot, 
         vector<int64_t> dependOnIngestionJobKeys, int dependOnSuccess,
         string& responseBody);
         
-    vector<int64_t> ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
+    vector<int64_t> ingestionGroupOfTasks(shared_ptr<CheckedMySqlConnection> conn,
         shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
             Json::Value groupOfTasksRoot, 
         vector <int64_t> dependOnIngestionJobKeys, int dependOnSuccess,
         string& responseBody);
 
-    void ingestionEvents(shared_ptr<MySQLConnection> conn,
+    void ingestionEvents(shared_ptr<CheckedMySqlConnection> conn,
         shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
             Json::Value taskOrGroupOfTasksRoot, 
         vector<int64_t> dependOnIngestionJobKeys, string& responseBody);

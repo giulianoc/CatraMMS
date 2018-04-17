@@ -46,7 +46,8 @@ MMSEngineDBFacade::MMSEngineDBFacade(
     shared_ptr<MySQLConnectionFactory>  mySQLConnectionFactory = 
             make_shared<MySQLConnectionFactory>(dbServer, dbUsername, dbPassword, dbName);
         
-    _connectionPool = make_shared<DBConnectionPool<MySQLConnection>>(dbPoolSize, mySQLConnectionFactory);
+    // _connectionPool = make_shared<DBConnectionPool<MySQLConnection>>(dbPoolSize, mySQLConnectionFactory);
+    _connectionPool = make_shared<DBConnectionPool<CheckedMySqlConnection>>(dbPoolSize, mySQLConnectionFactory);
 
     createTablesIfNeeded();
 }
@@ -90,7 +91,7 @@ vector<shared_ptr<Customer>> MMSEngineDBFacade::getCustomers()
 
 shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 {
-    shared_ptr<MySQLConnection> conn = _connectionPool->borrow();	
+    shared_ptr<CheckedMySqlConnection> conn = _connectionPool->borrow();	
 
     string lastSQLCommand =
         "select workspaceKey, name, directoryName, maxStorageInGB, maxEncodingPriority from MMS_Workspace where workspaceKey = ?";
@@ -131,7 +132,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 
 shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(string workspaceName)
 {
-    shared_ptr<MySQLConnection> conn = _connectionPool->borrow();	
+    shared_ptr<CheckedMySqlConnection> conn = _connectionPool->borrow();	
 
     string lastSQLCommand =
         "select workspaceKey, name, directoryName, maxStorageInGB, maxEncodingPriority from MMS_Workspace where name = ?";
@@ -172,7 +173,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(string workspaceName)
 
 void MMSEngineDBFacade::getTerritories(shared_ptr<Workspace> workspace)
 {
-    shared_ptr<MySQLConnection> conn = _connectionPool->borrow();	
+    shared_ptr<CheckedMySqlConnection> conn = _connectionPool->borrow();	
 
     string lastSQLCommand =
         "select territoryKey, name from MMS_Territory t where workspaceKey = ?";
@@ -213,7 +214,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUser(
     
     string      lastSQLCommand;
     
-    shared_ptr<MySQLConnection> conn;
+    shared_ptr<CheckedMySqlConnection> conn;
     bool autoCommit = true;
 
     try
@@ -401,7 +402,7 @@ string MMSEngineDBFacade::confirmUser(
     string      apiKey;
     string      lastSQLCommand;
     
-    shared_ptr<MySQLConnection> conn;
+    shared_ptr<CheckedMySqlConnection> conn;
     bool autoCommit = true;
 
     try
@@ -610,7 +611,7 @@ tuple<shared_ptr<Workspace>,bool,bool> MMSEngineDBFacade::checkAPIKey (string ap
     string          flags;
     string          lastSQLCommand;
 
-    shared_ptr<MySQLConnection> conn;
+    shared_ptr<CheckedMySqlConnection> conn;
 
     try
     {
@@ -698,7 +699,7 @@ tuple<shared_ptr<Workspace>,bool,bool> MMSEngineDBFacade::checkAPIKey (string ap
 }
 
 int64_t MMSEngineDBFacade::addTerritory (
-	shared_ptr<MySQLConnection> conn,
+	shared_ptr<CheckedMySqlConnection> conn,
         int64_t workspaceKey,
         string territoryName
 )
@@ -759,7 +760,7 @@ bool MMSEngineDBFacade::isLoginValid(
     bool        isLoginValid;
     string      lastSQLCommand;
 
-    shared_ptr<MySQLConnection> conn;
+    shared_ptr<CheckedMySqlConnection> conn;
 
     try
     {
@@ -820,7 +821,7 @@ string MMSEngineDBFacade::getPassword(string emailAddress)
     string      password;
     string      lastSQLCommand;
 
-    shared_ptr<MySQLConnection> conn;
+    shared_ptr<CheckedMySqlConnection> conn;
 
     try
     {
@@ -880,7 +881,7 @@ string MMSEngineDBFacade::getPassword(string emailAddress)
 }
 
 int64_t MMSEngineDBFacade::addEncodingProfilesSet (
-        shared_ptr<MySQLConnection> conn, int64_t workspaceKey,
+        shared_ptr<CheckedMySqlConnection> conn, int64_t workspaceKey,
         MMSEngineDBFacade::ContentType contentType, 
         string label)
 {
@@ -944,7 +945,7 @@ int64_t MMSEngineDBFacade::addEncodingProfilesSet (
 }
 
 int64_t MMSEngineDBFacade::addEncodingProfile(
-        shared_ptr<MySQLConnection> conn,
+        shared_ptr<CheckedMySqlConnection> conn,
         int64_t workspaceKey,
         string label,
         MMSEngineDBFacade::ContentType contentType, 
@@ -1088,7 +1089,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
     string      lastSQLCommand;
     bool        autoCommit = true;
     
-    shared_ptr<MySQLConnection> conn;
+    shared_ptr<CheckedMySqlConnection> conn;
 
     try
     {
@@ -1387,11 +1388,11 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
     }        
 }
 
-shared_ptr<MySQLConnection> MMSEngineDBFacade::beginIngestionJobs ()
+shared_ptr<CheckedMySqlConnection> MMSEngineDBFacade::beginIngestionJobs ()
 {    
     string      lastSQLCommand;
     
-    shared_ptr<MySQLConnection> conn;
+    shared_ptr<CheckedMySqlConnection> conn;
 
     try
     {
@@ -1433,8 +1434,8 @@ shared_ptr<MySQLConnection> MMSEngineDBFacade::beginIngestionJobs ()
     return conn;    
 }
 
-shared_ptr<MySQLConnection> MMSEngineDBFacade::endIngestionJobs (
-    shared_ptr<MySQLConnection> conn, bool commit)
+shared_ptr<CheckedMySqlConnection> MMSEngineDBFacade::endIngestionJobs (
+    shared_ptr<CheckedMySqlConnection> conn, bool commit)
 {    
     string      lastSQLCommand;
     
@@ -1488,7 +1489,7 @@ shared_ptr<MySQLConnection> MMSEngineDBFacade::endIngestionJobs (
 }
 
 int64_t MMSEngineDBFacade::addIngestionRoot (
-        shared_ptr<MySQLConnection> conn,
+        shared_ptr<CheckedMySqlConnection> conn,
     	int64_t workspaceKey, string rootType, string rootLabel,
         bool rootLabelDuplication
 )
@@ -1568,7 +1569,7 @@ int64_t MMSEngineDBFacade::addIngestionRoot (
 }
 
 int64_t MMSEngineDBFacade::addIngestionJob (
-        shared_ptr<MySQLConnection> conn, int64_t workspaceKey,
+        shared_ptr<CheckedMySqlConnection> conn, int64_t workspaceKey,
     	int64_t ingestionRootKey, string label, string metadataContent,
         MMSEngineDBFacade::IngestionType ingestionType, 
         vector<int64_t> dependOnIngestionJobKeys, int dependOnSuccess
@@ -1715,7 +1716,7 @@ int64_t MMSEngineDBFacade::addIngestionJob (
 }
 
 void MMSEngineDBFacade::updateIngestionJobMetadataContent (
-        shared_ptr<MySQLConnection> conn,
+        shared_ptr<CheckedMySqlConnection> conn,
         int64_t ingestionJobKey,
         string metadataContent
 )
@@ -1781,7 +1782,7 @@ void MMSEngineDBFacade::updateIngestionJob (
 {    
     string      lastSQLCommand;
     
-    shared_ptr<MySQLConnection> conn;
+    shared_ptr<CheckedMySqlConnection> conn;
 
     try
     {
@@ -1855,7 +1856,7 @@ void MMSEngineDBFacade::updateIngestionJob (
 {
     string      lastSQLCommand;
 
-    shared_ptr<MySQLConnection> conn;
+    shared_ptr<CheckedMySqlConnection> conn;
 
     try
     {
@@ -2010,7 +2011,7 @@ void MMSEngineDBFacade::updateIngestionJob (
 {    
     string      lastSQLCommand;
     
-    shared_ptr<MySQLConnection> conn;
+    shared_ptr<CheckedMySqlConnection> conn;
 
     try
     {
@@ -2165,7 +2166,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress (
     bool        toBeCancelled = false;
     string      lastSQLCommand;
     
-    shared_ptr<MySQLConnection> conn;
+    shared_ptr<CheckedMySqlConnection> conn;
 
     try
     {
@@ -2259,7 +2260,7 @@ void MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress (
     
     string      lastSQLCommand;
     
-    shared_ptr<MySQLConnection> conn;
+    shared_ptr<CheckedMySqlConnection> conn;
 
     try
     {
@@ -2324,7 +2325,7 @@ void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred (
     
     string      lastSQLCommand;
     
-    shared_ptr<MySQLConnection> conn;
+    shared_ptr<CheckedMySqlConnection> conn;
 
     try
     {
@@ -2387,7 +2388,7 @@ MMSEngineDBFacade::ContentType MMSEngineDBFacade::getMediaItemKeyDetails(
 {
     string      lastSQLCommand;
         
-    shared_ptr<MySQLConnection> conn;
+    shared_ptr<CheckedMySqlConnection> conn;
     
     MMSEngineDBFacade::ContentType contentType;
 
@@ -2471,7 +2472,7 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
 {
     string      lastSQLCommand;
         
-    shared_ptr<MySQLConnection> conn;
+    shared_ptr<CheckedMySqlConnection> conn;
     
     pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType;
 
@@ -2557,7 +2558,7 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
 {
     string      lastSQLCommand;
         
-    shared_ptr<MySQLConnection> conn;
+    shared_ptr<CheckedMySqlConnection> conn;
     
     pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType;
 
@@ -2642,7 +2643,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> MMSEn
 {
     string      lastSQLCommand;
         
-    shared_ptr<MySQLConnection> conn;
+    shared_ptr<CheckedMySqlConnection> conn;
     
     try
     {
@@ -2738,7 +2739,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 {
     string      lastSQLCommand;
         
-    shared_ptr<MySQLConnection> conn;
+    shared_ptr<CheckedMySqlConnection> conn;
     bool autoCommit = true;
 
     try
@@ -3004,7 +3005,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetKey(
     
     string      lastSQLCommand;
     
-    shared_ptr<MySQLConnection> conn;
+    shared_ptr<CheckedMySqlConnection> conn;
 
     try
     {
@@ -3096,7 +3097,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(
     
     string      lastSQLCommand;
     
-    shared_ptr<MySQLConnection> conn;
+    shared_ptr<CheckedMySqlConnection> conn;
 
     try
     {
@@ -3181,7 +3182,7 @@ int MMSEngineDBFacade::addEncodingJob (
 
     string      lastSQLCommand;
     
-    shared_ptr<MySQLConnection> conn;
+    shared_ptr<CheckedMySqlConnection> conn;
 
     try
     {
@@ -3264,7 +3265,7 @@ int MMSEngineDBFacade::updateEncodingJob (
     
     string      lastSQLCommand;
     
-    shared_ptr<MySQLConnection> conn;
+    shared_ptr<CheckedMySqlConnection> conn;
     bool autoCommit = true;
 
     int encodingFailureNumber = -1;
@@ -3487,7 +3488,7 @@ void MMSEngineDBFacade::updateEncodingJobProgress (
     
     string      lastSQLCommand;
     
-    shared_ptr<MySQLConnection> conn;
+    shared_ptr<CheckedMySqlConnection> conn;
 
     try
     {
@@ -3550,7 +3551,7 @@ void MMSEngineDBFacade::checkWorkspaceMaxIngestionNumber (
 {
     string      lastSQLCommand;
 
-    shared_ptr<MySQLConnection> conn;
+    shared_ptr<CheckedMySqlConnection> conn;
 
     try
     {
@@ -3877,7 +3878,7 @@ string MMSEngineDBFacade::nextRelativePathToBeUsed (
     string      relativePathToBeUsed;
     string      lastSQLCommand;
 
-    shared_ptr<MySQLConnection> conn;
+    shared_ptr<CheckedMySqlConnection> conn;
 
     try
     {
@@ -3996,7 +3997,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
     
     string      lastSQLCommand;
     
-    shared_ptr<MySQLConnection> conn;
+    shared_ptr<CheckedMySqlConnection> conn;
     bool autoCommit = true;
 
     try
@@ -4545,7 +4546,7 @@ tuple<int,string,string,string> MMSEngineDBFacade::getStorageDetails(
         
     string      lastSQLCommand;
 
-    shared_ptr<MySQLConnection> conn;
+    shared_ptr<CheckedMySqlConnection> conn;
 
     try
     {
@@ -4643,7 +4644,7 @@ int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
     int64_t     encodedPhysicalPathKey;
     string      lastSQLCommand;
     
-    shared_ptr<MySQLConnection> conn;
+    shared_ptr<CheckedMySqlConnection> conn;
     bool autoCommit = true;
 
     try
@@ -4817,7 +4818,7 @@ bool MMSEngineDBFacade::isMetadataPresent(Json::Value root, string field)
         return false;
 }
 
-int64_t MMSEngineDBFacade::getLastInsertId(shared_ptr<MySQLConnection> conn)
+int64_t MMSEngineDBFacade::getLastInsertId(shared_ptr<CheckedMySqlConnection> conn)
 {
     int64_t         lastInsertId;
     
@@ -4868,7 +4869,7 @@ int64_t MMSEngineDBFacade::getLastInsertId(shared_ptr<MySQLConnection> conn)
 
 void MMSEngineDBFacade::createTablesIfNeeded()
 {
-    shared_ptr<MySQLConnection> conn;
+    shared_ptr<CheckedMySqlConnection> conn;
 
     string      lastSQLCommand;
 

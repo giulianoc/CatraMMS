@@ -1483,7 +1483,7 @@ void API::ingestion(
         }
 
         string responseBody;    
-        shared_ptr<MySQLConnection> conn;
+        shared_ptr<CheckedMySqlConnection> conn;
 
         try
         {            
@@ -1620,7 +1620,7 @@ void API::ingestion(
     }
 }
 
-vector<int64_t> API::ingestionTask(shared_ptr<MySQLConnection> conn,
+vector<int64_t> API::ingestionTask(shared_ptr<CheckedMySqlConnection> conn,
         shared_ptr<Workspace> workspace, int64_t ingestionRootKey, Json::Value taskRoot, 
         vector<int64_t> dependOnIngestionJobKeys, int dependOnSuccess,
         string& responseBody)
@@ -1843,7 +1843,7 @@ vector<int64_t> API::ingestionTask(shared_ptr<MySQLConnection> conn,
     return localDependOnIngestionJobKeys;
 }
 
-vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
+vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<CheckedMySqlConnection> conn,
         shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
         Json::Value groupOfTasksRoot, 
         vector<int64_t> dependOnIngestionJobKeys, int dependOnSuccess,
@@ -1912,7 +1912,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
     return localDependOnIngestionJobKeys;
 }    
 
-void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
+void API::ingestionEvents(shared_ptr<CheckedMySqlConnection> conn,
         shared_ptr<Workspace> workspace, int64_t ingestionRootKey, Json::Value taskOrGroupOfTasksRoot, 
         vector<int64_t> dependOnIngestionJobKeys, string& responseBody)
 {
@@ -2700,7 +2700,7 @@ void API::addEncodingProfilesSet(
         }
 
         string responseBody;    
-        shared_ptr<MySQLConnection> conn;
+        shared_ptr<CheckedMySqlConnection> conn;
 
         try
         {            

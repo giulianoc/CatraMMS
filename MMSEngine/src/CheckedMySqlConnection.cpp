@@ -11,22 +11,27 @@
  * Created on April 16, 2018, 4:45 PM
  */
 
+#include <string>
 #include "CheckedMySqlConnection.h"
 
-void CheckedMySqlConnection:: checkConnection(bool resetInCaseOfFailure)
+bool CheckedMySqlConnection::connectionValid()
 {
+    bool connectionValid = true;
+    
     try
     {
-        string lastSQLCommand = "select * from MMS_TestConnection";
+        string lastSQLCommand = "select count(*) from MMS_TestConnection";
         shared_ptr<sql::PreparedStatement> preparedStatement (_sqlConnection->prepareStatement(lastSQLCommand));
         shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
     }
     catch(sql::SQLException se)
     {
-        // we should reset the connection
+        connectionValid = false;
     }
     catch(exception e)
     {
-        // we should reset the connection
-    }        
+        connectionValid = false;
+    }
+    
+    return connectionValid;
 }

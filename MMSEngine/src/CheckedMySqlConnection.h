@@ -14,9 +14,13 @@
 #ifndef CheckedMySqlConnection_h
 #define CheckedMySqlConnection_h
 
+#include "catralibraries/MySQLConnection.h"
+
+using namespace std;
+
 class CheckedMySqlConnection: public MySQLConnection {
 public:
-    virtual void checkConnection(bool resetInCaseOfFailure);
+    virtual bool connectionValid();
 };
 
 #endif /* CHECKEDMYSQLCONNECTION_H */
