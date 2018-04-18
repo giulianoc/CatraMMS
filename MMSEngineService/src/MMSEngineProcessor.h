@@ -21,6 +21,14 @@
 class MMSEngineProcessor
 {
 public:
+    struct CurlDownloadData {
+        int         currentFileNumber;
+        string      workspaceIngestionBinaryPathName;
+        fstream     mediaSourceFileStream;
+        size_t      currentTotalSize;
+        size_t      maxChunkFileSize;
+    };
+    
     MMSEngineProcessor(
             shared_ptr<spdlog::logger> logger, 
             shared_ptr<MultiEventsSet> multiEventsSet,

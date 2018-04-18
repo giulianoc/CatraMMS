@@ -30,7 +30,7 @@ if [ $# -eq 2 ]; then
 elif [ $# -eq 3 ]; then
 	ingestionNumberToBeContinued=0
 elif [ $# -ne 4 ]; then
-	echo "Usage: $0 <ingestion job key> <user key> <user API key> <binary path name> [<chunk size in bytes]"
+	echo "Usage: $0 <ingestion job key> <binary path name> [<chunk size in bytes]"
 
 	exit 1
 fi

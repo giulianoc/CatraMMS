@@ -2734,62 +2734,73 @@ void MMSEngineProcessor::validateMediaSourceFile (int64_t ingestionJobKey,
     }    
 }
 
-/*
-static int64_t totalSize = 0;
-size_t WriteCallback(char* ptr, size_t size, size_t nmemb, void *f)
-{
-    auto l = spdlog::get("mmsEngineService");
 
-    if (size != 1)
-        l->info(__FILEREF__ + "SIZE IS DIFFERENT FROM 1");
-    totalSize += (size * nmemb);
+size_t curlDownloadCallback(char* ptr, size_t size, size_t nmemb, void *f)
+{
+    MMSEngineProcessor::CurlDownloadData* curlDownloadData = (MMSEngineProcessor::CurlDownloadData*) f;
+    
+    auto logger = spdlog::get("mmsEngineService");
+
+    if (curlDownloadData->currentFileNumber == 0)
+    {
+        (curlDownloadData->mediaSourceFileStream).open(
+                curlDownloadData -> workspaceIngestionBinaryPathName, ios::binary | ios::out | ios::trunc);
+        curlDownloadData->currentFileNumber += 1;
+    }
+    else if (curlDownloadData->currentTotalSize >= 
+            curlDownloadData->currentFileNumber * curlDownloadData->maxChunkFileSize)
+    {
+        (curlDownloadData->mediaSourceFileStream).close();
+
+        string localPathFileName = curlDownloadData->workspaceIngestionBinaryPathName
+                + ".new";
+        if (curlDownloadData->currentFileNumber > 2)
+        {
+            try
+            {
+                bool removeSrcFileAfterConcat = true;
+
+                logger->info(__FILEREF__ + "Concat file"
+                    + ", localPathFileName: " + localPathFileName
+                    + ", curlDownloadData->workspaceIngestionBinaryPathName: " + curlDownloadData->workspaceIngestionBinaryPathName
+                    + ", removeSrcFileAfterConcat: " + to_string(removeSrcFileAfterConcat)
+                );
+
+                FileIO::concatFile(localPathFileName, curlDownloadData->workspaceIngestionBinaryPathName, removeSrcFileAfterConcat);
+            }
+            catch(exception e)
+            {
+                string errorMessage = string("Error to concat file")
+                    + ", localPathFileName: " + localPathFileName
+                    + ", curlDownloadData->workspaceIngestionBinaryPathName: " + curlDownloadData->workspaceIngestionBinaryPathName
+                ;
+                logger->error(__FILEREF__ + errorMessage);
+
+                throw runtime_error(errorMessage);            
+            }
+        }
+        (curlDownloadData->mediaSourceFileStream).open(localPathFileName, ios::binary | ios::out | ios::trunc);
+        curlDownloadData->currentFileNumber += 1;
+    }
+    
+    curlDownloadData->mediaSourceFileStream.write(ptr, size * nmemb);
+    curlDownloadData->currentTotalSize += (size * nmemb);
+    
+    /*
     l->info(__FILEREF__ + "Writing"
         + ", size: " + to_string(size)
         + ", nmemb: " + to_string(nmemb)
         + ", totalSize: " + to_string(totalSize)
             );
-    
+     */
+
+/*
     FILE *file = (FILE *)f;
     return fwrite(ptr, size, nmemb, file);
+ */    
 
-//    ofstream *mediaSourceFileStream = (ofstream *) f;
-//
-//    streamsize toBeWritten = size * nmemb;
-//    streamsize written = 1;
-//    while (toBeWritten > 0 && written > 0)
-//    {
-//        // size_t positionBefore = mediaSourceFileStream->tellp();
-//        mediaSourceFileStream->write(ptr, toBeWritten);
-//        // size_t positionAfter = mediaSourceFileStream->tellp();
-//        
-//        // written = positionAfter - positionBefore;
-//        written = toBeWritten;
-//        
-//        totalSize += written;
-//
-//        toBeWritten -= written;
-//        
-//        if (written <= 0)
-//        {
-//            l->error(__FILEREF__ + "Writing"
-//                + ", toBeWritten: " + to_string(toBeWritten)
-//                + ", written: " + to_string(written)
-//                + ", totalSize: " + to_string(totalSize)
-//                    );
-//        }
-//    }
-
-//    l->info(__FILEREF__ + "Writing"
-//        + ", size: " + to_string(size)
-//        + ", nmemb: " + to_string(nmemb)
-//        + ", totalSize: " + to_string(totalSize)
-//            );
-    // return positionAfter - positionBefore;
-    // return (size * nmemb);
-
-    // return fwrite(ptr, size, nmemb, file);        
+    return size * nmemb;        
 };
-*/
 
 void MMSEngineProcessor::downloadMediaSourceFile(string sourceReferenceURL,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace)
@@ -2827,6 +2838,13 @@ RESUMING FILE TRANSFERS
         doesn't, curl will say so. 
  */    
  
+    string workspaceIngestionBinaryPathName = _mmsStorage->getWorkspaceIngestionRepository(workspace);
+    workspaceIngestionBinaryPathName
+        .append("/")
+        .append(to_string(ingestionJobKey))
+        .append(".binary")
+        ;
+
         
     for (int attemptIndex = 0; attemptIndex < _maxDownloadAttemptNumber && !downloadingCompleted; attemptIndex++)
     {
@@ -2840,18 +2858,16 @@ RESUMING FILE TRANSFERS
                 + ", attempt: " + to_string(attemptIndex + 1)
                 + ", _maxDownloadAttemptNumber: " + to_string(_maxDownloadAttemptNumber)
             );
-
-            string workspaceIngestionBinaryPathName = _mmsStorage->getWorkspaceIngestionRepository(workspace);
-            workspaceIngestionBinaryPathName
-                .append("/")
-                .append(to_string(ingestionJobKey))
-                .append(".binary")
-                ;
             
             if (attemptIndex == 0)
             {
-                fstream mediaSourceFileStream(workspaceIngestionBinaryPathName, ios::binary | ios::out);
-                mediaSourceFileStream.exceptions(ios::badbit | ios::failbit);   // setting the exception mask
+                CurlDownloadData curlDownloadData;
+                curlDownloadData.currentFileNumber = 0;
+                curlDownloadData.workspaceIngestionBinaryPathName   = workspaceIngestionBinaryPathName;
+                curlDownloadData.maxChunkFileSize    = 20000000;
+                
+                // fstream mediaSourceFileStream(workspaceIngestionBinaryPathName, ios::binary | ios::out);
+                // mediaSourceFileStream.exceptions(ios::badbit | ios::failbit);   // setting the exception mask
                 // FILE *mediaSourceFileStream = fopen(workspaceIngestionBinaryPathName.c_str(), "wb");
 
                 curlpp::Cleanup cleaner;
@@ -2859,12 +2875,12 @@ RESUMING FILE TRANSFERS
 
                 // Set the writer callback to enable cURL 
                 // to write result in a memory area
-                request.setOpt(new curlpp::options::WriteStream(&mediaSourceFileStream));
+                // request.setOpt(new curlpp::options::WriteStream(&mediaSourceFileStream));
                 
-//                curlpp::options::WriteFunctionCurlFunction myFunction(WriteCallback);
-//                curlpp::OptionTrait<void *, CURLOPT_WRITEDATA> myData(mediaSourceFileStream);
-//                request.setOpt(myFunction);
-//                request.setOpt(myData);
+                curlpp::options::WriteFunctionCurlFunction curlDownloadCallbackFunction(curlDownloadCallback);
+                curlpp::OptionTrait<void *, CURLOPT_WRITEDATA> curlDownloadDataData(&curlDownloadData);
+                request.setOpt(curlDownloadCallbackFunction);
+                request.setOpt(curlDownloadDataData);
 
                 // Setting the URL to retrive.
                 request.setOpt(new curlpp::options::Url(sourceReferenceURL));
@@ -2889,7 +2905,35 @@ RESUMING FILE TRANSFERS
                 );
                 request.perform();
                 
-                mediaSourceFileStream.close();
+                (curlDownloadData.mediaSourceFileStream).close();
+
+                string localPathFileName = curlDownloadData.workspaceIngestionBinaryPathName
+                        + ".new";
+                if (curlDownloadData.currentFileNumber > 2)
+                {
+                    try
+                    {
+                        bool removeSrcFileAfterConcat = true;
+
+                        _logger->info(__FILEREF__ + "Concat file"
+                            + ", localPathFileName: " + localPathFileName
+                            + ", curlDownloadData.workspaceIngestionBinaryPathName: " + curlDownloadData.workspaceIngestionBinaryPathName
+                            + ", removeSrcFileAfterConcat: " + to_string(removeSrcFileAfterConcat)
+                        );
+
+                        FileIO::concatFile(localPathFileName, curlDownloadData.workspaceIngestionBinaryPathName, removeSrcFileAfterConcat);
+                    }
+                    catch(exception e)
+                    {
+                        string errorMessage = string("Error to concat file")
+                            + ", localPathFileName: " + localPathFileName
+                            + ", curlDownloadData.workspaceIngestionBinaryPathName: " + curlDownloadData.workspaceIngestionBinaryPathName
+                        ;
+                        _logger->error(__FILEREF__ + errorMessage);
+
+                        throw runtime_error(errorMessage);            
+                    }
+                }
             }
             else
             {
@@ -2898,20 +2942,31 @@ RESUMING FILE TRANSFERS
                 );
                 
                 // FILE *mediaSourceFileStream = fopen(workspaceIngestionBinaryPathName.c_str(), "wb+");
-                fstream mediaSourceFileStream(workspaceIngestionBinaryPathName, ios::binary | ios::out | ios::app);
-                mediaSourceFileStream.exceptions(ios::badbit | ios::failbit);   // setting the exception mask
+                long long fileSize;
+                {
+                    fstream mediaSourceFileStream(workspaceIngestionBinaryPathName, ios::binary | ios::out | ios::app);
+                    fileSize = mediaSourceFileStream.tellp();
+                    mediaSourceFileStream.close();
+                }
+
+                CurlDownloadData curlDownloadData;
+                curlDownloadData.workspaceIngestionBinaryPathName   = workspaceIngestionBinaryPathName;
+                curlDownloadData.maxChunkFileSize    = 10000000;
+
+                curlDownloadData.currentFileNumber = fileSize % curlDownloadData.maxChunkFileSize;
+                fileSize = curlDownloadData.currentFileNumber * curlDownloadData.maxChunkFileSize;
 
                 curlpp::Cleanup cleaner;
                 curlpp::Easy request;
 
                 // Set the writer callback to enable cURL 
                 // to write result in a memory area
-                request.setOpt(new curlpp::options::WriteStream(&mediaSourceFileStream));
+                // request.setOpt(new curlpp::options::WriteStream(&mediaSourceFileStream));
 
-//                curlpp::options::WriteFunctionCurlFunction myFunction(WriteCallback);
-//                curlpp::OptionTrait<void *, CURLOPT_WRITEDATA> myData(mediaSourceFileStream);
-//                request.setOpt(myFunction);
-//                request.setOpt(myData);
+                curlpp::options::WriteFunctionCurlFunction curlDownloadCallbackFunction(curlDownloadCallback);
+                curlpp::OptionTrait<void *, CURLOPT_WRITEDATA> curlDownloadDataData(&curlDownloadData);
+                request.setOpt(curlDownloadCallbackFunction);
+                request.setOpt(curlDownloadDataData);
 
                 // Setting the URL to retrive.
                 request.setOpt(new curlpp::options::Url(sourceReferenceURL));
@@ -2930,7 +2985,6 @@ RESUMING FILE TRANSFERS
                 request.setOpt(new curlpp::options::ProgressFunction(curlpp::types::ProgressFunctionFunctor(functor)));
                 request.setOpt(new curlpp::options::NoProgress(0L));
                 
-                long long fileSize = mediaSourceFileStream.tellp();
                 if (fileSize > 2 * 1000 * 1000 * 1000)
                     request.setOpt(new curlpp::options::ResumeFromLarge(fileSize));
                 else
@@ -2942,7 +2996,36 @@ RESUMING FILE TRANSFERS
                     + ", resuming from fileSize: " + to_string(fileSize)
                 );
                 request.perform();
-                mediaSourceFileStream.close();
+                
+                (curlDownloadData.mediaSourceFileStream).close();
+
+                string localPathFileName = curlDownloadData.workspaceIngestionBinaryPathName
+                        + ".new";
+                if (curlDownloadData.currentFileNumber > 2)
+                {
+                    try
+                    {
+                        bool removeSrcFileAfterConcat = true;
+
+                        _logger->info(__FILEREF__ + "Concat file"
+                            + ", localPathFileName: " + localPathFileName
+                            + ", curlDownloadData.workspaceIngestionBinaryPathName: " + curlDownloadData.workspaceIngestionBinaryPathName
+                            + ", removeSrcFileAfterConcat: " + to_string(removeSrcFileAfterConcat)
+                        );
+
+                        FileIO::concatFile(localPathFileName, curlDownloadData.workspaceIngestionBinaryPathName, removeSrcFileAfterConcat);
+                    }
+                    catch(exception e)
+                    {
+                        string errorMessage = string("Error to concat file")
+                            + ", localPathFileName: " + localPathFileName
+                            + ", curlDownloadData.workspaceIngestionBinaryPathName: " + curlDownloadData.workspaceIngestionBinaryPathName
+                        ;
+                        _logger->error(__FILEREF__ + errorMessage);
+
+                        throw runtime_error(errorMessage);            
+                    }
+                }
             }
 
             downloadingCompleted = true;
