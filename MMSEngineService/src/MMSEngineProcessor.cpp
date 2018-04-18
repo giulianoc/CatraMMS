@@ -2739,6 +2739,15 @@ size_t WriteCallback(char* ptr, size_t size, size_t nmemb, void *f)
 {
     auto l = spdlog::get("mmsEngineService");
 
+    if (size != 1)
+        l->info(__FILEREF__ + "SIZE IS DIFFERENT FROM 1");
+    totalSize += (size * nmemb);
+    l->info(__FILEREF__ + "Writing"
+        + ", size: " + to_string(size)
+        + ", nmemb: " + to_string(nmemb)
+        + ", totalSize: " + to_string(totalSize)
+            );
+    
     FILE *file = (FILE *)f;
     return fwrite(ptr, size, nmemb, file);
 
