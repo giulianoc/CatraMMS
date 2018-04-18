@@ -1,0 +1,27 @@
+{
+    "Type": "Workflow",
+    "Label": "1",
+    "Variables": {
+        "TitleOfVideo": "My Title of the video content"
+    },
+    "Task": {
+        "Label": "My video (push)",
+        "Type": "Content-Ingestion",
+        "Parameters": {
+            "SourceFileName": "123456.mp4",
+            "userData": { "MyData": "this is my video data" },
+            "Title": "${TitleOfVideo}",
+	    "FileSizeInBytes": 278341022
+        },
+        "OnSuccess": {
+            "Task": {
+                "Label": "my label",
+                "Type": "Encode",
+                "Parameters": {
+                    "EncodingPriority": "Low",
+                    "EncodingProfilesSetLabel": "Sport"
+                }
+            }
+        }
+    }
+}
