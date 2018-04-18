@@ -1,4 +1,6 @@
 
+#include <stdio.h>
+
 #include <fstream>
 #include <sstream>
 #include <curlpp/cURLpp.hpp>
@@ -13,6 +15,7 @@
 #include "CheckIngestionTimes.h"
 #include "CheckEncodingTimes.h"
 #include "catralibraries/md5.h"
+
 
 MMSEngineProcessor::MMSEngineProcessor(
         shared_ptr<spdlog::logger> logger, 
@@ -2736,9 +2739,10 @@ size_t WriteCallback(char* ptr, size_t size, size_t nmemb, void *f)
 {
     auto l = spdlog::get("mmsEngineService");
 
-    // FILE *file = (FILE *)f;
-    // return fwrite(ptr, size, nmemb, file);
+    FILE *file = (FILE *)f;
+    return fwrite(ptr, size, nmemb, file);
 
+    /*
     ofstream *mediaSourceFileStream = (ofstream *) f;
 
     streamsize toBeWritten = size * nmemb;
@@ -2765,6 +2769,7 @@ size_t WriteCallback(char* ptr, size_t size, size_t nmemb, void *f)
                     );
         }
     }
+     */
 
 /*    
     l->info(__FILEREF__ + "Writing"
@@ -2774,7 +2779,7 @@ size_t WriteCallback(char* ptr, size_t size, size_t nmemb, void *f)
             );
 */
     // return positionAfter - positionBefore;
-    return (size * nmemb);
+    // return (size * nmemb);
 
     // return fwrite(ptr, size, nmemb, file);        
 };
@@ -2838,9 +2843,9 @@ RESUMING FILE TRANSFERS
             
             if (attemptIndex == 0)
             {
-                ofstream mediaSourceFileStream(workspaceIngestionBinaryPathName, ofstream::binary | ios::out);
-                mediaSourceFileStream.exceptions(ios::badbit | ios::failbit);   // setting the exception mask
-                // FILE *mediaSourceFileStream = fopen(workspaceIngestionBinaryPathName, "wb");
+                // ofstream mediaSourceFileStream(workspaceIngestionBinaryPathName, ofstream::binary | ios::out);
+                // mediaSourceFileStream.exceptions(ios::badbit | ios::failbit);   // setting the exception mask
+                FILE *mediaSourceFileStream = fopen(workspaceIngestionBinaryPathName.c_str(), "wb");
 
                 curlpp::Cleanup cleaner;
                 curlpp::Easy request;
@@ -2850,7 +2855,7 @@ RESUMING FILE TRANSFERS
                 // request.setOpt(new curlpp::options::WriteStream(&mediaSourceFileStream));
                 
                 curlpp::options::WriteFunctionCurlFunction myFunction(WriteCallback);
-                curlpp::OptionTrait<void *, CURLOPT_WRITEDATA> myData(&mediaSourceFileStream);
+                curlpp::OptionTrait<void *, CURLOPT_WRITEDATA> myData(mediaSourceFileStream);
                 request.setOpt(myFunction);
                 request.setOpt(myData);
 
@@ -2863,6 +2868,7 @@ RESUMING FILE TRANSFERS
                     request.setOpt(new curlpp::options::SslEngineDefault());
                 }
 
+                /*
                 chrono::system_clock::time_point lastProgressUpdate = chrono::system_clock::now();
                 double lastPercentageUpdated = -1.0;
                 curlpp::types::ProgressFunctionFunctor functor = bind(&MMSEngineProcessor::progressCallback, this,
@@ -2870,7 +2876,8 @@ RESUMING FILE TRANSFERS
                         placeholders::_1, placeholders::_2, placeholders::_3, placeholders::_4);
                 request.setOpt(new curlpp::options::ProgressFunction(curlpp::types::ProgressFunctionFunctor(functor)));
                 request.setOpt(new curlpp::options::NoProgress(0L));
-
+                */
+                
                 _logger->info(__FILEREF__ + "Downloading media file"
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", sourceReferenceURL: " + sourceReferenceURL
@@ -2883,8 +2890,9 @@ RESUMING FILE TRANSFERS
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 );
                 
-                ofstream mediaSourceFileStream(workspaceIngestionBinaryPathName, ofstream::binary | ofstream::out);
-                mediaSourceFileStream.exceptions(ios::badbit | ios::failbit);   // setting the exception mask
+                FILE *mediaSourceFileStream = fopen(workspaceIngestionBinaryPathName.c_str(), "wb+");
+                // ofstream mediaSourceFileStream(workspaceIngestionBinaryPathName, ofstream::binary | ofstream::out);
+                // mediaSourceFileStream.exceptions(ios::badbit | ios::failbit);   // setting the exception mask
 
                 curlpp::Cleanup cleaner;
                 curlpp::Easy request;
@@ -2894,7 +2902,7 @@ RESUMING FILE TRANSFERS
                 // request.setOpt(new curlpp::options::WriteStream(&mediaSourceFileStream));
 
                 curlpp::options::WriteFunctionCurlFunction myFunction(WriteCallback);
-                curlpp::OptionTrait<void *, CURLOPT_WRITEDATA> myData(&mediaSourceFileStream);
+                curlpp::OptionTrait<void *, CURLOPT_WRITEDATA> myData(mediaSourceFileStream);
                 request.setOpt(myFunction);
                 request.setOpt(myData);
 
@@ -2907,6 +2915,7 @@ RESUMING FILE TRANSFERS
                     request.setOpt(new curlpp::options::SslEngineDefault());
                 }
 
+                /*
                 chrono::system_clock::time_point lastTimeProgressUpdate = chrono::system_clock::now();
                 double lastPercentageUpdated = -1.0;
                 curlpp::types::ProgressFunctionFunctor functor = bind(&MMSEngineProcessor::progressCallback, this,
@@ -2914,17 +2923,20 @@ RESUMING FILE TRANSFERS
                         placeholders::_1, placeholders::_2, placeholders::_3, placeholders::_4);
                 request.setOpt(new curlpp::options::ProgressFunction(curlpp::types::ProgressFunctionFunctor(functor)));
                 request.setOpt(new curlpp::options::NoProgress(0L));
-
+                */
+                
+                /*
                 long long fileSize = mediaSourceFileStream.tellp();
                 if (fileSize > 2 * 1000 * 1000 * 1000)
                     request.setOpt(new curlpp::options::ResumeFromLarge(fileSize));
                 else
                     request.setOpt(new curlpp::options::ResumeFrom(fileSize));
+                */
                 
                 _logger->info(__FILEREF__ + "Resume Download media file"
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", sourceReferenceURL: " + sourceReferenceURL
-                    + ", resuming from fileSize: " + to_string(fileSize)
+                    // + ", resuming from fileSize: " + to_string(fileSize)
                 );
                 request.perform();
             }
