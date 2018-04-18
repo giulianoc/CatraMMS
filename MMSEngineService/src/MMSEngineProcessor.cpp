@@ -2734,6 +2734,7 @@ void MMSEngineProcessor::validateMediaSourceFile (int64_t ingestionJobKey,
     }    
 }
 
+/*
 static int64_t totalSize = 0;
 size_t WriteCallback(char* ptr, size_t size, size_t nmemb, void *f)
 {
@@ -2751,47 +2752,44 @@ size_t WriteCallback(char* ptr, size_t size, size_t nmemb, void *f)
     FILE *file = (FILE *)f;
     return fwrite(ptr, size, nmemb, file);
 
-    /*
-    ofstream *mediaSourceFileStream = (ofstream *) f;
+//    ofstream *mediaSourceFileStream = (ofstream *) f;
+//
+//    streamsize toBeWritten = size * nmemb;
+//    streamsize written = 1;
+//    while (toBeWritten > 0 && written > 0)
+//    {
+//        // size_t positionBefore = mediaSourceFileStream->tellp();
+//        mediaSourceFileStream->write(ptr, toBeWritten);
+//        // size_t positionAfter = mediaSourceFileStream->tellp();
+//        
+//        // written = positionAfter - positionBefore;
+//        written = toBeWritten;
+//        
+//        totalSize += written;
+//
+//        toBeWritten -= written;
+//        
+//        if (written <= 0)
+//        {
+//            l->error(__FILEREF__ + "Writing"
+//                + ", toBeWritten: " + to_string(toBeWritten)
+//                + ", written: " + to_string(written)
+//                + ", totalSize: " + to_string(totalSize)
+//                    );
+//        }
+//    }
 
-    streamsize toBeWritten = size * nmemb;
-    streamsize written = 1;
-    while (toBeWritten > 0 && written > 0)
-    {
-        // size_t positionBefore = mediaSourceFileStream->tellp();
-        mediaSourceFileStream->write(ptr, toBeWritten);
-        // size_t positionAfter = mediaSourceFileStream->tellp();
-        
-        // written = positionAfter - positionBefore;
-        written = toBeWritten;
-        
-        totalSize += written;
-
-        toBeWritten -= written;
-        
-        if (written <= 0)
-        {
-            l->error(__FILEREF__ + "Writing"
-                + ", toBeWritten: " + to_string(toBeWritten)
-                + ", written: " + to_string(written)
-                + ", totalSize: " + to_string(totalSize)
-                    );
-        }
-    }
-     */
-
-/*    
-    l->info(__FILEREF__ + "Writing"
-        + ", size: " + to_string(size)
-        + ", nmemb: " + to_string(nmemb)
-        + ", totalSize: " + to_string(totalSize)
-            );
-*/
+//    l->info(__FILEREF__ + "Writing"
+//        + ", size: " + to_string(size)
+//        + ", nmemb: " + to_string(nmemb)
+//        + ", totalSize: " + to_string(totalSize)
+//            );
     // return positionAfter - positionBefore;
     // return (size * nmemb);
 
     // return fwrite(ptr, size, nmemb, file);        
 };
+*/
 
 void MMSEngineProcessor::downloadMediaSourceFile(string sourceReferenceURL,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace)
@@ -2852,21 +2850,21 @@ RESUMING FILE TRANSFERS
             
             if (attemptIndex == 0)
             {
-                // ofstream mediaSourceFileStream(workspaceIngestionBinaryPathName, ofstream::binary | ios::out);
-                // mediaSourceFileStream.exceptions(ios::badbit | ios::failbit);   // setting the exception mask
-                FILE *mediaSourceFileStream = fopen(workspaceIngestionBinaryPathName.c_str(), "wb");
+                fstream mediaSourceFileStream(workspaceIngestionBinaryPathName, ios::binary | ios::out);
+                mediaSourceFileStream.exceptions(ios::badbit | ios::failbit);   // setting the exception mask
+                // FILE *mediaSourceFileStream = fopen(workspaceIngestionBinaryPathName.c_str(), "wb");
 
                 curlpp::Cleanup cleaner;
                 curlpp::Easy request;
 
                 // Set the writer callback to enable cURL 
                 // to write result in a memory area
-                // request.setOpt(new curlpp::options::WriteStream(&mediaSourceFileStream));
+                request.setOpt(new curlpp::options::WriteStream(&mediaSourceFileStream));
                 
-                curlpp::options::WriteFunctionCurlFunction myFunction(WriteCallback);
-                curlpp::OptionTrait<void *, CURLOPT_WRITEDATA> myData(mediaSourceFileStream);
-                request.setOpt(myFunction);
-                request.setOpt(myData);
+//                curlpp::options::WriteFunctionCurlFunction myFunction(WriteCallback);
+//                curlpp::OptionTrait<void *, CURLOPT_WRITEDATA> myData(mediaSourceFileStream);
+//                request.setOpt(myFunction);
+//                request.setOpt(myData);
 
                 // Setting the URL to retrive.
                 request.setOpt(new curlpp::options::Url(sourceReferenceURL));
@@ -2877,7 +2875,6 @@ RESUMING FILE TRANSFERS
                     request.setOpt(new curlpp::options::SslEngineDefault());
                 }
 
-                /*
                 chrono::system_clock::time_point lastProgressUpdate = chrono::system_clock::now();
                 double lastPercentageUpdated = -1.0;
                 curlpp::types::ProgressFunctionFunctor functor = bind(&MMSEngineProcessor::progressCallback, this,
@@ -2885,7 +2882,6 @@ RESUMING FILE TRANSFERS
                         placeholders::_1, placeholders::_2, placeholders::_3, placeholders::_4);
                 request.setOpt(new curlpp::options::ProgressFunction(curlpp::types::ProgressFunctionFunctor(functor)));
                 request.setOpt(new curlpp::options::NoProgress(0L));
-                */
                 
                 _logger->info(__FILEREF__ + "Downloading media file"
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -2893,7 +2889,7 @@ RESUMING FILE TRANSFERS
                 );
                 request.perform();
                 
-                fclose(mediaSourceFileStream);
+                mediaSourceFileStream.close();
             }
             else
             {
@@ -2901,21 +2897,21 @@ RESUMING FILE TRANSFERS
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 );
                 
-                FILE *mediaSourceFileStream = fopen(workspaceIngestionBinaryPathName.c_str(), "wb+");
-                // ofstream mediaSourceFileStream(workspaceIngestionBinaryPathName, ofstream::binary | ofstream::out);
-                // mediaSourceFileStream.exceptions(ios::badbit | ios::failbit);   // setting the exception mask
+                // FILE *mediaSourceFileStream = fopen(workspaceIngestionBinaryPathName.c_str(), "wb+");
+                fstream mediaSourceFileStream(workspaceIngestionBinaryPathName, ios::binary | ios::out | ios::app);
+                mediaSourceFileStream.exceptions(ios::badbit | ios::failbit);   // setting the exception mask
 
                 curlpp::Cleanup cleaner;
                 curlpp::Easy request;
 
                 // Set the writer callback to enable cURL 
                 // to write result in a memory area
-                // request.setOpt(new curlpp::options::WriteStream(&mediaSourceFileStream));
+                request.setOpt(new curlpp::options::WriteStream(&mediaSourceFileStream));
 
-                curlpp::options::WriteFunctionCurlFunction myFunction(WriteCallback);
-                curlpp::OptionTrait<void *, CURLOPT_WRITEDATA> myData(mediaSourceFileStream);
-                request.setOpt(myFunction);
-                request.setOpt(myData);
+//                curlpp::options::WriteFunctionCurlFunction myFunction(WriteCallback);
+//                curlpp::OptionTrait<void *, CURLOPT_WRITEDATA> myData(mediaSourceFileStream);
+//                request.setOpt(myFunction);
+//                request.setOpt(myData);
 
                 // Setting the URL to retrive.
                 request.setOpt(new curlpp::options::Url(sourceReferenceURL));
@@ -2926,7 +2922,6 @@ RESUMING FILE TRANSFERS
                     request.setOpt(new curlpp::options::SslEngineDefault());
                 }
 
-                /*
                 chrono::system_clock::time_point lastTimeProgressUpdate = chrono::system_clock::now();
                 double lastPercentageUpdated = -1.0;
                 curlpp::types::ProgressFunctionFunctor functor = bind(&MMSEngineProcessor::progressCallback, this,
@@ -2934,23 +2929,20 @@ RESUMING FILE TRANSFERS
                         placeholders::_1, placeholders::_2, placeholders::_3, placeholders::_4);
                 request.setOpt(new curlpp::options::ProgressFunction(curlpp::types::ProgressFunctionFunctor(functor)));
                 request.setOpt(new curlpp::options::NoProgress(0L));
-                */
                 
-                /*
                 long long fileSize = mediaSourceFileStream.tellp();
                 if (fileSize > 2 * 1000 * 1000 * 1000)
                     request.setOpt(new curlpp::options::ResumeFromLarge(fileSize));
                 else
                     request.setOpt(new curlpp::options::ResumeFrom(fileSize));
-                */
                 
                 _logger->info(__FILEREF__ + "Resume Download media file"
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", sourceReferenceURL: " + sourceReferenceURL
-                    // + ", resuming from fileSize: " + to_string(fileSize)
+                    + ", resuming from fileSize: " + to_string(fileSize)
                 );
                 request.perform();
-                fclose(mediaSourceFileStream);
+                mediaSourceFileStream.close();
             }
 
             downloadingCompleted = true;
