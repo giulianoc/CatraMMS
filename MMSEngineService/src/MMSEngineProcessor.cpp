@@ -2892,6 +2892,8 @@ RESUMING FILE TRANSFERS
                     + ", sourceReferenceURL: " + sourceReferenceURL
                 );
                 request.perform();
+                
+                fclose(mediaSourceFileStream);
             }
             else
             {
@@ -2948,6 +2950,7 @@ RESUMING FILE TRANSFERS
                     // + ", resuming from fileSize: " + to_string(fileSize)
                 );
                 request.perform();
+                fclose(mediaSourceFileStream);
             }
 
             downloadingCompleted = true;
