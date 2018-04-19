@@ -43,7 +43,8 @@ MMSEngineProcessor::MMSEngineProcessor(
     _maxIngestionJobsPerEvent       = configuration["mms"].get("maxIngestionJobsPerEvent", 5).asInt();
     // _maxIngestionJobsWithDependencyToCheckPerEvent = configuration["mms"].get("maxIngestionJobsWithDependencyToCheckPerEvent", 5).asInt();
 
-    _dependencyExpirationInHours       = configuration["mms"].get("dependencyExpirationInHours", 5).asInt();
+    _dependencyExpirationInHours        = configuration["mms"].get("dependencyExpirationInHours", 5).asInt();
+    _downloadChunkSizeInMegaBytes       = configuration["download"].get("downloadChunkSizeInMegaBytes", 5).asInt();
 }
 
 MMSEngineProcessor::~MMSEngineProcessor()
@@ -2854,7 +2855,7 @@ RESUMING FILE TRANSFERS
  (*2) = This requires that the web server supports at least HTTP/1.1. If it 
         doesn't, curl will say so. 
  */    
- 
+
     string workspaceIngestionBinaryPathName = _mmsStorage->getWorkspaceIngestionRepository(workspace);
     workspaceIngestionBinaryPathName
         .append("/")
@@ -2882,7 +2883,7 @@ RESUMING FILE TRANSFERS
                 curlDownloadData.currentChunkNumber = 0;
                 curlDownloadData.currentTotalSize = 0;
                 curlDownloadData.workspaceIngestionBinaryPathName   = workspaceIngestionBinaryPathName;
-                curlDownloadData.maxChunkFileSize    = 10000000;
+                curlDownloadData.maxChunkFileSize    = _downloadChunkSizeInMegaBytes;
                 
                 // fstream mediaSourceFileStream(workspaceIngestionBinaryPathName, ios::binary | ios::out);
                 // mediaSourceFileStream.exceptions(ios::badbit | ios::failbit);   // setting the exception mask
@@ -2982,7 +2983,7 @@ RESUMING FILE TRANSFERS
 
                 CurlDownloadData curlDownloadData;
                 curlDownloadData.workspaceIngestionBinaryPathName   = workspaceIngestionBinaryPathName;
-                curlDownloadData.maxChunkFileSize    = 10000000;
+                curlDownloadData.maxChunkFileSize    = _downloadChunkSizeInMegaBytes;
 
                 curlDownloadData.currentChunkNumber = fileSize % curlDownloadData.maxChunkFileSize;
                 // fileSize = curlDownloadData.currentChunkNumber * curlDownloadData.maxChunkFileSize;
