@@ -212,11 +212,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
             // same string declared in EncoderVideoAudioProxy.cpp
             string noEncodingAvailableMessage("__NO-ENCODING-AVAILABLE__");
             
-            _logger->error(__FILEREF__ + noEncodingAvailableMessage);
+            _logger->warn(__FILEREF__ + noEncodingAvailableMessage);
 
             sendError(request, 400, noEncodingAvailableMessage);
 
-            throw runtime_error(noEncodingAvailableMessage);
+            // throw runtime_error(noEncodingAvailableMessage);
+            return;
         }
         
         try

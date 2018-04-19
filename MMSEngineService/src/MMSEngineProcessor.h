@@ -22,9 +22,9 @@ class MMSEngineProcessor
 {
 public:
     struct CurlDownloadData {
-        int         currentFileNumber;
+        int         currentChunkNumber;
         string      workspaceIngestionBinaryPathName;
-        fstream     mediaSourceFileStream;
+        ofstream    mediaSourceFileStream;
         size_t      currentTotalSize;
         size_t      maxChunkFileSize;
     };

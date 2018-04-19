@@ -2741,29 +2741,29 @@ size_t curlDownloadCallback(char* ptr, size_t size, size_t nmemb, void *f)
     
     auto logger = spdlog::get("mmsEngineService");
 
-    if (curlDownloadData->currentFileNumber == 0)
+    if (curlDownloadData->currentChunkNumber == 0)
     {
         (curlDownloadData->mediaSourceFileStream).open(
-                curlDownloadData -> workspaceIngestionBinaryPathName, ios::binary | ios::out | ios::trunc);
-        curlDownloadData->currentFileNumber += 1;
+                curlDownloadData -> workspaceIngestionBinaryPathName, ofstream::binary | ofstream::trunc);
+        curlDownloadData->currentChunkNumber += 1;
         
         logger->info(__FILEREF__ + "Opening binary file"
              + ", curlDownloadData -> workspaceIngestionBinaryPathName: " + curlDownloadData -> workspaceIngestionBinaryPathName
-             + ", curlDownloadData->currentFileNumber: " + to_string(curlDownloadData->currentFileNumber)
+             + ", curlDownloadData->currentChunkNumber: " + to_string(curlDownloadData->currentChunkNumber)
              + ", curlDownloadData->currentTotalSize: " + to_string(curlDownloadData->currentTotalSize)
              + ", curlDownloadData->maxChunkFileSize: " + to_string(curlDownloadData->maxChunkFileSize)
         );
     }
     else if (curlDownloadData->currentTotalSize >= 
-            curlDownloadData->currentFileNumber * curlDownloadData->maxChunkFileSize)
+            curlDownloadData->currentChunkNumber * curlDownloadData->maxChunkFileSize)
     {
         (curlDownloadData->mediaSourceFileStream).close();
 
+        /*
         string localPathFileName = curlDownloadData->workspaceIngestionBinaryPathName
                 // + ".new"
                 ;
-        /*
-        if (curlDownloadData->currentFileNumber >= 2)
+        if (curlDownloadData->currentChunkNumber >= 2)
         {
             try
             {
@@ -2801,12 +2801,12 @@ size_t curlDownloadCallback(char* ptr, size_t size, size_t nmemb, void *f)
         }
          */
         // (curlDownloadData->mediaSourceFileStream).open(localPathFileName, ios::binary | ios::out | ios::trunc);
-        (curlDownloadData->mediaSourceFileStream).open(localPathFileName, ios::binary | ios::app);
-        curlDownloadData->currentFileNumber += 1;
+        (curlDownloadData->mediaSourceFileStream).open(curlDownloadData->workspaceIngestionBinaryPathName, ofstream::binary | ofstream::app);
+        curlDownloadData->currentChunkNumber += 1;
 
         logger->info(__FILEREF__ + "Opening binary file"
-             + ", localPathFileName: " + localPathFileName
-             + ", curlDownloadData->currentFileNumber: " + to_string(curlDownloadData->currentFileNumber)
+             + ", curlDownloadData->workspaceIngestionBinaryPathName: " + curlDownloadData->workspaceIngestionBinaryPathName
+             + ", curlDownloadData->currentChunkNumber: " + to_string(curlDownloadData->currentChunkNumber)
              + ", curlDownloadData->currentTotalSize: " + to_string(curlDownloadData->currentTotalSize)
              + ", curlDownloadData->maxChunkFileSize: " + to_string(curlDownloadData->maxChunkFileSize)
         );
@@ -2879,7 +2879,7 @@ RESUMING FILE TRANSFERS
             if (attemptIndex == 0)
             {
                 CurlDownloadData curlDownloadData;
-                curlDownloadData.currentFileNumber = 0;
+                curlDownloadData.currentChunkNumber = 0;
                 curlDownloadData.currentTotalSize = 0;
                 curlDownloadData.workspaceIngestionBinaryPathName   = workspaceIngestionBinaryPathName;
                 curlDownloadData.maxChunkFileSize    = 10000000;
@@ -2925,10 +2925,10 @@ RESUMING FILE TRANSFERS
                 
                 (curlDownloadData.mediaSourceFileStream).close();
 
+                /*
                 string localPathFileName = curlDownloadData.workspaceIngestionBinaryPathName
                         + ".new";
-                /*
-                if (curlDownloadData.currentFileNumber >= 2)
+                if (curlDownloadData.currentChunkNumber >= 2)
                 {
                     try
                     {
@@ -2964,7 +2964,7 @@ RESUMING FILE TRANSFERS
                         throw runtime_error(errorMessage);            
                     }
                 }
-                 */
+                */
             }
             else
             {
@@ -2975,7 +2975,7 @@ RESUMING FILE TRANSFERS
                 // FILE *mediaSourceFileStream = fopen(workspaceIngestionBinaryPathName.c_str(), "wb+");
                 long long fileSize;
                 {
-                    fstream mediaSourceFileStream(workspaceIngestionBinaryPathName, ios::binary | ios::out | ios::app);
+                    ofstream mediaSourceFileStream(workspaceIngestionBinaryPathName, ofstream::binary | ofstream::app);
                     fileSize = mediaSourceFileStream.tellp();
                     mediaSourceFileStream.close();
                 }
@@ -2984,8 +2984,8 @@ RESUMING FILE TRANSFERS
                 curlDownloadData.workspaceIngestionBinaryPathName   = workspaceIngestionBinaryPathName;
                 curlDownloadData.maxChunkFileSize    = 10000000;
 
-                curlDownloadData.currentFileNumber = fileSize % curlDownloadData.maxChunkFileSize;
-                fileSize = curlDownloadData.currentFileNumber * curlDownloadData.maxChunkFileSize;
+                curlDownloadData.currentChunkNumber = fileSize % curlDownloadData.maxChunkFileSize;
+                // fileSize = curlDownloadData.currentChunkNumber * curlDownloadData.maxChunkFileSize;
                 curlDownloadData.currentTotalSize = fileSize;
 
                 curlpp::Cleanup cleaner;
@@ -3031,10 +3031,10 @@ RESUMING FILE TRANSFERS
                 
                 (curlDownloadData.mediaSourceFileStream).close();
 
+                /*
                 string localPathFileName = curlDownloadData.workspaceIngestionBinaryPathName
                         + ".new";
-                /*
-                if (curlDownloadData.currentFileNumber >= 2)
+                if (curlDownloadData.currentChunkNumber >= 2)
                 {
                     try
                     {
