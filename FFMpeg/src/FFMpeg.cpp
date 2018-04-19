@@ -112,7 +112,7 @@ void FFMpeg::encodeContent(
             size_t fileNameIndex = stagingEncodedAssetPathName.find_last_of("/");
             if (fileNameIndex == string::npos)
             {
-                string errorMessage = __FILEREF__ + "No fileName find in the staging encoded asset path name"
+                string errorMessage = __FILEREF__ + "ffmpeg: No fileName find in the staging encoded asset path name"
                         + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
                 _logger->error(errorMessage);
 
@@ -122,7 +122,7 @@ void FFMpeg::encodeContent(
             stagingEncodedAssetPath = stagingEncodedAssetPathName.substr(0, fileNameIndex);
         }
         _outputFfmpegPathFileName = string(stagingEncodedAssetPath)
-                + to_string(physicalPathKey)
+                + to_string(_currentEncodingJobKey)
                 + ".ffmpegoutput";
         /*
         _outputFfmpegPathFileName = _mmsStorage->getStagingAssetPathName (
@@ -182,7 +182,7 @@ void FFMpeg::encodeContent(
                 int executeCommandStatus = ProcessUtility:: execute (ffmpegExecuteCommand);
                 if (executeCommandStatus != 0)
                 {
-                    string errorMessage = __FILEREF__ + "ffmpeg command failed"
+                    string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
                             + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                     ;
                     _logger->error(errorMessage);
@@ -194,7 +194,7 @@ void FFMpeg::encodeContent(
             {
                 string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                         _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
-                string errorMessage = __FILEREF__ + "ffmpeg command failed"
+                string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
                         + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                         + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
                         + ", e.what(): " + e.what()
@@ -222,7 +222,7 @@ void FFMpeg::encodeContent(
             if (_twoPasses)
             {
                 string ffmpegPassLogPathFileName = string(stagingEncodedAssetPath)
-                    + to_string(physicalPathKey)
+                    + to_string(_currentEncodingJobKey)
                     + "_"
                     + encodedFileName
                     + ".passlog"
@@ -274,7 +274,7 @@ void FFMpeg::encodeContent(
                     int executeCommandStatus = ProcessUtility:: execute (ffmpegExecuteCommand);
                     if (executeCommandStatus != 0)
                     {
-                        string errorMessage = __FILEREF__ + "ffmpeg command failed"
+                        string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
                                 + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                         ;            
                         _logger->error(errorMessage);
@@ -286,7 +286,7 @@ void FFMpeg::encodeContent(
                 {
                     string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                             _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
-                    string errorMessage = __FILEREF__ + "ffmpeg command failed"
+                    string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
                             + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                             + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
                             + ", e.what(): " + e.what()
@@ -340,7 +340,7 @@ void FFMpeg::encodeContent(
                     int executeCommandStatus = ProcessUtility:: execute (ffmpegExecuteCommand);
                     if (executeCommandStatus != 0)
                     {
-                        string errorMessage = __FILEREF__ + "ffmpeg command failed"
+                        string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
                                 + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                         ;            
                         _logger->error(errorMessage);
@@ -352,7 +352,7 @@ void FFMpeg::encodeContent(
                 {
                     string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                             _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
-                    string errorMessage = __FILEREF__ + "ffmpeg command failed"
+                    string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
                             + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                             + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
                             + ", e.what(): " + e.what()
@@ -410,7 +410,7 @@ void FFMpeg::encodeContent(
                     int executeCommandStatus = ProcessUtility:: execute (ffmpegExecuteCommand);
                     if (executeCommandStatus != 0)
                     {
-                        string errorMessage = __FILEREF__ + "ffmpeg command failed"
+                        string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
                                 + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                         ;            
                         _logger->error(errorMessage);
@@ -422,7 +422,7 @@ void FFMpeg::encodeContent(
                 {
                     string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                             _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
-                    string errorMessage = __FILEREF__ + "ffmpeg command failed"
+                    string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
                             + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                             + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
                             + ", e.what(): " + e.what()
@@ -449,7 +449,7 @@ void FFMpeg::encodeContent(
 
             if (ulFileSize == 0)
             {
-                string errorMessage = __FILEREF__ + "ffmpeg command failed, encoded file size is 0"
+                string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed, encoded file size is 0"
                         + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                 ;
 
@@ -461,7 +461,7 @@ void FFMpeg::encodeContent(
     }
     catch(runtime_error e)
     {
-        _logger->error(__FILEREF__ + "ffmpeg encode failed"
+        _logger->error(__FILEREF__ + "ffmpeg: ffmpeg encode failed"
             + ", encodingJobKey: " + to_string(encodingJobKey)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", physicalPathKey: " + to_string(physicalPathKey)
@@ -495,7 +495,7 @@ void FFMpeg::encodeContent(
     }
     catch(exception e)
     {
-        _logger->error(__FILEREF__ + "ffmpeg encode failed"
+        _logger->error(__FILEREF__ + "ffmpeg: ffmpeg encode failed"
             + ", encodingJobKey: " + to_string(encodingJobKey)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", physicalPathKey: " + to_string(physicalPathKey)
@@ -537,7 +537,7 @@ int FFMpeg::getEncodingProgress()
     {        
         if (!FileIO::isFileExisting(_outputFfmpegPathFileName.c_str()))
         {
-            _logger->info(__FILEREF__ + "Encoding status not available"
+            _logger->info(__FILEREF__ + "ffmpeg: Encoding status not available"
                 + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
                 + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
                 + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
@@ -557,7 +557,7 @@ int FFMpeg::getEncodingProgress()
         }
         catch(exception e)
         {
-            _logger->error(__FILEREF__ + "Failure reading the encoding status file"
+            _logger->error(__FILEREF__ + "ffmpeg: Failure reading the encoding status file"
                 + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
                 + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
                 + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
@@ -638,16 +638,28 @@ int FFMpeg::getEncodingProgress()
             }
         }
     }
-    catch(...)
+    catch(FFMpegEncodingStatusNotAvailable e)
     {
-        _logger->info(__FILEREF__ + "getEncodingProgress failed"
+        _logger->info(__FILEREF__ + "ffmpeg: getEncodingProgress failed"
+            + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
+            + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
+            + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
+            + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
+            + ", e.what(): " + e.what()
+        );
+
+        throw FFMpegEncodingStatusNotAvailable();
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "ffmpeg: getEncodingProgress failed"
             + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
             + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
             + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
             + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
         );
 
-        throw FFMpegEncodingStatusNotAvailable();
+        throw e;
     }
 
     
@@ -659,7 +671,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
     size_t fileNameIndex = mmsAssetPathName.find_last_of("/");
     if (fileNameIndex == string::npos)
     {
-        string errorMessage = __FILEREF__ + "No fileName find in the asset path name"
+        string errorMessage = __FILEREF__ + "ffmpeg: No fileName find in the asset path name"
                 + ", mmsAssetPathName: " + mmsAssetPathName;
         _logger->error(errorMessage);
         
@@ -703,7 +715,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
         int executeCommandStatus = ProcessUtility:: execute (ffprobeExecuteCommand);
         if (executeCommandStatus != 0)
         {
-            string errorMessage = __FILEREF__ + "ffprobe command failed"
+            string errorMessage = __FILEREF__ + "ffmpeg: ffprobe command failed"
                     + ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
             ;
 
@@ -716,7 +728,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
     {
         string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                 detailsPathFileName, _charsToBeReadFromFfmpegErrorOutput);
-        string errorMessage = __FILEREF__ + "ffprobe command failed"
+        string errorMessage = __FILEREF__ + "ffmpeg: ffprobe command failed"
                 + ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
                 + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
         ;
@@ -875,7 +887,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
 
             if (!parsingSuccessful)
             {
-                string errorMessage = __FILEREF__ + "failed to parse the media details"
+                string errorMessage = __FILEREF__ + "ffmpeg: failed to parse the media details"
                         + ", mmsAssetPathName: " + mmsAssetPathName
                         + ", errors: " + errors
                         + ", mediaDetails: " + mediaDetails
@@ -887,7 +899,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
         }
         catch(...)
         {
-            string errorMessage = string("media json is not well format")
+            string errorMessage = string("ffmpeg: media json is not well format")
                     + ", mmsAssetPathName: " + mmsAssetPathName
                     + ", mediaDetails: " + mediaDetails
                     ;
@@ -899,7 +911,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
         string field = "streams";
         if (!isMetadataPresent(detailsRoot, field))
         {
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+            string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
                     + ", mmsAssetPathName: " + mmsAssetPathName
                     + ", Field: " + field;
             _logger->error(errorMessage);
@@ -916,7 +928,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
             field = "codec_type";
             if (!isMetadataPresent(streamRoot, field))
             {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
                         + ", mmsAssetPathName: " + mmsAssetPathName
                         + ", Field: " + field;
                 _logger->error(errorMessage);
@@ -932,7 +944,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
                 field = "codec_name";
                 if (!isMetadataPresent(streamRoot, field))
                 {
-                    string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
                             + ", mmsAssetPathName: " + mmsAssetPathName
                             + ", Field: " + field;
                     _logger->error(errorMessage);
@@ -946,7 +958,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
                 {
                     if (videoCodecName != "mjpeg")
                     {
-                        string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
                                 + ", mmsAssetPathName: " + mmsAssetPathName
                                 + ", Field: " + field;
                         _logger->error(errorMessage);
@@ -960,7 +972,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
                 field = "width";
                 if (!isMetadataPresent(streamRoot, field))
                 {
-                    string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
                             + ", mmsAssetPathName: " + mmsAssetPathName
                             + ", Field: " + field;
                     _logger->error(errorMessage);
@@ -972,7 +984,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
                 field = "height";
                 if (!isMetadataPresent(streamRoot, field))
                 {
-                    string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
                             + ", mmsAssetPathName: " + mmsAssetPathName
                             + ", Field: " + field;
                     _logger->error(errorMessage);
@@ -984,7 +996,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
                 field = "avg_frame_rate";
                 if (!isMetadataPresent(streamRoot, field))
                 {
-                    string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
                             + ", mmsAssetPathName: " + mmsAssetPathName
                             + ", Field: " + field;
                     _logger->error(errorMessage);
@@ -998,7 +1010,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
                 {
                     if (videoCodecName != "mjpeg")
                     {
-                        string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
                                 + ", mmsAssetPathName: " + mmsAssetPathName
                                 + ", Field: " + field;
                         _logger->error(errorMessage);
@@ -1016,7 +1028,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
                 field = "codec_name";
                 if (!isMetadataPresent(streamRoot, field))
                 {
-                    string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
                             + ", mmsAssetPathName: " + mmsAssetPathName
                             + ", Field: " + field;
                     _logger->error(errorMessage);
@@ -1028,7 +1040,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
                 field = "sample_rate";
                 if (!isMetadataPresent(streamRoot, field))
                 {
-                    string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
                             + ", mmsAssetPathName: " + mmsAssetPathName
                             + ", Field: " + field;
                     _logger->error(errorMessage);
@@ -1040,7 +1052,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
                 field = "channels";
                 if (!isMetadataPresent(streamRoot, field))
                 {
-                    string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
                             + ", mmsAssetPathName: " + mmsAssetPathName
                             + ", Field: " + field;
                     _logger->error(errorMessage);
@@ -1052,7 +1064,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
                 field = "bit_rate";
                 if (!isMetadataPresent(streamRoot, field))
                 {
-                    string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
                             + ", mmsAssetPathName: " + mmsAssetPathName
                             + ", Field: " + field;
                     _logger->error(errorMessage);
@@ -1066,7 +1078,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
         field = "format";
         if (!isMetadataPresent(detailsRoot, field))
         {
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+            string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
                     + ", mmsAssetPathName: " + mmsAssetPathName
                     + ", Field: " + field;
             _logger->error(errorMessage);
@@ -1080,7 +1092,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
         {
             if (videoCodecName != "" && videoCodecName != "mjpeg")
             {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
                     + ", mmsAssetPathName: " + mmsAssetPathName
                     + ", Field: " + field;
                 _logger->error(errorMessage);
@@ -1099,7 +1111,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
         {
             if (videoCodecName != "" && videoCodecName != "mjpeg")
             {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
                     + ", mmsAssetPathName: " + mmsAssetPathName
                     + ", Field: " + field;
                 _logger->error(errorMessage);
@@ -1120,7 +1132,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
     /*
     if (durationInMilliSeconds == -1)
     {
-        string errorMessage = __FILEREF__ + "durationInMilliSeconds was not able to be retrieved from media"
+        string errorMessage = __FILEREF__ + "ffmpeg: durationInMilliSeconds was not able to be retrieved from media"
                 + ", mmsAssetPathName: " + mmsAssetPathName
                 + ", durationInMilliSeconds: " + to_string(durationInMilliSeconds);
         _logger->error(errorMessage);
@@ -1129,7 +1141,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
     }
     else if (width == -1 || height == -1)
     {
-        string errorMessage = __FILEREF__ + "width/height were not able to be retrieved from media"
+        string errorMessage = __FILEREF__ + "ffmpeg: width/height were not able to be retrieved from media"
                 + ", mmsAssetPathName: " + mmsAssetPathName
                 + ", width: " + to_string(width)
                 + ", height: " + to_string(height)
@@ -1264,7 +1276,7 @@ vector<string> FFMpeg::generateFramesToIngest(
         int executeCommandStatus = ProcessUtility::execute (ffmpegExecuteCommand);
         if (executeCommandStatus != 0)
         {
-            string errorMessage = __FILEREF__ + "ffmpeg command failed"
+            string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
                     + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
             ;
 
@@ -1277,7 +1289,7 @@ vector<string> FFMpeg::generateFramesToIngest(
     {
         string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                 outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
-        string errorMessage = __FILEREF__ + "ffmpeg command failed"
+        string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
                 + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                 + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
         ;
@@ -1322,7 +1334,7 @@ vector<string> FFMpeg::generateFramesToIngest(
             }
             catch(runtime_error e)
             {
-                string errorMessage = __FILEREF__ + "listing directory failed"
+                string errorMessage = __FILEREF__ + "ffmpeg: listing directory failed"
                        + ", e.what(): " + e.what()
                 ;
                 _logger->error(errorMessage);
@@ -1331,7 +1343,7 @@ vector<string> FFMpeg::generateFramesToIngest(
             }
             catch(exception e)
             {
-                string errorMessage = __FILEREF__ + "listing directory failed"
+                string errorMessage = __FILEREF__ + "ffmpeg: listing directory failed"
                        + ", e.what(): " + e.what()
                 ;
                 _logger->error(errorMessage);
@@ -1350,7 +1362,7 @@ vector<string> FFMpeg::generateFramesToIngest(
 
     if (ulFileSize == 0)
     {
-        string errorMessage = __FILEREF__ + "ffmpeg command failed, image file size is 0"
+        string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed, image file size is 0"
             + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
         ;
         _logger->error(errorMessage);
@@ -1411,7 +1423,7 @@ void FFMpeg::generateConcatMediaToIngest(
         int executeCommandStatus = ProcessUtility::execute (ffmpegExecuteCommand);
         if (executeCommandStatus != 0)
         {
-            string errorMessage = __FILEREF__ + "ffmpeg command failed"
+            string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
                     + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
             ;
 
@@ -1424,7 +1436,7 @@ void FFMpeg::generateConcatMediaToIngest(
     {
         string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                 outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
-        string errorMessage = __FILEREF__ + "ffmpeg command failed"
+        string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
                 + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                 + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
         ;
@@ -1499,7 +1511,7 @@ void FFMpeg::generateSlideshowMediaToIngest(
         int executeCommandStatus = ProcessUtility::execute (ffmpegExecuteCommand);
         if (executeCommandStatus != 0)
         {
-            string errorMessage = __FILEREF__ + "ffmpeg command failed"
+            string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
                     + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
             ;
 
@@ -1512,7 +1524,7 @@ void FFMpeg::generateSlideshowMediaToIngest(
     {
         string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                 outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
-        string errorMessage = __FILEREF__ + "ffmpeg command failed"
+        string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
                 + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                 + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
         ;
@@ -1571,7 +1583,7 @@ void FFMpeg::generateCutMediaToIngest(
         int executeCommandStatus = ProcessUtility::execute (ffmpegExecuteCommand);
         if (executeCommandStatus != 0)
         {
-            string errorMessage = __FILEREF__ + "ffmpeg command failed"
+            string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
                     + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
             ;
 
@@ -1584,7 +1596,7 @@ void FFMpeg::generateCutMediaToIngest(
     {
         string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                 outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
-        string errorMessage = __FILEREF__ + "ffmpeg command failed"
+        string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
                 + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                 + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
         ;
@@ -1640,7 +1652,7 @@ void FFMpeg::settingFfmpegPatameters(
 
         if (!parsingSuccessful)
         {
-            string errorMessage = __FILEREF__ + "failed to parse the encoder details"
+            string errorMessage = __FILEREF__ + "ffmpeg: failed to parse the encoder details"
                     + ", errors: " + errors
                     + ", encodingProfileDetails: " + encodingProfileDetails
                     ;
@@ -1651,7 +1663,7 @@ void FFMpeg::settingFfmpegPatameters(
     }
     catch(...)
     {
-        throw runtime_error(string("wrong encoding profile json format")
+        throw runtime_error(string("ffmpeg: wrong encoding profile json format")
                 + ", encodingProfileDetails: " + encodingProfileDetails
                 );
     }
@@ -1662,7 +1674,7 @@ void FFMpeg::settingFfmpegPatameters(
         field = "fileFormat";
         if (!isMetadataPresent(encodingProfileRoot, field))
         {
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+            string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
                     + ", Field: " + field;
             _logger->error(errorMessage);
 
@@ -1706,7 +1718,7 @@ void FFMpeg::settingFfmpegPatameters(
         field = "video";
         if (!isMetadataPresent(encodingProfileRoot, field))
         {
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+            string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
                     + ", Field: " + field;
             _logger->error(errorMessage);
 
@@ -1721,7 +1733,7 @@ void FFMpeg::settingFfmpegPatameters(
             field = "codec";
             if (!isMetadataPresent(videoRoot, field))
             {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
                         + ", Field: " + field;
                 _logger->error(errorMessage);
 
@@ -1759,7 +1771,7 @@ void FFMpeg::settingFfmpegPatameters(
                 }
                 else
                 {
-                    string errorMessage = __FILEREF__ + "codec is wrong"
+                    string errorMessage = __FILEREF__ + "ffmpeg: codec is wrong"
                             + ", codec: " + codec;
                     _logger->error(errorMessage);
 
@@ -1773,7 +1785,7 @@ void FFMpeg::settingFfmpegPatameters(
             field = "width";
             if (!isMetadataPresent(videoRoot, field))
             {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
                         + ", Field: " + field;
                 _logger->error(errorMessage);
 
@@ -1786,7 +1798,7 @@ void FFMpeg::settingFfmpegPatameters(
             field = "height";
             if (!isMetadataPresent(videoRoot, field))
             {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
                         + ", Field: " + field;
                 _logger->error(errorMessage);
 
@@ -1806,7 +1818,7 @@ void FFMpeg::settingFfmpegPatameters(
             field = "kBitRate";
             if (!isMetadataPresent(videoRoot, field))
             {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
                         + ", Field: " + field;
                 _logger->error(errorMessage);
 
@@ -1826,7 +1838,7 @@ void FFMpeg::settingFfmpegPatameters(
             if (!isMetadataPresent(videoRoot, field) 
                     && fileFormat != "segment") // twoPasses is used ONLY if it is NOT segment
             {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
                         + ", Field: " + field;
                 _logger->error(errorMessage);
 
@@ -1896,7 +1908,7 @@ void FFMpeg::settingFfmpegPatameters(
         field = "audio";
         if (!isMetadataPresent(encodingProfileRoot, field))
         {
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+            string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
                     + ", Field: " + field;
             _logger->error(errorMessage);
 
@@ -1910,7 +1922,7 @@ void FFMpeg::settingFfmpegPatameters(
             field = "codec";
             if (!isMetadataPresent(audioRoot, field))
             {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
                         + ", Field: " + field;
                 _logger->error(errorMessage);
 
@@ -1930,7 +1942,7 @@ void FFMpeg::settingFfmpegPatameters(
             field = "kBitRate";
             if (!isMetadataPresent(audioRoot, field))
             {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
                         + ", Field: " + field;
                 _logger->error(errorMessage);
 
@@ -2037,7 +2049,7 @@ void FFMpeg::encodingFileFormatValidation(string fileFormat,
             && fileFormat != "segment"
             )
     {
-        string errorMessage = __FILEREF__ + "fileFormat is wrong"
+        string errorMessage = __FILEREF__ + "ffmpeg: fileFormat is wrong"
                 + ", fileFormat: " + fileFormat;
 
         logger->error(errorMessage);
@@ -2052,7 +2064,7 @@ void FFMpeg::encodingVideoCodecValidation(string codec,
     if (codec != "libx264" 
             && codec != "libvpx")
     {
-        string errorMessage = __FILEREF__ + "Video codec is wrong"
+        string errorMessage = __FILEREF__ + "ffmpeg: Video codec is wrong"
                 + ", codec: " + codec;
 
         logger->error(errorMessage);
@@ -2069,7 +2081,7 @@ void FFMpeg::encodingVideoProfileValidation(
     {
         if (profile != "high" && profile != "baseline" && profile != "main")
         {
-            string errorMessage = __FILEREF__ + "Profile is wrong"
+            string errorMessage = __FILEREF__ + "ffmpeg: Profile is wrong"
                     + ", codec: " + codec
                     + ", profile: " + profile;
 
@@ -2082,7 +2094,7 @@ void FFMpeg::encodingVideoProfileValidation(
     {
         if (profile != "best" && profile != "good")
         {
-            string errorMessage = __FILEREF__ + "Profile is wrong"
+            string errorMessage = __FILEREF__ + "ffmpeg: Profile is wrong"
                     + ", codec: " + codec
                     + ", profile: " + profile;
 
@@ -2093,7 +2105,7 @@ void FFMpeg::encodingVideoProfileValidation(
     }
     else
     {
-        string errorMessage = __FILEREF__ + "codec is wrong"
+        string errorMessage = __FILEREF__ + "ffmpeg: codec is wrong"
                 + ", codec: " + codec;
 
         logger->error(errorMessage);
@@ -2111,7 +2123,7 @@ void FFMpeg::encodingAudioCodecValidation(string codec,
             && codec != "libvorbis"
     )
     {
-        string errorMessage = __FILEREF__ + "Audio codec is wrong"
+        string errorMessage = __FILEREF__ + "ffmpeg: Audio codec is wrong"
                 + ", codec: " + codec;
 
         logger->error(errorMessage);

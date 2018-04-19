@@ -2760,7 +2760,9 @@ size_t curlDownloadCallback(char* ptr, size_t size, size_t nmemb, void *f)
         (curlDownloadData->mediaSourceFileStream).close();
 
         string localPathFileName = curlDownloadData->workspaceIngestionBinaryPathName
-                + ".new";
+                // + ".new"
+                ;
+        /*
         if (curlDownloadData->currentFileNumber >= 2)
         {
             try
@@ -2797,7 +2799,9 @@ size_t curlDownloadCallback(char* ptr, size_t size, size_t nmemb, void *f)
                 throw runtime_error(errorMessage);            
             }
         }
-        (curlDownloadData->mediaSourceFileStream).open(localPathFileName, ios::binary | ios::out | ios::trunc);
+         */
+        // (curlDownloadData->mediaSourceFileStream).open(localPathFileName, ios::binary | ios::out | ios::trunc);
+        (curlDownloadData->mediaSourceFileStream).open(localPathFileName, ios::binary | ios::app);
         curlDownloadData->currentFileNumber += 1;
 
         logger->info(__FILEREF__ + "Opening binary file"
@@ -2811,18 +2815,6 @@ size_t curlDownloadCallback(char* ptr, size_t size, size_t nmemb, void *f)
     curlDownloadData->mediaSourceFileStream.write(ptr, size * nmemb);
     curlDownloadData->currentTotalSize += (size * nmemb);
     
-    /*
-    l->info(__FILEREF__ + "Writing"
-        + ", size: " + to_string(size)
-        + ", nmemb: " + to_string(nmemb)
-        + ", totalSize: " + to_string(totalSize)
-            );
-     */
-
-/*
-    FILE *file = (FILE *)f;
-    return fwrite(ptr, size, nmemb, file);
- */    
 
     return size * nmemb;        
 };
@@ -2935,7 +2927,7 @@ RESUMING FILE TRANSFERS
 
                 string localPathFileName = curlDownloadData.workspaceIngestionBinaryPathName
                         + ".new";
-                (curlDownloadData.mediaSourceFileStream).close();
+                /*
                 if (curlDownloadData.currentFileNumber >= 2)
                 {
                     try
@@ -2972,6 +2964,7 @@ RESUMING FILE TRANSFERS
                         throw runtime_error(errorMessage);            
                     }
                 }
+                 */
             }
             else
             {
@@ -3040,7 +3033,7 @@ RESUMING FILE TRANSFERS
 
                 string localPathFileName = curlDownloadData.workspaceIngestionBinaryPathName
                         + ".new";
-                (curlDownloadData.mediaSourceFileStream).close();
+                /*
                 if (curlDownloadData.currentFileNumber >= 2)
                 {
                     try
@@ -3077,6 +3070,7 @@ RESUMING FILE TRANSFERS
                         throw runtime_error(errorMessage);            
                     }
                 }
+                 */
             }
 
             downloadingCompleted = true;

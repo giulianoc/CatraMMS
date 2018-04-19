@@ -365,11 +365,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
             string errorMessage = string("_ffmpeg->getEncodingProgress failed")
                 + ", e.what(): " + e.what()
                     ;
-            _logger->error(__FILEREF__ + errorMessage);
+            _logger->info(__FILEREF__ + errorMessage);
 
             sendError(request, 400, errorMessage);
 
-            throw e;
+            // throw e;
+            return;
         }
         catch(exception e)
         {
