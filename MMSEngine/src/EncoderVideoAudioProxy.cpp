@@ -745,6 +745,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                     + ffmpegEncoderHost + ":"
                     + to_string(ffmpegEncoderPort)
                     + ffmpegEncoderURI
+                    + "/" + to_string(_encodingItem->_encodingJobKey)
             ;
             string body;
             {
