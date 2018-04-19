@@ -19,10 +19,16 @@
 #include <vector>
 #include "spdlog/spdlog.h"
 #include "Workspace.h"
-// #include "catralibraries/MySQLConnection.h"
-#include "CheckedMySqlConnection.h"
+#include "catralibraries/MySQLConnection.h"
 #include "json/json.h"
 
+#ifndef __FILEREF__
+    #ifdef __APPLE__
+        #define __FILEREF__ string("[") + string(__FILE__).substr(string(__FILE__).find_last_of("/") + 1) + ":" + to_string(__LINE__) + "] "
+    #else
+        #define __FILEREF__ string("[") + basename(__FILE__) + ":" + to_string(__LINE__) + "] "
+    #endif
+#endif
 
 using namespace std;
 
@@ -492,12 +498,12 @@ public:
     tuple<shared_ptr<Workspace>,bool,bool> checkAPIKey (string apiKey);
 
     int64_t addEncodingProfilesSet (
-        shared_ptr<CheckedMySqlConnection> conn, int64_t workspaceKey,
+        shared_ptr<MySQLConnection> conn, int64_t workspaceKey,
         MMSEngineDBFacade::ContentType contentType, 
         string label);
 
     int64_t addEncodingProfile(
-        shared_ptr<CheckedMySqlConnection> conn,
+        shared_ptr<MySQLConnection> conn,
         int64_t workspaceKey,
         string label,
         MMSEngineDBFacade::ContentType contentType, 
@@ -513,14 +519,14 @@ public:
         // int maxIngestionJobsWithDependencyToCheck
     );
 
-    shared_ptr<CheckedMySqlConnection> beginIngestionJobs ();
+    shared_ptr<MySQLConnection> beginIngestionJobs ();
     
     int64_t addIngestionRoot (
-        shared_ptr<CheckedMySqlConnection> conn,
+        shared_ptr<MySQLConnection> conn,
     	int64_t workspaceKey, string rootType, string rootLabel,
         bool rootLabelDuplication);
 
-    int64_t addIngestionJob (shared_ptr<CheckedMySqlConnection> conn,
+    int64_t addIngestionJob (shared_ptr<MySQLConnection> conn,
     	int64_t workspaceKey, int64_t ingestionRootKey, 
         string label, string metadataContent,
         MMSEngineDBFacade::IngestionType ingestionType, 
@@ -528,12 +534,12 @@ public:
     );
 
     void updateIngestionJobMetadataContent (
-        shared_ptr<CheckedMySqlConnection> conn,
+        shared_ptr<MySQLConnection> conn,
         int64_t ingestionJobKey,
         string metadataContent);
 
-    shared_ptr<CheckedMySqlConnection> endIngestionJobs (
-        shared_ptr<CheckedMySqlConnection> conn, bool commit);
+    shared_ptr<MySQLConnection> endIngestionJobs (
+        shared_ptr<MySQLConnection> conn, bool commit);
 
     void updateIngestionJob (
         int64_t ingestionJobKey,
@@ -656,11 +662,14 @@ public:
 private:
     shared_ptr<spdlog::logger>                      _logger;
     // shared_ptr<DBConnectionPool<MySQLConnection>>     _connectionPool;
-    shared_ptr<DBConnectionPool<CheckedMySqlConnection>>     _connectionPool;
+    shared_ptr<DBConnectionPool<MySQLConnection>>     _connectionPool;
     string                          _defaultContentProviderName;
     string                          _defaultTerritoryName;
     int                             _maxEncodingFailures;
     int                             _confirmationCodeRetentionInDays;
+    
+    chrono::system_clock::time_point _lastConnectionStatsReport;
+    int             _dbConnectionPoolStatsReportPeriodInSeconds;
 
     void getTerritories(shared_ptr<Workspace> workspace);
 
@@ -668,10 +677,10 @@ private:
 
     bool isRealDBError(string exceptionMessage);
 
-    int64_t getLastInsertId(shared_ptr<CheckedMySqlConnection> conn);
+    int64_t getLastInsertId(shared_ptr<MySQLConnection> conn);
 
     int64_t addTerritory (
-	shared_ptr<CheckedMySqlConnection> conn,
+	shared_ptr<MySQLConnection> conn,
         int64_t workspaceKey,
         string territoryName
     );

@@ -64,7 +64,6 @@ void MMSEngineProcessor::operator ()()
     bool endEvent = false;
     while(!endEvent)
     {
-        // cout << "Calling getAndRemoveFirstEvent" << endl;
         shared_ptr<Event2> event = _multiEventsSet->getAndRemoveFirstEvent(MMSENGINEPROCESSORNAME, blocking, milliSecondsToBlock);
         if (event == nullptr)
         {
@@ -81,7 +80,7 @@ void MMSEngineProcessor::operator ()()
 
                 try
                 {
-        		handleCheckIngestionEvent ();
+                    handleCheckIngestionEvent ();
                 }
                 catch(exception e)
                 {
@@ -96,7 +95,7 @@ void MMSEngineProcessor::operator ()()
             break;
             case MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT:	// 2
             {
-                _logger->info(__FILEREF__ + "Received LOCALASSETINGESTIONEVENT");
+                _logger->debug(__FILEREF__ + "Received LOCALASSETINGESTIONEVENT");
 
                 shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = dynamic_pointer_cast<LocalAssetIngestionEvent>(event);
 
@@ -182,7 +181,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
         
         _mmsEngineDBFacade->getIngestionsToBeManaged(ingestionsToBeManaged, 
                 _processorMMS, _maxIngestionJobsPerEvent 
-                // _maxIngestionJobsWithDependencyToCheckPerEvent
         );
         
         for (tuple<int64_t, string, shared_ptr<Workspace>, string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus> 

@@ -21,7 +21,6 @@
 # with the authors.
 
 SET (SOURCES
-	CheckedMySqlConnection.cpp
 	Workspace.cpp
 	MMSStorage.cpp
 	MMSEngineDBFacade.cpp
@@ -30,7 +29,6 @@ SET (SOURCES
 	EncoderVideoAudioProxy.cpp
 )
 SET (HEADERS
-	CheckedMySqlConnection.h
 	Workspace.h
 	MMSStorage.h
 	MMSEngineDBFacade.h
