@@ -2773,7 +2773,7 @@ size_t curlDownloadCallback(char* ptr, size_t size, size_t nmemb, void *f)
                     + ", removeSrcFileAfterConcat: " + to_string(removeSrcFileAfterConcat)
                 );
 
-                FileIO::concatFile(localPathFileName, curlDownloadData->workspaceIngestionBinaryPathName, removeSrcFileAfterConcat);
+                FileIO::concatFile(curlDownloadData->workspaceIngestionBinaryPathName, localPathFileName, removeSrcFileAfterConcat);
             }
             catch(runtime_error e)
             {
