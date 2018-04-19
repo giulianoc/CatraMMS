@@ -2775,6 +2775,17 @@ size_t curlDownloadCallback(char* ptr, size_t size, size_t nmemb, void *f)
 
                 FileIO::concatFile(localPathFileName, curlDownloadData->workspaceIngestionBinaryPathName, removeSrcFileAfterConcat);
             }
+            catch(runtime_error e)
+            {
+                string errorMessage = string("Error to concat file")
+                    + ", localPathFileName: " + localPathFileName
+                    + ", curlDownloadData->workspaceIngestionBinaryPathName: " + curlDownloadData->workspaceIngestionBinaryPathName
+                        + ", e.what(): " + e.what()
+                ;
+                logger->error(__FILEREF__ + errorMessage);
+
+                throw runtime_error(errorMessage);            
+            }
             catch(exception e)
             {
                 string errorMessage = string("Error to concat file")
