@@ -2754,7 +2754,7 @@ size_t curlDownloadCallback(char* ptr, size_t size, size_t nmemb, void *f)
 
         string localPathFileName = curlDownloadData->workspaceIngestionBinaryPathName
                 + ".new";
-        if (curlDownloadData->currentFileNumber > 2)
+        if (curlDownloadData->currentFileNumber >= 2)
         {
             try
             {
@@ -2864,7 +2864,7 @@ RESUMING FILE TRANSFERS
                 CurlDownloadData curlDownloadData;
                 curlDownloadData.currentFileNumber = 0;
                 curlDownloadData.workspaceIngestionBinaryPathName   = workspaceIngestionBinaryPathName;
-                curlDownloadData.maxChunkFileSize    = 20000000;
+                curlDownloadData.maxChunkFileSize    = 10000000;
                 
                 // fstream mediaSourceFileStream(workspaceIngestionBinaryPathName, ios::binary | ios::out);
                 // mediaSourceFileStream.exceptions(ios::badbit | ios::failbit);   // setting the exception mask
@@ -2909,7 +2909,8 @@ RESUMING FILE TRANSFERS
 
                 string localPathFileName = curlDownloadData.workspaceIngestionBinaryPathName
                         + ".new";
-                if (curlDownloadData.currentFileNumber > 2)
+                (curlDownloadData.mediaSourceFileStream).close();
+                if (curlDownloadData.currentFileNumber >= 2)
                 {
                     try
                     {
@@ -3001,7 +3002,8 @@ RESUMING FILE TRANSFERS
 
                 string localPathFileName = curlDownloadData.workspaceIngestionBinaryPathName
                         + ".new";
-                if (curlDownloadData.currentFileNumber > 2)
+                (curlDownloadData.mediaSourceFileStream).close();
+                if (curlDownloadData.currentFileNumber >= 2)
                 {
                     try
                     {

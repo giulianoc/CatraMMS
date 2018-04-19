@@ -1220,6 +1220,20 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEncod
             _encodingItem->_workspace->_territories
         );
     }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "_mmsStorage->moveAssetInMMSRepository failed"
+            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingItem->_physicalPathKey: " + to_string(_encodingItem->_physicalPathKey)
+            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            + ", _encodingItem->_workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+            + ", _encodingItem->_relativePath: " + _encodingItem->_relativePath
+            + ", e.what(): " + e.what()
+        );
+
+        throw e;
+    }
     catch(exception e)
     {
         _logger->error(__FILEREF__ + "_mmsStorage->moveAssetInMMSRepository failed"
@@ -1227,6 +1241,8 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEncod
             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingItem->_physicalPathKey: " + to_string(_encodingItem->_physicalPathKey)
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            + ", _encodingItem->_workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+            + ", _encodingItem->_relativePath: " + _encodingItem->_relativePath
         );
 
         throw e;

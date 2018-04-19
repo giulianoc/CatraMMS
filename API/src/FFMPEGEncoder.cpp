@@ -179,20 +179,18 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
     if (method == "encodeContent")
     {
-        /*
-        bool isAdminAPI = get<1>(workspaceAndFlags);
-        if (!isAdminAPI)
+        auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
+        if (encodingJobKeyIt == queryParameters.end())
         {
-            string errorMessage = string("APIKey flags does not have the ADMIN permission"
-                    ", isAdminAPI: " + to_string(isAdminAPI)
-                    );
+            string errorMessage = string("The 'encodingJobKey' parameter is not found");
             _logger->error(__FILEREF__ + errorMessage);
 
-            sendError(request, 403, errorMessage);
+            sendError(request, 400, errorMessage);
 
             throw runtime_error(errorMessage);
         }
-        */
+
+        int64_t encodingJobKey = stol(encodingJobKeyIt->second);
         
         lock_guard<mutex> locker(_encodingMutex);
 
@@ -222,18 +220,18 @@ void FFMPEGEncoder::manageRequestAndResponse(
         }
         
         try
-        {
+        {            
             _logger->info(__FILEREF__ + "Creating encodeContent thread"
-                + ", selectedEncoding->_encodingJobKey: " + to_string(selectedEncoding->_encodingJobKey)
+                + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
                 + ", requestBody: " + requestBody
             );
-            thread encodeContentThread(&FFMPEGEncoder::encodeContent, this, selectedEncoding, requestBody);
+            thread encodeContentThread(&FFMPEGEncoder::encodeContent, this, selectedEncoding, encodingJobKey, requestBody);
             encodeContentThread.detach();
             
             // encodeContent(request, selectedEncoding, requestBody);
             
             string responseBody = string("{ ")
-                    + "\"encodingJobKey\": " + to_string(selectedEncoding->_encodingJobKey) + " "
+                    + "\"encodingJobKey\": " + to_string(encodingJobKey) + " "
                     + ", \"ffmpegEncoderHost\": \"" + System::getHostName() + "\" "
                     + "}";
 
@@ -407,6 +405,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 void FFMPEGEncoder::encodeContent(
         // FCGX_Request& request,
         shared_ptr<Encoding> encoding,
+        int64_t encodingJobKey,
         string requestBody)
 {
     string api = "encodeContent";
@@ -418,6 +417,7 @@ void FFMPEGEncoder::encodeContent(
     try
     {
         encoding->_running = true;
+        encoding->_encodingJobKey = encodingJobKey;
         /*
         {
             "mmsSourceAssetPathName": "...",

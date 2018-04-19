@@ -62,6 +62,7 @@ private:
     void encodeContent(
         // FCGX_Request& request,
         shared_ptr<Encoding> encoding,
+            int64_t encodingJobKey,
         string requestBody);
 };
 

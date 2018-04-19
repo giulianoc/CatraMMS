@@ -41,7 +41,7 @@ server {
 		}
 
 		if ($request_method = POST) {
-			rewrite ^/catramms/encoder/?$ /encoder?method=encodeContent last;
+			rewrite ^/catramms/encoder/([0-9]+)/?$ /encoder?method=encodeContent&encodingJobKey=$1 last;
 		}
 		if ($request_method = GET) {
 			rewrite ^/catramms/encoder/progress/([0-9]+)/?$ /encoder?method=encodingProgress&encodingJobKey=$1 last;
