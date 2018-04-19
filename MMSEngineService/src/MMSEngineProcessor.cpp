@@ -2948,7 +2948,18 @@ RESUMING FILE TRANSFERS
                             + ", removeSrcFileAfterConcat: " + to_string(removeSrcFileAfterConcat)
                         );
 
-                        FileIO::concatFile(localPathFileName, curlDownloadData.workspaceIngestionBinaryPathName, removeSrcFileAfterConcat);
+                        FileIO::concatFile(curlDownloadData.workspaceIngestionBinaryPathName, localPathFileName, removeSrcFileAfterConcat);
+                    }
+                    catch(runtime_error e)
+                    {
+                        string errorMessage = string("Error to concat file")
+                            + ", localPathFileName: " + localPathFileName
+                            + ", curlDownloadData.workspaceIngestionBinaryPathName: " + curlDownloadData.workspaceIngestionBinaryPathName
+                                + ", e.what(): " + e.what()
+                        ;
+                        _logger->error(__FILEREF__ + errorMessage);
+
+                        throw runtime_error(errorMessage);            
                     }
                     catch(exception e)
                     {
@@ -3042,7 +3053,18 @@ RESUMING FILE TRANSFERS
                             + ", removeSrcFileAfterConcat: " + to_string(removeSrcFileAfterConcat)
                         );
 
-                        FileIO::concatFile(localPathFileName, curlDownloadData.workspaceIngestionBinaryPathName, removeSrcFileAfterConcat);
+                        FileIO::concatFile(curlDownloadData.workspaceIngestionBinaryPathName, localPathFileName, removeSrcFileAfterConcat);
+                    }
+                    catch(runtime_error e)
+                    {
+                        string errorMessage = string("Error to concat file")
+                            + ", localPathFileName: " + localPathFileName
+                            + ", curlDownloadData.workspaceIngestionBinaryPathName: " + curlDownloadData.workspaceIngestionBinaryPathName
+                                + ", e.what(): " + e.what()
+                        ;
+                        _logger->error(__FILEREF__ + errorMessage);
+
+                        throw runtime_error(errorMessage);            
                     }
                     catch(exception e)
                     {
