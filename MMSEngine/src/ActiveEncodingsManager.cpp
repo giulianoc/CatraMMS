@@ -118,13 +118,13 @@ void ActiveEncodingsManager::operator()()
                         }
                         catch(runtime_error e)
                         {
-                            _logger->error(__FILEREF__ + "_encoderVideoAudioProxy or updateEncodingJobProgress failed"
+                            _logger->error(__FILEREF__ + "getEncodingProgress failed"
                                 + ", runtime_error: " + e.what()
                             );
                         }
                         catch(exception e)
                         {
-                            _logger->error(__FILEREF__ + "_encoderVideoAudioProxy or updateEncodingJobProgress failed");
+                            _logger->error(__FILEREF__ + "getEncodingProgress failed");
                         }
 
                         if (chrono::duration_cast<chrono::hours>(

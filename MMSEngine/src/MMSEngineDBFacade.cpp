@@ -2402,6 +2402,111 @@ void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred (
     }
 }
 
+Json::Value MMSEngineDBFacade::getIngestionJobStatus (
+        int64_t ingestionRootKey
+)
+{    
+    string      lastSQLCommand;
+    Json::Value statusRoot;
+    
+    shared_ptr<MySQLConnection> conn;
+
+    try
+    {
+        string field;
+        
+        conn = _connectionPool->borrow();	
+
+        Json::Value workflowRoot;
+        {
+            lastSQLCommand = 
+                "select label from MMS_IngestionRoot where ingestionRootKey = ?";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, ingestionRootKey);
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                field = "ingestionRootKey";
+                workflowRoot[field] = ingestionRootKey;
+                
+                field = "label";
+                workflowRoot[field] = static_cast<string>(resultSet->getString("label"));
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "ingestionRootKey is not found"
+                    + ", ingestionRootKey: " + to_string(ingestionRootKey)
+                    + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }            
+        }
+        
+        field = "workflow";
+        statusRoot[field] = workflowRoot;
+        
+        Json::Value tasksRoot;
+        {
+            lastSQLCommand = 
+                "select ingestionJobKey, label, status from MMS_IngestionJob where ingestionRootKey = ?";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, ingestionRootKey);
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            while (resultSet->next())
+            {
+                Json::Value taskRoot;
+        
+                field = "ingestionJobKey";
+                taskRoot[field] = resultSet->getInt64(field);
+                
+                field = "label";
+                taskRoot[field] = static_cast<string>(resultSet->getString(field));
+
+                field = "status";
+                taskRoot[field] = static_cast<string>(resultSet->getString(field));
+                
+                tasksRoot.append(taskRoot);
+            }
+        }
+
+        field = "tasks";
+        statusRoot[field] = tasksRoot;
+
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        _connectionPool->unborrow(conn);
+
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw se;
+    }    
+    catch(exception e)
+    {        
+        _connectionPool->unborrow(conn);
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
+    } 
+    
+    return statusRoot;
+}
+
 MMSEngineDBFacade::ContentType MMSEngineDBFacade::getMediaItemKeyDetails(
     int64_t referenceMediaItemKey, bool warningIfMissing)
 {
