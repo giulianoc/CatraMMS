@@ -392,6 +392,23 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUser(
 
         throw e;
     }
+    catch(...)
+    {
+        // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+        if (!autoCommit)
+        {
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute("ROLLBACK");
+        }
+        
+        _connectionPool->unborrow(conn);
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw exception();
+    }
     
     tuple<int64_t,int64_t,string> workspaceKeyUserKeyAndConfirmationCode = 
             make_tuple(workspaceKey, userKey, confirmationCode);
@@ -605,6 +622,22 @@ string MMSEngineDBFacade::confirmUser(
 
         throw e;
     }
+    catch(...)
+    {
+        if (!autoCommit)
+        {
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute("ROLLBACK");
+        }
+        
+        _connectionPool->unborrow(conn);
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw exception();
+    }
     
     return apiKey;
 }
@@ -691,6 +724,16 @@ tuple<shared_ptr<Workspace>,bool,bool> MMSEngineDBFacade::checkAPIKey (string ap
 
         throw e;
     }
+    catch(...)
+    {        
+        _connectionPool->unborrow(conn);
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw exception();
+    }
     
     tuple<shared_ptr<Workspace>,bool,bool> workspaceAndFlags;
     
@@ -751,6 +794,14 @@ int64_t MMSEngineDBFacade::addTerritory (
         );
 
         throw e;
+    }
+    catch(...)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw exception();
     }
     
     return territoryKey;
@@ -816,6 +867,16 @@ bool MMSEngineDBFacade::isLoginValid(
 
         throw e;
     }
+    catch(...)
+    {        
+        _connectionPool->unborrow(conn);
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw exception();
+    }
     
     return isLoginValid;
 }
@@ -880,6 +941,16 @@ string MMSEngineDBFacade::getPassword(string emailAddress)
 
         throw e;
     }
+    catch(...)
+    {        
+        _connectionPool->unborrow(conn);
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw exception();
+    }
     
     return password;
 }
@@ -943,6 +1014,14 @@ int64_t MMSEngineDBFacade::addEncodingProfilesSet (
         );
 
         throw e;
+    }
+    catch(...)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw exception();
     }
     
     return encodingProfilesSetKey;
@@ -1078,6 +1157,14 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
         );
 
         throw e;
+    }
+    catch(...)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw exception();
     }
     
     return encodingProfileKey;
@@ -1405,6 +1492,22 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 
         throw e;
     }        
+    catch(...)
+    {        
+        if (!autoCommit)
+        {
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute("ROLLBACK");
+        }
+        
+        _connectionPool->unborrow(conn);
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw exception();
+    }        
 }
 
 shared_ptr<MySQLConnection> MMSEngineDBFacade::beginIngestionJobs ()
@@ -1448,6 +1551,16 @@ shared_ptr<MySQLConnection> MMSEngineDBFacade::beginIngestionJobs ()
         );
 
         throw e;
+    }
+    catch(...)
+    {        
+        _connectionPool->unborrow(conn);
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw exception();
     }
 
     return conn;    
@@ -1502,6 +1615,16 @@ shared_ptr<MySQLConnection> MMSEngineDBFacade::endIngestionJobs (
         );
 
         throw e;
+    }
+    catch(...)
+    {        
+        _connectionPool->unborrow(conn);
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw exception();
     }
 
     return conn;    
@@ -1582,6 +1705,14 @@ int64_t MMSEngineDBFacade::addIngestionRoot (
         );
 
         throw e;
+    }
+    catch(...)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw exception();
     }
     
     return ingestionRootKey;
@@ -1730,6 +1861,14 @@ int64_t MMSEngineDBFacade::addIngestionJob (
 
         throw e;
     }
+    catch(...)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw exception();
+    }
     
     return ingestionJobKey;
 }
@@ -1791,6 +1930,14 @@ void MMSEngineDBFacade::updateIngestionJobMetadataContent (
         );
 
         throw e;
+    }    
+    catch(...)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw exception();
     }    
 }
 
@@ -1863,6 +2010,16 @@ void MMSEngineDBFacade::updateIngestionJob (
         );
 
         throw e;
+    }    
+    catch(...)
+    {        
+        _connectionPool->unborrow(conn);
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw exception();
     }    
 }
 
@@ -2017,6 +2174,16 @@ void MMSEngineDBFacade::updateIngestionJob (
         );
 
         throw e;
+    }    
+    catch(...)
+    {        
+        _connectionPool->unborrow(conn);
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw exception();
     }    
 }
 
@@ -2175,6 +2342,16 @@ void MMSEngineDBFacade::updateIngestionJob (
 
         throw e;
     }    
+    catch(...)
+    {        
+        _connectionPool->unborrow(conn);
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw exception();
+    }    
 }
 
 bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress (
@@ -2268,6 +2445,16 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress (
 
         throw e;
     }
+    catch(...)
+    {
+        _connectionPool->unborrow(conn);
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw exception();
+    }
     
     return toBeCancelled;
 }
@@ -2335,6 +2522,16 @@ void MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress (
 
         throw e;
     }
+    catch(...)
+    {
+        _connectionPool->unborrow(conn);
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw exception();
+    }
 }
 
 void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred (
@@ -2399,6 +2596,16 @@ void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred (
         );
 
         throw e;
+    }
+    catch(...)
+    {
+        _connectionPool->unborrow(conn);
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw exception();
     }
 }
 
@@ -2503,6 +2710,16 @@ Json::Value MMSEngineDBFacade::getIngestionJobStatus (
 
         throw e;
     } 
+    catch(...)
+    {        
+        _connectionPool->unborrow(conn);
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw exception();
+    } 
     
     return statusRoot;
 }
@@ -2586,6 +2803,16 @@ MMSEngineDBFacade::ContentType MMSEngineDBFacade::getMediaItemKeyDetails(
         );
 
         throw e;
+    }
+    catch(...)
+    {
+        _connectionPool->unborrow(conn);
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw exception();
     }
     
     return contentType;
@@ -2673,6 +2900,16 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
 
         throw e;
     }
+    catch(...)
+    {
+        _connectionPool->unborrow(conn);
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw exception();
+    }
     
     return mediaItemKeyAndContentType;
 }
@@ -2757,6 +2994,16 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
         );
 
         throw e;
+    }
+    catch(...)
+    {
+        _connectionPool->unborrow(conn);
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw exception();
     }
     
     return mediaItemKeyAndContentType;
@@ -2852,6 +3099,16 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> MMSEn
         );
 
         throw e;
+    }    
+    catch(...)
+    {
+        _connectionPool->unborrow(conn);
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw exception();
     }    
 }
 
@@ -3119,6 +3376,23 @@ void MMSEngineDBFacade::getEncodingJobs(
 
         throw e;
     }
+    catch(...)
+    {
+        // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+        if (!autoCommit)
+        {
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute("ROLLBACK");
+        }
+        
+        _connectionPool->unborrow(conn);
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw exception();
+    }
 }
 
 vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetKey(
@@ -3209,6 +3483,16 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetKey(
 
         throw e;
     }       
+    catch(...)
+    {
+        _connectionPool->unborrow(conn);
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw exception();
+    }       
     
     return encodingProfilesSetKeys;
 }
@@ -3291,6 +3575,16 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(
         );
 
         throw e;
+    }       
+    catch(...)
+    {
+        _connectionPool->unborrow(conn);
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw exception();
     }       
     
     return encodingProfilesSetKeys;
@@ -3378,6 +3672,16 @@ int MMSEngineDBFacade::addEncodingJob (
         );
 
         throw e;
+    }        
+    catch(...)
+    {
+        _connectionPool->unborrow(conn);
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw exception();
     }        
 }
 
@@ -3601,6 +3905,23 @@ int MMSEngineDBFacade::updateEncodingJob (
 
         throw e;
     }
+    catch(...)
+    {
+        // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+        if (!autoCommit)
+        {
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute("ROLLBACK");
+        }
+        
+        _connectionPool->unborrow(conn);
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw exception();
+    }
     
     return encodingFailureNumber;
 }
@@ -3666,6 +3987,16 @@ void MMSEngineDBFacade::updateEncodingJobProgress (
         );
 
         throw e;
+    }
+    catch(...)
+    {
+        _connectionPool->unborrow(conn);
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw exception();
     }
 }
 
@@ -3993,6 +4324,16 @@ void MMSEngineDBFacade::checkWorkspaceMaxIngestionNumber (
 
         throw e;
     }        
+    catch(...)
+    {        
+        _connectionPool->unborrow(conn);
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw exception();
+    }        
 }
 
 string MMSEngineDBFacade::nextRelativePathToBeUsed (
@@ -4081,6 +4422,16 @@ string MMSEngineDBFacade::nextRelativePathToBeUsed (
         );
 
         throw e;
+    }    
+    catch(...)
+    {        
+        _connectionPool->unborrow(conn);
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw exception();
     }    
     
     return relativePathToBeUsed;
@@ -4658,6 +5009,23 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
 
         throw e;
     }
+    catch(...)
+    {
+        // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+        if (!autoCommit)
+        {
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute("ROLLBACK");
+        }
+        
+        _connectionPool->unborrow(conn);
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw exception();
+    }
     
     return mediaItemKeyAndPhysicalPathKey;
 }
@@ -4752,6 +5120,16 @@ tuple<int,string,string,string> MMSEngineDBFacade::getStorageDetails(
         );
 
         throw e;
+    }        
+    catch(...)
+    {        
+        _connectionPool->unborrow(conn);
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw exception();
     }        
 }
 
@@ -4929,6 +5307,23 @@ int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
 
         throw e;
     }
+    catch(...)
+    {
+        // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+        if (!autoCommit)
+        {
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute("ROLLBACK");
+        }
+        
+        _connectionPool->unborrow(conn);
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw exception();
+    }
     
     return encodedPhysicalPathKey;
 }
@@ -4986,6 +5381,14 @@ int64_t MMSEngineDBFacade::getLastInsertId(shared_ptr<MySQLConnection> conn)
         );
 
         throw e;
+    }
+    catch(...)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw exception();
     }
     
     return lastInsertId;
