@@ -1,6 +1,7 @@
 
 #include <thread>
 #include <fstream>
+#include <csignal>
 
 #include "catralibraries/Service.h"
 #include "catralibraries/Scheduler2.h"
@@ -13,6 +14,15 @@
 #include "MMSStorage.h"
 
 Json::Value loadConfigurationFile(string configurationPathName);
+
+void signalHandler(int signal)
+{
+    auto logger = spdlog::get("mmsEngineService");
+    
+    logger->error(__FILEREF__ + "Received a signal"
+        + ", signal: " + to_string(signal)
+    );
+}
 
 int main (int iArgc, char *pArgv [])
 {
@@ -93,6 +103,12 @@ int main (int iArgc, char *pArgv [])
 
     string pattern =  configuration["log"]["mms"].get("pattern", "XXX").asString();
     spdlog::set_pattern(pattern);
+
+    // install a signal handler
+    signal(SIGSEGV, signalHandler);
+    signal(SIGINT, signalHandler);
+    signal(SIGABRT, signalHandler);
+    // signal(SIGBUS, signalHandler);
 
     logger->info(__FILEREF__ + "Creating MMSEngineDBFacade"
             );
