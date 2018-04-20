@@ -58,7 +58,7 @@ private:
 
     int                     _maxIngestionJobsPerEvent;
     int                     _dependencyExpirationInHours;
-    int                     _downloadChunkSizeInMegaBytes;
+    size_t                  _downloadChunkSizeInMegaBytes;
     
     void handleCheckIngestionEvent();
 

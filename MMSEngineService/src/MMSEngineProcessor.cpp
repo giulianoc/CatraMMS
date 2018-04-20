@@ -2881,7 +2881,7 @@ RESUMING FILE TRANSFERS
                 curlDownloadData.currentChunkNumber = 0;
                 curlDownloadData.currentTotalSize = 0;
                 curlDownloadData.workspaceIngestionBinaryPathName   = workspaceIngestionBinaryPathName;
-                curlDownloadData.maxChunkFileSize    = _downloadChunkSizeInMegaBytes;
+                curlDownloadData.maxChunkFileSize    = _downloadChunkSizeInMegaBytes * 1000000;
                 
                 // fstream mediaSourceFileStream(workspaceIngestionBinaryPathName, ios::binary | ios::out);
                 // mediaSourceFileStream.exceptions(ios::badbit | ios::failbit);   // setting the exception mask
@@ -2981,7 +2981,7 @@ RESUMING FILE TRANSFERS
 
                 CurlDownloadData curlDownloadData;
                 curlDownloadData.workspaceIngestionBinaryPathName   = workspaceIngestionBinaryPathName;
-                curlDownloadData.maxChunkFileSize    = _downloadChunkSizeInMegaBytes;
+                curlDownloadData.maxChunkFileSize    = _downloadChunkSizeInMegaBytes * 1000000;
 
                 curlDownloadData.currentChunkNumber = fileSize % curlDownloadData.maxChunkFileSize;
                 // fileSize = curlDownloadData.currentChunkNumber * curlDownloadData.maxChunkFileSize;
