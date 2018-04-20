@@ -26,6 +26,9 @@ server {
 			rewrite ^/catramms/user/([0-9]+)/([0-9]+)/?$ /api?method=confirmUser&userKey=$1&confirmationeCode=$2 last;
 		}
 
+		if ($request_method = GET) {
+			rewrite ^/catramms/ingestion/([0-9]+)/?$ /api?method=ingestionStatus&ingestionRootKey=$1 last;
+		}
 		if ($request_method = POST) {
 			rewrite ^/catramms/ingestion/?$ /api?method=ingestion last;
 		}

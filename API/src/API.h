@@ -88,6 +88,12 @@ private:
         FCGX_Request& request,
         unordered_map<string, string> queryParameters);
 
+    void ingestionStatus(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody);
+
     /*
     void createAPIKey(
         FCGX_Request& request,
