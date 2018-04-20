@@ -352,6 +352,16 @@ int EncoderVideoAudioProxy::getEncodingProgress(int64_t encodingJobKey)
         ostringstream response;
         try
         {
+            if (_currentUsedFFMpegEncoderHost == "")
+            {
+                string errorMessage = __FILEREF__ + "no _currentUsedFFMpegEncoderHost initialized"
+                        + ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
+                        ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            
             // string ffmpegEncoderHost = _configuration["ffmpeg"].get("encoderHost", "").asString();
             int ffmpegEncoderPort = _configuration["ffmpeg"].get("encoderPort", "").asInt();
             _logger->info(__FILEREF__ + "Configuration item"
