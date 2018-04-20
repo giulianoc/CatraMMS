@@ -76,7 +76,7 @@ void MMSEngineProcessor::operator ()()
         {
             case MMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTIONEVENT:	// 1
             {
-                _logger->debug(__FILEREF__ + "Received MMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTION");
+                _logger->info(__FILEREF__ + "1. Received MMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTION");
 
                 try
                 {
@@ -91,11 +91,12 @@ void MMSEngineProcessor::operator ()()
 
                 _multiEventsSet->getEventsFactory()->releaseEvent<Event2>(event);
 
+                _logger->info(__FILEREF__ + "2. Received MMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTION");
             }
             break;
             case MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT:	// 2
             {
-                _logger->debug(__FILEREF__ + "Received LOCALASSETINGESTIONEVENT");
+                _logger->info(__FILEREF__ + "1. Received LOCALASSETINGESTIONEVENT");
 
                 shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = dynamic_pointer_cast<LocalAssetIngestionEvent>(event);
 
@@ -117,11 +118,13 @@ void MMSEngineProcessor::operator ()()
                 }
 
                 _multiEventsSet->getEventsFactory()->releaseEvent<LocalAssetIngestionEvent>(localAssetIngestionEvent);
+
+                _logger->info(__FILEREF__ + "2. Received LOCALASSETINGESTIONEVENT");
             }
             break;
             case MMSENGINE_EVENTTYPEIDENTIFIER_CHECKENCODINGEVENT:	// 3
             {
-                _logger->debug(__FILEREF__ + "Received MMSENGINE_EVENTTYPEIDENTIFIER_CHECKENCODING");
+                _logger->info(__FILEREF__ + "1. Received MMSENGINE_EVENTTYPEIDENTIFIER_CHECKENCODING");
 
                 try
                 {
@@ -136,6 +139,7 @@ void MMSEngineProcessor::operator ()()
 
                 _multiEventsSet->getEventsFactory()->releaseEvent<Event2>(event);
 
+                _logger->info(__FILEREF__ + "2. Received MMSENGINE_EVENTTYPEIDENTIFIER_CHECKENCODING");
             }
             break;
             /*
