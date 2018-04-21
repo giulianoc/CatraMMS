@@ -39,7 +39,10 @@ export LD_LIBRARY_PATH=$CatraMMS_PATH/CatraLibraries/lib:$CatraMMS_PATH/CatraMMS
 
 if [ "$command" == "start" ]
 then
-	#ulimit in order to generate a core in case of sigabrt signal
+        #to generate a core in case of sigabrt signal
+        #1. run below ulimit command
+        #2. run mmsEngineService as nodaemon with '&' to run as background
+        #3. waiting the core
 	ulimit -c unlimited
 	$CatraMMS_PATH/CatraMMS/bin/mmsEngineService $OPTIONS $CatraMMS_PATH/CatraMMS/etc/mms.cfg
 elif [ "$command" == "status" ]
