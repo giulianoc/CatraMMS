@@ -190,7 +190,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
             throw runtime_error(errorMessage);
         }
 
-        int64_t encodingJobKey = stol(encodingJobKeyIt->second);
+        int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
         
         lock_guard<mutex> locker(_encodingMutex);
 
@@ -212,9 +212,12 @@ void FFMPEGEncoder::manageRequestAndResponse(
             // same string declared in EncoderVideoAudioProxy.cpp
             string noEncodingAvailableMessage("__NO-ENCODING-AVAILABLE__");
             
-            _logger->warn(__FILEREF__ + noEncodingAvailableMessage);
+            string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
+                    + ", " + noEncodingAvailableMessage;
+            
+            _logger->warn(__FILEREF__ + errorMessage);
 
-            sendError(request, 400, noEncodingAvailableMessage);
+            sendError(request, 400, errorMessage);
 
             // throw runtime_error(noEncodingAvailableMessage);
             return;
@@ -241,6 +244,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         catch(exception e)
         {
             _logger->error(__FILEREF__ + "encodeContentThread failed"
+                + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
                 + ", requestBody: " + requestBody
                 + ", e.what(): " + e.what()
             );
@@ -266,7 +270,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
             throw runtime_error(errorMessage);
         }
 
-        int64_t encodingJobKey = stol(encodingJobKeyIt->second);
+        int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
         
         lock_guard<mutex> locker(_encodingMutex);
 
@@ -293,9 +297,22 @@ void FFMPEGEncoder::manageRequestAndResponse(
         }
         else
         {
+            /* in case we see the encoding is finished but encoding->_running is true,
+            it means the thread encodingContent is hanged.
+             In this case we can implement the method _ffmpeg->stillEncoding
+             doing a check may be looking if the encoded file is growing.
+             That will allow us to know for sure if the encoding finished and
+             reset the Encoding structure
+            bool stillEncoding = encoding->_ffmpeg->stillEncoding();
+            if (!stillEncoding)
+            {
+                encoding->_running = false;
+            }
+            */
+            
             responseBody = string("{ ")
                 + "\"encodingJobKey\": " + to_string(selectedEncoding->_encodingJobKey) + " "
-                + ", \"encodingFinished\": false "
+                + ", \"encodingFinished\": " + (selectedEncoding->_running ? "false " : "true ")
                 + "}";
         }
 
@@ -329,13 +346,15 @@ void FFMPEGEncoder::manageRequestAndResponse(
             throw runtime_error(errorMessage);
         }
 
+        int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
+
         lock_guard<mutex> locker(_encodingMutex);
 
         shared_ptr<Encoding>    selectedEncoding;
         bool                    encodingFound = false;
         for (shared_ptr<Encoding> encoding: _encodingsCapability)
         {
-            if (encoding->_encodingJobKey == stol(encodingJobKeyIt->second))
+            if (encoding->_encodingJobKey == encodingJobKey)
             {
                 encodingFound = true;
                 selectedEncoding = encoding;
@@ -349,11 +368,14 @@ void FFMPEGEncoder::manageRequestAndResponse(
             // same string declared in EncoderVideoAudioProxy.cpp
             string noEncodingJobKeyFound("__NO-ENCODINGJOBKEY-FOUND__");
             
-            _logger->error(__FILEREF__ + noEncodingJobKeyFound);
+            string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
+                    + ", " + noEncodingJobKeyFound;
+            
+            _logger->error(__FILEREF__ + errorMessage);
 
-            sendError(request, 400, noEncodingJobKeyFound);
+            sendError(request, 400, errorMessage);
 
-            throw runtime_error(noEncodingJobKeyFound);
+            throw runtime_error(errorMessage);
         }
 
         int encodingProgress;
@@ -364,6 +386,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         catch(FFMpegEncodingStatusNotAvailable e)
         {
             string errorMessage = string("_ffmpeg->getEncodingProgress failed")
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
                 + ", e.what(): " + e.what()
                     ;
             _logger->info(__FILEREF__ + errorMessage);
@@ -376,6 +399,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         catch(exception e)
         {
             string errorMessage = string("_ffmpeg->getEncodingProgress failed")
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
                 + ", e.what(): " + e.what()
                     ;
             _logger->error(__FILEREF__ + errorMessage);
@@ -386,7 +410,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
         }
         
         string responseBody = string("{ ")
-                + "\"encodingProgress\": " + to_string(encodingProgress) + " "
+                    + "\"encodingJobKey\": " + to_string(encodingJobKey)
+                + ", \"encodingProgress\": " + to_string(encodingProgress) + " "
                 + "}";
         
         sendSuccess(request, 200, responseBody);
@@ -413,6 +438,7 @@ void FFMPEGEncoder::encodeContent(
     string api = "encodeContent";
 
     _logger->info(__FILEREF__ + "Received " + api
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
         + ", requestBody: " + requestBody
     );
 
@@ -452,6 +478,7 @@ void FFMPEGEncoder::encodeContent(
             if (!parsingSuccessful)
             {
                 string errorMessage = __FILEREF__ + "failed to parse the requestBody"
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", errors: " + errors
                         + ", requestBody: " + requestBody
                         ;
@@ -463,6 +490,7 @@ void FFMPEGEncoder::encodeContent(
         catch(...)
         {
             string errorMessage = string("requestBody json is not well format")
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
                     + ", requestBody: " + requestBody
                     ;
             _logger->error(__FILEREF__ + errorMessage);
@@ -521,6 +549,7 @@ void FFMPEGEncoder::encodeContent(
         encoding->_running = false;
 
         string errorMessage = string ("API failed")
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
             + ", API: " + api
             + ", requestBody: " + requestBody
             + ", e.what(): " + e.what()
@@ -541,6 +570,7 @@ void FFMPEGEncoder::encodeContent(
         encoding->_running = false;
 
         string errorMessage = string("API failed")
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
             + ", API: " + api
             + ", requestBody: " + requestBody
             + ", e.what(): " + e.what()

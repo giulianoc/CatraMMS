@@ -293,7 +293,7 @@ int APICommon::operator()()
                 // workspaceAndFlags = _mmsEngine->checkAPIKey (apiKey);
                 workspaceAndFlags = _mmsEngineDBFacade->checkAPIKey(apiKey);
 
-                if (get<0>(workspaceAndFlags)->_workspaceKey != stol(custormerKey))
+                if (get<0>(workspaceAndFlags)->_workspaceKey != stoll(custormerKey))
                 {
                     _logger->error(__FILEREF__ + "Username (WorkspaceKey) is not the same Workspace the apiKey is referring"
                         + ", username (custormerKey): " + custormerKey
@@ -561,7 +561,7 @@ int APICommon::manageBinaryRequest()
         // workspaceAndFlags = _mmsEngine->checkAPIKey (apiKey);
         workspaceAndFlags = _mmsEngineDBFacade->checkAPIKey(apiKey);
 
-        if (get<0>(workspaceAndFlags)->_workspaceKey != stol(custormerKey))
+        if (get<0>(workspaceAndFlags)->_workspaceKey != stoll(custormerKey))
         {
             _logger->error(__FILEREF__ + "Username (WorkspaceKey) is not the same Workspace the apiKey is referring"
                 + ", username (custormerKey): " + custormerKey

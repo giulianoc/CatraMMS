@@ -54,7 +54,7 @@ public:
         string relativePath,
         int64_t encodingJobKey,
         int64_t ingestionJobKey);
-
+    
     int getEncodingProgress();
 
     tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> getMediaInfo(string mmsAssetPathName);

@@ -456,7 +456,7 @@ int EncoderVideoAudioProxy::getEncodingProgress(int64_t encodingJobKey)
                     // same string declared in FFMPEGEncoder.cpp
                     string noEncodingJobKeyFound("__NO-ENCODINGJOBKEY-FOUND__");
             
-                    if (error == noEncodingJobKeyFound)
+                    if (error.find(noEncodingJobKeyFound) != string::npos)
                     {
                         string errorMessage = string("No EncodingJobKey found")
                                 + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
@@ -915,7 +915,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                 {
                     string error = encodeContentResponse.get(field, "XXX").asString();
                     
-                    if (error == noEncodingAvailableMessage)
+                    if (error.find(noEncodingAvailableMessage) != string::npos)
                     {
                         string errorMessage = string("No Encodings available")
                                 + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 

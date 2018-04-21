@@ -178,7 +178,7 @@ void UploadBinary::getBinaryAndResponse(
 
             throw runtime_error(errorMessage);            
         }
-        int64_t ingestionJobKey = stol(ingestionJobKeyIt->second);
+        int64_t ingestionJobKey = stoll(ingestionJobKeyIt->second);
 
         shared_ptr<Workspace> workspace = get<0>(workspaceAndFlags);
         string workspaceIngestionBinaryPathName = _mmsStorage->getWorkspaceIngestionRepository(workspace);

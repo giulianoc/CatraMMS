@@ -1472,6 +1472,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
     {
         _logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveIngestedContentMetadata failed"
             + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+            + ", e.what: " + e.what()
         );
 
         _logger->info(__FILEREF__ + "Remove file"

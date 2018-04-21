@@ -283,7 +283,7 @@ void API::manageRequestAndResponse(
                     struct FileUploadProgressData::RequestData requestData;
 
                     requestData._progressId = progressIdIt->second;
-                    requestData._ingestionJobKey = stol(originalURIIt->second.substr(ingestionJobKeyIndex + 1));
+                    requestData._ingestionJobKey = stoll(originalURIIt->second.substr(ingestionJobKeyIndex + 1));
                     requestData._lastPercentageUpdated = 0;
                     requestData._callFailures = 0;
 
@@ -1391,12 +1391,12 @@ void API::ingestionStatus(
 
         {
             Json::Value ingestionStatusRoot = _mmsEngineDBFacade->getIngestionJobStatus(
-                    stol(ingestionRootKeyIt->second));
+                    stoll(ingestionRootKeyIt->second));
 
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, ingestionStatusRoot);
             
-            sendSuccess(request, 201, responseBody);
+            sendSuccess(request, 200, responseBody);
         }
     }
     catch(runtime_error e)
@@ -2262,7 +2262,7 @@ void API::uploadBinary(
 
             throw runtime_error(errorMessage);            
         }
-        int64_t ingestionJobKey = stol(ingestionJobKeyIt->second);
+        int64_t ingestionJobKey = stoll(ingestionJobKeyIt->second);
 
         auto binaryPathFileIt = requestDetails.find("HTTP_X_FILE");
         if (binaryPathFileIt == requestDetails.end())

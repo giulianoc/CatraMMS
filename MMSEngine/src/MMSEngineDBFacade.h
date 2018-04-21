@@ -621,7 +621,7 @@ public:
         shared_ptr<Workspace> workspace,
         int64_t ingestionJobKey,
         MMSEngineDBFacade::ContentType contentType,
-        Json::Value typeRoot,
+        Json::Value parametersRoot,
         string relativePath,
         string mediaSourceFileName,
         int mmsPartitionIndexUsed,

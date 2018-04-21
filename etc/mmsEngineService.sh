@@ -39,6 +39,8 @@ export LD_LIBRARY_PATH=$CatraMMS_PATH/CatraLibraries/lib:$CatraMMS_PATH/CatraMMS
 
 if [ "$command" == "start" ]
 then
+	#ulimit in order to generate a core in case of sigabrt signal
+	ulimit -c unlimited
 	$CatraMMS_PATH/CatraMMS/bin/mmsEngineService $OPTIONS $CatraMMS_PATH/CatraMMS/etc/mms.cfg
 elif [ "$command" == "status" ]
 then
