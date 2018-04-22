@@ -44,10 +44,11 @@ then
 	spawn-fcgi -p $PORT -P $PIDFILE $FORK_OPTION $CatraMMS_PATH/CatraMMS/bin/cgi/ffmpegEncoder.fcgi
 elif [ "$command" == "status" ]
 then
-	ps -ef | grep "ffmpegEncoder.fcgi"
+	ps -ef | grep "ffmpegEncoder.fcgi" | grep -v grep | grep -v status
 elif [ "$command" == "stop" ]
 then
 	#PIDFILE is not created in case of nodaemon
 	kill -9 `cat $PIDFILE`
+	ps -ef | grep ffmpeg | grep -v grep
 fi
 

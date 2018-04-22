@@ -83,7 +83,7 @@ private:
         int                 _runningEncodingsNumber;
     #endif
 
-    void processEncodingJob(mutex* mtEncodingJobs, EncodingJob* encodingJob);
+    void processEncodingJob(EncodingJob* encodingJob);
     void addEncodingItem(shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem);
     string encodeContentImage(
         shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem);

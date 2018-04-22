@@ -35,28 +35,27 @@ EncoderVideoAudioProxy::~EncoderVideoAudioProxy()
 {
 }
 
-void EncoderVideoAudioProxy::setData(
-        Json::Value configuration,
+void EncoderVideoAudioProxy::init(
+        int proxyIdentifier,
         mutex* mtEncodingJobs,
-        EncodingJobStatus* status,
+        Json::Value configuration,
         shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
         shared_ptr<MMSStorage> mmsStorage,
-        shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem,
         #ifdef __LOCALENCODER__
             int* pRunningEncodingsNumber,
         #endif
         shared_ptr<spdlog::logger> logger
 )
 {
+    _proxyIdentifier        = proxyIdentifier;
+    
+    _mtEncodingJobs         = mtEncodingJobs;
+    
     _logger                 = logger;
     _configuration          = configuration;
     
-    _mtEncodingJobs         = mtEncodingJobs;
-    _status                 = status;
-    
     _mmsEngineDBFacade      = mmsEngineDBFacade;
     _mmsStorage             = mmsStorage;
-    _encodingItem           = encodingItem;
     
     _mp4Encoder             = _configuration["encoding"].get("mp4Encoder", "").asString();
     _logger->info(__FILEREF__ + "Configuration item"
@@ -70,8 +69,8 @@ void EncoderVideoAudioProxy::setData(
     _intervalInSecondsToCheckEncodingFinished         = _configuration["encoding"].get("intervalInSecondsToCheckEncodingFinished", "").asInt();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", encoding->intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
-    );
-        
+    );        
+    
     #ifdef __LOCALENCODER__
         _ffmpegMaxCapacity      = 1;
         
@@ -81,9 +80,25 @@ void EncoderVideoAudioProxy::setData(
     #endif
 }
 
+void EncoderVideoAudioProxy::setEncodingData(
+        EncodingJobStatus* status,
+        shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem
+)
+{
+    _status                 = status;
+    
+    _encodingItem           = encodingItem;            
+}
+
 void EncoderVideoAudioProxy::operator()()
 {
     
+    _logger->info(__FILEREF__ + "Running EncoderVideoAudioProxy..."
+        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+        + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+        + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+    );
+        
     string stagingEncodedAssetPathName;
     try
     {
@@ -91,9 +106,12 @@ void EncoderVideoAudioProxy::operator()()
     }
     catch(MaxConcurrentJobsReached e)
     {
-        _logger->warn(__FILEREF__ + "encodeContentVideoAudio: " + e.what());
+        _logger->warn(__FILEREF__ + "encodeContentVideoAudio: " + e.what()
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+        );
         
         _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob MaxCapacityReached"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
         );
@@ -107,14 +125,23 @@ void EncoderVideoAudioProxy::operator()()
             *_status = EncodingJobStatus::Free;
         }
         
+        _logger->info(__FILEREF__ + "EncoderVideoAudioProxy finished"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+        );
+        
         // throw e;
         return;
     }
     catch(EncoderError e)
     {
-        _logger->error(__FILEREF__ + "encodeContentVideoAudio: " + e.what());
+        _logger->error(__FILEREF__ + "encodeContentVideoAudio: " + e.what()
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+        );
         
         _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
         );
@@ -123,6 +150,7 @@ void EncoderVideoAudioProxy::operator()()
                 MMSEngineDBFacade::EncodingError::PunctualError, _encodingItem->_ingestionJobKey);
 
         _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", encodingFailureNumber: " + to_string(encodingFailureNumber)
@@ -133,15 +161,24 @@ void EncoderVideoAudioProxy::operator()()
 
             *_status = EncodingJobStatus::Free;
         }
+        
+        _logger->info(__FILEREF__ + "EncoderVideoAudioProxy finished"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+        );
         
         // throw e;
         return;
     }
     catch(runtime_error e)
     {
-        _logger->error(__FILEREF__ + "encodeContentVideoAudio: " + e.what());
+        _logger->error(__FILEREF__ + "encodeContentVideoAudio: " + e.what()
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+        );
         
         _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
         );
@@ -153,6 +190,7 @@ void EncoderVideoAudioProxy::operator()()
                 _encodingItem->_ingestionJobKey);
 
         _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", encodingFailureNumber: " + to_string(encodingFailureNumber)
@@ -163,15 +201,24 @@ void EncoderVideoAudioProxy::operator()()
 
             *_status = EncodingJobStatus::Free;
         }
+        
+        _logger->info(__FILEREF__ + "EncoderVideoAudioProxy finished"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+        );
         
         // throw e;
         return;
     }
     catch(exception e)
     {
-        _logger->error(__FILEREF__ + "encodeContentVideoAudio: " + e.what());
+        _logger->error(__FILEREF__ + "encodeContentVideoAudio: " + e.what()
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+        );
         
         _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
         );
@@ -183,6 +230,7 @@ void EncoderVideoAudioProxy::operator()()
                 _encodingItem->_ingestionJobKey);
 
         _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", encodingFailureNumber: " + to_string(encodingFailureNumber)
@@ -193,6 +241,12 @@ void EncoderVideoAudioProxy::operator()()
 
             *_status = EncodingJobStatus::Free;
         }
+        
+        _logger->info(__FILEREF__ + "EncoderVideoAudioProxy finished"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+        );
         
         // throw e;
         return;
@@ -202,13 +256,16 @@ void EncoderVideoAudioProxy::operator()()
     {
         processEncodedContentVideoAudio(stagingEncodedAssetPathName);
     }
-    catch(exception e)
+    catch(runtime_error e)
     {
-        _logger->error(__FILEREF__ + "processEncodedContentVideoAudio: " + e.what());
+        _logger->error(__FILEREF__ + "processEncodedContentVideoAudio failed: " + e.what()
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+        );
         
         FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
 
         _logger->error(__FILEREF__ + "Remove"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
         );
 
@@ -224,6 +281,7 @@ void EncoderVideoAudioProxy::operator()()
         }
 
         _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
         );
@@ -235,6 +293,7 @@ void EncoderVideoAudioProxy::operator()()
                 _encodingItem->_ingestionJobKey);
 
         _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", encodingFailureNumber: " + to_string(encodingFailureNumber)
@@ -246,6 +305,70 @@ void EncoderVideoAudioProxy::operator()()
             *_status = EncodingJobStatus::Free;
         }
         
+        _logger->info(__FILEREF__ + "EncoderVideoAudioProxy finished"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+        );
+        
+        // throw e;
+        return;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "processEncodedContentVideoAudio failed: " + e.what()
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+        );
+        
+        FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
+
+        _logger->error(__FILEREF__ + "Remove"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+        );
+
+        // file in case of .3gp content OR directory in case of IPhone content
+        if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
+        {
+            Boolean_t bRemoveRecursively = true;
+            FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
+        }
+        else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
+        {
+            FileIO::remove(stagingEncodedAssetPathName);
+        }
+
+        _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+        );
+        
+        // PunctualError is used because, in case it always happens, the encoding will never reach a final state
+        int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (
+                _encodingItem->_encodingJobKey, 
+                MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
+                _encodingItem->_ingestionJobKey);
+
+        _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", encodingFailureNumber: " + to_string(encodingFailureNumber)
+        );
+
+        {
+            lock_guard<mutex> locker(*_mtEncodingJobs);
+
+            *_status = EncodingJobStatus::Free;
+        }
+        
+        _logger->info(__FILEREF__ + "EncoderVideoAudioProxy finished"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+        );
+        
         // throw e;
         return;
     }
@@ -253,6 +376,7 @@ void EncoderVideoAudioProxy::operator()()
     try
     {
         _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob NoError"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
         );
@@ -264,13 +388,21 @@ void EncoderVideoAudioProxy::operator()()
     }
     catch(exception e)
     {
-        _logger->error(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob failed: " + e.what());
+        _logger->error(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob failed: " + e.what()
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+        );
 
         {
             lock_guard<mutex> locker(*_mtEncodingJobs);
 
             *_status = EncodingJobStatus::Free;
         }
+        
+        _logger->info(__FILEREF__ + "EncoderVideoAudioProxy finished"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+        );
         
         // throw e;
         return;
@@ -281,6 +413,13 @@ void EncoderVideoAudioProxy::operator()()
 
         *_status = EncodingJobStatus::Free;
     }        
+    
+    _logger->info(__FILEREF__ + "EncoderVideoAudioProxy finished"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+        + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+        + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+    );
+        
 }
 
 string EncoderVideoAudioProxy::encodeContentVideoAudio()
@@ -288,6 +427,7 @@ string EncoderVideoAudioProxy::encodeContentVideoAudio()
     string stagingEncodedAssetPathName;
     
     _logger->info(__FILEREF__ + "Creating encoderVideoAudioProxy thread"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
         + ", _encodingItem->_encodingProfileTechnology" + to_string(static_cast<int>(_encodingItem->_encodingProfileTechnology))
         + ", _mp4Encoder: " + _mp4Encoder
     );
@@ -306,14 +446,18 @@ string EncoderVideoAudioProxy::encodeContentVideoAudio()
     }
     else if (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::WindowsMedia)
     {
-        string errorMessage = __FILEREF__ + "No Encoder available to encode WindowsMedia technology";
+        string errorMessage = __FILEREF__ + "No Encoder available to encode WindowsMedia technology"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                ;
         _logger->error(errorMessage);
         
         throw runtime_error(errorMessage);
     }
     else
     {
-        string errorMessage = __FILEREF__ + "Unknown technology and no Encoder available to encode";
+        string errorMessage = __FILEREF__ + "Unknown technology and no Encoder available to encode"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                ;
         _logger->error(errorMessage);
         
         throw runtime_error(errorMessage);
@@ -334,6 +478,7 @@ int EncoderVideoAudioProxy::getEncodingProgress(int64_t encodingJobKey)
         catch(FFMpegEncodingStatusNotAvailable e)
         {
             _logger->error(__FILEREF__ + "_ffmpeg->getEncodingProgress failed"
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", e.what(): " + e.what()
             );
 
@@ -342,6 +487,7 @@ int EncoderVideoAudioProxy::getEncodingProgress(int64_t encodingJobKey)
         catch(exception e)
         {
             _logger->error(__FILEREF__ + "_ffmpeg->getEncodingProgress failed"
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", e.what(): " + e.what()
             );
 
@@ -355,6 +501,7 @@ int EncoderVideoAudioProxy::getEncodingProgress(int64_t encodingJobKey)
             if (_currentUsedFFMpegEncoderHost == "")
             {
                 string errorMessage = __FILEREF__ + "no _currentUsedFFMpegEncoderHost initialized"
+                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                         + ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
                         ;
                 _logger->error(errorMessage);
@@ -365,10 +512,12 @@ int EncoderVideoAudioProxy::getEncodingProgress(int64_t encodingJobKey)
             // string ffmpegEncoderHost = _configuration["ffmpeg"].get("encoderHost", "").asString();
             int ffmpegEncoderPort = _configuration["ffmpeg"].get("encoderPort", "").asInt();
             _logger->info(__FILEREF__ + "Configuration item"
+                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", ffmpeg->encoderPort: " + to_string(ffmpegEncoderPort)
             );
             string ffmpegEncoderURI = _configuration["ffmpeg"].get("encoderURI", "").asString();
             _logger->info(__FILEREF__ + "Configuration item"
+                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", ffmpeg->encoderURI: " + ffmpegEncoderURI
             );
             ffmpegEncoderURL = 
@@ -384,10 +533,12 @@ int EncoderVideoAudioProxy::getEncodingProgress(int64_t encodingJobKey)
             {
                 string encoderUser = _configuration["ffmpeg"].get("encoderUser", "").asString();
                 _logger->info(__FILEREF__ + "Configuration item"
+                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                     + ", ffmpeg->encoderUser: " + encoderUser
                 );
                 string encoderPassword = _configuration["ffmpeg"].get("encoderPassword", "").asString();
                 _logger->info(__FILEREF__ + "Configuration item"
+                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                     + ", ffmpeg->encoderPassword: " + "..."
                 );
                 string userPasswordEncoded = Convert::base64_encode(encoderUser + ":" + encoderPassword);
@@ -409,11 +560,13 @@ int EncoderVideoAudioProxy::getEncodingProgress(int64_t encodingJobKey)
             chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
 
             _logger->info(__FILEREF__ + "getEncodingProgress"
+                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
             );
             request.perform();
             chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
             _logger->info(__FILEREF__ + "getEncodingProgress"
+                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
                     + ", encodingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count())
                     + ", response.str: " + response.str()
@@ -440,6 +593,7 @@ int EncoderVideoAudioProxy::getEncodingProgress(int64_t encodingJobKey)
                 if (!parsingSuccessful)
                 {
                     string errorMessage = __FILEREF__ + "failed to parse the response body"
+                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                             + ", errors: " + errors
                             + ", sResponse: " + sResponse
                             ;
@@ -459,6 +613,7 @@ int EncoderVideoAudioProxy::getEncodingProgress(int64_t encodingJobKey)
                     if (error.find(noEncodingJobKeyFound) != string::npos)
                     {
                         string errorMessage = string("No EncodingJobKey found")
+                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                                 + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                                 + ", sResponse: " + sResponse
                                 ;
@@ -469,6 +624,7 @@ int EncoderVideoAudioProxy::getEncodingProgress(int64_t encodingJobKey)
                     else
                     {
                         string errorMessage = string("FFMPEGEncoder error")
+                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                                 + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                                 + ", sResponse: " + sResponse
                                 ;
@@ -485,6 +641,7 @@ int EncoderVideoAudioProxy::getEncodingProgress(int64_t encodingJobKey)
                         encodingProgress = encodeProgressResponse.get("encodingProgress", "XXX").asInt();
                         
                         _logger->info(__FILEREF__ + "Retrieving encodingProgress"
+                            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                             + "encodingProgress: " + to_string(encodingProgress)
                                 );                                        
@@ -492,7 +649,8 @@ int EncoderVideoAudioProxy::getEncodingProgress(int64_t encodingJobKey)
                     else
                     {
                         string errorMessage = string("Unexpected FFMPEGEncoder response")
-                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                                 + ", sResponse: " + sResponse
                                 ;
                         _logger->error(__FILEREF__ + errorMessage);
@@ -504,6 +662,7 @@ int EncoderVideoAudioProxy::getEncodingProgress(int64_t encodingJobKey)
             catch(NoEncodingJobKeyFound e)
             {
                 string errorMessage = string("NoEncodingJobKeyFound")
+                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                         + ", sResponse: " + sResponse
                         + ", e.what(): " + e.what()
                         ;
@@ -514,6 +673,7 @@ int EncoderVideoAudioProxy::getEncodingProgress(int64_t encodingJobKey)
             catch(runtime_error e)
             {
                 string errorMessage = string("runtime_error")
+                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                         + ", sResponse: " + sResponse
                         + ", e.what(): " + e.what()
                         ;
@@ -524,6 +684,7 @@ int EncoderVideoAudioProxy::getEncodingProgress(int64_t encodingJobKey)
             catch(...)
             {
                 string errorMessage = string("response Body json is not well format")
+                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                         + ", sResponse: " + sResponse
                         ;
                 _logger->error(__FILEREF__ + errorMessage);
@@ -534,6 +695,7 @@ int EncoderVideoAudioProxy::getEncodingProgress(int64_t encodingJobKey)
         catch (curlpp::LogicError & e) 
         {
             _logger->error(__FILEREF__ + "Progress URL failed (LogicError)"
+                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", encodingJobKey: " + to_string(encodingJobKey) 
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
                 + ", exception: " + e.what()
@@ -545,6 +707,7 @@ int EncoderVideoAudioProxy::getEncodingProgress(int64_t encodingJobKey)
         catch (curlpp::RuntimeError & e) 
         { 
             string errorMessage = string("Progress URL failed (RuntimeError)")
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", encodingJobKey: " + to_string(encodingJobKey) 
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
                 + ", exception: " + e.what()
@@ -558,6 +721,7 @@ int EncoderVideoAudioProxy::getEncodingProgress(int64_t encodingJobKey)
         catch (NoEncodingJobKeyFound e)
         {
             _logger->warn(__FILEREF__ + "Progress URL failed (exception)"
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", encodingJobKey: " + to_string(encodingJobKey) 
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
                 + ", exception: " + e.what()
@@ -569,6 +733,7 @@ int EncoderVideoAudioProxy::getEncodingProgress(int64_t encodingJobKey)
         catch (runtime_error e)
         {
             _logger->error(__FILEREF__ + "Progress URL failed (exception)"
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", encodingJobKey: " + to_string(encodingJobKey) 
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
                 + ", exception: " + e.what()
@@ -580,6 +745,7 @@ int EncoderVideoAudioProxy::getEncodingProgress(int64_t encodingJobKey)
         catch (exception e)
         {
             _logger->error(__FILEREF__ + "Progress URL failed (exception)"
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", encodingJobKey: " + to_string(encodingJobKey) 
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
                 + ", exception: " + e.what()
@@ -604,14 +770,16 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
     #ifdef __LOCALENCODER__
         if (*_pRunningEncodingsNumber > _ffmpegMaxCapacity)
         {
-            _logger->info("Max ffmpeg encoder capacity is reached");
+            _logger->info("Max ffmpeg encoder capacity is reached"
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            );
 
             throw MaxConcurrentJobsReached();
         }
     #endif
 
     // stagingEncodedAssetPathName preparation
-    {
+    {        
         mmsSourceAssetPathName = _mmsStorage->getMMSAssetPathName(
             _encodingItem->_mmsPartitionNumber,
             _encodingItem->_workspace->_directoryName,
@@ -622,6 +790,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
         if (extensionIndex == string::npos)
         {
             string errorMessage = __FILEREF__ + "No extension find in the asset file name"
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                 + ", _encodingItem->_fileName: " + _encodingItem->_fileName;
             _logger->error(errorMessage);
@@ -630,7 +799,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
         }
 
         encodedFileName =
-                _encodingItem->_fileName.substr(0, extensionIndex)
+                to_string(_encodingItem->_encodingJobKey)
                 + "_" 
                 + to_string(_encodingItem->_encodingProfileKey);
         if (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MP4)
@@ -642,7 +811,9 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
             encodedFileName.append(".webm");
         else
         {
-            string errorMessage = __FILEREF__ + "Unknown technology";
+            string errorMessage = __FILEREF__ + "Unknown technology"
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                    ;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -665,6 +836,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
             if (!FileIO::directoryExisting(stagingEncodedAssetPathName)) 
             {
                 _logger->info(__FILEREF__ + "Create directory"
+                    + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                     + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
                 );
 
@@ -677,6 +849,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                         S_IROTH | S_IXOTH, noErrorIfExists, recursive);
             }        
         }
+        
     }
 
     #ifdef __LOCALENCODER__
@@ -702,6 +875,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
         catch(runtime_error e)
         {
             _logger->error(__FILEREF__ + "_ffmpeg->encodeContent failed"
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
                 + ", encodedFileName: " + encodedFileName
                 + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
@@ -719,6 +893,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
         catch(exception e)
         {
             _logger->error(__FILEREF__ + "_ffmpeg->encodeContent failed"
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
                 + ", encodedFileName: " + encodedFileName
                 + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
@@ -740,14 +915,17 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
         {
             string ffmpegEncoderHost = _configuration["ffmpeg"].get("encoderHost", "").asString();
             _logger->info(__FILEREF__ + "Configuration item"
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", ffmpeg->encoderHost: " + ffmpegEncoderHost
             );
             int ffmpegEncoderPort = _configuration["ffmpeg"].get("encoderPort", "").asInt();
             _logger->info(__FILEREF__ + "Configuration item"
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", ffmpeg->encoderPort: " + to_string(ffmpegEncoderPort)
             );
             string ffmpegEncoderURI = _configuration["ffmpeg"].get("encoderURI", "").asString();
             _logger->info(__FILEREF__ + "Configuration item"
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", ffmpeg->encoderURI: " + ffmpegEncoderURI
             );
             ffmpegEncoderURL = 
@@ -781,6 +959,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                         if (!parsingSuccessful)
                         {
                             string errorMessage = __FILEREF__ + "failed to parse the _encodingItem->_jsonProfile"
+                                    + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                                     + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                                     + ", errors: " + errors
                                     + ", _encodingItem->_jsonProfile: " + _encodingItem->_jsonProfile
@@ -793,6 +972,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                     catch(...)
                     {
                         string errorMessage = string("_encodingItem->_jsonProfile json is not well format")
+                                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                                 + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                                 + ", _encodingItem->_jsonProfile: " + _encodingItem->_jsonProfile
                                 ;
@@ -822,10 +1002,12 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
             {
                 string encoderUser = _configuration["ffmpeg"].get("encoderUser", "").asString();
                 _logger->info(__FILEREF__ + "Configuration item"
+                    + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                     + ", ffmpeg->encoderUser: " + encoderUser
                 );
                 string encoderPassword = _configuration["ffmpeg"].get("encoderPassword", "").asString();
                 _logger->info(__FILEREF__ + "Configuration item"
+                    + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                     + ", ffmpeg->encoderPassword: " + "..."
                 );
                 string userPasswordEncoded = Convert::base64_encode(encoderUser + ":" + encoderPassword);
@@ -849,6 +1031,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
             chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
 
             _logger->info(__FILEREF__ + "Encoding media file"
+                    + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                     + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
                     + ", body: " + body
@@ -875,6 +1058,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                 if (!parsingSuccessful)
                 {
                     string errorMessage = __FILEREF__ + "failed to parse the response body"
+                            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                             + ", errors: " + errors
                             + ", sResponse: " + sResponse
@@ -887,6 +1071,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
             catch(runtime_error e)
             {
                 string errorMessage = string("response Body json is not well format")
+                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                         + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                         + ", sResponse: " + sResponse
                         + ", e.what(): " + e.what()
@@ -898,6 +1083,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
             catch(...)
             {
                 string errorMessage = string("response Body json is not well format")
+                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                         + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                         + ", sResponse: " + sResponse
                         ;
@@ -918,6 +1104,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                     if (error.find(noEncodingAvailableMessage) != string::npos)
                     {
                         string errorMessage = string("No Encodings available")
+                                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                                 + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                                 + ", sResponse: " + sResponse
                                 ;
@@ -928,6 +1115,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                     else
                     {
                         string errorMessage = string("FFMPEGEncoder error")
+                                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                                 + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                                 + ", sResponse: " + sResponse
                                 ;
@@ -944,6 +1132,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                         _currentUsedFFMpegEncoderHost = encodeContentResponse.get("ffmpegEncoderHost", "XXX").asString();
                         
                         _logger->info(__FILEREF__ + "Retrieving ffmpegEncoderHost"
+                            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                             + "_currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
                                 );                                        
@@ -951,6 +1140,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                     else
                     {
                         string errorMessage = string("Unexpected FFMPEGEncoder response")
+                                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                                 + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                                 + ", sResponse: " + sResponse
                                 ;
@@ -973,6 +1163,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
             chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
             
             _logger->info(__FILEREF__ + "Encoded media file"
+                    + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                     + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
                     + ", body: " + body
@@ -984,6 +1175,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
         catch(MaxConcurrentJobsReached e)
         {
             string errorMessage = string("MaxConcurrentJobsReached")
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                 + ", response.str(): " + response.str()
                 + ", e.what(): " + e.what()
@@ -995,6 +1187,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
         catch (curlpp::LogicError & e) 
         {
             _logger->error(__FILEREF__ + "Encoding URL failed (LogicError)"
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
                 + ", exception: " + e.what()
@@ -1006,6 +1199,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
         catch (curlpp::RuntimeError & e) 
         {
             _logger->error(__FILEREF__ + "Encoding URL failed (RuntimeError)"
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
                 + ", exception: " + e.what()
@@ -1017,6 +1211,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
         catch (runtime_error e)
         {
             _logger->error(__FILEREF__ + "Encoding URL failed (runtime_error)"
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
                 + ", exception: " + e.what()
@@ -1028,6 +1223,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
         catch (exception e)
         {
             _logger->error(__FILEREF__ + "Encoding URL failed (exception)"
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
                 + ", exception: " + e.what()
@@ -1052,10 +1248,12 @@ bool EncoderVideoAudioProxy::getEncodingStatus(int64_t encodingJobKey)
         // string ffmpegEncoderHost = _configuration["ffmpeg"].get("encoderHost", "").asString();
         int ffmpegEncoderPort = _configuration["ffmpeg"].get("encoderPort", "").asInt();
         _logger->info(__FILEREF__ + "Configuration item"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", ffmpeg->encoderPort: " + to_string(ffmpegEncoderPort)
         );
         string ffmpegEncoderURI = _configuration["ffmpeg"].get("encoderURI", "").asString();
         _logger->info(__FILEREF__ + "Configuration item"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", ffmpeg->encoderURI: " + ffmpegEncoderURI
         );
         ffmpegEncoderURL = 
@@ -1071,10 +1269,12 @@ bool EncoderVideoAudioProxy::getEncodingStatus(int64_t encodingJobKey)
         {
             string encoderUser = _configuration["ffmpeg"].get("encoderUser", "").asString();
             _logger->info(__FILEREF__ + "Configuration item"
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", ffmpeg->encoderUser: " + encoderUser
             );
             string encoderPassword = _configuration["ffmpeg"].get("encoderPassword", "").asString();
             _logger->info(__FILEREF__ + "Configuration item"
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", ffmpeg->encoderPassword: " + "..."
             );
             string userPasswordEncoded = Convert::base64_encode(encoderUser + ":" + encoderPassword);
@@ -1096,11 +1296,13 @@ bool EncoderVideoAudioProxy::getEncodingStatus(int64_t encodingJobKey)
         chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
 
         _logger->info(__FILEREF__ + "getEncodingStatus"
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL
         );
         request.perform();
         chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
         _logger->info(__FILEREF__ + "getEncodingStatus"
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL
                 + ", encodingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count())
         );
@@ -1126,6 +1328,7 @@ bool EncoderVideoAudioProxy::getEncodingStatus(int64_t encodingJobKey)
             if (!parsingSuccessful)
             {
                 string errorMessage = __FILEREF__ + "failed to parse the response body"
+                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                         + ", errors: " + errors
                         + ", sResponse: " + sResponse
                         ;
@@ -1139,6 +1342,7 @@ bool EncoderVideoAudioProxy::getEncodingStatus(int64_t encodingJobKey)
         catch(...)
         {
             string errorMessage = string("response Body json is not well format")
+                    + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                     + ", sResponse: " + sResponse
                     ;
             _logger->error(__FILEREF__ + errorMessage);
@@ -1149,6 +1353,7 @@ bool EncoderVideoAudioProxy::getEncodingStatus(int64_t encodingJobKey)
     catch (curlpp::LogicError & e) 
     {
         _logger->error(__FILEREF__ + "Progress URL failed (LogicError)"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", encodingJobKey: " + to_string(encodingJobKey) 
             + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
             + ", exception: " + e.what()
@@ -1160,6 +1365,7 @@ bool EncoderVideoAudioProxy::getEncodingStatus(int64_t encodingJobKey)
     catch (curlpp::RuntimeError & e) 
     { 
         string errorMessage = string("Progress URL failed (RuntimeError)")
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", encodingJobKey: " + to_string(encodingJobKey) 
             + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
             + ", exception: " + e.what()
@@ -1173,6 +1379,7 @@ bool EncoderVideoAudioProxy::getEncodingStatus(int64_t encodingJobKey)
     catch (runtime_error e)
     {
         _logger->error(__FILEREF__ + "Progress URL failed (exception)"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", encodingJobKey: " + to_string(encodingJobKey) 
             + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
             + ", exception: " + e.what()
@@ -1184,6 +1391,7 @@ bool EncoderVideoAudioProxy::getEncodingStatus(int64_t encodingJobKey)
     catch (exception e)
     {
         _logger->error(__FILEREF__ + "Progress URL failed (exception)"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", encodingJobKey: " + to_string(encodingJobKey) 
             + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
             + ", exception: " + e.what()
@@ -1207,6 +1415,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEncod
         if (fileNameIndex == string::npos)
         {
             string errorMessage = __FILEREF__ + "No fileName find in the asset path name"
+                    + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                     + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
             _logger->error(errorMessage);
 
@@ -1234,6 +1443,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEncod
     catch(runtime_error e)
     {
         _logger->error(__FILEREF__ + "_mmsStorage->moveAssetInMMSRepository failed"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingItem->_physicalPathKey: " + to_string(_encodingItem->_physicalPathKey)
@@ -1248,6 +1458,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEncod
     catch(exception e)
     {
         _logger->error(__FILEREF__ + "_mmsStorage->moveAssetInMMSRepository failed"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingItem->_physicalPathKey: " + to_string(_encodingItem->_physicalPathKey)
@@ -1271,6 +1482,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEncod
                     detSourceFileType != FileIO::TOOLS_FILEIO_REGULARFILE) 
             {
                 string errorMessage = __FILEREF__ + "Wrong directory entry type"
+                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                         + ", mmsAssetPathName: " + mmsAssetPathName
                         ;
 
@@ -1301,6 +1513,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEncod
             _encodingItem->_encodingProfileKey);
         
         _logger->info(__FILEREF__ + "Saved the Encoded content"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingItem->_physicalPathKey: " + to_string(_encodingItem->_physicalPathKey)
@@ -1310,6 +1523,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEncod
     catch(exception e)
     {
         _logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveEncodedContentMetadata failed"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingItem->_physicalPathKey: " + to_string(_encodingItem->_physicalPathKey)
@@ -1319,6 +1533,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEncod
         FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(mmsAssetPathName);
 
         _logger->info(__FILEREF__ + "Remove"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", mmsAssetPathName: " + mmsAssetPathName
         );
 

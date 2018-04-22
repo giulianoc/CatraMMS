@@ -27,6 +27,46 @@ ActiveEncodingsManager::ActiveEncodingsManager(
     #ifdef __LOCALENCODER__
         _runningEncodingsNumber = 0;
     #endif
+
+    {
+        int lastProxyIdentifier = 0;
+        
+        for (EncodingJob& encodingJob: _lowPriorityEncodingJobs)
+        {
+            encodingJob._encoderVideoAudioProxy.init(
+                lastProxyIdentifier++, &_mtEncodingJobs,
+                    _configuration, _mmsEngineDBFacade,
+                    _mmsStorage, 
+                    #ifdef __LOCALENCODER__
+                        &_runningEncodingsNumber,
+                    #endif
+                    _logger);
+        }
+        
+        for (EncodingJob& encodingJob: _mediumPriorityEncodingJobs)
+        {
+            encodingJob._encoderVideoAudioProxy.init(
+                lastProxyIdentifier++, &_mtEncodingJobs,
+                    _configuration, _mmsEngineDBFacade,
+                    _mmsStorage, 
+                    #ifdef __LOCALENCODER__
+                        &_runningEncodingsNumber,
+                    #endif
+                    _logger);
+        }
+
+        for (EncodingJob& encodingJob: _highPriorityEncodingJobs)
+        {
+            encodingJob._encoderVideoAudioProxy.init(
+                lastProxyIdentifier++, &_mtEncodingJobs,
+                    _configuration, _mmsEngineDBFacade,
+                    _mmsStorage, 
+                    #ifdef __LOCALENCODER__
+                        &_runningEncodingsNumber,
+                    #endif
+                    _logger);
+        }
+    }                        
 }
 
 ActiveEncodingsManager::~ActiveEncodingsManager()
@@ -167,7 +207,7 @@ void ActiveEncodingsManager::operator()()
 
                         try
                         {
-                            processEncodingJob(&_mtEncodingJobs, encodingJob);
+                            processEncodingJob(encodingJob);
                             
                             _logger->info(__FILEREF__ + "processEncodingJob done"
                                 + ", elapsed (seconds): " + 
@@ -202,22 +242,14 @@ void ActiveEncodingsManager::operator()()
     }
 }
 
-void ActiveEncodingsManager::processEncodingJob(mutex* mtEncodingJobs, EncodingJob* encodingJob)
+void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
 {
     if (encodingJob->_encodingItem->_contentType == MMSEngineDBFacade::ContentType::Video ||
             encodingJob->_encodingItem->_contentType == MMSEngineDBFacade::ContentType::Audio)
     {
-        encodingJob->_encoderVideoAudioProxy.setData(
-            _configuration,
-            mtEncodingJobs,
+        encodingJob->_encoderVideoAudioProxy.setEncodingData(
             &(encodingJob->_status),
-            _mmsEngineDBFacade,
-            _mmsStorage,
-            encodingJob->_encodingItem,
-            #ifdef __LOCALENCODER__
-                &_runningEncodingsNumber,
-            #endif
-            _logger
+            encodingJob->_encodingItem
         );
         
         _logger->info(__FILEREF__ + "Creating encoderVideoAudioProxy thread"

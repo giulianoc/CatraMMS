@@ -76,7 +76,7 @@ void MMSEngineProcessor::operator ()()
         {
             case MMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTIONEVENT:	// 1
             {
-                _logger->info(__FILEREF__ + "1. Received MMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTION");
+                _logger->debug(__FILEREF__ + "1. Received MMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTION");
 
                 try
                 {
@@ -91,12 +91,12 @@ void MMSEngineProcessor::operator ()()
 
                 _multiEventsSet->getEventsFactory()->releaseEvent<Event2>(event);
 
-                _logger->info(__FILEREF__ + "2. Received MMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTION");
+                _logger->debug(__FILEREF__ + "2. Received MMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTION");
             }
             break;
             case MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT:	// 2
             {
-                _logger->info(__FILEREF__ + "1. Received LOCALASSETINGESTIONEVENT");
+                _logger->debug(__FILEREF__ + "1. Received LOCALASSETINGESTIONEVENT");
 
                 shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = dynamic_pointer_cast<LocalAssetIngestionEvent>(event);
 
@@ -119,12 +119,12 @@ void MMSEngineProcessor::operator ()()
 
                 _multiEventsSet->getEventsFactory()->releaseEvent<LocalAssetIngestionEvent>(localAssetIngestionEvent);
 
-                _logger->info(__FILEREF__ + "2. Received LOCALASSETINGESTIONEVENT");
+                _logger->debug(__FILEREF__ + "2. Received LOCALASSETINGESTIONEVENT");
             }
             break;
             case MMSENGINE_EVENTTYPEIDENTIFIER_CHECKENCODINGEVENT:	// 3
             {
-                _logger->info(__FILEREF__ + "1. Received MMSENGINE_EVENTTYPEIDENTIFIER_CHECKENCODING");
+                _logger->debug(__FILEREF__ + "1. Received MMSENGINE_EVENTTYPEIDENTIFIER_CHECKENCODING");
 
                 try
                 {
@@ -139,7 +139,7 @@ void MMSEngineProcessor::operator ()()
 
                 _multiEventsSet->getEventsFactory()->releaseEvent<Event2>(event);
 
-                _logger->info(__FILEREF__ + "2. Received MMSENGINE_EVENTTYPEIDENTIFIER_CHECKENCODING");
+                _logger->debug(__FILEREF__ + "2. Received MMSENGINE_EVENTTYPEIDENTIFIER_CHECKENCODING");
             }
             break;
             /*
@@ -183,9 +183,28 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
         vector<tuple<int64_t,string,shared_ptr<Workspace>,string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus>> 
                 ingestionsToBeManaged;
         
-        _mmsEngineDBFacade->getIngestionsToBeManaged(ingestionsToBeManaged, 
-                _processorMMS, _maxIngestionJobsPerEvent 
-        );
+        try
+        {
+            _mmsEngineDBFacade->getIngestionsToBeManaged(ingestionsToBeManaged, 
+                    _processorMMS, _maxIngestionJobsPerEvent 
+            );
+        }
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + "getIngestionsToBeManaged failed"
+                    + ", exception: " + e.what()
+            );
+
+            throw e;
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "getIngestionsToBeManaged failed"
+                    + ", exception: " + e.what()
+            );
+
+            throw e;
+        }
         
         for (tuple<int64_t, string, shared_ptr<Workspace>, string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus> 
                 ingestionToBeManaged: ingestionsToBeManaged)
@@ -894,8 +913,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
     }
     catch(...)
     {
-        _logger->error(__FILEREF__ + "Error retrieving the Ingestion Jobs to be managed"
-                );
+        _logger->error(__FILEREF__ + "handleCheckIngestionEvent failed");
     }
 }
 

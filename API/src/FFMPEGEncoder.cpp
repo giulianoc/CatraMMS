@@ -542,6 +542,7 @@ void FFMPEGEncoder::encodeContent(
         _logger->info(__FILEREF__ + "Encode content finished"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
         );
     }
     catch(runtime_error e)

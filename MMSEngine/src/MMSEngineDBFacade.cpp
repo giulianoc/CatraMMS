@@ -22,10 +22,10 @@ MMSEngineDBFacade::MMSEngineDBFacade(
         shared_ptr<spdlog::logger> logger) 
 {
     _logger     = logger;
-    
+
     _defaultContentProviderName     = "default";
     _defaultTerritoryName           = "default";
-    
+
     size_t dbPoolSize = configuration["database"].get("poolSize", 5).asInt();
     string dbServer = configuration["database"].get("server", "XXX").asString();
     _dbConnectionPoolStatsReportPeriodInSeconds = configuration["database"].get("dbConnectionPoolStatsReportPeriodInSeconds", 5).asInt();
@@ -42,17 +42,18 @@ MMSEngineDBFacade::MMSEngineDBFacade(
     string selectTestingConnection = configuration["database"].get("selectTestingConnection", "XXX").asString();
 
     _maxEncodingFailures            = configuration["encoding"].get("maxEncodingFailures", 3).asInt();
-    
+
     _confirmationCodeRetentionInDays    = configuration["mms"].get("confirmationCodeRetentionInDays", 3).asInt();
-    
+
     shared_ptr<MySQLConnectionFactory>  mySQLConnectionFactory = 
             make_shared<MySQLConnectionFactory>(dbServer, dbUsername, dbPassword, dbName,
-            selectTestingConnection);
-        
-    _connectionPool = make_shared<DBConnectionPool<MySQLConnection>>(dbPoolSize, mySQLConnectionFactory);
-    
+            selectTestingConnection, _logger);
+
+    _connectionPool = make_shared<DBConnectionPool<MySQLConnection>>(
+            dbPoolSize, mySQLConnectionFactory, _logger);
+
     _lastConnectionStatsReport = chrono::system_clock::now();
-            
+
     createTablesIfNeeded();
 }
 
@@ -96,6 +97,9 @@ vector<shared_ptr<Customer>> MMSEngineDBFacade::getCustomers()
 shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 {
     shared_ptr<MySQLConnection> conn = _connectionPool->borrow();	
+    _logger->info(__FILEREF__ + "DB connection borrow"
+        + ", getConnectionId: " + to_string(conn->getConnectionId())
+    );
 
     string lastSQLCommand =
         "select workspaceKey, name, directoryName, maxStorageInGB, maxEncodingPriority from MMS_Workspace where workspaceKey = ?";
@@ -118,6 +122,9 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
     }
     else
     {
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
         _connectionPool->unborrow(conn);
 
         string errorMessage = __FILEREF__ + "select failed"
@@ -129,6 +136,9 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
         throw runtime_error(errorMessage);                    
     }
 
+    _logger->info(__FILEREF__ + "DB connection unborrow"
+        + ", getConnectionId: " + to_string(conn->getConnectionId())
+    );
     _connectionPool->unborrow(conn);
     
     return workspace;
@@ -137,6 +147,9 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(string workspaceName)
 {
     shared_ptr<MySQLConnection> conn = _connectionPool->borrow();	
+    _logger->info(__FILEREF__ + "DB connection borrow"
+        + ", getConnectionId: " + to_string(conn->getConnectionId())
+    );
 
     string lastSQLCommand =
         "select workspaceKey, name, directoryName, maxStorageInGB, maxEncodingPriority from MMS_Workspace where name = ?";
@@ -159,6 +172,9 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(string workspaceName)
     }
     else
     {
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
         _connectionPool->unborrow(conn);
 
         string errorMessage = __FILEREF__ + "select failed"
@@ -170,6 +186,9 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(string workspaceName)
         throw runtime_error(errorMessage);                    
     }
 
+    _logger->info(__FILEREF__ + "DB connection unborrow"
+        + ", getConnectionId: " + to_string(conn->getConnectionId())
+    );
     _connectionPool->unborrow(conn);
     
     return workspace;
@@ -178,6 +197,9 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(string workspaceName)
 void MMSEngineDBFacade::getTerritories(shared_ptr<Workspace> workspace)
 {
     shared_ptr<MySQLConnection> conn = _connectionPool->borrow();	
+    _logger->info(__FILEREF__ + "DB connection borrow"
+        + ", getConnectionId: " + to_string(conn->getConnectionId())
+    );
 
     string lastSQLCommand =
         "select territoryKey, name from MMS_Territory t where workspaceKey = ?";
@@ -191,6 +213,9 @@ void MMSEngineDBFacade::getTerritories(shared_ptr<Workspace> workspace)
         workspace->_territories.insert(make_pair(resultSet->getInt("territoryKey"), resultSet->getString("name")));
     }
 
+    _logger->info(__FILEREF__ + "DB connection unborrow"
+        + ", getConnectionId: " + to_string(conn->getConnectionId())
+    );
     _connectionPool->unborrow(conn);
 }
 
@@ -224,6 +249,9 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUser(
     try
     {
         conn = _connectionPool->borrow();	
+        _logger->info(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
 
         autoCommit = false;
         // conn->_sqlConnection->setAutoCommit(autoCommit); OR execute the statement START TRANSACTION
@@ -353,19 +381,13 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUser(
         }
         autoCommit = true;
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
         _connectionPool->unborrow(conn);
     }
     catch(sql::SQLException se)
     {
-        // conn->_sqlConnection->rollback(); OR execute ROLLBACK
-        if (!autoCommit)
-        {
-            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-            statement->execute("ROLLBACK");
-        }
-        
-        _connectionPool->unborrow(conn);
-
         string exceptionMessage(se.what());
         
         _logger->error(__FILEREF__ + "SQL exception"
@@ -373,40 +395,133 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUser(
             + ", exceptionMessage: " + exceptionMessage
         );
 
+        try
+        {
+            // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+            if (!autoCommit)
+            {
+                shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                statement->execute("ROLLBACK");
+            }
+
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(sql::SQLException se)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + se.what()
+            );
+        
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + e.what()
+            );
+        
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+
         throw se;
     }
     catch(runtime_error e)
     {
-        // conn->_sqlConnection->rollback(); OR execute ROLLBACK
-        if (!autoCommit)
-        {
-            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-            statement->execute("ROLLBACK");
-        }
-        
-        _connectionPool->unborrow(conn);
-
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
+        try
+        {
+            // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+            if (!autoCommit)
+            {
+                shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                statement->execute("ROLLBACK");
+            }
+
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(sql::SQLException se)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + se.what()
+            );
+        
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + e.what()
+            );
+        
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+
         throw exception();
     }
     catch(exception e)
     {
-        // conn->_sqlConnection->rollback(); OR execute ROLLBACK
-        if (!autoCommit)
-        {
-            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-            statement->execute("ROLLBACK");
-        }
-        
-        _connectionPool->unborrow(conn);
-
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
+
+        try
+        {
+            // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+            if (!autoCommit)
+            {
+                shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                statement->execute("ROLLBACK");
+            }
+
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(sql::SQLException se)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + se.what()
+            );
+        
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + e.what()
+            );
+        
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
 
         throw e;
     }
@@ -430,6 +545,9 @@ string MMSEngineDBFacade::confirmUser(
     try
     {
         conn = _connectionPool->borrow();	
+        _logger->info(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
 
         autoCommit = false;
         // conn->_sqlConnection->setAutoCommit(autoCommit); OR execute the statement START TRANSACTION
@@ -586,18 +704,13 @@ string MMSEngineDBFacade::confirmUser(
         }
         autoCommit = true;
         
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
         _connectionPool->unborrow(conn);
     }
     catch(sql::SQLException se)
     {
-        if (!autoCommit)
-        {
-            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-            statement->execute("ROLLBACK");
-        }
-        
-        _connectionPool->unborrow(conn);
-
         string exceptionMessage(se.what());
         
         _logger->error(__FILEREF__ + "SQL exception"
@@ -605,39 +718,134 @@ string MMSEngineDBFacade::confirmUser(
             + ", exceptionMessage: " + exceptionMessage
         );
 
+        try
+        {
+            // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+            if (!autoCommit)
+            {
+                shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                statement->execute("ROLLBACK");
+            }
+
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(sql::SQLException se)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + se.what()
+            );
+        
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + e.what()
+            );
+        
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+
         throw se;
     }
     catch(runtime_error e)
     {
-        if (!autoCommit)
-        {
-            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-            statement->execute("ROLLBACK");
-        }
-        
-        _connectionPool->unborrow(conn);
-        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
+        try
+        {
+            // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+            if (!autoCommit)
+            {
+                shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                statement->execute("ROLLBACK");
+            }
+
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(sql::SQLException se)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + se.what()
+            );
+        
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + e.what()
+            );
+        
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        
         throw exception();
     }
     catch(exception e)
     {
-        if (!autoCommit)
-        {
-            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-            statement->execute("ROLLBACK");
-        }
-        
-        _connectionPool->unborrow(conn);
-        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
+        try
+        {
+            // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+            if (!autoCommit)
+            {
+                shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                statement->execute("ROLLBACK");
+            }
+
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(sql::SQLException se)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + se.what()
+            );
+        
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + e.what()
+            );
+        
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        
         throw e;
     }
     
@@ -655,6 +863,9 @@ tuple<shared_ptr<Workspace>,bool,bool> MMSEngineDBFacade::checkAPIKey (string ap
     try
     {
         conn = _connectionPool->borrow();	
+        _logger->info(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
 
         int64_t         userKey;
         int64_t         workspaceKey;
@@ -688,12 +899,13 @@ tuple<shared_ptr<Workspace>,bool,bool> MMSEngineDBFacade::checkAPIKey (string ap
         
         workspace = getWorkspace(workspaceKey);
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
         _connectionPool->unborrow(conn);
     }
     catch(sql::SQLException se)
     {
-        _connectionPool->unborrow(conn);
-
         string exceptionMessage(se.what());
 
         _logger->error(__FILEREF__ + "SQL exception"
@@ -701,12 +913,15 @@ tuple<shared_ptr<Workspace>,bool,bool> MMSEngineDBFacade::checkAPIKey (string ap
             + ", exceptionMessage: " + exceptionMessage
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
         throw se;
     }
     catch(APIKeyNotFoundOrExpired e)
     {        
-        _connectionPool->unborrow(conn);
-
         string exceptionMessage(e.what());
 
         _logger->error(__FILEREF__ + "SQL exception"
@@ -714,26 +929,37 @@ tuple<shared_ptr<Workspace>,bool,bool> MMSEngineDBFacade::checkAPIKey (string ap
             + ", exceptionMessage: " + exceptionMessage
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
         throw e;
     }
     catch(runtime_error e)
     {        
-        _connectionPool->unborrow(conn);
-
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
         throw exception();
     }
     catch(exception e)
     {        
-        _connectionPool->unborrow(conn);
-
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
+
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
 
         throw e;
     }
@@ -824,6 +1050,9 @@ bool MMSEngineDBFacade::isLoginValid(
     try
     {
         conn = _connectionPool->borrow();	
+        _logger->info(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
 
         {
             lastSQLCommand = 
@@ -846,12 +1075,13 @@ bool MMSEngineDBFacade::isLoginValid(
             }            
         }
                         
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
         _connectionPool->unborrow(conn);
     }
     catch(sql::SQLException se)
     {
-        _connectionPool->unborrow(conn);
-
         string exceptionMessage(se.what());
         
         _logger->error(__FILEREF__ + "SQL exception"
@@ -859,26 +1089,37 @@ bool MMSEngineDBFacade::isLoginValid(
             + ", exceptionMessage: " + exceptionMessage
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
         throw se;
     }
     catch(runtime_error e)
     {        
-        _connectionPool->unborrow(conn);
-
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
         throw exception();
     }
     catch(exception e)
     {        
-        _connectionPool->unborrow(conn);
-
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
+
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
 
         throw e;
     }
@@ -896,6 +1137,9 @@ string MMSEngineDBFacade::getPassword(string emailAddress)
     try
     {
         conn = _connectionPool->borrow();	
+        _logger->info(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
 
         {
             lastSQLCommand = 
@@ -921,12 +1165,13 @@ string MMSEngineDBFacade::getPassword(string emailAddress)
             }            
         }
                         
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
         _connectionPool->unborrow(conn);
     }
     catch(sql::SQLException se)
     {
-        _connectionPool->unborrow(conn);
-
         string exceptionMessage(se.what());
         
         _logger->error(__FILEREF__ + "SQL exception"
@@ -934,26 +1179,37 @@ string MMSEngineDBFacade::getPassword(string emailAddress)
             + ", exceptionMessage: " + exceptionMessage
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
         throw se;
     }
     catch(runtime_error e)
     {        
-        _connectionPool->unborrow(conn);
-
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
         throw exception();
     }
     catch(exception e)
     {        
-        _connectionPool->unborrow(conn);
-
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
+
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
 
         throw e;
     }
@@ -1206,6 +1462,9 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
         }
 
         conn = _connectionPool->borrow();	
+        _logger->info(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
 
         // We have the Transaction because previously there was a select for update and then the update.
         // Now we have first the update and than the select. Probable the Transaction does not need, anyway I left it
@@ -1463,18 +1722,13 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
         }
         autoCommit = true;
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
         _connectionPool->unborrow(conn);
     }
     catch(sql::SQLException se)
     {
-        if (!autoCommit)
-        {
-            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-            statement->execute("ROLLBACK");
-        }
-        
-        _connectionPool->unborrow(conn);
-
         string exceptionMessage(se.what());
         
         _logger->error(__FILEREF__ + "SQL exception"
@@ -1482,38 +1736,133 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
             + ", exceptionMessage: " + exceptionMessage
         );
 
+        try
+        {
+            // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+            if (!autoCommit)
+            {
+                shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                statement->execute("ROLLBACK");
+            }
+
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(sql::SQLException se)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + se.what()
+            );
+        
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + e.what()
+            );
+        
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+
         throw se;
     }    
     catch(runtime_error e)
     {        
-        if (!autoCommit)
-        {
-            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-            statement->execute("ROLLBACK");
-        }
-        
-        _connectionPool->unborrow(conn);
-
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
+        try
+        {
+            // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+            if (!autoCommit)
+            {
+                shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                statement->execute("ROLLBACK");
+            }
+
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(sql::SQLException se)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + se.what()
+            );
+        
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + e.what()
+            );
+        
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+
         throw exception();
     }        
     catch(exception e)
     {        
-        if (!autoCommit)
-        {
-            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-            statement->execute("ROLLBACK");
-        }
-        
-        _connectionPool->unborrow(conn);
-
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
+
+        try
+        {
+            // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+            if (!autoCommit)
+            {
+                shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                statement->execute("ROLLBACK");
+            }
+
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(sql::SQLException se)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + se.what()
+            );
+        
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + e.what()
+            );
+        
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
 
         throw e;
     }        
@@ -1528,6 +1877,9 @@ shared_ptr<MySQLConnection> MMSEngineDBFacade::beginIngestionJobs ()
     try
     {
         conn = _connectionPool->borrow();	
+        _logger->info(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
 
         // conn->_sqlConnection->setAutoCommit(autoCommit); OR execute the statement START TRANSACTION
         {
@@ -1540,8 +1892,6 @@ shared_ptr<MySQLConnection> MMSEngineDBFacade::beginIngestionJobs ()
     }
     catch(sql::SQLException se)
     {
-        _connectionPool->unborrow(conn);
-
         string exceptionMessage(se.what());
         
         _logger->error(__FILEREF__ + "SQL exception"
@@ -1549,26 +1899,37 @@ shared_ptr<MySQLConnection> MMSEngineDBFacade::beginIngestionJobs ()
             + ", exceptionMessage: " + exceptionMessage
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
         throw se;
     }
     catch(runtime_error e)
     {        
-        _connectionPool->unborrow(conn);
-
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
         throw exception();
     }
     catch(exception e)
     {        
-        _connectionPool->unborrow(conn);
-
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
+
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
 
         throw e;
     }
@@ -1601,12 +1962,13 @@ shared_ptr<MySQLConnection> MMSEngineDBFacade::endIngestionJobs (
         
         autoCommit = true;
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
         _connectionPool->unborrow(conn);
     }
     catch(sql::SQLException se)
     {
-        _connectionPool->unborrow(conn);
-
         string exceptionMessage(se.what());
         
         _logger->error(__FILEREF__ + "SQL exception"
@@ -1614,26 +1976,37 @@ shared_ptr<MySQLConnection> MMSEngineDBFacade::endIngestionJobs (
             + ", exceptionMessage: " + exceptionMessage
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
         throw se;
     }
     catch(runtime_error e)
     {        
-        _connectionPool->unborrow(conn);
-
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
         throw exception();
     }
     catch(exception e)
     {        
-        _connectionPool->unborrow(conn);
-
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
+
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
 
         throw e;
     }
@@ -1967,6 +2340,9 @@ void MMSEngineDBFacade::updateIngestionJob (
     try
     {
         conn = _connectionPool->borrow();	
+        _logger->info(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
 
         {
             lastSQLCommand = 
@@ -2000,12 +2376,13 @@ void MMSEngineDBFacade::updateIngestionJob (
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
         _connectionPool->unborrow(conn);
     }
     catch(sql::SQLException se)
     {
-        _connectionPool->unborrow(conn);
-
         string exceptionMessage(se.what());
         
         _logger->error(__FILEREF__ + "SQL exception"
@@ -2013,26 +2390,37 @@ void MMSEngineDBFacade::updateIngestionJob (
             + ", exceptionMessage: " + exceptionMessage
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
         throw se;
     }    
     catch(runtime_error e)
     {        
-        _connectionPool->unborrow(conn);
-
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
         throw exception();
     }    
     catch(exception e)
     {        
-        _connectionPool->unborrow(conn);
-
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
+
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
 
         throw e;
     }    
@@ -2063,6 +2451,9 @@ void MMSEngineDBFacade::updateIngestionJob (
         }
         
         conn = _connectionPool->borrow();	
+        _logger->info(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
 
         if (MMSEngineDBFacade::isIngestionStatusFinalState(newIngestionStatus))
         {
@@ -2165,12 +2556,13 @@ void MMSEngineDBFacade::updateIngestionJob (
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
         _connectionPool->unborrow(conn);
     }
     catch(sql::SQLException se)
     {
-        _connectionPool->unborrow(conn);
-
         string exceptionMessage(se.what());
         
         _logger->error(__FILEREF__ + "SQL exception"
@@ -2178,26 +2570,37 @@ void MMSEngineDBFacade::updateIngestionJob (
             + ", exceptionMessage: " + exceptionMessage
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
         throw se;
     }    
     catch(runtime_error e)
     {        
-        _connectionPool->unborrow(conn);
-
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
         throw exception();
     }    
     catch(exception e)
     {        
-        _connectionPool->unborrow(conn);
-
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
+
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
 
         throw e;
     }    
@@ -2229,6 +2632,9 @@ void MMSEngineDBFacade::updateIngestionJob (
         }
         
         conn = _connectionPool->borrow();	
+        _logger->info(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
 
         if (MMSEngineDBFacade::isIngestionStatusFinalState(newIngestionStatus))
         {
@@ -2333,12 +2739,13 @@ void MMSEngineDBFacade::updateIngestionJob (
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
         _connectionPool->unborrow(conn);
     }
     catch(sql::SQLException se)
     {
-        _connectionPool->unborrow(conn);
-
         string exceptionMessage(se.what());
         
         _logger->error(__FILEREF__ + "SQL exception"
@@ -2346,26 +2753,37 @@ void MMSEngineDBFacade::updateIngestionJob (
             + ", exceptionMessage: " + exceptionMessage
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
         throw se;
     }    
     catch(runtime_error e)
     {        
-        _connectionPool->unborrow(conn);
-
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
         throw exception();
     }    
     catch(exception e)
     {        
-        _connectionPool->unborrow(conn);
-
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
+
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
 
         throw e;
     }    
@@ -2384,6 +2802,9 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress (
     try
     {
         conn = _connectionPool->borrow();	
+        _logger->info(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
 
         {
             lastSQLCommand = 
@@ -2437,12 +2858,13 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress (
             }            
         }
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
         _connectionPool->unborrow(conn);
     }
     catch(sql::SQLException se)
     {
-        _connectionPool->unborrow(conn);
-
         string exceptionMessage(se.what());
         
         _logger->error(__FILEREF__ + "SQL exception"
@@ -2450,27 +2872,38 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress (
             + ", exceptionMessage: " + exceptionMessage
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
         throw se;
     }
     catch(runtime_error e)
     {
-        _connectionPool->unborrow(conn);
-        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
         throw exception();
     }
     catch(exception e)
     {
-        _connectionPool->unborrow(conn);
-        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
         throw e;
     }
     
@@ -2489,6 +2922,9 @@ void MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress (
     try
     {
         conn = _connectionPool->borrow();	
+        _logger->info(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
 
         {
             lastSQLCommand = 
@@ -2515,12 +2951,13 @@ void MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress (
             }
         }
         
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
         _connectionPool->unborrow(conn);
     }
     catch(sql::SQLException se)
     {
-        _connectionPool->unborrow(conn);
-
         string exceptionMessage(se.what());
         
         _logger->error(__FILEREF__ + "SQL exception"
@@ -2528,27 +2965,38 @@ void MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress (
             + ", exceptionMessage: " + exceptionMessage
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
         throw se;
     }
     catch(runtime_error e)
     {
-        _connectionPool->unborrow(conn);
-        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
         throw exception();
     }
     catch(exception e)
     {
-        _connectionPool->unborrow(conn);
-        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
         throw e;
     }
 }
@@ -2565,6 +3013,9 @@ void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred (
     try
     {
         conn = _connectionPool->borrow();	
+        _logger->info(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
 
         {
             lastSQLCommand = 
@@ -2591,12 +3042,13 @@ void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred (
             }
         }
         
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
         _connectionPool->unborrow(conn);
     }
     catch(sql::SQLException se)
     {
-        _connectionPool->unborrow(conn);
-
         string exceptionMessage(se.what());
         
         _logger->error(__FILEREF__ + "SQL exception"
@@ -2604,27 +3056,38 @@ void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred (
             + ", exceptionMessage: " + exceptionMessage
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
         throw se;
     }
     catch(runtime_error e)
     {
-        _connectionPool->unborrow(conn);
-        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
         throw exception();
     }
     catch(exception e)
     {
-        _connectionPool->unborrow(conn);
-        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
         throw e;
     }
 }
@@ -2643,6 +3106,9 @@ Json::Value MMSEngineDBFacade::getIngestionJobStatus (
         string field;
         
         conn = _connectionPool->borrow();	
+        _logger->info(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
 
         Json::Value workflowRoot;
         {
@@ -2657,7 +3123,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobStatus (
             {
                 field = "ingestionRootKey";
                 workflowRoot[field] = ingestionRootKey;
-                
+
                 field = "label";
                 workflowRoot[field] = static_cast<string>(resultSet->getString("label"));
             }
@@ -2672,14 +3138,14 @@ Json::Value MMSEngineDBFacade::getIngestionJobStatus (
                 throw runtime_error(errorMessage);                    
             }            
         }
-        
-        field = "workflow";
-        statusRoot[field] = workflowRoot;
-        
-        Json::Value tasksRoot;
+
+        Json::Value tasksRoot(Json::arrayValue);
         {
             lastSQLCommand = 
-                "select ingestionJobKey, label, status from MMS_IngestionJob where ingestionRootKey = ?";
+                "select ingestionJobKey, label, mediaItemKey, ingestionType, "
+                "DATE_FORMAT(startIngestion, '%Y-%m-%d %H:%i:%s') as startIngestion, DATE_FORMAT(endIngestion, '%Y-%m-%d %H:%i:%s') as endIngestion, "
+                "downloadingProgress, uploadingProgress, "
+                "status, errorMessage from MMS_IngestionJob where ingestionRootKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -2688,18 +3154,59 @@ Json::Value MMSEngineDBFacade::getIngestionJobStatus (
             while (resultSet->next())
             {
                 Json::Value taskRoot;
-        
+
                 int64_t ingestionJobKey = resultSet->getInt64("ingestionJobKey");
-                
+
                 field = "ingestionJobKey";
                 taskRoot[field] = ingestionJobKey;
-                
+
                 field = "label";
-                taskRoot[field] = static_cast<string>(resultSet->getString("label"));
+                if (resultSet->isNull("label"))
+                    taskRoot[field] = Json::nullValue;
+                else
+                    taskRoot[field] = static_cast<string>(resultSet->getString("label"));
+
+                field = "mediaItemKey";
+                if (resultSet->isNull("mediaItemKey"))
+                    taskRoot[field] = Json::nullValue;
+                else
+                    taskRoot[field] = resultSet->getInt64("mediaItemKey");
+
+                field = "startIngestion";
+                taskRoot[field] = static_cast<string>(resultSet->getString("startIngestion"));
+
+                field = "endIngestion";
+                if (resultSet->isNull("endIngestion"))
+                    taskRoot[field] = Json::nullValue;
+                else
+                    taskRoot[field] = static_cast<string>(resultSet->getString("endIngestion"));
+
+                field = "downloadingProgress";
+                if (resultSet->isNull("downloadingProgress"))
+                    taskRoot[field] = Json::nullValue;
+                else
+                    taskRoot[field] = resultSet->getInt64("downloadingProgress");
+
+                field = "uploadingProgress";
+                if (resultSet->isNull("uploadingProgress"))
+                    taskRoot[field] = Json::nullValue;
+                else
+                    taskRoot[field] = resultSet->getInt64("uploadingProgress");
 
                 field = "status";
                 taskRoot[field] = static_cast<string>(resultSet->getString("status"));
-                
+
+                field = "errorMessage";
+                if (resultSet->isNull("errorMessage"))
+                    taskRoot[field] = Json::nullValue;
+                else
+                    taskRoot[field] = static_cast<string>(resultSet->getString("errorMessage"));
+
+                // field = "ingestionType";
+                // taskRoot[field] = static_cast<string>(resultSet->getString("ingestionType"));
+                IngestionType ingestionType = toIngestionType(resultSet->getString("ingestionType"));
+
+                if (ingestionType == IngestionType::Encode)
                 {
                     lastSQLCommand = 
                         "select encodingProfileKey, status, encodingProgress, DATE_FORMAT(encodingJobStart, '%Y-%m-%d %H:%i:%s') as encodingJobStart, "
@@ -2711,54 +3218,63 @@ Json::Value MMSEngineDBFacade::getIngestionJobStatus (
                     shared_ptr<sql::ResultSet> resultSetEncodingJob (preparedStatementEncodingJob->executeQuery());
                     if (resultSetEncodingJob->next())
                     {
+                        Json::Value encodingRoot;
+
                         field = "encodingProfileKey";
-                        taskRoot[field] = resultSetEncodingJob->getInt64("encodingProfileKey");
+                        encodingRoot[field] = resultSetEncodingJob->getInt64("encodingProfileKey");
 
                         field = "encodingStatus";
-                        taskRoot[field] = static_cast<string>(resultSetEncodingJob->getString("status"));
+                        encodingRoot[field] = static_cast<string>(resultSetEncodingJob->getString("status"));
                         EncodingStatus encodingStatus = MMSEngineDBFacade::toEncodingStatus(resultSetEncodingJob->getString("status"));
 
                         field = "encodingProgress";
                         if (resultSetEncodingJob->isNull("encodingProgress"))
-                            taskRoot[field] = 0;
+                            encodingRoot[field] = Json::nullValue;
                         else
-                            taskRoot[field] = resultSetEncodingJob->getInt("encodingProgress");
+                            encodingRoot[field] = resultSetEncodingJob->getInt("encodingProgress");
 
                         field = "encodingJobStart";
                         if (encodingStatus == EncodingStatus::ToBeProcessed)
-                            taskRoot[field] = "";
+                            encodingRoot[field] = Json::nullValue;
                         else
                         {
                             if (resultSetEncodingJob->isNull("encodingJobStart"))
-                                taskRoot[field] = "";
+                                encodingRoot[field] = Json::nullValue;
                             else
-                                taskRoot[field] = static_cast<string>(resultSetEncodingJob->getString("encodingJobStart"));
+                                encodingRoot[field] = static_cast<string>(resultSetEncodingJob->getString("encodingJobStart"));
                         }
 
                         field = "encodingJobEnd";
                         if (resultSetEncodingJob->isNull("encodingJobEnd"))
-                            taskRoot[field] = "";
+                            encodingRoot[field] = Json::nullValue;
                         else
-                            taskRoot[field] = static_cast<string>(resultSetEncodingJob->getString("encodingJobEnd"));
+                            encodingRoot[field] = static_cast<string>(resultSetEncodingJob->getString("encodingJobEnd"));
 
                         field = "encodingFailuresNumber";
-                        taskRoot[field] = resultSetEncodingJob->getInt("failuresNumber");                        
+                        encodingRoot[field] = resultSetEncodingJob->getInt("failuresNumber");  
+
+                        field = "encoding";
+                        taskRoot[field] = encodingRoot;
                     }
                 }
-                
+
                 tasksRoot.append(taskRoot);
             }
         }
 
         field = "tasks";
-        statusRoot[field] = tasksRoot;
+        workflowRoot[field] = tasksRoot;
 
+        field = "workflow";
+        statusRoot[field] = workflowRoot;
+
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
         _connectionPool->unborrow(conn);
     }
     catch(sql::SQLException se)
     {
-        _connectionPool->unborrow(conn);
-
         string exceptionMessage(se.what());
         
         _logger->error(__FILEREF__ + "SQL exception"
@@ -2766,26 +3282,37 @@ Json::Value MMSEngineDBFacade::getIngestionJobStatus (
             + ", exceptionMessage: " + exceptionMessage
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
         throw se;
     }    
     catch(runtime_error e)
     {        
-        _connectionPool->unborrow(conn);
-
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
         throw exception();
     } 
     catch(exception e)
     {        
-        _connectionPool->unborrow(conn);
-
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
+
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
 
         throw e;
     } 
@@ -2805,6 +3332,9 @@ MMSEngineDBFacade::ContentType MMSEngineDBFacade::getMediaItemKeyDetails(
     try
     {
         conn = _connectionPool->borrow();	
+        _logger->info(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
 
         {
             lastSQLCommand = 
@@ -2833,12 +3363,13 @@ MMSEngineDBFacade::ContentType MMSEngineDBFacade::getMediaItemKeyDetails(
             }            
         }
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
         _connectionPool->unborrow(conn);
     }
     catch(sql::SQLException se)
     {
-        _connectionPool->unborrow(conn);
-
         string exceptionMessage(se.what());
         
         _logger->error(__FILEREF__ + "SQL exception"
@@ -2846,12 +3377,15 @@ MMSEngineDBFacade::ContentType MMSEngineDBFacade::getMediaItemKeyDetails(
             + ", exceptionMessage: " + exceptionMessage
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
         throw se;
     }
     catch(MediaItemKeyNotFound e)
     {
-        _connectionPool->unborrow(conn);
-        
         if (warningIfMissing)
             _logger->warn(__FILEREF__ + "SQL exception"
                 + ", lastSQLCommand: " + lastSQLCommand
@@ -2861,27 +3395,38 @@ MMSEngineDBFacade::ContentType MMSEngineDBFacade::getMediaItemKeyDetails(
                 + ", lastSQLCommand: " + lastSQLCommand
             );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
         throw e;
     }
     catch(runtime_error e)
     {
-        _connectionPool->unborrow(conn);
-        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
         throw exception();
     }
     catch(exception e)
     {
-        _connectionPool->unborrow(conn);
-        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
         throw e;
     }
     
@@ -2900,6 +3445,9 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
     try
     {
         conn = _connectionPool->borrow();	
+        _logger->info(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
 
         {
             lastSQLCommand = 
@@ -2930,12 +3478,13 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
             }            
         }
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
         _connectionPool->unborrow(conn);
     }
     catch(sql::SQLException se)
     {
-        _connectionPool->unborrow(conn);
-
         string exceptionMessage(se.what());
         
         _logger->error(__FILEREF__ + "SQL exception"
@@ -2943,12 +3492,15 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
             + ", exceptionMessage: " + exceptionMessage
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
         throw se;
     }
     catch(MediaItemKeyNotFound e)
     {
-        _connectionPool->unborrow(conn);
-        
         if (warningIfMissing)
             _logger->warn(__FILEREF__ + "SQL exception"
                 + ", lastSQLCommand: " + lastSQLCommand
@@ -2958,27 +3510,38 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
                 + ", lastSQLCommand: " + lastSQLCommand
             );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
         throw e;
     }
     catch(runtime_error e)
     {
-        _connectionPool->unborrow(conn);
-        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
         throw exception();
     }
     catch(exception e)
     {
-        _connectionPool->unborrow(conn);
-        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
         throw e;
     }
     
@@ -2997,6 +3560,9 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
     try
     {
         conn = _connectionPool->borrow();	
+        _logger->info(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
 
         {
             lastSQLCommand = 
@@ -3026,12 +3592,13 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
             }            
         }
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
         _connectionPool->unborrow(conn);
     }
     catch(sql::SQLException se)
     {
-        _connectionPool->unborrow(conn);
-
         string exceptionMessage(se.what());
         
         _logger->error(__FILEREF__ + "SQL exception"
@@ -3039,12 +3606,15 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
             + ", exceptionMessage: " + exceptionMessage
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
         throw se;
     }
     catch(MediaItemKeyNotFound e)
     {
-        _connectionPool->unborrow(conn);
-        
         if (warningIfMissing)
             _logger->warn(__FILEREF__ + "SQL exception"
                 + ", lastSQLCommand: " + lastSQLCommand
@@ -3054,27 +3624,38 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
                 + ", lastSQLCommand: " + lastSQLCommand
             );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
         throw e;
     }
     catch(runtime_error e)
     {
-        _connectionPool->unborrow(conn);
-        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
         throw exception();
     }
     catch(exception e)
     {
-        _connectionPool->unborrow(conn);
-        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
         throw e;
     }
     
@@ -3091,6 +3672,9 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> MMSEn
     try
     {
         conn = _connectionPool->borrow();	
+        _logger->info(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
 
         int64_t durationInMilliSeconds;
         long bitRate;
@@ -3143,6 +3727,9 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> MMSEn
             }            
         }
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
         _connectionPool->unborrow(conn);
         
         return make_tuple(durationInMilliSeconds, bitRate,
@@ -3151,8 +3738,6 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> MMSEn
     }
     catch(sql::SQLException se)
     {
-        _connectionPool->unborrow(conn);
-
         string exceptionMessage(se.what());
         
         _logger->error(__FILEREF__ + "SQL exception"
@@ -3160,27 +3745,38 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> MMSEn
             + ", exceptionMessage: " + exceptionMessage
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
         throw se;
     }
     catch(runtime_error e)
     {
-        _connectionPool->unborrow(conn);
-        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
         throw exception();
     }    
     catch(exception e)
     {
-        _connectionPool->unborrow(conn);
-        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
         throw e;
     }    
 }
@@ -3199,6 +3795,9 @@ void MMSEngineDBFacade::getEncodingJobs(
     try
     {
         conn = _connectionPool->borrow();	
+        _logger->info(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
 
         autoCommit = false;
         // conn->_sqlConnection->setAutoCommit(autoCommit); OR execute the statement START TRANSACTION
@@ -3409,19 +4008,13 @@ void MMSEngineDBFacade::getEncodingJobs(
         }
         autoCommit = true;
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
         _connectionPool->unborrow(conn);
     }
     catch(sql::SQLException se)
     {
-        // conn->_sqlConnection->rollback(); OR execute ROLLBACK
-        if (!autoCommit)
-        {
-            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-            statement->execute("ROLLBACK");
-        }
-        
-        _connectionPool->unborrow(conn);
-
         string exceptionMessage(se.what());
         
         _logger->error(__FILEREF__ + "SQL exception"
@@ -3430,41 +4023,134 @@ void MMSEngineDBFacade::getEncodingJobs(
             + ", exceptionMessage: " + exceptionMessage
         );
 
+        try
+        {
+            // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+            if (!autoCommit)
+            {
+                shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                statement->execute("ROLLBACK");
+            }
+
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(sql::SQLException se)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + se.what()
+            );
+        
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + e.what()
+            );
+        
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+
         throw se;
     }
     catch(runtime_error e)
     {
-        // conn->_sqlConnection->rollback(); OR execute ROLLBACK
-        if (!autoCommit)
-        {
-            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-            statement->execute("ROLLBACK");
-        }
-        
-        _connectionPool->unborrow(conn);
-        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
+        try
+        {
+            // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+            if (!autoCommit)
+            {
+                shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                statement->execute("ROLLBACK");
+            }
+
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(sql::SQLException se)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + se.what()
+            );
+        
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + e.what()
+            );
+        
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        
         throw exception();
     }
     catch(exception e)
     {
-        // conn->_sqlConnection->rollback(); OR execute ROLLBACK
-        if (!autoCommit)
-        {
-            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-            statement->execute("ROLLBACK");
-        }
-        
-        _connectionPool->unborrow(conn);
-        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
+        try
+        {
+            // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+            if (!autoCommit)
+            {
+                shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                statement->execute("ROLLBACK");
+            }
+
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(sql::SQLException se)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + se.what()
+            );
+        
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + e.what()
+            );
+        
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        
         throw e;
     }
 }
@@ -3482,6 +4168,9 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetKey(
     try
     {
         conn = _connectionPool->borrow();	
+        _logger->info(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
 
         {
             lastSQLCommand = 
@@ -3532,12 +4221,13 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetKey(
             }
         }
         
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
         _connectionPool->unborrow(conn);
     }
     catch(sql::SQLException se)
     {
-        _connectionPool->unborrow(conn);
-
         string exceptionMessage(se.what());
         
         _logger->error(__FILEREF__ + "SQL exception"
@@ -3545,27 +4235,38 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetKey(
             + ", exceptionMessage: " + exceptionMessage
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
         throw se;
     }
     catch(runtime_error e)
     {
-        _connectionPool->unborrow(conn);
-        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
         throw exception();
     }       
     catch(exception e)
     {
-        _connectionPool->unborrow(conn);
-        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
         throw e;
     }       
     
@@ -3585,6 +4286,9 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(
     try
     {
         conn = _connectionPool->borrow();	
+        _logger->info(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
 
         int64_t encodingProfilesSetKey;
         {
@@ -3626,12 +4330,13 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(
             }
         }
         
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
         _connectionPool->unborrow(conn);
     }
     catch(sql::SQLException se)
     {
-        _connectionPool->unborrow(conn);
-
         string exceptionMessage(se.what());
         
         _logger->error(__FILEREF__ + "SQL exception"
@@ -3639,27 +4344,38 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(
             + ", exceptionMessage: " + exceptionMessage
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
         throw se;
     }
     catch(runtime_error e)
     {
-        _connectionPool->unborrow(conn);
-        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
         throw exception();
     }       
     catch(exception e)
     {
-        _connectionPool->unborrow(conn);
-        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
         throw e;
     }       
     
@@ -3681,6 +4397,9 @@ int MMSEngineDBFacade::addEncodingJob (
     try
     {
         conn = _connectionPool->borrow();	
+        _logger->info(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
 
         int64_t sourcePhysicalPathKey;
         {
@@ -3724,12 +4443,13 @@ int MMSEngineDBFacade::addEncodingJob (
             preparedStatement->executeUpdate();
         }
         
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
         _connectionPool->unborrow(conn);
     }
     catch(sql::SQLException se)
     {
-        _connectionPool->unborrow(conn);
-
         string exceptionMessage(se.what());
         
         _logger->error(__FILEREF__ + "SQL exception"
@@ -3737,27 +4457,38 @@ int MMSEngineDBFacade::addEncodingJob (
             + ", exceptionMessage: " + exceptionMessage
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
         throw se;
     }
     catch(runtime_error e)
     {
-        _connectionPool->unborrow(conn);
-        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
         throw exception();
     }        
     catch(exception e)
     {
-        _connectionPool->unborrow(conn);
-        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
         throw e;
     }        
 }
@@ -3778,6 +4509,9 @@ int MMSEngineDBFacade::updateEncodingJob (
     try
     {
         conn = _connectionPool->borrow();	
+        _logger->info(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
 
         autoCommit = false;
         // conn->_sqlConnection->setAutoCommit(autoCommit); OR execute the statement START TRANSACTION
@@ -3922,6 +4656,12 @@ int MMSEngineDBFacade::updateEncodingJob (
             string errorMessage;
             string processorMMS;
             
+            _logger->info(__FILEREF__ + "Update IngestionJob"
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", IngestionStatus: " + toString(ingestionStatus)
+                + ", errorMessage: " + errorMessage
+                + ", processorMMS: " + processorMMS
+            );                            
             updateIngestionJob (ingestionJobKey, ingestionStatus, errorMessage, processorMMS);
         }
         else if (newEncodingStatus == EncodingStatus::End_Failed)
@@ -3930,8 +4670,15 @@ int MMSEngineDBFacade::updateEncodingJob (
             string errorMessage;
             string processorMMS;
 
+            _logger->info(__FILEREF__ + "Update IngestionJob"
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", IngestionStatus: " + toString(ingestionStatus)
+                + ", errorMessage: " + errorMessage
+                + ", processorMMS: " + processorMMS
+            );                            
             updateIngestionJob (ingestionJobKey, ingestionStatus, errorMessage, processorMMS);
         }
+
 
         // conn->_sqlConnection->commit(); OR execute COMMIT
         {
@@ -3943,19 +4690,13 @@ int MMSEngineDBFacade::updateEncodingJob (
         }
         autoCommit = true;
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
         _connectionPool->unborrow(conn);
     }
     catch(sql::SQLException se)
     {
-        // conn->_sqlConnection->rollback(); OR execute ROLLBACK
-        if (!autoCommit)
-        {
-            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-            statement->execute("ROLLBACK");
-        }
-        
-        _connectionPool->unborrow(conn);
-
         string exceptionMessage(se.what());
         
         _logger->error(__FILEREF__ + "SQL exception"
@@ -3963,41 +4704,134 @@ int MMSEngineDBFacade::updateEncodingJob (
             + ", exceptionMessage: " + exceptionMessage
         );
 
+        try
+        {
+            // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+            if (!autoCommit)
+            {
+                shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                statement->execute("ROLLBACK");
+            }
+
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(sql::SQLException se)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + se.what()
+            );
+        
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + e.what()
+            );
+        
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+
         throw se;
     }
     catch(runtime_error e)
     {
-        // conn->_sqlConnection->rollback(); OR execute ROLLBACK
-        if (!autoCommit)
-        {
-            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-            statement->execute("ROLLBACK");
-        }
-        
-        _connectionPool->unborrow(conn);
-        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
+        try
+        {
+            // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+            if (!autoCommit)
+            {
+                shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                statement->execute("ROLLBACK");
+            }
+
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(sql::SQLException se)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + se.what()
+            );
+        
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + e.what()
+            );
+        
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        
         throw exception();
     }
     catch(exception e)
     {
-        // conn->_sqlConnection->rollback(); OR execute ROLLBACK
-        if (!autoCommit)
-        {
-            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-            statement->execute("ROLLBACK");
-        }
-        
-        _connectionPool->unborrow(conn);
-        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
+        try
+        {
+            // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+            if (!autoCommit)
+            {
+                shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                statement->execute("ROLLBACK");
+            }
+
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(sql::SQLException se)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + se.what()
+            );
+        
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + e.what()
+            );
+        
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        
         throw e;
     }
     
@@ -4016,6 +4850,9 @@ void MMSEngineDBFacade::updateEncodingJobProgress (
     try
     {
         conn = _connectionPool->borrow();	
+        _logger->info(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
 
         {
             lastSQLCommand = 
@@ -4041,12 +4878,13 @@ void MMSEngineDBFacade::updateEncodingJobProgress (
             }
         }
         
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
         _connectionPool->unborrow(conn);
     }
     catch(sql::SQLException se)
     {
-        _connectionPool->unborrow(conn);
-
         string exceptionMessage(se.what());
         
         _logger->error(__FILEREF__ + "SQL exception"
@@ -4054,27 +4892,38 @@ void MMSEngineDBFacade::updateEncodingJobProgress (
             + ", exceptionMessage: " + exceptionMessage
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
         throw se;
     }
     catch(runtime_error e)
     {
-        _connectionPool->unborrow(conn);
-        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
         throw exception();
     }
     catch(exception e)
     {
-        _connectionPool->unborrow(conn);
-        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
         throw e;
     }
 }
@@ -4096,6 +4945,9 @@ void MMSEngineDBFacade::checkWorkspaceMaxIngestionNumber (
         string periodEndDateTime;
 
         conn = _connectionPool->borrow();	
+        _logger->info(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
 
         {
             lastSQLCommand = 
@@ -4368,12 +5220,13 @@ void MMSEngineDBFacade::checkWorkspaceMaxIngestionNumber (
             throw runtime_error(errorMessage);
         }
                 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
         _connectionPool->unborrow(conn);
     }
     catch(sql::SQLException se)
     {
-        _connectionPool->unborrow(conn);
-
         string exceptionMessage(se.what());
         
         _logger->error(__FILEREF__ + "SQL exception"
@@ -4381,25 +5234,36 @@ void MMSEngineDBFacade::checkWorkspaceMaxIngestionNumber (
             + ", exceptionMessage: " + exceptionMessage
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
         throw se;
     }    
     catch(runtime_error e)
     {
-        _connectionPool->unborrow(conn);
-
         _logger->error(__FILEREF__ + "exception"
             + ", e.what: " + e.what()
         );
+
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
 
         throw e;
     }    
     catch(exception e)
     {        
-        _connectionPool->unborrow(conn);
-
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
+
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
 
         throw e;
     }        
@@ -4421,6 +5285,9 @@ string MMSEngineDBFacade::nextRelativePathToBeUsed (
         int currentDirLevel3;
 
         conn = _connectionPool->borrow();	
+        _logger->info(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
 
         {
             lastSQLCommand = 
@@ -4457,12 +5324,13 @@ string MMSEngineDBFacade::nextRelativePathToBeUsed (
             relativePathToBeUsed = pCurrentRelativePath;
         }
         
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
         _connectionPool->unborrow(conn);
     }
     catch(sql::SQLException se)
     {
-        _connectionPool->unborrow(conn);
-
         string exceptionMessage(se.what());
         
         _logger->error(__FILEREF__ + "SQL exception"
@@ -4470,26 +5338,37 @@ string MMSEngineDBFacade::nextRelativePathToBeUsed (
             + ", exceptionMessage: " + exceptionMessage
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
         throw se;
     }    
     catch(runtime_error e)
     {        
-        _connectionPool->unborrow(conn);
-
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
         throw exception();
     }    
     catch(exception e)
     {        
-        _connectionPool->unborrow(conn);
-
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
+
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
 
         throw e;
     }    
@@ -4538,6 +5417,9 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
     try
     {
         conn = _connectionPool->borrow();	
+        _logger->info(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
 
         autoCommit = false;
         // conn->_sqlConnection->setAutoCommit(autoCommit); OR execute the statement START TRANSACTION
@@ -5026,6 +5908,9 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
         }
         autoCommit = true;
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
         _connectionPool->unborrow(conn);
         
         mediaItemKeyAndPhysicalPathKey.first = mediaItemKey;
@@ -5033,15 +5918,6 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
     }
     catch(sql::SQLException se)
     {
-        // conn->_sqlConnection->rollback(); OR execute ROLLBACK
-        if (!autoCommit)
-        {
-            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-            statement->execute("ROLLBACK");
-        }
-        
-        _connectionPool->unborrow(conn);
-
         string exceptionMessage(se.what());
         
         _logger->error(__FILEREF__ + "SQL exception"
@@ -5049,41 +5925,134 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             + ", exceptionMessage: " + exceptionMessage
         );
 
+        try
+        {
+            // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+            if (!autoCommit)
+            {
+                shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                statement->execute("ROLLBACK");
+            }
+
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(sql::SQLException se)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + se.what()
+            );
+        
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + e.what()
+            );
+        
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+
         throw se;
     }
     catch(runtime_error e)
     {
-        // conn->_sqlConnection->rollback(); OR execute ROLLBACK
-        if (!autoCommit)
-        {
-            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-            statement->execute("ROLLBACK");
-        }
-        
-        _connectionPool->unborrow(conn);
-        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
+        try
+        {
+            // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+            if (!autoCommit)
+            {
+                shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                statement->execute("ROLLBACK");
+            }
+
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(sql::SQLException se)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + se.what()
+            );
+        
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + e.what()
+            );
+        
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        
         throw e;
     }
     catch(exception e)
     {
-        // conn->_sqlConnection->rollback(); OR execute ROLLBACK
-        if (!autoCommit)
-        {
-            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-            statement->execute("ROLLBACK");
-        }
-        
-        _connectionPool->unborrow(conn);
-        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
+        try
+        {
+            // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+            if (!autoCommit)
+            {
+                shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                statement->execute("ROLLBACK");
+            }
+
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(sql::SQLException se)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + se.what()
+            );
+        
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + e.what()
+            );
+        
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        
         throw e;
     }
     
@@ -5103,6 +6072,9 @@ tuple<int,string,string,string> MMSEngineDBFacade::getStorageDetails(
     try
     {
         conn = _connectionPool->borrow();	
+        _logger->info(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
 
         int64_t workspaceKey;
         int mmsPartitionNumber;
@@ -5144,14 +6116,15 @@ tuple<int,string,string,string> MMSEngineDBFacade::getStorageDetails(
 
         shared_ptr<Workspace> workspace = getWorkspace(workspaceKey);
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
         _connectionPool->unborrow(conn);
 
         return make_tuple(mmsPartitionNumber, workspace->_directoryName, relativePath, fileName);
     }
     catch(sql::SQLException se)
     {
-        _connectionPool->unborrow(conn);
-
         string exceptionMessage(se.what());
         
         _logger->error(__FILEREF__ + "SQL exception"
@@ -5159,26 +6132,37 @@ tuple<int,string,string,string> MMSEngineDBFacade::getStorageDetails(
             + ", exceptionMessage: " + exceptionMessage
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
         throw se;
     }    
     catch(runtime_error e)
     {        
-        _connectionPool->unborrow(conn);
-
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
         throw exception();
     }        
     catch(exception e)
     {        
-        _connectionPool->unborrow(conn);
-
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
+
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
 
         throw e;
     }        
@@ -5203,6 +6187,9 @@ int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
     try
     {
         conn = _connectionPool->borrow();	
+        _logger->info(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
 
         autoCommit = false;
         // conn->_sqlConnection->setAutoCommit(autoCommit); OR execute the statement START TRANSACTION
@@ -5319,19 +6306,13 @@ int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
         }
         autoCommit = true;
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
         _connectionPool->unborrow(conn);
     }
     catch(sql::SQLException se)
     {
-        // conn->_sqlConnection->rollback(); OR execute ROLLBACK
-        if (!autoCommit)
-        {
-            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-            statement->execute("ROLLBACK");
-        }
-        
-        _connectionPool->unborrow(conn);
-
         string exceptionMessage(se.what());
         
         _logger->error(__FILEREF__ + "SQL exception"
@@ -5339,41 +6320,134 @@ int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
             + ", exceptionMessage: " + exceptionMessage
         );
 
+        try
+        {
+            // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+            if (!autoCommit)
+            {
+                shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                statement->execute("ROLLBACK");
+            }
+
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(sql::SQLException se)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + se.what()
+            );
+        
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + e.what()
+            );
+        
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+
         throw se;
     }
     catch(runtime_error e)
     {
-        // conn->_sqlConnection->rollback(); OR execute ROLLBACK
-        if (!autoCommit)
-        {
-            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-            statement->execute("ROLLBACK");
-        }
-        
-        _connectionPool->unborrow(conn);
-        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
+        try
+        {
+            // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+            if (!autoCommit)
+            {
+                shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                statement->execute("ROLLBACK");
+            }
+
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(sql::SQLException se)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + se.what()
+            );
+        
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + e.what()
+            );
+        
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        
         throw exception();
     }
     catch(exception e)
     {
-        // conn->_sqlConnection->rollback(); OR execute ROLLBACK
-        if (!autoCommit)
-        {
-            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
-            statement->execute("ROLLBACK");
-        }
-        
-        _connectionPool->unborrow(conn);
-        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
+        try
+        {
+            // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+            if (!autoCommit)
+            {
+                shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                statement->execute("ROLLBACK");
+            }
+
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(sql::SQLException se)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + se.what()
+            );
+        
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + e.what()
+            );
+        
+            _logger->info(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        
         throw e;
     }
     
@@ -5456,6 +6530,9 @@ void MMSEngineDBFacade::createTablesIfNeeded()
     try
     {
         conn = _connectionPool->borrow();	
+        _logger->info(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
 
         shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
 
@@ -7223,10 +8300,16 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             ENGINE=InnoDB;
          */
 
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
         _connectionPool->unborrow(conn);
     }
     catch(sql::SQLException se)
     {
+        _logger->info(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
         _connectionPool->unborrow(conn);
 
         _logger->error(__FILEREF__ + "SQL exception"

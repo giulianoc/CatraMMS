@@ -62,18 +62,21 @@ public:
 
     virtual ~EncoderVideoAudioProxy();
     
-    void setData(
+    void init(
+        int proxyIdentifier, mutex* mtEncodingJobs,
         Json::Value configuration,
-        mutex* mtEncodingJobs,
-        EncodingJobStatus* status,
         shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
         shared_ptr<MMSStorage> mmsStorage,
-        shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem,
         #ifdef __LOCALENCODER__
             int* pRunningEncodingsNumber,
         #else
         #endif
         shared_ptr<spdlog::logger> logger);
+    
+    void setEncodingData(
+        EncodingJobStatus* status,
+        shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem
+    );
 
     void operator ()();
 
@@ -81,6 +84,7 @@ public:
 
 private:
     shared_ptr<spdlog::logger>          _logger;
+    int                                 _proxyIdentifier;
     Json::Value                         _configuration;
     mutex*                              _mtEncodingJobs;
     EncodingJobStatus*                  _status;

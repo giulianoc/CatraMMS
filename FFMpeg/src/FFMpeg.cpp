@@ -122,6 +122,7 @@ void FFMpeg::encodeContent(
             stagingEncodedAssetPath = stagingEncodedAssetPathName.substr(0, fileNameIndex);
         }
         _outputFfmpegPathFileName = string(stagingEncodedAssetPath)
+                + "/"
                 + to_string(_currentEncodingJobKey)
                 + ".ffmpegoutput";
         /*
@@ -140,7 +141,7 @@ void FFMpeg::encodeContent(
             string stagingEncodedSegmentAssetPathName =
                     stagingEncodedAssetPathName 
                     + "/"
-                    + encodedFileName
+                    + to_string(_currentEncodingJobKey)
                     + "_%04d.ts"
             ;
 
@@ -211,7 +212,7 @@ void FFMpeg::encodeContent(
             FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
 
             _logger->info(__FILEREF__ + "Encoded file generated"
-                + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+                + ", stagingEncodedSegmentAssetPathName: " + stagingEncodedSegmentAssetPathName
             );
 
             // changes to be done to the manifest, see EncoderThread.cpp
@@ -222,9 +223,8 @@ void FFMpeg::encodeContent(
             if (_twoPasses)
             {
                 string ffmpegPassLogPathFileName = string(stagingEncodedAssetPath)
+                    + "/"
                     + to_string(_currentEncodingJobKey)
-                    + "_"
-                    + encodedFileName
                     + ".passlog"
                     ;
 
