@@ -2526,6 +2526,16 @@ void MMSEngineProcessor::manageEmailNotification(
         emailBody.push_back(message);
             
         sendEmail(emailAddress, "Task finished", emailBody);
+        
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_TaskSuccess"
+            + ", errorMessage: " + ""
+        );                            
+        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
+                MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
+                "", "" // ProcessorMMS
+        );
     }
     catch(runtime_error e)
     {
