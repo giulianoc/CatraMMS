@@ -3157,6 +3157,10 @@ Json::Value MMSEngineDBFacade::getIngestionJobStatus (
 
                 int64_t ingestionJobKey = resultSet->getInt64("ingestionJobKey");
 
+                field = "ingestionType";
+                taskRoot[field] = static_cast<string>(resultSet->getString("ingestionType"));
+                IngestionType ingestionType = toIngestionType(resultSet->getString("ingestionType"));
+
                 field = "ingestionJobKey";
                 taskRoot[field] = ingestionJobKey;
 
@@ -3165,12 +3169,113 @@ Json::Value MMSEngineDBFacade::getIngestionJobStatus (
                     taskRoot[field] = Json::nullValue;
                 else
                     taskRoot[field] = static_cast<string>(resultSet->getString("label"));
+                
+                if (ingestionType != IngestionType::Encode)
+                {
+                    int64_t mediaItemKey = -1;
+                    
+                    field = "mediaItemKey";
+                    if (resultSet->isNull("mediaItemKey"))
+                        taskRoot[field] = Json::nullValue;
+                    else
+                    {
+                        mediaItemKey = resultSet->getInt64("mediaItemKey");
+                        
+                        taskRoot[field] = mediaItemKey;
+                    }
+                    
+                    if (mediaItemKey != -1)
+                    {
+                        MMSEngineDBFacade::ContentType contentType;
+                        
+                        lastSQLCommand = 
+                            "select contentType from MMS_MediaItem where mediaItemKey = ?";
+                        shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                        int queryParameterIndex = 1;
+                        preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
 
-                field = "mediaItemKey";
-                if (resultSet->isNull("mediaItemKey"))
-                    taskRoot[field] = Json::nullValue;
-                else
-                    taskRoot[field] = resultSet->getInt64("mediaItemKey");
+                        shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+                        if (resultSet->next())
+                        {
+                            contentType = MMSEngineDBFacade::toContentType(resultSet->getString("contentType"));
+                        }
+                        else
+                        {
+                            string errorMessage = __FILEREF__ + "MediaItemKey is not found"
+                                + ", mediaItemKey: " + to_string(mediaItemKey)
+                                + ", lastSQLCommand: " + lastSQLCommand
+                            ;
+                            _logger->error(errorMessage);
+
+                            throw runtime_error(errorMessage);                    
+                        }            
+
+                        if (contentType == ContentType::Video)
+                        {
+                            int64_t durationInMilliSeconds;
+                            int videoWidth;
+                            int videoHeight;
+                            long bitRate;
+                            string videoCodecName;
+                            string videoProfile;
+                            string videoAvgFrameRate;
+                            long videoBitRate;
+                            string audioCodecName;
+                            long audioSampleRate;
+                            int audioChannels;
+                            long audioBitRate;
+
+                            tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
+                                videoDetails = getVideoDetails(mediaItemKey);
+
+                            tie(durationInMilliSeconds, bitRate,
+                                videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
+                                audioCodecName, audioSampleRate, audioChannels, audioBitRate) = videoDetails;
+
+                            Json::Value videoDetailsRoot;
+
+                            field = "durationInMilliSeconds";
+                            videoDetailsRoot[field] = durationInMilliSeconds;
+
+                            field = "videoWidth";
+                            videoDetailsRoot[field] = videoWidth;
+
+                            field = "videoHeight";
+                            videoDetailsRoot[field] = videoHeight;
+                            
+                            field = "bitRate";
+                            videoDetailsRoot[field] = (long long) bitRate;
+
+                            field = "videoCodecName";
+                            videoDetailsRoot[field] = videoCodecName;
+
+                            field = "videoProfile";
+                            videoDetailsRoot[field] = videoProfile;
+
+                            field = "videoAvgFrameRate";
+                            videoDetailsRoot[field] = videoAvgFrameRate;
+
+                            field = "videoBitRate";
+                            videoDetailsRoot[field] = (long long) videoBitRate;
+
+                            field = "audioCodecName";
+                            videoDetailsRoot[field] = audioCodecName;
+
+                            field = "audioSampleRate";
+                            videoDetailsRoot[field] = (long long) audioSampleRate;
+
+                            field = "audioChannels";
+                            videoDetailsRoot[field] = audioChannels;
+
+                            field = "audioBitRate";
+                            videoDetailsRoot[field] = (long long) audioBitRate;
+
+                            
+                            field = "videoDetails";
+                            taskRoot[field] = videoDetailsRoot;
+                        }
+                    }
+                }
 
                 field = "startIngestion";
                 taskRoot[field] = static_cast<string>(resultSet->getString("startIngestion"));
@@ -3181,17 +3286,23 @@ Json::Value MMSEngineDBFacade::getIngestionJobStatus (
                 else
                     taskRoot[field] = static_cast<string>(resultSet->getString("endIngestion"));
 
-                field = "downloadingProgress";
-                if (resultSet->isNull("downloadingProgress"))
-                    taskRoot[field] = Json::nullValue;
-                else
-                    taskRoot[field] = resultSet->getInt64("downloadingProgress");
+                if (ingestionType == IngestionType::ContentIngestion)
+                {
+                    field = "downloadingProgress";
+                    if (resultSet->isNull("downloadingProgress"))
+                        taskRoot[field] = Json::nullValue;
+                    else
+                        taskRoot[field] = resultSet->getInt64("downloadingProgress");
+                }
 
-                field = "uploadingProgress";
-                if (resultSet->isNull("uploadingProgress"))
-                    taskRoot[field] = Json::nullValue;
-                else
-                    taskRoot[field] = resultSet->getInt64("uploadingProgress");
+                if (ingestionType == IngestionType::ContentIngestion)
+                {
+                    field = "uploadingProgress";
+                    if (resultSet->isNull("uploadingProgress"))
+                        taskRoot[field] = Json::nullValue;
+                    else
+                        taskRoot[field] = resultSet->getInt64("uploadingProgress");
+                }
 
                 field = "status";
                 taskRoot[field] = static_cast<string>(resultSet->getString("status"));
@@ -3201,10 +3312,6 @@ Json::Value MMSEngineDBFacade::getIngestionJobStatus (
                     taskRoot[field] = Json::nullValue;
                 else
                     taskRoot[field] = static_cast<string>(resultSet->getString("errorMessage"));
-
-                // field = "ingestionType";
-                // taskRoot[field] = static_cast<string>(resultSet->getString("ingestionType"));
-                IngestionType ingestionType = toIngestionType(resultSet->getString("ingestionType"));
 
                 if (ingestionType == IngestionType::Encode)
                 {
