@@ -3244,7 +3244,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobStatus (
                             videoDetailsRoot[field] = videoHeight;
                             
                             field = "bitRate";
-                            videoDetailsRoot[field] = (long long) bitRate;
+                            videoDetailsRoot[field] = (int64_t) bitRate;
 
                             field = "videoCodecName";
                             videoDetailsRoot[field] = videoCodecName;
@@ -3256,19 +3256,19 @@ Json::Value MMSEngineDBFacade::getIngestionJobStatus (
                             videoDetailsRoot[field] = videoAvgFrameRate;
 
                             field = "videoBitRate";
-                            videoDetailsRoot[field] = (long long) videoBitRate;
+                            videoDetailsRoot[field] = (int64_t) videoBitRate;
 
                             field = "audioCodecName";
                             videoDetailsRoot[field] = audioCodecName;
 
                             field = "audioSampleRate";
-                            videoDetailsRoot[field] = (long long) audioSampleRate;
+                            videoDetailsRoot[field] = (int64_t) audioSampleRate;
 
                             field = "audioChannels";
                             videoDetailsRoot[field] = audioChannels;
 
                             field = "audioBitRate";
-                            videoDetailsRoot[field] = (long long) audioBitRate;
+                            videoDetailsRoot[field] = (int64_t) audioBitRate;
 
                             
                             field = "videoDetails";
