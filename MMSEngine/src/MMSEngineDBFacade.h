@@ -277,6 +277,7 @@ public:
         Slideshow               = 8,
         ConcatDemuxer           = 9,
         Cut                     = 10,
+        EmailNotification       = 11,
         ContentUpdate           = 50,
         ContentRemove           = 60
     };
@@ -306,6 +307,8 @@ public:
                 return "Concat-Demuxer";
             case IngestionType::Cut:
                 return "Cut";
+            case IngestionType::EmailNotification:
+                return "Email-Notification";
             case IngestionType::ContentUpdate:
                 return "ContentUpdate";
             case IngestionType::ContentRemove:
@@ -340,6 +343,8 @@ public:
             return IngestionType::ConcatDemuxer;
         else if (lowerCase == "cut")
             return IngestionType::Cut;
+        else if (lowerCase == "email-notification")
+            return IngestionType::EmailNotification;
         else if (lowerCase == "contentupdate")
             return IngestionType::ContentUpdate;
         else if (lowerCase == "contentremove")

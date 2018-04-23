@@ -64,6 +64,9 @@ public:
     void validateCutMetadata(
         Json::Value parametersRoot, vector<int64_t>& dependencies);
 
+    void validateEmailNotificationMetadata(
+        Json::Value parametersRoot, vector<int64_t>& dependencies);
+
     void validateEncodingProfilesSetRootMetadata(
         MMSEngineDBFacade::ContentType contentType, 
         Json::Value encodingProfilesSetRoot);

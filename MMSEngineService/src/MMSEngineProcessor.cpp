@@ -45,6 +45,13 @@ MMSEngineProcessor::MMSEngineProcessor(
 
     _dependencyExpirationInHours        = configuration["mms"].get("dependencyExpirationInHours", 5).asInt();
     _downloadChunkSizeInMegaBytes       = configuration["download"].get("downloadChunkSizeInMegaBytes", 5).asInt();
+    
+    _emailProtocol                      = _configuration["EmailNotification"].get("protocol", "XXX").asString();
+    _emailServer                        = _configuration["EmailNotification"].get("server", "XXX").asString();
+    _emailPort                          = _configuration["EmailNotification"].get("port", "XXX").asInt();
+    _emailUserName                      = _configuration["EmailNotification"].get("userName", "XXX").asString();
+    _emailPassword                      = _configuration["EmailNotification"].get("password", "XXX").asString();
+    _emailFrom                          = _configuration["EmailNotification"].get("from", "XXX").asString();
 }
 
 MMSEngineProcessor::~MMSEngineProcessor()
@@ -661,12 +668,12 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 _logger->info(__FILEREF__ + "Update IngestionJob"
                                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                    + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                                        MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage,
                                         "" // processorMMS
                                         );
@@ -684,12 +691,12 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 _logger->info(__FILEREF__ + "Update IngestionJob"
                                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                    + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                                        MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage,
                                         "" // processorMMS
                                         );
@@ -719,12 +726,12 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 _logger->info(__FILEREF__ + "Update IngestionJob"
                                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                    + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                                        MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage,
                                         "" // processorMMS
                                         );
@@ -742,12 +749,12 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 _logger->info(__FILEREF__ + "Update IngestionJob"
                                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                    + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                                        MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage,
                                         "" // processorMMS
                                         );
@@ -777,12 +784,12 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 _logger->info(__FILEREF__ + "Update IngestionJob"
                                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                    + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                                        MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage,
                                         "" // processorMMS
                                         );
@@ -800,12 +807,12 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 _logger->info(__FILEREF__ + "Update IngestionJob"
                                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                    + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                                        MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage,
                                         "" // processorMMS
                                         );
@@ -835,12 +842,12 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 _logger->info(__FILEREF__ + "Update IngestionJob"
                                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                    + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                                        MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage,
                                         "" // processorMMS
                                         );
@@ -858,12 +865,70 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
                                 _logger->info(__FILEREF__ + "Update IngestionJob"
                                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                    + ", IngestionStatus: " + "End_ValidationMediaSourceFailed"
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
                                     + ", errorMessage: " + errorMessage
                                     + ", processorMMS: " + ""
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                                        MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                                        errorMessage,
+                                        "" // processorMMS
+                                        );
+
+                                throw runtime_error(errorMessage);
+                            }
+                        }
+                        else if (ingestionType == MMSEngineDBFacade::IngestionType::EmailNotification)
+                        {
+                            // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
+                            try
+                            {
+                                manageEmailNotification(
+                                        ingestionJobKey, 
+                                        workspace, 
+                                        parametersRoot, 
+                                        dependencies);
+                            }
+                            catch(runtime_error e)
+                            {
+                                _logger->error(__FILEREF__ + "manageEmailNotification failed"
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                                        errorMessage,
+                                        "" // processorMMS
+                                        );
+
+                                throw runtime_error(errorMessage);
+                            }
+                            catch(exception e)
+                            {
+                                _logger->error(__FILEREF__ + "manageEmailNotification failed"
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                                         errorMessage,
                                         "" // processorMMS
                                         );
@@ -2422,6 +2487,170 @@ void MMSEngineProcessor::generateAndIngestCutMedia(
         
         throw e;
     }
+}
+
+void MMSEngineProcessor::manageEmailNotification(
+        int64_t ingestionJobKey,
+        shared_ptr<Workspace> workspace,
+        Json::Value parametersRoot,
+        vector<int64_t>& dependencies
+)
+{
+    try
+    {
+        if (dependencies.size() == 0)
+        {
+            string errorMessage = __FILEREF__ + "No configured any IngestionJobKey in order to send an email"
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", dependencies.size: " + to_string(dependencies.size());
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        
+        int64_t ingestionJobKey = dependencies.back();
+        
+        string field = "EmailAddress";
+        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        string emailAddress = parametersRoot.get(field, "XXX").asString();
+    
+        string message = string("<p>Task ingestionJobKey ") + to_string(ingestionJobKey) + " has finished</p>";
+        vector<string> emailBody;
+        emailBody.push_back(message);
+            
+        sendEmail(emailAddress, "Task finished", emailBody);
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "sendEmail failed"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
+        );
+        
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "sendEmail failed"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+        );
+        
+        throw e;
+    }
+}
+
+void MMSEngineProcessor:: sendEmail(string to, string subject, vector<string>& emailBody)
+{
+    // curl --url 'smtps://smtp.gmail.com:465' --ssl-reqd   
+    //      --mail-from 'giulianocatrambone@gmail.com' 
+    //      --mail-rcpt 'giulianoc@catrasoftware.it'   
+    //      --upload-file ~/tmp/1.txt 
+    //      --user 'giulianocatrambone@gmail.com:XXXXXXXXXXXXX' 
+    //      --insecure
+    
+    
+    string emailServerURL = _emailProtocol + "://" + _emailServer + ":" + to_string(_emailPort);
+    
+
+    CURL *curl;
+    CURLcode res = CURLE_OK;
+    struct curl_slist *recipients = NULL;
+    deque<string> emailLines;
+  
+    emailLines.push_back(string("From: <") + _emailFrom + ">" + "\r\n");
+    emailLines.push_back(string("To: <") + to + ">" + "\r\n");
+    emailLines.push_back(string("Subject: ") + subject + "\r\n");
+    emailLines.push_back(string("Content-Type: text/html; charset=\"UTF-8\"") + "\r\n");
+    emailLines.push_back("\r\n");   // empty line to divide headers from body, see RFC5322
+    emailLines.insert(emailLines.end(), emailBody.begin(), emailBody.end());
+    
+    curl = curl_easy_init();
+
+    if(curl) 
+    {
+        curl_easy_setopt(curl, CURLOPT_URL, emailServerURL.c_str());
+        curl_easy_setopt(curl, CURLOPT_USERNAME, _emailUserName.c_str());
+        curl_easy_setopt(curl, CURLOPT_PASSWORD, _emailPassword.c_str());
+        
+//        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+//        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+
+        /* Note that this option isn't strictly required, omitting it will result
+         * in libcurl sending the MAIL FROM command with empty sender data. All
+         * autoresponses should have an empty reverse-path, and should be directed
+         * to the address in the reverse-path which triggered them. Otherwise,
+         * they could cause an endless loop. See RFC 5321 Section 4.5.5 for more
+         * details.
+         */
+        curl_easy_setopt(curl, CURLOPT_MAIL_FROM, _emailFrom.c_str());
+
+        /* Add two recipients, in this particular case they correspond to the
+         * To: and Cc: addressees in the header, but they could be any kind of
+         * recipient. */
+        recipients = curl_slist_append(recipients, to.c_str());
+        curl_easy_setopt(curl, CURLOPT_MAIL_RCPT, recipients);
+
+        /* We're using a callback function to specify the payload (the headers and
+         * body of the message). You could just use the CURLOPT_READDATA option to
+         * specify a FILE pointer to read from. */
+        curl_easy_setopt(curl, CURLOPT_READFUNCTION, MMSEngineProcessor::emailPayloadFeed);
+        curl_easy_setopt(curl, CURLOPT_READDATA, &emailLines);
+        curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
+        // curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+
+        /* Send the message */
+        _logger->info(__FILEREF__ + "Sending email...");
+        res = curl_easy_perform(curl);
+
+        /* Check for errors */
+        if(res != CURLE_OK)
+            _logger->error(__FILEREF__ + "curl_easy_perform() failed"
+                + ", curl_easy_strerror(res): " + curl_easy_strerror(res)
+            );
+        else
+            _logger->info(__FILEREF__ + "Email sent successful");
+
+        /* Free the list of recipients */
+        curl_slist_free_all(recipients);
+
+        /* curl won't send the QUIT command until you call cleanup, so you should
+         * be able to re-use this connection for additional messages (setting
+         * CURLOPT_MAIL_FROM and CURLOPT_MAIL_RCPT as required, and calling
+         * curl_easy_perform() again. It may not be a good idea to keep the
+         * connection open for a very long time though (more than a few minutes
+         * may result in the server timing out the connection), and you do want to
+         * clean up in the end.
+         */
+        curl_easy_cleanup(curl);
+    }    
+}
+
+size_t MMSEngineProcessor:: emailPayloadFeed(void *ptr, size_t size, size_t nmemb, void *userp)
+{
+    deque<string>* pEmailLines = (deque<string>*) userp;
+ 
+    if((size == 0) || (nmemb == 0) || ((size*nmemb) < 1)) 
+    {
+        return 0;
+    }
+ 
+    if (pEmailLines->size() == 0)
+        return 0; // no more lines
+  
+    string emailLine = pEmailLines->front();
+    // cout << "emailLine: " << emailLine << endl;
+ 
+    memcpy(ptr, emailLine.c_str(), emailLine.length());
+    pEmailLines->pop_front();
+ 
+    return emailLine.length();
 }
 
 string MMSEngineProcessor::generateImageMetadataToIngest(

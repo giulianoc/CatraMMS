@@ -60,6 +60,15 @@ private:
     int                     _dependencyExpirationInHours;
     size_t                  _downloadChunkSizeInMegaBytes;
     
+    string                  _emailProtocol;
+    string                  _emailServer;
+    int                     _emailPort;
+    string                  _emailUserName;
+    string                  _emailPassword;
+    string                  _emailFrom;
+    
+    void sendEmail(string to, string subject, vector<string>& emailBody);
+
     void handleCheckIngestionEvent();
 
     void handleLocalAssetIngestionEvent (
@@ -111,6 +120,12 @@ private:
         Json::Value parametersRoot,
         vector<int64_t>& dependencies);
 
+    void manageEmailNotification(
+        int64_t ingestionJobKey,
+        shared_ptr<Workspace> workspace,
+        Json::Value parametersRoot,
+        vector<int64_t>& dependencies);
+
     tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> getMediaSourceDetails(
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
         MMSEngineDBFacade::IngestionType ingestionType,
@@ -136,6 +151,7 @@ private:
         double dltotal, double dlnow,
         double ultotal, double ulnow);
 
+    static size_t emailPayloadFeed(void *ptr, size_t size, size_t nmemb, void *userp);
 } ;
 
 #endif

@@ -621,6 +621,23 @@ vector<int64_t> Validator::validateTaskMetadata(Json::Value taskRoot)
         Json::Value parametersRoot = taskRoot[field]; 
         validateCutMetadata(parametersRoot, dependencies);        
     }
+    else if (type == "Email-Notification")
+    {
+        ingestionType = MMSEngineDBFacade::IngestionType::EmailNotification;
+        
+        field = "Parameters";
+        if (!isMetadataPresent(taskRoot, field))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        Json::Value parametersRoot = taskRoot[field]; 
+        validateEmailNotificationMetadata(parametersRoot, dependencies);        
+    }
     else
     {
         string errorMessage = __FILEREF__ + "Field 'Type' is wrong"
@@ -673,6 +690,10 @@ vector<int64_t> Validator::validateTaskMetadata(
     else if (ingestionType == MMSEngineDBFacade::IngestionType::Cut)
     {
         validateCutMetadata(parametersRoot, dependencies);        
+    }
+    else if (ingestionType == MMSEngineDBFacade::IngestionType::EmailNotification)
+    {
+        validateEmailNotificationMetadata(parametersRoot, dependencies);        
     }
     else
     {
@@ -1946,6 +1967,78 @@ void Validator::validateCutMetadata(
         }
 
         dependencies.push_back(referenceMediaItemKey);
+    }
+        
+    /*
+    // Territories
+    {
+        field = "Territories";
+        if (isMetadataPresent(contentIngestion, field))
+        {
+            const Json::Value territories = contentIngestion[field];
+            
+            for( Json::ValueIterator itr = territories.begin() ; itr != territories.end() ; itr++ ) 
+            {
+                Json::Value territory = territories[territoryIndex];
+            }
+        
+    }
+    */
+}
+
+void Validator::validateEmailNotificationMetadata(
+    Json::Value parametersRoot, vector<int64_t>& dependencies)
+{
+    // see sample in directory samples
+        
+    vector<string> mandatoryFields = {
+        "EmailAddress"
+    };
+    for (string mandatoryField: mandatoryFields)
+    {
+        if (!isMetadataPresent(parametersRoot, mandatoryField))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + mandatoryField;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+    
+    // References is optional because in case of dependency managed automatically
+    // by MMS (i.e.: onSuccess)
+    string field = "References";
+    if (isMetadataPresent(parametersRoot, field))
+    {
+        Json::Value referencesRoot = parametersRoot[field];
+        if (referencesRoot.size() != 1)
+        {
+            string errorMessage = __FILEREF__ + "No correct number of References"
+                    + ", referencesRoot.size: " + to_string(referencesRoot.size());
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        Json::Value referenceRoot = referencesRoot[0];
+
+        int64_t referenceIngestionJobKey = -1;
+        field = "ReferenceIngestionJobKey";
+        if (!isMetadataPresent(referenceRoot, field))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + "Reference...";
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        else
+        {
+            referenceIngestionJobKey = referenceRoot.get(field, "XXX").asInt64();
+        }        
+        
+        dependencies.push_back(referenceIngestionJobKey);
     }
         
     /*
