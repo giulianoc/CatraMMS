@@ -1,6 +1,6 @@
 {
 	"Type": "Workflow",
-	"Label": "1",
+	"Label": "Workflow 1",
 	"Variables": {  
 		"Title": "My Title of the content"
 	},
