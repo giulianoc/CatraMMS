@@ -412,7 +412,6 @@ string MMSStorage::moveAssetInMMSRepository(
  {
     FileIO::DirectoryEntryType_t detSourceFileType;
 
-
     if (relativePath.front() != '/' || pulMMSPartitionIndexUsed == (unsigned long *) NULL) 
     {
             throw runtime_error(string("Wrong argument")

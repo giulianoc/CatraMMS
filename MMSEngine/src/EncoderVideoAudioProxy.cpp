@@ -1411,6 +1411,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEncod
     unsigned long mmsPartitionIndexUsed;
     try
     {
+        /*
         size_t fileNameIndex = stagingEncodedAssetPathName.find_last_of("/");
         if (fileNameIndex == string::npos)
         {
@@ -1423,6 +1424,27 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEncod
         }
 
         encodedFileName = stagingEncodedAssetPathName.substr(fileNameIndex + 1);
+        */
+        
+        encodedFileName = _encodingItem->_fileName
+                + "_" 
+                + to_string(_encodingItem->_encodingProfileKey);
+        if (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MP4)
+            encodedFileName.append(".mp4");
+        else if (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MPEG2_TS ||
+                _encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::Adobe)
+            ;
+        else if (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::WEBM)
+            encodedFileName.append(".webm");
+        else
+        {
+            string errorMessage = __FILEREF__ + "Unknown technology"
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
 
         bool partitionIndexToBeCalculated = true;
         bool deliveryRepositoriesToo = true;

@@ -804,6 +804,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
     long audioSampleRate = -1;
     int audioChannels = -1;
     long audioBitRate = -1;
+    try
     {
         // json output will be like:
         /*
@@ -1180,6 +1181,30 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
         bool exceptionInCaseOfError = false;
         FileIO::remove(detailsPathFileName, exceptionInCaseOfError);
     }
+    catch(runtime_error e)
+    {
+        string errorMessage = __FILEREF__ + "ffmpeg: error processing ffprobe output"
+                + ", e.what(): " + e.what()
+        ;
+        _logger->error(errorMessage);
+
+        bool exceptionInCaseOfError = false;
+        FileIO::remove(detailsPathFileName, exceptionInCaseOfError);
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        string errorMessage = __FILEREF__ + "ffmpeg: error processing ffprobe output"
+                + ", e.what(): " + e.what()
+        ;
+        _logger->error(errorMessage);
+
+        bool exceptionInCaseOfError = false;
+        FileIO::remove(detailsPathFileName, exceptionInCaseOfError);
+
+        throw e;
+    }
 
     /*
     if (durationInMilliSeconds == -1)
@@ -1495,12 +1520,14 @@ void FFMpeg::generateConcatMediaToIngest(
         _logger->error(errorMessage);
 
         bool exceptionInCaseOfError = false;
+        FileIO::remove(concatenationListPathName, exceptionInCaseOfError);
         FileIO::remove(outputFfmpegPathFileName, exceptionInCaseOfError);
 
         throw e;
     }
 
     bool exceptionInCaseOfError = false;
+    FileIO::remove(concatenationListPathName, exceptionInCaseOfError);
     FileIO::remove(outputFfmpegPathFileName, exceptionInCaseOfError);    
 }
 
