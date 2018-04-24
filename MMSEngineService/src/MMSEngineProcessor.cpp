@@ -2508,7 +2508,14 @@ void MMSEngineProcessor::manageEmailNotification(
             throw runtime_error(errorMessage);
         }
         
-        int64_t ingestionJobKey = dependencies.back();
+        string sIngestionJobJeyDependency;
+        for (int64_t ingestionJobKeyDependency: dependencies)
+        {
+            if (sIngestionJobJeyDependency == "")
+                sIngestionJobJeyDependency = to_string(ingestionJobKeyDependency);
+            else
+                sIngestionJobJeyDependency += (", " + to_string(ingestionJobKeyDependency));
+        }
         
         string field = "EmailAddress";
         if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
@@ -2521,7 +2528,35 @@ void MMSEngineProcessor::manageEmailNotification(
         }
         string emailAddress = parametersRoot.get(field, "XXX").asString();
     
-        string message = string("<p>Task ingestionJobKey ") + to_string(ingestionJobKey) + " has finished</p>";
+        field = "Subject";
+        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        string subject = parametersRoot.get(field, "XXX").asString();
+
+        field = "Message";
+        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        string message = parametersRoot.get(field, "XXX").asString();
+
+        {
+            string strToBeReplaced = "__INGESTIONJOBKEY__";
+            string strToReplace = sIngestionJobJeyDependency;
+            if (message.find(strToBeReplaced) != string::npos)
+                message.replace(message.find(strToBeReplaced), strToBeReplaced.length(), strToReplace);
+        }
+
         vector<string> emailBody;
         emailBody.push_back(message);
             

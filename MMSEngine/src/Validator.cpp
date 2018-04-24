@@ -1992,7 +1992,9 @@ void Validator::validateEmailNotificationMetadata(
     // see sample in directory samples
         
     vector<string> mandatoryFields = {
-        "EmailAddress"
+        "EmailAddress",
+        "Subject",
+        "Message"
     };
     for (string mandatoryField: mandatoryFields)
     {
@@ -2012,33 +2014,35 @@ void Validator::validateEmailNotificationMetadata(
     if (isMetadataPresent(parametersRoot, field))
     {
         Json::Value referencesRoot = parametersRoot[field];
-        if (referencesRoot.size() != 1)
+        if (referencesRoot.size() < 1)
         {
-            string errorMessage = __FILEREF__ + "No correct number of References"
-                    + ", referencesRoot.size: " + to_string(referencesRoot.size());
+            string errorMessage = __FILEREF__ + "Field is present but it does not have enough elements (2)"
+                    + ", Field: " + field;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
         }
-
-        Json::Value referenceRoot = referencesRoot[0];
-
-        int64_t referenceIngestionJobKey = -1;
-        field = "ReferenceIngestionJobKey";
-        if (!isMetadataPresent(referenceRoot, field))
+        for (int referenceIndex = 0; referenceIndex < referencesRoot.size(); referenceIndex++)
         {
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + "Reference...";
-            _logger->error(errorMessage);
+            Json::Value referenceRoot = referencesRoot[referenceIndex];
 
-            throw runtime_error(errorMessage);
+            int64_t referenceIngestionJobKey = -1;
+            field = "ReferenceIngestionJobKey";
+            if (!isMetadataPresent(referenceRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + "Reference...";
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            else
+            {
+                referenceIngestionJobKey = referenceRoot.get(field, "XXX").asInt64();
+            }        
+
+            dependencies.push_back(referenceIngestionJobKey);
         }
-        else
-        {
-            referenceIngestionJobKey = referenceRoot.get(field, "XXX").asInt64();
-        }        
-        
-        dependencies.push_back(referenceIngestionJobKey);
     }
         
     /*
