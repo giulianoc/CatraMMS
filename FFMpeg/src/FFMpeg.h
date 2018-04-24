@@ -148,6 +148,8 @@ private:
         string pathFileName, int lastCharsToBeRead);
     
     bool isMetadataPresent(Json::Value root, string field);
+
+    void removeHavingPrefixFileName(string directoryName, string prefixFileName);
 };
 
 #endif

@@ -222,23 +222,11 @@ void FFMpeg::encodeContent(
             string ffmpegExecuteCommand;
             if (_twoPasses)
             {
+                string passlogFileName = to_string(_currentEncodingJobKey) + ".passlog";
                 string ffmpegPassLogPathFileName = string(stagingEncodedAssetPath)
                     + "/"
-                    + to_string(_currentEncodingJobKey)
-                    + ".passlog"
+                    + passlogFileName
                     ;
-
-                // bool removeLinuxPathIfExist = true;
-                /*
-                string ffmpegPassLogPathFileName = _mmsStorage->getStagingAssetPathName (
-                    customerDirectoryName,
-                    relativePath,
-                    passLogFileName,
-                    -1,         // long long llMediaItemKey,
-                    -1,         // long long llPhysicalPathKey,
-                    true    // removeLinuxPathIfExist
-                );
-                 */
 
                 ffmpegExecuteCommand =
                         _ffmpegPath + "/ffmpeg "
@@ -294,7 +282,7 @@ void FFMpeg::encodeContent(
                     _logger->error(errorMessage);
 
                     bool exceptionInCaseOfError = false;
-                    FileIO::remove(ffmpegPassLogPathFileName, exceptionInCaseOfError);
+                    removeHavingPrefixFileName(stagingEncodedAssetPath, passlogFileName);
                     FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
 
                     throw e;
@@ -360,14 +348,14 @@ void FFMpeg::encodeContent(
                     _logger->error(errorMessage);
 
                     bool exceptionInCaseOfError = false;
-                    FileIO::remove(ffmpegPassLogPathFileName, exceptionInCaseOfError);
+                    removeHavingPrefixFileName(stagingEncodedAssetPath, passlogFileName);
                     FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
 
                     throw e;
                 }
 
                 bool exceptionInCaseOfError = false;
-                FileIO::remove(ffmpegPassLogPathFileName, exceptionInCaseOfError);
+                removeHavingPrefixFileName(stagingEncodedAssetPath, passlogFileName);
                 FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
             }
             else
@@ -525,6 +513,70 @@ void FFMpeg::encodeContent(
         }
 
         throw e;
+    }
+}
+
+void FFMpeg::removeHavingPrefixFileName(string directoryName, string prefixFileName)
+{
+    try
+    {
+        FileIO::DirectoryEntryType_t detDirectoryEntryType;
+        shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (directoryName + "/");
+
+        bool scanDirectoryFinished = false;
+        while (!scanDirectoryFinished)
+        {
+            string directoryEntry;
+            try
+            {
+                string directoryEntry = FileIO::readDirectory (directory,
+                    &detDirectoryEntryType);
+
+                if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
+                    continue;
+
+                if (directoryEntry.size() >= prefixFileName.size() && directoryEntry.compare(0, prefixFileName.size(), prefixFileName) == 0) 
+                {
+                    bool exceptionInCaseOfError = false;
+                    string pathFileName = directoryName + "/" + directoryEntry;
+                    FileIO::remove(pathFileName, exceptionInCaseOfError);
+                }
+            }
+            catch(DirectoryListFinished e)
+            {
+                scanDirectoryFinished = true;
+            }
+            catch(runtime_error e)
+            {
+                string errorMessage = __FILEREF__ + "ffmpeg: listing directory failed"
+                       + ", e.what(): " + e.what()
+                ;
+                _logger->error(errorMessage);
+
+                throw e;
+            }
+            catch(exception e)
+            {
+                string errorMessage = __FILEREF__ + "ffmpeg: listing directory failed"
+                       + ", e.what(): " + e.what()
+                ;
+                _logger->error(errorMessage);
+
+                throw e;
+            }
+        }
+
+        FileIO::closeDirectory (directory);
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "removeHavingPrefixFileName failed"
+            + ", e.what(): " + e.what()
+        );
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "removeHavingPrefixFileName failed");
     }
 }
 
