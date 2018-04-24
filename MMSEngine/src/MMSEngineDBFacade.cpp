@@ -11,6 +11,7 @@
  * Created on January 27, 2018, 9:38 AM
  */
 
+
 #include <random>
 #include "catralibraries/Encrypt.h"
 #include "MMSEngineDBFacade.h"
@@ -47,10 +48,10 @@ MMSEngineDBFacade::MMSEngineDBFacade(
 
     shared_ptr<MySQLConnectionFactory>  mySQLConnectionFactory = 
             make_shared<MySQLConnectionFactory>(dbServer, dbUsername, dbPassword, dbName,
-            selectTestingConnection, _logger);
+            selectTestingConnection);
 
     _connectionPool = make_shared<DBConnectionPool<MySQLConnection>>(
-            dbPoolSize, mySQLConnectionFactory, _logger);
+            dbPoolSize, mySQLConnectionFactory);
 
     _lastConnectionStatsReport = chrono::system_clock::now();
 

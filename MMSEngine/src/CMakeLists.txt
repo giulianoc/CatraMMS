@@ -31,6 +31,7 @@ SET (SOURCES
 SET (HEADERS
 	Workspace.h
 	MMSStorage.h
+	MySQLConnection.h
 	MMSEngineDBFacade.h
 	Validator.h
 	ActiveEncodingsManager.h
