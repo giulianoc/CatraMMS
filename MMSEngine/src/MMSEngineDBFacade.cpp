@@ -26,7 +26,7 @@ MMSEngineDBFacade::MMSEngineDBFacade(
         shared_ptr<spdlog::logger> logger) 
 {
     _mySQLConnectionFactory = 
-            make_shared<MySQLConnectionFactory>("tcp://127.0.0.1:3306", "mms", "mms", "mms",
+            make_shared<MySQLConnectionFactory>("127.0.0.1", "mms", "mms", "mms",
             "select count(*) from MMS_TestConnection");
 
     // without an open stream the first connection fails
