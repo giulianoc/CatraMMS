@@ -26,15 +26,6 @@ MMSEngineDBFacade::MMSEngineDBFacade(
         Json::Value configuration,
         shared_ptr<spdlog::logger> logger) 
 {
-    _mySQLConnectionFactory = 
-            make_shared<MySQLConnectionFactory>("127.0.0.1", "mms", "mms", "mms",
-            "select count(*) from MMS_TestConnection");
-
-    // without an open stream the first connection fails
-    ofstream aaa("/tmp/DBConnectionPool.h");
-    _connectionPool = make_shared<DBConnectionPool<MySQLConnection>>(
-            5, _mySQLConnectionFactory);
-
     _logger     = logger;
 
     _defaultContentProviderName     = "default";
@@ -59,17 +50,15 @@ MMSEngineDBFacade::MMSEngineDBFacade(
 
     _confirmationCodeRetentionInDays    = configuration["mms"].get("confirmationCodeRetentionInDays", 3).asInt();
 
-    /*
     _mySQLConnectionFactory = 
             make_shared<MySQLConnectionFactory>(dbServer, dbUsername, dbPassword, dbName,
             selectTestingConnection);
 
     // without an open stream the first connection fails
-    ofstream aaa("/tmp/DBConnectionPool.h");
+    ofstream aaa("/tmp/a.txt");
     _connectionPool = make_shared<DBConnectionPool<MySQLConnection>>(
             dbPoolSize, _mySQLConnectionFactory);
      
-    */
     _lastConnectionStatsReport = chrono::system_clock::now();
 
     createTablesIfNeeded();
