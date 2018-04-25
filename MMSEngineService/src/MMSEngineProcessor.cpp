@@ -1919,7 +1919,8 @@ void MMSEngineProcessor::generateAndIngestFrames(
 
                 localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
                 localAssetIngestionEvent->setIngestionSourceFileName(generatedFrameFileName);
-                localAssetIngestionEvent->setMMSSourceFileName(mmsSourceFileName);
+                // localAssetIngestionEvent->setMMSSourceFileName(mmsSourceFileName);
+                localAssetIngestionEvent->setMMSSourceFileName(generatedFrameFileName);
                 localAssetIngestionEvent->setWorkspace(workspace);
                 localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::ContentIngestion);
 
@@ -2084,7 +2085,7 @@ void MMSEngineProcessor::generateAndIngestSlideshow(
 
             localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
             localAssetIngestionEvent->setIngestionSourceFileName(localSourceFileName);
-            localAssetIngestionEvent->setMMSSourceFileName("");
+            localAssetIngestionEvent->setMMSSourceFileName(localSourceFileName);
             localAssetIngestionEvent->setWorkspace(workspace);
             localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::ContentIngestion);
 
@@ -2196,12 +2197,14 @@ void MMSEngineProcessor::generateAndIngestConcatenation(
         }
         string sourceFileName = parametersRoot.get(field, "XXX").asString();
 
+        // this is a concat, so destination file name shall have the same
+        // extension as the source file name
         string localSourceFileName = to_string(ingestionJobKey)
                 + ".binary"
                 ;
-        size_t extensionIndex = sourceFileName.find_last_of(".");
+        size_t extensionIndex = sourcePhysicalPaths.front().find_last_of(".");
         if (extensionIndex != string::npos)
-            localSourceFileName.append(sourceFileName.substr(extensionIndex));
+            localSourceFileName.append(sourcePhysicalPaths.front().substr(extensionIndex));
         
         string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
             workspace);
@@ -2233,7 +2236,7 @@ void MMSEngineProcessor::generateAndIngestConcatenation(
 
             localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
             localAssetIngestionEvent->setIngestionSourceFileName(localSourceFileName);
-            localAssetIngestionEvent->setMMSSourceFileName("");
+            localAssetIngestionEvent->setMMSSourceFileName(localSourceFileName);
             localAssetIngestionEvent->setWorkspace(workspace);
             localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::ContentIngestion);
 
@@ -2416,12 +2419,14 @@ void MMSEngineProcessor::generateAndIngestCutMedia(
         }
         string sourceFileName = parametersRoot.get(field, "XXX").asString();
 
+        // this is a cut so destination file name shall have the same
+        // extension as the source file name
         string localSourceFileName = to_string(ingestionJobKey)
                 + ".binary"
                 ;
-        size_t extensionIndex = sourceFileName.find_last_of(".");
+        size_t extensionIndex = sourcePhysicalPath.find_last_of(".");
         if (extensionIndex != string::npos)
-            localSourceFileName.append(sourceFileName.substr(extensionIndex));
+            localSourceFileName.append(sourcePhysicalPath.substr(extensionIndex));
         
         string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
                 workspace);
@@ -2455,7 +2460,7 @@ void MMSEngineProcessor::generateAndIngestCutMedia(
 
             localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
             localAssetIngestionEvent->setIngestionSourceFileName(localSourceFileName);
-            localAssetIngestionEvent->setMMSSourceFileName("");
+            localAssetIngestionEvent->setMMSSourceFileName(localSourceFileName);
             localAssetIngestionEvent->setWorkspace(workspace);
             localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::ContentIngestion);
 
