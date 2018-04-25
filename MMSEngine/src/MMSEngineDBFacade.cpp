@@ -13,8 +13,6 @@
 
 #include <iostream>
 
-using namespace std;
-
 #define DB_DEBUG_LOGGER(x) std::cout << x << std::endl;
 #define DB_ERROR_LOGGER(x) std::cerr << x << std::endl;
 
