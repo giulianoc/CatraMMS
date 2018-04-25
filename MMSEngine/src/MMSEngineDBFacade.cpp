@@ -18,6 +18,7 @@
 #include <random>
 #include "catralibraries/Encrypt.h"
 #include "MMSEngineDBFacade.h"
+#include <fstream>
 
 // http://download.nust.na/pub6/mysql/tech-resources/articles/mysql-connector-cpp.html#trx
 
