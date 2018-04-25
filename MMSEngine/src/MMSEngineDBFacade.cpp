@@ -49,12 +49,12 @@ MMSEngineDBFacade::MMSEngineDBFacade(
 
     _confirmationCodeRetentionInDays    = configuration["mms"].get("confirmationCodeRetentionInDays", 3).asInt();
 
-    shared_ptr<MySQLConnectionFactory>  mySQLConnectionFactory = 
+    _mySQLConnectionFactory = 
             make_shared<MySQLConnectionFactory>(dbServer, dbUsername, dbPassword, dbName,
             selectTestingConnection);
 
     _connectionPool = make_shared<DBConnectionPool<MySQLConnection>>(
-            dbPoolSize, mySQLConnectionFactory);
+            dbPoolSize, _mySQLConnectionFactory);
 
     _lastConnectionStatsReport = chrono::system_clock::now();
 

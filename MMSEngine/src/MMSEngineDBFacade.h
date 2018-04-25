@@ -670,9 +670,9 @@ public:
         int64_t encodingProfileKey);
 
 private:
-    shared_ptr<spdlog::logger>                      _logger;
-    // shared_ptr<DBConnectionPool<MySQLConnection>>     _connectionPool;
-    shared_ptr<DBConnectionPool<MySQLConnection>>     _connectionPool;
+    shared_ptr<spdlog::logger>                          _logger;
+    shared_ptr<MySQLConnectionFactory>                  _mySQLConnectionFactory;
+    shared_ptr<DBConnectionPool<MySQLConnection>>       _connectionPool;
     string                          _defaultContentProviderName;
     string                          _defaultTerritoryName;
     int                             _maxEncodingFailures;
