@@ -11,9 +11,9 @@
  * Created on January 27, 2018, 9:38 AM
  */
 
-// #include <iostream>
-// #define DB_DEBUG_LOGGER(x) std::cout << x << std::endl;
-// #define DB_ERROR_LOGGER(x) std::cerr << x << std::endl;
+#include <iostream>
+#define DB_DEBUG_LOGGER(x) std::cout << x << std::endl;
+#define DB_ERROR_LOGGER(x) std::cerr << x << std::endl;
 
 #include <random>
 #include "catralibraries/Encrypt.h"
