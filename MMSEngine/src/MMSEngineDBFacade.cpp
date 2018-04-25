@@ -29,7 +29,7 @@ MMSEngineDBFacade::MMSEngineDBFacade(
             make_shared<MySQLConnectionFactory>("127.0.0.1", "mms", "mms", "mms",
             "select count(*) from MMS_TestConnection");
 
-    without an open stream the first connection fails
+    // without an open stream the first connection fails
     ofstream aaa("/tmp/DBConnectionPool.h");
     _connectionPool = make_shared<DBConnectionPool<MySQLConnection>>(
             5, _mySQLConnectionFactory);
