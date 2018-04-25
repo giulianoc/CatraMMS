@@ -104,7 +104,7 @@ vector<shared_ptr<Customer>> MMSEngineDBFacade::getCustomers()
 shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 {
     shared_ptr<MySQLConnection> conn = _connectionPool->borrow();	
-    _logger->info(__FILEREF__ + "DB connection borrow"
+    _logger->debug(__FILEREF__ + "DB connection borrow"
         + ", getConnectionId: " + to_string(conn->getConnectionId())
     );
 
@@ -129,7 +129,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
     }
     else
     {
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -143,7 +143,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
         throw runtime_error(errorMessage);                    
     }
 
-    _logger->info(__FILEREF__ + "DB connection unborrow"
+    _logger->debug(__FILEREF__ + "DB connection unborrow"
         + ", getConnectionId: " + to_string(conn->getConnectionId())
     );
     _connectionPool->unborrow(conn);
@@ -154,7 +154,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(string workspaceName)
 {
     shared_ptr<MySQLConnection> conn = _connectionPool->borrow();	
-    _logger->info(__FILEREF__ + "DB connection borrow"
+    _logger->debug(__FILEREF__ + "DB connection borrow"
         + ", getConnectionId: " + to_string(conn->getConnectionId())
     );
 
@@ -179,7 +179,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(string workspaceName)
     }
     else
     {
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -193,7 +193,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(string workspaceName)
         throw runtime_error(errorMessage);                    
     }
 
-    _logger->info(__FILEREF__ + "DB connection unborrow"
+    _logger->debug(__FILEREF__ + "DB connection unborrow"
         + ", getConnectionId: " + to_string(conn->getConnectionId())
     );
     _connectionPool->unborrow(conn);
@@ -204,7 +204,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(string workspaceName)
 void MMSEngineDBFacade::getTerritories(shared_ptr<Workspace> workspace)
 {
     shared_ptr<MySQLConnection> conn = _connectionPool->borrow();	
-    _logger->info(__FILEREF__ + "DB connection borrow"
+    _logger->debug(__FILEREF__ + "DB connection borrow"
         + ", getConnectionId: " + to_string(conn->getConnectionId())
     );
 
@@ -220,7 +220,7 @@ void MMSEngineDBFacade::getTerritories(shared_ptr<Workspace> workspace)
         workspace->_territories.insert(make_pair(resultSet->getInt("territoryKey"), resultSet->getString("name")));
     }
 
-    _logger->info(__FILEREF__ + "DB connection unborrow"
+    _logger->debug(__FILEREF__ + "DB connection unborrow"
         + ", getConnectionId: " + to_string(conn->getConnectionId())
     );
     _connectionPool->unborrow(conn);
@@ -256,7 +256,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUser(
     try
     {
         conn = _connectionPool->borrow();	
-        _logger->info(__FILEREF__ + "DB connection borrow"
+        _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
@@ -388,7 +388,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUser(
         }
         autoCommit = true;
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -411,7 +411,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUser(
                 statement->execute("ROLLBACK");
             }
 
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -422,7 +422,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUser(
                 + ", exceptionMessage: " + se.what()
             );
         
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -433,7 +433,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUser(
                 + ", exceptionMessage: " + e.what()
             );
         
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -457,7 +457,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUser(
                 statement->execute("ROLLBACK");
             }
 
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -468,7 +468,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUser(
                 + ", exceptionMessage: " + se.what()
             );
         
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -479,7 +479,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUser(
                 + ", exceptionMessage: " + e.what()
             );
         
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -502,7 +502,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUser(
                 statement->execute("ROLLBACK");
             }
 
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -513,7 +513,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUser(
                 + ", exceptionMessage: " + se.what()
             );
         
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -524,7 +524,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUser(
                 + ", exceptionMessage: " + e.what()
             );
         
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -552,7 +552,7 @@ string MMSEngineDBFacade::confirmUser(
     try
     {
         conn = _connectionPool->borrow();	
-        _logger->info(__FILEREF__ + "DB connection borrow"
+        _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
@@ -711,7 +711,7 @@ string MMSEngineDBFacade::confirmUser(
         }
         autoCommit = true;
         
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -734,7 +734,7 @@ string MMSEngineDBFacade::confirmUser(
                 statement->execute("ROLLBACK");
             }
 
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -745,7 +745,7 @@ string MMSEngineDBFacade::confirmUser(
                 + ", exceptionMessage: " + se.what()
             );
         
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -756,7 +756,7 @@ string MMSEngineDBFacade::confirmUser(
                 + ", exceptionMessage: " + e.what()
             );
         
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -780,7 +780,7 @@ string MMSEngineDBFacade::confirmUser(
                 statement->execute("ROLLBACK");
             }
 
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -791,7 +791,7 @@ string MMSEngineDBFacade::confirmUser(
                 + ", exceptionMessage: " + se.what()
             );
         
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -802,7 +802,7 @@ string MMSEngineDBFacade::confirmUser(
                 + ", exceptionMessage: " + e.what()
             );
         
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -825,7 +825,7 @@ string MMSEngineDBFacade::confirmUser(
                 statement->execute("ROLLBACK");
             }
 
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -836,7 +836,7 @@ string MMSEngineDBFacade::confirmUser(
                 + ", exceptionMessage: " + se.what()
             );
         
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -847,7 +847,7 @@ string MMSEngineDBFacade::confirmUser(
                 + ", exceptionMessage: " + e.what()
             );
         
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -870,7 +870,7 @@ tuple<shared_ptr<Workspace>,bool,bool> MMSEngineDBFacade::checkAPIKey (string ap
     try
     {
         conn = _connectionPool->borrow();	
-        _logger->info(__FILEREF__ + "DB connection borrow"
+        _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
@@ -906,7 +906,7 @@ tuple<shared_ptr<Workspace>,bool,bool> MMSEngineDBFacade::checkAPIKey (string ap
         
         workspace = getWorkspace(workspaceKey);
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -920,7 +920,7 @@ tuple<shared_ptr<Workspace>,bool,bool> MMSEngineDBFacade::checkAPIKey (string ap
             + ", exceptionMessage: " + exceptionMessage
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -936,7 +936,7 @@ tuple<shared_ptr<Workspace>,bool,bool> MMSEngineDBFacade::checkAPIKey (string ap
             + ", exceptionMessage: " + exceptionMessage
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -950,7 +950,7 @@ tuple<shared_ptr<Workspace>,bool,bool> MMSEngineDBFacade::checkAPIKey (string ap
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -963,7 +963,7 @@ tuple<shared_ptr<Workspace>,bool,bool> MMSEngineDBFacade::checkAPIKey (string ap
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -1057,7 +1057,7 @@ bool MMSEngineDBFacade::isLoginValid(
     try
     {
         conn = _connectionPool->borrow();	
-        _logger->info(__FILEREF__ + "DB connection borrow"
+        _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
@@ -1082,7 +1082,7 @@ bool MMSEngineDBFacade::isLoginValid(
             }            
         }
                         
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -1096,7 +1096,7 @@ bool MMSEngineDBFacade::isLoginValid(
             + ", exceptionMessage: " + exceptionMessage
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -1110,7 +1110,7 @@ bool MMSEngineDBFacade::isLoginValid(
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -1123,7 +1123,7 @@ bool MMSEngineDBFacade::isLoginValid(
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -1144,7 +1144,7 @@ string MMSEngineDBFacade::getPassword(string emailAddress)
     try
     {
         conn = _connectionPool->borrow();	
-        _logger->info(__FILEREF__ + "DB connection borrow"
+        _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
@@ -1172,7 +1172,7 @@ string MMSEngineDBFacade::getPassword(string emailAddress)
             }            
         }
                         
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -1186,7 +1186,7 @@ string MMSEngineDBFacade::getPassword(string emailAddress)
             + ", exceptionMessage: " + exceptionMessage
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -1200,7 +1200,7 @@ string MMSEngineDBFacade::getPassword(string emailAddress)
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -1213,7 +1213,7 @@ string MMSEngineDBFacade::getPassword(string emailAddress)
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -1469,7 +1469,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
         }
 
         conn = _connectionPool->borrow();	
-        _logger->info(__FILEREF__ + "DB connection borrow"
+        _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
@@ -1729,7 +1729,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
         }
         autoCommit = true;
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -1752,7 +1752,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                 statement->execute("ROLLBACK");
             }
 
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -1763,7 +1763,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                 + ", exceptionMessage: " + se.what()
             );
         
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -1774,7 +1774,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                 + ", exceptionMessage: " + e.what()
             );
         
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -1798,7 +1798,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                 statement->execute("ROLLBACK");
             }
 
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -1809,7 +1809,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                 + ", exceptionMessage: " + se.what()
             );
         
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -1820,7 +1820,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                 + ", exceptionMessage: " + e.what()
             );
         
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -1843,7 +1843,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                 statement->execute("ROLLBACK");
             }
 
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -1854,7 +1854,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                 + ", exceptionMessage: " + se.what()
             );
         
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -1865,7 +1865,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                 + ", exceptionMessage: " + e.what()
             );
         
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -1884,7 +1884,7 @@ shared_ptr<MySQLConnection> MMSEngineDBFacade::beginIngestionJobs ()
     try
     {
         conn = _connectionPool->borrow();	
-        _logger->info(__FILEREF__ + "DB connection borrow"
+        _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
@@ -1906,7 +1906,7 @@ shared_ptr<MySQLConnection> MMSEngineDBFacade::beginIngestionJobs ()
             + ", exceptionMessage: " + exceptionMessage
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -1920,7 +1920,7 @@ shared_ptr<MySQLConnection> MMSEngineDBFacade::beginIngestionJobs ()
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -1933,7 +1933,7 @@ shared_ptr<MySQLConnection> MMSEngineDBFacade::beginIngestionJobs ()
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -1969,7 +1969,7 @@ shared_ptr<MySQLConnection> MMSEngineDBFacade::endIngestionJobs (
         
         autoCommit = true;
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -1983,7 +1983,7 @@ shared_ptr<MySQLConnection> MMSEngineDBFacade::endIngestionJobs (
             + ", exceptionMessage: " + exceptionMessage
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -1997,7 +1997,7 @@ shared_ptr<MySQLConnection> MMSEngineDBFacade::endIngestionJobs (
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -2010,7 +2010,7 @@ shared_ptr<MySQLConnection> MMSEngineDBFacade::endIngestionJobs (
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -2347,7 +2347,7 @@ void MMSEngineDBFacade::updateIngestionJob (
     try
     {
         conn = _connectionPool->borrow();	
-        _logger->info(__FILEREF__ + "DB connection borrow"
+        _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
@@ -2383,7 +2383,7 @@ void MMSEngineDBFacade::updateIngestionJob (
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -2397,7 +2397,7 @@ void MMSEngineDBFacade::updateIngestionJob (
             + ", exceptionMessage: " + exceptionMessage
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -2411,7 +2411,7 @@ void MMSEngineDBFacade::updateIngestionJob (
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -2424,7 +2424,7 @@ void MMSEngineDBFacade::updateIngestionJob (
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -2458,7 +2458,7 @@ void MMSEngineDBFacade::updateIngestionJob (
         }
         
         conn = _connectionPool->borrow();	
-        _logger->info(__FILEREF__ + "DB connection borrow"
+        _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
@@ -2563,7 +2563,7 @@ void MMSEngineDBFacade::updateIngestionJob (
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -2577,7 +2577,7 @@ void MMSEngineDBFacade::updateIngestionJob (
             + ", exceptionMessage: " + exceptionMessage
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -2591,7 +2591,7 @@ void MMSEngineDBFacade::updateIngestionJob (
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -2604,7 +2604,7 @@ void MMSEngineDBFacade::updateIngestionJob (
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -2639,7 +2639,7 @@ void MMSEngineDBFacade::updateIngestionJob (
         }
         
         conn = _connectionPool->borrow();	
-        _logger->info(__FILEREF__ + "DB connection borrow"
+        _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
@@ -2746,7 +2746,7 @@ void MMSEngineDBFacade::updateIngestionJob (
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -2760,7 +2760,7 @@ void MMSEngineDBFacade::updateIngestionJob (
             + ", exceptionMessage: " + exceptionMessage
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -2774,7 +2774,7 @@ void MMSEngineDBFacade::updateIngestionJob (
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -2787,7 +2787,7 @@ void MMSEngineDBFacade::updateIngestionJob (
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -2809,7 +2809,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress (
     try
     {
         conn = _connectionPool->borrow();	
-        _logger->info(__FILEREF__ + "DB connection borrow"
+        _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
@@ -2865,7 +2865,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress (
             }            
         }
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -2879,7 +2879,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress (
             + ", exceptionMessage: " + exceptionMessage
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -2893,7 +2893,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress (
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -2906,7 +2906,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress (
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -2929,7 +2929,7 @@ void MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress (
     try
     {
         conn = _connectionPool->borrow();	
-        _logger->info(__FILEREF__ + "DB connection borrow"
+        _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
@@ -2958,7 +2958,7 @@ void MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress (
             }
         }
         
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -2972,7 +2972,7 @@ void MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress (
             + ", exceptionMessage: " + exceptionMessage
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -2986,7 +2986,7 @@ void MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress (
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -2999,7 +2999,7 @@ void MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress (
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -3020,7 +3020,7 @@ void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred (
     try
     {
         conn = _connectionPool->borrow();	
-        _logger->info(__FILEREF__ + "DB connection borrow"
+        _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
@@ -3049,7 +3049,7 @@ void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred (
             }
         }
         
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -3063,7 +3063,7 @@ void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred (
             + ", exceptionMessage: " + exceptionMessage
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -3077,7 +3077,7 @@ void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred (
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -3090,7 +3090,7 @@ void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred (
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -3113,7 +3113,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobStatus (
         string field;
         
         conn = _connectionPool->borrow();	
-        _logger->info(__FILEREF__ + "DB connection borrow"
+        _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
@@ -3382,7 +3382,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobStatus (
         field = "workflow";
         statusRoot[field] = workflowRoot;
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -3396,7 +3396,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobStatus (
             + ", exceptionMessage: " + exceptionMessage
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -3410,7 +3410,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobStatus (
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -3423,7 +3423,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobStatus (
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -3446,7 +3446,7 @@ MMSEngineDBFacade::ContentType MMSEngineDBFacade::getMediaItemKeyDetails(
     try
     {
         conn = _connectionPool->borrow();	
-        _logger->info(__FILEREF__ + "DB connection borrow"
+        _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
@@ -3477,7 +3477,7 @@ MMSEngineDBFacade::ContentType MMSEngineDBFacade::getMediaItemKeyDetails(
             }            
         }
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -3491,7 +3491,7 @@ MMSEngineDBFacade::ContentType MMSEngineDBFacade::getMediaItemKeyDetails(
             + ", exceptionMessage: " + exceptionMessage
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -3509,7 +3509,7 @@ MMSEngineDBFacade::ContentType MMSEngineDBFacade::getMediaItemKeyDetails(
                 + ", lastSQLCommand: " + lastSQLCommand
             );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -3523,7 +3523,7 @@ MMSEngineDBFacade::ContentType MMSEngineDBFacade::getMediaItemKeyDetails(
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -3536,7 +3536,7 @@ MMSEngineDBFacade::ContentType MMSEngineDBFacade::getMediaItemKeyDetails(
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -3559,7 +3559,7 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
     try
     {
         conn = _connectionPool->borrow();	
-        _logger->info(__FILEREF__ + "DB connection borrow"
+        _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
@@ -3592,7 +3592,7 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
             }            
         }
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -3606,7 +3606,7 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
             + ", exceptionMessage: " + exceptionMessage
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -3624,7 +3624,7 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
                 + ", lastSQLCommand: " + lastSQLCommand
             );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -3638,7 +3638,7 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -3651,7 +3651,7 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -3674,7 +3674,7 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
     try
     {
         conn = _connectionPool->borrow();	
-        _logger->info(__FILEREF__ + "DB connection borrow"
+        _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
@@ -3706,7 +3706,7 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
             }            
         }
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -3720,7 +3720,7 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
             + ", exceptionMessage: " + exceptionMessage
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -3738,7 +3738,7 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
                 + ", lastSQLCommand: " + lastSQLCommand
             );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -3752,7 +3752,7 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -3765,7 +3765,7 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -3786,7 +3786,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> MMSEn
     try
     {
         conn = _connectionPool->borrow();	
-        _logger->info(__FILEREF__ + "DB connection borrow"
+        _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
@@ -3841,7 +3841,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> MMSEn
             }            
         }
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -3859,7 +3859,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> MMSEn
             + ", exceptionMessage: " + exceptionMessage
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -3873,7 +3873,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> MMSEn
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -3886,7 +3886,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> MMSEn
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -3909,7 +3909,7 @@ void MMSEngineDBFacade::getEncodingJobs(
     try
     {
         conn = _connectionPool->borrow();	
-        _logger->info(__FILEREF__ + "DB connection borrow"
+        _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
@@ -4122,7 +4122,7 @@ void MMSEngineDBFacade::getEncodingJobs(
         }
         autoCommit = true;
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -4146,7 +4146,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                 statement->execute("ROLLBACK");
             }
 
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -4157,7 +4157,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                 + ", exceptionMessage: " + se.what()
             );
         
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -4168,7 +4168,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                 + ", exceptionMessage: " + e.what()
             );
         
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -4192,7 +4192,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                 statement->execute("ROLLBACK");
             }
 
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -4203,7 +4203,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                 + ", exceptionMessage: " + se.what()
             );
         
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -4214,7 +4214,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                 + ", exceptionMessage: " + e.what()
             );
         
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -4237,7 +4237,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                 statement->execute("ROLLBACK");
             }
 
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -4248,7 +4248,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                 + ", exceptionMessage: " + se.what()
             );
         
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -4259,7 +4259,7 @@ void MMSEngineDBFacade::getEncodingJobs(
                 + ", exceptionMessage: " + e.what()
             );
         
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -4282,7 +4282,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetKey(
     try
     {
         conn = _connectionPool->borrow();	
-        _logger->info(__FILEREF__ + "DB connection borrow"
+        _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
@@ -4335,7 +4335,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetKey(
             }
         }
         
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -4349,7 +4349,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetKey(
             + ", exceptionMessage: " + exceptionMessage
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -4363,7 +4363,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetKey(
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -4376,7 +4376,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetKey(
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -4400,7 +4400,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(
     try
     {
         conn = _connectionPool->borrow();	
-        _logger->info(__FILEREF__ + "DB connection borrow"
+        _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
@@ -4444,7 +4444,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(
             }
         }
         
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -4458,7 +4458,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(
             + ", exceptionMessage: " + exceptionMessage
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -4472,7 +4472,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -4485,7 +4485,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -4511,7 +4511,7 @@ int MMSEngineDBFacade::addEncodingJob (
     try
     {
         conn = _connectionPool->borrow();	
-        _logger->info(__FILEREF__ + "DB connection borrow"
+        _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
@@ -4557,7 +4557,7 @@ int MMSEngineDBFacade::addEncodingJob (
             preparedStatement->executeUpdate();
         }
         
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -4571,7 +4571,7 @@ int MMSEngineDBFacade::addEncodingJob (
             + ", exceptionMessage: " + exceptionMessage
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -4585,7 +4585,7 @@ int MMSEngineDBFacade::addEncodingJob (
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -4598,7 +4598,7 @@ int MMSEngineDBFacade::addEncodingJob (
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -4623,7 +4623,7 @@ int MMSEngineDBFacade::updateEncodingJob (
     try
     {
         conn = _connectionPool->borrow();	
-        _logger->info(__FILEREF__ + "DB connection borrow"
+        _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
@@ -4804,7 +4804,7 @@ int MMSEngineDBFacade::updateEncodingJob (
         }
         autoCommit = true;
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -4827,7 +4827,7 @@ int MMSEngineDBFacade::updateEncodingJob (
                 statement->execute("ROLLBACK");
             }
 
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -4838,7 +4838,7 @@ int MMSEngineDBFacade::updateEncodingJob (
                 + ", exceptionMessage: " + se.what()
             );
         
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -4849,7 +4849,7 @@ int MMSEngineDBFacade::updateEncodingJob (
                 + ", exceptionMessage: " + e.what()
             );
         
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -4873,7 +4873,7 @@ int MMSEngineDBFacade::updateEncodingJob (
                 statement->execute("ROLLBACK");
             }
 
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -4884,7 +4884,7 @@ int MMSEngineDBFacade::updateEncodingJob (
                 + ", exceptionMessage: " + se.what()
             );
         
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -4895,7 +4895,7 @@ int MMSEngineDBFacade::updateEncodingJob (
                 + ", exceptionMessage: " + e.what()
             );
         
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -4918,7 +4918,7 @@ int MMSEngineDBFacade::updateEncodingJob (
                 statement->execute("ROLLBACK");
             }
 
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -4929,7 +4929,7 @@ int MMSEngineDBFacade::updateEncodingJob (
                 + ", exceptionMessage: " + se.what()
             );
         
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -4940,7 +4940,7 @@ int MMSEngineDBFacade::updateEncodingJob (
                 + ", exceptionMessage: " + e.what()
             );
         
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -4964,7 +4964,7 @@ void MMSEngineDBFacade::updateEncodingJobProgress (
     try
     {
         conn = _connectionPool->borrow();	
-        _logger->info(__FILEREF__ + "DB connection borrow"
+        _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
@@ -4992,7 +4992,7 @@ void MMSEngineDBFacade::updateEncodingJobProgress (
             }
         }
         
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -5006,7 +5006,7 @@ void MMSEngineDBFacade::updateEncodingJobProgress (
             + ", exceptionMessage: " + exceptionMessage
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -5020,7 +5020,7 @@ void MMSEngineDBFacade::updateEncodingJobProgress (
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -5033,7 +5033,7 @@ void MMSEngineDBFacade::updateEncodingJobProgress (
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -5059,7 +5059,7 @@ void MMSEngineDBFacade::checkWorkspaceMaxIngestionNumber (
         string periodEndDateTime;
 
         conn = _connectionPool->borrow();	
-        _logger->info(__FILEREF__ + "DB connection borrow"
+        _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
@@ -5334,7 +5334,7 @@ void MMSEngineDBFacade::checkWorkspaceMaxIngestionNumber (
             throw runtime_error(errorMessage);
         }
                 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -5348,7 +5348,7 @@ void MMSEngineDBFacade::checkWorkspaceMaxIngestionNumber (
             + ", exceptionMessage: " + exceptionMessage
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -5361,7 +5361,7 @@ void MMSEngineDBFacade::checkWorkspaceMaxIngestionNumber (
             + ", e.what: " + e.what()
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -5374,7 +5374,7 @@ void MMSEngineDBFacade::checkWorkspaceMaxIngestionNumber (
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -5399,7 +5399,7 @@ string MMSEngineDBFacade::nextRelativePathToBeUsed (
         int currentDirLevel3;
 
         conn = _connectionPool->borrow();	
-        _logger->info(__FILEREF__ + "DB connection borrow"
+        _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
@@ -5438,7 +5438,7 @@ string MMSEngineDBFacade::nextRelativePathToBeUsed (
             relativePathToBeUsed = pCurrentRelativePath;
         }
         
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -5452,7 +5452,7 @@ string MMSEngineDBFacade::nextRelativePathToBeUsed (
             + ", exceptionMessage: " + exceptionMessage
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -5466,7 +5466,7 @@ string MMSEngineDBFacade::nextRelativePathToBeUsed (
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -5479,7 +5479,7 @@ string MMSEngineDBFacade::nextRelativePathToBeUsed (
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -5531,7 +5531,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
     try
     {
         conn = _connectionPool->borrow();	
-        _logger->info(__FILEREF__ + "DB connection borrow"
+        _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
@@ -6022,7 +6022,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
         }
         autoCommit = true;
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -6048,7 +6048,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                 statement->execute("ROLLBACK");
             }
 
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -6059,7 +6059,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                 + ", exceptionMessage: " + se.what()
             );
         
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -6070,7 +6070,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                 + ", exceptionMessage: " + e.what()
             );
         
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -6094,7 +6094,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                 statement->execute("ROLLBACK");
             }
 
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -6105,7 +6105,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                 + ", exceptionMessage: " + se.what()
             );
         
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -6116,7 +6116,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                 + ", exceptionMessage: " + e.what()
             );
         
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -6139,7 +6139,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                 statement->execute("ROLLBACK");
             }
 
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -6150,7 +6150,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                 + ", exceptionMessage: " + se.what()
             );
         
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -6161,7 +6161,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                 + ", exceptionMessage: " + e.what()
             );
         
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -6186,7 +6186,7 @@ tuple<int,string,string,string> MMSEngineDBFacade::getStorageDetails(
     try
     {
         conn = _connectionPool->borrow();	
-        _logger->info(__FILEREF__ + "DB connection borrow"
+        _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
@@ -6230,7 +6230,7 @@ tuple<int,string,string,string> MMSEngineDBFacade::getStorageDetails(
 
         shared_ptr<Workspace> workspace = getWorkspace(workspaceKey);
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -6246,7 +6246,7 @@ tuple<int,string,string,string> MMSEngineDBFacade::getStorageDetails(
             + ", exceptionMessage: " + exceptionMessage
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -6260,7 +6260,7 @@ tuple<int,string,string,string> MMSEngineDBFacade::getStorageDetails(
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -6273,7 +6273,7 @@ tuple<int,string,string,string> MMSEngineDBFacade::getStorageDetails(
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -6301,7 +6301,7 @@ int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
     try
     {
         conn = _connectionPool->borrow();	
-        _logger->info(__FILEREF__ + "DB connection borrow"
+        _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
@@ -6420,7 +6420,7 @@ int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
         }
         autoCommit = true;
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
@@ -6443,7 +6443,7 @@ int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
                 statement->execute("ROLLBACK");
             }
 
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -6454,7 +6454,7 @@ int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
                 + ", exceptionMessage: " + se.what()
             );
         
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -6465,7 +6465,7 @@ int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
                 + ", exceptionMessage: " + e.what()
             );
         
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -6489,7 +6489,7 @@ int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
                 statement->execute("ROLLBACK");
             }
 
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -6500,7 +6500,7 @@ int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
                 + ", exceptionMessage: " + se.what()
             );
         
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -6511,7 +6511,7 @@ int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
                 + ", exceptionMessage: " + e.what()
             );
         
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -6534,7 +6534,7 @@ int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
                 statement->execute("ROLLBACK");
             }
 
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -6545,7 +6545,7 @@ int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
                 + ", exceptionMessage: " + se.what()
             );
         
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -6556,7 +6556,7 @@ int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
                 + ", exceptionMessage: " + e.what()
             );
         
-            _logger->info(__FILEREF__ + "DB connection unborrow"
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
                 + ", getConnectionId: " + to_string(conn->getConnectionId())
             );
             _connectionPool->unborrow(conn);
@@ -6644,7 +6644,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
     try
     {
         conn = _connectionPool->borrow();	
-        _logger->info(__FILEREF__ + "DB connection borrow"
+        _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
@@ -8414,14 +8414,14 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             ENGINE=InnoDB;
          */
 
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
     }
     catch(sql::SQLException se)
     {
-        _logger->info(__FILEREF__ + "DB connection unborrow"
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
