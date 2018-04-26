@@ -1263,6 +1263,19 @@ vector<string> FFMpeg::generateFramesToIngest(
         int imageHeight,
         string mmsAssetPathName)
 {
+    _logger->info(__FILEREF__ + "generateFramesToIngest"
+        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+        + ", imageDirecotry: " + imageDirecotry
+        + ", imageFileName: " + imageFileName
+        + ", startTimeInSeconds: " + to_string(startTimeInSeconds)
+        + ", framesNumber: " + to_string(framesNumber)
+        + ", videoFilter: " + videoFilter
+        + ", periodInSeconds: " + periodInSeconds
+        + ", mjpeg: " + to_string(mjpeg)
+        + ", imageWidth: " + to_string(imageWidth)
+        + ", imageHeight: " + to_string(imageHeight)
+        + ", mmsAssetPathName: " + mmsAssetPathName
+    );
     vector<string> generatedFramesFileNames;
     
     string localImageFileName = imageFileName;
