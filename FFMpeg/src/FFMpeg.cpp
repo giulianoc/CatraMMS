@@ -1290,13 +1290,13 @@ vector<string> FFMpeg::generateFramesToIngest(
             {
                 imageBaseFileName = localImageFileName.substr(0, extensionIndex);
 
-                localImageFileName.insert(extensionIndex, ".%04d");                
+                localImageFileName.insert(extensionIndex, "_%04d");                
             }
             else
             {
                 imageBaseFileName = localImageFileName;
 
-                localImageFileName.append(".%04d").append(".jpg");      // default is jpg
+                localImageFileName.append("_%04d").append(".jpg");      // default is jpg
             }
         }
     }

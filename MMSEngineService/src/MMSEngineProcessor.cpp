@@ -1849,7 +1849,7 @@ void MMSEngineProcessor::generateAndIngestFrames(
         // string textToBeReplaced;
         // string textToReplace;
         {
-            localSourceFileName = to_string(ingestionJobKey) + ".binary" + ".jpg";
+            localSourceFileName = to_string(ingestionJobKey) + /* ".binary" + */ ".jpg";
             /*
             size_t extensionIndex = sourceFileName.find_last_of(".");
             if (extensionIndex != string::npos)
@@ -2039,11 +2039,14 @@ void MMSEngineProcessor::generateAndIngestSlideshow(
         }
 
         string localSourceFileName = to_string(ingestionJobKey)
-                + ".binary"
+                // + ".binary"
+                + ".mp4"
                 ;
+        /*
         size_t extensionIndex = sourceFileName.find_last_of(".");
         if (extensionIndex != string::npos)
             localSourceFileName.append(sourceFileName.substr(extensionIndex));
+        */
         
         string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
             workspace);
