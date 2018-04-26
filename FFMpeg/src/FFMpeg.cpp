@@ -445,7 +445,9 @@ void FFMpeg::encodeContent(
 
                 throw runtime_error(errorMessage);
             }
-        } 
+        }
+        
+        _twoPasses = false;
     }
     catch(runtime_error e)
     {
