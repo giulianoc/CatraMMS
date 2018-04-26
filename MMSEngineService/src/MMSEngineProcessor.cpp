@@ -1721,6 +1721,7 @@ void MMSEngineProcessor::generateAndIngestFrames(
         int maxFramesNumber = -1;
         if (ingestionType == MMSEngineDBFacade::IngestionType::Frame)
         {
+            maxFramesNumber = 1;
         }
         else if (ingestionType == MMSEngineDBFacade::IngestionType::PeriodicalFrames
                 || ingestionType == MMSEngineDBFacade::IngestionType::IFrames
