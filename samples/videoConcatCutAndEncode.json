@@ -1,6 +1,6 @@
 {
 	"Type": "Workflow",
-	"Label": "1",
+	"Label": "My workflow",
 	"Variables": {
 		"TitleOfVideo_1": "My Title of the video_1 content",
 		"TitleOfVideo_2": "My Title of the video_2 content",
@@ -35,6 +35,7 @@
 		],
 		"OnSuccess": {
 			"Task": {
+				"Label": "My concat",
 				"Type": "Concat-Demuxer",
 				"Parameters": {
 					"userData": { "MyData": "this is my frame data" },
@@ -42,6 +43,7 @@
 				},
 				"OnSuccess": {
 					"Task": {
+						"Label": "My cut",
 						"Type": "Cut",
 						"Parameters": {
 							"StartTimeInSeconds": 1200.0,
@@ -51,7 +53,7 @@
 						},
 						"OnSuccess": {
 							"Task": {
-								"Label": "my label",
+								"Label": "my encode",
 								"Type": "Encode",
 								"Parameters": {
 									"EncodingPriority": "Low",

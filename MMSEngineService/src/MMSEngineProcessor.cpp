@@ -2191,7 +2191,7 @@ void MMSEngineProcessor::generateAndIngestConcatenation(
         // this is a concat, so destination file name shall have the same
         // extension as the source file name
         string localSourceFileName = to_string(ingestionJobKey)
-                + "." // + ".binary"
+                // + ".binary"
                 ;
         size_t extensionIndex = sourcePhysicalPaths.front().find_last_of(".");
         if (extensionIndex != string::npos)
@@ -2408,7 +2408,7 @@ void MMSEngineProcessor::generateAndIngestCutMedia(
         // this is a cut so destination file name shall have the same
         // extension as the source file name
         string localSourceFileName = to_string(ingestionJobKey)
-                + "." // + ".binary"
+                // + ".binary"
                 ;
         size_t extensionIndex = sourcePhysicalPath.find_last_of(".");
         if (extensionIndex != string::npos)

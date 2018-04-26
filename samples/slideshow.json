@@ -1,6 +1,6 @@
 {
     "Type": "Workflow",
-    "Label": "1",
+    "Label": "My workflow",
     "Variables": {
         "Title": "My Title of the content"
     },
@@ -8,14 +8,13 @@
         "Label": "my label",
         "Type": "Slideshow",
         "Parameters": {
-            "SourceFileName": "123456.mp4",
             "References": [
-                { "ReferenceMediaItemKey": 100 },
-                { "ReferenceMediaItemKey": 101 },
-                { "ReferenceMediaItemKey": 103 },
-                { "ReferenceMediaItemKey": 104 },
-                { "ReferenceMediaItemKey": 105 },
-                { "ReferenceMediaItemKey": 106 }
+                { "ReferenceMediaItemKey": 321 },
+                { "ReferenceMediaItemKey": 322 },
+                { "ReferenceMediaItemKey": 327 },
+                { "ReferenceMediaItemKey": 329 },
+                { "ReferenceMediaItemKey": 330 },
+                { "ReferenceMediaItemKey": 332 }
             ],
             "DurationOfEachSlideInSeconds": 5,
             "OutputFrameRate": 30,
