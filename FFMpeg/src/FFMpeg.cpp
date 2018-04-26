@@ -1270,7 +1270,7 @@ vector<string> FFMpeg::generateFramesToIngest(
         + ", startTimeInSeconds: " + to_string(startTimeInSeconds)
         + ", framesNumber: " + to_string(framesNumber)
         + ", videoFilter: " + videoFilter
-        + ", periodInSeconds: " + periodInSeconds
+        + ", periodInSeconds: " + to_string(periodInSeconds)
         + ", mjpeg: " + to_string(mjpeg)
         + ", imageWidth: " + to_string(imageWidth)
         + ", imageHeight: " + to_string(imageHeight)
