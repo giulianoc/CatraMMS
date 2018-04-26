@@ -45,6 +45,7 @@ then
 elif [ "$command" == "status" ]
 then
 	ps -ef | grep "ffmpegEncoder.fcgi" | grep -v grep | grep -v status
+	ps -ef | grep ffmpeg | grep -v grep
 elif [ "$command" == "stop" ]
 then
 	#PIDFILE is not created in case of nodaemon

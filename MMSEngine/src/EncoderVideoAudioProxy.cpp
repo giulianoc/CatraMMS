@@ -1411,7 +1411,6 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEncod
     unsigned long mmsPartitionIndexUsed;
     try
     {
-        /*
         size_t fileNameIndex = stagingEncodedAssetPathName.find_last_of("/");
         if (fileNameIndex == string::npos)
         {
@@ -1424,8 +1423,8 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEncod
         }
 
         encodedFileName = stagingEncodedAssetPathName.substr(fileNameIndex + 1);
-        */
-        
+
+        /*
         encodedFileName = _encodingItem->_fileName
                 + "_" 
                 + to_string(_encodingItem->_encodingProfileKey);
@@ -1445,6 +1444,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEncod
 
             throw runtime_error(errorMessage);
         }
+        */        
 
         bool partitionIndexToBeCalculated = true;
         bool deliveryRepositoriesToo = true;

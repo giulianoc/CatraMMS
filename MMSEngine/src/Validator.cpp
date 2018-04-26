@@ -1633,6 +1633,7 @@ void Validator::validateConcatDemuxerMetadata(
 {
     // see sample in directory samples
         
+    /*
     vector<string> mandatoryFields = {
         "SourceFileName"
     };
@@ -1661,10 +1662,11 @@ void Validator::validateConcatDemuxerMetadata(
         
         throw runtime_error(errorMessage);
     }
+    */
     
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
-    field = "References";
+    string field = "References";
     if (isMetadataPresent(parametersRoot, field))
     {
         Json::Value referencesRoot = parametersRoot[field];
@@ -1802,6 +1804,7 @@ void Validator::validateCutMetadata(
 {
     // see sample in directory samples
         
+    /*
     vector<string> mandatoryFields = {
         "SourceFileName"
     };
@@ -1830,8 +1833,9 @@ void Validator::validateCutMetadata(
         
         throw runtime_error(errorMessage);
     }
+    */
     
-    field = "StartTimeInSeconds";
+    string field = "StartTimeInSeconds";
     if (!isMetadataPresent(parametersRoot, field))
     {
         string errorMessage = __FILEREF__ + "Field is not present or it is null"

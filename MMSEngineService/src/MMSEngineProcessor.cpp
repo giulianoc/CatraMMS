@@ -2102,7 +2102,7 @@ void MMSEngineProcessor::generateAndIngestSlideshow(
     }
     catch(runtime_error e)
     {
-        _logger->error(__FILEREF__ + "generateAndIngestConcatenation failed"
+        _logger->error(__FILEREF__ + "generateAndIngestSlideshow failed"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", e.what(): " + e.what()
         );
@@ -2111,7 +2111,7 @@ void MMSEngineProcessor::generateAndIngestSlideshow(
     }
     catch(exception e)
     {
-        _logger->error(__FILEREF__ + "generateAndIngestConcatenation failed"
+        _logger->error(__FILEREF__ + "generateAndIngestSlideshow failed"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );
         
@@ -2185,22 +2185,17 @@ void MMSEngineProcessor::generateAndIngestConcatenation(
             }
         }
 
+        string sourceFileName;
         string field = "SourceFileName";
-        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
         {
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", Field: " + field;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
+            sourceFileName = parametersRoot.get(field, "XXX").asString();
         }
-        string sourceFileName = parametersRoot.get(field, "XXX").asString();
-
+        
         // this is a concat, so destination file name shall have the same
         // extension as the source file name
         string localSourceFileName = to_string(ingestionJobKey)
-                + ".binary"
+                + "." // + ".binary"
                 ;
         size_t extensionIndex = sourcePhysicalPaths.front().find_last_of(".");
         if (extensionIndex != string::npos)
@@ -2222,7 +2217,7 @@ void MMSEngineProcessor::generateAndIngestConcatenation(
         string mediaMetaDataContent = generateMediaMetadataToIngest(
                 ingestionJobKey,
                 concatContentType == MMSEngineDBFacade::ContentType::Video ? true : false,
-                sourceFileName,
+                sourceFileName == "" ? localSourceFileName : sourceFileName,
                 parametersRoot
         );
 
@@ -2281,7 +2276,7 @@ void MMSEngineProcessor::generateAndIngestCutMedia(
     {
         if (dependencies.size() == 0)
         {
-            string errorMessage = __FILEREF__ + "No configured any media to be concatenated"
+            string errorMessage = __FILEREF__ + "No configured any media to be cut"
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", dependencies.size: " + to_string(dependencies.size());
             _logger->error(errorMessage);
@@ -2407,22 +2402,17 @@ void MMSEngineProcessor::generateAndIngestCutMedia(
             throw runtime_error(errorMessage);
         }
 
+        string sourceFileName;
         field = "SourceFileName";
-        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
         {
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", Field: " + field;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
+            sourceFileName = parametersRoot.get(field, "XXX").asString();
         }
-        string sourceFileName = parametersRoot.get(field, "XXX").asString();
 
         // this is a cut so destination file name shall have the same
         // extension as the source file name
         string localSourceFileName = to_string(ingestionJobKey)
-                + ".binary"
+                + "." // + ".binary"
                 ;
         size_t extensionIndex = sourcePhysicalPath.find_last_of(".");
         if (extensionIndex != string::npos)
@@ -2446,7 +2436,7 @@ void MMSEngineProcessor::generateAndIngestCutMedia(
         string mediaMetaDataContent = generateMediaMetadataToIngest(
                 ingestionJobKey,
                 contentType == MMSEngineDBFacade::ContentType::Video ? true : false,
-                sourceFileName,
+                sourceFileName == "" ? localSourceFileName : sourceFileName,
                 parametersRoot
         );
 
@@ -2477,7 +2467,7 @@ void MMSEngineProcessor::generateAndIngestCutMedia(
     }
     catch(runtime_error e)
     {
-        _logger->error(__FILEREF__ + "generateAndIngestConcatenation failed"
+        _logger->error(__FILEREF__ + "generateAndIngestCutMedia failed"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", e.what(): " + e.what()
         );
@@ -2486,7 +2476,7 @@ void MMSEngineProcessor::generateAndIngestCutMedia(
     }
     catch(exception e)
     {
-        _logger->error(__FILEREF__ + "generateAndIngestConcatenation failed"
+        _logger->error(__FILEREF__ + "generateAndIngestCutMedia failed"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );
         
