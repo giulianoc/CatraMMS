@@ -1835,32 +1835,29 @@ void MMSEngineProcessor::generateAndIngestFrames(
             throw runtime_error(errorMessage);
         }
 
+        string sourceFileName;
         field = "SourceFileName";
-        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
         {
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", Field: " + field;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
+            sourceFileName = parametersRoot.get(field, "XXX").asString();
         }
-        string sourceFileName = parametersRoot.get(field, "XXX").asString();
 
         string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
                 workspace);
 
-        string temporaryFileName;
-        string textToBeReplaced;
-        string textToReplace;
+        string localSourceFileName;
+        // string textToBeReplaced;
+        // string textToReplace;
         {
-            temporaryFileName = to_string(ingestionJobKey) + ".binary";
+            localSourceFileName = to_string(ingestionJobKey) + ".binary" + ".jpg";
+            /*
             size_t extensionIndex = sourceFileName.find_last_of(".");
             if (extensionIndex != string::npos)
                 temporaryFileName.append(sourceFileName.substr(extensionIndex));
+            */
 
-            textToBeReplaced = to_string(ingestionJobKey) + ".binary";
-            textToReplace = sourceFileName.substr(0, extensionIndex);
+            // textToBeReplaced = to_string(ingestionJobKey) + ".binary";
+            // textToReplace = sourceFileName.substr(0, extensionIndex);
         }
         
         FFMpeg ffmpeg (_configuration, _logger);
@@ -1868,7 +1865,7 @@ void MMSEngineProcessor::generateAndIngestFrames(
         vector<string> generatedFramesFileNames = ffmpeg.generateFramesToIngest(
                 ingestionJobKey,
                 workspaceIngestionRepository,
-                temporaryFileName,
+                localSourceFileName,
                 startTimeInSeconds,
                 maxFramesNumber,
                 videoFilter,
@@ -1888,14 +1885,14 @@ void MMSEngineProcessor::generateAndIngestFrames(
             _logger->info(__FILEREF__ + "Generated Frame to ingest"
                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", generatedFrameFileName: " + generatedFrameFileName
-                + ", textToBeReplaced: " + textToBeReplaced
-                + ", textToReplace: " + textToReplace
+                // + ", textToBeReplaced: " + textToBeReplaced
+                // + ", textToReplace: " + textToReplace
             );
 
             string mmsSourceFileName = generatedFrameFileName;
             
-            if (mmsSourceFileName.find(textToBeReplaced) != string::npos)
-                mmsSourceFileName.replace(mmsSourceFileName.find(textToBeReplaced), textToBeReplaced.length(), textToReplace);
+//            if (mmsSourceFileName.find(textToBeReplaced) != string::npos)
+//                mmsSourceFileName.replace(mmsSourceFileName.find(textToBeReplaced), textToBeReplaced.length(), textToReplace);
 
             _logger->info(__FILEREF__ + "Generated Frame to ingest"
                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -2034,17 +2031,12 @@ void MMSEngineProcessor::generateAndIngestSlideshow(
             outputFrameRate = parametersRoot.get(field, "XXX").asInt();
         }
 
+        string sourceFileName;
         field = "SourceFileName";
-        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
         {
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", Field: " + field;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
+            sourceFileName = parametersRoot.get(field, "XXX").asString();
         }
-        string sourceFileName = parametersRoot.get(field, "XXX").asString();
 
         string localSourceFileName = to_string(ingestionJobKey)
                 + ".binary"
@@ -2071,7 +2063,7 @@ void MMSEngineProcessor::generateAndIngestSlideshow(
         string mediaMetaDataContent = generateMediaMetadataToIngest(
                 ingestionJobKey,
                 true,
-                sourceFileName,
+                sourceFileName == "" ? localSourceFileName : sourceFileName,
                 parametersRoot
         );
 

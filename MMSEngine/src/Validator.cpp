@@ -959,7 +959,8 @@ void Validator::validateFrameMetadata(
     Json::Value parametersRoot, vector<int64_t>& dependencies)
 {
     // see sample in directory samples
-        
+     
+    /*
     vector<string> mandatoryFields = {
         "SourceFileName"
     };
@@ -988,10 +989,11 @@ void Validator::validateFrameMetadata(
         
         throw runtime_error(errorMessage);
     }
+    */
     
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
-    field = "References";
+    string field = "References";
     if (isMetadataPresent(parametersRoot, field))
     {
         Json::Value referencesRoot = parametersRoot[field];
@@ -1124,7 +1126,7 @@ void Validator::validatePeriodicalFramesMetadata(
     Json::Value parametersRoot, vector<int64_t>& dependencies)
 {
     vector<string> mandatoryFields = {
-        "SourceFileName",
+        // "SourceFileName",
         "PeriodInSeconds"
     };
     for (string mandatoryField: mandatoryFields)
@@ -1139,6 +1141,7 @@ void Validator::validatePeriodicalFramesMetadata(
         }
     }
 
+    /*
     string field = "SourceFileName";
     string sourceFileName = parametersRoot.get(field, "XXX").asString();
 
@@ -1152,10 +1155,11 @@ void Validator::validatePeriodicalFramesMetadata(
         
         throw runtime_error(errorMessage);
     }
+    */
     
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
-    field = "References";
+    string field = "References";
     if (isMetadataPresent(parametersRoot, field))
     {
         Json::Value referencesRoot = parametersRoot[field];
@@ -1289,6 +1293,7 @@ void Validator::validateIFramesMetadata(
 {
     // see sample in directory samples
         
+    /*
     vector<string> mandatoryFields = {
         "SourceFileName"
     };
@@ -1317,10 +1322,11 @@ void Validator::validateIFramesMetadata(
         
         throw runtime_error(errorMessage);
     }
+    */
     
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
-    field = "References";
+    string field = "References";
     if (isMetadataPresent(parametersRoot, field))
     {
         Json::Value referencesRoot = parametersRoot[field];
@@ -1469,7 +1475,6 @@ void Validator::validateSlideshowMetadata(
     // see sample in directory samples
         
     vector<string> mandatoryFields = {
-        "SourceFileName",
         "References"
     };
     for (string mandatoryField: mandatoryFields)
@@ -1484,6 +1489,7 @@ void Validator::validateSlideshowMetadata(
         }
     }
 
+    /*
     string field = "SourceFileName";
     string sourceFileName = parametersRoot.get(field, "XXX").asString();
 
@@ -1496,8 +1502,9 @@ void Validator::validateSlideshowMetadata(
         
         throw runtime_error(errorMessage);
     }
+    */
     
-    field = "References";
+    string field = "References";
     {
         Json::Value referencesRoot = parametersRoot[field];
         if (referencesRoot.size() < 1)
