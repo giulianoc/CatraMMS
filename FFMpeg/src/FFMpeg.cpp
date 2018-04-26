@@ -1291,9 +1291,10 @@ vector<string> FFMpeg::generateFramesToIngest(
     string imageBaseFileName;
     if (mjpeg)
     {
-        if (extensionIndex == string::npos ||
-                (extensionIndex != string::npos && localImageFileName.substr(extensionIndex) != ".mjpeg"))
+        if (extensionIndex == string::npos)
             localImageFileName.append(".mjpeg");
+        else if (localImageFileName.substr(extensionIndex) != ".mjpeg")
+            localImageFileName = localImageFileName.substr(0, extensionIndex).append(".mjpeg");
     }
     else
     {

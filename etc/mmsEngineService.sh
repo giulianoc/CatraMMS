@@ -35,6 +35,9 @@ fi
 
 CatraMMS_PATH=/home/mms/catramms
 
+#used by ImageMagick to look for the configuration files
+export MAGICK_CONFIGURE_PATH=$CatraMMS_PATH/ImageMagick-7.0.7-22/etc/ImageMagick-7
+
 export LD_LIBRARY_PATH=$CatraMMS_PATH/CatraLibraries/lib:$CatraMMS_PATH/CatraMMS/lib:$CatraMMS_PATH/ImageMagick-7.0.7-22/lib:$CatraMMS_PATH/curlpp//lib:$CatraMMS_PATH/ffmpeg-3.4.2/lib:$CatraMMS_PATH/jsoncpp/lib:$CatraMMS_PATH/mysql-connector-c++-1.1.9-linux-ubuntu16.10-x86-64bit/lib
 
 if [ "$command" == "start" ]
