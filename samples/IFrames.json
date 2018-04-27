@@ -8,7 +8,6 @@
 		"Label": "my label",
 		"Type": "I-Frames",
 		"Parameters": {
-			"SourceFileName": "123456.jpg",
 			"ReferenceMediaItemKey": 11,
 			"StartTimeInSeconds": 0.0,
 			"MaxFramesNumber": 5,

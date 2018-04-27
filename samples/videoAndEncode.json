@@ -9,7 +9,7 @@
         "Type": "Content-Ingestion",
         "Parameters": {
             "SourceURL": "http://mediaww.rsi.ch/rsi/unrestricted/2018/04/16/2560539.mp4",
-            "SourceFileName": "123456.mp4",
+            "FileFormat": "mp4",
             "userData": { "MyData": "this is my video data" },
             "Title": "${TitleOfVideo}",
 	    "FileSizeInBytes": 278341022

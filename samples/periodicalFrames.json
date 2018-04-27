@@ -8,7 +8,6 @@
 		"Label": "my label",
 		"Type": "Periodical-Frames",
 		"Parameters": {
-			"SourceFileName": "123456.jpg",
 			"ReferenceMediaItemKey": 11,
 			"StartTimeInSeconds": 2.5,
 			"PeriodInSeconds": 2,

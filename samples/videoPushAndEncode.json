@@ -8,7 +8,7 @@
         "Label": "My video (push)",
         "Type": "Content-Ingestion",
         "Parameters": {
-            "SourceFileName": "123456.mp4",
+            "FileFormat": "mp4",
             "userData": { "MyData": "this is my video data" },
             "Title": "${TitleOfVideo}",
 	    "FileSizeInBytes": 278341022

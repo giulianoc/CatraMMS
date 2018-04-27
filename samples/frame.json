@@ -8,7 +8,6 @@
 		"Label": "my label",
 		"Type": "Frame",
 		"Parameters": {
-			"SourceFileName": "123456.jpg",
 			"ReferenceMediaItemKey": 11,
 			"InstantInSeconds": 2.5,
 			"userData": { "MyData": "this is my data" },

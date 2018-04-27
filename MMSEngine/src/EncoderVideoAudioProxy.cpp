@@ -509,7 +509,11 @@ int EncoderVideoAudioProxy::getEncodingProgress(int64_t encodingJobKey)
                 throw runtime_error(errorMessage);
             }
             
-            // string ffmpegEncoderHost = _configuration["ffmpeg"].get("encoderHost", "").asString();
+            string ffmpegEncoderProtocol = _configuration["ffmpeg"].get("encoderProtocol", "").asString();
+            _logger->info(__FILEREF__ + "Configuration item"
+                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                + ", ffmpeg->encoderProtocol: " + ffmpegEncoderProtocol
+            );
             int ffmpegEncoderPort = _configuration["ffmpeg"].get("encoderPort", "").asInt();
             _logger->info(__FILEREF__ + "Configuration item"
                         + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -521,7 +525,8 @@ int EncoderVideoAudioProxy::getEncodingProgress(int64_t encodingJobKey)
                 + ", ffmpeg->encoderURI: " + ffmpegEncoderURI
             );
             ffmpegEncoderURL = 
-                    string("http://")
+                    ffmpegEncoderProtocol
+                    + "://"
                     + _currentUsedFFMpegEncoderHost + ":"
                     + to_string(ffmpegEncoderPort)
                     + ffmpegEncoderURI
@@ -913,6 +918,11 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
         ostringstream response;
         try
         {
+            string ffmpegEncoderProtocol = _configuration["ffmpeg"].get("encoderProtocol", "").asString();
+            _logger->info(__FILEREF__ + "Configuration item"
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                + ", ffmpeg->encoderProtocol: " + ffmpegEncoderProtocol
+            );
             string ffmpegEncoderHost = _configuration["ffmpeg"].get("encoderHost", "").asString();
             _logger->info(__FILEREF__ + "Configuration item"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -929,7 +939,8 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                 + ", ffmpeg->encoderURI: " + ffmpegEncoderURI
             );
             ffmpegEncoderURL = 
-                    string("http://")
+                    ffmpegEncoderProtocol
+                    + "://"
                     + ffmpegEncoderHost + ":"
                     + to_string(ffmpegEncoderPort)
                     + ffmpegEncoderURI
@@ -1245,7 +1256,12 @@ bool EncoderVideoAudioProxy::getEncodingStatus(int64_t encodingJobKey)
     ostringstream response;
     try
     {
-        // string ffmpegEncoderHost = _configuration["ffmpeg"].get("encoderHost", "").asString();
+        string ffmpegEncoderProtocol = _configuration["ffmpeg"].get("encoderProtocol", "").asString();
+        _logger->info(__FILEREF__ + "Configuration item"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", ffmpeg->encoderProtocol: " + ffmpegEncoderProtocol
+        );
+
         int ffmpegEncoderPort = _configuration["ffmpeg"].get("encoderPort", "").asInt();
         _logger->info(__FILEREF__ + "Configuration item"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -1257,7 +1273,8 @@ bool EncoderVideoAudioProxy::getEncodingStatus(int64_t encodingJobKey)
             + ", ffmpeg->encoderURI: " + ffmpegEncoderURI
         );
         ffmpegEncoderURL = 
-                string("http://")
+                ffmpegEncoderProtocol
+                + "://"                
                 + _currentUsedFFMpegEncoderHost + ":"
                 + to_string(ffmpegEncoderPort)
                 + ffmpegEncoderURI

@@ -10,7 +10,7 @@
         "Type": "Content-Ingestion",
         "Parameters": {
             "SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
-            "SourceFileName": "123456.mp4",
+            "FileFormat": "mp4",
             "userData": { "MyData": "this is my video data" },
             "Title": "${TitleOfVideo}"
         },

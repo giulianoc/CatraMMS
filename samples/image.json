@@ -8,7 +8,7 @@
         "Keywords": "aaa",          // optional
         "Description": "aaa",       // optional
 
-        "SourceFileName": "RiscaldamentoDiMaradona.jpg", // mandatory
+        "FileFormat": "jpg", // mandatory
         "ContentType": "image",     // mandatory: "video" or "audio" or "image"
         "LogicalType": "Advertising",     // optional
         "MD5FileCheckSum": null,	// "6f60b0d5ed8925d032da926c78c8c67d",  // optional
