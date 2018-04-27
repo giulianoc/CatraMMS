@@ -2163,7 +2163,7 @@ void API::uploadBinary(
         workspaceIngestionBinaryPathName
                 .append("/")
                 .append(to_string(ingestionJobKey))
-                .append(".binary")
+                .append(".source")
                 ;
              
         if (!contentRangePresent)

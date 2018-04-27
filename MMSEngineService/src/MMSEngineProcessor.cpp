@@ -291,7 +291,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                 {
                     // source binary download or uploaded terminated
 
-                    string sourceFileName = to_string(ingestionJobKey) + ".binary";
+                    string sourceFileName = to_string(ingestionJobKey) + ".source";
 
                     {
                         shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
@@ -1853,14 +1853,14 @@ void MMSEngineProcessor::generateAndIngestFrames(
         // string textToBeReplaced;
         // string textToReplace;
         {
-            localSourceFileName = to_string(ingestionJobKey) + /* ".binary" + */ ".jpg";
+            localSourceFileName = to_string(ingestionJobKey) + /* ".source" + */ ".jpg";
             /*
             size_t extensionIndex = sourceFileName.find_last_of(".");
             if (extensionIndex != string::npos)
                 temporaryFileName.append(sourceFileName.substr(extensionIndex));
             */
 
-            // textToBeReplaced = to_string(ingestionJobKey) + ".binary";
+            // textToBeReplaced = to_string(ingestionJobKey) + ".source";
             // textToReplace = sourceFileName.substr(0, extensionIndex);
         }
         
@@ -2043,7 +2043,7 @@ void MMSEngineProcessor::generateAndIngestSlideshow(
         }
 
         string localSourceFileName = to_string(ingestionJobKey)
-                // + ".binary"
+                // + ".source"
                 + ".mp4"
                 ;
         /*
@@ -2194,7 +2194,7 @@ void MMSEngineProcessor::generateAndIngestConcatenation(
         // this is a concat, so destination file name shall have the same
         // extension as the source file name
         string localSourceFileName = to_string(ingestionJobKey)
-                // + ".binary"
+                // + ".source"
                 ;
         size_t extensionIndex = sourcePhysicalPaths.front().find_last_of(".");
         if (extensionIndex != string::npos)
@@ -2411,7 +2411,7 @@ void MMSEngineProcessor::generateAndIngestCutMedia(
         // this is a cut so destination file name shall have the same
         // extension as the source file name
         string localSourceFileName = to_string(ingestionJobKey)
-                // + ".binary"
+                // + ".source"
                 ;
         size_t extensionIndex = sourcePhysicalPath.find_last_of(".");
         if (extensionIndex != string::npos)
@@ -3149,7 +3149,7 @@ RESUMING FILE TRANSFERS
     workspaceIngestionBinaryPathName
         .append("/")
         .append(to_string(ingestionJobKey))
-        .append(".binary")
+        .append(".source")
         ;
 
         
@@ -3515,7 +3515,7 @@ void MMSEngineProcessor::moveMediaSourceFile(string sourceReferenceURL,
         workspaceIngestionBinaryPathName
             .append("/")
             .append(to_string(ingestionJobKey))
-            .append(".binary")
+            .append(".source")
             ;
 
         string movePrefix("move://");
@@ -3597,7 +3597,7 @@ void MMSEngineProcessor::copyMediaSourceFile(string sourceReferenceURL,
         workspaceIngestionBinaryPathName
             .append("/")
             .append(to_string(ingestionJobKey))
-            .append(".binary")
+            .append(".source")
             ;
 
         string copyPrefix("copy://");

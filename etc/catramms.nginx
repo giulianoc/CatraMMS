@@ -1,5 +1,30 @@
 server {
-	listen 80;
+        server_name www.catramms.cloud catramms.cloud;
+        return 301 https://catramms.cloud$request_uri;
+}
+
+server {  
+        listen 443 ssl http2;
+        server_name www.catramms.cloud;
+
+	ssl_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
+	ssl_certificate_key /etc/letsencrypt/live/catrasoft.cloud/privkey.pem;
+	ssl_trusted_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
+        include /usr/local/nginx/conf/snippets/ssl-params.conf;
+
+        return 301 https://example.com$request_uri;
+}
+
+server {
+        listen 443 ssl http2;
+        server_name catramms.cloud;
+
+	ssl_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
+	ssl_certificate_key /etc/letsencrypt/live/catrasoft.cloud/privkey.pem;
+	ssl_trusted_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
+        include /usr/local/nginx/conf/snippets/ssl-params.conf;
+
+	#listen 80;
 
 	root /home/mms/catramms/www;
 	#index index.html index.htm;
