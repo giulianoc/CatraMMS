@@ -427,7 +427,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         {
                             MMSEngineDBFacade::IngestionStatus nextIngestionStatus;
                             string mediaSourceURL;
-                            string mediaSourceFileName;
+                            string mediaFileFormat;
                             string md5FileCheckSum;
                             int fileSizeInBytes;
                             try
@@ -439,7 +439,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                         ingestionType, parametersRoot);
 
                                 tie(nextIngestionStatus,
-                                        mediaSourceURL, mediaSourceFileName, 
+                                        mediaSourceURL, mediaFileFormat, 
                                         md5FileCheckSum, fileSizeInBytes) = mediaSourceDetails;                        
                             }
                             catch(runtime_error e)
@@ -1067,7 +1067,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 
     MMSEngineDBFacade::IngestionStatus nextIngestionStatus;
     string mediaSourceURL;
-    string mediaSourceFileName;
+    string mediaFileFormat;
     string md5FileCheckSum;
     int fileSizeInBytes;
     try
@@ -1079,7 +1079,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                 localAssetIngestionEvent->getIngestionType(), parametersRoot);
         
         tie(nextIngestionStatus,
-                mediaSourceURL, mediaSourceFileName, 
+                mediaSourceURL, mediaFileFormat, 
                 md5FileCheckSum, fileSizeInBytes) = mediaSourceDetails;                        
     }
     catch(runtime_error e)
@@ -1124,9 +1124,6 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
 
         throw e;
     }
-
-    if (localAssetIngestionEvent->getMMSSourceFileName() != "") 
-        mediaSourceFileName = localAssetIngestionEvent->getMMSSourceFileName();
 
     string workspaceIngestionBinaryPathName;
     try
@@ -1184,6 +1181,12 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         );
 
         throw e;
+    }
+
+    string mediaSourceFileName = localAssetIngestionEvent->getMMSSourceFileName();
+    if (mediaSourceFileName == "")
+    {
+        mediaSourceFileName = localAssetIngestionEvent->getIngestionSourceFileName() + "." + mediaFileFormat;
     }
 
     string relativePathToBeUsed;
@@ -1259,7 +1262,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
     int imageHeight = -1;
     string imageFormat;
     int imageQuality = -1;
-    if (validator.isVideoAudioMedia(mediaSourceFileName))
+    if (validator.isVideoAudioFileFormat(mediaFileFormat))
     {
         try
         {
@@ -1325,7 +1328,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             throw e;
         }        
     }
-    else if (validator.isImageMedia(mediaSourceFileName))
+    else if (validator.isImageFileFormat(mediaFileFormat))
     {
         try
         {
@@ -2883,7 +2886,7 @@ tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> MMSEngine
 {
     MMSEngineDBFacade::IngestionStatus nextIngestionStatus;
     string mediaSourceURL;
-    string mediaSourceFileName;
+    string mediaFileFormat;
     
     string field;
     if (ingestionType == MMSEngineDBFacade::IngestionType::ContentIngestion)
@@ -2892,8 +2895,8 @@ tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> MMSEngine
         if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
             mediaSourceURL = parametersRoot.get(field, "XXX").asString();
         
-        field = "SourceFileName";
-        mediaSourceFileName = parametersRoot.get(field, "XXX").asString();
+        field = "FileFormat";
+        mediaFileFormat = parametersRoot.get(field, "XXX").asString();
 
         string httpPrefix ("http://");
         string httpsPrefix ("https://");
@@ -2950,7 +2953,7 @@ tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> MMSEngine
     tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> mediaSourceDetails;
     get<0>(mediaSourceDetails) = nextIngestionStatus;
     get<1>(mediaSourceDetails) = mediaSourceURL;
-    get<2>(mediaSourceDetails) = mediaSourceFileName;
+    get<2>(mediaSourceDetails) = mediaFileFormat;
     get<3>(mediaSourceDetails) = md5FileCheckSum;
     get<4>(mediaSourceDetails) = fileSizeInBytes;
 
@@ -2958,7 +2961,7 @@ tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> MMSEngine
         + ", ingestionJobKey: " + to_string(ingestionJobKey)
         + ", nextIngestionStatus: " + MMSEngineDBFacade::toString(get<0>(mediaSourceDetails))
         + ", mediaSourceURL: " + get<1>(mediaSourceDetails)
-        + ", mediaSourceFileName: " + get<2>(mediaSourceDetails)
+        + ", mediaFileFormat: " + get<2>(mediaSourceDetails)
         + ", md5FileCheckSum: " + get<3>(mediaSourceDetails)
         + ", fileSizeInBytes: " + to_string(get<4>(mediaSourceDetails))
     );

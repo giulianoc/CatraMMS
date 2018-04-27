@@ -26,9 +26,9 @@ public:
     Validator(const Validator& orig);
     virtual ~Validator();
     
-    bool isVideoAudioMedia(string mediaSourceFileName);
+    bool isVideoAudioFileFormat(string fileFormat);
     
-    bool isImageMedia(string mediaSourceFileName);
+    bool isImageFileFormat(string fileFormat);
 
     void validateRootMetadata(Json::Value root);
 

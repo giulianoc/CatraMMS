@@ -28,46 +28,45 @@ Validator::Validator(const Validator& orig) {
 Validator::~Validator() {
 }
 
-bool Validator::isVideoAudioMedia(string mediaSourceFileName)
+bool Validator::isVideoAudioFileFormat(string fileFormat)
 {
     // see https://en.wikipedia.org/wiki/Video_file_format
     vector<string> suffixes = {
-        ".webm",
-        ".mkv",
-        ".flv",
-        ".vob",
-        ".ogv",
-        ".ogg",
-        ".avi",
-        ".mov",
-        ".wmv",
-        ".yuv",
-        ".mp4",
-        ".m4p ",
-        ".mpg",
-        ".mp2",
-        ".mpeg",
-        ".mjpeg",
-        ".m4v",
-        ".3gp",
-        ".3g2",
-        ".mxf"
+        "webm",
+        "mkv",
+        "flv",
+        "vob",
+        "ogv",
+        "ogg",
+        "avi",
+        "mov",
+        "wmv",
+        "yuv",
+        "mp4",
+        "m4p ",
+        "mpg",
+        "mp2",
+        "mpeg",
+        "mjpeg",
+        "m4v",
+        "3gp",
+        "3g2",
+        "mxf"
     };
 
-    string lowerCaseMediaSourceFileName;
-    lowerCaseMediaSourceFileName.resize(mediaSourceFileName.size());
-    transform(mediaSourceFileName.begin(), mediaSourceFileName.end(), lowerCaseMediaSourceFileName.begin(), [](unsigned char c){return tolower(c); } );
+    string lowerCaseFileFormat;
+    lowerCaseFileFormat.resize(fileFormat.size());
+    transform(fileFormat.begin(), fileFormat.end(), lowerCaseFileFormat.begin(), [](unsigned char c){return tolower(c); } );
     for (string suffix: suffixes)
     {
-        if (lowerCaseMediaSourceFileName.size() >= suffix.size() 
-                && 0 == lowerCaseMediaSourceFileName.compare(lowerCaseMediaSourceFileName.size()-suffix.size(), suffix.size(), suffix)) 
+        if (lowerCaseFileFormat == suffix) 
             return true;
     }
     
     return false;
 }
 
-bool Validator::isImageMedia(string mediaSourceFileName)
+bool Validator::isImageFileFormat(string fileFormat)
 {
     // see https://en.wikipedia.org/wiki/Video_file_format
     vector<string> suffixes = {
@@ -80,13 +79,12 @@ bool Validator::isImageMedia(string mediaSourceFileName)
         ".png"
     };
 
-    string lowerCaseMediaSourceFileName;
-    lowerCaseMediaSourceFileName.resize(mediaSourceFileName.size());
-    transform(mediaSourceFileName.begin(), mediaSourceFileName.end(), lowerCaseMediaSourceFileName.begin(), [](unsigned char c){return tolower(c); } );
+    string lowerCaseFileFormat;
+    lowerCaseFileFormat.resize(fileFormat.size());
+    transform(fileFormat.begin(), fileFormat.end(), lowerCaseFileFormat.begin(), [](unsigned char c){return tolower(c); } );
     for (string suffix: suffixes)
     {
-        if (lowerCaseMediaSourceFileName.size() >= suffix.size() 
-                && 0 == lowerCaseMediaSourceFileName.compare(lowerCaseMediaSourceFileName.size()-suffix.size(), suffix.size(), suffix)) 
+        if (lowerCaseFileFormat == suffix) 
             return true;
     }
     
@@ -713,7 +711,7 @@ void Validator::validateContentIngestionMetadata(
 {
     vector<string> mandatoryFields = {
         // "SourceURL",     it is optional in case of push
-        "SourceFileName"
+        "FileFormat"
     };
     for (string mandatoryField: mandatoryFields)
     {
@@ -726,14 +724,14 @@ void Validator::validateContentIngestionMetadata(
             throw runtime_error(errorMessage);
         }
     }
-    string field = "SourceFileName";
-    string sourceFileName = parametersRoot.get(field, "XXX").asString();
+    string field = "FileFormat";
+    string fileFormat = parametersRoot.get(field, "XXX").asString();
 
-    if (!isVideoAudioMedia(sourceFileName)
-            && !isImageMedia(sourceFileName))
+    if (!isVideoAudioFileFormat(fileFormat)
+            && !isImageFileFormat(fileFormat))
     {
-        string errorMessage = string("Unknown sourceFileName extension")
-            + ", sourceFileName: " + sourceFileName
+        string errorMessage = string("Unknown fileFormat")
+            + ", fileFormat: " + fileFormat
         ;
         _logger->error(__FILEREF__ + errorMessage);
         
