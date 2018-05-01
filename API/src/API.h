@@ -122,7 +122,7 @@ private:
             Json::Value taskOrGroupOfTasksRoot, 
         vector<int64_t> dependOnIngestionJobKeys, string& responseBody);
 
-    void uploadBinary(
+    void uploadedBinary(
         FCGX_Request& request,
         string requestMethod,
         string xCatraMMSResumeHeader,

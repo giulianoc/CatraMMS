@@ -27,6 +27,7 @@ SET (SOURCES
 	Validator.cpp
 	ActiveEncodingsManager.cpp
 	EncoderVideoAudioProxy.cpp
+	EncodersLoadBalancer.cpp
 )
 SET (HEADERS
 	Workspace.h
@@ -36,6 +37,7 @@ SET (HEADERS
 	Validator.h
 	ActiveEncodingsManager.h
 	EncoderVideoAudioProxy.h
+	EncodersLoadBalancer.h
 )
 
 include_directories ("${PROJECT_SOURCE_DIR}/../spdlog/include")

@@ -194,7 +194,7 @@ API::API(Json::Value configuration,
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->binary->maxProgressCallFailures: " + to_string(_maxProgressCallFailures)
     );
-        _progressURI  = api["binary"].get("progressURI", "XXX").asString();
+    _progressURI  = api["binary"].get("progressURI", "XXX").asString();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->binary->progressURI: " + _progressURI
     );
@@ -435,7 +435,7 @@ void API::manageRequestAndResponse(
         
         ingestionStatus(request, get<0>(workspaceAndFlags), queryParameters, requestBody);
     }
-    else if (method == "uploadBinary")
+    else if (method == "uploadedBinary")
     {
         bool isUserAPI = get<2>(workspaceAndFlags);
         if (!isUserAPI)
@@ -450,7 +450,7 @@ void API::manageRequestAndResponse(
             throw runtime_error(errorMessage);
         }
                 
-        uploadBinary(request, requestMethod, xCatraMMSResumeHeader,
+        uploadedBinary(request, requestMethod, xCatraMMSResumeHeader,
             queryParameters, workspaceAndFlags, // contentLength,
                 requestDetails);
     }
@@ -1574,7 +1574,7 @@ void API::ingestion(
             conn = _mmsEngineDBFacade->beginIngestionJobs();
 
             Validator validator(_logger, _mmsEngineDBFacade);
-            validator.validateRootMetadata(requestBodyRoot);
+            validator.validateRootMetadata(workspace->_workspaceKey, requestBodyRoot);
         
             string field = "Type";
             if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
@@ -2080,7 +2080,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
     }    
 }
 
-void API::uploadBinary(
+void API::uploadedBinary(
         FCGX_Request& request,
         string requestMethod,
         string xCatraMMSResumeHeader,
@@ -2090,7 +2090,7 @@ void API::uploadBinary(
         unordered_map<string, string>& requestDetails
 )
 {
-    string api = "uploadBinary";
+    string api = "uploadedBinary";
 
     // char* buffer = nullptr;
 
@@ -2163,7 +2163,7 @@ void API::uploadBinary(
         workspaceIngestionBinaryPathName
                 .append("/")
                 .append(to_string(ingestionJobKey))
-                .append(".source")
+                .append("_source")
                 ;
              
         if (!contentRangePresent)

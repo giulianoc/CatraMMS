@@ -108,6 +108,7 @@ public:
 private:
     shared_ptr<spdlog::logger>  _logger;
     string          _ffmpegPath;
+    string          _ffmpegTempDir;
     int             _charsToBeReadFromFfmpegErrorOutput;
     bool            _twoPasses;
     string          _outputFfmpegPathFileName;

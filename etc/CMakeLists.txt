@@ -29,6 +29,8 @@ SET (ETCs
 	ffmpegHelper.sh
 	nginx.sh
 	mms.cfg
+	crontab.txt
+	crontab.sh
 )
 
 install (FILES ${ETCs} DESTINATION etc)

@@ -76,17 +76,23 @@ private:
 
     void handleCheckEncodingEvent ();
 
+    void removeContent(
+        int64_t ingestionJobKey,
+        shared_ptr<Workspace> workspace,
+        Json::Value parametersRoot,
+        vector<int64_t>& dependencies);
+    
     string generateImageMetadataToIngest(
         int64_t ingestionJobKey,
         bool mjpeg,
-        string sourceFileName,
+        string fileFormat,
         Json::Value parametersRoot
     );
 
     string generateMediaMetadataToIngest(
         int64_t ingestionJobKey,
         bool video,
-        string sourceFileName,
+        string fileFormat,
         Json::Value parametersRoot);
 
     void manageEncodeTask(

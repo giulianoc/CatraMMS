@@ -26,6 +26,9 @@ MMSStorage::MMSStorage(
     _streamingRootRepository = _storage + "StreamingRepository/";
 
     _stagingRootRepository = _storage + "MMSWorkingAreaRepository/Staging/";
+    
+    string nginxArea = _storage + "MMSWorkingAreaRepository/nginx/";
+    string ffmpegArea = _storage + "MMSWorkingAreaRepository/ffmpeg/";
 
     _profilesRootRepository = _storage + "MMSRepository/EncodingProfiles/";
 
@@ -85,6 +88,22 @@ MMSStorage::MMSStorage(
     FileIO::createDirectory(_stagingRootRepository,
             S_IRUSR | S_IWUSR | S_IXUSR |
             S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+
+    _logger->info(__FILEREF__ + "Creating directory (if needed)"
+        + ", ffmpegArea: " + ffmpegArea
+    );
+    FileIO::createDirectory(ffmpegArea,
+            S_IRUSR | S_IWUSR | S_IXUSR |
+            S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, noErrorIfExists, recursive);
+
+    _logger->info(__FILEREF__ + "Creating directory (if needed)"
+        + ", nginxArea: " + nginxArea
+    );
+    FileIO::createDirectory(nginxArea,
+            S_IRUSR | S_IWUSR | S_IXUSR 
+            | S_IRGRP | S_IWGRP | S_IXGRP
+            | S_IROTH | S_IWOTH | S_IXOTH, 
+            noErrorIfExists, recursive);
 
     // Partitions staff
     {
@@ -156,7 +175,7 @@ string MMSStorage::getPhysicalPath(int64_t mediaItemKey,
         int64_t encodingProfileKey)
 {    
     tuple<int,string,string,string> storageDetails =
-        _mmsEngineDBFacade->getStorageDetails(mediaItemKey, encodingProfileKey);
+        _mmsEngineDBFacade->getStorageDetailsByMediaItemKey(mediaItemKey, encodingProfileKey);
 
     int mmsPartitionNumber;
     string workspaceDirectoryName;
@@ -169,6 +188,69 @@ string MMSStorage::getPhysicalPath(int64_t mediaItemKey,
         workspaceDirectoryName,
         relativePath,
         fileName);
+}
+
+void MMSStorage::removePhysicalPath(int64_t physicalPathKey)
+{    
+
+    string mmsAssetPathName;
+    
+    try
+    {
+        tuple<int,string,string,string> storageDetails =
+            _mmsEngineDBFacade->getStorageDetailsByPhysicalPathKey(physicalPathKey);
+
+        int mmsPartitionNumber;
+        string workspaceDirectoryName;
+        string relativePath;
+        string fileName;
+        tie(mmsPartitionNumber, workspaceDirectoryName, relativePath, fileName) = storageDetails;
+
+        mmsAssetPathName = getMMSAssetPathName(
+            mmsPartitionNumber,
+            workspaceDirectoryName,
+            relativePath,
+            fileName);
+    }
+    catch(runtime_error e)
+    {
+        string errorMessage = string("getStorageDetailsByPhysicalPathKey failed")
+            + ", physicalPathKey: " + to_string(physicalPathKey)
+        ;
+        
+        _logger->info(__FILEREF__ + errorMessage);
+        
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        
+    }
+    
+    /*
+    tuple<int,string,string,string> storageDetails =
+        _mmsEngineDBFacade->getStorageDetails(mediaItemKey, encodingProfileKey);
+
+    int mmsPartitionNumber;
+    string workspaceDirectoryName;
+    string relativePath;
+    string fileName;
+    tie(mmsPartitionNumber, workspaceDirectoryName, relativePath, fileName) = storageDetails;
+     */
+}
+
+void MMSStorage::removeMediaItem(int64_t mediaItemKey)
+{
+    /*
+    tuple<int,string,string,string> storageDetails =
+        _mmsEngineDBFacade->getStorageDetails(mediaItemKey, encodingProfileKey);
+
+    int mmsPartitionNumber;
+    string workspaceDirectoryName;
+    string relativePath;
+    string fileName;
+    tie(mmsPartitionNumber, workspaceDirectoryName, relativePath, fileName) = storageDetails;
+    */
 }
 
 string MMSStorage::getWorkspaceIngestionRepository(shared_ptr<Workspace> workspace)
@@ -492,9 +574,12 @@ string MMSStorage::moveAssetInMMSRepository(
 
         if (ulMMSPartitionIndex == _mmsPartitionsFreeSizeInMB.size()) 
         {
-            throw runtime_error(string("No more space in MMS Partitions")
+            string errorMessage = string("No more space in MMS Partitions")
                     + ", ullFSEntrySizeInBytes: " + to_string(ullFSEntrySizeInBytes)
-                    );
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
+            
+            throw runtime_error(errorMessage);
         }
 
         *pulMMSPartitionIndexUsed = _ulCurrentMMSPartitionIndex;

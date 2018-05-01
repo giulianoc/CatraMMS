@@ -1,5 +1,5 @@
 {
-    "Type": "ContentIngestion",         // mandatory
+    "Type": "Add-Content",         // mandatory
     "Version": "1.0",           // mandatory
     "ContentIngestion": {
         "Title": "RiscaldamentoDiMaradona.jpg",            // mandatory

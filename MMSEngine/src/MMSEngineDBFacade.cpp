@@ -3293,7 +3293,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobStatus (
                 else
                     taskRoot[field] = static_cast<string>(resultSet->getString("endIngestion"));
 
-                if (ingestionType == IngestionType::ContentIngestion)
+                if (ingestionType == IngestionType::AddContent)
                 {
                     field = "downloadingProgress";
                     if (resultSet->isNull("downloadingProgress"))
@@ -3302,7 +3302,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobStatus (
                         taskRoot[field] = resultSet->getInt64("downloadingProgress");
                 }
 
-                if (ingestionType == IngestionType::ContentIngestion)
+                if (ingestionType == IngestionType::AddContent)
                 {
                     field = "uploadingProgress";
                     if (resultSet->isNull("uploadingProgress"))
@@ -3547,6 +3547,121 @@ MMSEngineDBFacade::ContentType MMSEngineDBFacade::getMediaItemKeyDetails(
     return contentType;
 }
 
+pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyDetailsByPhysicalPathKey(
+    int64_t referencePhysicalPathKey, bool warningIfMissing)
+{
+    string      lastSQLCommand;
+        
+    shared_ptr<MySQLConnection> conn;
+    
+    pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        {
+            lastSQLCommand = 
+                "select mi.mediaItemKey, mi.contentType from MMS_MediaItem mi, MMS_PhysicalPath p "
+                "where mi.mediaItemKey = p.mediaItemKey and p.physicalPathKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, referencePhysicalPathKey);
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                mediaItemKeyAndContentType.first = resultSet->getInt64("mediaItemKey");
+                mediaItemKeyAndContentType.second = MMSEngineDBFacade::toContentType(resultSet->getString("contentType"));
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "MediaItemKey is not found"
+                    + ", referencePhysicalPathKey: " + to_string(referencePhysicalPathKey)
+                    + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                if (warningIfMissing)
+                    _logger->warn(errorMessage);
+                else
+                    _logger->error(errorMessage);
+
+                throw MediaItemKeyNotFound(errorMessage);                    
+            }            
+        }
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
+        throw se;
+    }
+    catch(MediaItemKeyNotFound e)
+    {
+        if (warningIfMissing)
+            _logger->warn(__FILEREF__ + "SQL exception"
+                + ", lastSQLCommand: " + lastSQLCommand
+            );
+        else
+            _logger->error(__FILEREF__ + "SQL exception"
+                + ", lastSQLCommand: " + lastSQLCommand
+            );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
+        throw e;
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
+        throw exception();
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
+        throw e;
+    }
+    
+    return mediaItemKeyAndContentType;
+}
+
 pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyDetailsByIngestionJobKey(
     int64_t referenceIngestionJobKey, bool warningIfMissing)
 {
@@ -3663,7 +3778,7 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
 }
 
 pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyDetailsByUniqueName(
-    string referenceUniqueName, bool warningIfMissing)
+    int64_t workspaceKey, string referenceUniqueName, bool warningIfMissing)
 {
     string      lastSQLCommand;
         
@@ -3680,9 +3795,12 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
 
         {
             lastSQLCommand = 
-                "select mediaItemKey, contentType from MMS_MediaItem where uniqueName = ?";
+                "select mi.mediaItemKey, mi.contentType from MMS_MediaItem mi, MMS_ExternalUniqueName eun"
+                "where mi.mediaItemKey == eun.mediaItemKey "
+                "and eun.workspaceKey = ? and eun.uniqueName = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setString(queryParameterIndex++, referenceUniqueName);
 
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
@@ -5582,16 +5700,12 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
 
         _logger->info(__FILEREF__ + "Insert into MMS_MediaItem");
         // int64_t encodingProfileSetKey;
-        string uniqueName;
         {
             string title = "";
             string ingester = "";
             string keywords = "";
             string sContentType;
             // string encodingProfilesSet;
-
-            if (isMetadataPresent(parametersRoot, "UniqueName"))
-                uniqueName = parametersRoot.get("UniqueName", "XXX").asString();
 
             title = parametersRoot.get("Title", "XXX").asString();
             
@@ -5602,13 +5716,12 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                 keywords = parametersRoot.get("Keywords", "XXX").asString();
 
             lastSQLCommand = 
-                "insert into MMS_MediaItem (mediaItemKey, uniqueName, workspaceKey, contentProviderKey, title, ingester, keywords, " 
+                "insert into MMS_MediaItem (mediaItemKey, workspaceKey, contentProviderKey, title, ingester, keywords, " 
                 "ingestionDate, contentType) values ("
-                "NULL, ?, ?, ?, ?, ?, ?, NULL, ?)";
+                "NULL, ?, ?, ?, ?, ?, NULL, ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++, uniqueName);
             preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
             preparedStatement->setInt64(queryParameterIndex++, contentProviderKey);
             preparedStatement->setString(queryParameterIndex++, title);
@@ -5627,27 +5740,24 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
         
         int64_t mediaItemKey = getLastInsertId(conn);
 
-        if (uniqueName == "")
         {
-            lastSQLCommand = 
-                "update MMS_MediaItem set uniqueName = ? where mediaItemKey = ?";
+            string uniqueName;
+            if (isMetadataPresent(parametersRoot, "UniqueName"))
+                uniqueName = parametersRoot.get("UniqueName", "XXX").asString();
 
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++, to_string(mediaItemKey));
-            preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
-
-            int rowsUpdated = preparedStatement->executeUpdate();
-            if (rowsUpdated != 1)
+            if (uniqueName != "")
             {
-                string errorMessage = __FILEREF__ + "no update was done"
-                        + ", mediaItemKey: " + to_string(mediaItemKey)
-                        + ", rowsUpdated: " + to_string(rowsUpdated)
-                        + ", lastSQLCommand: " + lastSQLCommand
-                ;
-                _logger->error(errorMessage);
+                lastSQLCommand = 
+                    "insert into MMS_ExternalUniqueName (workspaceKey, mediaItemKey, uniqueName) values ("
+                    "?, ?, ?)";
 
-                throw runtime_error(errorMessage);                    
+                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                int queryParameterIndex = 1;
+                preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
+                preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+                preparedStatement->setString(queryParameterIndex++, uniqueName);
+
+                preparedStatement->executeUpdate();
             }
         }
         
@@ -6173,7 +6283,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
     return mediaItemKeyAndPhysicalPathKey;
 }
 
-tuple<int,string,string,string> MMSEngineDBFacade::getStorageDetails(
+tuple<int,string,string,string> MMSEngineDBFacade::getStorageDetailsByMediaItemKey(
         int64_t mediaItemKey,
         int64_t encodingProfileKey
 )
@@ -7179,7 +7289,6 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             lastSQLCommand = 
                 "create table if not exists MMS_MediaItem ("
                     "mediaItemKey  			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
-                    "uniqueName      			VARCHAR (128) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
                     "workspaceKey			BIGINT UNSIGNED NOT NULL,"
                     "contentProviderKey			BIGINT UNSIGNED NOT NULL,"
                     "title      			VARCHAR (256) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
@@ -7191,8 +7300,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "constraint MMS_MediaItem_FK foreign key (workspaceKey) "
                         "references MMS_Workspace (workspaceKey) on delete cascade, "
                     "constraint MMS_MediaItem_FK2 foreign key (contentProviderKey) "
-                        "references MMS_ContentProvider (contentProviderKey), "
-                    "UNIQUE (uniqueName)) "
+                        "references MMS_ContentProvider (contentProviderKey)) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
@@ -7266,6 +7374,55 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             }
         }
 
+        try
+        {
+            // we cannot have two equal UniqueNames within the same workspace
+            // we can have two equal UniqueNames on two different workspaces
+            lastSQLCommand = 
+                "create table if not exists MMS_ExternalUniqueName ("
+                    "workspaceKey			BIGINT UNSIGNED NOT NULL,"
+                    "uniqueName      		VARCHAR (128) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
+                    "mediaItemKey  			BIGINT UNSIGNED NOT NULL,"
+                    "constraint MMS_ExternalUniqueName_PK PRIMARY KEY (workspaceKey, uniqueName), "
+                    "constraint MMS_ExternalUniqueName_FK foreign key (workspaceKey) "
+                        "references MMS_Workspace (workspaceKey) on delete cascade, "
+                    "constraint MMS_ExternalUniqueName_FK2 foreign key (mediaItemKey) "
+                        "references MMS_MediaItem (mediaItemKey)) "
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
+        try
+        {
+            lastSQLCommand = 
+                "create index MMS_ExternalUniqueName_idx on MMS_ExternalUniqueName (workspaceKey, mediaItemKey)";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+        
         try
         {
             // DRM. 0: NO DRM, 1: YES DRM
@@ -7608,14 +7765,6 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         try
         {
             // The MMS_EncodingJob table include all the contents that have to be encoded
-            //  OriginatingProcedure.
-            //      0: ContentIngestion1_0
-            //          Used fields: FileName, RelativePath, customerKey, PhysicalPathKey, EncodingProfileKey
-            //          The other fields will be NULL
-            //      1: Encoding1_0
-            //          Used fields: FileName, RelativePath, customerKey, FTPIPAddress (optional), FTPPort (optional),
-            //              FTPUser (optional), FTPPassword (optional), EncodingProfileKey
-            //          The other fields will be NULL
             //  RelativePath: it is the relative path of the original uncompressed file name
             //  PhysicalPathKey: it is the physical path key of the original uncompressed file name
             //  The ContentType was added just to avoid a big join to retrieve this info

@@ -41,6 +41,7 @@ void EncoderVideoAudioProxy::init(
         Json::Value configuration,
         shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
         shared_ptr<MMSStorage> mmsStorage,
+        shared_ptr<EncodersLoadBalancer> encodersLoadBalancer,
         #ifdef __LOCALENCODER__
             int* pRunningEncodingsNumber,
         #endif
@@ -56,6 +57,7 @@ void EncoderVideoAudioProxy::init(
     
     _mmsEngineDBFacade      = mmsEngineDBFacade;
     _mmsStorage             = mmsStorage;
+    _encodersLoadBalancer   = encodersLoadBalancer;
     
     _mp4Encoder             = _configuration["encoding"].get("mp4Encoder", "").asString();
     _logger->info(__FILEREF__ + "Configuration item"
@@ -557,6 +559,71 @@ int EncoderVideoAudioProxy::getEncodingProgress(int64_t encodingJobKey)
 
             // Setting the URL to retrive.
             request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
+            if (ffmpegEncoderProtocol == "https")
+            {
+                /*
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;                                          
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;                                  
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;                              
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;                                    
+                    typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;                           
+                    typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;                                         
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;                                          
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;                                          
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;                                 
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;                                    
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;                          
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;                                    
+                 */
+                                                                                                  
+                
+                /*
+                // cert is stored PEM coded in file... 
+                // since PEM is default, we needn't set it for PEM 
+                // curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
+                curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
+                equest.setOpt(sslCertType);
+
+                // set the cert for client authentication
+                // "testcert.pem"
+                // curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
+                curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
+                request.setOpt(sslCert);
+                 */
+
+                /*
+                // sorry, for engine we must set the passphrase
+                //   (if the key has one...)
+                // const char *pPassphrase = NULL;
+                if(pPassphrase)
+                  curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
+
+                // if we use a key stored in a crypto engine,
+                //   we must set the key type to "ENG"
+                // pKeyType  = "PEM";
+                curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
+
+                // set the private key (file or ID in engine)
+                // pKeyName  = "testkey.pem";
+                curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
+
+                // set the file with the certs vaildating the server
+                // *pCACertFile = "cacert.pem";
+                curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
+                */
+                
+                // disconnect if we can't validate server's cert
+                bool bSslVerifyPeer = false;
+                curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
+                request.setOpt(sslVerifyPeer);
+                
+                curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
+                request.setOpt(sslVerifyHost);
+                
+                // request.setOpt(new curlpp::options::SslEngineDefault());                                              
+
+            }
 
             request.setOpt(new curlpp::options::HttpHeader(header));
 
@@ -804,7 +871,9 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
         }
 
         encodedFileName =
-                to_string(_encodingItem->_encodingJobKey)
+                to_string(_encodingItem->_ingestionJobKey)
+                + "_"
+                + to_string(_encodingItem->_encodingJobKey)
                 + "_" 
                 + to_string(_encodingItem->_encodingProfileKey);
         if (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MP4)
@@ -827,7 +896,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
         bool removeLinuxPathIfExist = true;
         stagingEncodedAssetPathName = _mmsStorage->getStagingAssetPathName(
             _encodingItem->_workspace->_directoryName,
-            _encodingItem->_relativePath,
+            "/",    // _encodingItem->_relativePath,
             encodedFileName,
             -1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
             -1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
@@ -923,10 +992,10 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", ffmpeg->encoderProtocol: " + ffmpegEncoderProtocol
             );
-            string ffmpegEncoderHost = _configuration["ffmpeg"].get("encoderHost", "").asString();
+            _currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(_encodingItem->_workspace);
             _logger->info(__FILEREF__ + "Configuration item"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", ffmpeg->encoderHost: " + ffmpegEncoderHost
+                + ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
             );
             int ffmpegEncoderPort = _configuration["ffmpeg"].get("encoderPort", "").asInt();
             _logger->info(__FILEREF__ + "Configuration item"
@@ -941,7 +1010,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
             ffmpegEncoderURL = 
                     ffmpegEncoderProtocol
                     + "://"
-                    + ffmpegEncoderHost + ":"
+                    + _currentUsedFFMpegEncoderHost + ":"
                     + to_string(ffmpegEncoderPort)
                     + ffmpegEncoderURI
                     + "/" + to_string(_encodingItem->_encodingJobKey)
@@ -1033,6 +1102,71 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
             // Setting the URL to retrive.
             request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
 
+            if (ffmpegEncoderProtocol == "https")
+            {
+                /*
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;                                          
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;                                  
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;                              
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;                                    
+                    typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;                           
+                    typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;                                         
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;                                          
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;                                          
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;                                 
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;                                    
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;                          
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;                                    
+                 */
+                                                                                                  
+                
+                /*
+                // cert is stored PEM coded in file... 
+                // since PEM is default, we needn't set it for PEM 
+                // curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
+                curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
+                equest.setOpt(sslCertType);
+
+                // set the cert for client authentication
+                // "testcert.pem"
+                // curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
+                curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
+                request.setOpt(sslCert);
+                 */
+
+                /*
+                // sorry, for engine we must set the passphrase
+                //   (if the key has one...)
+                // const char *pPassphrase = NULL;
+                if(pPassphrase)
+                  curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
+
+                // if we use a key stored in a crypto engine,
+                //   we must set the key type to "ENG"
+                // pKeyType  = "PEM";
+                curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
+
+                // set the private key (file or ID in engine)
+                // pKeyName  = "testkey.pem";
+                curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
+
+                // set the file with the certs vaildating the server
+                // *pCACertFile = "cacert.pem";
+                curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
+                */
+                
+                // disconnect if we can't validate server's cert
+                bool bSslVerifyPeer = false;
+                curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
+                request.setOpt(sslVerifyPeer);
+                
+                curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
+                request.setOpt(sslVerifyHost);
+                
+                // request.setOpt(new curlpp::options::SslEngineDefault());                                              
+
+            }
             request.setOpt(new curlpp::options::HttpHeader(header));
             request.setOpt(new curlpp::options::PostFields(body));
             request.setOpt(new curlpp::options::PostFieldSize(body.length()));
@@ -1135,6 +1269,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                         throw runtime_error(errorMessage);
                     }                        
                 }
+                /*
                 else
                 {
                     string field = "ffmpegEncoderHost";
@@ -1159,16 +1294,28 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 
                         throw runtime_error(errorMessage);
                     }
-                }                        
+                }
+                */                        
             }
             
             // loop waiting the end of the encoding
             bool encodingFinished = false;
-            while(!encodingFinished)
+            int maxEncodingStatusFailures = 1;
+            int encodingStatusFailures = 0;
+            while(!(encodingFinished || encodingStatusFailures >= maxEncodingStatusFailures))
             {
                 this_thread::sleep_for(chrono::seconds(_intervalInSecondsToCheckEncodingFinished));
                 
-                encodingFinished = getEncodingStatus(_encodingItem->_encodingJobKey);
+                try
+                {
+                    encodingFinished = getEncodingStatus(_encodingItem->_encodingJobKey);
+                }
+                catch(...)
+                {
+                    _logger->error(__FILEREF__ + "getEncodingStatus failed");
+                    
+                    encodingStatusFailures++;
+                }
             }
             
             chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
@@ -1305,6 +1452,72 @@ bool EncoderVideoAudioProxy::getEncodingStatus(int64_t encodingJobKey)
 
         // Setting the URL to retrive.
         request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
+
+        if (ffmpegEncoderProtocol == "https")
+        {
+            /*
+                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
+                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;                                          
+                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;                                  
+                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;                              
+                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;                                    
+                typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;                           
+                typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;                                         
+                typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;                                          
+                typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;                                          
+                typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;                                 
+                typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;                                    
+                typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;                          
+                typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;                                    
+             */
+
+
+            /*
+            // cert is stored PEM coded in file... 
+            // since PEM is default, we needn't set it for PEM 
+            // curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
+            curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
+            equest.setOpt(sslCertType);
+
+            // set the cert for client authentication
+            // "testcert.pem"
+            // curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
+            curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
+            request.setOpt(sslCert);
+             */
+
+            /*
+            // sorry, for engine we must set the passphrase
+            //   (if the key has one...)
+            // const char *pPassphrase = NULL;
+            if(pPassphrase)
+              curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
+
+            // if we use a key stored in a crypto engine,
+            //   we must set the key type to "ENG"
+            // pKeyType  = "PEM";
+            curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
+
+            // set the private key (file or ID in engine)
+            // pKeyName  = "testkey.pem";
+            curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
+
+            // set the file with the certs vaildating the server
+            // *pCACertFile = "cacert.pem";
+            curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
+            */
+
+            // disconnect if we can't validate server's cert
+            bool bSslVerifyPeer = false;
+            curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
+            request.setOpt(sslVerifyPeer);
+
+            curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
+            request.setOpt(sslVerifyHost);
+
+            // request.setOpt(new curlpp::options::SslEngineDefault());                                              
+
+        }
 
         request.setOpt(new curlpp::options::HttpHeader(header));
 

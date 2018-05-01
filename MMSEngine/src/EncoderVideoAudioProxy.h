@@ -19,6 +19,7 @@
 #endif
 #include "MMSEngineDBFacade.h"
 #include "MMSStorage.h"
+#include "EncodersLoadBalancer.h"
 #include "spdlog/spdlog.h"
 
 struct MaxConcurrentJobsReached: public exception {
@@ -67,6 +68,7 @@ public:
         Json::Value configuration,
         shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
         shared_ptr<MMSStorage> mmsStorage,
+        shared_ptr<EncodersLoadBalancer> encodersLoadBalancer,
         #ifdef __LOCALENCODER__
             int* pRunningEncodingsNumber,
         #else
@@ -90,6 +92,7 @@ private:
     EncodingJobStatus*                  _status;
     shared_ptr<MMSEngineDBFacade>       _mmsEngineDBFacade;
     shared_ptr<MMSStorage>              _mmsStorage;
+    shared_ptr<EncodersLoadBalancer>    _encodersLoadBalancer;
     shared_ptr<MMSEngineDBFacade::EncodingItem> _encodingItem;
     
     string                              _mp4Encoder;

@@ -25,6 +25,8 @@ FFMpeg::FFMpeg(Json::Value configuration,
     _logger             = logger;
 
     _ffmpegPath = configuration["ffmpeg"].get("path", "").asString();
+    _ffmpegTempDir = configuration["ffmpeg"].get("tempDir", "").asString();
+
     _charsToBeReadFromFfmpegErrorOutput     = 1024;
     
     _twoPasses = false;
@@ -123,6 +125,8 @@ void FFMpeg::encodeContent(
         }
         _outputFfmpegPathFileName = string(stagingEncodedAssetPath)
                 + "/"
+                + to_string(_currentIngestionJobKey)
+                + "_"
                 + to_string(_currentEncodingJobKey)
                 + ".ffmpegoutput";
         /*
@@ -141,6 +145,8 @@ void FFMpeg::encodeContent(
             string stagingEncodedSegmentAssetPathName =
                     stagingEncodedAssetPathName 
                     + "/"
+                    + to_string(_currentIngestionJobKey)
+                    + "_"
                     + to_string(_currentEncodingJobKey)
                     + "_%04d.ts"
             ;
@@ -222,7 +228,10 @@ void FFMpeg::encodeContent(
             string ffmpegExecuteCommand;
             if (_twoPasses)
             {
-                string passlogFileName = to_string(_currentEncodingJobKey) + ".passlog";
+                string passlogFileName = 
+                    to_string(_currentIngestionJobKey)
+                    + "_"
+                    + to_string(_currentEncodingJobKey) + ".passlog";
                 string ffmpegPassLogPathFileName = string(stagingEncodedAssetPath)
                     + "/"
                     + passlogFileName
@@ -735,7 +744,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
     string sourceFileName = mmsAssetPathName.substr(fileNameIndex + 1);
 
     string      detailsPathFileName =
-            string("/tmp/") + sourceFileName + ".json";
+            _ffmpegTempDir + sourceFileName + ".json";
     
     /*
      * ffprobe:
@@ -1285,7 +1294,7 @@ vector<string> FFMpeg::generateFramesToIngest(
     size_t extensionIndex = localImageFileName.find_last_of(".");
     
     string outputFfmpegPathFileName =
-            string("/tmp/")
+            _ffmpegTempDir
             + to_string(ingestionJobKey)
             + ".generateFrame.log"
             ;
@@ -1473,7 +1482,7 @@ void FFMpeg::generateConcatMediaToIngest(
         string concatenatedMediaPathName)
 {
     string concatenationListPathName =
-        string("/tmp/")
+        _ffmpegTempDir
         + to_string(ingestionJobKey)
         + ".concatList.txt"
         ;
@@ -1486,7 +1495,7 @@ void FFMpeg::generateConcatMediaToIngest(
     concatListFile.close();
 
     string outputFfmpegPathFileName =
-            string("/tmp/")
+            _ffmpegTempDir
             + to_string(ingestionJobKey)
             + ".concat.log"
             ;
@@ -1555,7 +1564,7 @@ void FFMpeg::generateSlideshowMediaToIngest(
         string slideshowMediaPathName)
 {
     string slideshowListPathName =
-        string("/tmp/")
+        _ffmpegTempDir
         + to_string(ingestionJobKey)
         + ".slideshowList.txt"
         ;
@@ -1573,7 +1582,7 @@ void FFMpeg::generateSlideshowMediaToIngest(
     slideshowListFile.close();
 
     string outputFfmpegPathFileName =
-            string("/tmp/")
+            _ffmpegTempDir
             + to_string(ingestionJobKey)
             + ".slideshow.log"
             ;
@@ -1645,7 +1654,7 @@ void FFMpeg::generateCutMediaToIngest(
 {
 
     string outputFfmpegPathFileName =
-            string("/tmp/")
+            _ffmpegTempDir
             + to_string(ingestionJobKey)
             + ".cut.log"
             ;

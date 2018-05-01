@@ -1,169 +1,209 @@
 server {
-        server_name www.catramms.cloud catramms.cloud;
-        return 301 https://catramms.cloud$request_uri;
-}
+	server_name mms.catrasoft.cloud catrasoft.cloud;
+	listen 80;
 
-server {  
-        listen 443 ssl http2;
-        server_name www.catramms.cloud;
-
-	ssl_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
-	ssl_certificate_key /etc/letsencrypt/live/catrasoft.cloud/privkey.pem;
-	ssl_trusted_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
-        include /usr/local/nginx/conf/snippets/ssl-params.conf;
-
-        return 301 https://example.com$request_uri;
+	return 301 https://github.com/giulianoc/CatraMMS/wiki;
 }
 
 server {
-        listen 443 ssl http2;
-        server_name catramms.cloud;
+	server_name mms.catrasoft.cloud catrasoft.cloud;
+	listen 443 ssl http2;
 
 	ssl_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
 	ssl_certificate_key /etc/letsencrypt/live/catrasoft.cloud/privkey.pem;
 	ssl_trusted_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
-        include /usr/local/nginx/conf/snippets/ssl-params.conf;
+	include /usr/local/nginx/conf/snippets/ssl-params.conf;
 
-	#listen 80;
+	return 301 https://github.com/giulianoc/CatraMMS/wiki;
+}
+
+server {
+	server_name mms-api.catrasoft.cloud;
+	listen 80;
+
+	return 301 https://mms-api.catrasoft.cloud$request_uri;
+}
+
+server {
+	listen 443 ssl http2;
+	server_name mms-api.catrasoft.cloud;
+
+	ssl_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
+	ssl_certificate_key /etc/letsencrypt/live/catrasoft.cloud/privkey.pem;
+	ssl_trusted_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
+	include /usr/local/nginx/conf/snippets/ssl-params.conf;
 
 	root /home/mms/catramms/www;
 	#index index.html index.htm;
 
-	# server-1 is for the calls directly to the encoder server (progress and status(isFinished))
-	#	we should call the encoder machine as encoder-1, encoder-2, ...
-	server_name mms.catrasoft.cloud server-1;
-
-	access_log   /usr/local/CatraMMS/logs/catramms.access.log main;
-	error_log    /usr/local/CatraMMS/logs/catramms.error.log notice;
-
-	client_max_body_size 1G;
+	access_log   /usr/local/CatraMMS/logs/mms-api.access.log main;
+	error_log    /usr/local/CatraMMS/logs/mms-api.error.log notice;
 
 	location /catramms {
 		if ($request_method = POST) {
-			rewrite ^/catramms/uploadedBinary/?$ /api last;
-		}
-
-		if ($request_method = POST) {
-			rewrite ^/catramms/user/?$ /api?method=registerUser last;
+			rewrite ^/catramms/(v[0-9]+)/user/?$ /api?version=$1&method=registerUser last;
 		}
 
 		if ($request_method = PUT) {
-			rewrite ^/catramms/user/([0-9]+)/([0-9]+)/?$ /api?method=confirmUser&userKey=$1&confirmationeCode=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/user/([0-9]+)/([0-9]+)/?$ /api?version=$1&method=confirmUser&userKey=$2&confirmationeCode=$3 last;
 		}
 
 		if ($request_method = GET) {
-			rewrite ^/catramms/ingestion/([0-9]+)/?$ /api?method=ingestionStatus&ingestionRootKey=$1 last;
+			rewrite ^/catramms/(v[0-9]+)/ingestion/([0-9]+)/?$ /api?version=$1&method=ingestionStatus&ingestionRootKey=$2 last;
 		}
 		if ($request_method = POST) {
-			rewrite ^/catramms/ingestion/?$ /api?method=ingestion last;
+			rewrite ^/catramms/(v[0-9]+)/ingestion/?$ /api?version=$1&method=ingestion last;
 		}
 
 		if ($request_method = PUT) {
-			rewrite ^/catramms/profilesSet/video/?$ /api?method=addEncodingProfilesSet&contentType=video last;
+			rewrite ^/catramms/(v[0-9]+)/profilesSet/video/?$ /api?version=$1&method=addEncodingProfilesSet&contentType=video last;
 		}
 		if ($request_method = PUT) {
-			rewrite ^/catramms/profilesSet/audio/?$ /api?method=addEncodingProfilesSet&contentType=audio last;
+			rewrite ^/catramms/(v[0-9]+)/profilesSet/audio/?$ /api?version=$1&method=addEncodingProfilesSet&contentType=audio last;
 		}
 		if ($request_method = PUT) {
-			rewrite ^/catramms/profilesSet/image/?$ /api?method=addEncodingProfilesSet&contentType=image last;
-		}
-
-		if ($request_method = POST) {
-			rewrite ^/catramms/encoder/([0-9]+)/?$ /encoder?method=encodeContent&encodingJobKey=$1 last;
-		}
-		if ($request_method = GET) {
-			rewrite ^/catramms/encoder/progress/([0-9]+)/?$ /encoder?method=encodingProgress&encodingJobKey=$1 last;
-		}
-		if ($request_method = GET) {
-			rewrite ^/catramms/encoder/status/([0-9]+)/?$ /encoder?method=encodingStatus&encodingJobKey=$1 last;
-		}
-	}
-
-	location /catramms/binary {
-		if ($request_method = POST) {
-			set $XProgressID "$msec";
-			rewrite ^/catramms/binary/([0-9]+)/?$ /catramms/binary/toBeAuthorized?method=uploadBinary&ingestionJobKey=$1&X-Progress-ID=$XProgressID last;
-		}
-		#if ($request_method = HEAD) {
-		#	rewrite ^/catramms/binary/([0-9]+)/?$ /upload?method=uploadBinary&ingestionJobKey=$1 last;
-		#}
-
-		location /catramms/binary/toBeAuthorized {
-			internal;
-
-			auth_request /catramms/binary/checkAuthorization;
-			#auth_request_set $auth_status $upstream_status;
-
-			client_body_temp_path /tmp;
-
-			# When set to the value on, temporary files are not removed after request processing
-			#The value clean does it.
-			client_body_in_file_only clean;
-
-			proxy_pass_request_headers on;
-
-			# where the POST data was written to
-			proxy_set_header X-FILE $request_body_file;
-
-			proxy_redirect off;
-			proxy_set_body off;
-			proxy_http_version 1.1;
-			proxy_pass http://127.0.0.1:80/catramms/uploadedBinary;
-
-			## Track uploads for this location on the zone defined
-			## up to 30 seconds after they have been finished
-			## In case of Upload using Content-Range, the X-Progress-Id (ingestionKey) will be the same,
-			## so two upload requests using Content-Range has to be done at least with 5 seconds of interval
-			## otherwise the 'upload progress' module will return an error.
-			## This directive must be the last directive of the location.
-			track_uploads uploads 30s;
-		}
-
-		location = /catramms/binary/checkAuthorization {
-			internal;
-
-			proxy_pass http://127.0.0.1:80/catramms/binary/authorization;
-			proxy_pass_request_body off;
-			proxy_set_header Content-Length "";
-			#proxy_set_header X-Original-METHOD $request_method;
-			proxy_set_header X-Original-METHOD $XProgressID;
-			proxy_set_header X-Original-URI $request_uri;
-		}
-
-		location /catramms/binary/authorization {
-			allow 127.0.0.1;
-			deny all;
-			if ($request_method = GET) {
-				rewrite ^/catramms/binary/authorization/?$ /api?method=authorization last;
-			}
-		}
-
-		location ^~ /catramms/binary/uploadProgress {
-			allow 127.0.0.1;
-			deny all;
-			upload_progress_json_output;
-			report_uploads uploads;
+			rewrite ^/catramms/(v[0-9]+)/profilesSet/image/?$ /api?version=$1/method=addEncodingProfilesSet&contentType=image last;
 		}
 	}
 
 	location /api {
 		internal;
 
-		fastcgi_pass   127.0.0.1:8010;
+		fastcgi_pass   localhost:8010;
 		include /usr/local/nginx/conf/fastcgi_params;
 	}
+}
 
-	#location /upload {
-	#	internal;
-	#
-	#	fastcgi_pass   127.0.0.1:8000;
-	#	include /usr/local/nginx/conf/fastcgi_params;
-	#}
+server {
+	listen 80;
+
+	# server-1 is for the calls directly to the encoder server (progress and status(isFinished))
+	#we should call the encoder machine as encoder-1, encoder-2, ...
+	server_name server-1;
+
+	access_log   /usr/local/CatraMMS/logs/mms-encoder.access.log main;
+	error_log    /usr/local/CatraMMS/logs/mms-encoder.error.log notice;
+
+	location /catramms {
+		if ($request_method = POST) {
+			rewrite ^/catramms/(v[0-9]+)/encoder/([0-9]+)/?$ /encoder?version=$1&method=encodeContent&encodingJobKey=$2 last;
+		}
+		if ($request_method = GET) {
+			rewrite ^/catramms/(v[0-9]+)/encoder/progress/([0-9]+)/?$ /encoder?version=$1&method=encodingProgress&encodingJobKey=$2 last;
+		}
+		if ($request_method = GET) {
+			rewrite ^/catramms/(v[0-9]+)/encoder/status/([0-9]+)/?$ /encoder?version=$1&method=encodingStatus&encodingJobKey=$2 last;
+		}
+	}
 
 	location /encoder {
 		internal;
 
-		fastcgi_pass   127.0.0.1:8020;
+		fastcgi_pass   localhost:8020;
+		include /usr/local/nginx/conf/fastcgi_params;
+	}
+}
+
+server {
+	server_name mms-binary.catrasoft.cloud;
+	listen 443;
+
+	ssl_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
+	ssl_certificate_key /etc/letsencrypt/live/catrasoft.cloud/privkey.pem;
+	ssl_trusted_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
+	include /usr/local/nginx/conf/snippets/ssl-params.conf;
+
+	return 301 http://mms-binary.catrasoft.cloud$request_uri;
+}
+
+server {
+	listen 80;
+
+	server_name mms-binary.catrasoft.cloud localhost;
+
+	access_log   /usr/local/CatraMMS/logs/mms-binary.access.log main;
+	error_log    /usr/local/CatraMMS/logs/mms-binary.error.log notice;
+
+	client_max_body_size 1G;
+
+	location /catramms {
+		if ($request_method = POST) {
+			#this request will receive the URL parameters
+			#set by 'toBeAuthorized' redirect
+			rewrite ^/catramms/uploadedBinary/?$ /api last;
+		}
+	}
+
+	location ~ /catramms/(v[0-9]+)/binary {
+		if ($request_method = POST) {
+			set $XProgressID "$msec";
+			rewrite ^/catramms/(v[0-9]+)/binary/([0-9]+)/?$ /catramms/binary/toBeAuthorized?version=$1&method=uploadedBinary&ingestionJobKey=$2&X-Progress-ID=$XProgressID last;
+		}
+	}
+
+	location /catramms/binary/toBeAuthorized {
+		internal;
+
+		auth_request /catramms/binary/checkAuthorization;
+		#auth_request_set $auth_status $upstream_status;
+
+		client_body_temp_path /usr/local/CatraMMS/storage/MMSWorkingAreaRepository/nginx;
+
+		# When set to the value on, temporary files are not removed after request processing
+		#The value clean does it.
+		client_body_in_file_only clean;
+
+		proxy_pass_request_headers on;
+
+		# filename where the POST data was written to
+		proxy_set_header X-FILE $request_body_file;
+
+		proxy_redirect off;
+		proxy_set_body off;
+		proxy_http_version 1.1;
+		#It is called when nginx completed to upload the binary,
+		#all the URL parameters are inherit from the 'toBeAuthorized' redirect
+		proxy_pass http://localhost/catramms/uploadedBinary;
+
+		## Track uploads for this location on the zone defined
+		## up to 30 seconds after they have been finished
+		## In case of Upload using Content-Range, the X-Progress-Id (ingestionKey) will be the same,
+		## so two upload requests using Content-Range has to be done at least with 5 seconds of interval
+		## otherwise the 'upload progress' module will return an error.
+		## This directive must be the last directive of the location.
+		track_uploads uploads 30s;
+	}
+
+	location = /catramms/binary/checkAuthorization {
+		internal;
+
+		proxy_pass http://localhost/catramms/binary/authorization;
+		proxy_pass_request_body off;
+		proxy_set_header Content-Length "";
+		#proxy_set_header X-Original-METHOD $request_method;
+		proxy_set_header X-Original-METHOD $XProgressID;
+		proxy_set_header X-Original-URI $request_uri;
+	}
+
+	location /catramms/binary/authorization {
+		allow 127.0.0.1;
+		deny all;
+		if ($request_method = GET) {
+			rewrite ^/catramms/binary/authorization/?$ /api?method=authorization last;
+		}
+	}
+
+	location ^~ /catramms/binary/uploadProgress {
+		allow 127.0.0.1;
+		deny all;
+		upload_progress_json_output;
+		report_uploads uploads;
+	}
+
+	location /api {
+		internal;
+
+		fastcgi_pass   localhost:8010;
 		include /usr/local/nginx/conf/fastcgi_params;
 	}
 }

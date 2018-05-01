@@ -7,11 +7,11 @@
     },
     "Task": {
         "Label": "...",
-        "Type": "Content-Ingestion",
+        "Type": "Add-Content",
         "Parameters": {
             "SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
             "FileFormat": "mp4",
-            "userData": { "MyData": "this is my video data" },
+            "UserData": { "MyData": "this is my video data" },
             "Title": "${TitleOfVideo}"
         },
         "OnSuccess": {
@@ -20,7 +20,7 @@
                 "Parameters": {
                     "StartTimeInSeconds": 1.0,
                     "EndTimeInSeconds": 5.0,
-                    "userData": { "MyData": "this is my frame data" },
+                    "UserData": { "MyData": "this is my frame data" },
                     "Title": "${TitleOfCut}"
                 }
             }

@@ -269,17 +269,18 @@ public:
 
     enum class IngestionType {
         Unknown                 = 0,    // in case json was not able to be parsed
-        ContentIngestion        = 1,
-        Encode                  = 2,
-        Frame                   = 3,
-        PeriodicalFrames        = 4,
-        IFrames                 = 5,
-        MotionJPEGByPeriodicalFrames        = 6,
-        MotionJPEGByIFrames     = 7,
-        Slideshow               = 8,
-        ConcatDemuxer           = 9,
-        Cut                     = 10,
-        EmailNotification       = 11,
+        AddContent              = 1,
+        RemoveContent           = 2,
+        Encode                  = 3,
+        Frame                   = 4,
+        PeriodicalFrames        = 5,
+        IFrames                 = 6,
+        MotionJPEGByPeriodicalFrames        = 7,
+        MotionJPEGByIFrames     = 8,
+        Slideshow               = 9,
+        ConcatDemuxer           = 10,
+        Cut                     = 11,
+        EmailNotification       = 12,
         ContentUpdate           = 50,
         ContentRemove           = 60
     };
@@ -289,8 +290,10 @@ public:
         {
             case IngestionType::Unknown:
                 return "Unknown";
-            case IngestionType::ContentIngestion:
-                return "Content-Ingestion";
+            case IngestionType::AddContent:
+                return "Add-Content";
+            case IngestionType::RemoveContent:
+                return "Remove-Content";
             case IngestionType::Encode:
                 return "Encode";
             case IngestionType::Frame:
@@ -325,8 +328,10 @@ public:
         lowerCase.resize(ingestionType.size());
         transform(ingestionType.begin(), ingestionType.end(), lowerCase.begin(), [](unsigned char c){return tolower(c); } );
 
-        if (lowerCase == "content-ingestion")
-            return IngestionType::ContentIngestion;
+        if (lowerCase == "add-content")
+            return IngestionType::AddContent;
+        else if (lowerCase == "remove-content")
+            return IngestionType::RemoveContent;
         else if (lowerCase == "encode")
             return IngestionType::Encode;
         else if (lowerCase == "frame")
@@ -583,11 +588,14 @@ public:
     MMSEngineDBFacade::ContentType getMediaItemKeyDetails(
         int64_t referenceMediaItemKey, bool warningIfMissing);
     
+    pair<int64_t,MMSEngineDBFacade::ContentType> getMediaItemKeyDetailsByPhysicalPathKey(
+        int64_t referencePhysicalPathKey, bool warningIfMissing);
+    
     pair<int64_t,MMSEngineDBFacade::ContentType> getMediaItemKeyDetailsByIngestionJobKey(
         int64_t referenceIngestionJobKey, bool warningIfMissing);
 
     pair<int64_t,MMSEngineDBFacade::ContentType> getMediaItemKeyDetailsByUniqueName(
-        string referenceUniqueName, bool warningIfMissing);
+        int64_t workspaceKey, string referenceUniqueName, bool warningIfMissing);
     
     tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> getVideoDetails(
         int64_t mediaItemKey);
@@ -655,7 +663,7 @@ public:
         int imageQuality
     );
 
-    tuple<int,string,string,string> getStorageDetails(
+    tuple<int,string,string,string> getStorageDetailsByMediaItemKey(
         int64_t mediaItemKey,
         int64_t encodingProfileKey
     );

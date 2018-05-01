@@ -24,6 +24,8 @@ ActiveEncodingsManager::ActiveEncodingsManager(
     _mmsEngineDBFacade = mmsEngineDBFacade;
     _mmsStorage = mmsStorage; 
     
+    _encodersLoadBalancer = make_shared<EncodersLoadBalancer>(_configuration, _logger);
+
     #ifdef __LOCALENCODER__
         _runningEncodingsNumber = 0;
     #endif
@@ -36,7 +38,7 @@ ActiveEncodingsManager::ActiveEncodingsManager(
             encodingJob._encoderVideoAudioProxy.init(
                 lastProxyIdentifier++, &_mtEncodingJobs,
                     _configuration, _mmsEngineDBFacade,
-                    _mmsStorage, 
+                    _mmsStorage, _encodersLoadBalancer,
                     #ifdef __LOCALENCODER__
                         &_runningEncodingsNumber,
                     #endif
@@ -48,7 +50,7 @@ ActiveEncodingsManager::ActiveEncodingsManager(
             encodingJob._encoderVideoAudioProxy.init(
                 lastProxyIdentifier++, &_mtEncodingJobs,
                     _configuration, _mmsEngineDBFacade,
-                    _mmsStorage, 
+                    _mmsStorage, _encodersLoadBalancer,
                     #ifdef __LOCALENCODER__
                         &_runningEncodingsNumber,
                     #endif
@@ -60,7 +62,7 @@ ActiveEncodingsManager::ActiveEncodingsManager(
             encodingJob._encoderVideoAudioProxy.init(
                 lastProxyIdentifier++, &_mtEncodingJobs,
                     _configuration, _mmsEngineDBFacade,
-                    _mmsStorage, 
+                    _mmsStorage, _encodersLoadBalancer,
                     #ifdef __LOCALENCODER__
                         &_runningEncodingsNumber,
                     #endif

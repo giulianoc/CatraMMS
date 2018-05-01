@@ -6,12 +6,12 @@
 	},
 	"Task": {
 		"Label": "This is my video",
-		"Type": "Content-Ingestion",
+		"Type": "Add-Content",
 		"Parameters": {
 			"SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
 			"FileFormat": "mp4",
 			"ContentType": "video",
-			"userData": { "MyData": "this is my data" },
+			"UserData": { "MyData": "this is my data" },
 			"Title": "${Title}"
 		}
 	}

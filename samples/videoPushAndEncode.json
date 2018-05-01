@@ -6,10 +6,10 @@
     },
     "Task": {
         "Label": "My video (push)",
-        "Type": "Content-Ingestion",
+        "Type": "Add-Content",
         "Parameters": {
             "FileFormat": "mp4",
-            "userData": { "MyData": "this is my video data" },
+            "UserData": { "MyData": "this is my video data" },
             "Title": "${TitleOfVideo}",
 	    "FileSizeInBytes": 278341022
         },

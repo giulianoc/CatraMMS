@@ -35,8 +35,8 @@ elif [ $# -ne 4 ]; then
 	exit 1
 fi
 
-mmsHostName=mms.catrasoft.cloud
-mmsPort=80
+mmsHostName=mms-binary.catrasoft.cloud
+#mmsPort=80
 userKey=1
 userAPIKey=SU1.8ZO1O2zRs.gL_nWYV4AZ0uU_dy89CRjqmaXv4J58R0NfNsa9Ku8f6OScAwS.gT
 sleepingInSecondsInCaseOfIngestionError=5
@@ -80,11 +80,11 @@ while [  $ingestionNumber -lt $totalIngestionsNumber ]; do
 
 			echo "$(date +%Y-%m-%d-%H:%M:%S): IngestionNumber $ingestionNumber/$totalIngestionsNumber, bytes $contentRangeStart-$contentRangeEnd/$binaryFileSize"
 			if [ "$osName" == "Darwin" ]; then
-				echo "command: dd if=$binaryFilePathName bs=1 skip=$contentRangeStart count=$((contentRangeEnd - contentRangeStart + 1)) 2> /dev/null | curl -k -s -o /dev/null -w \"%{response_code}\" -X POST -H \"$contentRange\" -u $userKey:$userAPIKey --data-binary @- \"https://$mmsHostName:$mmsPort/catramms/binary/$ingestionJobKey\""
-				responseCode=$(dd if=$binaryFilePathName bs=1 skip=$contentRangeStart count=$((contentRangeEnd - contentRangeStart + 1)) 2> /dev/null | curl -k -s -o /dev/null -w "%{response_code}" -X POST -H "$contentRange" -u $userKey:$userAPIKey --data-binary @- "https://$mmsHostName:$mmsPort/catramms/binary/$ingestionJobKey")
+				echo "command: dd if=$binaryFilePathName bs=1 skip=$contentRangeStart count=$((contentRangeEnd - contentRangeStart + 1)) 2> /dev/null | curl -s -o /dev/null -w \"%{response_code}\" -X POST -H \"$contentRange\" -u $userKey:$userAPIKey --data-binary @- \"http://$mmsHostName/catramms/binary/$ingestionJobKey\""
+				responseCode=$(dd if=$binaryFilePathName bs=1 skip=$contentRangeStart count=$((contentRangeEnd - contentRangeStart + 1)) 2> /dev/null | curl -s -o /dev/null -w "%{response_code}" -X POST -H "$contentRange" -u $userKey:$userAPIKey --data-binary @- "http://$mmsHostName/catramms/binary/$ingestionJobKey")
 			else
-				echo "command: dd status=none if=$binaryFilePathName bs=1024 iflag=skip_bytes,count_bytes skip=$contentRangeStart count=$((contentRangeEnd - contentRangeStart + 1)) | curl -k -s -o /dev/null -w \"%{response_code}\" -X POST -H \"$contentRange\" -u $userKey:$userAPIKey --data-binary @- \"https://$mmsHostName:$mmsPort/catramms/binary/$ingestionJobKey\""
-				responseCode=$(dd status=none if=$binaryFilePathName bs=1024 iflag=skip_bytes,count_bytes skip=$contentRangeStart count=$((contentRangeEnd - contentRangeStart + 1)) | curl -k -s -o /dev/null -w "%{response_code}" -X POST -H "$contentRange" -u $userKey:$userAPIKey --data-binary @- "https://$mmsHostName:$mmsPort/catramms/binary/$ingestionJobKey")
+				echo "command: dd status=none if=$binaryFilePathName bs=1024 iflag=skip_bytes,count_bytes skip=$contentRangeStart count=$((contentRangeEnd - contentRangeStart + 1)) | curl -s -o /dev/null -w \"%{response_code}\" -X POST -H \"$contentRange\" -u $userKey:$userAPIKey --data-binary @- \"http://$mmsHostName/catramms/binary/$ingestionJobKey\""
+				responseCode=$(dd status=none if=$binaryFilePathName bs=1024 iflag=skip_bytes,count_bytes skip=$contentRangeStart count=$((contentRangeEnd - contentRangeStart + 1)) | curl -s -o /dev/null -w "%{response_code}" -X POST -H "$contentRange" -u $userKey:$userAPIKey --data-binary @- "http://$mmsHostName/catramms/binary/$ingestionJobKey")
 			fi
 
 			#echo "responseCode: $responseCode"

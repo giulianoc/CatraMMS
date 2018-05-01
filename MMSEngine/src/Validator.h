@@ -30,38 +30,42 @@ public:
     
     bool isImageFileFormat(string fileFormat);
 
-    void validateRootMetadata(Json::Value root);
+    void validateRootMetadata(int64_t workspaceKey, Json::Value root);
 
-    void validateGroupOfTasksMetadata(Json::Value groupOfTasksRoot);
+    void validateGroupOfTasksMetadata(int64_t workspaceKey, Json::Value groupOfTasksRoot);
 
-    vector<int64_t> validateTaskMetadata(Json::Value taskRoot);
+    vector<int64_t> validateTaskMetadata(int64_t workspaceKey, Json::Value taskRoot);
 
-    void validateEvents(Json::Value taskOrGroupOfTasksRoot);
+    void validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTasksRoot);
 
-    vector<int64_t> validateTaskMetadata(
+    vector<int64_t> validateTaskMetadata(int64_t workspaceKey,
         MMSEngineDBFacade::IngestionType ingestionType, 
         Json::Value parametersRoot);
 
-    void validateContentIngestionMetadata(Json::Value parametersRoot);
+    void validateAddContentMetadata(Json::Value parametersRoot);
 
-    void validateEncodeMetadata(
-        Json::Value parametersRoot, vector<int64_t>& dependencies);
-
-    void validateFrameMetadata(Json::Value parametersRoot, vector<int64_t>& dependencies);
-
-    void validatePeriodicalFramesMetadata(
+    void validateRemoveContentMetadata(int64_t workspaceKey,
         Json::Value parametersRoot, vector<int64_t>& dependencies);
     
-    void validateIFramesMetadata(
+    void validateEncodeMetadata(int64_t workspaceKey,
         Json::Value parametersRoot, vector<int64_t>& dependencies);
 
-    void validateSlideshowMetadata(
+    void validateFrameMetadata(int64_t workspaceKey,
+        Json::Value parametersRoot, vector<int64_t>& dependencies);
+
+    void validatePeriodicalFramesMetadata(int64_t workspaceKey,
         Json::Value parametersRoot, vector<int64_t>& dependencies);
     
-    void validateConcatDemuxerMetadata(
+    void validateIFramesMetadata(int64_t workspaceKey,
         Json::Value parametersRoot, vector<int64_t>& dependencies);
 
-    void validateCutMetadata(
+    void validateSlideshowMetadata(int64_t workspaceKey,
+        Json::Value parametersRoot, vector<int64_t>& dependencies);
+    
+    void validateConcatDemuxerMetadata(int64_t workspaceKey,
+        Json::Value parametersRoot, vector<int64_t>& dependencies);
+
+    void validateCutMetadata(int64_t workspaceKey,
         Json::Value parametersRoot, vector<int64_t>& dependencies);
 
     void validateEmailNotificationMetadata(

@@ -185,7 +185,7 @@ void UploadBinary::getBinaryAndResponse(
         workspaceIngestionBinaryPathName
                 .append("/")
                 .append(to_string(ingestionJobKey))
-                .append(".source")
+                .append("_source")
                 ;
         
         _logger->info(__FILEREF__ + "Workspace Ingestion Binary path name"

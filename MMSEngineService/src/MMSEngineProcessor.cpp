@@ -149,30 +149,6 @@ void MMSEngineProcessor::operator ()()
                 _logger->debug(__FILEREF__ + "2. Received MMSENGINE_EVENTTYPEIDENTIFIER_CHECKENCODING");
             }
             break;
-            /*
-            case MMSENGINE_EVENTTYPEIDENTIFIER_GENERATEIMAGETOINGESTEVENT:	// 4
-            {
-                _logger->debug(__FILEREF__ + "Received MMSENGINE_EVENTTYPEIDENTIFIER_GENERATEIMAGETOINGESTEVENT");
-
-                shared_ptr<GenerateImageToIngestEvent>    generateImageToIngestEvent =
-                        dynamic_pointer_cast<GenerateImageToIngestEvent>(event);
-
-                try
-                {
-                    handleGenerateImageToIngestEvent (generateImageToIngestEvent);
-                }
-                catch(exception e)
-                {
-                    _logger->error(__FILEREF__ + "handleGenerateImageToIngestEvent failed"
-                        + ", exception: " + e.what()
-                    );
-                }
-
-                _multiEventsSet->getEventsFactory()->releaseEvent<GenerateImageToIngestEvent>(generateImageToIngestEvent);
-
-            }
-            break;
-             */
             default:
                 throw runtime_error(string("Event type identifier not managed")
                         + to_string(event->getEventKey().first));
@@ -291,7 +267,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                 {
                     // source binary download or uploaded terminated
 
-                    string sourceFileName = to_string(ingestionJobKey) + ".source";
+                    string sourceFileName = to_string(ingestionJobKey) + "_source";
 
                     {
                         shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
@@ -373,7 +349,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         Validator validator(_logger, _mmsEngineDBFacade);
                         
                         dependencies = validator.validateTaskMetadata(
-                                ingestionType, parametersRoot);                        
+                                workspace->_workspaceKey, ingestionType, parametersRoot);                        
                     }
                     catch(runtime_error e)
                     {
@@ -423,7 +399,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                     }
 
                     {
-                        if (ingestionType == MMSEngineDBFacade::IngestionType::ContentIngestion)
+                        if (ingestionType == MMSEngineDBFacade::IngestionType::AddContent)
                         {
                             MMSEngineDBFacade::IngestionStatus nextIngestionStatus;
                             string mediaSourceURL;
@@ -579,6 +555,64 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                         + ", exception: " + e.what()
                                 ;
                                 _logger->error(__FILEREF__ + errorMessage);
+
+                                throw runtime_error(errorMessage);
+                            }
+                        }
+                        else if (ingestionType == MMSEngineDBFacade::IngestionType::RemoveContent)
+                        {
+                            // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
+                            try
+                            {
+                                removeContent(
+                                        ingestionJobKey, 
+                                        workspace, 
+                                        parametersRoot, 
+                                        dependencies);
+                            }
+                            catch(runtime_error e)
+                            {
+                                _logger->error(__FILEREF__ + "removeContent failed"
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                                        errorMessage,
+                                        "" // processorMMS
+                                        );
+
+                                throw runtime_error(errorMessage);
+                            }
+                            catch(exception e)
+                            {
+                                _logger->error(__FILEREF__ + "removeContent failed"
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                                        errorMessage,
+                                        "" // processorMMS
+                                        );
 
                                 throw runtime_error(errorMessage);
                             }
@@ -985,6 +1019,15 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 void MMSEngineProcessor::handleLocalAssetIngestionEvent (
     shared_ptr<LocalAssetIngestionEvent> localAssetIngestionEvent)
 {
+    string workspaceIngestionBinaryPathName;
+
+    workspaceIngestionBinaryPathName = _mmsStorage->getWorkspaceIngestionRepository(
+            localAssetIngestionEvent->getWorkspace());
+    workspaceIngestionBinaryPathName
+            .append("/")
+            .append(localAssetIngestionEvent->getIngestionSourceFileName())
+            ;
+    
     string      metadataFileContent;
     vector<int64_t> dependencies;
     Json::Value parametersRoot;
@@ -1019,6 +1062,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         }
         
         dependencies = validator.validateTaskMetadata(
+                localAssetIngestionEvent->getWorkspace()->_workspaceKey,
                 localAssetIngestionEvent->getIngestionType(), parametersRoot);
     }
     catch(runtime_error e)
@@ -1041,6 +1085,12 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             e.what(), "" //ProcessorMMS
         );
 
+        _logger->info(__FILEREF__ + "Remove file"
+            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+            + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
+        );
+        FileIO::remove(workspaceIngestionBinaryPathName);
+            
         throw e;
     }
     catch(exception e)
@@ -1062,6 +1112,12 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             e.what(), "" // ProcessorMMS
         );
 
+        _logger->info(__FILEREF__ + "Remove file"
+            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+            + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
+        );
+        FileIO::remove(workspaceIngestionBinaryPathName);
+            
         throw e;
     }
 
@@ -1101,6 +1157,12 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             e.what(), "" // ProcessorMMS
         );
 
+        _logger->info(__FILEREF__ + "Remove file"
+            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+            + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
+        );
+        FileIO::remove(workspaceIngestionBinaryPathName);
+            
         throw e;
     }
     catch(exception e)
@@ -1122,19 +1184,17 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             e.what(), "" // ProcessorMMS
         );
 
+        _logger->info(__FILEREF__ + "Remove file"
+            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+            + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
+        );
+        FileIO::remove(workspaceIngestionBinaryPathName);
+            
         throw e;
     }
 
-    string workspaceIngestionBinaryPathName;
     try
     {
-        workspaceIngestionBinaryPathName = _mmsStorage->getWorkspaceIngestionRepository(
-                localAssetIngestionEvent->getWorkspace());
-        workspaceIngestionBinaryPathName
-                .append("/")
-                .append(localAssetIngestionEvent->getIngestionSourceFileName())
-                ;
-
         validateMediaSourceFile(
                 localAssetIngestionEvent->getIngestionJobKey(),
                 workspaceIngestionBinaryPathName,
@@ -1159,6 +1219,12 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             e.what(), "" // ProcessorMMS
         );
 
+        _logger->info(__FILEREF__ + "Remove file"
+            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+            + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
+        );
+        FileIO::remove(workspaceIngestionBinaryPathName);
+            
         throw e;
     }
     catch(exception e)
@@ -1180,6 +1246,12 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             e.what(), "" // ProcessorMMS
         );
 
+        _logger->info(__FILEREF__ + "Remove file"
+            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+            + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
+        );
+        FileIO::remove(workspaceIngestionBinaryPathName);
+            
         throw e;
     }
 
@@ -1224,6 +1296,12 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                 e.what(), "" // ProcessorMMS
         );
         
+        _logger->info(__FILEREF__ + "Remove file"
+            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+            + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
+        );
+        FileIO::remove(workspaceIngestionBinaryPathName);
+            
         throw e;
     }
     catch(exception e)
@@ -1240,6 +1318,12 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                 e.what(), "" // ProcessorMMS
         );
         
+        _logger->info(__FILEREF__ + "Remove file"
+            + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+            + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
+        );
+        FileIO::remove(workspaceIngestionBinaryPathName);
+            
         throw e;
     }
 
@@ -1598,11 +1682,96 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         );                            
         _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what(), "" // ProcessorMMS
+                e.what(), 
+                "" // ProcessorMMS
         );
 
         throw e;
     }    
+}
+
+void MMSEngineProcessor::removeContent(
+        int64_t ingestionJobKey,
+        shared_ptr<Workspace> workspace,
+        Json::Value parametersRoot,
+        vector<int64_t>& dependencies
+)
+{
+    try
+    {
+        if (dependencies.size() == 0)
+        {
+            string errorMessage = __FILEREF__ + "No configured any media to be removed"
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", dependencies.size: " + to_string(dependencies.size());
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        int64_t sourceMediaItemKey = -1;
+        int64_t sourcePhysicalPathKey = -1;
+        
+        string field = "ReferencePhysicalPathKey";
+        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+            _mmsStorage->removePhysicalPath(dependencies.back());
+        }
+        else
+        {
+            _mmsStorage->removeMediaItem(dependencies.back());
+        }
+
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_TaskSuccess"
+            + ", errorMessage: " + ""
+        );                            
+        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
+                MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
+                "", // errorMessage
+                "" // ProcessorMMS
+        );
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "generateAndIngestCutMedia failed"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
+        );
+        
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what(), 
+                "" // ProcessorMMS
+        );
+        
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "generateAndIngestCutMedia failed"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+        );
+        
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what(), 
+                "" // ProcessorMMS
+        );
+
+        throw e;
+    }
 }
 
 void MMSEngineProcessor::manageEncodeTask(
@@ -1853,14 +2022,14 @@ void MMSEngineProcessor::generateAndIngestFrames(
         // string textToBeReplaced;
         // string textToReplace;
         {
-            localSourceFileName = to_string(ingestionJobKey) + /* ".source" + */ ".jpg";
+            localSourceFileName = to_string(ingestionJobKey) + /* "_source" + */ ".jpg";
             /*
             size_t extensionIndex = sourceFileName.find_last_of(".");
             if (extensionIndex != string::npos)
                 temporaryFileName.append(sourceFileName.substr(extensionIndex));
             */
 
-            // textToBeReplaced = to_string(ingestionJobKey) + ".source";
+            // textToBeReplaced = to_string(ingestionJobKey) + "_source";
             // textToReplace = sourceFileName.substr(0, extensionIndex);
         }
         
@@ -1893,7 +2062,19 @@ void MMSEngineProcessor::generateAndIngestFrames(
                 // + ", textToReplace: " + textToReplace
             );
 
-            string mmsSourceFileName = generatedFrameFileName;
+            string fileFormat;
+            size_t extensionIndex = generatedFrameFileName.find_last_of(".");
+            if (extensionIndex == string::npos)
+            {
+                string errorMessage = __FILEREF__ + "No fileFormat (extension of the file) found in generatedFileName"
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", generatedFrameFileName: " + generatedFrameFileName
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            fileFormat = generatedFrameFileName.substr(extensionIndex + 1);
             
 //            if (mmsSourceFileName.find(textToBeReplaced) != string::npos)
 //                mmsSourceFileName.replace(mmsSourceFileName.find(textToBeReplaced), textToBeReplaced.length(), textToReplace);
@@ -1901,12 +2082,13 @@ void MMSEngineProcessor::generateAndIngestFrames(
             _logger->info(__FILEREF__ + "Generated Frame to ingest"
                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", new generatedFrameFileName: " + generatedFrameFileName
+                + ", fileFormat: " + fileFormat
             );
             
             string imageMetaDataContent = generateImageMetadataToIngest(
                     ingestionJobKey,
                     mjpeg,
-                    generatedFrameFileName,
+                    fileFormat,
                     parametersRoot
             );
 
@@ -1923,7 +2105,7 @@ void MMSEngineProcessor::generateAndIngestFrames(
                 // localAssetIngestionEvent->setMMSSourceFileName(mmsSourceFileName);
                 localAssetIngestionEvent->setMMSSourceFileName(generatedFrameFileName);
                 localAssetIngestionEvent->setWorkspace(workspace);
-                localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::ContentIngestion);
+                localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::AddContent);
 
                 localAssetIngestionEvent->setMetadataContent(imageMetaDataContent);
 
@@ -2042,9 +2224,11 @@ void MMSEngineProcessor::generateAndIngestSlideshow(
             sourceFileName = parametersRoot.get(field, "XXX").asString();
         }
 
+        string fileFormat = "mp4";
+        
         string localSourceFileName = to_string(ingestionJobKey)
-                // + ".source"
-                + ".mp4"
+                // + "_source"
+                + "." + fileFormat
                 ;
         /*
         size_t extensionIndex = sourceFileName.find_last_of(".");
@@ -2066,11 +2250,11 @@ void MMSEngineProcessor::generateAndIngestSlideshow(
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", slideshowMediaPathName: " + slideshowMediaPathName
         );
-                
+                            
         string mediaMetaDataContent = generateMediaMetadataToIngest(
                 ingestionJobKey,
                 true,
-                sourceFileName == "" ? localSourceFileName : sourceFileName,
+                fileFormat,
                 parametersRoot
         );
 
@@ -2086,7 +2270,7 @@ void MMSEngineProcessor::generateAndIngestSlideshow(
             localAssetIngestionEvent->setIngestionSourceFileName(localSourceFileName);
             localAssetIngestionEvent->setMMSSourceFileName(localSourceFileName);
             localAssetIngestionEvent->setWorkspace(workspace);
-            localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::ContentIngestion);
+            localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::AddContent);
 
             localAssetIngestionEvent->setMetadataContent(mediaMetaDataContent);
 
@@ -2184,21 +2368,26 @@ void MMSEngineProcessor::generateAndIngestConcatenation(
             }
         }
 
-        string sourceFileName;
-        string field = "SourceFileName";
-        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-        {
-            sourceFileName = parametersRoot.get(field, "XXX").asString();
-        }
-        
         // this is a concat, so destination file name shall have the same
         // extension as the source file name
-        string localSourceFileName = to_string(ingestionJobKey)
-                // + ".source"
-                ;
+        string fileFormat;
         size_t extensionIndex = sourcePhysicalPaths.front().find_last_of(".");
-        if (extensionIndex != string::npos)
-            localSourceFileName.append(sourcePhysicalPaths.front().substr(extensionIndex));
+        if (extensionIndex == string::npos)
+        {
+            string errorMessage = __FILEREF__ + "No fileFormat (extension of the file) found in sourcePhysicalPath"
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", sourcePhysicalPaths.front(): " + sourcePhysicalPaths.front()
+            ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        fileFormat = sourcePhysicalPaths.front().substr(extensionIndex + 1);
+
+        string localSourceFileName = to_string(ingestionJobKey)
+                + "_concat"
+                + "." + fileFormat // + "_source"
+                ;
         
         string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
             workspace);
@@ -2216,7 +2405,7 @@ void MMSEngineProcessor::generateAndIngestConcatenation(
         string mediaMetaDataContent = generateMediaMetadataToIngest(
                 ingestionJobKey,
                 concatContentType == MMSEngineDBFacade::ContentType::Video ? true : false,
-                sourceFileName == "" ? localSourceFileName : sourceFileName,
+                fileFormat,
                 parametersRoot
         );
 
@@ -2232,7 +2421,7 @@ void MMSEngineProcessor::generateAndIngestConcatenation(
             localAssetIngestionEvent->setIngestionSourceFileName(localSourceFileName);
             localAssetIngestionEvent->setMMSSourceFileName(localSourceFileName);
             localAssetIngestionEvent->setWorkspace(workspace);
-            localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::ContentIngestion);
+            localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::AddContent);
 
             localAssetIngestionEvent->setMetadataContent(mediaMetaDataContent);
 
@@ -2401,21 +2590,26 @@ void MMSEngineProcessor::generateAndIngestCutMedia(
             throw runtime_error(errorMessage);
         }
 
-        string sourceFileName;
-        field = "SourceFileName";
-        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-        {
-            sourceFileName = parametersRoot.get(field, "XXX").asString();
-        }
-
         // this is a cut so destination file name shall have the same
         // extension as the source file name
-        string localSourceFileName = to_string(ingestionJobKey)
-                // + ".source"
-                ;
+        string fileFormat;
         size_t extensionIndex = sourcePhysicalPath.find_last_of(".");
-        if (extensionIndex != string::npos)
-            localSourceFileName.append(sourcePhysicalPath.substr(extensionIndex));
+        if (extensionIndex == string::npos)
+        {
+            string errorMessage = __FILEREF__ + "No fileFormat (extension of the file) found in sourcePhysicalPath"
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", sourcePhysicalPath: " + sourcePhysicalPath
+            ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        fileFormat = sourcePhysicalPath.substr(extensionIndex + 1);
+
+        string localSourceFileName = to_string(ingestionJobKey)
+                + "_cut"
+                + "." + fileFormat // + "_source"
+                ;
         
         string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
                 workspace);
@@ -2435,7 +2629,7 @@ void MMSEngineProcessor::generateAndIngestCutMedia(
         string mediaMetaDataContent = generateMediaMetadataToIngest(
                 ingestionJobKey,
                 contentType == MMSEngineDBFacade::ContentType::Video ? true : false,
-                sourceFileName == "" ? localSourceFileName : sourceFileName,
+                fileFormat,
                 parametersRoot
         );
 
@@ -2451,7 +2645,7 @@ void MMSEngineProcessor::generateAndIngestCutMedia(
             localAssetIngestionEvent->setIngestionSourceFileName(localSourceFileName);
             localAssetIngestionEvent->setMMSSourceFileName(localSourceFileName);
             localAssetIngestionEvent->setWorkspace(workspace);
-            localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::ContentIngestion);
+            localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::AddContent);
 
             localAssetIngestionEvent->setMetadataContent(mediaMetaDataContent);
 
@@ -2563,7 +2757,8 @@ void MMSEngineProcessor::manageEmailNotification(
         );                            
         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
                 MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
-                "", "" // ProcessorMMS
+                "", // errorMessage
+                "" // ProcessorMMS
         );
     }
     catch(runtime_error e)
@@ -2573,12 +2768,34 @@ void MMSEngineProcessor::manageEmailNotification(
             + ", e.what(): " + e.what()
         );
         
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what(), 
+                "" // ProcessorMMS
+        );
+        
         throw e;
     }
     catch(exception e)
     {
         _logger->error(__FILEREF__ + "sendEmail failed"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
+        );
+        
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what(), 
+                "" // ProcessorMMS
         );
         
         throw e;
@@ -2695,7 +2912,7 @@ size_t MMSEngineProcessor:: emailPayloadFeed(void *ptr, size_t size, size_t nmem
 string MMSEngineProcessor::generateImageMetadataToIngest(
         int64_t ingestionJobKey,
         bool mjpeg,
-        string sourceFileName,
+        string fileFormat,
         Json::Value frameRoot
 )
 {
@@ -2748,7 +2965,7 @@ string MMSEngineProcessor::generateImageMetadataToIngest(
     string imageMetadata = string("")
         + "{"
             + "\"ContentType\": \"" + (mjpeg ? "video" : "image") + "\""
-            + ", \"SourceFileName\": \"" + sourceFileName + "\""
+            + ", \"FileFormat\": \"" + fileFormat + "\""
             ;
     if (title != "")
         imageMetadata += ", \"Title\": \"" + title + "\"";
@@ -2782,7 +2999,7 @@ string MMSEngineProcessor::generateImageMetadataToIngest(
 string MMSEngineProcessor::generateMediaMetadataToIngest(
         int64_t ingestionJobKey,
         bool video,
-        string sourceFileName,
+        string fileFormat,
         Json::Value parametersRoot
 )
 {
@@ -2835,7 +3052,7 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
     string mediaMetadata = string("")
         + "{"
             + "\"ContentType\": \"" + (video ? "video" : "audio") + "\""
-            + ", \"SourceFileName\": \"" + sourceFileName + "\""
+            + ", \"FileFormat\": \"" + fileFormat + "\""
             ;
     if (title != "")
         mediaMetadata += ", \"Title\": \"" + title + "\"";
@@ -2889,7 +3106,7 @@ tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> MMSEngine
     string mediaFileFormat;
     
     string field;
-    if (ingestionType == MMSEngineDBFacade::IngestionType::ContentIngestion)
+    if (ingestionType == MMSEngineDBFacade::IngestionType::AddContent)
     {
         field = "SourceURL";
         if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
@@ -3149,7 +3366,7 @@ RESUMING FILE TRANSFERS
     workspaceIngestionBinaryPathName
         .append("/")
         .append(to_string(ingestionJobKey))
-        .append(".source")
+        .append("_source")
         ;
 
         
@@ -3195,8 +3412,13 @@ RESUMING FILE TRANSFERS
                 string httpsPrefix("https");
                 if (sourceReferenceURL.size() >= httpsPrefix.size() && 0 == sourceReferenceURL.compare(0, httpsPrefix.size(), httpsPrefix))
                 {
-                    _logger->info(__FILEREF__ + "Setting SslEngineDefault");
-                    request.setOpt(new curlpp::options::SslEngineDefault());
+                    // disconnect if we can't validate server's cert
+                    bool bSslVerifyPeer = false;
+                    curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
+                    request.setOpt(sslVerifyPeer);
+
+                    curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
+                    request.setOpt(sslVerifyHost);
                 }
 
                 chrono::system_clock::time_point lastProgressUpdate = chrono::system_clock::now();
@@ -3515,7 +3737,7 @@ void MMSEngineProcessor::moveMediaSourceFile(string sourceReferenceURL,
         workspaceIngestionBinaryPathName
             .append("/")
             .append(to_string(ingestionJobKey))
-            .append(".source")
+            .append("_source")
             ;
 
         string movePrefix("move://");
@@ -3597,7 +3819,7 @@ void MMSEngineProcessor::copyMediaSourceFile(string sourceReferenceURL,
         workspaceIngestionBinaryPathName
             .append("/")
             .append(to_string(ingestionJobKey))
-            .append(".source")
+            .append("_source")
             ;
 
         string copyPrefix("copy://");

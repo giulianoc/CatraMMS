@@ -71,6 +71,7 @@ private:
     Json::Value                                 _configuration;
     shared_ptr<MMSEngineDBFacade>               _mmsEngineDBFacade;
     shared_ptr<MMSStorage>                      _mmsStorage;
+    shared_ptr<EncodersLoadBalancer>            _encodersLoadBalancer;
     
     condition_variable                          _cvAddedEncodingJob;
     mutex                                       _mtEncodingJobs;

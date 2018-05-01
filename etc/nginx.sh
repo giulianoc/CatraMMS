@@ -21,7 +21,7 @@ then
 	sudo /usr/local/nginx/sbin/nginx 
 elif [ "$command" == "status" ]
 then
-	ps -ef | grep nginx
+	ps -ef | grep nginx | grep -v grep | grep -v status
 elif [ "$command" == "stop" ]
 then
 	PID=$(cat /usr/local/nginx/conf/nginx.conf | grep -Ev '^\s*#' | awk 'BEGIN { RS="[;{}]" } { if ($1 == "pid") print $2 }' | head -n1)

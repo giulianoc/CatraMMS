@@ -1,16 +1,16 @@
 {
 	"Type": "Workflow",
-	"Label": "1",
+	"Label": "My Workflow",
 	"Variables": {  
 		"Title": "My Title of the content"
 	},
 	"Task": {
-		"Label": "...",
-		"Type": "ContentIngestion",
+		"Label": "My Task",
+		"Type": "Add-Content",
 		"Parameters": {
-			"FileFormat": "mp4",
+			"FileFormat": "mpg",
 			"ContentType": "video",
-			"userData": { "MyData": "this is my data" },
+			"UserData": { "MyData": "this is my data" },
 			"Title": "${Title}"
 		}
 	}

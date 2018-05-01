@@ -10,7 +10,7 @@
 		"Parameters": {
 			"ReferenceMediaItemKey": 11,
 			"InstantInSeconds": 2.5,
-			"userData": { "MyData": "this is my data" },
+			"UserData": { "MyData": "this is my data" },
 			"Title": "${Title}"
 		}
 	}
