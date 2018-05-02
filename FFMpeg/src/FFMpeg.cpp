@@ -1490,6 +1490,10 @@ void FFMpeg::generateConcatMediaToIngest(
     ofstream concatListFile(concatenationListPathName.c_str(), ofstream::trunc);
     for (string sourcePhysicalPath: sourcePhysicalPaths)
     {
+        _logger->info(__FILEREF__ + "ffmpeg: adding physical path"
+            + ", sourcePhysicalPath: " + sourcePhysicalPath
+        );
+        
         concatListFile << "file '" << sourcePhysicalPath << "'" << endl;
     }
     concatListFile.close();
