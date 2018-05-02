@@ -175,7 +175,7 @@ string MMSStorage::getPhysicalPath(int64_t mediaItemKey,
         int64_t encodingProfileKey)
 {    
     tuple<int,string,string,string> storageDetails =
-        _mmsEngineDBFacade->getStorageDetailsByMediaItemKey(mediaItemKey, encodingProfileKey);
+        _mmsEngineDBFacade->getStorageDetails(mediaItemKey, encodingProfileKey);
 
     int mmsPartitionNumber;
     string workspaceDirectoryName;
@@ -192,13 +192,15 @@ string MMSStorage::getPhysicalPath(int64_t mediaItemKey,
 
 void MMSStorage::removePhysicalPath(int64_t physicalPathKey)
 {    
-
-    string mmsAssetPathName;
     
     try
     {
+        _logger->info(__FILEREF__ + "getStorageDetailsByPhysicalPathKey ..."
+            + ", physicalPathKey: " + to_string(physicalPathKey)
+        );
+        
         tuple<int,string,string,string> storageDetails =
-            _mmsEngineDBFacade->getStorageDetailsByPhysicalPathKey(physicalPathKey);
+            _mmsEngineDBFacade->getStorageDetails(physicalPathKey);
 
         int mmsPartitionNumber;
         string workspaceDirectoryName;
@@ -206,15 +208,60 @@ void MMSStorage::removePhysicalPath(int64_t physicalPathKey)
         string fileName;
         tie(mmsPartitionNumber, workspaceDirectoryName, relativePath, fileName) = storageDetails;
 
-        mmsAssetPathName = getMMSAssetPathName(
+        _logger->info(__FILEREF__ + "getMMSAssetPathName ..."
+            + ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
+            + ", workspaceDirectoryName: " + workspaceDirectoryName
+            + ", relativePath: " + relativePath
+            + ", fileName: " + fileName
+        );
+        string mmsAssetPathName = getMMSAssetPathName(
             mmsPartitionNumber,
             workspaceDirectoryName,
             relativePath,
             fileName);
+        
+        _logger->info(__FILEREF__ + "removePhysicalPathKey ..."
+            + ", physicalPathKey: " + to_string(physicalPathKey)
+        );
+
+        _mmsEngineDBFacade->removePhysicalPath(physicalPathKey);
+        
+        {
+            FileIO::DirectoryEntryType_t detSourceFileType;
+
+            detSourceFileType = FileIO::getDirectoryEntryType(mmsAssetPathName);
+
+            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY) 
+            {
+                _logger->info(__FILEREF__ + "Remove directory"
+                    + ", mmsAssetPathName: " + mmsAssetPathName
+                );
+
+                bool removeRecursively = true;
+                FileIO::removeDirectory(mmsAssetPathName, removeRecursively);
+            } 
+            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
+            {
+                _logger->info(__FILEREF__ + "Remove file"
+                    + ", mmsAssetPathName: " + mmsAssetPathName
+                );
+
+                FileIO::remove(mmsAssetPathName);
+            } 
+            else 
+            {
+                string errorMessage = string("Unexpected directory entry")
+                        + ", detSourceFileType: " + to_string(detSourceFileType);
+                
+                _logger->error(__FILEREF__ + errorMessage);
+                
+                throw runtime_error(errorMessage);
+            }
+        }
     }
     catch(runtime_error e)
     {
-        string errorMessage = string("getStorageDetailsByPhysicalPathKey failed")
+        string errorMessage = string("removePhysicalPath failed")
             + ", physicalPathKey: " + to_string(physicalPathKey)
         ;
         
@@ -224,33 +271,108 @@ void MMSStorage::removePhysicalPath(int64_t physicalPathKey)
     }
     catch(exception e)
     {
+        string errorMessage = string("removePhysicalPath failed")
+            + ", physicalPathKey: " + to_string(physicalPathKey)
+        ;
         
-    }
-    
-    /*
-    tuple<int,string,string,string> storageDetails =
-        _mmsEngineDBFacade->getStorageDetails(mediaItemKey, encodingProfileKey);
-
-    int mmsPartitionNumber;
-    string workspaceDirectoryName;
-    string relativePath;
-    string fileName;
-    tie(mmsPartitionNumber, workspaceDirectoryName, relativePath, fileName) = storageDetails;
-     */
+        _logger->info(__FILEREF__ + errorMessage);
+        
+        throw runtime_error(errorMessage);
+    }    
 }
 
 void MMSStorage::removeMediaItem(int64_t mediaItemKey)
 {
-    /*
-    tuple<int,string,string,string> storageDetails =
-        _mmsEngineDBFacade->getStorageDetails(mediaItemKey, encodingProfileKey);
+    try
+    {
+        _logger->info(__FILEREF__ + "getAllStorageDetails ..."
+            + ", mediaItemKey: " + to_string(mediaItemKey)
+        );
+        
+        vector<tuple<int,string,string,string>> allStorageDetails;
+        _mmsEngineDBFacade->getAllStorageDetails(mediaItemKey, allStorageDetails);
 
-    int mmsPartitionNumber;
-    string workspaceDirectoryName;
-    string relativePath;
-    string fileName;
-    tie(mmsPartitionNumber, workspaceDirectoryName, relativePath, fileName) = storageDetails;
-    */
+        _logger->info(__FILEREF__ + "removeMediaItem ..."
+            + ", mediaItemKey: " + to_string(mediaItemKey)
+        );
+
+        _mmsEngineDBFacade->removeMediaItem(mediaItemKey);
+        
+        for (tuple<int,string,string,string>& storageDetails: allStorageDetails)
+        {
+            int mmsPartitionNumber;
+            string workspaceDirectoryName;
+            string relativePath;
+            string fileName;
+            tie(mmsPartitionNumber, workspaceDirectoryName, relativePath, fileName) = storageDetails;
+
+            _logger->info(__FILEREF__ + "getMMSAssetPathName ..."
+                + ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
+                + ", workspaceDirectoryName: " + workspaceDirectoryName
+                + ", relativePath: " + relativePath
+                + ", fileName: " + fileName
+            );
+            string mmsAssetPathName = getMMSAssetPathName(
+                mmsPartitionNumber,
+                workspaceDirectoryName,
+                relativePath,
+                fileName);
+
+
+            {
+                FileIO::DirectoryEntryType_t detSourceFileType;
+
+                detSourceFileType = FileIO::getDirectoryEntryType(mmsAssetPathName);
+
+                if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY) 
+                {
+                    _logger->info(__FILEREF__ + "Remove directory"
+                        + ", mmsAssetPathName: " + mmsAssetPathName
+                    );
+
+                    bool removeRecursively = true;
+                    FileIO::removeDirectory(mmsAssetPathName, removeRecursively);
+                } 
+                else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
+                {
+                    _logger->info(__FILEREF__ + "Remove file"
+                        + ", mmsAssetPathName: " + mmsAssetPathName
+                    );
+
+                    FileIO::remove(mmsAssetPathName);
+                } 
+                else 
+                {
+                    string errorMessage = string("Unexpected directory entry")
+                            + ", detSourceFileType: " + to_string(detSourceFileType);
+
+                    _logger->error(__FILEREF__ + errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+            }
+        }
+    }
+    catch(runtime_error e)
+    {
+        string errorMessage = string("removeMediaItem failed")
+            + ", mediaItemKey: " + to_string(mediaItemKey)
+        ;
+        
+        _logger->info(__FILEREF__ + errorMessage);
+        
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        string errorMessage = string("removeMediaItem failed")
+            + ", mediaItemKey: " + to_string(mediaItemKey)
+        ;
+        
+        _logger->info(__FILEREF__ + errorMessage);
+        
+        throw runtime_error(errorMessage);
+    }    
 }
 
 string MMSStorage::getWorkspaceIngestionRepository(shared_ptr<Workspace> workspace)

@@ -663,11 +663,23 @@ public:
         int imageQuality
     );
 
-    tuple<int,string,string,string> getStorageDetailsByMediaItemKey(
+    void removePhysicalPath (
+        int64_t physicalPathKey);
+
+    void removeMediaItem (
+        int64_t mediaItemKey);
+
+    tuple<int,string,string,string> getStorageDetails(
+        int64_t physicalPathKey);
+
+    tuple<int,string,string,string> getStorageDetails(
         int64_t mediaItemKey,
         int64_t encodingProfileKey
     );
 
+    void getAllStorageDetails(int64_t mediaItemKey,
+        vector<tuple<int,string,string,string>>& allStorageDetails);
+    
     int64_t saveEncodedContentMetadata(
         int64_t workspaceKey,
         int64_t mediaItemKey,
