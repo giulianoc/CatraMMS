@@ -88,7 +88,7 @@ private:
     void addEncodingItem(shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem);
     string encodeContentImage(
         shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem);
-    void processEncodedImage(
+    int64_t processEncodedImage(
         shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem, 
         string stagingEncodedAssetPathName);
 

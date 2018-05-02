@@ -234,7 +234,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                     );                            
                     _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
                             MMSEngineDBFacade::IngestionStatus::End_WorkspaceReachedHisMaxIngestionNumber,
-                            e.what(), "" // processorMMS
+                            e.what(), 
+                            "" // processorMMS
                     );
 
                     throw e;
@@ -254,7 +255,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                     );                            
                     _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
                             MMSEngineDBFacade::IngestionStatus::End_WorkspaceReachedHisMaxIngestionNumber,
-                            e.what(), "" // processorMMS
+                            e.what(), 
+                            "" // processorMMS
                     );
 
                     throw e;
@@ -479,7 +481,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                         + ", processorMMS: " + processorMMS
                                     );                            
                                     _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                                            nextIngestionStatus, 
+                                            nextIngestionStatus,
                                             errorMessage,
                                             processorMMS
                                             );
@@ -500,7 +502,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                         + ", processorMMS: " + processorMMS
                                     );                            
                                     _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                                            nextIngestionStatus, 
+                                            nextIngestionStatus,
                                             errorMessage,
                                             processorMMS
                                             );
@@ -3886,7 +3888,8 @@ void MMSEngineProcessor::copyMediaSourceFile(string sourceReferenceURL,
         );                            
         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what(), "" /* processorMMS */);
+                e.what(), 
+                "" /* processorMMS */);
 
         return;
     }

@@ -118,8 +118,11 @@ void EncoderVideoAudioProxy::operator()()
             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
         );
         
+        int64_t encodedPhysicalPathKey = -1;
         _mmsEngineDBFacade->updateEncodingJob (_encodingItem->_encodingJobKey, 
-                MMSEngineDBFacade::EncodingError::MaxCapacityReached, _encodingItem->_ingestionJobKey);
+                MMSEngineDBFacade::EncodingError::MaxCapacityReached, 
+                _encodingItem->_mediaItemKey, encodedPhysicalPathKey,
+                _encodingItem->_ingestionJobKey);
         
         {
             lock_guard<mutex> locker(*_mtEncodingJobs);
@@ -148,8 +151,11 @@ void EncoderVideoAudioProxy::operator()()
             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
         );
         
+        int64_t encodedPhysicalPathKey = -1;
         int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (_encodingItem->_encodingJobKey, 
-                MMSEngineDBFacade::EncodingError::PunctualError, _encodingItem->_ingestionJobKey);
+                MMSEngineDBFacade::EncodingError::PunctualError, 
+                _encodingItem->_mediaItemKey, encodedPhysicalPathKey,
+                _encodingItem->_ingestionJobKey);
 
         _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -185,10 +191,12 @@ void EncoderVideoAudioProxy::operator()()
             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
         );
         
+        int64_t encodedPhysicalPathKey = -1;
         // PunctualError is used because, in case it always happens, the encoding will never reach a final state
         int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (
                 _encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
+                _encodingItem->_mediaItemKey, encodedPhysicalPathKey,
                 _encodingItem->_ingestionJobKey);
 
         _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
@@ -225,10 +233,12 @@ void EncoderVideoAudioProxy::operator()()
             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
         );
         
+        int64_t encodedPhysicalPathKey = -1;
         // PunctualError is used because, in case it always happens, the encoding will never reach a final state
         int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (
                 _encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
+                _encodingItem->_mediaItemKey, encodedPhysicalPathKey,
                 _encodingItem->_ingestionJobKey);
 
         _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
@@ -253,10 +263,12 @@ void EncoderVideoAudioProxy::operator()()
         // throw e;
         return;
     }
-            
+     
+    int64_t encodedPhysicalPathKey;
+    
     try
     {
-        processEncodedContentVideoAudio(stagingEncodedAssetPathName);
+        encodedPhysicalPathKey = processEncodedContentVideoAudio(stagingEncodedAssetPathName);
     }
     catch(runtime_error e)
     {
@@ -288,10 +300,12 @@ void EncoderVideoAudioProxy::operator()()
             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
         );
         
+        encodedPhysicalPathKey = -1;
         // PunctualError is used because, in case it always happens, the encoding will never reach a final state
         int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (
                 _encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
+                _encodingItem->_mediaItemKey, encodedPhysicalPathKey,
                 _encodingItem->_ingestionJobKey);
 
         _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
@@ -346,10 +360,12 @@ void EncoderVideoAudioProxy::operator()()
             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
         );
         
+        int64_t encodedPhysicalPathKey = -1;
         // PunctualError is used because, in case it always happens, the encoding will never reach a final state
         int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (
                 _encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
+                _encodingItem->_mediaItemKey, encodedPhysicalPathKey,
                 _encodingItem->_ingestionJobKey);
 
         _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
@@ -385,7 +401,8 @@ void EncoderVideoAudioProxy::operator()()
         
         _mmsEngineDBFacade->updateEncodingJob (
             _encodingItem->_encodingJobKey, 
-            MMSEngineDBFacade::EncodingError::NoError, 
+            MMSEngineDBFacade::EncodingError::NoError,
+            _encodingItem->_mediaItemKey, encodedPhysicalPathKey,
             _encodingItem->_ingestionJobKey);
     }
     catch(exception e)
@@ -1634,8 +1651,9 @@ bool EncoderVideoAudioProxy::getEncodingStatus(int64_t encodingJobKey)
     return encodingFinished;
 }
 
-void EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEncodedAssetPathName)
+int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEncodedAssetPathName)
 {
+    int64_t encodedPhysicalPathKey;
     string encodedFileName;
     string mmsAssetPathName;
     unsigned long mmsPartitionIndexUsed;
@@ -1755,7 +1773,7 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEncod
         }
 
 
-        int64_t encodedPhysicalPathKey = _mmsEngineDBFacade->saveEncodedContentMetadata(
+        encodedPhysicalPathKey = _mmsEngineDBFacade->saveEncodedContentMetadata(
             _encodingItem->_workspace->_workspaceKey,
             _encodingItem->_mediaItemKey,
             encodedFileName,
@@ -1802,4 +1820,6 @@ void EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEncod
 
         throw e;
     }
+    
+    return encodedPhysicalPathKey;
 }

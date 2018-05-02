@@ -565,6 +565,14 @@ public:
 
     void updateIngestionJob (
         int64_t ingestionJobKey,
+        IngestionStatus newIngestionStatus,
+        int64_t mediaItemKey,
+        int64_t physicalPathKey,
+        string errorMessage,
+        string processorMMS);
+
+    void updateIngestionJob (
+        int64_t ingestionJobKey,
         IngestionType ingestionType,
         IngestionStatus newIngestionStatus,
         string errorMessage,
@@ -622,6 +630,8 @@ public:
     int updateEncodingJob (
         int64_t encodingJobKey,
         EncodingError encodingError,
+        int64_t mediaItemKey,
+        int64_t encodedPhysicalPathKey,
         int64_t ingestionJobKey);
 
     void updateEncodingJobProgress (

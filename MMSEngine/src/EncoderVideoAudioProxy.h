@@ -110,7 +110,7 @@ private:
     string encodeContentVideoAudio();
     string encodeContent_VideoAudio_through_ffmpeg();
 
-    void processEncodedContentVideoAudio(string stagingEncodedAssetPathName);    
+    int64_t processEncodedContentVideoAudio(string stagingEncodedAssetPathName);    
 
     bool getEncodingStatus(int64_t encodingJobKey);
 };

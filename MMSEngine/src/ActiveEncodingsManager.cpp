@@ -282,10 +282,13 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
                 + ", encodingJob->_encodingItem->_ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey)
             );
 
+            int64_t encodedPhysicalPathKey = -1;
+            
             // PunctualError is used because, in case it always happens, the encoding will never reach a final state
             int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (
                     encodingJob->_encodingItem->_encodingJobKey, 
                     MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
+                    encodingJob->_encodingItem->_mediaItemKey, encodedPhysicalPathKey,
                     encodingJob->_encodingItem->_ingestionJobKey);
 
             _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
@@ -300,9 +303,10 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
             return;
         }
 
+        int64_t encodedPhysicalPathKey;
         try
         {
-            processEncodedImage(encodingJob->_encodingItem, stagingEncodedAssetPathName);
+            encodedPhysicalPathKey = processEncodedImage(encodingJob->_encodingItem, stagingEncodedAssetPathName);
         }
         catch(exception e)
         {
@@ -319,10 +323,13 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
                 + ", encodingJob->_encodingItem->_ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey)
             );
 
+            encodedPhysicalPathKey = -1;
+            
             // PunctualError is used because, in case it always happens, the encoding will never reach a final state
             int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (
                     encodingJob->_encodingItem->_encodingJobKey, 
                     MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
+                    encodingJob->_encodingItem->_mediaItemKey, encodedPhysicalPathKey,
                     encodingJob->_encodingItem->_ingestionJobKey);
 
             _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
@@ -347,6 +354,7 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
             _mmsEngineDBFacade->updateEncodingJob (
                 encodingJob->_encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::NoError, 
+                encodingJob->_encodingItem->_mediaItemKey, encodedPhysicalPathKey,
                 encodingJob->_encodingItem->_ingestionJobKey);
         }
         catch(exception e)
@@ -536,10 +544,11 @@ string ActiveEncodingsManager::encodeContentImage(shared_ptr<MMSEngineDBFacade::
     return stagingEncodedAssetPathName;
 }
 
-void ActiveEncodingsManager::processEncodedImage(
+int64_t ActiveEncodingsManager::processEncodedImage(
         shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem, 
         string stagingEncodedAssetPathName)
 {
+    int64_t encodedPhysicalPathKey;
     string encodedFileName;
     string mmsAssetPathName;
     unsigned long mmsPartitionIndexUsed;
@@ -594,7 +603,7 @@ void ActiveEncodingsManager::processEncodedImage(
                     inCaseOfLinkHasItToBeRead);   
         }
 
-        int64_t encodedPhysicalPathKey = _mmsEngineDBFacade->saveEncodedContentMetadata(
+        encodedPhysicalPathKey = _mmsEngineDBFacade->saveEncodedContentMetadata(
             encodingItem->_workspace->_workspaceKey,
             encodingItem->_mediaItemKey,
             encodedFileName,
@@ -627,6 +636,8 @@ void ActiveEncodingsManager::processEncodedImage(
 
         throw e;
     }
+    
+    return encodedPhysicalPathKey;
 }
 
 void ActiveEncodingsManager::addEncodingItem(shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem)
@@ -714,8 +725,11 @@ unsigned long ActiveEncodingsManager:: addEncodingItems (
                 + ", encodingItem->_fileName: " + encodingItem->_fileName
             );
             
-            _mmsEngineDBFacade->updateEncodingJob (encodingItem->_encodingJobKey, 
-                MMSEngineDBFacade::EncodingError::MaxCapacityReached, encodingItem->_ingestionJobKey);
+            int64_t encodedPhysicalPathKey = -1;
+            _mmsEngineDBFacade->updateEncodingJob (encodingItem->_encodingJobKey,
+                    MMSEngineDBFacade::EncodingError::MaxCapacityReached, 
+                    encodingItem->_mediaItemKey, encodedPhysicalPathKey,
+                    encodingItem->_ingestionJobKey);
         }
         catch(exception e)
         {
@@ -728,8 +742,10 @@ unsigned long ActiveEncodingsManager:: addEncodingItems (
                 + ", encodingItem->_physicalPathKey: " + to_string(encodingItem->_physicalPathKey)
                 + ", encodingItem->_fileName: " + encodingItem->_fileName
             );
+            int64_t encodedPhysicalPathKey = -1;
             _mmsEngineDBFacade->updateEncodingJob (encodingItem->_encodingJobKey, 
-                MMSEngineDBFacade::EncodingError::ErrorBeforeEncoding, encodingItem->_ingestionJobKey);
+                MMSEngineDBFacade::EncodingError::ErrorBeforeEncoding,
+                encodingItem->_mediaItemKey, encodedPhysicalPathKey, encodingItem->_ingestionJobKey);
         }        
     }
     
