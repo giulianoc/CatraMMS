@@ -1612,6 +1612,11 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                     
                     if (ingestionJobToBeManaged)
                     {
+                        _logger->info(__FILEREF__ + "Adding jobs to be processed"
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", ingestionStatus: " + toString(ingestionStatus)
+                        );
+                        
                         shared_ptr<Workspace> workspace = getWorkspace(workspaceKey);
 
                         tuple<int64_t, string, shared_ptr<Workspace>, string, IngestionType, IngestionStatus> ingestionToBeManaged
@@ -3731,11 +3736,11 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
     catch(MediaItemKeyNotFound e)
     {
         if (warningIfMissing)
-            _logger->warn(__FILEREF__ + "SQL exception"
+            _logger->warn(__FILEREF__ + "MediaItemKeyNotFound SQL exception"
                 + ", lastSQLCommand: " + lastSQLCommand
             );
         else
-            _logger->error(__FILEREF__ + "SQL exception"
+            _logger->error(__FILEREF__ + "MediaItemKeyNotFound SQL exception"
                 + ", lastSQLCommand: " + lastSQLCommand
             );
 
