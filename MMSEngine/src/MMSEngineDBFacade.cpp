@@ -3414,81 +3414,85 @@ Json::Value MMSEngineDBFacade::getIngestionJobStatus (
                         if (resultSet->next())
                         {
                             contentType = MMSEngineDBFacade::toContentType(resultSet->getString("contentType"));
+                            
+                            if (contentType == ContentType::Video)
+                            {
+                                int64_t durationInMilliSeconds;
+                                int videoWidth;
+                                int videoHeight;
+                                long bitRate;
+                                string videoCodecName;
+                                string videoProfile;
+                                string videoAvgFrameRate;
+                                long videoBitRate;
+                                string audioCodecName;
+                                long audioSampleRate;
+                                int audioChannels;
+                                long audioBitRate;
+
+                                tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
+                                    videoDetails = getVideoDetails(mediaItemKey);
+
+                                tie(durationInMilliSeconds, bitRate,
+                                    videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
+                                    audioCodecName, audioSampleRate, audioChannels, audioBitRate) = videoDetails;
+
+                                Json::Value videoDetailsRoot;
+
+                                field = "durationInMilliSeconds";
+                                videoDetailsRoot[field] = durationInMilliSeconds;
+
+                                field = "videoWidth";
+                                videoDetailsRoot[field] = videoWidth;
+
+                                field = "videoHeight";
+                                videoDetailsRoot[field] = videoHeight;
+
+                                field = "bitRate";
+                                videoDetailsRoot[field] = (int64_t) bitRate;
+
+                                field = "videoCodecName";
+                                videoDetailsRoot[field] = videoCodecName;
+
+                                field = "videoProfile";
+                                videoDetailsRoot[field] = videoProfile;
+
+                                field = "videoAvgFrameRate";
+                                videoDetailsRoot[field] = videoAvgFrameRate;
+
+                                field = "videoBitRate";
+                                videoDetailsRoot[field] = (int64_t) videoBitRate;
+
+                                field = "audioCodecName";
+                                videoDetailsRoot[field] = audioCodecName;
+
+                                field = "audioSampleRate";
+                                videoDetailsRoot[field] = (int64_t) audioSampleRate;
+
+                                field = "audioChannels";
+                                videoDetailsRoot[field] = audioChannels;
+
+                                field = "audioBitRate";
+                                videoDetailsRoot[field] = (int64_t) audioBitRate;
+
+
+                                field = "videoDetails";
+                                taskRoot[field] = videoDetailsRoot;
+                            }
                         }
                         else
                         {
+                            // the MIK could be removed
+                            
+                            /*
                             string errorMessage = __FILEREF__ + "MediaItemKey is not found"
                                 + ", mediaItemKey: " + to_string(mediaItemKey)
                                 + ", lastSQLCommand: " + lastSQLCommand
                             ;
                             _logger->error(errorMessage);
 
-                            throw runtime_error(errorMessage);                    
-                        }            
-
-                        if (contentType == ContentType::Video)
-                        {
-                            int64_t durationInMilliSeconds;
-                            int videoWidth;
-                            int videoHeight;
-                            long bitRate;
-                            string videoCodecName;
-                            string videoProfile;
-                            string videoAvgFrameRate;
-                            long videoBitRate;
-                            string audioCodecName;
-                            long audioSampleRate;
-                            int audioChannels;
-                            long audioBitRate;
-
-                            tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
-                                videoDetails = getVideoDetails(mediaItemKey);
-
-                            tie(durationInMilliSeconds, bitRate,
-                                videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
-                                audioCodecName, audioSampleRate, audioChannels, audioBitRate) = videoDetails;
-
-                            Json::Value videoDetailsRoot;
-
-                            field = "durationInMilliSeconds";
-                            videoDetailsRoot[field] = durationInMilliSeconds;
-
-                            field = "videoWidth";
-                            videoDetailsRoot[field] = videoWidth;
-
-                            field = "videoHeight";
-                            videoDetailsRoot[field] = videoHeight;
-                            
-                            field = "bitRate";
-                            videoDetailsRoot[field] = (int64_t) bitRate;
-
-                            field = "videoCodecName";
-                            videoDetailsRoot[field] = videoCodecName;
-
-                            field = "videoProfile";
-                            videoDetailsRoot[field] = videoProfile;
-
-                            field = "videoAvgFrameRate";
-                            videoDetailsRoot[field] = videoAvgFrameRate;
-
-                            field = "videoBitRate";
-                            videoDetailsRoot[field] = (int64_t) videoBitRate;
-
-                            field = "audioCodecName";
-                            videoDetailsRoot[field] = audioCodecName;
-
-                            field = "audioSampleRate";
-                            videoDetailsRoot[field] = (int64_t) audioSampleRate;
-
-                            field = "audioChannels";
-                            videoDetailsRoot[field] = audioChannels;
-
-                            field = "audioBitRate";
-                            videoDetailsRoot[field] = (int64_t) audioBitRate;
-
-                            
-                            field = "videoDetails";
-                            taskRoot[field] = videoDetailsRoot;
+                            throw runtime_error(errorMessage);  
+                            */                  
                         }
                     }
                 }
