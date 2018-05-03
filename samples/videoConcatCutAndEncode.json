@@ -67,6 +67,7 @@
 		},
 		"OnComplete": {
 			"Task": {
+				"Label": "My email",
 				"Type": "Email-Notification",
 				"Parameters": {
 					"EmailAddress": "giulianoc@catrasoftware.it",

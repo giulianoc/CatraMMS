@@ -145,7 +145,7 @@ int main (int iArgc, char *pArgv [])
     logger->info(__FILEREF__ + "Starting ActiveEncodingsManager"
             );
     thread activeEncodingsManagerThread (ref(activeEncodingsManager));
-
+    
     logger->info(__FILEREF__ + "Starting MMSEngineProcessor"
             );
     thread mmsEngineProcessorThread (mmsEngineProcessor);
