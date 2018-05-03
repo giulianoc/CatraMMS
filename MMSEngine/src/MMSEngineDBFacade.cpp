@@ -3918,7 +3918,7 @@ tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMedi
 
         {
             lastSQLCommand = 
-                "select mi.contentType from MMS_MediaItem where mediaItemKey = ?";
+                "select contentType from MMS_MediaItem where mediaItemKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
