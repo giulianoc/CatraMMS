@@ -13,6 +13,7 @@
 #include "ActiveEncodingsManager.h"
 #include "LocalAssetIngestionEvent.h"
 #include "GenerateImageToIngestEvent.h"
+#include "Validator.h"
 #include "json/json.h"
 
 #define MMSENGINEPROCESSORNAME    "MMSEngineProcessor"
@@ -80,7 +81,7 @@ private:
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<int64_t>& dependencies);
+        vector<pair<int64_t,Validator::DependencyType>>& dependencies);
     
     string generateImageMetadataToIngest(
         int64_t ingestionJobKey,
@@ -99,38 +100,38 @@ private:
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<int64_t>& dependencies);
+        vector<pair<int64_t,Validator::DependencyType>>& dependencies);
 
     void generateAndIngestFrames(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         MMSEngineDBFacade::IngestionType ingestionType,
         Json::Value parametersRoot,
-        vector<int64_t>& dependencies);
+        vector<pair<int64_t,Validator::DependencyType>>& dependencies);
 
     void generateAndIngestSlideshow(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<int64_t>& dependencies);
+        vector<pair<int64_t,Validator::DependencyType>>& dependencies);
 
     void generateAndIngestConcatenation(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<int64_t>& dependencies);
+        vector<pair<int64_t,Validator::DependencyType>>& dependencies);
 
     void generateAndIngestCutMedia(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<int64_t>& dependencies);
+        vector<pair<int64_t,Validator::DependencyType>>& dependencies);
 
     void manageEmailNotification(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<int64_t>& dependencies);
+        vector<pair<int64_t,Validator::DependencyType>>& dependencies);
 
     tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> getMediaSourceDetails(
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace,

@@ -3869,14 +3869,14 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
     return mediaItemKeyAndContentType;
 }
 
-pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyDetailsByIngestionJobKey(
+tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
     int64_t referenceIngestionJobKey, bool warningIfMissing)
 {
     string      lastSQLCommand;
         
     shared_ptr<MySQLConnection> conn;
     
-    pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType;
+    tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyPhysicalPathKeyAndContentType;
 
     try
     {
@@ -3885,19 +3885,49 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
+        int64_t mediaItemKey = -1;
+        int64_t physicalPathKey = -1;
         {
             lastSQLCommand = 
-                "select mi.mediaItemKey, mi.contentType from MMS_IngestionJob ij, MMS_MediaItem mi "
-                "where ij.mediaItemKey = mi.mediaItemKey and ij.ingestionJobKey = ?";
+                "select mediaItemKey, physicalPathKey from MMS_IngestionJob where ingestionJobKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, referenceIngestionJobKey);
 
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next() && !resultSet->isNull("mediaItemKey"))
+            {
+                mediaItemKey = resultSet->getInt64("mediaItemKey");
+                if (!resultSet->isNull("physicalPathKey"))
+                    physicalPathKey = resultSet->getInt64("physicalPathKey");
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "ingestionJobKey is not found"
+                    + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
+                    + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                if (warningIfMissing)
+                    _logger->warn(errorMessage);
+                else
+                    _logger->error(errorMessage);
+
+                throw MediaItemKeyNotFound(errorMessage);                    
+            }            
+        }
+
+        {
+            lastSQLCommand = 
+                "select mi.contentType from MMS_MediaItem where mediaItemKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
-                mediaItemKeyAndContentType.first = resultSet->getInt64("mediaItemKey");
-                mediaItemKeyAndContentType.second = MMSEngineDBFacade::toContentType(resultSet->getString("contentType"));
+                mediaItemKeyPhysicalPathKeyAndContentType = make_tuple(
+                        mediaItemKey, physicalPathKey, MMSEngineDBFacade::toContentType(resultSet->getString("contentType")));
             }
             else
             {
@@ -3981,7 +4011,7 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
         throw e;
     }
     
-    return mediaItemKeyAndContentType;
+    return mediaItemKeyPhysicalPathKeyAndContentType;
 }
 
 pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyDetailsByUniqueName(

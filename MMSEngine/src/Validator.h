@@ -18,6 +18,13 @@
 
 class Validator {
 public:
+    enum class DependencyType {
+        MediaItemKey,
+        PhysicalPathKey,
+        IngestionJobKey
+    };
+    
+public:
     Validator(            
             shared_ptr<spdlog::logger> logger, 
             shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade
@@ -34,42 +41,42 @@ public:
 
     void validateGroupOfTasksMetadata(int64_t workspaceKey, Json::Value groupOfTasksRoot);
 
-    vector<int64_t> validateTaskMetadata(int64_t workspaceKey, Json::Value taskRoot);
+    vector<pair<int64_t,Validator::DependencyType>> validateTaskMetadata(int64_t workspaceKey, Json::Value taskRoot);
 
     void validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTasksRoot);
 
-    vector<int64_t> validateTaskMetadata(int64_t workspaceKey,
+    vector<pair<int64_t,Validator::DependencyType>> validateTaskMetadata(int64_t workspaceKey,
         MMSEngineDBFacade::IngestionType ingestionType, 
         Json::Value parametersRoot);
 
     void validateAddContentMetadata(Json::Value parametersRoot);
 
     void validateRemoveContentMetadata(int64_t workspaceKey,
-        Json::Value parametersRoot, vector<int64_t>& dependencies);
+        Json::Value parametersRoot, vector<pair<int64_t,DependencyType>>& dependencies);
     
     void validateEncodeMetadata(int64_t workspaceKey,
-        Json::Value parametersRoot, vector<int64_t>& dependencies);
+        Json::Value parametersRoot, vector<pair<int64_t,DependencyType>>& dependencies);
 
     void validateFrameMetadata(int64_t workspaceKey,
-        Json::Value parametersRoot, vector<int64_t>& dependencies);
+        Json::Value parametersRoot, vector<pair<int64_t,DependencyType>>& dependencies);
 
     void validatePeriodicalFramesMetadata(int64_t workspaceKey,
-        Json::Value parametersRoot, vector<int64_t>& dependencies);
+        Json::Value parametersRoot, vector<pair<int64_t,DependencyType>>& dependencies);
     
     void validateIFramesMetadata(int64_t workspaceKey,
-        Json::Value parametersRoot, vector<int64_t>& dependencies);
+        Json::Value parametersRoot, vector<pair<int64_t,DependencyType>>& dependencies);
 
     void validateSlideshowMetadata(int64_t workspaceKey,
-        Json::Value parametersRoot, vector<int64_t>& dependencies);
+        Json::Value parametersRoot, vector<pair<int64_t,DependencyType>>& dependencies);
     
     void validateConcatDemuxerMetadata(int64_t workspaceKey,
-        Json::Value parametersRoot, vector<int64_t>& dependencies);
+        Json::Value parametersRoot, vector<pair<int64_t,DependencyType>>& dependencies);
 
     void validateCutMetadata(int64_t workspaceKey,
-        Json::Value parametersRoot, vector<int64_t>& dependencies);
+        Json::Value parametersRoot, vector<pair<int64_t,DependencyType>>& dependencies);
 
     void validateEmailNotificationMetadata(
-        Json::Value parametersRoot, vector<int64_t>& dependencies);
+        Json::Value parametersRoot, vector<pair<int64_t,DependencyType>>& dependencies);
 
     void validateEncodingProfilesSetRootMetadata(
         MMSEngineDBFacade::ContentType contentType, 

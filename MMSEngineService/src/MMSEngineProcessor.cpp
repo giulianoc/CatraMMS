@@ -10,7 +10,6 @@
 #include <curlpp/Infos.hpp>
 #include "catralibraries/System.h"
 #include "FFMpeg.h"
-#include "Validator.h"
 #include "MMSEngineProcessor.h"
 #include "CheckIngestionTimes.h"
 #include "CheckEncodingTimes.h"
@@ -345,7 +344,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         throw runtime_error(errorMessage);
                     }
 
-                    vector<int64_t> dependencies;
+                    vector<pair<int64_t,Validator::DependencyType>> dependencies;
                     try
                     {
                         Validator validator(_logger, _mmsEngineDBFacade);
@@ -1031,7 +1030,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             ;
     
     string      metadataFileContent;
-    vector<int64_t> dependencies;
+    vector<pair<int64_t,Validator::DependencyType>> dependencies;
     Json::Value parametersRoot;
     Validator validator(_logger, _mmsEngineDBFacade);
     try
@@ -1696,7 +1695,7 @@ void MMSEngineProcessor::removeContent(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<int64_t>& dependencies
+        vector<pair<int64_t,Validator::DependencyType>>& dependencies
 )
 {
     try
@@ -1711,17 +1710,21 @@ void MMSEngineProcessor::removeContent(
             throw runtime_error(errorMessage);
         }
 
-        int64_t sourceMediaItemKey = -1;
-        int64_t sourcePhysicalPathKey = -1;
+        pair<int64_t,Validator::DependencyType>& keyAndDependencyType = dependencies.back();
         
-        string field = "ReferencePhysicalPathKey";
-        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        if (keyAndDependencyType.second == Validator::DependencyType::MediaItemKey)
         {
-            _mmsStorage->removePhysicalPath(dependencies.back());
+            _logger->info(__FILEREF__ + "removeMediaItem"
+                + ", mediaItemKey: " + to_string(keyAndDependencyType.first)
+            );
+            _mmsStorage->removeMediaItem(keyAndDependencyType.first);
         }
         else
         {
-            _mmsStorage->removeMediaItem(dependencies.back());
+            _logger->info(__FILEREF__ + "removePhysicalPath"
+                + ", physicalPathKey: " + to_string(keyAndDependencyType.first)
+            );
+            _mmsStorage->removePhysicalPath(keyAndDependencyType.first);
         }
 
         _logger->info(__FILEREF__ + "Update IngestionJob"
@@ -1780,7 +1783,7 @@ void MMSEngineProcessor::manageEncodeTask(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<int64_t>& dependencies
+        vector<pair<int64_t,Validator::DependencyType>>& dependencies
 )
 {
     try
@@ -1812,7 +1815,8 @@ void MMSEngineProcessor::manageEncodeTask(
         MMSEngineDBFacade::EncodingPriority encodingPriority =
                 MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
 
-        int64_t sourceMediaItemKey = dependencies.back();
+        pair<int64_t,Validator::DependencyType>& keyAndDependencyType = dependencies.back();
+        int64_t sourceMediaItemKey = keyAndDependencyType.first;
     
         _mmsEngineDBFacade->addEncodingJob (ingestionJobKey,
             encodingProfileKey, sourceMediaItemKey, encodingPriority);
@@ -1841,7 +1845,7 @@ void MMSEngineProcessor::generateAndIngestFrames(
         shared_ptr<Workspace> workspace,
         MMSEngineDBFacade::IngestionType ingestionType,
         Json::Value parametersRoot,
-        vector<int64_t>& dependencies
+        vector<pair<int64_t,Validator::DependencyType>>& dependencies
 )
 {
     try
@@ -1947,7 +1951,8 @@ void MMSEngineProcessor::generateAndIngestFrames(
             height = parametersRoot.get(field, "XXX").asInt();
         }
 
-        int64_t sourceMediaItemKey = dependencies.back();
+        pair<int64_t,Validator::DependencyType>& keyAndDependencyType = dependencies.back();
+        int64_t sourceMediaItemKey = keyAndDependencyType.first;
         
         int64_t encodingProfileKey = -1;
         string sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourceMediaItemKey, encodingProfileKey);
@@ -2144,7 +2149,7 @@ void MMSEngineProcessor::generateAndIngestSlideshow(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<int64_t>& dependencies
+        vector<pair<int64_t,Validator::DependencyType>>& dependencies
 )
 {
     try
@@ -2163,17 +2168,17 @@ void MMSEngineProcessor::generateAndIngestSlideshow(
         bool slideshowContentTypeInitialized = false;
         vector<string> sourcePhysicalPaths;
         
-        for (int64_t sourceMediaItemKey: dependencies)
+        for (pair<int64_t,Validator::DependencyType>& keyAndDependencyType: dependencies)
         {
             int64_t encodingProfileKey = -1;
-            string sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourceMediaItemKey, encodingProfileKey);
+            string sourcePhysicalPath = _mmsStorage->getPhysicalPath(keyAndDependencyType.first, encodingProfileKey);
 
             sourcePhysicalPaths.push_back(sourcePhysicalPath);
             
             bool warningIfMissing = false;
             
             MMSEngineDBFacade::ContentType contentType = _mmsEngineDBFacade->getMediaItemKeyDetails(
-                sourceMediaItemKey, warningIfMissing);
+                keyAndDependencyType.first, warningIfMissing);
             
             if (!slideshowContentTypeInitialized)
             {
@@ -2308,7 +2313,7 @@ void MMSEngineProcessor::generateAndIngestConcatenation(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<int64_t>& dependencies
+        vector<pair<int64_t,Validator::DependencyType>>& dependencies
 )
 {
     try
@@ -2327,17 +2332,17 @@ void MMSEngineProcessor::generateAndIngestConcatenation(
         bool concatContentTypeInitialized = false;
         vector<string> sourcePhysicalPaths;
         
-        for (int64_t sourceMediaItemKey: dependencies)
+        for (pair<int64_t,Validator::DependencyType>& keyAndDependencyType: dependencies)
         {
             int64_t encodingProfileKey = -1;
-            string sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourceMediaItemKey, encodingProfileKey);
+            string sourcePhysicalPath = _mmsStorage->getPhysicalPath(keyAndDependencyType.first, encodingProfileKey);
 
             sourcePhysicalPaths.push_back(sourcePhysicalPath);
             
             bool warningIfMissing = false;
             
             MMSEngineDBFacade::ContentType contentType = _mmsEngineDBFacade->getMediaItemKeyDetails(
-                sourceMediaItemKey, warningIfMissing);
+                keyAndDependencyType.first, warningIfMissing);
             
             if (!concatContentTypeInitialized)
             {
@@ -2459,7 +2464,7 @@ void MMSEngineProcessor::generateAndIngestCutMedia(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<int64_t>& dependencies
+        vector<pair<int64_t,Validator::DependencyType>>& dependencies
 )
 {
     try
@@ -2474,7 +2479,8 @@ void MMSEngineProcessor::generateAndIngestCutMedia(
             throw runtime_error(errorMessage);
         }
         
-        int64_t sourceMediaItemKey = dependencies.back();
+        pair<int64_t,Validator::DependencyType>& keyAndDependencyType = dependencies.back();
+        int64_t sourceMediaItemKey = keyAndDependencyType.first;
 
         int64_t encodingProfileKey = -1;
         string sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourceMediaItemKey, encodingProfileKey);
@@ -2683,7 +2689,7 @@ void MMSEngineProcessor::manageEmailNotification(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<int64_t>& dependencies
+        vector<pair<int64_t,Validator::DependencyType>>& dependencies
 )
 {
     try
@@ -2699,12 +2705,12 @@ void MMSEngineProcessor::manageEmailNotification(
         }
         
         string sIngestionJobJeyDependency;
-        for (int64_t ingestionJobKeyDependency: dependencies)
+        for (pair<int64_t,Validator::DependencyType>& keyAndDependencyType: dependencies)
         {
             if (sIngestionJobJeyDependency == "")
-                sIngestionJobJeyDependency = to_string(ingestionJobKeyDependency);
+                sIngestionJobJeyDependency = to_string(keyAndDependencyType.first);
             else
-                sIngestionJobJeyDependency += (", " + to_string(ingestionJobKeyDependency));
+                sIngestionJobJeyDependency += (", " + to_string(keyAndDependencyType.first));
         }
         
         string field = "EmailAddress";

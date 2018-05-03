@@ -433,10 +433,10 @@ void Validator::validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTa
     }    
 }
 
-vector<int64_t> Validator::validateTaskMetadata(int64_t workspaceKey, Json::Value taskRoot)
+vector<pair<int64_t,Validator::DependencyType>> Validator::validateTaskMetadata(int64_t workspaceKey, Json::Value taskRoot)
 {
     MMSEngineDBFacade::IngestionType    ingestionType;
-    vector<int64_t>                     dependencies;
+    vector<pair<int64_t,DependencyType>>           dependencies;
 
     string field = "Type";
     if (!isMetadataPresent(taskRoot, field))
@@ -667,10 +667,10 @@ vector<int64_t> Validator::validateTaskMetadata(int64_t workspaceKey, Json::Valu
     return dependencies;
 }
 
-vector<int64_t> Validator::validateTaskMetadata(int64_t workspaceKey,
+vector<pair<int64_t,Validator::DependencyType>> Validator::validateTaskMetadata(int64_t workspaceKey,
         MMSEngineDBFacade::IngestionType ingestionType, Json::Value parametersRoot)
 {
-    vector<int64_t>                     dependencies;
+    vector<pair<int64_t,DependencyType>>                     dependencies;
 
     if (ingestionType == MMSEngineDBFacade::IngestionType::AddContent)
     {
@@ -777,7 +777,7 @@ void Validator::validateAddContentMetadata(
 }
 
 void Validator::validateRemoveContentMetadata(int64_t workspaceKey,
-    Json::Value parametersRoot, vector<int64_t>& dependencies)
+    Json::Value parametersRoot, vector<pair<int64_t,DependencyType>>& dependencies)
 {     
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
@@ -858,12 +858,12 @@ void Validator::validateRemoveContentMetadata(int64_t workspaceKey,
             }
             else if (referenceIngestionJobKey != -1)
             {
-                pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
-                        _mmsEngineDBFacade->getMediaItemKeyDetailsByIngestionJobKey(
+                tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyPhysicalPathKeyAndContentType = 
+                        _mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
                         referenceIngestionJobKey, warningIfMissing);  
 
-                referenceMediaItemKey = mediaItemKeyAndContentType.first;
-                referenceContentType = mediaItemKeyAndContentType.second;
+                tie(referenceMediaItemKey, referencePhysicalPathKey, referenceContentType) =
+                        mediaItemKeyPhysicalPathKeyAndContentType;
             }
             else // if (referenceUniqueName != "")
             {
@@ -909,14 +909,14 @@ void Validator::validateRemoveContentMetadata(int64_t workspaceKey,
         }
 
         if (referencePhysicalPathKey != -1)
-            dependencies.push_back(referencePhysicalPathKey);
+            dependencies.push_back(make_pair(referencePhysicalPathKey,DependencyType::PhysicalPathKey));
         else
-            dependencies.push_back(referenceMediaItemKey);
+            dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
     }    
 }
 
 void Validator::validateEncodeMetadata(int64_t workspaceKey,
-    Json::Value parametersRoot, vector<int64_t>& dependencies)
+    Json::Value parametersRoot, vector<pair<int64_t,DependencyType>>& dependencies)
 {
     string field = "EncodingPriority";
     if (isMetadataPresent(parametersRoot, field))
@@ -1025,12 +1025,14 @@ void Validator::validateEncodeMetadata(int64_t workspaceKey,
             }
             else if (referenceIngestionJobKey != -1)
             {
-                pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
-                        _mmsEngineDBFacade->getMediaItemKeyDetailsByIngestionJobKey(
+                int64_t referencePhysicalPathKey;
+                
+                tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyPhysicalPathKeyAndContentType = 
+                        _mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
                         referenceIngestionJobKey, warningIfMissing);  
 
-                referenceMediaItemKey = mediaItemKeyAndContentType.first;
-                referenceContentType = mediaItemKeyAndContentType.second;
+                tie(referenceMediaItemKey, referencePhysicalPathKey, referenceContentType) =
+                        mediaItemKeyPhysicalPathKeyAndContentType;
             }
             else // if (referenceUniqueName != "")
             {
@@ -1075,12 +1077,12 @@ void Validator::validateEncodeMetadata(int64_t workspaceKey,
             throw runtime_error(errorMessage);
         }
 
-        dependencies.push_back(referenceMediaItemKey);
+        dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
     }    
 }
 
 void Validator::validateFrameMetadata(int64_t workspaceKey,
-    Json::Value parametersRoot, vector<int64_t>& dependencies)
+    Json::Value parametersRoot, vector<pair<int64_t,DependencyType>>& dependencies)
 {
     // see sample in directory samples
      
@@ -1176,12 +1178,14 @@ void Validator::validateFrameMetadata(int64_t workspaceKey,
             }
             else if (referenceIngestionJobKey != -1)
             {
-                pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
-                        _mmsEngineDBFacade->getMediaItemKeyDetailsByIngestionJobKey(
+                int64_t referencePhysicalPathKey;
+                
+                tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyPhysicalPathKeyAndContentType = 
+                        _mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
                         referenceIngestionJobKey, warningIfMissing);  
 
-                referenceMediaItemKey = mediaItemKeyAndContentType.first;
-                referenceContentType = mediaItemKeyAndContentType.second;
+                tie(referenceMediaItemKey, referencePhysicalPathKey, referenceContentType) =
+                        mediaItemKeyPhysicalPathKeyAndContentType;
             }
             else // if (referenceUniqueName != "")
             {
@@ -1226,12 +1230,12 @@ void Validator::validateFrameMetadata(int64_t workspaceKey,
             throw runtime_error(errorMessage);
         }
 
-        dependencies.push_back(referenceMediaItemKey);
+        dependencies.push_back(make_pair(referenceMediaItemKey,DependencyType::MediaItemKey));
     }    
 }
 
 void Validator::validatePeriodicalFramesMetadata(int64_t workspaceKey,
-    Json::Value parametersRoot, vector<int64_t>& dependencies)
+    Json::Value parametersRoot, vector<pair<int64_t,DependencyType>>& dependencies)
 {
     vector<string> mandatoryFields = {
         // "SourceFileName",
@@ -1326,12 +1330,14 @@ void Validator::validatePeriodicalFramesMetadata(int64_t workspaceKey,
             }
             else if (referenceIngestionJobKey != -1)
             {
-                pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
-                        _mmsEngineDBFacade->getMediaItemKeyDetailsByIngestionJobKey(
+                int64_t referencePhysicalPathKey;
+                
+                tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyPhysicalPathKeyAndContentType = 
+                        _mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
                         referenceIngestionJobKey, warningIfMissing);  
 
-                referenceMediaItemKey = mediaItemKeyAndContentType.first;
-                referenceContentType = mediaItemKeyAndContentType.second;
+                tie(referenceMediaItemKey, referencePhysicalPathKey, referenceContentType) =
+                        mediaItemKeyPhysicalPathKeyAndContentType;
             }
             else // if (referenceUniqueName != "")
             {
@@ -1376,12 +1382,12 @@ void Validator::validatePeriodicalFramesMetadata(int64_t workspaceKey,
             throw runtime_error(errorMessage);
         }
 
-        dependencies.push_back(referenceMediaItemKey);
+        dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
     }        
 }
 
 void Validator::validateIFramesMetadata(int64_t workspaceKey,
-    Json::Value parametersRoot, vector<int64_t>& dependencies)
+    Json::Value parametersRoot, vector<pair<int64_t,DependencyType>>& dependencies)
 {
     // see sample in directory samples
         
@@ -1477,12 +1483,14 @@ void Validator::validateIFramesMetadata(int64_t workspaceKey,
             }
             else if (referenceIngestionJobKey != -1)
             {
-                pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
-                        _mmsEngineDBFacade->getMediaItemKeyDetailsByIngestionJobKey(
+                int64_t referencePhysicalPathKey;
+                
+                tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyPhysicalPathKeyAndContentType = 
+                        _mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
                         referenceIngestionJobKey, warningIfMissing);  
 
-                referenceMediaItemKey = mediaItemKeyAndContentType.first;
-                referenceContentType = mediaItemKeyAndContentType.second;
+                tie(referenceMediaItemKey, referencePhysicalPathKey, referenceContentType) =
+                        mediaItemKeyPhysicalPathKeyAndContentType;
             }
             else // if (referenceUniqueName != "")
             {
@@ -1541,12 +1549,12 @@ void Validator::validateIFramesMetadata(int64_t workspaceKey,
             throw runtime_error(errorMessage);
         }
 
-        dependencies.push_back(referenceMediaItemKey);
+        dependencies.push_back(make_pair(referenceMediaItemKey,DependencyType::MediaItemKey));
     }    
 }
 
 void Validator::validateSlideshowMetadata(int64_t workspaceKey,
-    Json::Value parametersRoot, vector<int64_t>& dependencies)
+    Json::Value parametersRoot, vector<pair<int64_t,DependencyType>>& dependencies)
 {
     // see sample in directory samples
         
@@ -1639,12 +1647,14 @@ void Validator::validateSlideshowMetadata(int64_t workspaceKey,
                 }
                 else if (referenceIngestionJobKey != -1)
                 {
-                    pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
-                            _mmsEngineDBFacade->getMediaItemKeyDetailsByIngestionJobKey(
+                    int64_t referencePhysicalPathKey;
+
+                    tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyPhysicalPathKeyAndContentType = 
+                            _mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
                             referenceIngestionJobKey, warningIfMissing);  
 
-                    referenceMediaItemKey = mediaItemKeyAndContentType.first;
-                    referenceContentType = mediaItemKeyAndContentType.second;
+                    tie(referenceMediaItemKey, referencePhysicalPathKey, referenceContentType) =
+                            mediaItemKeyPhysicalPathKeyAndContentType;
                 }
                 else // if (referenceUniqueName != "")
                 {
@@ -1690,13 +1700,13 @@ void Validator::validateSlideshowMetadata(int64_t workspaceKey,
                 throw runtime_error(errorMessage);
             }
 
-            dependencies.push_back(referenceMediaItemKey);
+            dependencies.push_back(make_pair(referenceMediaItemKey,DependencyType::MediaItemKey));
         }
     }
 }
 
 void Validator::validateConcatDemuxerMetadata(int64_t workspaceKey,
-    Json::Value parametersRoot, vector<int64_t>& dependencies)
+    Json::Value parametersRoot, vector<pair<int64_t,DependencyType>>& dependencies)
 {
     // see sample in directory samples
         
@@ -1793,12 +1803,14 @@ void Validator::validateConcatDemuxerMetadata(int64_t workspaceKey,
                 }
                 else if (referenceIngestionJobKey != -1)
                 {
-                    pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
-                            _mmsEngineDBFacade->getMediaItemKeyDetailsByIngestionJobKey(
+                    int64_t referencePhysicalPathKey;
+
+                    tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyPhysicalPathKeyAndContentType = 
+                            _mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
                             referenceIngestionJobKey, warningIfMissing);  
 
-                    referenceMediaItemKey = mediaItemKeyAndContentType.first;
-                    referenceContentType = mediaItemKeyAndContentType.second;
+                    tie(referenceMediaItemKey, referencePhysicalPathKey, referenceContentType) =
+                            mediaItemKeyPhysicalPathKeyAndContentType;
                 }
                 else // if (referenceUniqueName != "")
                 {
@@ -1845,13 +1857,13 @@ void Validator::validateConcatDemuxerMetadata(int64_t workspaceKey,
                 throw runtime_error(errorMessage);
             }
 
-            dependencies.push_back(referenceMediaItemKey);
+            dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
         }
     }
 }
 
 void Validator::validateCutMetadata(int64_t workspaceKey,
-    Json::Value parametersRoot, vector<int64_t>& dependencies)
+    Json::Value parametersRoot, vector<pair<int64_t, DependencyType>>& dependencies)
 {
     // see sample in directory samples
         
@@ -1971,12 +1983,14 @@ void Validator::validateCutMetadata(int64_t workspaceKey,
             }
             else if (referenceIngestionJobKey != -1)
             {
-                pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
-                        _mmsEngineDBFacade->getMediaItemKeyDetailsByIngestionJobKey(
+                int64_t referencePhysicalPathKey;
+
+                tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyPhysicalPathKeyAndContentType = 
+                        _mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
                         referenceIngestionJobKey, warningIfMissing);  
 
-                referenceMediaItemKey = mediaItemKeyAndContentType.first;
-                referenceContentType = mediaItemKeyAndContentType.second;
+                tie(referenceMediaItemKey, referencePhysicalPathKey, referenceContentType) =
+                        mediaItemKeyPhysicalPathKeyAndContentType;
             }
             else // if (referenceUniqueName != "")
             {
@@ -2021,12 +2035,12 @@ void Validator::validateCutMetadata(int64_t workspaceKey,
             throw runtime_error(errorMessage);
         }
 
-        dependencies.push_back(referenceMediaItemKey);
+        dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
     }        
 }
 
 void Validator::validateEmailNotificationMetadata(
-    Json::Value parametersRoot, vector<int64_t>& dependencies)
+    Json::Value parametersRoot, vector<pair<int64_t,DependencyType>>& dependencies)
 {
     // see sample in directory samples
         
@@ -2080,7 +2094,7 @@ void Validator::validateEmailNotificationMetadata(
                 referenceIngestionJobKey = referenceRoot.get(field, "XXX").asInt64();
             }        
 
-            dependencies.push_back(referenceIngestionJobKey);
+            dependencies.push_back(make_pair(referenceIngestionJobKey, DependencyType::IngestionJobKey));
         }
     }        
 }

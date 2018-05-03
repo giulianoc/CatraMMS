@@ -599,7 +599,7 @@ public:
     pair<int64_t,MMSEngineDBFacade::ContentType> getMediaItemKeyDetailsByPhysicalPathKey(
         int64_t referencePhysicalPathKey, bool warningIfMissing);
     
-    pair<int64_t,MMSEngineDBFacade::ContentType> getMediaItemKeyDetailsByIngestionJobKey(
+    tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> getMediaItemDetailsByIngestionJobKey(
         int64_t referenceIngestionJobKey, bool warningIfMissing);
 
     pair<int64_t,MMSEngineDBFacade::ContentType> getMediaItemKeyDetailsByUniqueName(
