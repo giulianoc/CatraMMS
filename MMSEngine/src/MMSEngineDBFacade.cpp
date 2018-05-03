@@ -3350,8 +3350,8 @@ Json::Value MMSEngineDBFacade::getIngestionJobStatus (
             lastSQLCommand = 
                 "select ingestionJobKey, label, mediaItemKey, physicalPathKey, ingestionType, "
                 "DATE_FORMAT(startIngestion, '%Y-%m-%d %H:%i:%s') as startIngestion, DATE_FORMAT(endIngestion, '%Y-%m-%d %H:%i:%s') as endIngestion, "
-                "downloadingProgress, uploadingProgress, "
-                "status, errorMessage from MMS_IngestionJob where ingestionRootKey = ? order by endIngestion asc";
+                "IF(endIngestion is null, NOW(), endIngestion) as newEndIngestion, downloadingProgress, uploadingProgress, "
+                "status, errorMessage from MMS_IngestionJob where ingestionRootKey = ? order by startIngestion, newEndIngestion asc";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
