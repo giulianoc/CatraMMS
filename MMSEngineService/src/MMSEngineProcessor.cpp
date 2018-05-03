@@ -1710,21 +1710,22 @@ void MMSEngineProcessor::removeContent(
             throw runtime_error(errorMessage);
         }
 
-        pair<int64_t,Validator::DependencyType>& keyAndDependencyType = dependencies.back();
-        
-        if (keyAndDependencyType.second == Validator::DependencyType::MediaItemKey)
+        for (pair<int64_t,Validator::DependencyType>& keyAndDependencyType: dependencies)
         {
-            _logger->info(__FILEREF__ + "removeMediaItem"
-                + ", mediaItemKey: " + to_string(keyAndDependencyType.first)
-            );
-            _mmsStorage->removeMediaItem(keyAndDependencyType.first);
-        }
-        else
-        {
-            _logger->info(__FILEREF__ + "removePhysicalPath"
-                + ", physicalPathKey: " + to_string(keyAndDependencyType.first)
-            );
-            _mmsStorage->removePhysicalPath(keyAndDependencyType.first);
+            if (keyAndDependencyType.second == Validator::DependencyType::MediaItemKey)
+            {
+                _logger->info(__FILEREF__ + "removeMediaItem"
+                    + ", mediaItemKey: " + to_string(keyAndDependencyType.first)
+                );
+                _mmsStorage->removeMediaItem(keyAndDependencyType.first);
+            }
+            else
+            {
+                _logger->info(__FILEREF__ + "removePhysicalPath"
+                    + ", physicalPathKey: " + to_string(keyAndDependencyType.first)
+                );
+                _mmsStorage->removePhysicalPath(keyAndDependencyType.first);
+            }
         }
 
         _logger->info(__FILEREF__ + "Update IngestionJob"
