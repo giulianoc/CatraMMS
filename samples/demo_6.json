@@ -62,6 +62,16 @@
 					}
 				}
 			}
+		},
+		"OnComplete": {
+			"Task": {
+				"Type": "Email-Notification",
+				"Parameters": {
+					"EmailAddress": "giulianoc@catrasoftware.it",
+					"Subject": "Task finished",
+					"Message": "Task __INGESTIONJOBKEY__ has finished"
+				}
+			}
 		}
 	}
 }

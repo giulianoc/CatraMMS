@@ -1948,6 +1948,8 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
     string executionType = groupOfTasksRoot.get(field, "XXX").asString();
     if (executionType == "parallel")
         parallelTasks = true;
+    else if (executionType == "sequential")
+        parallelTasks = false;
     else
     {
         string errorMessage = __FILEREF__ + "executionType field is wrong"
@@ -1977,23 +1979,47 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
         throw runtime_error(errorMessage);
     }
 
-    vector<int64_t> localDependOnIngestionJobKeys;
+    vector<int64_t> newDependOnIngestionJobKeys;
+    vector<int64_t> lastDependOnIngestionJobKeys;
     for (int taskIndex = 0; taskIndex < tasksRoot.size(); ++taskIndex)
     {
         Json::Value taskRoot = tasksRoot[taskIndex];
         
-        vector<int64_t> ingestionTaskDependOnIngestionJobKey = ingestionTask(
+        vector<int64_t> localIngestionTaskDependOnIngestionJobKey;
+        if (parallelTasks)
+        {
+            localIngestionTaskDependOnIngestionJobKey = ingestionTask(
                 conn, workspace, ingestionRootKey, taskRoot, dependOnIngestionJobKeys, 
-                dependOnSuccess, responseBody);    
+                dependOnSuccess, responseBody);
+        }
+        else
+        {
+            if (taskIndex == 0)
+            {
+                localIngestionTaskDependOnIngestionJobKey = ingestionTask(
+                    conn, workspace, ingestionRootKey, taskRoot, dependOnIngestionJobKeys, 
+                    dependOnSuccess, responseBody);
+            }
+            else
+            {
+                int localDependOnSuccess = -1;
+                
+                localIngestionTaskDependOnIngestionJobKey = ingestionTask(
+                    conn, workspace, ingestionRootKey, taskRoot, lastDependOnIngestionJobKeys, 
+                    localDependOnSuccess, responseBody);
+            }
+            
+            lastDependOnIngestionJobKeys = localIngestionTaskDependOnIngestionJobKey;
+        }
 
-        for (int64_t localDependOnIngestionJobKey: ingestionTaskDependOnIngestionJobKey)
-            localDependOnIngestionJobKeys.push_back(localDependOnIngestionJobKey);
+        for (int64_t localDependOnIngestionJobKey: localIngestionTaskDependOnIngestionJobKey)
+            newDependOnIngestionJobKeys.push_back(localDependOnIngestionJobKey);
     }
 
     ingestionEvents(conn, workspace, ingestionRootKey, groupOfTasksRoot, 
-        localDependOnIngestionJobKeys, responseBody);
+        newDependOnIngestionJobKeys, responseBody);
     
-    return localDependOnIngestionJobKeys;
+    return newDependOnIngestionJobKeys;
 }    
 
 void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
