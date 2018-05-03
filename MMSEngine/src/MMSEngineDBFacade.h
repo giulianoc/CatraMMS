@@ -369,6 +369,7 @@ public:
         SourceMovingInProgress,
         SourceCopingInProgress,
         SourceUploadingInProgress,
+        EncodingQueued,
 
         End_DownloadCancelledByUser,   
 
@@ -398,6 +399,8 @@ public:
                 return "SourceCopingInProgress";
             case IngestionStatus::SourceUploadingInProgress:
                 return "SourceUploadingInProgress";
+            case IngestionStatus::EncodingQueued:
+                return "EncodingQueued";
             case IngestionStatus::End_DownloadCancelledByUser:
                 return "End_DownloadCancelledByUser";
             case IngestionStatus::End_ValidationMetadataFailed:
@@ -432,6 +435,8 @@ public:
             return IngestionStatus::SourceCopingInProgress;
         else if (lowerCase == "sourceuploadinginprogress")
             return IngestionStatus::SourceUploadingInProgress;
+        else if (lowerCase == "encodingqueued")
+            return IngestionStatus::EncodingQueued;
         else if (lowerCase == "end_downloadcancelledbyuser")
             return IngestionStatus::End_DownloadCancelledByUser;
         else if (lowerCase == "end_validationmetadatafailed")
