@@ -328,7 +328,8 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey, Json::Value g
     }
 
     string executionType = groupOfTasksRoot.get(field, "XXX").asString();
-    if (executionType != "parallel")
+    if (executionType != "parallel" 
+            && executionType != "sequential")
     {
         string errorMessage = __FILEREF__ + "executionType field is wrong"
                 + ", executionType: " + executionType;
