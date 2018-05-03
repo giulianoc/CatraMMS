@@ -1571,18 +1571,20 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 
                                 if (MMSEngineDBFacade::isIngestionStatusFinalState(ingestionStatusDependency))
                                 {
-                                    if (dependOnSuccess && MMSEngineDBFacade::isIngestionStatusFailed(ingestionStatusDependency))
+                                    if (dependOnSuccess == 1 && MMSEngineDBFacade::isIngestionStatusFailed(ingestionStatusDependency))
                                     {
                                         ingestionJobToBeManaged = false;
 
                                         break;
                                     }
-                                    else if (!dependOnSuccess && MMSEngineDBFacade::isIngestionStatusSuccess(ingestionStatusDependency))
+                                    else if (dependOnSuccess == 0 && MMSEngineDBFacade::isIngestionStatusSuccess(ingestionStatusDependency))
                                     {
                                         ingestionJobToBeManaged = false;
 
                                         break;
                                     }
+                                    // else if (dependOnSuccess == -1)
+                                    //      It means OnComplete and we have to do it since it's a final state
                                 }
                                 else
                                 {
