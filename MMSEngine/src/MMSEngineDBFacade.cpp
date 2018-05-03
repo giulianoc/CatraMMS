@@ -6724,7 +6724,7 @@ tuple<int,string,string,string> MMSEngineDBFacade::getStorageDetails(
             lastSQLCommand = string("") +
                 "select mi.workspaceKey, pp.partitionNumber, pp.relativePath, pp.fileName "
                 "from MMS_MediaItem mi, MMS_PhysicalPath pp "
-                "where mi.mediaItemKey = pp.mediaItemKey and mi.physicalPathKey = ? ";
+                "where mi.mediaItemKey = pp.mediaItemKey and pp.physicalPathKey = ? ";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;

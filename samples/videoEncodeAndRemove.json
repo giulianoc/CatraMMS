@@ -12,7 +12,7 @@
             "FileFormat": "mp4",
             "UserData": { "MyData": "this is my video data" },
             "Title": "${TitleOfVideo}",
-	    "FileSizeInBytes": 278341022
+			"FileSizeInBytes": 278341022
         },
         "OnSuccess": {
             "Task": {
