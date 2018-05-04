@@ -105,7 +105,7 @@ private:
         unordered_map<string, string> queryParameters,
         string requestBody);
 
-    vector<int64_t> ingestionTask(shared_ptr<MySQLConnection> conn,
+    vector<int64_t> ingestionSingleTask(shared_ptr<MySQLConnection> conn,
             shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
             Json::Value taskRoot, 
             vector<int64_t> dependOnIngestionJobKeysExecution, int dependOnSuccess,

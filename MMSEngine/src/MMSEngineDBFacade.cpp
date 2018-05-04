@@ -2045,8 +2045,7 @@ shared_ptr<MySQLConnection> MMSEngineDBFacade::endIngestionJobs (
 
 int64_t MMSEngineDBFacade::addIngestionRoot (
         shared_ptr<MySQLConnection> conn,
-    	int64_t workspaceKey, string rootType, string rootLabel,
-        bool rootLabelDuplication
+    	int64_t workspaceKey, string rootType, string rootLabel
 )
 {
     int64_t     ingestionRootKey;
@@ -2055,33 +2054,6 @@ int64_t MMSEngineDBFacade::addIngestionRoot (
     
     try
     {
-        if (!rootLabelDuplication)
-        {
-            lastSQLCommand = 
-                "select ingestionRootKey from MMS_IngestionRoot where workspaceKey = ? and label = ?";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
-            preparedStatement->setString(queryParameterIndex++, rootLabel);
-            
-            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-            if (resultSet->next())
-            {
-                int64_t ingestionRootKey = resultSet->getInt64("ingestionRootKey");
-                
-                {
-                    string errorMessage = __FILEREF__ + "IngestionRoot is already present"
-                        + ", ingestionRootKey: " + to_string(ingestionRootKey)
-                        + ", rootLabel: " + rootLabel
-                        + ", lastSQLCommand: " + lastSQLCommand
-                    ;
-                    _logger->error(errorMessage);
-                    
-                    throw runtime_error(errorMessage);                    
-                }
-            }
-        }
-
         {
             {
                 lastSQLCommand = 
