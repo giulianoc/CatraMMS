@@ -2060,8 +2060,10 @@ void Validator::validateEmailNotificationMetadata(
         Json::Value referencesRoot = parametersRoot[field];
         if (referencesRoot.size() < 1)
         {
-            string errorMessage = __FILEREF__ + "Field is present but it does not have enough elements (2)"
-                    + ", Field: " + field;
+            string errorMessage = __FILEREF__ + "Field is present but it does not have enough elements"
+                    + ", Field: " + field
+                    + ", referencesRoot.size(): " + to_string(referencesRoot.size())
+                    ;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);

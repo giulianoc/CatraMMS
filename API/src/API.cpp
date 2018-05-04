@@ -1925,11 +1925,13 @@ vector<int64_t> API::ingestionTask(shared_ptr<MySQLConnection> conn,
             + "}");
 
     vector<int64_t> localDependOnIngestionJobKeysExecution;
+    vector<int64_t> localDependOnIngestionJobKeysReferences;
     localDependOnIngestionJobKeysExecution.push_back(localDependOnIngestionJobKeyExecution);
+    localDependOnIngestionJobKeysReferences.push_back(localDependOnIngestionJobKeyExecution);
     
     ingestionEvents(conn, workspace, ingestionRootKey, taskRoot, 
             localDependOnIngestionJobKeysExecution, 
-            dependOnIngestionJobKeysReferences, responseBody);
+            localDependOnIngestionJobKeysReferences, responseBody);
     
     
     return localDependOnIngestionJobKeysExecution;
@@ -1989,6 +1991,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
     }
 
     vector<int64_t> newDependOnIngestionJobKeysExecution;
+    vector<int64_t> newDependOnIngestionJobKeysReferences;
     vector<int64_t> lastDependOnIngestionJobKeysExecution;
     for (int taskIndex = 0; taskIndex < tasksRoot.size(); ++taskIndex)
     {
@@ -2028,12 +2031,15 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
         }
 
         for (int64_t localDependOnIngestionJobKey: localIngestionTaskDependOnIngestionJobKeyExecution)
+        {
             newDependOnIngestionJobKeysExecution.push_back(localDependOnIngestionJobKey);
+            newDependOnIngestionJobKeysReferences.push_back(localDependOnIngestionJobKey);
+        }
     }
 
     ingestionEvents(conn, workspace, ingestionRootKey, groupOfTasksRoot, 
             newDependOnIngestionJobKeysExecution, 
-            dependOnIngestionJobKeysReferences, responseBody);
+            newDependOnIngestionJobKeysReferences, responseBody);
     
     return newDependOnIngestionJobKeysExecution;
 }    
