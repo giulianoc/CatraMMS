@@ -349,7 +349,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                     {
                         Validator validator(_logger, _mmsEngineDBFacade);
                         
-                        dependencies = validator.validateTaskMetadata(
+                        dependencies = validator.validateSingleTaskMetadata(
                                 workspace->_workspaceKey, ingestionType, parametersRoot);                        
                     }
                     catch(runtime_error e)
@@ -1062,7 +1062,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             throw runtime_error(errorMessage);
         }
         
-        dependencies = validator.validateTaskMetadata(
+        dependencies = validator.validateSingleTaskMetadata(
                 localAssetIngestionEvent->getWorkspace()->_workspaceKey,
                 localAssetIngestionEvent->getIngestionType(), parametersRoot);
     }

@@ -49,10 +49,15 @@ server {
 		}
 
 		if ($request_method = GET) {
-			rewrite ^/catramms/(v[0-9]+)/ingestion/([0-9]+)/?$ /api?version=$1&method=ingestionStatus&ingestionRootKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/ingestion/([0-9]+)/?([0-9]*)/?$ /api?version=$1&method=ingestionStatus&ingestionRootKey=$2&ingestionJobKey=$3 last;
 		}
 		if ($request_method = POST) {
 			rewrite ^/catramms/(v[0-9]+)/ingestion/?$ /api?version=$1&method=ingestion last;
+		}
+
+		if ($request_method = GET) {
+			rewrite ^/catramms/(v[0-9]+)/content/?$ /api?version=$1&method=contentList last;
+			#rewrite ^/catramms/(v[0-9]+)/content/([0-9]+)/?([0-9]*)/?$ /api?version=$1&method=contentDetails&mediaItemKey=$2&ingestionJobKey=$3 last;
 		}
 
 		if ($request_method = PUT) {

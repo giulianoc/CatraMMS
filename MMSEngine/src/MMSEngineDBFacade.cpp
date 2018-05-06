@@ -3286,7 +3286,7 @@ void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred (
 }
 
 Json::Value MMSEngineDBFacade::getIngestionJobStatus (
-        int64_t ingestionRootKey
+        int64_t ingestionRootKey, int64_t ingestionJobKey
 )
 {    
     string      lastSQLCommand;
@@ -3334,15 +3334,24 @@ Json::Value MMSEngineDBFacade::getIngestionJobStatus (
 
         Json::Value tasksRoot(Json::arrayValue);
         {
-            lastSQLCommand = 
-                "select ingestionJobKey, label, mediaItemKey, physicalPathKey, ingestionType, "
-                "DATE_FORMAT(startIngestion, '%Y-%m-%d %H:%i:%s') as startIngestion, DATE_FORMAT(endIngestion, '%Y-%m-%d %H:%i:%s') as endIngestion, "
-                "IF(endIngestion is null, NOW(), endIngestion) as newEndIngestion, downloadingProgress, uploadingProgress, "
-                "status, errorMessage from MMS_IngestionJob where ingestionRootKey = ? order by startIngestion, newEndIngestion asc";
+            if (ingestionJobKey == -1)
+                lastSQLCommand = 
+                    "select ingestionJobKey, label, mediaItemKey, physicalPathKey, ingestionType, "
+                    "DATE_FORMAT(startIngestion, '%Y-%m-%d %H:%i:%s') as startIngestion, DATE_FORMAT(endIngestion, '%Y-%m-%d %H:%i:%s') as endIngestion, "
+                    "IF(endIngestion is null, NOW(), endIngestion) as newEndIngestion, downloadingProgress, uploadingProgress, "
+                    "status, errorMessage from MMS_IngestionJob where ingestionRootKey = ? order by startIngestion, newEndIngestion asc";
+            else
+                lastSQLCommand = 
+                    "select ingestionJobKey, label, mediaItemKey, physicalPathKey, ingestionType, "
+                    "DATE_FORMAT(startIngestion, '%Y-%m-%d %H:%i:%s') as startIngestion, DATE_FORMAT(endIngestion, '%Y-%m-%d %H:%i:%s') as endIngestion, "
+                    "IF(endIngestion is null, NOW(), endIngestion) as newEndIngestion, downloadingProgress, uploadingProgress, "
+                    "status, errorMessage from MMS_IngestionJob where ingestionRootKey = ? and ingestionJobKey = ? order by startIngestion, newEndIngestion asc";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, ingestionRootKey);
+            if (ingestionJobKey != -1)
+                preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             while (resultSet->next())
             {

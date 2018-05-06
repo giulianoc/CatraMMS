@@ -595,7 +595,7 @@ public:
         bool sourceBinaryTransferred);
 
     Json::Value getIngestionJobStatus (
-        int64_t ingestionRootKey);
+        int64_t ingestionRootKey, int64_t ingestionJobKey);
 
     MMSEngineDBFacade::ContentType getMediaItemKeyDetails(
         int64_t referenceMediaItemKey, bool warningIfMissing);

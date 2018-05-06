@@ -41,13 +41,12 @@ public:
 
     void validateGroupOfTasksMetadata(int64_t workspaceKey, Json::Value groupOfTasksRoot);
 
-    vector<pair<int64_t,Validator::DependencyType>> validateTaskMetadata(int64_t workspaceKey, Json::Value taskRoot);
+    vector<pair<int64_t,Validator::DependencyType>> validateSingleTaskMetadata(int64_t workspaceKey, Json::Value taskRoot);
 
     void validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTasksRoot);
 
-    vector<pair<int64_t,Validator::DependencyType>> validateTaskMetadata(int64_t workspaceKey,
-        MMSEngineDBFacade::IngestionType ingestionType, 
-        Json::Value parametersRoot);
+    vector<pair<int64_t,Validator::DependencyType>> validateSingleTaskMetadata(int64_t workspaceKey,
+        MMSEngineDBFacade::IngestionType ingestionType, Json::Value parametersRoot);
 
     void validateAddContentMetadata(Json::Value parametersRoot);
 

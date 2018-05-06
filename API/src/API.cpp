@@ -1389,9 +1389,13 @@ void API::ingestionStatus(
             throw runtime_error(errorMessage);
         }
 
+        auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
+        
         {
             Json::Value ingestionStatusRoot = _mmsEngineDBFacade->getIngestionJobStatus(
-                    stoll(ingestionRootKeyIt->second));
+                    stoll(ingestionRootKeyIt->second),
+                    ingestionJobKeyIt->second == "" ? -1 : stoll(ingestionJobKeyIt->second)
+                    );
 
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, ingestionStatusRoot);
@@ -2028,16 +2032,11 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
         {            
             if (taskType == "GroupOfTasks")
             {
-                /*
-                Json::Value groupOfTasksRoot = requestBodyRoot[groupOfTasksField];
-                
-                vector<int64_t> dependOnIngestionJobKeysExecution;
-                int localDependOnSuccess = 0;   // it is not important since dependOnIngestionJobKey is -1
-                ingestionGroupOfTasks(conn, workspace, ingestionRootKey, taskRoot, 
-                        dependOnIngestionJobKeysExecution, localDependOnSuccess,
-                        dependOnIngestionJobKeysExecution,
-                        responseBody); 
-                */
+                localIngestionTaskDependOnIngestionJobKeyExecution = ingestionGroupOfTasks(
+                    conn, workspace, ingestionRootKey, taskRoot, 
+                    dependOnIngestionJobKeysExecution, dependOnSuccess, 
+                    dependOnIngestionJobKeysReferences,
+                    responseBody);
             }
             else
             {
@@ -2054,16 +2053,11 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
             {
                 if (taskType == "GroupOfTasks")
                 {
-                    /*
-                    Json::Value groupOfTasksRoot = requestBodyRoot[groupOfTasksField];
-
-                    vector<int64_t> dependOnIngestionJobKeysExecution;
-                    int localDependOnSuccess = 0;   // it is not important since dependOnIngestionJobKey is -1
-                    ingestionGroupOfTasks(conn, workspace, ingestionRootKey, taskRoot, 
-                            dependOnIngestionJobKeysExecution, localDependOnSuccess,
-                            dependOnIngestionJobKeysExecution,
-                            responseBody); 
-                    */
+                    localIngestionTaskDependOnIngestionJobKeyExecution = ingestionGroupOfTasks(
+                        conn, workspace, ingestionRootKey, taskRoot, 
+                        dependOnIngestionJobKeysExecution, dependOnSuccess, 
+                        dependOnIngestionJobKeysReferences,
+                        responseBody);
                 }
                 else
                 {
@@ -2080,16 +2074,11 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
                 
                 if (taskType == "GroupOfTasks")
                 {
-                    /*
-                    Json::Value groupOfTasksRoot = requestBodyRoot[groupOfTasksField];
-
-                    vector<int64_t> dependOnIngestionJobKeysExecution;
-                    int localDependOnSuccess = 0;   // it is not important since dependOnIngestionJobKey is -1
-                    ingestionGroupOfTasks(conn, workspace, ingestionRootKey, taskRoot, 
-                            dependOnIngestionJobKeysExecution, localDependOnSuccess,
-                            dependOnIngestionJobKeysExecution,
-                            responseBody); 
-                    */
+                    localIngestionTaskDependOnIngestionJobKeyExecution = ingestionGroupOfTasks(
+                        conn, workspace, ingestionRootKey, taskRoot, 
+                        lastDependOnIngestionJobKeysExecution, localDependOnSuccess, 
+                        dependOnIngestionJobKeysReferences,
+                        responseBody);
                 }
                 else
                 {

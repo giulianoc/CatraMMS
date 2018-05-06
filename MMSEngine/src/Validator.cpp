@@ -102,8 +102,13 @@ void Validator::validateEncodingProfilesSetRootMetadata(
     {
         if (!isMetadataPresent(encodingProfilesSetRoot, mandatoryField))
         {
+            Json::StreamWriterBuilder wbuilder;
+            string sEncodingProfilesSetRoot = Json::writeString(wbuilder, encodingProfilesSetRoot);
+            
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + mandatoryField;
+                    + ", Field: " + mandatoryField
+                    + ", sEncodingProfilesSetRoot: " + sEncodingProfilesSetRoot
+                    ;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -143,8 +148,12 @@ void Validator::validateEncodingProfileRootVideoMetadata(
         {
             if (!isMetadataPresent(encodingProfileRoot, mandatoryField))
             {
+                Json::StreamWriterBuilder wbuilder;
+                string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
+                
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                        + ", Field: " + mandatoryField;
+                        + ", Field: " + mandatoryField
+                        + ", sEncodingProfileRoot: " + sEncodingProfileRoot;
                 _logger->error(errorMessage);
 
                 throw runtime_error(errorMessage);
@@ -167,8 +176,12 @@ void Validator::validateEncodingProfileRootVideoMetadata(
         {
             if (!isMetadataPresent(encodingProfileVideoRoot, mandatoryField))
             {
+                Json::StreamWriterBuilder wbuilder;
+                string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
+                
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                        + ", Field: " + mandatoryField;
+                        + ", Field: " + mandatoryField
+                        + ", sEncodingProfileRoot: " + sEncodingProfileRoot;
                 _logger->error(errorMessage);
 
                 throw runtime_error(errorMessage);
@@ -188,8 +201,12 @@ void Validator::validateEncodingProfileRootVideoMetadata(
         {
             if (!isMetadataPresent(encodingProfileAudioRoot, mandatoryField))
             {
+                Json::StreamWriterBuilder wbuilder;
+                string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
+                
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                        + ", Field: " + mandatoryField;
+                        + ", Field: " + mandatoryField
+                        + ", sEncodingProfileRoot: " + sEncodingProfileRoot;
                 _logger->error(errorMessage);
 
                 throw runtime_error(errorMessage);
@@ -211,8 +228,12 @@ void Validator::validateEncodingProfileRootAudioMetadata(
         {
             if (!isMetadataPresent(encodingProfileRoot, mandatoryField))
             {
+                Json::StreamWriterBuilder wbuilder;
+                string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
+                
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                        + ", Field: " + mandatoryField;
+                        + ", Field: " + mandatoryField
+                        + ", sEncodingProfileRoot: " + sEncodingProfileRoot;
                 _logger->error(errorMessage);
 
                 throw runtime_error(errorMessage);
@@ -232,8 +253,12 @@ void Validator::validateEncodingProfileRootAudioMetadata(
         {
             if (!isMetadataPresent(encodingProfileAudioRoot, mandatoryField))
             {
+                Json::StreamWriterBuilder wbuilder;
+                string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
+                
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                        + ", Field: " + mandatoryField;
+                        + ", Field: " + mandatoryField
+                        + ", sEncodingProfileRoot: " + sEncodingProfileRoot;
                 _logger->error(errorMessage);
 
                 throw runtime_error(errorMessage);
@@ -258,8 +283,12 @@ void Validator::validateEncodingProfileRootImageMetadata(
         {
             if (!isMetadataPresent(encodingProfileRoot, mandatoryField))
             {
+                Json::StreamWriterBuilder wbuilder;
+                string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
+                
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                        + ", Field: " + mandatoryField;
+                        + ", Field: " + mandatoryField
+                        + ", sEncodingProfileRoot: " + sEncodingProfileRoot;
                 _logger->error(errorMessage);
 
                 throw runtime_error(errorMessage);
@@ -273,8 +302,13 @@ void Validator::validateRootMetadata(int64_t workspaceKey, Json::Value root)
     string field = "Type";
     if (!_mmsEngineDBFacade->isMetadataPresent(root, field))
     {
+        Json::StreamWriterBuilder wbuilder;
+        string sRoot = Json::writeString(wbuilder, root);
+        
         string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                + ", Field: " + field;
+                + ", Field: " + 
+                + ", sRoot: " + sRoot
+                ;
         _logger->error(errorMessage);
 
         throw runtime_error(errorMessage);
@@ -289,45 +323,78 @@ void Validator::validateRootMetadata(int64_t workspaceKey, Json::Value root)
         throw runtime_error(errorMessage);
     }
     
-    string taskField = "Task";
-    string groupOfTasksField = "GroupOfTasks";
-    if (_mmsEngineDBFacade->isMetadataPresent(root, taskField))
+    field = "Task";
+    if (!_mmsEngineDBFacade->isMetadataPresent(root, field))
     {
-        Json::Value taskRoot = root[taskField];  
-
-        validateTaskMetadata(workspaceKey, taskRoot);
-    }
-    else if (_mmsEngineDBFacade->isMetadataPresent(root, groupOfTasksField))
-    {
-        Json::Value groupOfTasksRoot = root[groupOfTasksField];  
-
-        validateGroupOfTasksMetadata(workspaceKey, groupOfTasksRoot);
-    }
-    else
-    {
-        string errorMessage = __FILEREF__ + "Both Fields are not present or are null"
-                + ", Field: " + taskField
-                + ", Field: " + groupOfTasksField
-                ;
+        Json::StreamWriterBuilder wbuilder;
+        string sRoot = Json::writeString(wbuilder, root);
+        
+        string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                + ", Field: " + field
+                + ", sRoot: " + sRoot;
         _logger->error(errorMessage);
 
         throw runtime_error(errorMessage);
+    }    
+    Json::Value taskRoot = root[field];                        
+
+    field = "Type";
+    if (!_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
+    {
+        Json::StreamWriterBuilder wbuilder;
+        string sRoot = Json::writeString(wbuilder, root);
+        
+        string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                + ", Field: " + field
+                + ", sRoot: " + sRoot;
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }    
+    string taskType = taskRoot.get(field, "XXX").asString();
+
+    if (taskType == "GroupOfTasks")
+    {
+        validateGroupOfTasksMetadata(workspaceKey, taskRoot);
     }
+    else
+    {
+        validateSingleTaskMetadata(workspaceKey, taskRoot);
+    }    
 }
 
 void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey, Json::Value groupOfTasksRoot)
 {
-    string field = "ExecutionType";
-    if (!_mmsEngineDBFacade->isMetadataPresent(groupOfTasksRoot, field))
+    string field = "Parameters";
+    if (!isMetadataPresent(groupOfTasksRoot, field))
     {
+        Json::StreamWriterBuilder wbuilder;
+        string sGroupOfTasksRoot = Json::writeString(wbuilder, groupOfTasksRoot);
+        
         string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                + ", Field: " + field;
+                + ", Field: " + field
+                + ", sGroupOfTasksRoot: " + sGroupOfTasksRoot;
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    Json::Value parametersRoot = groupOfTasksRoot[field];
+    
+    field = "ExecutionType";
+    if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+    {
+        Json::StreamWriterBuilder wbuilder;
+        string sGroupOfTasksRoot = Json::writeString(wbuilder, groupOfTasksRoot);
+        
+        string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                + ", Field: " + field
+                + ", sGroupOfTasksRoot: " + sGroupOfTasksRoot;
         _logger->error(errorMessage);
 
         throw runtime_error(errorMessage);
     }
 
-    string executionType = groupOfTasksRoot.get(field, "XXX").asString();
+    string executionType = parametersRoot.get(field, "XXX").asString();
     if (executionType != "parallel" 
             && executionType != "sequential")
     {
@@ -339,16 +406,19 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey, Json::Value g
     }
 
     field = "Tasks";
-    if (!_mmsEngineDBFacade->isMetadataPresent(groupOfTasksRoot, field))
+    if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
     {
+        Json::StreamWriterBuilder wbuilder;
+        string sGroupOfTasksRoot = Json::writeString(wbuilder, groupOfTasksRoot);
+        
         string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                + ", Field: " + field;
+                + ", Field: " + field
+                + ", sGroupOfTasksRoot: " + sGroupOfTasksRoot;
         _logger->error(errorMessage);
 
         throw runtime_error(errorMessage);
     }
-    
-    Json::Value tasksRoot = groupOfTasksRoot[field];
+    Json::Value tasksRoot = parametersRoot[field];
     
     if (tasksRoot.size() == 0)
     {
@@ -362,7 +432,29 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey, Json::Value g
     {
         Json::Value taskRoot = tasksRoot[taskIndex];
         
-        validateTaskMetadata(workspaceKey, taskRoot);
+        field = "Type";
+        if (!_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sGroupOfTasksRoot = Json::writeString(wbuilder, groupOfTasksRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field
+                + ", sGroupOfTasksRoot: " + sGroupOfTasksRoot;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }    
+        string taskType = taskRoot.get(field, "XXX").asString();
+
+        if (taskType == "GroupOfTasks")
+        {
+            validateGroupOfTasksMetadata(workspaceKey, taskRoot);
+        }
+        else
+        {
+            validateSingleTaskMetadata(workspaceKey, taskRoot);
+        }        
     }
     
     validateEvents(workspaceKey, groupOfTasksRoot);
@@ -375,19 +467,43 @@ void Validator::validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTa
     {
         Json::Value onSuccessRoot = taskOrGroupOfTasksRoot[field];
         
-        string taskField = "Task";
-        string groupOfTasksField = "GroupOfTasks";
-        if (_mmsEngineDBFacade->isMetadataPresent(onSuccessRoot, taskField))
+        field = "Task";
+        if (!_mmsEngineDBFacade->isMetadataPresent(onSuccessRoot, field))
         {
-            Json::Value onSuccessTaskRoot = onSuccessRoot[taskField];                        
+            Json::StreamWriterBuilder wbuilder;
+            string sTaskOrGroupOfTasksRoot = Json::writeString(wbuilder, taskOrGroupOfTasksRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field
+                    + ", sTaskOrGroupOfTasksRoot: " + sTaskOrGroupOfTasksRoot;
+            _logger->error(errorMessage);
 
-            validateTaskMetadata(workspaceKey, onSuccessTaskRoot);
+            throw runtime_error(errorMessage);
+        }    
+        Json::Value taskRoot = onSuccessRoot[field];                        
+
+        string field = "Type";
+        if (!_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sTaskOrGroupOfTasksRoot = Json::writeString(wbuilder, taskOrGroupOfTasksRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field
+                    + ", sTaskOrGroupOfTasksRoot: " + sTaskOrGroupOfTasksRoot;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }    
+        string taskType = taskRoot.get(field, "XXX").asString();
+
+        if (taskType == "GroupOfTasks")
+        {
+            validateGroupOfTasksMetadata(workspaceKey, taskRoot);
         }
-        else if (_mmsEngineDBFacade->isMetadataPresent(onSuccessRoot, groupOfTasksField))
+        else
         {
-            Json::Value onSuccessGroupOfTasksRoot = onSuccessRoot[groupOfTasksField];                        
-
-            validateGroupOfTasksMetadata(workspaceKey, onSuccessGroupOfTasksRoot);
+            validateSingleTaskMetadata(workspaceKey, taskRoot);
         }
     }
 
@@ -396,19 +512,43 @@ void Validator::validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTa
     {
         Json::Value onErrorRoot = taskOrGroupOfTasksRoot[field];
         
-        string taskField = "Task";
-        string groupOfTasksField = "GroupOfTasks";
-        if (_mmsEngineDBFacade->isMetadataPresent(onErrorRoot, taskField))
+        field = "Task";
+        if (!_mmsEngineDBFacade->isMetadataPresent(onErrorRoot, field))
         {
-            Json::Value onErrorTaskRoot = onErrorRoot[taskField];                        
+            Json::StreamWriterBuilder wbuilder;
+            string sTaskOrGroupOfTasksRoot = Json::writeString(wbuilder, taskOrGroupOfTasksRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field
+                    + ", sTaskOrGroupOfTasksRoot: " + sTaskOrGroupOfTasksRoot;
+            _logger->error(errorMessage);
 
-            validateTaskMetadata(workspaceKey, onErrorTaskRoot);
+            throw runtime_error(errorMessage);
+        }    
+        Json::Value taskRoot = onErrorRoot[field];                        
+
+        string field = "Type";
+        if (!_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sTaskOrGroupOfTasksRoot = Json::writeString(wbuilder, taskOrGroupOfTasksRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field
+                    + ", sTaskOrGroupOfTasksRoot: " + sTaskOrGroupOfTasksRoot;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }    
+        string taskType = taskRoot.get(field, "XXX").asString();
+
+        if (taskType == "GroupOfTasks")
+        {
+            validateGroupOfTasksMetadata(workspaceKey, taskRoot);
         }
-        else if (_mmsEngineDBFacade->isMetadataPresent(onErrorRoot, groupOfTasksField))
+        else
         {
-            Json::Value onErrorGroupOfTasksRoot = onErrorRoot[groupOfTasksField];                        
-
-            validateGroupOfTasksMetadata(workspaceKey, onErrorGroupOfTasksRoot);
+            validateSingleTaskMetadata(workspaceKey, taskRoot);
         }
     }    
     
@@ -417,24 +557,48 @@ void Validator::validateEvents(int64_t workspaceKey, Json::Value taskOrGroupOfTa
     {
         Json::Value onCompleteRoot = taskOrGroupOfTasksRoot[field];
         
-        string taskField = "Task";
-        string groupOfTasksField = "GroupOfTasks";
-        if (_mmsEngineDBFacade->isMetadataPresent(onCompleteRoot, taskField))
+        field = "Task";
+        if (!_mmsEngineDBFacade->isMetadataPresent(onCompleteRoot, field))
         {
-            Json::Value onCompleteTaskRoot = onCompleteRoot[taskField];                        
+            Json::StreamWriterBuilder wbuilder;
+            string sTaskOrGroupOfTasksRoot = Json::writeString(wbuilder, taskOrGroupOfTasksRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field
+                    + ", sTaskOrGroupOfTasksRoot: " + sTaskOrGroupOfTasksRoot;
+            _logger->error(errorMessage);
 
-            validateTaskMetadata(workspaceKey, onCompleteTaskRoot);
+            throw runtime_error(errorMessage);
+        }    
+        Json::Value taskRoot = onCompleteRoot[field];                        
+
+        string field = "Type";
+        if (!_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sTaskOrGroupOfTasksRoot = Json::writeString(wbuilder, taskOrGroupOfTasksRoot);
+
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field
+                    + ", sTaskOrGroupOfTasksRoot: " + sTaskOrGroupOfTasksRoot;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }    
+        string taskType = taskRoot.get(field, "XXX").asString();
+
+        if (taskType == "GroupOfTasks")
+        {
+            validateGroupOfTasksMetadata(workspaceKey, taskRoot);
         }
-        else if (_mmsEngineDBFacade->isMetadataPresent(onCompleteRoot, groupOfTasksField))
+        else
         {
-            Json::Value onCompleteGroupOfTasksRoot = onCompleteRoot[groupOfTasksField];                        
-
-            validateGroupOfTasksMetadata(workspaceKey, onCompleteGroupOfTasksRoot);
+            validateSingleTaskMetadata(workspaceKey, taskRoot);
         }
     }    
 }
 
-vector<pair<int64_t,Validator::DependencyType>> Validator::validateTaskMetadata(int64_t workspaceKey, Json::Value taskRoot)
+vector<pair<int64_t,Validator::DependencyType>> Validator::validateSingleTaskMetadata(int64_t workspaceKey, Json::Value taskRoot)
 {
     MMSEngineDBFacade::IngestionType    ingestionType;
     vector<pair<int64_t,DependencyType>>           dependencies;
@@ -442,8 +606,12 @@ vector<pair<int64_t,Validator::DependencyType>> Validator::validateTaskMetadata(
     string field = "Type";
     if (!isMetadataPresent(taskRoot, field))
     {
+        Json::StreamWriterBuilder wbuilder;
+        string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            
         string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                + ", Field: " + field;
+                + ", Field: " + field
+                + ", sTaskRoot: " + sTaskRoot;
         _logger->error(errorMessage);
 
         throw runtime_error(errorMessage);
@@ -457,8 +625,12 @@ vector<pair<int64_t,Validator::DependencyType>> Validator::validateTaskMetadata(
         field = "Parameters";
         if (!isMetadataPresent(taskRoot, field))
         {
+            Json::StreamWriterBuilder wbuilder;
+            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + field;
+                    + ", Field: " + field
+                    + ", sTaskRoot: " + sTaskRoot;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -474,8 +646,12 @@ vector<pair<int64_t,Validator::DependencyType>> Validator::validateTaskMetadata(
         field = "Parameters";
         if (!isMetadataPresent(taskRoot, field))
         {
+            Json::StreamWriterBuilder wbuilder;
+            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + field;
+                    + ", Field: " + field
+                    + ", sTaskRoot: " + sTaskRoot;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -491,8 +667,12 @@ vector<pair<int64_t,Validator::DependencyType>> Validator::validateTaskMetadata(
         field = "Parameters";
         if (!isMetadataPresent(taskRoot, field))
         {
+            Json::StreamWriterBuilder wbuilder;
+            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + field;
+                    + ", Field: " + field
+                    + ", sTaskRoot: " + sTaskRoot;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -508,8 +688,12 @@ vector<pair<int64_t,Validator::DependencyType>> Validator::validateTaskMetadata(
         field = "Parameters";
         if (!isMetadataPresent(taskRoot, field))
         {
+            Json::StreamWriterBuilder wbuilder;
+            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + field;
+                    + ", Field: " + field
+                    + ", sTaskRoot: " + sTaskRoot;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -525,8 +709,12 @@ vector<pair<int64_t,Validator::DependencyType>> Validator::validateTaskMetadata(
         field = "Parameters";
         if (!isMetadataPresent(taskRoot, field))
         {
+            Json::StreamWriterBuilder wbuilder;
+            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + field;
+                    + ", Field: " + field
+                    + ", sTaskRoot: " + sTaskRoot;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -542,8 +730,12 @@ vector<pair<int64_t,Validator::DependencyType>> Validator::validateTaskMetadata(
         field = "Parameters";
         if (!isMetadataPresent(taskRoot, field))
         {
+            Json::StreamWriterBuilder wbuilder;
+            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + field;
+                    + ", Field: " + field
+                    + ", sTaskRoot: " + sTaskRoot;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -559,8 +751,12 @@ vector<pair<int64_t,Validator::DependencyType>> Validator::validateTaskMetadata(
         field = "Parameters";
         if (!isMetadataPresent(taskRoot, field))
         {
+            Json::StreamWriterBuilder wbuilder;
+            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + field;
+                    + ", Field: " + field
+                    + ", sTaskRoot: " + sTaskRoot;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -576,8 +772,12 @@ vector<pair<int64_t,Validator::DependencyType>> Validator::validateTaskMetadata(
         field = "Parameters";
         if (!isMetadataPresent(taskRoot, field))
         {
+            Json::StreamWriterBuilder wbuilder;
+            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + field;
+                    + ", Field: " + field
+                    + ", sTaskRoot: " + sTaskRoot;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -593,8 +793,12 @@ vector<pair<int64_t,Validator::DependencyType>> Validator::validateTaskMetadata(
         field = "Parameters";
         if (!isMetadataPresent(taskRoot, field))
         {
+            Json::StreamWriterBuilder wbuilder;
+            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + field;
+                    + ", Field: " + field
+                    + ", sTaskRoot: " + sTaskRoot;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -610,8 +814,12 @@ vector<pair<int64_t,Validator::DependencyType>> Validator::validateTaskMetadata(
         field = "Parameters";
         if (!isMetadataPresent(taskRoot, field))
         {
+            Json::StreamWriterBuilder wbuilder;
+            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + field;
+                    + ", Field: " + field
+                    + ", sTaskRoot: " + sTaskRoot;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -627,8 +835,12 @@ vector<pair<int64_t,Validator::DependencyType>> Validator::validateTaskMetadata(
         field = "Parameters";
         if (!isMetadataPresent(taskRoot, field))
         {
+            Json::StreamWriterBuilder wbuilder;
+            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + field;
+                    + ", Field: " + field
+                    + ", sTaskRoot: " + sTaskRoot;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -644,8 +856,12 @@ vector<pair<int64_t,Validator::DependencyType>> Validator::validateTaskMetadata(
         field = "Parameters";
         if (!isMetadataPresent(taskRoot, field))
         {
+            Json::StreamWriterBuilder wbuilder;
+            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + field;
+                    + ", Field: " + field
+                    + ", sTaskRoot: " + sTaskRoot;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -668,7 +884,7 @@ vector<pair<int64_t,Validator::DependencyType>> Validator::validateTaskMetadata(
     return dependencies;
 }
 
-vector<pair<int64_t,Validator::DependencyType>> Validator::validateTaskMetadata(int64_t workspaceKey,
+vector<pair<int64_t,Validator::DependencyType>> Validator::validateSingleTaskMetadata(int64_t workspaceKey,
         MMSEngineDBFacade::IngestionType ingestionType, Json::Value parametersRoot)
 {
     vector<pair<int64_t,DependencyType>>                     dependencies;
@@ -739,8 +955,13 @@ void Validator::validateAddContentMetadata(
     {
         if (!isMetadataPresent(parametersRoot, mandatoryField))
         {
+            Json::StreamWriterBuilder wbuilder;
+            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + mandatoryField;
+                    + ", Field: " + mandatoryField
+                    + ", sParametersRoot: " + sParametersRoot
+                    ;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -815,8 +1036,13 @@ void Validator::validateRemoveContentMetadata(int64_t workspaceKey,
                         field = "ReferenceUniqueName";
                         if (!isMetadataPresent(referenceRoot, field))
                         {
+                            Json::StreamWriterBuilder wbuilder;
+                            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+                            
                             string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                                    + ", Field: " + "Reference...";
+                                    + ", Field: " + "Reference..."
+                                    + ", sParametersRoot: " + sParametersRoot
+                                    ;
                             _logger->error(errorMessage);
 
                             throw runtime_error(errorMessage);
@@ -984,8 +1210,13 @@ void Validator::validateEncodeMetadata(int64_t workspaceKey,
                 field = "ReferenceUniqueName";
                 if (!isMetadataPresent(referenceRoot, field))
                 {
+                    Json::StreamWriterBuilder wbuilder;
+                    string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+                            
                     string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                            + ", Field: " + "Reference...";
+                            + ", Field: " + "Reference..."
+                            + ", sParametersRoot: " + sParametersRoot
+                            ;
                     _logger->error(errorMessage);
 
                     throw runtime_error(errorMessage);
@@ -1137,8 +1368,13 @@ void Validator::validateFrameMetadata(int64_t workspaceKey,
                 field = "ReferenceUniqueName";
                 if (!isMetadataPresent(referenceRoot, field))
                 {
+                    Json::StreamWriterBuilder wbuilder;
+                    string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+                    
                     string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                            + ", Field: " + "Reference...";
+                            + ", Field: " + "Reference..."
+                            + ", sParametersRoot: " + sParametersRoot
+                            ;
                     _logger->error(errorMessage);
 
                     throw runtime_error(errorMessage);
@@ -1236,8 +1472,13 @@ void Validator::validatePeriodicalFramesMetadata(int64_t workspaceKey,
     {
         if (!isMetadataPresent(parametersRoot, mandatoryField))
         {
+            Json::StreamWriterBuilder wbuilder;
+            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + mandatoryField;
+                    + ", Field: " + mandatoryField
+                    + ", sParametersRoot: " + sParametersRoot
+                    ;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -1289,8 +1530,13 @@ void Validator::validatePeriodicalFramesMetadata(int64_t workspaceKey,
                 field = "ReferenceUniqueName";
                 if (!isMetadataPresent(referenceRoot, field))
                 {
+                    Json::StreamWriterBuilder wbuilder;
+                    string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+                    
                     string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                            + ", Field: " + "Reference...";
+                            + ", Field: " + "Reference..."
+                            + ", sParametersRoot: " + sParametersRoot
+                            ;
                     _logger->error(errorMessage);
 
                     throw runtime_error(errorMessage);
@@ -1442,8 +1688,13 @@ void Validator::validateIFramesMetadata(int64_t workspaceKey,
                 field = "ReferenceUniqueName";
                 if (!isMetadataPresent(referenceRoot, field))
                 {
+                    Json::StreamWriterBuilder wbuilder;
+                    string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+                    
                     string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                            + ", Field: " + "Reference...";
+                            + ", Field: " + "Reference..."
+                            + ", sParametersRoot: " + sParametersRoot
+                            ;
                     _logger->error(errorMessage);
 
                     throw runtime_error(errorMessage);
@@ -1556,8 +1807,13 @@ void Validator::validateSlideshowMetadata(int64_t workspaceKey,
     {
         if (!isMetadataPresent(parametersRoot, mandatoryField))
         {
+            Json::StreamWriterBuilder wbuilder;
+            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+                    
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + mandatoryField;
+                    + ", Field: " + mandatoryField
+                    + ", sParametersRoot: " + sParametersRoot
+                    ;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -1606,8 +1862,13 @@ void Validator::validateSlideshowMetadata(int64_t workspaceKey,
                     field = "ReferenceUniqueName";
                     if (!isMetadataPresent(referenceRoot, field))
                     {
+                        Json::StreamWriterBuilder wbuilder;
+                        string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+                        
                         string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                                + ", Field: " + "Reference...";
+                                + ", Field: " + "Reference..."
+                                + ", sParametersRoot: " + sParametersRoot
+                                ;
                         _logger->error(errorMessage);
 
                         throw runtime_error(errorMessage);
@@ -1762,8 +2023,13 @@ void Validator::validateConcatDemuxerMetadata(int64_t workspaceKey,
                     field = "ReferenceUniqueName";
                     if (!isMetadataPresent(referenceRoot, field))
                     {
+                        Json::StreamWriterBuilder wbuilder;
+                        string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+                        
                         string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                                + ", Field: " + "Reference...";
+                                + ", Field: " + "Reference..."
+                                + ", sParametersRoot: " + sParametersRoot
+                                ;
                         _logger->error(errorMessage);
 
                         throw runtime_error(errorMessage);
@@ -1892,8 +2158,13 @@ void Validator::validateCutMetadata(int64_t workspaceKey,
     string field = "StartTimeInSeconds";
     if (!isMetadataPresent(parametersRoot, field))
     {
+        Json::StreamWriterBuilder wbuilder;
+        string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+                        
         string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                + ", Field: " + field;
+                + ", Field: " + field
+                + ", sParametersRoot: " + sParametersRoot
+                ;
         _logger->error(errorMessage);
 
         throw runtime_error(errorMessage);
@@ -1942,8 +2213,13 @@ void Validator::validateCutMetadata(int64_t workspaceKey,
                 field = "ReferenceUniqueName";
                 if (!isMetadataPresent(referenceRoot, field))
                 {
+                    Json::StreamWriterBuilder wbuilder;
+                    string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+                    
                     string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                            + ", Field: " + "Reference...";
+                            + ", Field: " + "Reference..."
+                            + ", sParametersRoot: " + sParametersRoot
+                            ;
                     _logger->error(errorMessage);
 
                     throw runtime_error(errorMessage);
@@ -2044,8 +2320,13 @@ void Validator::validateEmailNotificationMetadata(
     {
         if (!isMetadataPresent(parametersRoot, mandatoryField))
         {
+            Json::StreamWriterBuilder wbuilder;
+            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + mandatoryField;
+                    + ", Field: " + mandatoryField
+                    + ", sParametersRoot: " + sParametersRoot
+                    ;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -2076,8 +2357,13 @@ void Validator::validateEmailNotificationMetadata(
             field = "ReferenceIngestionJobKey";
             if (!isMetadataPresent(referenceRoot, field))
             {
+                Json::StreamWriterBuilder wbuilder;
+                string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+                
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                        + ", Field: " + "Reference...";
+                        + ", Field: " + "Reference..."
+                        + ", sParametersRoot: " + sParametersRoot
+                        ;
                 _logger->error(errorMessage);
 
                 throw runtime_error(errorMessage);
