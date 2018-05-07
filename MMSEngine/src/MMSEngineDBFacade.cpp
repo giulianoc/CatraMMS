@@ -3774,7 +3774,7 @@ Json::Value MMSEngineDBFacade::getContentList (
         if (contentTypePresent)
             sqlWhere += ("and contentType = ? ");
         if (startAndEndIngestionDatePresent)
-            sqlWhere += ("and ingestionDate > STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ') and ingestionDate < STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ') ");
+            sqlWhere += ("and ingestionDate >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), +00:00', @@session.time_zone) and ingestionDate =< convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), +00:00', @@session.time_zone) ");
         
         Json::Value responseRoot;
         {
