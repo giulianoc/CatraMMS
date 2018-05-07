@@ -4018,7 +4018,10 @@ Json::Value MMSEngineDBFacade::getContentList (
         }
 
         field = "mediaItems";
-        contentListRoot[field] = mediaItemsRoot;
+        responseRoot[field] = mediaItemsRoot;
+
+        field = "response";
+        contentListRoot[field] = responseRoot;
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
