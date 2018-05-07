@@ -1574,7 +1574,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                         "from MMS_IngestionRoot ir, MMS_IngestionJob ij "
                         "where ir.ingestionRootKey = ij.ingestionRootKey and ij.processorMMS is null "
                         "and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) "
-                        "limit ?, ? for update";
+                        "limit ? offset ? for update";
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
                 preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::Start_TaskQueued));
@@ -3793,11 +3793,13 @@ Json::Value MMSEngineDBFacade::getContentList (
                     "DATE_FORMAT(convert_tz(ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate, "
                     "contentType from MMS_MediaItem ")
                     + sqlWhere
-                    + " limit " + to_string (start) + " " + to_string(rows);
+                    + "limit ? offset ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            preparedStatement->setInt(queryParameterIndex++, start);
+            preparedStatement->setInt(queryParameterIndex++, rows);
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             while (resultSet->next())
             {
