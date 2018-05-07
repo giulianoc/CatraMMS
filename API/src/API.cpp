@@ -435,6 +435,23 @@ void API::manageRequestAndResponse(
         
         ingestionStatus(request, get<0>(workspaceAndFlags), queryParameters, requestBody);
     }
+    else if (method == "contentList")
+    {
+        bool isUserAPI = get<2>(workspaceAndFlags);
+        if (!isUserAPI)
+        {
+            string errorMessage = string("APIKey flags does not have the USER permission"
+                    ", isUserAPI: " + to_string(isUserAPI)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        
+        contentList(request, get<0>(workspaceAndFlags), queryParameters, requestBody);
+    }
     else if (method == "uploadedBinary")
     {
         bool isUserAPI = get<2>(workspaceAndFlags);
@@ -1393,9 +1410,85 @@ void API::ingestionStatus(
         
         {
             Json::Value ingestionStatusRoot = _mmsEngineDBFacade->getIngestionJobStatus(
+                    workspace->_workspaceKey,
                     stoll(ingestionRootKeyIt->second),
                     ingestionJobKeyIt->second == "" ? -1 : stoll(ingestionJobKeyIt->second)
                     );
+
+            Json::StreamWriterBuilder wbuilder;
+            string responseBody = Json::writeString(wbuilder, ingestionStatusRoot);
+            
+            sendSuccess(request, 200, responseBody);
+        }
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::contentList(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody)
+{
+    string api = "contentList";
+
+    _logger->info(__FILEREF__ + "Received " + api
+        + ", requestBody: " + requestBody
+    );
+
+    try
+    {
+        int start = 0;
+        auto startIt = queryParameters.find("start");
+        if (startIt != queryParameters.end())
+        {
+            start = stoll(startIt->second);
+        }
+
+        int rows = 10;
+        auto rowsIt = queryParameters.find("rows");
+        if (rowsIt != queryParameters.end())
+        {
+            rows = stoll(rowsIt->second);
+        }
+        
+        {
+            string startIngestionDate;
+            string endIngestionDate;
+            MMSEngineDBFacade::ContentType contentType;
+            
+            Json::Value ingestionStatusRoot = _mmsEngineDBFacade->getContentList(
+                    workspace->_workspaceKey, start, rows,
+                    startIngestionDate, endIngestionDate, contentType);
 
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, ingestionStatusRoot);

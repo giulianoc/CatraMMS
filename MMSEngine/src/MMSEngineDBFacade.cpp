@@ -3286,6 +3286,7 @@ void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred (
 }
 
 Json::Value MMSEngineDBFacade::getIngestionJobStatus (
+        int64_t workspaceKey,
         int64_t ingestionRootKey, int64_t ingestionJobKey
 )
 {    
@@ -3306,10 +3307,11 @@ Json::Value MMSEngineDBFacade::getIngestionJobStatus (
         Json::Value workflowRoot;
         {
             lastSQLCommand = 
-                "select label from MMS_IngestionRoot where ingestionRootKey = ?";
+                "select label from MMS_IngestionRoot where workspaceKey = ? and ingestionRootKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setInt64(queryParameterIndex++, ingestionRootKey);
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
@@ -3333,17 +3335,19 @@ Json::Value MMSEngineDBFacade::getIngestionJobStatus (
         }
 
         Json::Value tasksRoot(Json::arrayValue);
-        {
+        {            
             if (ingestionJobKey == -1)
                 lastSQLCommand = 
                     "select ingestionJobKey, label, mediaItemKey, physicalPathKey, ingestionType, "
-                    "DATE_FORMAT(startIngestion, '%Y-%m-%d %H:%i:%s') as startIngestion, DATE_FORMAT(endIngestion, '%Y-%m-%d %H:%i:%s') as endIngestion, "
+                    "DATE_FORMAT(convert_tz(startIngestion, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as startIngestion, "
+                    "DATE_FORMAT(convert_tz(endIngestion, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endIngestion, "
                     "IF(endIngestion is null, NOW(), endIngestion) as newEndIngestion, downloadingProgress, uploadingProgress, "
                     "status, errorMessage from MMS_IngestionJob where ingestionRootKey = ? order by startIngestion, newEndIngestion asc";
             else
                 lastSQLCommand = 
                     "select ingestionJobKey, label, mediaItemKey, physicalPathKey, ingestionType, "
-                    "DATE_FORMAT(startIngestion, '%Y-%m-%d %H:%i:%s') as startIngestion, DATE_FORMAT(endIngestion, '%Y-%m-%d %H:%i:%s') as endIngestion, "
+                    "DATE_FORMAT(convert_tz(startIngestion, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as startIngestion, "
+                    "DATE_FORMAT(convert_tz(endIngestion, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endIngestion, "
                     "IF(endIngestion is null, NOW(), endIngestion) as newEndIngestion, downloadingProgress, uploadingProgress, "
                     "status, errorMessage from MMS_IngestionJob where ingestionRootKey = ? and ingestionJobKey = ? order by startIngestion, newEndIngestion asc";
 
@@ -3475,6 +3479,82 @@ Json::Value MMSEngineDBFacade::getIngestionJobStatus (
                                 field = "videoDetails";
                                 taskRoot[field] = videoDetailsRoot;
                             }
+                            else if (contentType == ContentType::Audio)
+                            {
+                                int64_t durationInMilliSeconds;
+                                string codecName;
+                                long bitRate;
+                                long sampleRate;
+                                int channels;
+                                
+                                tuple<int64_t,string,long,long,int>
+                                    audioDetails = getAudioDetails(mediaItemKey);
+
+                                tie(durationInMilliSeconds, codecName, bitRate, sampleRate, channels) 
+                                        = audioDetails;
+
+                                Json::Value audioDetailsRoot;
+
+                                field = "durationInMilliSeconds";
+                                audioDetailsRoot[field] = durationInMilliSeconds;
+
+                                field = "codecName";
+                                audioDetailsRoot[field] = codecName;
+
+                                field = "bitRate";
+                                audioDetailsRoot[field] = (int64_t) bitRate;
+
+                                field = "sampleRate";
+                                audioDetailsRoot[field] = (int64_t) sampleRate;
+
+                                field = "channels";
+                                audioDetailsRoot[field] = channels;
+
+
+                                field = "audioDetails";
+                                taskRoot[field] = audioDetailsRoot;
+                            }
+                            else if (contentType == ContentType::Image)
+                            {
+                                int width;
+                                int height;
+                                string format;
+                                int quality;
+                                
+                                tuple<int,int,string,int>
+                                    imageDetails = getImageDetails(mediaItemKey);
+
+                                tie(width, height, format, quality) 
+                                        = imageDetails;
+
+                                Json::Value imageDetailsRoot;
+
+                                field = "width";
+                                imageDetailsRoot[field] = width;
+
+                                field = "height";
+                                imageDetailsRoot[field] = height;
+
+                                field = "format";
+                                imageDetailsRoot[field] = format;
+
+                                field = "quality";
+                                imageDetailsRoot[field] = quality;
+
+
+                                field = "audioDetails";
+                                taskRoot[field] = imageDetailsRoot;
+                            }
+                            else
+                            {
+                                string errorMessage = __FILEREF__ + "ContentType unmanaged"
+                                    + ", mediaItemKey: " + to_string(mediaItemKey)
+                                    + ", lastSQLCommand: " + lastSQLCommand
+                                ;
+                                _logger->error(errorMessage);
+
+                                throw runtime_error(errorMessage);  
+                            }
                         }
                         else
                         {
@@ -3532,8 +3612,10 @@ Json::Value MMSEngineDBFacade::getIngestionJobStatus (
                 if (ingestionType == IngestionType::Encode)
                 {
                     lastSQLCommand = 
-                        "select encodingProfileKey, status, encodingProgress, DATE_FORMAT(encodingJobStart, '%Y-%m-%d %H:%i:%s') as encodingJobStart, "
-                        "DATE_FORMAT(encodingJobEnd, '%Y-%m-%d %H:%i:%s') as encodingJobEnd, failuresNumber from MMS_EncodingJob where ingestionJobKey = ?";
+                        "select encodingProfileKey, status, encodingProgress, "
+                        "DATE_FORMAT(convert_tz(encodingJobStart, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as encodingJobStart, "
+                        "DATE_FORMAT(convert_tz(encodingJobEnd, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as encodingJobEnd, "
+                        "failuresNumber from MMS_EncodingJob where ingestionJobKey = ?";
 
                     shared_ptr<sql::PreparedStatement> preparedStatementEncodingJob (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
@@ -3641,6 +3723,351 @@ Json::Value MMSEngineDBFacade::getIngestionJobStatus (
     } 
     
     return statusRoot;
+}
+
+Json::Value MMSEngineDBFacade::getContentList (
+        int64_t workspaceKey,
+        int start, int rows,
+        string startIngestionDate, string endIngestionDate,
+        ContentType contentType
+)
+{    
+    string      lastSQLCommand;
+    Json::Value contentListRoot;
+    
+    shared_ptr<MySQLConnection> conn;
+
+    try
+    {
+        string field;
+        
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        {
+            Json::Value requestParametersRoot;
+            
+            field = "start";
+            requestParametersRoot[field] = start;
+
+            field = "rows";
+            requestParametersRoot[field] = rows;
+            
+            field = "requestParameters";
+            contentListRoot[field] = requestParametersRoot;
+        }
+        
+        string sqlWhere = "where workspaceKey = ? ";
+        
+        Json::Value responseRoot;
+        {
+            lastSQLCommand = 
+                string("select count(*) from MMS_MediaItem ")
+                    + sqlWhere;
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                field = "numFound";
+                responseRoot[field] = resultSet->getInt64(1);
+            }
+            else
+            {
+                string errorMessage ("select count(*) failed");
+
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+
+        Json::Value mediaItemsRoot(Json::arrayValue);
+        {
+            lastSQLCommand = 
+                string("select mediaItemKey, title, ingester, keywords, "
+                    "DATE_FORMAT(convert_tz(ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate, "
+                    "contentType from MMS_MediaItem ")
+                    + sqlWhere
+                    + " limit " + to_string (start) + " " + to_string(rows);
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            while (resultSet->next())
+            {
+                Json::Value mediaItemRoot;
+
+                int64_t mediaItemKey = resultSet->getInt64("mediaItemKey");
+
+                field = "mediaItemKey";
+                mediaItemRoot[field] = mediaItemKey;
+
+                field = "title";
+                mediaItemRoot[field] = static_cast<string>(resultSet->getString("title"));
+
+                field = "ingester";
+                if (resultSet->isNull("ingester"))
+                    mediaItemRoot[field] = Json::nullValue;
+                else
+                    mediaItemRoot[field] = static_cast<string>(resultSet->getString("ingester"));
+
+                field = "keywords";
+                if (resultSet->isNull("keywords"))
+                    mediaItemRoot[field] = Json::nullValue;
+                else
+                    mediaItemRoot[field] = static_cast<string>(resultSet->getString("keywords"));
+
+
+                field = "ingestionDate";
+                mediaItemRoot[field] = static_cast<string>(resultSet->getString("ingestionDate"));
+
+                ContentType contentType = MMSEngineDBFacade::toContentType(resultSet->getString("contentType"));
+                field = "contentType";
+                mediaItemRoot[field] = static_cast<string>(resultSet->getString("contentType"));
+
+                if (contentType == ContentType::Video)
+                {
+                    int64_t durationInMilliSeconds;
+                    int videoWidth;
+                    int videoHeight;
+                    long bitRate;
+                    string videoCodecName;
+                    string videoProfile;
+                    string videoAvgFrameRate;
+                    long videoBitRate;
+                    string audioCodecName;
+                    long audioSampleRate;
+                    int audioChannels;
+                    long audioBitRate;
+
+                    tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
+                        videoDetails = getVideoDetails(mediaItemKey);
+
+                    tie(durationInMilliSeconds, bitRate,
+                        videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
+                        audioCodecName, audioSampleRate, audioChannels, audioBitRate) = videoDetails;
+
+                    Json::Value videoDetailsRoot;
+
+                    field = "durationInMilliSeconds";
+                    videoDetailsRoot[field] = durationInMilliSeconds;
+
+                    field = "videoWidth";
+                    videoDetailsRoot[field] = videoWidth;
+
+                    field = "videoHeight";
+                    videoDetailsRoot[field] = videoHeight;
+
+                    field = "bitRate";
+                    videoDetailsRoot[field] = (int64_t) bitRate;
+
+                    field = "videoCodecName";
+                    videoDetailsRoot[field] = videoCodecName;
+
+                    field = "videoProfile";
+                    videoDetailsRoot[field] = videoProfile;
+
+                    field = "videoAvgFrameRate";
+                    videoDetailsRoot[field] = videoAvgFrameRate;
+
+                    field = "videoBitRate";
+                    videoDetailsRoot[field] = (int64_t) videoBitRate;
+
+                    field = "audioCodecName";
+                    videoDetailsRoot[field] = audioCodecName;
+
+                    field = "audioSampleRate";
+                    videoDetailsRoot[field] = (int64_t) audioSampleRate;
+
+                    field = "audioChannels";
+                    videoDetailsRoot[field] = audioChannels;
+
+                    field = "audioBitRate";
+                    videoDetailsRoot[field] = (int64_t) audioBitRate;
+
+
+                    field = "videoDetails";
+                    mediaItemRoot[field] = videoDetailsRoot;
+                }
+                else if (contentType == ContentType::Audio)
+                {
+                    int64_t durationInMilliSeconds;
+                    string codecName;
+                    long bitRate;
+                    long sampleRate;
+                    int channels;
+
+                    tuple<int64_t,string,long,long,int>
+                        audioDetails = getAudioDetails(mediaItemKey);
+
+                    tie(durationInMilliSeconds, codecName, bitRate, sampleRate, channels) 
+                            = audioDetails;
+
+                    Json::Value audioDetailsRoot;
+
+                    field = "durationInMilliSeconds";
+                    audioDetailsRoot[field] = durationInMilliSeconds;
+
+                    field = "codecName";
+                    audioDetailsRoot[field] = codecName;
+
+                    field = "bitRate";
+                    audioDetailsRoot[field] = (int64_t) bitRate;
+
+                    field = "sampleRate";
+                    audioDetailsRoot[field] = (int64_t) sampleRate;
+
+                    field = "channels";
+                    audioDetailsRoot[field] = channels;
+
+
+                    field = "audioDetails";
+                    mediaItemRoot[field] = audioDetailsRoot;
+                }
+                else if (contentType == ContentType::Image)
+                {
+                    int width;
+                    int height;
+                    string format;
+                    int quality;
+
+                    tuple<int,int,string,int>
+                        imageDetails = getImageDetails(mediaItemKey);
+
+                    tie(width, height, format, quality) 
+                            = imageDetails;
+
+                    Json::Value imageDetailsRoot;
+
+                    field = "width";
+                    imageDetailsRoot[field] = width;
+
+                    field = "height";
+                    imageDetailsRoot[field] = height;
+
+                    field = "format";
+                    imageDetailsRoot[field] = format;
+
+                    field = "quality";
+                    imageDetailsRoot[field] = quality;
+
+
+                    field = "imageDetails";
+                    mediaItemRoot[field] = imageDetailsRoot;
+                }
+                else
+                {
+                    string errorMessage = __FILEREF__ + "ContentType unmanaged"
+                        + ", mediaItemKey: " + to_string(mediaItemKey)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                    ;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);  
+                }
+
+                {
+                    Json::Value mediaItemProfilesRoot(Json::arrayValue);
+                    
+                    lastSQLCommand = 
+                        "select physicalPathKey, encodingProfileKey, sizeInBytes, "
+                        "DATE_FORMAT(convert_tz(creationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as creationDate "
+                        "from MMS_PhysicalPath where mediaItemKey = ?";
+
+                    shared_ptr<sql::PreparedStatement> preparedStatementProfiles (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                    int queryParameterIndex = 1;
+                    preparedStatementProfiles->setInt64(queryParameterIndex++, mediaItemKey);
+                    shared_ptr<sql::ResultSet> resultSetProfiles (preparedStatementProfiles->executeQuery());
+                    while (resultSetProfiles->next())
+                    {
+                        Json::Value profileRoot;
+
+                        field = "physicalPathKey";
+                        profileRoot[field] = resultSetProfiles->getInt64("physicalPathKey");
+
+                        field = "encodingProfileKey";
+                        if (resultSetProfiles->isNull("encodingProfileKey"))
+                            profileRoot[field] = Json::nullValue;
+                        else
+                            profileRoot[field] = resultSetProfiles->getInt64("encodingProfileKey");
+
+                        field = "sizeInBytes";
+                        profileRoot[field] = resultSetProfiles->getInt64("sizeInBytes");
+
+                        field = "creationDate";
+                        profileRoot[field] = static_cast<string>(resultSetProfiles->getString("creationDate"));
+
+
+                        mediaItemProfilesRoot.append(profileRoot);
+                    }
+                    
+                    field = "profiles";
+                    mediaItemRoot[field] = mediaItemProfilesRoot;
+                }
+
+                mediaItemsRoot.append(mediaItemRoot);
+            }
+        }
+
+        field = "mediaItems";
+        contentListRoot[field] = mediaItemsRoot;
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
+        throw se;
+    }    
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
+        throw exception();
+    } 
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
+        throw e;
+    } 
+    
+    return contentListRoot;
 }
 
 MMSEngineDBFacade::ContentType MMSEngineDBFacade::getMediaItemKeyDetails(
@@ -4206,6 +4633,206 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> MMSEn
         return make_tuple(durationInMilliSeconds, bitRate,
             videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
             audioCodecName, audioSampleRate, audioChannels, audioBitRate);
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
+        throw exception();
+    }    
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
+        throw e;
+    }    
+}
+
+tuple<int64_t,string,long,long,int> MMSEngineDBFacade::getAudioDetails(
+    int64_t mediaItemKey)
+{
+    string      lastSQLCommand;
+        
+    shared_ptr<MySQLConnection> conn;
+    
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        int64_t durationInMilliSeconds;
+        string codecName;
+        long bitRate;
+        long sampleRate;
+        int channels;
+
+        {
+            lastSQLCommand = 
+                "select durationInMilliSeconds, codecName, bitRate, sampleRate, channels "
+                "from MMS_AudioItem where mediaItemKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                durationInMilliSeconds = resultSet->getInt64("durationInMilliSeconds");
+                codecName = resultSet->getString("codecName");
+                bitRate = resultSet->getInt("bitRate");
+                sampleRate = resultSet->getInt("sampleRate");
+                channels = resultSet->getInt("channels");
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "MediaItemKey is not found"
+                    + ", mediaItemKey: " + to_string(mediaItemKey)
+                    + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw MediaItemKeyNotFound(errorMessage);                    
+            }            
+        }
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
+        return make_tuple(durationInMilliSeconds, codecName, bitRate, sampleRate, channels);
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
+        throw exception();
+    }    
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
+        throw e;
+    }    
+}
+
+tuple<int,int,string,int> MMSEngineDBFacade::getImageDetails(
+    int64_t mediaItemKey)
+{
+    string      lastSQLCommand;
+        
+    shared_ptr<MySQLConnection> conn;
+    
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        int width;
+        int height;
+        string format;
+        int quality;
+
+        {
+            lastSQLCommand = 
+                "select width, height, format, quality "
+                "from MMS_ImageItem where mediaItemKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                width = resultSet->getInt("width");
+                height = resultSet->getInt("height");
+                format = resultSet->getString("format");
+                quality = resultSet->getInt("quality");
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "MediaItemKey is not found"
+                    + ", mediaItemKey: " + to_string(mediaItemKey)
+                    + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw MediaItemKeyNotFound(errorMessage);                    
+            }            
+        }
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
+        return make_tuple(width, height, format, quality);
     }
     catch(sql::SQLException se)
     {

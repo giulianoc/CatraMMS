@@ -595,7 +595,14 @@ public:
         bool sourceBinaryTransferred);
 
     Json::Value getIngestionJobStatus (
+        int64_t workspaceKey,
         int64_t ingestionRootKey, int64_t ingestionJobKey);
+
+    Json::Value getContentList (
+        int64_t workspaceKey,
+        int start, int rows,
+        string startIngestionDate, string endIngestionDate,
+        ContentType contentType);
 
     MMSEngineDBFacade::ContentType getMediaItemKeyDetails(
         int64_t referenceMediaItemKey, bool warningIfMissing);
@@ -611,6 +618,10 @@ public:
     
     tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> getVideoDetails(
         int64_t mediaItemKey);
+
+    tuple<int64_t,string,long,long,int> getAudioDetails(int64_t mediaItemKey);
+
+    tuple<int,int,string,int> getImageDetails(int64_t mediaItemKey);
 
     void getEncodingJobs(
         bool resetToBeDone,
