@@ -95,8 +95,8 @@ public:
         else if (lowerCase == "image")
             return ContentType::Image;
         else
-            throw runtime_error(string("Wrong ContentType")
-                    + ", contentType: " + contentType
+            throw runtime_error(string("Wrong ContentType (correct value: video, audio or image")
+                    + ", current contentType: " + contentType
                     );
     }
 
@@ -601,8 +601,8 @@ public:
     Json::Value getContentList (
         int64_t workspaceKey,
         int start, int rows,
-        string startIngestionDate, string endIngestionDate,
-        ContentType contentType);
+        bool contentTypePresent, ContentType contentType,
+        bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate);
 
     MMSEngineDBFacade::ContentType getMediaItemKeyDetails(
         int64_t referenceMediaItemKey, bool warningIfMissing);

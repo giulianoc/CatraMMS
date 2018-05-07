@@ -1481,14 +1481,36 @@ void API::contentList(
             rows = stoll(rowsIt->second);
         }
         
+        bool contentTypePresent = false;
+        MMSEngineDBFacade::ContentType contentType;
+        auto contentTypeIt = queryParameters.find("contentType");
+        if (contentTypeIt != queryParameters.end())
         {
-            string startIngestionDate;
-            string endIngestionDate;
-            MMSEngineDBFacade::ContentType contentType;
+            contentType = MMSEngineDBFacade::toContentType(contentTypeIt->second);
+            
+            contentTypePresent = true;
+        }
+        
+        bool startAndEndIngestionDatePresent = false;
+        string startIngestionDate;
+        string endIngestionDate;
+        auto startIngestionDateIt = queryParameters.find("startIngestionDate");
+        auto endIngestionDateIt = queryParameters.find("endIngestionDate");
+        if (startIngestionDateIt != queryParameters.end() && endIngestionDateIt != queryParameters.end())
+        {
+            startIngestionDate = startIngestionDateIt->second;
+            endIngestionDate = endIngestionDateIt->second;
+            
+            startAndEndIngestionDatePresent = true;
+        }
+
+        {
             
             Json::Value ingestionStatusRoot = _mmsEngineDBFacade->getContentList(
-                    workspace->_workspaceKey, start, rows,
-                    startIngestionDate, endIngestionDate, contentType);
+                    workspace->_workspaceKey, 
+                    start, rows,
+                    contentTypePresent, contentType,
+                    startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate);
 
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, ingestionStatusRoot);

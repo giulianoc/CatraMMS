@@ -3728,8 +3728,8 @@ Json::Value MMSEngineDBFacade::getIngestionJobStatus (
 Json::Value MMSEngineDBFacade::getContentList (
         int64_t workspaceKey,
         int start, int rows,
-        string startIngestionDate, string endIngestionDate,
-        ContentType contentType
+        bool contentTypePresent, ContentType contentType,
+        bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate
 )
 {    
     string      lastSQLCommand;
@@ -3745,6 +3745,11 @@ Json::Value MMSEngineDBFacade::getContentList (
             + ", workspaceKey: " + to_string(workspaceKey)
             + ", start: " + to_string(start)
             + ", rows: " + to_string(rows)
+            + ", contentTypePresent: " + to_string(contentTypePresent)
+            + ", contentType: " + toString(contentType)
+            + ", startAndEndIngestionDatePresent: " + to_string(startAndEndIngestionDatePresent)
+            + ", startIngestionDate: " + startIngestionDate
+            + ", endIngestionDate: " + endIngestionDate
         );
         
         conn = _connectionPool->borrow();	
@@ -3765,7 +3770,11 @@ Json::Value MMSEngineDBFacade::getContentList (
             contentListRoot[field] = requestParametersRoot;
         }
         
-        string sqlWhere = "where workspaceKey = ? ";
+        string sqlWhere = string ("where workspaceKey = ? ");
+        if (contentTypePresent)
+            sqlWhere += ("and contentType = ? ");
+        if (startAndEndIngestionDatePresent)
+            sqlWhere += ("and ingestionDate > STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ') and ingestionDate < STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ') ");
         
         Json::Value responseRoot;
         {
@@ -3776,6 +3785,13 @@ Json::Value MMSEngineDBFacade::getContentList (
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            if (contentTypePresent)
+                preparedStatement->setString(queryParameterIndex++, toString(contentType));
+            if (startAndEndIngestionDatePresent)
+            {
+                preparedStatement->setString(queryParameterIndex++, startIngestionDate);
+                preparedStatement->setString(queryParameterIndex++, endIngestionDate);
+            }
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
@@ -3804,6 +3820,13 @@ Json::Value MMSEngineDBFacade::getContentList (
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            if (contentTypePresent)
+                preparedStatement->setString(queryParameterIndex++, toString(contentType));
+            if (startAndEndIngestionDatePresent)
+            {
+                preparedStatement->setString(queryParameterIndex++, startIngestionDate);
+                preparedStatement->setString(queryParameterIndex++, endIngestionDate);
+            }
             preparedStatement->setInt(queryParameterIndex++, rows);
             preparedStatement->setInt(queryParameterIndex++, start);
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
