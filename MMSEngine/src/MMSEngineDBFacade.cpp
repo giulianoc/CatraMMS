@@ -3741,6 +3741,12 @@ Json::Value MMSEngineDBFacade::getContentList (
     {
         string field;
         
+        _logger->info(__FILEREF__ + "getContentList"
+            + ", workspaceKey: " + to_string(workspaceKey)
+            + ", start: " + to_string(start)
+            + ", rows: " + to_string(rows)
+        );
+        
         conn = _connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -3798,8 +3804,8 @@ Json::Value MMSEngineDBFacade::getContentList (
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
-            preparedStatement->setInt(queryParameterIndex++, start);
             preparedStatement->setInt(queryParameterIndex++, rows);
+            preparedStatement->setInt(queryParameterIndex++, start);
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             while (resultSet->next())
             {
