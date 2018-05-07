@@ -3795,7 +3795,7 @@ Json::Value MMSEngineDBFacade::getContentList (
         Json::Value mediaItemsRoot(Json::arrayValue);
         {
             lastSQLCommand = 
-                string("select mediaItemKey, title, ingester, keywords, "
+                string("select mediaItemKey, title, ingester, keywords, contentProviderKey, "
                     "DATE_FORMAT(convert_tz(ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate, "
                     "contentType from MMS_MediaItem ")
                     + sqlWhere
@@ -3838,6 +3838,33 @@ Json::Value MMSEngineDBFacade::getContentList (
                 ContentType contentType = MMSEngineDBFacade::toContentType(resultSet->getString("contentType"));
                 field = "contentType";
                 mediaItemRoot[field] = static_cast<string>(resultSet->getString("contentType"));
+
+                int64_t contentProviderKey = resultSet->getInt64("contentProviderKey");
+                
+                {                    
+                    lastSQLCommand = 
+                        "select name from MMS_ContentProvider where contentProviderKey = ?";
+
+                    shared_ptr<sql::PreparedStatement> preparedStatementProvider (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                    int queryParameterIndex = 1;
+                    preparedStatementProvider->setInt64(queryParameterIndex++, contentProviderKey);
+                    shared_ptr<sql::ResultSet> resultSetProviders (preparedStatementProvider->executeQuery());
+                    if (resultSetProviders->next())
+                    {
+                        field = "providerName";
+                        mediaItemRoot[field] = static_cast<string>(resultSetProviders->getString("name"));
+                    }
+                    else
+                    {
+                        string errorMessage = string("content provider does not exist")
+                            + ", contentProviderKey: " + to_string(contentProviderKey)
+                        ;
+
+                        _logger->error(errorMessage);
+
+                        throw runtime_error(errorMessage);
+                    }
+                }
 
                 if (contentType == ContentType::Video)
                 {
