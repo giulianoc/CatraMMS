@@ -3746,10 +3746,10 @@ Json::Value MMSEngineDBFacade::getContentList (
             + ", start: " + to_string(start)
             + ", rows: " + to_string(rows)
             + ", contentTypePresent: " + to_string(contentTypePresent)
-            + ", contentType: " + toString(contentType)
+            + ", contentType: " + (contentTypePresent ? toString(contentType) : "")
             + ", startAndEndIngestionDatePresent: " + to_string(startAndEndIngestionDatePresent)
-            + ", startIngestionDate: " + startIngestionDate
-            + ", endIngestionDate: " + endIngestionDate
+            + ", startIngestionDate: " + (startAndEndIngestionDatePresent ? startIngestionDate : "")
+            + ", endIngestionDate: " + (startAndEndIngestionDatePresent ? endIngestionDate : "")
         );
         
         conn = _connectionPool->borrow();	
