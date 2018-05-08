@@ -280,7 +280,8 @@ public:
         Slideshow               = 9,
         ConcatDemuxer           = 10,
         Cut                     = 11,
-        EmailNotification       = 12,
+        OverlayImageOnVideo     = 12,
+        EmailNotification       = 30,
         ContentUpdate           = 50,
         ContentRemove           = 60
     };
@@ -312,6 +313,9 @@ public:
                 return "Concat-Demuxer";
             case IngestionType::Cut:
                 return "Cut";
+            case IngestionType::OverlayImageOnVideo:
+                return "Overlay-Image-On-Video";
+                
             case IngestionType::EmailNotification:
                 return "Email-Notification";
             case IngestionType::ContentUpdate:
@@ -350,6 +354,9 @@ public:
             return IngestionType::ConcatDemuxer;
         else if (lowerCase == "cut")
             return IngestionType::Cut;
+        else if (lowerCase == "overlay-image-on-video")
+            return IngestionType::OverlayImageOnVideo;
+
         else if (lowerCase == "email-notification")
             return IngestionType::EmailNotification;
         else if (lowerCase == "contentupdate")
@@ -529,6 +536,13 @@ public:
         int64_t encodingProfilesSetKey  // -1 if it is not associated to any Set
     );
 
+    int64_t addEncodingProfile(
+        int64_t workspaceKey,
+        string label,
+        MMSEngineDBFacade::ContentType contentType, 
+        EncodingTechnology encodingTechnology,
+        string jsonEncodingProfile);
+
     void getIngestionsToBeManaged(
         vector<tuple<int64_t,string,shared_ptr<Workspace>,string, IngestionType, IngestionStatus>>& ingestionsToBeManaged,
         string processorMMS,
@@ -599,7 +613,7 @@ public:
         int64_t ingestionRootKey, int64_t ingestionJobKey);
 
     Json::Value getContentList (
-        int64_t workspaceKey,
+        int64_t workspaceKey, int64_t mediaItemKey,
         int start, int rows,
         bool contentTypePresent, ContentType contentType,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate);
@@ -636,6 +650,13 @@ public:
         int64_t workspaceKey,
         string label);
     
+    int addEncodingJob (
+        int64_t workspaceKey,
+        int64_t ingestionJobKey,
+        string encodingProfileLabel,
+        int64_t mediaItemKey,
+        EncodingPriority encodingPriority);
+
     int addEncodingJob (
         int64_t ingestionJobKey,
         int64_t encodingProfileKey,

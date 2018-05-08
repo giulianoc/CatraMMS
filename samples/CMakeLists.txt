@@ -20,42 +20,16 @@
 # License is allowed only after express negotiation of conditions
 # with the authors.
 
-cmake_minimum_required(
-	VERSION 2.8.12
+SET (SAMPLEs
+	demo_1.json
+	demo_2.json
+	demo_3.json
+	demo_4.json
+	demo_5.json
+	demo_6.json
+	demo_7.json
+	free-logo.jpg
 )
 
-project(
-	CatraMMS
-)
-
-SET(CMAKE_CXX_FLAGS "-std=c++14")
-
-#ADD_DEFINITIONS(-D__LOCALENCODER__)
-
-
-set(CMAKE_BUILD_TYPE Debug)
-#set(CMAKE_BUILD_TYPE RelWithDebInfo)
-#set(CMAKE_BUILD_TYPE Release)
-
-set(CatraMMS_VERSION_MAJOR 1)
-set(CatraMMS_VERSION_MINOR 0)
-
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
-find_package(LibCrypto)
-find_package(ZLIB)
-
-add_compile_options(-D_FILE_OFFSET_BITS=64)
-
-add_subdirectory(MMSEngine/src)
-add_subdirectory(FFMpeg/src)
-add_subdirectory(MMSEngineService/src)
-
-add_subdirectory(API/src)
-
-add_subdirectory(etc)
-add_subdirectory(samples)
-
-add_subdirectory(utilities/registerAdministratorCustomer/src)
-add_subdirectory(utilities/registerCustomer/src)
-add_subdirectory(utilities/addEncodingProfile/src)
+install (FILES ${SAMPLEs} DESTINATION samples)
 

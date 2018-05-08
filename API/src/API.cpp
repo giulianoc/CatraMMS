@@ -489,6 +489,24 @@ void API::manageRequestAndResponse(
         addEncodingProfilesSet(request, get<0>(workspaceAndFlags),
             queryParameters, requestBody);
     }
+    else if (method == "addEncodingProfile")
+    {
+        bool isUserAPI = get<2>(workspaceAndFlags);
+        if (!isUserAPI)
+        {
+            string errorMessage = string("APIKey flags does not have the USER permission"
+                    ", isUserAPI: " + to_string(isUserAPI)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+                
+        addEncodingProfile(request, get<0>(workspaceAndFlags),
+            queryParameters, requestBody);
+    }
     else
     {
         string errorMessage = string("No API is matched")
@@ -1467,6 +1485,13 @@ void API::contentList(
 
     try
     {
+        int64_t mediaItemKey = -1;
+        auto mediaItemKeyIt = queryParameters.find("mediaItemKey");
+        if (mediaItemKeyIt != queryParameters.end())
+        {
+            mediaItemKey = stoll(mediaItemKeyIt->second);
+        }
+
         int start = 0;
         auto startIt = queryParameters.find("start");
         if (startIt != queryParameters.end())
@@ -1507,7 +1532,7 @@ void API::contentList(
         {
             
             Json::Value ingestionStatusRoot = _mmsEngineDBFacade->getContentList(
-                    workspace->_workspaceKey, 
+                    workspace->_workspaceKey, mediaItemKey,
                     start, rows,
                     contentTypePresent, contentType,
                     startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate);
@@ -1687,7 +1712,11 @@ void API::ingestion(
         shared_ptr<MySQLConnection> conn;
 
         try
-        {            
+        {       
+            // used to save <label of the task> ---> vector of ingestionJobKey. A vector is used in case the same label is used more times
+            // It is used when ReferenceLabel is used.
+            unordered_map<string, vector<int64_t>> mapLabelAndIngestionJobKey;
+            
             conn = _mmsEngineDBFacade->beginIngestionJobs();
 
             Validator validator(_logger, _mmsEngineDBFacade);
@@ -1743,7 +1772,7 @@ void API::ingestion(
                 ingestionGroupOfTasks(conn, workspace, ingestionRootKey, taskRoot, 
                         dependOnIngestionJobKeysExecution, localDependOnSuccess,
                         dependOnIngestionJobKeysExecution,
-                        responseBody); 
+                        mapLabelAndIngestionJobKey, responseBody); 
             }
             else
             {
@@ -1751,7 +1780,7 @@ void API::ingestion(
                 int localDependOnSuccess = 0;   // it is not important since dependOnIngestionJobKey is -1
                 ingestionSingleTask(conn, workspace, ingestionRootKey, taskRoot, 
                         dependOnIngestionJobKeysExecution, localDependOnSuccess,
-                        dependOnIngestionJobKeysExecution,
+                        dependOnIngestionJobKeysExecution, mapLabelAndIngestionJobKey,
                         responseBody);            
             }
 
@@ -1828,13 +1857,14 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
         shared_ptr<Workspace> workspace, int64_t ingestionRootKey, Json::Value taskRoot, 
         vector<int64_t> dependOnIngestionJobKeysExecution, int dependOnSuccess,
         vector<int64_t> dependOnIngestionJobKeysReferences,
+        unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey,
         string& responseBody)
 {
-    string label;
+    string taskLabel;
     string field = "Label";
     if (_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
     {
-        label = taskRoot.get(field, "XXX").asString();
+        taskLabel = taskRoot.get(field, "XXX").asString();
     }
 
     field = "Type";
@@ -1845,9 +1875,12 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 
     string parametersField = "Parameters";
     Json::Value parametersRoot;
+    bool parametersSectionPresent = false;
     if (_mmsEngineDBFacade->isMetadataPresent(taskRoot, parametersField))
     {
         parametersRoot = taskRoot[parametersField];
+        
+        parametersSectionPresent = true;
         
         Json::StreamWriterBuilder wbuilder;
 
@@ -1857,7 +1890,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
     string encodingProfilesSetKeyField = "EncodingProfilesSetKey";
     string encodingProfilesSetLabelField = "EncodingProfilesSetLabel";
     if (type == "Encode"
-            && _mmsEngineDBFacade->isMetadataPresent(taskRoot, parametersField)
+            && parametersSectionPresent
             && 
             (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, encodingProfilesSetKeyField)
             || _mmsEngineDBFacade->isMetadataPresent(parametersRoot, encodingProfilesSetLabelField)
@@ -1926,7 +1959,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
         for (int64_t encodingProfileKey: encodingProfilesSetKeys)
         {
             Json::Value newTaskRoot;
-            string localLabel = label + " - EncodingProfileKey " + to_string(encodingProfileKey);
+            string localLabel = taskLabel + " - EncodingProfileKey " + to_string(encodingProfileKey);
 
             field = "Label";
             newTaskRoot[field] = localLabel;
@@ -1990,12 +2023,12 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
         
         return ingestionGroupOfTasks(conn, workspace, ingestionRootKey, newTasksGroupRoot, 
                 dependOnIngestionJobKeysExecution, dependOnSuccess,
-                dependOnIngestionJobKeysReferences,
+                dependOnIngestionJobKeysReferences, mapLabelAndIngestionJobKey,
                 responseBody); 
     }
 
     _logger->info(__FILEREF__ + "add IngestionJob"
-        + ", label: " + label
+        + ", taskLabel: " + taskLabel
         + ", taskMetadata: " + taskMetadata
         + ", IngestionType: " + type
         + ", dependOnIngestionJobKeysExecution.size(): " + to_string(dependOnIngestionJobKeysExecution.size())
@@ -2003,13 +2036,94 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
     );
 
     int64_t localDependOnIngestionJobKeyExecution = _mmsEngineDBFacade->addIngestionJob(conn,
-            workspace->_workspaceKey, ingestionRootKey, label, taskMetadata, MMSEngineDBFacade::toIngestionType(type), 
+            workspace->_workspaceKey, ingestionRootKey, taskLabel, taskMetadata, MMSEngineDBFacade::toIngestionType(type), 
             dependOnIngestionJobKeysExecution, dependOnSuccess);
     
-    if (dependOnIngestionJobKeysExecution.size() > 0)
+    if (taskLabel != "")
+        (mapLabelAndIngestionJobKey[taskLabel]).push_back(localDependOnIngestionJobKeyExecution);
+    
+    bool referencesSectionPresent = false;
+    Json::Value referencesRoot(Json::arrayValue);
+    if (parametersSectionPresent)
     {
-        Json::Value referencesRoot(Json::arrayValue);
+        field = "References";
+        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+            referencesRoot = parametersRoot[field];
+
+            referencesSectionPresent = true;
+        }
+    }
+    
+    if (referencesSectionPresent)
+    {
+        bool referencesChanged = false;
         
+        for (int referenceIndex = 0; referenceIndex < referencesRoot.size(); ++referenceIndex)
+        {
+            Json::Value referenceRoot = referencesRoot[referenceIndex];
+            
+            field = "ReferenceLabel";
+            if (_mmsEngineDBFacade->isMetadataPresent(referenceRoot, field))
+            {
+                string referenceLabel = referenceRoot.get(field, "XXX").asString();
+                
+                if (referenceLabel == "")
+                {
+                    string errorMessage = __FILEREF__ + "The 'referenceLabel' value cannot be empty"
+                            + ", referenceLabel: " + referenceLabel;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+                
+                vector<int64_t> ingestionJobKeys = mapLabelAndIngestionJobKey[referenceLabel];
+                
+                if (ingestionJobKeys.size() == 0)
+                {
+                    string errorMessage = __FILEREF__ + "The 'referenceLabel' value is not found"
+                            + ", referenceLabel: " + referenceLabel;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+                else if (ingestionJobKeys.size() > 1)
+                {
+                    string errorMessage = __FILEREF__ + "The 'referenceLabel' value cannot be used in more than one Task"
+                            + ", referenceLabel: " + referenceLabel
+                            + ", ingestionJobKeys.size(): " + to_string(ingestionJobKeys.size())
+                            ;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+
+                field = "ReferenceIngestionJobKey";
+                referenceRoot[field] = ingestionJobKeys.back();
+                
+                referencesChanged = true;
+            }
+        }
+        
+        if (referencesChanged)
+        {
+            {
+                Json::StreamWriterBuilder wbuilder;
+
+                taskMetadata = Json::writeString(wbuilder, parametersRoot);        
+            }
+
+            // commented because already logged in mmsEngineDBFacade
+            // _logger->info(__FILEREF__ + "update IngestionJob"
+            //     + ", localDependOnIngestionJobKey: " + to_string(localDependOnIngestionJobKey)
+            //    + ", taskMetadata: " + taskMetadata
+            // );
+
+            _mmsEngineDBFacade->updateIngestionJobMetadataContent(conn, localDependOnIngestionJobKeyExecution, taskMetadata);
+        }
+    }
+    else if (dependOnIngestionJobKeysReferences.size() > 0)
+    {
         for (int referenceIndex = 0; referenceIndex < dependOnIngestionJobKeysReferences.size(); ++referenceIndex)
         {
             Json::Value referenceRoot;
@@ -2021,13 +2135,16 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
         
         field = "Parameters";
         string arrayField = "References";
-        taskRoot[field][arrayField] = referencesRoot;
+        parametersRoot[arrayField] = referencesRoot;
+        if (!parametersSectionPresent)
+        {
+            taskRoot[field] = parametersRoot;
+        }
         
         {
             Json::StreamWriterBuilder wbuilder;
 
-            field = "Parameters";
-            taskMetadata = Json::writeString(wbuilder, taskRoot[field]);        
+            taskMetadata = Json::writeString(wbuilder, parametersRoot);        
         }
         
         // commented because already logged in mmsEngineDBFacade
@@ -2044,7 +2161,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
     responseBody +=
             (string("{ ")
             + "\"ingestionJobKey\": " + to_string(localDependOnIngestionJobKeyExecution) + ", "
-            + "\"label\": \"" + label + "\" "
+            + "\"label\": \"" + taskLabel + "\" "
             + "}");
 
     vector<int64_t> localDependOnIngestionJobKeysExecution;
@@ -2054,7 +2171,8 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
     
     ingestionEvents(conn, workspace, ingestionRootKey, taskRoot, 
             localDependOnIngestionJobKeysExecution, 
-            localDependOnIngestionJobKeysReferences, responseBody);
+            localDependOnIngestionJobKeysReferences, mapLabelAndIngestionJobKey,
+            responseBody);
     
     
     return localDependOnIngestionJobKeysExecution;
@@ -2065,7 +2183,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
         Json::Value groupOfTasksRoot, 
         vector<int64_t> dependOnIngestionJobKeysExecution, int dependOnSuccess,
         vector<int64_t> dependOnIngestionJobKeysReferences,
-        string& responseBody)
+        unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey, string& responseBody)
 {
     
     string field = "Parameters";
@@ -2150,7 +2268,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
                 localIngestionTaskDependOnIngestionJobKeyExecution = ingestionGroupOfTasks(
                     conn, workspace, ingestionRootKey, taskRoot, 
                     dependOnIngestionJobKeysExecution, dependOnSuccess, 
-                    dependOnIngestionJobKeysReferences,
+                    dependOnIngestionJobKeysReferences, mapLabelAndIngestionJobKey,
                     responseBody);
             }
             else
@@ -2158,7 +2276,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
                 localIngestionTaskDependOnIngestionJobKeyExecution = ingestionSingleTask(
                     conn, workspace, ingestionRootKey, taskRoot, 
                     dependOnIngestionJobKeysExecution, dependOnSuccess, 
-                    dependOnIngestionJobKeysReferences,
+                    dependOnIngestionJobKeysReferences, mapLabelAndIngestionJobKey,
                     responseBody);
             }
         }
@@ -2171,7 +2289,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
                     localIngestionTaskDependOnIngestionJobKeyExecution = ingestionGroupOfTasks(
                         conn, workspace, ingestionRootKey, taskRoot, 
                         dependOnIngestionJobKeysExecution, dependOnSuccess, 
-                        dependOnIngestionJobKeysReferences,
+                        dependOnIngestionJobKeysReferences, mapLabelAndIngestionJobKey,
                         responseBody);
                 }
                 else
@@ -2179,7 +2297,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
                     localIngestionTaskDependOnIngestionJobKeyExecution = ingestionSingleTask(
                         conn, workspace, ingestionRootKey, taskRoot, 
                         dependOnIngestionJobKeysExecution, dependOnSuccess,
-                        dependOnIngestionJobKeysReferences,
+                        dependOnIngestionJobKeysReferences, mapLabelAndIngestionJobKey,
                         responseBody);
                 }
             }
@@ -2192,7 +2310,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
                     localIngestionTaskDependOnIngestionJobKeyExecution = ingestionGroupOfTasks(
                         conn, workspace, ingestionRootKey, taskRoot, 
                         lastDependOnIngestionJobKeysExecution, localDependOnSuccess, 
-                        dependOnIngestionJobKeysReferences,
+                        dependOnIngestionJobKeysReferences, mapLabelAndIngestionJobKey,
                         responseBody);
                 }
                 else
@@ -2200,7 +2318,7 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
                     localIngestionTaskDependOnIngestionJobKeyExecution = ingestionSingleTask(
                         conn, workspace, ingestionRootKey, taskRoot, 
                         lastDependOnIngestionJobKeysExecution, localDependOnSuccess,
-                        dependOnIngestionJobKeysReferences,
+                        dependOnIngestionJobKeysReferences, mapLabelAndIngestionJobKey,
                         responseBody);
                 }
             }
@@ -2217,7 +2335,8 @@ vector<int64_t> API::ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
 
     ingestionEvents(conn, workspace, ingestionRootKey, groupOfTasksRoot, 
             newDependOnIngestionJobKeysExecution, 
-            newDependOnIngestionJobKeysReferences, responseBody);
+            newDependOnIngestionJobKeysReferences, mapLabelAndIngestionJobKey,
+            responseBody);
     
     return newDependOnIngestionJobKeysExecution;
 }    
@@ -2227,6 +2346,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
         Json::Value taskOrGroupOfTasksRoot, 
         vector<int64_t> dependOnIngestionJobKeysExecution, 
         vector<int64_t> dependOnIngestionJobKeysReferences,
+        unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey,
         string& responseBody)
 {
 
@@ -2263,7 +2383,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
             ingestionGroupOfTasks(conn, workspace, ingestionRootKey,
                     taskRoot, 
                     dependOnIngestionJobKeysExecution, localDependOnSuccess, 
-                    dependOnIngestionJobKeysReferences,
+                    dependOnIngestionJobKeysReferences, mapLabelAndIngestionJobKey,
                     responseBody);            
         }
         else
@@ -2271,7 +2391,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
             int localDependOnSuccess = 1;
             ingestionSingleTask(conn, workspace, ingestionRootKey, taskRoot, 
                     dependOnIngestionJobKeysExecution, localDependOnSuccess, 
-                    dependOnIngestionJobKeysReferences,
+                    dependOnIngestionJobKeysReferences, mapLabelAndIngestionJobKey,
                     responseBody);            
         }
     }
@@ -2309,7 +2429,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
             ingestionGroupOfTasks(conn, workspace, ingestionRootKey,
                     taskRoot, 
                     dependOnIngestionJobKeysExecution, localDependOnSuccess, 
-                    dependOnIngestionJobKeysReferences,
+                    dependOnIngestionJobKeysReferences, mapLabelAndIngestionJobKey,
                     responseBody);            
         }
         else
@@ -2317,7 +2437,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
             int localDependOnSuccess = 0;
             ingestionSingleTask(conn, workspace, ingestionRootKey, taskRoot, 
                     dependOnIngestionJobKeysExecution, localDependOnSuccess, 
-                    dependOnIngestionJobKeysReferences,
+                    dependOnIngestionJobKeysReferences, mapLabelAndIngestionJobKey,
                     responseBody);            
         }
     }    
@@ -2355,7 +2475,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
             ingestionGroupOfTasks(conn, workspace, ingestionRootKey,
                     taskRoot, 
                     dependOnIngestionJobKeysExecution, localDependOnSuccess, 
-                    dependOnIngestionJobKeysReferences,
+                    dependOnIngestionJobKeysReferences, mapLabelAndIngestionJobKey,
                     responseBody);            
         }
         else
@@ -2363,7 +2483,7 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
             int localDependOnSuccess = -1;
             ingestionSingleTask(conn, workspace, ingestionRootKey, taskRoot, 
                     dependOnIngestionJobKeysExecution, localDependOnSuccess, 
-                    dependOnIngestionJobKeysReferences,
+                    dependOnIngestionJobKeysReferences, mapLabelAndIngestionJobKey,
                     responseBody);            
         }
     }    
@@ -3722,6 +3842,172 @@ void API::addEncodingProfilesSet(
             _mmsEngineDBFacade->endIngestionJobs(conn, commit);
 
             _logger->error(__FILEREF__ + "request body parsing failed"
+                + ", e.what(): " + e.what()
+            );
+
+            throw e;
+        }
+
+        sendSuccess(request, 201, responseBody);
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::addEncodingProfile(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody)
+{
+    string api = "addEncodingProfile";
+
+    _logger->info(__FILEREF__ + "Received " + api
+        + ", requestBody: " + requestBody
+    );
+
+    try
+    {
+        auto sContentTypeIt = queryParameters.find("contentType");
+        if (sContentTypeIt == queryParameters.end())
+        {
+            string errorMessage = string("'contentType' URI parameter is missing");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);            
+        }
+        MMSEngineDBFacade::ContentType contentType = 
+                MMSEngineDBFacade::toContentType(sContentTypeIt->second);
+        
+        Json::Value encodingProfileRoot;
+        try
+        {
+            {
+                Json::CharReaderBuilder builder;
+                Json::CharReader* reader = builder.newCharReader();
+                string errors;
+
+                bool parsingSuccessful = reader->parse(requestBody.c_str(),
+                        requestBody.c_str() + requestBody.size(), 
+                        &encodingProfileRoot, &errors);
+                delete reader;
+
+                if (!parsingSuccessful)
+                {
+                    string errorMessage = __FILEREF__ + "failed to parse the requestBody"
+                            + ", errors: " + errors
+                            + ", requestBody: " + requestBody
+                            ;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+            }
+        }
+        catch(runtime_error e)
+        {
+            string errorMessage = string("requestBody json is not well format")
+                    + ", requestBody: " + requestBody
+                    + ", e.what(): " + e.what()
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        catch(exception e)
+        {
+            string errorMessage = string("requestBody json is not well format")
+                    + ", requestBody: " + requestBody
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        string responseBody;    
+
+        try
+        {
+            Validator validator(_logger, _mmsEngineDBFacade);
+            validator.validateEncodingProfileRootMetadata(contentType, encodingProfileRoot);
+
+            string field = "Label";
+            if (!_mmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            string profileLabel = encodingProfileRoot.get(field, "XXX").asString();
+
+            MMSEngineDBFacade::EncodingTechnology encodingTechnology;
+
+            if (contentType == MMSEngineDBFacade::ContentType::Image)
+                encodingTechnology = MMSEngineDBFacade::EncodingTechnology::Image;
+            else
+                encodingTechnology = MMSEngineDBFacade::EncodingTechnology::MP4;
+
+            string jsonEncodingProfile;
+            {
+                Json::StreamWriterBuilder wbuilder;
+
+                jsonEncodingProfile = Json::writeString(wbuilder, encodingProfileRoot);
+            }
+            
+            int64_t encodingProfileKey = _mmsEngineDBFacade->addEncodingProfile(
+                workspace->_workspaceKey, profileLabel,
+                contentType, encodingTechnology, jsonEncodingProfile);
+
+            responseBody = (
+                    string("{ ") 
+                    + "\"encodingProfileKey\": " + to_string(encodingProfileKey)
+                    + ", \"label\": \"" + profileLabel + "\" "
+                    + "}"
+                    );            
+        }
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addEncodingProfile failed"
+                + ", e.what(): " + e.what()
+            );
+
+            throw e;
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addEncodingProfile failed"
                 + ", e.what(): " + e.what()
             );
 

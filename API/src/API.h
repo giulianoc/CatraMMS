@@ -116,6 +116,7 @@ private:
             Json::Value taskRoot, 
             vector<int64_t> dependOnIngestionJobKeysExecution, int dependOnSuccess,
             vector<int64_t> dependOnIngestionJobKeysReferences,
+            unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey,
             string& responseBody);
         
     vector<int64_t> ingestionGroupOfTasks(shared_ptr<MySQLConnection> conn,
@@ -123,6 +124,7 @@ private:
             Json::Value groupOfTasksRoot, 
             vector <int64_t> dependOnIngestionJobKeysExecution, int dependOnSuccess,
             vector<int64_t> dependOnIngestionJobKeysReferences,
+            unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey,
             string& responseBody);
 
     void ingestionEvents(shared_ptr<MySQLConnection> conn,
@@ -130,6 +132,7 @@ private:
             Json::Value taskOrGroupOfTasksRoot, 
             vector<int64_t> dependOnIngestionJobKeysExecution, 
             vector<int64_t> dependOnIngestionJobKeysReferences,
+            unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey,
             string& responseBody);
 
     void uploadedBinary(
@@ -143,6 +146,12 @@ private:
     );
     
     void addEncodingProfilesSet(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody);
+
+    void addEncodingProfile(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,

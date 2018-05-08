@@ -1298,6 +1298,89 @@ int64_t MMSEngineDBFacade::addEncodingProfilesSet (
 }
 
 int64_t MMSEngineDBFacade::addEncodingProfile(
+        int64_t workspaceKey,
+        string label,
+        MMSEngineDBFacade::ContentType contentType, 
+        EncodingTechnology encodingTechnology,
+        string jsonEncodingProfile
+)
+{    
+    int64_t         encodingProfileKey;
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        int64_t encodingProfilesSetKey = -1;
+
+        encodingProfileKey = addEncodingProfile(
+            conn,
+            workspaceKey,
+            label,
+            contentType, 
+            encodingTechnology,
+            jsonEncodingProfile,
+            encodingProfilesSetKey);        
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
+        throw se;
+    }    
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
+        throw exception();
+    }    
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
+        throw e;
+    }    
+    
+    return encodingProfileKey;
+}
+
+int64_t MMSEngineDBFacade::addEncodingProfile(
         shared_ptr<MySQLConnection> conn,
         int64_t workspaceKey,
         string label,
@@ -1565,8 +1648,8 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
         {
             int mysqlOffset = 0;
             int mysqlRowCount = maxIngestionJobs;
-            bool noMoreRowsReturned = false;
-            while(ingestionsToBeManaged.size() < maxIngestionJobs && !noMoreRowsReturned)
+            bool moreRows = true;
+            while(ingestionsToBeManaged.size() < maxIngestionJobs && moreRows)
             {
                 lastSQLCommand = 
                     "select ij.ingestionJobKey, DATE_FORMAT(ij.startIngestion, '%Y-%m-%d %H:%i:%s') as startIngestion, "
@@ -1582,18 +1665,19 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                 preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress));
                 preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress));
                 preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress));
-                preparedStatement->setInt(queryParameterIndex++, mysqlOffset);
                 preparedStatement->setInt(queryParameterIndex++, mysqlRowCount);
+                preparedStatement->setInt(queryParameterIndex++, mysqlOffset);
 
-                noMoreRowsReturned = true;
+                shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+
+                if (resultSet->rowsCount() < mysqlRowCount)
+                    moreRows = false;
+                else
+                    moreRows = true;
                 mysqlOffset += maxIngestionJobs;
                 
-                shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
                 while (resultSet->next())
                 {
-                    if (noMoreRowsReturned)
-                        noMoreRowsReturned = false;
-                
                     int64_t ingestionJobKey     = resultSet->getInt64("ingestionJobKey");
                     string startIngestion       = resultSet->getString("startIngestion");
                     int64_t workspaceKey         = resultSet->getInt64("workspaceKey");
@@ -1601,11 +1685,9 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                     IngestionStatus ingestionStatus     = MMSEngineDBFacade::toIngestionStatus(resultSet->getString("status"));
                     IngestionType ingestionType     = MMSEngineDBFacade::toIngestionType(resultSet->getString("ingestionType"));
 
-                    /*
-                    _logger->info(__FILEREF__ + "Analyzing dependencies for the IngestionJob"
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    );
-                    */
+//                    _logger->info(__FILEREF__ + "Analyzing dependencies for the IngestionJob"
+//                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+//                    );
                     
                     bool ingestionJobToBeManaged = true;
 
@@ -1634,14 +1716,12 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                             {
                                 string sStatus = resultSetIngestionJob->getString("status");
                                 
-                                /*
-                                _logger->info(__FILEREF__ + "Dependency for the IngestionJob"
-                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                    + ", dependOnIngestionJobKey: " + to_string(dependOnIngestionJobKey)
-                                    + ", dependOnSuccess: " + to_string(dependOnSuccess)
-                                    + ", status (dependOnIngestionJobKey): " + sStatus
-                                );
-                                */
+//                                _logger->info(__FILEREF__ + "Dependency for the IngestionJob"
+//                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+//                                    + ", dependOnIngestionJobKey: " + to_string(dependOnIngestionJobKey)
+//                                    + ", dependOnSuccess: " + to_string(dependOnSuccess)
+//                                    + ", status (dependOnIngestionJobKey): " + sStatus
+//                                );
                                 
                                 IngestionStatus ingestionStatusDependency     = MMSEngineDBFacade::toIngestionStatus(sStatus);
 
@@ -3542,7 +3622,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobStatus (
                                 imageDetailsRoot[field] = quality;
 
 
-                                field = "audioDetails";
+                                field = "imageDetails";
                                 taskRoot[field] = imageDetailsRoot;
                             }
                             else
@@ -3726,7 +3806,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobStatus (
 }
 
 Json::Value MMSEngineDBFacade::getContentList (
-        int64_t workspaceKey,
+        int64_t workspaceKey, int64_t mediaItemKey,
         int start, int rows,
         bool contentTypePresent, ContentType contentType,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate
@@ -3743,6 +3823,7 @@ Json::Value MMSEngineDBFacade::getContentList (
         
         _logger->info(__FILEREF__ + "getContentList"
             + ", workspaceKey: " + to_string(workspaceKey)
+            + ", mediaItemKey: " + to_string(mediaItemKey)
             + ", start: " + to_string(start)
             + ", rows: " + to_string(rows)
             + ", contentTypePresent: " + to_string(contentTypePresent)
@@ -3766,11 +3847,34 @@ Json::Value MMSEngineDBFacade::getContentList (
             field = "rows";
             requestParametersRoot[field] = rows;
             
+            if (mediaItemKey != -1)
+            {
+                field = "mediaItemKey";
+                requestParametersRoot[field] = mediaItemKey;
+            }
+            
+            if (contentTypePresent)
+            {
+                field = "contentType";
+                requestParametersRoot[field] = toString(contentType);
+            }
+            
+            if (startAndEndIngestionDatePresent)
+            {
+                field = "startIngestionDate";
+                requestParametersRoot[field] = startIngestionDate;
+
+                field = "endIngestionDate";
+                requestParametersRoot[field] = endIngestionDate;
+            }
+            
             field = "requestParameters";
             contentListRoot[field] = requestParametersRoot;
         }
         
         string sqlWhere = string ("where workspaceKey = ? ");
+        if (mediaItemKey != -1)
+            sqlWhere += ("and mediaItemKey = ? ");
         if (contentTypePresent)
             sqlWhere += ("and contentType = ? ");
         if (startAndEndIngestionDatePresent)
@@ -3785,6 +3889,8 @@ Json::Value MMSEngineDBFacade::getContentList (
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            if (mediaItemKey != -1)
+                preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
             if (contentTypePresent)
                 preparedStatement->setString(queryParameterIndex++, toString(contentType));
             if (startAndEndIngestionDatePresent)
@@ -3820,6 +3926,8 @@ Json::Value MMSEngineDBFacade::getContentList (
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            if (mediaItemKey != -1)
+                preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
             if (contentTypePresent)
                 preparedStatement->setString(queryParameterIndex++, toString(contentType));
             if (startAndEndIngestionDatePresent)
@@ -5539,6 +5647,136 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(
     }       
     
     return encodingProfilesSetKeys;
+}
+
+int MMSEngineDBFacade::addEncodingJob (
+    int64_t workspaceKey,
+    int64_t ingestionJobKey,
+    string encodingProfileLabel,
+    int64_t mediaItemKey,
+    EncodingPriority encodingPriority
+)
+{
+    
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        string contentType;
+        {
+            lastSQLCommand = 
+                "select contentType from MMS_MediaItem where mediaItemKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                contentType = static_cast<string>(resultSet->getString("contentType"));
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "ContentType not found "
+                        + ", mediaItemKey: " + to_string(mediaItemKey)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }
+        }
+
+        int64_t encodingProfileKey;
+        {
+            lastSQLCommand = 
+                "select encodingProfileKey from MMS_EncodingProfile where workspaceKey = ? and contentType = ? and label = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            preparedStatement->setString(queryParameterIndex++, contentType);
+            preparedStatement->setString(queryParameterIndex++, encodingProfileLabel);
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                encodingProfileKey = resultSet->getInt64("encodingProfileKey");
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "encodingProfileKey not found "
+                        + ", workspaceKey: " + to_string(workspaceKey)
+                        + ", contentType: " + contentType
+                        + ", encodingProfileLabel: " + encodingProfileLabel
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }
+        }
+
+        addEncodingJob (
+            ingestionJobKey,
+            encodingProfileKey,
+            mediaItemKey,
+            encodingPriority);
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
+        throw exception();
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
+        throw e;
+    }
 }
 
 int MMSEngineDBFacade::addEncodingJob (

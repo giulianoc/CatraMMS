@@ -74,6 +74,9 @@ public:
     void validateCutMetadata(int64_t workspaceKey,
         Json::Value parametersRoot, vector<pair<int64_t,DependencyType>>& dependencies);
 
+    void validateOverlayImageOnVideoMetadata(int64_t workspaceKey,
+        Json::Value parametersRoot, vector<pair<int64_t,DependencyType>>& dependencies);
+
     void validateEmailNotificationMetadata(
         Json::Value parametersRoot, vector<pair<int64_t,DependencyType>>& dependencies);
 
@@ -81,6 +84,10 @@ public:
         MMSEngineDBFacade::ContentType contentType, 
         Json::Value encodingProfilesSetRoot);
         
+    void validateEncodingProfileRootMetadata(
+        MMSEngineDBFacade::ContentType contentType,
+        Json::Value encodingProfileRoot);
+
     static bool isMetadataPresent(Json::Value root, string field);
     
 private:

@@ -122,16 +122,23 @@ void Validator::validateEncodingProfilesSetRootMetadata(
 
         for (int profileIndex = 0; profileIndex < profilesRoot.size(); profileIndex++)
         {
-            Json::Value profileRoot = profilesRoot[profileIndex];
+            Json::Value encodingProfileRoot = profilesRoot[profileIndex];
 
-            if (contentType == MMSEngineDBFacade::ContentType::Video)
-                validateEncodingProfileRootVideoMetadata(profileRoot);
-            else if (contentType == MMSEngineDBFacade::ContentType::Audio)
-                validateEncodingProfileRootAudioMetadata(profileRoot);
-            else // if (contentType == MMSEngineDBFacade::ContentType::Image)
-                validateEncodingProfileRootImageMetadata(profileRoot);
+            validateEncodingProfileRootMetadata(contentType, encodingProfileRoot);
         }
     }
+}
+
+void Validator::validateEncodingProfileRootMetadata(
+    MMSEngineDBFacade::ContentType contentType,
+    Json::Value encodingProfileRoot)
+{
+    if (contentType == MMSEngineDBFacade::ContentType::Video)
+        validateEncodingProfileRootVideoMetadata(encodingProfileRoot);
+    else if (contentType == MMSEngineDBFacade::ContentType::Audio)
+        validateEncodingProfileRootAudioMetadata(encodingProfileRoot);
+    else // if (contentType == MMSEngineDBFacade::ContentType::Image)
+        validateEncodingProfileRootImageMetadata(encodingProfileRoot);
 }
 
 void Validator::validateEncodingProfileRootVideoMetadata(
@@ -849,6 +856,27 @@ vector<pair<int64_t,Validator::DependencyType>> Validator::validateSingleTaskMet
         Json::Value parametersRoot = taskRoot[field]; 
         validateCutMetadata(workspaceKey, parametersRoot, dependencies);        
     }
+    else if (type == "Overlay-Image-On-Video")
+    {
+        ingestionType = MMSEngineDBFacade::IngestionType::OverlayImageOnVideo;
+        
+        field = "Parameters";
+        if (!isMetadataPresent(taskRoot, field))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field
+                    + ", sTaskRoot: " + sTaskRoot;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        Json::Value parametersRoot = taskRoot[field]; 
+        validateOverlayImageOnVideoMetadata(workspaceKey, parametersRoot, dependencies);        
+    }
     else if (type == "Email-Notification")
     {
         ingestionType = MMSEngineDBFacade::IngestionType::EmailNotification;
@@ -926,6 +954,10 @@ vector<pair<int64_t,Validator::DependencyType>> Validator::validateSingleTaskMet
     else if (ingestionType == MMSEngineDBFacade::IngestionType::Cut)
     {
         validateCutMetadata(workspaceKey, parametersRoot, dependencies);        
+    }
+    else if (ingestionType == MMSEngineDBFacade::IngestionType::OverlayImageOnVideo)
+    {
+        validateOverlayImageOnVideoMetadata(workspaceKey, parametersRoot, dependencies);        
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::EmailNotification)
     {
@@ -1156,24 +1188,16 @@ void Validator::validateEncodeMetadata(int64_t workspaceKey,
     string encodingProfilesSetKeyField = "EncodingProfilesSetKey";
     string encodingProfilesSetLabelField = "EncodingProfilesSetLabel";
     string encodingProfileKeyField = "EncodingProfileKey";
+    string encodingProfileLabelField = "EncodingProfileLabel";
     if (!isMetadataPresent(parametersRoot, encodingProfilesSetKeyField)
             && !isMetadataPresent(parametersRoot, encodingProfilesSetLabelField)
+            && !isMetadataPresent(parametersRoot, encodingProfileLabelField)
             && !isMetadataPresent(parametersRoot, encodingProfileKeyField))
     {
         string errorMessage = __FILEREF__ + "Neither of the following fields are present"
                 + ", Field: " + encodingProfilesSetKeyField
                 + ", Field: " + encodingProfilesSetLabelField
-                + ", Field: " + encodingProfileKeyField
-                ;
-        _logger->error(errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-    else if (isMetadataPresent(parametersRoot, encodingProfilesSetKeyField)
-            && isMetadataPresent(parametersRoot, encodingProfileKeyField))
-    {
-        string errorMessage = __FILEREF__ + "Both fields are present"
-                + ", Field: " + encodingProfilesSetKeyField
+                + ", Field: " + encodingProfileLabelField
                 + ", Field: " + encodingProfileKeyField
                 ;
         _logger->error(errorMessage);
@@ -1286,6 +1310,8 @@ void Validator::validateEncodeMetadata(int64_t workspaceKey,
             throw runtime_error(errorMessage);
         }
         
+        /*
+         * we may have encoding for video, audio, image, ...
         if (referenceContentType != MMSEngineDBFacade::ContentType::Video)
         {
             string errorMessage = __FILEREF__ + "Reference... does not refer a video content"
@@ -1298,6 +1324,7 @@ void Validator::validateEncodeMetadata(int64_t workspaceKey,
 
             throw runtime_error(errorMessage);
         }
+         */
 
         dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
     }    
@@ -2304,6 +2331,164 @@ void Validator::validateCutMetadata(int64_t workspaceKey,
 
         dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
     }        
+}
+
+void Validator::validateOverlayImageOnVideoMetadata(int64_t workspaceKey,
+    Json::Value parametersRoot, vector<pair<int64_t,DependencyType>>& dependencies)
+{
+    
+    // References is optional because in case of dependency managed automatically
+    // by MMS (i.e.: onSuccess)
+    string field = "References";
+    if (isMetadataPresent(parametersRoot, field))
+    {
+        Json::Value referencesRoot = parametersRoot[field];
+        if (referencesRoot.size() != 2)
+        {
+            string errorMessage = __FILEREF__ + "Field is present but it does not have two elements"
+                    + ", Field: " + field;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        bool imagePresent = false;
+        bool videoPresent = false;
+        for (int referenceIndex = 0; referenceIndex < referencesRoot.size(); referenceIndex++)
+        {
+            Json::Value referenceRoot = referencesRoot[referenceIndex];
+
+            int64_t referenceMediaItemKey = -1;
+            int64_t referenceIngestionJobKey = -1;
+            string referenceUniqueName = "";
+            string field = "ReferenceMediaItemKey";
+            if (!isMetadataPresent(referenceRoot, field))
+            {
+                field = "ReferenceIngestionJobKey";
+                if (!isMetadataPresent(referenceRoot, field))
+                {
+                    field = "ReferenceUniqueName";
+                    if (!isMetadataPresent(referenceRoot, field))
+                    {
+                        Json::StreamWriterBuilder wbuilder;
+                        string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+                        
+                        string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                                + ", Field: " + "Reference..."
+                                + ", sParametersRoot: " + sParametersRoot
+                                ;
+                        _logger->error(errorMessage);
+
+                        throw runtime_error(errorMessage);
+                    }
+                    else
+                    {
+                        referenceUniqueName = referenceRoot.get(field, "XXX").asString();
+                    }        
+                }
+                else
+                {
+                    referenceIngestionJobKey = referenceRoot.get(field, "XXX").asInt64();
+                }        
+            }
+            else
+            {
+                referenceMediaItemKey = referenceRoot.get(field, "XXX").asInt64();    
+            }
+
+            MMSEngineDBFacade::ContentType      referenceContentType;
+            try
+            {
+                bool warningIfMissing = true;
+                if (referenceMediaItemKey != -1)
+                {
+                    referenceContentType = _mmsEngineDBFacade->getMediaItemKeyDetails(
+                        referenceMediaItemKey, warningIfMissing); 
+                }
+                else if (referenceIngestionJobKey != -1)
+                {
+                    int64_t referencePhysicalPathKey;
+
+                    tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyPhysicalPathKeyAndContentType = 
+                            _mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
+                            referenceIngestionJobKey, warningIfMissing);  
+
+                    tie(referenceMediaItemKey, referencePhysicalPathKey, referenceContentType) =
+                            mediaItemKeyPhysicalPathKeyAndContentType;
+                }
+                else // if (referenceUniqueName != "")
+                {
+                    pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
+                            _mmsEngineDBFacade->getMediaItemKeyDetailsByUniqueName(
+                            workspaceKey, referenceUniqueName, warningIfMissing);  
+
+                    referenceMediaItemKey = mediaItemKeyAndContentType.first;
+                    referenceContentType = mediaItemKeyAndContentType.second;
+                }
+            }
+            catch(runtime_error e)
+            {
+                string errorMessage = __FILEREF__ + "Reference... was not found"
+                        + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
+                        ;
+                _logger->warn(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            catch(exception e)
+            {
+                string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->getMediaItemKeyDetails failed"
+                        + ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
+                        + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
+                        ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+
+
+            if (referenceContentType == MMSEngineDBFacade::ContentType::Video)
+            {
+                if (videoPresent)
+                {
+                    string errorMessage = __FILEREF__ + "References are referring two videos"
+                            ;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+
+                videoPresent = true;
+            }
+            else if (referenceContentType == MMSEngineDBFacade::ContentType::Image)
+            {
+                if (imagePresent)
+                {
+                    string errorMessage = __FILEREF__ + "References are referring two images"
+                            ;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+
+                imagePresent = true;
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "Reference... does not refer a video or image content"
+                    + ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
+                    + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
+                    + ", referenceUniqueName: " + referenceUniqueName
+                    + ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
+                        ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+
+            dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
+        }
+    }
 }
 
 void Validator::validateEmailNotificationMetadata(

@@ -1,0 +1,64 @@
+{
+	"Type": "Workflow",
+	"Label": "1",
+	"Variables": {
+		"TitleOfVideo_1": "My Title of the video_1 content",
+		"TitleOfImage_1": "My Title of the logo content",
+		"TitleOfOverlayVideo_1": "My Title of the overlay content"
+	},
+	"Task": {
+		"Type": "GroupOfTasks",
+		"Parameters": {
+			"ExecutionType": "parallel",
+			"Tasks": [
+				{
+					"Label": "${TitleOfVideo_1}",
+					"Type": "Add-Content",
+					"Parameters": {
+           				"SourceURL": "http://mediaww.rsi.ch/rsi/unrestricted/2018/04/16/2560539.mp4",
+						"FileFormat": "mp4",
+						"ContentType": "video",
+						"UserData": { "MyData": "this is my video data" },
+						"Title": "${TitleOfVideo_1}"
+					}
+				},
+				{
+					"Label": "${TitleOfImage_1}",
+					"Type": "Add-Content",
+					"Parameters": {
+           				"SourceURL": "copy:///home/mms/catramms/CatraMMS/samples/free-logo.jpg",
+						"FileFormat": "jpg",
+						"ContentType": "image",
+						"UserData": { "MyData": "this is my image data" },
+						"Title": "${TitleOfImage_1}"
+					},
+					"OnSuccess": {
+						"Task": {
+							"Label": "my image encode",
+							"Type": "Encode",
+							"Parameters": {
+								"EncodingPriority": "Low",
+								"EncodingProfileLabel": "Profile Logo"
+							}
+						}
+					}
+				}
+			]
+		},
+		"OnSuccess": {
+			"Task": {
+				"Label": "my overlay",
+				"Type": "Overlay-Image-On-Video",
+				"Parameters": {
+					"EncodingPriority": "Low",
+					"References": [
+						{ "ReferenceLabel": "my image encode" },
+						{ "ReferenceLabel": "${TitleOfVideo_1}" }
+					],
+					"UserData": { "MyData": "this is my overlay data" },
+					"Title": "${TitleOfOverlayVideo_1}"
+				}
+			}
+		}
+	}
+}
