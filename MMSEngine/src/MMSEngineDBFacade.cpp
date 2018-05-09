@@ -6274,19 +6274,19 @@ int MMSEngineDBFacade::addOverlayVideoImageJob (
 
         int64_t sourceVideoPhysicalPathKey;
         int64_t sourceImagePhysicalPathKey;
-        if (!(contentType_1 == ContentType::Video && contentType_2 == ContentType::Image
+        if (contentType_1 == ContentType::Video && contentType_2 == ContentType::Image)
         {
             sourceVideoPhysicalPathKey = sourcePhysicalPathKey_1;
             sourceImagePhysicalPathKey = sourcePhysicalPathKey_2;
         }
-        else if (contentType_1 == ContentType::Image && contentType_2 == ContentType::Video))
+        else if (contentType_1 == ContentType::Image && contentType_2 == ContentType::Video)
         {
             sourceVideoPhysicalPathKey = sourcePhysicalPathKey_2;
             sourceImagePhysicalPathKey = sourcePhysicalPathKey_1;
         }
         else
         {
-            string errorMessage = __FILEREF__ + "It is not received one Video and one Image"
+            string errorMessage = __FILEREF__ + "addOverlayVideoImageJob is not receiving one Video and one Image"
                     + ", contentType_1: " + toString(contentType_1)
                     + ", contentType_2: " + toString(contentType_2)
             ;
@@ -6295,8 +6295,7 @@ int MMSEngineDBFacade::addOverlayVideoImageJob (
             throw runtime_error(errorMessage);                    
         }
         
-        EncodingType encodingType;
-        encodingType = EncodingType::EncodeOverlay;
+        EncodingType encodingType = EncodingType::Overlay;
         
         string parameters = string()
                 + "{ "

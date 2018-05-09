@@ -138,59 +138,62 @@ void ActiveEncodingsManager::operator()()
 
                     if (encodingJob->_status == EncodingJobStatus::Free)
                         continue;
-                    else if (encodingJob->_status == EncodingJobStatus::Running && 
-                            encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::EncodeVideoAudio)
+                    else if (encodingJob->_status == EncodingJobStatus::Running)
                     {
-                        try
+                        // if (encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::EncodeVideoAudio
+                        //         || encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::Overlay)
                         {
-                            int encodingPercentage = encodingJob->_encoderVideoAudioProxy
-                                .getEncodingProgress(encodingJob->_encodingItem->_encodingJobKey);
-                            
-                            _mmsEngineDBFacade->updateEncodingJobProgress (encodingJob->_encodingItem->_encodingJobKey, 
-                                encodingPercentage);
-                        }
-                        catch(EncodingStatusNotAvailable e)
-                        {
+                            try
+                            {
+                                int encodingPercentage = encodingJob->_encoderVideoAudioProxy
+                                    .getEncodingProgress(encodingJob->_encodingItem->_encodingJobKey);
 
-                        }
-                        catch(NoEncodingJobKeyFound e)
-                        {
+                                _mmsEngineDBFacade->updateEncodingJobProgress (encodingJob->_encodingItem->_encodingJobKey, 
+                                    encodingPercentage);
+                            }
+                            catch(EncodingStatusNotAvailable e)
+                            {
 
-                        }
-                        catch(runtime_error e)
-                        {
-                            _logger->error(__FILEREF__ + "getEncodingProgress failed"
-                                + ", runtime_error: " + e.what()
-                            );
-                        }
-                        catch(exception e)
-                        {
-                            _logger->error(__FILEREF__ + "getEncodingProgress failed");
-                        }
+                            }
+                            catch(NoEncodingJobKeyFound e)
+                            {
 
-                        if (chrono::duration_cast<chrono::hours>(
-                                chrono::system_clock::now() - encodingJob->_encodingJobStart) >
-                                chrono::hours(24))
-                        {
-                            _logger->error(__FILEREF__ + "EncodingJob is not finishing"
-                                    + ", elapsed (hours): " + 
-                                        to_string(chrono::duration_cast<chrono::hours>(chrono::system_clock::now() - encodingJob->_encodingJobStart).count())
-                            );
-                        }
-                        else
-                        {
-                            _logger->info(__FILEREF__ + "EncodingJob still running"
-                                    + ", elapsed (minutes): " + 
-                                        to_string(chrono::duration_cast<chrono::minutes>(chrono::system_clock::now() - encodingJob->_encodingJobStart).count())
-                                    + ", workspace: " + encodingJob->_encodingItem->_workspace->_name
-                                    + ", _ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey)
-                                    + ", _encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
-                                    + ", _encodingPriority: " + to_string(static_cast<int>(encodingJob->_encodingItem->_encodingPriority))
-                                    + ", _relativePath: " + encodingJob->_encodingItem->_relativePath
-                                    + ", _fileName: " + encodingJob->_encodingItem->_fileName
-                                    + ", _encodingType: " + MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
-                                    + ", _encodingParameters: " + encodingJob->_encodingItem->_encodingParameters
-                            );
+                            }
+                            catch(runtime_error e)
+                            {
+                                _logger->error(__FILEREF__ + "getEncodingProgress failed"
+                                    + ", runtime_error: " + e.what()
+                                );
+                            }
+                            catch(exception e)
+                            {
+                                _logger->error(__FILEREF__ + "getEncodingProgress failed");
+                            }
+
+                            if (chrono::duration_cast<chrono::hours>(
+                                    chrono::system_clock::now() - encodingJob->_encodingJobStart) >
+                                    chrono::hours(24))
+                            {
+                                _logger->error(__FILEREF__ + "EncodingJob is not finishing"
+                                        + ", elapsed (hours): " + 
+                                            to_string(chrono::duration_cast<chrono::hours>(chrono::system_clock::now() - encodingJob->_encodingJobStart).count())
+                                );
+                            }
+                            else
+                            {
+                                _logger->info(__FILEREF__ + "EncodingJob still running"
+                                        + ", elapsed (minutes): " + 
+                                            to_string(chrono::duration_cast<chrono::minutes>(chrono::system_clock::now() - encodingJob->_encodingJobStart).count())
+                                        + ", workspace: " + encodingJob->_encodingItem->_workspace->_name
+                                        + ", _ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey)
+                                        + ", _encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey)
+                                        + ", _encodingPriority: " + to_string(static_cast<int>(encodingJob->_encodingItem->_encodingPriority))
+                                        + ", _relativePath: " + encodingJob->_encodingItem->_relativePath
+                                        + ", _fileName: " + encodingJob->_encodingItem->_fileName
+                                        + ", _encodingType: " + MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
+                                        + ", _encodingParameters: " + encodingJob->_encodingItem->_encodingParameters
+                                );
+                            }
                         }
                     }
                     else // if (encodingJob._status == EncodingJobStatus::ToBeRun)
