@@ -918,7 +918,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
                             try
                             {
-                                manageOverlayTask(
+                                manageOverlayImageOnVideoTask(
                                         ingestionJobKey, 
                                         workspace, 
                                         parametersRoot, 
@@ -926,7 +926,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             }
                             catch(runtime_error e)
                             {
-                                _logger->error(__FILEREF__ + "manageOverlayTask failed"
+                                _logger->error(__FILEREF__ + "manageOverlayImageOnVideoTask failed"
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", exception: " + e.what()
                                 );
@@ -949,7 +949,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             }
                             catch(exception e)
                             {
-                                _logger->error(__FILEREF__ + "manageOverlayTask failed"
+                                _logger->error(__FILEREF__ + "manageOverlayImageOnVideoTask failed"
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", exception: " + e.what()
                                 );
@@ -1863,83 +1863,6 @@ void MMSEngineProcessor::removeContent(
     }
 }
 
-void MMSEngineProcessor::manageEncodeTask(
-        int64_t ingestionJobKey,
-        shared_ptr<Workspace> workspace,
-        Json::Value parametersRoot,
-        vector<pair<int64_t,Validator::DependencyType>>& dependencies
-)
-{
-    try
-    {        
-        // This task shall contain EncodingProfileKey or EncodingProfileLabel.
-        // We cannot have EncodingProfilesSetKey because we replaced it with a GroupOfTasks
-        //  having just EncodingProfileKey        
-        
-        string keyField = "EncodingProfileKey";
-        int64_t encodingProfileKey = -1;
-        string labelField = "EncodingProfileLabel";
-        string encodingProfileLabel;
-        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, keyField))
-        {
-            encodingProfileKey = parametersRoot.get(keyField, "XXX").asInt64();
-        }
-        else if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, labelField))
-        {
-            encodingProfileLabel = parametersRoot.get(labelField, "XXX").asString();
-        }
-        else
-        {
-            string errorMessage = __FILEREF__ + "Both fields are not present or it is null"
-                    + ", Field: " + keyField
-                    + ", Field: " + labelField
-                    ;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-
-        string field = "EncodingPriority";
-        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-        {
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + field;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        MMSEngineDBFacade::EncodingPriority encodingPriority =
-                MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
-
-        pair<int64_t,Validator::DependencyType>& keyAndDependencyType = dependencies.back();
-        int64_t sourceMediaItemKey = keyAndDependencyType.first;
-    
-        if (encodingProfileKey == -1)
-            _mmsEngineDBFacade->addEncodingJob (workspace->_workspaceKey, ingestionJobKey,
-                encodingProfileLabel, sourceMediaItemKey, encodingPriority);
-        else
-            _mmsEngineDBFacade->addEncodingJob (ingestionJobKey,
-                encodingProfileKey, sourceMediaItemKey, encodingPriority);
-    }
-    catch(runtime_error e)
-    {
-        _logger->error(__FILEREF__ + "generateAndIngestFrame failed"
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", e.what(): " + e.what()
-        );
-        
-        throw e;
-    }
-    catch(exception e)
-    {
-        _logger->error(__FILEREF__ + "generateAndIngestFrame failed"
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-        );
-        
-        throw e;
-    }
-}
-
 void MMSEngineProcessor::generateAndIngestFrames(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
@@ -2785,7 +2708,7 @@ void MMSEngineProcessor::generateAndIngestCutMedia(
     }
 }
 
-void MMSEngineProcessor::manageOverlayTask(
+void MMSEngineProcessor::manageEncodeTask(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
@@ -2855,6 +2778,59 @@ void MMSEngineProcessor::manageOverlayTask(
     catch(exception e)
     {
         _logger->error(__FILEREF__ + "generateAndIngestFrame failed"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+        );
+        
+        throw e;
+    }
+}
+
+void MMSEngineProcessor::manageOverlayImageOnVideoTask(
+        int64_t ingestionJobKey,
+        shared_ptr<Workspace> workspace,
+        Json::Value parametersRoot,
+        vector<pair<int64_t,Validator::DependencyType>>& dependencies
+)
+{
+    try
+    {
+        if (dependencies.size() != 2)
+        {
+            string errorMessage = __FILEREF__ + "Wrong number of dependencies"
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", dependencies.size: " + to_string(dependencies.size());
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        string field = "EncodingPriority";
+        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        MMSEngineDBFacade::EncodingPriority encodingPriority =
+                MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
+
+        _mmsEngineDBFacade->addOverlayVideoImageJob (ingestionJobKey,
+            vec[0], vec[1], encodingPriority);
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "manageOverlayImageOnVideoTask failed"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
+        );
+        
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "manageOverlayImageOnVideoTask failed"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );
         

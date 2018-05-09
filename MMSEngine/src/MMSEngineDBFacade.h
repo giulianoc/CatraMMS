@@ -179,6 +179,43 @@ public:
                     );
     }
     
+    enum class EncodingType {
+        EncodeVideoAudio    = 0,
+        EncodeImage         = 1,
+        Overlay             = 2
+    };
+    static const char* toString(const EncodingType& encodingType)
+    {
+        switch (encodingType)
+        {
+            case EncodingType::EncodeVideoAudio:
+                return "EncodeVideoAudio";
+            case EncodingType::EncodeImage:
+                return "EncodeImage";
+            case EncodingType::Overlay:
+                return "Overlay";
+            default:
+            throw runtime_error(string("Wrong EncodingType"));
+        }
+    }
+    static EncodingType toEncodingType(const string& encodingType)
+    {
+        string lowerCase;
+        lowerCase.resize(encodingType.size());
+        transform(encodingType.begin(), encodingType.end(), lowerCase.begin(), [](unsigned char c){return tolower(c); } );
+
+        if (lowerCase == "encodevideoaudio")
+            return EncodingType::EncodeVideoAudio;
+        if (lowerCase == "encodeimage")
+            return EncodingType::EncodeImage;
+        else if (lowerCase == "overlay")
+            return EncodingType::Overlay;
+        else
+            throw runtime_error(string("Wrong EncodingType")
+                    + ", encodingType: " + encodingType
+                    );
+    }
+
     enum class EncodingError {
         NoError,
         PunctualError,
@@ -241,22 +278,18 @@ public:
     {
         long long                               _encodingJobKey;
         long long                               _ingestionJobKey;
+        EncodingPriority                        _encodingPriority;
+        EncodingType                            _encodingType;
+        string                                  _encodingParameters;
+        Json::Value                             _parametersRoot;
+        
         unsigned long                           _mmsPartitionNumber;
         string                                  _fileName;
         string                                  _relativePath;
         shared_ptr<Workspace>                   _workspace;
         long long                               _mediaItemKey;
-        long long                               _physicalPathKey;
         int64_t                                 _durationInMilliSeconds;
         ContentType                             _contentType;
-        EncodingPriority                        _encodingPriority;
-        /*
-        string                                  _ftpIPAddress;
-        string                                  _ftpPort;
-        string                                  _ftpUser;
-        string                                  _ftpPassword;
-         */
-        long long                               _encodingProfileKey;
         MMSEngineDBFacade::EncodingTechnology   _encodingProfileTechnology;
         string                                  _jsonProfile;
     } ;

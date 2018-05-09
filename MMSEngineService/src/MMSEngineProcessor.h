@@ -102,7 +102,7 @@ private:
         Json::Value parametersRoot,
         vector<pair<int64_t,Validator::DependencyType>>& dependencies);
 
-    void manageOverlayTask(
+    void manageOverlayImageOnVideoTask(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,

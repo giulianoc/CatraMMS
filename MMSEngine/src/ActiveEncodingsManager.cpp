@@ -139,8 +139,7 @@ void ActiveEncodingsManager::operator()()
                     if (encodingJob->_status == EncodingJobStatus::Free)
                         continue;
                     else if (encodingJob->_status == EncodingJobStatus::Running && 
-                            (encodingJob->_encodingItem->_contentType == MMSEngineDBFacade::ContentType::Video
-                            || encodingJob->_encodingItem->_contentType == MMSEngineDBFacade::ContentType::Audio))
+                            encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::EncodeVideoAudio)
                     {
                         try
                         {
@@ -189,7 +188,8 @@ void ActiveEncodingsManager::operator()()
                                     + ", _encodingPriority: " + to_string(static_cast<int>(encodingJob->_encodingItem->_encodingPriority))
                                     + ", _relativePath: " + encodingJob->_encodingItem->_relativePath
                                     + ", _fileName: " + encodingJob->_encodingItem->_fileName
-                                    + ", _encodingProfileKey: " + to_string(encodingJob->_encodingItem->_encodingProfileKey)
+                                    + ", _encodingType: " + MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
+                                    + ", _encodingParameters: " + encodingJob->_encodingItem->_encodingParameters
                             );
                         }
                     }
@@ -204,7 +204,8 @@ void ActiveEncodingsManager::operator()()
                                 + ", _encodingPriority: " + to_string(static_cast<int>(encodingJob->_encodingItem->_encodingPriority))
                                 + ", _relativePath: " + encodingJob->_encodingItem->_relativePath
                                 + ", _fileName: " + encodingJob->_encodingItem->_fileName
-                                + ", _encodingProfileKey: " + to_string(encodingJob->_encodingItem->_encodingProfileKey)
+                                + ", _encodingType: " + MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
+                                + ", _encodingParameters: " + encodingJob->_encodingItem->_encodingParameters
                         );
 
                         try
@@ -220,7 +221,8 @@ void ActiveEncodingsManager::operator()()
                                 + ", _encodingPriority: " + to_string(static_cast<int>(encodingJob->_encodingItem->_encodingPriority))
                                 + ", _relativePath: " + encodingJob->_encodingItem->_relativePath
                                 + ", _fileName: " + encodingJob->_encodingItem->_fileName
-                                + ", _encodingProfileKey: " + to_string(encodingJob->_encodingItem->_encodingProfileKey)
+                                + ", _encodingType: " + MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
+                                + ", _encodingParameters: " + encodingJob->_encodingItem->_encodingParameters
                             );
                         }
                         catch(runtime_error e)
@@ -246,8 +248,7 @@ void ActiveEncodingsManager::operator()()
 
 void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
 {
-    if (encodingJob->_encodingItem->_contentType == MMSEngineDBFacade::ContentType::Video ||
-            encodingJob->_encodingItem->_contentType == MMSEngineDBFacade::ContentType::Audio)
+    if (encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::EncodeVideoAudio)
     {
         encodingJob->_encoderVideoAudioProxy.setEncodingData(
             &(encodingJob->_status),
@@ -266,8 +267,8 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
         encodingJob->_encodingJobStart		= chrono::system_clock::now();
         encodingJob->_status			= EncodingJobStatus::Running;
     }
-    else if (encodingJob->_encodingItem->_contentType == MMSEngineDBFacade::ContentType::Image)
-    {
+    else if (encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::EncodeImage)
+    {    
         string stagingEncodedAssetPathName;
         try
         {
@@ -306,7 +307,8 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
         int64_t encodedPhysicalPathKey;
         try
         {
-            encodedPhysicalPathKey = processEncodedImage(encodingJob->_encodingItem, stagingEncodedAssetPathName);
+            encodedPhysicalPathKey = processEncodedImage(encodingJob->_encodingItem, 
+                    stagingEncodedAssetPathName);
         }
         catch(exception e)
         {
@@ -371,8 +373,8 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
     }
     else
     {
-        string errorMessage = __FILEREF__ + "Encoding not managed for the ContentType"
-                + ", encodingJob->_encodingItem->_contentType: " + to_string(static_cast<int>(encodingJob->_encodingItem->_contentType))
+        string errorMessage = __FILEREF__ + "Encoding not managed for the EncodingType"
+                + ", encodingJob->_encodingItem->_encodingType: " + MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
                 ;
         _logger->error(errorMessage);
         
@@ -380,8 +382,20 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
     }
 }
 
-string ActiveEncodingsManager::encodeContentImage(shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem)
+string ActiveEncodingsManager::encodeContentImage(
+        shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem)
 {
+    int64_t sourcePhysicalPathKey;
+    int64_t encodingProfileKey;    
+
+    {
+        string field = "sourcePhysicalPathKey";
+        sourcePhysicalPathKey = encodingItem->_parametersRoot.get(field, 0).asInt64();
+
+        field = "encodingProfileKey";
+        encodingProfileKey = encodingItem->_parametersRoot.get(field, 0).asInt64();
+    }
+
     size_t extensionIndex = encodingItem->_fileName.find_last_of(".");
     if (extensionIndex == string::npos)
     {
@@ -394,7 +408,7 @@ string ActiveEncodingsManager::encodeContentImage(shared_ptr<MMSEngineDBFacade::
     string encodedFileName =
             encodingItem->_fileName.substr(0, extensionIndex)
             + "_" 
-            + to_string(encodingItem->_encodingProfileKey);
+            + to_string(encodingProfileKey);
     
     string mmsSourceAssetPathName = _mmsStorage->getMMSAssetPathName(
         encodingItem->_mmsPartitionNumber,
@@ -446,7 +460,7 @@ string ActiveEncodingsManager::encodeContentImage(shared_ptr<MMSEngineDBFacade::
 	int currentHeight	= imageToEncode. rows ();
 
         _logger->info(__FILEREF__ + "Image processing"
-            + ", encodingItem->_encodingProfileKey: " + to_string(encodingItem->_encodingProfileKey)
+            + ", encodingProfileKey: " + to_string(encodingProfileKey)
             + ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
             + ", currentImageFormat: " + currentImageFormat
             + ", currentWidth: " + to_string(currentWidth)
@@ -545,9 +559,20 @@ string ActiveEncodingsManager::encodeContentImage(shared_ptr<MMSEngineDBFacade::
 }
 
 int64_t ActiveEncodingsManager::processEncodedImage(
-        shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem, 
+        shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem,
         string stagingEncodedAssetPathName)
 {
+    int64_t sourcePhysicalPathKey;
+    int64_t encodingProfileKey;    
+
+    {
+        string field = "sourcePhysicalPathKey";
+        sourcePhysicalPathKey = encodingItem->_parametersRoot.get(field, 0).asInt64();
+
+        field = "encodingProfileKey";
+        encodingProfileKey = encodingItem->_parametersRoot.get(field, 0).asInt64();
+    }
+    
     int64_t encodedPhysicalPathKey;
     string encodedFileName;
     string mmsAssetPathName;
@@ -587,7 +612,7 @@ int64_t ActiveEncodingsManager::processEncodedImage(
         _logger->error(__FILEREF__ + "_mmsStorage->moveAssetInMMSRepository failed"
             + ", encodingItem->_encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
             + ", encodingItem->_ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
-            + ", encodingItem->_physicalPathKey: " + to_string(encodingItem->_physicalPathKey)
+            + ", encodingItem->_encodingParameters: " + encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
         );
 
@@ -610,12 +635,12 @@ int64_t ActiveEncodingsManager::processEncodedImage(
             encodingItem->_relativePath,
             mmsPartitionIndexUsed,
             mmsAssetSizeInBytes,
-            encodingItem->_encodingProfileKey);
+            encodingProfileKey);
         
         _logger->info(__FILEREF__ + "Saved the Encoded content"
             + ", encodingItem->_encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
             + ", encodingItem->_ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
-            + ", encodingItem->_physicalPathKey: " + to_string(encodingItem->_physicalPathKey)
+            + ", encodingItem->_encodingParameters: " + encodingItem->_encodingParameters
             + ", encodedPhysicalPathKey: " + to_string(encodedPhysicalPathKey)
         );
     }
@@ -624,7 +649,7 @@ int64_t ActiveEncodingsManager::processEncodedImage(
         _logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveEncodedContentMetadata failed"
             + ", encodingItem->_encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
             + ", encodingItem->_ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
-            + ", encodingItem->_physicalPathKey: " + to_string(encodingItem->_physicalPathKey)
+            + ", encodingItem->_encodingParameters: " + encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
         );
 
@@ -704,7 +729,7 @@ unsigned long ActiveEncodingsManager:: addEncodingItems (
             + ", encodingItem->_encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
             + ", encodingItem->_encodingPriority: " + to_string(static_cast<int>(encodingItem->_encodingPriority))
             + ", encodingItem->_mediaItemKey: " + to_string(encodingItem->_mediaItemKey)
-            + ", encodingItem->_physicalPathKey: " + to_string(encodingItem->_physicalPathKey)
+            + ", encodingItem->_encodingParameters: " + encodingItem->_encodingParameters
             + ", encodingItem->_fileName: " + encodingItem->_fileName
         );
 
@@ -721,7 +746,7 @@ unsigned long ActiveEncodingsManager:: addEncodingItems (
                 + ", encodingItem->_encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
                 + ", encodingItem->_encodingPriority: " + to_string(static_cast<int>(encodingItem->_encodingPriority))
                 + ", encodingItem->_mediaItemKey: " + to_string(encodingItem->_mediaItemKey)
-                + ", encodingItem->_physicalPathKey: " + to_string(encodingItem->_physicalPathKey)
+                + ", encodingItem->_encodingParameters: " + encodingItem->_encodingParameters
                 + ", encodingItem->_fileName: " + encodingItem->_fileName
             );
             
@@ -739,7 +764,7 @@ unsigned long ActiveEncodingsManager:: addEncodingItems (
                 + ", encodingItem->_encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
                 + ", encodingItem->_encodingPriority: " + to_string(static_cast<int>(encodingItem->_encodingPriority))
                 + ", encodingItem->_mediaItemKey: " + to_string(encodingItem->_mediaItemKey)
-                + ", encodingItem->_physicalPathKey: " + to_string(encodingItem->_physicalPathKey)
+                + ", encodingItem->_encodingParameters: " + encodingItem->_encodingParameters
                 + ", encodingItem->_fileName: " + encodingItem->_fileName
             );
             int64_t encodedPhysicalPathKey = -1;

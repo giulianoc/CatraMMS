@@ -1860,31 +1860,24 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
         unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey,
         string& responseBody)
 {
+    string field = "Type";
+    string type = taskRoot.get(field, "XXX").asString();
+
     string taskLabel;
-    string field = "Label";
+    field = "Label";
     if (_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
     {
         taskLabel = taskRoot.get(field, "XXX").asString();
     }
-
-    field = "Type";
-    string type = taskRoot.get(field, "XXX").asString();
-
     
-    string taskMetadata;
-
-    string parametersField = "Parameters";
+    field = "Parameters";
     Json::Value parametersRoot;
     bool parametersSectionPresent = false;
-    if (_mmsEngineDBFacade->isMetadataPresent(taskRoot, parametersField))
+    if (_mmsEngineDBFacade->isMetadataPresent(taskRoot, field))
     {
-        parametersRoot = taskRoot[parametersField];
+        parametersRoot = taskRoot[field];
         
         parametersSectionPresent = true;
-        
-        Json::StreamWriterBuilder wbuilder;
-
-        taskMetadata = Json::writeString(wbuilder, parametersRoot);        
     }
     
     string encodingProfilesSetKeyField = "EncodingProfilesSetKey";
@@ -2027,21 +2020,6 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
                 responseBody); 
     }
 
-    _logger->info(__FILEREF__ + "add IngestionJob"
-        + ", taskLabel: " + taskLabel
-        + ", taskMetadata: " + taskMetadata
-        + ", IngestionType: " + type
-        + ", dependOnIngestionJobKeysExecution.size(): " + to_string(dependOnIngestionJobKeysExecution.size())
-        + ", dependOnSuccess: " + to_string(dependOnSuccess)
-    );
-
-    int64_t localDependOnIngestionJobKeyExecution = _mmsEngineDBFacade->addIngestionJob(conn,
-            workspace->_workspaceKey, ingestionRootKey, taskLabel, taskMetadata, MMSEngineDBFacade::toIngestionType(type), 
-            dependOnIngestionJobKeysExecution, dependOnSuccess);
-    
-    if (taskLabel != "")
-        (mapLabelAndIngestionJobKey[taskLabel]).push_back(localDependOnIngestionJobKeyExecution);
-    
     bool referencesSectionPresent = false;
     Json::Value referencesRoot(Json::arrayValue);
     if (parametersSectionPresent)
@@ -2102,9 +2080,23 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
                 referenceRoot[field] = ingestionJobKeys.back();
                 
                 referencesChanged = true;
+                
+                // The workflow specifies expliticily a reference (input for the task).
+                // Probable this is because the Reference is not part of the
+                // 'dependOnIngestionJobKeysReferences' parameter that it is generally
+                // same of 'dependOnIngestionJobKeysExecution'.
+                // For this reason we have to make sure this Reference is inside
+                // dependOnIngestionJobKeysExecution in order to avoid the Task starts
+                // when the input is not yet ready
+                vector<int64_t>::iterator itrIngestionJobKey = find(
+                        dependOnIngestionJobKeysExecution.begin(), dependOnIngestionJobKeysExecution.end(), 
+                        ingestionJobKeys.back());
+                if (itrIngestionJobKey == dependOnIngestionJobKeysExecution.end())
+                    dependOnIngestionJobKeysExecution.push_back(ingestionJobKeys.back());
             }
         }
         
+        /*
         if (referencesChanged)
         {
             {
@@ -2121,6 +2113,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 
             _mmsEngineDBFacade->updateIngestionJobMetadataContent(conn, localDependOnIngestionJobKeyExecution, taskMetadata);
         }
+        */
     }
     else if (dependOnIngestionJobKeysReferences.size() > 0)
     {
@@ -2140,7 +2133,8 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
         {
             taskRoot[field] = parametersRoot;
         }
-        
+
+        /*        
         {
             Json::StreamWriterBuilder wbuilder;
 
@@ -2154,8 +2148,33 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
         // );
 
         _mmsEngineDBFacade->updateIngestionJobMetadataContent(conn, localDependOnIngestionJobKeyExecution, taskMetadata);
+        */
     }
 
+    string taskMetadata;
+
+    if (parametersSectionPresent)
+    {                
+        Json::StreamWriterBuilder wbuilder;
+
+        taskMetadata = Json::writeString(wbuilder, parametersRoot);        
+    }
+    
+    _logger->info(__FILEREF__ + "add IngestionJob"
+        + ", taskLabel: " + taskLabel
+        + ", taskMetadata: " + taskMetadata
+        + ", IngestionType: " + type
+        + ", dependOnIngestionJobKeysExecution.size(): " + to_string(dependOnIngestionJobKeysExecution.size())
+        + ", dependOnSuccess: " + to_string(dependOnSuccess)
+    );
+
+    int64_t localDependOnIngestionJobKeyExecution = _mmsEngineDBFacade->addIngestionJob(conn,
+            workspace->_workspaceKey, ingestionRootKey, taskLabel, taskMetadata, MMSEngineDBFacade::toIngestionType(type), 
+            dependOnIngestionJobKeysExecution, dependOnSuccess);
+    
+    if (taskLabel != "")
+        (mapLabelAndIngestionJobKey[taskLabel]).push_back(localDependOnIngestionJobKeyExecution);
+    
     if (responseBody != "")
         responseBody += ", ";    
     responseBody +=

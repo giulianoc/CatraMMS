@@ -268,7 +268,8 @@ void EncoderVideoAudioProxy::operator()()
     
     try
     {
-        encodedPhysicalPathKey = processEncodedContentVideoAudio(stagingEncodedAssetPathName);
+        encodedPhysicalPathKey = processEncodedContentVideoAudio(
+                stagingEncodedAssetPathName);
     }
     catch(runtime_error e)
     {
@@ -851,6 +852,17 @@ int EncoderVideoAudioProxy::getEncodingProgress(int64_t encodingJobKey)
 string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 {
     
+    int64_t sourcePhysicalPathKey;
+    int64_t encodingProfileKey;    
+
+    {
+        string field = "sourcePhysicalPathKey";
+        sourcePhysicalPathKey = _encodingItem->_parametersRoot.get(field, 0).asInt64();
+
+        field = "encodingProfileKey";
+        encodingProfileKey = _encodingItem->_parametersRoot.get(field, 0).asInt64();
+    }
+    
     string stagingEncodedAssetPathName;
     string encodedFileName;
     string mmsSourceAssetPathName;
@@ -892,7 +904,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                 + "_"
                 + to_string(_encodingItem->_encodingJobKey)
                 + "_" 
-                + to_string(_encodingItem->_encodingProfileKey);
+                + to_string(encodingProfileKey);
         if (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MP4)
             encodedFileName.append(".mp4");
         else if (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MPEG2_TS ||
@@ -1080,7 +1092,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                 }
                 encodingMedatada["encodingProfileDetails"] = encodingDetails;
                 encodingMedatada["contentType"] = MMSEngineDBFacade::toString(_encodingItem->_contentType);
-                encodingMedatada["physicalPathKey"] = (Json::LargestUInt) (_encodingItem->_physicalPathKey);
+                encodingMedatada["physicalPathKey"] = (Json::LargestUInt) (sourcePhysicalPathKey);
                 encodingMedatada["workspaceDirectoryName"] = _encodingItem->_workspace->_directoryName;
                 encodingMedatada["relativePath"] = _encodingItem->_relativePath;
                 encodingMedatada["encodingJobKey"] = (Json::LargestUInt) (_encodingItem->_encodingJobKey);
@@ -1653,6 +1665,17 @@ bool EncoderVideoAudioProxy::getEncodingStatus(int64_t encodingJobKey)
 
 int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEncodedAssetPathName)
 {
+    int64_t sourcePhysicalPathKey;
+    int64_t encodingProfileKey;    
+
+    {
+        string field = "sourcePhysicalPathKey";
+        sourcePhysicalPathKey = _encodingItem->_parametersRoot.get(field, 0).asInt64();
+
+        field = "encodingProfileKey";
+        encodingProfileKey = _encodingItem->_parametersRoot.get(field, 0).asInt64();
+    }
+    
     int64_t encodedPhysicalPathKey;
     string encodedFileName;
     string mmsAssetPathName;
@@ -1716,7 +1739,7 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEn
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_physicalPathKey: " + to_string(_encodingItem->_physicalPathKey)
+            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
             + ", _encodingItem->_workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
             + ", _encodingItem->_relativePath: " + _encodingItem->_relativePath
@@ -1731,7 +1754,7 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEn
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_physicalPathKey: " + to_string(_encodingItem->_physicalPathKey)
+            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
             + ", _encodingItem->_workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
             + ", _encodingItem->_relativePath: " + _encodingItem->_relativePath
@@ -1780,13 +1803,13 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEn
             _encodingItem->_relativePath,
             mmsPartitionIndexUsed,
             mmsAssetSizeInBytes,
-            _encodingItem->_encodingProfileKey);
+            encodingProfileKey);
         
         _logger->info(__FILEREF__ + "Saved the Encoded content"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_physicalPathKey: " + to_string(_encodingItem->_physicalPathKey)
+            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
             + ", encodedPhysicalPathKey: " + to_string(encodedPhysicalPathKey)
         );
     }
@@ -1796,7 +1819,7 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEn
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_physicalPathKey: " + to_string(_encodingItem->_physicalPathKey)
+            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
         );
 
