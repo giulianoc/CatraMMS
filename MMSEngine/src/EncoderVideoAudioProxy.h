@@ -99,6 +99,15 @@ private:
     string                              _mpeg2TSEncoder;
     int                                 _intervalInSecondsToCheckEncodingFinished;
     
+    string                              _ffmpegEncoderProtocol;
+    int                                 _ffmpegEncoderPort;
+    string                              _ffmpegEncoderUser;
+    string                              _ffmpegEncoderPassword;
+    string                              _ffmpegEncoderProgressURI;
+    string                              _ffmpegEncoderStatusURI;
+    string                              _ffmpegEncodeURI;
+    string                              _ffmpegOverlayImageOnVideoURI;
+    
     #ifdef __LOCALENCODER__
         shared_ptr<FFMpeg>              _ffmpeg;
         int*                            _pRunningEncodingsNumber;
@@ -111,6 +120,11 @@ private:
     string encodeContent_VideoAudio_through_ffmpeg();
 
     int64_t processEncodedContentVideoAudio(string stagingEncodedAssetPathName);    
+
+    string overlayImageOnVideo();
+    string overlayImageOnVideo_through_ffmpeg();
+
+    pair<int64_t,int64_t> processOverlayedImageOnVideo(string stagingEncodedAssetPathName);    
 
     bool getEncodingStatus(int64_t encodingJobKey);
 };

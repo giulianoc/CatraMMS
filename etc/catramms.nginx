@@ -93,7 +93,10 @@ server {
 
 	location /catramms {
 		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/([0-9]+)/?$ /encoder?version=$1&method=encodeContent&encodingJobKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/encoder/encode/([0-9]+)/?$ /encoder?version=$1&method=encodeContent&encodingJobKey=$2 last;
+		}
+		if ($request_method = POST) {
+			rewrite ^/catramms/(v[0-9]+)/encoder/overlayImageOnVideo/([0-9]+)/?$ /encoder?version=$1&method=overlayImageOnVideo&encodingJobKey=$2 last;
 		}
 		if ($request_method = GET) {
 			rewrite ^/catramms/(v[0-9]+)/encoder/progress/([0-9]+)/?$ /encoder?version=$1&method=encodingProgress&encodingJobKey=$2 last;

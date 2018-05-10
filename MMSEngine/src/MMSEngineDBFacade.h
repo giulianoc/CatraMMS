@@ -182,7 +182,7 @@ public:
     enum class EncodingType {
         EncodeVideoAudio    = 0,
         EncodeImage         = 1,
-        Overlay             = 2
+        OverlayImageOnVideo = 2
     };
     static const char* toString(const EncodingType& encodingType)
     {
@@ -192,8 +192,8 @@ public:
                 return "EncodeVideoAudio";
             case EncodingType::EncodeImage:
                 return "EncodeImage";
-            case EncodingType::Overlay:
-                return "Overlay";
+            case EncodingType::OverlayImageOnVideo:
+                return "OverlayImageOnVideo";
             default:
             throw runtime_error(string("Wrong EncodingType"));
         }
@@ -208,8 +208,8 @@ public:
             return EncodingType::EncodeVideoAudio;
         if (lowerCase == "encodeimage")
             return EncodingType::EncodeImage;
-        else if (lowerCase == "overlay")
-            return EncodingType::Overlay;
+        else if (lowerCase == "overlayimageonvideo")
+            return EncodingType::OverlayImageOnVideo;
         else
             throw runtime_error(string("Wrong EncodingType")
                     + ", encodingType: " + encodingType
@@ -282,16 +282,35 @@ public:
         EncodingType                            _encodingType;
         string                                  _encodingParameters;
         Json::Value                             _parametersRoot;
-        
-        unsigned long                           _mmsPartitionNumber;
-        string                                  _fileName;
-        string                                  _relativePath;
+
         shared_ptr<Workspace>                   _workspace;
-        long long                               _mediaItemKey;
-        int64_t                                 _durationInMilliSeconds;
-        ContentType                             _contentType;
-        MMSEngineDBFacade::EncodingTechnology   _encodingProfileTechnology;
-        string                                  _jsonProfile;
+
+        struct EncodeData {
+            unsigned long                           _mmsPartitionNumber;
+            string                                  _fileName;
+            string                                  _relativePath;
+            long long                               _mediaItemKey;
+            int64_t                                 _durationInMilliSeconds;
+            ContentType                             _contentType;
+            MMSEngineDBFacade::EncodingTechnology   _encodingProfileTechnology;
+            string                                  _jsonProfile;
+        };
+
+        struct OverlayImageOnVideoData {
+            unsigned long                           _mmsVideoPartitionNumber;
+            string                                  _videoFileName;
+            string                                  _videoRelativePath;
+            int64_t                                 _videoDurationInMilliSeconds;
+
+            unsigned long                           _mmsImagePartitionNumber;
+            string                                  _imageFileName;
+            string                                  _imageRelativePath;
+
+            Json::Value                             _overlayParametersRoot;
+        };
+        
+        shared_ptr<EncodeData>                      _encodeData;
+        shared_ptr<OverlayImageOnVideoData>         _overlayImageOnVideoData;
     } ;
 
     enum class WorkspaceType {
@@ -664,11 +683,13 @@ public:
         int64_t workspaceKey, string referenceUniqueName, bool warningIfMissing);
     
     tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> getVideoDetails(
-        int64_t mediaItemKey);
+        int64_t mediaItemKey, int64_t physicalpathKey);
 
-    tuple<int64_t,string,long,long,int> getAudioDetails(int64_t mediaItemKey);
+    tuple<int64_t,string,long,long,int> getAudioDetails(
+        int64_t mediaItemKey, int64_t physicalpathKey);
 
-    tuple<int,int,string,int> getImageDetails(int64_t mediaItemKey);
+    tuple<int,int,string,int> getImageDetails(
+        int64_t mediaItemKey, int64_t physicalpathKey);
 
     void getEncodingJobs(
         bool resetToBeDone,
@@ -694,6 +715,12 @@ public:
         int64_t ingestionJobKey,
         int64_t encodingProfileKey,
         int64_t mediaItemKey,
+        EncodingPriority encodingPriority);
+
+    int addOverlayImageOnVideoJob (
+        int64_t ingestionJobKey,
+        int64_t mediaItemKey_1,
+        int64_t mediaItemKey_2,
         EncodingPriority encodingPriority);
 
     int updateEncodingJob (
@@ -742,6 +769,36 @@ public:
         int imageQuality
     );
 
+    int64_t saveEncodedContentMetadata(
+        int64_t workspaceKey,
+        int64_t mediaItemKey,
+        string encodedFileName,
+        string relativePath,
+        int mmsPartitionIndexUsed,
+        unsigned long long sizeInBytes,
+        int64_t encodingProfileKey,
+        
+        // video-audio
+        int64_t durationInMilliSeconds,
+        long bitRate,
+        string videoCodecName,
+        string videoProfile,
+        int videoWidth,
+        int videoHeight,
+        string videoAvgFrameRate,
+        long videoBitRate,
+        string audioCodecName,
+        long audioSampleRate,
+        int audioChannels,
+        long audioBitRate,
+
+        // image
+        int imageWidth,
+        int imageHeight,
+        string imageFormat,
+        int imageQuality
+    );
+    
     void removePhysicalPath (
         int64_t physicalPathKey);
 
@@ -759,15 +816,6 @@ public:
     void getAllStorageDetails(int64_t mediaItemKey,
         vector<tuple<int,string,string,string>>& allStorageDetails);
     
-    int64_t saveEncodedContentMetadata(
-        int64_t workspaceKey,
-        int64_t mediaItemKey,
-        string encodedFileName,
-        string relativePath,
-        int mmsPartitionIndexUsed,
-        unsigned long long sizeInBytes,
-        int64_t encodingProfileKey);
-
 private:
     shared_ptr<spdlog::logger>                          _logger;
     shared_ptr<MySQLConnectionFactory>                  _mySQLConnectionFactory;
@@ -780,6 +828,38 @@ private:
     chrono::system_clock::time_point _lastConnectionStatsReport;
     int             _dbConnectionPoolStatsReportPeriodInSeconds;
 
+    int64_t saveEncodedContentMetadata(
+        shared_ptr<MySQLConnection> conn,
+        
+        int64_t workspaceKey,
+        int64_t mediaItemKey,
+        string encodedFileName,
+        string relativePath,
+        int mmsPartitionIndexUsed,
+        unsigned long long sizeInBytes,
+        int64_t encodingProfileKey,
+        
+        // video-audio
+        int64_t durationInMilliSeconds,
+        long bitRate,
+        string videoCodecName,
+        string videoProfile,
+        int videoWidth,
+        int videoHeight,
+        string videoAvgFrameRate,
+        long videoBitRate,
+        string audioCodecName,
+        long audioSampleRate,
+        int audioChannels,
+        long audioBitRate,
+
+        // image
+        int imageWidth,
+        int imageHeight,
+        string imageFormat,
+        int imageQuality
+    );
+    
     void getTerritories(shared_ptr<Workspace> workspace);
 
     void createTablesIfNeeded();

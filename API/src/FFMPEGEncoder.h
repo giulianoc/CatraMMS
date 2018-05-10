@@ -64,6 +64,12 @@ private:
         shared_ptr<Encoding> encoding,
             int64_t encodingJobKey,
         string requestBody);
+    
+    void overlayImageOnVideo(
+        // FCGX_Request& request,
+        shared_ptr<Encoding> encoding,
+            int64_t encodingJobKey,
+        string requestBody);
 };
 
 #endif

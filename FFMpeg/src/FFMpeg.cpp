@@ -527,6 +527,192 @@ void FFMpeg::encodeContent(
     }
 }
 
+void FFMpeg::overlayImageOnVideo(
+        string mmsSourceVideoAssetPathName,
+        int64_t videoDurationInMilliSeconds,
+        string mmsSourceImageAssetPathName,
+        string encodedFileName,
+        string stagingEncodedAssetPathName,
+        int64_t encodingJobKey,
+        int64_t ingestionJobKey)
+{
+    try
+    {
+        _currentDurationInMilliSeconds      = videoDurationInMilliSeconds;
+        _currentMMSSourceAssetPathName      = mmsSourceVideoAssetPathName;
+        _currentStagingEncodedAssetPathName = stagingEncodedAssetPathName;
+        _currentIngestionJobKey             = ingestionJobKey;
+        _currentEncodingJobKey              = encodingJobKey;
+        
+
+        string stagingEncodedAssetPath;
+        {
+            size_t fileNameIndex = stagingEncodedAssetPathName.find_last_of("/");
+            if (fileNameIndex == string::npos)
+            {
+                string errorMessage = __FILEREF__ + "ffmpeg: No fileName find in the staging encoded asset path name"
+                        + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            
+            stagingEncodedAssetPath = stagingEncodedAssetPathName.substr(0, fileNameIndex);
+        }
+        _outputFfmpegPathFileName = string(stagingEncodedAssetPath)
+                + "/"
+                + to_string(_currentIngestionJobKey)
+                + "_"
+                + to_string(_currentEncodingJobKey)
+                + ".ffmpegoutput";
+
+        {
+            string ffmpegExecuteCommand;
+            {
+                ffmpegExecuteCommand =
+                        _ffmpegPath + "/ffmpeg "
+                        + "-y -i " + mmsSourceVideoAssetPathName + " "
+                        + "-i " + mmsSourceImageAssetPathName + " "
+                        + "-filter_complex 'overlay=10:main_h-overlay_h-10' "
+                        
+                        + stagingEncodedAssetPathName + " "
+                        + "> " + _outputFfmpegPathFileName 
+                        + " 2>&1"
+                ;
+
+                #ifdef __APPLE__
+                    ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
+                #endif
+
+                _logger->info(__FILEREF__ + "Executing ffmpeg command"
+                    + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+                );
+
+                try
+                {
+                    int executeCommandStatus = ProcessUtility:: execute (ffmpegExecuteCommand);
+                    if (executeCommandStatus != 0)
+                    {
+                        string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+                                + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+                        ;            
+                        _logger->error(errorMessage);
+
+                        throw runtime_error(errorMessage);
+                    }
+                }
+                catch(runtime_error e)
+                {
+                    string lastPartOfFfmpegOutputFile = getLastPartOfFile(
+                            _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
+                    string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+                            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+                            + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+                            + ", e.what(): " + e.what()
+                    ;
+                    _logger->error(errorMessage);
+
+                    bool exceptionInCaseOfError = false;
+                    FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+
+                    throw e;
+                }
+
+                bool exceptionInCaseOfError = false;
+                FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+            }
+
+            _logger->info(__FILEREF__ + "Overlayed file generated"
+                + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            );
+
+            bool inCaseOfLinkHasItToBeRead = false;
+            unsigned long ulFileSize = FileIO::getFileSizeInBytes (
+                stagingEncodedAssetPathName, inCaseOfLinkHasItToBeRead);
+
+            if (ulFileSize == 0)
+            {
+                string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed, encoded file size is 0"
+                        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+                ;
+
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+        
+        _twoPasses = false;
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "ffmpeg: ffmpeg overlay failed"
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", mmsSourceVideoAssetPathName: " + mmsSourceVideoAssetPathName
+            + ", mmsSourceImageAssetPathName: " + mmsSourceImageAssetPathName
+            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            + ", e.what(): " + e.what()
+        );
+
+        if (FileIO::fileExisting(stagingEncodedAssetPathName)
+                || FileIO::directoryExisting(stagingEncodedAssetPathName))
+        {
+            FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
+
+            _logger->info(__FILEREF__ + "Remove"
+                + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            );
+
+            // file in case of .3gp content OR directory in case of IPhone content
+            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
+            {
+                Boolean_t bRemoveRecursively = true;
+                FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
+            }
+            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
+            {
+                FileIO::remove(stagingEncodedAssetPathName);
+            }
+        }
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "ffmpeg: ffmpeg overlay failed"
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", mmsSourceVideoAssetPathName: " + mmsSourceVideoAssetPathName
+            + ", mmsSourceImageAssetPathName: " + mmsSourceImageAssetPathName
+            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+        );
+
+        if (FileIO::fileExisting(stagingEncodedAssetPathName)
+                || FileIO::directoryExisting(stagingEncodedAssetPathName))
+        {
+            FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
+
+            _logger->info(__FILEREF__ + "Remove"
+                + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            );
+
+            // file in case of .3gp content OR directory in case of IPhone content
+            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
+            {
+                Boolean_t bRemoveRecursively = true;
+                FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
+            }
+            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
+            {
+                FileIO::remove(stagingEncodedAssetPathName);
+            }
+        }
+
+        throw e;
+    }
+}
+
 void FFMpeg::removeHavingPrefixFileName(string directoryName, string prefixFileName)
 {
     try

@@ -1977,6 +1977,7 @@ void MMSEngineProcessor::generateAndIngestFrames(
         pair<int64_t,Validator::DependencyType>& keyAndDependencyType = dependencies.back();
         int64_t sourceMediaItemKey = keyAndDependencyType.first;
         
+        int64_t physicalPathKey = -1;
         int64_t encodingProfileKey = -1;
         string sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourceMediaItemKey, encodingProfileKey);
 
@@ -1996,7 +1997,7 @@ void MMSEngineProcessor::generateAndIngestFrames(
             long audioBitRate;
         
             tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
-                videoDetails = _mmsEngineDBFacade->getVideoDetails(sourceMediaItemKey);
+                videoDetails = _mmsEngineDBFacade->getVideoDetails(sourceMediaItemKey, physicalPathKey);
             
             tie(durationInMilliSeconds, bitRate,
                 videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
@@ -2505,9 +2506,6 @@ void MMSEngineProcessor::generateAndIngestCutMedia(
         pair<int64_t,Validator::DependencyType>& keyAndDependencyType = dependencies.back();
         int64_t sourceMediaItemKey = keyAndDependencyType.first;
 
-        int64_t encodingProfileKey = -1;
-        string sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourceMediaItemKey, encodingProfileKey);
-
         bool warningIfMissing = false;
 
         MMSEngineDBFacade::ContentType contentType = _mmsEngineDBFacade->getMediaItemKeyDetails(
@@ -2561,6 +2559,10 @@ void MMSEngineProcessor::generateAndIngestCutMedia(
             throw runtime_error(errorMessage);
         }
 
+        int64_t physicalPathKey = -1;
+        int64_t encodingProfileKey = -1;
+        string sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourceMediaItemKey, encodingProfileKey);
+
         int64_t durationInMilliSeconds;
         try
         {
@@ -2577,7 +2579,7 @@ void MMSEngineProcessor::generateAndIngestCutMedia(
             long audioBitRate;
         
             tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
-                videoDetails = _mmsEngineDBFacade->getVideoDetails(sourceMediaItemKey);
+                videoDetails = _mmsEngineDBFacade->getVideoDetails(sourceMediaItemKey, physicalPathKey);
             
             tie(durationInMilliSeconds, bitRate,
                 videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
@@ -2816,8 +2818,8 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
         MMSEngineDBFacade::EncodingPriority encodingPriority =
                 MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
 
-        _mmsEngineDBFacade->addOverlayVideoImageJob (ingestionJobKey,
-            vec[0], vec[1], encodingPriority);
+        _mmsEngineDBFacade->addOverlayImageOnVideoJob (ingestionJobKey,
+            dependencies[0].first, dependencies[1].first, encodingPriority);
     }
     catch(runtime_error e)
     {

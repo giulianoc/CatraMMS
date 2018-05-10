@@ -55,6 +55,15 @@ public:
         int64_t encodingJobKey,
         int64_t ingestionJobKey);
     
+    void overlayImageOnVideo(
+        string mmsSourceVideoAssetPathName,
+        int64_t videoDurationInMilliSeconds,
+        string mmsSourceImageAssetPathName,
+        string encodedFileName,
+        string stagingEncodedAssetPathName,
+        int64_t encodingJobKey,
+        int64_t ingestionJobKey);
+
     int getEncodingProgress();
 
     tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> getMediaInfo(string mmsAssetPathName);
