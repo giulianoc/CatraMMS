@@ -2039,7 +2039,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
         
         for (int referenceIndex = 0; referenceIndex < referencesRoot.size(); ++referenceIndex)
         {
-            Json::Value referenceRoot = referencesRoot[referenceIndex];
+            Json::Value& referenceRoot = referencesRoot[referenceIndex];
             
             field = "ReferenceLabel";
             if (_mmsEngineDBFacade->isMetadataPresent(referenceRoot, field))
