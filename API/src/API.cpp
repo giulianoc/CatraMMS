@@ -2081,6 +2081,9 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
                 
                 referencesRoot[referenceIndex] = referenceRoot;
                 
+                field = "References";
+                parametersRoot[field] = referencesRoot;
+            
                 {                
                     Json::StreamWriterBuilder wbuilder;
 
