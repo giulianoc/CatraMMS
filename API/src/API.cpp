@@ -2039,7 +2039,7 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
         
         for (int referenceIndex = 0; referenceIndex < referencesRoot.size(); ++referenceIndex)
         {
-            Json::Value& referenceRoot = referencesRoot[referenceIndex];
+            Json::Value referenceRoot = referencesRoot[referenceIndex];
             
             field = "ReferenceLabel";
             if (_mmsEngineDBFacade->isMetadataPresent(referenceRoot, field))
@@ -2079,6 +2079,24 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
                 field = "ReferenceIngestionJobKey";
                 referenceRoot[field] = ingestionJobKeys.back();
                 
+                {                
+                    Json::StreamWriterBuilder wbuilder;
+
+                    string aaaaa = Json::writeString(wbuilder, referenceRoot);       
+                    _logger->error(__FILEREF__ + "referenceRoot: " + aaaaa);
+                }
+                {                
+                    Json::StreamWriterBuilder wbuilder;
+
+                    string bbbbbbb = Json::writeString(wbuilder, referencesRoot);       
+                    _logger->error(__FILEREF__ + "referencesRoot: " + bbbbbbb);
+                }
+                {                
+                    Json::StreamWriterBuilder wbuilder;
+
+                    string ccccccc = Json::writeString(wbuilder, parametersRoot);       
+                    _logger->error(__FILEREF__ + "parametersRoot: " + ccccccc);
+                }
                 referencesChanged = true;
                 
                 // The workflow specifies expliticily a reference (input for the task).
