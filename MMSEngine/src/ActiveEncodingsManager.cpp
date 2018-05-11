@@ -245,7 +245,8 @@ void ActiveEncodingsManager::operator()()
 
 void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
 {
-    if (encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::EncodeVideoAudio)
+    if (encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::EncodeVideoAudio
+            || encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::OverlayImageOnVideo)
     {
         encodingJob->_encoderVideoAudioProxy.setEncodingData(
             &(encodingJob->_status),

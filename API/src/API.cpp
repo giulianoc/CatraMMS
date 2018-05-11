@@ -2084,24 +2084,6 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
                 field = "References";
                 parametersRoot[field] = referencesRoot;
             
-                {                
-                    Json::StreamWriterBuilder wbuilder;
-
-                    string aaaaa = Json::writeString(wbuilder, referenceRoot);       
-                    _logger->error(__FILEREF__ + "referenceRoot: " + aaaaa);
-                }
-                {                
-                    Json::StreamWriterBuilder wbuilder;
-
-                    string bbbbbbb = Json::writeString(wbuilder, referencesRoot);       
-                    _logger->error(__FILEREF__ + "referencesRoot: " + bbbbbbb);
-                }
-                {                
-                    Json::StreamWriterBuilder wbuilder;
-
-                    string ccccccc = Json::writeString(wbuilder, parametersRoot);       
-                    _logger->error(__FILEREF__ + "parametersRoot: " + ccccccc);
-                }
                 referencesChanged = true;
                 
                 // The workflow specifies expliticily a reference (input for the task).
