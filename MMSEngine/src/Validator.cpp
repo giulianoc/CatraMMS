@@ -1156,6 +1156,31 @@ void Validator::validateRemoveContentMetadata(int64_t workspaceKey,
                 throw runtime_error(errorMessage);
             }
 
+            if (referencePhysicalPathKey == -1)
+            {
+                int64_t encodingProfileKey = -1;
+                
+                field = "EncodingProfileKey";
+                if (isMetadataPresent(referenceRoot, field))
+                {
+                    int64_t encodingProfileKey = referenceRoot.get(field, "0").asInt64();
+
+                    referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
+                            referenceMediaItemKey, encodingProfileKey);
+                }  
+                else
+                {
+                    field = "EncodingProfileLabel";
+                    if (isMetadataPresent(referenceRoot, field))
+                    {
+                        string encodingProfileLabel = referenceRoot.get(field, "0").asString();
+
+                        referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(workspaceKey,
+                                referenceMediaItemKey, referenceContentType, encodingProfileLabel);
+                    }        
+                }
+            }
+            
             if (referencePhysicalPathKey != -1)
                 dependencies.push_back(make_pair(referencePhysicalPathKey,DependencyType::PhysicalPathKey));
             else
@@ -1223,37 +1248,46 @@ void Validator::validateEncodeMetadata(int64_t workspaceKey,
         Json::Value referenceRoot = referencesRoot[0];
 
         int64_t referenceMediaItemKey = -1;
+        int64_t referencePhysicalPathKey = -1;
         int64_t referenceIngestionJobKey = -1;
         string referenceUniqueName = "";
         field = "ReferenceMediaItemKey";
         if (!isMetadataPresent(referenceRoot, field))
         {
-            field = "ReferenceIngestionJobKey";
+            field = "ReferencePhysicalPathKey";
             if (!isMetadataPresent(referenceRoot, field))
             {
-                field = "ReferenceUniqueName";
+                field = "ReferenceIngestionJobKey";
                 if (!isMetadataPresent(referenceRoot, field))
                 {
-                    Json::StreamWriterBuilder wbuilder;
-                    string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
-                            
-                    string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                            + ", Field: " + "Reference..."
-                            + ", sParametersRoot: " + sParametersRoot
-                            ;
-                    _logger->error(errorMessage);
+                    field = "ReferenceUniqueName";
+                    if (!isMetadataPresent(referenceRoot, field))
+                    {
+                        Json::StreamWriterBuilder wbuilder;
+                        string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
 
-                    throw runtime_error(errorMessage);
+                        string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                                + ", Field: " + "Reference..."
+                                + ", sParametersRoot: " + sParametersRoot
+                                ;
+                        _logger->error(errorMessage);
+
+                        throw runtime_error(errorMessage);
+                    }
+                    else
+                    {
+                        referenceUniqueName = referenceRoot.get(field, "XXX").asString();
+                    }        
                 }
                 else
                 {
-                    referenceUniqueName = referenceRoot.get(field, "XXX").asString();
-                }        
+                    referenceIngestionJobKey = referenceRoot.get(field, "XXX").asInt64();
+                } 
             }
             else
             {
-                referenceIngestionJobKey = referenceRoot.get(field, "XXX").asInt64();
-            }        
+                referencePhysicalPathKey = referenceRoot.get(field, "XXX").asInt64();
+            }
         }
         else
         {
@@ -1269,15 +1303,24 @@ void Validator::validateEncodeMetadata(int64_t workspaceKey,
                 referenceContentType = _mmsEngineDBFacade->getMediaItemKeyDetails(
                     referenceMediaItemKey, warningIfMissing); 
             }
+            else if (referencePhysicalPathKey != -1)
+            {
+                pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
+                        _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+                        referencePhysicalPathKey, warningIfMissing);  
+
+                referenceMediaItemKey = mediaItemKeyAndContentType.first;
+                referenceContentType = mediaItemKeyAndContentType.second;
+            }
             else if (referenceIngestionJobKey != -1)
             {
-                int64_t referencePhysicalPathKey;
+                int64_t localReferencePhysicalPathKey;
                 
                 tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyPhysicalPathKeyAndContentType = 
                         _mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
                         referenceIngestionJobKey, warningIfMissing);  
 
-                tie(referenceMediaItemKey, referencePhysicalPathKey, referenceContentType) =
+                tie(referenceMediaItemKey, localReferencePhysicalPathKey, referenceContentType) =
                         mediaItemKeyPhysicalPathKeyAndContentType;
             }
             else // if (referenceUniqueName != "")
@@ -1310,23 +1353,35 @@ void Validator::validateEncodeMetadata(int64_t workspaceKey,
             throw runtime_error(errorMessage);
         }
         
-        /*
-         * we may have encoding for video, audio, image, ...
-        if (referenceContentType != MMSEngineDBFacade::ContentType::Video)
+        if (referencePhysicalPathKey == -1)
         {
-            string errorMessage = __FILEREF__ + "Reference... does not refer a video content"
-                + ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
-                + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
-                + ", referenceUniqueName: " + referenceUniqueName
-                + ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
-                    ;
-            _logger->error(errorMessage);
+            int64_t encodingProfileKey = -1;
 
-            throw runtime_error(errorMessage);
+            field = "EncodingProfileKey";
+            if (isMetadataPresent(referenceRoot, field))
+            {
+                int64_t encodingProfileKey = referenceRoot.get(field, "0").asInt64();
+
+                referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
+                        referenceMediaItemKey, encodingProfileKey);
+            }  
+            else
+            {
+                field = "EncodingProfileLabel";
+                if (isMetadataPresent(referenceRoot, field))
+                {
+                    string encodingProfileLabel = referenceRoot.get(field, "0").asString();
+
+                    referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(workspaceKey, 
+                            referenceMediaItemKey, referenceContentType, encodingProfileLabel);
+                }        
+            }
         }
-         */
 
-        dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
+        if (referencePhysicalPathKey != -1)
+            dependencies.push_back(make_pair(referencePhysicalPathKey,DependencyType::PhysicalPathKey));
+        else
+            dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
     }    
 }
 
@@ -1384,37 +1439,46 @@ void Validator::validateFrameMetadata(int64_t workspaceKey,
         Json::Value referenceRoot = referencesRoot[0];
 
         int64_t referenceMediaItemKey = -1;
+        int64_t referencePhysicalPathKey = -1;
         int64_t referenceIngestionJobKey = -1;
         string referenceUniqueName = "";
         field = "ReferenceMediaItemKey";
         if (!isMetadataPresent(referenceRoot, field))
         {
-            field = "ReferenceIngestionJobKey";
+            field = "ReferencePhysicalPathKey";
             if (!isMetadataPresent(referenceRoot, field))
             {
-                field = "ReferenceUniqueName";
+                field = "ReferenceIngestionJobKey";
                 if (!isMetadataPresent(referenceRoot, field))
                 {
-                    Json::StreamWriterBuilder wbuilder;
-                    string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
-                    
-                    string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                            + ", Field: " + "Reference..."
-                            + ", sParametersRoot: " + sParametersRoot
-                            ;
-                    _logger->error(errorMessage);
+                    field = "ReferenceUniqueName";
+                    if (!isMetadataPresent(referenceRoot, field))
+                    {
+                        Json::StreamWriterBuilder wbuilder;
+                        string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
 
-                    throw runtime_error(errorMessage);
+                        string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                                + ", Field: " + "Reference..."
+                                + ", sParametersRoot: " + sParametersRoot
+                                ;
+                        _logger->error(errorMessage);
+
+                        throw runtime_error(errorMessage);
+                    }
+                    else
+                    {
+                        referenceUniqueName = referenceRoot.get(field, "XXX").asString();
+                    }        
                 }
                 else
                 {
-                    referenceUniqueName = referenceRoot.get(field, "XXX").asString();
+                    referenceIngestionJobKey = referenceRoot.get(field, "XXX").asInt64();
                 }        
             }
             else
             {
-                referenceIngestionJobKey = referenceRoot.get(field, "XXX").asInt64();
-            }        
+                referencePhysicalPathKey = referenceRoot.get(field, "XXX").asInt64();
+            }
         }
         else
         {
@@ -1430,15 +1494,24 @@ void Validator::validateFrameMetadata(int64_t workspaceKey,
                 referenceContentType = _mmsEngineDBFacade->getMediaItemKeyDetails(
                     referenceMediaItemKey, warningIfMissing); 
             }
+            else if (referencePhysicalPathKey != -1)
+            {
+                pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
+                        _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+                        referencePhysicalPathKey, warningIfMissing);  
+
+                referenceMediaItemKey = mediaItemKeyAndContentType.first;
+                referenceContentType = mediaItemKeyAndContentType.second;
+            }
             else if (referenceIngestionJobKey != -1)
             {
-                int64_t referencePhysicalPathKey;
+                int64_t localReferencePhysicalPathKey;
                 
                 tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyPhysicalPathKeyAndContentType = 
                         _mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
                         referenceIngestionJobKey, warningIfMissing);  
 
-                tie(referenceMediaItemKey, referencePhysicalPathKey, referenceContentType) =
+                tie(referenceMediaItemKey, localReferencePhysicalPathKey, referenceContentType) =
                         mediaItemKeyPhysicalPathKeyAndContentType;
             }
             else // if (referenceUniqueName != "")
@@ -1484,7 +1557,35 @@ void Validator::validateFrameMetadata(int64_t workspaceKey,
             throw runtime_error(errorMessage);
         }
 
-        dependencies.push_back(make_pair(referenceMediaItemKey,DependencyType::MediaItemKey));
+        if (referencePhysicalPathKey == -1)
+        {
+            int64_t encodingProfileKey = -1;
+
+            field = "EncodingProfileKey";
+            if (isMetadataPresent(referenceRoot, field))
+            {
+                int64_t encodingProfileKey = referenceRoot.get(field, "0").asInt64();
+
+                referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
+                        referenceMediaItemKey, encodingProfileKey);
+            }  
+            else
+            {
+                field = "EncodingProfileLabel";
+                if (isMetadataPresent(referenceRoot, field))
+                {
+                    string encodingProfileLabel = referenceRoot.get(field, "0").asString();
+
+                    referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(workspaceKey,
+                            referenceMediaItemKey, referenceContentType, encodingProfileLabel);
+                }        
+            }
+        }
+
+        if (referencePhysicalPathKey != -1)
+            dependencies.push_back(make_pair(referencePhysicalPathKey,DependencyType::PhysicalPathKey));
+        else
+            dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
     }    
 }
 
@@ -1546,37 +1647,46 @@ void Validator::validatePeriodicalFramesMetadata(int64_t workspaceKey,
         Json::Value referenceRoot = referencesRoot[0];
 
         int64_t referenceMediaItemKey = -1;
+        int64_t referencePhysicalPathKey = -1;
         int64_t referenceIngestionJobKey = -1;
         string referenceUniqueName = "";
         field = "ReferenceMediaItemKey";
         if (!isMetadataPresent(referenceRoot, field))
         {
-            field = "ReferenceIngestionJobKey";
+            field = "ReferencePhysicalPathKey";
             if (!isMetadataPresent(referenceRoot, field))
             {
-                field = "ReferenceUniqueName";
+                field = "ReferenceIngestionJobKey";
                 if (!isMetadataPresent(referenceRoot, field))
                 {
-                    Json::StreamWriterBuilder wbuilder;
-                    string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
-                    
-                    string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                            + ", Field: " + "Reference..."
-                            + ", sParametersRoot: " + sParametersRoot
-                            ;
-                    _logger->error(errorMessage);
+                    field = "ReferenceUniqueName";
+                    if (!isMetadataPresent(referenceRoot, field))
+                    {
+                        Json::StreamWriterBuilder wbuilder;
+                        string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
 
-                    throw runtime_error(errorMessage);
+                        string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                                + ", Field: " + "Reference..."
+                                + ", sParametersRoot: " + sParametersRoot
+                                ;
+                        _logger->error(errorMessage);
+
+                        throw runtime_error(errorMessage);
+                    }
+                    else
+                    {
+                        referenceUniqueName = referenceRoot.get(field, "XXX").asString();
+                    }        
                 }
                 else
                 {
-                    referenceUniqueName = referenceRoot.get(field, "XXX").asString();
+                    referenceIngestionJobKey = referenceRoot.get(field, "XXX").asInt64();
                 }        
             }
             else
             {
-                referenceIngestionJobKey = referenceRoot.get(field, "XXX").asInt64();
-            }        
+                referencePhysicalPathKey = referenceRoot.get(field, "XXX").asInt64();
+            }
         }
         else
         {
@@ -1592,15 +1702,24 @@ void Validator::validatePeriodicalFramesMetadata(int64_t workspaceKey,
                 referenceContentType = _mmsEngineDBFacade->getMediaItemKeyDetails(
                     referenceMediaItemKey, warningIfMissing); 
             }
+            else if (referencePhysicalPathKey != -1)
+            {
+                pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
+                        _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+                        referencePhysicalPathKey, warningIfMissing);  
+
+                referenceMediaItemKey = mediaItemKeyAndContentType.first;
+                referenceContentType = mediaItemKeyAndContentType.second;
+            }
             else if (referenceIngestionJobKey != -1)
             {
-                int64_t referencePhysicalPathKey;
+                int64_t localReferencePhysicalPathKey;
                 
                 tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyPhysicalPathKeyAndContentType = 
                         _mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
                         referenceIngestionJobKey, warningIfMissing);  
 
-                tie(referenceMediaItemKey, referencePhysicalPathKey, referenceContentType) =
+                tie(referenceMediaItemKey, localReferencePhysicalPathKey, referenceContentType) =
                         mediaItemKeyPhysicalPathKeyAndContentType;
             }
             else // if (referenceUniqueName != "")
@@ -1646,7 +1765,35 @@ void Validator::validatePeriodicalFramesMetadata(int64_t workspaceKey,
             throw runtime_error(errorMessage);
         }
 
-        dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
+        if (referencePhysicalPathKey == -1)
+        {
+            int64_t encodingProfileKey = -1;
+
+            field = "EncodingProfileKey";
+            if (isMetadataPresent(referenceRoot, field))
+            {
+                int64_t encodingProfileKey = referenceRoot.get(field, "0").asInt64();
+
+                referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
+                        referenceMediaItemKey, encodingProfileKey);
+            }  
+            else
+            {
+                field = "EncodingProfileLabel";
+                if (isMetadataPresent(referenceRoot, field))
+                {
+                    string encodingProfileLabel = referenceRoot.get(field, "0").asString();
+
+                    referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(workspaceKey,
+                            referenceMediaItemKey, referenceContentType, encodingProfileLabel);
+                }        
+            }
+        }
+
+        if (referencePhysicalPathKey != -1)
+            dependencies.push_back(make_pair(referencePhysicalPathKey,DependencyType::PhysicalPathKey));
+        else
+            dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
     }        
 }
 
@@ -1704,37 +1851,46 @@ void Validator::validateIFramesMetadata(int64_t workspaceKey,
         Json::Value referenceRoot = referencesRoot[0];
 
         int64_t referenceMediaItemKey = -1;
+        int64_t referencePhysicalPathKey = -1;
         int64_t referenceIngestionJobKey = -1;
         string referenceUniqueName = "";
         field = "ReferenceMediaItemKey";
         if (!isMetadataPresent(referenceRoot, field))
         {
-            field = "ReferenceIngestionJobKey";
+            field = "ReferencePhysicalPathKey";
             if (!isMetadataPresent(referenceRoot, field))
             {
-                field = "ReferenceUniqueName";
+                field = "ReferenceIngestionJobKey";
                 if (!isMetadataPresent(referenceRoot, field))
                 {
-                    Json::StreamWriterBuilder wbuilder;
-                    string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
-                    
-                    string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                            + ", Field: " + "Reference..."
-                            + ", sParametersRoot: " + sParametersRoot
-                            ;
-                    _logger->error(errorMessage);
+                    field = "ReferenceUniqueName";
+                    if (!isMetadataPresent(referenceRoot, field))
+                    {
+                        Json::StreamWriterBuilder wbuilder;
+                        string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
 
-                    throw runtime_error(errorMessage);
+                        string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                                + ", Field: " + "Reference..."
+                                + ", sParametersRoot: " + sParametersRoot
+                                ;
+                        _logger->error(errorMessage);
+
+                        throw runtime_error(errorMessage);
+                    }
+                    else
+                    {
+                        referenceUniqueName = referenceRoot.get(field, "XXX").asString();
+                    }        
                 }
                 else
                 {
-                    referenceUniqueName = referenceRoot.get(field, "XXX").asString();
+                    referenceIngestionJobKey = referenceRoot.get(field, "XXX").asInt64();
                 }        
             }
             else
             {
-                referenceIngestionJobKey = referenceRoot.get(field, "XXX").asInt64();
-            }        
+                referencePhysicalPathKey = referenceRoot.get(field, "XXX").asInt64();
+            }
         }
         else
         {
@@ -1749,6 +1905,15 @@ void Validator::validateIFramesMetadata(int64_t workspaceKey,
             {
                 referenceContentType = _mmsEngineDBFacade->getMediaItemKeyDetails(
                     referenceMediaItemKey, warningIfMissing); 
+            }
+            else if (referencePhysicalPathKey != -1)
+            {
+                pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
+                        _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+                        referencePhysicalPathKey, warningIfMissing);  
+
+                referenceMediaItemKey = mediaItemKeyAndContentType.first;
+                referenceContentType = mediaItemKeyAndContentType.second;
             }
             else if (referenceIngestionJobKey != -1)
             {
@@ -1818,7 +1983,35 @@ void Validator::validateIFramesMetadata(int64_t workspaceKey,
             throw runtime_error(errorMessage);
         }
 
-        dependencies.push_back(make_pair(referenceMediaItemKey,DependencyType::MediaItemKey));
+        if (referencePhysicalPathKey == -1)
+        {
+            int64_t encodingProfileKey = -1;
+
+            field = "EncodingProfileKey";
+            if (isMetadataPresent(referenceRoot, field))
+            {
+                int64_t encodingProfileKey = referenceRoot.get(field, "0").asInt64();
+
+                referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
+                        referenceMediaItemKey, encodingProfileKey);
+            }  
+            else
+            {
+                field = "EncodingProfileLabel";
+                if (isMetadataPresent(referenceRoot, field))
+                {
+                    string encodingProfileLabel = referenceRoot.get(field, "0").asString();
+
+                    referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(workspaceKey,
+                            referenceMediaItemKey, referenceContentType, encodingProfileLabel);
+                }        
+            }
+        }
+
+        if (referencePhysicalPathKey != -1)
+            dependencies.push_back(make_pair(referencePhysicalPathKey,DependencyType::PhysicalPathKey));
+        else
+            dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
     }    
 }
 
@@ -1878,37 +2071,46 @@ void Validator::validateSlideshowMetadata(int64_t workspaceKey,
             Json::Value referenceRoot = referencesRoot[referenceIndex];
 
             int64_t referenceMediaItemKey = -1;
+            int64_t referencePhysicalPathKey = -1;
             int64_t referenceIngestionJobKey = -1;
             string referenceUniqueName = "";
             string field = "ReferenceMediaItemKey";
             if (!isMetadataPresent(referenceRoot, field))
             {
-                field = "ReferenceIngestionJobKey";
+                field = "ReferencePhysicalPathKey";
                 if (!isMetadataPresent(referenceRoot, field))
                 {
-                    field = "ReferenceUniqueName";
+                    field = "ReferenceIngestionJobKey";
                     if (!isMetadataPresent(referenceRoot, field))
                     {
-                        Json::StreamWriterBuilder wbuilder;
-                        string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
-                        
-                        string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                                + ", Field: " + "Reference..."
-                                + ", sParametersRoot: " + sParametersRoot
-                                ;
-                        _logger->error(errorMessage);
+                        field = "ReferenceUniqueName";
+                        if (!isMetadataPresent(referenceRoot, field))
+                        {
+                            Json::StreamWriterBuilder wbuilder;
+                            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
 
-                        throw runtime_error(errorMessage);
+                            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                                    + ", Field: " + "Reference..."
+                                    + ", sParametersRoot: " + sParametersRoot
+                                    ;
+                            _logger->error(errorMessage);
+
+                            throw runtime_error(errorMessage);
+                        }
+                        else
+                        {
+                            referenceUniqueName = referenceRoot.get(field, "XXX").asString();
+                        }        
                     }
                     else
                     {
-                        referenceUniqueName = referenceRoot.get(field, "XXX").asString();
+                        referenceIngestionJobKey = referenceRoot.get(field, "XXX").asInt64();
                     }        
                 }
                 else
                 {
-                    referenceIngestionJobKey = referenceRoot.get(field, "XXX").asInt64();
-                }        
+                    referencePhysicalPathKey = referenceRoot.get(field, "XXX").asInt64();
+                }
             }
             else
             {
@@ -1924,15 +2126,24 @@ void Validator::validateSlideshowMetadata(int64_t workspaceKey,
                     referenceContentType = _mmsEngineDBFacade->getMediaItemKeyDetails(
                         referenceMediaItemKey, warningIfMissing); 
                 }
+                else if (referencePhysicalPathKey != -1)
+                {
+                    pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
+                            _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+                            referencePhysicalPathKey, warningIfMissing);  
+
+                    referenceMediaItemKey = mediaItemKeyAndContentType.first;
+                    referenceContentType = mediaItemKeyAndContentType.second;
+                }
                 else if (referenceIngestionJobKey != -1)
                 {
-                    int64_t referencePhysicalPathKey;
+                    int64_t localReferencePhysicalPathKey;
 
                     tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyPhysicalPathKeyAndContentType = 
                             _mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
                             referenceIngestionJobKey, warningIfMissing);  
 
-                    tie(referenceMediaItemKey, referencePhysicalPathKey, referenceContentType) =
+                    tie(referenceMediaItemKey, localReferencePhysicalPathKey, referenceContentType) =
                             mediaItemKeyPhysicalPathKeyAndContentType;
                 }
                 else // if (referenceUniqueName != "")
@@ -1979,7 +2190,35 @@ void Validator::validateSlideshowMetadata(int64_t workspaceKey,
                 throw runtime_error(errorMessage);
             }
 
-            dependencies.push_back(make_pair(referenceMediaItemKey,DependencyType::MediaItemKey));
+            if (referencePhysicalPathKey == -1)
+            {
+                int64_t encodingProfileKey = -1;
+                
+                field = "EncodingProfileKey";
+                if (isMetadataPresent(referenceRoot, field))
+                {
+                    int64_t encodingProfileKey = referenceRoot.get(field, "0").asInt64();
+
+                    referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
+                            referenceMediaItemKey, encodingProfileKey);
+                }  
+                else
+                {
+                    field = "EncodingProfileLabel";
+                    if (isMetadataPresent(referenceRoot, field))
+                    {
+                        string encodingProfileLabel = referenceRoot.get(field, "0").asString();
+
+                        referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(workspaceKey,
+                                referenceMediaItemKey, referenceContentType, encodingProfileLabel);
+                    }        
+                }
+            }
+            
+            if (referencePhysicalPathKey != -1)
+                dependencies.push_back(make_pair(referencePhysicalPathKey,DependencyType::PhysicalPathKey));
+            else
+                dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
         }
     }
 }
@@ -2039,37 +2278,46 @@ void Validator::validateConcatDemuxerMetadata(int64_t workspaceKey,
             Json::Value referenceRoot = referencesRoot[referenceIndex];
 
             int64_t referenceMediaItemKey = -1;
+            int64_t referencePhysicalPathKey = -1;
             int64_t referenceIngestionJobKey = -1;
             string referenceUniqueName = "";
             string field = "ReferenceMediaItemKey";
             if (!isMetadataPresent(referenceRoot, field))
             {
-                field = "ReferenceIngestionJobKey";
+                field = "ReferencePhysicalPathKey";
                 if (!isMetadataPresent(referenceRoot, field))
                 {
-                    field = "ReferenceUniqueName";
+                    field = "ReferenceIngestionJobKey";
                     if (!isMetadataPresent(referenceRoot, field))
                     {
-                        Json::StreamWriterBuilder wbuilder;
-                        string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
-                        
-                        string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                                + ", Field: " + "Reference..."
-                                + ", sParametersRoot: " + sParametersRoot
-                                ;
-                        _logger->error(errorMessage);
+                        field = "ReferenceUniqueName";
+                        if (!isMetadataPresent(referenceRoot, field))
+                        {
+                            Json::StreamWriterBuilder wbuilder;
+                            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
 
-                        throw runtime_error(errorMessage);
+                            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                                    + ", Field: " + "Reference..."
+                                    + ", sParametersRoot: " + sParametersRoot
+                                    ;
+                            _logger->error(errorMessage);
+
+                            throw runtime_error(errorMessage);
+                        }
+                        else
+                        {
+                            referenceUniqueName = referenceRoot.get(field, "XXX").asString();
+                        }        
                     }
                     else
                     {
-                        referenceUniqueName = referenceRoot.get(field, "XXX").asString();
+                        referenceIngestionJobKey = referenceRoot.get(field, "XXX").asInt64();
                     }        
                 }
                 else
                 {
-                    referenceIngestionJobKey = referenceRoot.get(field, "XXX").asInt64();
-                }        
+                    referencePhysicalPathKey = referenceRoot.get(field, "XXX").asInt64();
+                }
             }
             else
             {
@@ -2085,15 +2333,24 @@ void Validator::validateConcatDemuxerMetadata(int64_t workspaceKey,
                     referenceContentType = _mmsEngineDBFacade->getMediaItemKeyDetails(
                         referenceMediaItemKey, warningIfMissing); 
                 }
+                else if (referencePhysicalPathKey != -1)
+                {
+                    pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
+                            _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+                            referencePhysicalPathKey, warningIfMissing);  
+
+                    referenceMediaItemKey = mediaItemKeyAndContentType.first;
+                    referenceContentType = mediaItemKeyAndContentType.second;
+                }
                 else if (referenceIngestionJobKey != -1)
                 {
-                    int64_t referencePhysicalPathKey;
+                    int64_t localReferencePhysicalPathKey;
 
                     tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyPhysicalPathKeyAndContentType = 
                             _mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
                             referenceIngestionJobKey, warningIfMissing);  
 
-                    tie(referenceMediaItemKey, referencePhysicalPathKey, referenceContentType) =
+                    tie(referenceMediaItemKey, localReferencePhysicalPathKey, referenceContentType) =
                             mediaItemKeyPhysicalPathKeyAndContentType;
                 }
                 else // if (referenceUniqueName != "")
@@ -2141,7 +2398,35 @@ void Validator::validateConcatDemuxerMetadata(int64_t workspaceKey,
                 throw runtime_error(errorMessage);
             }
 
-            dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
+            if (referencePhysicalPathKey == -1)
+            {
+                int64_t encodingProfileKey = -1;
+                
+                field = "EncodingProfileKey";
+                if (isMetadataPresent(referenceRoot, field))
+                {
+                    int64_t encodingProfileKey = referenceRoot.get(field, "0").asInt64();
+
+                    referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
+                            referenceMediaItemKey, encodingProfileKey);
+                }  
+                else
+                {
+                    field = "EncodingProfileLabel";
+                    if (isMetadataPresent(referenceRoot, field))
+                    {
+                        string encodingProfileLabel = referenceRoot.get(field, "0").asString();
+
+                        referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(workspaceKey,
+                                referenceMediaItemKey, referenceContentType, encodingProfileLabel);
+                    }        
+                }
+            }
+            
+            if (referencePhysicalPathKey != -1)
+                dependencies.push_back(make_pair(referencePhysicalPathKey,DependencyType::PhysicalPathKey));
+            else
+                dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
         }
     }
 }
@@ -2229,37 +2514,46 @@ void Validator::validateCutMetadata(int64_t workspaceKey,
         Json::Value referenceRoot = referencesRoot[0];
 
         int64_t referenceMediaItemKey = -1;
+        int64_t referencePhysicalPathKey = -1;
         int64_t referenceIngestionJobKey = -1;
         string referenceUniqueName = "";
         field = "ReferenceMediaItemKey";
         if (!isMetadataPresent(referenceRoot, field))
         {
-            field = "ReferenceIngestionJobKey";
+            field = "ReferencePhysicalPathKey";
             if (!isMetadataPresent(referenceRoot, field))
             {
-                field = "ReferenceUniqueName";
+                field = "ReferenceIngestionJobKey";
                 if (!isMetadataPresent(referenceRoot, field))
                 {
-                    Json::StreamWriterBuilder wbuilder;
-                    string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
-                    
-                    string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                            + ", Field: " + "Reference..."
-                            + ", sParametersRoot: " + sParametersRoot
-                            ;
-                    _logger->error(errorMessage);
+                    field = "ReferenceUniqueName";
+                    if (!isMetadataPresent(referenceRoot, field))
+                    {
+                        Json::StreamWriterBuilder wbuilder;
+                        string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
 
-                    throw runtime_error(errorMessage);
+                        string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                                + ", Field: " + "Reference..."
+                                + ", sParametersRoot: " + sParametersRoot
+                                ;
+                        _logger->error(errorMessage);
+
+                        throw runtime_error(errorMessage);
+                    }
+                    else
+                    {
+                        referenceUniqueName = referenceRoot.get(field, "XXX").asString();
+                    }        
                 }
                 else
                 {
-                    referenceUniqueName = referenceRoot.get(field, "XXX").asString();
+                    referenceIngestionJobKey = referenceRoot.get(field, "XXX").asInt64();
                 }        
             }
             else
             {
-                referenceIngestionJobKey = referenceRoot.get(field, "XXX").asInt64();
-            }        
+                referencePhysicalPathKey = referenceRoot.get(field, "XXX").asInt64();
+            }
         }
         else
         {
@@ -2275,15 +2569,24 @@ void Validator::validateCutMetadata(int64_t workspaceKey,
                 referenceContentType = _mmsEngineDBFacade->getMediaItemKeyDetails(
                     referenceMediaItemKey, warningIfMissing); 
             }
+            else if (referencePhysicalPathKey != -1)
+            {
+                pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
+                        _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+                        referencePhysicalPathKey, warningIfMissing);  
+
+                referenceMediaItemKey = mediaItemKeyAndContentType.first;
+                referenceContentType = mediaItemKeyAndContentType.second;
+            }
             else if (referenceIngestionJobKey != -1)
             {
-                int64_t referencePhysicalPathKey;
+                int64_t localReferencePhysicalPathKey;
 
                 tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyPhysicalPathKeyAndContentType = 
                         _mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
                         referenceIngestionJobKey, warningIfMissing);  
 
-                tie(referenceMediaItemKey, referencePhysicalPathKey, referenceContentType) =
+                tie(referenceMediaItemKey, localReferencePhysicalPathKey, referenceContentType) =
                         mediaItemKeyPhysicalPathKeyAndContentType;
             }
             else // if (referenceUniqueName != "")
@@ -2329,7 +2632,35 @@ void Validator::validateCutMetadata(int64_t workspaceKey,
             throw runtime_error(errorMessage);
         }
 
-        dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
+        if (referencePhysicalPathKey == -1)
+        {
+            int64_t encodingProfileKey = -1;
+
+            field = "EncodingProfileKey";
+            if (isMetadataPresent(referenceRoot, field))
+            {
+                int64_t encodingProfileKey = referenceRoot.get(field, "0").asInt64();
+
+                referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
+                        referenceMediaItemKey, encodingProfileKey);
+            }  
+            else
+            {
+                field = "EncodingProfileLabel";
+                if (isMetadataPresent(referenceRoot, field))
+                {
+                    string encodingProfileLabel = referenceRoot.get(field, "0").asString();
+
+                    referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(workspaceKey,
+                            referenceMediaItemKey, referenceContentType, encodingProfileLabel);
+                }        
+            }
+        }
+
+        if (referencePhysicalPathKey != -1)
+            dependencies.push_back(make_pair(referencePhysicalPathKey,DependencyType::PhysicalPathKey));
+        else
+            dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
     }        
 }
 
@@ -2359,37 +2690,46 @@ void Validator::validateOverlayImageOnVideoMetadata(int64_t workspaceKey,
             Json::Value referenceRoot = referencesRoot[referenceIndex];
 
             int64_t referenceMediaItemKey = -1;
+            int64_t referencePhysicalPathKey = -1;
             int64_t referenceIngestionJobKey = -1;
             string referenceUniqueName = "";
             string field = "ReferenceMediaItemKey";
             if (!isMetadataPresent(referenceRoot, field))
             {
-                field = "ReferenceIngestionJobKey";
+                field = "ReferencePhysicalPathKey";
                 if (!isMetadataPresent(referenceRoot, field))
                 {
-                    field = "ReferenceUniqueName";
+                    field = "ReferenceIngestionJobKey";
                     if (!isMetadataPresent(referenceRoot, field))
                     {
-                        Json::StreamWriterBuilder wbuilder;
-                        string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
-                        
-                        string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                                + ", Field: " + "Reference..."
-                                + ", sParametersRoot: " + sParametersRoot
-                                ;
-                        _logger->error(errorMessage);
+                        field = "ReferenceUniqueName";
+                        if (!isMetadataPresent(referenceRoot, field))
+                        {
+                            Json::StreamWriterBuilder wbuilder;
+                            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
 
-                        throw runtime_error(errorMessage);
+                            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                                    + ", Field: " + "Reference..."
+                                    + ", sParametersRoot: " + sParametersRoot
+                                    ;
+                            _logger->error(errorMessage);
+
+                            throw runtime_error(errorMessage);
+                        }
+                        else
+                        {
+                            referenceUniqueName = referenceRoot.get(field, "XXX").asString();
+                        }        
                     }
                     else
                     {
-                        referenceUniqueName = referenceRoot.get(field, "XXX").asString();
+                        referenceIngestionJobKey = referenceRoot.get(field, "XXX").asInt64();
                     }        
                 }
                 else
                 {
-                    referenceIngestionJobKey = referenceRoot.get(field, "XXX").asInt64();
-                }        
+                    referencePhysicalPathKey = referenceRoot.get(field, "XXX").asInt64();
+                }
             }
             else
             {
@@ -2405,15 +2745,24 @@ void Validator::validateOverlayImageOnVideoMetadata(int64_t workspaceKey,
                     referenceContentType = _mmsEngineDBFacade->getMediaItemKeyDetails(
                         referenceMediaItemKey, warningIfMissing); 
                 }
+                else if (referencePhysicalPathKey != -1)
+                {
+                    pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
+                            _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+                            referencePhysicalPathKey, warningIfMissing);  
+
+                    referenceMediaItemKey = mediaItemKeyAndContentType.first;
+                    referenceContentType = mediaItemKeyAndContentType.second;
+                }
                 else if (referenceIngestionJobKey != -1)
                 {
-                    int64_t referencePhysicalPathKey;
+                    int64_t localReferencePhysicalPathKey;
 
                     tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyPhysicalPathKeyAndContentType = 
                             _mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
                             referenceIngestionJobKey, warningIfMissing);  
 
-                    tie(referenceMediaItemKey, referencePhysicalPathKey, referenceContentType) =
+                    tie(referenceMediaItemKey, localReferencePhysicalPathKey, referenceContentType) =
                             mediaItemKeyPhysicalPathKeyAndContentType;
                 }
                 else // if (referenceUniqueName != "")
@@ -2445,7 +2794,6 @@ void Validator::validateOverlayImageOnVideoMetadata(int64_t workspaceKey,
 
                 throw runtime_error(errorMessage);
             }
-
 
             if (referenceContentType == MMSEngineDBFacade::ContentType::Video)
             {
@@ -2486,7 +2834,35 @@ void Validator::validateOverlayImageOnVideoMetadata(int64_t workspaceKey,
                 throw runtime_error(errorMessage);
             }
 
-            dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
+            if (referencePhysicalPathKey == -1)
+            {
+                int64_t encodingProfileKey = -1;
+                
+                field = "EncodingProfileKey";
+                if (isMetadataPresent(referenceRoot, field))
+                {
+                    int64_t encodingProfileKey = referenceRoot.get(field, "0").asInt64();
+
+                    referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
+                            referenceMediaItemKey, encodingProfileKey);
+                }  
+                else
+                {
+                    field = "EncodingProfileLabel";
+                    if (isMetadataPresent(referenceRoot, field))
+                    {
+                        string encodingProfileLabel = referenceRoot.get(field, "0").asString();
+
+                        referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(workspaceKey,
+                                referenceMediaItemKey, referenceContentType, encodingProfileLabel);
+                    }        
+                }
+            }
+            
+            if (referencePhysicalPathKey != -1)
+                dependencies.push_back(make_pair(referencePhysicalPathKey,DependencyType::PhysicalPathKey));
+            else
+                dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
         }
     }
 }

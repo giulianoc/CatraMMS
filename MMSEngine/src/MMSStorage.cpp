@@ -190,6 +190,24 @@ string MMSStorage::getPhysicalPath(int64_t mediaItemKey,
         fileName);
 }
 
+string MMSStorage::getPhysicalPath(int64_t physicalPathKey)
+{    
+    tuple<int,string,string,string> storageDetails =
+        _mmsEngineDBFacade->getStorageDetails(physicalPathKey);
+
+    int mmsPartitionNumber;
+    string workspaceDirectoryName;
+    string relativePath;
+    string fileName;
+    tie(mmsPartitionNumber, workspaceDirectoryName, relativePath, fileName) = storageDetails;
+
+    return getMMSAssetPathName(
+        mmsPartitionNumber,
+        workspaceDirectoryName,
+        relativePath,
+        fileName);
+}
+
 void MMSStorage::removePhysicalPath(int64_t physicalPathKey)
 {    
     

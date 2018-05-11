@@ -4387,6 +4387,251 @@ MMSEngineDBFacade::ContentType MMSEngineDBFacade::getMediaItemKeyDetails(
     return contentType;
 }
 
+int64_t MMSEngineDBFacade::getPhysicalPathDetails(
+    int64_t referenceMediaItemKey, int64_t encodingProfileKey)
+{
+    string      lastSQLCommand;
+        
+    shared_ptr<MySQLConnection> conn;
+    
+    int64_t physicalPathKey = -1;
+    
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        {
+            lastSQLCommand = 
+                "select physicalPathKey from MMS_PhysicalPath where mediaItemKey = ? and encodingProfileKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, referenceMediaItemKey);
+            preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                physicalPathKey = resultSet->getInt64("physicalPathKey");
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "MediaItemKey/encodingProfileKey are not found"
+                    + ", mediaItemKey: " + to_string(referenceMediaItemKey)
+                    + ", encodingProfileKey: " + to_string(encodingProfileKey)
+                    + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }            
+        }
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
+        throw se;
+    }
+    catch(MediaItemKeyNotFound e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
+        throw e;
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
+        throw exception();
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
+        throw e;
+    }
+    
+    return physicalPathKey;
+}
+
+int64_t MMSEngineDBFacade::getPhysicalPathDetails(
+        int64_t workspaceKey, 
+        int64_t mediaItemKey, ContentType contentType,
+        string encodingProfileLabel)
+{
+    string      lastSQLCommand;
+        
+    shared_ptr<MySQLConnection> conn;
+    
+    int64_t physicalPathKey = -1;
+    
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        int64_t encodingProfileKey = -1;
+        {
+            lastSQLCommand = 
+                "select encodingProfileKey from MMS_EncodingProfile where workspaceKey = ? and contentType = ? and encodingProfileLabel = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            preparedStatement->setString(queryParameterIndex++, toString(contentType));
+            preparedStatement->setString(queryParameterIndex++, encodingProfileLabel);
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                encodingProfileKey = resultSet->getInt64("encodingProfileKey");
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "encodingProfileKey is not found"
+                    + ", workspaceKey: " + to_string(workspaceKey)
+                    + ", contentType: " + toString(contentType)
+                    + ", encodingProfileLabel: " + encodingProfileLabel
+                    + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }            
+        }
+
+        {
+            lastSQLCommand = 
+                "select physicalPathKey from MMS_PhysicalPath where mediaItemKey = ? and encodingProfileKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+            preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                physicalPathKey = resultSet->getInt64("physicalPathKey");
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "MediaItemKey/encodingProfileKey are not found"
+                    + ", mediaItemKey: " + to_string(mediaItemKey)
+                    + ", encodingProfileKey: " + to_string(encodingProfileKey)
+                    + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }            
+        }
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
+        throw se;
+    }
+    catch(MediaItemKeyNotFound e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
+        throw e;
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
+        throw exception();
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
+        throw e;
+    }
+    
+    return physicalPathKey;
+}
+
 pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyDetailsByPhysicalPathKey(
     int64_t referencePhysicalPathKey, bool warningIfMissing)
 {
@@ -6148,8 +6393,9 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(
 int MMSEngineDBFacade::addEncodingJob (
     int64_t workspaceKey,
     int64_t ingestionJobKey,
-    string encodingProfileLabel,
-    int64_t mediaItemKey,
+    string destEncodingProfileLabel,
+    int64_t sourceMediaItemKey,
+    int64_t sourcePhysicalPathKey,
     EncodingPriority encodingPriority
 )
 {
@@ -6171,7 +6417,7 @@ int MMSEngineDBFacade::addEncodingJob (
                 "select contentType from MMS_MediaItem where mediaItemKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+            preparedStatement->setInt64(queryParameterIndex++, sourceMediaItemKey);
 
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
@@ -6181,7 +6427,7 @@ int MMSEngineDBFacade::addEncodingJob (
             else
             {
                 string errorMessage = __FILEREF__ + "ContentType not found "
-                        + ", mediaItemKey: " + to_string(mediaItemKey)
+                        + ", sourceMediaItemKey: " + to_string(sourceMediaItemKey)
                         + ", lastSQLCommand: " + lastSQLCommand
                 ;
                 _logger->error(errorMessage);
@@ -6190,7 +6436,7 @@ int MMSEngineDBFacade::addEncodingJob (
             }
         }
 
-        int64_t encodingProfileKey;
+        int64_t destEncodingProfileKey;
         {
             lastSQLCommand = 
                 "select encodingProfileKey from MMS_EncodingProfile where workspaceKey = ? and contentType = ? and label = ?";
@@ -6198,19 +6444,19 @@ int MMSEngineDBFacade::addEncodingJob (
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setString(queryParameterIndex++, contentType);
-            preparedStatement->setString(queryParameterIndex++, encodingProfileLabel);
+            preparedStatement->setString(queryParameterIndex++, destEncodingProfileLabel);
 
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
-                encodingProfileKey = resultSet->getInt64("encodingProfileKey");
+                destEncodingProfileKey = resultSet->getInt64("encodingProfileKey");
             }
             else
             {
                 string errorMessage = __FILEREF__ + "encodingProfileKey not found "
                         + ", workspaceKey: " + to_string(workspaceKey)
                         + ", contentType: " + contentType
-                        + ", encodingProfileLabel: " + encodingProfileLabel
+                        + ", destEncodingProfileLabel: " + destEncodingProfileLabel
                         + ", lastSQLCommand: " + lastSQLCommand
                 ;
                 _logger->error(errorMessage);
@@ -6221,8 +6467,9 @@ int MMSEngineDBFacade::addEncodingJob (
 
         addEncodingJob (
             ingestionJobKey,
-            encodingProfileKey,
-            mediaItemKey,
+            destEncodingProfileKey,
+            sourceMediaItemKey,
+            sourcePhysicalPathKey,
             encodingPriority);
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
@@ -6277,8 +6524,9 @@ int MMSEngineDBFacade::addEncodingJob (
 
 int MMSEngineDBFacade::addEncodingJob (
     int64_t ingestionJobKey,
-    int64_t encodingProfileKey,
-    int64_t mediaItemKey,
+    int64_t destEncodingProfileKey,
+    int64_t sourceMediaItemKey,
+    int64_t sourcePhysicalPathKey,
     EncodingPriority encodingPriority
 )
 {
@@ -6311,7 +6559,7 @@ int MMSEngineDBFacade::addEncodingJob (
                 "select contentType from MMS_MediaItem where mediaItemKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+            preparedStatement->setInt64(queryParameterIndex++, sourceMediaItemKey);
 
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
@@ -6321,7 +6569,7 @@ int MMSEngineDBFacade::addEncodingJob (
             else
             {
                 string errorMessage = __FILEREF__ + "mediaItemKey not found"
-                        + ", mediaItemKey: " + to_string(mediaItemKey)
+                        + ", sourceMediaItemKey: " + to_string(sourceMediaItemKey)
                         + ", lastSQLCommand: " + lastSQLCommand
                 ;
                 _logger->error(errorMessage);
@@ -6330,24 +6578,25 @@ int MMSEngineDBFacade::addEncodingJob (
             }
         }
 
-        int64_t sourcePhysicalPathKey;
+        int64_t localSourcePhysicalPathKey = sourcePhysicalPathKey;
+        if (sourcePhysicalPathKey == -1)
         {
             lastSQLCommand =
                 "select physicalPathKey from MMS_PhysicalPath "
                 "where mediaItemKey = ? and encodingProfileKey is null";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+            preparedStatement->setInt64(queryParameterIndex++, sourceMediaItemKey);
 
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
-                sourcePhysicalPathKey = resultSet->getInt64("physicalPathKey");
+                localSourcePhysicalPathKey = resultSet->getInt64("physicalPathKey");
             }
             else
             {
                 string errorMessage = __FILEREF__ + "physicalPathKey not found"
-                        + ", mediaItemKey: " + to_string(mediaItemKey)
+                        + ", sourceMediaItemKey: " + to_string(sourceMediaItemKey)
                         + ", lastSQLCommand: " + lastSQLCommand
                 ;
                 _logger->error(errorMessage);
@@ -6364,8 +6613,8 @@ int MMSEngineDBFacade::addEncodingJob (
         
         string parameters = string()
                 + "{ "
-                + "\"encodingProfileKey\": " + to_string(encodingProfileKey)
-                + ", \"sourcePhysicalPathKey\": " + to_string(sourcePhysicalPathKey)
+                + "\"encodingProfileKey\": " + to_string(destEncodingProfileKey)
+                + ", \"sourcePhysicalPathKey\": " + to_string(localSourcePhysicalPathKey)
                 + "} ";        
        {
             lastSQLCommand = 
@@ -6564,8 +6813,8 @@ int MMSEngineDBFacade::addEncodingJob (
 
 int MMSEngineDBFacade::addOverlayImageOnVideoJob (
     int64_t ingestionJobKey,
-    int64_t mediaItemKey_1,
-    int64_t mediaItemKey_2,
+    int64_t mediaItemKey_1, int64_t physicalPathKey_1,
+    int64_t mediaItemKey_2, int64_t physicalPathKey_2,
     EncodingPriority encodingPriority
 )
 {
@@ -6642,7 +6891,8 @@ int MMSEngineDBFacade::addOverlayImageOnVideoJob (
             }
         }
         
-        int64_t sourcePhysicalPathKey_1;
+        int64_t localSourcePhysicalPathKey_1 = physicalPathKey_1;
+        if (physicalPathKey_1 == -1)
         {
             lastSQLCommand =
                 "select physicalPathKey from MMS_PhysicalPath "
@@ -6654,7 +6904,7 @@ int MMSEngineDBFacade::addOverlayImageOnVideoJob (
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
-                sourcePhysicalPathKey_1 = resultSet->getInt64("physicalPathKey");
+                localSourcePhysicalPathKey_1 = resultSet->getInt64("physicalPathKey");
             }
             else
             {
@@ -6668,7 +6918,8 @@ int MMSEngineDBFacade::addOverlayImageOnVideoJob (
             }
         }
         
-        int64_t sourcePhysicalPathKey_2;
+        int64_t localSourcePhysicalPathKey_2 = physicalPathKey_2;
+        if (physicalPathKey_2 == -1)
         {
             lastSQLCommand =
                 "select physicalPathKey from MMS_PhysicalPath "
@@ -6680,7 +6931,7 @@ int MMSEngineDBFacade::addOverlayImageOnVideoJob (
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
-                sourcePhysicalPathKey_2 = resultSet->getInt64("physicalPathKey");
+                localSourcePhysicalPathKey_2 = resultSet->getInt64("physicalPathKey");
             }
             else
             {
@@ -6698,13 +6949,13 @@ int MMSEngineDBFacade::addOverlayImageOnVideoJob (
         int64_t sourceImagePhysicalPathKey;
         if (contentType_1 == ContentType::Video && contentType_2 == ContentType::Image)
         {
-            sourceVideoPhysicalPathKey = sourcePhysicalPathKey_1;
-            sourceImagePhysicalPathKey = sourcePhysicalPathKey_2;
+            sourceVideoPhysicalPathKey = localSourcePhysicalPathKey_1;
+            sourceImagePhysicalPathKey = localSourcePhysicalPathKey_2;
         }
         else if (contentType_1 == ContentType::Image && contentType_2 == ContentType::Video)
         {
-            sourceVideoPhysicalPathKey = sourcePhysicalPathKey_2;
-            sourceImagePhysicalPathKey = sourcePhysicalPathKey_1;
+            sourceVideoPhysicalPathKey = localSourcePhysicalPathKey_2;
+            sourceImagePhysicalPathKey = localSourcePhysicalPathKey_1;
         }
         else
         {

@@ -54,6 +54,8 @@ public:
     string getPhysicalPath(int64_t mediaItemKey,
         int64_t encodingProfileKey);
     
+    string getPhysicalPath(int64_t physicalPathKey);
+
     void removePhysicalPath(int64_t physicalPathKey);
     
     void removeMediaItem(int64_t mediaItemKey);

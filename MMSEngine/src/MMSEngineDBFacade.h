@@ -672,7 +672,15 @@ public:
 
     MMSEngineDBFacade::ContentType getMediaItemKeyDetails(
         int64_t referenceMediaItemKey, bool warningIfMissing);
-    
+
+    int64_t getPhysicalPathDetails(
+        int64_t referenceMediaItemKey, int64_t encodingProfileKey);
+   
+    int64_t getPhysicalPathDetails(
+        int64_t workspaceKey, 
+        int64_t mediaItemKey, ContentType contentType,
+        string encodingProfileLabel);
+
     pair<int64_t,MMSEngineDBFacade::ContentType> getMediaItemKeyDetailsByPhysicalPathKey(
         int64_t referencePhysicalPathKey, bool warningIfMissing);
     
@@ -691,11 +699,6 @@ public:
     tuple<int,int,string,int> getImageDetails(
         int64_t mediaItemKey, int64_t physicalpathKey);
 
-    void getEncodingJobs(
-        bool resetToBeDone,
-        string processorMMS,
-        vector<shared_ptr<MMSEngineDBFacade::EncodingItem>>& encodingItems);
-    
     vector<int64_t> getEncodingProfileKeysBySetKey(
         int64_t workspaceKey,
         int64_t encodingProfilesSetKey);
@@ -704,23 +707,41 @@ public:
         int64_t workspaceKey,
         string label);
     
+    tuple<int,string,string,string> getStorageDetails(
+        int64_t physicalPathKey);
+
+    tuple<int,string,string,string> getStorageDetails(
+        int64_t mediaItemKey,
+        int64_t encodingProfileKey
+    );
+
+    void getAllStorageDetails(int64_t mediaItemKey,
+        vector<tuple<int,string,string,string>>& allStorageDetails);
+    
+    void getEncodingJobs(
+        bool resetToBeDone,
+        string processorMMS,
+        vector<shared_ptr<MMSEngineDBFacade::EncodingItem>>& encodingItems);
+    
     int addEncodingJob (
         int64_t workspaceKey,
         int64_t ingestionJobKey,
-        string encodingProfileLabel,
-        int64_t mediaItemKey,
+        string destEncodingProfileLabel,
+        int64_t sourceMediaItemKey,
+        int64_t sourcePhysicalPathKey,
         EncodingPriority encodingPriority);
 
     int addEncodingJob (
         int64_t ingestionJobKey,
-        int64_t encodingProfileKey,
-        int64_t mediaItemKey,
+        int64_t destEncodingProfileKey,
+        int64_t sourceMediaItemKey,
+        int64_t sourcePhysicalPathKey,
         EncodingPriority encodingPriority);
 
     int addOverlayImageOnVideoJob (
         int64_t ingestionJobKey,
-        int64_t mediaItemKey_1,
-        int64_t mediaItemKey_2,
+        int64_t mediaItemKey_1, int64_t physicalPathKey_1,
+        int64_t mediaItemKey_2, int64_t physicalPathKey_2,
         EncodingPriority encodingPriority);
 
     int updateEncodingJob (
@@ -805,17 +826,6 @@ public:
     void removeMediaItem (
         int64_t mediaItemKey);
 
-    tuple<int,string,string,string> getStorageDetails(
-        int64_t physicalPathKey);
-
-    tuple<int,string,string,string> getStorageDetails(
-        int64_t mediaItemKey,
-        int64_t encodingProfileKey
-    );
-
-    void getAllStorageDetails(int64_t mediaItemKey,
-        vector<tuple<int,string,string,string>>& allStorageDetails);
-    
 private:
     shared_ptr<spdlog::logger>                          _logger;
     shared_ptr<MySQLConnectionFactory>                  _mySQLConnectionFactory;

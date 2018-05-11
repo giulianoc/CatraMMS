@@ -1875,6 +1875,16 @@ void MMSEngineProcessor::generateAndIngestFrames(
     {
         string field;
         
+        if (dependencies.size() != 1)
+        {
+            string errorMessage = __FILEREF__ + "No video found"
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", dependencies.size: " + to_string(dependencies.size());
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        
         int periodInSeconds = -1;
         if (ingestionType == MMSEngineDBFacade::IngestionType::Frame)
         {
@@ -1974,12 +1984,30 @@ void MMSEngineProcessor::generateAndIngestFrames(
             height = parametersRoot.get(field, "XXX").asInt();
         }
 
+        int64_t sourceMediaItemKey;
+        int64_t sourcePhysicalPathKey;
+        string sourcePhysicalPath;
         pair<int64_t,Validator::DependencyType>& keyAndDependencyType = dependencies.back();
-        int64_t sourceMediaItemKey = keyAndDependencyType.first;
-        
-        int64_t physicalPathKey = -1;
-        int64_t encodingProfileKey = -1;
-        string sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourceMediaItemKey, encodingProfileKey);
+        if (keyAndDependencyType.second == Validator::DependencyType::MediaItemKey)
+        {
+            sourceMediaItemKey = keyAndDependencyType.first;
+
+            sourcePhysicalPathKey = -1;
+            int64_t encodingProfileKey = -1;
+            sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourceMediaItemKey, encodingProfileKey);
+        }
+        else
+        {
+            sourcePhysicalPathKey = keyAndDependencyType.first;
+            
+            bool warningIfMissing = false;
+            pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType =
+                _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+                    sourcePhysicalPathKey, warningIfMissing);
+    
+            sourceMediaItemKey = mediaItemKeyAndContentType.first;
+            sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourcePhysicalPathKey);
+        }
 
         int64_t durationInMilliSeconds;
         int videoWidth;
@@ -1997,7 +2025,7 @@ void MMSEngineProcessor::generateAndIngestFrames(
             long audioBitRate;
         
             tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
-                videoDetails = _mmsEngineDBFacade->getVideoDetails(sourceMediaItemKey, physicalPathKey);
+                videoDetails = _mmsEngineDBFacade->getVideoDetails(sourceMediaItemKey, sourcePhysicalPathKey);
             
             tie(durationInMilliSeconds, bitRate,
                 videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
@@ -2194,15 +2222,39 @@ void MMSEngineProcessor::generateAndIngestSlideshow(
         
         for (pair<int64_t,Validator::DependencyType>& keyAndDependencyType: dependencies)
         {
-            int64_t encodingProfileKey = -1;
-            string sourcePhysicalPath = _mmsStorage->getPhysicalPath(keyAndDependencyType.first, encodingProfileKey);
+            // int64_t encodingProfileKey = -1;
+            // string sourcePhysicalPath = _mmsStorage->getPhysicalPath(keyAndDependencyType.first, encodingProfileKey);
 
+            int64_t sourceMediaItemKey;
+            int64_t sourcePhysicalPathKey;
+            string sourcePhysicalPath;
+            if (keyAndDependencyType.second == Validator::DependencyType::MediaItemKey)
+            {
+                sourceMediaItemKey = keyAndDependencyType.first;
+
+                sourcePhysicalPathKey = -1;
+                int64_t encodingProfileKey = -1;
+                sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourceMediaItemKey, encodingProfileKey);
+            }
+            else
+            {
+                sourcePhysicalPathKey = keyAndDependencyType.first;
+
+                bool warningIfMissing = false;
+                pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType =
+                    _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+                        sourcePhysicalPathKey, warningIfMissing);
+
+                sourceMediaItemKey = mediaItemKeyAndContentType.first;
+                sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourcePhysicalPathKey);
+            }
+            
             sourcePhysicalPaths.push_back(sourcePhysicalPath);
             
             bool warningIfMissing = false;
             
             MMSEngineDBFacade::ContentType contentType = _mmsEngineDBFacade->getMediaItemKeyDetails(
-                keyAndDependencyType.first, warningIfMissing);
+                sourceMediaItemKey, warningIfMissing);
             
             if (!slideshowContentTypeInitialized)
             {
@@ -2358,15 +2410,39 @@ void MMSEngineProcessor::generateAndIngestConcatenation(
         
         for (pair<int64_t,Validator::DependencyType>& keyAndDependencyType: dependencies)
         {
-            int64_t encodingProfileKey = -1;
-            string sourcePhysicalPath = _mmsStorage->getPhysicalPath(keyAndDependencyType.first, encodingProfileKey);
+            // int64_t encodingProfileKey = -1;
+            // string sourcePhysicalPath = _mmsStorage->getPhysicalPath(keyAndDependencyType.first, encodingProfileKey);
+
+            int64_t sourceMediaItemKey;
+            int64_t sourcePhysicalPathKey;
+            string sourcePhysicalPath;
+            if (keyAndDependencyType.second == Validator::DependencyType::MediaItemKey)
+            {
+                sourceMediaItemKey = keyAndDependencyType.first;
+
+                sourcePhysicalPathKey = -1;
+                int64_t encodingProfileKey = -1;
+                sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourceMediaItemKey, encodingProfileKey);
+            }
+            else
+            {
+                sourcePhysicalPathKey = keyAndDependencyType.first;
+
+                bool warningIfMissing = false;
+                pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType =
+                    _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+                        sourcePhysicalPathKey, warningIfMissing);
+
+                sourceMediaItemKey = mediaItemKeyAndContentType.first;
+                sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourcePhysicalPathKey);
+            }
 
             sourcePhysicalPaths.push_back(sourcePhysicalPath);
             
             bool warningIfMissing = false;
             
             MMSEngineDBFacade::ContentType contentType = _mmsEngineDBFacade->getMediaItemKeyDetails(
-                keyAndDependencyType.first, warningIfMissing);
+                sourceMediaItemKey, warningIfMissing);
             
             if (!concatContentTypeInitialized)
             {
@@ -2503,8 +2579,30 @@ void MMSEngineProcessor::generateAndIngestCutMedia(
             throw runtime_error(errorMessage);
         }
         
+        int64_t sourceMediaItemKey;
+        int64_t sourcePhysicalPathKey;
+        string sourcePhysicalPath;
         pair<int64_t,Validator::DependencyType>& keyAndDependencyType = dependencies.back();
-        int64_t sourceMediaItemKey = keyAndDependencyType.first;
+        if (keyAndDependencyType.second == Validator::DependencyType::MediaItemKey)
+        {
+            sourceMediaItemKey = keyAndDependencyType.first;
+
+            sourcePhysicalPathKey = -1;
+            int64_t encodingProfileKey = -1;
+            sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourceMediaItemKey, encodingProfileKey);
+        }
+        else
+        {
+            sourcePhysicalPathKey = keyAndDependencyType.first;
+            
+            bool warningIfMissing = false;
+            pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType =
+                _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+                    sourcePhysicalPathKey, warningIfMissing);
+    
+            sourceMediaItemKey = mediaItemKeyAndContentType.first;
+            sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourcePhysicalPathKey);
+        }
 
         bool warningIfMissing = false;
 
@@ -2559,10 +2657,6 @@ void MMSEngineProcessor::generateAndIngestCutMedia(
             throw runtime_error(errorMessage);
         }
 
-        int64_t physicalPathKey = -1;
-        int64_t encodingProfileKey = -1;
-        string sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourceMediaItemKey, encodingProfileKey);
-
         int64_t durationInMilliSeconds;
         try
         {
@@ -2579,7 +2673,7 @@ void MMSEngineProcessor::generateAndIngestCutMedia(
             long audioBitRate;
         
             tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
-                videoDetails = _mmsEngineDBFacade->getVideoDetails(sourceMediaItemKey, physicalPathKey);
+                videoDetails = _mmsEngineDBFacade->getVideoDetails(sourceMediaItemKey, sourcePhysicalPathKey);
             
             tie(durationInMilliSeconds, bitRate,
                 videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
@@ -2719,6 +2813,16 @@ void MMSEngineProcessor::manageEncodeTask(
 {
     try
     {        
+        if (dependencies.size() != 1)
+        {
+            string errorMessage = __FILEREF__ + "Wrong media number to be encoded"
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", dependencies.size: " + to_string(dependencies.size());
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
         // This task shall contain EncodingProfileKey or EncodingProfileLabel.
         // We cannot have EncodingProfilesSetKey because we replaced it with a GroupOfTasks
         //  having just EncodingProfileKey        
@@ -2758,15 +2862,33 @@ void MMSEngineProcessor::manageEncodeTask(
         MMSEngineDBFacade::EncodingPriority encodingPriority =
                 MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
 
+        int64_t sourceMediaItemKey;
+        int64_t sourcePhysicalPathKey;
         pair<int64_t,Validator::DependencyType>& keyAndDependencyType = dependencies.back();
-        int64_t sourceMediaItemKey = keyAndDependencyType.first;
+        if (keyAndDependencyType.second == Validator::DependencyType::MediaItemKey)
+        {
+            sourceMediaItemKey = keyAndDependencyType.first;
+
+            sourcePhysicalPathKey = -1;
+        }
+        else
+        {
+            sourcePhysicalPathKey = keyAndDependencyType.first;
+            
+            bool warningIfMissing = false;
+            pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType =
+                _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+                    sourcePhysicalPathKey, warningIfMissing);
+    
+            sourceMediaItemKey = mediaItemKeyAndContentType.first;
+        }
     
         if (encodingProfileKey == -1)
             _mmsEngineDBFacade->addEncodingJob (workspace->_workspaceKey, ingestionJobKey,
-                encodingProfileLabel, sourceMediaItemKey, encodingPriority);
+                encodingProfileLabel, sourceMediaItemKey, sourcePhysicalPathKey, encodingPriority);
         else
             _mmsEngineDBFacade->addEncodingJob (ingestionJobKey,
-                encodingProfileKey, sourceMediaItemKey, encodingPriority);
+                encodingProfileKey, sourceMediaItemKey, sourcePhysicalPathKey, encodingPriority);
     }
     catch(runtime_error e)
     {
@@ -2818,8 +2940,52 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
         MMSEngineDBFacade::EncodingPriority encodingPriority =
                 MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
 
+        int64_t sourceMediaItemKey_1;
+        int64_t sourcePhysicalPathKey_1;
+        pair<int64_t,Validator::DependencyType>& keyAndDependencyType_1 = dependencies[0];
+        if (keyAndDependencyType_1.second == Validator::DependencyType::MediaItemKey)
+        {
+            sourceMediaItemKey_1 = keyAndDependencyType_1.first;
+
+            sourcePhysicalPathKey_1 = -1;
+        }
+        else
+        {
+            sourcePhysicalPathKey_1 = keyAndDependencyType_1.first;
+            
+            bool warningIfMissing = false;
+            pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType =
+                _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+                    sourcePhysicalPathKey_1, warningIfMissing);
+    
+            sourceMediaItemKey_1 = mediaItemKeyAndContentType.first;
+        }
+
+        int64_t sourceMediaItemKey_2;
+        int64_t sourcePhysicalPathKey_2;
+        pair<int64_t,Validator::DependencyType>& keyAndDependencyType_2 = dependencies[1];
+        if (keyAndDependencyType_2.second == Validator::DependencyType::MediaItemKey)
+        {
+            sourceMediaItemKey_2 = keyAndDependencyType_2.first;
+
+            sourcePhysicalPathKey_2 = -1;
+        }
+        else
+        {
+            sourcePhysicalPathKey_2 = keyAndDependencyType_2.first;
+            
+            bool warningIfMissing = false;
+            pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType =
+                _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+                    sourcePhysicalPathKey_2, warningIfMissing);
+    
+            sourceMediaItemKey_2 = mediaItemKeyAndContentType.first;
+        }
+
         _mmsEngineDBFacade->addOverlayImageOnVideoJob (ingestionJobKey,
-            dependencies[0].first, dependencies[1].first, encodingPriority);
+            sourceMediaItemKey_1, sourcePhysicalPathKey_1,
+            sourceMediaItemKey_2, sourcePhysicalPathKey_2,
+                encodingPriority);
     }
     catch(runtime_error e)
     {
