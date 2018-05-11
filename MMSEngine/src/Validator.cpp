@@ -1170,7 +1170,7 @@ void Validator::validateRemoveContentMetadata(int64_t workspaceKey,
                 throw runtime_error(errorMessage);
             }
 
-            if (referencePhysicalPathKey == -1)
+            if (referenceLabel == false && referencePhysicalPathKey == -1)
             {
                 int64_t encodingProfileKey = -1;
                 
@@ -1382,7 +1382,7 @@ void Validator::validateEncodeMetadata(int64_t workspaceKey,
             throw runtime_error(errorMessage);
         }
         
-        if (referencePhysicalPathKey == -1)
+        if (referenceLabel == false && referencePhysicalPathKey == -1)
         {
             int64_t encodingProfileKey = -1;
 
@@ -1602,7 +1602,7 @@ void Validator::validateFrameMetadata(int64_t workspaceKey,
             throw runtime_error(errorMessage);
         }
 
-        if (referencePhysicalPathKey == -1)
+        if (referenceLabel == false && referencePhysicalPathKey == -1)
         {
             int64_t encodingProfileKey = -1;
 
@@ -1826,7 +1826,7 @@ void Validator::validatePeriodicalFramesMetadata(int64_t workspaceKey,
             throw runtime_error(errorMessage);
         }
 
-        if (referencePhysicalPathKey == -1)
+        if (referenceLabel == false && referencePhysicalPathKey == -1)
         {
             int64_t encodingProfileKey = -1;
 
@@ -2060,7 +2060,7 @@ void Validator::validateIFramesMetadata(int64_t workspaceKey,
             throw runtime_error(errorMessage);
         }
 
-        if (referencePhysicalPathKey == -1)
+        if (referenceLabel == false && referencePhysicalPathKey == -1)
         {
             int64_t encodingProfileKey = -1;
 
@@ -2282,7 +2282,7 @@ void Validator::validateSlideshowMetadata(int64_t workspaceKey,
                 throw runtime_error(errorMessage);
             }
 
-            if (referencePhysicalPathKey == -1)
+            if (referenceLabel == false && referencePhysicalPathKey == -1)
             {
                 int64_t encodingProfileKey = -1;
                 
@@ -2505,7 +2505,7 @@ void Validator::validateConcatDemuxerMetadata(int64_t workspaceKey,
                 throw runtime_error(errorMessage);
             }
 
-            if (referencePhysicalPathKey == -1)
+            if (referenceLabel == false && referencePhysicalPathKey == -1)
             {
                 int64_t encodingProfileKey = -1;
                 
@@ -2755,7 +2755,7 @@ void Validator::validateCutMetadata(int64_t workspaceKey,
             throw runtime_error(errorMessage);
         }
 
-        if (referencePhysicalPathKey == -1)
+        if (referenceLabel == false && referencePhysicalPathKey == -1)
         {
             int64_t encodingProfileKey = -1;
 
@@ -2975,7 +2975,7 @@ void Validator::validateOverlayImageOnVideoMetadata(int64_t workspaceKey,
                 }
             }
 
-            if (referencePhysicalPathKey == -1)
+            if (referenceLabel == false && referencePhysicalPathKey == -1)
             {
                 int64_t encodingProfileKey = -1;
                 
