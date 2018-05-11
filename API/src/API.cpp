@@ -2079,6 +2079,8 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
                 field = "ReferenceIngestionJobKey";
                 referenceRoot[field] = ingestionJobKeys.back();
                 
+                referencesRoot[referenceIndex] = referenceRoot;
+                
                 {                
                     Json::StreamWriterBuilder wbuilder;
 
