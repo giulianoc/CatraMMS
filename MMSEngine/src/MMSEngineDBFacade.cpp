@@ -3689,7 +3689,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobStatus (
                 else
                     taskRoot[field] = static_cast<string>(resultSet->getString("errorMessage"));
 
-                if (ingestionType == IngestionType::Encode)
+                if (ingestionType == IngestionType::Encode || ingestionType == IngestionType::OverlayImageOnVideo)
                 {
                     lastSQLCommand = 
                         "select type, parameters, status, encodingProgress, "
