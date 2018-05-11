@@ -4515,7 +4515,7 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
         int64_t encodingProfileKey = -1;
         {
             lastSQLCommand = 
-                "select encodingProfileKey from MMS_EncodingProfile where workspaceKey = ? and contentType = ? and encodingProfileLabel = ?";
+                "select encodingProfileKey from MMS_EncodingProfile where workspaceKey = ? and contentType = ? and label = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
