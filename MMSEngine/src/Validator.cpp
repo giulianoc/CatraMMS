@@ -2793,6 +2793,27 @@ void Validator::validateOverlayImageOnVideoMetadata(int64_t workspaceKey,
     Json::Value parametersRoot, vector<pair<int64_t,DependencyType>>& dependencies)
 {
     
+    vector<string> mandatoryFields = {
+        "imagePosition_X_InPixel",
+        "imagePosition_Y_InPixel"
+    };
+    for (string mandatoryField: mandatoryFields)
+    {
+        if (!isMetadataPresent(parametersRoot, mandatoryField))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+                    
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + mandatoryField
+                    + ", sParametersRoot: " + sParametersRoot
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
     string field = "References";

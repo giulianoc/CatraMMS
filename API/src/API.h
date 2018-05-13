@@ -48,7 +48,7 @@ public:
         string requestMethod,
         string xCatraMMSResumeHeader,
         unordered_map<string, string> queryParameters,
-        tuple<shared_ptr<Workspace>,bool,bool>& workspaceAndFlags,
+        tuple<int64_t,shared_ptr<Workspace>,bool,bool>& userKeyWorkspaceAndFlags,
         unsigned long contentLength);
 
     virtual void manageRequestAndResponse(
@@ -56,7 +56,7 @@ public:
             string requestURI,
             string requestMethod,
             unordered_map<string, string> queryParameters,
-            tuple<shared_ptr<Workspace>,bool,bool>& workspaceAndFlags,
+            tuple<int64_t,shared_ptr<Workspace>,bool,bool>& userKeyWorkspaceAndFlags,
             unsigned long contentLength,
             string requestBody,
             string xCatraMMSResumeHeader,
@@ -77,6 +77,12 @@ private:
     bool                _fileUploadProgressThreadShutdown;
     int                 _maxProgressCallFailures;
     string              _progressURI;
+    
+    int                 _defaultTTLInSeconds;
+    int                 _defaultMaxRetries;
+    bool                _defaultRedirect;
+    string              _deliveryHost;
+
     FileUploadProgressData*     _fileUploadProgressData;
     
 
@@ -140,7 +146,7 @@ private:
         string requestMethod,
         string xCatraMMSResumeHeader,
         unordered_map<string, string> queryParameters,
-        tuple<shared_ptr<Workspace>,bool,bool> workspaceAndFlags,
+        tuple<int64_t,shared_ptr<Workspace>,bool,bool> userKeyWorkspaceAndFlags,
         // unsigned long contentLength,
             unordered_map<string, string>& requestDetails
     );
@@ -156,6 +162,13 @@ private:
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
+
+    void createDeliveryAuthorization(
+        FCGX_Request& request,
+        int64_t userKey,
+        shared_ptr<Workspace> requestWorkspace,
+        string clientIPAddress,
+        unordered_map<string, string> queryParameters);
 
     void parseContentRange(string contentRange,
         long long& contentRangeStart,

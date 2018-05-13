@@ -59,6 +59,8 @@ public:
         string mmsSourceVideoAssetPathName,
         int64_t videoDurationInMilliSeconds,
         string mmsSourceImageAssetPathName,
+        string imagePosition_X_InPixel,
+        string imagePosition_Y_InPixel,
         string encodedFileName,
         string stagingEncodedAssetPathName,
         int64_t encodingJobKey,

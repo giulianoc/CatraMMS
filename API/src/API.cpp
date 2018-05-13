@@ -199,7 +199,26 @@ API::API(Json::Value configuration,
         + ", api->binary->progressURI: " + _progressURI
     );
     
+    _defaultTTLInSeconds  = api["delivery"].get("defaultTTLInSeconds", 60).asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->delivery->defaultTTLInSeconds: " + to_string(_defaultTTLInSeconds)
+    );
 
+    _defaultMaxRetries  = api["delivery"].get("defaultMaxRetries", 60).asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->delivery->defaultMaxRetries: " + to_string(_defaultMaxRetries)
+    );
+
+    _defaultRedirect  = api["delivery"].get("defaultRedirect", 60).asBool();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->delivery->defaultRedirect: " + to_string(_defaultRedirect)
+    );
+    
+    _deliveryHost  = api["delivery"].get("deliveryHost", "XXX").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->delivery->deliveryHost: " + _deliveryHost
+    );
+    
     _fileUploadProgressData     = fileUploadProgressData;
     _fileUploadProgressThreadShutdown       = false;
 }
@@ -219,7 +238,7 @@ void API::getBinaryAndResponse(
         string requestMethod,
         string xCatraMMSResumeHeader,
         unordered_map<string, string> queryParameters,
-        tuple<shared_ptr<Workspace>,bool,bool>& workspaceAndFlags,
+        tuple<int64_t,shared_ptr<Workspace>,bool,bool>& userKeyWorkspaceAndFlags,
         unsigned long contentLength
 )
 {
@@ -238,7 +257,7 @@ void API::manageRequestAndResponse(
         string requestURI,
         string requestMethod,
         unordered_map<string, string> queryParameters,
-        tuple<shared_ptr<Workspace>,bool,bool>& workspaceAndFlags,
+        tuple<int64_t,shared_ptr<Workspace>,bool,bool>& userKeyWorkspaceAndFlags,
         unsigned long contentLength,
         string requestBody,
         string xCatraMMSResumeHeader,
@@ -266,7 +285,7 @@ void API::manageRequestAndResponse(
     }
     string method = methodIt->second;
 
-    if (method == "authorization")
+    if (method == "binaryAuthorization")
     {
         // since we are here, for sure user is authorized
         
@@ -344,10 +363,72 @@ void API::manageRequestAndResponse(
         string responseBody;
         sendSuccess(request, 200, responseBody);
     }
+    else if (method == "deliveryAuthorization")
+    {        
+        // retrieve the HTTP_X_ORIGINAL_METHOD to retrieve the token to be checked (set in the nginx server configuration)
+        try
+        {
+            auto tokenIt = requestDetails.find("HTTP_X_ORIGINAL_METHOD");
+            auto originalURIIt = requestDetails.find("HTTP_X_ORIGINAL_URI");
+            if (tokenIt != requestDetails.end() && originalURIIt != requestDetails.end()
+                    )
+            {
+                int64_t token = stoll(tokenIt->second);
+
+                string contentURI = originalURIIt->second;
+                size_t endOfURIIndex = contentURI.find_last_of("?");
+                if (endOfURIIndex == string::npos)
+                {
+                    string errorMessage = string("Wrong URI format")
+                        + ", contentURI: " + contentURI
+                            ;
+                    _logger->info(__FILEREF__ + errorMessage);
+
+                    sendError(request, 500, errorMessage);
+                }
+                contentURI = contentURI.substr(0, endOfURIIndex);
+
+                if (_mmsEngineDBFacade->checkDeliveryAuthorization(token, contentURI))
+                {
+                    _logger->info(__FILEREF__ + "token authorized"
+                        + ", token: " + to_string(token)
+                    );
+
+                    string responseBody;
+                    sendSuccess(request, 200, responseBody);
+                }
+                else
+                {
+                    string errorMessage = string("Not authorized: token invalid")
+                        + ", token: " + to_string(token)
+                            ;
+                    _logger->info(__FILEREF__ + errorMessage);
+
+                    string responseBody;
+                    sendError(request, 403, errorMessage);
+                }
+            }        
+            else
+            {
+                string errorMessage = string("Not authorized: token parameter not present")
+                        ;
+                _logger->info(__FILEREF__ + errorMessage);
+
+                sendError(request, 500, errorMessage);
+            }
+        }
+        catch(exception e)
+        {
+            string errorMessage = string("Not authorized: exception retrieving the token");
+            _logger->info(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+        }
+    }
     else if (method == "registerUser")
     {
         /*
-        bool isAdminAPI = get<1>(workspaceAndFlags);
+        bool isAdminAPI = get<2>(userKeyWorkspaceAndFlags);
         if (!isAdminAPI)
         {
             string errorMessage = string("APIKey flags does not have the ADMIN permission"
@@ -366,7 +447,7 @@ void API::manageRequestAndResponse(
     else if (method == "confirmUser")
     {
         /*
-        bool isAdminAPI = get<1>(workspaceAndFlags);
+        bool isAdminAPI = get<2>(userKeyWorkspaceAndFlags);
         if (!isAdminAPI)
         {
             string errorMessage = string("APIKey flags does not have the ADMIN permission"
@@ -382,10 +463,10 @@ void API::manageRequestAndResponse(
         
         confirmUser(request, queryParameters);
     }
-    /*
-    else if (method == "createAPIKey")
+    else if (method == "createDeliveryAuthorization")
     {
-        bool isAdminAPI = get<1>(workspaceAndFlags);
+        /*
+        bool isAdminAPI = get<2>(userKeyWorkspaceAndFlags);
         if (!isAdminAPI)
         {
             string errorMessage = string("APIKey flags does not have the ADMIN permission"
@@ -397,13 +478,21 @@ void API::manageRequestAndResponse(
 
             throw runtime_error(errorMessage);
         }
-        
-        createAPIKey(request, queryParameters);
+        */
+
+        string clientIPAddress;
+        auto remoteAddrIt = requestDetails.find("REMOTE_ADDR");
+        if (remoteAddrIt != requestDetails.end())
+            clientIPAddress = remoteAddrIt->second;
+            
+        createDeliveryAuthorization(request, get<0>(userKeyWorkspaceAndFlags),
+                get<1>(userKeyWorkspaceAndFlags),
+                clientIPAddress, queryParameters);
     }
-    */
     else if (method == "ingestion")
     {
-        bool isUserAPI = get<2>(workspaceAndFlags);
+        /*
+        bool isUserAPI = get<2>(userKeyWorkspaceAndFlags);
         if (!isUserAPI)
         {
             string errorMessage = string("APIKey flags does not have the USER permission"
@@ -415,12 +504,14 @@ void API::manageRequestAndResponse(
 
             throw runtime_error(errorMessage);
         }
+        */
         
-        ingestion(request, get<0>(workspaceAndFlags), queryParameters, requestBody);
+        ingestion(request, get<1>(userKeyWorkspaceAndFlags), queryParameters, requestBody);
     }
     else if (method == "ingestionStatus")
     {
-        bool isUserAPI = get<2>(workspaceAndFlags);
+        /*
+        bool isUserAPI = get<2>(userKeyWorkspaceAndFlags);
         if (!isUserAPI)
         {
             string errorMessage = string("APIKey flags does not have the USER permission"
@@ -432,12 +523,14 @@ void API::manageRequestAndResponse(
 
             throw runtime_error(errorMessage);
         }
+        */
         
-        ingestionStatus(request, get<0>(workspaceAndFlags), queryParameters, requestBody);
+        ingestionStatus(request, get<1>(userKeyWorkspaceAndFlags), queryParameters, requestBody);
     }
     else if (method == "contentList")
     {
-        bool isUserAPI = get<2>(workspaceAndFlags);
+        /*
+        bool isUserAPI = get<2>(userKeyWorkspaceAndFlags);
         if (!isUserAPI)
         {
             string errorMessage = string("APIKey flags does not have the USER permission"
@@ -449,12 +542,14 @@ void API::manageRequestAndResponse(
 
             throw runtime_error(errorMessage);
         }
+        */
         
-        contentList(request, get<0>(workspaceAndFlags), queryParameters, requestBody);
+        contentList(request, get<1>(userKeyWorkspaceAndFlags), queryParameters, requestBody);
     }
     else if (method == "uploadedBinary")
     {
-        bool isUserAPI = get<2>(workspaceAndFlags);
+        /*
+        bool isUserAPI = get<2>(userKeyWorkspaceAndFlags);
         if (!isUserAPI)
         {
             string errorMessage = string("APIKey flags does not have the USER permission"
@@ -466,14 +561,16 @@ void API::manageRequestAndResponse(
 
             throw runtime_error(errorMessage);
         }
+        */
                 
         uploadedBinary(request, requestMethod, xCatraMMSResumeHeader,
-            queryParameters, workspaceAndFlags, // contentLength,
+            queryParameters, userKeyWorkspaceAndFlags, // contentLength,
                 requestDetails);
     }
     else if (method == "addEncodingProfilesSet")
     {
-        bool isUserAPI = get<2>(workspaceAndFlags);
+        /*
+        bool isUserAPI = get<2>(userKeyWorkspaceAndFlags);
         if (!isUserAPI)
         {
             string errorMessage = string("APIKey flags does not have the USER permission"
@@ -485,13 +582,15 @@ void API::manageRequestAndResponse(
 
             throw runtime_error(errorMessage);
         }
+        */
                 
-        addEncodingProfilesSet(request, get<0>(workspaceAndFlags),
+        addEncodingProfilesSet(request, get<1>(userKeyWorkspaceAndFlags),
             queryParameters, requestBody);
     }
     else if (method == "addEncodingProfile")
     {
-        bool isUserAPI = get<2>(workspaceAndFlags);
+        /*
+        bool isUserAPI = get<2>(userKeyWorkspaceAndFlags);
         if (!isUserAPI)
         {
             string errorMessage = string("APIKey flags does not have the USER permission"
@@ -503,8 +602,9 @@ void API::manageRequestAndResponse(
 
             throw runtime_error(errorMessage);
         }
+        */
                 
-        addEncodingProfile(request, get<0>(workspaceAndFlags),
+        addEncodingProfile(request, get<1>(userKeyWorkspaceAndFlags),
             queryParameters, requestBody);
     }
     else
@@ -1293,58 +1393,128 @@ void API::confirmUser(
     }
 }
 
-/*
-void API::createAPIKey(
+void API::createDeliveryAuthorization(
         FCGX_Request& request,
+        int64_t userKey,
+        shared_ptr<Workspace> requestWorkspace,
+        string clientIPAddress,
         unordered_map<string, string> queryParameters)
 {
-    string api = "createAPIKey";
+    string api = "createDeliveryAuthorization";
 
     _logger->info(__FILEREF__ + "Received " + api
     );
 
     try
     {
-        auto workspaceKeyIt = queryParameters.find("workspaceKey");
-        if (workspaceKeyIt == queryParameters.end())
+        int64_t physicalPathKey;
+        auto physicalPathKeyIt = queryParameters.find("physicalPathKey");
+        if (physicalPathKeyIt == queryParameters.end())
         {
-            string errorMessage = string("The 'workspaceKey' parameter is not found");
+            string errorMessage = string("The 'physicalPathKey' parameter is not found");
             _logger->error(__FILEREF__ + errorMessage);
 
             sendError(request, 400, errorMessage);
 
             throw runtime_error(errorMessage);
         }
+        physicalPathKey = stoll(physicalPathKeyIt->second);
 
-        auto userKeyIt = queryParameters.find("userKey");
-        if (userKeyIt == queryParameters.end())
+        int ttlInSeconds = _defaultTTLInSeconds;
+        auto ttlInSecondsIt = queryParameters.find("ttlInSeconds");
+        if (ttlInSecondsIt != queryParameters.end())
         {
-            string errorMessage = string("The 'userKey' parameter is not found");
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 400, errorMessage);
-
-            throw runtime_error(errorMessage);
+            ttlInSeconds = stol(ttlInSecondsIt->second);
         }
 
+        int maxRetries = _defaultMaxRetries;
+        auto maxRetriesIt = queryParameters.find("maxRetries");
+        if (maxRetriesIt != queryParameters.end())
+        {
+            maxRetries = stol(maxRetriesIt->second);
+        }
+        
+        bool redirect = _defaultRedirect;
+        auto redirectIt = queryParameters.find("redirect");
+        if (redirectIt != queryParameters.end())
+        {
+            if (redirectIt->second == "false")
+                redirect = false;
+            else if (redirectIt->second == "true")
+                redirect = true;
+        }
+        
         try
         {
-            bool adminAPI = false; 
-            bool userAPI = true;
-            chrono::system_clock::time_point apiKeyExpirationDate = 
-                    chrono::system_clock::now() + chrono::hours(24 * 365 * 20);
-            
-            string apiKey = _mmsEngineDBFacade->createAPIKey(
-                    stol(workspaceKeyIt->second),
-                    stol(userKeyIt->second),
-                    adminAPI, 
-                    userAPI, 
-                    apiKeyExpirationDate);
+            tuple<int,shared_ptr<Workspace>,string,string> storageDetails =
+                _mmsEngineDBFacade->getStorageDetails(physicalPathKey);
 
-            string responseBody = string("{ ")
-                + "\"apiKey\": \"" + apiKey + "\" "
-                + "}";
-            sendSuccess(request, 201, responseBody);
+            int mmsPartitionNumber;
+            shared_ptr<Workspace> contentWorkspace;
+            string relativePath;
+            string fileName;
+            tie(mmsPartitionNumber, contentWorkspace, relativePath, fileName) = storageDetails;
+    
+            if (contentWorkspace->_workspaceKey != requestWorkspace->_workspaceKey)
+            {
+                string errorMessage = string ("Workspace of the content and Workspace of the requester is different")
+                        + ", contentWorkspace->_workspaceKey: " + to_string(contentWorkspace->_workspaceKey)
+                        + ", requestWorkspace->_workspaceKey: " + to_string(requestWorkspace->_workspaceKey)
+                        ;
+                _logger->error(__FILEREF__ + errorMessage);
+                
+                throw runtime_error(errorMessage);
+            }
+            
+            string outputFileName = "zzzz";
+
+            string deliveryURI;
+            {
+                char pMMSPartitionName [64];
+
+
+                // .../storage/MMSRepository/MMS_0000/CatraSoft/000/000/550/815_source.jpg 
+
+                sprintf(pMMSPartitionName, "/MMS_%04d/", mmsPartitionNumber);
+
+                deliveryURI = 
+                    + pMMSPartitionName
+                    + contentWorkspace->_directoryName
+                    + relativePath
+                    + fileName
+                ;
+            }
+            int64_t authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
+                userKey,
+                clientIPAddress,
+                physicalPathKey,
+                deliveryURI,
+                ttlInSeconds,
+                maxRetries);
+
+            string deliveryURL = 
+                string("http://") 
+                + _deliveryHost
+                + deliveryURI
+                + "?token=" + to_string(authorizationKey)
+                + "&outputFileName=" + outputFileName
+            ;
+            
+            if (redirect)
+            {
+                sendRedirect(deliveryURL);
+            }
+            else
+            {
+                string responseBody = string("{ ")
+                    + "\"deliveryURL\": \"" + deliveryURL + "\""
+                    + ", \"outputFileName\": \"" + outputFileName + "\""
+                    + ", \"authorizationKey\": " + to_string(authorizationKey)
+                    + ", \"ttlInSeconds\": " + to_string(ttlInSeconds)
+                    + ", \"maxRetries\": " + to_string(maxRetries)
+                    + " }";
+                sendSuccess(request, 201, responseBody);
+            }
         }
         catch(runtime_error e)
         {
@@ -1397,7 +1567,6 @@ void API::createAPIKey(
         throw runtime_error(errorMessage);
     }
 }
- */
 
 void API::ingestionStatus(
         FCGX_Request& request,
@@ -3221,7 +3390,7 @@ void API::uploadedBinary(
         string requestMethod,
         string xCatraMMSResumeHeader,
         unordered_map<string, string> queryParameters,
-        tuple<shared_ptr<Workspace>,bool,bool> workspaceAndFlags,
+        tuple<int64_t,shared_ptr<Workspace>,bool,bool> userKeyWorkspaceAndFlags,
         // unsigned long contentLength,
         unordered_map<string, string>& requestDetails
 )
@@ -3294,7 +3463,7 @@ void API::uploadedBinary(
             + ", contentRangeSize: " + to_string(contentRangeSize)
         );
 
-        shared_ptr<Workspace> workspace = get<0>(workspaceAndFlags);
+        shared_ptr<Workspace> workspace = get<1>(userKeyWorkspaceAndFlags);
         string workspaceIngestionBinaryPathName = _mmsStorage->getWorkspaceIngestionRepository(workspace);
         workspaceIngestionBinaryPathName
                 .append("/")

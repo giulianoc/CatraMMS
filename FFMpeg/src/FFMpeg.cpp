@@ -531,6 +531,8 @@ void FFMpeg::overlayImageOnVideo(
         string mmsSourceVideoAssetPathName,
         int64_t videoDurationInMilliSeconds,
         string mmsSourceImageAssetPathName,
+        string imagePosition_X_InPixel,
+        string imagePosition_Y_InPixel,
         string encodedFileName,
         string stagingEncodedAssetPathName,
         int64_t encodingJobKey,
@@ -567,13 +569,27 @@ void FFMpeg::overlayImageOnVideo(
                 + ".ffmpegoutput";
 
         {
+            string ffmpegImagePosition_X_InPixel = 
+                    regex_replace(imagePosition_X_InPixel, regex("video_width"), "main_w");
+            ffmpegImagePosition_X_InPixel = 
+                    regex_replace(ffmpegImagePosition_X_InPixel, regex("image_width"), "overlay_w");
+            
+            string ffmpegImagePosition_Y_InPixel = 
+                    regex_replace(imagePosition_Y_InPixel, regex("video_height"), "main_h");
+            ffmpegImagePosition_Y_InPixel = 
+                    regex_replace(ffmpegImagePosition_Y_InPixel, regex("image_height"), "overlay_h");
+
+            string ffmpegFilterComplex = string("-filter_complex 'overlay=")
+                    + ffmpegImagePosition_X_InPixel + ":"
+                    + ffmpegImagePosition_Y_InPixel + "'"
+                    ;
             string ffmpegExecuteCommand;
             {
                 ffmpegExecuteCommand =
                         _ffmpegPath + "/ffmpeg "
                         + "-y -i " + mmsSourceVideoAssetPathName + " "
                         + "-i " + mmsSourceImageAssetPathName + " "
-                        + "-filter_complex 'overlay=10:main_h-overlay_h-10' "
+                        + ffmpegFilterComplex + " "
                         
                         + stagingEncodedAssetPathName + " "
                         + "> " + _outputFfmpegPathFileName 

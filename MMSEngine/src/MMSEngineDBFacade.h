@@ -571,7 +571,7 @@ public:
 
     string getPassword(string emailAddress);
 
-    tuple<shared_ptr<Workspace>,bool,bool> checkAPIKey (string apiKey);
+    tuple<int64_t,shared_ptr<Workspace>,bool,bool> checkAPIKey (string apiKey);
 
     int64_t addEncodingProfilesSet (
         shared_ptr<MySQLConnection> conn, int64_t workspaceKey,
@@ -707,10 +707,10 @@ public:
         int64_t workspaceKey,
         string label);
     
-    tuple<int,string,string,string> getStorageDetails(
+    tuple<int,shared_ptr<Workspace>,string,string> getStorageDetails(
         int64_t physicalPathKey);
 
-    tuple<int,string,string,string> getStorageDetails(
+    tuple<int,shared_ptr<Workspace>,string,string> getStorageDetails(
         int64_t mediaItemKey,
         int64_t encodingProfileKey
     );
@@ -718,6 +718,18 @@ public:
     void getAllStorageDetails(int64_t mediaItemKey,
         vector<tuple<int,string,string,string>>& allStorageDetails);
     
+    int64_t createDeliveryAuthorization(
+        int64_t userKey,
+        string clientIPAddress,
+        int64_t physicalPathKey,
+        string deliveryURI,
+        int ttlInSeconds,
+        int maxRetries);
+
+    bool checkDeliveryAuthorization(
+        int64_t deliveryAuthorizationKey,
+        string contentURI);
+
     void getEncodingJobs(
         bool resetToBeDone,
         string processorMMS,
@@ -742,6 +754,7 @@ public:
         int64_t ingestionJobKey,
         int64_t mediaItemKey_1, int64_t physicalPathKey_1,
         int64_t mediaItemKey_2, int64_t physicalPathKey_2,
+        string imagePosition_X_InPixel, string imagePosition_Y_InPixel,
         EncodingPriority encodingPriority);
 
     int updateEncodingJob (
@@ -831,7 +844,7 @@ private:
     shared_ptr<MySQLConnectionFactory>                  _mySQLConnectionFactory;
     shared_ptr<DBConnectionPool<MySQLConnection>>       _connectionPool;
     string                          _defaultContentProviderName;
-    string                          _defaultTerritoryName;
+    // string                          _defaultTerritoryName;
     int                             _maxEncodingFailures;
     int                             _confirmationCodeRetentionInDays;
     
@@ -870,7 +883,7 @@ private:
         int imageQuality
     );
     
-    void getTerritories(shared_ptr<Workspace> workspace);
+    // void getTerritories(shared_ptr<Workspace> workspace);
 
     void createTablesIfNeeded();
 
@@ -878,11 +891,13 @@ private:
 
     int64_t getLastInsertId(shared_ptr<MySQLConnection> conn);
 
+    /*
     int64_t addTerritory (
 	shared_ptr<MySQLConnection> conn,
         int64_t workspaceKey,
         string territoryName
     );
+    */
 
     bool isMMSAdministratorUser (long lUserType)
     {

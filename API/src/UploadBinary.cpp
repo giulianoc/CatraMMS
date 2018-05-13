@@ -128,7 +128,7 @@ void UploadBinary::manageRequestAndResponse(
         string requestURI,
         string requestMethod,
         unordered_map<string, string> queryParameters,
-        tuple<shared_ptr<Workspace>,bool,bool>& workspaceAndFlags,
+        tuple<int64_t,shared_ptr<Workspace>,bool,bool>& userKeyWorkspaceAndFlags,
         unsigned long contentLength,
         string requestBody,
         string xCatraMMSResumeHeader,
@@ -150,7 +150,7 @@ void UploadBinary::getBinaryAndResponse(
         string requestMethod,
         string xCatraMMSResumeHeader,
         unordered_map<string, string> queryParameters,
-        tuple<shared_ptr<Workspace>,bool,bool>& workspaceAndFlags,
+        tuple<int64_t,shared_ptr<Workspace>,bool,bool>& userKeyWorkspaceAndFlags,
         unsigned long contentLength
 )
 {
@@ -180,7 +180,7 @@ void UploadBinary::getBinaryAndResponse(
         }
         int64_t ingestionJobKey = stoll(ingestionJobKeyIt->second);
 
-        shared_ptr<Workspace> workspace = get<0>(workspaceAndFlags);
+        shared_ptr<Workspace> workspace = get<1>(userKeyWorkspaceAndFlags);
         string workspaceIngestionBinaryPathName = _mmsStorage->getWorkspaceIngestionRepository(workspace);
         workspaceIngestionBinaryPathName
                 .append("/")

@@ -32,7 +32,7 @@ public:
         string requestMethod,
         string xCatraMMSResumeHeader,
         unordered_map<string, string> queryParameters,
-        tuple<shared_ptr<Workspace>,bool,bool>& workspaceAndFlags,
+        tuple<int64_t,shared_ptr<Workspace>,bool,bool>& userKeyWorkspaceAndFlags,
         unsigned long contentLength);
 
     virtual void manageRequestAndResponse(
@@ -40,7 +40,7 @@ public:
             string requestURI,
             string requestMethod,
             unordered_map<string, string> queryParameters,
-            tuple<shared_ptr<Workspace>,bool,bool>& workspaceAndFlags,
+            tuple<int64_t,shared_ptr<Workspace>,bool,bool>& userKeyWorkspaceAndFlags,
             unsigned long contentLength,
             string requestBody,
             string xCatraMMSResumeHeader,

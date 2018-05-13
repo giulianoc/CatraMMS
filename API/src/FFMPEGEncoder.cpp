@@ -138,7 +138,7 @@ void FFMPEGEncoder::getBinaryAndResponse(
         string requestMethod,
         string xCatraMMSResumeHeader,
         unordered_map<string, string> queryParameters,
-        tuple<shared_ptr<Workspace>,bool,bool>& workspaceAndFlags,
+        tuple<int64_t,shared_ptr<Workspace>,bool,bool>& userKeyWorkspaceAndFlags,
         unsigned long contentLength
 )
 {
@@ -157,7 +157,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         string requestURI,
         string requestMethod,
         unordered_map<string, string> queryParameters,
-        tuple<shared_ptr<Workspace>,bool,bool>& workspaceAndFlags,
+        tuple<int64_t,shared_ptr<Workspace>,bool,bool>& userKeyWorkspaceAndFlags,
         unsigned long contentLength,
         string requestBody,
         string xCatraMMSResumeHeader,
@@ -725,6 +725,9 @@ void FFMPEGEncoder::overlayImageOnVideo(
         string mmsSourceVideoAssetPathName = overlayMedatada.get("mmsSourceVideoAssetPathName", "XXX").asString();
         int64_t videoDurationInMilliSeconds = overlayMedatada.get("videoDurationInMilliSeconds", -1).asInt64();
         string mmsSourceImageAssetPathName = overlayMedatada.get("mmsSourceImageAssetPathName", "XXX").asString();
+        string imagePosition_X_InPixel = overlayMedatada.get("imagePosition_X_InPixel", "XXX").asString();
+        string imagePosition_Y_InPixel = overlayMedatada.get("imagePosition_Y_InPixel", "XXX").asString();
+
         string encodedFileName = overlayMedatada.get("encodedFileName", "XXX").asString();
         string stagingEncodedAssetPathName = overlayMedatada.get("stagingEncodedAssetPathName", "XXX").asString();
         int64_t encodingJobKey = overlayMedatada.get("encodingJobKey", -1).asInt64();
@@ -735,6 +738,8 @@ void FFMPEGEncoder::overlayImageOnVideo(
             mmsSourceVideoAssetPathName,
             videoDurationInMilliSeconds,
             mmsSourceImageAssetPathName,
+            imagePosition_X_InPixel,
+            imagePosition_Y_InPixel,
             encodedFileName,
             stagingEncodedAssetPathName,
             encodingJobKey,

@@ -50,6 +50,8 @@
 				"Label": "my overlay",
 				"Type": "Overlay-Image-On-Video",
 				"Parameters": {
+					"imagePosition_X_InPixel": "video_width-image_width-10",
+					"imagePosition_Y_InPixel": "video_height-image_height-10",
 					"EncodingPriority": "High",
 					"References": [
 						{ "ReferenceLabel": "my image encode", "EncodingProfileLabel": "Profile Logo" },

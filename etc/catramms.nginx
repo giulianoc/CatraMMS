@@ -71,6 +71,10 @@ server {
 			rewrite ^/catramms/(v[0-9]+)/profilesSet/image/?$ /api?version=$1&method=addEncodingProfilesSet&contentType=image last;
 			rewrite ^/catramms/(v[0-9]+)/profile/image/?$ /api?version=$1&method=addEncodingProfile&contentType=image last;
 		}
+
+		if ($request_method = GET) {
+			rewrite ^/catramms/(v[0-9]+)/delivery/([0-9]+)/?$ /api?version=$1&method=createDeliveryAuthorization&physicalPathKey=$2 last;
+		}
 	}
 
 	location /api {
@@ -124,6 +128,60 @@ server {
 	include /usr/local/nginx/conf/snippets/ssl-params.conf;
 
 	return 301 http://mms-binary.catrasoft.cloud$request_uri;
+}
+
+server {
+	listen 80;
+
+	server_name mms-delivery.catrasoft.cloud;
+
+	access_log   /usr/local/CatraMMS/logs/mms-delivery.access.log main;
+	error_log    /usr/local/CatraMMS/logs/mms-delivery.error.log notice;
+
+	root /usr/local/CatraMMS/storage/MMSRepository/;
+
+	location ~ /MMS {
+		if ($arg_token) {
+			set $token $arg_token;
+		}
+		if ($arg_outputFileName) {
+			add_header Content-Disposition 'attachment; filename="$arg_outputFileName"';
+		}
+
+		auth_request /catramms/delivery/checkAuthorization;
+
+	}
+
+	location = /catramms/delivery/checkAuthorization {
+		internal;
+
+		proxy_pass http://mms-delivery.catrasoft.cloud/catramms/delivery/authorization;
+		proxy_pass_request_body off;
+		proxy_set_header Content-Length "";
+		#proxy_set_header X-Original-METHOD $request_method;
+		proxy_set_header X-Original-METHOD $token;
+		proxy_set_header X-Original-URI $request_uri;
+	}
+
+	location /catramms/delivery/authorization {
+		allow 127.0.0.1;
+		deny all;
+		if ($request_method = GET) {
+			rewrite ^/catramms/delivery/authorization/?$ /api?method=deliveryAuthorization last;
+		}
+	}
+
+	location /api {
+		internal;
+
+		fastcgi_pass   localhost:8010;
+		include /usr/local/nginx/conf/fastcgi_params;
+	}
+
+	location / {
+		return 403;
+		break;
+	}
 }
 
 server {
@@ -199,7 +257,7 @@ server {
 		allow 127.0.0.1;
 		deny all;
 		if ($request_method = GET) {
-			rewrite ^/catramms/binary/authorization/?$ /api?method=authorization last;
+			rewrite ^/catramms/binary/authorization/?$ /api?method=binaryAuthorization last;
 		}
 	}
 

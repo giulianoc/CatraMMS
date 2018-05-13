@@ -47,7 +47,7 @@ public:
         string requestURI,
         string requestMethod,
         unordered_map<string, string> queryParameters,
-        tuple<shared_ptr<Workspace>,bool,bool>& workspaceAndFlags,
+        tuple<int64_t,shared_ptr<Workspace>,bool,bool>& userKeyWorkspaceAndFlags,
         unsigned long contentLength,
         string requestBody,
         string xCatraMMSResumeHeader,
@@ -59,7 +59,7 @@ public:
         string requestMethod,
         string xCatraMMSResumeHeader,
         unordered_map<string, string> queryParameters,
-        tuple<shared_ptr<Workspace>,bool,bool>& workspaceAndFlags,
+        tuple<int64_t,shared_ptr<Workspace>,bool,bool>& userKeyWorkspaceAndFlags,
         unsigned long contentLength
     ) = 0;
     
@@ -76,6 +76,7 @@ protected:
 
     void sendSuccess(FCGX_Request& request, int htmlResponseCode, string responseBody);
     void sendSuccess(int htmlResponseCode, string responseBody);
+    void sendRedirect(string locationURL);
     void sendHeadSuccess(FCGX_Request& request, int htmlResponseCode, unsigned long fileSize);
     void sendHeadSuccess(int htmlResponseCode, unsigned long fileSize);
     void sendError(FCGX_Request& request, int htmlResponseCode, string errorMessage);
@@ -95,6 +96,7 @@ private:
         unordered_map<string, string>& queryParameters);
     
     bool registrationRequest(
+        string requestURI,
         unordered_map<string, string> queryParameters);
 
     // bool requestToUploadBinary(unordered_map<string, string>& queryParameters);

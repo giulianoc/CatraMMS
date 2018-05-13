@@ -29,7 +29,7 @@ MMSEngineDBFacade::MMSEngineDBFacade(
     _logger     = logger;
 
     _defaultContentProviderName     = "default";
-    _defaultTerritoryName           = "default";
+    // _defaultTerritoryName           = "default";
 
     size_t dbPoolSize = configuration["database"].get("poolSize", 5).asInt();
     string dbServer = configuration["database"].get("server", "XXX").asString();
@@ -68,39 +68,6 @@ MMSEngineDBFacade::~MMSEngineDBFacade()
 {
 }
 
-/*
-vector<shared_ptr<Customer>> MMSEngineDBFacade::getCustomers()
-{
-    shared_ptr<MySQLConnection> conn = _connectionPool->borrow();	
-
-    string lastSQLCommand =
-        "select customerKey, name, directoryName, maxStorageInGB, maxEncodingPriority from MMS_Customer where isEnabled = 1 and customerType in (1, 2)";
-    shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-    shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-
-    vector<shared_ptr<Customer>>    customers;
-    
-    while (resultSet->next())
-    {
-        shared_ptr<Customer>    customer = make_shared<Customer>();
-        
-        customers.push_back(customer);
-        
-        customer->_customerKey = resultSet->getInt("customerKey");
-        customer->_name = resultSet->getString("name");
-        customer->_directoryName = resultSet->getString("directoryName");
-        customer->_maxStorageInGB = resultSet->getInt("maxStorageInGB");
-        customer->_maxEncodingPriority = static_cast<int>(MMSEngineDBFacade::toEncodingPriority(resultSet->getString("maxEncodingPriority")));
-
-        getTerritories(customer);
-    }
-
-    _connectionPool->unborrow(conn);
-    
-    return customers;
-}
-*/
-
 shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 {
     shared_ptr<MySQLConnection> conn = _connectionPool->borrow();	
@@ -125,7 +92,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
         workspace->_maxStorageInGB = resultSet->getInt("maxStorageInGB");
         workspace->_maxEncodingPriority = static_cast<int>(MMSEngineDBFacade::toEncodingPriority(resultSet->getString("maxEncodingPriority")));
 
-        getTerritories(workspace);
+        // getTerritories(workspace);
     }
     else
     {
@@ -175,7 +142,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(string workspaceName)
         workspace->_maxStorageInGB = resultSet->getInt("maxStorageInGB");
         workspace->_maxEncodingPriority = static_cast<int>(MMSEngineDBFacade::toEncodingPriority(resultSet->getString("maxEncodingPriority")));
 
-        getTerritories(workspace);
+        // getTerritories(workspace);
     }
     else
     {
@@ -201,6 +168,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(string workspaceName)
     return workspace;
 }
 
+/*
 void MMSEngineDBFacade::getTerritories(shared_ptr<Workspace> workspace)
 {
     shared_ptr<MySQLConnection> conn = _connectionPool->borrow();	
@@ -225,6 +193,7 @@ void MMSEngineDBFacade::getTerritories(shared_ptr<Workspace> workspace)
     );
     _connectionPool->unborrow(conn);
 }
+*/
 
 tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUser(
     string userName,
@@ -373,11 +342,13 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUser(
 
         contentProviderKey = getLastInsertId(conn);
 
+        /*
         int64_t territoryKey = addTerritory(
                 conn,
                 workspaceKey,
                 _defaultTerritoryName);
-                
+        */
+        
         // conn->_sqlConnection->commit(); OR execute COMMIT
         {
             lastSQLCommand = 
@@ -859,9 +830,10 @@ string MMSEngineDBFacade::confirmUser(
     return apiKey;
 }
 
-tuple<shared_ptr<Workspace>,bool,bool> MMSEngineDBFacade::checkAPIKey (string apiKey)
+tuple<int64_t,shared_ptr<Workspace>,bool,bool> MMSEngineDBFacade::checkAPIKey (string apiKey)
 {
     shared_ptr<Workspace> workspace;
+    int64_t         userKey;
     string          flags;
     string          lastSQLCommand;
 
@@ -874,7 +846,6 @@ tuple<shared_ptr<Workspace>,bool,bool> MMSEngineDBFacade::checkAPIKey (string ap
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
-        int64_t         userKey;
         int64_t         workspaceKey;
         
         {
@@ -971,16 +942,17 @@ tuple<shared_ptr<Workspace>,bool,bool> MMSEngineDBFacade::checkAPIKey (string ap
         throw e;
     }
     
-    tuple<shared_ptr<Workspace>,bool,bool> workspaceAndFlags;
+    tuple<int64_t,shared_ptr<Workspace>,bool,bool> userKeyWorkspaceAndFlags;
     
-    workspaceAndFlags = make_tuple(workspace,
+    userKeyWorkspaceAndFlags = make_tuple(userKey, workspace,
         flags.find("ADMIN_API") == string::npos ? false : true,
         flags.find("USER_API") == string::npos ? false : true
     );
             
-    return workspaceAndFlags;
+    return userKeyWorkspaceAndFlags;
 }
 
+/*
 int64_t MMSEngineDBFacade::addTerritory (
 	shared_ptr<MySQLConnection> conn,
         int64_t workspaceKey,
@@ -996,7 +968,7 @@ int64_t MMSEngineDBFacade::addTerritory (
         {
             lastSQLCommand = 
                 "insert into MMS_Territory (territoryKey, workspaceKey, name, currency) values ("
-    		"NULL, ?, ?, ?)";
+                "NULL, ?, ?, ?)";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
@@ -1043,6 +1015,7 @@ int64_t MMSEngineDBFacade::addTerritory (
     
     return territoryKey;
 }
+*/
 
 bool MMSEngineDBFacade::isLoginValid(
         string emailAddress,
@@ -3951,6 +3924,8 @@ Json::Value MMSEngineDBFacade::getContentList (
             lastSQLCommand = 
                 string("select mediaItemKey, title, ingester, keywords, contentProviderKey, "
                     "DATE_FORMAT(convert_tz(ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate, "
+                    "DATE_FORMAT(convert_tz(startPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as startPublishing, "
+                    "DATE_FORMAT(convert_tz(endPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endPublishing, "
                     "contentType from MMS_MediaItem ")
                     + sqlWhere
                     + "limit ? offset ?";
@@ -3997,6 +3972,11 @@ Json::Value MMSEngineDBFacade::getContentList (
 
                 field = "ingestionDate";
                 mediaItemRoot[field] = static_cast<string>(resultSet->getString("ingestionDate"));
+
+                field = "startPublishing";
+                mediaItemRoot[field] = static_cast<string>(resultSet->getString("startPublishing"));
+                field = "endPublishing";
+                mediaItemRoot[field] = static_cast<string>(resultSet->getString("endPublishing"));
 
                 ContentType contentType = MMSEngineDBFacade::toContentType(resultSet->getString("contentType"));
                 field = "contentType";
@@ -6815,6 +6795,7 @@ int MMSEngineDBFacade::addOverlayImageOnVideoJob (
     int64_t ingestionJobKey,
     int64_t mediaItemKey_1, int64_t physicalPathKey_1,
     int64_t mediaItemKey_2, int64_t physicalPathKey_2,
+    string imagePosition_X_InPixel, string imagePosition_Y_InPixel,
     EncodingPriority encodingPriority
 )
 {
@@ -6974,7 +6955,9 @@ int MMSEngineDBFacade::addOverlayImageOnVideoJob (
                 + "{ "
                 + "\"sourceVideoPhysicalPathKey\": " + to_string(sourceVideoPhysicalPathKey)
                 + ", \"sourceImagePhysicalPathKey\": " + to_string(sourceImagePhysicalPathKey)
-                + "} ";        
+                + ", \"imagePosition_X_InPixel\": \"" + imagePosition_X_InPixel + "\""
+                + ", \"imagePosition_Y_InPixel\": \"" + imagePosition_Y_InPixel + "\""
+                + "} ";
        {
             lastSQLCommand = 
                 "insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, parameters, encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, failuresNumber) values ("
@@ -8157,18 +8140,85 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             string sContentType;
             // string encodingProfilesSet;
 
-            title = parametersRoot.get("Title", "XXX").asString();
+            string field = "Title";
+            title = parametersRoot.get(field, "XXX").asString();
             
-            if (isMetadataPresent(parametersRoot, "Ingester"))
-                ingester = parametersRoot.get("Ingester", "XXX").asString();
+            field = "Ingester";
+            if (isMetadataPresent(parametersRoot, field))
+                ingester = parametersRoot.get(field, "XXX").asString();
 
-            if (isMetadataPresent(parametersRoot, "Keywords"))
-                keywords = parametersRoot.get("Keywords", "XXX").asString();
+            field = "Keywords";
+            if (isMetadataPresent(parametersRoot, field))
+                keywords = parametersRoot.get(field, "XXX").asString();
 
+            string startPublishing = "NOW";
+            string endPublishing = "FOREVER";
+            {
+                field = "Publishing";
+                if (isMetadataPresent(parametersRoot, field))
+                {
+                    Json::Value publishingRoot = parametersRoot[field];
+
+                    field = "startPublishing";
+                    if (isMetadataPresent(publishingRoot, field))
+                        startPublishing = publishingRoot.get(field, "XXX").asString();
+
+                    field = "endPublishing";
+                    if (isMetadataPresent(publishingRoot, field))
+                        endPublishing = publishingRoot.get(field, "XXX").asString();
+                }
+                
+                if (startPublishing == "NOW")
+                {
+                    tm          tmDateTime;
+                    char        strDateTime [64];
+
+                    chrono::system_clock::time_point now = chrono::system_clock::now();
+                    time_t utcTime = chrono::system_clock::to_time_t(now);
+
+                	gmtime_r (&utcTime, &tmDateTime);
+
+                    sprintf (strDateTime, "%04d-%02d-%02dT%02d:%02d:%02dZ",
+                            tmDateTime. tm_year + 1900,
+                            tmDateTime. tm_mon + 1,
+                            tmDateTime. tm_mday,
+                            tmDateTime. tm_hour,
+                            tmDateTime. tm_min,
+                            tmDateTime. tm_sec);
+
+                    startPublishing = strDateTime;
+                }
+
+                if (endPublishing == "FOREVER")
+                {
+                    tm          tmDateTime;
+                    char        strDateTime [64];
+
+                    chrono::system_clock::time_point forever = chrono::system_clock::now() + chrono::hours(24 * 365 * 10);
+
+                    time_t utcTime = chrono::system_clock::to_time_t(forever);
+
+                	gmtime_r (&utcTime, &tmDateTime);
+
+                    sprintf (strDateTime, "%04d-%02d-%02dT%02d:%02d:%02dZ",
+                            tmDateTime. tm_year + 1900,
+                            tmDateTime. tm_mon + 1,
+                            tmDateTime. tm_mday,
+                            tmDateTime. tm_hour,
+                            tmDateTime. tm_min,
+                            tmDateTime. tm_sec);
+
+                    endPublishing = strDateTime;
+                }
+            }
+            
             lastSQLCommand = 
                 "insert into MMS_MediaItem (mediaItemKey, workspaceKey, contentProviderKey, title, ingester, keywords, " 
-                "ingestionDate, contentType) values ("
-                "NULL, ?, ?, ?, ?, ?, NULL, ?)";
+                "ingestionDate, contentType, startPublishing, endPublishing) values ("
+                "NULL, ?, ?, ?, ?, ?, NULL, ?, "
+                "convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone), "
+                "convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone)"
+                ")";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -8184,6 +8234,8 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             else
                 preparedStatement->setString(queryParameterIndex++, keywords);
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
+            preparedStatement->setString(queryParameterIndex++, startPublishing);
+            preparedStatement->setString(queryParameterIndex++, endPublishing);
 
             preparedStatement->executeUpdate();
         }
@@ -8211,6 +8263,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             }
         }
         
+        /*
         // territories
         {
             string field = "Territories";
@@ -8305,6 +8358,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                 }                
             }
         }
+        */
 
         int64_t encodingProfileKey = -1;
         int64_t physicalPathKey = saveEncodedContentMetadata(
@@ -9072,80 +9126,6 @@ int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
                 throw runtime_error(errorMessage);                    
             }            
         }        
-
-        // publishing territories
-        {
-            lastSQLCommand = 
-                "select t.territoryKey, t.name, DATE_FORMAT(d.startPublishing, '%Y-%m-%d %H:%i:%s') as startPublishing, DATE_FORMAT(d.endPublishing, '%Y-%m-%d %H:%i:%s') as endPublishing "
-                "from MMS_Territory t, MMS_DefaultTerritoryInfo d "
-                "where t.territoryKey = d.territoryKey and t.workspaceKey = ? and d.mediaItemKey = ?";
-            shared_ptr<sql::PreparedStatement> preparedStatementTerritory (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatementTerritory->setInt64(queryParameterIndex++, workspaceKey);
-            preparedStatementTerritory->setInt64(queryParameterIndex++, mediaItemKey);
-
-            shared_ptr<sql::ResultSet> resultSetTerritory (preparedStatementTerritory->executeQuery());
-            while (resultSetTerritory->next())
-            {
-                int64_t territoryKey = resultSetTerritory->getInt64("territoryKey");
-                string territoryName = resultSetTerritory->getString("name");
-                string startPublishing = resultSetTerritory->getString("startPublishing");
-                string endPublishing = resultSetTerritory->getString("endPublishing");
-                
-                lastSQLCommand = 
-                    "select publishingStatus from MMS_Publishing where mediaItemKey = ? and territoryKey = ?";
-                shared_ptr<sql::PreparedStatement> preparedStatementPublishing (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                int queryParameterIndex = 1;
-                preparedStatementPublishing->setInt64(queryParameterIndex++, mediaItemKey);
-                preparedStatementPublishing->setInt64(queryParameterIndex++, territoryKey);
-
-                shared_ptr<sql::ResultSet> resultSetPublishing (preparedStatementPublishing->executeQuery());
-                if (resultSetPublishing->next())
-                {
-                    int publishingStatus = resultSetPublishing->getInt("PublishingStatus");
-                    
-                    if (publishingStatus == 1)
-                    {
-                        lastSQLCommand = 
-                            "update MMS_Publishing set publishingStatus = 0 where mediaItemKey = ? and territoryKey = ?";
-
-                        shared_ptr<sql::PreparedStatement> preparedStatementUpdatePublishing (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                        int queryParameterIndex = 1;
-                        preparedStatementUpdatePublishing->setInt64(queryParameterIndex++, mediaItemKey);
-                        preparedStatementUpdatePublishing->setInt(queryParameterIndex++, territoryKey);
-
-                        int rowsUpdated = preparedStatementUpdatePublishing->executeUpdate();
-                        if (rowsUpdated != 1)
-                        {
-                            string errorMessage = __FILEREF__ + "no update was done"
-                                    + ", mediaItemKey: " + to_string(mediaItemKey)
-                                    + ", territoryKey: " + to_string(territoryKey)
-                                    + ", rowsUpdated: " + to_string(rowsUpdated)
-                                    + ", lastSQLCommand: " + lastSQLCommand
-                            ;
-                            _logger->error(errorMessage);
-
-                            throw runtime_error(errorMessage);                    
-                        }
-                    }
-                }
-                else
-                {
-                    lastSQLCommand = 
-                        "insert into MMS_Publishing (publishingKey, mediaItemKey, territoryKey, startPublishing, endPublishing, publishingStatus) values ("
-                        "NULL, ?, ?, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'), STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'), 0)";
-
-                    shared_ptr<sql::PreparedStatement> preparedStatementInsertPublishing (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                    int queryParameterIndex = 1;
-                    preparedStatementInsertPublishing->setInt64(queryParameterIndex++, mediaItemKey);
-                    preparedStatementInsertPublishing->setInt(queryParameterIndex++, territoryKey);
-                    preparedStatementInsertPublishing->setString(queryParameterIndex++, startPublishing);
-                    preparedStatementInsertPublishing->setString(queryParameterIndex++, endPublishing);
-
-                    preparedStatementInsertPublishing->executeUpdate();
-                }
-            }                
-        }
     }
     catch(sql::SQLException se)
     {
@@ -9353,7 +9333,7 @@ void MMSEngineDBFacade::removeMediaItem (
     }
 }
 
-tuple<int,string,string,string> MMSEngineDBFacade::getStorageDetails(
+tuple<int,shared_ptr<Workspace>,string,string> MMSEngineDBFacade::getStorageDetails(
         int64_t physicalPathKey
 )
 {
@@ -9410,7 +9390,7 @@ tuple<int,string,string,string> MMSEngineDBFacade::getStorageDetails(
         );
         _connectionPool->unborrow(conn);
 
-        return make_tuple(mmsPartitionNumber, workspace->_directoryName, relativePath, fileName);
+        return make_tuple(mmsPartitionNumber, workspace, relativePath, fileName);
     }
     catch(sql::SQLException se)
     {
@@ -9457,7 +9437,7 @@ tuple<int,string,string,string> MMSEngineDBFacade::getStorageDetails(
     }        
 }
 
-tuple<int,string,string,string> MMSEngineDBFacade::getStorageDetails(
+tuple<int,shared_ptr<Workspace>,string,string> MMSEngineDBFacade::getStorageDetails(
         int64_t mediaItemKey,
         int64_t encodingProfileKey
 )
@@ -9519,7 +9499,7 @@ tuple<int,string,string,string> MMSEngineDBFacade::getStorageDetails(
         );
         _connectionPool->unborrow(conn);
 
-        return make_tuple(mmsPartitionNumber, workspace->_directoryName, relativePath, fileName);
+        return make_tuple(mmsPartitionNumber, workspace, relativePath, fileName);
     }
     catch(sql::SQLException se)
     {
@@ -9662,6 +9642,247 @@ void MMSEngineDBFacade::getAllStorageDetails(
 
         throw e;
     }        
+}
+
+int64_t MMSEngineDBFacade::createDeliveryAuthorization(
+    int64_t userKey,
+    string clientIPAddress,
+    int64_t physicalPathKey,
+    string deliveryURI,
+    int ttlInSeconds,
+    int maxRetries)
+{
+    int64_t     deliveryAuthorizationKey;
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        
+        {
+            lastSQLCommand = 
+                "insert into MMS_DeliveryAuthorization(deliveryAuthorizationKey, userKey, clientIPAddress, physicalPathKey, deliveryURI, ttlInSeconds, currentRetriesNumber, maxRetries) values ("
+                "NULL, ?, ?, ?, ?, ?, 0, ?)";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, userKey);
+            if (clientIPAddress == "")
+                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+            else
+                preparedStatement->setString(queryParameterIndex++, clientIPAddress);
+            preparedStatement->setInt64(queryParameterIndex++, physicalPathKey);
+            preparedStatement->setString(queryParameterIndex++, deliveryURI);
+            preparedStatement->setInt(queryParameterIndex++, ttlInSeconds);
+            preparedStatement->setInt(queryParameterIndex++, maxRetries);
+
+            preparedStatement->executeUpdate();
+        }
+                    
+        deliveryAuthorizationKey = getLastInsertId(conn);
+        
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
+        throw se;
+    }    
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
+        throw exception();
+    }        
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
+        throw e;
+    }        
+
+    return deliveryAuthorizationKey;
+}
+
+bool MMSEngineDBFacade::checkDeliveryAuthorization(
+        int64_t deliveryAuthorizationKey,
+        string contentURI)
+{
+    bool        authorizationOK = false;
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+    
+        {
+            lastSQLCommand =
+                "select deliveryURI, currentRetriesNumber, maxRetries, "
+                "(DATE_ADD(authorizationTimestamp, INTERVAL ttlInSeconds SECOND) - NOW()) as timeToLiveAvailable "
+                "from MMS_DeliveryAuthorization "
+                "where deliveryAuthorizationKey = ?";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, deliveryAuthorizationKey);
+            
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                string deliveryURI = resultSet->getString("deliveryURI");
+                int currentRetriesNumber = resultSet->getInt("currentRetriesNumber");
+                int maxRetries = resultSet->getInt("maxRetries");
+                int timeToLiveAvailable = resultSet->getInt("timeToLiveAvailable");
+                
+                if (contentURI != deliveryURI)
+                {
+                    string errorMessage = __FILEREF__ + "contentURI and deliveryURI are different"
+                        + ", contentURI: " + contentURI
+                        + ", deliveryURI: " + deliveryURI
+                        + ", lastSQLCommand: " + lastSQLCommand
+                    ;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);                    
+                }
+                else if (currentRetriesNumber >= maxRetries)
+                {
+                    string errorMessage = __FILEREF__ + "maxRetries is already reached"
+                        + ", currentRetriesNumber: " + to_string(currentRetriesNumber)
+                        + ", maxRetries: " + to_string(maxRetries)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                    ;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);                    
+                }
+                else if (timeToLiveAvailable < 0)
+                {
+                    string errorMessage = __FILEREF__ + "TTL expired"
+                        + ", timeToLiveAvailable: " + to_string(timeToLiveAvailable)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                    ;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);                    
+                }
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "deliveryAuthorizationKey not found"
+                    + ", deliveryAuthorizationKey: " + to_string(deliveryAuthorizationKey)
+                    + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }
+            
+            authorizationOK = true;
+        }
+        
+        if (authorizationOK)
+        {
+            lastSQLCommand = 
+                "update MMS_DeliveryAuthorization set currentRetriesNumber = currentRetriesNumber + 1 "
+                "where deliveryAuthorizationKey = ?";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, deliveryAuthorizationKey);
+
+            preparedStatement->executeUpdate();
+        }
+                    
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
+        throw se;
+    }    
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
+        // throw exception();
+    }        
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
+        throw e;
+    }        
+
+    return authorizationOK;
 }
 
 bool MMSEngineDBFacade::isMetadataPresent(Json::Value root, string field)
@@ -9939,6 +10160,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             }
         }
 
+        /*
         try
         {
             // The territories are present only if the Workspace is a 'Content Provider'.
@@ -9969,7 +10191,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
                 throw se;
             }
-        }    
+        }
+        */    
 
         try
         {
@@ -10277,12 +10500,14 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create table if not exists MMS_MediaItem ("
                     "mediaItemKey  			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "workspaceKey			BIGINT UNSIGNED NOT NULL,"
-                    "contentProviderKey			BIGINT UNSIGNED NOT NULL,"
+                    "contentProviderKey		BIGINT UNSIGNED NOT NULL,"
                     "title      			VARCHAR (256) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
                     "ingester				VARCHAR (128) NULL,"
                     "keywords				VARCHAR (128) CHARACTER SET utf8 COLLATE utf8_bin NULL,"
                     "ingestionDate			TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
-                    "contentType                        VARCHAR (32) NOT NULL,"
+                    "contentType            VARCHAR (32) NOT NULL,"
+                    "startPublishing        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+                    "endPublishing			TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "constraint MMS_MediaItem_PK PRIMARY KEY (mediaItemKey), "
                     "constraint MMS_MediaItem_FK foreign key (workspaceKey) "
                         "references MMS_Workspace (workspaceKey) on delete cascade, "
@@ -10326,7 +10551,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         try
         {
             lastSQLCommand = 
-                "create index MMS_MediaItem_idx3 on MMS_MediaItem (contentType, ingestionDate)";
+                "create index MMS_MediaItem_idx3 on MMS_MediaItem (contentType, startPublishing, endPublishing)";
             statement->execute(lastSQLCommand);
         }
         catch(sql::SQLException se)
@@ -10591,6 +10816,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             }
         }
         
+        /*
         try
         {
             // Reservecredit is not NULL only in case of PayPerEvent or Bundle. In these cases, it will be 0 or 1.
@@ -10599,20 +10825,6 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "defaultTerritoryInfoKey  			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "mediaItemKey				BIGINT UNSIGNED NOT NULL,"
                     "territoryKey				BIGINT UNSIGNED NOT NULL,"
-                    /*
-                    "DownloadChargingKey1			BIGINT UNSIGNED NOT NULL,"
-                    "DownloadChargingKey2			BIGINT UNSIGNED NOT NULL,"
-                    "DownloadReserveCredit			TINYINT (1) NULL,"
-                    "DownloadExternalBillingName		VARCHAR (64) NULL,"
-                    "DownloadMaxRetries				INT NOT NULL,"
-                    "DownloadTTLInSeconds			INT NOT NULL,"
-                    "StreamingChargingKey1			BIGINT UNSIGNED NOT NULL,"
-                    "StreamingChargingKey2			BIGINT UNSIGNED NOT NULL,"
-                    "StreamingReserveCredit			TINYINT (1) NULL,"
-                    "StreamingExternalBillingName		VARCHAR (64) NULL,"
-                    "StreamingMaxRetries			INT NOT NULL,"
-                    "StreamingTTLInSeconds			INT NOT NULL,"
-                    */
                     "startPublishing				DATETIME NOT NULL,"
                     "endPublishing				DATETIME NOT NULL,"
                     "constraint MMS_DefaultTerritoryInfo_PK PRIMARY KEY (defaultTerritoryInfoKey), "
@@ -10620,16 +10832,6 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                         "references MMS_MediaItem (mediaItemKey) on delete cascade, "
                     "constraint MMS_DefaultTerritoryInfo_FK2 foreign key (territoryKey) "
                         "references MMS_Territory (territoryKey) on delete cascade, "
-                    /*
-                    "constraint MMS_DefaultTerritoryInfo_FK3 foreign key (DownloadChargingKey1) "
-                        "references ChargingInfo (ChargingKey), "
-                    "constraint MMS_DefaultTerritoryInfo_FK4 foreign key (DownloadChargingKey2) "
-                        "references ChargingInfo (ChargingKey), "
-                    "constraint MMS_DefaultTerritoryInfo_FK5 foreign key (StreamingChargingKey1) "
-                        "references ChargingInfo (ChargingKey), "
-                    "constraint MMS_DefaultTerritoryInfo_FK6 foreign key (StreamingChargingKey2) "
-                        "references ChargingInfo (ChargingKey), "
-                     */
                     "UNIQUE (mediaItemKey, territoryKey)) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
@@ -10646,7 +10848,9 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 throw se;
             }
         }
+        */
         
+        /*
         try
         {
             // PublishingStatus. 0: not published, 1: published
@@ -10748,6 +10952,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 throw se;
             }
         }
+        */
 
         try
         {
@@ -10818,8 +11023,54 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             }
         }
     
-    
-        /*
+        try
+        {
+            // create table MMS_RequestsAuthorization
+            // MediaItemKey or ExternalKey cannot be both null
+            // DeliveryMethod:
+            //    0: download
+            //    1: 3gpp streaming
+            //    2: RTMP Flash Streaming
+            //    3: WindowsMedia Streaming
+            // SwitchingType: 0: None, 1: FCS, 2: FTS
+            // NetworkCoverage. 0: 2G, 1: 2.5G, 2: 3G
+            // IngestedPathName: [<live prefix>]/<customer name>/<territory name>/<relative path>/<content name>
+            // ToBeContinued. 0 or 1
+            // ForceHTTPRedirection. 0: HTML page, 1: HTTP Redirection
+            // TimeToLive is measured in seconds
+            lastSQLCommand = 
+                "create table if not exists MMS_DeliveryAuthorization ("
+                    "deliveryAuthorizationKey	BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "userKey    				BIGINT UNSIGNED NOT NULL,"
+                    "clientIPAddress			VARCHAR (16) NULL,"
+                    "physicalPathKey			BIGINT UNSIGNED NOT NULL,"
+                    "deliveryURI    			VARCHAR (1024) NOT NULL,"
+                    "ttlInSeconds               INT NOT NULL,"
+                    "currentRetriesNumber       INT NOT NULL,"
+                    "maxRetries                 INT NOT NULL,"
+                    "authorizationTimestamp		TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+                    "constraint MMS_DeliveryAuthorization_PK PRIMARY KEY (deliveryAuthorizationKey), "
+                    "constraint MMS_DeliveryAuthorization_FK foreign key (userKey) "
+                        "references MMS_User (userKey) on delete cascade, "
+                    "constraint MMS_DeliveryAuthorization_FK2 foreign key (physicalPathKey) "
+                        "references MMS_PhysicalPath (physicalPathKey) on delete cascade) "
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+        
+    /*
     # create table MMS_HTTPSessions
     # One session is per userKey and UserAgent
     create table if not exists MMS_HTTPSessions (
@@ -11137,54 +11388,6 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             ENGINE=InnoDB;
 
 
-    # create table MMS_RequestsAuthorization
-    # MediaItemKey or ExternalKey cannot be both null
-    # DeliveryMethod:
-    #		0: download
-    #		1: 3gpp streaming
-    #		2: RTMP Flash Streaming
-    #		3: WindowsMedia Streaming
-    # SwitchingType: 0: None, 1: FCS, 2: FTS
-    # NetworkCoverage. 0: 2G, 1: 2.5G, 2: 3G
-    # IngestedPathName: [<live prefix>]/<customer name>/<territory name>/<relative path>/<content name>
-    # ToBeContinued. 0 or 1
-    # ForceHTTPRedirection. 0: HTML page, 1: HTTP Redirection
-    # TimeToLive is measured in seconds
-    create table if not exists MMS_RequestsAuthorization (
-            RequestAuthorizationKey	BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            CustomerKey				BIGINT UNSIGNED NOT NULL,
-            PlayerIP					VARCHAR (16) NULL,
-            territoryKey				BIGINT UNSIGNED NOT NULL,
-            Shuffling					TINYINT NULL,
-            PartyID					VARCHAR (64) NOT NULL,
-            MSISDN						VARCHAR (32) NULL,
-            MediaItemKey				BIGINT UNSIGNED NULL,
-            ExternalKey				VARCHAR (64) NULL,
-            EncodingProfileKey			BIGINT UNSIGNED NULL,
-            EncodingLabel				VARCHAR (64) NULL,
-            languageCode				VARCHAR (16) NULL,
-            DeliveryMethod				TINYINT NULL,
-            PreviewSeconds				INT NULL,
-            SwitchingType				TINYINT NOT NULL default 0,
-            ChargingKey				BIGINT UNSIGNED NULL,
-            XSBTTLInSeconds			INT NULL,
-            XSBMaxRetries				INT NULL,
-            Sequence					VARCHAR (16) NULL,
-            ToBeContinued				TINYINT NULL,
-            ForceHTTPRedirection		TINYINT NULL,
-            NetworkCoverage			TINYINT NULL,
-            AuthorizationTimestamp		TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            TimeToLive					INT NOT NULL,
-            AuthorizationType			VARCHAR (64) NULL,
-            AuthorizationData			VARCHAR (128) NULL,
-            constraint MMS_RequestsAuthorization_PK PRIMARY KEY (RequestAuthorizationKey), 
-            constraint MMS_RequestsAuthorization_FK foreign key (CustomerKey) 
-                    references MMS_Customers (CustomerKey) on delete cascade, 
-            constraint MMS_RequestsAuthorization_FK2 foreign key (MediaItemKey) 
-                    references MMS_MediaItems (MediaItemKey) on delete cascade, 
-            constraint MMS_RequestsAuthorization_FK3 foreign key (ChargingKey) 
-                    references ChargingInfo (ChargingKey) on delete cascade) 
-            ENGINE=InnoDB;
 
     # create table MMS_RequestsStatistics
     # Status:

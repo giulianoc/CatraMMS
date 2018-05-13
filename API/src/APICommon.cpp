@@ -250,8 +250,16 @@ int APICommon::operator()()
             continue;
         }
 
-        tuple<shared_ptr<Workspace>,bool, bool> workspaceAndFlags;
-        if (!registrationRequest(queryParameters))
+        string requestURI;
+        {
+            unordered_map<string, string>::iterator it;
+
+            if ((it = requestDetails.find("REQUEST_URI")) != requestDetails.end())
+                requestURI = it->second;
+        }
+
+        tuple<int64_t,shared_ptr<Workspace>,bool, bool> userKeyWorkspaceAndFlags;
+        if (!registrationRequest(requestURI, queryParameters))
         {
             try
             {
@@ -287,16 +295,16 @@ int APICommon::operator()()
                     throw NoAPIKeyPresentIntoRequest();
                 }
 
-                string custormerKey = usernameAndPassword.substr(0, userNameSeparator);
+                string userKey = usernameAndPassword.substr(0, userNameSeparator);
                 string apiKey = usernameAndPassword.substr(userNameSeparator + 1);
 
                 // workspaceAndFlags = _mmsEngine->checkAPIKey (apiKey);
-                workspaceAndFlags = _mmsEngineDBFacade->checkAPIKey(apiKey);
+                userKeyWorkspaceAndFlags = _mmsEngineDBFacade->checkAPIKey(apiKey);
 
-                if (get<0>(workspaceAndFlags)->_workspaceKey != stoll(custormerKey))
+                if (get<1>(userKeyWorkspaceAndFlags)->_workspaceKey != stoll(userKey))
                 {
                     _logger->error(__FILEREF__ + "Username (WorkspaceKey) is not the same Workspace the apiKey is referring"
-                        + ", username (custormerKey): " + custormerKey
+                        + ", username (userKey): " + userKey
                         + ", apiKey: " + apiKey
                     );
 
@@ -375,10 +383,6 @@ int APICommon::operator()()
         {
             unordered_map<string, string>::iterator it;
 
-            string requestURI;
-            if ((it = requestDetails.find("REQUEST_URI")) != requestDetails.end())
-                requestURI = it->second;
-
             string requestMethod;
             if ((it = requestDetails.find("REQUEST_METHOD")) != requestDetails.end())
                 requestMethod = it->second;
@@ -393,7 +397,7 @@ int APICommon::operator()()
              */
 
             manageRequestAndResponse(request, requestURI, requestMethod, queryParameters,
-                    workspaceAndFlags, contentLength, requestBody,
+                    userKeyWorkspaceAndFlags, contentLength, requestBody,
                     xCatraMMSResumeHeader, requestDetails);            
         }
         catch(runtime_error e)
@@ -428,6 +432,7 @@ int APICommon::operator()()
 }
 
 bool APICommon::registrationRequest(
+    string requestURI,
     unordered_map<string, string> queryParameters
 )
 {
@@ -444,7 +449,15 @@ bool APICommon::registrationRequest(
     string method = methodIt->second;
 
     if (method == "registerUser"
-            || method == "confirmUser")
+            || method == "confirmUser"
+            )
+    {
+        registrationRequest = true;
+    }
+    
+    // This is the authorization asked when the deliveryURL is received by nginx
+    // Here the token is checked and it is not needed any basic authorization
+    if (requestURI == "/catramms/delivery/authorization")
     {
         registrationRequest = true;
     }
@@ -520,7 +533,7 @@ int APICommon::manageBinaryRequest()
         throw runtime_error(errorMessage);
     }
 
-    tuple<shared_ptr<Workspace>,bool, bool> workspaceAndFlags;
+    tuple<int64_t,shared_ptr<Workspace>,bool, bool> userKeyWorkspaceAndFlags;
     try
     {
         unordered_map<string, string>::iterator it;
@@ -555,16 +568,16 @@ int APICommon::manageBinaryRequest()
             throw NoAPIKeyPresentIntoRequest();
         }
 
-        string custormerKey = usernameAndPassword.substr(0, userNameSeparator);
+        string userKey = usernameAndPassword.substr(0, userNameSeparator);
         string apiKey = usernameAndPassword.substr(userNameSeparator + 1);
 
         // workspaceAndFlags = _mmsEngine->checkAPIKey (apiKey);
-        workspaceAndFlags = _mmsEngineDBFacade->checkAPIKey(apiKey);
+        userKeyWorkspaceAndFlags = _mmsEngineDBFacade->checkAPIKey(apiKey);
 
-        if (get<0>(workspaceAndFlags)->_workspaceKey != stoll(custormerKey))
+        if (get<1>(userKeyWorkspaceAndFlags)->_workspaceKey != stoll(userKey))
         {
             _logger->error(__FILEREF__ + "Username (WorkspaceKey) is not the same Workspace the apiKey is referring"
-                + ", username (custormerKey): " + custormerKey
+                + ", username (userKey): " + userKey
                 + ", apiKey: " + apiKey
             );
 
@@ -648,7 +661,7 @@ int APICommon::manageBinaryRequest()
 
         getBinaryAndResponse(requestURI, requestMethod, 
                 xCatraMMSResumeHeader, queryParameters,
-                workspaceAndFlags, contentLength);            
+                userKeyWorkspaceAndFlags, contentLength);            
     }
     catch(runtime_error e)
     {
@@ -753,6 +766,22 @@ void APICommon::sendSuccess(int htmlResponseCode, string responseBody)
             + "Content-Length: " + to_string(responseBody.length()) + endLine
             + endLine
             + responseBody;
+
+    _logger->info(__FILEREF__ + "HTTP Success"
+        + ", response: " + completeHttpResponse
+    );
+
+    cout << completeHttpResponse;
+}
+
+void APICommon::sendRedirect(string locationURL)
+{
+    string endLine = "\r\n";
+    
+    string completeHttpResponse =
+            string("Status: 301 Moved Permanently") + endLine
+            + "Location: " + locationURL + endLine
+            + endLine;
 
     _logger->info(__FILEREF__ + "HTTP Success"
         + ", response: " + completeHttpResponse

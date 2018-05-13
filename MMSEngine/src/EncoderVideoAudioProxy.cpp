@@ -1526,7 +1526,9 @@ string EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 {
     
     int64_t sourceVideoPhysicalPathKey;
-    int64_t sourceImagePhysicalPathKey;    
+    int64_t sourceImagePhysicalPathKey;  
+    string imagePosition_X_InPixel;
+    string imagePosition_Y_InPixel;
 
     {
         string field = "sourceVideoPhysicalPathKey";
@@ -1534,6 +1536,12 @@ string EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 
         field = "sourceImagePhysicalPathKey";
         sourceImagePhysicalPathKey = _encodingItem->_parametersRoot.get(field, 0).asInt64();
+
+        field = "imagePosition_X_InPixel";
+        imagePosition_X_InPixel = _encodingItem->_parametersRoot.get(field, "XXX").asString();
+
+        field = "imagePosition_Y_InPixel";
+        imagePosition_Y_InPixel = _encodingItem->_parametersRoot.get(field, "XXX").asString();
     }
     
     string stagingEncodedAssetPathName;
@@ -1679,6 +1687,8 @@ string EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
                 overlayMedatada["mmsSourceVideoAssetPathName"] = mmsSourceVideoAssetPathName;
                 overlayMedatada["videoDurationInMilliSeconds"] = (Json::LargestUInt) (_encodingItem->_overlayImageOnVideoData->_videoDurationInMilliSeconds);
                 overlayMedatada["mmsSourceImageAssetPathName"] = mmsSourceImageAssetPathName;
+                overlayMedatada["imagePosition_X_InPixel"] = imagePosition_X_InPixel;
+                overlayMedatada["imagePosition_Y_InPixel"] = imagePosition_Y_InPixel;
                 overlayMedatada["encodedFileName"] = encodedFileName;
                 overlayMedatada["stagingEncodedAssetPathName"] = stagingEncodedAssetPathName;
                 overlayMedatada["encodingJobKey"] = (Json::LargestUInt) (_encodingItem->_encodingJobKey);

@@ -2940,6 +2940,28 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
         MMSEngineDBFacade::EncodingPriority encodingPriority =
                 MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
 
+        field = "imagePosition_X_InPixel";
+        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        string imagePosition_X_InPixel = parametersRoot.get(field, "XXX").asString();
+
+        field = "imagePosition_Y_InPixel";
+        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        string imagePosition_Y_InPixel = parametersRoot.get(field, "XXX").asString();
+
         int64_t sourceMediaItemKey_1;
         int64_t sourcePhysicalPathKey_1;
         pair<int64_t,Validator::DependencyType>& keyAndDependencyType_1 = dependencies[0];
@@ -2983,8 +3005,9 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
         }
 
         _mmsEngineDBFacade->addOverlayImageOnVideoJob (ingestionJobKey,
-            sourceMediaItemKey_1, sourcePhysicalPathKey_1,
-            sourceMediaItemKey_2, sourcePhysicalPathKey_2,
+                sourceMediaItemKey_1, sourcePhysicalPathKey_1,
+                sourceMediaItemKey_2, sourcePhysicalPathKey_2,
+                imagePosition_X_InPixel, imagePosition_Y_InPixel,
                 encodingPriority);
     }
     catch(runtime_error e)
