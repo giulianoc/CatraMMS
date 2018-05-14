@@ -214,6 +214,10 @@ API::API(Json::Value configuration,
         + ", api->delivery->defaultRedirect: " + to_string(_defaultRedirect)
     );
     
+    _deliveryProtocol  = api["delivery"].get("deliveryProtocol", "XXX").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->delivery->deliveryProtocol: " + _deliveryProtocol
+    );
     _deliveryHost  = api["delivery"].get("deliveryHost", "XXX").asString();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->delivery->deliveryHost: " + _deliveryHost
@@ -1493,11 +1497,12 @@ void API::createDeliveryAuthorization(
                 maxRetries);
 
             string deliveryURL = 
-                string("http://") 
-                + _deliveryHost
-                + deliveryURI
-                + "?token=" + to_string(authorizationKey)
-                + "&outputFileName=" + outputFileName
+                    _deliveryProtocol
+                    + "://" 
+                    + _deliveryHost
+                    + deliveryURI
+                    + "?token=" + to_string(authorizationKey)
+                    + "&outputFileName=" + outputFileName
             ;
             
             if (redirect)

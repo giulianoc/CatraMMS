@@ -81,6 +81,7 @@ private:
     int                 _defaultTTLInSeconds;
     int                 _defaultMaxRetries;
     bool                _defaultRedirect;
+    string              _deliveryProtocol;
     string              _deliveryHost;
 
     FileUploadProgressData*     _fileUploadProgressData;
