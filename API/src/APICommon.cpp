@@ -782,7 +782,7 @@ void APICommon::sendRedirect(string locationURL)
     
     string completeHttpResponse =
             string("Status: ") + to_string(htmlResponseCode) 
-                + " " + getHtmlStandardMessage(htmlResponseCode) + endLine;
+                + " " + getHtmlStandardMessage(htmlResponseCode) + endLine
             + "Location: " + locationURL + endLine
             + endLine;
 
