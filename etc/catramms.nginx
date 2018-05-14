@@ -14,7 +14,8 @@ server {
 	ssl_trusted_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
 	include /usr/local/nginx/conf/snippets/ssl-params.conf;
 
-	return 301 https://github.com/giulianoc/CatraMMS/wiki;
+	root /home/mms/catramms/CatraMMS/www;
+	#return 301 https://github.com/giulianoc/CatraMMS/wiki;
 }
 
 server {
@@ -32,9 +33,6 @@ server {
 	ssl_certificate_key /etc/letsencrypt/live/catrasoft.cloud/privkey.pem;
 	ssl_trusted_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
 	include /usr/local/nginx/conf/snippets/ssl-params.conf;
-
-	root /home/mms/catramms/www;
-	#index index.html index.htm;
 
 	access_log   /usr/local/CatraMMS/logs/mms-api.access.log main;
 	error_log    /usr/local/CatraMMS/logs/mms-api.error.log notice;

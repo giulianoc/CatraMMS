@@ -49,7 +49,7 @@ done
 
 cd $CURRENT_DIRECTORY
 
-cp layout.html $TEMP_DIR/html
+cp $PUBLISH_HTML_DIR/index.html $TEMP_DIR/html
 
 mv $TEMP_DIR/html $PUBLISH_HTML_DIR
 

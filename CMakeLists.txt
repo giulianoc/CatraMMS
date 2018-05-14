@@ -53,6 +53,7 @@ add_subdirectory(MMSEngineService/src)
 add_subdirectory(API/src)
 
 add_subdirectory(etc)
+add_subdirectory(generateHtmlDoc)
 add_subdirectory(samples)
 
 add_subdirectory(utilities/registerAdministratorCustomer/src)
