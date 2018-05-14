@@ -778,13 +778,11 @@ void APICommon::sendRedirect(string locationURL)
 {
     string endLine = "\r\n";
     
-    int htmlResponseCode = 301;
+    int htmlResponseCode = 302;
     
     string completeHttpResponse =
             string("Status: ") + to_string(htmlResponseCode) 
                 + " " + getHtmlStandardMessage(htmlResponseCode) + endLine
-            + "Content-Type: text/html" + endLine
-            + "Content-Length: 0" + endLine
             + "Location: " + locationURL + endLine
             + endLine;
 
@@ -936,6 +934,10 @@ string APICommon::getHtmlStandardMessage(int htmlResponseCode)
             return string("Created");
         case 301:
             return string("Moved Permanently");
+        case 302:
+            return string("Found");
+        case 307:
+            return string("Temporary Redirect");
         case 403:
             return string("Forbidden");
         case 400:
