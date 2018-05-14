@@ -778,7 +778,7 @@ void APICommon::sendRedirect(string locationURL)
 {
     string endLine = "\r\n";
     
-    int htmlResponseCode = 302;
+    int htmlResponseCode = 307;
     
     string completeHttpResponse =
             string("Status: ") + to_string(htmlResponseCode) 
