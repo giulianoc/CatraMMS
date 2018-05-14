@@ -1,0 +1,42 @@
+<h2 id="overview">Overview</h2>
+<p>This API.html is used to upload the Binary into the MMS.</p>
+<h2 id="uri">URI</h2>
+<p>/catramms/v1/binary/:ingestionJobKey</p>
+<h2 id="method">Method</h2>
+<p>POST</p>
+<h2 id="url-params">URL Params</h2>
+<h3 id="required">Required</h3>
+<ul>
+<li>ingestionJobKey=[number] this field has to be the IngestionJobKey returned in the <a href="./1.2.2.1-Push:-Ingestion-of-metadata">previous step</a>. This field is important because it will be the key used by MMS to associate the binary to the previous ingested metadata example: ingestionJobKey=12</li>
+</ul>
+<h3 id="optional">Optional</h3>
+<p>None</p>
+<h2 id="payload-data">Payload Data</h2>
+<p>Source binary (i.e. binary file)</p>
+<h2 id="success-response">Success Response</h2>
+<h3 id="code">Code</h3>
+<p>201 Created</p>
+<h3 id="content">Content</h3>
+<p>{ &quot;contentLength&quot;: 6596335616, &quot;writtenBytes&quot;: 6596335616, &quot;elapsedUploadInSeconds&quot;: 25 }</p>
+<h2 id="error-response">Error Response</h2>
+<p>See <a href="./A.1-Common-error-responses.html">Common Error Responses</a></p>
+<h2 id="sample-call">Sample Call</h2>
+<p>Assuming:</p>
+<ul>
+<li>UserKey: 5</li>
+<li>API.htmlKey: SU1.8ZO1O2zVeBMNv9lzZ0whABXSAdjWrR~rpcnI5eaHNO2gysrNdAv8BNoWZB1eLP</li>
+<li>IngestionJobKey: 16</li>
+</ul>
+<p><strong>Single request:</strong></p>
+<p><code>curl -v -X POST -u 5:SU1.8ZO1O2zVeBMNv9lzZ0whABXSAdjWrR~rpcnI5eaHNO2gysrNdAv8BNoWZB1eLP -T score.mpg http://mms-binary.catrasoft.cloud/catramms/v1/binary/16</code></p>
+<p><strong>Multiple chunks:</strong></p>
+<p>In this scenario the media binary file is split in several chunks and the single chunks, one by one, are sent. It is already implemented the <a href="https://github.com/giulianoc/CatraMMS/blob/master/utilities/ingestionThroughChunks.sh">ingestionThroughChunks.sh script</a> taking care of all the steps to do. In alternative, here follows all the steps to be done.</p>
+<p>Let's assume the size of score.mpg is 209246 and we want to split it with chucks of 100000, the commands to run will be:</p>
+<p><strong>dd</strong> status=none if=score.mpg bs=1024 iflag=skip_bytes,count_bytes skip=<strong>0</strong> count=<strong>100000</strong> <strong>| curl</strong> -s -o /dev/null -w &quot;%{response_code}&quot; -X POST -H &quot;<strong>Content-Range: bytes 0-99999/209246</strong>&quot; -u 5:SU1.8ZO1O2zVeBMNv9lzZ0whABXSAdjWrR~rpcnI5eaHNO2gysrNdAv8BNoWZB1eLP --data-binary @- &quot;<a href="http://mms-binary.catrasoft.cloud/catramms/v1/binary/16" class="uri">http://mms-binary.catrasoft.cloud/catramms/v1/binary/16</a>&quot;</p>
+<p><strong>dd</strong> status=none if=score.mpg bs=1024 iflag=skip_bytes,count_bytes skip=<strong>100000</strong> count=<strong>100000</strong> <strong>| curl</strong> -s -o /dev/null -w &quot;%{response_code}&quot; -X POST -H &quot;<strong>Content-Range: bytes 100000-199999/209246</strong>&quot; -u 5:SU1.8ZO1O2zVeBMNv9lzZ0whABXSAdjWrR~rpcnI5eaHNO2gysrNdAv8BNoWZB1eLP --data-binary @- &quot;<a href="http://mms-binary.catrasoft.cloud/catramms/v1/binary/16" class="uri">http://mms-binary.catrasoft.cloud/catramms/v1/binary/16</a>&quot;</p>
+<p><strong>dd</strong> status=none if=score.mpg bs=1024 iflag=skip_bytes,count_bytes skip=<strong>200000</strong> count=<strong>9246</strong> <strong>| curl</strong> -s -o /dev/null -w &quot;%{response_code}&quot; -X POST -H &quot;<strong>Content-Range: bytes 200000-209245/209246</strong>&quot; -u 5:SU1.8ZO1O2zVeBMNv9lzZ0whABXSAdjWrR~rpcnI5eaHNO2gysrNdAv8BNoWZB1eLP --data-binary @- &quot;<a href="http://mms-binary.catrasoft.cloud/catramms/v1/binary/16" class="uri">http://mms-binary.catrasoft.cloud/catramms/v1/binary/16</a>&quot;</p>
+<p><strong>Remark:</strong></p>
+<ul>
+<li>In case the Content-Range start is 0, the system reset the binary if it exists and considers the chunk as the first chunk of the content</li>
+<li>In case the Content-Range end + 1 is equal to the Content-Range Size, the system considers the chunk as the last chunk of the content and proceeds to ingest the content</li>
+</ul>

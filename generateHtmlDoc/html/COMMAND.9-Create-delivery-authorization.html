@@ -1,0 +1,57 @@
+<h2 id="overview">Overview</h2>
+<p>This command creates a delivery authorization valid for a max number of retries (maxRetries parameter) and with a time to live (ttlInSeconds parameter). This command might perform a redirection (redirect parameter) with the download URL. In this case it is not needed to call the download command (step nr. 2) because the download starts automatically by the redirection.</p>
+<h2 id="uri">URI</h2>
+<p>/catramms/v1/delivery/:<strong>PhysicalPathKey</strong>?[:<strong>ttlInSeconds</strong>=120]&amp;[:<strong>maxRetries</strong>=10]&amp;[:<strong>redirect</strong>=false]</p>
+<h2 id="method">Method</h2>
+<p>GET</p>
+<h2 id="url-params">URL Params</h2>
+<h3 id="required">Required</h3>
+<p>PhysicalPathKey: key of the specific file to be authorized for the download</p>
+<h3 id="optional">Optional</h3>
+<ul>
+<li>ttlInSeconds: time to live in seconds of the authorization
+<ul>
+<li>default: 120</li>
+</ul></li>
+<li>maxRetries: max number of retries of the authorization
+<ul>
+<li>default: 10</li>
+</ul></li>
+<li>redirect: it specifies if this command has to perform a redirection or it has to return a json with several information including the URL to be used for the download of the content
+<ul>
+<li>default: false</li>
+</ul></li>
+</ul>
+<h2 id="payload-data">Payload Data</h2>
+<p>None</p>
+<h2 id="success-response">Success Response</h2>
+<h3 id="code">Code</h3>
+<ul>
+<li>301 Moved Permanently in case the redirect parameter is true</li>
+<li>201 Created in case the redirect parameter is false</li>
+</ul>
+<h3 id="content">Content</h3>
+<p>Only in case the redirect parameter is false</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode javascript"><code class="sourceCode javascript"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="op">{</span> </a>
+<a class="sourceLine" id="cb1-2" data-line-number="2">    <span class="st">&quot;deliveryURL&quot;</span><span class="op">:</span> <span class="st">&quot;https://mms-delivery.catrasoft.cloud/MMS_0000/CatraSoft/000/000/561/833_source.mp4?token=4&amp;outputFileName=myName.mp4&quot;</span><span class="op">,</span></a>
+<a class="sourceLine" id="cb1-3" data-line-number="3">    <span class="st">&quot;deliveryFileName&quot;</span><span class="op">:</span> <span class="st">&quot;myName.mp4&quot;</span><span class="op">,</span> </a>
+<a class="sourceLine" id="cb1-4" data-line-number="4">    <span class="st">&quot;authorizationKey&quot;</span><span class="op">:</span> <span class="dv">4</span><span class="op">,</span> </a>
+<a class="sourceLine" id="cb1-5" data-line-number="5">    <span class="st">&quot;ttlInSeconds&quot;</span><span class="op">:</span> <span class="dv">120</span><span class="op">,</span> </a>
+<a class="sourceLine" id="cb1-6" data-line-number="6">    <span class="st">&quot;maxRetries&quot;</span><span class="op">:</span> <span class="dv">10</span> </a>
+<a class="sourceLine" id="cb1-7" data-line-number="7"><span class="op">}</span></a></code></pre></div>
+<h2 id="error-response">Error Response</h2>
+<p>See <a href="./A.1-Common-error-responses.html">Common Error Responses</a></p>
+<h2 id="sample-call">Sample Call</h2>
+<p>Assuming:</p>
+<ul>
+<li><p>UserKey: 5</p></li>
+<li><p>API.htmlKey: SU1.8ZO1O2zVeBMNv9lzZ0whABXSAdjWrR~rpcnI5eaHNO2gysrNdAv8BNoWZB1eLP</p></li>
+<li><p>redirect=false (default)</p>
+<ul>
+<li><code>curl -k -v -u 5:SU1.8ZO1O2zVeBMNv9lzZ0whABXSAdjWrR~rpcnI5eaHNO2gysrNdAv8BNoWZB1eLP https://mms-API.html.catrasoft.cloud/catramms/v1/delivery/663</code></li>
+</ul></li>
+<li><p>redirect=true</p>
+<ul>
+<li><code>curl -k -v -u 5:SU1.8ZO1O2zVeBMNv9lzZ0whABXSAdjWrR~rpcnI5eaHNO2gysrNdAv8BNoWZB1eLP -L https://mms-API.html.catrasoft.cloud/catramms/v1/delivery/663?redirect=true &gt; myFileName.mp4</code></li>
+</ul></li>
+</ul>

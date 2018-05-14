@@ -1,0 +1,35 @@
+<h2 id="overview">Overview</h2>
+<ul>
+<li>A User already registered has to be ‘confirmed’ through the confirmation code received by the User through an email</li>
+<li>Return the API.html Key to be used to call the MMS API.htmls</li>
+</ul>
+<h2 id="uri">URI</h2>
+<p>/catramms/v1/user/:UserKey/:ConfirmationCode</p>
+<h2 id="method">Method</h2>
+<p>PUT</p>
+<h2 id="url-params">URL Params</h2>
+<h3 id="required">Required</h3>
+<ul>
+<li>UserKey=[number] example: UserKey=12</li>
+<li>ConfirmationCode=[string] example: ConfirmationCode=1387270786</li>
+</ul>
+<h3 id="optional">Optional</h3>
+<p>None</p>
+<h2 id="payload-data">Payload Data</h2>
+<p>None</p>
+<h2 id="success-response">Success Response</h2>
+<h3 id="code">Code</h3>
+<p>200 OK</p>
+<h3 id="content">Content</h3>
+<div class="sourceCode" id="cb1"><pre class="sourceCode javascript"><code class="sourceCode javascript"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="op">{</span> </a>
+<a class="sourceLine" id="cb1-2" data-line-number="2">   <span class="st">&quot;API.htmlKey&quot;</span><span class="op">:</span> <span class="st">&quot;SU1.8ZO1O2zRs.gL_nWYV4AZ0uU_dy89CXogV2eLaeQ0&quot;</span></a>
+<a class="sourceLine" id="cb1-3" data-line-number="3"><span class="op">}</span></a></code></pre></div>
+<h2 id="error-response">Error Response</h2>
+<p>See <a href="./A.1-Common-error-responses.html">Common Error Responses</a></p>
+<h2 id="sample-call">Sample Call</h2>
+<p>Assuming:</p>
+<ul>
+<li>UserKey to be confirmed: 2</li>
+<li>Confirmation Code of the User to be confirmed: 2049792014</li>
+</ul>
+<p>curl -k -v -X PUT <a href="https://mms-API.html.catrasoft.cloud/catramms/v1/user/2/2049792014" class="uri">https://mms-API.html.catrasoft.cloud/catramms/v1/user/2/2049792014</a></p>

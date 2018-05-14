@@ -1,0 +1,21 @@
+<h3 id="push-option">Push option</h3>
+<p>The Push option means the binary of the content is uploaded by the Client through HTTP. Push supports two options: single request and multiple chunks.</p>
+<ol>
+<li><strong>single request</strong>: the Client should use this option if the file is small enough to upload again in its entirety if the connection fails. This approach is usually best, since it requires fewer requests and thus has better performance.</li>
+<li><strong>multiple chunks</strong>: use this option for larger files or less reliable network connections. Use this approach even in case you need to reduce the amount of data transferred in any single request. You might need to do this when there is a fixed time limit for individual requests. The media binary file is split in several chunks and the single chunks, one by one, are sent to the MMS platform. A script is provided to take care of slicing the content in chunks and upload to the CatraMMS platform.</li>
+</ol>
+<p>The Push option consists of two steps:</p>
+<ol>
+<li>First the metadata are ingested into the MMS</li>
+<li>Second, the binary (video, audio, image) is uploaded into the MMS having as URL parameter the reference returned by the previous step</li>
+</ol>
+<p>References:</p>
+<ul>
+<li>the <a href="./COMMAND.6-Ingestion-a-new-Command.html">command details</a> to ingest the metadata (step nr. 1) (HTTP POST)</li>
+<li>Content Ingestion metadata <a href="./TASK.1-Add-Content-JSON-format.html"><strong>JSON format</strong></a> (body of the POST)</li>
+<li>Here follows some examples (body of the POST)
+<ul>
+<li>(<a href="./JSON-Example.2-Add-a-new-content-(push).html">JSON Example</a>)</li>
+</ul></li>
+<li><a href="./COMMAND.4-Push-Binary-upload.html">Command details</a> to upload the binary (step nr. 2) (HTTP POST)</li>
+</ul>

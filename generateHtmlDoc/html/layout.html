@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+  <head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+<script>
+  $(function(){
+    var includes = $('[data-include]');
+    jQuery.each(includes, function(){
+      var file = $(this).data('include');
+      $(this).load(file);
+    });
+  });
+</script>
+
+		<style>
+			#header{
+				background-color: lightblue;
+				width:100%;
+				height:50px;
+				text-align: center;
+			}
+
+			#sidebar-left{
+				float:left;
+				width:15%;
+				background-color: red;
+			}
+
+			#main{
+				float:left;
+				width:70%;
+				background-color: lightgray;
+			}
+
+			#sidebar-right{
+				float:left;
+				width:15%;
+				background-color: red;
+			}
+
+			#footer{
+				clear:both;
+				height: 50px;
+				width: 100%;
+				text-align: center;
+				background-color: lightblue;
+			}
+
+			#sidebar-left, #main, #sidebar-right{
+				min-height: 600px				
+			}
+
+		</style>
+	</head>
+	<body>
+		<div id="header">Media Management System</div>
+		<div id="sidebar-left" data-include="./_Sidebar.html"></div>
+		<div id="main" data-include="./Home.html"></div>
+		<div id="sidebar-right">Right</div>
+		<div id="footer" data-include="./_Footer.html"></div>
+	</body>
+</html>
