@@ -779,7 +779,8 @@ void APICommon::sendRedirect(string locationURL)
     string endLine = "\r\n";
     
     string completeHttpResponse =
-            string("Status: 301 Moved Permanently") + endLine
+            // string("Status: 301 Moved Permanently") + endLine
+            string("HTTP/1.1 301") + endLine
             + "Location: " + locationURL + endLine
             + endLine;
 
