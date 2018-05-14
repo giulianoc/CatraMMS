@@ -778,13 +778,22 @@ void APICommon::sendRedirect(string locationURL)
 {
     string endLine = "\r\n";
     
-    int htmlResponseCode = 307;
+    string responseBody =
+            string("{ ")
+            + "\"status\": " + to_string(htmlResponseCode) + ", "
+            + "\"error\": " + "\"" + "..." + "\"" + " "
+            + "}";
+    
+    int htmlResponseCode = 301;
     
     string completeHttpResponse =
             string("Status: ") + to_string(htmlResponseCode) 
                 + " " + getHtmlStandardMessage(htmlResponseCode) + endLine
             + "Location: " + locationURL + endLine
-            + endLine;
+            + "Content-Type: application/json; charset=utf-8" + endLine
+            + "Content-Length: " + to_string(responseBody.length()) + endLine
+            + endLine
+            + responseBody;
 
     _logger->info(__FILEREF__ + "HTTP Success"
         + ", response: " + completeHttpResponse
