@@ -2,7 +2,8 @@ server {
 	server_name mms.catrasoft.cloud catrasoft.cloud;
 	listen 80;
 
-	return 301 https://github.com/giulianoc/CatraMMS/wiki;
+	#return 301 https://github.com/giulianoc/CatraMMS/wiki;
+	return 301 https://mms.catrasoft.cloud$request_uri;
 }
 
 server {
