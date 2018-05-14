@@ -778,13 +778,13 @@ void APICommon::sendRedirect(string locationURL)
 {
     string endLine = "\r\n";
     
+    int htmlResponseCode = 301;
+    
     string responseBody =
             string("{ ")
             + "\"status\": " + to_string(htmlResponseCode) + ", "
             + "\"error\": " + "\"" + "..." + "\"" + " "
             + "}";
-    
-    int htmlResponseCode = 301;
     
     string completeHttpResponse =
             string("Status: ") + to_string(htmlResponseCode) 
