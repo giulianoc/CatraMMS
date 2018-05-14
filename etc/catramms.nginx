@@ -131,9 +131,14 @@ server {
 }
 
 server {
-	listen 80;
-
 	server_name mms-delivery.catrasoft.cloud;
+	#listen 80;
+	listen 443;
+
+	ssl_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
+	ssl_certificate_key /etc/letsencrypt/live/catrasoft.cloud/privkey.pem;
+	ssl_trusted_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
+	include /usr/local/nginx/conf/snippets/ssl-params.conf;
 
 	access_log   /usr/local/CatraMMS/logs/mms-delivery.access.log main;
 	error_log    /usr/local/CatraMMS/logs/mms-delivery.error.log notice;
@@ -155,7 +160,7 @@ server {
 	location = /catramms/delivery/checkAuthorization {
 		internal;
 
-		proxy_pass http://mms-delivery.catrasoft.cloud/catramms/delivery/authorization;
+		proxy_pass https://mms-delivery.catrasoft.cloud/catramms/delivery/authorization;
 		proxy_pass_request_body off;
 		proxy_set_header Content-Length "";
 		#proxy_set_header X-Original-METHOD $request_method;
