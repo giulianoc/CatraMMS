@@ -149,8 +149,8 @@ server {
 		if ($arg_token) {
 			set $token $arg_token;
 		}
-		if ($arg_outputFileName) {
-			add_header Content-Disposition 'attachment; filename="$arg_outputFileName"';
+		if ($arg_deliveryFileName) {
+			add_header Content-Disposition 'attachment; filename="$arg_deliveryFileName"';
 		}
 
 		auth_request /catramms/delivery/checkAuthorization;

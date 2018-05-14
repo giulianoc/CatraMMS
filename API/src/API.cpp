@@ -1450,15 +1450,24 @@ void API::createDeliveryAuthorization(
         
         try
         {
-            tuple<int,shared_ptr<Workspace>,string,string> storageDetails =
+            tuple<int,shared_ptr<Workspace>,string,string,string> storageDetails =
                 _mmsEngineDBFacade->getStorageDetails(physicalPathKey);
 
             int mmsPartitionNumber;
             shared_ptr<Workspace> contentWorkspace;
             string relativePath;
             string fileName;
-            tie(mmsPartitionNumber, contentWorkspace, relativePath, fileName) = storageDetails;
-    
+            string deliveryFileName;
+            tie(mmsPartitionNumber, contentWorkspace, relativePath, fileName, deliveryFileName)
+                    = storageDetails;
+
+            if (deliveryFileName != "")
+            {
+                size_t extensionIndex = fileName.find_last_of(".");
+                if (extensionIndex != string::npos)
+                    deliveryFileName.append(fileName.substr(extensionIndex));
+            }
+            
             if (contentWorkspace->_workspaceKey != requestWorkspace->_workspaceKey)
             {
                 string errorMessage = string ("Workspace of the content and Workspace of the requester is different")
@@ -1470,8 +1479,6 @@ void API::createDeliveryAuthorization(
                 throw runtime_error(errorMessage);
             }
             
-            string outputFileName = "zzzz";
-
             string deliveryURI;
             {
                 char pMMSPartitionName [64];
@@ -1502,8 +1509,9 @@ void API::createDeliveryAuthorization(
                     + _deliveryHost
                     + deliveryURI
                     + "?token=" + to_string(authorizationKey)
-                    + "&outputFileName=" + outputFileName
             ;
+            if (deliveryFileName != "")
+                deliveryURL.append("&deliveryFileName=").append(deliveryFileName);
             
             if (redirect)
             {
@@ -1513,7 +1521,7 @@ void API::createDeliveryAuthorization(
             {
                 string responseBody = string("{ ")
                     + "\"deliveryURL\": \"" + deliveryURL + "\""
-                    + ", \"outputFileName\": \"" + outputFileName + "\""
+                    + ", \"deliveryFileName\": \"" + deliveryFileName + "\""
                     + ", \"authorizationKey\": " + to_string(authorizationKey)
                     + ", \"ttlInSeconds\": " + to_string(ttlInSeconds)
                     + ", \"maxRetries\": " + to_string(maxRetries)

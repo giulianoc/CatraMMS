@@ -174,14 +174,15 @@ string MMSStorage::getIngestionRootRepository(void) {
 string MMSStorage::getPhysicalPath(int64_t mediaItemKey,
         int64_t encodingProfileKey)
 {    
-    tuple<int,shared_ptr<Workspace>,string,string> storageDetails =
+    tuple<int,shared_ptr<Workspace>,string,string,string> storageDetails =
         _mmsEngineDBFacade->getStorageDetails(mediaItemKey, encodingProfileKey);
 
     int mmsPartitionNumber;
     shared_ptr<Workspace> workspace;
     string relativePath;
     string fileName;
-    tie(mmsPartitionNumber, workspace, relativePath, fileName) = storageDetails;
+    string deliveryFileName;
+    tie(mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName) = storageDetails;
 
     return getMMSAssetPathName(
         mmsPartitionNumber,
@@ -192,14 +193,15 @@ string MMSStorage::getPhysicalPath(int64_t mediaItemKey,
 
 string MMSStorage::getPhysicalPath(int64_t physicalPathKey)
 {    
-    tuple<int,shared_ptr<Workspace>,string,string> storageDetails =
+    tuple<int,shared_ptr<Workspace>,string,string,string> storageDetails =
         _mmsEngineDBFacade->getStorageDetails(physicalPathKey);
 
     int mmsPartitionNumber;
     shared_ptr<Workspace> workspace;
     string relativePath;
     string fileName;
-    tie(mmsPartitionNumber, workspace, relativePath, fileName) = storageDetails;
+    string deliveryFileName;
+    tie(mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName) = storageDetails;
 
     return getMMSAssetPathName(
         mmsPartitionNumber,
@@ -217,14 +219,15 @@ void MMSStorage::removePhysicalPath(int64_t physicalPathKey)
             + ", physicalPathKey: " + to_string(physicalPathKey)
         );
         
-        tuple<int,shared_ptr<Workspace>,string,string> storageDetails =
+        tuple<int,shared_ptr<Workspace>,string,string,string> storageDetails =
             _mmsEngineDBFacade->getStorageDetails(physicalPathKey);
 
         int mmsPartitionNumber;
         shared_ptr<Workspace> workspace;
         string relativePath;
         string fileName;
-        tie(mmsPartitionNumber, workspace, relativePath, fileName) = storageDetails;
+        string deliveryFileName;
+        tie(mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName) = storageDetails;
 
         _logger->info(__FILEREF__ + "getMMSAssetPathName ..."
             + ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)

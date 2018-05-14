@@ -8137,6 +8137,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             string title = "";
             string ingester = "";
             string keywords = "";
+            string deliveryFileName = "";
             string sContentType;
             // string encodingProfilesSet;
 
@@ -8150,6 +8151,10 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             field = "Keywords";
             if (isMetadataPresent(parametersRoot, field))
                 keywords = parametersRoot.get(field, "XXX").asString();
+
+            field = "DeliveryFileName";
+            if (isMetadataPresent(parametersRoot, field))
+                deliveryFileName = parametersRoot.get(field, "XXX").asString();
 
             string startPublishing = "NOW";
             string endPublishing = "FOREVER";
@@ -8214,8 +8219,8 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             
             lastSQLCommand = 
                 "insert into MMS_MediaItem (mediaItemKey, workspaceKey, contentProviderKey, title, ingester, keywords, " 
-                "ingestionDate, contentType, startPublishing, endPublishing) values ("
-                "NULL, ?, ?, ?, ?, ?, NULL, ?, "
+                "deliveryFileName, ingestionDate, contentType, startPublishing, endPublishing) values ("
+                "NULL, ?, ?, ?, ?, ?, ?, NULL, ?, "
                 "convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone), "
                 "convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone)"
                 ")";
@@ -8233,6 +8238,10 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
             else
                 preparedStatement->setString(queryParameterIndex++, keywords);
+            if (deliveryFileName == "")
+                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+            else
+                preparedStatement->setString(queryParameterIndex++, deliveryFileName);
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
             preparedStatement->setString(queryParameterIndex++, startPublishing);
             preparedStatement->setString(queryParameterIndex++, endPublishing);
@@ -9333,7 +9342,7 @@ void MMSEngineDBFacade::removeMediaItem (
     }
 }
 
-tuple<int,shared_ptr<Workspace>,string,string> MMSEngineDBFacade::getStorageDetails(
+tuple<int,shared_ptr<Workspace>,string,string,string> MMSEngineDBFacade::getStorageDetails(
         int64_t physicalPathKey
 )
 {
@@ -9353,9 +9362,10 @@ tuple<int,shared_ptr<Workspace>,string,string> MMSEngineDBFacade::getStorageDeta
         int mmsPartitionNumber;
         string relativePath;
         string fileName;
+        string deliveryFileName = "";
         {
             lastSQLCommand = string("") +
-                "select mi.workspaceKey, pp.partitionNumber, pp.relativePath, pp.fileName "
+                "select mi.workspaceKey, mi.deliveryFileName, pp.partitionNumber, pp.relativePath, pp.fileName "
                 "from MMS_MediaItem mi, MMS_PhysicalPath pp "
                 "where mi.mediaItemKey = pp.mediaItemKey and pp.physicalPathKey = ? ";
 
@@ -9370,6 +9380,8 @@ tuple<int,shared_ptr<Workspace>,string,string> MMSEngineDBFacade::getStorageDeta
                 mmsPartitionNumber = resultSet->getInt("partitionNumber");
                 relativePath = resultSet->getString("relativePath");
                 fileName = resultSet->getString("fileName");
+                if (!resultSet->isNull("deliveryFileName"))
+                    deliveryFileName = resultSet->getString("deliveryFileName");
             }
             else
             {
@@ -9390,7 +9402,7 @@ tuple<int,shared_ptr<Workspace>,string,string> MMSEngineDBFacade::getStorageDeta
         );
         _connectionPool->unborrow(conn);
 
-        return make_tuple(mmsPartitionNumber, workspace, relativePath, fileName);
+        return make_tuple(mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName);
     }
     catch(sql::SQLException se)
     {
@@ -9437,7 +9449,7 @@ tuple<int,shared_ptr<Workspace>,string,string> MMSEngineDBFacade::getStorageDeta
     }        
 }
 
-tuple<int,shared_ptr<Workspace>,string,string> MMSEngineDBFacade::getStorageDetails(
+tuple<int,shared_ptr<Workspace>,string,string,string> MMSEngineDBFacade::getStorageDetails(
         int64_t mediaItemKey,
         int64_t encodingProfileKey
 )
@@ -9458,9 +9470,10 @@ tuple<int,shared_ptr<Workspace>,string,string> MMSEngineDBFacade::getStorageDeta
         int mmsPartitionNumber;
         string relativePath;
         string fileName;
+        string deliveryFileName = "";
         {
             lastSQLCommand = string("") +
-                "select mi.workspaceKey, pp.partitionNumber, pp.relativePath, pp.fileName "
+                "select mi.workspaceKey, mi.deliveryFileName, pp.partitionNumber, pp.relativePath, pp.fileName "
                 "from MMS_MediaItem mi, MMS_PhysicalPath pp "
                 "where mi.mediaItemKey = pp.mediaItemKey and mi.mediaItemKey = ? "
                 "and pp.encodingProfileKey " + (encodingProfileKey == -1 ? "is null" : "= ?");
@@ -9478,6 +9491,8 @@ tuple<int,shared_ptr<Workspace>,string,string> MMSEngineDBFacade::getStorageDeta
                 mmsPartitionNumber = resultSet->getInt("partitionNumber");
                 relativePath = resultSet->getString("relativePath");
                 fileName = resultSet->getString("fileName");
+                if (!resultSet->isNull("deliveryFileName"))
+                    deliveryFileName = resultSet->getString("deliveryFileName");
             }
             else
             {
@@ -9499,7 +9514,7 @@ tuple<int,shared_ptr<Workspace>,string,string> MMSEngineDBFacade::getStorageDeta
         );
         _connectionPool->unborrow(conn);
 
-        return make_tuple(mmsPartitionNumber, workspace, relativePath, fileName);
+        return make_tuple(mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName);
     }
     catch(sql::SQLException se)
     {
@@ -10504,6 +10519,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "title      			VARCHAR (256) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
                     "ingester				VARCHAR (128) NULL,"
                     "keywords				VARCHAR (128) CHARACTER SET utf8 COLLATE utf8_bin NULL,"
+                    "deliveryFileName       VARCHAR (128) NULL,"
                     "ingestionDate			TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "contentType            VARCHAR (32) NOT NULL,"
                     "startPublishing        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"

@@ -707,10 +707,10 @@ public:
         int64_t workspaceKey,
         string label);
     
-    tuple<int,shared_ptr<Workspace>,string,string> getStorageDetails(
+    tuple<int,shared_ptr<Workspace>,string,string,string> getStorageDetails(
         int64_t physicalPathKey);
 
-    tuple<int,shared_ptr<Workspace>,string,string> getStorageDetails(
+    tuple<int,shared_ptr<Workspace>,string,string,string> getStorageDetails(
         int64_t mediaItemKey,
         int64_t encodingProfileKey
     );
