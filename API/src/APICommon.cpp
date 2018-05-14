@@ -774,32 +774,24 @@ void APICommon::sendSuccess(int htmlResponseCode, string responseBody)
     cout << completeHttpResponse;
 }
 
-void APICommon::sendRedirect(string locationURL)
+void APICommon::sendRedirect(FCGX_Request& request, string locationURL)
 {
     string endLine = "\r\n";
     
     int htmlResponseCode = 301;
     
-    string responseBody =
-            string("{ ")
-            + "\"status\": " + to_string(htmlResponseCode) + ", "
-            + "\"error\": " + "\"" + "..." + "\"" + " "
-            + "}";
-    
     string completeHttpResponse =
             string("Status: ") + to_string(htmlResponseCode) 
                 + " " + getHtmlStandardMessage(htmlResponseCode) + endLine
             + "Location: " + locationURL + endLine
-            + "Content-Type: application/json; charset=utf-8" + endLine
-            + "Content-Length: " + to_string(responseBody.length()) + endLine
-            + endLine
-            + responseBody;
+            + endLine;
 
     _logger->info(__FILEREF__ + "HTTP Success"
         + ", response: " + completeHttpResponse
     );
 
-    cout << completeHttpResponse;
+    FCGX_FPrintF(request.out, completeHttpResponse.c_str());
+    // cout << completeHttpResponse;
 }
 
 void APICommon::sendHeadSuccess(FCGX_Request& request, int htmlResponseCode, unsigned long fileSize)

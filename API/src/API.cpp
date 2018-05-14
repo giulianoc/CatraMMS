@@ -1507,7 +1507,7 @@ void API::createDeliveryAuthorization(
             
             if (redirect)
             {
-                sendRedirect(deliveryURL);
+                sendRedirect(request, deliveryURL);
             }
             else
             {

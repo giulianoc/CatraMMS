@@ -76,7 +76,7 @@ protected:
 
     void sendSuccess(FCGX_Request& request, int htmlResponseCode, string responseBody);
     void sendSuccess(int htmlResponseCode, string responseBody);
-    void sendRedirect(string locationURL);
+    void sendRedirect(FCGX_Request& request, string locationURL);
     void sendHeadSuccess(FCGX_Request& request, int htmlResponseCode, unsigned long fileSize);
     void sendHeadSuccess(int htmlResponseCode, unsigned long fileSize);
     void sendError(FCGX_Request& request, int htmlResponseCode, string errorMessage);
