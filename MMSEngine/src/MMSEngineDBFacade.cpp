@@ -6298,7 +6298,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(
                 string errorMessage = __FILEREF__ + "WorkspaceKey/encodingProfilesSetLabel was not found "
                         + ", workspaceKey: " + to_string(workspaceKey)
                         + ", label: " + label
-                        + ", lastSQLCommand: " + lastSQLCommand
+                        // + ", lastSQLCommand: " + lastSQLCommand    It will be added in catch
                 ;
                 _logger->error(errorMessage);
 
@@ -6353,7 +6353,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(
         );
         _connectionPool->unborrow(conn);
         
-        throw exception();
+        throw e;
     }       
     catch(exception e)
     {
@@ -7881,6 +7881,7 @@ void MMSEngineDBFacade::checkWorkspaceMaxIngestionNumber (
             string errorMessage = __FILEREF__ + "Reached the max number of Ingestions in your period"
                 + ", maxIngestionsNumber: " + to_string(maxIngestionsNumber)
                 + ", encodingPeriod: " + toString(encodingPeriod)
+                    + ". It is needed to increase Workspace capacity."
             ;
             _logger->error(errorMessage);
             
