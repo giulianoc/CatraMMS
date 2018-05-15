@@ -176,7 +176,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(
             "codec",
             "width",
             "height",
-            "kBitrate",
+            "kBitRate",
             "twoPasses"
         };
         for (string mandatoryField: mandatoryFields)
@@ -202,7 +202,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(
 
         vector<string> mandatoryFields = {
             "codec",
-            "kBitrate"
+            "kBitRate"
         };
         for (string mandatoryField: mandatoryFields)
         {
@@ -254,7 +254,7 @@ void Validator::validateEncodingProfileRootAudioMetadata(
 
         vector<string> mandatoryFields = {
             "codec",
-            "kBitrate"
+            "kBitRate"
         };
         for (string mandatoryField: mandatoryFields)
         {
