@@ -291,7 +291,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUser(
                 preparedStatement->setString(queryParameterIndex++, deliveryURL);
             preparedStatement->setInt(queryParameterIndex++, enabled);
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(maxEncodingPriority));
-            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(encodingPeriod));
+            preparedStatement->setString(queryParameterIndex++, toString(encodingPeriod));
             preparedStatement->setInt(queryParameterIndex++, maxIngestionsNumber);
             preparedStatement->setInt(queryParameterIndex++, maxStorageInGB);
             preparedStatement->setString(queryParameterIndex++, languageCode);
@@ -7607,7 +7607,7 @@ void MMSEngineDBFacade::checkWorkspaceMaxIngestionNumber (
     {
         int maxIngestionsNumber;
         int currentIngestionsNumber;
-        int encodingPeriod;
+        EncodingPeriod encodingPeriod;
         string periodStartDateTime;
         string periodEndDateTime;
 
@@ -7630,7 +7630,7 @@ void MMSEngineDBFacade::checkWorkspaceMaxIngestionNumber (
             {
                 maxIngestionsNumber = resultSet->getInt("maxIngestionsNumber");
                 currentIngestionsNumber = resultSet->getInt("currentIngestionsNumber");
-                encodingPeriod = resultSet->getInt("encodingPeriod");
+                encodingPeriod = toEncodingPeriod(resultSet->getString("encodingPeriod"));
                 periodStartDateTime = resultSet->getString("LocalStartDateTime");
                 periodEndDateTime = resultSet->getString("LocalEndDateTime");                
             }
@@ -7685,7 +7685,7 @@ void MMSEngineDBFacade::checkWorkspaceMaxIngestionNumber (
 
                 periodExpired = true;
                 
-                if (encodingPeriod == static_cast<int>(EncodingPeriod::Daily))
+                if (encodingPeriod == EncodingPeriod::Daily)
                 {
                     sprintf (newPeriodStartDateTime, "%04d-%02d-%02d %02d:%02d:%02d",
                             tmDateTimeNow. tm_year + 1900,
@@ -7704,7 +7704,7 @@ void MMSEngineDBFacade::checkWorkspaceMaxIngestionNumber (
                             59  // tmCurrentDateTime. tm_sec
                     );
                 }
-                else if (encodingPeriod == static_cast<int>(EncodingPeriod::Weekly))
+                else if (encodingPeriod == EncodingPeriod::Weekly)
                 {
                     // from monday to sunday
                     // monday
@@ -7768,7 +7768,7 @@ void MMSEngineDBFacade::checkWorkspaceMaxIngestionNumber (
                         );
                     }
                 }
-                else if (encodingPeriod == static_cast<int>(EncodingPeriod::Monthly))
+                else if (encodingPeriod == EncodingPeriod::Monthly)
                 {
                     // first day of the month
                     {
@@ -7880,7 +7880,7 @@ void MMSEngineDBFacade::checkWorkspaceMaxIngestionNumber (
         {
             string errorMessage = __FILEREF__ + "Reached the max number of Ingestions in your period"
                 + ", maxIngestionsNumber: " + to_string(maxIngestionsNumber)
-                + ", encodingPeriod: " + to_string(static_cast<int>(encodingPeriod))
+                + ", encodingPeriod: " + toString(encodingPeriod)
             ;
             _logger->error(errorMessage);
             
@@ -10026,7 +10026,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "deliveryURL                    VARCHAR (256) NULL,"
                     "isEnabled                      TINYINT (1) NOT NULL,"
                     "maxEncodingPriority            VARCHAR (32) NOT NULL,"
-                    "encodingPeriod                 TINYINT NOT NULL,"
+                    "encodingPeriod                 VARCHAR (64) NOT NULL,"
                     "maxIngestionsNumber            INT NOT NULL,"
                     "maxStorageInGB                 INT NOT NULL,"
                     "currentStorageUsageInGB        INT DEFAULT 0,"

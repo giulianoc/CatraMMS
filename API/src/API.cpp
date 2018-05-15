@@ -1236,7 +1236,7 @@ void API::registerUser(
             
             string responseBody = string("{ ")
                 + "\"workspaceKey\": " + to_string(get<0>(workspaceKeyUserKeyAndConfirmationCode)) + " "
-                + "\"userKey\": " + to_string(get<1>(workspaceKeyUserKeyAndConfirmationCode)) + " "
+                + ", \"userKey\": " + to_string(get<1>(workspaceKeyUserKeyAndConfirmationCode)) + " "
                 + "}";
             sendSuccess(request, 201, responseBody);
             
