@@ -563,7 +563,7 @@ public:
         string languageCode,
         chrono::system_clock::time_point userExpirationDate);
     
-    string confirmUser(string confirmationCode);
+    tuple<string,string,string> confirmUser(string confirmationCode);
 
     bool isLoginValid(
         string emailAddress,

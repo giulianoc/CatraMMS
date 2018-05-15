@@ -1235,18 +1235,19 @@ void API::registerUser(
             );
             
             string responseBody = string("{ ")
+                + "\"workspaceKey\": " + to_string(get<0>(workspaceKeyUserKeyAndConfirmationCode)) + " "
                 + "\"userKey\": " + to_string(get<1>(workspaceKeyUserKeyAndConfirmationCode)) + " "
                 + "}";
             sendSuccess(request, 201, responseBody);
             
-            string to = "giulianoc@catrasoftware.it";
+            string to = email;
             string subject = "Confirmation code";
             
             vector<string> emailBody;
-            emailBody.push_back("<p>Hi John,</p>");
-            emailBody.push_back(string("<p>This is the confirmation code ") + get<2>(workspaceKeyUserKeyAndConfirmationCode) + "</p>");
-            emailBody.push_back(string("<p>for the workspace key ") + to_string(get<0>(workspaceKeyUserKeyAndConfirmationCode)) + "</p>");
-            emailBody.push_back("<p>Bye!</p>");
+            emailBody.push_back(string("<p>Hi ") + name + ",</p>");
+            emailBody.push_back(string("<p>here follows the confirmation code ") + get<2>(workspaceKeyUserKeyAndConfirmationCode) + "</p>");
+            emailBody.push_back("<p>Bye</p>");
+            emailBody.push_back("<p>MMS technical support</p>");
 
             sendEmail(to, subject, emailBody);
         }
@@ -1328,20 +1329,28 @@ void API::confirmUser(
 
         try
         {
-            string apiKey = _mmsEngineDBFacade->confirmUser(confirmationCodeIt->second);
+            tuple<string,string,string> apiKeyNameAndEmailAddress
+                = _mmsEngineDBFacade->confirmUser(confirmationCodeIt->second);
 
+            string apiKey;
+            string name;
+            string emailAddress;
+            
+            tie(apiKey, name, emailAddress) = apiKeyNameAndEmailAddress;
+            
             string responseBody = string("{ ")
                 + "\"apiKey\": \"" + apiKey + "\" "
                 + "}";
             sendSuccess(request, 201, responseBody);
             
-            string to = "giulianoc@catrasoftware.it";
+            string to = emailAddress;
             string subject = "Welcome";
             
             vector<string> emailBody;
-            emailBody.push_back("<p>Hi John,</p>");
-            emailBody.push_back(string("<p>Your registration is now completed and you can start working with ...</p>"));
-            emailBody.push_back("<p>Bye!</p>");
+            emailBody.push_back(string("<p>Hi ") + name + ",</p>");
+            emailBody.push_back(string("<p>Your registration is now completed and you can enjoy working with MMS</p>"));
+            emailBody.push_back("<p>Bye</p>");
+            emailBody.push_back("<p>MMS technical support</p>");
 
             sendEmail(to, subject, emailBody);
         }

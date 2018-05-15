@@ -510,7 +510,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUser(
     return workspaceKeyUserKeyAndConfirmationCode;
 }
 
-string MMSEngineDBFacade::confirmUser(
+tuple<string,string,string> MMSEngineDBFacade::confirmUser(
     string confirmationCode
 )
 {
@@ -593,9 +593,10 @@ string MMSEngineDBFacade::confirmUser(
         }
 
         string emailAddress;
+        string name;
         {
             lastSQLCommand = 
-                "select eMailAddress from MMS_User where userKey = ?";
+                "select name, eMailAddress from MMS_User where userKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, userKey);
@@ -603,6 +604,7 @@ string MMSEngineDBFacade::confirmUser(
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
+                name = resultSet->getString("name");
                 emailAddress = resultSet->getString("eMailAddress");
             }
             else
@@ -686,6 +688,8 @@ string MMSEngineDBFacade::confirmUser(
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
+
+        return make_tuple(apiKey, name, emailAddress);
     }
     catch(sql::SQLException se)
     {
@@ -825,9 +829,7 @@ string MMSEngineDBFacade::confirmUser(
         }
         
         throw e;
-    }
-    
-    return apiKey;
+    }    
 }
 
 tuple<int64_t,shared_ptr<Workspace>,bool,bool> MMSEngineDBFacade::checkAPIKey (string apiKey)
