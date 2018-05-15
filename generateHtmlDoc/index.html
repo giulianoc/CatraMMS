@@ -1,17 +1,17 @@
 <!DOCTYPE html>
 <html>
-  <head>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+	<head>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 
-<script>
-  $(function(){
-    var includes = $('[data-include]');
-    jQuery.each(includes, function(){
-      var file = $(this).data('include');
-      $(this).load(file);
-    });
-  });
-</script>
+		<script>
+			$(function(){
+				var includes = $('[data-include]');
+				jQuery.each(includes, function(){
+					var file = $(this).data('include');
+					$(this).load(file);
+				});
+			});
+		</script>
 
 		<style>
 			#header{
@@ -23,21 +23,23 @@
 
 			#sidebar-left{
 				float:left;
-				width:15%;
-				background-color: red;
+				width:25%;
+				background-color: lightgray;
 			}
 
 			#main{
 				float:left;
-				width:70%;
+				width:75%;
 				background-color: lightgray;
 			}
 
+/*
 			#sidebar-right{
 				float:left;
 				width:15%;
 				background-color: red;
 			}
+*/
 
 			#footer{
 				clear:both;
