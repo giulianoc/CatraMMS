@@ -115,7 +115,7 @@ void Validator::validateEncodingProfilesSetRootMetadata(
         }
     }
 
-    string field = "profiles";
+    string field = "Profiles";
     if (_mmsEngineDBFacade->isMetadataPresent(encodingProfilesSetRoot, field))
     {
         Json::Value profilesRoot = encodingProfilesSetRoot[field];
@@ -147,9 +147,9 @@ void Validator::validateEncodingProfileRootVideoMetadata(
     {
         vector<string> mandatoryFields = {
             "Label",
-            "fileFormat",
-            "video",
-            "audio"
+            "FileFormat",
+            "Video",
+            "Audio"
         };
         for (string mandatoryField: mandatoryFields)
         {
@@ -169,15 +169,15 @@ void Validator::validateEncodingProfileRootVideoMetadata(
     }
     
     {
-        string field = "video";
+        string field = "Video";
         Json::Value encodingProfileVideoRoot = encodingProfileRoot[field];
 
         vector<string> mandatoryFields = {
-            "codec",
-            "width",
-            "height",
-            "kBitRate",
-            "twoPasses"
+            "Codec",
+            "Width",
+            "Height",
+            "KBitRate",
+            "TwoPasses"
         };
         for (string mandatoryField: mandatoryFields)
         {
@@ -197,12 +197,12 @@ void Validator::validateEncodingProfileRootVideoMetadata(
     }
 
     {
-        string field = "audio";
+        string field = "Audio";
         Json::Value encodingProfileAudioRoot = encodingProfileRoot[field];
 
         vector<string> mandatoryFields = {
-            "codec",
-            "kBitRate"
+            "Codec",
+            "KBitRate"
         };
         for (string mandatoryField: mandatoryFields)
         {
@@ -228,8 +228,8 @@ void Validator::validateEncodingProfileRootAudioMetadata(
     {
         vector<string> mandatoryFields = {
             "Label",
-            "fileFormat",
-            "audio"
+            "FileFormat",
+            "Audio"
         };
         for (string mandatoryField: mandatoryFields)
         {
@@ -249,12 +249,12 @@ void Validator::validateEncodingProfileRootAudioMetadata(
     }
     
     {
-        string field = "audio";
+        string field = "Audio";
         Json::Value encodingProfileAudioRoot = encodingProfileRoot[field];
 
         vector<string> mandatoryFields = {
-            "codec",
-            "kBitRate"
+            "Codec",
+            "KBitRate"
         };
         for (string mandatoryField: mandatoryFields)
         {
@@ -280,11 +280,11 @@ void Validator::validateEncodingProfileRootImageMetadata(
     {
         vector<string> mandatoryFields = {
             "Label",
-            "format",
-            "width",
-            "height",
-            "aspectRatio",
-            "interlaceType"
+            "Format",
+            "Width",
+            "Height",
+            "AspectRatio",
+            "InterlaceType"
         };
         for (string mandatoryField: mandatoryFields)
         {

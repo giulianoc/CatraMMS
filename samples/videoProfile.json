@@ -1,36 +1,36 @@
 {
 	"Label": "Sport",
-	"profiles": [
+	"Profiles": [
 		{
 			"Label": "Profile_1",
-			"fileFormat": "mp4",
-			"video": {
-				"codec": "libx264",
-				"profile": "high",
-				"width": 720,
-				"height": 480,
-				"kBitRate": 256,
-				"twoPasses": true
+			"FileFormat": "mp4",
+			"Video": {
+				"Codec": "libx264",
+				"Profile": "high",
+				"Width": 720,
+				"Height": 480,
+				"KBitRate": 256,
+				"TwoPasses": true
 			},
-			"audio": {
-				"codec": "libaacplus",
-				"kBitRate": 64
+			"Audio": {
+				"Codec": "libaacplus",
+				"KBitRate": 64
 			}
 		},
 		{
 			"Label": "Profile_2",
-			"fileFormat": "mp4",
-			"video": {
-				"codec": "libx264",
-				"profile": "high",
-				"width": 720,
-				"height": 480,
-				"kBitRate": 128,
-				"twoPasses": true
+			"FileFormat": "mp4",
+			"Video": {
+				"Codec": "libx264",
+				"Profile": "high",
+				"Width": 720,
+				"Height": 480,
+				"KBitRate": 128,
+				"TwoPasses": true
 			},
-			"audio": {
-				"codec": "libaacplus",
-				"kBitRate": 64
+			"Audio": {
+				"Codec": "libaacplus",
+				"KBitRate": 64
 			}
 		}
 	]

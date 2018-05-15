@@ -3275,7 +3275,7 @@ void API::addEncodingProfilesSet(
             int64_t encodingProfilesSetKey = _mmsEngineDBFacade->addEncodingProfilesSet(conn,
                     workspace->_workspaceKey, contentType, label);
             
-            field = "profiles";
+            field = "Profiles";
             if (_mmsEngineDBFacade->isMetadataPresent(encodingProfilesSetRoot, field))
             {
                 Json::Value profilesRoot = encodingProfilesSetRoot[field];

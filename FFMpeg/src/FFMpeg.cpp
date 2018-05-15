@@ -1981,7 +1981,7 @@ void FFMpeg::settingFfmpegPatameters(
     // fileFormat
     string fileFormat;
     {
-        field = "fileFormat";
+        field = "FileFormat";
         if (!isMetadataPresent(encodingProfileRoot, field))
         {
             string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
@@ -2025,7 +2025,7 @@ void FFMpeg::settingFfmpegPatameters(
 
     if (isVideo)
     {
-        field = "video";
+        field = "Video";
         if (!isMetadataPresent(encodingProfileRoot, field))
         {
             string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
@@ -2040,7 +2040,7 @@ void FFMpeg::settingFfmpegPatameters(
         // codec
         string codec;
         {
-            field = "codec";
+            field = "Codec";
             if (!isMetadataPresent(videoRoot, field))
             {
                 string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
@@ -2061,7 +2061,7 @@ void FFMpeg::settingFfmpegPatameters(
 
         // profile
         {
-            field = "profile";
+            field = "Profile";
             if (isMetadataPresent(videoRoot, field))
             {
                 string profile = videoRoot.get(field, "XXX").asString();
@@ -2092,7 +2092,7 @@ void FFMpeg::settingFfmpegPatameters(
 
         // resolution
         {
-            field = "width";
+            field = "Width";
             if (!isMetadataPresent(videoRoot, field))
             {
                 string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
@@ -2105,7 +2105,7 @@ void FFMpeg::settingFfmpegPatameters(
             if (width == -1 && codec == "libx264")
                 width   = -2;     // h264 requires always a even width/height
         
-            field = "height";
+            field = "Height";
             if (!isMetadataPresent(videoRoot, field))
             {
                 string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
@@ -2125,7 +2125,7 @@ void FFMpeg::settingFfmpegPatameters(
 
         // bitRate
         {
-            field = "kBitRate";
+            field = "KBitRate";
             if (!isMetadataPresent(videoRoot, field))
             {
                 string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
@@ -2144,7 +2144,7 @@ void FFMpeg::settingFfmpegPatameters(
 
         // twoPasses
         {
-            field = "twoPasses";
+            field = "TwoPasses";
             if (!isMetadataPresent(videoRoot, field) 
                     && fileFormat != "segment") // twoPasses is used ONLY if it is NOT segment
             {
@@ -2161,7 +2161,7 @@ void FFMpeg::settingFfmpegPatameters(
 
         // maxRate
         {
-            field = "maxRate";
+            field = "MaxRate";
             if (isMetadataPresent(videoRoot, field))
             {
                 int maxRate = videoRoot.get(field, "XXX").asInt();
@@ -2174,7 +2174,7 @@ void FFMpeg::settingFfmpegPatameters(
 
         // bufSize
         {
-            field = "bufSize";
+            field = "BufSize";
             if (isMetadataPresent(videoRoot, field))
             {
                 int bufSize = videoRoot.get(field, "XXX").asInt();
@@ -2187,7 +2187,7 @@ void FFMpeg::settingFfmpegPatameters(
 
         // frameRate
         {
-            field = "frameRate";
+            field = "FrameRate";
             if (isMetadataPresent(videoRoot, field))
             {
                 int frameRate = videoRoot.get(field, "XXX").asInt();
@@ -2198,7 +2198,7 @@ void FFMpeg::settingFfmpegPatameters(
 
                 // keyFrameIntervalInSeconds
                 {
-                    field = "keyFrameIntervalInSeconds";
+                    field = "KeyFrameIntervalInSeconds";
                     if (isMetadataPresent(videoRoot, field))
                     {
                         int keyFrameIntervalInSeconds = videoRoot.get(field, "XXX").asInt();
@@ -2215,7 +2215,7 @@ void FFMpeg::settingFfmpegPatameters(
     
     // if (contentType == "video" || contentType == "audio")
     {
-        field = "audio";
+        field = "Audio";
         if (!isMetadataPresent(encodingProfileRoot, field))
         {
             string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
@@ -2229,7 +2229,7 @@ void FFMpeg::settingFfmpegPatameters(
 
         // codec
         {
-            field = "codec";
+            field = "Codec";
             if (!isMetadataPresent(audioRoot, field))
             {
                 string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
@@ -2249,7 +2249,7 @@ void FFMpeg::settingFfmpegPatameters(
 
         // kBitRate
         {
-            field = "kBitRate";
+            field = "KBitRate";
             if (!isMetadataPresent(audioRoot, field))
             {
                 string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
@@ -2267,7 +2267,7 @@ void FFMpeg::settingFfmpegPatameters(
         
         // channelsNumber
         {
-            field = "channelsNumber";
+            field = "ChannelsNumber";
             if (isMetadataPresent(audioRoot, field))
             {
                 int channelsNumber = audioRoot.get(field, "XXX").asInt();
@@ -2280,7 +2280,7 @@ void FFMpeg::settingFfmpegPatameters(
 
         // sample rate
         {
-            field = "sampleRate";
+            field = "SampleRate";
             if (isMetadataPresent(audioRoot, field))
             {
                 int sampleRate = audioRoot.get(field, "XXX").asInt();

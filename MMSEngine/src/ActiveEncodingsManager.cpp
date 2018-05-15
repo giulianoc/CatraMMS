@@ -950,7 +950,7 @@ void ActiveEncodingsManager::readingImageProfile(
 
     // Format
     {
-        field = "format";
+        field = "Format";
         if (!_mmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -967,7 +967,7 @@ void ActiveEncodingsManager::readingImageProfile(
 
     // Width
     {
-        field = "width";
+        field = "Width";
         if (!_mmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -982,7 +982,7 @@ void ActiveEncodingsManager::readingImageProfile(
 
     // Height
     {
-        field = "height";
+        field = "Height";
         if (!_mmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -997,7 +997,7 @@ void ActiveEncodingsManager::readingImageProfile(
 
     // Aspect
     {
-        field = "aspectRatio";
+        field = "AspectRatio";
         if (!_mmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -1012,7 +1012,7 @@ void ActiveEncodingsManager::readingImageProfile(
 
     // Interlace
     {
-        field = "interlaceType";
+        field = "InterlaceType";
         if (!_mmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
