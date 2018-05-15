@@ -1,0 +1,38 @@
+{
+    "Label": "Sport",
+    "Profiles": [
+        {
+            "Label": "Profile_1",
+            "FileFormat": "mp4",
+            "Video": {
+                "Codec": "libx264",
+                "Profile": "high",
+                "Width": 720,
+                "Height": 480,
+                "KBitRate": 256,
+                "TwoPasses": true
+            },
+            "Audio": {
+                "Codec": "aac",
+                "KBitRate": 64
+            }
+        },
+        {
+            "Label": "Profile_2",
+            "FileFormat": "mp4",
+            "Video": {
+                "Codec": "libx264",
+                "Profile": "high",
+                "Width": 720,
+                "Height": 480,
+                "KBitRate": 128,
+                "TwoPasses": true
+            },
+            "Audio": {
+                "Codec": "aac",
+                "KBitRate": 64
+            }
+        }
+    ]
+}
+
