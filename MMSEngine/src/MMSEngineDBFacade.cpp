@@ -7428,12 +7428,12 @@ int MMSEngineDBFacade::addOverlayTextOnVideoJob (
                 + ", \"textPosition_X_InPixel\": \"" + textPosition_X_InPixel + "\""
                 + ", \"textPosition_Y_InPixel\": \"" + textPosition_Y_InPixel + "\""
                 + ", \"fontType\": \"" + fontType + "\""
-                + ", \"fontSize\": \"" + to_string(fontSize) + "\""
+                + ", \"fontSize\": " + to_string(fontSize)
                 + ", \"fontColor\": \"" + fontColor + "\""
-                + ", \"textPercentageOpacity\": \"" + to_string(textPercentageOpacity) + "\""
-                + ", \"boxEnable\": \"" + (boxEnable ? "true" : "false") + "\""
+                + ", \"textPercentageOpacity\": " + to_string(textPercentageOpacity)
+                + ", \"boxEnable\": " + (boxEnable ? "true" : "false")
                 + ", \"boxColor\": \"" + boxColor + "\""
-                + ", \"boxPercentageOpacity\": \"" + to_string(boxPercentageOpacity) + "\""
+                + ", \"boxPercentageOpacity\": " + to_string(boxPercentageOpacity)
 
                 + "} ";
        {
@@ -11470,7 +11470,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "encodingJobKey  			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "ingestionJobKey			BIGINT UNSIGNED NOT NULL,"
                     "type                               VARCHAR (64) NOT NULL,"
-                    "parameters                         VARCHAR (256) NOT NULL,"
+                    "parameters                         VARCHAR (1024) NOT NULL,"
                     "encodingPriority			TINYINT NOT NULL,"
                     "encodingJobStart			TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "encodingJobEnd			DATETIME NULL,"
