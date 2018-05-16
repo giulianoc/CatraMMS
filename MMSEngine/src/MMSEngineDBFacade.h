@@ -213,7 +213,7 @@ public:
             return EncodingType::EncodeImage;
         else if (lowerCase == "overlayimageonvideo")
             return EncodingType::OverlayImageOnVideo;
-        else if (lowerCase == "drawtextonvideo")
+        else if (lowerCase == "overlaytextonvideo")
             return EncodingType::OverlayTextOnVideo;
         else
             throw runtime_error(string("Wrong EncodingType")
@@ -384,7 +384,7 @@ public:
             case IngestionType::OverlayImageOnVideo:
                 return "Overlay-Image-On-Video";
             case IngestionType::OverlayTextOnVideo:
-                return "Draw-Text-On-Video";
+                return "Overlay-Text-On-Video";
                 
             case IngestionType::EmailNotification:
                 return "Email-Notification";
@@ -426,7 +426,7 @@ public:
             return IngestionType::Cut;
         else if (lowerCase == "overlay-image-on-video")
             return IngestionType::OverlayImageOnVideo;
-        else if (lowerCase == "draw-text-on-video")
+        else if (lowerCase == "overlay-text-on-video")
             return IngestionType::OverlayTextOnVideo;
 
         else if (lowerCase == "email-notification")

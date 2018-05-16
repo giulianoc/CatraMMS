@@ -1,0 +1,38 @@
+{
+    "Type": "Workflow",
+    "Label": "1",
+    "Variables": {
+        "TitleOfVideo": "My Title of the video content",
+        "TitleOfOverlayVideo": "My Title of the overlay video content"
+    },
+    "Task": {
+        "Label": "My video",
+        "Type": "Add-Content",
+        "Parameters": {
+            "SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
+            "FileFormat": "mp4",
+            "UserData": { "MyData": "this is my video data" },
+            "Title": "${TitleOfVideo}"
+        },
+        "OnSuccess": {
+            "Task": {
+                "Label": "my label",
+                "Type": "Overlay-Text-On-Video",
+                "Parameters": {
+                    "Text": "This video is for adult",                                  
+                    "TextPosition_X_InPixel": "(video_width-text_width)/2",
+                    "TextPosition_Y_InPixel": "(video_height-text_text_height)/2",
+                    "FontSize": 24,
+                    "FontColor": "red",
+                    "TextPercentageOpacity": 20,
+                    "BoxEnable": true,
+                    "BoxColor": "red",
+                    "BoxPercentageOpacity": 50,
+
+                    "UserData": { "MyData": "this is my data" },
+                    "Title": "${TitleOfOverlayVideo}"
+                }
+            }
+        }
+    }
+}
