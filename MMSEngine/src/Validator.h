@@ -37,6 +37,10 @@ public:
     
     bool isImageFileFormat(string fileFormat);
 
+    bool isFontTypeValid(string fontType);
+    
+    bool isFontColorValid(string fontColor);
+
     void validateRootMetadata(int64_t workspaceKey, Json::Value root);
 
     void validateGroupOfTasksMetadata(int64_t workspaceKey, Json::Value groupOfTasksRoot);
@@ -76,6 +80,9 @@ public:
 
     void validateOverlayImageOnVideoMetadata(int64_t workspaceKey,
         Json::Value parametersRoot, vector<pair<int64_t,DependencyType>>& dependencies);
+
+    void validateOverlayTextOnVideoMetadata(int64_t workspaceKey,
+        Json::Value parametersRoot, vector<pair<int64_t, DependencyType>>& dependencies);
 
     void validateEmailNotificationMetadata(
         Json::Value parametersRoot, vector<pair<int64_t,DependencyType>>& dependencies);

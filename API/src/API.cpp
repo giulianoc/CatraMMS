@@ -1801,7 +1801,7 @@ void API::ingestion(
                             ;
                     _logger->error(errorMessage);
 
-                    throw runtime_error(errorMessage);
+                    throw runtime_error(errors);
                 }
             }
 

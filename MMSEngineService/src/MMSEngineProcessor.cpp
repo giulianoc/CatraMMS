@@ -971,6 +971,64 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 throw runtime_error(errorMessage);
                             }
                         }
+                        else if (ingestionType == MMSEngineDBFacade::IngestionType::OverlayTextOnVideo)
+                        {
+                            // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
+                            try
+                            {
+                                manageOverlayTextOnVideoTask(
+                                        ingestionJobKey, 
+                                        workspace, 
+                                        parametersRoot, 
+                                        dependencies);
+                            }
+                            catch(runtime_error e)
+                            {
+                                _logger->error(__FILEREF__ + "manageOverlayTextOnVideoTask failed"
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                                        errorMessage,
+                                        "" // processorMMS
+                                        );
+
+                                throw runtime_error(errorMessage);
+                            }
+                            catch(exception e)
+                            {
+                                _logger->error(__FILEREF__ + "manageOverlayTextOnVideoTask failed"
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                                        errorMessage,
+                                        "" // processorMMS
+                                        );
+
+                                throw runtime_error(errorMessage);
+                            }
+                        }
                         else if (ingestionType == MMSEngineDBFacade::IngestionType::EmailNotification)
                         {
                             // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
@@ -2928,19 +2986,20 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
             throw runtime_error(errorMessage);
         }
 
+        MMSEngineDBFacade::EncodingPriority encodingPriority;
         string field = "EncodingPriority";
         if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
         {
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + field;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
+            encodingPriority = 
+                    static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority);
         }
-        MMSEngineDBFacade::EncodingPriority encodingPriority =
+        else
+        {
+            encodingPriority =
                 MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
+        }
 
-        field = "imagePosition_X_InPixel";
+        field = "ImagePosition_X_InPixel";
         if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -2951,7 +3010,7 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
         }
         string imagePosition_X_InPixel = parametersRoot.get(field, "XXX").asString();
 
-        field = "imagePosition_Y_InPixel";
+        field = "ImagePosition_Y_InPixel";
         if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -3022,6 +3081,162 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
     catch(exception e)
     {
         _logger->error(__FILEREF__ + "manageOverlayImageOnVideoTask failed"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+        );
+        
+        throw e;
+    }
+}
+
+void MMSEngineProcessor::manageOverlayTextOnVideoTask(
+        int64_t ingestionJobKey,
+        shared_ptr<Workspace> workspace,
+        Json::Value parametersRoot,
+        vector<pair<int64_t,Validator::DependencyType>>& dependencies
+)
+{
+    try
+    {
+        if (dependencies.size() != 1)
+        {
+            string errorMessage = __FILEREF__ + "Wrong number of dependencies"
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", dependencies.size: " + to_string(dependencies.size());
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        MMSEngineDBFacade::EncodingPriority encodingPriority;
+        string field = "EncodingPriority";
+        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+            encodingPriority = 
+                    static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority);
+        }
+        else
+        {
+            encodingPriority =
+                MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
+        }
+
+        field = "Text";
+        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        string text = parametersRoot.get(field, "XXX").asString();
+
+        string textPosition_X_InPixel;
+        field = "TextPosition_X_InPixel";
+        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+            textPosition_X_InPixel = parametersRoot.get(field, "XXX").asString();
+        }
+
+        string textPosition_Y_InPixel;
+        field = "TextPosition_Y_InPixel";
+        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+            textPosition_Y_InPixel = parametersRoot.get(field, "XXX").asString();
+        }
+
+        string fontType;
+        field = "FontType";
+        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+            fontType = parametersRoot.get(field, "XXX").asString();
+        }
+
+        int fontSize;
+        field = "FontSize";
+        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+            fontSize = parametersRoot.get(field, -1).asInt();
+        }
+
+        string fontColor;
+        field = "FontColor";
+        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+            fontColor = parametersRoot.get(field, "XXX").asString();
+        }
+
+        int textPercentageOpacity;
+        field = "TextPercentageOpacity";
+        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+            textPercentageOpacity = parametersRoot.get(field, -1).asInt();
+        }
+
+        bool boxEnable;
+        field = "BoxEnable";
+        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+            boxEnable = parametersRoot.get(field, -1).asBool();
+        }
+
+        string boxColor;
+        field = "BoxColor";
+        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+            boxColor = parametersRoot.get(field, "XXX").asString();
+        }
+
+        int boxPercentageOpacity;
+        field = "BoxPercentageOpacity";
+        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+            boxPercentageOpacity = parametersRoot.get(field, -1).asInt();
+        }
+
+        int64_t sourceMediaItemKey;
+        int64_t sourcePhysicalPathKey;
+        pair<int64_t,Validator::DependencyType>& keyAndDependencyType = dependencies[0];
+        if (keyAndDependencyType.second == Validator::DependencyType::MediaItemKey)
+        {
+            sourceMediaItemKey = keyAndDependencyType.first;
+
+            sourcePhysicalPathKey = -1;
+        }
+        else
+        {
+            sourcePhysicalPathKey = keyAndDependencyType.first;
+            
+            bool warningIfMissing = false;
+            pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType =
+                _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+                    sourcePhysicalPathKey, warningIfMissing);
+    
+            sourceMediaItemKey = mediaItemKeyAndContentType.first;
+        }
+
+        _mmsEngineDBFacade->addOverlayTextOnVideoJob (
+                ingestionJobKey, encodingPriority,
+                
+                sourceMediaItemKey, sourcePhysicalPathKey,
+                text,
+                textPosition_X_InPixel, textPosition_Y_InPixel,
+                fontType, fontSize, fontColor, textPercentageOpacity,
+                boxEnable, boxColor, boxPercentageOpacity
+                );
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "manageOverlayTextOnVideoTask failed"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
+        );
+        
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "manageOverlayTextOnVideoTask failed"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );
         

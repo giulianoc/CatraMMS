@@ -107,6 +107,7 @@ private:
     string                              _ffmpegEncoderStatusURI;
     string                              _ffmpegEncodeURI;
     string                              _ffmpegOverlayImageOnVideoURI;
+    string                              _ffmpegOverlayTextOnVideoURI;
     
     #ifdef __LOCALENCODER__
         shared_ptr<FFMpeg>              _ffmpeg;
@@ -123,8 +124,12 @@ private:
 
     string overlayImageOnVideo();
     string overlayImageOnVideo_through_ffmpeg();
-
     pair<int64_t,int64_t> processOverlayedImageOnVideo(string stagingEncodedAssetPathName);    
+
+    string overlayTextOnVideo();
+    string overlayTextOnVideo_through_ffmpeg();
+    pair<int64_t,int64_t> processOverlayedTextOnVideo(string stagingEncodedAssetPathName);    
+    
 
     bool getEncodingStatus(int64_t encodingJobKey);
 };

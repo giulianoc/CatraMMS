@@ -182,7 +182,8 @@ public:
     enum class EncodingType {
         EncodeVideoAudio    = 0,
         EncodeImage         = 1,
-        OverlayImageOnVideo = 2
+        OverlayImageOnVideo = 2,
+        OverlayTextOnVideo     = 3
     };
     static const char* toString(const EncodingType& encodingType)
     {
@@ -194,6 +195,8 @@ public:
                 return "EncodeImage";
             case EncodingType::OverlayImageOnVideo:
                 return "OverlayImageOnVideo";
+            case EncodingType::OverlayTextOnVideo:
+                return "OverlayTextOnVideo";
             default:
             throw runtime_error(string("Wrong EncodingType"));
         }
@@ -210,6 +213,8 @@ public:
             return EncodingType::EncodeImage;
         else if (lowerCase == "overlayimageonvideo")
             return EncodingType::OverlayImageOnVideo;
+        else if (lowerCase == "drawtextonvideo")
+            return EncodingType::OverlayTextOnVideo;
         else
             throw runtime_error(string("Wrong EncodingType")
                     + ", encodingType: " + encodingType
@@ -309,8 +314,18 @@ public:
             Json::Value                             _overlayParametersRoot;
         };
         
+        struct OverlayTextOnVideoData {
+            unsigned long                           _mmsVideoPartitionNumber;
+            string                                  _videoFileName;
+            string                                  _videoRelativePath;
+            int64_t                                 _videoDurationInMilliSeconds;
+
+            Json::Value                             _overlayTextParametersRoot;
+        };
+
         shared_ptr<EncodeData>                      _encodeData;
         shared_ptr<OverlayImageOnVideoData>         _overlayImageOnVideoData;
+        shared_ptr<OverlayTextOnVideoData>             _overlayTextOnVideoData;
     } ;
 
     enum class WorkspaceType {
@@ -333,6 +348,7 @@ public:
         ConcatDemuxer           = 10,
         Cut                     = 11,
         OverlayImageOnVideo     = 12,
+        OverlayTextOnVideo         = 13,
         EmailNotification       = 30,
         ContentUpdate           = 50,
         ContentRemove           = 60
@@ -367,6 +383,8 @@ public:
                 return "Cut";
             case IngestionType::OverlayImageOnVideo:
                 return "Overlay-Image-On-Video";
+            case IngestionType::OverlayTextOnVideo:
+                return "Draw-Text-On-Video";
                 
             case IngestionType::EmailNotification:
                 return "Email-Notification";
@@ -408,6 +426,8 @@ public:
             return IngestionType::Cut;
         else if (lowerCase == "overlay-image-on-video")
             return IngestionType::OverlayImageOnVideo;
+        else if (lowerCase == "draw-text-on-video")
+            return IngestionType::OverlayTextOnVideo;
 
         else if (lowerCase == "email-notification")
             return IngestionType::EmailNotification;
@@ -756,6 +776,22 @@ public:
         int64_t mediaItemKey_2, int64_t physicalPathKey_2,
         string imagePosition_X_InPixel, string imagePosition_Y_InPixel,
         EncodingPriority encodingPriority);
+
+    int addOverlayTextOnVideoJob (
+        int64_t ingestionJobKey,
+        EncodingPriority encodingPriority,
+
+        int64_t mediaItemKey, int64_t physicalPathKey,
+        string text,
+        string textPosition_X_InPixel,
+        string textPosition_Y_InPixel,
+        string fontType,
+        int fontSize,
+        string fontColor,
+        int textPercentageOpacity,
+        bool boxEnable,
+        string boxColor,
+        int boxPercentageOpacity);
 
     int updateEncodingJob (
         int64_t encodingJobKey,

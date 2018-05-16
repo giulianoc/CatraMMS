@@ -66,6 +66,26 @@ public:
         int64_t encodingJobKey,
         int64_t ingestionJobKey);
 
+    void overlayTextOnVideo(
+        string mmsSourceVideoAssetPathName,
+        int64_t videoDurationInMilliSeconds,
+
+        string text,
+        string textPosition_X_InPixel,
+        string textPosition_Y_InPixel,
+        string fontType,
+        int fontSize,
+        string fontColor,
+        int textPercentageOpacity,
+        bool boxEnable,
+        string boxColor,
+        int boxPercentageOpacity,
+
+        string encodedFileName,
+        string stagingEncodedAssetPathName,
+        int64_t encodingJobKey,
+        int64_t ingestionJobKey);
+
     int getEncodingProgress();
 
     tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> getMediaInfo(string mmsAssetPathName);
@@ -120,6 +140,7 @@ private:
     shared_ptr<spdlog::logger>  _logger;
     string          _ffmpegPath;
     string          _ffmpegTempDir;
+    string          _ffmpegTtfFontDir;
     int             _charsToBeReadFromFfmpegErrorOutput;
     bool            _twoPasses;
     string          _outputFfmpegPathFileName;
