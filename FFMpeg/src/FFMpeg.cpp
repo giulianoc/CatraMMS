@@ -802,9 +802,9 @@ void FFMpeg::overlayTextOnVideo(
             string ffmpegDrawTextFilter = string("-vf drawtext=\"text='")
                     + text + "'";
             if (textPosition_X_InPixel != "")
-                ffmpegDrawTextFilter += (": x=" + textPosition_X_InPixel);
+                ffmpegDrawTextFilter += (": x=" + ffmpegTextPosition_X_InPixel);
             if (textPosition_Y_InPixel != "")
-                ffmpegDrawTextFilter += (": y=" + textPosition_Y_InPixel);               
+                ffmpegDrawTextFilter += (": y=" + ffmpegTextPosition_Y_InPixel);               
             if (fontType != "")
                 ffmpegDrawTextFilter += (": fontfile=" + _ffmpegTtfFontDir + "/" + fontType);
             if (fontSize != -1)
