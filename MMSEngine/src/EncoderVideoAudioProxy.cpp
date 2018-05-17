@@ -2836,17 +2836,21 @@ string EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
                 }
             }
             
-            if (encodingStatusFailures >= maxEncodingStatusFailures)
+            // here we do not know if the encoding was successful or not
+            // we can just check the encoded file because we know the ffmpeg methods
+            // will remove the encoded file in case of failure
+            if (!FileIO::fileExisting(stagingEncodedAssetPathName)
+                && !FileIO::directoryExisting(stagingEncodedAssetPathName))
             {
-                    string errorMessage = string("Encoding failed, reached max encoding failures")
-                            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
-                            + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
-                            + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
-                            ;
-                    _logger->error(__FILEREF__ + errorMessage);
+                string errorMessage = string("Encoded file was not generated!!!")
+                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                        + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                        + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+                        + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
+                        ;
+                _logger->error(__FILEREF__ + errorMessage);
 
-                    throw runtime_error(errorMessage);
+                throw runtime_error(errorMessage);
             }
             
             chrono::system_clock::time_point endEncoding = chrono::system_clock::now();

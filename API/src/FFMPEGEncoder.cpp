@@ -725,6 +725,8 @@ void FFMPEGEncoder::encodeContent(
         */
 
         // this method run on a detached thread, we will not generate exception
+        // The ffmpeg method will make sure the encoded file is removed 
+        // (this is checked in EncoderVideoAudioProxy)
         // throw runtime_error(errorMessage);
     }
     catch(exception e)
@@ -747,6 +749,8 @@ void FFMPEGEncoder::encodeContent(
          */
 
         // this method run on a detached thread, we will not generate exception
+        // The ffmpeg method will make sure the encoded file is removed 
+        // (this is checked in EncoderVideoAudioProxy)
         // throw runtime_error(errorMessage);
     }
 }
@@ -863,6 +867,8 @@ void FFMPEGEncoder::overlayImageOnVideo(
         */
 
         // this method run on a detached thread, we will not generate exception
+        // The ffmpeg method will make sure the encoded file is removed 
+        // (this is checked in EncoderVideoAudioProxy)
         // throw runtime_error(errorMessage);
     }
     catch(exception e)
@@ -885,6 +891,8 @@ void FFMPEGEncoder::overlayImageOnVideo(
          */
 
         // this method run on a detached thread, we will not generate exception
+        // The ffmpeg method will make sure the encoded file is removed 
+        // (this is checked in EncoderVideoAudioProxy)
         // throw runtime_error(errorMessage);
     }
 }
@@ -1018,6 +1026,8 @@ void FFMPEGEncoder::overlayTextOnVideo(
         */
 
         // this method run on a detached thread, we will not generate exception
+        // The ffmpeg method will make sure the encoded file is removed 
+        // (this is checked in EncoderVideoAudioProxy)
         // throw runtime_error(errorMessage);
     }
     catch(exception e)
@@ -1040,6 +1050,8 @@ void FFMPEGEncoder::overlayTextOnVideo(
          */
 
         // this method run on a detached thread, we will not generate exception
+        // The ffmpeg method will make sure the encoded file is removed 
+        // (this is checked in EncoderVideoAudioProxy)
         // throw runtime_error(errorMessage);
     }
 }
