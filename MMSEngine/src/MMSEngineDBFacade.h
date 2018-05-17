@@ -615,6 +615,10 @@ public:
         EncodingTechnology encodingTechnology,
         string jsonEncodingProfile);
 
+    void getExpiredMediaItemKeys(
+        vector<pair<shared_ptr<Workspace>,int64_t>>& mediaItemKeyToBeRemoved,
+            int maxMediaItemKeysNumber);
+
     void getIngestionsToBeManaged(
         vector<tuple<int64_t,string,shared_ptr<Workspace>,string, IngestionType, IngestionStatus>>& ingestionsToBeManaged,
         string processorMMS,

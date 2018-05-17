@@ -458,7 +458,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUser(
             _connectionPool->unborrow(conn);
         }
 
-        throw exception();
+        throw e;
     }
     catch(exception e)
     {
@@ -785,7 +785,7 @@ tuple<string,string,string> MMSEngineDBFacade::confirmUser(
             _connectionPool->unborrow(conn);
         }
         
-        throw exception();
+        throw e;
     }
     catch(exception e)
     {
@@ -930,7 +930,7 @@ tuple<int64_t,shared_ptr<Workspace>,bool,bool> MMSEngineDBFacade::checkAPIKey (s
         );
         _connectionPool->unborrow(conn);
 
-        throw exception();
+        throw e;
     }
     catch(exception e)
     {        
@@ -1006,7 +1006,7 @@ int64_t MMSEngineDBFacade::addTerritory (
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        throw exception();
+        throw e;
     }
     catch(exception e)
     {        
@@ -1092,7 +1092,7 @@ bool MMSEngineDBFacade::isLoginValid(
         );
         _connectionPool->unborrow(conn);
 
-        throw exception();
+        throw e;
     }
     catch(exception e)
     {        
@@ -1182,7 +1182,7 @@ string MMSEngineDBFacade::getPassword(string emailAddress)
         );
         _connectionPool->unborrow(conn);
 
-        throw exception();
+        throw e;
     }
     catch(exception e)
     {        
@@ -1260,7 +1260,7 @@ int64_t MMSEngineDBFacade::addEncodingProfilesSet (
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        throw exception();
+        throw e;
     }
     catch(exception e)
     {        
@@ -1338,7 +1338,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
         );
         _connectionPool->unborrow(conn);
 
-        throw exception();
+        throw e;
     }    
     catch(exception e)
     {        
@@ -1487,7 +1487,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        throw exception();
+        throw e;
     }
     catch(exception e)
     {
@@ -1499,6 +1499,93 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
     }
     
     return encodingProfileKey;
+}
+
+void MMSEngineDBFacade::getExpiredMediaItemKeys(
+    vector<pair<shared_ptr<Workspace>,int64_t>>& mediaItemKeyToBeRemoved,
+        int maxMediaItemKeysNumber)
+{    
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        
+        {
+            lastSQLCommand = 
+                "select workspaceKey, mediaItemKey from MMS_MediaItem where "
+                "DATE_ADD(ingestionDate, INTERVAL retentionInDays DAY) < NOW()";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            while (resultSet->next())
+            {
+                int64_t workspaceKey = resultSet->getInt64("workspaceKey");
+                int64_t mediaItemKey = resultSet->getInt64("mediaItemKey");
+                
+                shared_ptr<Workspace> workspace = getWorkspace(workspaceKey);
+                
+                pair<shared_ptr<Workspace>,int64_t> workspaceAndMediaItemKey =
+                        make_pair(workspace, mediaItemKey);
+                
+                mediaItemKeyToBeRemoved.push_back(workspaceAndMediaItemKey);
+            }
+        }
+        
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
+        throw se;
+    }
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
+        throw e;
+    }
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
+        throw e;
+    }    
 }
 
 /*
@@ -1559,7 +1646,7 @@ string MMSEngineDBFacade::resetIngestionJobs(string processorMMS)
         );
         _connectionPool->unborrow(conn);
 
-        throw exception();
+        throw e;
     }
     catch(exception e)
     {        
@@ -1905,7 +1992,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
             _connectionPool->unborrow(conn);
         }
 
-        throw exception();
+        throw e;
     }        
     catch(exception e)
     {        
@@ -2004,7 +2091,7 @@ shared_ptr<MySQLConnection> MMSEngineDBFacade::beginIngestionJobs ()
         );
         _connectionPool->unborrow(conn);
 
-        throw exception();
+        throw e;
     }
     catch(exception e)
     {        
@@ -2081,7 +2168,7 @@ shared_ptr<MySQLConnection> MMSEngineDBFacade::endIngestionJobs (
         );
         _connectionPool->unborrow(conn);
 
-        throw exception();
+        throw e;
     }
     catch(exception e)
     {        
@@ -2147,7 +2234,7 @@ int64_t MMSEngineDBFacade::addIngestionRoot (
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        throw exception();
+        throw e;
     }
     catch(exception e)
     {        
@@ -2303,7 +2390,7 @@ int64_t MMSEngineDBFacade::addIngestionJob (
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        throw exception();
+        throw e;
     }
     catch(exception e)
     {        
@@ -2374,7 +2461,7 @@ void MMSEngineDBFacade::updateIngestionJobMetadataContent (
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        throw exception();
+        throw e;
     }    
     catch(exception e)
     {        
@@ -2467,7 +2554,7 @@ void MMSEngineDBFacade::updateIngestionJob (
         );
         _connectionPool->unborrow(conn);
 
-        throw exception();
+        throw e;
     }    
     catch(exception e)
     {        
@@ -2647,7 +2734,7 @@ void MMSEngineDBFacade::updateIngestionJob (
         );
         _connectionPool->unborrow(conn);
 
-        throw exception();
+        throw e;
     }    
     catch(exception e)
     {        
@@ -2839,7 +2926,7 @@ void MMSEngineDBFacade::updateIngestionJob (
         );
         _connectionPool->unborrow(conn);
 
-        throw exception();
+        throw e;
     }    
     catch(exception e)
     {        
@@ -3022,7 +3109,7 @@ void MMSEngineDBFacade::updateIngestionJob (
         );
         _connectionPool->unborrow(conn);
 
-        throw exception();
+        throw e;
     }    
     catch(exception e)
     {        
@@ -3141,7 +3228,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress (
         );
         _connectionPool->unborrow(conn);
         
-        throw exception();
+        throw e;
     }
     catch(exception e)
     {
@@ -3234,7 +3321,7 @@ void MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress (
         );
         _connectionPool->unborrow(conn);
         
-        throw exception();
+        throw e;
     }
     catch(exception e)
     {
@@ -3325,7 +3412,7 @@ void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred (
         );
         _connectionPool->unborrow(conn);
         
-        throw exception();
+        throw e;
     }
     catch(exception e)
     {
@@ -3797,7 +3884,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobStatus (
         );
         _connectionPool->unborrow(conn);
 
-        throw exception();
+        throw e;
     } 
     catch(exception e)
     {        
@@ -4244,7 +4331,7 @@ Json::Value MMSEngineDBFacade::getContentList (
         );
         _connectionPool->unborrow(conn);
 
-        throw exception();
+        throw e;
     } 
     catch(exception e)
     {        
@@ -4357,7 +4444,7 @@ MMSEngineDBFacade::ContentType MMSEngineDBFacade::getMediaItemKeyDetails(
         );
         _connectionPool->unborrow(conn);
         
-        throw exception();
+        throw e;
     }
     catch(exception e)
     {
@@ -4464,7 +4551,7 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
         );
         _connectionPool->unborrow(conn);
         
-        throw exception();
+        throw e;
     }
     catch(exception e)
     {
@@ -4602,7 +4689,7 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
         );
         _connectionPool->unborrow(conn);
         
-        throw exception();
+        throw e;
     }
     catch(exception e)
     {
@@ -4717,7 +4804,7 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
         );
         _connectionPool->unborrow(conn);
         
-        throw exception();
+        throw e;
     }
     catch(exception e)
     {
@@ -4862,7 +4949,7 @@ tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMedi
         );
         _connectionPool->unborrow(conn);
         
-        throw exception();
+        throw e;
     }
     catch(exception e)
     {
@@ -4979,7 +5066,7 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
         );
         _connectionPool->unborrow(conn);
         
-        throw exception();
+        throw e;
     }
     catch(exception e)
     {
@@ -5131,7 +5218,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> MMSEn
         );
         _connectionPool->unborrow(conn);
         
-        throw exception();
+        throw e;
     }    
     catch(exception e)
     {
@@ -5263,7 +5350,7 @@ tuple<int64_t,string,long,long,int> MMSEngineDBFacade::getAudioDetails(
         );
         _connectionPool->unborrow(conn);
         
-        throw exception();
+        throw e;
     }    
     catch(exception e)
     {
@@ -5393,7 +5480,7 @@ tuple<int,int,string,int> MMSEngineDBFacade::getImageDetails(
         );
         _connectionPool->unborrow(conn);
         
-        throw exception();
+        throw e;
     }    
     catch(exception e)
     {
@@ -5459,7 +5546,8 @@ void MMSEngineDBFacade::getEncodingJobs(
             int retentionDaysToReset = 7;
             
             lastSQLCommand = 
-                "update MMS_EncodingJob set status = ?, processorMMS = null where processorMMS = ? and status = ? and DATE_ADD(encodingJobStart, INTERVAL ? DAY) <= NOW()";
+                "update MMS_EncodingJob set status = ?, processorMMS = null where processorMMS = ? and status = ? "
+                "and DATE_ADD(encodingJobStart, INTERVAL ? DAY) <= NOW()";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
@@ -6272,7 +6360,7 @@ void MMSEngineDBFacade::getEncodingJobs(
             _connectionPool->unborrow(conn);
         }
         
-        throw exception();
+        throw e;
     }
     catch(exception e)
     {
@@ -6420,7 +6508,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetKey(
         );
         _connectionPool->unborrow(conn);
         
-        throw exception();
+        throw e;
     }       
     catch(exception e)
     {
@@ -6663,7 +6751,7 @@ int MMSEngineDBFacade::addEncodingJob (
         );
         _connectionPool->unborrow(conn);
         
-        throw exception();
+        throw e;
     }
     catch(exception e)
     {
@@ -6920,7 +7008,7 @@ int MMSEngineDBFacade::addEncodingJob (
             _connectionPool->unborrow(conn);
         }
         
-        throw exception();
+        throw e;
     }        
     catch(exception e)
     {
@@ -7282,7 +7370,7 @@ int MMSEngineDBFacade::addOverlayImageOnVideoJob (
             _connectionPool->unborrow(conn);
         }
         
-        throw exception();
+        throw e;
     }        
     catch(exception e)
     {
@@ -7587,7 +7675,7 @@ int MMSEngineDBFacade::addOverlayTextOnVideoJob (
             _connectionPool->unborrow(conn);
         }
         
-        throw exception();
+        throw e;
     }        
     catch(exception e)
     {
@@ -7935,7 +8023,7 @@ int MMSEngineDBFacade::updateEncodingJob (
             _connectionPool->unborrow(conn);
         }
         
-        throw exception();
+        throw e;
     }
     catch(exception e)
     {
@@ -8059,7 +8147,7 @@ void MMSEngineDBFacade::updateEncodingJobProgress (
         );
         _connectionPool->unborrow(conn);
         
-        throw exception();
+        throw e;
     }
     catch(exception e)
     {
@@ -8506,7 +8594,7 @@ string MMSEngineDBFacade::nextRelativePathToBeUsed (
         );
         _connectionPool->unborrow(conn);
 
-        throw exception();
+        throw e;
     }    
     catch(exception e)
     {        
@@ -9367,7 +9455,7 @@ int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
             _connectionPool->unborrow(conn);
         }
         
-        throw exception();
+        throw e;
     }
     catch(exception e)
     {
@@ -9644,7 +9732,7 @@ int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        throw exception();
+        throw e;
     }
     catch(exception e)
     {
@@ -9728,7 +9816,7 @@ void MMSEngineDBFacade::removePhysicalPath (
         );
         _connectionPool->unborrow(conn);
         
-        throw exception();
+        throw e;
     }
     catch(exception e)
     {
@@ -9815,7 +9903,7 @@ void MMSEngineDBFacade::removeMediaItem (
         );
         _connectionPool->unborrow(conn);
         
-        throw exception();
+        throw e;
     }
     catch(exception e)
     {
@@ -9922,7 +10010,7 @@ tuple<int,shared_ptr<Workspace>,string,string,string> MMSEngineDBFacade::getStor
         );
         _connectionPool->unborrow(conn);
 
-        throw exception();
+        throw e;
     }        
     catch(exception e)
     {        
@@ -10034,7 +10122,7 @@ tuple<int,shared_ptr<Workspace>,string,string,string> MMSEngineDBFacade::getStor
         );
         _connectionPool->unborrow(conn);
 
-        throw exception();
+        throw e;
     }        
     catch(exception e)
     {        
@@ -10132,7 +10220,7 @@ void MMSEngineDBFacade::getAllStorageDetails(
         );
         _connectionPool->unborrow(conn);
 
-        throw exception();
+        throw e;
     }        
     catch(exception e)
     {        
@@ -10224,7 +10312,7 @@ int64_t MMSEngineDBFacade::createDeliveryAuthorization(
         );
         _connectionPool->unborrow(conn);
 
-        throw exception();
+        throw e;
     }        
     catch(exception e)
     {        
@@ -10371,7 +10459,7 @@ bool MMSEngineDBFacade::checkDeliveryAuthorization(
         );
         _connectionPool->unborrow(conn);
 
-        // throw exception();
+        // throw e;
     }        
     catch(exception e)
     {        
@@ -10443,7 +10531,7 @@ int64_t MMSEngineDBFacade::getLastInsertId(shared_ptr<MySQLConnection> conn)
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        throw exception();
+        throw e;
     }
     catch(exception e)
     {        

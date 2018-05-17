@@ -155,7 +155,9 @@ void MMSEngineProcessor::operator ()()
 
                 try
                 {
-                    handleContentRetentionEvent ();
+                    
+                    thread contentRetention(&MMSEngineProcessor::handleContentRetentionEvent, this);
+                    contentRetention.detach();
                 }
                 catch(exception e)
                 {
@@ -3687,7 +3689,86 @@ void MMSEngineProcessor::handleCheckEncodingEvent ()
 
 void MMSEngineProcessor::handleContentRetentionEvent ()
 {
-    _logger->info(__FILEREF__ + "handleContentRetentionEvent");
+    
+    vector<pair<shared_ptr<Workspace>,int64_t>> mediaItemKeyToBeRemoved;
+    bool moreRemoveToBeDone = true;
+
+    while (moreRemoveToBeDone)
+    {
+        try
+        {
+            int maxMediaItemKeysNumber = 100;
+
+            mediaItemKeyToBeRemoved.clear();
+            _mmsEngineDBFacade->getExpiredMediaItemKeys(mediaItemKeyToBeRemoved, maxMediaItemKeysNumber);
+            
+            if (mediaItemKeyToBeRemoved.size() == 0)
+                moreRemoveToBeDone = false;
+        }
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + "getExpiredMediaItemKeys failed"
+                    + ", exception: " + e.what()
+            );
+
+            // no throw since it is running in a detached thread
+            // throw e;
+            break;
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "getExpiredMediaItemKeys failed"
+                    + ", exception: " + e.what()
+            );
+
+            // no throw since it is running in a detached thread
+            // throw e;
+            break;
+        }
+        
+        for (pair<shared_ptr<Workspace>,int64_t> workspaceAndMediaItemKey: mediaItemKeyToBeRemoved)
+        {
+            _logger->info(__FILEREF__ + "Removing because of Retention"
+                + ", workspace->_workspaceKey: " + to_string(workspaceAndMediaItemKey.first->_workspaceKey)
+                + ", workspace->_name: " + workspaceAndMediaItemKey.first->_name
+                + ", mediaItemKeyToBeRemoved: " + to_string(workspaceAndMediaItemKey.second)
+            );
+
+            try
+            {
+                _mmsStorage->removeMediaItem(workspaceAndMediaItemKey.second);
+            }
+            catch(runtime_error e)
+            {
+                _logger->error(__FILEREF__ + "_mmsStorage->removeMediaItem failed"
+                    + ", workspace->_workspaceKey: " + to_string(workspaceAndMediaItemKey.first->_workspaceKey)
+                    + ", workspace->_name: " + workspaceAndMediaItemKey.first->_name
+                    + ", mediaItemKeyToBeRemoved: " + to_string(workspaceAndMediaItemKey.second)
+                    + ", exception: " + e.what()
+                );
+
+                moreRemoveToBeDone = false;
+
+                break;
+                // no throw since it is running in a detached thread
+                // throw e;
+            }
+            catch(exception e)
+            {
+                _logger->error(__FILEREF__ + "_mmsStorage->removeMediaItem failed"
+                    + ", workspace->_workspaceKey: " + to_string(workspaceAndMediaItemKey.first->_workspaceKey)
+                    + ", workspace->_name: " + workspaceAndMediaItemKey.first->_name
+                    + ", mediaItemKeyToBeRemoved: " + to_string(workspaceAndMediaItemKey.second)
+                );
+
+                moreRemoveToBeDone = false;
+
+                break;
+                // no throw since it is running in a detached thread
+                // throw e;
+            }
+        }
+    }
 }
 
 tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> MMSEngineProcessor::getMediaSourceDetails(
