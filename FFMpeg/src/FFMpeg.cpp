@@ -116,6 +116,8 @@ void FFMpeg::encodeContent(
             if (fileNameIndex == string::npos)
             {
                 string errorMessage = __FILEREF__ + "ffmpeg: No fileName find in the staging encoded asset path name"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
                         + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
                 _logger->error(errorMessage);
 
@@ -182,6 +184,8 @@ void FFMpeg::encodeContent(
             #endif
 
             _logger->info(__FILEREF__ + "Executing ffmpeg command"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
             );
 
@@ -191,6 +195,8 @@ void FFMpeg::encodeContent(
                 if (executeCommandStatus != 0)
                 {
                     string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
                             + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                     ;
                     _logger->error(errorMessage);
@@ -203,6 +209,8 @@ void FFMpeg::encodeContent(
                 string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                         _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
                 string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
                         + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                         + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
                         + ", e.what(): " + e.what()
@@ -219,6 +227,8 @@ void FFMpeg::encodeContent(
             FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
 
             _logger->info(__FILEREF__ + "Encoded file generated"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", stagingEncodedSegmentAssetPathName: " + stagingEncodedSegmentAssetPathName
             );
 
@@ -264,6 +274,8 @@ void FFMpeg::encodeContent(
                 #endif
 
                 _logger->info(__FILEREF__ + "Executing ffmpeg command (first step)"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                 );
 
@@ -273,6 +285,8 @@ void FFMpeg::encodeContent(
                     if (executeCommandStatus != 0)
                     {
                         string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+                            + ", encodingJobKey: " + to_string(encodingJobKey)
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                 + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                         ;            
                         _logger->error(errorMessage);
@@ -285,6 +299,8 @@ void FFMpeg::encodeContent(
                     string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                             _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
                     string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
                             + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                             + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
                             + ", e.what(): " + e.what()
@@ -329,6 +345,8 @@ void FFMpeg::encodeContent(
                 #endif
 
                 _logger->info(__FILEREF__ + "Executing ffmpeg command (second step)"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                 );
 
@@ -339,6 +357,8 @@ void FFMpeg::encodeContent(
                     if (executeCommandStatus != 0)
                     {
                         string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+                            + ", encodingJobKey: " + to_string(encodingJobKey)
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                 + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                         ;            
                         _logger->error(errorMessage);
@@ -351,6 +371,8 @@ void FFMpeg::encodeContent(
                     string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                             _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
                     string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
                             + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                             + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
                             + ", e.what(): " + e.what()
@@ -400,6 +422,8 @@ void FFMpeg::encodeContent(
                 #endif
 
                 _logger->info(__FILEREF__ + "Executing ffmpeg command"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                 );
 
@@ -409,6 +433,8 @@ void FFMpeg::encodeContent(
                     if (executeCommandStatus != 0)
                     {
                         string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+                            + ", encodingJobKey: " + to_string(encodingJobKey)
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                 + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                         ;            
                         _logger->error(errorMessage);
@@ -421,6 +447,8 @@ void FFMpeg::encodeContent(
                     string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                             _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
                     string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
                             + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                             + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
                             + ", e.what(): " + e.what()
@@ -438,6 +466,8 @@ void FFMpeg::encodeContent(
             }
 
             _logger->info(__FILEREF__ + "Encoded file generated"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
             );
 
@@ -448,6 +478,8 @@ void FFMpeg::encodeContent(
             if (ulFileSize == 0)
             {
                 string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed, encoded file size is 0"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
                         + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                 ;
 
@@ -476,6 +508,8 @@ void FFMpeg::encodeContent(
             FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
 
             _logger->info(__FILEREF__ + "Remove"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
             );
 
@@ -509,6 +543,8 @@ void FFMpeg::encodeContent(
             FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
 
             _logger->info(__FILEREF__ + "Remove"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
             );
 
@@ -554,6 +590,8 @@ void FFMpeg::overlayImageOnVideo(
             if (fileNameIndex == string::npos)
             {
                 string errorMessage = __FILEREF__ + "ffmpeg: No fileName find in the staging encoded asset path name"
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
                         + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
                 _logger->error(errorMessage);
 
@@ -602,6 +640,8 @@ void FFMpeg::overlayImageOnVideo(
                 #endif
 
                 _logger->info(__FILEREF__ + "Executing ffmpeg command"
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                 );
 
@@ -611,6 +651,8 @@ void FFMpeg::overlayImageOnVideo(
                     if (executeCommandStatus != 0)
                     {
                         string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+                            + ", encodingJobKey: " + to_string(encodingJobKey)
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                 + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                         ;            
                         _logger->error(errorMessage);
@@ -623,6 +665,8 @@ void FFMpeg::overlayImageOnVideo(
                     string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                             _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
                     string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
                             + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                             + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
                             + ", e.what(): " + e.what()
@@ -640,6 +684,8 @@ void FFMpeg::overlayImageOnVideo(
             }
 
             _logger->info(__FILEREF__ + "Overlayed file generated"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
             );
 
@@ -650,6 +696,8 @@ void FFMpeg::overlayImageOnVideo(
             if (ulFileSize == 0)
             {
                 string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed, encoded file size is 0"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
                         + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                 ;
 
@@ -678,6 +726,8 @@ void FFMpeg::overlayImageOnVideo(
             FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
 
             _logger->info(__FILEREF__ + "Remove"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
             );
 
@@ -711,6 +761,8 @@ void FFMpeg::overlayImageOnVideo(
             FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
 
             _logger->info(__FILEREF__ + "Remove"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
             );
 
@@ -765,7 +817,10 @@ void FFMpeg::overlayTextOnVideo(
             if (fileNameIndex == string::npos)
             {
                 string errorMessage = __FILEREF__ + "ffmpeg: No fileName find in the staging encoded asset path name"
-                        + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+                        ;
                 _logger->error(errorMessage);
 
                 throw runtime_error(errorMessage);
@@ -838,6 +893,7 @@ void FFMpeg::overlayTextOnVideo(
                     }
                 }
             }
+            ffmpegDrawTextFilter += "\"";
                 
             string ffmpegExecuteCommand;
             {
@@ -855,6 +911,8 @@ void FFMpeg::overlayTextOnVideo(
                 #endif
 
                 _logger->info(__FILEREF__ + "Executing ffmpeg command"
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                 );
 
@@ -864,7 +922,9 @@ void FFMpeg::overlayTextOnVideo(
                     if (executeCommandStatus != 0)
                     {
                         string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
-                                + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+                            + ", encodingJobKey: " + to_string(encodingJobKey)
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                         ;            
                         _logger->error(errorMessage);
 
@@ -876,6 +936,8 @@ void FFMpeg::overlayTextOnVideo(
                     string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                             _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
                     string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+                            + ", encodingJobKey: " + to_string(encodingJobKey)
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
                             + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                             + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
                             + ", e.what(): " + e.what()
@@ -893,6 +955,8 @@ void FFMpeg::overlayTextOnVideo(
             }
 
             _logger->info(__FILEREF__ + "Drawtext file generated"
+                + ", encodingJobKey: " + to_string(encodingJobKey)
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
             );
 
@@ -903,6 +967,8 @@ void FFMpeg::overlayTextOnVideo(
             if (ulFileSize == 0)
             {
                 string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed, encoded file size is 0"
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
                         + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                 ;
 
@@ -930,6 +996,8 @@ void FFMpeg::overlayTextOnVideo(
             FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
 
             _logger->info(__FILEREF__ + "Remove"
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
             );
 
@@ -962,6 +1030,8 @@ void FFMpeg::overlayTextOnVideo(
             FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
 
             _logger->info(__FILEREF__ + "Remove"
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
             );
 

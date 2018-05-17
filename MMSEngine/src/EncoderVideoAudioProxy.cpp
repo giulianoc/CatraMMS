@@ -2826,11 +2826,27 @@ string EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
                     encodingFinished = getEncodingStatus(_encodingItem->_encodingJobKey);
                 }
                 catch(...)
-                {
-                    _logger->error(__FILEREF__ + "getEncodingStatus failed");
-                    
+                {                    
                     encodingStatusFailures++;
+                    
+                    _logger->error(__FILEREF__ + "getEncodingStatus failed"
+                        + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                        + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+                    );
                 }
+            }
+            
+            if (encodingStatusFailures >= maxEncodingStatusFailures)
+            {
+                    string errorMessage = string("Encoding failed, reached max encoding failures")
+                            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                            + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+                            + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
+                            ;
+                    _logger->error(__FILEREF__ + errorMessage);
+
+                    throw runtime_error(errorMessage);
             }
             
             chrono::system_clock::time_point endEncoding = chrono::system_clock::now();

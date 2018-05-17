@@ -724,7 +724,8 @@ void FFMPEGEncoder::encodeContent(
         sendError(request, 500, errorMessage);
         */
 
-        throw runtime_error(errorMessage);
+        // this method run on a detached thread, we will not generate exception
+        // throw runtime_error(errorMessage);
     }
     catch(exception e)
     {
@@ -745,7 +746,8 @@ void FFMPEGEncoder::encodeContent(
         sendError(request, 500, errorMessage);
          */
 
-        throw runtime_error(errorMessage);
+        // this method run on a detached thread, we will not generate exception
+        // throw runtime_error(errorMessage);
     }
 }
 
@@ -860,7 +862,8 @@ void FFMPEGEncoder::overlayImageOnVideo(
         sendError(request, 500, errorMessage);
         */
 
-        throw runtime_error(errorMessage);
+        // this method run on a detached thread, we will not generate exception
+        // throw runtime_error(errorMessage);
     }
     catch(exception e)
     {
@@ -881,7 +884,8 @@ void FFMPEGEncoder::overlayImageOnVideo(
         sendError(request, 500, errorMessage);
          */
 
-        throw runtime_error(errorMessage);
+        // this method run on a detached thread, we will not generate exception
+        // throw runtime_error(errorMessage);
     }
 }
 
@@ -1013,7 +1017,8 @@ void FFMPEGEncoder::overlayTextOnVideo(
         sendError(request, 500, errorMessage);
         */
 
-        throw runtime_error(errorMessage);
+        // this method run on a detached thread, we will not generate exception
+        // throw runtime_error(errorMessage);
     }
     catch(exception e)
     {
@@ -1034,6 +1039,7 @@ void FFMPEGEncoder::overlayTextOnVideo(
         sendError(request, 500, errorMessage);
          */
 
-        throw runtime_error(errorMessage);
+        // this method run on a detached thread, we will not generate exception
+        // throw runtime_error(errorMessage);
     }
 }
