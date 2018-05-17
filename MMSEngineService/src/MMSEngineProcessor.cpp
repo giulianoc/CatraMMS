@@ -3690,6 +3690,9 @@ void MMSEngineProcessor::handleCheckEncodingEvent ()
 void MMSEngineProcessor::handleContentRetentionEvent ()
 {
     
+    _logger->info(__FILEREF__ + "Content Retention started"
+    );
+            
     vector<pair<shared_ptr<Workspace>,int64_t>> mediaItemKeyToBeRemoved;
     bool moreRemoveToBeDone = true;
 
@@ -3769,6 +3772,9 @@ void MMSEngineProcessor::handleContentRetentionEvent ()
             }
         }
     }
+
+    _logger->info(__FILEREF__ + "Content Retention finished"
+    );
 }
 
 tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> MMSEngineProcessor::getMediaSourceDetails(
