@@ -12,7 +12,6 @@
 #include "MMSStorage.h"
 #include "ActiveEncodingsManager.h"
 #include "LocalAssetIngestionEvent.h"
-#include "GenerateImageToIngestEvent.h"
 #include "Validator.h"
 #include "json/json.h"
 
@@ -76,6 +75,8 @@ private:
         shared_ptr<LocalAssetIngestionEvent> localAssetIngestionEvent);
 
     void handleCheckEncodingEvent ();
+
+    void handleContentRetentionEvent ();
 
     void removeContent(
         int64_t ingestionJobKey,

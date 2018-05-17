@@ -9,6 +9,7 @@
 #include "MMSEngineProcessor.h"
 #include "CheckIngestionTimes.h"
 #include "CheckEncodingTimes.h"
+#include "RetentionTimes.h"
 #include "MMSEngineDBFacade.h"
 #include "ActiveEncodingsManager.h"
 #include "MMSStorage.h"
@@ -172,7 +173,16 @@ int main (int iArgc, char *pArgv [])
     checkEncodingTimes->start();
     scheduler.activeTimes(checkEncodingTimes);
 
-    
+    string           contentRetentionTimesSchedule = configuration["scheduler"].get("contentRetentionTimesSchedule", "").asString();
+    logger->info(__FILEREF__ + "Creating and Starting RetentionTimes"
+        + ", contentRetentionTimesSchedule: " + contentRetentionTimesSchedule
+            );
+    shared_ptr<RetentionTimes>     retentionTimes =
+            make_shared<RetentionTimes>(contentRetentionTimesSchedule, multiEventsSet, logger);
+    retentionTimes->start();
+    scheduler.activeTimes(retentionTimes);
+
+
     logger->info(__FILEREF__ + "Waiting ActiveEncodingsManager"
             );
     activeEncodingsManagerThread.join();

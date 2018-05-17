@@ -13,6 +13,7 @@
 #include "MMSEngineProcessor.h"
 #include "CheckIngestionTimes.h"
 #include "CheckEncodingTimes.h"
+#include "RetentionTimes.h"
 #include "catralibraries/md5.h"
 
 
@@ -146,6 +147,25 @@ void MMSEngineProcessor::operator ()()
                 _multiEventsSet->getEventsFactory()->releaseEvent<Event2>(event);
 
                 _logger->debug(__FILEREF__ + "2. Received MMSENGINE_EVENTTYPEIDENTIFIER_CHECKENCODING");
+            }
+            case MMSENGINE_EVENTTYPEIDENTIFIER_CONTENTRETENTIONEVENT:	// 4
+            {
+                _logger->debug(__FILEREF__ + "1. Received MMSENGINE_EVENTTYPEIDENTIFIER_RETENTIONEVENT");
+
+                try
+                {
+                    handleContentRetentionEvent ();
+                }
+                catch(exception e)
+                {
+                    _logger->error(__FILEREF__ + "handleContentRetentionEvent failed"
+                        + ", exception: " + e.what()
+                    );
+                }
+
+                _multiEventsSet->getEventsFactory()->releaseEvent<Event2>(event);
+
+                _logger->debug(__FILEREF__ + "2. Received MMSENGINE_EVENTTYPEIDENTIFIER_RETENTIONEVENT");
             }
             break;
             default:
@@ -3662,6 +3682,11 @@ void MMSEngineProcessor::handleCheckEncodingEvent ()
     _firstGetEncodingJob = false;
 
     _pActiveEncodingsManager->addEncodingItems(encodingItems);
+}
+
+void MMSEngineProcessor::handleContentRetentionEvent ()
+{
+    _logger->info(__FILEREF__ + "handleContentRetentionEvent");
 }
 
 tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> MMSEngineProcessor::getMediaSourceDetails(

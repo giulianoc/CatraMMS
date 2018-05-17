@@ -25,12 +25,14 @@ SET (SOURCES
 	MMSEngineProcessor.cpp
 	CheckIngestionTimes.cpp
 	CheckEncodingTimes.cpp
+	RetentionTimes.cpp
 )
 
 SET (HEADERS
 	MMSEngineProcessor.h
 	CheckIngestionTimes.h
 	CheckEncodingTimes.h
+	RetentionTimes.h
 	LocalAssetIngestionEvent.h
 )
 
