@@ -23,11 +23,11 @@
                     "TextPosition_X_InPixel": "(video_width-text_width)/2",
                     "TextPosition_Y_InPixel": "(video_height-text_height)/2",
                     "FontSize": 24,
-                    "FontColor": "red",
+                    "FontColor": "yellow",
                     "TextPercentageOpacity": 20,
                     "BoxEnable": true,
                     "BoxColor": "red",
-                    "BoxPercentageOpacity": 50,
+                    "BoxPercentageOpacity": 20,
 
                     "UserData": { "MyData": "this is my data" },
                     "Title": "${TitleOfOverlayVideo}"

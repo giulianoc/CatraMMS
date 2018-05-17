@@ -50,6 +50,8 @@ MMSEngineDBFacade::MMSEngineDBFacade(
 
     _confirmationCodeRetentionInDays    = configuration["mms"].get("confirmationCodeRetentionInDays", 3).asInt();
 
+    _contentRetentionInDaysDefaultValue    = configuration["mms"].get("contentRetentionInDaysDefaultValue", 1).asInt();
+    
     _mySQLConnectionFactory = 
             make_shared<MySQLConnectionFactory>(dbServer, dbUsername, dbPassword, dbName,
             selectTestingConnection);
@@ -3930,7 +3932,7 @@ Json::Value MMSEngineDBFacade::getContentList (
                     "DATE_FORMAT(convert_tz(ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate, "
                     "DATE_FORMAT(convert_tz(startPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as startPublishing, "
                     "DATE_FORMAT(convert_tz(endPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endPublishing, "
-                    "contentType from MMS_MediaItem ")
+                    "contentType, retentionInDays from MMS_MediaItem ")
                     + sqlWhere
                     + "limit ? offset ?";
 
@@ -3986,6 +3988,9 @@ Json::Value MMSEngineDBFacade::getContentList (
                 field = "contentType";
                 mediaItemRoot[field] = static_cast<string>(resultSet->getString("contentType"));
 
+                field = "retentionInDays";
+                mediaItemRoot[field] = resultSet->getInt("retentionInDays");
+                
                 int64_t contentProviderKey = resultSet->getInt64("contentProviderKey");
                 
                 {                    
@@ -8618,6 +8623,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             string keywords = "";
             string deliveryFileName = "";
             string sContentType;
+            int retentionInDays = _contentRetentionInDaysDefaultValue;
             // string encodingProfilesSet;
 
             string field = "Title";
@@ -8634,6 +8640,10 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             field = "DeliveryFileName";
             if (isMetadataPresent(parametersRoot, field))
                 deliveryFileName = parametersRoot.get(field, "XXX").asString();
+
+            field = "RetentionInDays";
+            if (isMetadataPresent(parametersRoot, field))
+                retentionInDays = parametersRoot.get(field, 1).asInt();
 
             string startPublishing = "NOW";
             string endPublishing = "FOREVER";
@@ -8698,11 +8708,11 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             
             lastSQLCommand = 
                 "insert into MMS_MediaItem (mediaItemKey, workspaceKey, contentProviderKey, title, ingester, keywords, " 
-                "deliveryFileName, ingestionDate, contentType, startPublishing, endPublishing) values ("
+                "deliveryFileName, ingestionDate, contentType, startPublishing, endPublishing, retentionInDays) values ("
                 "NULL, ?, ?, ?, ?, ?, ?, NULL, ?, "
                 "convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone), "
-                "convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone)"
-                ")";
+                "convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone), "
+                "?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -8724,6 +8734,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
             preparedStatement->setString(queryParameterIndex++, startPublishing);
             preparedStatement->setString(queryParameterIndex++, endPublishing);
+            preparedStatement->setInt(queryParameterIndex++, retentionInDays);
 
             preparedStatement->executeUpdate();
         }
@@ -10992,17 +11003,18 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             // The ContentProviderKey is the entity owner of the content. For example H3G is our workspace and EMI is the ContentProvider.
             lastSQLCommand = 
                 "create table if not exists MMS_MediaItem ("
-                    "mediaItemKey  			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
-                    "workspaceKey			BIGINT UNSIGNED NOT NULL,"
-                    "contentProviderKey		BIGINT UNSIGNED NOT NULL,"
-                    "title      			VARCHAR (256) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
-                    "ingester				VARCHAR (128) NULL,"
-                    "keywords				VARCHAR (128) CHARACTER SET utf8 COLLATE utf8_bin NULL,"
+                    "mediaItemKey           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "workspaceKey           BIGINT UNSIGNED NOT NULL,"
+                    "contentProviderKey     BIGINT UNSIGNED NOT NULL,"
+                    "title                  VARCHAR (256) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
+                    "ingester               VARCHAR (128) NULL,"
+                    "keywords               VARCHAR (128) CHARACTER SET utf8 COLLATE utf8_bin NULL,"
                     "deliveryFileName       VARCHAR (128) NULL,"
-                    "ingestionDate			TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+                    "ingestionDate          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "contentType            VARCHAR (32) NOT NULL,"
                     "startPublishing        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
-                    "endPublishing			TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+                    "endPublishing          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+                    "retentionInDays        INT NOT NULL,"
                     "constraint MMS_MediaItem_PK PRIMARY KEY (mediaItemKey), "
                     "constraint MMS_MediaItem_FK foreign key (workspaceKey) "
                         "references MMS_Workspace (workspaceKey) on delete cascade, "
