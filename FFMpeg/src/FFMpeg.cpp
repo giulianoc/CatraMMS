@@ -871,7 +871,7 @@ void FFMpeg::overlayTextOnVideo(
                 {
                     char opacity[64];
                     
-                    sprintf(opacity, "%.1f", (float) (textPercentageOpacity / 100));
+                    sprintf(opacity, "%.1f", ((float) textPercentageOpacity) / 100.0);
                     
                     ffmpegDrawTextFilter += ("@" + string(opacity));                
                 }
@@ -887,7 +887,7 @@ void FFMpeg::overlayTextOnVideo(
                     {
                         char opacity[64];
 
-                        sprintf(opacity, "%.1f", (float) (boxPercentageOpacity / 100));
+                        sprintf(opacity, "%.1f", ((float) boxPercentageOpacity) / 100.0);
 
                         ffmpegDrawTextFilter += ("@" + string(opacity));                
                     }

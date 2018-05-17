@@ -21,7 +21,7 @@
                 "Parameters": {
                     "Text": "This video is for adult",                                  
                     "TextPosition_X_InPixel": "(video_width-text_width)/2",
-                    "TextPosition_Y_InPixel": "(video_height-text_text_height)/2",
+                    "TextPosition_Y_InPixel": "(video_height-text_height)/2",
                     "FontSize": 24,
                     "FontColor": "red",
                     "TextPercentageOpacity": 20,
