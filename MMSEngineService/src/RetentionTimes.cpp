@@ -20,6 +20,10 @@ RetentionTimes::~RetentionTimes (void)
 void RetentionTimes:: handleTimeOut (void)
 {
 
+    _logger->info(__FILEREF__ + "RetentionTimes:: handleTimeOut");
+    return;
+    
+    /*
     lock_guard<mutex>   locker(_mtTimesMutex);
 
     if (_schTimesStatus != SCHTIMES_STARTED)
@@ -41,4 +45,5 @@ void RetentionTimes:: handleTimeOut (void)
             + ", getEventKey().first: " + to_string(event->getEventKey().first)
             + ", getEventKey().second: " + to_string(event->getEventKey().second)
     );
+     */
 }
