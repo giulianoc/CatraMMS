@@ -131,10 +131,23 @@ int main (int iArgc, char *pArgv [])
             );
     ActiveEncodingsManager      activeEncodingsManager(configuration, mmsEngineDBFacade, mmsStorage, logger);
 
-    logger->info(__FILEREF__ + "Creating MMSEngineProcessor"
-            );
-    MMSEngineProcessor      mmsEngineProcessor(logger, multiEventsSet, 
-            mmsEngineDBFacade, mmsStorage, &activeEncodingsManager, configuration);
+//    MMSEngineProcessor      mmsEngineProcessor(0, logger, multiEventsSet, 
+//            mmsEngineDBFacade, mmsStorage, &activeEncodingsManager, configuration);
+    vector<shared_ptr<MMSEngineProcessor>>      mmsEngineProcessors;
+    {
+        int mmsProcessorsNumber =  configuration["mms"].get("MMSProcessors", 1).asInt();
+
+        for (int mmsProcessorIndex = 0; mmsProcessorIndex < mmsProcessorsNumber; mmsProcessorIndex++)
+        {
+            logger->info(__FILEREF__ + "Creating MMSEngineProcessor"
+                + ", mmsProcessorIndex: " + to_string(mmsProcessorIndex)
+                    );
+            shared_ptr<MMSEngineProcessor>      mmsEngineProcessor = 
+                    make_shared<MMSEngineProcessor>(mmsProcessorIndex, logger, multiEventsSet, 
+                        mmsEngineDBFacade, mmsStorage, &activeEncodingsManager, configuration);
+            mmsEngineProcessors.push_back(mmsEngineProcessor);
+        }
+    }    
     
     unsigned long           ulThreadSleepInMilliSecs = configuration["scheduler"].get("threadSleepInMilliSecs", 5).asInt();
     logger->info(__FILEREF__ + "Creating Scheduler2"
@@ -147,9 +160,17 @@ int main (int iArgc, char *pArgv [])
             );
     thread activeEncodingsManagerThread (ref(activeEncodingsManager));
     
-    logger->info(__FILEREF__ + "Starting MMSEngineProcessor"
-            );
-    thread mmsEngineProcessorThread (mmsEngineProcessor);
+    vector<shared_ptr<thread>> mmsEngineProcessorsThread;
+    {
+        //    thread mmsEngineProcessorThread (mmsEngineProcessor);
+        for (int mmsProcessorIndex = 0; mmsProcessorIndex < mmsEngineProcessors.size(); mmsProcessorIndex++)
+        {
+            logger->info(__FILEREF__ + "Starting MMSEngineProcessor"
+                + ", mmsProcessorIndex: " + to_string(mmsProcessorIndex)
+                    );
+            mmsEngineProcessorsThread.push_back(make_shared<thread>(&MMSEngineProcessor::operator(), mmsEngineProcessors[mmsProcessorIndex]));
+        }
+    }    
 
     logger->info(__FILEREF__ + "Starting Scheduler2"
             );
@@ -187,10 +208,16 @@ int main (int iArgc, char *pArgv [])
             );
     activeEncodingsManagerThread.join();
     
-    logger->info(__FILEREF__ + "Waiting MMSEngineProcessor"
-            );
-    mmsEngineProcessorThread.join();
-    
+    {
+        for (int mmsProcessorIndex = 0; mmsProcessorIndex < mmsEngineProcessorsThread.size(); mmsProcessorIndex++)
+        {
+            logger->info(__FILEREF__ + "Waiting MMSEngineProcessor"
+                + ", mmsProcessorIndex: " + to_string(mmsProcessorIndex)
+                    );
+            mmsEngineProcessorsThread[mmsProcessorIndex]->join();
+        }
+    }    
+        
     logger->info(__FILEREF__ + "Waiting Scheduler2"
             );
     schedulerThread.join();

@@ -17,6 +17,7 @@
 #include <fstream>
 #include <curl/curl.h>
 #include "catralibraries/Convert.h"
+#include "catralibraries/Encrypt.h"
 #include "APICommon.h"
 
 extern char** environ;
@@ -1058,7 +1059,11 @@ void APICommon:: sendEmail(string to, string subject, vector<string>& emailBody)
     string emailServer = _configuration["EmailNotification"].get("server", "XXX").asString();
     int emailPort = _configuration["EmailNotification"].get("port", "XXX").asInt();
     string userName = _configuration["EmailNotification"].get("userName", "XXX").asString();
-    string password = _configuration["EmailNotification"].get("password", "XXX").asString();
+    string password;
+    {
+        string encryptedPassword = _configuration["EmailNotification"].get("password", "XXX").asString();
+        password = Encrypt::decrypt(encryptedPassword);        
+    }
     string from = _configuration["EmailNotification"].get("from", "XXX").asString();
     // string to = "giulianoc@catrasoftware.it";
     string cc = _configuration["EmailNotification"].get("cc", "XXX").asString();

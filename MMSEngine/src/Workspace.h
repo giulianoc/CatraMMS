@@ -14,7 +14,7 @@ struct Workspace
     long long               _workspaceKey;
     string                  _name;
     string                  _directoryName;
-    unsigned long           _maxStorageInGB;
+    unsigned long           _maxStorageInMB;
     int                     _maxEncodingPriority;
 
     TerritoriesHashMap      _territories;

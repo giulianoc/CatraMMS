@@ -930,17 +930,22 @@ string MMSStorage::getStagingAssetPathName(
     }
 
     sprintf(pDateTime,
-            "%04lu_%02lu_%02lu",
+            "%04lu_%02lu_%02lu_%02lu_%02lu_%02lu_%04lu",
             (unsigned long) (tmDateTime. tm_year + 1900),
             (unsigned long) (tmDateTime. tm_mon + 1),
-            (unsigned long) (tmDateTime. tm_mday));
+            (unsigned long) (tmDateTime. tm_mday),
+            (unsigned long) (tmDateTime. tm_hour),
+            (unsigned long) (tmDateTime. tm_min),
+            (unsigned long) (tmDateTime. tm_sec),
+            ulMilliSecs
+            );
 
     // create the 'date' directory in staging if not exist
     {
         assetPathName = _stagingRootRepository;
         assetPathName
             .append(workspaceDirectoryName)
-            .append("/")
+            .append("_")    // .append("/")
             .append(pDateTime)
             .append(relativePath);
 

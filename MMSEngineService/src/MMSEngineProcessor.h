@@ -30,6 +30,7 @@ public:
     };
     
     MMSEngineProcessor(
+            int processorIdentifier,
             shared_ptr<spdlog::logger> logger, 
             shared_ptr<MultiEventsSet> multiEventsSet,
             shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
@@ -42,6 +43,7 @@ public:
     void operator()();
     
 private:
+    int                                 _processorIdentifier;
     shared_ptr<spdlog::logger>          _logger;
     Json::Value                         _configuration;
     shared_ptr<MultiEventsSet>          _multiEventsSet;
@@ -49,12 +51,13 @@ private:
     shared_ptr<MMSStorage>              _mmsStorage;
     ActiveEncodingsManager*             _pActiveEncodingsManager;
     
-    bool                    _firstGetEncodingJob;
     string                  _processorMMS;
 
     int                     _maxDownloadAttemptNumber;
     int                     _progressUpdatePeriodInSeconds;
     int                     _secondsWaitingAmongDownloadingAttempt;
+    
+    int                     _stagingRetentionInDays;
 
     int                     _maxIngestionJobsPerEvent;
     int                     _dependencyExpirationInHours;
@@ -66,6 +69,7 @@ private:
     string                  _emailUserName;
     string                  _emailPassword;
     string                  _emailFrom;
+    
     
     void sendEmail(string to, string subject, vector<string>& emailBody);
 

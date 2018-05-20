@@ -172,9 +172,9 @@ API::API(Json::Value configuration,
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->maxIngestionsNumberWorkspaceDefaultValue: " + to_string(_maxIngestionsNumberWorkspaceDefaultValue)
     );
-    _maxStorageInGBWorkspaceDefaultValue = _configuration["api"].get("maxStorageInGBWorkspaceDefaultValue", "XXX").asInt();
+    _maxStorageInMBWorkspaceDefaultValue = _configuration["api"].get("maxStorageInMBWorkspaceDefaultValue", "XXX").asInt();
     _logger->info(__FILEREF__ + "Configuration item"
-        + ", api->maxStorageInGBWorkspaceDefaultValue: " + to_string(_maxStorageInGBWorkspaceDefaultValue)
+        + ", api->maxStorageInMBWorkspaceDefaultValue: " + to_string(_maxStorageInMBWorkspaceDefaultValue)
     );
 
     Json::Value api = _configuration["api"];
@@ -591,6 +591,25 @@ void API::manageRequestAndResponse(
         addEncodingProfilesSet(request, get<1>(userKeyWorkspaceAndFlags),
             queryParameters, requestBody);
     }
+    else if (method == "encodingProfilesSetList")
+    {
+        /*
+        bool isUserAPI = get<2>(userKeyWorkspaceAndFlags);
+        if (!isUserAPI)
+        {
+            string errorMessage = string("APIKey flags does not have the USER permission"
+                    ", isUserAPI: " + to_string(isUserAPI)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        */
+        
+        encodingProfilesSetList(request, get<1>(userKeyWorkspaceAndFlags), queryParameters);
+    }
     else if (method == "addEncodingProfile")
     {
         /*
@@ -610,6 +629,25 @@ void API::manageRequestAndResponse(
                 
         addEncodingProfile(request, get<1>(userKeyWorkspaceAndFlags),
             queryParameters, requestBody);
+    }
+    else if (method == "encodingProfileList")
+    {
+        /*
+        bool isUserAPI = get<2>(userKeyWorkspaceAndFlags);
+        if (!isUserAPI)
+        {
+            string errorMessage = string("APIKey flags does not have the USER permission"
+                    ", isUserAPI: " + to_string(isUserAPI)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        */
+        
+        encodingProfileList(request, get<1>(userKeyWorkspaceAndFlags), queryParameters);
     }
     else
     {
@@ -977,7 +1015,7 @@ void API::registerUser(
         MMSEngineDBFacade::EncodingPriority encodingPriority;
         MMSEngineDBFacade::EncodingPeriod encodingPeriod;
         int maxIngestionsNumber;
-        int maxStorageInGB;
+        int maxStorageInMB;
 
         Json::Value metadataRoot;
         try
@@ -1151,7 +1189,7 @@ void API::registerUser(
         }
         */
 
-        maxStorageInGB = _maxStorageInGBWorkspaceDefaultValue;
+        maxStorageInMB = _maxStorageInMBWorkspaceDefaultValue;
         /*
         // MaxStorageInGB
         {
@@ -1222,7 +1260,7 @@ void API::registerUser(
                     encodingPriority,               //  MMSEngineDBFacade::EncodingPriority maxEncodingPriority,
                     encodingPeriod,                 //  MMSEngineDBFacade::EncodingPeriod encodingPeriod,
                     maxIngestionsNumber,            // long maxIngestionsNumber,
-                    maxStorageInGB,                 // long maxStorageInGB,
+                    maxStorageInMB,                 // long maxStorageInMB,
                     "",                             // string languageCode,
                     chrono::system_clock::now() + chrono::hours(24 * 365 * 10)     // chrono::system_clock::time_point userExpirationDate
                 );
@@ -1435,14 +1473,14 @@ void API::createDeliveryAuthorization(
 
         int ttlInSeconds = _defaultTTLInSeconds;
         auto ttlInSecondsIt = queryParameters.find("ttlInSeconds");
-        if (ttlInSecondsIt != queryParameters.end())
+        if (ttlInSecondsIt != queryParameters.end() && ttlInSecondsIt->second != "")
         {
             ttlInSeconds = stol(ttlInSecondsIt->second);
         }
 
         int maxRetries = _defaultMaxRetries;
         auto maxRetriesIt = queryParameters.find("maxRetries");
-        if (maxRetriesIt != queryParameters.end())
+        if (maxRetriesIt != queryParameters.end() && maxRetriesIt->second != "")
         {
             maxRetries = stol(maxRetriesIt->second);
         }
@@ -1678,21 +1716,21 @@ void API::contentList(
     {
         int64_t mediaItemKey = -1;
         auto mediaItemKeyIt = queryParameters.find("mediaItemKey");
-        if (mediaItemKeyIt != queryParameters.end())
+        if (mediaItemKeyIt != queryParameters.end() && mediaItemKeyIt->second != "")
         {
             mediaItemKey = stoll(mediaItemKeyIt->second);
         }
 
         int start = 0;
         auto startIt = queryParameters.find("start");
-        if (startIt != queryParameters.end())
+        if (startIt != queryParameters.end() && startIt->second != "")
         {
             start = stoll(startIt->second);
         }
 
         int rows = 10;
         auto rowsIt = queryParameters.find("rows");
-        if (rowsIt != queryParameters.end())
+        if (rowsIt != queryParameters.end() && rowsIt->second != "")
         {
             rows = stoll(rowsIt->second);
         }
@@ -1700,7 +1738,7 @@ void API::contentList(
         bool contentTypePresent = false;
         MMSEngineDBFacade::ContentType contentType;
         auto contentTypeIt = queryParameters.find("contentType");
-        if (contentTypeIt != queryParameters.end())
+        if (contentTypeIt != queryParameters.end() && contentTypeIt->second != "")
         {
             contentType = MMSEngineDBFacade::toContentType(contentTypeIt->second);
             
@@ -1754,6 +1792,148 @@ void API::contentList(
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
             + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::encodingProfilesSetList(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters)
+{
+    string api = "encodingProfilesSetList";
+
+    _logger->info(__FILEREF__ + "Received " + api
+    );
+
+    try
+    {
+        int64_t encodingProfilesSetKey = -1;
+        auto encodingProfilesSetKeyIt = queryParameters.find("encodingProfilesSetKey");
+        if (encodingProfilesSetKeyIt != queryParameters.end() && encodingProfilesSetKeyIt->second != "")
+        {
+            encodingProfilesSetKey = stoll(encodingProfilesSetKeyIt->second);
+        }
+
+        bool contentTypePresent = false;
+        MMSEngineDBFacade::ContentType contentType;
+        auto contentTypeIt = queryParameters.find("contentType");
+        if (contentTypeIt != queryParameters.end() && contentTypeIt->second != "")
+        {
+            contentType = MMSEngineDBFacade::toContentType(contentTypeIt->second);
+            
+            contentTypePresent = true;
+        }
+        
+        {
+            
+            Json::Value encodingProfilesSetListRoot = _mmsEngineDBFacade->getEncodingProfilesSetList(
+                    workspace->_workspaceKey, encodingProfilesSetKey,
+                    contentTypePresent, contentType);
+
+            Json::StreamWriterBuilder wbuilder;
+            string responseBody = Json::writeString(wbuilder, encodingProfilesSetListRoot);
+            
+            sendSuccess(request, 200, responseBody);
+        }
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error: ") + e.what();
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::encodingProfileList(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters)
+{
+    string api = "encodingProfileList";
+
+    _logger->info(__FILEREF__ + "Received " + api
+    );
+
+    try
+    {
+        int64_t encodingProfileKey = -1;
+        auto encodingProfileKeyIt = queryParameters.find("encodingProfileKey");
+        if (encodingProfileKeyIt != queryParameters.end() && encodingProfileKeyIt->second != "")
+        {
+            encodingProfileKey = stoll(encodingProfileKeyIt->second);
+        }
+
+        bool contentTypePresent = false;
+        MMSEngineDBFacade::ContentType contentType;
+        auto contentTypeIt = queryParameters.find("contentType");
+        if (contentTypeIt != queryParameters.end() && contentTypeIt->second != "")
+        {
+            contentType = MMSEngineDBFacade::toContentType(contentTypeIt->second);
+            
+            contentTypePresent = true;
+        }
+        
+        {
+            
+            Json::Value encodingProfileListRoot = _mmsEngineDBFacade->getEncodingProfileList(
+                    workspace->_workspaceKey, encodingProfileKey,
+                    contentTypePresent, contentType);
+
+            Json::StreamWriterBuilder wbuilder;
+            string responseBody = Json::writeString(wbuilder, encodingProfileListRoot);
+            
+            sendSuccess(request, 200, responseBody);
+        }
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error: ") + e.what();
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
             + ", e.what(): " + e.what()
         );
 

@@ -9,6 +9,7 @@
 #include <curlpp/Exception.hpp>
 #include <curlpp/Infos.hpp>
 #include "catralibraries/System.h"
+#include "catralibraries/Encrypt.h"
 #include "FFMpeg.h"
 #include "MMSEngineProcessor.h"
 #include "CheckIngestionTimes.h"
@@ -18,6 +19,7 @@
 
 
 MMSEngineProcessor::MMSEngineProcessor(
+        int processorIdentifier,
         shared_ptr<spdlog::logger> logger, 
         shared_ptr<MultiEventsSet> multiEventsSet,
         shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
@@ -26,6 +28,7 @@ MMSEngineProcessor::MMSEngineProcessor(
         Json::Value configuration
 )
 {
+    _processorIdentifier         = processorIdentifier;
     _logger             = logger;
     _configuration      = configuration;
     _multiEventsSet     = multiEventsSet;
@@ -33,9 +36,9 @@ MMSEngineProcessor::MMSEngineProcessor(
     _mmsStorage         = mmsStorage;
     _pActiveEncodingsManager = pActiveEncodingsManager;
 
-    _firstGetEncodingJob            = true;
     _processorMMS                   = System::getHostName();
     
+cout << "processorIdentifier: " << processorIdentifier << endl;
     _maxDownloadAttemptNumber       = configuration["download"].get("maxDownloadAttemptNumber", 5).asInt();
     _progressUpdatePeriodInSeconds  = configuration["download"].get("progressUpdatePeriodInSeconds", 5).asInt();
     _secondsWaitingAmongDownloadingAttempt  = configuration["download"].get("secondsWaitingAmongDownloadingAttempt", 5).asInt();
@@ -44,14 +47,42 @@ MMSEngineProcessor::MMSEngineProcessor(
     // _maxIngestionJobsWithDependencyToCheckPerEvent = configuration["mms"].get("maxIngestionJobsWithDependencyToCheckPerEvent", 5).asInt();
 
     _dependencyExpirationInHours        = configuration["mms"].get("dependencyExpirationInHours", 5).asInt();
+    _stagingRetentionInDays             = configuration["mms"].get("stagingRetentionInDays", 5).asInt();
     _downloadChunkSizeInMegaBytes       = configuration["download"].get("downloadChunkSizeInMegaBytes", 5).asInt();
     
     _emailProtocol                      = _configuration["EmailNotification"].get("protocol", "XXX").asString();
     _emailServer                        = _configuration["EmailNotification"].get("server", "XXX").asString();
     _emailPort                          = _configuration["EmailNotification"].get("port", "XXX").asInt();
     _emailUserName                      = _configuration["EmailNotification"].get("userName", "XXX").asString();
-    _emailPassword                      = _configuration["EmailNotification"].get("password", "XXX").asString();
+    string _emailPassword;
+    {
+        string encryptedPassword = _configuration["EmailNotification"].get("password", "XXX").asString();
+        _emailPassword = Encrypt::decrypt(encryptedPassword);        
+    }
     _emailFrom                          = _configuration["EmailNotification"].get("from", "XXX").asString();
+    
+    if (_processorIdentifier == 0)
+    {
+        try
+        {
+            _mmsEngineDBFacade->resetProcessingJobsIfNeeded(_processorMMS);
+        }
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->resetProcessingJobsIfNeeded failed"
+                    + ", exception: " + e.what()
+            );
+
+            throw e;
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->resetProcessingJobsIfNeeded failed"
+            );
+
+            throw e;
+        }
+    }
 }
 
 MMSEngineProcessor::~MMSEngineProcessor()
@@ -3676,13 +3707,8 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
 void MMSEngineProcessor::handleCheckEncodingEvent ()
 {
     vector<shared_ptr<MMSEngineDBFacade::EncodingItem>> encodingItems;
-    
-    bool resetToBeDone = _firstGetEncodingJob ? true : false;
-    
-    _mmsEngineDBFacade->getEncodingJobs(resetToBeDone,
-        _processorMMS, encodingItems);
-
-    _firstGetEncodingJob = false;
+        
+    _mmsEngineDBFacade->getEncodingJobs(_processorMMS, encodingItems);
 
     _pActiveEncodingsManager->addEncodingItems(encodingItems);
 }
@@ -3690,91 +3716,224 @@ void MMSEngineProcessor::handleCheckEncodingEvent ()
 void MMSEngineProcessor::handleContentRetentionEvent ()
 {
     
-    _logger->info(__FILEREF__ + "Content Retention started"
-    );
-            
-    vector<pair<shared_ptr<Workspace>,int64_t>> mediaItemKeyToBeRemoved;
-    bool moreRemoveToBeDone = true;
-
-    while (moreRemoveToBeDone)
     {
-        try
-        {
-            int maxMediaItemKeysNumber = 100;
+        _logger->info(__FILEREF__ + "Content Retention started"
+        );
 
-            mediaItemKeyToBeRemoved.clear();
-            _mmsEngineDBFacade->getExpiredMediaItemKeys(mediaItemKeyToBeRemoved, maxMediaItemKeysNumber);
-            
-            if (mediaItemKeyToBeRemoved.size() == 0)
-                moreRemoveToBeDone = false;
-        }
-        catch(runtime_error e)
-        {
-            _logger->error(__FILEREF__ + "getExpiredMediaItemKeys failed"
-                    + ", exception: " + e.what()
-            );
+        vector<pair<shared_ptr<Workspace>,int64_t>> mediaItemKeyToBeRemoved;
+        bool moreRemoveToBeDone = true;
 
-            // no throw since it is running in a detached thread
-            // throw e;
-            break;
-        }
-        catch(exception e)
+        while (moreRemoveToBeDone)
         {
-            _logger->error(__FILEREF__ + "getExpiredMediaItemKeys failed"
-                    + ", exception: " + e.what()
-            );
-
-            // no throw since it is running in a detached thread
-            // throw e;
-            break;
-        }
-        
-        for (pair<shared_ptr<Workspace>,int64_t> workspaceAndMediaItemKey: mediaItemKeyToBeRemoved)
-        {
-            _logger->info(__FILEREF__ + "Removing because of Retention"
-                + ", workspace->_workspaceKey: " + to_string(workspaceAndMediaItemKey.first->_workspaceKey)
-                + ", workspace->_name: " + workspaceAndMediaItemKey.first->_name
-                + ", mediaItemKeyToBeRemoved: " + to_string(workspaceAndMediaItemKey.second)
-            );
-
             try
             {
-                _mmsStorage->removeMediaItem(workspaceAndMediaItemKey.second);
+                int maxMediaItemKeysNumber = 100;
+
+                mediaItemKeyToBeRemoved.clear();
+                _mmsEngineDBFacade->getExpiredMediaItemKeys(
+                    _processorMMS, mediaItemKeyToBeRemoved, maxMediaItemKeysNumber);
+
+                if (mediaItemKeyToBeRemoved.size() == 0)
+                    moreRemoveToBeDone = false;
             }
             catch(runtime_error e)
             {
-                _logger->error(__FILEREF__ + "_mmsStorage->removeMediaItem failed"
-                    + ", workspace->_workspaceKey: " + to_string(workspaceAndMediaItemKey.first->_workspaceKey)
-                    + ", workspace->_name: " + workspaceAndMediaItemKey.first->_name
-                    + ", mediaItemKeyToBeRemoved: " + to_string(workspaceAndMediaItemKey.second)
-                    + ", exception: " + e.what()
+                _logger->error(__FILEREF__ + "getExpiredMediaItemKeys failed"
+                        + ", exception: " + e.what()
                 );
 
-                moreRemoveToBeDone = false;
-
-                break;
                 // no throw since it is running in a detached thread
                 // throw e;
+                break;
             }
             catch(exception e)
             {
-                _logger->error(__FILEREF__ + "_mmsStorage->removeMediaItem failed"
+                _logger->error(__FILEREF__ + "getExpiredMediaItemKeys failed"
+                        + ", exception: " + e.what()
+                );
+
+                // no throw since it is running in a detached thread
+                // throw e;
+                break;
+            }
+
+            for (pair<shared_ptr<Workspace>,int64_t> workspaceAndMediaItemKey: mediaItemKeyToBeRemoved)
+            {
+                _logger->info(__FILEREF__ + "Removing because of Retention"
                     + ", workspace->_workspaceKey: " + to_string(workspaceAndMediaItemKey.first->_workspaceKey)
                     + ", workspace->_name: " + workspaceAndMediaItemKey.first->_name
                     + ", mediaItemKeyToBeRemoved: " + to_string(workspaceAndMediaItemKey.second)
                 );
 
-                moreRemoveToBeDone = false;
+                try
+                {
+                    _mmsStorage->removeMediaItem(workspaceAndMediaItemKey.second);
+                }
+                catch(runtime_error e)
+                {
+                    _logger->error(__FILEREF__ + "_mmsStorage->removeMediaItem failed"
+                        + ", workspace->_workspaceKey: " + to_string(workspaceAndMediaItemKey.first->_workspaceKey)
+                        + ", workspace->_name: " + workspaceAndMediaItemKey.first->_name
+                        + ", mediaItemKeyToBeRemoved: " + to_string(workspaceAndMediaItemKey.second)
+                        + ", exception: " + e.what()
+                    );
 
-                break;
-                // no throw since it is running in a detached thread
-                // throw e;
+                    moreRemoveToBeDone = false;
+
+                    break;
+                    // no throw since it is running in a detached thread
+                    // throw e;
+                }
+                catch(exception e)
+                {
+                    _logger->error(__FILEREF__ + "_mmsStorage->removeMediaItem failed"
+                        + ", workspace->_workspaceKey: " + to_string(workspaceAndMediaItemKey.first->_workspaceKey)
+                        + ", workspace->_name: " + workspaceAndMediaItemKey.first->_name
+                        + ", mediaItemKeyToBeRemoved: " + to_string(workspaceAndMediaItemKey.second)
+                    );
+
+                    moreRemoveToBeDone = false;
+
+                    break;
+                    // no throw since it is running in a detached thread
+                    // throw e;
+                }
             }
         }
+
+        _logger->info(__FILEREF__ + "Content Retention finished"
+        );
     }
 
-    _logger->info(__FILEREF__ + "Content Retention finished"
-    );
+    {
+        _logger->info(__FILEREF__ + "Staging Retention started"
+            + ", _mmsStorage->getStagingRootRepository(): " + _mmsStorage->getStagingRootRepository()
+        );
+
+        try
+        {
+            chrono::system_clock::time_point tpNow = chrono::system_clock::now();
+    
+            FileIO::DirectoryEntryType_t detDirectoryEntryType;
+            shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (_mmsStorage->getStagingRootRepository());
+
+            bool scanDirectoryFinished = false;
+            while (!scanDirectoryFinished)
+            {
+                string directoryEntry;
+                try
+                {
+                    string directoryEntry = FileIO::readDirectory (directory,
+                        &detDirectoryEntryType);
+
+                    _logger->error(__FILEREF__ + "staging directory"
+                        + ", directoryEntry: " + directoryEntry
+                            );
+//                    if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
+//                        continue;
+
+                    string pathName = _mmsStorage->getStagingRootRepository()
+                            + directoryEntry;
+                    chrono::system_clock::time_point tpLastModification =
+                            FileIO:: getFileTime (pathName);
+                    
+                    int elapsedInHours = chrono::duration_cast<chrono::hours>(tpNow - tpLastModification).count();
+                    double elapsedInDays =  elapsedInHours / 24;
+                    _logger->error(__FILEREF__ + "staging directory"
+                        + ", pathName: " + pathName
+                        + ", elapsedInHours: " + to_string(elapsedInHours)
+                        + ", elapsedInDays: " + to_string(elapsedInDays)
+                        + ", _stagingRetentionInDays: " + to_string(_stagingRetentionInDays)
+                            );
+                    if (elapsedInDays >= _stagingRetentionInDays)
+                    {
+                        if (detDirectoryEntryType == FileIO:: TOOLS_FILEIO_DIRECTORY) 
+                        {
+                            _logger->info(__FILEREF__ + "Removing staging directory because of Retention"
+                                + ", pathName: " + pathName
+                                + ", elapsedInDays: " + to_string(elapsedInDays)
+                                + ", _stagingRetentionInDays: " + to_string(_stagingRetentionInDays)
+                            );
+                            
+                            try
+                            {
+                                bool removeRecursively = true;
+
+                                FileIO::removeDirectory(pathName, removeRecursively);
+                            }
+                            catch(runtime_error e)
+                            {
+                                _logger->warn(__FILEREF__ + "Error removing staging directory because of Retention"
+                                    + ", pathName: " + pathName
+                                    + ", elapsedInDays: " + to_string(elapsedInDays)
+                                    + ", _stagingRetentionInDays: " + to_string(_stagingRetentionInDays)
+                                    + ", e.what(): " + e.what()
+                                );
+                            }
+                            catch(exception e)
+                            {
+                                _logger->warn(__FILEREF__ + "Error removing staging directory because of Retention"
+                                    + ", pathName: " + pathName
+                                    + ", elapsedInDays: " + to_string(elapsedInDays)
+                                    + ", _stagingRetentionInDays: " + to_string(_stagingRetentionInDays)
+                                    + ", e.what(): " + e.what()
+                                );
+                            }
+                        }
+                        else
+                        {
+                            _logger->info(__FILEREF__ + "Removing staging file because of Retention"
+                                + ", pathName: " + pathName
+                                + ", elapsedInDays: " + to_string(elapsedInDays)
+                                + ", _stagingRetentionInDays: " + to_string(_stagingRetentionInDays)
+                            );
+                            
+                            bool exceptionInCaseOfError = false;
+
+                            FileIO::remove(pathName, exceptionInCaseOfError);
+                        }
+                    }
+                }
+                catch(DirectoryListFinished e)
+                {
+                    scanDirectoryFinished = true;
+                }
+                catch(runtime_error e)
+                {
+                    string errorMessage = __FILEREF__ + "listing directory failed"
+                           + ", e.what(): " + e.what()
+                    ;
+                    _logger->error(errorMessage);
+
+                    throw e;
+                }
+                catch(exception e)
+                {
+                    string errorMessage = __FILEREF__ + "listing directory failed"
+                           + ", e.what(): " + e.what()
+                    ;
+                    _logger->error(errorMessage);
+
+                    throw e;
+                }
+            }
+
+            FileIO::closeDirectory (directory);
+        }
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + "removeHavingPrefixFileName failed"
+                + ", e.what(): " + e.what()
+            );
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "removeHavingPrefixFileName failed");
+        }
+
+        _logger->info(__FILEREF__ + "Staging Retention finished"
+        );
+    }
 }
 
 tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> MMSEngineProcessor::getMediaSourceDetails(

@@ -579,7 +579,7 @@ public:
         EncodingPriority maxEncodingPriority,
         EncodingPeriod encodingPeriod,
         long maxIngestionsNumber,
-        long maxStorageInGB,
+        long maxStorageInMB,
         string languageCode,
         chrono::system_clock::time_point userExpirationDate);
     
@@ -616,8 +616,9 @@ public:
         string jsonEncodingProfile);
 
     void getExpiredMediaItemKeys(
+        string processorMMS,
         vector<pair<shared_ptr<Workspace>,int64_t>>& mediaItemKeyToBeRemoved,
-            int maxMediaItemKeysNumber);
+        int maxMediaItemKeysNumber);
 
     void getIngestionsToBeManaged(
         vector<tuple<int64_t,string,shared_ptr<Workspace>,string, IngestionType, IngestionStatus>>& ingestionsToBeManaged,
@@ -694,6 +695,14 @@ public:
         bool contentTypePresent, ContentType contentType,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate);
 
+    Json::Value getEncodingProfilesSetList (
+        int64_t workspaceKey, int64_t encodingProfilesSetKey,
+        bool contentTypePresent, ContentType contentType);
+
+    Json::Value getEncodingProfileList (
+        int64_t workspaceKey, int64_t encodingProfileKey,
+        bool contentTypePresent, ContentType contentType);
+
     MMSEngineDBFacade::ContentType getMediaItemKeyDetails(
         int64_t referenceMediaItemKey, bool warningIfMissing);
 
@@ -754,8 +763,9 @@ public:
         int64_t deliveryAuthorizationKey,
         string contentURI);
 
+    void resetProcessingJobsIfNeeded(string processorMMS);
+
     void getEncodingJobs(
-        bool resetToBeDone,
         string processorMMS,
         vector<shared_ptr<MMSEngineDBFacade::EncodingItem>>& encodingItems);
     

@@ -1,1 +1,0 @@
-sudo apache2ctl stop && echo "stopped" && make && cp API/src/api.fcgi API/src/uploadBinary.cgi API/src/ffmpegEncoder.fcgi /home/giuliano/catramms/cgi && echo "copied" && sudo apache2ctl start && tail -f /var/log/apache2/error.log /home/giuliano/catramms/logs/apac*

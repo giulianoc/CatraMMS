@@ -70,7 +70,7 @@ private:
     MMSEngineDBFacade::EncodingPriority _encodingPriorityWorkspaceDefaultValue;
     MMSEngineDBFacade::EncodingPeriod _encodingPeriodWorkspaceDefaultValue;
     int _maxIngestionsNumberWorkspaceDefaultValue;
-    int _maxStorageInGBWorkspaceDefaultValue;
+    int _maxStorageInMBWorkspaceDefaultValue;
     // unsigned long       _binaryBufferLength;
     unsigned long       _progressUpdatePeriodInSeconds;
     int                 _webServerPort;
@@ -107,11 +107,16 @@ private:
         unordered_map<string, string> queryParameters,
         string requestBody);
 
-    /*
-    void createAPIKey(
+    void encodingProfilesSetList(
         FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters);
-    */
+
+    void encodingProfileList(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters);
+
     void ingestion(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,

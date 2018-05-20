@@ -42,7 +42,11 @@ MMSEngineDBFacade::MMSEngineDBFacade(
     #endif
      */
     string dbUsername = configuration["database"].get("userName", "XXX").asString();
-    string dbPassword = configuration["database"].get("password", "XXX").asString();
+    string dbPassword;
+    {
+        string encryptedPassword = configuration["database"].get("password", "XXX").asString();
+        dbPassword = Encrypt::decrypt(encryptedPassword);        
+    }    
     string dbName = configuration["database"].get("dbName", "XXX").asString();
     string selectTestingConnection = configuration["database"].get("selectTestingConnection", "XXX").asString();
 
@@ -78,7 +82,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
     );
 
     string lastSQLCommand =
-        "select workspaceKey, name, directoryName, maxStorageInGB, maxEncodingPriority from MMS_Workspace where workspaceKey = ?";
+        "select workspaceKey, name, directoryName, maxStorageInMB, maxEncodingPriority from MMS_Workspace where workspaceKey = ?";
     shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
     int queryParameterIndex = 1;
     preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
@@ -91,7 +95,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
         workspace->_workspaceKey = resultSet->getInt("workspaceKey");
         workspace->_name = resultSet->getString("name");
         workspace->_directoryName = resultSet->getString("directoryName");
-        workspace->_maxStorageInGB = resultSet->getInt("maxStorageInGB");
+        workspace->_maxStorageInMB = resultSet->getInt("maxStorageInMB");
         workspace->_maxEncodingPriority = static_cast<int>(MMSEngineDBFacade::toEncodingPriority(resultSet->getString("maxEncodingPriority")));
 
         // getTerritories(workspace);
@@ -128,7 +132,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(string workspaceName)
     );
 
     string lastSQLCommand =
-        "select workspaceKey, name, directoryName, maxStorageInGB, maxEncodingPriority from MMS_Workspace where name = ?";
+        "select workspaceKey, name, directoryName, maxStorageInMB, maxEncodingPriority from MMS_Workspace where name = ?";
     shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
     int queryParameterIndex = 1;
     preparedStatement->setString(queryParameterIndex++, workspaceName);
@@ -141,7 +145,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(string workspaceName)
         workspace->_workspaceKey = resultSet->getInt("workspaceKey");
         workspace->_name = resultSet->getString("name");
         workspace->_directoryName = resultSet->getString("directoryName");
-        workspace->_maxStorageInGB = resultSet->getInt("maxStorageInGB");
+        workspace->_maxStorageInMB = resultSet->getInt("maxStorageInMB");
         workspace->_maxEncodingPriority = static_cast<int>(MMSEngineDBFacade::toEncodingPriority(resultSet->getString("maxEncodingPriority")));
 
         // getTerritories(workspace);
@@ -209,7 +213,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUser(
     EncodingPriority maxEncodingPriority,
     EncodingPeriod encodingPeriod,
     long maxIngestionsNumber,
-    long maxStorageInGB,
+    long maxStorageInMB,
     string languageCode,
     chrono::system_clock::time_point userExpirationDate
 )
@@ -279,8 +283,8 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUser(
             
             lastSQLCommand = 
                     "insert into MMS_Workspace ("
-                    "workspaceKey, creationDate, name, directoryName, workspaceType, deliveryURL, isEnabled, maxEncodingPriority, encodingPeriod, maxIngestionsNumber, maxStorageInGB, currentStorageUsageInGB, languageCode) values ("
-                    "NULL,         NULL,         ?,    ?,             ?,             ?,           ?,         ?,                   ?,              ?,                   ?,              0,                       ?)";
+                    "workspaceKey, creationDate, name, directoryName, workspaceType, deliveryURL, isEnabled, maxEncodingPriority, encodingPeriod, maxIngestionsNumber, maxStorageInMB, languageCode) values ("
+                    "NULL,         NULL,         ?,    ?,             ?,             ?,           ?,         ?,                   ?,              ?,                   ?,              ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -295,7 +299,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUser(
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(maxEncodingPriority));
             preparedStatement->setString(queryParameterIndex++, toString(encodingPeriod));
             preparedStatement->setInt(queryParameterIndex++, maxIngestionsNumber);
-            preparedStatement->setInt(queryParameterIndex++, maxStorageInGB);
+            preparedStatement->setInt(queryParameterIndex++, maxStorageInMB);
             preparedStatement->setString(queryParameterIndex++, languageCode);
 
             preparedStatement->executeUpdate();
@@ -1502,12 +1506,14 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
 }
 
 void MMSEngineDBFacade::getExpiredMediaItemKeys(
-    vector<pair<shared_ptr<Workspace>,int64_t>>& mediaItemKeyToBeRemoved,
+        string processorMMS,
+        vector<pair<shared_ptr<Workspace>,int64_t>>& mediaItemKeyToBeRemoved,
         int maxMediaItemKeysNumber)
 {    
     string      lastSQLCommand;
     
     shared_ptr<MySQLConnection> conn;
+    bool autoCommit = true;
 
     try
     {
@@ -1516,12 +1522,25 @@ void MMSEngineDBFacade::getExpiredMediaItemKeys(
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         
+        autoCommit = false;
+        // conn->_sqlConnection->setAutoCommit(autoCommit); OR execute the statement START TRANSACTION
+        {
+            lastSQLCommand = 
+                "START TRANSACTION";
+
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute(lastSQLCommand);
+        }
+        
         {
             lastSQLCommand = 
                 "select workspaceKey, mediaItemKey from MMS_MediaItem where "
-                "DATE_ADD(ingestionDate, INTERVAL retentionInDays DAY) < NOW()";
+                "DATE_ADD(ingestionDate, INTERVAL retentionInDays DAY) < NOW() "
+                "and processorMMS is null "
+                "limit ? for update";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
+            preparedStatement->setInt(queryParameterIndex++, maxMediaItemKeysNumber);
             
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             while (resultSet->next())
@@ -1535,8 +1554,41 @@ void MMSEngineDBFacade::getExpiredMediaItemKeys(
                         make_pair(workspace, mediaItemKey);
                 
                 mediaItemKeyToBeRemoved.push_back(workspaceAndMediaItemKey);
+                
+                {
+                    lastSQLCommand = 
+                        "update MMS_MediaItem set processorMMS = ? where mediaItemKey = ? and processorMMS is null";
+                    shared_ptr<sql::PreparedStatement> preparedStatementUpdateEncoding (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                    int queryParameterIndex = 1;
+                    preparedStatementUpdateEncoding->setString(queryParameterIndex++, processorMMS);
+                    preparedStatementUpdateEncoding->setInt64(queryParameterIndex++, mediaItemKey);
+
+                    int rowsUpdated = preparedStatementUpdateEncoding->executeUpdate();
+                    if (rowsUpdated != 1)
+                    {
+                        string errorMessage = __FILEREF__ + "no update was done"
+                                + ", processorMMS: " + processorMMS
+                                + ", mediaItemKey: " + to_string(mediaItemKey)
+                                + ", rowsUpdated: " + to_string(rowsUpdated)
+                                + ", lastSQLCommand: " + lastSQLCommand
+                        ;
+                        _logger->error(errorMessage);
+
+                        throw runtime_error(errorMessage);
+                    }
+                }
             }
         }
+        
+        // conn->_sqlConnection->commit(); OR execute COMMIT
+        {
+            lastSQLCommand = 
+                "COMMIT";
+
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute(lastSQLCommand);
+        }
+        autoCommit = true;
         
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -1552,11 +1604,43 @@ void MMSEngineDBFacade::getExpiredMediaItemKeys(
             + ", exceptionMessage: " + exceptionMessage
         );
 
-        _logger->debug(__FILEREF__ + "DB connection unborrow"
-            + ", getConnectionId: " + to_string(conn->getConnectionId())
-        );
-        _connectionPool->unborrow(conn);
+        try
+        {
+            // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+            if (!autoCommit)
+            {
+                shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                statement->execute("ROLLBACK");
+            }
+
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(sql::SQLException se)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + se.what()
+            );
         
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + e.what()
+            );
+        
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+
         throw se;
     }
     catch(runtime_error e)
@@ -1566,11 +1650,43 @@ void MMSEngineDBFacade::getExpiredMediaItemKeys(
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->debug(__FILEREF__ + "DB connection unborrow"
-            + ", getConnectionId: " + to_string(conn->getConnectionId())
-        );
-        _connectionPool->unborrow(conn);
+        try
+        {
+            // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+            if (!autoCommit)
+            {
+                shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                statement->execute("ROLLBACK");
+            }
+
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(sql::SQLException se)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + se.what()
+            );
         
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + e.what()
+            );
+        
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+
         throw e;
     }
     catch(exception e)
@@ -1579,17 +1695,48 @@ void MMSEngineDBFacade::getExpiredMediaItemKeys(
             + ", lastSQLCommand: " + lastSQLCommand
         );
 
-        _logger->debug(__FILEREF__ + "DB connection unborrow"
-            + ", getConnectionId: " + to_string(conn->getConnectionId())
-        );
-        _connectionPool->unborrow(conn);
+        try
+        {
+            // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+            if (!autoCommit)
+            {
+                shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                statement->execute("ROLLBACK");
+            }
+
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(sql::SQLException se)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + se.what()
+            );
         
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + e.what()
+            );
+        
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+
         throw e;
     }    
 }
 
-/*
-string MMSEngineDBFacade::resetIngestionJobs(string processorMMS)
+void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 {
     string      lastSQLCommand;
 
@@ -1611,6 +1758,50 @@ string MMSEngineDBFacade::resetIngestionJobs(string processorMMS)
             preparedStatement->setString(queryParameterIndex++, processorMMS);
 
             int rowsUpdated = preparedStatement->executeUpdate();
+            if (rowsUpdated > 0)
+            {
+                _logger->info(__FILEREF__ + "Found Processing jobs (MMS_IngestionJob) to be reset"
+                    + ", processorMMS: " + processorMMS
+                    + ", rowsUpdated: " + to_string(rowsUpdated)
+                );
+            }
+        }
+                        
+        {
+            lastSQLCommand = 
+                "update MMS_EncodingJob set status = ?, processorMMS = null where processorMMS = ? and status = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
+            preparedStatement->setString(queryParameterIndex++, processorMMS);
+            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::Processing));
+
+            int rowsUpdated = preparedStatement->executeUpdate();            
+            if (rowsUpdated > 0)
+            {
+                _logger->info(__FILEREF__ + "Found Processing jobs (MMS_EncodingJob) to be reset"
+                    + ", processorMMS: " + processorMMS
+                    + ", rowsUpdated: " + to_string(rowsUpdated)
+                );
+            }
+        }
+
+        {
+            lastSQLCommand = 
+                "update MMS_MediaItem set processorMMS = NULL where processorMMS = ?";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, processorMMS);
+
+            int rowsUpdated = preparedStatement->executeUpdate();
+            if (rowsUpdated > 0)
+            {
+                _logger->info(__FILEREF__ + "Found Processing jobs (MMS_MediaItem) to be reset"
+                    + ", processorMMS: " + processorMMS
+                    + ", rowsUpdated: " + to_string(rowsUpdated)
+                );
+            }
         }
                         
         _logger->debug(__FILEREF__ + "DB connection unborrow"
@@ -1662,13 +1853,11 @@ string MMSEngineDBFacade::resetIngestionJobs(string processorMMS)
         throw e;
     }    
 }
-*/
 
 void MMSEngineDBFacade::getIngestionsToBeManaged(
         vector<tuple<int64_t, string, shared_ptr<Workspace>, string, IngestionType, IngestionStatus>>& ingestionsToBeManaged,
         string processorMMS,
         int maxIngestionJobs
-        // int maxIngestionJobsWithDependencyToCheck
 )
 {
     string      lastSQLCommand;
@@ -4042,10 +4231,10 @@ Json::Value MMSEngineDBFacade::getContentList (
             {
                 Json::Value mediaItemRoot;
 
-                int64_t mediaItemKey = resultSet->getInt64("mediaItemKey");
+                int64_t localMediaItemKey = resultSet->getInt64("mediaItemKey");
 
                 field = "mediaItemKey";
-                mediaItemRoot[field] = mediaItemKey;
+                mediaItemRoot[field] = localMediaItemKey;
 
                 field = "title";
                 mediaItemRoot[field] = static_cast<string>(resultSet->getString("title"));
@@ -4122,7 +4311,7 @@ Json::Value MMSEngineDBFacade::getContentList (
 
                     int64_t physicalPathKey = -1;
                     tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
-                        videoDetails = getVideoDetails(mediaItemKey, physicalPathKey);
+                        videoDetails = getVideoDetails(localMediaItemKey, physicalPathKey);
 
                     tie(durationInMilliSeconds, bitRate,
                         videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
@@ -4180,7 +4369,7 @@ Json::Value MMSEngineDBFacade::getContentList (
 
                     int64_t physicalPathKey = -1;
                     tuple<int64_t,string,long,long,int>
-                        audioDetails = getAudioDetails(mediaItemKey, physicalPathKey);
+                        audioDetails = getAudioDetails(localMediaItemKey, physicalPathKey);
 
                     tie(durationInMilliSeconds, codecName, bitRate, sampleRate, channels) 
                             = audioDetails;
@@ -4215,7 +4404,7 @@ Json::Value MMSEngineDBFacade::getContentList (
 
                     int64_t physicalPathKey = -1;
                     tuple<int,int,string,int>
-                        imageDetails = getImageDetails(mediaItemKey, physicalPathKey);
+                        imageDetails = getImageDetails(localMediaItemKey, physicalPathKey);
 
                     tie(width, height, format, quality) 
                             = imageDetails;
@@ -4241,7 +4430,7 @@ Json::Value MMSEngineDBFacade::getContentList (
                 else
                 {
                     string errorMessage = __FILEREF__ + "ContentType unmanaged"
-                        + ", mediaItemKey: " + to_string(mediaItemKey)
+                        + ", mediaItemKey: " + to_string(localMediaItemKey)
                         + ", lastSQLCommand: " + lastSQLCommand
                     ;
                     _logger->error(errorMessage);
@@ -4259,7 +4448,7 @@ Json::Value MMSEngineDBFacade::getContentList (
 
                     shared_ptr<sql::PreparedStatement> preparedStatementProfiles (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
-                    preparedStatementProfiles->setInt64(queryParameterIndex++, mediaItemKey);
+                    preparedStatementProfiles->setInt64(queryParameterIndex++, localMediaItemKey);
                     shared_ptr<sql::ResultSet> resultSetProfiles (preparedStatementProfiles->executeQuery());
                     while (resultSetProfiles->next())
                     {
@@ -4294,6 +4483,459 @@ Json::Value MMSEngineDBFacade::getContentList (
 
         field = "mediaItems";
         responseRoot[field] = mediaItemsRoot;
+
+        field = "response";
+        contentListRoot[field] = responseRoot;
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
+        throw se;
+    }    
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
+        throw e;
+    } 
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
+        throw e;
+    } 
+    
+    return contentListRoot;
+}
+
+Json::Value MMSEngineDBFacade::getEncodingProfilesSetList (
+        int64_t workspaceKey, int64_t encodingProfilesSetKey,
+        bool contentTypePresent, ContentType contentType
+)
+{    
+    string      lastSQLCommand;
+    Json::Value contentListRoot;
+    
+    shared_ptr<MySQLConnection> conn;
+
+    try
+    {
+        string field;
+        
+        _logger->info(__FILEREF__ + "getEncodingProfilesSetList"
+            + ", workspaceKey: " + to_string(workspaceKey)
+            + ", encodingProfilesSetKey: " + to_string(encodingProfilesSetKey)
+            + ", contentTypePresent: " + to_string(contentTypePresent)
+            + ", contentType: " + (contentTypePresent ? toString(contentType) : "")
+        );
+        
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        {
+            Json::Value requestParametersRoot;
+            
+            if (encodingProfilesSetKey != -1)
+            {
+                field = "encodingProfilesSetKey";
+                requestParametersRoot[field] = encodingProfilesSetKey;
+            }
+            
+            if (contentTypePresent)
+            {
+                field = "contentType";
+                requestParametersRoot[field] = toString(contentType);
+            }
+            
+            field = "requestParameters";
+            contentListRoot[field] = requestParametersRoot;
+        }
+        
+        string sqlWhere = string ("where workspaceKey = ? ");
+        if (encodingProfilesSetKey != -1)
+            sqlWhere += ("and encodingProfilesSetKey = ? ");
+        if (contentTypePresent)
+            sqlWhere += ("and contentType = ? ");
+        
+        Json::Value responseRoot;
+        {
+            lastSQLCommand = 
+                string("select count(*) from MMS_EncodingProfilesSet ")
+                    + sqlWhere;
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            if (encodingProfilesSetKey != -1)
+                preparedStatement->setInt64(queryParameterIndex++, encodingProfilesSetKey);
+            if (contentTypePresent)
+                preparedStatement->setString(queryParameterIndex++, toString(contentType));
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                field = "numFound";
+                responseRoot[field] = resultSet->getInt64(1);
+            }
+            else
+            {
+                string errorMessage ("select count(*) failed");
+
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+
+        Json::Value encodingProfilesSetsRoot(Json::arrayValue);
+        {
+            lastSQLCommand = 
+                string("select encodingProfilesSetKey, contentType, label from MMS_EncodingProfilesSet ")
+                    + sqlWhere;
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            if (encodingProfilesSetKey != -1)
+                preparedStatement->setInt64(queryParameterIndex++, encodingProfilesSetKey);
+            if (contentTypePresent)
+                preparedStatement->setString(queryParameterIndex++, toString(contentType));
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            while (resultSet->next())
+            {
+                Json::Value encodingProfilesSetRoot;
+
+                int64_t localEncodingProfilesSetKey = resultSet->getInt64("encodingProfilesSetKey");
+
+                field = "encodingProfilesSetKey";
+                encodingProfilesSetRoot[field] = localEncodingProfilesSetKey;
+
+                field = "label";
+                encodingProfilesSetRoot[field] = static_cast<string>(resultSet->getString("label"));
+
+                ContentType contentType = MMSEngineDBFacade::toContentType(resultSet->getString("contentType"));
+                field = "contentType";
+                encodingProfilesSetRoot[field] = static_cast<string>(resultSet->getString("contentType"));
+
+                Json::Value encodingProfilesRoot(Json::arrayValue);
+                {                    
+                    lastSQLCommand = 
+                        "select ep.encodingProfileKey, ep.label, ep.technology, ep.jsonProfile "
+                        "from MMS_EncodingProfilesSetMapping epsm, MMS_EncodingProfile ep "
+                        "where epsm.encodingProfileKey = ep.encodingProfileKey and "
+                        "epsm.encodingProfilesSetKey = ?";
+
+                    shared_ptr<sql::PreparedStatement> preparedStatementProfile (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                    int queryParameterIndex = 1;
+                    preparedStatementProfile->setInt64(queryParameterIndex++, localEncodingProfilesSetKey);
+                    shared_ptr<sql::ResultSet> resultSetProfile (preparedStatementProfile->executeQuery());
+                    while (resultSetProfile->next())
+                    {
+                        Json::Value encodingProfileRoot;
+                        
+                        field = "encodingProfileKey";
+                        encodingProfileRoot[field] = resultSetProfile->getInt64("encodingProfileKey");
+                
+                        field = "label";
+                        encodingProfileRoot[field] = static_cast<string>(resultSetProfile->getString("label"));
+                        
+                        field = "technology";
+                        encodingProfileRoot[field] = static_cast<string>(resultSetProfile->getString("technology"));
+
+                        {
+                            string jsonProfile = resultSetProfile->getString("jsonProfile");
+                            
+                            Json::Value profileRoot;
+                            try
+                            {
+                                Json::CharReaderBuilder builder;
+                                Json::CharReader* reader = builder.newCharReader();
+                                string errors;
+
+                                bool parsingSuccessful = reader->parse(jsonProfile.c_str(),
+                                        jsonProfile.c_str() + jsonProfile.size(), 
+                                        &profileRoot, &errors);
+                                delete reader;
+
+                                if (!parsingSuccessful)
+                                {
+                                    string errorMessage = string("Json metadata failed during the parsing")
+                                            + ", errors: " + errors
+                                            + ", json data: " + jsonProfile
+                                            ;
+                                    _logger->error(__FILEREF__ + errorMessage);
+
+                                    continue;
+                                }
+                            }
+                            catch(exception e)
+                            {
+                                string errorMessage = string("Json metadata failed during the parsing"
+                                        ", json data: " + jsonProfile
+                                        );
+                                _logger->error(__FILEREF__ + errorMessage);
+
+                                continue;
+                            }
+                            
+                            field = "profile";
+                            encodingProfileRoot[field] = profileRoot;
+                        }
+                        
+                        encodingProfilesRoot.append(encodingProfileRoot);
+                    }
+                }
+
+                field = "encodingProfiles";
+                encodingProfilesSetRoot[field] = encodingProfilesRoot;
+                
+                encodingProfilesSetsRoot.append(encodingProfilesSetRoot);
+            }
+        }
+
+        field = "encodingProfilesSets";
+        responseRoot[field] = encodingProfilesSetsRoot;
+
+        field = "response";
+        contentListRoot[field] = responseRoot;
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
+        throw se;
+    }    
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
+        throw e;
+    } 
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
+        throw e;
+    } 
+    
+    return contentListRoot;
+}
+
+Json::Value MMSEngineDBFacade::getEncodingProfileList (
+        int64_t workspaceKey, int64_t encodingProfileKey,
+        bool contentTypePresent, ContentType contentType
+)
+{    
+    string      lastSQLCommand;
+    Json::Value contentListRoot;
+    
+    shared_ptr<MySQLConnection> conn;
+
+    try
+    {
+        string field;
+        
+        _logger->info(__FILEREF__ + "getEncodingProfileList"
+            + ", workspaceKey: " + to_string(workspaceKey)
+            + ", encodingProfileKey: " + to_string(encodingProfileKey)
+            + ", contentTypePresent: " + to_string(contentTypePresent)
+            + ", contentType: " + (contentTypePresent ? toString(contentType) : "")
+        );
+        
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        {
+            Json::Value requestParametersRoot;
+            
+            if (encodingProfileKey != -1)
+            {
+                field = "encodingProfileKey";
+                requestParametersRoot[field] = encodingProfileKey;
+            }
+            
+            if (contentTypePresent)
+            {
+                field = "contentType";
+                requestParametersRoot[field] = toString(contentType);
+            }
+            
+            field = "requestParameters";
+            contentListRoot[field] = requestParametersRoot;
+        }
+        
+        string sqlWhere = string ("where workspaceKey = ? ");
+        if (encodingProfileKey != -1)
+            sqlWhere += ("and encodingProfileKey = ? ");
+        if (contentTypePresent)
+            sqlWhere += ("and contentType = ? ");
+        
+        Json::Value responseRoot;
+        {
+            lastSQLCommand = 
+                string("select count(*) from MMS_EncodingProfile ")
+                    + sqlWhere;
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            if (encodingProfileKey != -1)
+                preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
+            if (contentTypePresent)
+                preparedStatement->setString(queryParameterIndex++, toString(contentType));
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                field = "numFound";
+                responseRoot[field] = resultSet->getInt64(1);
+            }
+            else
+            {
+                string errorMessage ("select count(*) failed");
+
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+
+        Json::Value encodingProfilesRoot(Json::arrayValue);
+        {                    
+            lastSQLCommand = 
+                string ("select encodingProfileKey, label, technology, jsonProfile from MMS_EncodingProfile ") 
+                + sqlWhere;
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            if (encodingProfileKey != -1)
+                preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
+            if (contentTypePresent)
+                preparedStatement->setString(queryParameterIndex++, toString(contentType));
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            while (resultSet->next())
+            {
+                Json::Value encodingProfileRoot;
+
+                field = "encodingProfileKey";
+                encodingProfileRoot[field] = resultSet->getInt64("encodingProfileKey");
+
+                field = "label";
+                encodingProfileRoot[field] = static_cast<string>(resultSet->getString("label"));
+
+                field = "technology";
+                encodingProfileRoot[field] = static_cast<string>(resultSet->getString("technology"));
+
+                {
+                    string jsonProfile = resultSet->getString("jsonProfile");
+
+                    Json::Value profileRoot;
+                    try
+                    {
+                        Json::CharReaderBuilder builder;
+                        Json::CharReader* reader = builder.newCharReader();
+                        string errors;
+
+                        bool parsingSuccessful = reader->parse(jsonProfile.c_str(),
+                                jsonProfile.c_str() + jsonProfile.size(), 
+                                &profileRoot, &errors);
+                        delete reader;
+
+                        if (!parsingSuccessful)
+                        {
+                            string errorMessage = string("Json metadata failed during the parsing")
+                                    + ", errors: " + errors
+                                    + ", json data: " + jsonProfile
+                                    ;
+                            _logger->error(__FILEREF__ + errorMessage);
+
+                            continue;
+                        }
+                    }
+                    catch(exception e)
+                    {
+                        string errorMessage = string("Json metadata failed during the parsing"
+                                ", json data: " + jsonProfile
+                                );
+                        _logger->error(__FILEREF__ + errorMessage);
+
+                        continue;
+                    }
+
+                    field = "profile";
+                    encodingProfileRoot[field] = profileRoot;
+                }
+
+                encodingProfilesRoot.append(encodingProfileRoot);
+            }
+        }
+
+        field = "encodingProfiles";
+        responseRoot[field] = encodingProfilesRoot;
 
         field = "response";
         contentListRoot[field] = responseRoot;
@@ -5498,7 +6140,6 @@ tuple<int,int,string,int> MMSEngineDBFacade::getImageDetails(
 }
 
 void MMSEngineDBFacade::getEncodingJobs(
-        bool resetToBeDone,
         string processorMMS,
         vector<shared_ptr<MMSEngineDBFacade::EncodingItem>>& encodingItems
 )
@@ -5525,23 +6166,6 @@ void MMSEngineDBFacade::getEncodingJobs(
             statement->execute(lastSQLCommand);
         }
         
-        if (resetToBeDone)
-        {
-            lastSQLCommand = 
-                "update MMS_EncodingJob set status = ?, processorMMS = null where processorMMS = ? and status = ?";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
-            preparedStatement->setString(queryParameterIndex++, processorMMS);
-            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::Processing));
-
-            int rowsReset = preparedStatement->executeUpdate();            
-            if (rowsReset > 0)
-                _logger->warn(__FILEREF__ + "Rows (MMS_EncodingJob) that were reset"
-                    + ", rowsReset: " + to_string(rowsReset)
-                );
-        }
-        else
         {
             int retentionDaysToReset = 7;
             
@@ -8176,6 +8800,7 @@ void MMSEngineDBFacade::checkWorkspaceMaxIngestionNumber (
     {
         int maxIngestionsNumber;
         int currentIngestionsNumber;
+        int64_t maxStorageInMB;
         EncodingPeriod encodingPeriod;
         string periodStartDateTime;
         string periodEndDateTime;
@@ -8187,8 +8812,10 @@ void MMSEngineDBFacade::checkWorkspaceMaxIngestionNumber (
 
         {
             lastSQLCommand = 
-                "select c.maxIngestionsNumber, cmi.currentIngestionsNumber, c.encodingPeriod, " 
-                    "DATE_FORMAT(cmi.startDateTime, '%Y-%m-%d %H:%i:%s') as LocalStartDateTime, DATE_FORMAT(cmi.endDateTime, '%Y-%m-%d %H:%i:%s') as LocalEndDateTime "
+                "select c.maxIngestionsNumber, cmi.currentIngestionsNumber, c.encodingPeriod, "
+                    "c.maxStorageInMB, "
+                    "DATE_FORMAT(cmi.startDateTime, '%Y-%m-%d %H:%i:%s') as LocalStartDateTime, "
+                    "DATE_FORMAT(cmi.endDateTime, '%Y-%m-%d %H:%i:%s') as LocalEndDateTime "
                 "from MMS_Workspace c, MMS_WorkspaceMoreInfo cmi where c.workspaceKey = cmi.workspaceKey and c.workspaceKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -8200,6 +8827,7 @@ void MMSEngineDBFacade::checkWorkspaceMaxIngestionNumber (
                 maxIngestionsNumber = resultSet->getInt("maxIngestionsNumber");
                 currentIngestionsNumber = resultSet->getInt("currentIngestionsNumber");
                 encodingPeriod = toEncodingPeriod(resultSet->getString("encodingPeriod"));
+                maxStorageInMB = resultSet->getInt("maxStorageInMB");
                 periodStartDateTime = resultSet->getString("LocalStartDateTime");
                 periodEndDateTime = resultSet->getString("LocalEndDateTime");                
             }
@@ -8213,6 +8841,40 @@ void MMSEngineDBFacade::checkWorkspaceMaxIngestionNumber (
 
                 throw runtime_error(errorMessage);                    
             }            
+        }
+
+        // check maxStorage first        
+        {
+            int64_t totalSizeInBytes;
+            {
+                lastSQLCommand = 
+                    "select SUM(pp.sizeInBytes) as totalSizeInBytes from MMS_MediaItem mi, MMS_PhysicalPath pp "
+                    "where mi.mediaItemKey = pp.mediaItemKey and mi.workspaceKey = ?";
+                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                int queryParameterIndex = 1;
+                preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+
+                shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+                if (resultSet->next())
+                {
+                    if (resultSet->isNull("totalSizeInBytes"))
+                        totalSizeInBytes = -1;
+                    else
+                        totalSizeInBytes = resultSet->getInt64("totalSizeInBytes");
+                }
+            }
+            
+            int64_t totalSizeInMB = totalSizeInBytes / 1000000;
+            if (totalSizeInMB >= maxStorageInMB)
+            {
+                string errorMessage = __FILEREF__ + "Reached the max storage dedicated for your Workspace"
+                    + ", maxStorageInMB: " + to_string(maxStorageInMB)
+                    + ". It is needed to increase Workspace capacity."
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
         }
         
         bool ingestionsAllowed = true;
@@ -8796,11 +9458,11 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             
             lastSQLCommand = 
                 "insert into MMS_MediaItem (mediaItemKey, workspaceKey, contentProviderKey, title, ingester, keywords, " 
-                "deliveryFileName, ingestionDate, contentType, startPublishing, endPublishing, retentionInDays) values ("
+                "deliveryFileName, ingestionDate, contentType, startPublishing, endPublishing, retentionInDays, processorMMS) values ("
                 "NULL, ?, ?, ?, ?, ?, ?, NULL, ?, "
                 "convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone), "
                 "convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone), "
-                "?)";
+                "?, NULL)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -9858,7 +10520,6 @@ void MMSEngineDBFacade::removeMediaItem (
             int rowsUpdated = preparedStatement->executeUpdate();
             if (rowsUpdated != 1)
             {
-                // probable because encodingPercentage was already the same in the table
                 string errorMessage = __FILEREF__ + "no delete was done"
                         + ", mediaItemKey: " + to_string(mediaItemKey)
                         + ", rowsUpdated: " + to_string(rowsUpdated)
@@ -9866,7 +10527,7 @@ void MMSEngineDBFacade::removeMediaItem (
                 ;
                 _logger->warn(errorMessage);
 
-                // throw runtime_error(errorMessage);                    
+                throw runtime_error(errorMessage);                    
             }
         }
         
@@ -10598,14 +11259,13 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "creationDate                   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "name                           VARCHAR (64) NOT NULL,"
                     "directoryName                  VARCHAR (64) NOT NULL,"
-                    "workspaceType                   TINYINT NOT NULL,"
+                    "workspaceType                  TINYINT NOT NULL,"
                     "deliveryURL                    VARCHAR (256) NULL,"
                     "isEnabled                      TINYINT (1) NOT NULL,"
                     "maxEncodingPriority            VARCHAR (32) NOT NULL,"
                     "encodingPeriod                 VARCHAR (64) NOT NULL,"
                     "maxIngestionsNumber            INT NOT NULL,"
-                    "maxStorageInGB                 INT NOT NULL,"
-                    "currentStorageUsageInGB        INT DEFAULT 0,"
+                    "maxStorageInMB                 INT UNSIGNED NOT NULL,"
                     "languageCode                   VARCHAR (16) NOT NULL,"
                     "constraint MMS_Workspace_PK PRIMARY KEY (workspaceKey),"
                     "UNIQUE (name))"
@@ -11103,6 +11763,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "startPublishing        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "endPublishing          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "retentionInDays        INT NOT NULL,"
+                    "processorMMS           VARCHAR (128) NULL,"
                     "constraint MMS_MediaItem_PK PRIMARY KEY (mediaItemKey), "
                     "constraint MMS_MediaItem_FK foreign key (workspaceKey) "
                         "references MMS_Workspace (workspaceKey) on delete cascade, "

@@ -62,6 +62,10 @@ server {
 			rewrite ^/catramms/(v[0-9]+)/profilesSet/video/?$ /api?version=$1&method=addEncodingProfilesSet&contentType=video last;
 			rewrite ^/catramms/(v[0-9]+)/profile/video/?$ /api?version=$1&method=addEncodingProfile&contentType=video last;
 		}
+		if ($request_method = GET) {
+			rewrite ^/catramms/(v[0-9]+)/profilesSet/video/?([0-9]*)/?$ /api?version=$1&method=encodingProfilesSetList&contentType=video&encodingProfilesSetKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/profile/video/?([0-9]*)/?$ /api?version=$1&method=encodingProfileList&contentType=video&encodingProfileKey=$2 last;
+		}
 		if ($request_method = PUT) {
 			rewrite ^/catramms/(v[0-9]+)/profilesSet/audio/?$ /api?version=$1&method=addEncodingProfilesSet&contentType=audio last;
 			rewrite ^/catramms/(v[0-9]+)/profile/audio/?$ /api?version=$1&method=addEncodingProfile&contentType=audio last;
