@@ -4060,10 +4060,6 @@ void MMSEngineProcessor::handleContentRetentionEvent ()
                     string directoryEntry = FileIO::readDirectory (directory,
                         &detDirectoryEntryType);
 
-                    _logger->error(__FILEREF__ + "staging directory"
-                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", directoryEntry: " + directoryEntry
-                            );
 //                    if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
 //                        continue;
 
@@ -4074,13 +4070,6 @@ void MMSEngineProcessor::handleContentRetentionEvent ()
                     
                     int elapsedInHours = chrono::duration_cast<chrono::hours>(tpNow - tpLastModification).count();
                     double elapsedInDays =  elapsedInHours / 24;
-                    _logger->error(__FILEREF__ + "staging directory"
-                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", pathName: " + pathName
-                        + ", elapsedInHours: " + to_string(elapsedInHours)
-                        + ", elapsedInDays: " + to_string(elapsedInDays)
-                        + ", _stagingRetentionInDays: " + to_string(_stagingRetentionInDays)
-                            );
                     if (elapsedInDays >= _stagingRetentionInDays)
                     {
                         if (detDirectoryEntryType == FileIO:: TOOLS_FILEIO_DIRECTORY) 

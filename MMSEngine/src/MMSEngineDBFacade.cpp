@@ -11796,7 +11796,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "contentType            VARCHAR (32) NOT NULL,"
                     "startPublishing        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "endPublishing          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
-                    "retentionInMinutes     UNSIGNED INT NOT NULL,"
+                    "retentionInMinutes     BIGINT UNSIGNED NOT NULL,"
                     "processorMMS           VARCHAR (128) NULL,"
                     "constraint MMS_MediaItem_PK PRIMARY KEY (mediaItemKey), "
                     "constraint MMS_MediaItem_FK foreign key (workspaceKey) "
