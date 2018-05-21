@@ -54,7 +54,7 @@ MMSEngineDBFacade::MMSEngineDBFacade(
 
     _confirmationCodeRetentionInDays    = configuration["mms"].get("confirmationCodeRetentionInDays", 3).asInt();
 
-    _contentRetentionInDaysDefaultValue    = configuration["mms"].get("contentRetentionInDaysDefaultValue", 1).asInt();
+    _contentRetentionInMinutesDefaultValue    = configuration["mms"].get("contentRetentionInMinutesDefaultValue", 1).asInt();
     
     _mySQLConnectionFactory = 
             make_shared<MySQLConnectionFactory>(dbServer, dbUsername, dbPassword, dbName,
@@ -1535,7 +1535,7 @@ void MMSEngineDBFacade::getExpiredMediaItemKeys(
         {
             lastSQLCommand = 
                 "select workspaceKey, mediaItemKey from MMS_MediaItem where "
-                "DATE_ADD(ingestionDate, INTERVAL retentionInDays DAY) < NOW() "
+                "DATE_ADD(ingestionDate, INTERVAL retentionInMinutes MINUTE) < NOW() "
                 "and processorMMS is null "
                 "limit ? for update";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -4208,7 +4208,7 @@ Json::Value MMSEngineDBFacade::getContentList (
                     "DATE_FORMAT(convert_tz(ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate, "
                     "DATE_FORMAT(convert_tz(startPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as startPublishing, "
                     "DATE_FORMAT(convert_tz(endPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endPublishing, "
-                    "contentType, retentionInDays from MMS_MediaItem ")
+                    "contentType, retentionInMinutes from MMS_MediaItem ")
                     + sqlWhere
                     + "limit ? offset ?";
 
@@ -4264,8 +4264,8 @@ Json::Value MMSEngineDBFacade::getContentList (
                 field = "contentType";
                 mediaItemRoot[field] = static_cast<string>(resultSet->getString("contentType"));
 
-                field = "retentionInDays";
-                mediaItemRoot[field] = resultSet->getInt("retentionInDays");
+                field = "retentionInMinutes";
+                mediaItemRoot[field] = resultSet->getInt64("retentionInMinutes");
                 
                 int64_t contentProviderKey = resultSet->getInt64("contentProviderKey");
                 
@@ -9373,7 +9373,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             string keywords = "";
             string deliveryFileName = "";
             string sContentType;
-            int retentionInDays = _contentRetentionInDaysDefaultValue;
+            int retentionInMinutes = _contentRetentionInMinutesDefaultValue;
             // string encodingProfilesSet;
 
             string field = "Title";
@@ -9391,9 +9391,43 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             if (isMetadataPresent(parametersRoot, field))
                 deliveryFileName = parametersRoot.get(field, "XXX").asString();
 
-            field = "RetentionInDays";
+            field = "Retention";
             if (isMetadataPresent(parametersRoot, field))
-                retentionInDays = parametersRoot.get(field, 1).asInt();
+            {
+                string retention = parametersRoot.get(field, "1d").asString();
+                if (retention == "0")
+                    retentionInMinutes = 0;
+                else if (retention.length() > 1)
+                {
+                    switch (retention.back())
+                    {
+                        case 's':   // seconds
+                            retentionInMinutes = stol(retention.substr(0, retention.length() - 1)) / 60;
+                            
+                            break;
+                        case 'm':   // minutes
+                            retentionInMinutes = stol(retention.substr(0, retention.length() - 1));
+                            
+                            break;
+                        case 'h':   // hours
+                            retentionInMinutes = stol(retention.substr(0, retention.length() - 1)) * 60;
+                            
+                            break;
+                        case 'd':   // days
+                            retentionInMinutes = stol(retention.substr(0, retention.length() - 1)) * 1440;
+                            
+                            break;
+                        case 'M':   // month
+                            retentionInMinutes = stol(retention.substr(0, retention.length() - 1)) * (1440 * 30);
+                            
+                            break;
+                        case 'y':   // year
+                            retentionInMinutes = stol(retention.substr(0, retention.length() - 1)) * (1440 * 365);
+                            
+                            break;
+                    }
+                }
+            }
 
             string startPublishing = "NOW";
             string endPublishing = "FOREVER";
@@ -9458,7 +9492,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             
             lastSQLCommand = 
                 "insert into MMS_MediaItem (mediaItemKey, workspaceKey, contentProviderKey, title, ingester, keywords, " 
-                "deliveryFileName, ingestionDate, contentType, startPublishing, endPublishing, retentionInDays, processorMMS) values ("
+                "deliveryFileName, ingestionDate, contentType, startPublishing, endPublishing, retentionInMinutes, processorMMS) values ("
                 "NULL, ?, ?, ?, ?, ?, ?, NULL, ?, "
                 "convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone), "
                 "convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone), "
@@ -9484,7 +9518,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
             preparedStatement->setString(queryParameterIndex++, startPublishing);
             preparedStatement->setString(queryParameterIndex++, endPublishing);
-            preparedStatement->setInt(queryParameterIndex++, retentionInDays);
+            preparedStatement->setInt(queryParameterIndex++, retentionInMinutes);
 
             preparedStatement->executeUpdate();
         }
@@ -11762,7 +11796,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "contentType            VARCHAR (32) NOT NULL,"
                     "startPublishing        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "endPublishing          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
-                    "retentionInDays        INT NOT NULL,"
+                    "retentionInMinutes     UNSIGNED INT NOT NULL,"
                     "processorMMS           VARCHAR (128) NULL,"
                     "constraint MMS_MediaItem_PK PRIMARY KEY (mediaItemKey), "
                     "constraint MMS_MediaItem_FK foreign key (workspaceKey) "

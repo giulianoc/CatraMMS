@@ -897,7 +897,7 @@ private:
     // string                          _defaultTerritoryName;
     int                             _maxEncodingFailures;
     int                             _confirmationCodeRetentionInDays;
-    int                             _contentRetentionInDaysDefaultValue;
+    int                             _contentRetentionInMinutesDefaultValue;
     
     chrono::system_clock::time_point _lastConnectionStatsReport;
     int             _dbConnectionPoolStatsReportPeriodInSeconds;
