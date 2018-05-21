@@ -1534,7 +1534,7 @@ void MMSEngineDBFacade::getExpiredMediaItemKeys(
         
         {
             lastSQLCommand = 
-                "select workspaceKey, mediaItemKey from MMS_MediaItem where "
+                "select workspaceKey, mediaItemKey, ingestionJobKey from MMS_MediaItem where "
                 "DATE_ADD(ingestionDate, INTERVAL retentionInMinutes MINUTE) < NOW() "
                 "and processorMMS is null "
                 "limit ? for update";
@@ -1545,37 +1545,78 @@ void MMSEngineDBFacade::getExpiredMediaItemKeys(
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             while (resultSet->next())
             {
+                int64_t ingestionJobKey = resultSet->getInt64("ingestionJobKey");
                 int64_t workspaceKey = resultSet->getInt64("workspaceKey");
                 int64_t mediaItemKey = resultSet->getInt64("mediaItemKey");
                 
-                shared_ptr<Workspace> workspace = getWorkspace(workspaceKey);
-                
-                pair<shared_ptr<Workspace>,int64_t> workspaceAndMediaItemKey =
-                        make_pair(workspace, mediaItemKey);
-                
-                mediaItemKeyToBeRemoved.push_back(workspaceAndMediaItemKey);
-                
+                // check if there is still an ingestion depending on the ingestionJobKey
+                bool ingestionDependingOnMediaItemKey = false;
                 {
-                    lastSQLCommand = 
-                        "update MMS_MediaItem set processorMMS = ? where mediaItemKey = ? and processorMMS is null";
-                    shared_ptr<sql::PreparedStatement> preparedStatementUpdateEncoding (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                    int queryParameterIndex = 1;
-                    preparedStatementUpdateEncoding->setString(queryParameterIndex++, processorMMS);
-                    preparedStatementUpdateEncoding->setInt64(queryParameterIndex++, mediaItemKey);
-
-                    int rowsUpdated = preparedStatementUpdateEncoding->executeUpdate();
-                    if (rowsUpdated != 1)
                     {
-                        string errorMessage = __FILEREF__ + "no update was done"
-                                + ", processorMMS: " + processorMMS
-                                + ", mediaItemKey: " + to_string(mediaItemKey)
-                                + ", rowsUpdated: " + to_string(rowsUpdated)
-                                + ", lastSQLCommand: " + lastSQLCommand
-                        ;
-                        _logger->error(errorMessage);
+                        lastSQLCommand = 
+                            "select count(*) from MMS_IngestionJobDependency ijd, MMS_IngestionJob ij where "
+                            "ijd.ingestionJobKey = ij.ingestionJobKey "
+                            "and ijd.dependOnIngestionJobKey = ? "
+                            "and ij.status not like 'End_%'";
+                        shared_ptr<sql::PreparedStatement> preparedStatementDependency (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                        int queryParameterIndex = 1;
+                        preparedStatementDependency->setInt(queryParameterIndex++, ingestionJobKey);
 
-                        throw runtime_error(errorMessage);
+                        shared_ptr<sql::ResultSet> resultSetDependency (preparedStatementDependency->executeQuery());
+                        if (resultSetDependency->next())
+                        {
+                            if (resultSet->getInt64(1) > 0)
+                                ingestionDependingOnMediaItemKey = true;
+                        }
+                        else
+                        {
+                            string errorMessage ("select count(*) failed");
+
+                            _logger->error(errorMessage);
+
+                            throw runtime_error(errorMessage);
+                        }
                     }
+                }
+                
+                if (!ingestionDependingOnMediaItemKey)
+                {
+                    shared_ptr<Workspace> workspace = getWorkspace(workspaceKey);
+
+                    pair<shared_ptr<Workspace>,int64_t> workspaceAndMediaItemKey =
+                            make_pair(workspace, mediaItemKey);
+
+                    mediaItemKeyToBeRemoved.push_back(workspaceAndMediaItemKey);
+
+                    {
+                        lastSQLCommand = 
+                            "update MMS_MediaItem set processorMMS = ? where mediaItemKey = ? and processorMMS is null";
+                        shared_ptr<sql::PreparedStatement> preparedStatementUpdateEncoding (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                        int queryParameterIndex = 1;
+                        preparedStatementUpdateEncoding->setString(queryParameterIndex++, processorMMS);
+                        preparedStatementUpdateEncoding->setInt64(queryParameterIndex++, mediaItemKey);
+
+                        int rowsUpdated = preparedStatementUpdateEncoding->executeUpdate();
+                        if (rowsUpdated != 1)
+                        {
+                            string errorMessage = __FILEREF__ + "no update was done"
+                                    + ", processorMMS: " + processorMMS
+                                    + ", mediaItemKey: " + to_string(mediaItemKey)
+                                    + ", rowsUpdated: " + to_string(rowsUpdated)
+                                    + ", lastSQLCommand: " + lastSQLCommand
+                            ;
+                            _logger->error(errorMessage);
+
+                            throw runtime_error(errorMessage);
+                        }
+                    }
+                }
+                else
+                {
+                    _logger->info(__FILEREF__ + "Content expired but not removed because there are still ingestion jobs depending on him"
+                        + ", workspaceKey: " + to_string(workspaceKey)
+                        + ", mediaItemKey: " + to_string(mediaItemKey)
+                    );
                 }
             }
         }
@@ -9492,8 +9533,8 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             
             lastSQLCommand = 
                 "insert into MMS_MediaItem (mediaItemKey, workspaceKey, contentProviderKey, title, ingester, keywords, " 
-                "deliveryFileName, ingestionDate, contentType, startPublishing, endPublishing, retentionInMinutes, processorMMS) values ("
-                "NULL, ?, ?, ?, ?, ?, ?, NULL, ?, "
+                "deliveryFileName, ingestionJobKey, ingestionDate, contentType, startPublishing, endPublishing, retentionInMinutes, processorMMS) values ("
+                "NULL, ?, ?, ?, ?, ?, ?, ?, NULL, ?, "
                 "convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone), "
                 "convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone), "
                 "?, NULL)";
@@ -9515,6 +9556,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
             else
                 preparedStatement->setString(queryParameterIndex++, deliveryFileName);
+            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
             preparedStatement->setString(queryParameterIndex++, startPublishing);
             preparedStatement->setString(queryParameterIndex++, endPublishing);
@@ -11792,6 +11834,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ingester               VARCHAR (128) NULL,"
                     "keywords               VARCHAR (128) CHARACTER SET utf8 COLLATE utf8_bin NULL,"
                     "deliveryFileName       VARCHAR (128) NULL,"
+                    "ingestionJobKey        BIGINT UNSIGNED NOT NULL,"
                     "ingestionDate          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "contentType            VARCHAR (32) NOT NULL,"
                     "startPublishing        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
