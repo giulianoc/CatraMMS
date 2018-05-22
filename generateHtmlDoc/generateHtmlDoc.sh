@@ -25,7 +25,7 @@ fileNumber=0
 for filename in *.md; do
 	fileBaseName=$(basename "$filename" .md)
 
-	cat $filename | pandoc -f gfm | sed "s/https:\/\/github.com\/giulianoc\/CatraMMS\/wiki//g" > $TEMP_DIR/www/$fileBaseName.html
+	cat $filename | pandoc -f gfm | sed "s/https:\/\/github.com\/giulianoc\/CatraMMS\/wiki\///g" > $TEMP_DIR/www/$fileBaseName.html
 
 	echo "$fileNumber: Generated $TEMP_DIR/www/$fileBaseName.html"
 	fileNumber=$((fileNumber + 1))
