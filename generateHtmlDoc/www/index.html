@@ -1,21 +1,21 @@
 <!DOCTYPE html>
 <html>
-  <head>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+	<head>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 
-<script>
-  $(function(){
-    var includes = $('[data-include]');
-    jQuery.each(includes, function(){
-      var file = $(this).data('include');
-      $(this).load(file);
-    });
-  });
-</script>
+		<script>
+			$(function(){
+				var includes = $('[data-include]');
+				jQuery.each(includes, function(){
+					var file = $(this).data('include');
+					$(this).load(file);
+				});
+			});
+		</script>
 
 		<style>
 			#header{
-				background-color: lightblue;
+				// background-color: lightblue;
 				width:100%;
 				height:50px;
 				text-align: center;
@@ -23,28 +23,30 @@
 
 			#sidebar-left{
 				float:left;
-				width:15%;
-				background-color: red;
+				width:25%;
+				// background-color: lightgray;
 			}
 
 			#main{
 				float:left;
-				width:70%;
-				background-color: lightgray;
+				width:74%;
+				// background-color: lightgray;
 			}
 
+/*
 			#sidebar-right{
 				float:left;
 				width:15%;
 				background-color: red;
 			}
+*/
 
 			#footer{
 				clear:both;
 				height: 50px;
 				width: 100%;
 				text-align: center;
-				background-color: lightblue;
+				// background-color: lightblue;
 			}
 
 			#sidebar-left, #main, #sidebar-right{
@@ -55,9 +57,8 @@
 	</head>
 	<body>
 		<div id="header">Media Management System</div>
-		<div id="sidebar-left" data-include="./_Sidebar.html"></div>
-		<div id="main" data-include="./Home.html"></div>
-		<div id="sidebar-right">Right</div>
-		<div id="footer" data-include="./_Footer.html"></div>
+		<iframe id="sidebar-left" src="https://mms.catrasoft.cloud/_Sidebar.html"></iframe>
+		<iframe id="main" name="main" src="https://mms.catrasoft.cloud/Home.html"></iframe>
+		<iframe id="footer" src="https://mms.catrasoft.cloud/_Footer.html"></iframe>
 	</body>
 </html>

@@ -1,6 +1,8 @@
 #!/bin/bash
 
 TEMP_DIR=~/tmp
+
+#PUBLISH_HTML_DIR will be initialized automatically with the directory containing this script
 PUBLISH_HTML_DIR=$(dirname $0)
 
 echo $0
@@ -23,7 +25,7 @@ fileNumber=0
 for filename in *.md; do
 	fileBaseName=$(basename "$filename" .md)
 
-	cat $filename | pandoc -f gfm | sed "s/https:\/\/github.com\/giulianoc\/CatraMMS\/wiki/./g" > $TEMP_DIR/www/$fileBaseName.html
+	cat $filename | pandoc -f gfm | sed "s/https:\/\/github.com\/giulianoc\/CatraMMS\/wiki/https:\/\/mms.catrasoft.cloud/g" > $TEMP_DIR/www/$fileBaseName.html
 
 	echo "$fileNumber: Generated $TEMP_DIR/www/$fileBaseName.html"
 	fileNumber=$((fileNumber + 1))
@@ -49,7 +51,17 @@ done
 
 cd $CURRENT_DIRECTORY
 
-cp $PUBLISH_HTML_DIR/index.html $TEMP_DIR/www
+cat $PUBLISH_HTML_DIR/index.html | sed "s/https:\/\/github.com\/giulianoc\/CatraMMS\/wiki/https:\/\/mms.catrasoft.cloud/g" > $TEMP_DIR/www/index.html
+
+cd $TEMP_DIR/www
+for htmlFile in *.html; do
+	sed "s/a href=/a target="\"main\"" href=/g" $TEMP_DIR/www/$htmlFile > $TEMP_DIR/www/$htmlFile.tmp
+	mv $TEMP_DIR/www/$htmlFile.tmp $TEMP_DIR/www/$htmlFile
+done
+
+cd $CURRENT_DIRECTORY
+
+#cp $PUBLISH_HTML_DIR/index.html $TEMP_DIR/www
 
 mv $TEMP_DIR/www $PUBLISH_HTML_DIR/www
 

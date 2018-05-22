@@ -60,7 +60,9 @@ MMSEngineDBFacade::MMSEngineDBFacade(
             make_shared<MySQLConnectionFactory>(dbServer, dbUsername, dbPassword, dbName,
             selectTestingConnection);
 
-    // without an open stream the first connection fails
+    // 2018-04-05: without an open stream the first connection fails
+    // 2018-05-22: It seems the problem is when the stdout of the spdlog is true!!!
+    //      Stdout of the spdlog is now false and I commented the ofstream statement
     // ofstream aaa("/tmp/a.txt");
     _connectionPool = make_shared<DBConnectionPool<MySQLConnection>>(
             dbPoolSize, _mySQLConnectionFactory);

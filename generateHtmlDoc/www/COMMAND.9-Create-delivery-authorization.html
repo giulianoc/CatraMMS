@@ -1,5 +1,5 @@
 <h2 id="overview">Overview</h2>
-<p>This command creates a delivery authorization valid for a max number of retries (maxRetries parameter) and with a time to live (ttlInSeconds parameter). This command might perform a redirection (redirect parameter) with the download URL. In this case it is not needed to call the download command (step nr. 2) because the download starts automatically by the redirection.</p>
+<p>This command creates a delivery authorization valid for a max number of retries (maxRetries parameter) and with a time to live (ttlInSeconds parameter). The create delivery authorization can be done ONLY by the owner of the content. This command might perform a redirection (redirect parameter) with the download URL. In this case it is not needed to call the download command (step nr. 2) because the download starts automatically by the redirection.</p>
 <h2 id="uri">URI</h2>
 <p>/catramms/v1/delivery/:<strong>PhysicalPathKey</strong>?[:<strong>ttlInSeconds</strong>=120]&amp;[:<strong>maxRetries</strong>=10]&amp;[:<strong>redirect</strong>=false]</p>
 <h2 id="method">Method</h2>
@@ -40,7 +40,7 @@
 <a class="sourceLine" id="cb1-6" data-line-number="6">    <span class="st">&quot;maxRetries&quot;</span><span class="op">:</span> <span class="dv">10</span> </a>
 <a class="sourceLine" id="cb1-7" data-line-number="7"><span class="op">}</span></a></code></pre></div>
 <h2 id="error-response">Error Response</h2>
-<p>See <a href="./A.1-Common-error-responses.html">Common Error Responses</a></p>
+<p>See <a target="main" href="https://mms.catrasoft.cloud/A.1-Common-error-responses.html">Common Error Responses</a></p>
 <h2 id="sample-call">Sample Call</h2>
 <p>Assuming:</p>
 <ul>
