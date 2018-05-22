@@ -61,7 +61,7 @@ MMSEngineDBFacade::MMSEngineDBFacade(
             selectTestingConnection);
 
     // without an open stream the first connection fails
-    ofstream aaa("/tmp/a.txt");
+    // ofstream aaa("/tmp/a.txt");
     _connectionPool = make_shared<DBConnectionPool<MySQLConnection>>(
             dbPoolSize, _mySQLConnectionFactory);
      

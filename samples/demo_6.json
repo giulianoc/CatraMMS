@@ -21,7 +21,7 @@
 						"ContentType": "video",
 						"UserData": { "MyData": "this is my video data" },
 					    "Title": "${TitleOfVideo_1}",
-	                    "Retention": "1s"
+                        "Retention": "1s"
 					}
 				},
 			{
@@ -33,7 +33,7 @@
 						"ContentType": "video",
 						"UserData": { "MyData": "this is my video data" },
 						"Title": "${TitleOfVideo_2}",
-	                    "Retention": "1s"
+                        "Retention": "1s"
 					}
 				}
 			]
@@ -44,17 +44,16 @@
 				"Parameters": {
 					"UserData": { "MyData": "this is my frame data" },
 					"Title": "${TitleOfConcatVideo}",
-	                "Retention": "1s"
+                        "Retention": "1s"
 				},
 				"OnSuccess": {
 					"Task": {
 						"Type": "Cut",
 						"Parameters": {
 							"StartTimeInSeconds": 5.0,
-							"EndTimeInSeconds": 10.0,
+							"EndTimeInSeconds": 3600.0,
 							"UserData": { "MyData": "this is my frame data" },
-							"Title": "${TitleOfCutVideo}",
-	                        "Retention": "1s"
+							"Title": "${TitleOfCutVideo}"
 						},
 						"OnSuccess": {
 							"Task": {
