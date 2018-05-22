@@ -1301,10 +1301,6 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         string errors;
 
         string sMetadataContent = localAssetIngestionEvent->getMetadataContent();
-            _logger->info(__FILEREF__ + "localAssetIngestionEvent->getMetadataContent"
-                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
-                + ", sMetadataContent: " + sMetadataContent
-            );
         
         // LF and CR create problems to the json parser...
         while (sMetadataContent.back() == 10 || sMetadataContent.back() == 13)
@@ -3853,6 +3849,7 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
         Json::Value parametersRoot
 )
 {
+    /*
     string title;
     string field = "title";
     if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
@@ -3924,7 +3921,59 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
     mediaMetadata +=
         string("}")
     ;
+    */
     
+    string expectedContentType = (video ? "video" : "audio");
+    string field = "ContentType";
+    if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+    {
+        string contentType = parametersRoot.get(field, "XXX").asString();
+        if (contentType != expectedContentType)
+        {
+            string errorMessage = string("Wrong contentType")
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", contentType: " + contentType
+                + ", expectedContentType: " + expectedContentType
+            ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+    else
+    {
+        parametersRoot[field] = expectedContentType;
+    }
+    
+    field = "FileFormat";
+    if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+    {
+        string fileFormatSpecifiedByUser = parametersRoot.get(field, "XXX").asString();
+        if (fileFormatSpecifiedByUser != fileFormat)
+        {
+            string errorMessage = string("Wrong fileFormat")
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", fileFormatSpecifiedByUser: " + fileFormatSpecifiedByUser
+                + ", fileFormat: " + fileFormat
+            ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+    else
+    {
+        parametersRoot[field] = fileFormat;
+    }
+
+    string mediaMetadata;
+    {
+        Json::StreamWriterBuilder wbuilder;
+        mediaMetadata = Json::writeString(wbuilder, parametersRoot);
+    }
+                        
     _logger->info(__FILEREF__ + "Media metadata generated"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
         + ", ingestionJobKey: " + to_string(ingestionJobKey)
