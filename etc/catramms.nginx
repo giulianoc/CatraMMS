@@ -15,6 +15,8 @@ server {
 	ssl_trusted_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
 	include /usr/local/nginx/conf/snippets/ssl-params.conf;
 
+	add_header X-Frame-Options "SAMEORIGIN";
+
 	root /home/mms/catramms/CatraMMS/www;
 	#return 301 https://github.com/giulianoc/CatraMMS/wiki;
 }
