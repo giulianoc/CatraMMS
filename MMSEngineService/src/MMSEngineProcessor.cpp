@@ -1301,6 +1301,10 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         string errors;
 
         string sMetadataContent = localAssetIngestionEvent->getMetadataContent();
+            _logger->info(__FILEREF__ + "localAssetIngestionEvent->getMetadataContent"
+                + ", ingestionJobKey: " + to_string(localAssetIngestionEvent->getIngestionJobKey())
+                + ", sMetadataContent: " + sMetadataContent
+            );
         
         // LF and CR create problems to the json parser...
         while (sMetadataContent.back() == 10 || sMetadataContent.back() == 13)
