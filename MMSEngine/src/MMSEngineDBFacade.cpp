@@ -9436,7 +9436,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             if (isMetadataPresent(parametersRoot, field))
             {
                 string retention = parametersRoot.get(field, "1d").asString();
-                _logger->info(__FELIREF__ + "Retention"
+                _logger->info(__FILEREF__ + "Retention"
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", Retention: " + retention
                 );
@@ -9473,7 +9473,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                     }
                 }
             }
-            _logger->info(__FELIREF__ + "Retention"
+            _logger->info(__FILEREF__ + "Retention"
                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", retentionInMinutes: " + to_string(retentionInMinutes)
             );
