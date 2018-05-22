@@ -9436,6 +9436,10 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             if (isMetadataPresent(parametersRoot, field))
             {
                 string retention = parametersRoot.get(field, "1d").asString();
+                _logger->info(__FELIREF__ + "Retention"
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", Retention: " + retention
+                );
                 if (retention == "0")
                     retentionInMinutes = 0;
                 else if (retention.length() > 1)
@@ -9469,6 +9473,10 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                     }
                 }
             }
+            _logger->info(__FELIREF__ + "Retention"
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", retentionInMinutes: " + to_string(retentionInMinutes)
+            );
 
             string startPublishing = "NOW";
             string endPublishing = "FOREVER";

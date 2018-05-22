@@ -16,22 +16,24 @@
 					"Label": "${TitleOfVideo_1}",
 					"Type": "Add-Content",
 					"Parameters": {
-		            	"SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
+		            	"SourceURL": "http://mediaww.rsi.ch/rsi/unrestricted/2018/04/16/2560539.mp4",
 						"FileFormat": "mp4",
 						"ContentType": "video",
 						"UserData": { "MyData": "this is my video data" },
-					"Title": "${TitleOfVideo_1}"
+					    "Title": "${TitleOfVideo_1}",
+	                    "Retention": "1s"
 					}
 				},
 			{
 				"Label": "${TitleOfVideo_2}",
 				"Type": "Add-Content",
 					"Parameters": {
-            			"SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
+            			"SourceURL": "http://mediaww.rsi.ch/rsi/unrestricted/2018/04/16/2560539.mp4",
 						"FileFormat": "mp4",
 						"ContentType": "video",
 						"UserData": { "MyData": "this is my video data" },
-						"Title": "${TitleOfVideo_2}"
+						"Title": "${TitleOfVideo_2}",
+	                    "Retention": "1s"
 					}
 				}
 			]
@@ -41,7 +43,8 @@
 				"Type": "Concat-Demuxer",
 				"Parameters": {
 					"UserData": { "MyData": "this is my frame data" },
-					"Title": "${TitleOfConcatVideo}"
+					"Title": "${TitleOfConcatVideo}",
+	                "Retention": "1s"
 				},
 				"OnSuccess": {
 					"Task": {
@@ -50,7 +53,8 @@
 							"StartTimeInSeconds": 5.0,
 							"EndTimeInSeconds": 10.0,
 							"UserData": { "MyData": "this is my frame data" },
-							"Title": "${TitleOfCutVideo}"
+							"Title": "${TitleOfCutVideo}",
+	                        "Retention": "1s"
 						},
 						"OnSuccess": {
 							"Task": {
