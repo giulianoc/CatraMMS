@@ -1565,7 +1565,7 @@ void MMSEngineDBFacade::getExpiredMediaItemKeys(
                         shared_ptr<sql::ResultSet> resultSetDependency (preparedStatementDependency->executeQuery());
                         if (resultSetDependency->next())
                         {
-                            if (resultSet->getInt64(1) > 0)
+                            if (resultSetDependency->getInt64(1) > 0)
                                 ingestionDependingOnMediaItemKey = true;
                         }
                         else
