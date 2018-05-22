@@ -21,11 +21,13 @@ git clone https://github.com/giulianoc/CatraMMS.wiki.git
 
 cd CatraMMS.wiki
 
+httpProtocol=http
+
 fileNumber=0
 for filename in *.md; do
 	fileBaseName=$(basename "$filename" .md)
 
-	cat $filename | pandoc -f gfm | sed "s/https:\/\/github.com\/giulianoc\/CatraMMS\/wiki/https:\/\/mms.catrasoft.cloud/g" > $TEMP_DIR/www/$fileBaseName.html
+	cat $filename | pandoc -f gfm | sed "s/https:\/\/github.com\/giulianoc\/CatraMMS\/wiki/$httpProtocol:\/\/mms.catrasoft.cloud/g" > $TEMP_DIR/www/$fileBaseName.html
 
 	echo "$fileNumber: Generated $TEMP_DIR/www/$fileBaseName.html"
 	fileNumber=$((fileNumber + 1))
@@ -51,7 +53,7 @@ done
 
 cd $CURRENT_DIRECTORY
 
-cat $PUBLISH_HTML_DIR/index.html | sed "s/https:\/\/github.com\/giulianoc\/CatraMMS\/wiki/https:\/\/mms.catrasoft.cloud/g" > $TEMP_DIR/www/index.html
+cat $PUBLISH_HTML_DIR/index.html | sed "s/https:\/\/github.com\/giulianoc\/CatraMMS\/wiki/$httpProtocol:\/\/mms.catrasoft.cloud/g" > $TEMP_DIR/www/index.html
 
 cd $TEMP_DIR/www
 for htmlFile in *.html; do
