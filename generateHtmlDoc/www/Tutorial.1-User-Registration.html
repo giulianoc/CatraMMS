@@ -1,4 +1,4 @@
-<p>Reference manual for * <a href="https://github.com/giulianoc/CatraMMS/wiki/User-registration">User Registration</a></p>
+<p>Reference manual for * <a href="User-registration.html">User Registration</a></p>
 <h2 id="user-creation">User Creation</h2>
 <p>The following HTTP POST will create a userKey and associate to him a Workspace * curl -k -v -X POST -d '{&quot;Name&quot;: &quot;XXXXXX&quot;, &quot;EMail&quot;: &quot;xxx@yyy.zzz&quot;, &quot;Password&quot;: &quot;yyyyy&quot;, &quot;Country&quot;: &quot;ZZZZZ&quot;, &quot;WorkspaceName&quot;: &quot;XXXXXX&quot; }' https://mms-api.catrasoft.cloud/catramms/v1/user</p>
 <p>It will return the key of the Workspace and User: * { &quot;workspaceKey&quot;: 123, &quot;userKey&quot;: <strong>654</strong> }</p>

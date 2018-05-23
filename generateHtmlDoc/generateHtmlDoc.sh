@@ -34,8 +34,7 @@ for filename in *.md; do
 	if [ "$fileBaseName" == "_Sidebar" ]; then
 		cat $filename | pandoc -f $pandocInputFormat | sed -E "s/href=\"https:\/\/github.com\/giulianoc\/CatraMMS\/wiki\/([^\"]*)/target="\"main\"" href=\"\1.html/g" > $TEMP_DIR/www/$fileBaseName.html
 	else
-		cat $filename | pandoc -f $pandocInputFormat > $TEMP_DIR/www/$fileBaseName.html
-		#| sed -E "s/href=\"https:\/\/github.com\/giulianoc\/CatraMMS\/wiki\/([^\"]*)/href=\"\1.html/g" > $TEMP_DIR/www/$fileBaseName.html
+		cat $filename | pandoc -f $pandocInputFormat | sed -E "s/href=\"https:\/\/github.com\/giulianoc\/CatraMMS\/wiki\/([^\"]*)/href=\"\1.html/g" > $TEMP_DIR/www/$fileBaseName.html
 	fi
 
 	echo "$fileNumber: Generated $TEMP_DIR/www/$fileBaseName.html"
@@ -61,6 +60,15 @@ done
 #done
 
 cd $CURRENT_DIRECTORY
+
+#manage image (MMS_Physical_Architecture.png) in Home.html
+cp $PUBLISH_HTML_DIR/../docs/MMS_Physical_Architecture.png $TEMP_DIR/www
+if [ "$osName" == "Darwin" ]; then
+	gsed "s/https:\/\/github.com\/giulianoc\/CatraMMS\/blob\/master\/docs\///gI" $TEMP_DIR/www/Home.html > $TEMP_DIR/www/Home.html.tmp
+else
+	sed "s/https:\/\/github.com\/giulianoc\/CatraMMS\/blob\/master\/docs\///gI" $TEMP_DIR/www/Home.html > $TEMP_DIR/www/Home.html.tmp
+fi
+mv $TEMP_DIR/www/Home.html.tmp $TEMP_DIR/www/Home.html
 
 cp $PUBLISH_HTML_DIR/index.html $TEMP_DIR/www
 
