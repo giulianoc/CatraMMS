@@ -2,11 +2,11 @@
 <ol>
 <li>create a delivery authorization associated to the content to be downloaded - (HTTP GET)
 <ul>
-<li><a target="main" href="COMMAND.9-Create-delivery-authorization.html">command details</a></li>
+<li><a href="COMMAND.9-Create-delivery-authorization.html">command details</a></li>
 </ul></li>
 <li>download the content - (HTTP GET). Not needed if the previous command performs a redirection (parameter redirect=true in the previous command).
 <ul>
-<li><a target="main" href="COMMAND.10-Download-content.html">command details</a></li>
+<li><a href="COMMAND.10-Download-content.html">command details</a></li>
 </ul></li>
 </ol>
 <p>The first command creates a delivery authorization valid for a max number of retries (maxRetries parameter) and with a time to live (ttlInSeconds parameter). The create delivery authorization can be done ONLY by the owner of the content. This command might perform a redirection (redirect parameter) with the download URL. In this case it is not needed to call the download command (step nr. 2) because the download will be automatically activated by the redirection.</p>

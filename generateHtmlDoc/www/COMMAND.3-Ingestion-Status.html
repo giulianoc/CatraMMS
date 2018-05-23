@@ -19,9 +19,9 @@
 <h3 id="code">Code</h3>
 <p>200 OK</p>
 <h3 id="content">Content</h3>
-<p>The API.html returns the identifiers (Keys), labels and the Status about every task of the 'Workflow.html' identified by the IngestionRootKey parameter. Here follows a sample:</p>
+<p>The API returns the identifiers (Keys), labels and the Status about every task of the 'workflow' identified by the IngestionRootKey parameter. Here follows a sample:</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode javascript"><code class="sourceCode javascript"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="op">{</span></a>
-<a class="sourceLine" id="cb1-2" data-line-number="2">    <span class="st">&quot;Workflow.html&quot;</span> <span class="op">:</span> </a>
+<a class="sourceLine" id="cb1-2" data-line-number="2">    <span class="st">&quot;workflow&quot;</span> <span class="op">:</span> </a>
 <a class="sourceLine" id="cb1-3" data-line-number="3">    <span class="op">{</span></a>
 <a class="sourceLine" id="cb1-4" data-line-number="4">        <span class="st">&quot;ingestionRootKey&quot;</span> <span class="op">:</span> <span class="dv">102</span><span class="op">,</span></a>
 <a class="sourceLine" id="cb1-5" data-line-number="5">        <span class="st">&quot;label&quot;</span> <span class="op">:</span> <span class="st">&quot;1&quot;</span><span class="op">,</span></a>
@@ -144,7 +144,7 @@
 <a class="sourceLine" id="cb1-122" data-line-number="122">                <span class="st">&quot;endIngestion&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span></a>
 <a class="sourceLine" id="cb1-123" data-line-number="123">                <span class="st">&quot;errorMessage&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span></a>
 <a class="sourceLine" id="cb1-124" data-line-number="124">                <span class="st">&quot;ingestionJobKey&quot;</span> <span class="op">:</span> <span class="dv">313</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb1-125" data-line-number="125">                <span class="st">&quot;ingestionType&quot;</span> <span class="op">:</span> <span class="st">&quot;Encode.html&quot;</span><span class="op">,</span></a>
+<a class="sourceLine" id="cb1-125" data-line-number="125">                <span class="st">&quot;ingestionType&quot;</span> <span class="op">:</span> <span class="st">&quot;Encode&quot;</span><span class="op">,</span></a>
 <a class="sourceLine" id="cb1-126" data-line-number="126">                <span class="st">&quot;label&quot;</span> <span class="op">:</span> <span class="st">&quot;my label - EncodingProfileKey 1&quot;</span><span class="op">,</span></a>
 <a class="sourceLine" id="cb1-127" data-line-number="127">                <span class="st">&quot;startIngestion&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-04-23 09:23:45&quot;</span><span class="op">,</span></a>
 <a class="sourceLine" id="cb1-128" data-line-number="128">                <span class="st">&quot;status&quot;</span> <span class="op">:</span> <span class="st">&quot;Start_TaskQueued&quot;</span></a>
@@ -162,7 +162,7 @@
 <a class="sourceLine" id="cb1-140" data-line-number="140">                <span class="st">&quot;endIngestion&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span></a>
 <a class="sourceLine" id="cb1-141" data-line-number="141">                <span class="st">&quot;errorMessage&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span></a>
 <a class="sourceLine" id="cb1-142" data-line-number="142">                <span class="st">&quot;ingestionJobKey&quot;</span> <span class="op">:</span> <span class="dv">314</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb1-143" data-line-number="143">                <span class="st">&quot;ingestionType&quot;</span> <span class="op">:</span> <span class="st">&quot;Encode.html&quot;</span><span class="op">,</span></a>
+<a class="sourceLine" id="cb1-143" data-line-number="143">                <span class="st">&quot;ingestionType&quot;</span> <span class="op">:</span> <span class="st">&quot;Encode&quot;</span><span class="op">,</span></a>
 <a class="sourceLine" id="cb1-144" data-line-number="144">                <span class="st">&quot;label&quot;</span> <span class="op">:</span> <span class="st">&quot;my label - EncodingProfileKey 2&quot;</span><span class="op">,</span></a>
 <a class="sourceLine" id="cb1-145" data-line-number="145">                <span class="st">&quot;startIngestion&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-04-23 09:23:45&quot;</span><span class="op">,</span></a>
 <a class="sourceLine" id="cb1-146" data-line-number="146">                <span class="st">&quot;status&quot;</span> <span class="op">:</span> <span class="st">&quot;Start_TaskQueued&quot;</span></a>
@@ -171,11 +171,11 @@
 <a class="sourceLine" id="cb1-149" data-line-number="149">    <span class="op">}</span></a>
 <a class="sourceLine" id="cb1-150" data-line-number="150"><span class="op">}</span></a></code></pre></div>
 <h2 id="error-response">Error Response</h2>
-<p>See <a target="main" href="A.1-Common-error-responses.html">Common Error Responses</a></p>
+<p>See <a href="A.1-Common-error-responses.html">Common Error Responses</a></p>
 <h2 id="sample-call">Sample Call</h2>
 <p>Assuming:</p>
 <ul>
 <li>UserKey: 5</li>
-<li>API.htmlKey: SU1.8ZO1O2zVeBMNv9lzZ0whABXSAdjWrR~rpcnI5eaHNO2gysrNdAv8BNoWZB1eLP</li>
+<li>APIKey: SU1.8ZO1O2zVeBMNv9lzZ0whABXSAdjWrR~rpcnI5eaHNO2gysrNdAv8BNoWZB1eLP</li>
 </ul>
-<p><code>curl -k -v -u 5:SU1.8ZO1O2zVeBMNv9lzZ0whABXSAdjWrR~rpcnI5eaHNO2gysrNdAv8BNoWZB1eLP https://mms-API.html.catrasoft.cloud/catramms/v1/ingestion/74</code></p>
+<p><code>curl -k -v -u 5:SU1.8ZO1O2zVeBMNv9lzZ0whABXSAdjWrR~rpcnI5eaHNO2gysrNdAv8BNoWZB1eLP https://mms-api.catrasoft.cloud/catramms/v1/ingestion/74</code></p>

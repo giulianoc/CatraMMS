@@ -26,7 +26,7 @@
 <h3 id="code">Code</h3>
 <p>201 Created</p>
 <h3 id="content">Content</h3>
-<p>The API.html returns the identifiers (Keys) and name of the profiles.</p>
+<p>The API returns the identifiers (Keys) and name of the profiles.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode javascript"><code class="sourceCode javascript"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="op">{</span> </a>
 <a class="sourceLine" id="cb1-2" data-line-number="2">    <span class="st">&quot;encodingProfilesSet&quot;</span><span class="op">:</span> <span class="op">{</span> <span class="st">&quot;encodingProfilesSetKey&quot;</span><span class="op">:</span> <span class="dv">8</span><span class="op">,</span> <span class="st">&quot;label&quot;</span><span class="op">:</span> <span class="st">&quot;...&quot;</span> <span class="op">},</span> </a>
 <a class="sourceLine" id="cb1-3" data-line-number="3">    <span class="st">&quot;profiles&quot;</span><span class="op">:</span> [</a>
@@ -37,12 +37,12 @@
 <a class="sourceLine" id="cb1-8" data-line-number="8">    ]</a>
 <a class="sourceLine" id="cb1-9" data-line-number="9"><span class="op">}</span></a></code></pre></div>
 <h2 id="error-response">Error Response</h2>
-<p>See <a target="main" href="A.1-Common-error-responses.html">Common Error Responses</a></p>
+<p>See <a href="A.1-Common-error-responses.html">Common Error Responses</a></p>
 <h2 id="sample-call">Sample Call</h2>
 <p>Assuming:</p>
 <ul>
 <li>UserKey: 5</li>
-<li>API.htmlKey: SU1.8ZO1O2zVeBMNv9lzZ0whABXSAdjWrR~rpcnI5eaHNO2gysrNdAv8BNoWZB1eLP</li>
+<li>APIKey: SU1.8ZO1O2zVeBMNv9lzZ0whABXSAdjWrR~rpcnI5eaHNO2gysrNdAv8BNoWZB1eLP</li>
 <li>profilesMetadata.json is a file containing the <strong>video</strong> metadata about the 'Profiles Set'</li>
 </ul>
-<p><code>curl -k -v -X PUT -u 5:SU1.8ZO1O2zVeBMNv9lzZ0whABXSAdjWrR~rpcnI5eaHNO2gysrNdAv8BNoWZB1eLP -d @profilesMetadata.json -H &quot;Content-Type: application/json&quot; https://mms-API.html.catrasoft.cloud/catramms/v1/profilesSet/video</code></p>
+<p><code>curl -k -v -X PUT -u 5:SU1.8ZO1O2zVeBMNv9lzZ0whABXSAdjWrR~rpcnI5eaHNO2gysrNdAv8BNoWZB1eLP -d @profilesMetadata.json -H &quot;Content-Type: application/json&quot; https://mms-api.catrasoft.cloud/catramms/v1/profilesSet/video</code></p>
