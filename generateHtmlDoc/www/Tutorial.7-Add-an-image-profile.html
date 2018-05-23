@@ -1,24 +1,15 @@
 <p>This tutorial adds one image profile labelled as 'Profile Logo'.</p>
-<p>Reference manual for</p>
-<ul>
-<li><a href="Add-encoding-profiles.html">Add Encoding Profiles</a></li>
-</ul>
+<p>Reference manual for * <a href="https://github.com/giulianoc/CatraMMS/wiki/Add-encoding-profiles">Add Encoding Profiles</a></p>
 <h2 id="input-creation-json">Input creation (json)</h2>
 <p>Create a file (imageProfile.json) having the following content</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode javascript"><code class="sourceCode javascript"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="op">{</span></a>
-<a class="sourceLine" id="cb1-2" data-line-number="2">        <span class="st">&quot;Label&quot;</span><span class="op">:</span> <span class="st">&quot;Profile Logo&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb1-3" data-line-number="3">        <span class="st">&quot;Format&quot;</span><span class="op">:</span> <span class="st">&quot;JPG&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb1-4" data-line-number="4">        <span class="st">&quot;Width&quot;</span><span class="op">:</span> <span class="dv">40</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb1-5" data-line-number="5">        <span class="st">&quot;Height&quot;</span><span class="op">:</span> <span class="dv">50</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb1-6" data-line-number="6">        <span class="st">&quot;AspectRatio&quot;</span><span class="op">:</span> <span class="kw">false</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb1-7" data-line-number="7">        <span class="st">&quot;InterlaceType&quot;</span><span class="op">:</span> <span class="st">&quot;NoInterlace&quot;</span></a>
-<a class="sourceLine" id="cb1-8" data-line-number="8"><span class="op">}</span></a></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode javascript"><code class="sourceCode javascript"><span class="op">{</span>
+        <span class="st">&quot;Label&quot;</span><span class="op">:</span> <span class="st">&quot;Profile Logo&quot;</span><span class="op">,</span>
+        <span class="st">&quot;Format&quot;</span><span class="op">:</span> <span class="st">&quot;JPG&quot;</span><span class="op">,</span>
+        <span class="st">&quot;Width&quot;</span><span class="op">:</span> <span class="dv">40</span><span class="op">,</span>
+        <span class="st">&quot;Height&quot;</span><span class="op">:</span> <span class="dv">50</span><span class="op">,</span>
+        <span class="st">&quot;AspectRatio&quot;</span><span class="op">:</span> <span class="kw">false</span><span class="op">,</span>
+        <span class="st">&quot;InterlaceType&quot;</span><span class="op">:</span> <span class="st">&quot;NoInterlace&quot;</span>
+<span class="op">}</span></code></pre></div>
 <h2 id="command">Command</h2>
-<p>Run the following HTTP PUT having as input userKey, APIKey and videoProfiles.json:</p>
-<ul>
-<li>curl -k -v -X PUT -u 654:SU1.8AO1O2z0gdezR99BIPvAz2y4LNUsCKcKJrSrQ_S4lS33iZ4zGJ8kfWxQqmOhKL -d @imageProfile.json -H &quot;Content-Type: application/json&quot; <a href="https://mms-api.catrasoft.cloud/catramms/v1/profile/image" class="uri">https://mms-api.catrasoft.cloud/catramms/v1/profile/image</a></li>
-</ul>
-<p>The return will be:</p>
-<ul>
-<li>{ &quot;encodingProfileKey&quot;: 6, &quot;label&quot;: &quot;Profile Logo&quot; }</li>
-</ul>
+<p>Run the following HTTP PUT having as input userKey, APIKey and videoProfiles.json: * curl -k -v -X PUT -u 654:SU1.8AO1O2z0gdezR99BIPvAz2y4LNUsCKcKJrSrQ_S4lS33iZ4zGJ8kfWxQqmOhKL -d <span class="citation">@imageProfile.json</span> -H &quot;Content-Type: application/json&quot; https://mms-api.catrasoft.cloud/catramms/v1/profile/image</p>
+<p>The return will be: * { &quot;encodingProfileKey&quot;: 6, &quot;label&quot;: &quot;Profile Logo&quot; }</p>

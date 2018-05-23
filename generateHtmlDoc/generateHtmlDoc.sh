@@ -15,7 +15,7 @@ rm -rf $TEMP_DIR/CatraMMS.wiki
 rm -rf $TEMP_DIR/www
 rm -rf $PUBLISH_HTML_DIR/www
 
-mkdir $TEMP_DIR/www
+mkdir -p $TEMP_DIR/www
 cd $TEMP_DIR
 git clone https://github.com/giulianoc/CatraMMS.wiki.git
 
@@ -23,13 +23,19 @@ cd CatraMMS.wiki
 
 #generate html and remove https://github.com/giulianoc/CatraMMS/wiki/
 fileNumber=0
+if [ "$osName" == "Darwin" ]; then
+	pandocInputFormat=gfm
+else
+	pandocInputFormat=markdown
+fi
 for filename in *.md; do
 	fileBaseName=$(basename "$filename" .md)
 
 	if [ "$fileBaseName" == "_Sidebar" ]; then
-		cat $filename | pandoc -f gfm | sed -E "s/href=\"https:\/\/github.com\/giulianoc\/CatraMMS\/wiki\/([^\"]*)/target="\"main\"" href=\"\1.html/g" > $TEMP_DIR/www/$fileBaseName.html
+		cat $filename | pandoc -f $pandocInputFormat | sed -E "s/href=\"https:\/\/github.com\/giulianoc\/CatraMMS\/wiki\/([^\"]*)/target="\"main\"" href=\"\1.html/g" > $TEMP_DIR/www/$fileBaseName.html
 	else
-		cat $filename | pandoc -f gfm | sed -E "s/href=\"https:\/\/github.com\/giulianoc\/CatraMMS\/wiki\/([^\"]*)/href=\"\1.html/g" > $TEMP_DIR/www/$fileBaseName.html
+		cat $filename | pandoc -f $pandocInputFormat > $TEMP_DIR/www/$fileBaseName.html
+		#| sed -E "s/href=\"https:\/\/github.com\/giulianoc\/CatraMMS\/wiki\/([^\"]*)/href=\"\1.html/g" > $TEMP_DIR/www/$fileBaseName.html
 	fi
 
 	echo "$fileNumber: Generated $TEMP_DIR/www/$fileBaseName.html"
