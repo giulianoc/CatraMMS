@@ -1,4 +1,7 @@
 <p>Registration APIs: 1. <strong>register a new User (and his Workspace)</strong>. When a new User is registered, a Workspace dedicated to the User is created as well. Once the User and Workspace are created, the API will send an email to the User providing a confirmation code that has to be used by the next API. 1. <a href="COMMAND.5-Register-a-new-User.html">Register command details</a> (HTTP POST) 1. <strong>confirm the registered User</strong>. This API will send the confirmation code to the MMS system so that the User/Workspace will be enabled. It will return the API Key associated to the User and Workspace. The API Key has to be used to call any MMS API. 1. <a href="COMMAND.2-Confirm-the-User-registration.html">Confirm command details</a> (HTTP PUT)</p>
 <p>The API Key has to be 'saved' because it has to be used in any MMS API.</p>
 <p>Here follows a diagram describing the steps to be done by a Client to start working with CatraMMS:</p>
-<p>[[https://github.com/giulianoc/CatraMMS/blob/master/docs/UserRegistration.png|alt=UserRegistration]]</p>
+<div class="figure">
+<img src="UserRegistration.png" alt="User Registration" />
+<p class="caption">User Registration</p>
+</div>

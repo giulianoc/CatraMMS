@@ -41,34 +41,28 @@ for filename in *.md; do
 	fileNumber=$((fileNumber + 1))
 done
 
-#for link in *.md; do
-	#linkToAddHtmlExtension=$(basename "$link" .md)
-
-	#fileNumber=$((fileNumber - 1))
-	#echo "$fileNumber: $linkToAddHtmlExtension ..."
-
-	#for filename in *.md; do
-		#fileBaseName=$(basename "$filename" .md)
-
-		#if [ "$osName" == "Darwin" ]; then
-			#gsed "s/$linkToAddHtmlExtension/$linkToAddHtmlExtension.html/gI" $TEMP_DIR/www/$fileBaseName.html > $TEMP_DIR/www/$fileBaseName.html.tmp
-		#else
-			#sed "s/$linkToAddHtmlExtension/$linkToAddHtmlExtension.html/gI" $TEMP_DIR/www/$fileBaseName.html > $TEMP_DIR/www/$fileBaseName.html.tmp
-		#fi
-		#mv $TEMP_DIR/www/$fileBaseName.html.tmp $TEMP_DIR/www/$fileBaseName.html
-	#done
-#done
-
 cd $CURRENT_DIRECTORY
 
-#manage image (MMS_Physical_Architecture.png) in Home.html
+#manage image (MMS_Physical_Architecture.png)
+imageHtmlFileName=Home.html
 cp $PUBLISH_HTML_DIR/../docs/MMS_Physical_Architecture.png $TEMP_DIR/www
 if [ "$osName" == "Darwin" ]; then
-	gsed "s/https:\/\/github.com\/giulianoc\/CatraMMS\/blob\/master\/docs\///gI" $TEMP_DIR/www/Home.html > $TEMP_DIR/www/Home.html.tmp
+	gsed "s/https:\/\/github.com\/giulianoc\/CatraMMS\/blob\/master\/docs\///gI" $TEMP_DIR/www/$imageHtmlFileName > $TEMP_DIR/www/$imageHtmlFileName.tmp
 else
-	sed "s/https:\/\/github.com\/giulianoc\/CatraMMS\/blob\/master\/docs\///gI" $TEMP_DIR/www/Home.html > $TEMP_DIR/www/Home.html.tmp
+	sed "s/https:\/\/github.com\/giulianoc\/CatraMMS\/blob\/master\/docs\///gI" $TEMP_DIR/www/$imageHtmlFileName > $TEMP_DIR/www/$imageHtmlFileName.tmp
 fi
-mv $TEMP_DIR/www/Home.html.tmp $TEMP_DIR/www/Home.html
+mv $TEMP_DIR/www/$imageHtmlFileName.tmp $TEMP_DIR/www/$imageHtmlFileName
+
+#manage image (UserRegistration.png)
+imageHtmlFileName=User-registration.html
+cp $PUBLISH_HTML_DIR/../docs/UserRegistration.png $TEMP_DIR/www
+if [ "$osName" == "Darwin" ]; then
+	gsed "s/https:\/\/github.com\/giulianoc\/CatraMMS\/blob\/master\/docs\///gI" $TEMP_DIR/www/$imageHtmlFileName > $TEMP_DIR/www/$imageHtmlFileName.tmp
+else
+	sed "s/https:\/\/github.com\/giulianoc\/CatraMMS\/blob\/master\/docs\///gI" $TEMP_DIR/www/$imageHtmlFileName > $TEMP_DIR/www/$imageHtmlFileName.tmp
+fi
+mv $TEMP_DIR/www/$imageHtmlFileName.tmp $TEMP_DIR/www/$imageHtmlFileName
+
 
 cp $PUBLISH_HTML_DIR/index.html $TEMP_DIR/www
 
