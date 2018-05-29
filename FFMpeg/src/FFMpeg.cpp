@@ -248,10 +248,11 @@ void FFMpeg::encodeContent(
                     + passlogFileName
                     ;
 
-                ffmpegExecuteCommand =
-                        _ffmpegPath + "/ffmpeg "
-                        + "-y -i " + mmsSourceAssetPathName + " "
-                        + ffmpegVideoCodecParameter
+                // ffmpeg <global-options> <input-options> -i <input> <output-options> <output>
+                string globalOptions = "-y ";
+                string inputOptions = "";
+                string outputOptions =
+                        ffmpegVideoCodecParameter
                         + ffmpegVideoProfileParameter
                         + "-preset slow "
                         + ffmpegVideoBitRateParameter
@@ -262,8 +263,16 @@ void FFMpeg::encodeContent(
                         + ffmpegVideoResolutionParameter
                         + "-threads 0 "
                         + "-pass 1 -passlogfile " + ffmpegPassLogPathFileName + " "
-                        + "-an "
+                        + "-an "    // disable audio
                         + ffmpegFileFormatParameter
+                        ;
+                
+                ffmpegExecuteCommand =
+                        _ffmpegPath + "/ffmpeg "
+                        + globalOptions
+                        + inputOptions
+                        + "-i " + mmsSourceAssetPathName + " "
+                        + outputOptions
                         + "/dev/null "
                         + "> " + _outputFfmpegPathFileName + " "
                         + "2>&1"
@@ -314,10 +323,11 @@ void FFMpeg::encodeContent(
                     throw e;
                 }
 
-                ffmpegExecuteCommand =
-                        _ffmpegPath + "/ffmpeg "
-                        + "-y -i " + mmsSourceAssetPathName + " "
-                        + ffmpegVideoCodecParameter
+                // ffmpeg <global-options> <input-options> -i <input> <output-options> <output>
+                globalOptions = "-y ";
+                inputOptions = "";
+                outputOptions =
+                        ffmpegVideoCodecParameter
                         + ffmpegVideoProfileParameter
                         + "-preset slow "
                         + ffmpegVideoBitRateParameter
@@ -335,6 +345,14 @@ void FFMpeg::encodeContent(
                         + ffmpegAudioSampleRateParameter
                         
                         + ffmpegFileFormatParameter
+                        ;
+                
+                ffmpegExecuteCommand =
+                        _ffmpegPath + "/ffmpeg "
+                        + globalOptions
+                        + inputOptions
+                        + "-i " + mmsSourceAssetPathName + " "
+                        + outputOptions
                         + stagingEncodedAssetPathName + " "
                         + "> " + _outputFfmpegPathFileName 
                         + " 2>&1"
@@ -392,10 +410,11 @@ void FFMpeg::encodeContent(
             }
             else
             {
-                ffmpegExecuteCommand =
-                        _ffmpegPath + "/ffmpeg "
-                        + "-y -i " + mmsSourceAssetPathName + " "
-                        + ffmpegVideoCodecParameter
+                // ffmpeg <global-options> <input-options> -i <input> <output-options> <output>
+                string globalOptions = "-y ";
+                string inputOptions = "";
+                string outputOptions =
+                        ffmpegVideoCodecParameter
                         + ffmpegVideoProfileParameter
                         + "-preset slow "
                         + ffmpegVideoBitRateParameter
@@ -412,6 +431,14 @@ void FFMpeg::encodeContent(
                         + ffmpegAudioSampleRateParameter
                         
                         + ffmpegFileFormatParameter
+                        ;
+                
+                ffmpegExecuteCommand =
+                        _ffmpegPath + "/ffmpeg "
+                        + globalOptions
+                        + inputOptions
+                        + "-i " + mmsSourceAssetPathName + " "
+                        + outputOptions                        
                         + stagingEncodedAssetPathName + " "
                         + "> " + _outputFfmpegPathFileName 
                         + " 2>&1"
@@ -624,11 +651,19 @@ void FFMpeg::overlayImageOnVideo(
                     ;
             string ffmpegExecuteCommand;
             {
+                // ffmpeg <global-options> <input-options> -i <input> <output-options> <output>
+                string globalOptions = "-y ";
+                string inputOptions = "";
+                string outputOptions =
+                        ffmpegFilterComplex + " "
+                        ;
                 ffmpegExecuteCommand =
                         _ffmpegPath + "/ffmpeg "
-                        + "-y -i " + mmsSourceVideoAssetPathName + " "
+                        + globalOptions
+                        + inputOptions
+                        + "-i " + mmsSourceVideoAssetPathName + " "
                         + "-i " + mmsSourceImageAssetPathName + " "
-                        + ffmpegFilterComplex + " "
+                        + outputOptions
                         
                         + stagingEncodedAssetPathName + " "
                         + "> " + _outputFfmpegPathFileName 
@@ -897,10 +932,19 @@ void FFMpeg::overlayTextOnVideo(
                 
             string ffmpegExecuteCommand;
             {
+                // ffmpeg <global-options> <input-options> -i <input> <output-options> <output>
+                string globalOptions = "-y ";
+                string inputOptions = "";
+                string outputOptions =
+                        ffmpegDrawTextFilter + " "
+                        ;
+                
                 ffmpegExecuteCommand =
                         _ffmpegPath + "/ffmpeg "
-                        + "-y -i " + mmsSourceVideoAssetPathName + " "
-                        + ffmpegDrawTextFilter + " "
+                        + globalOptions
+                        + inputOptions
+                        + "-i " + mmsSourceVideoAssetPathName + " "
+                        + outputOptions
                         + stagingEncodedAssetPathName + " "
                         + "> " + _outputFfmpegPathFileName 
                         + " 2>&1"
@@ -1875,15 +1919,22 @@ vector<string> FFMpeg::generateFramesToIngest(
         -an: disable audio
         -s set frame size (WxH or abbreviation)
      */
-    string ffmpegExecuteCommand = 
-            _ffmpegPath + "/ffmpeg "
-            + "-y " 
-            + "-i " + mmsAssetPathName + " "
-            + "-ss " + to_string(startTimeInSeconds) + " "
+    // ffmpeg <global-options> <input-options> -i <input> <output-options> <output>
+    string globalOptions = "-y ";
+    string inputOptions = "";
+    string outputOptions =
+            "-ss " + to_string(startTimeInSeconds) + " "
             + (framesNumber != -1 ? ("-vframes " + to_string(framesNumber)) : "") + " "
             + videoFilterParameters
             + (mjpeg ? "-f mjpeg " : "")
             + "-an -s " + to_string(imageWidth) + "x" + to_string(imageHeight) + " "
+            ;
+    string ffmpegExecuteCommand = 
+            _ffmpegPath + "/ffmpeg "
+            + globalOptions
+            + inputOptions
+            + "-i " + mmsAssetPathName + " "
+            + outputOptions
             + imageDirecotry + "/" + localImageFileName + " "
             + "> " + outputFfmpegPathFileName + " "
             + "2>&1"
