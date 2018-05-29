@@ -9,99 +9,81 @@
 <p>None</p>
 <h3 id="optional">Optional</h3>
 <ul>
-<li>mediaItemKey=[number]
-<ul>
+<li>mediaItemKey=[number]</li>
 <li>example: mediaItemKey=123</li>
-</ul></li>
-<li>start=[number starting from 0]
-<ul>
+<li>start=[number starting from 0]</li>
 <li>default: 0</li>
 <li>example: start=20</li>
-</ul></li>
-<li>rows=[number]
-<ul>
+<li>rows=[number]</li>
 <li>default: 10</li>
 <li>example: rows=10</li>
-</ul></li>
-<li>contentType=[string: video, audio or image]
-<ul>
+<li>contentType=[string: video, audio or image]</li>
 <li>example: contentType=video</li>
-</ul></li>
-<li>startIngestionDate=[string, format: YYYY-MM-DDTHH:MI:SSZ]
-<ul>
+<li>startIngestionDate=[string, format: YYYY-MM-DDTHH:MI:SSZ]</li>
 <li>example: startIngestionDate=2018-04-26T07:19:11Z</li>
-</ul></li>
-<li>endIngestionDate=[string, format: YYYY-MM-DDTHH:MI:SSZ]
-<ul>
+<li>endIngestionDate=[string, format: YYYY-MM-DDTHH:MI:SSZ]</li>
 <li>example: endIngestionDate=2018-04-27T07:19:11Z</li>
-</ul></li>
 </ul>
 <h2 id="payload-data">Payload Data</h2>
 <p>See the JSON format of the command it is ingesting</p>
 <h2 id="success-response">Success Response</h2>
 <h3 id="code">Code</h3>
-<p>200 OK</p>
-<h3 id="content">Content</h3>
-<p>The API returns information about the contents satisfying the conditions identified by the URL parameters.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode javascript"><code class="sourceCode javascript"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="op">{</span></a>
-<a class="sourceLine" id="cb1-2" data-line-number="2">    <span class="st">&quot;requestParameters&quot;</span> <span class="op">:</span> </a>
-<a class="sourceLine" id="cb1-3" data-line-number="3">    <span class="op">{</span></a>
-<a class="sourceLine" id="cb1-4" data-line-number="4">        <span class="st">&quot;contentType&quot;</span> <span class="op">:</span> <span class="st">&quot;Video&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb1-5" data-line-number="5">        <span class="st">&quot;endIngestionDate&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-04-26T07:20:11Z&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb1-6" data-line-number="6">        <span class="st">&quot;mediaItemKey&quot;</span> <span class="op">:</span> <span class="dv">141</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb1-7" data-line-number="7">        <span class="st">&quot;rows&quot;</span> <span class="op">:</span> <span class="dv">1</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb1-8" data-line-number="8">        <span class="st">&quot;start&quot;</span> <span class="op">:</span> <span class="dv">0</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb1-9" data-line-number="9">        <span class="st">&quot;startIngestionDate&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-04-26T07:19:11Z&quot;</span></a>
-<a class="sourceLine" id="cb1-10" data-line-number="10">    <span class="op">},</span></a>
-<a class="sourceLine" id="cb1-11" data-line-number="11">    <span class="st">&quot;response&quot;</span> <span class="op">:</span> </a>
-<a class="sourceLine" id="cb1-12" data-line-number="12">    <span class="op">{</span></a>
-<a class="sourceLine" id="cb1-13" data-line-number="13">        <span class="st">&quot;mediaItems&quot;</span> <span class="op">:</span> </a>
-<a class="sourceLine" id="cb1-14" data-line-number="14">        [</a>
-<a class="sourceLine" id="cb1-15" data-line-number="15">            <span class="op">{</span></a>
-<a class="sourceLine" id="cb1-16" data-line-number="16">                <span class="st">&quot;contentType&quot;</span> <span class="op">:</span> <span class="st">&quot;Video&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb1-17" data-line-number="17">                <span class="st">&quot;ingester&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb1-18" data-line-number="18">                <span class="st">&quot;ingestionDate&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-04-26T07:20:08Z&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb1-19" data-line-number="19">                <span class="st">&quot;keywords&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb1-20" data-line-number="20">                <span class="st">&quot;mediaItemKey&quot;</span> <span class="op">:</span> <span class="dv">141</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb1-21" data-line-number="21">                <span class="st">&quot;profiles&quot;</span> <span class="op">:</span> </a>
-<a class="sourceLine" id="cb1-22" data-line-number="22">                [</a>
-<a class="sourceLine" id="cb1-23" data-line-number="23">                    <span class="op">{</span></a>
-<a class="sourceLine" id="cb1-24" data-line-number="24">                        <span class="st">&quot;creationDate&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-04-26T07:20:08Z&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb1-25" data-line-number="25">                        <span class="st">&quot;encodingProfileKey&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb1-26" data-line-number="26">                        <span class="st">&quot;physicalPathKey&quot;</span> <span class="op">:</span> <span class="dv">186</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb1-27" data-line-number="27">                        <span class="st">&quot;sizeInBytes&quot;</span> <span class="op">:</span> <span class="dv">383631</span></a>
-<a class="sourceLine" id="cb1-28" data-line-number="28">                    <span class="op">}</span></a>
-<a class="sourceLine" id="cb1-29" data-line-number="29">                ]<span class="op">,</span></a>
-<a class="sourceLine" id="cb1-30" data-line-number="30">                <span class="st">&quot;providerName&quot;</span> <span class="op">:</span> <span class="st">&quot;default&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb1-31" data-line-number="31">                <span class="st">&quot;title&quot;</span> <span class="op">:</span> <span class="st">&quot;My Title of the video content&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb1-32" data-line-number="32">                <span class="st">&quot;videoDetails&quot;</span> <span class="op">:</span> </a>
-<a class="sourceLine" id="cb1-33" data-line-number="33">                <span class="op">{</span></a>
-<a class="sourceLine" id="cb1-34" data-line-number="34">                    <span class="st">&quot;audioBitRate&quot;</span> <span class="op">:</span> <span class="dv">83050</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb1-35" data-line-number="35">                    <span class="st">&quot;audioChannels&quot;</span> <span class="op">:</span> <span class="dv">1</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb1-36" data-line-number="36">                    <span class="st">&quot;audioCodecName&quot;</span> <span class="op">:</span> <span class="st">&quot;aac&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb1-37" data-line-number="37">                    <span class="st">&quot;audioSampleRate&quot;</span> <span class="op">:</span> <span class="dv">48000</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb1-38" data-line-number="38">                    <span class="st">&quot;bitRate&quot;</span> <span class="op">:</span> <span class="dv">551193</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb1-39" data-line-number="39">                    <span class="st">&quot;durationInMilliSeconds&quot;</span> <span class="op">:</span> <span class="dv">5000</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb1-40" data-line-number="40">                    <span class="st">&quot;videoAvgFrameRate&quot;</span> <span class="op">:</span> <span class="st">&quot;30/1&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb1-41" data-line-number="41">                    <span class="st">&quot;videoBitRate&quot;</span> <span class="op">:</span> <span class="dv">465641</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb1-42" data-line-number="42">                    <span class="st">&quot;videoCodecName&quot;</span> <span class="op">:</span> <span class="st">&quot;h264&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb1-43" data-line-number="43">                    <span class="st">&quot;videoHeight&quot;</span> <span class="op">:</span> <span class="dv">320</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb1-44" data-line-number="44">                    <span class="st">&quot;videoProfile&quot;</span> <span class="op">:</span> <span class="st">&quot;Constrained Baseline&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb1-45" data-line-number="45">                    <span class="st">&quot;videoWidth&quot;</span> <span class="op">:</span> <span class="dv">560</span></a>
-<a class="sourceLine" id="cb1-46" data-line-number="46">                <span class="op">}</span></a>
-<a class="sourceLine" id="cb1-47" data-line-number="47">            <span class="op">}</span></a>
-<a class="sourceLine" id="cb1-48" data-line-number="48">        ]<span class="op">,</span></a>
-<a class="sourceLine" id="cb1-49" data-line-number="49">        <span class="st">&quot;numFound&quot;</span> <span class="op">:</span> <span class="dv">91</span></a>
-<a class="sourceLine" id="cb1-50" data-line-number="50">    <span class="op">}</span></a>
-<a class="sourceLine" id="cb1-51" data-line-number="51"><span class="op">}</span></a></code></pre></div>
+<p>200 OK ### Content The API returns information about the contents satisfying the conditions identified by the URL parameters.</p>
+<div class="sourceCode"><pre class="sourceCode javascript"><code class="sourceCode javascript"><span class="op">{</span>
+    <span class="st">&quot;requestParameters&quot;</span> <span class="op">:</span> 
+    <span class="op">{</span>
+        <span class="st">&quot;contentType&quot;</span> <span class="op">:</span> <span class="st">&quot;Video&quot;</span><span class="op">,</span>
+        <span class="st">&quot;endIngestionDate&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-04-26T07:20:11Z&quot;</span><span class="op">,</span>
+        <span class="st">&quot;mediaItemKey&quot;</span> <span class="op">:</span> <span class="dv">141</span><span class="op">,</span>
+        <span class="st">&quot;rows&quot;</span> <span class="op">:</span> <span class="dv">1</span><span class="op">,</span>
+        <span class="st">&quot;start&quot;</span> <span class="op">:</span> <span class="dv">0</span><span class="op">,</span>
+        <span class="st">&quot;startIngestionDate&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-04-26T07:19:11Z&quot;</span>
+    <span class="op">},</span>
+    <span class="st">&quot;response&quot;</span> <span class="op">:</span> 
+    <span class="op">{</span>
+        <span class="st">&quot;mediaItems&quot;</span> <span class="op">:</span> 
+        [
+            <span class="op">{</span>
+                <span class="st">&quot;contentType&quot;</span> <span class="op">:</span> <span class="st">&quot;Video&quot;</span><span class="op">,</span>
+                <span class="st">&quot;ingester&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span>
+                <span class="st">&quot;ingestionDate&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-04-26T07:20:08Z&quot;</span><span class="op">,</span>
+                <span class="st">&quot;keywords&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span>
+                <span class="st">&quot;mediaItemKey&quot;</span> <span class="op">:</span> <span class="dv">141</span><span class="op">,</span>
+                <span class="st">&quot;profiles&quot;</span> <span class="op">:</span> 
+                [
+                    <span class="op">{</span>
+                        <span class="st">&quot;creationDate&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-04-26T07:20:08Z&quot;</span><span class="op">,</span>
+                        <span class="st">&quot;encodingProfileKey&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span>
+                        <span class="st">&quot;physicalPathKey&quot;</span> <span class="op">:</span> <span class="dv">186</span><span class="op">,</span>
+                        <span class="st">&quot;sizeInBytes&quot;</span> <span class="op">:</span> <span class="dv">383631</span>
+                    <span class="op">}</span>
+                ]<span class="op">,</span>
+                <span class="st">&quot;providerName&quot;</span> <span class="op">:</span> <span class="st">&quot;default&quot;</span><span class="op">,</span>
+                <span class="st">&quot;title&quot;</span> <span class="op">:</span> <span class="st">&quot;My Title of the video content&quot;</span><span class="op">,</span>
+                <span class="st">&quot;videoDetails&quot;</span> <span class="op">:</span> 
+                <span class="op">{</span>
+                    <span class="st">&quot;audioBitRate&quot;</span> <span class="op">:</span> <span class="dv">83050</span><span class="op">,</span>
+                    <span class="st">&quot;audioChannels&quot;</span> <span class="op">:</span> <span class="dv">1</span><span class="op">,</span>
+                    <span class="st">&quot;audioCodecName&quot;</span> <span class="op">:</span> <span class="st">&quot;aac&quot;</span><span class="op">,</span>
+                    <span class="st">&quot;audioSampleRate&quot;</span> <span class="op">:</span> <span class="dv">48000</span><span class="op">,</span>
+                    <span class="st">&quot;bitRate&quot;</span> <span class="op">:</span> <span class="dv">551193</span><span class="op">,</span>
+                    <span class="st">&quot;durationInMilliSeconds&quot;</span> <span class="op">:</span> <span class="dv">5000</span><span class="op">,</span>
+                    <span class="st">&quot;videoAvgFrameRate&quot;</span> <span class="op">:</span> <span class="st">&quot;30/1&quot;</span><span class="op">,</span>
+                    <span class="st">&quot;videoBitRate&quot;</span> <span class="op">:</span> <span class="dv">465641</span><span class="op">,</span>
+                    <span class="st">&quot;videoCodecName&quot;</span> <span class="op">:</span> <span class="st">&quot;h264&quot;</span><span class="op">,</span>
+                    <span class="st">&quot;videoHeight&quot;</span> <span class="op">:</span> <span class="dv">320</span><span class="op">,</span>
+                    <span class="st">&quot;videoProfile&quot;</span> <span class="op">:</span> <span class="st">&quot;Constrained Baseline&quot;</span><span class="op">,</span>
+                    <span class="st">&quot;videoWidth&quot;</span> <span class="op">:</span> <span class="dv">560</span>
+                <span class="op">}</span>
+            <span class="op">}</span>
+        ]<span class="op">,</span>
+        <span class="st">&quot;numFound&quot;</span> <span class="op">:</span> <span class="dv">91</span>
+    <span class="op">}</span>
+<span class="op">}</span></code></pre></div>
 <h2 id="error-response">Error Response</h2>
 <p>See <a href="A.1-Common-error-responses.html">Common Error Responses</a></p>
 <h2 id="sample-call">Sample Call</h2>
-<p>Assuming:</p>
-<ul>
-<li>UserKey: 5</li>
-<li>APIKey: SU1.8ZO1O2zVeBMNv9lzZ0whABXSAdjWrR~rpcnI5eaHNO2gysrNdAv8BNoWZB1eLP</li>
-</ul>
-<p><code>curl -k -v -u 5:SU1.8ZO1O2zVeBMNv9lzZ0whABXSAdjWrR~rpcnI5eaHNO2gysrNdAv8BNoWZB1eLP &quot;https://mms-api.catrasoft.cloud/catramms/v1/content?start=0&amp;rows=1&amp;contentType=video&amp;startIngestionDate=2018-04-26T07:19:11Z&amp;endIngestionDate=2018-04-26T07:20:11Z&quot;</code></p>
+<p>Assuming: * UserKey: 5 * APIKey: SU1.8ZO1O2zVeBMNv9lzZ0whABXSAdjWrR~rpcnI5eaHNO2gysrNdAv8BNoWZB1eLP</p>
+<p><code>curl -k -v -u 5:SU1.8ZO1O2zVeBMNv9lzZ0whABXSAdjWrR~rpcnI5eaHNO2gysrNdAv8BNoWZB1eLP  &quot;https://mms-api.catrasoft.cloud/catramms/v1/content?start=0&amp;rows=1&amp;contentType=video&amp;startIngestionDate=2018-04-26T07:19:11Z&amp;endIngestionDate=2018-04-26T07:20:11Z&quot;</code></p>
 <p>or</p>
-<p><code>curl -k -v -u 5:SU1.8ZO1O2zVeBMNv9lzZ0whABXSAdjWrR~rpcnI5eaHNO2gysrNdAv8BNoWZB1eLP &quot;https://mms-api.catrasoft.cloud/catramms/v1/content/141&quot;</code></p>
+<p><code>curl -k -v -u 5:SU1.8ZO1O2zVeBMNv9lzZ0whABXSAdjWrR~rpcnI5eaHNO2gysrNdAv8BNoWZB1eLP  &quot;https://mms-api.catrasoft.cloud/catramms/v1/content/141&quot;</code></p>

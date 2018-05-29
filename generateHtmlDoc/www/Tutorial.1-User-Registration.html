@@ -1,24 +1,9 @@
-<p>Reference manual for</p>
-<ul>
-<li><a href="User-registration.html">User Registration</a></li>
-</ul>
+<p>Reference manual for * <a href="User-registration.html">User Registration</a></p>
 <h2 id="user-creation">User Creation</h2>
-<p>The following HTTP POST will create a userKey and associate to him a Workspace</p>
-<ul>
-<li>curl -k -v -X POST -d '{&quot;Name&quot;: &quot;XXXXXX&quot;, &quot;EMail&quot;: &quot;<a href="mailto:xxx@yyy.zzz">xxx@yyy.zzz</a>&quot;, &quot;Password&quot;: &quot;yyyyy&quot;, &quot;Country&quot;: &quot;ZZZZZ&quot;, &quot;WorkspaceName&quot;: &quot;XXXXXX&quot; }' <a href="https://mms-api.catrasoft.cloud/catramms/v1/user" class="uri">https://mms-api.catrasoft.cloud/catramms/v1/user</a></li>
-</ul>
-<p>It will return the key of the Workspace and User:</p>
-<ul>
-<li>{ &quot;workspaceKey&quot;: 123, &quot;userKey&quot;: <strong>654</strong> }</li>
-</ul>
-<p>and an email is sent to <a href="mailto:xxx@yyy.zzz">xxx@yyy.zzz</a> providing the confirmation code (<strong>868943763298</strong>)</p>
+<p>The following HTTP POST will create a userKey and associate to him a Workspace * curl -k -v -X POST -d '{&quot;Name&quot;: &quot;XXXXXX&quot;, &quot;EMail&quot;: &quot;xxx@yyy.zzz&quot;, &quot;Password&quot;: &quot;yyyyy&quot;, &quot;Country&quot;: &quot;ZZZZZ&quot;, &quot;WorkspaceName&quot;: &quot;XXXXXX&quot; }' https://mms-api.catrasoft.cloud/catramms/v1/user</p>
+<p>It will return the key of the Workspace and User: * { &quot;workspaceKey&quot;: 123, &quot;userKey&quot;: <strong>654</strong> }</p>
+<p>and an email is sent to xxx@yyy.zzz providing the confirmation code (<strong>868943763298</strong>)</p>
 <h2 id="user-confirmation">User Confirmation</h2>
-<p>The following HTTP PUT will confirm the registration of the User. It needs as input the userKey and the confirmation code</p>
-<ul>
-<li>curl -k -v -X PUT <a href="https://mms-api.catrasoft.cloud/catramms/v1/user/654/868943763298" class="uri">https://mms-api.catrasoft.cloud/catramms/v1/user/654/868943763298</a></li>
-</ul>
-<p>It will return the APIKey</p>
-<ul>
-<li>{ &quot;apiKey&quot;: &quot;SU1.8AO1O2z0gdezR99BIPvAz2y4LNUsCKcKJrSrQ_S4lS33iZ4zGJ8kfWxQqmOhKL&quot; }</li>
-</ul>
+<p>The following HTTP PUT will confirm the registration of the User. It needs as input the userKey and the confirmation code * curl -k -v -X PUT https://mms-api.catrasoft.cloud/catramms/v1/user/654/868943763298</p>
+<p>It will return the APIKey * { &quot;apiKey&quot;: &quot;SU1.8AO1O2z0gdezR99BIPvAz2y4LNUsCKcKJrSrQ_S4lS33iZ4zGJ8kfWxQqmOhKL&quot; }</p>
 <p><strong>Remark</strong>: The <strong>apiKey</strong> and <strong>userKey</strong> have to be saved because they have to be used for any API call.</p>

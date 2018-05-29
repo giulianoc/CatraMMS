@@ -20,5 +20,5 @@
 # License is allowed only after express negotiation of conditions
 # with the authors.
 
-install (DIRECTORY www DESTINATION ./)
+install (DIRECTORY www DESTINATION .)
 

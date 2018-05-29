@@ -13,25 +13,18 @@
 <p>See the JSON format of the command it is ingesting</p>
 <h2 id="success-response">Success Response</h2>
 <h3 id="code">Code</h3>
-<p>201 Created</p>
-<h3 id="content">Content</h3>
-<p>The API returns the identifiers (Keys) and labels about the 'workflow' and every single task just added in the ingestion queue.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode javascript"><code class="sourceCode javascript"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="op">{</span> </a>
-<a class="sourceLine" id="cb1-2" data-line-number="2">    <span class="st">&quot;workflow&quot;</span><span class="op">:</span> <span class="op">{</span> <span class="st">&quot;ingestionRootKey&quot;</span><span class="op">:</span> <span class="dv">8</span><span class="op">,</span> <span class="st">&quot;label&quot;</span><span class="op">:</span> <span class="st">&quot;...&quot;</span> <span class="op">},</span> </a>
-<a class="sourceLine" id="cb1-3" data-line-number="3">    <span class="st">&quot;tasks&quot;</span><span class="op">:</span> [</a>
-<a class="sourceLine" id="cb1-4" data-line-number="4">        <span class="op">{</span> <span class="st">&quot;ingestionJobKey&quot;</span><span class="op">:</span> <span class="dv">16</span><span class="op">,</span> <span class="st">&quot;label&quot;</span><span class="op">:</span> <span class="st">&quot;...&quot;</span> <span class="op">},</span> </a>
-<a class="sourceLine" id="cb1-5" data-line-number="5">        <span class="op">{</span> <span class="st">&quot;ingestionJobKey&quot;</span><span class="op">:</span> <span class="dv">17</span><span class="op">,</span> <span class="st">&quot;label&quot;</span><span class="op">:</span> <span class="st">&quot;...&quot;</span> <span class="op">},</span> </a>
-<a class="sourceLine" id="cb1-6" data-line-number="6">        <span class="op">{</span> <span class="st">&quot;ingestionJobKey&quot;</span><span class="op">:</span> <span class="dv">18</span><span class="op">,</span> <span class="st">&quot;label&quot;</span><span class="op">:</span> <span class="st">&quot;...&quot;</span> <span class="op">},</span></a>
-<a class="sourceLine" id="cb1-7" data-line-number="7">        ... </a>
-<a class="sourceLine" id="cb1-8" data-line-number="8">    ]</a>
-<a class="sourceLine" id="cb1-9" data-line-number="9"><span class="op">}</span></a></code></pre></div>
+<p>201 Created ### Content The API returns the identifiers (Keys) and labels about the 'workflow' and every single task just added in the ingestion queue.</p>
+<div class="sourceCode"><pre class="sourceCode javascript"><code class="sourceCode javascript"><span class="op">{</span> 
+    <span class="st">&quot;workflow&quot;</span><span class="op">:</span> <span class="op">{</span> <span class="st">&quot;ingestionRootKey&quot;</span><span class="op">:</span> <span class="dv">8</span><span class="op">,</span> <span class="st">&quot;label&quot;</span><span class="op">:</span> <span class="st">&quot;...&quot;</span> <span class="op">},</span> 
+    <span class="st">&quot;tasks&quot;</span><span class="op">:</span> [
+        <span class="op">{</span> <span class="st">&quot;ingestionJobKey&quot;</span><span class="op">:</span> <span class="dv">16</span><span class="op">,</span> <span class="st">&quot;label&quot;</span><span class="op">:</span> <span class="st">&quot;...&quot;</span> <span class="op">},</span> 
+        <span class="op">{</span> <span class="st">&quot;ingestionJobKey&quot;</span><span class="op">:</span> <span class="dv">17</span><span class="op">,</span> <span class="st">&quot;label&quot;</span><span class="op">:</span> <span class="st">&quot;...&quot;</span> <span class="op">},</span> 
+        <span class="op">{</span> <span class="st">&quot;ingestionJobKey&quot;</span><span class="op">:</span> <span class="dv">18</span><span class="op">,</span> <span class="st">&quot;label&quot;</span><span class="op">:</span> <span class="st">&quot;...&quot;</span> <span class="op">},</span>
+        ... 
+    ]
+<span class="op">}</span></code></pre></div>
 <h2 id="error-response">Error Response</h2>
 <p>See <a href="A.1-Common-error-responses.html">Common Error Responses</a></p>
 <h2 id="sample-call">Sample Call</h2>
-<p>Assuming:</p>
-<ul>
-<li>UserKey: 5</li>
-<li>APIKey: SU1.8ZO1O2zVeBMNv9lzZ0whABXSAdjWrR~rpcnI5eaHNO2gysrNdAv8BNoWZB1eLP</li>
-<li>contentMetadata.json is a file containing the metadata about the Workflow and related tasks using the <a href="A.2-Language-used-by-the-ingestion-(workflow-implementation).html">language</a>.</li>
-</ul>
+<p>Assuming: * UserKey: 5 * APIKey: SU1.8ZO1O2zVeBMNv9lzZ0whABXSAdjWrR~rpcnI5eaHNO2gysrNdAv8BNoWZB1eLP * contentMetadata.json is a file containing the metadata about the Workflow and related tasks using the <a href="A.2-Language-used-by-the-ingestion-(workflow-implementation).html">language</a>.</p>
 <p><code>curl -k -v -X POST -u 5:SU1.8ZO1O2zVeBMNv9lzZ0whABXSAdjWrR~rpcnI5eaHNO2gysrNdAv8BNoWZB1eLP -d @contentMetadata.json -H &quot;Content-Type: application/json&quot; https://mms-api.catrasoft.cloud/catramms/v1/ingestion</code></p>

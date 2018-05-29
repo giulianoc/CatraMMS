@@ -1,15 +1,7 @@
 <h3 id="pull-option">Pull option</h3>
-<p>The Pull option means the binary of the content is downloaded by the MMS. The protocols supported are: http, https, ftp and ftps. The pull option supports the <em>Resume</em> in case of a fault during the download of the content.</p>
+<p>The Pull option means the binary of the content is downloaded by the MMS. The protocols supported are: http, https, ftp and ftps. The pull option supports the <em>Resume</em> in case of a fault during the download of the content. * In the Pull option the metadata contains the URL to be used to download the content ('SourceURL' item) * A resume might be used in case the download fails for any reason. Moreover a number of retries is used in case of network issues.</p>
+<p>References: * the <a href="COMMAND.6-Ingestion-a-new-Command.html">command details</a> to add a new content (HTTP POST) * Content Ingestion metadata <a href="TASK.1-Add-Content-JSON-format.html"><strong>JSON format</strong></a> (body of the POST)</p>
 <ul>
-<li>In the Pull option the metadata contains the URL to be used to download the content ('SourceURL' item)</li>
-<li>A resume might be used in case the download fails for any reason. Moreover a number of retries is used in case of network issues.</li>
-</ul>
-<p>References:</p>
-<ul>
-<li><p>the <a href="COMMAND.6-Ingestion-a-new-Command.html">command details</a> to add a new content (HTTP POST)</p></li>
-<li><p>Content Ingestion metadata <a href="TASK.1-Add-Content-JSON-format.html"><strong>JSON format</strong></a> (body of the POST)</p></li>
-<li><p>Here follows some examples (body of the POST)</p>
-<ul>
+<li>Here follows some examples (body of the POST)</li>
 <li>(<a href="JSON-Example.1-Add-a-new-content-(pull).html">JSON example</a>)</li>
-</ul></li>
 </ul>

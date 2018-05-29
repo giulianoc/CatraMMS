@@ -1,148 +1,128 @@
-<p>This tutorial implements the following Workflow:</p>
-<ul>
-<li>a content is added into MMS</li>
-<li>on success an email is sent</li>
-</ul>
-<p>Reference manual for</p>
-<ul>
-<li><a href="Add-a-new-content-Pull.html">Add Content (Pull)</a></li>
-<li><a href="Notification-through-email.html">Notification through email</a></li>
-</ul>
+<p>This tutorial implements the following Workflow: * a content is added into MMS * on success an email is sent</p>
+<p>Reference manual for * <a href="Add-a-new-content-Pull.html">Add Content (Pull)</a> * <a href="Notification-through-email.html">Notification through email</a></p>
 <h2 id="input-creation-json">Input creation (json)</h2>
 <p>Create a file (demo_2.json) having the following content</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode javascript"><code class="sourceCode javascript"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="op">{</span></a>
-<a class="sourceLine" id="cb1-2" data-line-number="2">        <span class="st">&quot;Type&quot;</span><span class="op">:</span> <span class="st">&quot;Workflow&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb1-3" data-line-number="3">        <span class="st">&quot;Label&quot;</span><span class="op">:</span> <span class="st">&quot;1&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb1-4" data-line-number="4">        <span class="st">&quot;Variables&quot;</span><span class="op">:</span> <span class="op">{</span></a>
-<a class="sourceLine" id="cb1-5" data-line-number="5">                <span class="st">&quot;Title&quot;</span><span class="op">:</span> <span class="st">&quot;My Title of the content&quot;</span></a>
-<a class="sourceLine" id="cb1-6" data-line-number="6">        <span class="op">},</span></a>
-<a class="sourceLine" id="cb1-7" data-line-number="7">        <span class="st">&quot;Task&quot;</span><span class="op">:</span> <span class="op">{</span></a>
-<a class="sourceLine" id="cb1-8" data-line-number="8">                <span class="st">&quot;Label&quot;</span><span class="op">:</span> <span class="st">&quot;This is my video&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb1-9" data-line-number="9">                <span class="st">&quot;Type&quot;</span><span class="op">:</span> <span class="st">&quot;Add-Content&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb1-10" data-line-number="10">                <span class="st">&quot;Parameters&quot;</span><span class="op">:</span> <span class="op">{</span></a>
-<a class="sourceLine" id="cb1-11" data-line-number="11">                        <span class="st">&quot;SourceURL&quot;</span><span class="op">:</span> <span class="st">&quot;http://techslides.com/demos/sample-videos/small.mp4&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb1-12" data-line-number="12">                        <span class="st">&quot;FileFormat&quot;</span><span class="op">:</span> <span class="st">&quot;mp4&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb1-13" data-line-number="13">                        <span class="st">&quot;ContentType&quot;</span><span class="op">:</span> <span class="st">&quot;video&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb1-14" data-line-number="14">                        <span class="st">&quot;UserData&quot;</span><span class="op">:</span> <span class="op">{</span> <span class="st">&quot;MyData&quot;</span><span class="op">:</span> <span class="st">&quot;this is my data&quot;</span> <span class="op">},</span></a>
-<a class="sourceLine" id="cb1-15" data-line-number="15">                        <span class="st">&quot;Title&quot;</span><span class="op">:</span> <span class="st">&quot;${Title}&quot;</span></a>
-<a class="sourceLine" id="cb1-16" data-line-number="16">                <span class="op">},</span></a>
-<a class="sourceLine" id="cb1-17" data-line-number="17">                <span class="st">&quot;OnSuccess&quot;</span><span class="op">:</span> <span class="op">{</span></a>
-<a class="sourceLine" id="cb1-18" data-line-number="18">                        <span class="st">&quot;Task&quot;</span><span class="op">:</span> <span class="op">{</span></a>
-<a class="sourceLine" id="cb1-19" data-line-number="19">                                <span class="st">&quot;Type&quot;</span><span class="op">:</span> <span class="st">&quot;Email-Notification&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb1-20" data-line-number="20">                                <span class="st">&quot;Parameters&quot;</span><span class="op">:</span> <span class="op">{</span></a>
-<a class="sourceLine" id="cb1-21" data-line-number="21">                                        <span class="st">&quot;EmailAddress&quot;</span><span class="op">:</span> <span class="st">&quot;giulianoc@catrasoftware.it&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb1-22" data-line-number="22">                                        <span class="st">&quot;Subject&quot;</span><span class="op">:</span> <span class="st">&quot;Task finished&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb1-23" data-line-number="23">                                        <span class="st">&quot;Message&quot;</span><span class="op">:</span> <span class="st">&quot;Task __INGESTIONJOBKEY__ has finished&quot;</span></a>
-<a class="sourceLine" id="cb1-24" data-line-number="24">                                <span class="op">}</span></a>
-<a class="sourceLine" id="cb1-25" data-line-number="25">                        <span class="op">}</span></a>
-<a class="sourceLine" id="cb1-26" data-line-number="26">                <span class="op">}</span></a>
-<a class="sourceLine" id="cb1-27" data-line-number="27">        <span class="op">}</span></a>
-<a class="sourceLine" id="cb1-28" data-line-number="28"><span class="op">}</span></a></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode javascript"><code class="sourceCode javascript"><span class="op">{</span>
+        <span class="st">&quot;Type&quot;</span><span class="op">:</span> <span class="st">&quot;Workflow&quot;</span><span class="op">,</span>
+        <span class="st">&quot;Label&quot;</span><span class="op">:</span> <span class="st">&quot;1&quot;</span><span class="op">,</span>
+        <span class="st">&quot;Variables&quot;</span><span class="op">:</span> <span class="op">{</span>
+                <span class="st">&quot;Title&quot;</span><span class="op">:</span> <span class="st">&quot;My Title of the content&quot;</span>
+        <span class="op">},</span>
+        <span class="st">&quot;Task&quot;</span><span class="op">:</span> <span class="op">{</span>
+                <span class="st">&quot;Label&quot;</span><span class="op">:</span> <span class="st">&quot;This is my video&quot;</span><span class="op">,</span>
+                <span class="st">&quot;Type&quot;</span><span class="op">:</span> <span class="st">&quot;Add-Content&quot;</span><span class="op">,</span>
+                <span class="st">&quot;Parameters&quot;</span><span class="op">:</span> <span class="op">{</span>
+                        <span class="st">&quot;SourceURL&quot;</span><span class="op">:</span> <span class="st">&quot;http://techslides.com/demos/sample-videos/small.mp4&quot;</span><span class="op">,</span>
+                        <span class="st">&quot;FileFormat&quot;</span><span class="op">:</span> <span class="st">&quot;mp4&quot;</span><span class="op">,</span>
+                        <span class="st">&quot;ContentType&quot;</span><span class="op">:</span> <span class="st">&quot;video&quot;</span><span class="op">,</span>
+                        <span class="st">&quot;UserData&quot;</span><span class="op">:</span> <span class="op">{</span> <span class="st">&quot;MyData&quot;</span><span class="op">:</span> <span class="st">&quot;this is my data&quot;</span> <span class="op">},</span>
+                        <span class="st">&quot;Title&quot;</span><span class="op">:</span> <span class="st">&quot;${Title}&quot;</span>
+                <span class="op">},</span>
+                <span class="st">&quot;OnSuccess&quot;</span><span class="op">:</span> <span class="op">{</span>
+                        <span class="st">&quot;Task&quot;</span><span class="op">:</span> <span class="op">{</span>
+                                <span class="st">&quot;Type&quot;</span><span class="op">:</span> <span class="st">&quot;Email-Notification&quot;</span><span class="op">,</span>
+                                <span class="st">&quot;Parameters&quot;</span><span class="op">:</span> <span class="op">{</span>
+                                        <span class="st">&quot;EmailAddress&quot;</span><span class="op">:</span> <span class="st">&quot;giulianoc@catrasoftware.it&quot;</span><span class="op">,</span>
+                                        <span class="st">&quot;Subject&quot;</span><span class="op">:</span> <span class="st">&quot;Task finished&quot;</span><span class="op">,</span>
+                                        <span class="st">&quot;Message&quot;</span><span class="op">:</span> <span class="st">&quot;Task __INGESTIONJOBKEY__ has finished&quot;</span>
+                                <span class="op">}</span>
+                        <span class="op">}</span>
+                <span class="op">}</span>
+        <span class="op">}</span>
+<span class="op">}</span></code></pre></div>
 <h2 id="command">Command</h2>
-<p>Run the following HTTP POST having as input userKey, APIKey and demo_2.json:</p>
-<ul>
-<li>curl -k -v -X POST -u 654:SU1.8AO1O2z0gdezR99BIPvAz2y4LNUsCKcKJrSrQ_S4lS33iZ4zGJ8kfWxQqmOhKL -d @demo_2.json -H &quot;Content-Type: application/json&quot; <a href="https://mms-api.catrasoft.cloud/catramms/v1/ingestion" class="uri">https://mms-api.catrasoft.cloud/catramms/v1/ingestion</a></li>
-</ul>
-<p>The return will be:</p>
-<ul>
-<li>{ &quot;workflow&quot;: { &quot;ingestionRootKey&quot;: 251, &quot;label&quot;: &quot;1&quot; }, &quot;tasks&quot;: [ { &quot;ingestionJobKey&quot;: 839, &quot;label&quot;: &quot;This is my video&quot; }, { &quot;ingestionJobKey&quot;: 840, &quot;label&quot;: &quot;&quot; } ] }</li>
-</ul>
+<p>Run the following HTTP POST having as input userKey, APIKey and demo_2.json: * curl -k -v -X POST -u 654:SU1.8AO1O2z0gdezR99BIPvAz2y4LNUsCKcKJrSrQ_S4lS33iZ4zGJ8kfWxQqmOhKL -d <span class="citation">@demo_2.json</span> -H &quot;Content-Type: application/json&quot; https://mms-api.catrasoft.cloud/catramms/v1/ingestion</p>
+<p>The return will be: * { &quot;workflow&quot;: { &quot;ingestionRootKey&quot;: 251, &quot;label&quot;: &quot;1&quot; }, &quot;tasks&quot;: [ { &quot;ingestionJobKey&quot;: 839, &quot;label&quot;: &quot;This is my video&quot; }, { &quot;ingestionJobKey&quot;: 840, &quot;label&quot;: &quot;&quot; } ] }</p>
 <h2 id="get-the-status-of-the-entire-workflow">Get the status of the entire Workflow</h2>
-<p>To get the status of the above ingestion, run the HTTP GET having as input the ingestionRootKey:</p>
-<ul>
-<li>curl -k -v -u 654:SU1.8AO1O2z0gdezR99BIPvAz2y4LNUsCKcKJrSrQ_S4lS33iZ4zGJ8kfWxQqmOhKL <a href="https://mms-api.catrasoft.cloud/catramms/v1/ingestion/251" class="uri">https://mms-api.catrasoft.cloud/catramms/v1/ingestion/251</a></li>
-</ul>
+<p>To get the status of the above ingestion, run the HTTP GET having as input the ingestionRootKey: * curl -k -v -u 654:SU1.8AO1O2z0gdezR99BIPvAz2y4LNUsCKcKJrSrQ_S4lS33iZ4zGJ8kfWxQqmOhKL https://mms-api.catrasoft.cloud/catramms/v1/ingestion/251</p>
 <p>The return will be:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode javascript"><code class="sourceCode javascript"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="op">{</span></a>
-<a class="sourceLine" id="cb2-2" data-line-number="2">    <span class="st">&quot;workflow&quot;</span> <span class="op">:</span> </a>
-<a class="sourceLine" id="cb2-3" data-line-number="3">    <span class="op">{</span></a>
-<a class="sourceLine" id="cb2-4" data-line-number="4">        <span class="st">&quot;ingestionRootKey&quot;</span> <span class="op">:</span> <span class="dv">251</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb2-5" data-line-number="5">        <span class="st">&quot;label&quot;</span> <span class="op">:</span> <span class="st">&quot;1&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb2-6" data-line-number="6">        <span class="st">&quot;tasks&quot;</span> <span class="op">:</span> </a>
-<a class="sourceLine" id="cb2-7" data-line-number="7">        [</a>
-<a class="sourceLine" id="cb2-8" data-line-number="8">            <span class="op">{</span></a>
-<a class="sourceLine" id="cb2-9" data-line-number="9">                <span class="st">&quot;downloadingProgress&quot;</span> <span class="op">:</span> <span class="dv">100</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb2-10" data-line-number="10">                <span class="st">&quot;endIngestion&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-05-15T12:30:11Z&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb2-11" data-line-number="11">                <span class="st">&quot;errorMessage&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb2-12" data-line-number="12">                <span class="st">&quot;ingestionJobKey&quot;</span> <span class="op">:</span> <span class="dv">839</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb2-13" data-line-number="13">                <span class="st">&quot;ingestionType&quot;</span> <span class="op">:</span> <span class="st">&quot;Add-Content&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb2-14" data-line-number="14">                <span class="st">&quot;label&quot;</span> <span class="op">:</span> <span class="st">&quot;This is my video&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb2-15" data-line-number="15">                <span class="st">&quot;mediaItemKey&quot;</span> <span class="op">:</span> <span class="dv">2</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb2-16" data-line-number="16">                <span class="st">&quot;physicalPathKey&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb2-17" data-line-number="17">                <span class="st">&quot;startIngestion&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-05-15T12:30:08Z&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb2-18" data-line-number="18">                <span class="st">&quot;status&quot;</span> <span class="op">:</span> <span class="st">&quot;End_TaskSuccess&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb2-19" data-line-number="19">                <span class="st">&quot;uploadingProgress&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb2-20" data-line-number="20">                <span class="st">&quot;videoDetails&quot;</span> <span class="op">:</span> </a>
-<a class="sourceLine" id="cb2-21" data-line-number="21">                <span class="op">{</span></a>
-<a class="sourceLine" id="cb2-22" data-line-number="22">                    <span class="st">&quot;audioBitRate&quot;</span> <span class="op">:</span> <span class="dv">83050</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb2-23" data-line-number="23">                    <span class="st">&quot;audioChannels&quot;</span> <span class="op">:</span> <span class="dv">1</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb2-24" data-line-number="24">                    <span class="st">&quot;audioCodecName&quot;</span> <span class="op">:</span> <span class="st">&quot;aac&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb2-25" data-line-number="25">                    <span class="st">&quot;audioSampleRate&quot;</span> <span class="op">:</span> <span class="dv">48000</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb2-26" data-line-number="26">                    <span class="st">&quot;bitRate&quot;</span> <span class="op">:</span> <span class="dv">551193</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb2-27" data-line-number="27">                    <span class="st">&quot;durationInMilliSeconds&quot;</span> <span class="op">:</span> <span class="dv">5000</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb2-28" data-line-number="28">                    <span class="st">&quot;videoAvgFrameRate&quot;</span> <span class="op">:</span> <span class="st">&quot;30/1&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb2-29" data-line-number="29">                    <span class="st">&quot;videoBitRate&quot;</span> <span class="op">:</span> <span class="dv">465641</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb2-30" data-line-number="30">                    <span class="st">&quot;videoCodecName&quot;</span> <span class="op">:</span> <span class="st">&quot;h264&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb2-31" data-line-number="31">                    <span class="st">&quot;videoHeight&quot;</span> <span class="op">:</span> <span class="dv">320</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb2-32" data-line-number="32">                    <span class="st">&quot;videoProfile&quot;</span> <span class="op">:</span> <span class="st">&quot;Constrained Baseline&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb2-33" data-line-number="33">                    <span class="st">&quot;videoWidth&quot;</span> <span class="op">:</span> <span class="dv">560</span></a>
-<a class="sourceLine" id="cb2-34" data-line-number="34">                <span class="op">}</span></a>
-<a class="sourceLine" id="cb2-35" data-line-number="35">            <span class="op">},</span></a>
-<a class="sourceLine" id="cb2-36" data-line-number="36">            <span class="op">{</span></a>
-<a class="sourceLine" id="cb2-37" data-line-number="37">                <span class="st">&quot;endIngestion&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-05-15T12:30:13Z&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb2-38" data-line-number="38">                <span class="st">&quot;errorMessage&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb2-39" data-line-number="39">                <span class="st">&quot;ingestionJobKey&quot;</span> <span class="op">:</span> <span class="dv">840</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb2-40" data-line-number="40">                <span class="st">&quot;ingestionType&quot;</span> <span class="op">:</span> <span class="st">&quot;Email-Notification&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb2-41" data-line-number="41">                <span class="st">&quot;label&quot;</span> <span class="op">:</span> <span class="st">&quot;&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb2-42" data-line-number="42">                <span class="st">&quot;mediaItemKey&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb2-43" data-line-number="43">                <span class="st">&quot;physicalPathKey&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb2-44" data-line-number="44">                <span class="st">&quot;startIngestion&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-05-15T12:30:08Z&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb2-45" data-line-number="45">                <span class="st">&quot;status&quot;</span> <span class="op">:</span> <span class="st">&quot;End_TaskSuccess&quot;</span></a>
-<a class="sourceLine" id="cb2-46" data-line-number="46">            <span class="op">}</span></a>
-<a class="sourceLine" id="cb2-47" data-line-number="47">        ]</a>
-<a class="sourceLine" id="cb2-48" data-line-number="48">    <span class="op">}</span></a>
-<a class="sourceLine" id="cb2-49" data-line-number="49"><span class="op">}</span></a></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode javascript"><code class="sourceCode javascript"><span class="op">{</span>
+    <span class="st">&quot;workflow&quot;</span> <span class="op">:</span> 
+    <span class="op">{</span>
+        <span class="st">&quot;ingestionRootKey&quot;</span> <span class="op">:</span> <span class="dv">251</span><span class="op">,</span>
+        <span class="st">&quot;label&quot;</span> <span class="op">:</span> <span class="st">&quot;1&quot;</span><span class="op">,</span>
+        <span class="st">&quot;tasks&quot;</span> <span class="op">:</span> 
+        [
+            <span class="op">{</span>
+                <span class="st">&quot;downloadingProgress&quot;</span> <span class="op">:</span> <span class="dv">100</span><span class="op">,</span>
+                <span class="st">&quot;endIngestion&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-05-15T12:30:11Z&quot;</span><span class="op">,</span>
+                <span class="st">&quot;errorMessage&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span>
+                <span class="st">&quot;ingestionJobKey&quot;</span> <span class="op">:</span> <span class="dv">839</span><span class="op">,</span>
+                <span class="st">&quot;ingestionType&quot;</span> <span class="op">:</span> <span class="st">&quot;Add-Content&quot;</span><span class="op">,</span>
+                <span class="st">&quot;label&quot;</span> <span class="op">:</span> <span class="st">&quot;This is my video&quot;</span><span class="op">,</span>
+                <span class="st">&quot;mediaItemKey&quot;</span> <span class="op">:</span> <span class="dv">2</span><span class="op">,</span>
+                <span class="st">&quot;physicalPathKey&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span>
+                <span class="st">&quot;startIngestion&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-05-15T12:30:08Z&quot;</span><span class="op">,</span>
+                <span class="st">&quot;status&quot;</span> <span class="op">:</span> <span class="st">&quot;End_TaskSuccess&quot;</span><span class="op">,</span>
+                <span class="st">&quot;uploadingProgress&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span>
+                <span class="st">&quot;videoDetails&quot;</span> <span class="op">:</span> 
+                <span class="op">{</span>
+                    <span class="st">&quot;audioBitRate&quot;</span> <span class="op">:</span> <span class="dv">83050</span><span class="op">,</span>
+                    <span class="st">&quot;audioChannels&quot;</span> <span class="op">:</span> <span class="dv">1</span><span class="op">,</span>
+                    <span class="st">&quot;audioCodecName&quot;</span> <span class="op">:</span> <span class="st">&quot;aac&quot;</span><span class="op">,</span>
+                    <span class="st">&quot;audioSampleRate&quot;</span> <span class="op">:</span> <span class="dv">48000</span><span class="op">,</span>
+                    <span class="st">&quot;bitRate&quot;</span> <span class="op">:</span> <span class="dv">551193</span><span class="op">,</span>
+                    <span class="st">&quot;durationInMilliSeconds&quot;</span> <span class="op">:</span> <span class="dv">5000</span><span class="op">,</span>
+                    <span class="st">&quot;videoAvgFrameRate&quot;</span> <span class="op">:</span> <span class="st">&quot;30/1&quot;</span><span class="op">,</span>
+                    <span class="st">&quot;videoBitRate&quot;</span> <span class="op">:</span> <span class="dv">465641</span><span class="op">,</span>
+                    <span class="st">&quot;videoCodecName&quot;</span> <span class="op">:</span> <span class="st">&quot;h264&quot;</span><span class="op">,</span>
+                    <span class="st">&quot;videoHeight&quot;</span> <span class="op">:</span> <span class="dv">320</span><span class="op">,</span>
+                    <span class="st">&quot;videoProfile&quot;</span> <span class="op">:</span> <span class="st">&quot;Constrained Baseline&quot;</span><span class="op">,</span>
+                    <span class="st">&quot;videoWidth&quot;</span> <span class="op">:</span> <span class="dv">560</span>
+                <span class="op">}</span>
+            <span class="op">},</span>
+            <span class="op">{</span>
+                <span class="st">&quot;endIngestion&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-05-15T12:30:13Z&quot;</span><span class="op">,</span>
+                <span class="st">&quot;errorMessage&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span>
+                <span class="st">&quot;ingestionJobKey&quot;</span> <span class="op">:</span> <span class="dv">840</span><span class="op">,</span>
+                <span class="st">&quot;ingestionType&quot;</span> <span class="op">:</span> <span class="st">&quot;Email-Notification&quot;</span><span class="op">,</span>
+                <span class="st">&quot;label&quot;</span> <span class="op">:</span> <span class="st">&quot;&quot;</span><span class="op">,</span>
+                <span class="st">&quot;mediaItemKey&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span>
+                <span class="st">&quot;physicalPathKey&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span>
+                <span class="st">&quot;startIngestion&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-05-15T12:30:08Z&quot;</span><span class="op">,</span>
+                <span class="st">&quot;status&quot;</span> <span class="op">:</span> <span class="st">&quot;End_TaskSuccess&quot;</span>
+            <span class="op">}</span>
+        ]
+    <span class="op">}</span>
+<span class="op">}</span></code></pre></div>
 <h2 id="get-the-status-of-the-single-task">Get the status of the single Task</h2>
-<p>To get the status of the above ingestion, run the HTTP GET having as input the ingestionRootKey:</p>
-<ul>
-<li>curl -k -v -u 654:SU1.8AO1O2z0gdezR99BIPvAz2y4LNUsCKcKJrSrQ_S4lS33iZ4zGJ8kfWxQqmOhKL <a href="https://mms-api.catrasoft.cloud/catramms/v1/ingestion/251/839" class="uri">https://mms-api.catrasoft.cloud/catramms/v1/ingestion/251/839</a></li>
-</ul>
+<p>To get the status of the above ingestion, run the HTTP GET having as input the ingestionRootKey: * curl -k -v -u 654:SU1.8AO1O2z0gdezR99BIPvAz2y4LNUsCKcKJrSrQ_S4lS33iZ4zGJ8kfWxQqmOhKL https://mms-api.catrasoft.cloud/catramms/v1/ingestion/251/839</p>
 <p>The return will be:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode javascript"><code class="sourceCode javascript"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="op">{</span></a>
-<a class="sourceLine" id="cb3-2" data-line-number="2">    <span class="st">&quot;workflow&quot;</span> <span class="op">:</span> </a>
-<a class="sourceLine" id="cb3-3" data-line-number="3">    <span class="op">{</span></a>
-<a class="sourceLine" id="cb3-4" data-line-number="4">        <span class="st">&quot;ingestionRootKey&quot;</span> <span class="op">:</span> <span class="dv">251</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb3-5" data-line-number="5">        <span class="st">&quot;label&quot;</span> <span class="op">:</span> <span class="st">&quot;1&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb3-6" data-line-number="6">        <span class="st">&quot;tasks&quot;</span> <span class="op">:</span> </a>
-<a class="sourceLine" id="cb3-7" data-line-number="7">        [</a>
-<a class="sourceLine" id="cb3-8" data-line-number="8">            <span class="op">{</span></a>
-<a class="sourceLine" id="cb3-9" data-line-number="9">                <span class="st">&quot;downloadingProgress&quot;</span> <span class="op">:</span> <span class="dv">100</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb3-10" data-line-number="10">                <span class="st">&quot;endIngestion&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-05-15T12:30:11Z&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb3-11" data-line-number="11">                <span class="st">&quot;errorMessage&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb3-12" data-line-number="12">                <span class="st">&quot;ingestionJobKey&quot;</span> <span class="op">:</span> <span class="dv">839</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb3-13" data-line-number="13">                <span class="st">&quot;ingestionType&quot;</span> <span class="op">:</span> <span class="st">&quot;Add-Content&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb3-14" data-line-number="14">                <span class="st">&quot;label&quot;</span> <span class="op">:</span> <span class="st">&quot;This is my video&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb3-15" data-line-number="15">                <span class="st">&quot;mediaItemKey&quot;</span> <span class="op">:</span> <span class="dv">2</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb3-16" data-line-number="16">                <span class="st">&quot;physicalPathKey&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb3-17" data-line-number="17">                <span class="st">&quot;startIngestion&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-05-15T12:30:08Z&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb3-18" data-line-number="18">                <span class="st">&quot;status&quot;</span> <span class="op">:</span> <span class="st">&quot;End_TaskSuccess&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb3-19" data-line-number="19">                <span class="st">&quot;uploadingProgress&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb3-20" data-line-number="20">                <span class="st">&quot;videoDetails&quot;</span> <span class="op">:</span> </a>
-<a class="sourceLine" id="cb3-21" data-line-number="21">                <span class="op">{</span></a>
-<a class="sourceLine" id="cb3-22" data-line-number="22">                    <span class="st">&quot;audioBitRate&quot;</span> <span class="op">:</span> <span class="dv">83050</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb3-23" data-line-number="23">                    <span class="st">&quot;audioChannels&quot;</span> <span class="op">:</span> <span class="dv">1</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb3-24" data-line-number="24">                    <span class="st">&quot;audioCodecName&quot;</span> <span class="op">:</span> <span class="st">&quot;aac&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb3-25" data-line-number="25">                    <span class="st">&quot;audioSampleRate&quot;</span> <span class="op">:</span> <span class="dv">48000</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb3-26" data-line-number="26">                    <span class="st">&quot;bitRate&quot;</span> <span class="op">:</span> <span class="dv">551193</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb3-27" data-line-number="27">                    <span class="st">&quot;durationInMilliSeconds&quot;</span> <span class="op">:</span> <span class="dv">5000</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb3-28" data-line-number="28">                    <span class="st">&quot;videoAvgFrameRate&quot;</span> <span class="op">:</span> <span class="st">&quot;30/1&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb3-29" data-line-number="29">                    <span class="st">&quot;videoBitRate&quot;</span> <span class="op">:</span> <span class="dv">465641</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb3-30" data-line-number="30">                    <span class="st">&quot;videoCodecName&quot;</span> <span class="op">:</span> <span class="st">&quot;h264&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb3-31" data-line-number="31">                    <span class="st">&quot;videoHeight&quot;</span> <span class="op">:</span> <span class="dv">320</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb3-32" data-line-number="32">                    <span class="st">&quot;videoProfile&quot;</span> <span class="op">:</span> <span class="st">&quot;Constrained Baseline&quot;</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb3-33" data-line-number="33">                    <span class="st">&quot;videoWidth&quot;</span> <span class="op">:</span> <span class="dv">560</span></a>
-<a class="sourceLine" id="cb3-34" data-line-number="34">                <span class="op">}</span></a>
-<a class="sourceLine" id="cb3-35" data-line-number="35">            <span class="op">}</span></a>
-<a class="sourceLine" id="cb3-36" data-line-number="36">        ]</a>
-<a class="sourceLine" id="cb3-37" data-line-number="37">    <span class="op">}</span></a>
-<a class="sourceLine" id="cb3-38" data-line-number="38"><span class="op">}</span></a></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode javascript"><code class="sourceCode javascript"><span class="op">{</span>
+    <span class="st">&quot;workflow&quot;</span> <span class="op">:</span> 
+    <span class="op">{</span>
+        <span class="st">&quot;ingestionRootKey&quot;</span> <span class="op">:</span> <span class="dv">251</span><span class="op">,</span>
+        <span class="st">&quot;label&quot;</span> <span class="op">:</span> <span class="st">&quot;1&quot;</span><span class="op">,</span>
+        <span class="st">&quot;tasks&quot;</span> <span class="op">:</span> 
+        [
+            <span class="op">{</span>
+                <span class="st">&quot;downloadingProgress&quot;</span> <span class="op">:</span> <span class="dv">100</span><span class="op">,</span>
+                <span class="st">&quot;endIngestion&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-05-15T12:30:11Z&quot;</span><span class="op">,</span>
+                <span class="st">&quot;errorMessage&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span>
+                <span class="st">&quot;ingestionJobKey&quot;</span> <span class="op">:</span> <span class="dv">839</span><span class="op">,</span>
+                <span class="st">&quot;ingestionType&quot;</span> <span class="op">:</span> <span class="st">&quot;Add-Content&quot;</span><span class="op">,</span>
+                <span class="st">&quot;label&quot;</span> <span class="op">:</span> <span class="st">&quot;This is my video&quot;</span><span class="op">,</span>
+                <span class="st">&quot;mediaItemKey&quot;</span> <span class="op">:</span> <span class="dv">2</span><span class="op">,</span>
+                <span class="st">&quot;physicalPathKey&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span>
+                <span class="st">&quot;startIngestion&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-05-15T12:30:08Z&quot;</span><span class="op">,</span>
+                <span class="st">&quot;status&quot;</span> <span class="op">:</span> <span class="st">&quot;End_TaskSuccess&quot;</span><span class="op">,</span>
+                <span class="st">&quot;uploadingProgress&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span>
+                <span class="st">&quot;videoDetails&quot;</span> <span class="op">:</span> 
+                <span class="op">{</span>
+                    <span class="st">&quot;audioBitRate&quot;</span> <span class="op">:</span> <span class="dv">83050</span><span class="op">,</span>
+                    <span class="st">&quot;audioChannels&quot;</span> <span class="op">:</span> <span class="dv">1</span><span class="op">,</span>
+                    <span class="st">&quot;audioCodecName&quot;</span> <span class="op">:</span> <span class="st">&quot;aac&quot;</span><span class="op">,</span>
+                    <span class="st">&quot;audioSampleRate&quot;</span> <span class="op">:</span> <span class="dv">48000</span><span class="op">,</span>
+                    <span class="st">&quot;bitRate&quot;</span> <span class="op">:</span> <span class="dv">551193</span><span class="op">,</span>
+                    <span class="st">&quot;durationInMilliSeconds&quot;</span> <span class="op">:</span> <span class="dv">5000</span><span class="op">,</span>
+                    <span class="st">&quot;videoAvgFrameRate&quot;</span> <span class="op">:</span> <span class="st">&quot;30/1&quot;</span><span class="op">,</span>
+                    <span class="st">&quot;videoBitRate&quot;</span> <span class="op">:</span> <span class="dv">465641</span><span class="op">,</span>
+                    <span class="st">&quot;videoCodecName&quot;</span> <span class="op">:</span> <span class="st">&quot;h264&quot;</span><span class="op">,</span>
+                    <span class="st">&quot;videoHeight&quot;</span> <span class="op">:</span> <span class="dv">320</span><span class="op">,</span>
+                    <span class="st">&quot;videoProfile&quot;</span> <span class="op">:</span> <span class="st">&quot;Constrained Baseline&quot;</span><span class="op">,</span>
+                    <span class="st">&quot;videoWidth&quot;</span> <span class="op">:</span> <span class="dv">560</span>
+                <span class="op">}</span>
+            <span class="op">}</span>
+        ]
+    <span class="op">}</span>
+<span class="op">}</span></code></pre></div>
