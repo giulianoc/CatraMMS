@@ -215,7 +215,6 @@ void Validator::validateEncodingProfileRootVideoMetadata(
             "Codec",
             "Width",
             "Height",
-            "KBitRate",
             "TwoPasses"
         };
         for (string mandatoryField: mandatoryFields)
@@ -240,8 +239,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(
         Json::Value encodingProfileAudioRoot = encodingProfileRoot[field];
 
         vector<string> mandatoryFields = {
-            "Codec",
-            "KBitRate"
+            "Codec"
         };
         for (string mandatoryField: mandatoryFields)
         {
@@ -292,8 +290,7 @@ void Validator::validateEncodingProfileRootAudioMetadata(
         Json::Value encodingProfileAudioRoot = encodingProfileRoot[field];
 
         vector<string> mandatoryFields = {
-            "Codec",
-            "KBitRate"
+            "Codec"
         };
         for (string mandatoryField: mandatoryFields)
         {

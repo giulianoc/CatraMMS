@@ -67,6 +67,7 @@ void FFMpeg::encodeContent(
         string ffmpegVideoProfileParameter = "";
         string ffmpegVideoResolutionParameter = "";
         string ffmpegVideoBitRateParameter = "";
+        string ffmpegVideoOtherParameters = "";
         string ffmpegVideoMaxRateParameter = "";
         string ffmpegVideoBufSizeParameter = "";
         string ffmpegVideoFrameRateParameter = "";
@@ -74,6 +75,7 @@ void FFMpeg::encodeContent(
 
         string ffmpegAudioCodecParameter = "";
         string ffmpegAudioBitRateParameter = "";
+        string ffmpegAudioOtherParameters = "";
         string ffmpegAudioChannelsParameter = "";
         string ffmpegAudioSampleRateParameter = "";
 
@@ -84,7 +86,7 @@ void FFMpeg::encodeContent(
         _currentIngestionJobKey             = ingestionJobKey;
         _currentEncodingJobKey              = encodingJobKey;
         
-        settingFfmpegPatameters(
+        settingFfmpegParameters(
             stagingEncodedAssetPathName,
 
             encodingProfileDetails,
@@ -97,6 +99,7 @@ void FFMpeg::encodeContent(
             ffmpegVideoProfileParameter,
             ffmpegVideoResolutionParameter,
             ffmpegVideoBitRateParameter,
+            ffmpegVideoOtherParameters,
             _twoPasses,
             ffmpegVideoMaxRateParameter,
             ffmpegVideoBufSizeParameter,
@@ -105,6 +108,7 @@ void FFMpeg::encodeContent(
 
             ffmpegAudioCodecParameter,
             ffmpegAudioBitRateParameter,
+            ffmpegAudioOtherParameters,
             ffmpegAudioChannelsParameter,
             ffmpegAudioSampleRateParameter
 
@@ -161,6 +165,7 @@ void FFMpeg::encodeContent(
                     + ffmpegVideoProfileParameter
                     + "-preset slow "
                     + ffmpegVideoBitRateParameter
+                    + ffmpegVideoOtherParameters
                     + ffmpegVideoMaxRateParameter
                     + ffmpegVideoBufSizeParameter
                     + ffmpegVideoFrameRateParameter
@@ -170,6 +175,7 @@ void FFMpeg::encodeContent(
 
                     + ffmpegAudioCodecParameter
                     + ffmpegAudioBitRateParameter
+                    + ffmpegAudioOtherParameters
                     + ffmpegAudioChannelsParameter
                     + ffmpegAudioSampleRateParameter
 
@@ -256,6 +262,7 @@ void FFMpeg::encodeContent(
                         + ffmpegVideoProfileParameter
                         + "-preset slow "
                         + ffmpegVideoBitRateParameter
+                        + ffmpegVideoOtherParameters
                         + ffmpegVideoMaxRateParameter
                         + ffmpegVideoBufSizeParameter
                         + ffmpegVideoFrameRateParameter
@@ -331,6 +338,7 @@ void FFMpeg::encodeContent(
                         + ffmpegVideoProfileParameter
                         + "-preset slow "
                         + ffmpegVideoBitRateParameter
+                        + ffmpegVideoOtherParameters
                         + ffmpegVideoMaxRateParameter
                         + ffmpegVideoBufSizeParameter
                         + ffmpegVideoFrameRateParameter
@@ -341,6 +349,7 @@ void FFMpeg::encodeContent(
                         
                         + ffmpegAudioCodecParameter
                         + ffmpegAudioBitRateParameter
+                        + ffmpegAudioOtherParameters
                         + ffmpegAudioChannelsParameter
                         + ffmpegAudioSampleRateParameter
                         
@@ -418,6 +427,7 @@ void FFMpeg::encodeContent(
                         + ffmpegVideoProfileParameter
                         + "-preset slow "
                         + ffmpegVideoBitRateParameter
+                        + ffmpegVideoOtherParameters
                         + ffmpegVideoMaxRateParameter
                         + ffmpegVideoBufSizeParameter
                         + ffmpegVideoFrameRateParameter
@@ -427,6 +437,7 @@ void FFMpeg::encodeContent(
                         
                         + ffmpegAudioCodecParameter
                         + ffmpegAudioBitRateParameter
+                        + ffmpegAudioOtherParameters
                         + ffmpegAudioChannelsParameter
                         + ffmpegAudioSampleRateParameter
                         
@@ -2295,7 +2306,7 @@ void FFMpeg::generateCutMediaToIngest(
     FileIO::remove(outputFfmpegPathFileName, exceptionInCaseOfError);    
 }
 
-void FFMpeg::settingFfmpegPatameters(
+void FFMpeg::settingFfmpegParameters(
         string stagingEncodedAssetPathName,
         
         string encodingProfileDetails,
@@ -2308,6 +2319,7 @@ void FFMpeg::settingFfmpegPatameters(
         string& ffmpegVideoProfileParameter,
         string& ffmpegVideoResolutionParameter,
         string& ffmpegVideoBitRateParameter,
+        string& ffmpegVideoOtherParameters,
         bool& twoPasses,
         string& ffmpegVideoMaxRateParameter,
         string& ffmpegVideoBufSizeParameter,
@@ -2316,6 +2328,7 @@ void FFMpeg::settingFfmpegPatameters(
 
         string& ffmpegAudioCodecParameter,
         string& ffmpegAudioBitRateParameter,
+        string& ffmpegAudioOtherParameters,
         string& ffmpegAudioChannelsParameter,
         string& ffmpegAudioSampleRateParameter
 )
@@ -2499,22 +2512,29 @@ void FFMpeg::settingFfmpegPatameters(
         // bitRate
         {
             field = "KBitRate";
-            if (!isMetadataPresent(videoRoot, field))
+            if (isMetadataPresent(videoRoot, field))
             {
-                string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-                        + ", Field: " + field;
-                _logger->error(errorMessage);
+                int bitRate = videoRoot.get(field, "XXX").asInt();
 
-                throw runtime_error(errorMessage);
+                ffmpegVideoBitRateParameter =
+                        "-b:v " + to_string(bitRate) + "k "
+                ;
             }
-
-            int bitRate = videoRoot.get(field, "XXX").asInt();
-
-            ffmpegVideoBitRateParameter =
-                    "-b:v " + to_string(bitRate) + "k "
-            ;
         }
 
+        // OtherOutputParameters
+        {
+            field = "OtherOutputParameters";
+            if (isMetadataPresent(videoRoot, field))
+            {
+                string otherOutputParameters = videoRoot.get(field, "XXX").asString();
+
+                ffmpegVideoOtherParameters =
+                        otherOutputParameters + " "
+                ;
+            }
+        }
+        
         // twoPasses
         {
             field = "TwoPasses";
@@ -2623,21 +2643,29 @@ void FFMpeg::settingFfmpegPatameters(
         // kBitRate
         {
             field = "KBitRate";
-            if (!isMetadataPresent(audioRoot, field))
+            if (isMetadataPresent(audioRoot, field))
             {
-                string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
-                        + ", Field: " + field;
-                _logger->error(errorMessage);
+                int bitRate = audioRoot.get(field, "XXX").asInt();
 
-                throw runtime_error(errorMessage);
+                ffmpegAudioBitRateParameter =
+                        "-b:a " + to_string(bitRate) + "k "
+                ;
             }
-            int bitRate = audioRoot.get(field, "XXX").asInt();
-
-            ffmpegAudioBitRateParameter =
-                    "-b:a " + to_string(bitRate) + "k "
-            ;
         }
         
+        // OtherOutputParameters
+        {
+            field = "OtherOutputParameters";
+            if (isMetadataPresent(audioRoot, field))
+            {
+                string otherOutputParameters = audioRoot.get(field, "XXX").asString();
+
+                ffmpegAudioOtherParameters =
+                        otherOutputParameters + " "
+                ;
+            }
+        }
+
         // channelsNumber
         {
             field = "ChannelsNumber";

@@ -152,7 +152,7 @@ private:
     int64_t         _currentIngestionJobKey;
     int64_t         _currentEncodingJobKey;
 
-    void settingFfmpegPatameters(
+    void settingFfmpegParameters(
         string stagingEncodedAssetPathName,
         
         string encodingProfileDetails,
@@ -165,6 +165,7 @@ private:
         string& ffmpegVideoProfileParameter,
         string& ffmpegVideoResolutionParameter,
         string& ffmpegVideoBitRateParameter,
+        string& ffmpegVideoOtherParameters,
         bool& twoPasses,
         string& ffmpegVideoMaxRateParameter,
         string& ffmpegVideoBufSizeParameter,
@@ -173,6 +174,7 @@ private:
 
         string& ffmpegAudioCodecParameter,
         string& ffmpegAudioBitRateParameter,
+        string& ffmpegAudioOtherParameters,
         string& ffmpegAudioChannelsParameter,
         string& ffmpegAudioSampleRateParameter
     );
