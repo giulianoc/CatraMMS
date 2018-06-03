@@ -1,0 +1,20 @@
+{
+	"Label" : "Profile_2",
+	"FileFormat" : "mp4",
+	"Video" : 
+	{
+		"Codec" : "libx264",
+		"Profile" : "main",
+		"Width" : 1920,
+		"Height" : 1080,
+		"FrameRate": 30,
+		"TwoPasses" : true,
+		"KBitRate" : 4000,
+		"OtherOutputParameters": "-preset medium -level 4.0 -crf 24"
+	},
+	"Audio" : 
+	{
+		"Codec" : "aac",
+		"KBitRate" : 160
+	}
+}

@@ -163,7 +163,6 @@ void FFMpeg::encodeContent(
                     + "-y -i " + mmsSourceAssetPathName + " "
                     + ffmpegVideoCodecParameter
                     + ffmpegVideoProfileParameter
-                    + "-preset slow "
                     + ffmpegVideoBitRateParameter
                     + ffmpegVideoOtherParameters
                     + ffmpegVideoMaxRateParameter
@@ -260,7 +259,6 @@ void FFMpeg::encodeContent(
                 string outputOptions =
                         ffmpegVideoCodecParameter
                         + ffmpegVideoProfileParameter
-                        + "-preset slow "
                         + ffmpegVideoBitRateParameter
                         + ffmpegVideoOtherParameters
                         + ffmpegVideoMaxRateParameter
@@ -336,7 +334,6 @@ void FFMpeg::encodeContent(
                 outputOptions =
                         ffmpegVideoCodecParameter
                         + ffmpegVideoProfileParameter
-                        + "-preset slow "
                         + ffmpegVideoBitRateParameter
                         + ffmpegVideoOtherParameters
                         + ffmpegVideoMaxRateParameter
@@ -425,7 +422,6 @@ void FFMpeg::encodeContent(
                 string outputOptions =
                         ffmpegVideoCodecParameter
                         + ffmpegVideoProfileParameter
-                        + "-preset slow "
                         + ffmpegVideoBitRateParameter
                         + ffmpegVideoOtherParameters
                         + ffmpegVideoMaxRateParameter
