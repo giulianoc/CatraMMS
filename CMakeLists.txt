@@ -55,6 +55,7 @@ add_subdirectory(API/src)
 add_subdirectory(etc)
 add_subdirectory(generateHtmlDoc)
 add_subdirectory(jsonSamples)
+add_subdirectory(predefinedEncodingProfiles)
 
 add_subdirectory(utilities/registerAdministratorCustomer/src)
 add_subdirectory(utilities/registerCustomer/src)

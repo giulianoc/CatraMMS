@@ -31,5 +31,5 @@ SET (SAMPLEs
 	free-logo.jpg
 )
 
-install (FILES ${SAMPLEs} DESTINATION samples)
+install (FILES ${SAMPLEs} DESTINATION jsonSamples)
 
