@@ -15,6 +15,7 @@
 	"Audio" : 
 	{
 		"Codec" : "aac",
-		"KBitRate" : 160
+		"KBitRate" : 160,
+		"ChannelsNumber": 2
 	}
 }

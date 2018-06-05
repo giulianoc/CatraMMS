@@ -7,14 +7,15 @@
 		"Profile" : "main",
 		"Width" : 640,
 		"Height" : 360,
-		"FrameRate": 30,
+		"FrameRate": 25,
 		"TwoPasses" : true,
 		"KBitRate" : 800,
-		"OtherOutputParameters": "-preset veryslow -level 4.0 -crf 22"
+		"OtherOutputParameters": "-preset medium -level 4.0 -crf 22"
 	},
 	"Audio" : 
 	{
 		"Codec" : "aac",
-		"KBitRate" : 92
+		"KBitRate" : 92,
+		"ChannelsNumber": 2
 	}
 }
