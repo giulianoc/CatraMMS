@@ -9,7 +9,7 @@
 		"Height" : 720,
 		"FrameRate": 30,
 		"TwoPasses" : true,
-		"KBitRate" : 2000,
+		"KBitRate" : 1400,
 		"OtherOutputParameters": "-preset medium -level 4.0 -crf 23"
 	},
 	"Audio" : 
