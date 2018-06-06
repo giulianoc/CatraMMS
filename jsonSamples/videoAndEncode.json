@@ -8,7 +8,7 @@
         "Label": "My video",
         "Type": "Add-Content",
         "Parameters": {
-            "SourceURL": "http://mediaww.rsi.ch/rsi/unrestricted/2018/06/04/2589929.mp4",
+            "SourceURL": "http://mediaww.rsi.ch/rsi/unrestricted/2018/05/15/2577986.mp4",
             "FileFormat": "mp4",
             "UserData": { "MyData": "this is my video data" },
             "Title": "${TitleOfVideo}"

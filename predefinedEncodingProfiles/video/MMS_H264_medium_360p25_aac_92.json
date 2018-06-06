@@ -1,21 +1,21 @@
 {
-	"Label" : "Profile_2",
+	"Label" : "MMS_H264_medium_360p25_aac_92",
 	"FileFormat" : "mp4",
 	"Video" : 
 	{
 		"Codec" : "libx264",
-		"Profile" : "main",
-		"Width" : 720,
-		"Height" : 480,
-		"FrameRate": 30,
+		"Profile" : "baseline",
+		"Width" : 640,
+		"Height" : 360,
+		"FrameRate": 25,
 		"TwoPasses" : true,
-		"KBitRate" : 1000,
+		"KBitRate" : 800,
 		"OtherOutputParameters": "-preset medium -level 4.0 -crf 22"
 	},
 	"Audio" : 
 	{
 		"Codec" : "aac",
-		"KBitRate" : 160,
+		"KBitRate" : 92,
 		"ChannelsNumber": 2
 	}
 }

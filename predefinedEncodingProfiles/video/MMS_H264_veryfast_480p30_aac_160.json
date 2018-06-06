@@ -1,21 +1,21 @@
 {
-	"Label" : "Profile_2",
+	"Label" : "MMS_H264_veryfast_480p30_aac_160",
 	"FileFormat" : "mp4",
 	"Video" : 
 	{
 		"Codec" : "libx264",
 		"Profile" : "main",
-		"Width" : 640,
-		"Height" : 360,
-		"FrameRate": 25,
+		"Width" : 720,
+		"Height" : 480,
+		"FrameRate": 30,
 		"TwoPasses" : true,
-		"KBitRate" : 800,
+		"KBitRate" : 1000,
 		"OtherOutputParameters": "-preset veryfast -level 4.0 -crf 22"
 	},
 	"Audio" : 
 	{
 		"Codec" : "aac",
-		"KBitRate" : 92,
+		"KBitRate" : 160,
 		"ChannelsNumber": 2
 	}
 }

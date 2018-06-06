@@ -135,7 +135,8 @@ void Validator::validateEncodingProfilesSetRootMetadata(
     Json::Value encodingProfilesSetRoot)
 {
     vector<string> mandatoryFields = {
-        "Label"
+        "Label",
+        "Profiles"
     };
     for (string mandatoryField: mandatoryFields)
     {
@@ -154,6 +155,7 @@ void Validator::validateEncodingProfilesSetRootMetadata(
         }
     }
 
+    /*
     string field = "Profiles";
     if (_mmsEngineDBFacade->isMetadataPresent(encodingProfilesSetRoot, field))
     {
@@ -166,6 +168,7 @@ void Validator::validateEncodingProfilesSetRootMetadata(
             validateEncodingProfileRootMetadata(contentType, encodingProfileRoot);
         }
     }
+    */
 }
 
 void Validator::validateEncodingProfileRootMetadata(
@@ -204,6 +207,20 @@ void Validator::validateEncodingProfileRootVideoMetadata(
 
                 throw runtime_error(errorMessage);
             }
+        }
+    }
+    
+    {
+        string field = "Label";
+        string label = encodingProfileRoot.get(field, "XXX").asString();
+        string mmsPredefinedProfilePrefix ("MMS_");
+        if (label.compare(0, mmsPredefinedProfilePrefix.size(), mmsPredefinedProfilePrefix) == 0)   
+        {
+            string errorMessage = __FILEREF__ + "Profiles starting with " + mmsPredefinedProfilePrefix + " are reserved"
+                    + ", Label: " + label;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
         }
     }
     
@@ -286,6 +303,20 @@ void Validator::validateEncodingProfileRootAudioMetadata(
     }
     
     {
+        string field = "Label";
+        string label = encodingProfileRoot.get(field, "XXX").asString();
+        string mmsPredefinedProfilePrefix ("MMS_");
+        if (label.compare(0, mmsPredefinedProfilePrefix.size(), mmsPredefinedProfilePrefix) == 0)   
+        {
+            string errorMessage = __FILEREF__ + "Profiles starting with " + mmsPredefinedProfilePrefix + " are reserved"
+                    + ", Label: " + label;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+    
+    {
         string field = "Audio";
         Json::Value encodingProfileAudioRoot = encodingProfileRoot[field];
 
@@ -338,6 +369,20 @@ void Validator::validateEncodingProfileRootImageMetadata(
             }
         }
     }    
+
+    {
+        string field = "Label";
+        string label = encodingProfileRoot.get(field, "XXX").asString();
+        string mmsPredefinedProfilePrefix ("MMS_");
+        if (label.compare(0, mmsPredefinedProfilePrefix.size(), mmsPredefinedProfilePrefix) == 0)   
+        {
+            string errorMessage = __FILEREF__ + "Profiles starting with " + mmsPredefinedProfilePrefix + " are reserved"
+                    + ", Label: " + label;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
 }
 
 void Validator::validateRootMetadata(int64_t workspaceKey, Json::Value root)

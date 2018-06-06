@@ -1,10 +1,10 @@
 {
-	"Label" : "Profile_2",
+	"Label" : "MMS_H264_veryslow_360p25_aac_92",
 	"FileFormat" : "mp4",
 	"Video" : 
 	{
 		"Codec" : "libx264",
-		"Profile" : "main",
+		"Profile" : "baseline",
 		"Width" : 640,
 		"Height" : 360,
 		"FrameRate": 25,

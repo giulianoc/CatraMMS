@@ -615,6 +615,13 @@ public:
         EncodingTechnology encodingTechnology,
         string jsonEncodingProfile);
 
+    int64_t addEncodingProfileIntoSet(
+        shared_ptr<MySQLConnection> conn,
+        int64_t workspaceKey,
+        string label,
+        MMSEngineDBFacade::ContentType contentType, 
+        int64_t encodingProfilesSetKey);
+
     void getExpiredMediaItemKeys(
         string processorMMS,
         vector<pair<shared_ptr<Workspace>,int64_t>>& mediaItemKeyToBeRemoved,
@@ -901,6 +908,10 @@ private:
     
     chrono::system_clock::time_point _lastConnectionStatsReport;
     int             _dbConnectionPoolStatsReportPeriodInSeconds;
+
+    string          _predefinedVideoProfilesDirectoryPath;
+    string          _predefinedAudioProfilesDirectoryPath;
+    string          _predefinedImageProfilesDirectoryPath;
 
     int64_t saveEncodedContentMetadata(
         shared_ptr<MySQLConnection> conn,

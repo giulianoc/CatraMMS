@@ -1,5 +1,5 @@
 {
-	"Label" : "Profile_2",
+	"Label" : "MMS_H264_veryslow_720p30_aac_160",
 	"FileFormat" : "mp4",
 	"Video" : 
 	{
@@ -9,8 +9,8 @@
 		"Height" : 720,
 		"FrameRate": 30,
 		"TwoPasses" : true,
-		"KBitRate" : 1400,
-		"OtherOutputParameters": "-preset veryfast -level 4.0 -crf 23"
+		"KBitRate" : 1500,
+		"OtherOutputParameters": "-preset veryslow -level 4.0 -crf 23"
 	},
 	"Audio" : 
 	{

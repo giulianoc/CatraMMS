@@ -3456,6 +3456,27 @@ void API::addEncodingProfilesSet(
                     workspace->_workspaceKey, contentType, label);
             
             field = "Profiles";
+            Json::Value profilesRoot = encodingProfilesSetRoot[field];
+
+            for (int profileIndex = 0; profileIndex < profilesRoot.size(); profileIndex++)
+            {
+                string profileLabel = profilesRoot[profileIndex].asString();
+                
+                int64_t encodingProfileKey = _mmsEngineDBFacade->addEncodingProfileIntoSet(
+                        conn, workspace->_workspaceKey, profileLabel,
+                        contentType, encodingProfilesSetKey);
+
+                if (responseBody != "")
+                    responseBody += string(", ");
+                responseBody += (
+                        string("{ ") 
+                        + "\"encodingProfileKey\": " + to_string(encodingProfileKey)
+                        + ", \"label\": \"" + profileLabel + "\" "
+                        + "}"
+                        );
+            }
+            
+            /*            
             if (_mmsEngineDBFacade->isMetadataPresent(encodingProfilesSetRoot, field))
             {
                 Json::Value profilesRoot = encodingProfilesSetRoot[field];
@@ -3504,6 +3525,7 @@ void API::addEncodingProfilesSet(
                             );
                 }
             }
+            */
             
             bool commit = true;
             _mmsEngineDBFacade->endIngestionJobs(conn, commit);
