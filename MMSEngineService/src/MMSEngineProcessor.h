@@ -71,7 +71,7 @@ private:
     string                  _emailFrom;
     
     
-    void sendEmail(string to, string subject, vector<string>& emailBody);
+    // void sendEmail(string to, string subject, vector<string>& emailBody);
 
     void handleCheckIngestionEvent();
 
@@ -175,7 +175,7 @@ private:
         double dltotal, double dlnow,
         double ultotal, double ulnow);
 
-    static size_t emailPayloadFeed(void *ptr, size_t size, size_t nmemb, void *userp);
+    // static size_t emailPayloadFeed(void *ptr, size_t size, size_t nmemb, void *userp);
 } ;
 
 #endif

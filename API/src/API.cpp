@@ -19,6 +19,7 @@
 #include <curlpp/Exception.hpp>
 #include <curlpp/Infos.hpp>
 #include "Validator.h"
+#include "EMailSender.h"
 #include "API.h"
 
 int main(int argc, char** argv) 
@@ -649,11 +650,39 @@ void API::manageRequestAndResponse(
         
         encodingProfileList(request, get<1>(userKeyWorkspaceAndFlags), queryParameters);
     }
+    else if (method == "testEmail")
+    {
+        bool isAdminAPI = get<2>(userKeyWorkspaceAndFlags);
+        if (!isAdminAPI)
+        {
+            string errorMessage = string("APIKey flags does not have the ADMIN permission"
+                    ", isAdminAPI: " + to_string(isAdminAPI)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        
+        string to = "giulianocatrambone@gmail.com";
+        string subject = "Email test";
+
+        vector<string> emailBody;
+        emailBody.push_back(string("<p>Hi, this is just a test") + "</p>");
+        emailBody.push_back("<p>Bye</p>");
+        emailBody.push_back("<p>MMS technical support</p>");
+
+        EMailSender emailSender(_logger, _configuration);
+        emailSender.sendEmail(to, subject, emailBody);
+    }
     else
     {
         string errorMessage = string("No API is matched")
-            + ", requestURI: " +requestURI
-            + ", requestMethod: " +requestMethod;
+            + ", requestURI: " + requestURI
+            + ", method: " + method
+            + ", requestMethod: " + requestMethod
+                ;
         _logger->error(__FILEREF__ + errorMessage);
 
         sendError(request, 400, errorMessage);
@@ -1287,7 +1316,8 @@ void API::registerUser(
             emailBody.push_back("<p>Bye</p>");
             emailBody.push_back("<p>MMS technical support</p>");
 
-            sendEmail(to, subject, emailBody);
+            EMailSender emailSender(_logger, _configuration);
+            emailSender.sendEmail(to, subject, emailBody);
         }
         catch(runtime_error e)
         {
@@ -1390,7 +1420,8 @@ void API::confirmUser(
             emailBody.push_back("<p>Bye</p>");
             emailBody.push_back("<p>MMS technical support</p>");
 
-            sendEmail(to, subject, emailBody);
+            EMailSender emailSender(_logger, _configuration);
+            emailSender.sendEmail(to, subject, emailBody);
         }
         catch(runtime_error e)
         {
