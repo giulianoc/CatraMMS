@@ -1350,7 +1350,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
 
     try
     {
-        int executeCommandStatus = ProcessUtility:: execute (ffprobeExecuteCommand);
+        int executeCommandStatus = ProcessUtility::execute(ffprobeExecuteCommand);
         if (executeCommandStatus != 0)
         {
             string errorMessage = __FILEREF__ + "ffmpeg: ffprobe command failed"
@@ -1362,13 +1362,14 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
             throw runtime_error(errorMessage);
         }
     }
-    catch(exception e)
+    catch(runtime_error e)
     {
         string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                 detailsPathFileName, _charsToBeReadFromFfmpegErrorOutput);
         string errorMessage = __FILEREF__ + "ffmpeg: ffprobe command failed"
                 + ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
                 + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+                + ", e.what(): " + e.what()
         ;
         _logger->error(errorMessage);
 
@@ -1969,13 +1970,14 @@ vector<string> FFMpeg::generateFramesToIngest(
             throw runtime_error(errorMessage);
         }
     }
-    catch(exception e)
+    catch(runtime_error e)
     {
         string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                 outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
         string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
                 + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                 + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+                + ", e.what(): " + e.what()
         ;
         _logger->error(errorMessage);
 
@@ -2120,13 +2122,14 @@ void FFMpeg::generateConcatMediaToIngest(
             throw runtime_error(errorMessage);
         }
     }
-    catch(exception e)
+    catch(runtime_error e)
     {
         string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                 outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
         string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
                 + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                 + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+                + ", e.what(): " + e.what()
         ;
         _logger->error(errorMessage);
 
@@ -2210,13 +2213,14 @@ void FFMpeg::generateSlideshowMediaToIngest(
             throw runtime_error(errorMessage);
         }
     }
-    catch(exception e)
+    catch(runtime_error e)
     {
         string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                 outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
         string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
                 + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                 + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+                + ", e.what(): " + e.what()
         ;
         _logger->error(errorMessage);
 
@@ -2282,13 +2286,14 @@ void FFMpeg::generateCutMediaToIngest(
             throw runtime_error(errorMessage);
         }
     }
-    catch(exception e)
+    catch(runtime_error e)
     {
         string lastPartOfFfmpegOutputFile = getLastPartOfFile(
                 outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
         string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
                 + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                 + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+                + ", e.what(): " + e.what()
         ;
         _logger->error(errorMessage);
 

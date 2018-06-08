@@ -28,6 +28,7 @@ SET (SOURCES
 	ActiveEncodingsManager.cpp
 	EncoderVideoAudioProxy.cpp
 	EncodersLoadBalancer.cpp
+	EMailSender.cpp
 )
 SET (HEADERS
 	Workspace.h
@@ -38,6 +39,7 @@ SET (HEADERS
 	ActiveEncodingsManager.h
 	EncoderVideoAudioProxy.h
 	EncodersLoadBalancer.h
+	EMailSender.h
 )
 
 include_directories ("${PROJECT_SOURCE_DIR}/../spdlog/include")

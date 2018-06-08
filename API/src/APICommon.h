@@ -81,7 +81,7 @@ protected:
     void sendHeadSuccess(int htmlResponseCode, unsigned long fileSize);
     void sendError(FCGX_Request& request, int htmlResponseCode, string errorMessage);
     void sendError(int htmlResponseCode, string errorMessage);
-    void sendEmail(string to, string subject, vector<string>& emailBody);
+    // void sendEmail(string to, string subject, vector<string>& emailBody);
     
 private:
     int             _managedRequestsNumber;
@@ -103,7 +103,7 @@ private:
 
     string getHtmlStandardMessage(int htmlResponseCode);
 
-    static size_t emailPayloadFeed(void *ptr, size_t size, size_t nmemb, void *userp);
+    // static size_t emailPayloadFeed(void *ptr, size_t size, size_t nmemb, void *userp);
 };
 
 #endif
