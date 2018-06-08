@@ -656,14 +656,17 @@ tuple<string,string,string> MMSEngineDBFacade::confirmUser(
                 }
             }
             
+            bool isOwner = true;
+            
             lastSQLCommand = 
-                "insert into MMS_APIKey (apiKey, userKey, workspaceKey, flags, creationDate, expirationDate) values ("
-                "?, ?, ?, ?, NULL, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'))";
+                "insert into MMS_APIKey (apiKey, userKey, workspaceKey, isOwner, flags, creationDate, expirationDate) values ("
+                "?, ?, ?, ?, ?, NULL, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%S'))";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, apiKey);
             preparedStatement->setInt64(queryParameterIndex++, userKey);
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            preparedStatement->setInt(queryParameterIndex++, isOwner);
             preparedStatement->setString(queryParameterIndex++, flags); // ADMIN_API,USER_API
             {
                 chrono::system_clock::time_point apiKeyExpirationDate =
@@ -968,6 +971,149 @@ tuple<int64_t,shared_ptr<Workspace>,bool,bool> MMSEngineDBFacade::checkAPIKey (s
     return userKeyWorkspaceAndFlags;
 }
 
+void MMSEngineDBFacade::login (
+        string eMailAddress, string password, 
+        vector<tuple<string,string,bool>>& vWorkspaceNameAPIKeyAndIfOwner)
+{
+    shared_ptr<Workspace> workspace;
+    int64_t         userKey;
+    string          flags;
+    string          lastSQLCommand;
+
+    shared_ptr<MySQLConnection> conn;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        int64_t         userKey;
+        
+        {
+            lastSQLCommand = 
+                "select userKey from MMS_User where eMailAddress = ? and password = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, eMailAddress);
+            preparedStatement->setString(queryParameterIndex++, password);
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                userKey = resultSet->getInt64("userKey");
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "email and/or password are wrong"
+                    + ", eMailAddress: " + eMailAddress
+                    + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw LoginFailed();
+            }
+        }
+
+        {
+            lastSQLCommand = 
+                "select w.name, a.apiKey, a.isOwner from MMS_APIKey a, MMS_Workspace w where a.workspaceKey = w.workspaceKey and userKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, userKey);
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            while (resultSet->next())
+            {
+                string workspaceName = resultSet->getString("name");
+                string apiKey = resultSet->getString("apiKey");
+                bool owner = resultSet->getInt("isOwner");
+                
+                tuple<string,string,bool> workspaceNameAPIKeyAndIfOwner =
+                    make_tuple(workspaceName, apiKey, owner);
+                
+                vWorkspaceNameAPIKeyAndIfOwner.push_back(workspaceNameAPIKeyAndIfOwner);
+            }
+
+            if (vWorkspaceNameAPIKeyAndIfOwner.size() == 0)
+            {
+                string errorMessage = __FILEREF__ + "No workspace available for the user"
+                    + ", eMailAddress: " + eMailAddress
+                    + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+        
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
+        throw se;
+    }
+    catch(LoginFailed e)
+    {        
+        string exceptionMessage(e.what());
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
+        throw e;
+    }
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
+        throw e;
+    }
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
+        throw e;
+    }
+}
+
 /*
 int64_t MMSEngineDBFacade::addTerritory (
 	shared_ptr<MySQLConnection> conn,
@@ -1033,6 +1179,7 @@ int64_t MMSEngineDBFacade::addTerritory (
 }
 */
 
+/*
 bool MMSEngineDBFacade::isLoginValid(
         string emailAddress,
         string password
@@ -1122,7 +1269,9 @@ bool MMSEngineDBFacade::isLoginValid(
     
     return isLoginValid;
 }
+*/
 
+/*
 string MMSEngineDBFacade::getPassword(string emailAddress)
 {
     string      password;
@@ -1212,6 +1361,7 @@ string MMSEngineDBFacade::getPassword(string emailAddress)
     
     return password;
 }
+*/
 
 int64_t MMSEngineDBFacade::addEncodingProfilesSet (
         shared_ptr<MySQLConnection> conn, int64_t workspaceKey,
@@ -11546,6 +11696,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "apiKey                     VARCHAR (128) NOT NULL,"
                     "userKey                    BIGINT UNSIGNED NOT NULL,"
                     "workspaceKey               BIGINT UNSIGNED NOT NULL,"
+                    "isOwner                    TINYINT (1) NOT NULL,"
                     "flags			SET('ADMIN_API', 'USER_API') NOT NULL,"
                     "creationDate		TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "expirationDate		DATETIME NOT NULL,"

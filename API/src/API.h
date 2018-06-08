@@ -95,6 +95,10 @@ private:
         FCGX_Request& request,
         unordered_map<string, string> queryParameters);
 
+    void login(
+        FCGX_Request& request,
+        string requestBody);
+
     void ingestionStatus(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,

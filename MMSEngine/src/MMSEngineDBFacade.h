@@ -34,6 +34,13 @@
 
 using namespace std;
 
+struct LoginFailed: public exception {    
+    char const* what() const throw() 
+    {
+        return "email and/or password are wrong";
+    }; 
+};
+
 struct APIKeyNotFoundOrExpired: public exception {    
     char const* what() const throw() 
     {
@@ -585,13 +592,18 @@ public:
     
     tuple<string,string,string> confirmUser(string confirmationCode);
 
+    /*
     bool isLoginValid(
         string emailAddress,
         string password);
-
-    string getPassword(string emailAddress);
+    */
+    // string getPassword(string emailAddress);
 
     tuple<int64_t,shared_ptr<Workspace>,bool,bool> checkAPIKey (string apiKey);
+
+    void login (
+        string eMailAddress, string password, 
+        vector<tuple<string,string,bool>>& vWorkspaceNameAPIKeyAndIfOwner);
 
     int64_t addEncodingProfilesSet (
         shared_ptr<MySQLConnection> conn, int64_t workspaceKey,

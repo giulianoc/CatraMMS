@@ -429,6 +429,25 @@ void API::manageRequestAndResponse(
             sendError(request, 500, errorMessage);
         }
     }
+    else if (method == "login")
+    {
+        /*
+        bool isAdminAPI = get<2>(userKeyWorkspaceAndFlags);
+        if (!isAdminAPI)
+        {
+            string errorMessage = string("APIKey flags does not have the ADMIN permission"
+                    ", isAdminAPI: " + to_string(isAdminAPI)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        */
+        
+        login(request, requestBody);
+    }
     else if (method == "registerUser")
     {
         /*
@@ -1432,6 +1451,196 @@ void API::confirmUser(
     {
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::login(
+        FCGX_Request& request,
+        string requestBody)
+{
+    string api = "login";
+
+    _logger->info(__FILEREF__ + "Received " + api
+        + ", requestBody: " + requestBody
+    );
+
+    try
+    {
+        string email;
+        string password;
+
+        Json::Value metadataRoot;
+        try
+        {
+            Json::CharReaderBuilder builder;
+            Json::CharReader* reader = builder.newCharReader();
+            string errors;
+
+            bool parsingSuccessful = reader->parse(requestBody.c_str(),
+                    requestBody.c_str() + requestBody.size(), 
+                    &metadataRoot, &errors);
+            delete reader;
+
+            if (!parsingSuccessful)
+            {
+                string errorMessage = string("Json metadata failed during the parsing")
+                        + ", errors: " + errors
+                        + ", json data: " + requestBody
+                        ;
+                _logger->error(__FILEREF__ + errorMessage);
+
+                sendError(request, 400, errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+        catch(exception e)
+        {
+            string errorMessage = string("Json metadata failed during the parsing"
+                    ", json data: " + requestBody
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        {
+            vector<string> mandatoryFields = {
+                "EMail",
+                "Password"
+            };
+            for (string field: mandatoryFields)
+            {
+                if (!_mmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
+                {
+                    string errorMessage = string("Json field is not present or it is null")
+                            + ", Json field: " + field;
+                    _logger->error(__FILEREF__ + errorMessage);
+
+                    sendError(request, 400, errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+            }
+
+            email = metadataRoot.get("EMail", "XXX").asString();
+            password = metadataRoot.get("Password", "XXX").asString();
+        }
+
+        try
+        {
+            _logger->info(__FILEREF__ + "Login User"
+                + ", email: " + email
+            );
+            
+            vector<tuple<string,string,bool>> vWorkspaceNameAPIKeyAndIfOwner;
+            
+            _mmsEngineDBFacade->login(
+                    email, 
+                    password,
+                    vWorkspaceNameAPIKeyAndIfOwner
+                );
+
+            _logger->info(__FILEREF__ + "Login User"
+                + ", vWorkspaceNameAPIKeyAndIfOwner.size: " + to_string(vWorkspaceNameAPIKeyAndIfOwner.size())
+                + ", email: " + email
+            );
+            
+            string responseBody = string("{ ")
+                    + "[ ";
+            bool firstEntry = true;
+            for (tuple<string,string,bool> workspaceNameAPIKeyAndIfOwner: vWorkspaceNameAPIKeyAndIfOwner)
+            {
+                string workspaceName;
+                string apiKey;
+                bool ifOwner;
+                
+                tie(workspaceName, apiKey, ifOwner) = workspaceNameAPIKeyAndIfOwner;
+                
+                if (!firstEntry)
+                    responseBody += ", ";
+                
+                responseBody += ("{ ");
+                responseBody += ("\"workspaceName\": \"" + workspaceName + "\", ");
+                responseBody += ("\"apiKey\": \"" + apiKey + "\", ");
+                responseBody += ("\"owner\": " + to_string(ifOwner) + " ");
+                responseBody += ("} ");
+
+                if (firstEntry)
+                    firstEntry = false;
+            }            
+            
+            responseBody += ("] ");
+            responseBody += ("} ");
+
+            sendSuccess(request, 201, responseBody);            
+        }
+        catch(LoginFailed e)
+        {
+            _logger->error(__FILEREF__ + api + " failed"
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = e.what();
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 401, errorMessage);   // unauthorized
+
+            throw runtime_error(errorMessage);
+        }
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + api + " failed"
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error: ") + e.what();
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + api + " failed"
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
             + ", e.what(): " + e.what()
         );
 
