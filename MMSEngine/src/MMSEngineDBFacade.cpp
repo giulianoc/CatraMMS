@@ -971,7 +971,7 @@ tuple<int64_t,shared_ptr<Workspace>,bool,bool> MMSEngineDBFacade::checkAPIKey (s
     return userKeyWorkspaceAndFlags;
 }
 
-void MMSEngineDBFacade::login (
+int64_t MMSEngineDBFacade::login (
         string eMailAddress, string password, 
         vector<tuple<string,string,bool>>& vWorkspaceNameAPIKeyAndIfOwner)
 {
@@ -988,8 +988,6 @@ void MMSEngineDBFacade::login (
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
-
-        int64_t         userKey;
         
         {
             lastSQLCommand = 
@@ -1112,6 +1110,8 @@ void MMSEngineDBFacade::login (
 
         throw e;
     }
+    
+    return userKey;
 }
 
 /*
@@ -2709,17 +2709,18 @@ int64_t MMSEngineDBFacade::addIngestionRoot (
     try
     {
         {
-            {
+            {                
                 lastSQLCommand = 
-                    "insert into MMS_IngestionRoot (ingestionRootKey, workspaceKey, type, label) values ("
-                    "NULL, ?, ?, ?)";
+                    "insert into MMS_IngestionRoot (ingestionRootKey, workspaceKey, type, label, ingestionDate, status) values ("
+                    "NULL, ?, ?, ?, NOW(), ?)";
 
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
                 preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
                 preparedStatement->setString(queryParameterIndex++, rootType);
                 preparedStatement->setString(queryParameterIndex++, rootLabel);
-
+                preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(MMSEngineDBFacade::IngestionRootStatus::NotCompleted));
+ 
                 preparedStatement->executeUpdate();
             }
 
@@ -3141,35 +3142,6 @@ void MMSEngineDBFacade::updateIngestionJob (
                 _logger->error(errorMessage);
 
                 throw runtime_error(errorMessage);                    
-            }
-            
-            {
-                int dependOnSuccess;
-
-                if (MMSEngineDBFacade::isIngestionStatusSuccess(newIngestionStatus))
-                {
-                    // set to NotToBeExecuted the tasks depending on this task on failure
-
-                    dependOnSuccess = 0;
-                }
-                else
-                {
-                    // set to NotToBeExecuted the tasks depending on this task on success
-
-                    dependOnSuccess = 1;
-                }
-
-                lastSQLCommand = 
-                    "update MMS_IngestionJob set status = ?, endIngestion = NOW() where ingestionJobKey in "
-                    "(select ingestionJobKey from MMS_IngestionJobDependency where dependOnIngestionJobKey = ? and dependOnSuccess = ?)";
-
-                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                int queryParameterIndex = 1;
-                preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(MMSEngineDBFacade::IngestionStatus::End_NotToBeExecuted));
-                preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
-                preparedStatement->setInt(queryParameterIndex++, dependOnSuccess);
-
-                int rowsUpdated = preparedStatement->executeUpdate();
             }            
         }
         else
@@ -3205,7 +3177,9 @@ void MMSEngineDBFacade::updateIngestionJob (
                 throw runtime_error(errorMessage);                    
             }
         }
-        
+            
+        manageIngestionJobStatusUpdate (ingestionJobKey, newIngestionStatus, conn);
+
         _logger->info(__FILEREF__ + "IngestionJob updated successful"
             + ", newIngestionStatus: " + MMSEngineDBFacade::toString(newIngestionStatus)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -3333,35 +3307,6 @@ void MMSEngineDBFacade::updateIngestionJob (
                 _logger->error(errorMessage);
 
                 throw runtime_error(errorMessage);                    
-            }
-            
-            {
-                int dependOnSuccess;
-
-                if (MMSEngineDBFacade::isIngestionStatusSuccess(newIngestionStatus))
-                {
-                    // set to NotToBeExecuted the tasks depending on this task on failure
-
-                    dependOnSuccess = 0;
-                }
-                else
-                {
-                    // set to NotToBeExecuted the tasks depending on this task on success
-
-                    dependOnSuccess = 1;
-                }
-
-                lastSQLCommand = 
-                    "update MMS_IngestionJob set status = ?, endIngestion = NOW() where ingestionJobKey in "
-                    "(select ingestionJobKey from MMS_IngestionJobDependency where dependOnIngestionJobKey = ? and dependOnSuccess = ?)";
-
-                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                int queryParameterIndex = 1;
-                preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(MMSEngineDBFacade::IngestionStatus::End_NotToBeExecuted));
-                preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
-                preparedStatement->setInt(queryParameterIndex++, dependOnSuccess);
-
-                int rowsUpdated = preparedStatement->executeUpdate();
             }            
         }
         else
@@ -3398,6 +3343,8 @@ void MMSEngineDBFacade::updateIngestionJob (
             }
         }
         
+        manageIngestionJobStatusUpdate (ingestionJobKey, newIngestionStatus, conn);
+
         _logger->info(__FILEREF__ + "IngestionJob updated successful"
             + ", newIngestionStatus: " + MMSEngineDBFacade::toString(newIngestionStatus)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -3516,35 +3463,6 @@ void MMSEngineDBFacade::updateIngestionJob (
 
                 throw runtime_error(errorMessage);                    
             }
-            
-            {
-                int dependOnSuccess;
-
-                if (MMSEngineDBFacade::isIngestionStatusSuccess(newIngestionStatus))
-                {
-                    // set to NotToBeExecuted the tasks depending on this task on failure
-
-                    dependOnSuccess = 0;
-                }
-                else
-                {
-                    // set to NotToBeExecuted the tasks depending on this task on success
-
-                    dependOnSuccess = 1;
-                }
-
-                lastSQLCommand = 
-                    "update MMS_IngestionJob set status = ?, endIngestion = NOW() where ingestionJobKey in "
-                    "(select ingestionJobKey from MMS_IngestionJobDependency where dependOnIngestionJobKey = ? and dependOnSuccess = ?)";
-
-                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                int queryParameterIndex = 1;
-                preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(MMSEngineDBFacade::IngestionStatus::End_NotToBeExecuted));
-                preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
-                preparedStatement->setInt(queryParameterIndex++, dependOnSuccess);
-
-                int rowsUpdated = preparedStatement->executeUpdate();
-            }            
         }
         else
         {
@@ -3581,6 +3499,8 @@ void MMSEngineDBFacade::updateIngestionJob (
             }
         }
         
+        manageIngestionJobStatusUpdate (ingestionJobKey, newIngestionStatus, conn);
+
         _logger->info(__FILEREF__ + "IngestionJob updated successful"
             + ", newIngestionStatus: " + MMSEngineDBFacade::toString(newIngestionStatus)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -3631,6 +3551,174 @@ void MMSEngineDBFacade::updateIngestionJob (
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
+
+        throw e;
+    }    
+}
+
+void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
+        int64_t ingestionJobKey,
+        IngestionStatus newIngestionStatus,
+        shared_ptr<MySQLConnection> conn
+)
+{    
+    string      lastSQLCommand;
+    
+
+    try
+    {
+        if (MMSEngineDBFacade::isIngestionStatusFinalState(newIngestionStatus))
+        {
+            int dependOnSuccess;
+
+            if (MMSEngineDBFacade::isIngestionStatusSuccess(newIngestionStatus))
+            {
+                // set to NotToBeExecuted the tasks depending on this task on failure
+
+                dependOnSuccess = 0;
+            }
+            else
+            {
+                // set to NotToBeExecuted the tasks depending on this task on success
+
+                dependOnSuccess = 1;
+            }
+
+            lastSQLCommand = 
+                "update MMS_IngestionJob set status = ?, endIngestion = NOW() where ingestionJobKey in "
+                "(select ingestionJobKey from MMS_IngestionJobDependency where dependOnIngestionJobKey = ? and dependOnSuccess = ?)";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(MMSEngineDBFacade::IngestionStatus::End_NotToBeExecuted));
+            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+            preparedStatement->setInt(queryParameterIndex++, dependOnSuccess);
+
+            int rowsUpdated = preparedStatement->executeUpdate();
+        }            
+
+        if (MMSEngineDBFacade::isIngestionStatusFinalState(newIngestionStatus))
+        {
+            int64_t ingestionRootKey;
+            IngestionRootStatus currentIngestionRootStatus;
+
+            {
+                lastSQLCommand = 
+                    "select ir.ingestionRootKey, ir.status "
+                    "from MMS_IngestionRoot ir, MMS_IngestionJob ij "
+                    "where ir.ingestionRootKey = ij.ingestionRootKey and ij.ingestionJobKey = ?";
+                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                int queryParameterIndex = 1;
+                preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+
+                shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+                if (resultSet->next())
+                {
+                    ingestionRootKey = resultSet->getInt64("ingestionRootKey");
+                    currentIngestionRootStatus = MMSEngineDBFacade::toIngestionRootStatus(resultSet->getString("Status"));                
+                }
+                else
+                {
+                    string errorMessage = __FILEREF__ + "IngestionJob is not found"
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                    ;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);                    
+                }            
+            }
+
+            int successStatesCount = 0;
+            int failureStatesCount = 0;
+            int intermediateStatesCount = 0;
+
+            {
+                lastSQLCommand = 
+                    "select status from MMS_IngestionJob where ingestionRootKey = ?";
+                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                int queryParameterIndex = 1;
+                preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+
+                shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+                while (resultSet->next())
+                {                
+                    IngestionStatus ingestionStatus = MMSEngineDBFacade::toIngestionStatus(resultSet->getString("Status"));
+
+                    if (!MMSEngineDBFacade::isIngestionStatusFinalState(ingestionStatus))
+                        intermediateStatesCount++;
+                    else
+                    {
+                        if (!MMSEngineDBFacade::isIngestionStatusSuccess(ingestionStatus))
+                            successStatesCount++;
+                        else
+                            failureStatesCount++;
+                    }
+                }
+            }
+
+            IngestionRootStatus newIngestionRootStatus;
+
+            if (intermediateStatesCount > 0)
+                newIngestionRootStatus = IngestionRootStatus::NotCompleted;
+            else
+            {
+                if (failureStatesCount > 0)
+                    newIngestionRootStatus = IngestionRootStatus::CompletedWithFailures;
+                else
+                    newIngestionRootStatus = IngestionRootStatus::CompletedSuccessful;
+            }
+
+            if (newIngestionRootStatus != currentIngestionRootStatus)            
+            {
+                lastSQLCommand = 
+                    "update MMS_IngestionRoot set status = ? where ingestionRootKey = ?";
+
+                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                int queryParameterIndex = 1;
+                preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(newIngestionRootStatus));
+                preparedStatement->setInt64(queryParameterIndex++, ingestionRootKey);
+
+                int rowsUpdated = preparedStatement->executeUpdate();
+                if (rowsUpdated != 1)
+                {
+                    string errorMessage = __FILEREF__ + "no update was done"
+                            + ", ingestionRootKey: " + to_string(ingestionRootKey)
+                            + ", rowsUpdated: " + to_string(rowsUpdated)
+                            + ", lastSQLCommand: " + lastSQLCommand
+                    ;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);                    
+                }            
+            }
+        }
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw se;
+    }    
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
+    }    
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
 
         throw e;
     }    
@@ -3939,13 +4027,14 @@ void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred (
     }
 }
 
-Json::Value MMSEngineDBFacade::getIngestionJobStatus (
-        int64_t workspaceKey,
-        int64_t ingestionRootKey, int64_t ingestionJobKey
+Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
+        int64_t workspaceKey, int64_t ingestionRootKey,
+        int start, int rows,
+        bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate
 )
 {    
     string      lastSQLCommand;
-    Json::Value statusRoot;
+    Json::Value statusListRoot;
     
     shared_ptr<MySQLConnection> conn;
 
@@ -3958,408 +4047,145 @@ Json::Value MMSEngineDBFacade::getIngestionJobStatus (
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
-        Json::Value workflowRoot;
+        {
+            Json::Value requestParametersRoot;
+            
+            field = "start";
+            requestParametersRoot[field] = start;
+
+            field = "rows";
+            requestParametersRoot[field] = rows;
+            
+            if (ingestionRootKey != -1)
+            {
+                field = "ingestionRootKey";
+                requestParametersRoot[field] = ingestionRootKey;
+            }
+            
+            if (startAndEndIngestionDatePresent)
+            {
+                field = "startIngestionDate";
+                requestParametersRoot[field] = startIngestionDate;
+
+                field = "endIngestionDate";
+                requestParametersRoot[field] = endIngestionDate;
+            }
+            
+            field = "requestParameters";
+            statusListRoot[field] = requestParametersRoot;
+        }
+        
+        string sqlWhere = string ("where workspaceKey = ? ");
+        if (ingestionRootKey != -1)
+            sqlWhere += ("and ingestionRootKey = ? ");
+        if (startAndEndIngestionDatePresent)
+            sqlWhere += ("and ingestionDate >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) and ingestionDate <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
+        
+        Json::Value responseRoot;
         {
             lastSQLCommand = 
-                "select label from MMS_IngestionRoot where workspaceKey = ? and ingestionRootKey = ?";
+                string("select count(*) from MMS_IngestionRoot ")
+                    + sqlWhere;
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
-            preparedStatement->setInt64(queryParameterIndex++, ingestionRootKey);
+            if (ingestionRootKey != -1)
+                preparedStatement->setInt64(queryParameterIndex++, ingestionRootKey);
+            if (startAndEndIngestionDatePresent)
+            {
+                preparedStatement->setString(queryParameterIndex++, startIngestionDate);
+                preparedStatement->setString(queryParameterIndex++, endIngestionDate);
+            }
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
-                field = "ingestionRootKey";
-                workflowRoot[field] = ingestionRootKey;
-
-                field = "label";
-                workflowRoot[field] = static_cast<string>(resultSet->getString("label"));
+                field = "numFound";
+                responseRoot[field] = resultSet->getInt64(1);
             }
             else
             {
-                string errorMessage = __FILEREF__ + "ingestionRootKey is not found"
-                    + ", ingestionRootKey: " + to_string(ingestionRootKey)
-                    + ", lastSQLCommand: " + lastSQLCommand
-                ;
+                string errorMessage ("select count(*) failed");
+
                 _logger->error(errorMessage);
 
-                throw runtime_error(errorMessage);                    
-            }            
+                throw runtime_error(errorMessage);
+            }
         }
-
-        Json::Value tasksRoot(Json::arrayValue);
-        {            
-            if (ingestionJobKey == -1)
-                lastSQLCommand = 
-                    "select ingestionJobKey, label, mediaItemKey, physicalPathKey, ingestionType, "
-                    "DATE_FORMAT(convert_tz(startIngestion, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as startIngestion, "
-                    "DATE_FORMAT(convert_tz(endIngestion, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endIngestion, "
-                    "IF(endIngestion is null, NOW(), endIngestion) as newEndIngestion, downloadingProgress, uploadingProgress, "
-                    "status, errorMessage from MMS_IngestionJob where ingestionRootKey = ? order by startIngestion, newEndIngestion asc";
-            else
-                lastSQLCommand = 
-                    "select ingestionJobKey, label, mediaItemKey, physicalPathKey, ingestionType, "
-                    "DATE_FORMAT(convert_tz(startIngestion, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as startIngestion, "
-                    "DATE_FORMAT(convert_tz(endIngestion, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endIngestion, "
-                    "IF(endIngestion is null, NOW(), endIngestion) as newEndIngestion, downloadingProgress, uploadingProgress, "
-                    "status, errorMessage from MMS_IngestionJob where ingestionRootKey = ? and ingestionJobKey = ? order by startIngestion, newEndIngestion asc";
+        
+        Json::Value workflowsRoot(Json::arrayValue);
+        {
+            lastSQLCommand = 
+                string("select ingestionRootKey, label, status, "
+                    "DATE_FORMAT(convert_tz(ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate "
+                    "from MMS_IngestionRoot ")
+                    + sqlWhere
+                    + "order by ingestionDate asc "
+                    + "limit ? offset ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, ingestionRootKey);
-            if (ingestionJobKey != -1)
-                preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            if (ingestionRootKey != -1)
+                preparedStatement->setInt64(queryParameterIndex++, ingestionRootKey);
+            if (startAndEndIngestionDatePresent)
+            {
+                preparedStatement->setString(queryParameterIndex++, startIngestionDate);
+                preparedStatement->setString(queryParameterIndex++, endIngestionDate);
+            }
+            preparedStatement->setInt(queryParameterIndex++, rows);
+            preparedStatement->setInt(queryParameterIndex++, start);
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             while (resultSet->next())
             {
-                Json::Value taskRoot;
-
-                int64_t ingestionJobKey = resultSet->getInt64("ingestionJobKey");
-
-                field = "ingestionType";
-                taskRoot[field] = static_cast<string>(resultSet->getString("ingestionType"));
-                IngestionType ingestionType = toIngestionType(resultSet->getString("ingestionType"));
-
-                field = "ingestionJobKey";
-                taskRoot[field] = ingestionJobKey;
+                Json::Value workflowRoot;
+                
+                field = "ingestionRootKey";
+                workflowRoot[field] = resultSet->getInt64("ingestionRootKey");
 
                 field = "label";
-                if (resultSet->isNull("label"))
-                    taskRoot[field] = Json::nullValue;
-                else
-                    taskRoot[field] = static_cast<string>(resultSet->getString("label"));
-                
-                {
-                    int64_t mediaItemKey = -1;
-                    int64_t physicalPathKey = -1;
-                    
-                    field = "mediaItemKey";
-                    if (resultSet->isNull("mediaItemKey"))
-                        taskRoot[field] = Json::nullValue;
-                    else
-                    {
-                        mediaItemKey = resultSet->getInt64("mediaItemKey");
-                        
-                        taskRoot[field] = mediaItemKey;
-                    }
-                    
-                    field = "physicalPathKey";
-                    if (resultSet->isNull("physicalPathKey"))
-                        taskRoot[field] = Json::nullValue;
-                    else
-                    {
-                        physicalPathKey = resultSet->getInt64("physicalPathKey");
-                        
-                        taskRoot[field] = physicalPathKey;
-                    }
-
-                    if (mediaItemKey != -1)
-                    {
-                        MMSEngineDBFacade::ContentType contentType;
-                        
-                        lastSQLCommand = 
-                            "select contentType from MMS_MediaItem where mediaItemKey = ?";
-                        shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                        int queryParameterIndex = 1;
-                        preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
-
-                        shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-                        if (resultSet->next())
-                        {
-                            contentType = MMSEngineDBFacade::toContentType(resultSet->getString("contentType"));
-                            
-                            if (contentType == ContentType::Video)
-                            {
-                                int64_t durationInMilliSeconds;
-                                int videoWidth;
-                                int videoHeight;
-                                long bitRate;
-                                string videoCodecName;
-                                string videoProfile;
-                                string videoAvgFrameRate;
-                                long videoBitRate;
-                                string audioCodecName;
-                                long audioSampleRate;
-                                int audioChannels;
-                                long audioBitRate;
-
-                                tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
-                                    videoDetails = getVideoDetails(mediaItemKey, physicalPathKey);
-
-                                tie(durationInMilliSeconds, bitRate,
-                                    videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
-                                    audioCodecName, audioSampleRate, audioChannels, audioBitRate) = videoDetails;
-
-                                Json::Value videoDetailsRoot;
-
-                                field = "durationInMilliSeconds";
-                                videoDetailsRoot[field] = durationInMilliSeconds;
-
-                                field = "videoWidth";
-                                videoDetailsRoot[field] = videoWidth;
-
-                                field = "videoHeight";
-                                videoDetailsRoot[field] = videoHeight;
-
-                                field = "bitRate";
-                                videoDetailsRoot[field] = (int64_t) bitRate;
-
-                                field = "videoCodecName";
-                                videoDetailsRoot[field] = videoCodecName;
-
-                                field = "videoProfile";
-                                videoDetailsRoot[field] = videoProfile;
-
-                                field = "videoAvgFrameRate";
-                                videoDetailsRoot[field] = videoAvgFrameRate;
-
-                                field = "videoBitRate";
-                                videoDetailsRoot[field] = (int64_t) videoBitRate;
-
-                                field = "audioCodecName";
-                                videoDetailsRoot[field] = audioCodecName;
-
-                                field = "audioSampleRate";
-                                videoDetailsRoot[field] = (int64_t) audioSampleRate;
-
-                                field = "audioChannels";
-                                videoDetailsRoot[field] = audioChannels;
-
-                                field = "audioBitRate";
-                                videoDetailsRoot[field] = (int64_t) audioBitRate;
-
-
-                                field = "videoDetails";
-                                taskRoot[field] = videoDetailsRoot;
-                            }
-                            else if (contentType == ContentType::Audio)
-                            {
-                                int64_t durationInMilliSeconds;
-                                string codecName;
-                                long bitRate;
-                                long sampleRate;
-                                int channels;
-                                
-                                tuple<int64_t,string,long,long,int>
-                                    audioDetails = getAudioDetails(mediaItemKey, physicalPathKey);
-
-                                tie(durationInMilliSeconds, codecName, bitRate, sampleRate, channels) 
-                                        = audioDetails;
-
-                                Json::Value audioDetailsRoot;
-
-                                field = "durationInMilliSeconds";
-                                audioDetailsRoot[field] = durationInMilliSeconds;
-
-                                field = "codecName";
-                                audioDetailsRoot[field] = codecName;
-
-                                field = "bitRate";
-                                audioDetailsRoot[field] = (int64_t) bitRate;
-
-                                field = "sampleRate";
-                                audioDetailsRoot[field] = (int64_t) sampleRate;
-
-                                field = "channels";
-                                audioDetailsRoot[field] = channels;
-
-
-                                field = "audioDetails";
-                                taskRoot[field] = audioDetailsRoot;
-                            }
-                            else if (contentType == ContentType::Image)
-                            {
-                                int width;
-                                int height;
-                                string format;
-                                int quality;
-                                
-                                tuple<int,int,string,int>
-                                    imageDetails = getImageDetails(mediaItemKey, physicalPathKey);
-
-                                tie(width, height, format, quality) 
-                                        = imageDetails;
-
-                                Json::Value imageDetailsRoot;
-
-                                field = "width";
-                                imageDetailsRoot[field] = width;
-
-                                field = "height";
-                                imageDetailsRoot[field] = height;
-
-                                field = "format";
-                                imageDetailsRoot[field] = format;
-
-                                field = "quality";
-                                imageDetailsRoot[field] = quality;
-
-
-                                field = "imageDetails";
-                                taskRoot[field] = imageDetailsRoot;
-                            }
-                            else
-                            {
-                                string errorMessage = __FILEREF__ + "ContentType unmanaged"
-                                    + ", mediaItemKey: " + to_string(mediaItemKey)
-                                    + ", lastSQLCommand: " + lastSQLCommand
-                                ;
-                                _logger->error(errorMessage);
-
-                                throw runtime_error(errorMessage);  
-                            }
-                        }
-                        else
-                        {
-                            // the MIK could be removed
-                            
-                            /*
-                            string errorMessage = __FILEREF__ + "MediaItemKey is not found"
-                                + ", mediaItemKey: " + to_string(mediaItemKey)
-                                + ", lastSQLCommand: " + lastSQLCommand
-                            ;
-                            _logger->error(errorMessage);
-
-                            throw runtime_error(errorMessage);  
-                            */                  
-                        }
-                    }
-                }
-
-                field = "startIngestion";
-                taskRoot[field] = static_cast<string>(resultSet->getString("startIngestion"));
-
-                field = "endIngestion";
-                if (resultSet->isNull("endIngestion"))
-                    taskRoot[field] = Json::nullValue;
-                else
-                    taskRoot[field] = static_cast<string>(resultSet->getString("endIngestion"));
-
-                if (ingestionType == IngestionType::AddContent)
-                {
-                    field = "downloadingProgress";
-                    if (resultSet->isNull("downloadingProgress"))
-                        taskRoot[field] = Json::nullValue;
-                    else
-                        taskRoot[field] = resultSet->getInt64("downloadingProgress");
-                }
-
-                if (ingestionType == IngestionType::AddContent)
-                {
-                    field = "uploadingProgress";
-                    if (resultSet->isNull("uploadingProgress"))
-                        taskRoot[field] = Json::nullValue;
-                    else
-                        taskRoot[field] = resultSet->getInt64("uploadingProgress");
-                }
+                workflowRoot[field] = static_cast<string>(resultSet->getString("label"));
 
                 field = "status";
-                taskRoot[field] = static_cast<string>(resultSet->getString("status"));
+                workflowRoot[field] = static_cast<string>(resultSet->getString("status"));
 
-                field = "errorMessage";
-                if (resultSet->isNull("errorMessage"))
-                    taskRoot[field] = Json::nullValue;
-                else
-                    taskRoot[field] = static_cast<string>(resultSet->getString("errorMessage"));
+                field = "ingestionDate";
+                workflowRoot[field] = static_cast<string>(resultSet->getString("ingestionDate"));
 
-                if (ingestionType == IngestionType::Encode 
-                        || ingestionType == IngestionType::OverlayImageOnVideo
-                        || ingestionType == IngestionType::OverlayTextOnVideo)
-                {
+                Json::Value ingestionJobsRoot(Json::arrayValue);
+                {            
                     lastSQLCommand = 
-                        "select type, parameters, status, encodingProgress, "
-                        "DATE_FORMAT(convert_tz(encodingJobStart, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as encodingJobStart, "
-                        "DATE_FORMAT(convert_tz(encodingJobEnd, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as encodingJobEnd, "
-                        "failuresNumber from MMS_EncodingJob where ingestionJobKey = ?";
+                        "select ingestionJobKey, label, mediaItemKey, physicalPathKey, ingestionType, "
+                        "DATE_FORMAT(convert_tz(startIngestion, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as startIngestion, "
+                        "DATE_FORMAT(convert_tz(endIngestion, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endIngestion, "
+                        "IF(endIngestion is null, NOW(), endIngestion) as newEndIngestion, downloadingProgress, uploadingProgress, "
+                        "status, errorMessage from MMS_IngestionJob where ingestionRootKey = ? order by startIngestion, newEndIngestion asc";
 
-                    shared_ptr<sql::PreparedStatement> preparedStatementEncodingJob (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                    shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
-                    preparedStatementEncodingJob->setInt64(queryParameterIndex++, ingestionJobKey);
-                    shared_ptr<sql::ResultSet> resultSetEncodingJob (preparedStatementEncodingJob->executeQuery());
-                    if (resultSetEncodingJob->next())
+                    preparedStatement->setInt64(queryParameterIndex++, ingestionRootKey);
+                    shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+                    while (resultSet->next())
                     {
-                        Json::Value encodingRoot;
+                        Json::Value ingestionJobRoot = getIngestionJobRoot(
+                                resultSet, conn);
 
-                        field = "type";
-                        encodingRoot[field] = static_cast<string>(resultSetEncodingJob->getString("type"));
-
-                        {
-                            string parameters = resultSetEncodingJob->getString("parameters");
-                            
-                            Json::Value parametersRoot;
-                            if (parameters != "")
-                            {
-                                Json::CharReaderBuilder builder;
-                                Json::CharReader* reader = builder.newCharReader();
-                                string errors;
-
-                                bool parsingSuccessful = reader->parse(parameters.c_str(),
-                                        parameters.c_str() + parameters.size(), 
-                                        &parametersRoot, &errors);
-                                delete reader;
-
-                                if (!parsingSuccessful)
-                                {
-                                    string errorMessage = __FILEREF__ + "failed to parse 'parameters'"
-                                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                            + ", errors: " + errors
-                                            + ", parameters: " + parameters
-                                            ;
-                                    _logger->error(errorMessage);
-
-                                    throw runtime_error(errorMessage);
-                                }
-                            }
-                            
-                            field = "parameters";
-                            encodingRoot[field] = parametersRoot;
-                        }
-                        
-                        field = "encodingStatus";
-                        encodingRoot[field] = static_cast<string>(resultSetEncodingJob->getString("status"));
-                        EncodingStatus encodingStatus = MMSEngineDBFacade::toEncodingStatus(resultSetEncodingJob->getString("status"));
-
-                        field = "encodingProgress";
-                        if (resultSetEncodingJob->isNull("encodingProgress"))
-                            encodingRoot[field] = Json::nullValue;
-                        else
-                            encodingRoot[field] = resultSetEncodingJob->getInt("encodingProgress");
-
-                        field = "encodingJobStart";
-                        if (encodingStatus == EncodingStatus::ToBeProcessed)
-                            encodingRoot[field] = Json::nullValue;
-                        else
-                        {
-                            if (resultSetEncodingJob->isNull("encodingJobStart"))
-                                encodingRoot[field] = Json::nullValue;
-                            else
-                                encodingRoot[field] = static_cast<string>(resultSetEncodingJob->getString("encodingJobStart"));
-                        }
-
-                        field = "encodingJobEnd";
-                        if (resultSetEncodingJob->isNull("encodingJobEnd"))
-                            encodingRoot[field] = Json::nullValue;
-                        else
-                            encodingRoot[field] = static_cast<string>(resultSetEncodingJob->getString("encodingJobEnd"));
-
-                        field = "encodingFailuresNumber";
-                        encodingRoot[field] = resultSetEncodingJob->getInt("failuresNumber");  
-
-                        field = "encoding";
-                        taskRoot[field] = encodingRoot;
+                        ingestionJobsRoot.append(ingestionJobRoot);
                     }
                 }
 
-                tasksRoot.append(taskRoot);
+                field = "ingestionJobs";
+                workflowRoot[field] = ingestionJobsRoot;
+
+                workflowsRoot.append(workflowRoot);
             }
         }
-
-        field = "tasks";
-        workflowRoot[field] = tasksRoot;
-
-        field = "workflow";
-        statusRoot[field] = workflowRoot;
+        
+        field = "workflows";
+        responseRoot[field] = workflowsRoot;
+        
+        field = "response";
+        statusListRoot[field] = responseRoot;
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -4410,18 +4236,18 @@ Json::Value MMSEngineDBFacade::getIngestionJobStatus (
         throw e;
     } 
     
-    return statusRoot;
+    return statusListRoot;
 }
 
-Json::Value MMSEngineDBFacade::getContentList (
-        int64_t workspaceKey, int64_t mediaItemKey,
+Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
+        int64_t workspaceKey, int64_t ingestionJobKey,
         int start, int rows,
-        bool contentTypePresent, ContentType contentType,
-        bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate
+        bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
+        bool asc
 )
 {    
     string      lastSQLCommand;
-    Json::Value contentListRoot;
+    Json::Value statusListRoot;
     
     shared_ptr<MySQLConnection> conn;
 
@@ -4429,7 +4255,834 @@ Json::Value MMSEngineDBFacade::getContentList (
     {
         string field;
         
-        _logger->info(__FILEREF__ + "getContentList"
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        {
+            Json::Value requestParametersRoot;
+            
+            field = "start";
+            requestParametersRoot[field] = start;
+
+            field = "rows";
+            requestParametersRoot[field] = rows;
+            
+            if (ingestionJobKey != -1)
+            {
+                field = "ingestionJobKey";
+                requestParametersRoot[field] = ingestionJobKey;
+            }
+            
+            if (startAndEndIngestionDatePresent)
+            {
+                field = "startIngestionDate";
+                requestParametersRoot[field] = startIngestionDate;
+
+                field = "endIngestionDate";
+                requestParametersRoot[field] = endIngestionDate;
+            }
+            
+            field = "requestParameters";
+            statusListRoot[field] = requestParametersRoot;
+        }
+        
+        string sqlWhere = string ("where ir.ingestionRootKey = ij.ingestionRootKey ");
+        sqlWhere += ("and ir.workspaceKey = ? ");
+        if (ingestionJobKey != -1)
+            sqlWhere += ("and ij.ingestionJobKey = ? ");
+        if (startAndEndIngestionDatePresent)
+            sqlWhere += ("and ij.startIngestion >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) and ij.startIngestion <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
+        
+        Json::Value responseRoot;
+        {
+            lastSQLCommand = 
+                string("select count(*) from MMS_IngestionRoot ir, MMS_IngestionJob ij ")
+                    + sqlWhere;
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            if (ingestionJobKey != -1)
+                preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+            if (startAndEndIngestionDatePresent)
+            {
+                preparedStatement->setString(queryParameterIndex++, startIngestionDate);
+                preparedStatement->setString(queryParameterIndex++, endIngestionDate);
+            }
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                field = "numFound";
+                responseRoot[field] = resultSet->getInt64(1);
+            }
+            else
+            {
+                string errorMessage ("select count(*) failed");
+
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+        
+        Json::Value ingestionJobsRoot(Json::arrayValue);
+        {            
+            lastSQLCommand = 
+                "select ij.ingestionJobKey, ij.label, ij.mediaItemKey, ij.physicalPathKey, ij.ingestionType, "
+                "DATE_FORMAT(convert_tz(ij.startIngestion, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as startIngestion, "
+                "DATE_FORMAT(convert_tz(ij.endIngestion, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endIngestion, "
+                "IF(ij.endIngestion is null, NOW(), ij.endIngestion) as newEndIngestion, ij.downloadingProgress, ij.uploadingProgress, "
+                "ij.status, ij.errorMessage from MMS_IngestionRoot ir, MMS_IngestionJob ij "
+                + sqlWhere
+                + "order by ij.startIngestion, newEndIngestion " + (asc ? " asc " : " desc ")
+                + "limit ? offset ?";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            if (ingestionJobKey != -1)
+                preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+            if (startAndEndIngestionDatePresent)
+            {
+                preparedStatement->setString(queryParameterIndex++, startIngestionDate);
+                preparedStatement->setString(queryParameterIndex++, endIngestionDate);
+            }
+            preparedStatement->setInt(queryParameterIndex++, rows);
+            preparedStatement->setInt(queryParameterIndex++, start);
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            while (resultSet->next())
+            {
+                Json::Value ingestionJobRoot = getIngestionJobRoot(
+                        resultSet, conn);
+
+                ingestionJobsRoot.append(ingestionJobRoot);
+            }
+        }
+        
+        field = "ingestionJobs";
+        responseRoot[field] = ingestionJobsRoot;
+        
+        field = "response";
+        statusListRoot[field] = responseRoot;
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
+        throw se;
+    }    
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
+        throw e;
+    } 
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
+        throw e;
+    } 
+    
+    return statusListRoot;
+}
+
+Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
+        int64_t workspaceKey, int64_t encodingJobKey,
+        int start, int rows,
+        bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
+        bool asc
+)
+{    
+    string      lastSQLCommand;
+    Json::Value statusListRoot;
+    
+    shared_ptr<MySQLConnection> conn;
+
+    try
+    {
+        string field;
+        
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        {
+            Json::Value requestParametersRoot;
+            
+            field = "start";
+            requestParametersRoot[field] = start;
+
+            field = "rows";
+            requestParametersRoot[field] = rows;
+            
+            if (encodingJobKey != -1)
+            {
+                field = "encodingJobKey";
+                requestParametersRoot[field] = encodingJobKey;
+            }
+            
+            if (startAndEndIngestionDatePresent)
+            {
+                field = "startIngestionDate";
+                requestParametersRoot[field] = startIngestionDate;
+
+                field = "endIngestionDate";
+                requestParametersRoot[field] = endIngestionDate;
+            }
+            
+            field = "requestParameters";
+            statusListRoot[field] = requestParametersRoot;
+        }
+        
+        string sqlWhere = string ("where ir.ingestionRootKey = ij.ingestionRootKey and ij.ingestionJobKey = ej.ingestionJobKey ");
+        sqlWhere += ("and ir.workspaceKey = ? ");
+        if (encodingJobKey != -1)
+            sqlWhere += ("and ej.encodingJobKey = ? ");
+        if (startAndEndIngestionDatePresent)
+            sqlWhere += ("and ij.startIngestion >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) and ij.startIngestion <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
+        
+        Json::Value responseRoot;
+        {
+            lastSQLCommand = 
+                string("select count(*) from MMS_IngestionRoot ir, MMS_IngestionJob ij, MMS_EncodingJob ej ")
+                    + sqlWhere;
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            if (encodingJobKey != -1)
+                preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
+            if (startAndEndIngestionDatePresent)
+            {
+                preparedStatement->setString(queryParameterIndex++, startIngestionDate);
+                preparedStatement->setString(queryParameterIndex++, endIngestionDate);
+            }
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                field = "numFound";
+                responseRoot[field] = resultSet->getInt64(1);
+            }
+            else
+            {
+                string errorMessage ("select count(*) failed");
+
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+        
+        Json::Value encodingJobsRoot(Json::arrayValue);
+        {            
+            lastSQLCommand = 
+                "select ej.encodingJobKey, ej.type, ej.parameters, ej.status, ej.encodingProgress, ej.failuresNumber, "
+                "DATE_FORMAT(convert_tz(ej.encodingJobStart, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as encodingJobStart, "
+                "DATE_FORMAT(convert_tz(ej.encodingJobEnd, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as encodingJobEnd, "
+                "IF(ij.endIngestion is null, NOW(), ij.endIngestion) as newEndIngestion "
+                "from MMS_IngestionRoot ir, MMS_IngestionJob ij, MMS_EncodingJob ej "
+                + sqlWhere
+                + "order by ij.startIngestion, newEndIngestion " + (asc ? " asc " : " desc ")
+                + "limit ? offset ?";
+            shared_ptr<sql::PreparedStatement> preparedStatementEncodingJob (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatementEncodingJob->setInt64(queryParameterIndex++, workspaceKey);
+            if (encodingJobKey != -1)
+                preparedStatementEncodingJob->setInt64(queryParameterIndex++, encodingJobKey);
+            if (startAndEndIngestionDatePresent)
+            {
+                preparedStatementEncodingJob->setString(queryParameterIndex++, startIngestionDate);
+                preparedStatementEncodingJob->setString(queryParameterIndex++, endIngestionDate);
+            }
+            preparedStatementEncodingJob->setInt(queryParameterIndex++, rows);
+            preparedStatementEncodingJob->setInt(queryParameterIndex++, start);
+            shared_ptr<sql::ResultSet> resultSetEncodingJob (preparedStatementEncodingJob->executeQuery());
+            while (resultSetEncodingJob->next())
+            {
+                Json::Value encodingJobRoot;
+
+                int64_t encodingJobKey = resultSetEncodingJob->getInt64("encodingJobKey");
+                
+                field = "encodingJobKey";
+                encodingJobRoot[field] = encodingJobKey;
+
+                field = "type";
+                encodingJobRoot[field] = static_cast<string>(resultSetEncodingJob->getString("type"));
+
+                {
+                    string parameters = resultSetEncodingJob->getString("parameters");
+
+                    Json::Value parametersRoot;
+                    if (parameters != "")
+                    {
+                        Json::CharReaderBuilder builder;
+                        Json::CharReader* reader = builder.newCharReader();
+                        string errors;
+
+                        bool parsingSuccessful = reader->parse(parameters.c_str(),
+                                parameters.c_str() + parameters.size(), 
+                                &parametersRoot, &errors);
+                        delete reader;
+
+                        if (!parsingSuccessful)
+                        {
+                            string errorMessage = __FILEREF__ + "failed to parse 'parameters'"
+                                    + ", encodingJobKey: " + to_string(encodingJobKey)
+                                    + ", errors: " + errors
+                                    + ", parameters: " + parameters
+                                    ;
+                            _logger->error(errorMessage);
+
+                            throw runtime_error(errorMessage);
+                        }
+                    }
+
+                    field = "parameters";
+                    encodingJobRoot[field] = parametersRoot;
+                }
+
+                field = "status";
+                encodingJobRoot[field] = static_cast<string>(resultSetEncodingJob->getString("status"));
+                EncodingStatus encodingStatus = MMSEngineDBFacade::toEncodingStatus(resultSetEncodingJob->getString("status"));
+
+                field = "progress";
+                if (resultSetEncodingJob->isNull("encodingProgress"))
+                    encodingJobRoot[field] = Json::nullValue;
+                else
+                    encodingJobRoot[field] = resultSetEncodingJob->getInt("encodingProgress");
+
+                field = "start";
+                if (encodingStatus == EncodingStatus::ToBeProcessed)
+                    encodingJobRoot[field] = Json::nullValue;
+                else
+                {
+                    if (resultSetEncodingJob->isNull("encodingJobStart"))
+                        encodingJobRoot[field] = Json::nullValue;
+                    else
+                        encodingJobRoot[field] = static_cast<string>(resultSetEncodingJob->getString("encodingJobStart"));
+                }
+
+                field = "end";
+                if (resultSetEncodingJob->isNull("encodingJobEnd"))
+                    encodingJobRoot[field] = Json::nullValue;
+                else
+                    encodingJobRoot[field] = static_cast<string>(resultSetEncodingJob->getString("encodingJobEnd"));
+
+                field = "failuresNumber";
+                encodingJobRoot[field] = resultSetEncodingJob->getInt("failuresNumber");  
+
+                encodingJobsRoot.append(encodingJobRoot);
+            }
+        }
+        
+        field = "encodingJobs";
+        responseRoot[field] = encodingJobsRoot;
+        
+        field = "response";
+        statusListRoot[field] = responseRoot;
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
+        throw se;
+    }    
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
+        throw e;
+    } 
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
+        throw e;
+    } 
+    
+    return statusListRoot;
+}
+
+Json::Value MMSEngineDBFacade::getIngestionJobRoot(
+        shared_ptr<sql::ResultSet> resultSet,
+        shared_ptr<MySQLConnection> conn
+)
+{
+    Json::Value ingestionJobRoot;
+    string      lastSQLCommand;
+    
+
+    try
+    {
+        int64_t ingestionJobKey = resultSet->getInt64("ingestionJobKey");
+
+        string field = "ingestionType";
+        ingestionJobRoot[field] = static_cast<string>(resultSet->getString("ingestionType"));
+        IngestionType ingestionType = toIngestionType(resultSet->getString("ingestionType"));
+
+        field = "ingestionJobKey";
+        ingestionJobRoot[field] = ingestionJobKey;
+
+        field = "label";
+        if (resultSet->isNull("label"))
+            ingestionJobRoot[field] = Json::nullValue;
+        else
+            ingestionJobRoot[field] = static_cast<string>(resultSet->getString("label"));
+
+        {
+            int64_t mediaItemKey = -1;
+            int64_t physicalPathKey = -1;
+
+            field = "mediaItemKey";
+            if (resultSet->isNull("mediaItemKey"))
+                ingestionJobRoot[field] = Json::nullValue;
+            else
+            {
+                mediaItemKey = resultSet->getInt64("mediaItemKey");
+
+                ingestionJobRoot[field] = mediaItemKey;
+            }
+
+            field = "physicalPathKey";
+            if (resultSet->isNull("physicalPathKey"))
+                ingestionJobRoot[field] = Json::nullValue;
+            else
+            {
+                physicalPathKey = resultSet->getInt64("physicalPathKey");
+
+                ingestionJobRoot[field] = physicalPathKey;
+            }
+
+            /*
+            if (mediaItemKey != -1)
+            {
+                MMSEngineDBFacade::ContentType contentType;
+
+                lastSQLCommand = 
+                    "select contentType from MMS_MediaItem where mediaItemKey = ?";
+                shared_ptr<sql::PreparedStatement> preparedStatementMediaItem (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                int queryParameterIndex = 1;
+                preparedStatementMediaItem->setInt64(queryParameterIndex++, mediaItemKey);
+
+                shared_ptr<sql::ResultSet> resultSetMediaItem (preparedStatementMediaItem->executeQuery());
+                if (resultSetMediaItem->next())
+                {
+                    contentType = MMSEngineDBFacade::toContentType(resultSetMediaItem->getString("contentType"));
+
+                    if (contentType == ContentType::Video)
+                    {
+                        int64_t durationInMilliSeconds;
+                        int videoWidth;
+                        int videoHeight;
+                        long bitRate;
+                        string videoCodecName;
+                        string videoProfile;
+                        string videoAvgFrameRate;
+                        long videoBitRate;
+                        string audioCodecName;
+                        long audioSampleRate;
+                        int audioChannels;
+                        long audioBitRate;
+
+                        tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
+                            videoDetails = getVideoDetails(mediaItemKey, physicalPathKey);
+
+                        tie(durationInMilliSeconds, bitRate,
+                            videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
+                            audioCodecName, audioSampleRate, audioChannels, audioBitRate) = videoDetails;
+
+                        Json::Value videoDetailsRoot;
+
+                        field = "durationInMilliSeconds";
+                        videoDetailsRoot[field] = durationInMilliSeconds;
+
+                        field = "videoWidth";
+                        videoDetailsRoot[field] = videoWidth;
+
+                        field = "videoHeight";
+                        videoDetailsRoot[field] = videoHeight;
+
+                        field = "bitRate";
+                        videoDetailsRoot[field] = (int64_t) bitRate;
+
+                        field = "videoCodecName";
+                        videoDetailsRoot[field] = videoCodecName;
+
+                        field = "videoProfile";
+                        videoDetailsRoot[field] = videoProfile;
+
+                        field = "videoAvgFrameRate";
+                        videoDetailsRoot[field] = videoAvgFrameRate;
+
+                        field = "videoBitRate";
+                        videoDetailsRoot[field] = (int64_t) videoBitRate;
+
+                        field = "audioCodecName";
+                        videoDetailsRoot[field] = audioCodecName;
+
+                        field = "audioSampleRate";
+                        videoDetailsRoot[field] = (int64_t) audioSampleRate;
+
+                        field = "audioChannels";
+                        videoDetailsRoot[field] = audioChannels;
+
+                        field = "audioBitRate";
+                        videoDetailsRoot[field] = (int64_t) audioBitRate;
+
+
+                        field = "videoDetails";
+                        ingestionJobRoot[field] = videoDetailsRoot;
+                    }
+                    else if (contentType == ContentType::Audio)
+                    {
+                        int64_t durationInMilliSeconds;
+                        string codecName;
+                        long bitRate;
+                        long sampleRate;
+                        int channels;
+
+                        tuple<int64_t,string,long,long,int>
+                            audioDetails = getAudioDetails(mediaItemKey, physicalPathKey);
+
+                        tie(durationInMilliSeconds, codecName, bitRate, sampleRate, channels) 
+                                = audioDetails;
+
+                        Json::Value audioDetailsRoot;
+
+                        field = "durationInMilliSeconds";
+                        audioDetailsRoot[field] = durationInMilliSeconds;
+
+                        field = "codecName";
+                        audioDetailsRoot[field] = codecName;
+
+                        field = "bitRate";
+                        audioDetailsRoot[field] = (int64_t) bitRate;
+
+                        field = "sampleRate";
+                        audioDetailsRoot[field] = (int64_t) sampleRate;
+
+                        field = "channels";
+                        audioDetailsRoot[field] = channels;
+
+
+                        field = "audioDetails";
+                        ingestionJobRoot[field] = audioDetailsRoot;
+                    }
+                    else if (contentType == ContentType::Image)
+                    {
+                        int width;
+                        int height;
+                        string format;
+                        int quality;
+
+                        tuple<int,int,string,int>
+                            imageDetails = getImageDetails(mediaItemKey, physicalPathKey);
+
+                        tie(width, height, format, quality) 
+                                = imageDetails;
+
+                        Json::Value imageDetailsRoot;
+
+                        field = "width";
+                        imageDetailsRoot[field] = width;
+
+                        field = "height";
+                        imageDetailsRoot[field] = height;
+
+                        field = "format";
+                        imageDetailsRoot[field] = format;
+
+                        field = "quality";
+                        imageDetailsRoot[field] = quality;
+
+
+                        field = "imageDetails";
+                        ingestionJobRoot[field] = imageDetailsRoot;
+                    }
+                    else
+                    {
+                        string errorMessage = __FILEREF__ + "ContentType unmanaged"
+                            + ", mediaItemKey: " + to_string(mediaItemKey)
+                            + ", lastSQLCommand: " + lastSQLCommand
+                        ;
+                        _logger->error(errorMessage);
+
+                        throw runtime_error(errorMessage);  
+                    }
+                }
+                else
+                {
+                    // the MIK could be removed
+
+//                    string errorMessage = __FILEREF__ + "MediaItemKey is not found"
+//                        + ", mediaItemKey: " + to_string(mediaItemKey)
+//                        + ", lastSQLCommand: " + lastSQLCommand
+//                    ;
+//                    _logger->error(errorMessage);
+//
+//                    throw runtime_error(errorMessage);  
+                }
+            }
+            */
+        }
+
+        field = "startIngestion";
+        ingestionJobRoot[field] = static_cast<string>(resultSet->getString("startIngestion"));
+
+        field = "endIngestion";
+        if (resultSet->isNull("endIngestion"))
+            ingestionJobRoot[field] = Json::nullValue;
+        else
+            ingestionJobRoot[field] = static_cast<string>(resultSet->getString("endIngestion"));
+
+        if (ingestionType == IngestionType::AddContent)
+        {
+            field = "downloadingProgress";
+            if (resultSet->isNull("downloadingProgress"))
+                ingestionJobRoot[field] = Json::nullValue;
+            else
+                ingestionJobRoot[field] = resultSet->getInt64("downloadingProgress");
+        }
+
+        if (ingestionType == IngestionType::AddContent)
+        {
+            field = "uploadingProgress";
+            if (resultSet->isNull("uploadingProgress"))
+                ingestionJobRoot[field] = Json::nullValue;
+            else
+                ingestionJobRoot[field] = resultSet->getInt64("uploadingProgress");
+        }
+
+        field = "status";
+        ingestionJobRoot[field] = static_cast<string>(resultSet->getString("status"));
+
+        field = "errorMessage";
+        if (resultSet->isNull("errorMessage"))
+            ingestionJobRoot[field] = Json::nullValue;
+        else
+            ingestionJobRoot[field] = static_cast<string>(resultSet->getString("errorMessage"));
+
+        if (ingestionType == IngestionType::Encode 
+                || ingestionType == IngestionType::OverlayImageOnVideo
+                || ingestionType == IngestionType::OverlayTextOnVideo)
+        {
+            lastSQLCommand = 
+                "select encodingJobKey, type, parameters, status, encodingProgress, "
+                "DATE_FORMAT(convert_tz(encodingJobStart, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as encodingJobStart, "
+                "DATE_FORMAT(convert_tz(encodingJobEnd, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as encodingJobEnd, "
+                "failuresNumber from MMS_EncodingJob where ingestionJobKey = ?";
+
+            shared_ptr<sql::PreparedStatement> preparedStatementEncodingJob (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatementEncodingJob->setInt64(queryParameterIndex++, ingestionJobKey);
+            shared_ptr<sql::ResultSet> resultSetEncodingJob (preparedStatementEncodingJob->executeQuery());
+            if (resultSetEncodingJob->next())
+            {
+                Json::Value encodingJobRoot;
+
+                int64_t encodingJobKey = resultSetEncodingJob->getInt64("encodingJobKey");
+                
+                field = "encodingJobKey";
+                encodingJobRoot[field] = encodingJobKey;
+
+                field = "type";
+                encodingJobRoot[field] = static_cast<string>(resultSetEncodingJob->getString("type"));
+
+                {
+                    string parameters = resultSetEncodingJob->getString("parameters");
+
+                    Json::Value parametersRoot;
+                    if (parameters != "")
+                    {
+                        Json::CharReaderBuilder builder;
+                        Json::CharReader* reader = builder.newCharReader();
+                        string errors;
+
+                        bool parsingSuccessful = reader->parse(parameters.c_str(),
+                                parameters.c_str() + parameters.size(), 
+                                &parametersRoot, &errors);
+                        delete reader;
+
+                        if (!parsingSuccessful)
+                        {
+                            string errorMessage = __FILEREF__ + "failed to parse 'parameters'"
+                                    + ", encodingJobKey: " + to_string(encodingJobKey)
+                                    + ", errors: " + errors
+                                    + ", parameters: " + parameters
+                                    ;
+                            _logger->error(errorMessage);
+
+                            throw runtime_error(errorMessage);
+                        }
+                    }
+
+                    field = "parameters";
+                    encodingJobRoot[field] = parametersRoot;
+                }
+
+                field = "status";
+                encodingJobRoot[field] = static_cast<string>(resultSetEncodingJob->getString("status"));
+                EncodingStatus encodingStatus = MMSEngineDBFacade::toEncodingStatus(resultSetEncodingJob->getString("status"));
+
+                field = "progress";
+                if (resultSetEncodingJob->isNull("encodingProgress"))
+                    encodingJobRoot[field] = Json::nullValue;
+                else
+                    encodingJobRoot[field] = resultSetEncodingJob->getInt("encodingProgress");
+
+                field = "start";
+                if (encodingStatus == EncodingStatus::ToBeProcessed)
+                    encodingJobRoot[field] = Json::nullValue;
+                else
+                {
+                    if (resultSetEncodingJob->isNull("encodingJobStart"))
+                        encodingJobRoot[field] = Json::nullValue;
+                    else
+                        encodingJobRoot[field] = static_cast<string>(resultSetEncodingJob->getString("encodingJobStart"));
+                }
+
+                field = "end";
+                if (resultSetEncodingJob->isNull("encodingJobEnd"))
+                    encodingJobRoot[field] = Json::nullValue;
+                else
+                    encodingJobRoot[field] = static_cast<string>(resultSetEncodingJob->getString("encodingJobEnd"));
+
+                field = "failuresNumber";
+                encodingJobRoot[field] = resultSetEncodingJob->getInt("failuresNumber");  
+
+                field = "encodingJob";
+                ingestionJobRoot[field] = encodingJobRoot;
+            }
+        }
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
+        throw se;
+    }    
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
+        throw e;
+    } 
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
+        throw e;
+    } 
+    
+    return ingestionJobRoot;
+}
+
+Json::Value MMSEngineDBFacade::getMediaItemsList (
+        int64_t workspaceKey, int64_t mediaItemKey,
+        int start, int rows,
+        bool contentTypePresent, ContentType contentType,
+        bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate
+)
+{    
+    string      lastSQLCommand;
+    Json::Value mediaItemsListRoot;
+    
+    shared_ptr<MySQLConnection> conn;
+
+    try
+    {
+        string field;
+        
+        _logger->info(__FILEREF__ + "getMediaItemsList"
             + ", workspaceKey: " + to_string(workspaceKey)
             + ", mediaItemKey: " + to_string(mediaItemKey)
             + ", start: " + to_string(start)
@@ -4477,7 +5130,7 @@ Json::Value MMSEngineDBFacade::getContentList (
             }
             
             field = "requestParameters";
-            contentListRoot[field] = requestParametersRoot;
+            mediaItemsListRoot[field] = requestParametersRoot;
         }
         
         string sqlWhere = string ("where workspaceKey = ? ");
@@ -4763,7 +5416,7 @@ Json::Value MMSEngineDBFacade::getContentList (
                     Json::Value mediaItemProfilesRoot(Json::arrayValue);
                     
                     lastSQLCommand = 
-                        "select physicalPathKey, encodingProfileKey, sizeInBytes, "
+                        "select physicalPathKey, fileName, encodingProfileKey, sizeInBytes, "
                         "DATE_FORMAT(convert_tz(creationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as creationDate "
                         "from MMS_PhysicalPath where mediaItemKey = ?";
 
@@ -4778,6 +5431,17 @@ Json::Value MMSEngineDBFacade::getContentList (
                         field = "physicalPathKey";
                         profileRoot[field] = resultSetProfiles->getInt64("physicalPathKey");
 
+
+                        field = "fileFormat";
+                        string fileName = resultSetProfiles->getString("fileName");
+                        size_t extensionIndex = fileName.find_last_of(".");
+                        if (extensionIndex == string::npos)
+                        {
+                            profileRoot[field] = Json::nullValue;
+                        }
+                        else
+                            profileRoot[field] = fileName.substr(extensionIndex + 1);
+                        
                         field = "encodingProfileKey";
                         if (resultSetProfiles->isNull("encodingProfileKey"))
                             profileRoot[field] = Json::nullValue;
@@ -4794,7 +5458,7 @@ Json::Value MMSEngineDBFacade::getContentList (
                         mediaItemProfilesRoot.append(profileRoot);
                     }
                     
-                    field = "profiles";
+                    field = "physicalPaths";
                     mediaItemRoot[field] = mediaItemProfilesRoot;
                 }
 
@@ -4806,7 +5470,7 @@ Json::Value MMSEngineDBFacade::getContentList (
         responseRoot[field] = mediaItemsRoot;
 
         field = "response";
-        contentListRoot[field] = responseRoot;
+        mediaItemsListRoot[field] = responseRoot;
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -4857,7 +5521,7 @@ Json::Value MMSEngineDBFacade::getContentList (
         throw e;
     } 
     
-    return contentListRoot;
+    return mediaItemsListRoot;
 }
 
 Json::Value MMSEngineDBFacade::getEncodingProfilesSetList (
@@ -5187,7 +5851,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfileList (
         Json::Value encodingProfilesRoot(Json::arrayValue);
         {                    
             lastSQLCommand = 
-                string ("select encodingProfileKey, label, technology, jsonProfile from MMS_EncodingProfile ") 
+                string ("select encodingProfileKey, label, contentType, technology, jsonProfile from MMS_EncodingProfile ") 
                 + sqlWhere;
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -5207,6 +5871,9 @@ Json::Value MMSEngineDBFacade::getEncodingProfileList (
 
                 field = "label";
                 encodingProfileRoot[field] = static_cast<string>(resultSet->getString("label"));
+
+                field = "contentType";
+                encodingProfileRoot[field] = static_cast<string>(resultSet->getString("contentType"));
 
                 field = "technology";
                 encodingProfileRoot[field] = static_cast<string>(resultSet->getString("technology"));
@@ -7823,13 +8490,15 @@ int MMSEngineDBFacade::addEncodingJob (
             preparedStatement->executeUpdate();
         }
         
-        {            
+        {     
+            IngestionStatus newIngestionStatus = IngestionStatus::EncodingQueued;
+            
             lastSQLCommand = 
                 "update MMS_IngestionJob set status = ?, processorMMS = NULL where ingestionJobKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::EncodingQueued));
+            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(newIngestionStatus));
             preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 
             int rowsUpdated = preparedStatement->executeUpdate();
@@ -7844,6 +8513,8 @@ int MMSEngineDBFacade::addEncodingJob (
 
                 throw runtime_error(errorMessage);                    
             }
+
+            manageIngestionJobStatusUpdate (ingestionJobKey, newIngestionStatus, conn);
         }
 
         // conn->_sqlConnection->commit(); OR execute COMMIT
@@ -8186,12 +8857,14 @@ int MMSEngineDBFacade::addOverlayImageOnVideoJob (
         }
         
         {            
+            IngestionStatus newIngestionStatus = IngestionStatus::EncodingQueued;
+
             lastSQLCommand = 
                 "update MMS_IngestionJob set status = ?, processorMMS = NULL where ingestionJobKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::EncodingQueued));
+            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(newIngestionStatus));
             preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 
             int rowsUpdated = preparedStatement->executeUpdate();
@@ -8206,6 +8879,8 @@ int MMSEngineDBFacade::addOverlayImageOnVideoJob (
 
                 throw runtime_error(errorMessage);                    
             }
+
+            manageIngestionJobStatusUpdate (ingestionJobKey, newIngestionStatus, conn);
         }
 
         // conn->_sqlConnection->commit(); OR execute COMMIT
@@ -8491,12 +9166,14 @@ int MMSEngineDBFacade::addOverlayTextOnVideoJob (
         }
         
         {            
+            IngestionStatus newIngestionStatus = IngestionStatus::EncodingQueued;
+
             lastSQLCommand = 
                 "update MMS_IngestionJob set status = ?, processorMMS = NULL where ingestionJobKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::EncodingQueued));
+            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(newIngestionStatus));
             preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 
             int rowsUpdated = preparedStatement->executeUpdate();
@@ -8511,6 +9188,8 @@ int MMSEngineDBFacade::addOverlayTextOnVideoJob (
 
                 throw runtime_error(errorMessage);                    
             }
+
+            manageIngestionJobStatusUpdate (ingestionJobKey, newIngestionStatus, conn);
         }
 
         // conn->_sqlConnection->commit(); OR execute COMMIT
@@ -10118,6 +10797,8 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", newIngestionStatus: " + MMSEngineDBFacade::toString(newIngestionStatus)
             );
+
+            manageIngestionJobStatusUpdate (ingestionJobKey, newIngestionStatus, conn);
         }
 
         // conn->_sqlConnection->commit(); OR execute COMMIT
@@ -12092,9 +12773,11 @@ void MMSEngineDBFacade::createTablesIfNeeded()
             lastSQLCommand = 
                 "create table if not exists MMS_IngestionRoot ("
                     "ingestionRootKey           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
-                    "workspaceKey                BIGINT UNSIGNED NOT NULL,"
+                    "workspaceKey               BIGINT UNSIGNED NOT NULL,"
                     "type                       VARCHAR (64) NOT NULL,"
                     "label                      VARCHAR (128) NULL,"
+                    "IngestionDate              TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+                    "status           			VARCHAR (64) NOT NULL,"
                     "constraint MMS_IngestionRoot_PK PRIMARY KEY (ingestionRootKey), "
                     "constraint MMS_IngestionRoot_FK foreign key (workspaceKey) "
                         "references MMS_Workspace (workspaceKey) on delete cascade) "	   	        				
@@ -12118,6 +12801,25 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         {
             lastSQLCommand = 
                 "create index MMS_IngestionRoot_idx on MMS_IngestionRoot (workspaceKey, label)";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }    
+
+        try
+        {
+            lastSQLCommand = 
+                "create index MMS_IngestionRoot_idx2 on MMS_IngestionRoot (workspaceKey, ingestionDate)";
             statement->execute(lastSQLCommand);
         }
         catch(sql::SQLException se)

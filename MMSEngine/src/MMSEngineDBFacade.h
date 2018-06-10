@@ -558,6 +558,43 @@ public:
         return (isIngestionStatusFinalState(ingestionStatus) && ingestionStatus != IngestionStatus::End_TaskSuccess);
     }
 
+    enum class IngestionRootStatus {
+        NotCompleted,
+        CompletedSuccessful,
+        CompletedWithFailures
+    };
+    static const char* toString(const IngestionRootStatus& ingestionRootStatus)
+    {
+        switch (ingestionRootStatus)
+        {
+            case IngestionRootStatus::NotCompleted:
+                return "NotCompleted";
+            case IngestionRootStatus::CompletedSuccessful:
+                return "CompletedSuccessful";
+            case IngestionRootStatus::CompletedWithFailures:
+                return "CompletedWithFailures";
+            default:
+            throw runtime_error(string("Wrong IngestionRootStatus"));
+        }
+    }
+    static IngestionRootStatus toIngestionRootStatus(const string& ingestionRootStatus)
+    {
+        string lowerCase;
+        lowerCase.resize(ingestionRootStatus.size());
+        transform(ingestionRootStatus.begin(), ingestionRootStatus.end(), lowerCase.begin(), [](unsigned char c){return tolower(c); } );
+
+        if (lowerCase == "notcompleted")
+            return IngestionRootStatus::NotCompleted;
+        if (lowerCase == "completedsuccessful")
+            return IngestionRootStatus::CompletedSuccessful;
+        if (lowerCase == "completedwithfailures")
+            return IngestionRootStatus::CompletedWithFailures;
+        else
+            throw runtime_error(string("Wrong IngestionRootStatus")
+                    + ", ingestionRootStatus: " + ingestionRootStatus
+                    );
+    }
+    
 public:
     MMSEngineDBFacade(
         Json::Value configuration,
@@ -601,7 +638,7 @@ public:
 
     tuple<int64_t,shared_ptr<Workspace>,bool,bool> checkAPIKey (string apiKey);
 
-    void login (
+    int64_t login (
         string eMailAddress, string password, 
         vector<tuple<string,string,bool>>& vWorkspaceNameAPIKeyAndIfOwner);
 
@@ -704,11 +741,25 @@ public:
         int64_t ingestionJobKey,
         bool sourceBinaryTransferred);
 
-    Json::Value getIngestionJobStatus (
-        int64_t workspaceKey,
-        int64_t ingestionRootKey, int64_t ingestionJobKey);
+    Json::Value getIngestionRootsStatus (
+        int64_t workspaceKey, int64_t ingestionRootKey,
+        int start, int rows,
+        bool startAndEndIngestionDatePresent, 
+        string startIngestionDate, string endIngestionDate);
 
-    Json::Value getContentList (
+    Json::Value getIngestionJobsStatus (
+        int64_t workspaceKey, int64_t ingestionJobKey,
+        int start, int rows,
+        bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
+        bool asc);
+
+    Json::Value getEncodingJobsStatus (
+        int64_t workspaceKey, int64_t encodingJobKey,
+        int start, int rows,
+        bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
+        bool asc);
+
+    Json::Value getMediaItemsList (
         int64_t workspaceKey, int64_t mediaItemKey,
         int start, int rows,
         bool contentTypePresent, ContentType contentType,
@@ -957,6 +1008,15 @@ private:
         int imageQuality
     );
     
+    Json::Value getIngestionJobRoot(
+        shared_ptr<sql::ResultSet> resultSet,
+        shared_ptr<MySQLConnection> conn);
+
+    void manageIngestionJobStatusUpdate (
+        int64_t ingestionJobKey,
+        IngestionStatus newIngestionStatus,
+        shared_ptr<MySQLConnection> conn);
+
     // void getTerritories(shared_ptr<Workspace> workspace);
 
     void createTablesIfNeeded();

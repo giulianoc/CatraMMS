@@ -260,7 +260,7 @@ int APICommon::operator()()
         }
 
         tuple<int64_t,shared_ptr<Workspace>,bool, bool> userKeyWorkspaceAndFlags;
-        if (!registrationRequest(requestURI, queryParameters))
+        if (basicAuthenticationRequired(requestURI, queryParameters))
         {
             try
             {
@@ -432,12 +432,12 @@ int APICommon::operator()()
     return 0;
 }
 
-bool APICommon::registrationRequest(
+bool APICommon::basicAuthenticationRequired(
     string requestURI,
     unordered_map<string, string> queryParameters
 )
 {
-    bool        registrationRequest = false;
+    bool        basicAuthenticationRequired = true;
     
     auto methodIt = queryParameters.find("method");
     if (methodIt == queryParameters.end())
@@ -451,19 +451,20 @@ bool APICommon::registrationRequest(
 
     if (method == "registerUser"
             || method == "confirmUser"
+            || method == "login"
             )
     {
-        registrationRequest = true;
+        basicAuthenticationRequired = false;
     }
     
     // This is the authorization asked when the deliveryURL is received by nginx
     // Here the token is checked and it is not needed any basic authorization
     if (requestURI == "/catramms/delivery/authorization")
     {
-        registrationRequest = true;
+        basicAuthenticationRequired = false;
     }
     
-    return registrationRequest;
+    return basicAuthenticationRequired;
 }
 
 int APICommon::manageBinaryRequest()

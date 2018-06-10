@@ -99,24 +99,36 @@ private:
         FCGX_Request& request,
         string requestBody);
 
-    void ingestionStatus(
+    void ingestionRootsStatus(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
 
-    void contentList(
+    void ingestionJobsStatus(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
 
-    void encodingProfilesSetList(
+    void encodingJobsStatus(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody);
+
+    void mediaItemsList(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody);
+
+    void encodingProfilesSetsList(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters);
 
-    void encodingProfileList(
+    void encodingProfilesList(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters);

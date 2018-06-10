@@ -54,23 +54,36 @@ server {
 		}
 
 		if ($request_method = GET) {
-			rewrite ^/catramms/(v[0-9]+)/ingestion/([0-9]+)/?([0-9]*)/?$ /api?version=$1&method=ingestionStatus&ingestionRootKey=$2&ingestionJobKey=$3 last;
+			rewrite ^/catramms/(v[0-9]+)/ingestionRoots/?([0-9]*)/?$ /api?version=$1&method=ingestionRootsStatus&ingestionRootKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/ingestionJobs/?([0-9]*)/?$ /api?version=$1&method=ingestionJobsStatus&ingestionJobKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/encodingJobs/?([0-9]*)/?$ /api?version=$1&method=encodingJobsStatus&encodingJobKey=$2 last;
 		}
 		if ($request_method = POST) {
 			rewrite ^/catramms/(v[0-9]+)/ingestion/?$ /api?version=$1&method=ingestion last;
 		}
 
 		if ($request_method = GET) {
-			rewrite ^/catramms/(v[0-9]+)/content/?([0-9]*)/?$ /api?version=$1&method=contentList&mediaItemKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/mediaItems/?([0-9]*)/?$ /api?version=$1&method=mediaItemsList&mediaItemKey=$2 last;
 		}
 
+		if ($request_method = GET) {
+			rewrite ^/catramms/(v[0-9]+)/profile/([0-9]+)/?$ /api?version=$1&method=encodingProfilesList&encodingProfileKey=$2 last;
+		}
+		if ($request_method = GET) {
+			rewrite ^/catramms/(v[0-9]+)/profilesSets/video/?([0-9]*)/?$ /api?version=$1&method=encodingProfilesSetsList&contentType=video&encodingProfilesSetKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/profiles/video/?([0-9]*)/?$ /api?version=$1&method=encodingProfilesList&contentType=video&encodingProfileKey=$2 last;
+		}
+		if ($request_method = GET) {
+			rewrite ^/catramms/(v[0-9]+)/profilesSets/audio/?([0-9]*)/?$ /api?version=$1&method=encodingProfilesSetsList&contentType=audio&encodingProfilesSetKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/profiles/audio/?([0-9]*)/?$ /api?version=$1&method=encodingProfilesList&contentType=audio&encodingProfileKey=$2 last;
+		}
+		if ($request_method = GET) {
+			rewrite ^/catramms/(v[0-9]+)/profilesSets/image/?([0-9]*)/?$ /api?version=$1&method=encodingProfilesSetsList&contentType=image&encodingProfilesSetKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/profiles/image/?([0-9]*)/?$ /api?version=$1&method=encodingProfilesList&contentType=image&encodingProfileKey=$2 last;
+		}
 		if ($request_method = PUT) {
 			rewrite ^/catramms/(v[0-9]+)/profilesSet/video/?$ /api?version=$1&method=addEncodingProfilesSet&contentType=video last;
 			rewrite ^/catramms/(v[0-9]+)/profile/video/?$ /api?version=$1&method=addEncodingProfile&contentType=video last;
-		}
-		if ($request_method = GET) {
-			rewrite ^/catramms/(v[0-9]+)/profilesSet/video/?([0-9]*)/?$ /api?version=$1&method=encodingProfilesSetList&contentType=video&encodingProfilesSetKey=$2 last;
-			rewrite ^/catramms/(v[0-9]+)/profile/video/?([0-9]*)/?$ /api?version=$1&method=encodingProfileList&contentType=video&encodingProfileKey=$2 last;
 		}
 		if ($request_method = PUT) {
 			rewrite ^/catramms/(v[0-9]+)/profilesSet/audio/?$ /api?version=$1&method=addEncodingProfilesSet&contentType=audio last;

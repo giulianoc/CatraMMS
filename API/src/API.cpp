@@ -532,10 +532,10 @@ void API::manageRequestAndResponse(
         
         ingestion(request, get<1>(userKeyWorkspaceAndFlags), queryParameters, requestBody);
     }
-    else if (method == "ingestionStatus")
+    else if (method == "ingestionRootsStatus")
     {
         /*
-        bool isUserAPI = get<2>(userKeyWorkspaceAndFlags);
+        bool isUserAPI = get"ingestion<2>(userKeyWorkspaceAndFlags);
         if (!isUserAPI)
         {
             string errorMessage = string("APIKey flags does not have the USER permission"
@@ -549,9 +549,47 @@ void API::manageRequestAndResponse(
         }
         */
         
-        ingestionStatus(request, get<1>(userKeyWorkspaceAndFlags), queryParameters, requestBody);
+        ingestionRootsStatus(request, get<1>(userKeyWorkspaceAndFlags), queryParameters, requestBody);
     }
-    else if (method == "contentList")
+    else if (method == "ingestionJobsStatus")
+    {
+        /*
+        bool isUserAPI = get"ingestion<2>(userKeyWorkspaceAndFlags);
+        if (!isUserAPI)
+        {
+            string errorMessage = string("APIKey flags does not have the USER permission"
+                    ", isUserAPI: " + to_string(isUserAPI)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        */
+        
+        ingestionJobsStatus(request, get<1>(userKeyWorkspaceAndFlags), queryParameters, requestBody);
+    }
+    else if (method == "encodingJobsStatus")
+    {
+        /*
+        bool isUserAPI = get"ingestion<2>(userKeyWorkspaceAndFlags);
+        if (!isUserAPI)
+        {
+            string errorMessage = string("APIKey flags does not have the USER permission"
+                    ", isUserAPI: " + to_string(isUserAPI)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        */
+        
+        encodingJobsStatus(request, get<1>(userKeyWorkspaceAndFlags), queryParameters, requestBody);
+    }
+    else if (method == "mediaItemsList")
     {
         /*
         bool isUserAPI = get<2>(userKeyWorkspaceAndFlags);
@@ -568,7 +606,7 @@ void API::manageRequestAndResponse(
         }
         */
         
-        contentList(request, get<1>(userKeyWorkspaceAndFlags), queryParameters, requestBody);
+        mediaItemsList(request, get<1>(userKeyWorkspaceAndFlags), queryParameters, requestBody);
     }
     else if (method == "uploadedBinary")
     {
@@ -611,7 +649,7 @@ void API::manageRequestAndResponse(
         addEncodingProfilesSet(request, get<1>(userKeyWorkspaceAndFlags),
             queryParameters, requestBody);
     }
-    else if (method == "encodingProfilesSetList")
+    else if (method == "encodingProfilesSetsList")
     {
         /*
         bool isUserAPI = get<2>(userKeyWorkspaceAndFlags);
@@ -628,7 +666,7 @@ void API::manageRequestAndResponse(
         }
         */
         
-        encodingProfilesSetList(request, get<1>(userKeyWorkspaceAndFlags), queryParameters);
+        encodingProfilesSetsList(request, get<1>(userKeyWorkspaceAndFlags), queryParameters);
     }
     else if (method == "addEncodingProfile")
     {
@@ -650,7 +688,7 @@ void API::manageRequestAndResponse(
         addEncodingProfile(request, get<1>(userKeyWorkspaceAndFlags),
             queryParameters, requestBody);
     }
-    else if (method == "encodingProfileList")
+    else if (method == "encodingProfilesList")
     {
         /*
         bool isUserAPI = get<2>(userKeyWorkspaceAndFlags);
@@ -667,7 +705,7 @@ void API::manageRequestAndResponse(
         }
         */
         
-        encodingProfileList(request, get<1>(userKeyWorkspaceAndFlags), queryParameters);
+        encodingProfilesList(request, get<1>(userKeyWorkspaceAndFlags), queryParameters);
     }
     else if (method == "testEmail")
     {
@@ -1577,19 +1615,24 @@ void API::login(
             
             vector<tuple<string,string,bool>> vWorkspaceNameAPIKeyAndIfOwner;
             
-            _mmsEngineDBFacade->login(
+            int userKey = _mmsEngineDBFacade->login(
                     email, 
                     password,
                     vWorkspaceNameAPIKeyAndIfOwner
                 );
 
             _logger->info(__FILEREF__ + "Login User"
+                + ", userKey: " + to_string(userKey)
                 + ", vWorkspaceNameAPIKeyAndIfOwner.size: " + to_string(vWorkspaceNameAPIKeyAndIfOwner.size())
                 + ", email: " + email
             );
             
-            string responseBody = string("{ ")
-                    + "[ ";
+            string responseBody = string("{ ");
+
+            responseBody += ("\"userKey\": " + to_string(userKey) + ", ");
+            
+            responseBody += ("\"workspaces\": [ ");
+
             bool firstEntry = true;
             for (tuple<string,string,bool> workspaceNameAPIKeyAndIfOwner: vWorkspaceNameAPIKeyAndIfOwner)
             {
@@ -1602,10 +1645,11 @@ void API::login(
                 if (!firstEntry)
                     responseBody += ", ";
                 
+                string owner = ifOwner ? "true" : "false";
                 responseBody += ("{ ");
                 responseBody += ("\"workspaceName\": \"" + workspaceName + "\", ");
                 responseBody += ("\"apiKey\": \"" + apiKey + "\", ");
-                responseBody += ("\"owner\": " + to_string(ifOwner) + " ");
+                responseBody += ("\"owner\": " + owner + " ");
                 responseBody += ("} ");
 
                 if (firstEntry)
@@ -1615,7 +1659,7 @@ void API::login(
             responseBody += ("] ");
             responseBody += ("} ");
 
-            sendSuccess(request, 201, responseBody);            
+            sendSuccess(request, 200, responseBody);            
         }
         catch(LoginFailed e)
         {
@@ -1868,13 +1912,13 @@ void API::createDeliveryAuthorization(
     }
 }
 
-void API::ingestionStatus(
+void API::ingestionRootsStatus(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody)
 {
-    string api = "ingestionStatus";
+    string api = "ingestionRootsStatus";
 
     _logger->info(__FILEREF__ + "Received " + api
         + ", requestBody: " + requestBody
@@ -1882,24 +1926,45 @@ void API::ingestionStatus(
 
     try
     {
+        int64_t ingestionRootKey = -1;
         auto ingestionRootKeyIt = queryParameters.find("ingestionRootKey");
-        if (ingestionRootKeyIt == queryParameters.end())
+        if (ingestionRootKeyIt != queryParameters.end() && ingestionRootKeyIt->second != "")
         {
-            string errorMessage = string("The 'ingestionRootKey' parameter is not found");
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 400, errorMessage);
-
-            throw runtime_error(errorMessage);
+            ingestionRootKey = stoll(ingestionRootKeyIt->second);
         }
 
-        auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
-        
+        int start = 0;
+        auto startIt = queryParameters.find("start");
+        if (startIt != queryParameters.end() && startIt->second != "")
         {
-            Json::Value ingestionStatusRoot = _mmsEngineDBFacade->getIngestionJobStatus(
-                    workspace->_workspaceKey,
-                    stoll(ingestionRootKeyIt->second),
-                    ingestionJobKeyIt->second == "" ? -1 : stoll(ingestionJobKeyIt->second)
+            start = stoll(startIt->second);
+        }
+
+        int rows = 10;
+        auto rowsIt = queryParameters.find("rows");
+        if (rowsIt != queryParameters.end() && rowsIt->second != "")
+        {
+            rows = stoll(rowsIt->second);
+        }
+        
+        bool startAndEndIngestionDatePresent = false;
+        string startIngestionDate;
+        string endIngestionDate;
+        auto startIngestionDateIt = queryParameters.find("startIngestionDate");
+        auto endIngestionDateIt = queryParameters.find("endIngestionDate");
+        if (startIngestionDateIt != queryParameters.end() && endIngestionDateIt != queryParameters.end())
+        {
+            startIngestionDate = startIngestionDateIt->second;
+            endIngestionDate = endIngestionDateIt->second;
+            
+            startAndEndIngestionDatePresent = true;
+        }
+
+        {
+            Json::Value ingestionStatusRoot = _mmsEngineDBFacade->getIngestionRootsStatus(
+                    workspace->_workspaceKey, ingestionRootKey,
+                    start, rows,
+                    startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate
                     );
 
             Json::StreamWriterBuilder wbuilder;
@@ -1940,13 +2005,221 @@ void API::ingestionStatus(
     }
 }
 
-void API::contentList(
+void API::ingestionJobsStatus(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody)
 {
-    string api = "contentList";
+    string api = "ingestionJobsStatus";
+
+    _logger->info(__FILEREF__ + "Received " + api
+        + ", requestBody: " + requestBody
+    );
+
+    try
+    {
+        int64_t ingestionJobKey = -1;
+        auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
+        if (ingestionJobKeyIt != queryParameters.end() && ingestionJobKeyIt->second != "")
+        {
+            ingestionJobKey = stoll(ingestionJobKeyIt->second);
+        }
+
+        int start = 0;
+        auto startIt = queryParameters.find("start");
+        if (startIt != queryParameters.end() && startIt->second != "")
+        {
+            start = stoll(startIt->second);
+        }
+
+        int rows = 10;
+        auto rowsIt = queryParameters.find("rows");
+        if (rowsIt != queryParameters.end() && rowsIt->second != "")
+        {
+            rows = stoll(rowsIt->second);
+        }
+        
+        bool startAndEndIngestionDatePresent = false;
+        string startIngestionDate;
+        string endIngestionDate;
+        auto startIngestionDateIt = queryParameters.find("startIngestionDate");
+        auto endIngestionDateIt = queryParameters.find("endIngestionDate");
+        if (startIngestionDateIt != queryParameters.end() && endIngestionDateIt != queryParameters.end())
+        {
+            startIngestionDate = startIngestionDateIt->second;
+            endIngestionDate = endIngestionDateIt->second;
+            
+            startAndEndIngestionDatePresent = true;
+        }
+
+        bool asc = true;
+        auto ascIt = queryParameters.find("asc");
+        if (ascIt != queryParameters.end() && ascIt->second != "")
+        {
+            if (ascIt->second == "true")
+                asc = true;
+            else
+                asc = false;
+        }
+
+        {
+            Json::Value ingestionStatusRoot = _mmsEngineDBFacade->getIngestionJobsStatus(
+                    workspace->_workspaceKey, ingestionJobKey,
+                    start, rows,
+                    startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
+                    asc
+                    );
+
+            Json::StreamWriterBuilder wbuilder;
+            string responseBody = Json::writeString(wbuilder, ingestionStatusRoot);
+            
+            sendSuccess(request, 200, responseBody);
+        }
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error: ") + e.what();
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::encodingJobsStatus(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody)
+{
+    string api = "encodingJobsStatus";
+
+    _logger->info(__FILEREF__ + "Received " + api
+        + ", requestBody: " + requestBody
+    );
+
+    try
+    {
+        int64_t encodingJobKey = -1;
+        auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
+        if (encodingJobKeyIt != queryParameters.end() && encodingJobKeyIt->second != "")
+        {
+            encodingJobKey = stoll(encodingJobKeyIt->second);
+        }
+
+        int start = 0;
+        auto startIt = queryParameters.find("start");
+        if (startIt != queryParameters.end() && startIt->second != "")
+        {
+            start = stoll(startIt->second);
+        }
+
+        int rows = 10;
+        auto rowsIt = queryParameters.find("rows");
+        if (rowsIt != queryParameters.end() && rowsIt->second != "")
+        {
+            rows = stoll(rowsIt->second);
+        }
+        
+        bool startAndEndIngestionDatePresent = false;
+        string startIngestionDate;
+        string endIngestionDate;
+        auto startIngestionDateIt = queryParameters.find("startIngestionDate");
+        auto endIngestionDateIt = queryParameters.find("endIngestionDate");
+        if (startIngestionDateIt != queryParameters.end() && endIngestionDateIt != queryParameters.end())
+        {
+            startIngestionDate = startIngestionDateIt->second;
+            endIngestionDate = endIngestionDateIt->second;
+            
+            startAndEndIngestionDatePresent = true;
+        }
+
+        bool asc = true;
+        auto ascIt = queryParameters.find("asc");
+        if (ascIt != queryParameters.end() && ascIt->second != "")
+        {
+            if (ascIt->second == "true")
+                asc = true;
+            else
+                asc = false;
+        }
+
+        {
+            Json::Value encodingStatusRoot = _mmsEngineDBFacade->getEncodingJobsStatus(
+                    workspace->_workspaceKey, encodingJobKey,
+                    start, rows,
+                    startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
+                    asc
+                    );
+
+            Json::StreamWriterBuilder wbuilder;
+            string responseBody = Json::writeString(wbuilder, encodingStatusRoot);
+            
+            sendSuccess(request, 200, responseBody);
+        }
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error: ") + e.what();
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::mediaItemsList(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody)
+{
+    string api = "mediaItemsList";
 
     _logger->info(__FILEREF__ + "Received " + api
         + ", requestBody: " + requestBody
@@ -2000,7 +2273,7 @@ void API::contentList(
 
         {
             
-            Json::Value ingestionStatusRoot = _mmsEngineDBFacade->getContentList(
+            Json::Value ingestionStatusRoot = _mmsEngineDBFacade->getMediaItemsList(
                     workspace->_workspaceKey, mediaItemKey,
                     start, rows,
                     contentTypePresent, contentType,
@@ -2044,12 +2317,12 @@ void API::contentList(
     }
 }
 
-void API::encodingProfilesSetList(
+void API::encodingProfilesSetsList(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters)
 {
-    string api = "encodingProfilesSetList";
+    string api = "encodingProfilesSetsList";
 
     _logger->info(__FILEREF__ + "Received " + api
     );
@@ -2115,12 +2388,12 @@ void API::encodingProfilesSetList(
     }
 }
 
-void API::encodingProfileList(
+void API::encodingProfilesList(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters)
 {
-    string api = "encodingProfileList";
+    string api = "encodingProfilesList";
 
     _logger->info(__FILEREF__ + "Received " + api
     );
@@ -2145,7 +2418,6 @@ void API::encodingProfileList(
         }
         
         {
-            
             Json::Value encodingProfileListRoot = _mmsEngineDBFacade->getEncodingProfileList(
                     workspace->_workspaceKey, encodingProfileKey,
                     contentTypePresent, contentType);

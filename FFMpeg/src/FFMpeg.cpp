@@ -196,13 +196,14 @@ void FFMpeg::encodeContent(
 
             try
             {
-                int executeCommandStatus = ProcessUtility:: execute (ffmpegExecuteCommand);
+                int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
                 if (executeCommandStatus != 0)
                 {
                     string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+                        + ", executeCommandStatus: " + to_string(executeCommandStatus)
+                        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                     ;
                     _logger->error(errorMessage);
 
@@ -295,13 +296,14 @@ void FFMpeg::encodeContent(
 
                 try
                 {
-                    int executeCommandStatus = ProcessUtility:: execute (ffmpegExecuteCommand);
+                    int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
                     if (executeCommandStatus != 0)
                     {
                         string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
                             + ", encodingJobKey: " + to_string(encodingJobKey)
                             + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+                            + ", executeCommandStatus: " + to_string(executeCommandStatus)
+                            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                         ;            
                         _logger->error(errorMessage);
 
@@ -377,13 +379,14 @@ void FFMpeg::encodeContent(
                 _currentlyAtSecondPass = true;
                 try
                 {
-                    int executeCommandStatus = ProcessUtility:: execute (ffmpegExecuteCommand);
+                    int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
                     if (executeCommandStatus != 0)
                     {
                         string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
                             + ", encodingJobKey: " + to_string(encodingJobKey)
                             + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+                            + ", executeCommandStatus: " + to_string(executeCommandStatus)
+                            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                         ;            
                         _logger->error(errorMessage);
 
@@ -463,13 +466,14 @@ void FFMpeg::encodeContent(
 
                 try
                 {
-                    int executeCommandStatus = ProcessUtility:: execute (ffmpegExecuteCommand);
+                    int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
                     if (executeCommandStatus != 0)
                     {
                         string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
                             + ", encodingJobKey: " + to_string(encodingJobKey)
                             + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+                            + ", executeCommandStatus: " + to_string(executeCommandStatus)
+                            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                         ;            
                         _logger->error(errorMessage);
 
@@ -689,13 +693,14 @@ void FFMpeg::overlayImageOnVideo(
 
                 try
                 {
-                    int executeCommandStatus = ProcessUtility:: execute (ffmpegExecuteCommand);
+                    int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
                     if (executeCommandStatus != 0)
                     {
                         string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
                             + ", encodingJobKey: " + to_string(encodingJobKey)
                             + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+                            + ", executeCommandStatus: " + to_string(executeCommandStatus)
+                            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                         ;            
                         _logger->error(errorMessage);
 
@@ -969,12 +974,13 @@ void FFMpeg::overlayTextOnVideo(
 
                 try
                 {
-                    int executeCommandStatus = ProcessUtility:: execute (ffmpegExecuteCommand);
+                    int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
                     if (executeCommandStatus != 0)
                     {
                         string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
                             + ", encodingJobKey: " + to_string(encodingJobKey)
                             + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", executeCommandStatus: " + to_string(executeCommandStatus)
                             + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                         ;            
                         _logger->error(errorMessage);
@@ -1354,6 +1360,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
         if (executeCommandStatus != 0)
         {
             string errorMessage = __FILEREF__ + "ffmpeg: ffprobe command failed"
+                    + ", executeCommandStatus: " + to_string(executeCommandStatus)
                     + ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
             ;
 
@@ -1958,10 +1965,11 @@ vector<string> FFMpeg::generateFramesToIngest(
 
     try
     {
-        int executeCommandStatus = ProcessUtility::execute (ffmpegExecuteCommand);
+        int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
         if (executeCommandStatus != 0)
         {
             string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+                    + ", executeCommandStatus: " + to_string(executeCommandStatus)
                     + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
             ;
 
@@ -2110,10 +2118,11 @@ void FFMpeg::generateConcatMediaToIngest(
 
     try
     {
-        int executeCommandStatus = ProcessUtility::execute (ffmpegExecuteCommand);
+        int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
         if (executeCommandStatus != 0)
         {
             string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+                    + ", executeCommandStatus: " + to_string(executeCommandStatus)
                     + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
             ;
 
@@ -2201,10 +2210,11 @@ void FFMpeg::generateSlideshowMediaToIngest(
 
     try
     {
-        int executeCommandStatus = ProcessUtility::execute (ffmpegExecuteCommand);
+        int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
         if (executeCommandStatus != 0)
         {
             string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+                    + ", executeCommandStatus: " + to_string(executeCommandStatus)
                     + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
             ;
 
@@ -2274,10 +2284,11 @@ void FFMpeg::generateCutMediaToIngest(
 
     try
     {
-        int executeCommandStatus = ProcessUtility::execute (ffmpegExecuteCommand);
+        int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
         if (executeCommandStatus != 0)
         {
             string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+                    + ", executeCommandStatus: " + to_string(executeCommandStatus)
                     + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
             ;
 

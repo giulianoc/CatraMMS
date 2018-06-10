@@ -225,15 +225,35 @@ void FFMPEGEncoder::manageRequestAndResponse(
         
         try
         {            
+            selectedEncoding->_running = true;
+            
             _logger->info(__FILEREF__ + "Creating encodeContent thread"
                 + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
                 + ", requestBody: " + requestBody
             );
             thread encodeContentThread(&FFMPEGEncoder::encodeContent, this, selectedEncoding, encodingJobKey, requestBody);
             encodeContentThread.detach();
-            
-            // encodeContent(request, selectedEncoding, requestBody);
-            
+        }
+        catch(exception e)
+        {
+            selectedEncoding->_running = false;
+
+            _logger->error(__FILEREF__ + "encodeContentThread failed"
+                + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
+                + ", requestBody: " + requestBody
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        try
+        {            
             string responseBody = string("{ ")
                     + "\"encodingJobKey\": " + to_string(encodingJobKey) + " "
                     + ", \"ffmpegEncoderHost\": \"" + System::getHostName() + "\" "
@@ -305,15 +325,35 @@ void FFMPEGEncoder::manageRequestAndResponse(
         
         try
         {            
+            selectedEncoding->_running = true;
+
             _logger->info(__FILEREF__ + "Creating encodeContent thread"
                 + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
                 + ", requestBody: " + requestBody
             );
             thread overlayImageOnVideoThread(&FFMPEGEncoder::overlayImageOnVideo, this, selectedEncoding, encodingJobKey, requestBody);
             overlayImageOnVideoThread.detach();
-            
-            // encodeContent(request, selectedEncoding, requestBody);
-            
+        }
+        catch(exception e)
+        {
+            selectedEncoding->_running = false;
+
+            _logger->error(__FILEREF__ + "overlayImageOnVideoThread failed"
+                + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
+                + ", requestBody: " + requestBody
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        try
+        {            
             string responseBody = string("{ ")
                     + "\"encodingJobKey\": " + to_string(encodingJobKey) + " "
                     + ", \"ffmpegEncoderHost\": \"" + System::getHostName() + "\" "
@@ -385,15 +425,35 @@ void FFMPEGEncoder::manageRequestAndResponse(
         
         try
         {            
+            selectedEncoding->_running = true;
+
             _logger->info(__FILEREF__ + "Creating encodeContent thread"
                 + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
                 + ", requestBody: " + requestBody
             );
             thread overlayTextOnVideoThread(&FFMPEGEncoder::overlayTextOnVideo, this, selectedEncoding, encodingJobKey, requestBody);
             overlayTextOnVideoThread.detach();
+        }
+        catch(exception e)
+        {
+            selectedEncoding->_running = false;
             
-            // encodeContent(request, selectedEncoding, requestBody);
-            
+            _logger->error(__FILEREF__ + "overlayTextOnVideoThread failed"
+                + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
+                + ", requestBody: " + requestBody
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        try
+        {            
             string responseBody = string("{ ")
                     + "\"encodingJobKey\": " + to_string(encodingJobKey) + " "
                     + ", \"ffmpegEncoderHost\": \"" + System::getHostName() + "\" "
@@ -604,7 +664,6 @@ void FFMPEGEncoder::encodeContent(
 
     try
     {
-        encoding->_running = true;
         encoding->_encodingJobKey = encodingJobKey;
         /*
         {
@@ -770,7 +829,6 @@ void FFMPEGEncoder::overlayImageOnVideo(
 
     try
     {
-        encoding->_running = true;
         encoding->_encodingJobKey = encodingJobKey;
 
         Json::Value overlayMedatada;
@@ -912,7 +970,6 @@ void FFMPEGEncoder::overlayTextOnVideo(
 
     try
     {
-        encoding->_running = true;
         encoding->_encodingJobKey = encodingJobKey;
 
         Json::Value overlayTextMedatada;

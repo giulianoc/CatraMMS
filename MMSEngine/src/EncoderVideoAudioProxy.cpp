@@ -471,22 +471,26 @@ void EncoderVideoAudioProxy::operator()()
             );
         }
 
-        FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
-
-        _logger->error(__FILEREF__ + "Remove"
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-        );
-
-        // file in case of .3gp content OR directory in case of IPhone content
-        if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
+        if (FileIO::fileExisting(stagingEncodedAssetPathName) || 
+                FileIO::directoryExisting(stagingEncodedAssetPathName))
         {
-            Boolean_t bRemoveRecursively = true;
-            FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
-        }
-        else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
-        {
-            FileIO::remove(stagingEncodedAssetPathName);
+            FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
+
+            _logger->error(__FILEREF__ + "Remove"
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            );
+
+            // file in case of .3gp content OR directory in case of IPhone content
+            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
+            {
+                Boolean_t bRemoveRecursively = true;
+                FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
+            }
+            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
+            {
+                FileIO::remove(stagingEncodedAssetPathName);
+            }
         }
 
         _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
@@ -553,22 +557,26 @@ void EncoderVideoAudioProxy::operator()()
             );
         }
 
-        FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
-
-        _logger->error(__FILEREF__ + "Remove"
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-        );
-
-        // file in case of .3gp content OR directory in case of IPhone content
-        if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
+        if (FileIO::fileExisting(stagingEncodedAssetPathName)
+                || FileIO::directoryExisting(stagingEncodedAssetPathName))
         {
-            Boolean_t bRemoveRecursively = true;
-            FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
-        }
-        else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
-        {
-            FileIO::remove(stagingEncodedAssetPathName);
+            FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
+
+            _logger->error(__FILEREF__ + "Remove"
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            );
+
+            // file in case of .3gp content OR directory in case of IPhone content
+            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
+            {
+                Boolean_t bRemoveRecursively = true;
+                FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
+            }
+            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
+            {
+                FileIO::remove(stagingEncodedAssetPathName);
+            }
         }
 
         _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
@@ -1502,22 +1510,26 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEn
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
         );
 
-        FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(mmsAssetPathName);
-
-        _logger->info(__FILEREF__ + "Remove"
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", mmsAssetPathName: " + mmsAssetPathName
-        );
-
-        // file in case of .3gp content OR directory in case of IPhone content
-        if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
+        if (FileIO::fileExisting(mmsAssetPathName)
+                || FileIO::directoryExisting(mmsAssetPathName))
         {
-            Boolean_t bRemoveRecursively = true;
-            FileIO::removeDirectory(mmsAssetPathName, bRemoveRecursively);
-        }
-        else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
-        {
-            FileIO::remove(mmsAssetPathName);
+            FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(mmsAssetPathName);
+
+            _logger->info(__FILEREF__ + "Remove"
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                + ", mmsAssetPathName: " + mmsAssetPathName
+            );
+
+            // file in case of .3gp content OR directory in case of IPhone content
+            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
+            {
+                Boolean_t bRemoveRecursively = true;
+                FileIO::removeDirectory(mmsAssetPathName, bRemoveRecursively);
+            }
+            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
+            {
+                FileIO::remove(mmsAssetPathName);
+            }
         }
 
         throw e;

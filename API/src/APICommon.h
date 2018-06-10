@@ -95,7 +95,7 @@ private:
         string queryString,
         unordered_map<string, string>& queryParameters);
     
-    bool registrationRequest(
+    bool basicAuthenticationRequired(
         string requestURI,
         unordered_map<string, string> queryParameters);
 

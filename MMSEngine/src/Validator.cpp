@@ -347,11 +347,8 @@ void Validator::validateEncodingProfileRootImageMetadata(
     {
         vector<string> mandatoryFields = {
             "Label",
-            "Format",
-            "Width",
-            "Height",
-            "AspectRatio",
-            "InterlaceType"
+            "FileFormat",
+            "Image"
         };
         for (string mandatoryField: mandatoryFields)
         {
@@ -381,6 +378,33 @@ void Validator::validateEncodingProfileRootImageMetadata(
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
+        }
+    }
+    
+    {
+        string field = "Image";
+        Json::Value encodingProfileImageRoot = encodingProfileRoot[field];
+
+        vector<string> mandatoryFields = {
+            "Width",
+            "Height",
+            "AspectRatio",
+            "InterlaceType"
+        };
+        for (string mandatoryField: mandatoryFields)
+        {
+            if (!isMetadataPresent(encodingProfileImageRoot, mandatoryField))
+            {
+                Json::StreamWriterBuilder wbuilder;
+                string sEncodingProfileRoot = Json::writeString(wbuilder, encodingProfileRoot);
+                
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + mandatoryField
+                        + ", sEncodingProfileRoot: " + sEncodingProfileRoot;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
         }
     }
 }

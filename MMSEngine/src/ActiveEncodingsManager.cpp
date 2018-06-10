@@ -464,11 +464,11 @@ string ActiveEncodingsManager::encodeContentImage(
 
         string currentImageFormat = imageToEncode.magick ();
         
-	if (currentImageFormat == "jpeg")
+        if (currentImageFormat == "jpeg")
             currentImageFormat = "JPG";
 
         int currentWidth	= imageToEncode. columns ();
-	int currentHeight	= imageToEncode. rows ();
+        int currentHeight	= imageToEncode. rows ();
 
         _logger->info(__FILEREF__ + "Image processing"
             + ", encodingProfileKey: " + to_string(encodingProfileKey)
@@ -831,7 +831,7 @@ void ActiveEncodingsManager::addEncodingItem(shared_ptr<MMSEngineDBFacade::Encod
     
     if (encodingJobIndex == maxEncodingsToBeManaged)
     {
-        _logger->error(__FILEREF__ + "Max Encodings Manager capacity reached");
+        _logger->warn(__FILEREF__ + "Max Encodings Manager capacity reached");
         
         throw MaxEncodingsManagerCapacityReached();
     }
@@ -950,9 +950,9 @@ void ActiveEncodingsManager::readingImageProfile(
                 );
     }
 
-    // Format
+    // FileFormat
     {
-        field = "Format";
+        field = "FileFormat";
         if (!_mmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -967,9 +967,9 @@ void ActiveEncodingsManager::readingImageProfile(
         encodingImageFormatValidation(newFormat);
     }
 
-    // Width
+    Json::Value encodingProfileImageRoot;
     {
-        field = "Width";
+        field = "Image";
         if (!_mmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -979,13 +979,28 @@ void ActiveEncodingsManager::readingImageProfile(
             throw runtime_error(errorMessage);
         }
 
-        newWidth = encodingProfileRoot.get(field, "XXX").asInt();
+        encodingProfileImageRoot = encodingProfileRoot[field];
+    }
+    
+    // Width
+    {
+        field = "Width";
+        if (!_mmsEngineDBFacade->isMetadataPresent(encodingProfileImageRoot, field))
+        {
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        newWidth = encodingProfileImageRoot.get(field, "XXX").asInt();
     }
 
     // Height
     {
         field = "Height";
-        if (!_mmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
+        if (!_mmsEngineDBFacade->isMetadataPresent(encodingProfileImageRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field;
@@ -994,13 +1009,13 @@ void ActiveEncodingsManager::readingImageProfile(
             throw runtime_error(errorMessage);
         }
 
-        newHeight = encodingProfileRoot.get(field, "XXX").asInt();
+        newHeight = encodingProfileImageRoot.get(field, "XXX").asInt();
     }
 
     // Aspect
     {
         field = "AspectRatio";
-        if (!_mmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
+        if (!_mmsEngineDBFacade->isMetadataPresent(encodingProfileImageRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field;
@@ -1009,13 +1024,13 @@ void ActiveEncodingsManager::readingImageProfile(
             throw runtime_error(errorMessage);
         }
 
-        newAspectRatio = encodingProfileRoot.get(field, "XXX").asBool();
+        newAspectRatio = encodingProfileImageRoot.get(field, "XXX").asBool();
     }
 
     // Interlace
     {
         field = "InterlaceType";
-        if (!_mmsEngineDBFacade->isMetadataPresent(encodingProfileRoot, field))
+        if (!_mmsEngineDBFacade->isMetadataPresent(encodingProfileImageRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field;
@@ -1024,7 +1039,7 @@ void ActiveEncodingsManager::readingImageProfile(
             throw runtime_error(errorMessage);
         }
 
-        sNewInterlaceType = encodingProfileRoot.get(field, "XXX").asString();
+        sNewInterlaceType = encodingProfileImageRoot.get(field, "XXX").asString();
 
         newInterlaceType = encodingImageInterlaceTypeValidation(sNewInterlaceType);
     }
