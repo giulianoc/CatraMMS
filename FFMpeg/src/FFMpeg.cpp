@@ -86,6 +86,8 @@ void FFMpeg::encodeContent(
         _currentIngestionJobKey             = ingestionJobKey;
         _currentEncodingJobKey              = encodingJobKey;
         
+        _currentlyAtSecondPass = false;
+
         settingFfmpegParameters(
             stagingEncodedAssetPathName,
 
@@ -527,7 +529,7 @@ void FFMpeg::encodeContent(
             }
         }
         
-        _twoPasses = false;
+        // _twoPasses = false;
     }
     catch(runtime_error e)
     {
@@ -754,7 +756,7 @@ void FFMpeg::overlayImageOnVideo(
             }
         }
         
-        _twoPasses = false;
+        // _twoPasses = false;
     }
     catch(runtime_error e)
     {
@@ -1035,7 +1037,7 @@ void FFMpeg::overlayTextOnVideo(
             }
         }
         
-        _twoPasses = false;
+        // _twoPasses = false;
     }
     catch(runtime_error e)
     {

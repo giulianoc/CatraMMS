@@ -4341,7 +4341,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
                 "IF(ij.endIngestion is null, NOW(), ij.endIngestion) as newEndIngestion, ij.downloadingProgress, ij.uploadingProgress, "
                 "ij.status, ij.errorMessage from MMS_IngestionRoot ir, MMS_IngestionJob ij "
                 + sqlWhere
-                + "order by ij.startIngestion, newEndIngestion " + (asc ? " asc " : " desc ")
+                + "order by ij.startIngestion" + (asc ? " asc" : " desc") + ", newEndIngestion " + 
                 + "limit ? offset ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
