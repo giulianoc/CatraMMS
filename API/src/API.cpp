@@ -1960,11 +1960,22 @@ void API::ingestionRootsStatus(
             startAndEndIngestionDatePresent = true;
         }
 
+        bool asc = true;
+        auto ascIt = queryParameters.find("asc");
+        if (ascIt != queryParameters.end() && ascIt->second != "")
+        {
+            if (ascIt->second == "true")
+                asc = true;
+            else
+                asc = false;
+        }
+
         {
             Json::Value ingestionStatusRoot = _mmsEngineDBFacade->getIngestionRootsStatus(
                     workspace->_workspaceKey, ingestionRootKey,
                     start, rows,
-                    startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate
+                    startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
+                    asc
                     );
 
             Json::StreamWriterBuilder wbuilder;
@@ -2063,12 +2074,19 @@ void API::ingestionJobsStatus(
                 asc = false;
         }
 
+        string status = "all";
+        auto statusIt = queryParameters.find("status");
+        if (statusIt != queryParameters.end() && statusIt->second != "")
+        {
+            status = statusIt->second;
+        }
+
         {
             Json::Value ingestionStatusRoot = _mmsEngineDBFacade->getIngestionJobsStatus(
                     workspace->_workspaceKey, ingestionJobKey,
                     start, rows,
                     startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
-                    asc
+                    asc, status
                     );
 
             Json::StreamWriterBuilder wbuilder;
@@ -2167,12 +2185,19 @@ void API::encodingJobsStatus(
                 asc = false;
         }
 
+        string status = "all";
+        auto statusIt = queryParameters.find("status");
+        if (statusIt != queryParameters.end() && statusIt->second != "")
+        {
+            status = statusIt->second;
+        }
+
         {
             Json::Value encodingStatusRoot = _mmsEngineDBFacade->getEncodingJobsStatus(
                     workspace->_workspaceKey, encodingJobKey,
                     start, rows,
                     startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
-                    asc
+                    asc, status
                     );
 
             Json::StreamWriterBuilder wbuilder;

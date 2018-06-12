@@ -745,19 +745,20 @@ public:
         int64_t workspaceKey, int64_t ingestionRootKey,
         int start, int rows,
         bool startAndEndIngestionDatePresent, 
-        string startIngestionDate, string endIngestionDate);
+        string startIngestionDate, string endIngestionDate,
+        bool asc);
 
     Json::Value getIngestionJobsStatus (
         int64_t workspaceKey, int64_t ingestionJobKey,
         int start, int rows,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
-        bool asc);
+        bool asc, string status);
 
     Json::Value getEncodingJobsStatus (
         int64_t workspaceKey, int64_t encodingJobKey,
         int start, int rows,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
-        bool asc);
+        bool asc, string status);
 
     Json::Value getMediaItemsList (
         int64_t workspaceKey, int64_t mediaItemKey,

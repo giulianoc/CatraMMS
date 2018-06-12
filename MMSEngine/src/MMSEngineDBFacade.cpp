@@ -4030,7 +4030,8 @@ void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred (
 Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
         int64_t workspaceKey, int64_t ingestionRootKey,
         int start, int rows,
-        bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate
+        bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
+        bool asc
 )
 {    
     string      lastSQLCommand;
@@ -4120,7 +4121,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
                     "DATE_FORMAT(convert_tz(ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate "
                     "from MMS_IngestionRoot ")
                     + sqlWhere
-                    + "order by ingestionDate asc "
+                    + "order by ingestionDate"  + (asc ? " asc " : " desc ")
                     + "limit ? offset ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -4243,7 +4244,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
         int64_t workspaceKey, int64_t ingestionJobKey,
         int start, int rows,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
-        bool asc
+        bool asc, string status
 )
 {    
     string      lastSQLCommand;
@@ -4294,7 +4295,11 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
             sqlWhere += ("and ij.ingestionJobKey = ? ");
         if (startAndEndIngestionDatePresent)
             sqlWhere += ("and ij.startIngestion >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) and ij.startIngestion <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
-        
+        if (status == "completed")
+            sqlWhere += ("and ij.status like 'End_%' ");
+        else if (status == "notCompleted")
+            sqlWhere += ("and ij.status not like 'End_%' ");
+            
         Json::Value responseRoot;
         {
             lastSQLCommand = 
@@ -4423,7 +4428,7 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
         int64_t workspaceKey, int64_t encodingJobKey,
         int start, int rows,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
-        bool asc
+        bool asc, string status
 )
 {    
     string      lastSQLCommand;
@@ -4474,6 +4479,10 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
             sqlWhere += ("and ej.encodingJobKey = ? ");
         if (startAndEndIngestionDatePresent)
             sqlWhere += ("and ij.startIngestion >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) and ij.startIngestion <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
+        if (status == "completed")
+            sqlWhere += ("and ej.status like 'End_%' ");
+        else if (status == "notCompleted")
+            sqlWhere += ("and ej.status not like 'End_%' ");
         
         Json::Value responseRoot;
         {
