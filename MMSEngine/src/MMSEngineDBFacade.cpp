@@ -5646,7 +5646,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfilesSetList (
                 Json::Value encodingProfilesRoot(Json::arrayValue);
                 {                    
                     lastSQLCommand = 
-                        "select ep.encodingProfileKey, ep.label, ep.technology, ep.jsonProfile "
+                        "select ep.encodingProfileKey, ep.contentType, ep.label, ep.technology, ep.jsonProfile "
                         "from MMS_EncodingProfilesSetMapping epsm, MMS_EncodingProfile ep "
                         "where epsm.encodingProfileKey = ep.encodingProfileKey and "
                         "epsm.encodingProfilesSetKey = ?";
@@ -5664,6 +5664,9 @@ Json::Value MMSEngineDBFacade::getEncodingProfilesSetList (
                 
                         field = "label";
                         encodingProfileRoot[field] = static_cast<string>(resultSetProfile->getString("label"));
+
+                        field = "contentType";
+                        encodingProfileRoot[field] = static_cast<string>(resultSetProfile->getString("contentType"));
                         
                         field = "technology";
                         encodingProfileRoot[field] = static_cast<string>(resultSetProfile->getString("technology"));
