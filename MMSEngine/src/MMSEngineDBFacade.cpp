@@ -3638,7 +3638,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
                     "select status from MMS_IngestionJob where ingestionRootKey = ?";
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
-                preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+                preparedStatement->setInt64(queryParameterIndex++, ingestionRootKey);
 
                 shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
                 while (resultSet->next())
@@ -3656,6 +3656,13 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
                     }
                 }
             }
+
+            _logger->info(string("Job status")
+                + ", ingestionRootKey: " + to_string(ingestionRootKey)
+                + ", intermediateStatesCount: " + to_string(intermediateStatesCount)
+                + ", successStatesCount: " + to_string(successStatesCount)
+                + ", failureStatesCount: " + to_string(failureStatesCount)
+            );
 
             IngestionRootStatus newIngestionRootStatus;
 
