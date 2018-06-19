@@ -2711,8 +2711,8 @@ int64_t MMSEngineDBFacade::addIngestionRoot (
         {
             {                
                 lastSQLCommand = 
-                    "insert into MMS_IngestionRoot (ingestionRootKey, workspaceKey, type, label, ingestionDate, status) values ("
-                    "NULL, ?, ?, ?, NOW(), ?)";
+                    "insert into MMS_IngestionRoot (ingestionRootKey, workspaceKey, type, label, ingestionDate, lastUpdate, status) values ("
+                    "NULL, ?, ?, ?, NOW(), NOW(), ?)";
 
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
@@ -3679,7 +3679,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
             if (newIngestionRootStatus != currentIngestionRootStatus)            
             {
                 lastSQLCommand = 
-                    "update MMS_IngestionRoot set status = ? where ingestionRootKey = ?";
+                    "update MMS_IngestionRoot set lastUpdate = NOW(), status = ? where ingestionRootKey = ?";
 
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
@@ -4125,7 +4125,8 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
         {
             lastSQLCommand = 
                 string("select ingestionRootKey, label, status, "
-                    "DATE_FORMAT(convert_tz(ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate "
+                    "DATE_FORMAT(convert_tz(ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate, "
+                    "DATE_FORMAT(convert_tz(lastUpdate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as lastUpdate "
                     "from MMS_IngestionRoot ")
                     + sqlWhere
                     + "order by ingestionDate"  + (asc ? " asc " : " desc ")
@@ -4159,6 +4160,9 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
 
                 field = "ingestionDate";
                 workflowRoot[field] = static_cast<string>(resultSet->getString("ingestionDate"));
+
+                field = "lastUpdate";
+                workflowRoot[field] = static_cast<string>(resultSet->getString("lastUpdate"));
 
                 Json::Value ingestionJobsRoot(Json::arrayValue);
                 {            
@@ -12795,7 +12799,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "workspaceKey               BIGINT UNSIGNED NOT NULL,"
                     "type                       VARCHAR (64) NOT NULL,"
                     "label                      VARCHAR (128) NULL,"
-                    "IngestionDate              TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+                    "ingestionDate              TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+                    "lastUpdate                 TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "status           			VARCHAR (64) NOT NULL,"
                     "constraint MMS_IngestionRoot_PK PRIMARY KEY (ingestionRootKey), "
                     "constraint MMS_IngestionRoot_FK foreign key (workspaceKey) "
