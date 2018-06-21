@@ -3416,7 +3416,7 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
             fontType = parametersRoot.get(field, "XXX").asString();
         }
 
-        int fontSize;
+        int fontSize = -1;
         field = "FontSize";
         if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
         {
@@ -3430,14 +3430,14 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
             fontColor = parametersRoot.get(field, "XXX").asString();
         }
 
-        int textPercentageOpacity;
+        int textPercentageOpacity = -1;
         field = "TextPercentageOpacity";
         if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
         {
             textPercentageOpacity = parametersRoot.get(field, -1).asInt();
         }
 
-        bool boxEnable;
+        bool boxEnable = false;
         field = "BoxEnable";
         if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
         {
@@ -3451,7 +3451,7 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
             boxColor = parametersRoot.get(field, "XXX").asString();
         }
 
-        int boxPercentageOpacity;
+        int boxPercentageOpacity = -1;
         field = "BoxPercentageOpacity";
         if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
         {

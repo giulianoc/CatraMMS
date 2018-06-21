@@ -28,6 +28,7 @@ SET (ETCs
 	mmsEngineService.sh
 	ffmpegHelper.sh
 	nginx.sh
+	tomcat.sh
 	mms.cfg
 	crontab.txt
 	crontab.sh

@@ -2072,6 +2072,29 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 
         {
             lastSQLCommand = 
+                "update MMS_IngestionJob set status = ? where processorMMS = ? and "
+                "status in (?, ?, ?) and sourceBinaryTransferred = 0";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::Start_TaskQueued));
+            preparedStatement->setString(queryParameterIndex++, processorMMS);
+            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress));
+            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress));
+            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress));
+
+            int rowsUpdated = preparedStatement->executeUpdate();
+            if (rowsUpdated > 0)
+            {
+                _logger->info(__FILEREF__ + "Found Processing jobs (MMS_IngestionJob) to be reset because downloading was interrupted"
+                    + ", processorMMS: " + processorMMS
+                    + ", rowsUpdated: " + to_string(rowsUpdated)
+                );
+            }
+        }
+
+        {
+            lastSQLCommand = 
                 "update MMS_IngestionJob set processorMMS = NULL where processorMMS = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -3649,7 +3672,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
                         intermediateStatesCount++;
                     else
                     {
-                        if (!MMSEngineDBFacade::isIngestionStatusSuccess(ingestionStatus))
+                        if (MMSEngineDBFacade::isIngestionStatusSuccess(ingestionStatus))
                             successStatesCount++;
                         else
                             failureStatesCount++;
@@ -10359,7 +10382,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             string contentProviderName;
             
             if (isMetadataPresent(parametersRoot, "ContentProviderName"))
-                contentProviderName = parametersRoot.get("ContentProviderName", "XXX").asString();
+                contentProviderName = parametersRoot.get("ContentProviderName", "").asString();
             else
                 contentProviderName = _defaultContentProviderName;
 
@@ -10400,19 +10423,19 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             // string encodingProfilesSet;
 
             string field = "Title";
-            title = parametersRoot.get(field, "XXX").asString();
+            title = parametersRoot.get(field, "").asString();
             
             field = "Ingester";
             if (isMetadataPresent(parametersRoot, field))
-                ingester = parametersRoot.get(field, "XXX").asString();
+                ingester = parametersRoot.get(field, "").asString();
 
             field = "Keywords";
             if (isMetadataPresent(parametersRoot, field))
-                keywords = parametersRoot.get(field, "XXX").asString();
+                keywords = parametersRoot.get(field, "").asString();
 
             field = "DeliveryFileName";
             if (isMetadataPresent(parametersRoot, field))
-                deliveryFileName = parametersRoot.get(field, "XXX").asString();
+                deliveryFileName = parametersRoot.get(field, "").asString();
 
             field = "Retention";
             if (isMetadataPresent(parametersRoot, field))
@@ -10462,11 +10485,11 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
 
                     field = "startPublishing";
                     if (isMetadataPresent(publishingRoot, field))
-                        startPublishing = publishingRoot.get(field, "XXX").asString();
+                        startPublishing = publishingRoot.get(field, "").asString();
 
                     field = "endPublishing";
                     if (isMetadataPresent(publishingRoot, field))
-                        endPublishing = publishingRoot.get(field, "XXX").asString();
+                        endPublishing = publishingRoot.get(field, "").asString();
                 }
                 
                 if (startPublishing == "NOW")
@@ -10552,7 +10575,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
         {
             string uniqueName;
             if (isMetadataPresent(parametersRoot, "UniqueName"))
-                uniqueName = parametersRoot.get("UniqueName", "XXX").asString();
+                uniqueName = parametersRoot.get("UniqueName", "").asString();
 
             if (uniqueName != "")
             {

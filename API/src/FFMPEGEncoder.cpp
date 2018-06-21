@@ -1011,15 +1011,51 @@ void FFMPEGEncoder::overlayTextOnVideo(
         int64_t videoDurationInMilliSeconds = overlayTextMedatada.get("videoDurationInMilliSeconds", -1).asInt64();
 
         string text = overlayTextMedatada.get("text", "XXX").asString();
-        string textPosition_X_InPixel = overlayTextMedatada.get("textPosition_X_InPixel", "XXX").asString();
-        string textPosition_Y_InPixel = overlayTextMedatada.get("textPosition_Y_InPixel", "XXX").asString();
-        string fontType = overlayTextMedatada.get("fontType", "XXX").asString();
-        int fontSize = overlayTextMedatada.get("fontSize", -1).asInt();
-        string fontColor = overlayTextMedatada.get("fontColor", "XXX").asString();
-        int textPercentageOpacity = overlayTextMedatada.get("textPercentageOpacity", -1).asInt();
-        bool boxEnable = overlayTextMedatada.get("boxEnable", 0).asBool();
-        string boxColor = overlayTextMedatada.get("boxColor", "XXX").asString();
-        int boxPercentageOpacity = overlayTextMedatada.get("boxPercentageOpacity", -1).asInt();
+        
+        string textPosition_X_InPixel;
+        string field = "textPosition_X_InPixel";
+        if (_mmsEngineDBFacade->isMetadataPresent(overlayTextMedatada, field))
+            textPosition_X_InPixel = overlayTextMedatada.get(field, "XXX").asString();
+        
+        string textPosition_Y_InPixel;
+        field = "textPosition_Y_InPixel";
+        if (_mmsEngineDBFacade->isMetadataPresent(overlayTextMedatada, field))
+            textPosition_Y_InPixel = overlayTextMedatada.get(field, "XXX").asString();
+        
+        string fontType;
+        field = "fontType";
+        if (_mmsEngineDBFacade->isMetadataPresent(overlayTextMedatada, field))
+            fontType = overlayTextMedatada.get(field, "XXX").asString();
+
+        int fontSize = -1;
+        field = "fontSize";
+        if (_mmsEngineDBFacade->isMetadataPresent(overlayTextMedatada, field))
+            fontSize = overlayTextMedatada.get(field, -1).asInt();
+
+        string fontColor;
+        field = "fontColor";
+        if (_mmsEngineDBFacade->isMetadataPresent(overlayTextMedatada, field))
+            fontColor = overlayTextMedatada.get(field, "XXX").asString();
+
+        int textPercentageOpacity = -1;
+        field = "textPercentageOpacity";
+        if (_mmsEngineDBFacade->isMetadataPresent(overlayTextMedatada, field))
+            textPercentageOpacity = overlayTextMedatada.get(field, -1).asInt();
+
+        bool boxEnable = false;
+        field = "boxEnable";
+        if (_mmsEngineDBFacade->isMetadataPresent(overlayTextMedatada, field))
+            boxEnable = overlayTextMedatada.get(field, 0).asBool();
+
+        string boxColor;
+        field = "boxColor";
+        if (_mmsEngineDBFacade->isMetadataPresent(overlayTextMedatada, field))
+            boxColor = overlayTextMedatada.get(field, "XXX").asString();
+        
+        int boxPercentageOpacity = -1;
+        field = "boxPercentageOpacity";
+        if (_mmsEngineDBFacade->isMetadataPresent(overlayTextMedatada, field))
+            boxPercentageOpacity = overlayTextMedatada.get("boxPercentageOpacity", -1).asInt();
 
         string encodedFileName = overlayTextMedatada.get("encodedFileName", "XXX").asString();
         string stagingEncodedAssetPathName = overlayTextMedatada.get("stagingEncodedAssetPathName", "XXX").asString();
@@ -1112,3 +1148,4 @@ void FFMPEGEncoder::overlayTextOnVideo(
         // throw runtime_error(errorMessage);
     }
 }
+
