@@ -11,7 +11,8 @@
             "SourceURL": "http://mediaww.rsi.ch/rsi/unrestricted/2018/05/15/2577986.mp4",
             "FileFormat": "mp4",
             "UserData": { "MyData": "this is my video data" },
-            "Title": "${TitleOfVideo}"
+            "Title": "${TitleOfVideo}",
+		"Retention": "1d"
         },
         "OnSuccess": {
             "Task": {

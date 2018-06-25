@@ -18,7 +18,6 @@
 					"Parameters": {
 		            	"SourceURL": "http://mediaww.rsi.ch/rsi/unrestricted/2018/04/16/2560539.mp4",
 						"FileFormat": "mp4",
-						"ContentType": "video",
 						"UserData": { "MyData": "this is my video data" },
 					    "Title": "${TitleOfVideo_1}",
                         "Retention": "1s"
@@ -30,7 +29,6 @@
 					"Parameters": {
             			"SourceURL": "http://mediaww.rsi.ch/rsi/unrestricted/2018/04/16/2560539.mp4",
 						"FileFormat": "mp4",
-						"ContentType": "video",
 						"UserData": { "MyData": "this is my video data" },
 						"Title": "${TitleOfVideo_2}",
                         "Retention": "1s"

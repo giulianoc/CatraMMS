@@ -1603,8 +1603,11 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
                 videoCodecName = streamRoot.get(field, "XXX").asString();
 
                 field = "profile";
-                if (!isMetadataPresent(streamRoot, field))
+                if (isMetadataPresent(streamRoot, field))
+                    videoProfile = streamRoot.get(field, "XXX").asString();
+                else
                 {
+                    /*
                     if (videoCodecName != "mjpeg")
                     {
                         string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
@@ -1614,9 +1617,8 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
 
                         throw runtime_error(errorMessage);
                     }
+                     */
                 }
-                else
-                    videoProfile = streamRoot.get(field, "XXX").asString();
 
                 field = "width";
                 if (!isMetadataPresent(streamRoot, field))
