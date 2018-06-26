@@ -1018,7 +1018,9 @@ private:
         IngestionStatus newIngestionStatus,
         shared_ptr<MySQLConnection> conn);
 
-    // void getTerritories(shared_ptr<Workspace> workspace);
+    int64_t getWorkspaceUsageInBytes(
+        shared_ptr<MySQLConnection> conn,
+        int64_t workspaceKey);
 
     void createTablesIfNeeded();
 

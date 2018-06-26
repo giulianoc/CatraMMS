@@ -4553,7 +4553,7 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
         Json::Value encodingJobsRoot(Json::arrayValue);
         {            
             lastSQLCommand = 
-                "select ej.encodingJobKey, ej.type, ej.parameters, ej.status, ej.encodingProgress, ej.failuresNumber, "
+                "select ej.encodingJobKey, ej.type, ej.parameters, ej.status, ej.encodingProgress, ej.failuresNumber, ej.encodingPriority, "
                 "DATE_FORMAT(convert_tz(ej.encodingJobStart, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as encodingJobStart, "
                 "DATE_FORMAT(convert_tz(ej.encodingJobEnd, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as encodingJobEnd, "
                 "IF(ij.endIngestion is null, NOW(), ij.endIngestion) as newEndIngestion "
@@ -4647,6 +4647,9 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
 
                 field = "failuresNumber";
                 encodingJobRoot[field] = resultSetEncodingJob->getInt("failuresNumber");  
+
+                field = "encodingPriority";
+                encodingJobRoot[field] = toString(static_cast<EncodingPriority>(resultSetEncodingJob->getInt("encodingPriority")));
 
                 encodingJobsRoot.append(encodingJobRoot);
             }
@@ -4974,7 +4977,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
                 || ingestionType == IngestionType::OverlayTextOnVideo)
         {
             lastSQLCommand = 
-                "select encodingJobKey, type, parameters, status, encodingProgress, "
+                "select encodingJobKey, type, parameters, status, encodingProgress, encodingPriority, "
                 "DATE_FORMAT(convert_tz(encodingJobStart, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as encodingJobStart, "
                 "DATE_FORMAT(convert_tz(encodingJobEnd, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as encodingJobEnd, "
                 "failuresNumber from MMS_EncodingJob where ingestionJobKey = ?";
@@ -5030,6 +5033,9 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
                 field = "status";
                 encodingJobRoot[field] = static_cast<string>(resultSetEncodingJob->getString("status"));
                 EncodingStatus encodingStatus = MMSEngineDBFacade::toEncodingStatus(resultSetEncodingJob->getString("status"));
+
+                field = "encodingPriority";
+                encodingJobRoot[field] = toString(static_cast<EncodingPriority>(resultSetEncodingJob->getInt("encodingPriority")));
 
                 field = "progress";
                 if (resultSetEncodingJob->isNull("encodingProgress"))
@@ -5216,6 +5222,14 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 
                 throw runtime_error(errorMessage);
             }
+        }
+        
+        {
+            int64_t workSpaceUsageInBytes = getWorkspaceUsageInBytes(conn, workspaceKey);
+            int64_t workSpaceUsageInMB = workSpaceUsageInBytes / 1000000;
+            
+            field = "workSpaceUsageInMB";
+            responseRoot[field] = workSpaceUsageInMB;
         }
 
         Json::Value mediaItemsRoot(Json::arrayValue);
@@ -9891,24 +9905,7 @@ void MMSEngineDBFacade::checkWorkspaceMaxIngestionNumber (
 
         // check maxStorage first        
         {
-            int64_t totalSizeInBytes;
-            {
-                lastSQLCommand = 
-                    "select SUM(pp.sizeInBytes) as totalSizeInBytes from MMS_MediaItem mi, MMS_PhysicalPath pp "
-                    "where mi.mediaItemKey = pp.mediaItemKey and mi.workspaceKey = ?";
-                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                int queryParameterIndex = 1;
-                preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
-
-                shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-                if (resultSet->next())
-                {
-                    if (resultSet->isNull("totalSizeInBytes"))
-                        totalSizeInBytes = -1;
-                    else
-                        totalSizeInBytes = resultSet->getInt64("totalSizeInBytes");
-                }
-            }
+            int64_t totalSizeInBytes = getWorkspaceUsageInBytes(conn, workspaceKey);
             
             int64_t totalSizeInMB = totalSizeInBytes / 1000000;
             if (totalSizeInMB >= maxStorageInMB)
@@ -10212,6 +10209,64 @@ void MMSEngineDBFacade::checkWorkspaceMaxIngestionNumber (
 
         throw e;
     }        
+}
+
+int64_t MMSEngineDBFacade::getWorkspaceUsageInBytes(
+        shared_ptr<MySQLConnection> conn,
+        int64_t workspaceKey)
+{
+    int64_t         totalSizeInBytes;
+    
+    string      lastSQLCommand;
+
+    try
+    {
+        lastSQLCommand = 
+            "select SUM(pp.sizeInBytes) as totalSizeInBytes from MMS_MediaItem mi, MMS_PhysicalPath pp "
+            "where mi.mediaItemKey = pp.mediaItemKey and mi.workspaceKey = ?";
+        shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+        int queryParameterIndex = 1;
+        preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+
+        shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+        if (resultSet->next())
+        {
+            if (resultSet->isNull("totalSizeInBytes"))
+                totalSizeInBytes = -1;
+            else
+                totalSizeInBytes = resultSet->getInt64("totalSizeInBytes");
+        }
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
+    }
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        throw e;
+    }
+    
+    return totalSizeInBytes;
 }
 
 string MMSEngineDBFacade::nextRelativePathToBeUsed (

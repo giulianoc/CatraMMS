@@ -3225,6 +3225,24 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey,
         }
     }
 
+    field = "EncodingPriority";
+    if (isMetadataPresent(parametersRoot, field))
+    {
+        string encodingPriority = parametersRoot.get(field, "XXX").asString();
+        try
+        {
+            MMSEngineDBFacade::toEncodingPriority(encodingPriority);    // it generate an exception in case of wrong string
+        }
+        catch(exception e)
+        {
+            string errorMessage = __FILEREF__ + "Field 'EncodingPriority' is wrong"
+                    + ", EncodingPriority: " + encodingPriority;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
     field = "References";
