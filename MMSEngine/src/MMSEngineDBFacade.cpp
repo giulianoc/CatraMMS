@@ -5225,11 +5225,19 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
         }
         
         {
-            int64_t workSpaceUsageInBytes = getWorkspaceUsageInBytes(conn, workspaceKey);
+            int64_t workSpaceUsageInBytes;
+            int64_t maxStorageInMB;
+
+            pair<int64_t,int64_t> workSpaceUsageInBytesAndMaxStorageInMB = getWorkspaceUsage(conn, workspaceKey);
+            tie(workSpaceUsageInBytes, maxStorageInMB) = workSpaceUsageInBytesAndMaxStorageInMB;
+            
             int64_t workSpaceUsageInMB = workSpaceUsageInBytes / 1000000;
             
             field = "workSpaceUsageInMB";
             responseRoot[field] = workSpaceUsageInMB;
+
+            field = "maxStorageInMB";
+            responseRoot[field] = maxStorageInMB;
         }
 
         Json::Value mediaItemsRoot(Json::arrayValue);
@@ -9861,7 +9869,6 @@ void MMSEngineDBFacade::checkWorkspaceMaxIngestionNumber (
     {
         int maxIngestionsNumber;
         int currentIngestionsNumber;
-        int64_t maxStorageInMB;
         EncodingPeriod encodingPeriod;
         string periodStartDateTime;
         string periodEndDateTime;
@@ -9874,7 +9881,6 @@ void MMSEngineDBFacade::checkWorkspaceMaxIngestionNumber (
         {
             lastSQLCommand = 
                 "select c.maxIngestionsNumber, cmi.currentIngestionsNumber, c.encodingPeriod, "
-                    "c.maxStorageInMB, "
                     "DATE_FORMAT(cmi.startDateTime, '%Y-%m-%d %H:%i:%s') as LocalStartDateTime, "
                     "DATE_FORMAT(cmi.endDateTime, '%Y-%m-%d %H:%i:%s') as LocalEndDateTime "
                 "from MMS_Workspace c, MMS_WorkspaceMoreInfo cmi where c.workspaceKey = cmi.workspaceKey and c.workspaceKey = ?";
@@ -9888,7 +9894,6 @@ void MMSEngineDBFacade::checkWorkspaceMaxIngestionNumber (
                 maxIngestionsNumber = resultSet->getInt("maxIngestionsNumber");
                 currentIngestionsNumber = resultSet->getInt("currentIngestionsNumber");
                 encodingPeriod = toEncodingPeriod(resultSet->getString("encodingPeriod"));
-                maxStorageInMB = resultSet->getInt("maxStorageInMB");
                 periodStartDateTime = resultSet->getString("LocalStartDateTime");
                 periodEndDateTime = resultSet->getString("LocalEndDateTime");                
             }
@@ -9906,9 +9911,13 @@ void MMSEngineDBFacade::checkWorkspaceMaxIngestionNumber (
 
         // check maxStorage first        
         {
-            int64_t totalSizeInBytes = getWorkspaceUsageInBytes(conn, workspaceKey);
+            int64_t workSpaceUsageInBytes;
+            int64_t maxStorageInMB;
+
+            pair<int64_t,int64_t> workSpaceUsageInBytesAndMaxStorageInMB = getWorkspaceUsage(conn, workspaceKey);
+            tie(workSpaceUsageInBytes, maxStorageInMB) = workSpaceUsageInBytesAndMaxStorageInMB;
             
-            int64_t totalSizeInMB = totalSizeInBytes / 1000000;
+            int64_t totalSizeInMB = workSpaceUsageInBytes / 1000000;
             if (totalSizeInMB >= maxStorageInMB)
             {
                 string errorMessage = __FILEREF__ + "Reached the max storage dedicated for your Workspace"
@@ -10212,31 +10221,60 @@ void MMSEngineDBFacade::checkWorkspaceMaxIngestionNumber (
     }        
 }
 
-int64_t MMSEngineDBFacade::getWorkspaceUsageInBytes(
+pair<int64_t,int64_t> MMSEngineDBFacade::getWorkspaceUsage(
         shared_ptr<MySQLConnection> conn,
         int64_t workspaceKey)
 {
     int64_t         totalSizeInBytes;
+    int64_t         maxStorageInMB;
     
     string      lastSQLCommand;
 
     try
     {
-        lastSQLCommand = 
-            "select SUM(pp.sizeInBytes) as totalSizeInBytes from MMS_MediaItem mi, MMS_PhysicalPath pp "
-            "where mi.mediaItemKey = pp.mediaItemKey and mi.workspaceKey = ?";
-        shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-        int queryParameterIndex = 1;
-        preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
-
-        shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-        if (resultSet->next())
         {
-            if (resultSet->isNull("totalSizeInBytes"))
-                totalSizeInBytes = -1;
-            else
-                totalSizeInBytes = resultSet->getInt64("totalSizeInBytes");
+            lastSQLCommand = 
+                "select SUM(pp.sizeInBytes) as totalSizeInBytes from MMS_MediaItem mi, MMS_PhysicalPath pp "
+                "where mi.mediaItemKey = pp.mediaItemKey and mi.workspaceKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                if (resultSet->isNull("totalSizeInBytes"))
+                    totalSizeInBytes = -1;
+                else
+                    totalSizeInBytes = resultSet->getInt64("totalSizeInBytes");
+            }
         }
+        
+        {
+            lastSQLCommand = 
+                "select maxStorageInMB from MMS_Workspace where workspaceKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                maxStorageInMB = resultSet->getInt("maxStorageInMB");
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "Workspace is not present/configured"
+                    + ", workspaceKey: " + to_string(workspaceKey)
+                    + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }            
+        }
+        
+        return make_pair(totalSizeInBytes, maxStorageInMB);
     }
     catch(sql::SQLException se)
     {
@@ -10265,9 +10303,7 @@ int64_t MMSEngineDBFacade::getWorkspaceUsageInBytes(
         );
 
         throw e;
-    }
-    
-    return totalSizeInBytes;
+    }    
 }
 
 string MMSEngineDBFacade::nextRelativePathToBeUsed (

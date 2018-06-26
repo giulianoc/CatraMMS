@@ -1018,7 +1018,7 @@ private:
         IngestionStatus newIngestionStatus,
         shared_ptr<MySQLConnection> conn);
 
-    int64_t getWorkspaceUsageInBytes(
+    pair<int64_t,int64_t> getWorkspaceUsage(
         shared_ptr<MySQLConnection> conn,
         int64_t workspaceKey);
 
