@@ -1648,6 +1648,16 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                 videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
                 audioCodecName, audioSampleRate, audioChannels, audioBitRate) = mediaInfo;
             
+            if (localAssetIngestionEvent->getForcedAvgFrameRate() != "")
+            {
+                _logger->info(__FILEREF__ + "handleLocalAssetIngestionEvent. Forced Avg Frame Rate"
+                    + ", current avgFrameRate: " + videoAvgFrameRate
+                    + ", forced avgFrameRate: " + localAssetIngestionEvent->getForcedAvgFrameRate()
+                );
+                
+                videoAvgFrameRate = localAssetIngestionEvent->getForcedAvgFrameRate();
+            }
+                
             if (videoCodecName == "")
                 contentType = MMSEngineDBFacade::ContentType::Audio;
             else
@@ -2267,20 +2277,27 @@ void MMSEngineProcessor::generateAndIngestFrames(
 
             sourcePhysicalPathKey = -1;
             int64_t encodingProfileKey = -1;
-            sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourceMediaItemKey, encodingProfileKey);
+            pair<int64_t,string> physicalPathKeyAndPhysicalPath 
+                    = _mmsStorage->getPhysicalPath(sourceMediaItemKey, encodingProfileKey);
+            
+            int64_t localPhysicalPathKey;
+            tie(localPhysicalPathKey,sourcePhysicalPath) = physicalPathKeyAndPhysicalPath;
         }
         else
         {
             sourcePhysicalPathKey = keyAndDependencyType.first;
             
             bool warningIfMissing = false;
-            pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType =
+            pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyContentTypeAndAvgFrameRate =
                 _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                     sourcePhysicalPathKey, warningIfMissing);
     
-            sourceMediaItemKey = mediaItemKeyAndContentType.first;
+            MMSEngineDBFacade::ContentType localContentType;
+            tie(sourceMediaItemKey,localContentType)
+                    = mediaItemKeyContentTypeAndAvgFrameRate;
+            
             sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourcePhysicalPathKey);
-        }
+       }
 
         int64_t durationInMilliSeconds;
         int videoWidth;
@@ -2518,18 +2535,25 @@ void MMSEngineProcessor::generateAndIngestSlideshow(
 
                 sourcePhysicalPathKey = -1;
                 int64_t encodingProfileKey = -1;
-                sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourceMediaItemKey, encodingProfileKey);
+                pair<int64_t,string> physicalPathKeyAndPhysicalPath 
+                        = _mmsStorage->getPhysicalPath(sourceMediaItemKey, encodingProfileKey);
+
+                int64_t localPhysicalPathKey;
+                tie(localPhysicalPathKey,sourcePhysicalPath) = physicalPathKeyAndPhysicalPath;
             }
             else
             {
                 sourcePhysicalPathKey = keyAndDependencyType.first;
 
                 bool warningIfMissing = false;
-                pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType =
+                pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyContentTypeAndAvgFrameRate =
                     _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                         sourcePhysicalPathKey, warningIfMissing);
 
-                sourceMediaItemKey = mediaItemKeyAndContentType.first;
+                MMSEngineDBFacade::ContentType localContentType;
+                tie(sourceMediaItemKey,localContentType)
+                        = mediaItemKeyContentTypeAndAvgFrameRate;
+
                 sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourcePhysicalPathKey);
             }
             
@@ -2698,6 +2722,7 @@ void MMSEngineProcessor::generateAndIngestConcatenation(
         MMSEngineDBFacade::ContentType concatContentType;
         bool concatContentTypeInitialized = false;
         vector<string> sourcePhysicalPaths;
+        string forcedAvgFrameRate("");
         
         for (pair<int64_t,Validator::DependencyType>& keyAndDependencyType: dependencies)
         {
@@ -2713,27 +2738,38 @@ void MMSEngineProcessor::generateAndIngestConcatenation(
 
                 sourcePhysicalPathKey = -1;
                 int64_t encodingProfileKey = -1;
-                sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourceMediaItemKey, encodingProfileKey);
+                pair<int64_t,string> physicalPathInfo = _mmsStorage->getPhysicalPath(sourceMediaItemKey, encodingProfileKey);
+                
+                tie(sourcePhysicalPathKey,sourcePhysicalPath) = physicalPathInfo;
             }
             else
             {
                 sourcePhysicalPathKey = keyAndDependencyType.first;
 
                 bool warningIfMissing = false;
-                pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType =
+                pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyContentTypeAndAvgFrameRate =
                     _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                         sourcePhysicalPathKey, warningIfMissing);
 
-                sourceMediaItemKey = mediaItemKeyAndContentType.first;
+                MMSEngineDBFacade::ContentType localContentType;
+                tie(sourceMediaItemKey,localContentType)
+                        = mediaItemKeyContentTypeAndAvgFrameRate;
+
                 sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourcePhysicalPathKey);
             }
 
             sourcePhysicalPaths.push_back(sourcePhysicalPath);
             
             bool warningIfMissing = false;
+            pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyContentTypeAndAvgFrameRate 
+                    = _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+                        sourcePhysicalPathKey, warningIfMissing);
             
-            MMSEngineDBFacade::ContentType contentType = _mmsEngineDBFacade->getMediaItemKeyDetails(
-                sourceMediaItemKey, warningIfMissing);
+            MMSEngineDBFacade::ContentType contentType;
+            {
+                int64_t localMediaItemKey;
+                tie(localMediaItemKey, contentType) = mediaItemKeyContentTypeAndAvgFrameRate;                
+            }
             
             if (!concatContentTypeInitialized)
             {
@@ -2765,6 +2801,33 @@ void MMSEngineProcessor::generateAndIngestConcatenation(
 
                     throw runtime_error(errorMessage);
                 }
+            }
+            
+            // to manage a ffmpeg bug generating a corrupted/wrong avgFrameRate, we will
+            // force the concat file to have the same avgFrameRate of the source media
+            if (concatContentType == MMSEngineDBFacade::ContentType::Video
+                    && forcedAvgFrameRate == "")
+            {
+                int64_t localDurationInMilliSeconds;
+                long localBitRate;
+                string localVideoCodecName;
+                string localVideoProfile;
+                int localVideoWidth;
+                int localVideoHeight;
+                string localVideoAvgFrameRate;
+                long localVideoBitRate;
+                string localAudioCodecName;
+                long localAudioSampleRate;
+                int localAudioChannels;
+                long localAudioBitRate;
+                
+                tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> videoDetails 
+                    = _mmsEngineDBFacade->getVideoDetails(sourceMediaItemKey, sourcePhysicalPathKey);
+
+                    tie(localDurationInMilliSeconds, localBitRate, localVideoCodecName,
+                        localVideoProfile, localVideoWidth, localVideoHeight, localVideoAvgFrameRate,
+                        localVideoBitRate, localAudioCodecName, localAudioSampleRate, localAudioChannels, localAudioBitRate)
+                        = videoDetails;
             }
         }
 
@@ -2823,7 +2886,12 @@ void MMSEngineProcessor::generateAndIngestConcatenation(
             localAssetIngestionEvent->setIngestionSourceFileName(localSourceFileName);
             localAssetIngestionEvent->setMMSSourceFileName(localSourceFileName);
             localAssetIngestionEvent->setWorkspace(workspace);
-            localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::AddContent);
+            localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::AddContent);            
+            // to manage a ffmpeg bug generating a corrupted/wrong avgFrameRate, we will
+            // force the concat file to have the same avgFrameRate of the source media
+            if (forcedAvgFrameRate != "" && concatContentType == MMSEngineDBFacade::ContentType::Video)
+                localAssetIngestionEvent->setForcedAvgFrameRate(forcedAvgFrameRate);            
+
 
             localAssetIngestionEvent->setMetadataContent(mediaMetaDataContent);
 
@@ -2888,18 +2956,23 @@ void MMSEngineProcessor::generateAndIngestCutMedia(
 
             sourcePhysicalPathKey = -1;
             int64_t encodingProfileKey = -1;
-            sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourceMediaItemKey, encodingProfileKey);
+            pair<int64_t,string> physicalPathKeyAndPhysicalPath
+                    = _mmsStorage->getPhysicalPath(sourceMediaItemKey, encodingProfileKey);
+            tie(sourcePhysicalPathKey,sourcePhysicalPath) = physicalPathKeyAndPhysicalPath;
         }
         else
         {
             sourcePhysicalPathKey = keyAndDependencyType.first;
             
             bool warningIfMissing = false;
-            pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType =
+            pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyContentTypeAndAvgFrameRate =
                 _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                     sourcePhysicalPathKey, warningIfMissing);
-    
-            sourceMediaItemKey = mediaItemKeyAndContentType.first;
+
+            MMSEngineDBFacade::ContentType localContentType;
+            tie(sourceMediaItemKey,localContentType)
+                    = mediaItemKeyContentTypeAndAvgFrameRate;
+
             sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourcePhysicalPathKey);
         }
 
@@ -3189,11 +3262,13 @@ void MMSEngineProcessor::manageEncodeTask(
             sourcePhysicalPathKey = keyAndDependencyType.first;
             
             bool warningIfMissing = false;
-            pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType =
+            pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyContentTypeAndAvgFrameRate =
                 _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                     sourcePhysicalPathKey, warningIfMissing);
-    
-            sourceMediaItemKey = mediaItemKeyAndContentType.first;
+
+            MMSEngineDBFacade::ContentType localContentType;
+            tie(sourceMediaItemKey,localContentType)
+                    = mediaItemKeyContentTypeAndAvgFrameRate;
         }
     
         if (encodingProfileKey == -1)
@@ -3295,11 +3370,13 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
             sourcePhysicalPathKey_1 = keyAndDependencyType_1.first;
             
             bool warningIfMissing = false;
-            pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType =
+            pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyContentTypeAndAvgFrameRate =
                 _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                     sourcePhysicalPathKey_1, warningIfMissing);
-    
-            sourceMediaItemKey_1 = mediaItemKeyAndContentType.first;
+
+            MMSEngineDBFacade::ContentType localContentType;
+            tie(sourceMediaItemKey_1,localContentType)
+                    = mediaItemKeyContentTypeAndAvgFrameRate;
         }
 
         int64_t sourceMediaItemKey_2;
@@ -3316,11 +3393,13 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
             sourcePhysicalPathKey_2 = keyAndDependencyType_2.first;
             
             bool warningIfMissing = false;
-            pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType =
+            pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyContentTypeAndAvgFrameRate =
                 _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                     sourcePhysicalPathKey_2, warningIfMissing);
-    
-            sourceMediaItemKey_2 = mediaItemKeyAndContentType.first;
+
+            MMSEngineDBFacade::ContentType localContentType;
+            tie(sourceMediaItemKey_2,localContentType)
+                    = mediaItemKeyContentTypeAndAvgFrameRate;
         }
 
         _mmsEngineDBFacade->addOverlayImageOnVideoJob (ingestionJobKey,
@@ -3472,11 +3551,13 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
             sourcePhysicalPathKey = keyAndDependencyType.first;
             
             bool warningIfMissing = false;
-            pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType =
+            pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyContentTypeAndAvgFrameRate =
                 _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                     sourcePhysicalPathKey, warningIfMissing);
-    
-            sourceMediaItemKey = mediaItemKeyAndContentType.first;
+
+            MMSEngineDBFacade::ContentType localContentType;
+            tie(sourceMediaItemKey,localContentType)
+                    = mediaItemKeyContentTypeAndAvgFrameRate;
         }
 
         _mmsEngineDBFacade->addOverlayTextOnVideoJob (

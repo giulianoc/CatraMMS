@@ -51,7 +51,7 @@ public:
 
     string getDoneRootRepository (void);
 
-    string getPhysicalPath(int64_t mediaItemKey,
+    pair<int64_t,string> getPhysicalPath(int64_t mediaItemKey,
         int64_t encodingProfileKey);
     
     string getPhysicalPath(int64_t physicalPathKey);

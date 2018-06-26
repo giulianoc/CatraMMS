@@ -774,9 +774,6 @@ public:
         int64_t workspaceKey, int64_t encodingProfileKey,
         bool contentTypePresent, ContentType contentType);
 
-    MMSEngineDBFacade::ContentType getMediaItemKeyDetails(
-        int64_t referenceMediaItemKey, bool warningIfMissing);
-
     int64_t getPhysicalPathDetails(
         int64_t referenceMediaItemKey, int64_t encodingProfileKey);
    
@@ -785,8 +782,11 @@ public:
         int64_t mediaItemKey, ContentType contentType,
         string encodingProfileLabel);
 
+    MMSEngineDBFacade::ContentType getMediaItemKeyDetails(
+        int64_t mediaItemKey, bool warningIfMissing);
+
     pair<int64_t,MMSEngineDBFacade::ContentType> getMediaItemKeyDetailsByPhysicalPathKey(
-        int64_t referencePhysicalPathKey, bool warningIfMissing);
+        int64_t physicalPathKey, bool warningIfMissing);
     
     tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> getMediaItemDetailsByIngestionJobKey(
         int64_t referenceIngestionJobKey, bool warningIfMissing);
@@ -814,7 +814,7 @@ public:
     tuple<int,shared_ptr<Workspace>,string,string,string> getStorageDetails(
         int64_t physicalPathKey);
 
-    tuple<int,shared_ptr<Workspace>,string,string,string> getStorageDetails(
+    tuple<int64_t,int,shared_ptr<Workspace>,string,string,string> getStorageDetails(
         int64_t mediaItemKey,
         int64_t encodingProfileKey
     );

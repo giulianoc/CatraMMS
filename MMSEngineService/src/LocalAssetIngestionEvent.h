@@ -42,6 +42,7 @@ private:
     string                  _metadataContent;
     string                  _ingestionSourceFileName;
     string                  _mmsSourceFileName;
+    string                  _forcedAvgFrameRate;
 
 public:
     void setMMSSourceFileName(string mmsSourceFileName)
@@ -96,6 +97,15 @@ public:
     shared_ptr<Workspace> getWorkspace()
     {
         return _workspace;
+    }
+
+    void setForcedAvgFrameRate(string forcedAvgFrameRate)
+    {
+        _forcedAvgFrameRate   = forcedAvgFrameRate;
+    }
+    string getForcedAvgFrameRate()
+    {
+        return _forcedAvgFrameRate;
     }
 };
 

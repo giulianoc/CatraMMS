@@ -6040,119 +6040,6 @@ Json::Value MMSEngineDBFacade::getEncodingProfileList (
     return contentListRoot;
 }
 
-MMSEngineDBFacade::ContentType MMSEngineDBFacade::getMediaItemKeyDetails(
-    int64_t referenceMediaItemKey, bool warningIfMissing)
-{
-    string      lastSQLCommand;
-        
-    shared_ptr<MySQLConnection> conn;
-    
-    MMSEngineDBFacade::ContentType contentType;
-
-    try
-    {
-        conn = _connectionPool->borrow();	
-        _logger->debug(__FILEREF__ + "DB connection borrow"
-            + ", getConnectionId: " + to_string(conn->getConnectionId())
-        );
-
-        {
-            lastSQLCommand = 
-                "select contentType from MMS_MediaItem where mediaItemKey = ?";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, referenceMediaItemKey);
-
-            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-            if (resultSet->next())
-            {
-                contentType = MMSEngineDBFacade::toContentType(resultSet->getString("contentType"));
-            }
-            else
-            {
-                string errorMessage = __FILEREF__ + "MediaItemKey is not found"
-                    + ", mediaItemKey: " + to_string(referenceMediaItemKey)
-                    + ", lastSQLCommand: " + lastSQLCommand
-                ;
-                if (warningIfMissing)
-                    _logger->warn(errorMessage);
-                else
-                    _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);                    
-            }            
-        }
-
-        _logger->debug(__FILEREF__ + "DB connection unborrow"
-            + ", getConnectionId: " + to_string(conn->getConnectionId())
-        );
-        _connectionPool->unborrow(conn);
-    }
-    catch(sql::SQLException se)
-    {
-        string exceptionMessage(se.what());
-        
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", lastSQLCommand: " + lastSQLCommand
-            + ", exceptionMessage: " + exceptionMessage
-        );
-
-        _logger->debug(__FILEREF__ + "DB connection unborrow"
-            + ", getConnectionId: " + to_string(conn->getConnectionId())
-        );
-        _connectionPool->unborrow(conn);
-
-        throw se;
-    }
-    catch(MediaItemKeyNotFound e)
-    {
-        if (warningIfMissing)
-            _logger->warn(__FILEREF__ + "SQL exception"
-                + ", lastSQLCommand: " + lastSQLCommand
-            );
-        else
-            _logger->error(__FILEREF__ + "SQL exception"
-                + ", lastSQLCommand: " + lastSQLCommand
-            );
-
-        _logger->debug(__FILEREF__ + "DB connection unborrow"
-            + ", getConnectionId: " + to_string(conn->getConnectionId())
-        );
-        _connectionPool->unborrow(conn);
-        
-        throw e;
-    }
-    catch(runtime_error e)
-    {
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", e.what(): " + e.what()
-            + ", lastSQLCommand: " + lastSQLCommand
-        );
-
-        _logger->debug(__FILEREF__ + "DB connection unborrow"
-            + ", getConnectionId: " + to_string(conn->getConnectionId())
-        );
-        _connectionPool->unborrow(conn);
-        
-        throw e;
-    }
-    catch(exception e)
-    {
-        _logger->error(__FILEREF__ + "SQL exception"
-            + ", lastSQLCommand: " + lastSQLCommand
-        );
-
-        _logger->debug(__FILEREF__ + "DB connection unborrow"
-            + ", getConnectionId: " + to_string(conn->getConnectionId())
-        );
-        _connectionPool->unborrow(conn);
-        
-        throw e;
-    }
-    
-    return contentType;
-}
-
 int64_t MMSEngineDBFacade::getPhysicalPathDetails(
     int64_t referenceMediaItemKey, int64_t encodingProfileKey)
 {
@@ -6398,14 +6285,14 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
     return physicalPathKey;
 }
 
-pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyDetailsByPhysicalPathKey(
-    int64_t referencePhysicalPathKey, bool warningIfMissing)
+MMSEngineDBFacade::ContentType MMSEngineDBFacade::getMediaItemKeyDetails(
+    int64_t mediaItemKey, bool warningIfMissing)
 {
     string      lastSQLCommand;
         
     shared_ptr<MySQLConnection> conn;
     
-    pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType;
+    MMSEngineDBFacade::ContentType contentType;
 
     try
     {
@@ -6416,22 +6303,20 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
 
         {
             lastSQLCommand = 
-                "select mi.mediaItemKey, mi.contentType from MMS_MediaItem mi, MMS_PhysicalPath p "
-                "where mi.mediaItemKey = p.mediaItemKey and p.physicalPathKey = ?";
+                "select contentType from MMS_MediaItem where mediaItemKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, referencePhysicalPathKey);
+            preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
 
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
-                mediaItemKeyAndContentType.first = resultSet->getInt64("mediaItemKey");
-                mediaItemKeyAndContentType.second = MMSEngineDBFacade::toContentType(resultSet->getString("contentType"));
+                contentType = MMSEngineDBFacade::toContentType(resultSet->getString("contentType"));
             }
             else
             {
                 string errorMessage = __FILEREF__ + "MediaItemKey is not found"
-                    + ", referencePhysicalPathKey: " + to_string(referencePhysicalPathKey)
+                    + ", mediaItemKey: " + to_string(mediaItemKey)
                     + ", lastSQLCommand: " + lastSQLCommand
                 ;
                 if (warningIfMissing)
@@ -6439,10 +6324,10 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
                 else
                     _logger->error(errorMessage);
 
-                throw MediaItemKeyNotFound(errorMessage);                    
+                throw runtime_error(errorMessage);                    
             }            
         }
-
+                        
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -6510,7 +6395,123 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
         throw e;
     }
     
-    return mediaItemKeyAndContentType;
+    return contentType;
+}
+
+pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyDetailsByPhysicalPathKey(
+    int64_t physicalPathKey, bool warningIfMissing)
+{
+    string      lastSQLCommand;
+        
+    shared_ptr<MySQLConnection> conn;
+    
+    int64_t mediaItemKey;
+    MMSEngineDBFacade::ContentType contentType;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        {
+            lastSQLCommand = 
+                "select mi.mediaItemKey, mi.contentType from MMS_MediaItem mi, MMS_PhysicalPath p "
+                "where mi.mediaItemKey = p.mediaItemKey and p.physicalPathKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, physicalPathKey);
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                mediaItemKey = resultSet->getInt64("mediaItemKey");
+                contentType = MMSEngineDBFacade::toContentType(resultSet->getString("contentType"));
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "MediaItemKey is not found"
+                    + ", physicalPathKey: " + to_string(physicalPathKey)
+                    + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                if (warningIfMissing)
+                    _logger->warn(errorMessage);
+                else
+                    _logger->error(errorMessage);
+
+                throw MediaItemKeyNotFound(errorMessage);                    
+            }            
+        }
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
+        return make_pair(mediaItemKey, contentType);
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
+        throw se;
+    }
+    catch(MediaItemKeyNotFound e)
+    {
+        if (warningIfMissing)
+            _logger->warn(__FILEREF__ + "SQL exception"
+                + ", lastSQLCommand: " + lastSQLCommand
+            );
+        else
+            _logger->error(__FILEREF__ + "SQL exception"
+                + ", lastSQLCommand: " + lastSQLCommand
+            );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
+        throw e;
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+        
+        throw e;
+    }    
 }
 
 tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
@@ -11826,7 +11827,7 @@ tuple<int,shared_ptr<Workspace>,string,string,string> MMSEngineDBFacade::getStor
     }        
 }
 
-tuple<int,shared_ptr<Workspace>,string,string,string> MMSEngineDBFacade::getStorageDetails(
+tuple<int64_t,int,shared_ptr<Workspace>,string,string,string> MMSEngineDBFacade::getStorageDetails(
         int64_t mediaItemKey,
         int64_t encodingProfileKey
 )
@@ -11844,13 +11845,14 @@ tuple<int,shared_ptr<Workspace>,string,string,string> MMSEngineDBFacade::getStor
         );
 
         int64_t workspaceKey;
+        int64_t physicalPathKey;
         int mmsPartitionNumber;
         string relativePath;
         string fileName;
         string deliveryFileName = "";
         {
             lastSQLCommand = string("") +
-                "select mi.workspaceKey, mi.deliveryFileName, pp.partitionNumber, pp.relativePath, pp.fileName "
+                "select mi.workspaceKey, mi.deliveryFileName, pp.physicalPathKey, pp.partitionNumber, pp.relativePath, pp.fileName "
                 "from MMS_MediaItem mi, MMS_PhysicalPath pp "
                 "where mi.mediaItemKey = pp.mediaItemKey and mi.mediaItemKey = ? "
                 "and pp.encodingProfileKey " + (encodingProfileKey == -1 ? "is null" : "= ?");
@@ -11865,6 +11867,7 @@ tuple<int,shared_ptr<Workspace>,string,string,string> MMSEngineDBFacade::getStor
             if (resultSet->next())
             {
                 workspaceKey = resultSet->getInt64("workspaceKey");
+                physicalPathKey = resultSet->getInt64("physicalPathKey");
                 mmsPartitionNumber = resultSet->getInt("partitionNumber");
                 relativePath = resultSet->getString("relativePath");
                 fileName = resultSet->getString("fileName");
@@ -11891,7 +11894,7 @@ tuple<int,shared_ptr<Workspace>,string,string,string> MMSEngineDBFacade::getStor
         );
         _connectionPool->unborrow(conn);
 
-        return make_tuple(mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName);
+        return make_tuple(physicalPathKey, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName);
     }
     catch(sql::SQLException se)
     {

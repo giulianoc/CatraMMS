@@ -1251,12 +1251,12 @@ void Validator::validateRemoveContentMetadata(int64_t workspaceKey,
                 }
                 else if (referencePhysicalPathKey != -1)
                 {
-                    pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
+                    pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyContentTypeAndFrameRate = 
                             _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                             referencePhysicalPathKey, warningIfMissing);  
 
-                    referenceMediaItemKey = mediaItemKeyAndContentType.first;
-                    referenceContentType = mediaItemKeyAndContentType.second;
+                    tie(referenceMediaItemKey,referenceContentType) 
+                            = mediaItemKeyContentTypeAndFrameRate;
                 }
                 else if (referenceIngestionJobKey != -1)
                 {
@@ -1461,12 +1461,12 @@ void Validator::validateEncodeMetadata(int64_t workspaceKey,
             }
             else if (referencePhysicalPathKey != -1)
             {
-                pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
+                pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyContentTypeAndFrameRate = 
                         _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                         referencePhysicalPathKey, warningIfMissing);  
 
-                referenceMediaItemKey = mediaItemKeyAndContentType.first;
-                referenceContentType = mediaItemKeyAndContentType.second;
+                tie(referenceMediaItemKey,referenceContentType) 
+                        = mediaItemKeyContentTypeAndFrameRate;
             }
             else if (referenceIngestionJobKey != -1)
             {
@@ -1667,12 +1667,12 @@ void Validator::validateFrameMetadata(int64_t workspaceKey,
             }
             else if (referencePhysicalPathKey != -1)
             {
-                pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
+                pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyContentTypeAndFrameRate = 
                         _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                         referencePhysicalPathKey, warningIfMissing);  
 
-                referenceMediaItemKey = mediaItemKeyAndContentType.first;
-                referenceContentType = mediaItemKeyAndContentType.second;
+                tie(referenceMediaItemKey,referenceContentType) 
+                        = mediaItemKeyContentTypeAndFrameRate;
             }
             else if (referenceIngestionJobKey != -1)
             {
@@ -1891,12 +1891,12 @@ void Validator::validatePeriodicalFramesMetadata(int64_t workspaceKey,
             }
             else if (referencePhysicalPathKey != -1)
             {
-                pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
+                pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyContentTypeAndFrameRate = 
                         _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                         referencePhysicalPathKey, warningIfMissing);  
 
-                referenceMediaItemKey = mediaItemKeyAndContentType.first;
-                referenceContentType = mediaItemKeyAndContentType.second;
+                tie(referenceMediaItemKey,referenceContentType) 
+                        = mediaItemKeyContentTypeAndFrameRate;
             }
             else if (referenceIngestionJobKey != -1)
             {
@@ -2111,12 +2111,12 @@ void Validator::validateIFramesMetadata(int64_t workspaceKey,
             }
             else if (referencePhysicalPathKey != -1)
             {
-                pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
+                pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyContentTypeAndFrameRate = 
                         _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                         referencePhysicalPathKey, warningIfMissing);  
 
-                referenceMediaItemKey = mediaItemKeyAndContentType.first;
-                referenceContentType = mediaItemKeyAndContentType.second;
+                tie(referenceMediaItemKey,referenceContentType) 
+                        = mediaItemKeyContentTypeAndFrameRate;
             }
             else if (referenceIngestionJobKey != -1)
             {
@@ -2347,12 +2347,12 @@ void Validator::validateSlideshowMetadata(int64_t workspaceKey,
                 }
                 else if (referencePhysicalPathKey != -1)
                 {
-                    pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
+                    pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyContentTypeAndFrameRate = 
                             _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                             referencePhysicalPathKey, warningIfMissing);  
 
-                    referenceMediaItemKey = mediaItemKeyAndContentType.first;
-                    referenceContentType = mediaItemKeyAndContentType.second;
+                    tie(referenceMediaItemKey,referenceContentType) 
+                            = mediaItemKeyContentTypeAndFrameRate;
                 }
                 else if (referenceIngestionJobKey != -1)
                 {
@@ -2569,12 +2569,12 @@ void Validator::validateConcatDemuxerMetadata(int64_t workspaceKey,
                 }
                 else if (referencePhysicalPathKey != -1)
                 {
-                    pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
+                    pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyContentTypeAndFrameRate = 
                             _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                             referencePhysicalPathKey, warningIfMissing);  
 
-                    referenceMediaItemKey = mediaItemKeyAndContentType.first;
-                    referenceContentType = mediaItemKeyAndContentType.second;
+                    tie(referenceMediaItemKey,referenceContentType) 
+                            = mediaItemKeyContentTypeAndFrameRate;
                 }
                 else if (referenceIngestionJobKey != -1)
                 {
@@ -2789,12 +2789,12 @@ void Validator::validateCutMetadata(int64_t workspaceKey,
             }
             else if (referencePhysicalPathKey != -1)
             {
-                pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
+                pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyContentTypeAndFrameRate = 
                         _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                         referencePhysicalPathKey, warningIfMissing);  
 
-                referenceMediaItemKey = mediaItemKeyAndContentType.first;
-                referenceContentType = mediaItemKeyAndContentType.second;
+                tie(referenceMediaItemKey,referenceContentType) 
+                        = mediaItemKeyContentTypeAndFrameRate;
             }
             else if (referenceIngestionJobKey != -1)
             {
@@ -3002,12 +3002,12 @@ void Validator::validateOverlayImageOnVideoMetadata(int64_t workspaceKey,
                 }
                 else if (referencePhysicalPathKey != -1)
                 {
-                    pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
+                    pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyContentTypeAndFrameRate = 
                             _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                             referencePhysicalPathKey, warningIfMissing);  
 
-                    referenceMediaItemKey = mediaItemKeyAndContentType.first;
-                    referenceContentType = mediaItemKeyAndContentType.second;
+                    tie(referenceMediaItemKey,referenceContentType) 
+                            = mediaItemKeyContentTypeAndFrameRate;
                 }
                 else if (referenceIngestionJobKey != -1)
                 {
@@ -3328,12 +3328,12 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey,
             }
             else if (referencePhysicalPathKey != -1)
             {
-                pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = 
+                pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyContentTypeAndFrameRate = 
                         _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                         referencePhysicalPathKey, warningIfMissing);  
 
-                referenceMediaItemKey = mediaItemKeyAndContentType.first;
-                referenceContentType = mediaItemKeyAndContentType.second;
+                tie(referenceMediaItemKey,referenceContentType) 
+                        = mediaItemKeyContentTypeAndFrameRate;
             }
             else if (referenceIngestionJobKey != -1)
             {
