@@ -2814,7 +2814,7 @@ void MMSEngineProcessor::generateAndIngestConcatenation(
                 string localVideoProfile;
                 int localVideoWidth;
                 int localVideoHeight;
-                string localVideoAvgFrameRate;
+                // string localVideoAvgFrameRate;
                 long localVideoBitRate;
                 string localAudioCodecName;
                 long localAudioSampleRate;
@@ -2825,7 +2825,7 @@ void MMSEngineProcessor::generateAndIngestConcatenation(
                     = _mmsEngineDBFacade->getVideoDetails(sourceMediaItemKey, sourcePhysicalPathKey);
 
                     tie(localDurationInMilliSeconds, localBitRate, localVideoCodecName,
-                        localVideoProfile, localVideoWidth, localVideoHeight, localVideoAvgFrameRate,
+                        localVideoProfile, localVideoWidth, localVideoHeight, forcedAvgFrameRate,
                         localVideoBitRate, localAudioCodecName, localAudioSampleRate, localAudioChannels, localAudioBitRate)
                         = videoDetails;
             }
