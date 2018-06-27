@@ -1,0 +1,216 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:media="http://xmlns.jcp.org/jsf/composite/media">
+
+<f:metadata>
+    <f:viewParam name="maxEncodingJobsNumber" value="#{encodingJobs.maxEncodingJobsNumber}"/>
+    <f:viewParam name="autoRefresh" value="#{encodingJobs.autoRefresh}"/>
+    <f:viewParam name="status" value="#{encodingJobs.status}"/>
+    <f:viewParam name="ascending" value="#{encodingJobs.ascending}"/>
+    <f:viewParam name="begin" value="#{encodingJobs.begin}" >
+        <f:convertDateTime pattern="yyyy-MM-dd'T'HH:mm:ss" />
+    </f:viewParam>
+    <f:viewParam name="end" value="#{encodingJobs.end}" >
+        <f:convertDateTime pattern="yyyy-MM-dd'T'HH:mm:ss" />
+    </f:viewParam>
+    <f:viewAction action="#{encodingJobs.fillList(false)}" />
+</f:metadata>
+
+<h:head>
+
+    <h:outputStylesheet library="css" name="catramms.css"  />
+
+</h:head>
+
+<h:body>
+
+    <ui:include src="/common/loadingDialog.xhtml"/>
+    <ui:include src="/common/globalConfirm.xhtml"/>
+
+    <h:form id="viewForm">
+
+        <p:growl id="growl" showDetail="true" sticky="false" escape="false" autoUpdate="true" life="5000" />
+
+        <p:toolbar>
+            <p:toolbarGroup align="left">
+                <p:outputLabel styleClass="appTitle" value="Media Management System" />
+            </p:toolbarGroup>
+
+            <p:toolbarGroup align="right">
+
+                <p:outputLabel value="Welcome #{login.user}" />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:commandLink value="Logout" action="#{login.logout}" />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <ui:include src="/common/mainMenu.xhtml"/>
+
+            </p:toolbarGroup>
+        </p:toolbar>
+
+        <p:toolbar>
+            <p:toolbarGroup align="left">
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:outputLabel styleClass="viewTitle" value="Encodings Jobs" />
+
+            </p:toolbarGroup>
+
+            <p:toolbarGroup align="right">
+                <p:outputLabel value="Begin:" />
+                <p:calendar id="begin" value="#{encodingJobs.begin}" pattern="dd-MM-yyyy HH:mm:ss" locale="my" >
+                    <p:ajax global="false" onstart="on_start()" event="dateSelect"
+                            listener="#{encodingJobs.beginChanged()}"
+                            update="end" />
+                </p:calendar>
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:outputLabel value="End:" />
+                <p:calendar id="end" value="#{encodingJobs.end}" pattern="dd-MM-yyyy HH:mm:ss" locale="my" >
+                    <p:ajax global="false" onstart="on_start()" event="dateSelect" listener="#{encodingJobs.endChanged()}"
+                            update="begin" />
+                </p:calendar>
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:outputLabel for="status" value="Status: " />
+                <p:selectOneMenu style="width:75px;" id="status"
+                                 value="#{encodingJobs.status}">
+                    <f:selectItems value="#{encodingJobs.statusOptions}" />
+                    <p:ajax global="false" onstart="on_start()" event="change" listener="#{encodingJobs.fillList(true)}" />
+                </p:selectOneMenu>
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:outputLabel value="Max:" />
+                <p:spinner id="maxEncodingJobsNumber"
+                           value="#{encodingJobs.maxEncodingJobsNumber}"
+                           min="10" max="1000" stepFactor="10" size="5"/>
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:selectBooleanButton
+                        value="#{encodingJobs.ascending}"
+                        onLabel="Asc" offLabel="Desc" onIcon="ui-icon-check" offIcon="ui-icon-check">
+                    <p:ajax global="false" onstart="on_start()"
+                            listener="#{encodingJobs.fillList(true)}" />
+                </p:selectBooleanButton>
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:commandButton global="false" onstart="on_start()" icon="ui-icon ui-icon-search"
+                                 actionListener="#{encodingJobs.fillList(true)}" />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:selectBooleanButton
+                        value="#{encodingJobs.autoRefresh}"
+                        onLabel="Auto Refresh" offLabel="No Auto Refresh" onIcon="ui-icon-check" offIcon="ui-icon-check">
+                    <p:ajax
+                            listener="#{encodingJobs.fillList(true)}" update="encodingJobDataTable" />
+                </p:selectBooleanButton>
+            </p:toolbarGroup>
+        </p:toolbar>
+
+        <p:remoteCommand name="updateView" actionListener="#{encodingJobs.fillList(false)}"
+                         update="encodingJobDataTable" global="false"
+                         oncomplete="setZIndex([ '.tieredMenuClass', '.replicaFilterClass', '.channelNameClass', '.ui-datepicker' ])" />
+        <p:remoteCommand rendered="#{encodingJobs.autoRefresh}"
+                         oncomplete="initUpdaterTimer(updateView, #{encodingJobs.autoRefreshPeriodInSeconds});"
+                         autoRun="true"/>
+
+        <p:dataTable resizableColumns="true" id="encodingJobDataTable" var="encodingJob" rowIndexVar="rowId"
+                     value="#{encodingJobs.encodingJobsList}" rowKey="#{encodingJob.encodingJobKey}"
+                     selectionMode="single" stickyHeader="true"
+                     widgetVar="encodingJobDataTable" >
+
+            <f:facet name="header">
+
+                <p:toolbar>
+                    <p:toolbarGroup align="left">
+                        <!-- panelGroup is to make 'rendered' working on update -->
+                        <h:panelGroup>
+                            <p:outputLabel styleClass="red" value="#{encodingJobs.encodingJobsList.size()}" />
+                            <p:outputLabel styleClass="red" value=" / #{encodingJobs.encodingJobsNumber}" />
+                            <p:outputLabel value=" encoding jobs" />
+                        </h:panelGroup>
+                    </p:toolbarGroup>
+
+                    <p:toolbarGroup align="right">
+
+                    </p:toolbarGroup>
+                </p:toolbar>
+
+            </f:facet>
+
+            <p:column style="width:80px;" headerText="Job Key" >
+                <p:outputLabel value="#{encodingJob.encodingJobKey}" />
+            </p:column>
+
+            <p:column style="width:120px;" headerText="Type" >
+                <p:outputLabel value="#{encodingJob.type}" />
+            </p:column>
+
+            <p:column style="width:160px;" headerText="Start" >
+                <p:outputLabel value="#{encodingJob.start}">
+                    <f:convertDateTime type="date" pattern="dd-MM-yyyy HH:mm:ss" timeZone="CET"/>
+                </p:outputLabel>
+            </p:column>
+
+            <p:column style="width:160px;" headerText="End" >
+                <p:outputLabel value="#{encodingJob.end}">
+                    <f:convertDateTime type="date" pattern="dd-MM-yyyy HH:mm:ss" timeZone="CET"/>
+                </p:outputLabel>
+            </p:column>
+
+            <p:column style="width:180px;" headerText="Status" >
+                <p:outputLabel value="#{encodingJob.status}" />
+            </p:column>
+
+            <p:column style="width:90px;" headerText="Progress" >
+                <p:outputLabel value="#{encodingJob.progress}" />
+            </p:column>
+
+            <p:column style="width:80px;" headerText="Failures" >
+                <p:outputLabel value="#{encodingJob.failuresNumber}" />
+            </p:column>
+
+            <p:column style="width:50px;" headerText="">
+                <h:link outcome="/encodingJobDetails.xhtml?faces-redirect=true" value="Details">
+                    <f:param name="encodingJobKey" value="#{encodingJob.encodingJobKey}" />
+                </h:link>
+            </p:column>
+        </p:dataTable>
+
+    </h:form>
+
+</h:body>
+</html>

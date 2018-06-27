@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/javaee"
+         xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+         id="WebApp_ID" version="2.5">
+
+	<display-name>Catra MMS site</display-name>
+
+    <!-- JSF configuration -->
+    <servlet>
+        <servlet-name>faces</servlet-name>
+        <servlet-class>javax.faces.webapp.FacesServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>faces</servlet-name>
+        <url-pattern>*.xhtml</url-pattern>
+    </servlet-mapping>
+
+    <context-param>
+        <param-name>primefaces.THEME</param-name>
+        <!-- <param-value>bluesky</param-value> -->
+        <!-- <param-value>admin</param-value> -->
+        <param-value>bootstrap</param-value>
+        <!-- <param-value>aristo</param-value> -->
+    </context-param>
+
+    <context-param>
+        <param-name>javax.faces.DATETIMECONVERTER_DEFAULT_TIMEZONE_IS_SYSTEM_TIMEZONE</param-name>
+        <param-value>true</param-value>
+    </context-param>
+
+    <!-- fileUpload -->
+    <context-param>
+        <param-name>primefaces.UPLOADER</param-name>
+        <param-value>auto</param-value>
+    </context-param>
+
+    <filter>
+        <filter-name>PrimeFaces FileUpload Filter</filter-name>
+        <filter-class>
+            org.primefaces.webapp.filter.FileUploadFilter
+        </filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>PrimeFaces FileUpload Filter</filter-name>
+        <servlet-name>faces</servlet-name>
+    </filter-mapping>
+
+    <context-param>
+        <param-name>facelets.SKIP_COMMENTS</param-name>
+        <param-value>true</param-value>  <!-- removes anything in the page that is contained in <!– –> -->
+    </context-param>
+
+    <context-param>
+        <param-name>primefaces.FONT_AWESOME</param-name>
+        <param-value>true</param-value>
+    </context-param>
+
+    <!-- BEGIN To make the GUI working in tomcat cluster session replication.
+        Because of that, MyPhaseListener was added too -->
+    <distributable/>
+
+    <context-param>
+        <param-name>javax.faces.STATE_SAVING_METHOD</param-name>
+        <param-value>client</param-value>
+    </context-param>
+
+    <env-entry>
+        <env-entry-name>jsf/ClientSideSecretKey</env-entry-name>
+        <env-entry-type>java.lang.String</env-entry-type>
+        <env-entry-value>XvgoS8dnNw0zyy+Ow2k5Cg==</env-entry-value>
+    </env-entry>
+
+    <!-- Generated using
+            try {
+            KeyGenerator keyGen = KeyGenerator.getInstance("AES");
+            // keyGen.init(256); // Use 128 for 16bit key.
+            keyGen.init(128); // Use 128 for 16bit key.
+            String key = Base64.getEncoder().encodeToString(keyGen.generateKey().getEncoded());
+            mLogger.error("Key 128: " + key);
+        }
+        catch (Exception e)
+        {
+            mLogger.error("KeyGenerator failed: " + e.getMessage());
+        }
+    -->
+
+    <!--
+
+    <context-param>
+        <param-name>com.sun.faces.serializeServerState</param-name>
+        <param-value>true</param-value>
+    </context-param>
+
+    <context-param>
+        <param-name>javax.faces.PARTIAL_STATE_SAVING</param-name>
+        <param-value>false</param-value>
+    </context-param>
+
+    <context-param>
+        <param-name>com.sun.faces.enableAgressiveSessionDirtying</param-name>
+        <param-value>true</param-value>
+    </context-param>
+
+    <context-param>
+        <param-name>com.sun.faces.numberOfViewsInSession</param-name>
+        <param-value>6</param-value>
+    </context-param>
+
+    <context-param>
+        <param-name>com.sun.faces.numberOfLogicalViews</param-name>
+        <param-value>1</param-value>
+    </context-param>
+
+    -->
+    <!-- END To make the GUI working in tomcat cluster session replication -->
+
+    <!--
+    <welcome-file-list>
+        <welcome-file>louise/programs.xhtml</welcome-file>
+    </welcome-file-list>
+    -->
+
+    <session-config>
+        <session-timeout>60</session-timeout>
+    </session-config>
+
+</web-app>

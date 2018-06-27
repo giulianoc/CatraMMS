@@ -1,0 +1,128 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:media="http://xmlns.jcp.org/jsf/composite/media">
+
+<f:metadata>
+    <f:viewParam name="contentType" value="#{encodingProfilesSets.contentType}"/>
+    <f:viewAction action="#{encodingProfilesSets.fillList(false)}" />
+</f:metadata>
+
+<h:head>
+
+    <h:outputStylesheet library="css" name="catramms.css"  />
+
+</h:head>
+
+<h:body>
+
+    <ui:include src="/common/loadingDialog.xhtml"/>
+    <ui:include src="/common/globalConfirm.xhtml"/>
+
+    <h:form id="viewForm">
+
+        <p:growl id="growl" showDetail="true" sticky="false" escape="false" autoUpdate="true" life="5000" />
+
+        <p:toolbar>
+            <p:toolbarGroup align="left">
+                <p:outputLabel styleClass="appTitle" value="Media Management System" />
+            </p:toolbarGroup>
+
+            <p:toolbarGroup align="right">
+
+                <p:outputLabel value="Welcome #{login.user}" />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:commandLink value="Logout" action="#{login.logout}" />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <ui:include src="/common/mainMenu.xhtml"/>
+
+            </p:toolbarGroup>
+        </p:toolbar>
+
+        <p:toolbar>
+            <p:toolbarGroup align="left">
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:outputLabel styleClass="viewTitle" value="Encoding Profiles Sets" />
+
+            </p:toolbarGroup>
+
+            <p:toolbarGroup align="right">
+                <p:outputLabel value="Content type:" />
+                <p:selectOneMenu id="contentType" value="#{encodingProfilesSets.contentType}"
+                                 autoWidth="false">
+                    <f:selectItems value="#{encodingProfilesSets.contentTypesList}" />
+                    <p:ajax global="true" event="change" listener="#{encodingProfilesSets.contentTypeChanged()}" />
+                </p:selectOneMenu>
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:commandButton global="true" icon="ui-icon ui-icon-search"
+                                 actionListener="#{encodingProfilesSets.fillList(true)}" />
+            </p:toolbarGroup>
+        </p:toolbar>
+
+        <p:dataTable resizableColumns="true" id="encodingProfilesSetsDataTable" var="encodingProfilesSet" rowIndexVar="rowId"
+                     value="#{encodingProfilesSets.encodingProfilesSetList}" rowKey="#{encodingProfilesSet.encodingProfilesSetKey}"
+                     selectionMode="single" stickyHeader="true"
+                     widgetVar="encodingProfilesSetsDataTable" >
+
+            <f:facet name="header">
+
+                <p:toolbar>
+                    <p:toolbarGroup align="left">
+                        <!-- panelGroup is to make 'rendered' working on update -->
+                        <h:panelGroup>
+                            <p:outputLabel styleClass="red" value="#{encodingProfilesSets.encodingProfilesSetList.size()}" />
+                            <p:outputLabel value=" encoding profiles sets" />
+                        </h:panelGroup>
+                    </p:toolbarGroup>
+
+                    <p:toolbarGroup align="right">
+
+                    </p:toolbarGroup>
+                </p:toolbar>
+
+            </f:facet>
+
+            <p:column style="width:130px;" headerText="Profiles Set Key" >
+                <p:outputLabel value="#{encodingProfilesSet.encodingProfilesSetKey}" />
+            </p:column>
+
+            <p:column headerText="Label" >
+                <p:outputLabel value="#{encodingProfilesSet.label}" />
+            </p:column>
+
+            <p:column style="width:120px;" headerText="Content Type" >
+                <p:outputLabel value="#{encodingProfilesSet.contentType}" />
+            </p:column>
+
+            <p:column style="width:80px;" headerText="">
+                <h:link outcome="/encodingProfilesSetDetails.xhtml?faces-redirect=true" value="Details">
+                    <f:param name="encodingProfilesSetKey" value="#{encodingProfilesSet.encodingProfilesSetKey}" />
+                </h:link>
+            </p:column>
+
+        </p:dataTable>
+
+    </h:form>
+
+</h:body>
+</html>

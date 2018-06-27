@@ -1,0 +1,3077 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:media="http://xmlns.jcp.org/jsf/composite/media">
+
+
+<h:panelGroup id="taskDetailProperties">
+
+    <h:panelGroup rendered="#{newWorkflow.nodeType == 'Workflow'}">
+        <p:toolbar>
+            <f:facet name="left">
+                <p:outputLabel value="Workflow"/>
+            </f:facet>
+            <f:facet name="right">
+                <p:defaultCommand target="saveWorkflowProperties"/>
+
+                <p:commandButton id="saveWorkflowProperties" value="Save Properties"
+                                 action="#{newWorkflow.saveWorkflowProperties}"
+                                 update="viewForm:workflowTree,viewForm:ingestWorkflowButton,viewForm:workflowIssuesWarning,jsonWorkflowForm:jsonWorkflow"
+                        />
+            </f:facet>
+        </p:toolbar>
+
+        <p:panelGrid cellpadding="10" style="width: 100%">
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Label" style="font-weight: bold"/>
+                </p:column>
+                <p:column>
+                    <!--
+                                 required="true"
+                    -->
+                    <p:inputText id="workflowLabel"
+                                 autocomplete="true"
+                                 value="#{newWorkflow.workflowLabel}"
+                                 placeholder="label"/>
+                </p:column>
+            </p:row>
+
+        </p:panelGrid>
+
+    </h:panelGroup>
+
+    <h:panelGroup rendered="#{newWorkflow.nodeType == 'GroupOfTasks'}">
+        <p:toolbar>
+            <f:facet name="left">
+                <p:outputLabel value="GroupOfTasks"/>
+            </f:facet>
+            <f:facet name="right">
+                <p:defaultCommand target="saveGroupOfTasksProperties"/>
+
+                <p:commandButton id="saveGroupOfTasksProperties" value="Save Properties"
+                                 action="#{newWorkflow.saveTaskProperties}"
+                                 update="viewForm:workflowTree,viewForm:ingestWorkflowButton,viewForm:workflowIssuesWarning,jsonWorkflowForm:jsonWorkflow"
+                        />
+            </f:facet>
+        </p:toolbar>
+
+        <p:panelGrid cellpadding="10" style="width: 100%">
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel for="groupOfTaskExecutionType" value="Execution Type:"/>
+                </p:column>
+                <p:column>
+                    <p:selectOneRadio id="groupOfTaskExecutionType" value="#{newWorkflow.groupOfTaskExecutionType}">
+                        <f:selectItem itemLabel="Parallel" itemValue="parallel"/>
+                        <f:selectItem itemLabel="Sequential" itemValue="sequential"/>
+                    </p:selectOneRadio>
+                </p:column>
+            </p:row>
+
+        </p:panelGrid>
+    </h:panelGroup>
+
+    <h:panelGroup rendered="#{newWorkflow.nodeType == 'Add-Content'}">
+        <p:toolbar>
+            <f:facet name="left">
+                <p:outputLabel value="Add-Content"/>
+            </f:facet>
+            <f:facet name="right">
+                <p:defaultCommand target="saveAddContentProperties"/>
+
+                <p:commandButton id="saveAddContentProperties" value="Save Properties"
+                                 action="#{newWorkflow.saveTaskProperties}"
+                                 update="viewForm:workflowTree,viewForm:ingestWorkflowButton,viewForm:workflowIssuesWarning,jsonWorkflowForm:jsonWorkflow"
+                        />
+            </f:facet>
+        </p:toolbar>
+
+        <p:panelGrid cellpadding="10" style="width: 100%">
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Label" style="font-weight: bold"/>
+                </p:column>
+                <p:column>
+                    <!--
+                                 required="#{newWorkflow.nodeType == 'Add-Content'}"
+                    -->
+                    <p:inputText id="taskLabel_Add_Content"
+                                 value="#{newWorkflow.taskLabel}"
+                                 autocomplete="true"
+                                 placeholder="label"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="File Format:" style="font-weight: bold"/>
+                </p:column>
+                <p:column>
+                    <!--
+                                     required="#{newWorkflow.nodeType == 'Add-Content'}"
+                    -->
+                    <p:selectOneMenu id="taskFileFormat_Add_Content"
+                                     value="#{newWorkflow.taskFileFormat}"
+                                     autoWidth="false">
+                        <f:selectItems value="#{newWorkflow.taskFileFormatsList}"/>
+                    </p:selectOneMenu>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel for="taskSourceDownloadType_Add_Content" value="Source download type:"/>
+                </p:column>
+                <p:column>
+                    <p:selectOneRadio id="taskSourceDownloadType_Add_Content"
+                                      value="#{newWorkflow.taskSourceDownloadType}">
+                        <f:selectItem itemLabel="Pull" itemValue="pull"/>
+                        <f:selectItem itemLabel="Push" itemValue="push"/>
+                        <p:ajax update="taskColumnSourceURL_Add_Content,taskSourceURL_Add_Content,taskColumnFile_Add_Content,taskFile_Add_Content" event="change"/>
+                    </p:selectOneRadio>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel id="taskColumnSourceURL_Add_Content"
+                                   value="Source URL"
+                                   style="#{(newWorkflow.taskSourceDownloadType == 'pull') ? 'font-weight: bold' : ''}"/>
+                </p:column>
+                <p:column>
+                    <!--
+                                 required="#{newWorkflow.nodeType == 'Add-Content' and newWorkflow.taskSourceDownloadType == 'pull'}"
+                    -->
+                    <p:inputText id="taskSourceURL_Add_Content" style="width: 100%"
+                                 disabled="#{newWorkflow.taskSourceDownloadType == 'push'}"
+                                 value="#{newWorkflow.taskPullSourceURL}"
+                                 autocomplete="true"
+                                 placeholder="source url"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel id="taskColumnFile_Add_Content" value="File"
+                                   style="#{(newWorkflow.taskSourceDownloadType == 'push') ? 'font-weight: bold' : ''}"
+                            />
+                </p:column>
+                <p:column>
+                    <p:fileUpload id="taskFile_Add_Content"
+                                  disabled="#{newWorkflow.taskSourceDownloadType == 'pull'}"
+                                  auto="true"
+                                  sizeLimit="1000000000"
+                                  fileUploadListener="#{newWorkflow.handleFileUpload}"
+                                  mode="advanced"
+                                  skinSimple="true"
+                                  allowTypes="#{newWorkflow.videoAudioAllowTypes}"
+                                  dragDropSupport="true"
+                                  update="taskColumnFileName_Add_Content"
+                            />
+                    <p:outputLabel id="taskColumnFileName_Add_Content"
+                                   value="#{newWorkflow.taskPushBinaryPathName}"
+                            />
+
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Retention"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskRetention_Add_Content"
+                                 required="false"
+                                 value="#{newWorkflow.taskRetention}"
+                                 autocomplete="true"
+                                 placeholder="retention"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Title"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskTitle_Add_Content" style="width: 100%"
+                                 required="false"
+                                 value="#{newWorkflow.taskTitle}"
+                                 autocomplete="true"
+                                 placeholder="title"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Start publishing:"/>
+                </p:column>
+                <p:column>
+                    <p:calendar id="startPublishing_Add_Content"
+                                value="#{newWorkflow.taskStartPublishing}"
+                                autocomplete="true"
+                                pattern="dd-MM-yyyy HH:mm:ss" locale="my">
+                    </p:calendar>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="End publishing:"/>
+                </p:column>
+                <p:column>
+                    <p:calendar id="endPublishing_Add_Content"
+                                value="#{newWorkflow.taskEndPublishing}"
+                                autocomplete="true"
+                                pattern="dd-MM-yyyy HH:mm:ss" locale="my">
+                    </p:calendar>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="User Data"/>
+                </p:column>
+                <p:column>
+                    <p:scrollPanel>
+                        <p:inputTextarea id="taskUserData_Add_Content" style="width: 100%"
+                                         required="false"
+                                         value="#{newWorkflow.taskUserData}"
+                                         autocomplete="true"
+                                         placeholder="user data"/>
+                    </p:scrollPanel>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Ingester"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskIngester_Add_Content"
+                                 required="false"
+                                 value="#{newWorkflow.taskIngester}"
+                                 autocomplete="true"
+                                 placeholder="ingester"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Keywords"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskKeywords_Add_Content"
+                                 required="false"
+                                 value="#{newWorkflow.taskKeywords}"
+                                 autocomplete="true"
+                                 placeholder="ingester"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="MD5 File Checksum"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskMD5FileChecksum_Add_Content"
+                                 required="false"
+                                 value="#{newWorkflow.taskMD5FileChecksum}"
+                                 autocomplete="true"
+                                 placeholder="md5 file checksum"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="File size in bytes"/>
+                </p:column>
+                <p:column>
+                    <p:inputNumber id="taskFileSizeInBytes_Add_Content"
+                                   required="false"
+                                   value="#{newWorkflow.taskFileSizeInBytes}"
+                                   autocomplete="true"
+                                   placeholder="file size in bytes"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Content Provider Name"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskContentProviderName_Add_Content"
+                                 required="false"
+                                 value="#{newWorkflow.taskContentProviderName}"
+                                 autocomplete="true"
+                                 placeholder="content provider name"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Delivery File Name"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskDeliveryFileName_Add_Content"
+                                 required="false"
+                                 value="#{newWorkflow.taskDeliveryFileName}"
+                                 autocomplete="true"
+                                 placeholder="delivery file name"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Unique Name"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskUniqueName_Add_Content"
+                                 required="false"
+                                 value="#{newWorkflow.taskUniqueName}"
+                                 autocomplete="true"
+                                 placeholder="unique name"/>
+                </p:column>
+            </p:row>
+        </p:panelGrid>
+
+    </h:panelGroup>
+
+    <h:panelGroup rendered="#{newWorkflow.nodeType == 'Remove-Content'}">
+        <p:toolbar>
+            <f:facet name="left">
+                <p:outputLabel value="Remove-Content"/>
+            </f:facet>
+            <f:facet name="right">
+                <p:defaultCommand target="saveRemoveContentProperties"/>
+
+                <p:commandButton id="saveRemoveContentProperties" value="Save Properties"
+                                 action="#{newWorkflow.saveTaskProperties}"
+                                 update="viewForm:workflowTree,viewForm:ingestWorkflowButton,viewForm:workflowIssuesWarning,jsonWorkflowForm:jsonWorkflow"
+                        />
+            </f:facet>
+        </p:toolbar>
+
+        <p:panelGrid cellpadding="10" style="width: 100%">
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Label" style="font-weight: bold"/>
+                </p:column>
+                <p:column>
+                    <!--
+                                 required="#{newWorkflow.nodeType == 'Remove-Content'}"
+                    -->
+                    <p:inputText id="taskLabel_Remove_Content"
+                                 value="#{newWorkflow.taskLabel}"
+                                 autocomplete="true"
+                                 placeholder="label"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="References"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskReferences_Remove_Content" style="width: 100%"
+                                 required="false"
+                                 value="#{newWorkflow.taskReferences}"
+                                 autocomplete="true"
+                                 placeholder="if left blank, references are retrieved from Workflow"/>
+                    <br/>
+                    <p:commandButton id="taskSelectReferences_Remove_Content"
+                                     icon="ui-icon-search"
+                                     value="Select Media"
+                                     update=":selectMediaItemsForm"
+                                     oncomplete="PF('selectMediaItems').show()"
+                            />
+                </p:column>
+            </p:row>
+
+        </p:panelGrid>
+    </h:panelGroup>
+
+    <h:panelGroup rendered="#{newWorkflow.nodeType == 'Concat-Demuxer'}">
+        <p:toolbar>
+            <f:facet name="left">
+                <p:outputLabel value="Concat-Demuxer"/>
+            </f:facet>
+            <f:facet name="right">
+                <p:defaultCommand target="saveConcatDemuxerProperties"/>
+
+                <p:commandButton id="saveConcatDemuxerProperties" value="Save Properties"
+                                 action="#{newWorkflow.saveTaskProperties}"
+                                 update="viewForm:workflowTree,viewForm:ingestWorkflowButton,viewForm:workflowIssuesWarning,jsonWorkflowForm:jsonWorkflow"
+                        />
+            </f:facet>
+        </p:toolbar>
+
+        <p:panelGrid cellpadding="10" style="width: 100%">
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Label" style="font-weight: bold"/>
+                </p:column>
+                <p:column>
+                    <!--
+                                 required="#{newWorkflow.nodeType == 'Concat-Demuxer'}"
+                    -->
+                    <p:inputText id="taskLabel_Concat_Demuxer"
+                                 value="#{newWorkflow.taskLabel}"
+                                 autocomplete="true"
+                                 placeholder="label"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Retention"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskRetention_Concat_Demuxer"
+                                 required="false"
+                                 value="#{newWorkflow.taskRetention}"
+                                 autocomplete="true"
+                                 placeholder="retention"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="References"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskReferences_Concat_Demuxer" style="width: 100%"
+                                 required="false"
+                                 value="#{newWorkflow.taskReferences}"
+                                 autocomplete="true"
+                                 placeholder="if left blank, references are retrieved from Workflow"/>
+                    <br/>
+                    <p:commandButton id="taskSelectReferences_Concat_Demuxer"
+                                     icon="ui-icon-search"
+                                     value="Select Media"
+                                     update=":selectMediaItemsForm"
+                                     oncomplete="PF('selectMediaItems').show()"
+                            />
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Title"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskTitle_Concat_Demuxer" style="width: 100%"
+                                 required="false"
+                                 value="#{newWorkflow.taskTitle}"
+                                 autocomplete="true"
+                                 placeholder="title"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Start publishing:"/>
+                </p:column>
+                <p:column>
+                    <p:calendar id="startPublishing_Concat_Demuxer"
+                                value="#{newWorkflow.taskStartPublishing}"
+                                autocomplete="true"
+                                pattern="dd-MM-yyyy HH:mm:ss" locale="my">
+                    </p:calendar>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="End publishing:"/>
+                </p:column>
+                <p:column>
+                    <p:calendar id="endPublishing_Concat_Demuxer"
+                                value="#{newWorkflow.taskEndPublishing}"
+                                autocomplete="true"
+                                pattern="dd-MM-yyyy HH:mm:ss" locale="my">
+                    </p:calendar>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="User Data"/>
+                </p:column>
+                <p:column>
+                    <p:scrollPanel>
+                        <p:inputTextarea id="taskUserData_Concat_Demuxer" style="width: 100%"
+                                         required="false"
+                                         value="#{newWorkflow.taskUserData}"
+                                         autocomplete="true"
+                                         placeholder="user data"/>
+                    </p:scrollPanel>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Ingester"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskIngester_Concat_Demuxer"
+                                 required="false"
+                                 value="#{newWorkflow.taskIngester}"
+                                 autocomplete="true"
+                                 placeholder="ingester"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Keywords"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskKeywords_Concat_Demuxer"
+                                 required="false"
+                                 value="#{newWorkflow.taskKeywords}"
+                                 autocomplete="true"
+                                 placeholder="ingester"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Content Provider Name"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskContentProviderName_Concat_Demuxer"
+                                 required="false"
+                                 value="#{newWorkflow.taskContentProviderName}"
+                                 autocomplete="true"
+                                 placeholder="content provider name"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Delivery File Name"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskDeliveryFileName_Concat_Demuxer"
+                                 required="false"
+                                 value="#{newWorkflow.taskDeliveryFileName}"
+                                 autocomplete="true"
+                                 placeholder="delivery file name"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Unique Name"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskUniqueName_Concat_Demuxer"
+                                 required="false"
+                                 value="#{newWorkflow.taskUniqueName}"
+                                 autocomplete="true"
+                                 placeholder="unique name"/>
+                </p:column>
+            </p:row>
+
+        </p:panelGrid>
+
+    </h:panelGroup>
+
+    <h:panelGroup rendered="#{newWorkflow.nodeType == 'Cut'}">
+        <p:toolbar>
+            <f:facet name="left">
+                <p:outputLabel value="Cut"/>
+            </f:facet>
+            <f:facet name="right">
+                <p:defaultCommand target="saveCutProperties"/>
+
+                <p:commandButton id="saveCutProperties" value="Save Properties"
+                                 action="#{newWorkflow.saveTaskProperties}"
+                                 update="viewForm:workflowTree,viewForm:ingestWorkflowButton,viewForm:workflowIssuesWarning,jsonWorkflowForm:jsonWorkflow"
+                        />
+            </f:facet>
+        </p:toolbar>
+
+        <p:panelGrid cellpadding="10" style="width: 100%">
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Label" style="font-weight: bold"/>
+                </p:column>
+                <p:column>
+                    <!--
+                                 required="#{newWorkflow.nodeType == 'Cut'}"
+                    -->
+                    <p:inputText id="taskLabel_Cut"
+                                 value="#{newWorkflow.taskLabel}"
+                                 autocomplete="true"
+                                 placeholder="label"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Start time in seconds" style="font-weight: bold"/>
+                </p:column>
+                <!--
+                     If added creates the following issue: the references field is not updated
+                        with the media selected by the 'selectMediaItems' dialog
+                -->
+                <p:column>
+                    <!--
+                                   required="#{newWorkflow.nodeType == 'Cut'}"
+                    -->
+                    <p:inputNumber id="taskStartTimeInSeconds_Cut"
+                                   decimalPlaces="#{newWorkflow.timeInSecondsDecimalsPrecision}"
+                                   value="#{newWorkflow.taskStartTimeInSeconds}"
+                                   autocomplete="true"
+                                   placeholder="label"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel for="taskCutEndType_Cut" value="End type:"/>
+                </p:column>
+                <p:column>
+                    <p:selectOneRadio id="taskCutEndType_Cut"
+                                      value="#{newWorkflow.taskCutEndType}">
+                        <f:selectItem itemLabel="End time in seconds" itemValue="endTime"/>
+                        <f:selectItem itemLabel="Frames number" itemValue="framesNumber"/>
+                        <p:ajax update="taskColumnEndTimeInSeconds_Cut,taskEndTimeInSeconds_Cut,taskColumnFramesNumber_Cut,taskFramesNumber_Cut"
+                                event="change"/>
+                    </p:selectOneRadio>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel id="taskColumnEndTimeInSeconds_Cut"
+                                   value="End time in seconds"
+                                   style="#{(newWorkflow.taskCutEndType == 'endTime') ? 'font-weight: bold' : ''}"
+                            />
+                </p:column>
+                <!--
+                     If added creates the following issue: the references field is not updated
+                        with the media selected by the 'selectMediaItems' dialog
+                -->
+                <p:column>
+                    <!--
+                                   required="#{newWorkflow.taskCutEndType == 'endTime' and newWorkflow.nodeType == 'Cut'}"
+                    -->
+                    <p:inputNumber id="taskEndTimeInSeconds_Cut"
+                                   decimalPlaces="#{newWorkflow.timeInSecondsDecimalsPrecision}"
+                                   value="#{newWorkflow.taskEndTimeInSeconds}"
+                                   autocomplete="true"
+                                   placeholder="end time in seconds"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel id="taskColumnFramesNumber_Cut"
+                                   value="Frames number"
+                                   style="#{(newWorkflow.taskCutEndType == 'framesNumber') ? 'font-weight: bold' : ''}"
+                            />
+                </p:column>
+                <!--
+                     If added creates the following issue: the references field is not updated
+                        with the media selected by the 'selectMediaItems' dialog
+                -->
+                <p:column>
+                    <!--
+                                   required="#{newWorkflow.taskCutEndType == 'framesNumber' and newWorkflow.nodeType == 'Cut'}"
+                    -->
+                    <p:inputNumber id="taskFramesNumber_Cut"
+                                   value="#{newWorkflow.taskFramesNumber}"
+                                   autocomplete="true"
+                                   placeholder="frames number"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="References"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskReferences_Cut" style="width: 100%"
+                                 required="false"
+                                 value="#{newWorkflow.taskReferences}"
+                                 autocomplete="true"
+                                 placeholder="if left blank, references are retrieved from Workflow"/>
+                    <br/>
+                    <p:commandButton id="taskSelectReferences_Cut"
+                                     icon="ui-icon-search"
+                                     value="Select Media"
+                                     update=":selectMediaItemsForm"
+                                     oncomplete="PF('selectMediaItems').show()"
+                            />
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Retention"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskRetention_Cut"
+                                 required="false"
+                                 value="#{newWorkflow.taskRetention}"
+                                 autocomplete="true"
+                                 placeholder="retention"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Unique Name"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskUniqueName_Cut"
+                                 required="false"
+                                 value="#{newWorkflow.taskUniqueName}"
+                                 autocomplete="true"
+                                 placeholder="unique name"/>
+                </p:column>
+            </p:row>
+
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Title"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskTitle_Cut" style="width: 100%"
+                                 required="false"
+                                 value="#{newWorkflow.taskTitle}"
+                                 autocomplete="true"
+                                 placeholder="title"/>
+                </p:column>
+            </p:row>
+
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Start publishing:"/>
+                </p:column>
+                <p:column>
+                    <p:calendar id="startPublishing_Cut"
+                                value="#{newWorkflow.taskStartPublishing}"
+                                autocomplete="true"
+                                pattern="dd-MM-yyyy HH:mm:ss" locale="my">
+                    </p:calendar>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="End publishing:"/>
+                </p:column>
+                <p:column>
+                    <p:calendar id="endPublishing_Cut"
+                                value="#{newWorkflow.taskEndPublishing}"
+                                autocomplete="true"
+                                pattern="dd-MM-yyyy HH:mm:ss" locale="my">
+                    </p:calendar>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="User Data"/>
+                </p:column>
+                <p:column>
+                    <p:scrollPanel>
+                        <p:inputTextarea id="taskUserData_Cut" style="width: 100%"
+                                         required="false"
+                                         value="#{newWorkflow.taskUserData}"
+                                         autocomplete="true"
+                                         placeholder="user data"/>
+                    </p:scrollPanel>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Ingester"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskIngester_Cut"
+                                 required="false"
+                                 value="#{newWorkflow.taskIngester}"
+                                 autocomplete="true"
+                                 placeholder="ingester"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Keywords"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskKeywords_Cut"
+                                 required="false"
+                                 value="#{newWorkflow.taskKeywords}"
+                                 autocomplete="true"
+                                 placeholder="ingester"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Content Provider Name"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskContentProviderName_Cut"
+                                 required="false"
+                                 value="#{newWorkflow.taskContentProviderName}"
+                                 autocomplete="true"
+                                 placeholder="content provider name"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Delivery File Name"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskDeliveryFileName_Cut"
+                                 required="false"
+                                 value="#{newWorkflow.taskDeliveryFileName}"
+                                 autocomplete="true"
+                                 placeholder="delivery file name"/>
+                </p:column>
+            </p:row>
+
+        </p:panelGrid>
+
+    </h:panelGroup>
+
+    <h:panelGroup rendered="#{newWorkflow.nodeType == 'Overlay-Image-On-Video'}">
+        <p:toolbar>
+            <f:facet name="left">
+                <p:outputLabel value="Overlay-Image-On-Video"/>
+            </f:facet>
+            <f:facet name="right">
+                <p:defaultCommand target="saveOverlayImageOnVideoProperties"/>
+
+                <p:commandButton id="saveOverlayImageOnVideoProperties" value="Save Properties"
+                                 action="#{newWorkflow.saveTaskProperties}"
+                                 update="viewForm:workflowTree,viewForm:ingestWorkflowButton,viewForm:workflowIssuesWarning,jsonWorkflowForm:jsonWorkflow"
+                        />
+            </f:facet>
+        </p:toolbar>
+
+        <p:panelGrid cellpadding="10" style="width: 100%">
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Label" style="font-weight: bold"/>
+                </p:column>
+                <p:column>
+                    <!--
+                                 required="#{newWorkflow.nodeType == 'Overlay-Image-On-Video'}"
+                    -->
+                    <p:inputText id="taskLabel_Overlay_Image_On_Video"
+                                 value="#{newWorkflow.taskLabel}"
+                                 autocomplete="true"
+                                 placeholder="label"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Image Position X InPixel" style="font-weight: bold"/>
+                </p:column>
+                <p:column>
+                    <!--
+                                 required="#{newWorkflow.nodeType == 'Overlay-Image-On-Video'}"
+                    -->
+                    <p:inputText id="taskOverlayPositionXInPixel_Overlay_Image_On_Video"
+                                 value="#{newWorkflow.taskOverlayPositionXInPixel}"
+                                 autocomplete="true"
+                                 placeholder="label"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Image Position Y InPixel" style="font-weight: bold"/>
+                </p:column>
+                <p:column>
+                    <!--
+                                 required="#{newWorkflow.nodeType == 'Overlay-Image-On-Video'}"
+                    -->
+                    <p:inputText id="taskOverlayPositionYInPixel_Overlay_Image_On_Video"
+                                 value="#{newWorkflow.taskOverlayPositionYInPixel}"
+                                 autocomplete="true"
+                                 placeholder="label"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="References"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskReferences_Overlay_Image_On_Video" style="width: 100%"
+                                 required="false"
+                                 value="#{newWorkflow.taskReferences}"
+                                 autocomplete="true"
+                                 placeholder="if left blank, references are retrieved from Workflow"/>
+                    <br/>
+                    <p:commandButton id="taskSelectReferences_Overlay_Image_On_Video"
+                                     icon="ui-icon-search"
+                                     value="Select Media"
+                                     update=":selectMediaItemsForm"
+                                     oncomplete="PF('selectMediaItems').show()"
+                            />
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Retention"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskRetention_Overlay_Image_On_Video"
+                                 required="false"
+                                 value="#{newWorkflow.taskRetention}"
+                                 autocomplete="true"
+                                 placeholder="retention"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Unique Name"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskUniqueName_Overlay_Image_On_Video"
+                                 required="false"
+                                 value="#{newWorkflow.taskUniqueName}"
+                                 autocomplete="true"
+                                 placeholder="unique name"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Title"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskTitle_Overlay_Image_On_Video" style="width: 100%"
+                                 required="false"
+                                 value="#{newWorkflow.taskTitle}"
+                                 autocomplete="true"
+                                 placeholder="title"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Start publishing:"/>
+                </p:column>
+                <p:column>
+                    <p:calendar id="startPublishing_Overlay_Image_On_Video"
+                                value="#{newWorkflow.taskStartPublishing}"
+                                autocomplete="true"
+                                pattern="dd-MM-yyyy HH:mm:ss" locale="my">
+                    </p:calendar>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="End publishing:"/>
+                </p:column>
+                <p:column>
+                    <p:calendar id="endPublishing_Overlay_Image_On_Video"
+                                value="#{newWorkflow.taskEndPublishing}"
+                                autocomplete="true"
+                                pattern="dd-MM-yyyy HH:mm:ss" locale="my">
+                    </p:calendar>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="User Data"/>
+                </p:column>
+                <p:column>
+                    <p:scrollPanel>
+                        <p:inputTextarea id="taskUserData_Overlay_Image_On_Video" style="width: 100%"
+                                         required="false"
+                                         value="#{newWorkflow.taskUserData}"
+                                         autocomplete="true"
+                                         placeholder="user data"/>
+                    </p:scrollPanel>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Ingester"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskIngester_Overlay_Image_On_Video"
+                                 required="false"
+                                 value="#{newWorkflow.taskIngester}"
+                                 autocomplete="true"
+                                 placeholder="ingester"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Keywords"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskKeywords_Overlay_Image_On_Video"
+                                 required="false"
+                                 value="#{newWorkflow.taskKeywords}"
+                                 autocomplete="true"
+                                 placeholder="ingester"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Content Provider Name"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskContentProviderName_Overlay_Image_On_Video"
+                                 required="false"
+                                 value="#{newWorkflow.taskContentProviderName}"
+                                 autocomplete="true"
+                                 placeholder="content provider name"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Delivery File Name"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskDeliveryFileName_Overlay_Image_On_Video"
+                                 required="false"
+                                 value="#{newWorkflow.taskDeliveryFileName}"
+                                 autocomplete="true"
+                                 placeholder="delivery file name"/>
+                </p:column>
+            </p:row>
+
+        </p:panelGrid>
+
+    </h:panelGroup>
+
+    <h:panelGroup rendered="#{newWorkflow.nodeType == 'Overlay-Text-On-Video'}">
+        <p:toolbar>
+            <f:facet name="left">
+                <p:outputLabel value="Overlay-Text-On-Video"/>
+            </f:facet>
+            <f:facet name="right">
+                <p:defaultCommand target="saveOverlayTextOnVideoProperties"/>
+
+                <p:commandButton id="saveOverlayTextOnVideoProperties" value="Save Properties"
+                                 action="#{newWorkflow.saveTaskProperties}"
+                                 update="viewForm:workflowTree,viewForm:ingestWorkflowButton,viewForm:workflowIssuesWarning,jsonWorkflowForm:jsonWorkflow"
+                        />
+            </f:facet>
+        </p:toolbar>
+
+        <p:panelGrid cellpadding="10" style="width: 100%">
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Label" style="font-weight: bold"/>
+                </p:column>
+                <p:column>
+                    <!--
+                                 required="#{newWorkflow.nodeType == 'Overlay-Text-On-Video'}"
+                    -->
+                    <p:inputText id="taskLabel_Overlay_Text_On_Video"
+                                 value="#{newWorkflow.taskLabel}"
+                                 autocomplete="true"
+                                 placeholder="label"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Retention"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskRetention_Overlay_Text_On_Video"
+                                 required="false"
+                                 value="#{newWorkflow.taskRetention}"
+                                 autocomplete="true"
+                                 placeholder="retention"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Text" style="font-weight: bold"/>
+                </p:column>
+                <p:column>
+                    <p:scrollPanel>
+                        <!--
+                                         required="#{newWorkflow.nodeType == 'Overlay-Text-On-Video'}"
+                        -->
+                        <p:inputTextarea id="taskOverlayText_Overlay_Text_On_Video" style="width: 100%"
+                                         value="#{newWorkflow.taskOverlayText}"
+                                         autocomplete="true"
+                                         placeholder="text"/>
+                    </p:scrollPanel>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Text Position X In Pixel"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskOverlayPositionXInPixel_Overlay_Text_On_Video"
+                                 required="false" style="width: 100%"
+                                 value="#{newWorkflow.taskOverlayPositionXInPixel}"
+                                 autocomplete="true"
+                                 placeholder="text position X in pixel"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Text Position Y In Pixel"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskOverlayPositionYInPixel_Overlay_Text_On_Video"
+                                 required="false" style="width: 100%"
+                                 value="#{newWorkflow.taskOverlayPositionYInPixel}"
+                                 autocomplete="true"
+                                 placeholder="text position Y in pixel"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Font Type"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskOverlayFontType_Overlay_Text_On_Video"
+                                 required="false"
+                                 value="#{newWorkflow.taskOverlayFontType}"
+                                 autocomplete="true"
+                                 placeholder="font type"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Font Size"/>
+                </p:column>
+                <p:column>
+                    <p:inputNumber id="taskOverlayFontSize_Overlay_Text_On_Video"
+                                   required="false"
+                                   value="#{newWorkflow.taskOverlayFontSize}"
+                                   autocomplete="true"
+                                   placeholder="font size"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Font Color"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskOverlayFontColor_Overlay_Text_On_Video"
+                                 required="false"
+                                 value="#{newWorkflow.taskOverlayFontColor}"
+                                 autocomplete="true"
+                                 placeholder="font color"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Text Percentage Opacity"/>
+                </p:column>
+                <p:column>
+                    <p:inputNumber id="taskOverlayTextPercentageOpacity_Overlay_Text_On_Video"
+                                   required="false"
+                                   value="#{newWorkflow.taskOverlayTextPercentageOpacity}"
+                                   autocomplete="true"
+                                   placeholder="font size"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Box Enable"/>
+                </p:column>
+                <p:column>
+                    <p:selectBooleanButton id="taskOverlayBoxEnable_Overlay_Text_On_Video"
+                                           value="#{newWorkflow.taskOverlayBoxEnable}"
+                                           onLabel="YES" offLabel="NO" onIcon="ui-icon-check" offIcon="ui-icon-check">
+                    </p:selectBooleanButton>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Box Color"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskOverlayBoxColor_Overlay_Text_On_Video"
+                                 required="false"
+                                 value="#{newWorkflow.taskOverlayBoxColor}"
+                                 autocomplete="true"
+                                 placeholder="box color"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Box Percentage Opacity"/>
+                </p:column>
+                <p:column>
+                    <p:inputNumber id="taskOverlayBoxPercentageOpacity_Overlay_Text_On_Video"
+                                   required="false"
+                                   value="#{newWorkflow.taskOverlayBoxPercentageOpacity}"
+                                   autocomplete="true"
+                                   placeholder="box percentage opacity"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Unique Name"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskUniqueName_Overlay_Text_On_Video"
+                                 required="false"
+                                 value="#{newWorkflow.taskUniqueName}"
+                                 autocomplete="true"
+                                 placeholder="unique name"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Encoding Priority:"/>
+                </p:column>
+                <p:column>
+                    <p:selectOneMenu id="taskEncodingPriority_Overlay_Text_On_Video"
+                                     value="#{newWorkflow.taskEncodingPriority}"
+                                     autoWidth="false">
+                        <f:selectItems value="#{newWorkflow.taskEncodingPrioritiesList}"/>
+                    </p:selectOneMenu>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="References"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskReferences_Overlay_Text_On_Video" style="width: 100%"
+                                 required="false"
+                                 value="#{newWorkflow.taskReferences}"
+                                 autocomplete="true"
+                                 placeholder="if left blank, references are retrieved from Workflow"/>
+                    <br/>
+                    <p:commandButton id="taskSelectReferences_Overlay_Text_On_Video"
+                                     icon="ui-icon-search"
+                                     value="Select Media"
+                                     update=":selectMediaItemsForm"
+                                     oncomplete="PF('selectMediaItems').show()"
+                            />
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Title"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskTitle_Overlay_Text_On_Video" style="width: 100%"
+                                 required="false"
+                                 value="#{newWorkflow.taskTitle}"
+                                 autocomplete="true"
+                                 placeholder="title"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Start publishing:"/>
+                </p:column>
+                <p:column>
+                    <p:calendar id="startPublishing_Overlay_Text_On_Video"
+                                value="#{newWorkflow.taskStartPublishing}"
+                                autocomplete="true"
+                                pattern="dd-MM-yyyy HH:mm:ss" locale="my">
+                    </p:calendar>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="End publishing:"/>
+                </p:column>
+                <p:column>
+                    <p:calendar id="endPublishing_Overlay_Text_On_Video"
+                                value="#{newWorkflow.taskEndPublishing}"
+                                autocomplete="true"
+                                pattern="dd-MM-yyyy HH:mm:ss" locale="my">
+                    </p:calendar>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="User Data"/>
+                </p:column>
+                <p:column colspan="3">
+                    <p:scrollPanel>
+                        <p:inputTextarea id="taskUserData_Overlay_Text_On_Video" style="width: 100%"
+                                         required="false"
+                                         value="#{newWorkflow.taskUserData}"
+                                         autocomplete="true"
+                                         placeholder="user data"/>
+                    </p:scrollPanel>
+                </p:column>
+
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Ingester"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskIngester_Overlay_Text_On_Video"
+                                 required="false"
+                                 value="#{newWorkflow.taskIngester}"
+                                 autocomplete="true"
+                                 placeholder="ingester"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Keywords"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskKeywords_Overlay_Text_On_Video"
+                                 required="false"
+                                 value="#{newWorkflow.taskKeywords}"
+                                 autocomplete="true"
+                                 placeholder="ingester"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Content Provider Name"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskContentProviderName_Overlay_Text_On_Video"
+                                 required="false"
+                                 value="#{newWorkflow.taskContentProviderName}"
+                                 autocomplete="true"
+                                 placeholder="content provider name"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Delivery File Name"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskDeliveryFileName_Overlay_Text_On_Video"
+                                 required="false"
+                                 value="#{newWorkflow.taskDeliveryFileName}"
+                                 autocomplete="true"
+                                 placeholder="delivery file name"/>
+                </p:column>
+            </p:row>
+
+        </p:panelGrid>
+
+    </h:panelGroup>
+
+    <h:panelGroup rendered="#{newWorkflow.nodeType == 'Frame'}">
+        <p:toolbar>
+            <f:facet name="left">
+                <p:outputLabel value="Frame"/>
+            </f:facet>
+            <f:facet name="right">
+                <p:defaultCommand target="saveFrameProperties"/>
+
+                <p:commandButton id="saveFrameProperties" value="Save Properties"
+                                 action="#{newWorkflow.saveTaskProperties}"
+                                 update="viewForm:workflowTree,viewForm:ingestWorkflowButton,viewForm:workflowIssuesWarning,jsonWorkflowForm:jsonWorkflow"
+                        />
+            </f:facet>
+        </p:toolbar>
+
+        <p:panelGrid cellpadding="10" style="width: 100%">
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Label" style="font-weight: bold"/>
+                </p:column>
+                <p:column>
+                    <!--
+                                 required="#{newWorkflow.nodeType == 'Frame'}"
+                    -->
+                    <p:inputText id="taskLabel_Frame"
+                                 value="#{newWorkflow.taskLabel}"
+                                 autocomplete="true"
+                                 placeholder="label"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Instant In Seconds"/>
+                </p:column>
+                <p:column>
+                    <p:inputNumber id="taskFrameInstantInSeconds_Frame"
+                                   required="false"
+                                   decimalPlaces="#{newWorkflow.timeInSecondsDecimalsPrecision}"
+                                   value="#{newWorkflow.taskFrameInstantInSeconds}"
+                                   autocomplete="true"
+                                   placeholder="instant in seconds"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Width"/>
+                </p:column>
+                <p:column>
+                    <p:inputNumber id="taskFrameWidth_Frame"
+                                   required="false"
+                                   value="#{newWorkflow.taskFrameWidth}"
+                                   autocomplete="true"
+                                   placeholder="font type"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Height"/>
+                </p:column>
+                <p:column>
+                    <p:inputNumber id="taskFrameHeight_Frame"
+                                   required="false"
+                                   value="#{newWorkflow.taskFrameHeight}"
+                                   autocomplete="true"
+                                   placeholder="font size"/>
+                </p:column>
+
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="References"/>
+                </p:column>
+                <p:column colspan="2">
+                    <p:inputText id="taskReferences_Frame" style="width: 100%"
+                                 required="false"
+                                 value="#{newWorkflow.taskReferences}"
+                                 autocomplete="true"
+                                 placeholder="if left blank, references are retrieved from Workflow"/>
+                    <br/>
+                    <p:commandButton id="taskSelectReferences_Frame"
+                                     icon="ui-icon-search"
+                                     value="Select Media"
+                                     update=":selectMediaItemsForm"
+                                     oncomplete="PF('selectMediaItems').show()"
+                            />
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Retention"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskRetention_Frame"
+                                 required="false"
+                                 value="#{newWorkflow.taskRetention}"
+                                 autocomplete="true"
+                                 placeholder="retention"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Unique Name"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskUniqueName_Frame"
+                                 required="false"
+                                 value="#{newWorkflow.taskUniqueName}"
+                                 autocomplete="true"
+                                 placeholder="unique name"/>
+                </p:column>
+
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Title"/>
+                </p:column>
+                <p:column colspan="3">
+                    <p:inputText id="taskTitle_Frame" style="width: 100%"
+                                 required="false"
+                                 value="#{newWorkflow.taskTitle}"
+                                 autocomplete="true"
+                                 placeholder="title"/>
+                </p:column>
+
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Start publishing:"/>
+                </p:column>
+                <p:column>
+                    <p:calendar id="startPublishing_Frame"
+                                value="#{newWorkflow.taskStartPublishing}"
+                                autocomplete="true"
+                                pattern="dd-MM-yyyy HH:mm:ss" locale="my">
+                    </p:calendar>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="End publishing:"/>
+                </p:column>
+                <p:column>
+                    <p:calendar id="endPublishing_Frame"
+                                value="#{newWorkflow.taskEndPublishing}"
+                                autocomplete="true"
+                                pattern="dd-MM-yyyy HH:mm:ss" locale="my">
+                    </p:calendar>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="User Data"/>
+                </p:column>
+                <p:column colspan="3">
+                    <p:scrollPanel>
+                        <p:inputTextarea id="taskUserData_Frame" style="width: 100%"
+                                         required="false"
+                                         value="#{newWorkflow.taskUserData}"
+                                         autocomplete="true"
+                                         placeholder="user data"/>
+                    </p:scrollPanel>
+                </p:column>
+
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Ingester"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskIngester_Frame"
+                                 required="false"
+                                 value="#{newWorkflow.taskIngester}"
+                                 autocomplete="true"
+                                 placeholder="ingester"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Keywords"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskKeywords_Frame"
+                                 required="false"
+                                 value="#{newWorkflow.taskKeywords}"
+                                 autocomplete="true"
+                                 placeholder="ingester"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Content Provider Name"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskContentProviderName_Frame"
+                                 required="false"
+                                 value="#{newWorkflow.taskContentProviderName}"
+                                 autocomplete="true"
+                                 placeholder="content provider name"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Delivery File Name"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskDeliveryFileName_Frame"
+                                 required="false"
+                                 value="#{newWorkflow.taskDeliveryFileName}"
+                                 autocomplete="true"
+                                 placeholder="delivery file name"/>
+                </p:column>
+            </p:row>
+
+        </p:panelGrid>
+
+    </h:panelGroup>
+
+    <h:panelGroup rendered="#{newWorkflow.nodeType == 'Periodical-Frames'}">
+        <p:toolbar>
+            <f:facet name="left">
+                <p:outputLabel value="Periodical-Frames"/>
+            </f:facet>
+            <f:facet name="right">
+                <p:defaultCommand target="savePeriodicalFramesProperties"/>
+
+                <p:commandButton id="savePeriodicalFramesProperties" value="Save Properties"
+                                 action="#{newWorkflow.saveTaskProperties}"
+                                 update="viewForm:workflowTree,viewForm:ingestWorkflowButton,viewForm:workflowIssuesWarning,jsonWorkflowForm:jsonWorkflow"
+                        />
+            </f:facet>
+        </p:toolbar>
+
+        <p:panelGrid cellpadding="10" style="width: 100%">
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Label" style="font-weight: bold"/>
+                </p:column>
+                <p:column>
+                    <!--
+                                 required="#{newWorkflow.nodeType == 'Periodical-Frames'}"
+                    -->
+                    <p:inputText id="taskLabel_Periodical_Frames"
+                                 value="#{newWorkflow.taskLabel}"
+                                 autocomplete="true"
+                                 placeholder="label"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Period In Seconds" style="font-weight: bold"/>
+                </p:column>
+                <p:column>
+                    <!--
+                                   required="#{newWorkflow.nodeType == 'Periodical-Frames'}"
+                    -->
+                    <p:inputNumber id="taskFramePeriodInSeconds_Periodical_Frames"
+                                   value="#{newWorkflow.taskFramePeriodInSeconds}"
+                                   autocomplete="true"
+                                   placeholder="period in seconds"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Start time in seconds"/>
+                </p:column>
+                <p:column>
+                    <p:inputNumber id="taskStartTimeInSeconds_Periodical_Frames"
+                                   required="false"
+                                   decimalPlaces="#{newWorkflow.timeInSecondsDecimalsPrecision}"
+                                   value="#{newWorkflow.taskStartTimeInSeconds}"
+                                   autocomplete="true"
+                                   placeholder="label"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Max Frames Number"/>
+                </p:column>
+                <p:column>
+                    <p:inputNumber id="taskFrameMaxFramesNumber_Periodical_Frames"
+                                   required="false"
+                                   value="#{newWorkflow.taskFrameMaxFramesNumber}"
+                                   autocomplete="true"
+                                   placeholder="max frames number"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Width"/>
+                </p:column>
+                <p:column>
+                    <p:inputNumber id="taskFrameWidth_Periodical_Frames"
+                                   required="false"
+                                   value="#{newWorkflow.taskFrameWidth}"
+                                   autocomplete="true"
+                                   placeholder="font type"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Height"/>
+                </p:column>
+                <p:column>
+                    <p:inputNumber id="taskFrameHeight_Periodical_Frames"
+                                   required="false"
+                                   value="#{newWorkflow.taskFrameHeight}"
+                                   autocomplete="true"
+                                   placeholder="font size"/>
+                </p:column>
+
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="References"/>
+                </p:column>
+                <p:column colspan="2">
+                    <p:inputText id="taskReferences_Periodical_Frames" style="width: 100%"
+                                 required="false"
+                                 value="#{newWorkflow.taskReferences}"
+                                 autocomplete="true"
+                                 placeholder="if left blank, references are retrieved from Workflow"/>
+                    <br/>
+                    <p:commandButton id="taskSelectReferences_Periodical_Frames"
+                                     icon="ui-icon-search"
+                                     value="Select Media"
+                                     update=":selectMediaItemsForm"
+                                     oncomplete="PF('selectMediaItems').show()"
+                            />
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Retention"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskRetention_Periodical_Frames"
+                                 required="false"
+                                 value="#{newWorkflow.taskRetention}"
+                                 autocomplete="true"
+                                 placeholder="retention"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Unique Name"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskUniqueName_Periodical_Frames"
+                                 required="false"
+                                 value="#{newWorkflow.taskUniqueName}"
+                                 autocomplete="true"
+                                 placeholder="unique name"/>
+                </p:column>
+
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Title"/>
+                </p:column>
+                <p:column colspan="3">
+                    <p:inputText id="taskTitle_Periodical_Frames" style="width: 100%"
+                                 required="false"
+                                 value="#{newWorkflow.taskTitle}"
+                                 autocomplete="true"
+                                 placeholder="title"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Start publishing:"/>
+                </p:column>
+                <p:column>
+                    <p:calendar id="startPublishing_Periodical_Frames"
+                                value="#{newWorkflow.taskStartPublishing}"
+                                autocomplete="true"
+                                pattern="dd-MM-yyyy HH:mm:ss" locale="my">
+                    </p:calendar>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="End publishing:"/>
+                </p:column>
+                <p:column>
+                    <p:calendar id="endPublishing_Periodical_Frames"
+                                value="#{newWorkflow.taskEndPublishing}"
+                                autocomplete="true"
+                                pattern="dd-MM-yyyy HH:mm:ss" locale="my">
+                    </p:calendar>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="User Data"/>
+                </p:column>
+                <p:column colspan="3">
+                    <p:scrollPanel>
+                        <p:inputTextarea id="taskUserData_Periodical_Frames" style="width: 100%"
+                                         required="false"
+                                         value="#{newWorkflow.taskUserData}"
+                                         autocomplete="true"
+                                         placeholder="user data"/>
+                    </p:scrollPanel>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Ingester"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskIngester_Periodical_Frames"
+                                 required="false"
+                                 value="#{newWorkflow.taskIngester}"
+                                 autocomplete="true"
+                                 placeholder="ingester"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Keywords"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskKeywords_Periodical_Frames"
+                                 required="false"
+                                 value="#{newWorkflow.taskKeywords}"
+                                 autocomplete="true"
+                                 placeholder="ingester"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Content Provider Name"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskContentProviderName_Periodical_Frames"
+                                 required="false"
+                                 value="#{newWorkflow.taskContentProviderName}"
+                                 autocomplete="true"
+                                 placeholder="content provider name"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Delivery File Name"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskDeliveryFileName_Periodical_Frames"
+                                 required="false"
+                                 value="#{newWorkflow.taskDeliveryFileName}"
+                                 autocomplete="true"
+                                 placeholder="delivery file name"/>
+                </p:column>
+            </p:row>
+
+        </p:panelGrid>
+
+    </h:panelGroup>
+
+    <h:panelGroup rendered="#{newWorkflow.nodeType == 'I-Frames'}">
+        <p:toolbar>
+            <f:facet name="left">
+                <p:outputLabel value="I-Frames"/>
+            </f:facet>
+            <f:facet name="right">
+                <p:defaultCommand target="saveIFramesProperties"/>
+
+                <p:commandButton id="saveIFramesProperties" value="Save Properties"
+                                 action="#{newWorkflow.saveTaskProperties}"
+                                 update="viewForm:workflowTree,viewForm:ingestWorkflowButton,viewForm:workflowIssuesWarning,jsonWorkflowForm:jsonWorkflow"
+                        />
+            </f:facet>
+        </p:toolbar>
+
+        <p:panelGrid cellpadding="10" style="width: 100%">
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Label" style="font-weight: bold"/>
+                </p:column>
+                <p:column>
+                    <!--
+                                 required="#{newWorkflow.nodeType == 'I-Frames'}"
+                    -->
+                    <p:inputText id="taskLabel_I_Frames"
+                                 value="#{newWorkflow.taskLabel}"
+                                 autocomplete="true"
+                                 placeholder="label"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Retention"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskRetention_I_Frames"
+                                 required="false"
+                                 value="#{newWorkflow.taskRetention}"
+                                 autocomplete="true"
+                                 placeholder="retention"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Start time in seconds"/>
+                </p:column>
+                <p:column>
+                    <p:inputNumber id="taskStartTimeInSeconds_I_Frames"
+                                   required="false"
+                                   decimalPlaces="#{newWorkflow.timeInSecondsDecimalsPrecision}"
+                                   value="#{newWorkflow.taskStartTimeInSeconds}"
+                                   autocomplete="true"
+                                   placeholder="label"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Max Frames Number"/>
+                </p:column>
+                <p:column>
+                    <p:inputNumber id="taskFrameMaxFramesNumber_I_Frames"
+                                   required="false"
+                                   value="#{newWorkflow.taskFrameMaxFramesNumber}"
+                                   autocomplete="true"
+                                   placeholder="max frames number"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Width"/>
+                </p:column>
+                <p:column>
+                    <p:inputNumber id="taskFrameWidth_I_Frames"
+                                   required="false"
+                                   value="#{newWorkflow.taskFrameWidth}"
+                                   autocomplete="true"
+                                   placeholder="font type"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Height"/>
+                </p:column>
+                <p:column>
+                    <p:inputNumber id="taskFrameHeight_I_Frames"
+                                   required="false"
+                                   value="#{newWorkflow.taskFrameHeight}"
+                                   autocomplete="true"
+                                   placeholder="font size"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="References"/>
+                </p:column>
+                <p:column colspan="2">
+                    <p:inputText id="taskReferences_I_Frames" style="width: 100%"
+                                 required="false"
+                                 value="#{newWorkflow.taskReferences}"
+                                 autocomplete="true"
+                                 placeholder="if left blank, references are retrieved from Workflow"/>
+                    <br/>
+                    <p:commandButton id="taskSelectReferences_I_Frames"
+                                     icon="ui-icon-search"
+                                     value="Select Media"
+                                     update=":selectMediaItemsForm"
+                                     oncomplete="PF('selectMediaItems').show()"
+                            />
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Unique Name"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskUniqueName_I_Frames"
+                                 required="false"
+                                 value="#{newWorkflow.taskUniqueName}"
+                                 autocomplete="true"
+                                 placeholder="unique name"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Title"/>
+                </p:column>
+                <p:column colspan="3">
+                    <p:inputText id="taskTitle_I_Frames" style="width: 100%"
+                                 required="false"
+                                 value="#{newWorkflow.taskTitle}"
+                                 autocomplete="true"
+                                 placeholder="title"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Start publishing:"/>
+                </p:column>
+                <p:column>
+                    <p:calendar id="startPublishing_I_Frames"
+                                value="#{newWorkflow.taskStartPublishing}"
+                                autocomplete="true"
+                                pattern="dd-MM-yyyy HH:mm:ss" locale="my">
+                    </p:calendar>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="End publishing:"/>
+                </p:column>
+                <p:column>
+                    <p:calendar id="endPublishing_I_Frames"
+                                value="#{newWorkflow.taskEndPublishing}"
+                                autocomplete="true"
+                                pattern="dd-MM-yyyy HH:mm:ss" locale="my">
+                    </p:calendar>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="User Data"/>
+                </p:column>
+                <p:column colspan="3">
+                    <p:scrollPanel>
+                        <p:inputTextarea id="taskUserData_I_Frames" style="width: 100%"
+                                         required="false"
+                                         value="#{newWorkflow.taskUserData}"
+                                         autocomplete="true"
+                                         placeholder="user data"/>
+                    </p:scrollPanel>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Ingester"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskIngester_I_Frames"
+                                 required="false"
+                                 value="#{newWorkflow.taskIngester}"
+                                 autocomplete="true"
+                                 placeholder="ingester"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Keywords"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskKeywords_I_Frames"
+                                 required="false"
+                                 value="#{newWorkflow.taskKeywords}"
+                                 autocomplete="true"
+                                 placeholder="ingester"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Content Provider Name"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskContentProviderName_I_Frames"
+                                 required="false"
+                                 value="#{newWorkflow.taskContentProviderName}"
+                                 autocomplete="true"
+                                 placeholder="content provider name"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Delivery File Name"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskDeliveryFileName_I_Frames"
+                                 required="false"
+                                 value="#{newWorkflow.taskDeliveryFileName}"
+                                 autocomplete="true"
+                                 placeholder="delivery file name"/>
+                </p:column>
+            </p:row>
+
+        </p:panelGrid>
+
+    </h:panelGroup>
+
+    <h:panelGroup rendered="#{newWorkflow.nodeType == 'Motion-JPEG-by-Periodical-Frames'}">
+        <p:toolbar>
+            <f:facet name="left">
+                <p:outputLabel value="Motion-JPEG-by-Periodical-Frames"/>
+            </f:facet>
+            <f:facet name="right">
+                <p:defaultCommand target="saveMotionJPEGbyPeriodicalFramesProperties"/>
+
+                <p:commandButton id="saveMotionJPEGbyPeriodicalFramesProperties" value="Save Properties"
+                                 action="#{newWorkflow.saveTaskProperties}"
+                                 update="viewForm:workflowTree,viewForm:ingestWorkflowButton,viewForm:workflowIssuesWarning,jsonWorkflowForm:jsonWorkflow"
+                        />
+            </f:facet>
+        </p:toolbar>
+
+        <p:panelGrid cellpadding="10" style="width: 100%">
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Label" style="font-weight: bold"/>
+                </p:column>
+                <p:column>
+                    <!--
+                                 required="#{newWorkflow.nodeType == 'Motion-JPEG-by-Periodical-Frames'}"
+                    -->
+                    <p:inputText id="taskLabel_Motion_JPEG_by_Periodical_Frames"
+                                 value="#{newWorkflow.taskLabel}"
+                                 autocomplete="true"
+                                 placeholder="label"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Period In Seconds" style="font-weight: bold"/>
+                </p:column>
+                <p:column>
+                    <!--
+                                   required="#{newWorkflow.nodeType == 'Motion-JPEG-by-Periodical-Frames'}"
+                    -->
+                    <p:inputNumber id="taskFramePeriodInSeconds_Motion_JPEG_by_Periodical_Frames"
+                                   value="#{newWorkflow.taskFramePeriodInSeconds}"
+                                   autocomplete="true"
+                                   placeholder="period in seconds"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Start time in seconds"/>
+                </p:column>
+                <p:column>
+                    <p:inputNumber id="taskStartTimeInSeconds_Motion_JPEG_by_Periodical_Frames"
+                                   required="false"
+                                   decimalPlaces="#{newWorkflow.timeInSecondsDecimalsPrecision}"
+                                   value="#{newWorkflow.taskStartTimeInSeconds}"
+                                   autocomplete="true"
+                                   placeholder="label"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Max Frames Number"/>
+                </p:column>
+                <p:column>
+                    <p:inputNumber id="taskFrameMaxFramesNumber_Motion_JPEG_by_Periodical_Frames"
+                                   required="false"
+                                   value="#{newWorkflow.taskFrameMaxFramesNumber}"
+                                   autocomplete="true"
+                                   placeholder="max frames number"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Width"/>
+                </p:column>
+                <p:column>
+                    <p:inputNumber id="taskFrameWidth_Motion_JPEG_by_Periodical_Frames"
+                                   required="false"
+                                   value="#{newWorkflow.taskFrameWidth}"
+                                   autocomplete="true"
+                                   placeholder="font type"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Height"/>
+                </p:column>
+                <p:column>
+                    <p:inputNumber id="taskFrameHeight_Motion_JPEG_by_Periodical_Frames"
+                                   required="false"
+                                   value="#{newWorkflow.taskFrameHeight}"
+                                   autocomplete="true"
+                                   placeholder="font size"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="References"/>
+                </p:column>
+                <p:column colspan="2">
+                    <p:inputText id="taskReferences_Motion_JPEG_by_Periodical_Frames" style="width: 100%"
+                                 required="false"
+                                 value="#{newWorkflow.taskReferences}"
+                                 autocomplete="true"
+                                 placeholder="if left blank, references are retrieved from Workflow"/>
+                    <br/>
+                    <p:commandButton id="taskSelectReferences_Motion_JPEG_by_Periodical_Frames"
+                                     icon="ui-icon-search"
+                                     value="Select Media"
+                                     update=":selectMediaItemsForm"
+                                     oncomplete="PF('selectMediaItems').show()"
+                            />
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Retention"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskRetention_Motion_JPEG_by_Periodical_Frames"
+                                 required="false"
+                                 value="#{newWorkflow.taskRetention}"
+                                 autocomplete="true"
+                                 placeholder="retention"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Unique Name"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskUniqueName_Motion_JPEG_by_Periodical_Frames"
+                                 required="false"
+                                 value="#{newWorkflow.taskUniqueName}"
+                                 autocomplete="true"
+                                 placeholder="unique name"/>
+                </p:column>
+
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Title"/>
+                </p:column>
+                <p:column colspan="3">
+                    <p:inputText id="taskTitle_Motion_JPEG_by_Periodical_Frames" style="width: 100%"
+                                 required="false"
+                                 value="#{newWorkflow.taskTitle}"
+                                 autocomplete="true"
+                                 placeholder="title"/>
+                </p:column>
+
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Start publishing:"/>
+                </p:column>
+                <p:column>
+                    <p:calendar id="startPublishing_Motion_JPEG_by_Periodical_Frames"
+                                value="#{newWorkflow.taskStartPublishing}"
+                                autocomplete="true"
+                                pattern="dd-MM-yyyy HH:mm:ss" locale="my">
+                    </p:calendar>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="End publishing:"/>
+                </p:column>
+                <p:column>
+                    <p:calendar id="endPublishing_Motion_JPEG_by_Periodical_Frames"
+                                value="#{newWorkflow.taskEndPublishing}"
+                                autocomplete="true"
+                                pattern="dd-MM-yyyy HH:mm:ss" locale="my">
+                    </p:calendar>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="User Data"/>
+                </p:column>
+                <p:column colspan="3">
+                    <p:scrollPanel>
+                        <p:inputTextarea id="taskUserData_Motion_JPEG_by_Periodical_Frames" style="width: 100%"
+                                         required="false"
+                                         value="#{newWorkflow.taskUserData}"
+                                         autocomplete="true"
+                                         placeholder="user data"/>
+                    </p:scrollPanel>
+                </p:column>
+
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Ingester"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskIngester_Motion_JPEG_by_Periodical_Frames"
+                                 required="false"
+                                 value="#{newWorkflow.taskIngester}"
+                                 autocomplete="true"
+                                 placeholder="ingester"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Keywords"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskKeywords_Motion_JPEG_by_Periodical_Frames"
+                                 required="false"
+                                 value="#{newWorkflow.taskKeywords}"
+                                 autocomplete="true"
+                                 placeholder="ingester"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Content Provider Name"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskContentProviderName_Motion_JPEG_by_Periodical_Frames"
+                                 required="false"
+                                 value="#{newWorkflow.taskContentProviderName}"
+                                 autocomplete="true"
+                                 placeholder="content provider name"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Delivery File Name"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskDeliveryFileName_Motion_JPEG_by_Periodical_Frames"
+                                 required="false"
+                                 value="#{newWorkflow.taskDeliveryFileName}"
+                                 autocomplete="true"
+                                 placeholder="delivery file name"/>
+                </p:column>
+            </p:row>
+
+        </p:panelGrid>
+
+    </h:panelGroup>
+
+    <h:panelGroup rendered="#{newWorkflow.nodeType == 'Motion-JPEG-by-I-Frames'}">
+        <p:toolbar>
+            <f:facet name="left">
+                <p:outputLabel value="Motion-JPEG-by-I-Frames"/>
+            </f:facet>
+            <f:facet name="right">
+                <p:defaultCommand target="saveMotionJPEGbyIFramesProperties"/>
+
+                <p:commandButton id="saveMotionJPEGbyIFramesProperties" value="Save Properties"
+                                 action="#{newWorkflow.saveTaskProperties}"
+                                 update="viewForm:workflowTree,viewForm:ingestWorkflowButton,viewForm:workflowIssuesWarning,jsonWorkflowForm:jsonWorkflow"
+                        />
+            </f:facet>
+        </p:toolbar>
+
+        <p:panelGrid cellpadding="10" style="width: 100%">
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Label" style="font-weight: bold"/>
+                </p:column>
+                <p:column>
+                    <!--
+                                 required="#{newWorkflow.nodeType == 'Motion-JPEG-by-I-Frames'}"
+                    -->
+                    <p:inputText id="taskLabel_Motion_JPEG_by_I_Frames"
+                                 value="#{newWorkflow.taskLabel}"
+                                 autocomplete="true"
+                                 placeholder="label"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Retention"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskRetention_Motion_JPEG_by_I_Frames"
+                                 required="false"
+                                 value="#{newWorkflow.taskRetention}"
+                                 autocomplete="true"
+                                 placeholder="retention"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Start time in seconds"/>
+                </p:column>
+                <p:column>
+                    <p:inputNumber id="taskStartTimeInSeconds_Motion_JPEG_by_I_Frames"
+                                   required="false"
+                                   decimalPlaces="#{newWorkflow.timeInSecondsDecimalsPrecision}"
+                                   value="#{newWorkflow.taskStartTimeInSeconds}"
+                                   autocomplete="true"
+                                   placeholder="label"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Max Frames Number"/>
+                </p:column>
+                <p:column>
+                    <p:inputNumber id="taskFrameMaxFramesNumber_Motion_JPEG_by_I_Frames"
+                                   required="false"
+                                   value="#{newWorkflow.taskFrameMaxFramesNumber}"
+                                   autocomplete="true"
+                                   placeholder="max frames number"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Width"/>
+                </p:column>
+                <p:column>
+                    <p:inputNumber id="taskFrameWidth_Motion_JPEG_by_I_Frames"
+                                   required="false"
+                                   value="#{newWorkflow.taskFrameWidth}"
+                                   autocomplete="true"
+                                   placeholder="font type"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Height"/>
+                </p:column>
+                <p:column>
+                    <p:inputNumber id="taskFrameHeight_Motion_JPEG_by_I_Frames"
+                                   required="false"
+                                   value="#{newWorkflow.taskFrameHeight}"
+                                   autocomplete="true"
+                                   placeholder="font size"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="References"/>
+                </p:column>
+                <p:column colspan="2">
+                    <p:inputText id="taskReferences_Motion_JPEG_by_I_Frames" style="width: 100%"
+                                 required="false"
+                                 value="#{newWorkflow.taskReferences}"
+                                 autocomplete="true"
+                                 placeholder="if left blank, references are retrieved from Workflow"/>
+                    <br/>
+                    <p:commandButton id="taskSelectReferences_Motion_JPEG_by_I_Frames"
+                                     icon="ui-icon-search"
+                                     value="Select Media"
+                                     update=":selectMediaItemsForm"
+                                     oncomplete="PF('selectMediaItems').show()"
+                            />
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Unique Name"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskUniqueName_Motion_JPEG_by_I_Frames"
+                                 required="false"
+                                 value="#{newWorkflow.taskUniqueName}"
+                                 autocomplete="true"
+                                 placeholder="unique name"/>
+                </p:column>
+
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Title"/>
+                </p:column>
+                <p:column colspan="3">
+                    <p:inputText id="taskTitle_Motion_JPEG_by_I_Frames" style="width: 100%"
+                                 required="false"
+                                 value="#{newWorkflow.taskTitle}"
+                                 autocomplete="true"
+                                 placeholder="title"/>
+                </p:column>
+
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Start publishing:"/>
+                </p:column>
+                <p:column>
+                    <p:calendar id="startPublishing_Motion_JPEG_by_I_Frames"
+                                value="#{newWorkflow.taskStartPublishing}"
+                                autocomplete="true"
+                                pattern="dd-MM-yyyy HH:mm:ss" locale="my">
+                    </p:calendar>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="End publishing:"/>
+                </p:column>
+                <p:column>
+                    <p:calendar id="endPublishing_Motion_JPEG_by_I_Frames"
+                                value="#{newWorkflow.taskEndPublishing}"
+                                autocomplete="true"
+                                pattern="dd-MM-yyyy HH:mm:ss" locale="my">
+                    </p:calendar>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="User Data"/>
+                </p:column>
+                <p:column colspan="3">
+                    <p:scrollPanel>
+                        <p:inputTextarea id="taskUserData_Motion_JPEG_by_I_Frames" style="width: 100%"
+                                         required="false"
+                                         value="#{newWorkflow.taskUserData}"
+                                         autocomplete="true"
+                                         placeholder="user data"/>
+                    </p:scrollPanel>
+                </p:column>
+
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Ingester"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskIngester_Motion_JPEG_by_I_Frames"
+                                 required="false"
+                                 value="#{newWorkflow.taskIngester}"
+                                 autocomplete="true"
+                                 placeholder="ingester"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Keywords"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskKeywords_Motion_JPEG_by_I_Frames"
+                                 required="false"
+                                 value="#{newWorkflow.taskKeywords}"
+                                 autocomplete="true"
+                                 placeholder="ingester"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Content Provider Name"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskContentProviderName_Motion_JPEG_by_I_Frames"
+                                 required="false"
+                                 value="#{newWorkflow.taskContentProviderName}"
+                                 autocomplete="true"
+                                 placeholder="content provider name"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Delivery File Name"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskDeliveryFileName_Motion_JPEG_by_I_Frames"
+                                 required="false"
+                                 value="#{newWorkflow.taskDeliveryFileName}"
+                                 autocomplete="true"
+                                 placeholder="delivery file name"/>
+                </p:column>
+            </p:row>
+
+        </p:panelGrid>
+
+    </h:panelGroup>
+
+    <h:panelGroup rendered="#{newWorkflow.nodeType == 'Slideshow'}">
+        <p:toolbar>
+            <f:facet name="left">
+                <p:outputLabel value="Slideshow"/>
+            </f:facet>
+            <f:facet name="right">
+                <p:defaultCommand target="saveSlideshowProperties"/>
+
+                <p:commandButton id="saveSlideshowProperties" value="Save Properties"
+                                 action="#{newWorkflow.saveTaskProperties}"
+                                 update="viewForm:workflowTree,viewForm:ingestWorkflowButton,viewForm:workflowIssuesWarning,jsonWorkflowForm:jsonWorkflow"
+                        />
+            </f:facet>
+        </p:toolbar>
+
+        <p:panelGrid cellpadding="10" style="width: 100%">
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Label" style="font-weight: bold"/>
+                </p:column>
+                <p:column>
+                    <!--
+                                 required="#{newWorkflow.nodeType == 'Slideshow'}"
+                    -->
+                    <p:inputText id="taskLabel_Slideshow"
+                                 value="#{newWorkflow.taskLabel}"
+                                 autocomplete="true"
+                                 placeholder="label"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Retention"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskRetention_Slideshow"
+                                 required="false"
+                                 value="#{newWorkflow.taskRetention}"
+                                 autocomplete="true"
+                                 placeholder="retention"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Duration Of Each Slide In Seconds"/>
+                </p:column>
+                <p:column>
+                    <p:inputNumber id="taskFrameDurationOfEachSlideInSeconds_Slideshow"
+                                   required="false"
+                                   value="#{newWorkflow.taskFrameDurationOfEachSlideInSeconds}"
+                                   autocomplete="true"
+                                   placeholder="duration of each slide in seconds"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Output Frame Rate"/>
+                </p:column>
+                <p:column>
+                    <p:inputNumber id="taskFrameOutputFrameRate_Slideshow"
+                                   required="false"
+                                   value="#{newWorkflow.taskFrameOutputFrameRate}"
+                                   autocomplete="true"
+                                   placeholder="output frame rate"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="References"/>
+                </p:column>
+                <p:column colspan="2">
+                    <p:inputText id="taskReferences_Slideshow" style="width: 100%"
+                                 required="false"
+                                 value="#{newWorkflow.taskReferences}"
+                                 autocomplete="true"
+                                 placeholder="if left blank, references are retrieved from Workflow"/>
+                    <br/>
+                    <p:commandButton id="taskSelectReferences_Slideshow"
+                                     icon="ui-icon-search"
+                                     value="Select Media"
+                                     update=":selectMediaItemsForm"
+                                     oncomplete="PF('selectMediaItems').show()"
+                            />
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Unique Name"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskUniqueName_Slideshow"
+                                 required="false"
+                                 value="#{newWorkflow.taskUniqueName}"
+                                 autocomplete="true"
+                                 placeholder="unique name"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Title"/>
+                </p:column>
+                <p:column colspan="3">
+                    <p:inputText id="taskTitle_Slideshow" style="width: 100%"
+                                 required="false"
+                                 value="#{newWorkflow.taskTitle}"
+                                 autocomplete="true"
+                                 placeholder="title"/>
+                </p:column>
+
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Start publishing:"/>
+                </p:column>
+                <p:column>
+                    <p:calendar id="startPublishing_Slideshow"
+                                value="#{newWorkflow.taskStartPublishing}"
+                                autocomplete="true"
+                                pattern="dd-MM-yyyy HH:mm:ss" locale="my">
+                    </p:calendar>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="End publishing:"/>
+                </p:column>
+                <p:column>
+                    <p:calendar id="endPublishing_Slideshow"
+                                value="#{newWorkflow.taskEndPublishing}"
+                                autocomplete="true"
+                                pattern="dd-MM-yyyy HH:mm:ss" locale="my">
+                    </p:calendar>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="User Data"/>
+                </p:column>
+                <p:column colspan="3">
+                    <p:scrollPanel>
+                        <p:inputTextarea id="taskUserData_Slideshow" style="width: 100%"
+                                         required="false"
+                                         value="#{newWorkflow.taskUserData}"
+                                         autocomplete="true"
+                                         placeholder="user data"/>
+                    </p:scrollPanel>
+                </p:column>
+
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Ingester"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskIngester_Slideshow"
+                                 required="false"
+                                 value="#{newWorkflow.taskIngester}"
+                                 autocomplete="true"
+                                 placeholder="ingester"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Keywords"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskKeywords_Slideshow"
+                                 required="false"
+                                 value="#{newWorkflow.taskKeywords}"
+                                 autocomplete="true"
+                                 placeholder="ingester"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Content Provider Name"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskContentProviderName_Slideshow"
+                                 required="false"
+                                 value="#{newWorkflow.taskContentProviderName}"
+                                 autocomplete="true"
+                                 placeholder="content provider name"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Delivery File Name"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskDeliveryFileName_Slideshow"
+                                 required="false"
+                                 value="#{newWorkflow.taskDeliveryFileName}"
+                                 autocomplete="true"
+                                 placeholder="delivery file name"/>
+                </p:column>
+            </p:row>
+
+        </p:panelGrid>
+
+    </h:panelGroup>
+
+    <h:panelGroup rendered="#{newWorkflow.nodeType == 'Encode'}">
+        <p:toolbar>
+            <f:facet name="left">
+                <p:outputLabel value="Encode"/>
+            </f:facet>
+            <f:facet name="right">
+                <p:defaultCommand target="saveEncodeProperties"/>
+
+                <p:commandButton id="saveEncodeProperties" value="Save Properties"
+                                 action="#{newWorkflow.saveTaskProperties}"
+                                 update="viewForm:workflowTree,viewForm:ingestWorkflowButton,viewForm:workflowIssuesWarning,jsonWorkflowForm:jsonWorkflow"
+                        />
+            </f:facet>
+        </p:toolbar>
+
+        <p:panelGrid cellpadding="10" style="width: 100%">
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Label" style="font-weight: bold"/>
+                </p:column>
+                <p:column>
+                    <!--
+                                 required="#{newWorkflow.nodeType == 'Encode'}"
+                    -->
+                    <p:inputText id="taskLabel_Encode"
+                                 value="#{newWorkflow.taskLabel}"
+                                 autocomplete="true"
+                                 placeholder="label"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Encoding Priority:"/>
+                </p:column>
+                <p:column>
+                    <p:selectOneMenu id="taskEncodingPriority_Encode"
+                                     value="#{newWorkflow.taskEncodingPriority}"
+                                     autoWidth="false">
+                        <f:selectItems value="#{newWorkflow.taskEncodingPrioritiesList}"/>
+                    </p:selectOneMenu>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Content type:"/>
+                </p:column>
+                <p:column>
+                    <p:selectOneMenu id="taskContentType_Encode"
+                                     value="#{newWorkflow.taskContentType}"
+                                     autoWidth="false">
+                        <f:selectItems value="#{newWorkflow.taskContentTypesList}"/>
+                        <p:ajax global="true" event="change"
+                                update="taskEncodingProfilesSetLabel_Encode,taskEncodingProfileLabel_Encode"/>
+                    </p:selectOneMenu>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel for="taskEncodingProfileType_Encode"
+                                   value="Encoding profile type:"/>
+                </p:column>
+                <p:column>
+                    <p:selectOneRadio id="taskEncodingProfileType_Encode"
+                                      value="#{newWorkflow.taskEncodingProfileType}">
+                        <f:selectItem itemLabel="Profiles Set" itemValue="profilesSet"/>
+                        <f:selectItem itemLabel="Single Profile" itemValue="singleProfile"/>
+                        <p:ajax event="change"
+                                update="taskColumnEncodingProfileLabel_Encode,taskEncodingProfileLabel_Encode,taskColumnEncodingProfilesSetLabel_Encode,taskEncodingProfilesSetLabel_Encode"/>
+                    </p:selectOneRadio>
+                </p:column>
+
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel id="taskColumnEncodingProfileLabel_Encode"
+                                   value="Encoding profile label"
+                                   style="#{(newWorkflow.taskEncodingProfileType == 'singleProfile') ? 'font-weight: bold' : ''}"/>
+                </p:column>
+                <p:column>
+                    <p:selectOneMenu id="taskEncodingProfileLabel_Encode"
+                                     value="#{newWorkflow.taskEncodingProfileLabel}"
+                                     disabled="#{newWorkflow.taskEncodingProfileType == 'profilesSet'}"
+                                     autoWidth="false">
+                        <f:selectItem itemLabel="Select a Profile Label" itemValue="" noSelectionOption="true"/>
+                        <f:selectItems value="#{newWorkflow.taskEncodingProfilesLabelList}"/>
+                    </p:selectOneMenu>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel id="taskColumnEncodingProfilesSetLabel_Encode"
+                                   value="Encoding profiles set label"
+                                   style="#{(newWorkflow.taskEncodingProfileType == 'profilesSet') ? 'font-weight: bold' : ''}"/>
+                </p:column>
+                <p:column>
+                    <p:selectOneMenu id="taskEncodingProfilesSetLabel_Encode"
+                                     value="#{newWorkflow.taskEncodingProfilesSetLabel}"
+                                     disabled="#{newWorkflow.taskEncodingProfileType == 'singleProfile'}"
+                                     autoWidth="false">
+                        <f:selectItem itemLabel="Select a Profiles Set Label" itemValue="" noSelectionOption="true"/>
+                        <f:selectItems value="#{newWorkflow.taskEncodingProfilesLabelSetList}"/>
+                    </p:selectOneMenu>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="References"/>
+                </p:column>
+                <p:column colspan="2">
+                    <p:inputText id="taskReferences_Encode" style="width: 100%"
+                                 required="false"
+                                 value="#{newWorkflow.taskReferences}"
+                                 autocomplete="true"
+                                 placeholder="if left blank, references are retrieved from Workflow"/>
+                    <br/>
+                    <p:commandButton id="taskSelectReferences_Encode"
+                                     icon="ui-icon-search"
+                                     value="Select Media"
+                                     update=":selectMediaItemsForm"
+                                     oncomplete="PF('selectMediaItems').show()"
+                            />
+                </p:column>
+            </p:row>
+
+        </p:panelGrid>
+
+    </h:panelGroup>
+
+    <h:panelGroup rendered="#{newWorkflow.nodeType == 'Email-Notification'}">
+        <p:toolbar>
+            <f:facet name="left">
+                <p:outputLabel value="Email-Notification"/>
+            </f:facet>
+            <f:facet name="right">
+                <p:defaultCommand target="saveEmailNotificationProperties"/>
+
+                <p:commandButton id="saveEmailNotificationProperties" value="Save Properties"
+                                 action="#{newWorkflow.saveTaskProperties}"
+                                 update="viewForm:workflowTree,viewForm:ingestWorkflowButton,viewForm:workflowIssuesWarning,jsonWorkflowForm:jsonWorkflow"
+                        />
+            </f:facet>
+        </p:toolbar>
+
+        <p:panelGrid cellpadding="10" style="width: 100%">
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Label" style="font-weight: bold"/>
+                </p:column>
+                <p:column>
+                    <!--
+                                 required="#{newWorkflow.nodeType == 'Email-Notification'}"
+                    -->
+                    <p:inputText id="taskLabel_Email_Notification"
+                                 value="#{newWorkflow.taskLabel}"
+                                 autocomplete="true"
+                                 placeholder="label"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Email address:"/>
+                </p:column>
+                <p:column>
+                    <!--
+                                 required="#{newWorkflow.nodeType == 'Email-Notification'}"
+                    -->
+                    <p:inputText id="taskEmailAddress_Email_Notification"
+                                 value="#{newWorkflow.taskEmailAddress}"
+                                 autocomplete="true"
+                                 placeholder="email address"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Subject" style="font-weight: bold"/>
+                </p:column>
+                <p:column colspan="3">
+                    <!--
+                                 required="#{newWorkflow.nodeType == 'Email-Notification'}"
+                    -->
+                    <p:inputText id="taskSubject_Email_Notification" style="width: 100%"
+                                 value="#{newWorkflow.taskSubject}"
+                                 autocomplete="true"
+                                 placeholder="label"/>
+                </p:column>
+
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Message"/>
+                </p:column>
+                <p:column colspan="3">
+                    <p:scrollPanel>
+                        <!--
+                                         required="#{newWorkflow.nodeType == 'Email-Notification'}"
+                        -->
+                        <p:inputTextarea id="taskMessage_Email_Notification" style="width: 100%"
+                                         value="#{newWorkflow.taskMessage}"
+                                         autocomplete="true"
+                                         placeholder="message"/>
+                    </p:scrollPanel>
+                </p:column>
+            </p:row>
+
+        </p:panelGrid>
+
+    </h:panelGroup>
+
+</h:panelGroup>
+
+
+</html>

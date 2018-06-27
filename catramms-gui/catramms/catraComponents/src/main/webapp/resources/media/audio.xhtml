@@ -1,0 +1,67 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:cc="http://xmlns.jcp.org/jsf/composite"
+      xmlns:c="http://xmlns.jcp.org/jsp/jstl/core"
+      xmlns:jsf="http://xmlns.jcp.org/jsf"
+      >
+
+<cc:interface componentType="UIMediaComponent">
+
+    <cc:attribute name="value" type="java.lang.String"
+                  shortDescription="URL of the audio file to display" />
+
+    <cc:attribute name="crossorigin" type="java.lang.String"
+                  shortDescription="Specifying how to deal with cross origin requests.
+                    anonymous (default) or use-credentials" />
+
+    <cc:attribute name="preload" type="java.lang.String" default="auto"
+                  shortDescription="Preload the audio file. none, metadata or auto" />
+
+    <cc:attribute name="autoplay" type="java.lang.Boolean" default="false"
+                  shortDescription="Start playback as soon as the page has loaded" />
+
+    <cc:attribute name="mediagroup" type="java.lang.String" default=""
+                  shortDescription="Media group for which the media file belong" />
+
+    <cc:attribute name="loop" type="java.lang.Boolean" default="false"
+                  shortDescription="Restart the audio once it reaches the end" />
+
+    <cc:attribute name="muted" type="java.lang.Boolean" default="false"
+                  shortDescription="Mute the sound" />
+
+    <cc:attribute name="controls" type="java.lang.Boolean" default="false"
+                  shortDescription="Display user controls" />
+
+    <cc:attribute name="sources" type="java.util.Collection"
+                  shortDescription="Collection of alternatives media sources" />
+
+    <cc:attribute name="tracks" type="java.util.Collection"
+                  shortDescription="Collection of media tracks" />
+
+</cc:interface>
+
+<cc:implementation>
+    <div id="#{cc.clientId}">
+        <audio oncontextmenu="return false;" jsf:id="#{cc.elementId}"
+            jsf:value="#{cc.attrs.value}"
+            preload="#{cc.attrs.preload}"
+            mediagroup="#{cc.attrs.mediagroup}"
+            src="#{cc.attrs.value}">
+
+            <c:forEach items="#{cc.attrs.sources}" var="source">
+                <source value="#{source}" />
+            </c:forEach>
+
+            <c:forEach items="#{cc.attrs.tracks}" var="track">
+                <track value="#{track}" />
+            </c:forEach>
+
+            <cc:insertChildren />
+
+        </audio>
+    </div>
+
+</cc:implementation>
+
+</html>

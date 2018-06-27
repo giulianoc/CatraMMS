@@ -1,0 +1,45 @@
+
+.blink {
+    animation: blinker 1s linear infinite;
+}
+
+@keyframes blinker {
+    50% { opacity: 0.0; }
+}
+
+.red {
+    color: red;
+}
+
+.gray {
+    color: gray;
+}
+
+.linkSeeMore {
+    color: blue !important;
+}
+
+.appTitle {
+    color: red;
+    /* font-weight: bold; */
+    /* font-size: 100% !important; */
+}
+
+.viewTitle {
+    /* color: red; */
+    /* font-weight: bold; */
+    /* font-size: 150% !important; */
+}
+
+/* for all the growls */
+.ui-growl {
+    z-index: 9999;
+}
+
+ul.ui-menu-child
+{
+    white-space: nowrap;
+    width: 220px !important;
+}
+
+

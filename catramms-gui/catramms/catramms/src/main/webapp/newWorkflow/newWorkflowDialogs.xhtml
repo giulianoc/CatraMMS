@@ -1,0 +1,223 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:media="http://xmlns.jcp.org/jsf/composite/media">
+
+<p:dialog widgetVar="jsonWorkflowWidget" modal="true"
+          header="Json Workflow" appendTo="@(body)" width="600"
+          showEffect="fade" hideEffect="fade" resizable="false" draggable="true">
+
+    <h:form id="jsonWorkflowForm">
+
+        <p:scrollPanel>
+            <p:inputTextarea id="jsonWorkflow" style="width: 100%" cols="100" rows="30" readonly="true"
+                         value="#{newWorkflow.jsonWorkflow}" />
+        </p:scrollPanel>
+
+    </h:form>
+</p:dialog>
+
+
+<p:dialog widgetVar="selectMediaItems" modal="true"
+          header="Select Media Items" appendTo="@(body)" width="1000" height="600"
+          showEffect="fade" hideEffect="fade" resizable="false" draggable="true">
+
+    <h:form id="selectMediaItemsForm">
+
+        <p:toolbar>
+            <f:facet name="left">
+                <p:outputLabel styleClass="red" value="#{newWorkflow.mediaItemsList.size()}" />
+                <p:outputLabel styleClass="red" value=" / #{newWorkflow.mediaItemsNumber}" />
+                <p:outputLabel value=" media items" />
+            </f:facet>
+
+            <f:facet name="right">
+                <p:outputLabel value="Type:" />
+                <p:selectOneMenu id="contentType" value="#{newWorkflow.mediaItemsContentType}"
+                                 autoWidth="false">
+                    <f:selectItems value="#{newWorkflow.mediaItemsContentTypesList}" />
+                </p:selectOneMenu>
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:outputLabel value="Begin:" />
+                <p:calendar id="begin" value="#{newWorkflow.mediaItemsBegin}" pattern="dd-MM-yyyy HH:mm:ss" locale="my" >
+                </p:calendar>
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:outputLabel value="End:" />
+                <p:calendar id="end" value="#{newWorkflow.mediaItemsEnd}" pattern="dd-MM-yyyy HH:mm:ss" locale="my" >
+                </p:calendar>
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:outputLabel value="Max:" />
+                <p:spinner id="maxMediaItemsNumber"
+                           value="#{newWorkflow.mediaItemsMaxMediaItemsNumber}"
+                           min="10" max="1000" stepFactor="10" size="5"/>
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:commandButton global="true" icon="ui-icon ui-icon-search"
+                                 actionListener="#{newWorkflow.fillMediaItems}"
+                        update=":selectMediaItemsForm"
+                        />
+            </f:facet>
+        </p:toolbar>
+
+        <p:dataTable resizableColumns="true" id="mediaItemDataTable" var="mediaItem" rowIndexVar="rowId"
+                     value="#{newWorkflow.mediaItemsList}"
+                     selection="#{newWorkflow.mediaItemsSelectedList}"
+                     rowKey="#{mediaItem.mediaItemKey}"
+                >
+
+            <f:facet name="header">
+                <p:outputLabel value="Media Items" />
+            </f:facet>
+
+            <p:column selectionMode="multiple" style="width:16px;text-align:center"/>
+
+            <p:column style="width:90px;" headerText="Media Item&lt;br&gt;Key" >
+                <p:outputLabel value="#{mediaItem.mediaItemKey}" />
+            </p:column>
+
+            <p:column style="width:100px;" headerText="Source Physical&lt;br&gt;Path Key" >
+                <p:outputLabel value="#{mediaItem.sourcePhysicalPath.physicalPathKey}" />
+            </p:column>
+
+            <p:column headerText="Title" >
+                <p:outputLabel value="#{mediaItem.title}" />
+            </p:column>
+
+            <p:column style="width:160px;" headerText="Ingestion Date" >
+                <p:outputLabel id="ingestionDate" value="#{mediaItem.ingestionDate}">
+                    <f:convertDateTime type="date" pattern="dd-MM-yyyy HH:mm:ss" timeZone="CET"/>
+                </p:outputLabel>
+            </p:column>
+
+            <f:facet name="footer">
+                <p:commandButton process="mediaItemDataTable"
+                                 update="viewForm:taskReferences_Remove_Content,viewForm:taskReferences_Concat_Demuxer,viewForm:taskReferences_Cut,viewForm:taskReferences_Overlay_Image_On_Video,viewForm:taskReferences_Overlay_Text_On_Video,viewForm:taskReferences_Frame,viewForm:taskReferences_Periodical_Frames,viewForm:taskReferences_I_Frames,viewForm:taskReferences_Motion_JPEG_by_Periodical_Frames,viewForm:taskReferences_Motion_JPEG_by_I_Frames,viewForm:taskReferences_Slideshow,viewForm:taskReferences_Encode"
+                                 icon="ui-icon-search" value="Save"
+                                 onclick="PF('selectMediaItems').hide()"
+                        />
+            </f:facet>
+        </p:dataTable>
+
+    </h:form>
+</p:dialog>
+
+<p:dialog widgetVar="workflowIssues" modal="true"
+          header="Workflow Issues" appendTo="@(body)" width="800"
+          showEffect="fade" hideEffect="fade" resizable="false" draggable="true">
+
+    <h:form id="workflowIssuesForm">
+
+
+        <p:dataTable resizableColumns="true" id="workflowIssuesDataTable" var="workflowIssue" rowIndexVar="rowId"
+                     value="#{newWorkflow.workflowIssueList}" rowKey="#{workflowIssue.label}"
+                     selectionMode="single" stickyHeader="true"
+                     widgetVar="workflowIssuesDataTable" >
+
+            <p:column headerText="Label" >
+                <p:outputLabel value="#{workflowIssue.label}" />
+            </p:column>
+
+            <p:column style="width:100px;" headerText="Task Type" >
+                <p:outputLabel value="#{workflowIssue.taskType}" />
+            </p:column>
+
+            <p:column style="width:150px;" headerText="Field name" >
+                <p:outputLabel value="#{workflowIssue.fieldName}" />
+            </p:column>
+
+            <p:column headerText="Issue" >
+                <p:outputLabel value="#{workflowIssue.issue}" />
+            </p:column>
+
+        </p:dataTable>
+
+    </h:form>
+</p:dialog>
+
+<p:dialog widgetVar="ingestionWorkflowResults" modal="true"
+          header="Ingestion Workflow Results" appendTo="@(body)" width="800"
+          showEffect="fade" hideEffect="fade" resizable="false" draggable="true">
+
+    <h:form id="ingestionWorkflowResultsForm">
+
+        <p:outputLabel value="Workflow Details:" style="font-weight: bold"/>
+        <p:panelGrid cellpadding="10" style="width: 100%" >
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Label" />
+                </p:column>
+                <p:column>
+                    <p:outputLabel value="#{newWorkflow.workflowRoot.label}" />
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Ingestion Root Key" />
+                </p:column>
+                <p:column>
+                    <p:outputLabel value="#{newWorkflow.workflowRoot.key}" />
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Details" />
+                </p:column>
+                <p:column>
+                    <h:link outcome="/ingestionWorkflowDetails.xhtml?faces-redirect=true" value="Ingestion Workflow Details">
+                        <f:param name="ingestionRootKey" value="#{newWorkflow.workflowRoot.key}" />
+                    </h:link>
+                </p:column>
+            </p:row>
+
+        </p:panelGrid>
+
+        <br/>
+
+        <p:outputLabel value="Jobs Details:" style="font-weight: bold"/>
+        <p:dataTable resizableColumns="false" id="ingestionJobsDataTable" var="ingestionJob"
+                     rowIndexVar="rowId" scrollable="true" scrollHeight="400"
+                     value="#{newWorkflow.ingestionJobList}" rowKey="#{ingestionJob.key}"
+                     selectionMode="single" stickyHeader="false"
+                     widgetVar="ingestionJobsDataTable" >
+
+            <p:column style="width:130px;" headerText="Ingestion Job Key" >
+                <p:outputLabel value="#{ingestionJob.key}" />
+            </p:column>
+
+            <p:column headerText="Label" >
+                <p:outputLabel value="#{ingestionJob.label}" />
+            </p:column>
+
+            <p:column style="width:130px;" headerText="" >
+                <h:link outcome="/ingestionJobDetails.xhtml?faces-redirect=true" value="Ingestion Job Details">
+                    <f:param name="ingestionJobKey" value="#{ingestionJob.key}" />
+                </h:link>
+            </p:column>
+
+        </p:dataTable>
+
+    </h:form>
+</p:dialog>
+
+</html>

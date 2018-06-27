@@ -1,0 +1,46 @@
+<html>
+<head>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+	<script type="text/javascript" src="./smpte_test_universal.js"></script>
+	<title>HTML5 video universal frame accuracy test rig for all nightly builds</title>
+</head>
+
+<body>
+
+<table width="950" border="0" cellpadding="4" cellspacing="0">
+	<tbody>
+		<tr bgcolor="#CCCCCC">
+	    <td>
+			<div id="videoHolder" style="width: 640px, height: 368px">
+				<video id="myVideo" width="640" height="368" controls="controls">
+					<source src="http://techslides.com/demos/sample-videos/small.mp4" type="video/mp4">
+				</video>
+			</div>
+		</td>
+		<td valign="top">
+			<div id="currentTimeCode">00:00:00:00</div>
+			<div id="videoInfo">
+				<b>Video info:</b>
+				<br>currentTime: 0<br>fixedTimecode: 0<br>srcVideo: http://www.massive-interactive.nl/html5_video/video/perfect-timecoded.webm<br>
+			</div>
+			<div id="seekInfo">seek info</div>
+			<div id="metaData"><b>Meta data loaded</b><br>duration: 80 seconds.<br></div>
+			<div id="videoSource">videoSource</div>
+		</td>
+		</tr>
+	</tbody>
+</table>
+<form>
+	<input id="minus1" type="button" value="&lt;| -1 frame" onclick="seekFrames(-1, 29.97)">
+	&nbsp;
+	<input id="plus1" type="button" value="|&gt; +1 frame" onclick="seekFrames(1, 29.97)">
+	<small>known problem with WebKit: start at 00:00:00:00 and step +1 13 times. You will get frame 00:00:00:12 twice rather than 00:00:00:13</small> <br>
+	<!--input id="playpause" type="button" value="Pause" onclick="togglePlay()"/--> &nbsp; <br>
+	<input id="jump01" type="button" value="Jump to 00:00:12:21" onclick="seekToTimecode(&#39;00:00:12:21&#39;, 25)">
+	(works	on most nightly builds of all browsers)<br>
+	<!-- input id="jump02" type="button" value="Jump to 0.5199666619300842" onclick="seekToSeconds(0.5199666619300842)"/ --> <br>
+</form>
+
+</body>
+</html>
+

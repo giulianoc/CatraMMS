@@ -1,0 +1,230 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:media="http://xmlns.jcp.org/jsf/composite/media">
+
+<f:metadata>
+    <f:viewParam name="predefined" value="#{newWorkflow.predefined}" />
+    <f:viewParam name="data" value="#{newWorkflow.data}" />
+    <f:viewAction action="#{newWorkflow.init}" />
+</f:metadata>
+
+<h:head>
+
+    <h:outputStylesheet library="css" name="catramms.css"  />
+
+</h:head>
+
+<h:body>
+
+    <ui:include src="/common/loadingDialog.xhtml"/>
+    <ui:include src="/common/globalConfirm.xhtml"/>
+    <ui:include src="newWorkflowDialogs.xhtml"/>
+
+    <h:form id="viewForm" enctype="multipart/form-data">
+
+        <p:growl id="growl" showDetail="true" sticky="false" escape="false" autoUpdate="true" life="5000" />
+
+        <p:toolbar>
+            <p:toolbarGroup align="left">
+                <p:outputLabel styleClass="appTitle" value="Media Management System" />
+            </p:toolbarGroup>
+
+            <p:toolbarGroup align="right">
+
+                <p:outputLabel value="Welcome #{login.user}" />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:commandLink value="Logout" action="#{login.logout}" />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <ui:include src="/common/mainMenu.xhtml"/>
+
+            </p:toolbarGroup>
+        </p:toolbar>
+
+        <p:toolbar>
+            <p:toolbarGroup align="left">
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:outputLabel styleClass="viewTitle" value="New Workflow" />
+
+            </p:toolbarGroup>
+
+            <p:toolbarGroup align="right">
+
+                <p:commandButton id="ingestWorkflowButton" global="true" value="Ingest Workflow"
+                                 actionListener="#{newWorkflow.ingestWorkflow}"
+                                 disabled="#{newWorkflow.workflowIssueList.size() > 0}"
+                                 update="ingestionWorkflowResultsForm"
+                                 oncomplete="PF('ingestionWorkflowResults').show()">
+                    <p:confirm header="Confirmation" message="Are you sure?" icon="ui-icon-alert" />
+                </p:commandButton>
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:commandButton id="jsonWorkflowButton" global="true"
+                                 icon="fa fa-file-code-o"
+                                 oncomplete="PF('jsonWorkflowWidget').show()"
+                        />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:commandButton id="workflowIssuesWarning" global="true"
+                                 styleClass="#{(newWorkflow.workflowIssueList.size() > 0) ? 'blink' : ''}" icon="fa fa-warning"
+                                 disabled="#{newWorkflow.workflowIssueList.size() == 0}"
+                                 update="workflowIssuesForm"
+                                 oncomplete="PF('workflowIssues').show()"
+                        />
+
+            </p:toolbarGroup>
+        </p:toolbar>
+
+        <p:layout style="width:100%;height: 500px">
+            <p:layoutUnit position="west" resizable="true" size="500" minSize="200" maxSize="600">
+                <p:toolbar id="workflowTreeToolbar">
+                    <f:facet name="left">
+                        <p:commandButton id="addGroupOfTaskTooltip" icon="fa fa-navicon"
+                                         title="Add Group of Task"
+                                         update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                                         action="#{newWorkflow.addGroupOfTasks}"
+                                />
+                        <p:tooltip for="addGroupOfTaskTooltip" showEffect="clip" hideEffect="explode" position="left"/>
+
+                        <span class="ui-separator">
+                            <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                        </span>
+
+                        <p:commandButton id="onSuccessTooltip" icon="fa fa-close"
+                                         title="OnSuccess"
+                                         update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                                         action="#{newWorkflow.addOnSuccessEvent}"
+                                />
+                        <p:tooltip for="onSuccessTooltip" showEffect="clip" hideEffect="explode" position="left"/>
+
+                        <p:commandButton id="onErrorTooltip" icon="fa fa-close"
+                                         title="OnError"
+                                         update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                                         action="#{newWorkflow.addOnErrorEvent}"
+                                />
+                        <p:tooltip for="onErrorTooltip" showEffect="clip" hideEffect="explode" position="left"/>
+
+                        <p:commandButton id="onCompleteTooltip" icon="fa fa-close"
+                                         title="OnComplete"
+                                         update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                                         action="#{newWorkflow.addOnCompleteEvent}"
+                                />
+                        <p:tooltip for="onCompleteTooltip" showEffect="clip" hideEffect="explode" position="left"/>
+
+                        <span class="ui-separator">
+                            <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                        </span>
+
+                        <p:commandButton id="addContentTooltip" icon="fa fa-plus"
+                                         title="Add-Content"
+                                         update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                                         action="#{newWorkflow.addTask('Add-Content')}"
+                                />
+                        <p:tooltip for="addContentTooltip" showEffect="clip" hideEffect="explode" position="left"/>
+
+                        <p:commandButton id="removeContentTooltip" icon="fa fa-close"
+                                         title="Remove-Content"
+                                         update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                                         action="#{newWorkflow.addTask('Remove-Content')}"
+                                />
+                        <p:tooltip for="removeContentTooltip" showEffect="clip" hideEffect="explode" position="left"/>
+
+                        <span class="ui-separator">
+                            <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                        </span>
+
+                        <p:commandButton id="concatDemuxerTooltip" icon="fa fa-close"
+                                         title="Concat-Demuxer"
+                                         update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                                         action="#{newWorkflow.addTask('Concat-Demuxer')}"
+                                />
+                        <p:tooltip for="concatDemuxerTooltip" showEffect="clip" hideEffect="explode" position="left"/>
+
+                        <p:commandButton id="cutTooltip" icon="fa fa-close"
+                                         title="Cut"
+                                         update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                                         action="#{newWorkflow.addTask('Cut')}"
+                                />
+                        <p:tooltip for="cutTooltip" showEffect="clip" hideEffect="explode" position="left"/>
+
+                        <span class="ui-separator">
+                            <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                        </span>
+
+                        <p:commandButton id="encodeTooltip" icon="fa fa-close"
+                                         title="Encode"
+                                         update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                                         action="#{newWorkflow.addTask('Encode')}"
+                                />
+                        <p:tooltip for="encodeTooltip" showEffect="clip" hideEffect="explode" position="left"/>
+
+                    </f:facet>
+                    <f:facet name="right">
+                    </f:facet>
+                </p:toolbar>
+                <p:sticky target="workflowTreeToolbar" />
+
+                <p:tree id="workflowTree"
+                        style="width: 100%;height: 400px"
+                        value="#{newWorkflow.tnRoot}" var="node"
+                        selectionMode="single" selection="#{newWorkflow.tnSelectedNode}"
+                        dynamic="true"  >
+
+                    <p:ajax event="select" listener="#{newWorkflow.selectionChanged}"
+                            update="viewForm:taskDetailProperties"/>
+
+                    <p:treeNode type="Workflow" expandedIcon="ui-icon-folder-open" collapsedIcon="ui-icon-folder-collapsed">
+                        <h:outputText value="#{node}"/>
+                    </p:treeNode>
+
+                    <p:treeNode type="Task" expandedIcon="ui-icon-folder-open" collapsedIcon="ui-icon-folder-collapsed">
+                        <h:outputText value="#{node}"/>
+                    </p:treeNode>
+
+                    <p:treeNode type="GroupOfTasks" expandedIcon="ui-icon-folder-open" collapsedIcon="ui-icon-folder-collapsed">
+                        <h:outputText value="#{node}"/>
+                    </p:treeNode>
+
+                    <p:treeNode type="Event" expandedIcon="ui-icon-folder-open" collapsedIcon="ui-icon-folder-collapsed">
+                        <h:outputText value="#{node}"/>
+                    </p:treeNode>
+
+                </p:tree>
+
+                <ui:include src="/newWorkflow/treeMenuContext.xhtml"/>
+
+            </p:layoutUnit>
+
+            <p:layoutUnit position="center">
+
+                <ui:include src="/newWorkflow/workflowProperties.xhtml"/>
+
+            </p:layoutUnit>
+        </p:layout>
+
+    </h:form>
+
+</h:body>
+</html>

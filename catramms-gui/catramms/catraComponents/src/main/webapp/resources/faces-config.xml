@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<faces-config xmlns="http://java.sun.com/xml/ns/javaee"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_2_0.xsd"
+              version="2.0">
+
+
+    <application>
+
+        <resource-bundle>
+            <base-name>com.java_javafx.ka.composite.localizedMessages</base-name>
+            <var>msgsc</var>
+        </resource-bundle>
+        <!-- set locales -->
+        <locale-config>
+            <default-locale>en</default-locale>
+            <supported-locale>fr</supported-locale>
+            <supported-locale>de</supported-locale>
+            <supported-locale>ar</supported-locale>
+
+        </locale-config>
+        <!-- end locals -->
+    </application>
+
+</faces-config>

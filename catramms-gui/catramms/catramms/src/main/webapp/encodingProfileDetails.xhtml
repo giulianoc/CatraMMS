@@ -1,0 +1,175 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:media="http://xmlns.jcp.org/jsf/composite/media">
+
+<f:metadata>
+    <f:viewParam name="encodingProfileKey" value="#{encodingProfileDetails.encodingProfileKey}" />
+    <f:viewAction action="#{encodingProfileDetails.init}" />
+</f:metadata>
+
+<h:head>
+
+    <h:outputStylesheet library="css" name="catramms.css"  />
+
+</h:head>
+
+<h:body>
+
+    <ui:include src="/common/loadingDialog.xhtml"/>
+
+    <h:form id="viewForm">
+
+        <p:toolbar>
+            <p:toolbarGroup align="left">
+                <p:outputLabel styleClass="appTitle" value="Media Management System" />
+            </p:toolbarGroup>
+
+            <p:toolbarGroup align="right">
+
+                <p:outputLabel value="Welcome #{login.user}" />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:commandLink value="Logout" action="#{login.logout}" />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <ui:include src="/common/mainMenu.xhtml"/>
+
+            </p:toolbarGroup>
+        </p:toolbar>
+
+        <p:toolbar>
+            <p:toolbarGroup align="left">
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:outputLabel styleClass="viewTitle" value="Encoding Profile Details" />
+            </p:toolbarGroup>
+
+            <p:toolbarGroup align="right">
+
+                <p:outputLabel value="Encoding Profile Key: #{encodingProfileDetails.encodingProfileKey}" />
+
+            </p:toolbarGroup>
+        </p:toolbar>
+
+        <p:tabView id="encodingProfileDetailTabView" dynamic="false" cache="true">
+
+            <p:tab title="General Info">
+                <p:panelGrid columns="2" cellpadding="10">
+                    <p:outputLabel value="Encoding Profile Key: " />
+                    <p:outputLabel value="#{encodingProfileDetails.encodingProfile.encodingProfileKey}" />
+
+                    <p:outputLabel value="Label: " />
+                    <p:outputLabel value="#{encodingProfileDetails.encodingProfile.label}" />
+
+                    <p:outputLabel value="Content Type: " />
+                    <p:outputLabel value="#{encodingProfileDetails.encodingProfile.contentType}" />
+
+                    <p:outputLabel value="File Format: " />
+                    <p:outputLabel value="#{encodingProfileDetails.encodingProfile.fileFormat}" />
+
+                </p:panelGrid>
+            </p:tab>
+
+            <p:tab rendered="#{encodingProfileDetails.encodingProfile.contentType == 'Video'}"
+                   title="Video Info">
+
+                <p:panelGrid columns="2" cellpadding="10">
+
+                    <p:outputLabel value="Codec: " />
+                    <p:outputLabel value="#{encodingProfileDetails.encodingProfile.videoDetails.codec}" />
+
+                    <p:outputLabel value="Profile: " />
+                    <p:outputLabel value="#{encodingProfileDetails.encodingProfile.videoDetails.profile}" />
+
+                    <p:outputLabel value="Width: " />
+                    <p:outputLabel value="#{encodingProfileDetails.encodingProfile.videoDetails.width}" />
+
+                    <p:outputLabel value="Height: " />
+                    <p:outputLabel value="#{encodingProfileDetails.encodingProfile.videoDetails.height}" />
+
+                    <p:outputLabel value="Two Passes: " />
+                    <p:outputLabel value="#{encodingProfileDetails.encodingProfile.videoDetails.twoPasses}" />
+
+                    <p:outputLabel value="Bit Rate (K): " />
+                    <p:outputLabel value="#{encodingProfileDetails.encodingProfile.videoDetails.kBitRate}" />
+
+                    <p:outputLabel value="Other Output Parameters: " />
+                    <p:outputLabel value="#{encodingProfileDetails.encodingProfile.videoDetails.otherOutputParameters}" />
+
+                    <p:outputLabel value="Max Rate (K): " />
+                    <p:outputLabel value="#{encodingProfileDetails.encodingProfile.videoDetails.kMaxRate}" />
+
+                    <p:outputLabel value="Buf Size (K): " />
+                    <p:outputLabel value="#{encodingProfileDetails.encodingProfile.videoDetails.kBufSize}" />
+
+                    <p:outputLabel value="Frame Rate: " />
+                    <p:outputLabel value="#{encodingProfileDetails.encodingProfile.videoDetails.frameRate}" />
+
+                    <p:outputLabel value="Key Frame Interval In Seconds: " />
+                    <p:outputLabel value="#{encodingProfileDetails.encodingProfile.videoDetails.keyFrameIntervalInSeconds}" />
+
+                </p:panelGrid>
+            </p:tab>
+
+            <p:tab rendered="#{encodingProfileDetails.encodingProfile.contentType == 'Video' or encodingProfileDetails.encodingProfile.contentType == 'Audio'}"
+                   title="Audio Info">
+
+                <p:panelGrid columns="2" cellpadding="10">
+
+                    <p:outputLabel value="Codec: " />
+                    <p:outputLabel value="#{encodingProfileDetails.encodingProfile.audioDetails.codec}" />
+
+                    <p:outputLabel value="Bit Rate (K): " />
+                    <p:outputLabel value="#{encodingProfileDetails.encodingProfile.audioDetails.kBitRate}" />
+
+                    <p:outputLabel value="Other Output Parameters: " />
+                    <p:outputLabel value="#{encodingProfileDetails.encodingProfile.audioDetails.otherOutputParameters}" />
+
+                    <p:outputLabel value="Channels Number: " />
+                    <p:outputLabel value="#{encodingProfileDetails.encodingProfile.audioDetails.channelsNumber}" />
+
+                    <p:outputLabel value="Sample Rate: " />
+                    <p:outputLabel value="#{encodingProfileDetails.encodingProfile.audioDetails.sampleRate}" />
+
+                </p:panelGrid>
+            </p:tab>
+
+            <p:tab rendered="#{encodingProfileDetails.encodingProfile.contentType == 'Image'}"
+                   title="Image Info">
+
+                <p:panelGrid columns="2" cellpadding="10">
+
+                    <p:outputLabel value="Width: " />
+                    <p:outputLabel value="#{encodingProfileDetails.encodingProfile.imageDetails.width}" />
+
+                    <p:outputLabel value="Height: " />
+                    <p:outputLabel value="#{encodingProfileDetails.encodingProfile.imageDetails.height}" />
+
+                    <p:outputLabel value="Aspect Ratio: " />
+                    <p:outputLabel value="#{encodingProfileDetails.encodingProfile.imageDetails.aspectRatio}" />
+
+                    <p:outputLabel value="InterlaceType: " />
+                    <p:outputLabel value="#{encodingProfileDetails.encodingProfile.imageDetails.interlaceType}" />
+
+                </p:panelGrid>
+            </p:tab>
+
+        </p:tabView>
+
+    </h:form>
+
+</h:body>
+</html>

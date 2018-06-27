@@ -1,0 +1,25 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:cc="http://xmlns.jcp.org/jsf/composite"
+      xmlns:jsf="http://xmlns.jcp.org/jsf"
+      >
+
+<cc:interface>
+
+    <cc:attribute name="value"
+        type="MediaSource"
+        shortDescription="MediaSource that should be made available to the video or audio element"
+        required="true"
+        />
+
+</cc:interface>
+
+<cc:implementation>
+    <source jsf:id="source"
+        src="#{cc.attrs.value.source}"
+        type="#{cc.attrs.value.type}"
+    />
+</cc:implementation>
+
+</html>

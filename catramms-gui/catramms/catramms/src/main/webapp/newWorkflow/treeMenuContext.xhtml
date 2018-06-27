@@ -1,0 +1,329 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:h="http://xmlns.jcp.org/jsf/html">
+
+<p:contextMenu for="workflowTree" nodeType="Workflow">
+    <p:submenu label="Add Task">
+        <p:submenu label="Content">
+            <p:menuitem value="Add-Content"
+                        icon="fa fa-plus"
+                        update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                        actionListener="#{newWorkflow.addTask('Add-Content')}"
+                    />
+            <p:menuitem value="Remove-Content"
+                        icon="fa fa-close"
+                        update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                        actionListener="#{newWorkflow.addTask('Remove-Content')}"
+                    />
+        </p:submenu>
+        <p:submenu label="Concat and Cut">
+            <p:menuitem value="Concat-Demuxer"
+                        icon="ui-icon-close"
+                        update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                        actionListener="#{newWorkflow.addTask('Concat-Demuxer')}"
+                    />
+            <p:menuitem value="Cut"
+                        icon="ui-icon-close"
+                        update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                        actionListener="#{newWorkflow.addTask('Cut')}"
+                    />
+        </p:submenu>
+        <p:menuitem value="Encode"
+                    icon="ui-icon-close"
+                    update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                    actionListener="#{newWorkflow.addTask('Encode')}"
+                />
+        <p:submenu label="Overlay">
+            <p:menuitem value="Overlay-Image-On-Video"
+                        icon="ui-icon-close"
+                        update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                        actionListener="#{newWorkflow.addTask('Overlay-Image-On-Video')}"
+                    />
+            <p:menuitem value="Overlay-Text-On-Video"
+                        icon="ui-icon-close"
+                        update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                        actionListener="#{newWorkflow.addTask('Overlay-Text-On-Video')}"
+                    />
+        </p:submenu>
+        <p:submenu label="Frame Processing">
+            <p:menuitem value="Frame"
+                        icon="ui-icon-close"
+                        update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                        actionListener="#{newWorkflow.addTask('Frame')}"
+                    />
+            <p:menuitem value="Periodical-Frames"
+                        icon="ui-icon-close"
+                        update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                        actionListener="#{newWorkflow.addTask('Periodical-Frames')}"
+                    />
+            <p:menuitem value="I-Frames"
+                        icon="ui-icon-close"
+                        update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                        actionListener="#{newWorkflow.addTask('I-Frames')}"
+                    />
+            <p:menuitem value="Motion-JPEG-by-Periodical-Frames"
+                        icon="ui-icon-close"
+                        update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                        actionListener="#{newWorkflow.addTask('Motion-JPEG-by-Periodical-Frames')}"
+                    />
+            <p:menuitem value="Motion-JPEG-by-I-Frames"
+                        icon="ui-icon-close"
+                        update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                        actionListener="#{newWorkflow.addTask('Motion-JPEG-by-I-Frames')}"
+                    />
+            <p:menuitem value="Slideshow"
+                        icon="ui-icon-close"
+                        update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                        actionListener="#{newWorkflow.addTask('Slideshow')}"
+                    />
+        </p:submenu>
+        <p:submenu label="Utilities">
+            <p:menuitem value="Email-Notification"
+                        icon="ui-icon-close"
+                        update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                        actionListener="#{newWorkflow.addTask('Email-Notification')}"
+                    />
+        </p:submenu>
+    </p:submenu>
+    <p:menuitem value="Add Group of Task"
+                icon="fa fa-navicon"
+                update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                actionListener="#{newWorkflow.addGroupOfTasks}"
+            />
+</p:contextMenu>
+
+<p:contextMenu for="workflowTree" nodeType="Task">
+    <p:submenu label="Add Event">
+        <p:menuitem value="OnSuccess"
+                    icon="ui-icon-close"
+                    update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                    actionListener="#{newWorkflow.addOnSuccessEvent}"
+                />
+        <p:menuitem value="OnError"
+                    icon="ui-icon-close"
+                    update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                    actionListener="#{newWorkflow.addOnErrorEvent}"
+                />
+        <p:menuitem value="OnComplete"
+                    icon="ui-icon-close"
+                    update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                    actionListener="#{newWorkflow.addOnCompleteEvent}"
+                />
+    </p:submenu>
+    <p:menuitem value="Delete Task"
+                icon="ui-icon-close"
+                update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                actionListener="#{newWorkflow.deleteNode}"
+            />
+</p:contextMenu>
+
+<p:contextMenu for="workflowTree" nodeType="GroupOfTasks">
+    <p:submenu label="Add Task">
+        <p:submenu label="Content">
+            <p:menuitem value="Add-Content"
+                        icon="fa fa-plus"
+                        update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                        actionListener="#{newWorkflow.addTask('Add-Content')}"
+                    />
+            <p:menuitem value="Remove-Content"
+                        icon="fa fa-close"
+                        update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                        actionListener="#{newWorkflow.addTask('Remove-Content')}"
+                    />
+        </p:submenu>
+        <p:submenu label="Concat and Cut">
+            <p:menuitem value="Concat-Demuxer"
+                        icon="ui-icon-close"
+                        update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                        actionListener="#{newWorkflow.addTask('Concat-Demuxer')}"
+                    />
+            <p:menuitem value="Cut"
+                        icon="ui-icon-close"
+                        update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                        actionListener="#{newWorkflow.addTask('Cut')}"
+                    />
+        </p:submenu>
+        <p:menuitem value="Encode"
+                    icon="ui-icon-close"
+                    update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                    actionListener="#{newWorkflow.addTask('Encode')}"
+                />
+        <p:submenu label="Overlay">
+            <p:menuitem value="Overlay-Image-On-Video"
+                        icon="ui-icon-close"
+                        update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                        actionListener="#{newWorkflow.addTask('Overlay-Image-On-Video')}"
+                    />
+            <p:menuitem value="Overlay-Text-On-Video"
+                        icon="ui-icon-close"
+                        update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                        actionListener="#{newWorkflow.addTask('Overlay-Text-On-Video')}"
+                    />
+        </p:submenu>
+        <p:submenu label="Frame Processing">
+            <p:menuitem value="Frame"
+                        icon="ui-icon-close"
+                        update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                        actionListener="#{newWorkflow.addTask('Frame')}"
+                    />
+            <p:menuitem value="Periodical-Frames"
+                        icon="ui-icon-close"
+                        update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                        actionListener="#{newWorkflow.addTask('Periodical-Frames')}"
+                    />
+            <p:menuitem value="I-Frames"
+                        icon="ui-icon-close"
+                        update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                        actionListener="#{newWorkflow.addTask('I-Frames')}"
+                    />
+            <p:menuitem value="Motion-JPEG-by-Periodical-Frames"
+                        icon="ui-icon-close"
+                        update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                        actionListener="#{newWorkflow.addTask('Motion-JPEG-by-Periodical-Frames')}"
+                    />
+            <p:menuitem value="Motion-JPEG-by-I-Frames"
+                        icon="ui-icon-close"
+                        update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                        actionListener="#{newWorkflow.addTask('Motion-JPEG-by-I-Frames')}"
+                    />
+            <p:menuitem value="Slideshow"
+                        icon="ui-icon-close"
+                        update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                        actionListener="#{newWorkflow.addTask('Slideshow')}"
+                    />
+        </p:submenu>
+        <p:submenu label="Utilities">
+            <p:menuitem value="Email-Notification"
+                        icon="ui-icon-close"
+                        update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                        actionListener="#{newWorkflow.addTask('Email-Notification')}"
+                    />
+        </p:submenu>
+    </p:submenu>
+    <p:menuitem value="Add Group of Task"
+                icon="fa fa-navicon"
+                update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                actionListener="#{newWorkflow.addGroupOfTasks}"
+            />
+    <p:submenu label="Add Event">
+        <p:menuitem value="OnSuccess"
+                    icon="ui-icon-close"
+                    update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                    actionListener="#{newWorkflow.addOnSuccessEvent}"
+                />
+        <p:menuitem value="OnError"
+                    icon="ui-icon-close"
+                    update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                    actionListener="#{newWorkflow.addOnErrorEvent}"
+                />
+        <p:menuitem value="OnComplete"
+                    icon="ui-icon-close"
+                    update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                    actionListener="#{newWorkflow.addOnCompleteEvent}"
+                />
+    </p:submenu>
+    <p:menuitem value="Delete Task"
+                icon="ui-icon-close"
+                update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                actionListener="#{newWorkflow.deleteNode}"
+            />
+</p:contextMenu>
+
+<p:contextMenu for="workflowTree" nodeType="Event">
+    <p:submenu label="Add Task">
+        <p:submenu label="Content">
+            <p:menuitem value="Add-Content"
+                        icon="fa fa-plus"
+                        update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                        actionListener="#{newWorkflow.addTask('Add-Content')}"
+                    />
+            <p:menuitem value="Remove-Content"
+                        icon="fa fa-close"
+                        update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                        actionListener="#{newWorkflow.addTask('Remove-Content')}"
+                    />
+        </p:submenu>
+        <p:submenu label="Concat and Cut">
+            <p:menuitem value="Concat-Demuxer"
+                        icon="ui-icon-close"
+                        update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                        actionListener="#{newWorkflow.addTask('Concat-Demuxer')}"
+                    />
+            <p:menuitem value="Cut"
+                        icon="ui-icon-close"
+                        update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                        actionListener="#{newWorkflow.addTask('Cut')}"
+                    />
+        </p:submenu>
+        <p:menuitem value="Encode"
+                    icon="ui-icon-close"
+                    update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                    actionListener="#{newWorkflow.addTask('Encode')}"
+                />
+        <p:submenu label="Overlay">
+            <p:menuitem value="Overlay-Image-On-Video"
+                        icon="ui-icon-close"
+                        update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                        actionListener="#{newWorkflow.addTask('Overlay-Image-On-Video')}"
+                    />
+            <p:menuitem value="Overlay-Text-On-Video"
+                        icon="ui-icon-close"
+                        update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                        actionListener="#{newWorkflow.addTask('Overlay-Text-On-Video')}"
+                    />
+        </p:submenu>
+        <p:submenu label="Frame Processing">
+            <p:menuitem value="Frame"
+                        icon="ui-icon-close"
+                        update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                        actionListener="#{newWorkflow.addTask('Frame')}"
+                    />
+            <p:menuitem value="Periodical-Frames"
+                        icon="ui-icon-close"
+                        update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                        actionListener="#{newWorkflow.addTask('Periodical-Frames')}"
+                    />
+            <p:menuitem value="I-Frames"
+                        icon="ui-icon-close"
+                        update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                        actionListener="#{newWorkflow.addTask('I-Frames')}"
+                    />
+            <p:menuitem value="Motion-JPEG-by-Periodical-Frames"
+                        icon="ui-icon-close"
+                        update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                        actionListener="#{newWorkflow.addTask('Motion-JPEG-by-Periodical-Frames')}"
+                    />
+            <p:menuitem value="Motion-JPEG-by-I-Frames"
+                        icon="ui-icon-close"
+                        update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                        actionListener="#{newWorkflow.addTask('Motion-JPEG-by-I-Frames')}"
+                    />
+            <p:menuitem value="Slideshow"
+                        icon="ui-icon-close"
+                        update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                        actionListener="#{newWorkflow.addTask('Slideshow')}"
+                    />
+        </p:submenu>
+        <p:submenu label="Utilities">
+            <p:menuitem value="Email-Notification"
+                        icon="ui-icon-close"
+                        update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                        actionListener="#{newWorkflow.addTask('Email-Notification')}"
+                    />
+        </p:submenu>
+    </p:submenu>
+    <p:menuitem value="Add Group of Task"
+                icon="fa fa-navicon"
+                update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                actionListener="#{newWorkflow.addGroupOfTasks}"
+            />
+    <p:menuitem value="Delete Task"
+                icon="ui-icon-close"
+                update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                actionListener="#{newWorkflow.deleteNode}"
+            />
+</p:contextMenu>
+
+</html>
