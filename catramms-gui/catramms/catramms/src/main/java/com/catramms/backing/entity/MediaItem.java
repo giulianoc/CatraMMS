@@ -24,6 +24,7 @@ public class MediaItem implements Serializable{
 
     private VideoDetails videoDetails = new VideoDetails();
     private AudioDetails audioDetails = new AudioDetails();
+    private ImageDetails imageDetails = new ImageDetails();
 
     // this is calculated during fillMediaItem
     private PhysicalPath sourcePhysicalPath;
@@ -58,6 +59,14 @@ public class MediaItem implements Serializable{
 
     public void setAudioDetails(AudioDetails audioDetails) {
         this.audioDetails = audioDetails;
+    }
+
+    public ImageDetails getImageDetails() {
+        return imageDetails;
+    }
+
+    public void setImageDetails(ImageDetails imageDetails) {
+        this.imageDetails = imageDetails;
     }
 
     public Long getMediaItemKey() {
@@ -139,4 +148,5 @@ public class MediaItem implements Serializable{
     public void setTitle(String title) {
         this.title = title;
     }
+
 }

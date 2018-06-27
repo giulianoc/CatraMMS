@@ -302,6 +302,25 @@
 
             </p:tab>
 
+            <p:tab rendered="#{mediaItemDetails.mediaItem.contentType == 'Image'}" title="Image Info">
+
+                <p:panelGrid columns="2" cellpadding="10">
+                    <p:outputLabel value="Width: " />
+                    <p:outputLabel value="#{mediaItemDetails.mediaItem.imageDetails.width}" />
+
+                    <p:outputLabel value="Height: " />
+                    <p:outputLabel value="#{mediaItemDetails.mediaItem.imageDetails.height}" />
+
+                    <p:outputLabel value="Format: " />
+                    <p:outputLabel value="#{mediaItemDetails.mediaItem.imageDetails.format}" />
+
+                    <p:outputLabel value="Quality: " />
+                    <p:outputLabel value="#{mediaItemDetails.mediaItem.imageDetails.quality}" />
+
+                </p:panelGrid>
+
+            </p:tab>
+
             <p:tab title="Physical Paths (#{mediaItemDetails.mediaItem.physicalPathList.size()})">
 
                 <p:dataTable resizableColumns="true" id="physicalPathTable" var="physicalPath" rowIndexVar="rowId"

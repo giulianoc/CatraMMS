@@ -1107,6 +1107,15 @@ public class CatraMMS {
                     mediaItem.getAudioDetails().setSampleRate(audioDetailsInfo.getLong("sampleRate"));
                     mediaItem.getAudioDetails().setChannels(audioDetailsInfo.getLong("channels"));
                 }
+                else if (mediaItem.getContentType().equalsIgnoreCase("image"))
+                {
+                    JSONObject imageDetailsInfo = mediaItemInfo.getJSONObject("imageDetails");
+
+                    mediaItem.getImageDetails().setWidth(imageDetailsInfo.getLong("width"));
+                    mediaItem.getImageDetails().setHeight(imageDetailsInfo.getLong("height"));
+                    mediaItem.getImageDetails().setFormat(imageDetailsInfo.getString("format"));
+                    mediaItem.getImageDetails().setQuality(imageDetailsInfo.getLong("quality"));
+                }
 
                 JSONArray jaPhysicalPaths = mediaItemInfo.getJSONArray("physicalPaths");
 
