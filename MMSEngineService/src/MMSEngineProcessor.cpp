@@ -3032,27 +3032,45 @@ void MMSEngineProcessor::generateAndIngestCutMedia(
             throw runtime_error(errorMessage);
         }
 
+        // to manage a ffmpeg bug generating a corrupted/wrong avgFrameRate, we will
+        // force the cut file to have the same avgFrameRate of the source media
+        string forcedAvgFrameRate;
         int64_t durationInMilliSeconds;
         try
         {
-            int videoWidth;
-            int videoHeight;
-            long bitRate;
-            string videoCodecName;
-            string videoProfile;
-            string videoAvgFrameRate;
-            long videoBitRate;
-            string audioCodecName;
-            long audioSampleRate;
-            int audioChannels;
-            long audioBitRate;
-        
-            tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
-                videoDetails = _mmsEngineDBFacade->getVideoDetails(sourceMediaItemKey, sourcePhysicalPathKey);
-            
-            tie(durationInMilliSeconds, bitRate,
-                videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
-                audioCodecName, audioSampleRate, audioChannels, audioBitRate) = videoDetails;
+            if (contentType == MMSEngineDBFacade::ContentType::Video)
+            {
+                int videoWidth;
+                int videoHeight;
+                long bitRate;
+                string videoCodecName;
+                string videoProfile;
+                long videoBitRate;
+                string audioCodecName;
+                long audioSampleRate;
+                int audioChannels;
+                long audioBitRate;
+
+                tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
+                    videoDetails = _mmsEngineDBFacade->getVideoDetails(sourceMediaItemKey, sourcePhysicalPathKey);
+
+                tie(durationInMilliSeconds, bitRate,
+                    videoCodecName, videoProfile, videoWidth, videoHeight, forcedAvgFrameRate, videoBitRate,
+                    audioCodecName, audioSampleRate, audioChannels, audioBitRate) = videoDetails;
+            }
+            else if (contentType == MMSEngineDBFacade::ContentType::Audio)
+            {
+                string codecName;
+                long bitRate;
+                long sampleRate;
+                int channels;
+
+                tuple<int64_t,string,long,long,int> audioDetails = _mmsEngineDBFacade->getAudioDetails(
+                    sourceMediaItemKey, sourcePhysicalPathKey);
+
+                tie(durationInMilliSeconds, codecName, bitRate, sampleRate, channels) 
+                        = audioDetails;
+            }
         }
         catch(runtime_error e)
         {
@@ -3153,6 +3171,10 @@ void MMSEngineProcessor::generateAndIngestCutMedia(
             localAssetIngestionEvent->setMMSSourceFileName(localSourceFileName);
             localAssetIngestionEvent->setWorkspace(workspace);
             localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::AddContent);
+            // to manage a ffmpeg bug generating a corrupted/wrong avgFrameRate, we will
+            // force the concat file to have the same avgFrameRate of the source media
+            if (forcedAvgFrameRate != "" && contentType == MMSEngineDBFacade::ContentType::Video)
+                localAssetIngestionEvent->setForcedAvgFrameRate(forcedAvgFrameRate);            
 
             localAssetIngestionEvent->setMetadataContent(mediaMetaDataContent);
 
