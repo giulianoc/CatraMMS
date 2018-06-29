@@ -185,19 +185,6 @@
 
             <p:row>
                 <p:column>
-                    <p:outputLabel value="Retention"/>
-                </p:column>
-                <p:column>
-                    <p:inputText id="taskRetention_Add_Content"
-                                 required="false"
-                                 value="#{newWorkflow.taskRetention}"
-                                 autocomplete="true"
-                                 placeholder="retention"/>
-                </p:column>
-            </p:row>
-
-            <p:row>
-                <p:column>
                     <p:outputLabel value="Title"/>
                 </p:column>
                 <p:column>
@@ -206,6 +193,21 @@
                                  value="#{newWorkflow.taskTitle}"
                                  autocomplete="true"
                                  placeholder="title"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Retention"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskRetention_Add_Content"
+                                 required="false"
+                                 value="#{newWorkflow.taskRetention}"
+                                 title="Samples: 10s, 45m, 4h, 7d, 3M, 1y"
+                                 autocomplete="true"
+                                 placeholder="retention"/>
+                    <p:tooltip for="taskRetention_Add_Content" showEffect="clip" hideEffect="explode" position="left"/>
                 </p:column>
             </p:row>
 
@@ -433,19 +435,6 @@
 
             <p:row>
                 <p:column>
-                    <p:outputLabel value="Retention"/>
-                </p:column>
-                <p:column>
-                    <p:inputText id="taskRetention_Concat_Demuxer"
-                                 required="false"
-                                 value="#{newWorkflow.taskRetention}"
-                                 autocomplete="true"
-                                 placeholder="retention"/>
-                </p:column>
-            </p:row>
-
-            <p:row>
-                <p:column>
                     <p:outputLabel value="References"/>
                 </p:column>
                 <p:column>
@@ -474,6 +463,21 @@
                                  value="#{newWorkflow.taskTitle}"
                                  autocomplete="true"
                                  placeholder="title"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Retention"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskRetention_Concat_Demuxer"
+                                 required="false"
+                                 value="#{newWorkflow.taskRetention}"
+                                 title="Samples: 10s, 45m, 4h, 7d, 3M, 1y"
+                                 autocomplete="true"
+                                 placeholder="retention"/>
+                    <p:tooltip for="taskRetention_Concat_Demuxer" showEffect="clip" hideEffect="explode" position="left"/>
                 </p:column>
             </p:row>
 
@@ -721,19 +725,6 @@
 
             <p:row>
                 <p:column>
-                    <p:outputLabel value="Retention"/>
-                </p:column>
-                <p:column>
-                    <p:inputText id="taskRetention_Cut"
-                                 required="false"
-                                 value="#{newWorkflow.taskRetention}"
-                                 autocomplete="true"
-                                 placeholder="retention"/>
-                </p:column>
-            </p:row>
-
-            <p:row>
-                <p:column>
                     <p:outputLabel value="Unique Name"/>
                 </p:column>
                 <p:column>
@@ -759,6 +750,21 @@
                 </p:column>
             </p:row>
 
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Retention"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskRetention_Cut"
+                                 required="false"
+                                 value="#{newWorkflow.taskRetention}"
+                                 title="Samples: 10s, 45m, 4h, 7d, 3M, 1y"
+                                 autocomplete="true"
+                                 placeholder="retention"/>
+                    <p:tooltip for="taskRetention_Cut" showEffect="clip" hideEffect="explode" position="left"/>
+                </p:column>
+            </p:row>
 
             <p:row>
                 <p:column>
@@ -941,19 +947,6 @@
 
             <p:row>
                 <p:column>
-                    <p:outputLabel value="Retention"/>
-                </p:column>
-                <p:column>
-                    <p:inputText id="taskRetention_Overlay_Image_On_Video"
-                                 required="false"
-                                 value="#{newWorkflow.taskRetention}"
-                                 autocomplete="true"
-                                 placeholder="retention"/>
-                </p:column>
-            </p:row>
-
-            <p:row>
-                <p:column>
                     <p:outputLabel value="Unique Name"/>
                 </p:column>
                 <p:column>
@@ -975,6 +968,21 @@
                                  value="#{newWorkflow.taskTitle}"
                                  autocomplete="true"
                                  placeholder="title"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Retention"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskRetention_Overlay_Image_On_Video"
+                                 required="false"
+                                 value="#{newWorkflow.taskRetention}"
+                                 title="Samples: 10s, 45m, 4h, 7d, 3M, 1y"
+                                 autocomplete="true"
+                                 placeholder="retention"/>
+                    <p:tooltip for="taskRetention_Overlay_Image_On_Video" showEffect="clip" hideEffect="explode" position="left"/>
                 </p:column>
             </p:row>
 
@@ -1104,19 +1112,6 @@
                                  value="#{newWorkflow.taskLabel}"
                                  autocomplete="true"
                                  placeholder="label"/>
-                </p:column>
-            </p:row>
-
-            <p:row>
-                <p:column>
-                    <p:outputLabel value="Retention"/>
-                </p:column>
-                <p:column>
-                    <p:inputText id="taskRetention_Overlay_Text_On_Video"
-                                 required="false"
-                                 value="#{newWorkflow.taskRetention}"
-                                 autocomplete="true"
-                                 placeholder="retention"/>
                 </p:column>
             </p:row>
 
@@ -1314,6 +1309,21 @@
 
             <p:row>
                 <p:column>
+                    <p:outputLabel value="Retention"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskRetention_Overlay_Text_On_Video"
+                                 required="false"
+                                 value="#{newWorkflow.taskRetention}"
+                                 title="Samples: 10s, 45m, 4h, 7d, 3M, 1y"
+                                 autocomplete="true"
+                                 placeholder="retention"/>
+                    <p:tooltip for="taskRetention_Overlay_Text_On_Video" showEffect="clip" hideEffect="explode" position="left"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
                     <p:outputLabel value="Start publishing:"/>
                 </p:column>
                 <p:column>
@@ -1504,19 +1514,6 @@
 
             <p:row>
                 <p:column>
-                    <p:outputLabel value="Retention"/>
-                </p:column>
-                <p:column>
-                    <p:inputText id="taskRetention_Frame"
-                                 required="false"
-                                 value="#{newWorkflow.taskRetention}"
-                                 autocomplete="true"
-                                 placeholder="retention"/>
-                </p:column>
-            </p:row>
-
-            <p:row>
-                <p:column>
                     <p:outputLabel value="Unique Name"/>
                 </p:column>
                 <p:column>
@@ -1541,6 +1538,21 @@
                                  placeholder="title"/>
                 </p:column>
 
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Retention"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskRetention_Frame"
+                                 required="false"
+                                 value="#{newWorkflow.taskRetention}"
+                                 title="Samples: 10s, 45m, 4h, 7d, 3M, 1y"
+                                 autocomplete="true"
+                                 placeholder="retention"/>
+                    <p:tooltip for="taskRetention_Frame" showEffect="clip" hideEffect="explode" position="left"/>
+                </p:column>
             </p:row>
 
             <p:row>
@@ -1763,19 +1775,6 @@
 
             <p:row>
                 <p:column>
-                    <p:outputLabel value="Retention"/>
-                </p:column>
-                <p:column>
-                    <p:inputText id="taskRetention_Periodical_Frames"
-                                 required="false"
-                                 value="#{newWorkflow.taskRetention}"
-                                 autocomplete="true"
-                                 placeholder="retention"/>
-                </p:column>
-            </p:row>
-
-            <p:row>
-                <p:column>
                     <p:outputLabel value="Unique Name"/>
                 </p:column>
                 <p:column>
@@ -1798,6 +1797,21 @@
                                  value="#{newWorkflow.taskTitle}"
                                  autocomplete="true"
                                  placeholder="title"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Retention"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskRetention_Periodical_Frames"
+                                 required="false"
+                                 value="#{newWorkflow.taskRetention}"
+                                 title="Samples: 10s, 45m, 4h, 7d, 3M, 1y"
+                                 autocomplete="true"
+                                 placeholder="retention"/>
+                    <p:tooltip for="taskRetention_Periodical_Frames" showEffect="clip" hideEffect="explode" position="left"/>
                 </p:column>
             </p:row>
 
@@ -1931,19 +1945,6 @@
 
             <p:row>
                 <p:column>
-                    <p:outputLabel value="Retention"/>
-                </p:column>
-                <p:column>
-                    <p:inputText id="taskRetention_I_Frames"
-                                 required="false"
-                                 value="#{newWorkflow.taskRetention}"
-                                 autocomplete="true"
-                                 placeholder="retention"/>
-                </p:column>
-            </p:row>
-
-            <p:row>
-                <p:column>
                     <p:outputLabel value="Start time in seconds"/>
                 </p:column>
                 <p:column>
@@ -2038,6 +2039,21 @@
                                  value="#{newWorkflow.taskTitle}"
                                  autocomplete="true"
                                  placeholder="title"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Retention"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskRetention_I_Frames"
+                                 required="false"
+                                 value="#{newWorkflow.taskRetention}"
+                                 title="Samples: 10s, 45m, 4h, 7d, 3M, 1y"
+                                 autocomplete="true"
+                                 placeholder="retention"/>
+                    <p:tooltip for="taskRetention_I_Frames" showEffect="clip" hideEffect="explode" position="left"/>
                 </p:column>
             </p:row>
 
@@ -2259,19 +2275,6 @@
 
             <p:row>
                 <p:column>
-                    <p:outputLabel value="Retention"/>
-                </p:column>
-                <p:column>
-                    <p:inputText id="taskRetention_Motion_JPEG_by_Periodical_Frames"
-                                 required="false"
-                                 value="#{newWorkflow.taskRetention}"
-                                 autocomplete="true"
-                                 placeholder="retention"/>
-                </p:column>
-            </p:row>
-
-            <p:row>
-                <p:column>
                     <p:outputLabel value="Unique Name"/>
                 </p:column>
                 <p:column>
@@ -2296,6 +2299,21 @@
                                  placeholder="title"/>
                 </p:column>
 
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Retention"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskRetention_Motion_JPEG_by_Periodical_Frames"
+                                 required="false"
+                                 value="#{newWorkflow.taskRetention}"
+                                 title="Samples: 10s, 45m, 4h, 7d, 3M, 1y"
+                                 autocomplete="true"
+                                 placeholder="retention"/>
+                    <p:tooltip for="taskRetention_Motion_JPEG_by_Periodical_Frames" showEffect="clip" hideEffect="explode" position="left"/>
+                </p:column>
             </p:row>
 
             <p:row>
@@ -2429,19 +2447,6 @@
 
             <p:row>
                 <p:column>
-                    <p:outputLabel value="Retention"/>
-                </p:column>
-                <p:column>
-                    <p:inputText id="taskRetention_Motion_JPEG_by_I_Frames"
-                                 required="false"
-                                 value="#{newWorkflow.taskRetention}"
-                                 autocomplete="true"
-                                 placeholder="retention"/>
-                </p:column>
-            </p:row>
-
-            <p:row>
-                <p:column>
                     <p:outputLabel value="Start time in seconds"/>
                 </p:column>
                 <p:column>
@@ -2539,6 +2544,21 @@
                                  placeholder="title"/>
                 </p:column>
 
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Retention"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskRetention_Motion_JPEG_by_I_Frames"
+                                 required="false"
+                                 value="#{newWorkflow.taskRetention}"
+                                 title="Samples: 10s, 45m, 4h, 7d, 3M, 1y"
+                                 autocomplete="true"
+                                 placeholder="retention"/>
+                    <p:tooltip for="taskRetention_Motion_JPEG_by_I_Frames" showEffect="clip" hideEffect="explode" position="left"/>
+                </p:column>
             </p:row>
 
             <p:row>
@@ -2672,19 +2692,6 @@
 
             <p:row>
                 <p:column>
-                    <p:outputLabel value="Retention"/>
-                </p:column>
-                <p:column>
-                    <p:inputText id="taskRetention_Slideshow"
-                                 required="false"
-                                 value="#{newWorkflow.taskRetention}"
-                                 autocomplete="true"
-                                 placeholder="retention"/>
-                </p:column>
-            </p:row>
-
-            <p:row>
-                <p:column>
                     <p:outputLabel value="Duration Of Each Slide In Seconds"/>
                 </p:column>
                 <p:column>
@@ -2754,6 +2761,21 @@
                                  placeholder="title"/>
                 </p:column>
 
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Retention"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskRetention_Slideshow"
+                                 required="false"
+                                 value="#{newWorkflow.taskRetention}"
+                                 title="Samples: 10s, 45m, 4h, 7d, 3M, 1y"
+                                 autocomplete="true"
+                                 placeholder="retention"/>
+                    <p:tooltip for="taskRetention_Slideshow" showEffect="clip" hideEffect="explode" position="left"/>
+                </p:column>
             </p:row>
 
             <p:row>
