@@ -1,17 +1,41 @@
 <h2 id="overview">Overview</h2>
-<p>This command is used to retrieve information about an ingestion.</p>
+<p>The following commands are used to retrieve information about the ingestions.</p>
 <h2 id="uri">URI</h2>
-<p>/catramms/v1/ingestion/:IngestionRootKey/[:IngestionJobKey]</p>
+<ul>
+<li>URI to retrieve information about the <strong>Ingestion Workflows</strong></li>
+<li>/catramms/v1/<strong>ingestionRoots</strong>/[:IngestionRootKey]?[:start]&amp;[:rows]&amp;[:contentType]&amp;[:startIngestionDate]&amp;[:endIngestionDate]&amp;[:asc]</li>
+<li>URI to retrieve information about the <strong>Ingestion Jobs</strong></li>
+<li>/catramms/v1/<strong>ingestionJobsRoot</strong>/[:IngestionJobKey]?[:start]&amp;[:rows]&amp;[:contentType]&amp;[:startIngestionDate]&amp;[:endIngestionDate]&amp;[:status]&amp;[:asc]</li>
+<li>URI to retrieve information about the <strong>Encoding Jobs</strong></li>
+<li>/catramms/v1/<strong>encodingJobsRoot</strong>/[:EncodingJobKey]?[:start]&amp;[:rows]&amp;[:contentType]&amp;[:startIngestionDate]&amp;[:endIngestionDate]&amp;[:status]&amp;[:asc]</li>
+</ul>
 <h2 id="method">Method</h2>
 <p>GET</p>
 <h2 id="url-params">URL Params</h2>
 <h3 id="required">Required</h3>
-<ul>
-<li>IngestionRootKey=[number] example: IngestionRootKey=12</li>
-</ul>
+<p>None</p>
 <h3 id="optional">Optional</h3>
 <ul>
-<li>IngestionJobKey=[number] example: IngestionJobKey=543</li>
+<li>IngestionRootKey=[number]</li>
+<li>example: IngestionRootKey=12</li>
+<li>IngestionJobKey=[number]</li>
+<li>example: IngestionJobKey=12</li>
+<li>EncodingJobKey=[number]</li>
+<li>example: EncodingJobKey=12</li>
+<li>start=[number starting from 0]</li>
+<li>default: 0</li>
+<li>example: start=20</li>
+<li>rows=[number]</li>
+<li>default: 10</li>
+<li>example: rows=10</li>
+<li>startIngestionDate=[string, format: YYYY-MM-DDTHH:MI:SSZ]</li>
+<li>example: startIngestionDate=2018-04-26T07:19:11Z</li>
+<li>endIngestionDate=[string, format: YYYY-MM-DDTHH:MI:SSZ]</li>
+<li>example: endIngestionDate=2018-04-27T07:19:11Z</li>
+<li>asc=[boolean]</li>
+<li>example: asc=true</li>
+<li>status=[string, options: all, completed, notCompleted]</li>
+<li>example: status=notCompleted</li>
 </ul>
 <h2 id="payload-data">Payload Data</h2>
 <p>None</p>
@@ -21,151 +45,102 @@
 <h3 id="content">Content</h3>
 <p>The API returns the identifiers (Keys), labels and the Status about every task of the 'workflow' identified by the IngestionRootKey parameter. Here follows a sample:</p>
 <div class="sourceCode"><pre class="sourceCode javascript"><code class="sourceCode javascript"><span class="op">{</span>
-    <span class="st">&quot;workflow&quot;</span> <span class="op">:</span> 
+    <span class="st">&quot;requestParameters&quot;</span> <span class="op">:</span> 
     <span class="op">{</span>
-        <span class="st">&quot;ingestionRootKey&quot;</span> <span class="op">:</span> <span class="dv">102</span><span class="op">,</span>
-        <span class="st">&quot;label&quot;</span> <span class="op">:</span> <span class="st">&quot;1&quot;</span><span class="op">,</span>
-        <span class="st">&quot;tasks&quot;</span> <span class="op">:</span> 
+        <span class="st">&quot;ingestionRootKey&quot;</span> <span class="op">:</span> <span class="dv">304</span><span class="op">,</span>
+        <span class="st">&quot;rows&quot;</span> <span class="op">:</span> <span class="dv">10</span><span class="op">,</span>
+        <span class="st">&quot;start&quot;</span> <span class="op">:</span> <span class="dv">0</span>
+    <span class="op">},</span>
+    <span class="st">&quot;response&quot;</span> <span class="op">:</span> 
+    <span class="op">{</span>
+        <span class="st">&quot;numFound&quot;</span> <span class="op">:</span> <span class="dv">1</span><span class="op">,</span>
+        <span class="st">&quot;workflows&quot;</span> <span class="op">:</span> 
         [
             <span class="op">{</span>
-                <span class="st">&quot;downloadingProgress&quot;</span> <span class="op">:</span> <span class="dv">100</span><span class="op">,</span>
-                <span class="st">&quot;endIngestion&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-04-23 09:24:05&quot;</span><span class="op">,</span>
-                <span class="st">&quot;errorMessage&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span>
-                <span class="st">&quot;ingestionJobKey&quot;</span> <span class="op">:</span> <span class="dv">309</span><span class="op">,</span>
-                <span class="st">&quot;ingestionType&quot;</span> <span class="op">:</span> <span class="st">&quot;Add-Content&quot;</span><span class="op">,</span>
-                <span class="st">&quot;label&quot;</span> <span class="op">:</span> <span class="st">&quot;My Title of the video_1 content&quot;</span><span class="op">,</span>
-                <span class="st">&quot;mediaItemKey&quot;</span> <span class="op">:</span> <span class="dv">65</span><span class="op">,</span>
-                <span class="st">&quot;startIngestion&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-04-23 09:23:45&quot;</span><span class="op">,</span>
-                <span class="st">&quot;status&quot;</span> <span class="op">:</span> <span class="st">&quot;End_TaskSuccess&quot;</span><span class="op">,</span>
-                <span class="st">&quot;uploadingProgress&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span>
-                <span class="st">&quot;videoDetails&quot;</span> <span class="op">:</span> 
-                <span class="op">{</span>
-                    <span class="st">&quot;audioBitRate&quot;</span> <span class="op">:</span> <span class="dv">128517</span><span class="op">,</span>
-                    <span class="st">&quot;audioChannels&quot;</span> <span class="op">:</span> <span class="dv">2</span><span class="op">,</span>
-                    <span class="st">&quot;audioCodecName&quot;</span> <span class="op">:</span> <span class="st">&quot;aac&quot;</span><span class="op">,</span>
-                    <span class="st">&quot;audioSampleRate&quot;</span> <span class="op">:</span> <span class="dv">48000</span><span class="op">,</span>
-                    <span class="st">&quot;bitRate&quot;</span> <span class="op">:</span> <span class="dv">936267</span><span class="op">,</span>
-                    <span class="st">&quot;durationInMilliSeconds&quot;</span> <span class="op">:</span> <span class="dv">2378000</span><span class="op">,</span>
-                    <span class="st">&quot;videoAvgFrameRate&quot;</span> <span class="op">:</span> <span class="st">&quot;25/1&quot;</span><span class="op">,</span>
-                    <span class="st">&quot;videoBitRate&quot;</span> <span class="op">:</span> <span class="dv">765777</span><span class="op">,</span>
-                    <span class="st">&quot;videoCodecName&quot;</span> <span class="op">:</span> <span class="st">&quot;h264&quot;</span><span class="op">,</span>
-                    <span class="st">&quot;videoHeight&quot;</span> <span class="op">:</span> <span class="dv">360</span><span class="op">,</span>
-                    <span class="st">&quot;videoProfile&quot;</span> <span class="op">:</span> <span class="st">&quot;Constrained Baseline&quot;</span><span class="op">,</span>
-                    <span class="st">&quot;videoWidth&quot;</span> <span class="op">:</span> <span class="dv">640</span>
-                <span class="op">}</span>
-            <span class="op">},</span>
-            <span class="op">{</span>
-                <span class="st">&quot;downloadingProgress&quot;</span> <span class="op">:</span> <span class="dv">100</span><span class="op">,</span>
-                <span class="st">&quot;endIngestion&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-04-23 09:24:06&quot;</span><span class="op">,</span>
-                <span class="st">&quot;errorMessage&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span>
-                <span class="st">&quot;ingestionJobKey&quot;</span> <span class="op">:</span> <span class="dv">310</span><span class="op">,</span>
-                <span class="st">&quot;ingestionType&quot;</span> <span class="op">:</span> <span class="st">&quot;Add-Content&quot;</span><span class="op">,</span>
-                <span class="st">&quot;label&quot;</span> <span class="op">:</span> <span class="st">&quot;My Title of the video_2 content&quot;</span><span class="op">,</span>
-                <span class="st">&quot;mediaItemKey&quot;</span> <span class="op">:</span> <span class="dv">66</span><span class="op">,</span>
-                <span class="st">&quot;startIngestion&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-04-23 09:23:45&quot;</span><span class="op">,</span>
-                <span class="st">&quot;status&quot;</span> <span class="op">:</span> <span class="st">&quot;End_TaskSuccess&quot;</span><span class="op">,</span>
-                <span class="st">&quot;uploadingProgress&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span>
-                <span class="st">&quot;videoDetails&quot;</span> <span class="op">:</span> 
-                <span class="op">{</span>
-                    <span class="st">&quot;audioBitRate&quot;</span> <span class="op">:</span> <span class="dv">128517</span><span class="op">,</span>
-                    <span class="st">&quot;audioChannels&quot;</span> <span class="op">:</span> <span class="dv">2</span><span class="op">,</span>
-                    <span class="st">&quot;audioCodecName&quot;</span> <span class="op">:</span> <span class="st">&quot;aac&quot;</span><span class="op">,</span>
-                    <span class="st">&quot;audioSampleRate&quot;</span> <span class="op">:</span> <span class="dv">48000</span><span class="op">,</span>
-                    <span class="st">&quot;bitRate&quot;</span> <span class="op">:</span> <span class="dv">936267</span><span class="op">,</span>
-                    <span class="st">&quot;durationInMilliSeconds&quot;</span> <span class="op">:</span> <span class="dv">2378000</span><span class="op">,</span>
-                    <span class="st">&quot;videoAvgFrameRate&quot;</span> <span class="op">:</span> <span class="st">&quot;25/1&quot;</span><span class="op">,</span>
-                    <span class="st">&quot;videoBitRate&quot;</span> <span class="op">:</span> <span class="dv">765777</span><span class="op">,</span>
-                    <span class="st">&quot;videoCodecName&quot;</span> <span class="op">:</span> <span class="st">&quot;h264&quot;</span><span class="op">,</span>
-                    <span class="st">&quot;videoHeight&quot;</span> <span class="op">:</span> <span class="dv">360</span><span class="op">,</span>
-                    <span class="st">&quot;videoProfile&quot;</span> <span class="op">:</span> <span class="st">&quot;Constrained Baseline&quot;</span><span class="op">,</span>
-                    <span class="st">&quot;videoWidth&quot;</span> <span class="op">:</span> <span class="dv">640</span>
-                <span class="op">}</span>
-            <span class="op">},</span>
-            <span class="op">{</span>
-                <span class="st">&quot;endIngestion&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-04-23 09:24:15&quot;</span><span class="op">,</span>
-                <span class="st">&quot;errorMessage&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span>
-                <span class="st">&quot;ingestionJobKey&quot;</span> <span class="op">:</span> <span class="dv">311</span><span class="op">,</span>
-                <span class="st">&quot;ingestionType&quot;</span> <span class="op">:</span> <span class="st">&quot;Concat-Demuxer&quot;</span><span class="op">,</span>
-                <span class="st">&quot;label&quot;</span> <span class="op">:</span> <span class="st">&quot;&quot;</span><span class="op">,</span>
-                <span class="st">&quot;mediaItemKey&quot;</span> <span class="op">:</span> <span class="dv">67</span><span class="op">,</span>
-                <span class="st">&quot;startIngestion&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-04-23 09:23:45&quot;</span><span class="op">,</span>
-                <span class="st">&quot;status&quot;</span> <span class="op">:</span> <span class="st">&quot;End_TaskSuccess&quot;</span><span class="op">,</span>
-                <span class="st">&quot;videoDetails&quot;</span> <span class="op">:</span> 
-                <span class="op">{</span>
-                    <span class="st">&quot;audioBitRate&quot;</span> <span class="op">:</span> <span class="dv">128516</span><span class="op">,</span>
-                    <span class="st">&quot;audioChannels&quot;</span> <span class="op">:</span> <span class="dv">2</span><span class="op">,</span>
-                    <span class="st">&quot;audioCodecName&quot;</span> <span class="op">:</span> <span class="st">&quot;aac&quot;</span><span class="op">,</span>
-                    <span class="st">&quot;audioSampleRate&quot;</span> <span class="op">:</span> <span class="dv">48000</span><span class="op">,</span>
-                    <span class="st">&quot;bitRate&quot;</span> <span class="op">:</span> <span class="dv">898950</span><span class="op">,</span>
-                    <span class="st">&quot;durationInMilliSeconds&quot;</span> <span class="op">:</span> <span class="dv">4756000</span><span class="op">,</span>
-                    <span class="st">&quot;videoAvgFrameRate&quot;</span> <span class="op">:</span> <span class="st">&quot;1522073600/60883763&quot;</span><span class="op">,</span>
-                    <span class="st">&quot;videoBitRate&quot;</span> <span class="op">:</span> <span class="dv">765918</span><span class="op">,</span>
-                    <span class="st">&quot;videoCodecName&quot;</span> <span class="op">:</span> <span class="st">&quot;h264&quot;</span><span class="op">,</span>
-                    <span class="st">&quot;videoHeight&quot;</span> <span class="op">:</span> <span class="dv">360</span><span class="op">,</span>
-                    <span class="st">&quot;videoProfile&quot;</span> <span class="op">:</span> <span class="st">&quot;Constrained Baseline&quot;</span><span class="op">,</span>
-                    <span class="st">&quot;videoWidth&quot;</span> <span class="op">:</span> <span class="dv">640</span>
-                <span class="op">}</span>
-            <span class="op">},</span>
-            <span class="op">{</span>
-                <span class="st">&quot;endIngestion&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-04-23 09:24:17&quot;</span><span class="op">,</span>
-                <span class="st">&quot;errorMessage&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span>
-                <span class="st">&quot;ingestionJobKey&quot;</span> <span class="op">:</span> <span class="dv">312</span><span class="op">,</span>
-                <span class="st">&quot;ingestionType&quot;</span> <span class="op">:</span> <span class="st">&quot;Cut&quot;</span><span class="op">,</span>
-                <span class="st">&quot;label&quot;</span> <span class="op">:</span> <span class="st">&quot;&quot;</span><span class="op">,</span>
-                <span class="st">&quot;mediaItemKey&quot;</span> <span class="op">:</span> <span class="dv">68</span><span class="op">,</span>
-                <span class="st">&quot;startIngestion&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-04-23 09:23:45&quot;</span><span class="op">,</span>
-                <span class="st">&quot;status&quot;</span> <span class="op">:</span> <span class="st">&quot;End_TaskSuccess&quot;</span><span class="op">,</span>
-                <span class="st">&quot;videoDetails&quot;</span> <span class="op">:</span> 
-                <span class="op">{</span>
-                    <span class="st">&quot;audioBitRate&quot;</span> <span class="op">:</span> <span class="dv">128496</span><span class="op">,</span>
-                    <span class="st">&quot;audioChannels&quot;</span> <span class="op">:</span> <span class="dv">2</span><span class="op">,</span>
-                    <span class="st">&quot;audioCodecName&quot;</span> <span class="op">:</span> <span class="st">&quot;aac&quot;</span><span class="op">,</span>
-                    <span class="st">&quot;audioSampleRate&quot;</span> <span class="op">:</span> <span class="dv">48000</span><span class="op">,</span>
-                    <span class="st">&quot;bitRate&quot;</span> <span class="op">:</span> <span class="dv">899753</span><span class="op">,</span>
-                    <span class="st">&quot;durationInMilliSeconds&quot;</span> <span class="op">:</span> <span class="dv">1800000</span><span class="op">,</span>
-                    <span class="st">&quot;videoAvgFrameRate&quot;</span> <span class="op">:</span> <span class="st">&quot;575936000/23038259&quot;</span><span class="op">,</span>
-                    <span class="st">&quot;videoBitRate&quot;</span> <span class="op">:</span> <span class="dv">766792</span><span class="op">,</span>
-                    <span class="st">&quot;videoCodecName&quot;</span> <span class="op">:</span> <span class="st">&quot;h264&quot;</span><span class="op">,</span>
-                    <span class="st">&quot;videoHeight&quot;</span> <span class="op">:</span> <span class="dv">360</span><span class="op">,</span>
-                    <span class="st">&quot;videoProfile&quot;</span> <span class="op">:</span> <span class="st">&quot;Constrained Baseline&quot;</span><span class="op">,</span>
-                    <span class="st">&quot;videoWidth&quot;</span> <span class="op">:</span> <span class="dv">640</span>
-                <span class="op">}</span>
-            <span class="op">},</span>
-            <span class="op">{</span>
-                <span class="st">&quot;encoding&quot;</span> <span class="op">:</span> 
-                <span class="op">{</span>
-                    <span class="st">&quot;encodingFailuresNumber&quot;</span> <span class="op">:</span> <span class="dv">0</span><span class="op">,</span>
-                    <span class="st">&quot;encodingJobEnd&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span>
-                    <span class="st">&quot;encodingJobStart&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-04-23 09:24:24&quot;</span><span class="op">,</span>
-                    <span class="st">&quot;encodingProfileKey&quot;</span> <span class="op">:</span> <span class="dv">1</span><span class="op">,</span>
-                    <span class="st">&quot;encodingProgress&quot;</span> <span class="op">:</span> <span class="dv">0</span><span class="op">,</span>
-                    <span class="st">&quot;encodingStatus&quot;</span> <span class="op">:</span> <span class="st">&quot;Processing&quot;</span>
-                <span class="op">},</span>
-                <span class="st">&quot;endIngestion&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span>
-                <span class="st">&quot;errorMessage&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span>
-                <span class="st">&quot;ingestionJobKey&quot;</span> <span class="op">:</span> <span class="dv">313</span><span class="op">,</span>
-                <span class="st">&quot;ingestionType&quot;</span> <span class="op">:</span> <span class="st">&quot;Encode&quot;</span><span class="op">,</span>
-                <span class="st">&quot;label&quot;</span> <span class="op">:</span> <span class="st">&quot;my label - EncodingProfileKey 1&quot;</span><span class="op">,</span>
-                <span class="st">&quot;startIngestion&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-04-23 09:23:45&quot;</span><span class="op">,</span>
-                <span class="st">&quot;status&quot;</span> <span class="op">:</span> <span class="st">&quot;Start_TaskQueued&quot;</span>
-            <span class="op">},</span>
-            <span class="op">{</span>
-                <span class="st">&quot;encoding&quot;</span> <span class="op">:</span> 
-                <span class="op">{</span>
-                    <span class="st">&quot;encodingFailuresNumber&quot;</span> <span class="op">:</span> <span class="dv">0</span><span class="op">,</span>
-                    <span class="st">&quot;encodingJobEnd&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span>
-                    <span class="st">&quot;encodingJobStart&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span>
-                    <span class="st">&quot;encodingProfileKey&quot;</span> <span class="op">:</span> <span class="dv">2</span><span class="op">,</span>
-                    <span class="st">&quot;encodingProgress&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span>
-                    <span class="st">&quot;encodingStatus&quot;</span> <span class="op">:</span> <span class="st">&quot;ToBeProcessed&quot;</span>
-                <span class="op">},</span>
-                <span class="st">&quot;endIngestion&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span>
-                <span class="st">&quot;errorMessage&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span>
-                <span class="st">&quot;ingestionJobKey&quot;</span> <span class="op">:</span> <span class="dv">314</span><span class="op">,</span>
-                <span class="st">&quot;ingestionType&quot;</span> <span class="op">:</span> <span class="st">&quot;Encode&quot;</span><span class="op">,</span>
-                <span class="st">&quot;label&quot;</span> <span class="op">:</span> <span class="st">&quot;my label - EncodingProfileKey 2&quot;</span><span class="op">,</span>
-                <span class="st">&quot;startIngestion&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-04-23 09:23:45&quot;</span><span class="op">,</span>
-                <span class="st">&quot;status&quot;</span> <span class="op">:</span> <span class="st">&quot;Start_TaskQueued&quot;</span>
+                <span class="st">&quot;ingestionRootKey&quot;</span> <span class="op">:</span> <span class="dv">304</span><span class="op">,</span>
+                <span class="st">&quot;label&quot;</span> <span class="op">:</span> <span class="st">&quot;1&quot;</span><span class="op">,</span>
+                <span class="st">&quot;tasks&quot;</span> <span class="op">:</span> 
+                [
+                    <span class="op">{</span>
+                        <span class="st">&quot;downloadingProgress&quot;</span> <span class="op">:</span> <span class="dv">100</span><span class="op">,</span>
+                        <span class="st">&quot;endIngestion&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-06-09T15:47:37Z&quot;</span><span class="op">,</span>
+                        <span class="st">&quot;errorMessage&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span>
+                        <span class="st">&quot;ingestionJobKey&quot;</span> <span class="op">:</span> <span class="dv">1143</span><span class="op">,</span>
+                        <span class="st">&quot;ingestionType&quot;</span> <span class="op">:</span> <span class="st">&quot;Add-Content&quot;</span><span class="op">,</span>
+                        <span class="st">&quot;label&quot;</span> <span class="op">:</span> <span class="st">&quot;My video&quot;</span><span class="op">,</span>
+                        <span class="st">&quot;mediaItemKey&quot;</span> <span class="op">:</span> <span class="dv">14</span><span class="op">,</span>
+                        <span class="st">&quot;physicalPathKey&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span>
+                        <span class="st">&quot;startIngestion&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-06-09T15:47:30Z&quot;</span><span class="op">,</span>
+                        <span class="st">&quot;status&quot;</span> <span class="op">:</span> <span class="st">&quot;End_TaskSuccess&quot;</span><span class="op">,</span>
+                        <span class="st">&quot;uploadingProgress&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span>
+                        <span class="st">&quot;videoDetails&quot;</span> <span class="op">:</span> 
+                        <span class="op">{</span>
+                            <span class="st">&quot;audioBitRate&quot;</span> <span class="op">:</span> <span class="dv">254857</span><span class="op">,</span>
+                            <span class="st">&quot;audioChannels&quot;</span> <span class="op">:</span> <span class="dv">2</span><span class="op">,</span>
+                            <span class="st">&quot;audioCodecName&quot;</span> <span class="op">:</span> <span class="st">&quot;aac&quot;</span><span class="op">,</span>
+                            <span class="st">&quot;audioSampleRate&quot;</span> <span class="op">:</span> <span class="dv">48000</span><span class="op">,</span>
+                            <span class="st">&quot;bitRate&quot;</span> <span class="op">:</span> <span class="dv">3711950</span><span class="op">,</span>
+                            <span class="st">&quot;durationInMilliSeconds&quot;</span> <span class="op">:</span> <span class="dv">131000</span><span class="op">,</span>
+                            <span class="st">&quot;videoAvgFrameRate&quot;</span> <span class="op">:</span> <span class="st">&quot;25/1&quot;</span><span class="op">,</span>
+                            <span class="st">&quot;videoBitRate&quot;</span> <span class="op">:</span> <span class="dv">3332779</span><span class="op">,</span>
+                            <span class="st">&quot;videoCodecName&quot;</span> <span class="op">:</span> <span class="st">&quot;h264&quot;</span><span class="op">,</span>
+                            <span class="st">&quot;videoHeight&quot;</span> <span class="op">:</span> <span class="dv">720</span><span class="op">,</span>
+                            <span class="st">&quot;videoProfile&quot;</span> <span class="op">:</span> <span class="st">&quot;High&quot;</span><span class="op">,</span>
+                            <span class="st">&quot;videoWidth&quot;</span> <span class="op">:</span> <span class="dv">1280</span>
+                        <span class="op">}</span>
+                    <span class="op">},</span>
+                    <span class="op">{</span>
+                        <span class="st">&quot;endIngestion&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-06-09T15:47:41Z&quot;</span><span class="op">,</span>
+                        <span class="st">&quot;errorMessage&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span>
+                        <span class="st">&quot;ingestionJobKey&quot;</span> <span class="op">:</span> <span class="dv">1145</span><span class="op">,</span>
+                        <span class="st">&quot;ingestionType&quot;</span> <span class="op">:</span> <span class="st">&quot;Email-Notification&quot;</span><span class="op">,</span>
+                        <span class="st">&quot;label&quot;</span> <span class="op">:</span> <span class="st">&quot;&quot;</span><span class="op">,</span>
+                        <span class="st">&quot;mediaItemKey&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span>
+                        <span class="st">&quot;physicalPathKey&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span>
+                        <span class="st">&quot;startIngestion&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-06-09T15:47:30Z&quot;</span><span class="op">,</span>
+                        <span class="st">&quot;status&quot;</span> <span class="op">:</span> <span class="st">&quot;End_TaskSuccess&quot;</span>
+                    <span class="op">},</span>
+                    <span class="op">{</span>
+                        <span class="st">&quot;encoding&quot;</span> <span class="op">:</span> 
+                        <span class="op">{</span>
+                            <span class="st">&quot;encodingFailuresNumber&quot;</span> <span class="op">:</span> <span class="dv">0</span><span class="op">,</span>
+                            <span class="st">&quot;encodingJobEnd&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-06-09T15:51:09Z&quot;</span><span class="op">,</span>
+                            <span class="st">&quot;encodingJobStart&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-06-09T15:47:43Z&quot;</span><span class="op">,</span>
+                            <span class="st">&quot;encodingProgress&quot;</span> <span class="op">:</span> <span class="dv">100</span><span class="op">,</span>
+                            <span class="st">&quot;encodingStatus&quot;</span> <span class="op">:</span> <span class="st">&quot;End_ProcessedSuccessful&quot;</span><span class="op">,</span>
+                            <span class="st">&quot;parameters&quot;</span> <span class="op">:</span> 
+                            <span class="op">{</span>
+                                <span class="st">&quot;encodingProfileKey&quot;</span> <span class="op">:</span> <span class="dv">17</span><span class="op">,</span>
+                                <span class="st">&quot;sourcePhysicalPathKey&quot;</span> <span class="op">:</span> <span class="dv">80</span>
+                            <span class="op">},</span>
+                            <span class="st">&quot;type&quot;</span> <span class="op">:</span> <span class="st">&quot;EncodeVideoAudio&quot;</span>
+                        <span class="op">},</span>
+                        <span class="st">&quot;endIngestion&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-06-09T15:51:09Z&quot;</span><span class="op">,</span>
+                        <span class="st">&quot;errorMessage&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span>
+                        <span class="st">&quot;ingestionJobKey&quot;</span> <span class="op">:</span> <span class="dv">1144</span><span class="op">,</span>
+                        <span class="st">&quot;ingestionType&quot;</span> <span class="op">:</span> <span class="st">&quot;Encode&quot;</span><span class="op">,</span>
+                        <span class="st">&quot;label&quot;</span> <span class="op">:</span> <span class="st">&quot;my label&quot;</span><span class="op">,</span>
+                        <span class="st">&quot;mediaItemKey&quot;</span> <span class="op">:</span> <span class="dv">14</span><span class="op">,</span>
+                        <span class="st">&quot;physicalPathKey&quot;</span> <span class="op">:</span> <span class="dv">81</span><span class="op">,</span>
+                        <span class="st">&quot;startIngestion&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-06-09T15:47:30Z&quot;</span><span class="op">,</span>
+                        <span class="st">&quot;status&quot;</span> <span class="op">:</span> <span class="st">&quot;End_TaskSuccess&quot;</span><span class="op">,</span>
+                        <span class="st">&quot;videoDetails&quot;</span> <span class="op">:</span> 
+                        <span class="op">{</span>
+                            <span class="st">&quot;audioBitRate&quot;</span> <span class="op">:</span> <span class="dv">163408</span><span class="op">,</span>
+                            <span class="st">&quot;audioChannels&quot;</span> <span class="op">:</span> <span class="dv">2</span><span class="op">,</span>
+                            <span class="st">&quot;audioCodecName&quot;</span> <span class="op">:</span> <span class="st">&quot;aac&quot;</span><span class="op">,</span>
+                            <span class="st">&quot;audioSampleRate&quot;</span> <span class="op">:</span> <span class="dv">48000</span><span class="op">,</span>
+                            <span class="st">&quot;bitRate&quot;</span> <span class="op">:</span> <span class="dv">4192079</span><span class="op">,</span>
+                            <span class="st">&quot;durationInMilliSeconds&quot;</span> <span class="op">:</span> <span class="dv">131000</span><span class="op">,</span>
+                            <span class="st">&quot;videoAvgFrameRate&quot;</span> <span class="op">:</span> <span class="st">&quot;30/1&quot;</span><span class="op">,</span>
+                            <span class="st">&quot;videoBitRate&quot;</span> <span class="op">:</span> <span class="dv">4020958</span><span class="op">,</span>
+                            <span class="st">&quot;videoCodecName&quot;</span> <span class="op">:</span> <span class="st">&quot;h264&quot;</span><span class="op">,</span>
+                            <span class="st">&quot;videoHeight&quot;</span> <span class="op">:</span> <span class="dv">1080</span><span class="op">,</span>
+                            <span class="st">&quot;videoProfile&quot;</span> <span class="op">:</span> <span class="st">&quot;Main&quot;</span><span class="op">,</span>
+                            <span class="st">&quot;videoWidth&quot;</span> <span class="op">:</span> <span class="dv">1920</span>
+                        <span class="op">}</span>
+                    <span class="op">}</span>
+                ]
             <span class="op">}</span>
         ]
     <span class="op">}</span>
@@ -174,4 +149,4 @@
 <p>See <a href="A.1-Common-error-responses.html">Common Error Responses</a></p>
 <h2 id="sample-call">Sample Call</h2>
 <p>Assuming: * UserKey: 5 * APIKey: SU1.8ZO1O2zVeBMNv9lzZ0whABXSAdjWrR~rpcnI5eaHNO2gysrNdAv8BNoWZB1eLP</p>
-<p><code>curl -k -v -u 5:SU1.8ZO1O2zVeBMNv9lzZ0whABXSAdjWrR~rpcnI5eaHNO2gysrNdAv8BNoWZB1eLP https://mms-api.catrasoft.cloud/catramms/v1/ingestion/74</code></p>
+<p><code>curl -k -v -u 5:SU1.8ZO1O2zVeBMNv9lzZ0whABXSAdjWrR~rpcnI5eaHNO2gysrNdAv8BNoWZB1eLP https://mms-api.catrasoft.cloud/catramms/v1/ingestionsRoot/304</code></p>

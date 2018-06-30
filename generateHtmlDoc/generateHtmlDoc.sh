@@ -2,6 +2,7 @@
 
 TEMP_DIR=~/tmp
 
+#This script has to be called from the directory where this script is placed
 #PUBLISH_HTML_DIR will be initialized automatically with the directory containing this script
 PUBLISH_HTML_DIR=$(dirname $0)
 

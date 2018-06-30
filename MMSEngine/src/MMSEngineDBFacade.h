@@ -677,7 +677,7 @@ public:
         int maxMediaItemKeysNumber);
 
     void getIngestionsToBeManaged(
-        vector<tuple<int64_t,string,shared_ptr<Workspace>,string, IngestionType, IngestionStatus>>& ingestionsToBeManaged,
+        vector<tuple<int64_t,shared_ptr<Workspace>,string, IngestionType, IngestionStatus>>& ingestionsToBeManaged,
         string processorMMS,
         int maxIngestionJobs
         // int maxIngestionJobsWithDependencyToCheck

@@ -2199,7 +2199,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 }
 
 void MMSEngineDBFacade::getIngestionsToBeManaged(
-        vector<tuple<int64_t, string, shared_ptr<Workspace>, string, IngestionType, IngestionStatus>>& ingestionsToBeManaged,
+        vector<tuple<int64_t, shared_ptr<Workspace>, string, IngestionType, IngestionStatus>>& ingestionsToBeManaged,
         string processorMMS,
         int maxIngestionJobs
 )
@@ -2249,8 +2249,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
             while(ingestionsToBeManaged.size() < maxIngestionJobs && moreRows)
             {
                 lastSQLCommand = 
-                    "select ij.ingestionJobKey, DATE_FORMAT(ij.startIngestion, '%Y-%m-%d %H:%i:%s') as startIngestion, "
-                        "ir.workspaceKey, ij.metaDataContent, ij.status, ij.ingestionType "
+                    "select ij.ingestionJobKey, ir.workspaceKey, ij.metaDataContent, ij.status, ij.ingestionType "
                         "from MMS_IngestionRoot ir, MMS_IngestionJob ij "
                         "where ir.ingestionRootKey = ij.ingestionRootKey and ij.processorMMS is null "
                         "and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) "
@@ -2276,7 +2275,6 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                 while (resultSet->next())
                 {
                     int64_t ingestionJobKey     = resultSet->getInt64("ingestionJobKey");
-                    string startIngestion       = resultSet->getString("startIngestion");
                     int64_t workspaceKey         = resultSet->getInt64("workspaceKey");
                     string metaDataContent      = resultSet->getString("metaDataContent");
                     IngestionStatus ingestionStatus     = MMSEngineDBFacade::toIngestionStatus(resultSet->getString("status"));
@@ -2374,8 +2372,8 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                         
                         shared_ptr<Workspace> workspace = getWorkspace(workspaceKey);
 
-                        tuple<int64_t, string, shared_ptr<Workspace>, string, IngestionType, IngestionStatus> ingestionToBeManaged
-                                = make_tuple(ingestionJobKey, startIngestion, workspace, metaDataContent, ingestionType, ingestionStatus);
+                        tuple<int64_t, shared_ptr<Workspace>, string, IngestionType, IngestionStatus> ingestionToBeManaged
+                                = make_tuple(ingestionJobKey, workspace, metaDataContent, ingestionType, ingestionStatus);
 
                         ingestionsToBeManaged.push_back(ingestionToBeManaged);
                     }
@@ -2383,21 +2381,20 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
             }
         }
 
-        for (tuple<int64_t, string, shared_ptr<Workspace>, string, IngestionType, IngestionStatus>& ingestionToBeManaged:
+        for (tuple<int64_t, shared_ptr<Workspace>, string, IngestionType, IngestionStatus>& ingestionToBeManaged:
             ingestionsToBeManaged)
         {
             int64_t ingestionJobKey;
-            string startIngestion;
             shared_ptr<Workspace> workspace;
             string metaDataContent;
             string sourceReference;
             MMSEngineDBFacade::IngestionStatus ingestionStatus;
             MMSEngineDBFacade::IngestionType ingestionType;
 
-            tie(ingestionJobKey, startIngestion, workspace, metaDataContent, ingestionType, ingestionStatus) = ingestionToBeManaged;
+            tie(ingestionJobKey, workspace, metaDataContent, ingestionType, ingestionStatus) = ingestionToBeManaged;
 
             lastSQLCommand = 
-                "update MMS_IngestionJob set startIngestion = NOW(), processorMMS = ? where ingestionJobKey = ?";
+                "update MMS_IngestionJob set startProcessing = NOW(), processorMMS = ? where ingestionJobKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, processorMMS);
@@ -2848,8 +2845,8 @@ int64_t MMSEngineDBFacade::addIngestionJob (
         {
             {
                 lastSQLCommand = 
-                    "insert into MMS_IngestionJob (ingestionJobKey, ingestionRootKey, label, mediaItemKey, physicalPathKey, metaDataContent, ingestionType, startIngestion, endIngestion, downloadingProgress, uploadingProgress, sourceBinaryTransferred, processorMMS, status, errorMessage) values ("
-                                                  "NULL,            ?,                ?,     NULL,         NULL,            ?,               ?,             NULL,           NULL,         NULL,                NULL,              0,                       NULL,         ?,      NULL)";
+                    "insert into MMS_IngestionJob (ingestionJobKey, ingestionRootKey, label, mediaItemKey, physicalPathKey, metaDataContent, ingestionType, startProcessing, endIngestion, downloadingProgress, uploadingProgress, sourceBinaryTransferred, processorMMS, status, errorMessage) values ("
+                                                  "NULL,            ?,                ?,     NULL,         NULL,            ?,               ?,             NULL,            NULL,         NULL,                NULL,              0,                       NULL,         ?,      NULL)";
 
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
@@ -4191,10 +4188,11 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
                 {            
                     lastSQLCommand = 
                         "select ingestionJobKey, label, mediaItemKey, physicalPathKey, ingestionType, "
-                        "DATE_FORMAT(convert_tz(startIngestion, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as startIngestion, "
-                        "DATE_FORMAT(convert_tz(endIngestion, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endIngestion, "
-                        "IF(endIngestion is null, NOW(), endIngestion) as newEndIngestion, downloadingProgress, uploadingProgress, "
-                        "status, errorMessage from MMS_IngestionJob where ingestionRootKey = ? order by startIngestion, newEndIngestion asc";
+                        "DATE_FORMAT(convert_tz(startProcessing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as startProcessing, "
+                        "DATE_FORMAT(convert_tz(endProcessing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endProcessing, "
+                        "IF(startProcessing is null, NOW(), startProcessing) as newStartProcessing, "
+                        "IF(endProcessing is null, NOW(), endProcessing) as newEndProcessing, downloadingProgress, uploadingProgress, "
+                        "status, errorMessage from MMS_IngestionJob where ingestionRootKey = ? order by newStartProcessing, newEndProcessing asc";
 
                     shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
@@ -4328,7 +4326,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
         if (ingestionJobKey != -1)
             sqlWhere += ("and ij.ingestionJobKey = ? ");
         if (startAndEndIngestionDatePresent)
-            sqlWhere += ("and ij.startIngestion >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) and ij.startIngestion <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
+            sqlWhere += ("and ir.ingestionDate >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) and ir.ingestionDate <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
         if (status == "completed")
             sqlWhere += ("and ij.status like 'End_%' ");
         else if (status == "notCompleted")
@@ -4370,12 +4368,13 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
         {            
             lastSQLCommand = 
                 "select ij.ingestionJobKey, ij.label, ij.mediaItemKey, ij.physicalPathKey, ij.ingestionType, "
-                "DATE_FORMAT(convert_tz(ij.startIngestion, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as startIngestion, "
-                "DATE_FORMAT(convert_tz(ij.endIngestion, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endIngestion, "
-                "IF(ij.endIngestion is null, NOW(), ij.endIngestion) as newEndIngestion, ij.downloadingProgress, ij.uploadingProgress, "
+                "DATE_FORMAT(convert_tz(ij.startProcessing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as startProcessing, "
+                "DATE_FORMAT(convert_tz(ij.endProcessing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endProcessing, "
+                "IF(ij.startProcessing is null, NOW(), ij.startProcessing) as newStartProcessing, "
+                "IF(ij.endProcessing is null, NOW(), ij.endProcessing) as newEndProcessing, ij.downloadingProgress, ij.uploadingProgress, "
                 "ij.status, ij.errorMessage from MMS_IngestionRoot ir, MMS_IngestionJob ij "
                 + sqlWhere
-                + "order by ij.startIngestion" + (asc ? " asc" : " desc") + ", newEndIngestion " + 
+                + "order by ij.newStartProcessing" + (asc ? " asc" : " desc") + ", newEndProcessing " + 
                 + "limit ? offset ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -4512,7 +4511,7 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
         if (encodingJobKey != -1)
             sqlWhere += ("and ej.encodingJobKey = ? ");
         if (startAndEndIngestionDatePresent)
-            sqlWhere += ("and ij.startIngestion >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) and ij.startIngestion <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
+            sqlWhere += ("and ir.ingestionDate >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) and ir.ingestionDate <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
         if (status == "completed")
             sqlWhere += ("and ej.status like 'End_%' ");
         else if (status == "notCompleted")
@@ -4556,10 +4555,11 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
                 "select ej.encodingJobKey, ej.type, ej.parameters, ej.status, ej.encodingProgress, ej.failuresNumber, ej.encodingPriority, "
                 "DATE_FORMAT(convert_tz(ej.encodingJobStart, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as encodingJobStart, "
                 "DATE_FORMAT(convert_tz(ej.encodingJobEnd, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as encodingJobEnd, "
-                "IF(ij.endIngestion is null, NOW(), ij.endIngestion) as newEndIngestion "
+                "IF(ij.startProcessing is null, NOW(), ij.startProcessing) as newStartProcessing, "
+                "IF(ij.endProcessing is null, NOW(), ij.endProcessing) as newEndProcessing "
                 "from MMS_IngestionRoot ir, MMS_IngestionJob ij, MMS_EncodingJob ej "
                 + sqlWhere
-                + "order by ij.startIngestion, newEndIngestion " + (asc ? " asc " : " desc ")
+                + "order by ij.newStartProcessing, newEndProcessing " + (asc ? " asc " : " desc ")
                 + "limit ? offset ?";
             shared_ptr<sql::PreparedStatement> preparedStatementEncodingJob (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -4762,188 +4762,19 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
 
                 ingestionJobRoot[field] = physicalPathKey;
             }
-
-            /*
-            if (mediaItemKey != -1)
-            {
-                MMSEngineDBFacade::ContentType contentType;
-
-                lastSQLCommand = 
-                    "select contentType from MMS_MediaItem where mediaItemKey = ?";
-                shared_ptr<sql::PreparedStatement> preparedStatementMediaItem (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                int queryParameterIndex = 1;
-                preparedStatementMediaItem->setInt64(queryParameterIndex++, mediaItemKey);
-
-                shared_ptr<sql::ResultSet> resultSetMediaItem (preparedStatementMediaItem->executeQuery());
-                if (resultSetMediaItem->next())
-                {
-                    contentType = MMSEngineDBFacade::toContentType(resultSetMediaItem->getString("contentType"));
-
-                    if (contentType == ContentType::Video)
-                    {
-                        int64_t durationInMilliSeconds;
-                        int videoWidth;
-                        int videoHeight;
-                        long bitRate;
-                        string videoCodecName;
-                        string videoProfile;
-                        string videoAvgFrameRate;
-                        long videoBitRate;
-                        string audioCodecName;
-                        long audioSampleRate;
-                        int audioChannels;
-                        long audioBitRate;
-
-                        tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
-                            videoDetails = getVideoDetails(mediaItemKey, physicalPathKey);
-
-                        tie(durationInMilliSeconds, bitRate,
-                            videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
-                            audioCodecName, audioSampleRate, audioChannels, audioBitRate) = videoDetails;
-
-                        Json::Value videoDetailsRoot;
-
-                        field = "durationInMilliSeconds";
-                        videoDetailsRoot[field] = durationInMilliSeconds;
-
-                        field = "videoWidth";
-                        videoDetailsRoot[field] = videoWidth;
-
-                        field = "videoHeight";
-                        videoDetailsRoot[field] = videoHeight;
-
-                        field = "bitRate";
-                        videoDetailsRoot[field] = (int64_t) bitRate;
-
-                        field = "videoCodecName";
-                        videoDetailsRoot[field] = videoCodecName;
-
-                        field = "videoProfile";
-                        videoDetailsRoot[field] = videoProfile;
-
-                        field = "videoAvgFrameRate";
-                        videoDetailsRoot[field] = videoAvgFrameRate;
-
-                        field = "videoBitRate";
-                        videoDetailsRoot[field] = (int64_t) videoBitRate;
-
-                        field = "audioCodecName";
-                        videoDetailsRoot[field] = audioCodecName;
-
-                        field = "audioSampleRate";
-                        videoDetailsRoot[field] = (int64_t) audioSampleRate;
-
-                        field = "audioChannels";
-                        videoDetailsRoot[field] = audioChannels;
-
-                        field = "audioBitRate";
-                        videoDetailsRoot[field] = (int64_t) audioBitRate;
-
-
-                        field = "videoDetails";
-                        ingestionJobRoot[field] = videoDetailsRoot;
-                    }
-                    else if (contentType == ContentType::Audio)
-                    {
-                        int64_t durationInMilliSeconds;
-                        string codecName;
-                        long bitRate;
-                        long sampleRate;
-                        int channels;
-
-                        tuple<int64_t,string,long,long,int>
-                            audioDetails = getAudioDetails(mediaItemKey, physicalPathKey);
-
-                        tie(durationInMilliSeconds, codecName, bitRate, sampleRate, channels) 
-                                = audioDetails;
-
-                        Json::Value audioDetailsRoot;
-
-                        field = "durationInMilliSeconds";
-                        audioDetailsRoot[field] = durationInMilliSeconds;
-
-                        field = "codecName";
-                        audioDetailsRoot[field] = codecName;
-
-                        field = "bitRate";
-                        audioDetailsRoot[field] = (int64_t) bitRate;
-
-                        field = "sampleRate";
-                        audioDetailsRoot[field] = (int64_t) sampleRate;
-
-                        field = "channels";
-                        audioDetailsRoot[field] = channels;
-
-
-                        field = "audioDetails";
-                        ingestionJobRoot[field] = audioDetailsRoot;
-                    }
-                    else if (contentType == ContentType::Image)
-                    {
-                        int width;
-                        int height;
-                        string format;
-                        int quality;
-
-                        tuple<int,int,string,int>
-                            imageDetails = getImageDetails(mediaItemKey, physicalPathKey);
-
-                        tie(width, height, format, quality) 
-                                = imageDetails;
-
-                        Json::Value imageDetailsRoot;
-
-                        field = "width";
-                        imageDetailsRoot[field] = width;
-
-                        field = "height";
-                        imageDetailsRoot[field] = height;
-
-                        field = "format";
-                        imageDetailsRoot[field] = format;
-
-                        field = "quality";
-                        imageDetailsRoot[field] = quality;
-
-
-                        field = "imageDetails";
-                        ingestionJobRoot[field] = imageDetailsRoot;
-                    }
-                    else
-                    {
-                        string errorMessage = __FILEREF__ + "ContentType unmanaged"
-                            + ", mediaItemKey: " + to_string(mediaItemKey)
-                            + ", lastSQLCommand: " + lastSQLCommand
-                        ;
-                        _logger->error(errorMessage);
-
-                        throw runtime_error(errorMessage);  
-                    }
-                }
-                else
-                {
-                    // the MIK could be removed
-
-//                    string errorMessage = __FILEREF__ + "MediaItemKey is not found"
-//                        + ", mediaItemKey: " + to_string(mediaItemKey)
-//                        + ", lastSQLCommand: " + lastSQLCommand
-//                    ;
-//                    _logger->error(errorMessage);
-//
-//                    throw runtime_error(errorMessage);  
-                }
-            }
-            */
         }
 
-        field = "startIngestion";
-        ingestionJobRoot[field] = static_cast<string>(resultSet->getString("startIngestion"));
-
-        field = "endIngestion";
-        if (resultSet->isNull("endIngestion"))
+        field = "startProcessing";
+        if (resultSet->isNull("startProcessing"))
             ingestionJobRoot[field] = Json::nullValue;
         else
-            ingestionJobRoot[field] = static_cast<string>(resultSet->getString("endIngestion"));
+            ingestionJobRoot[field] = static_cast<string>(resultSet->getString("startProcessing"));
+
+        field = "endProcessing";
+        if (resultSet->isNull("endProcessing"))
+            ingestionJobRoot[field] = Json::nullValue;
+        else
+            ingestionJobRoot[field] = static_cast<string>(resultSet->getString("endProcessing"));
 
         if (ingestionType == IngestionType::AddContent)
         {
@@ -12987,8 +12818,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "physicalPathKey            BIGINT UNSIGNED NULL,"
                     "metaDataContent            TEXT CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
                     "ingestionType              VARCHAR (64) NOT NULL,"
-                    "startIngestion             TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
-                    "endIngestion               DATETIME NULL,"
+                    "startProcessing            DATETIME NULL,"
+                    "endProcessing              DATETIME NULL,"
                     "downloadingProgress        DECIMAL(4,1) NULL,"
                     "uploadingProgress          DECIMAL(4,1) NULL,"
                     "sourceBinaryTransferred    INT NOT NULL,"

@@ -1,26 +1,32 @@
 <h2 id="overview">Overview</h2>
 <p>This command is used to retrieve information about the encoding profiles saved into the MMS repository.</p>
 <h2 id="uri">URI</h2>
+<h3 id="encoding-profile">Encoding profile</h3>
+<ul>
+<li>catramms/v1/profile/[:encodingProfileKey]</li>
+</ul>
 <h3 id="encoding-profiles">Encoding profiles</h3>
 <ul>
-<li>catramms/v1/profile/[video | audio | image]/[:encodingProfileKey]</li>
+<li>catramms/v1/profiles/[video | audio | image]/[:encodingProfileKey]</li>
 </ul>
 <h3 id="encoding-profiles-set">Encoding profiles Set</h3>
 <ul>
-<li>catramms/v1/profilesSet/[video | audio | image]/[:encodingProfilesSetKey]</li>
+<li>catramms/v1/profilesSet/[:encodingProfilesSetKey]</li>
+</ul>
+<h3 id="encoding-profiles-sets">Encoding profiles Sets</h3>
+<ul>
+<li>catramms/v1/profilesSets/[video | audio | image]/[:encodingProfilesSetKey]</li>
 </ul>
 <h2 id="method">Method</h2>
 <p>GET</p>
 <h2 id="url-params">URL Params</h2>
 <h3 id="required">Required</h3>
-<p>None</p>
-<h3 id="optional">Optional</h3>
 <ul>
-<li>encodingProfileKey=[number]</li>
+<li>:encodingProfileKey only in case of catramms/v1/profile URI</li>
 <li>example: encodingProfileKey=123</li>
-<li>encodingProfilesSetKey=[number]</li>
-<li>example: encodingProfilesSetKey=123</li>
 </ul>
+<h3 id="optional">Optional</h3>
+<p>In case it is not the catramms/v1/profile URI, the following parameters are optional: * encodingProfileKey=[number] * example: encodingProfileKey=123 * encodingProfilesSetKey=[number] * example: encodingProfilesSetKey=123</p>
 <h2 id="payload-data">Payload Data</h2>
 <p>None</p>
 <h2 id="success-response">Success Response</h2>
@@ -94,7 +100,7 @@
 <h2 id="sample-call">Sample Call</h2>
 <p>Assuming: * UserKey: 5 * APIKey: SU1.8ZO1O2zVeBMNv9lzZ0whABXSAdjWrR~rpcnI5eaHNO2gysrNdAv8BNoWZB1eLP</p>
 <ul>
-<li>curl -k -v -u 5:SU1.8ZO1O2zVeBMNv9lzZ0whABXSAdjWrR~rpcnI5eaHNO2gysrNdAv8BNoWZB1eLP &quot;https://mms-api.catrasoft.cloud/catramms/v1/profile/video&quot;</li>
-<li>curl -k -v -u 5:SU1.8ZO1O2zVeBMNv9lzZ0whABXSAdjWrR~rpcnI5eaHNO2gysrNdAv8BNoWZB1eLP &quot;https://mms-api.catrasoft.cloud/catramms/v1/profile/video/321&quot;</li>
-<li>curl -k -v -u 5:SU1.8ZO1O2zVeBMNv9lzZ0whABXSAdjWrR~rpcnI5eaHNO2gysrNdAv8BNoWZB1eLP &quot;https://mms-api.catrasoft.cloud/catramms/v1/profilesSet/video&quot;</li>
+<li>curl -k -v -u 5:SU1.8ZO1O2zVeBMNv9lzZ0whABXSAdjWrR~rpcnI5eaHNO2gysrNdAv8BNoWZB1eLP &quot;https://mms-api.catrasoft.cloud/catramms/v1/profiles/video&quot;</li>
+<li>curl -k -v -u 5:SU1.8ZO1O2zVeBMNv9lzZ0whABXSAdjWrR~rpcnI5eaHNO2gysrNdAv8BNoWZB1eLP &quot;https://mms-api.catrasoft.cloud/catramms/v1/profiles/video/321&quot;</li>
+<li>curl -k -v -u 5:SU1.8ZO1O2zVeBMNv9lzZ0whABXSAdjWrR~rpcnI5eaHNO2gysrNdAv8BNoWZB1eLP &quot;https://mms-api.catrasoft.cloud/catramms/v1/profilesSets/video&quot;</li>
 </ul>

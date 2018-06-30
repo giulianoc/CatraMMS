@@ -1,0 +1,35 @@
+<h2 id="overview">Overview</h2>
+<ul>
+<li>Perform a Login and returns, in case of success, all the couples WorkspaceName and APIKey the User is able to work on.</li>
+</ul>
+<h2 id="uri">URI</h2>
+<p>/catramms/v1/login</p>
+<h2 id="method">Method</h2>
+<p>POST</p>
+<h2 id="url-params">URL Params</h2>
+<h3 id="required">Required</h3>
+<p>None</p>
+<h3 id="optional">Optional</h3>
+<p>None</p>
+<h2 id="payload-data">Payload Data</h2>
+<div class="sourceCode"><pre class="sourceCode javascript"><code class="sourceCode javascript"><span class="op">{</span>
+   <span class="st">&quot;EMail&quot;</span><span class="op">:</span> <span class="st">&quot;admin@mycompany.com&quot;</span><span class="op">,</span>
+   <span class="st">&quot;Password&quot;</span><span class="op">:</span> <span class="st">&quot;kskhkd_3rR&quot;</span>
+<span class="op">}</span></code></pre></div>
+<h2 id="success-response">Success Response</h2>
+<h3 id="code">Code</h3>
+<p>200 OK</p>
+<h3 id="content">Content</h3>
+<div class="sourceCode"><pre class="sourceCode javascript"><code class="sourceCode javascript"><span class="op">{</span> 
+   <span class="st">&quot;userKey&quot;</span><span class="op">:</span> <span class="dv">198</span><span class="op">,</span>
+   <span class="st">&quot;workspaces&quot;</span><span class="op">:</span> [ 
+      <span class="op">{</span> 
+         <span class="st">&quot;workspaceName&quot;</span><span class="op">:</span> <span class="st">&quot;CatraSoft&quot;</span><span class="op">,</span> 
+         <span class="st">&quot;apiKey&quot;</span><span class="op">:</span> <span class="st">&quot;SU1.8ZO1ODJDHFOFOIOOFJJSrQ_S4lS33iZ4zFJ8kfWxQqmOhkL&quot;</span><span class="op">,</span> <span class="st">&quot;owner&quot;</span><span class="op">:</span> <span class="dv">1</span> 
+      <span class="op">}</span> 
+   ] 
+<span class="op">}</span></code></pre></div>
+<h2 id="error-response">Error Response</h2>
+<p>See <a href="A.1-Common-error-responses.html">Common Error Responses</a></p>
+<h2 id="sample-call">Sample Call</h2>
+<p>curl -k -v -X POST -d '{&quot;EMail&quot;: &quot;giuliano@catrasoftware.it&quot;, &quot;Password&quot;: &quot;kjkdiif&quot; }' https://mms-api.catrasoft.cloud/catramms/v1/login</p>

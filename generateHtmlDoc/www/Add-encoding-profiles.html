@@ -1,5 +1,5 @@
 <p>A content (video, audio or image) can be encoded using one or more profiles.</p>
-<p>This section describes how Encoding Profiles can be added into MMS.</p>
+<p>There are several <a href="Predefined-encoding-profiles.html">Predefined Encoding Profiles</a> defined by the MMS system, however a User can define new encoding profiles into MMS.</p>
 <p>It is possible to add a single encoding profile as well as a set of profiles and apply the entire set of profiles to one content using just one command.</p>
 <h2 id="video-encoding-profiles">Video Encoding profiles</h2>
 <ul>
@@ -9,13 +9,6 @@
 <li>Examples (body of the PUT)
 <ul>
 <li>This example adds one profile. (<a href="JSON-Example.30-Video-Profile.html">JSON example</a>)</li>
-</ul></li>
-<li>Add a <strong>set</strong> of video encoding profiles into MMS</li>
-<li><a href="COMMAND.1-Add-Profiles-Set-Command.html">command details</a> (HTTP PUT)</li>
-<li>Set of video encoding profiles <a href="TASK.10-Set-of-video-encoding-profiles-JSON-format.html"><strong>JSON format</strong></a> (body of the PUT)</li>
-<li>Examples (body of the PUT)
-<ul>
-<li>This example adds two profiles (Profile_1 and Profile_2) and associate these two profiles to the 'Sport' profiles set. Both the single profiles and the profiles set can be used to encode a content. (<a href="JSON-Example.18-Video-Profiles-Set.html">JSON example</a>)</li>
 </ul></li>
 </ul>
 <h2 id="audio-encoding-profiles">Audio Encoding profiles</h2>
@@ -27,13 +20,6 @@
 <ul>
 <li>This example adds one profile. (<a href="JSON-Example.31-Audio-Profile.html">JSON example</a>)</li>
 </ul></li>
-<li>Add a <strong>set</strong> of audio encoding profiles into MMS</li>
-<li><a href="COMMAND.1-Add-Profiles-Set-Command.html">command details</a> (HTTP PUT)</li>
-<li>Set of audio encoding profiles <a href="TASK.11-Set-of-audio-encoding-profiles-JSON-format.html"><strong>JSON format</strong></a> (body of the PUT)</li>
-<li>Examples (body of the PUT)
-<ul>
-<li>(<a href="JSON-Example.19-Audio-Profiles-Set.html">JSON example</a>)</li>
-</ul></li>
 </ul>
 <h2 id="image-encoding-profiles">Image Encoding profiles</h2>
 <ul>
@@ -44,11 +30,13 @@
 <ul>
 <li>(<a href="JSON-Example.32-Image-Profile.html">JSON example</a>)</li>
 </ul></li>
-<li>Add a <strong>set</strong> of image encoding profiles into MMS</li>
+</ul>
+<h2 id="set-of-encoding-profiles-into-mms"><strong>Set</strong> of encoding profiles into MMS</h2>
+<ul>
 <li><a href="COMMAND.1-Add-Profiles-Set-Command.html">command details</a> (HTTP PUT)</li>
-<li>Set of image encoding profiles <a href="TASK.13-Set-of-image-encoding-profiles-JSON-format.html"><strong>JSON format</strong></a> (body of the PUT)</li>
+<li>Set of encoding profiles <a href="TASK.10-Set-of-video-encoding-profiles-JSON-format.html"><strong>JSON format</strong></a> (body of the PUT)</li>
 <li>Examples (body of the PUT)
 <ul>
-<li>(<a href="JSON-Example.20-Image-Profiles-Set.html">JSON example</a>)</li>
+<li>This example adds two profiles (Profile_1 and Profile_2) and associate these two profiles to the 'Sport' profiles set. Both the single profiles and the profiles set can be used to encode a content. (<a href="JSON-Example.18-Video-Profiles-Set.html">JSON example</a>)</li>
 </ul></li>
 </ul>

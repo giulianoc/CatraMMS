@@ -1,7 +1,7 @@
 <h2 id="overview">Overview</h2>
 <p>This command is used to retrieve information about the contents saved into the MMS repository.</p>
 <h2 id="uri">URI</h2>
-<p>catramms/v1/content/[:mediaItemKey]/?[:start]&amp;[:rows]&amp;[:contentType]&amp;[:startIngestionDate]&amp;[:endIngestionDate]</p>
+<p>catramms/v1/mediaItems/[:mediaItemKey]/?[:start]&amp;[:rows]&amp;[:contentType]&amp;[:startIngestionDate]&amp;[:endIngestionDate]</p>
 <h2 id="method">Method</h2>
 <p>POST</p>
 <h2 id="url-params">URL Params</h2>
@@ -32,12 +32,8 @@
 <div class="sourceCode"><pre class="sourceCode javascript"><code class="sourceCode javascript"><span class="op">{</span>
     <span class="st">&quot;requestParameters&quot;</span> <span class="op">:</span> 
     <span class="op">{</span>
-        <span class="st">&quot;contentType&quot;</span> <span class="op">:</span> <span class="st">&quot;Video&quot;</span><span class="op">,</span>
-        <span class="st">&quot;endIngestionDate&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-04-26T07:20:11Z&quot;</span><span class="op">,</span>
-        <span class="st">&quot;mediaItemKey&quot;</span> <span class="op">:</span> <span class="dv">141</span><span class="op">,</span>
-        <span class="st">&quot;rows&quot;</span> <span class="op">:</span> <span class="dv">1</span><span class="op">,</span>
-        <span class="st">&quot;start&quot;</span> <span class="op">:</span> <span class="dv">0</span><span class="op">,</span>
-        <span class="st">&quot;startIngestionDate&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-04-26T07:19:11Z&quot;</span>
+        <span class="st">&quot;rows&quot;</span> <span class="op">:</span> <span class="dv">10</span><span class="op">,</span>
+        <span class="st">&quot;start&quot;</span> <span class="op">:</span> <span class="dv">0</span>
     <span class="op">},</span>
     <span class="st">&quot;response&quot;</span> <span class="op">:</span> 
     <span class="op">{</span>
@@ -45,45 +41,72 @@
         [
             <span class="op">{</span>
                 <span class="st">&quot;contentType&quot;</span> <span class="op">:</span> <span class="st">&quot;Video&quot;</span><span class="op">,</span>
+                <span class="st">&quot;endPublishing&quot;</span> <span class="op">:</span> <span class="st">&quot;2028-06-05T12:31:07Z&quot;</span><span class="op">,</span>
                 <span class="st">&quot;ingester&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span>
-                <span class="st">&quot;ingestionDate&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-04-26T07:20:08Z&quot;</span><span class="op">,</span>
+                <span class="st">&quot;ingestionDate&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-06-08T12:31:07Z&quot;</span><span class="op">,</span>
                 <span class="st">&quot;keywords&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span>
-                <span class="st">&quot;mediaItemKey&quot;</span> <span class="op">:</span> <span class="dv">141</span><span class="op">,</span>
-                <span class="st">&quot;profiles&quot;</span> <span class="op">:</span> 
+                <span class="st">&quot;mediaItemKey&quot;</span> <span class="op">:</span> <span class="dv">8</span><span class="op">,</span>
+                <span class="st">&quot;physicalPaths&quot;</span> <span class="op">:</span> 
                 [
                     <span class="op">{</span>
-                        <span class="st">&quot;creationDate&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-04-26T07:20:08Z&quot;</span><span class="op">,</span>
+                        <span class="st">&quot;creationDate&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-06-08T12:31:07Z&quot;</span><span class="op">,</span>
                         <span class="st">&quot;encodingProfileKey&quot;</span> <span class="op">:</span> <span class="kw">null</span><span class="op">,</span>
-                        <span class="st">&quot;physicalPathKey&quot;</span> <span class="op">:</span> <span class="dv">186</span><span class="op">,</span>
-                        <span class="st">&quot;sizeInBytes&quot;</span> <span class="op">:</span> <span class="dv">383631</span>
+                        <span class="st">&quot;physicalPathKey&quot;</span> <span class="op">:</span> <span class="dv">35</span><span class="op">,</span>
+                        <span class="st">&quot;sizeInBytes&quot;</span> <span class="op">:</span> <span class="dv">60974821</span>
+                    <span class="op">},</span>
+                    <span class="op">{</span>
+                        <span class="st">&quot;creationDate&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-06-08T12:32:18Z&quot;</span><span class="op">,</span>
+                        <span class="st">&quot;encodingProfileKey&quot;</span> <span class="op">:</span> <span class="dv">7</span><span class="op">,</span>
+                        <span class="st">&quot;physicalPathKey&quot;</span> <span class="op">:</span> <span class="dv">36</span><span class="op">,</span>
+                        <span class="st">&quot;sizeInBytes&quot;</span> <span class="op">:</span> <span class="dv">14748930</span>
+                    <span class="op">},</span>
+                    <span class="op">{</span>
+                        <span class="st">&quot;creationDate&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-06-08T12:42:30Z&quot;</span><span class="op">,</span>
+                        <span class="st">&quot;encodingProfileKey&quot;</span> <span class="op">:</span> <span class="dv">8</span><span class="op">,</span>
+                        <span class="st">&quot;physicalPathKey&quot;</span> <span class="op">:</span> <span class="dv">37</span><span class="op">,</span>
+                        <span class="st">&quot;sizeInBytes&quot;</span> <span class="op">:</span> <span class="dv">27487750</span>
+                    <span class="op">},</span>
+                    <span class="op">{</span>
+                        <span class="st">&quot;creationDate&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-06-08T12:45:29Z&quot;</span><span class="op">,</span>
+                        <span class="st">&quot;encodingProfileKey&quot;</span> <span class="op">:</span> <span class="dv">9</span><span class="op">,</span>
+                        <span class="st">&quot;physicalPathKey&quot;</span> <span class="op">:</span> <span class="dv">38</span><span class="op">,</span>
+                        <span class="st">&quot;sizeInBytes&quot;</span> <span class="op">:</span> <span class="dv">27491833</span>
+                    <span class="op">},</span>
+                    <span class="op">{</span>
+                        <span class="st">&quot;creationDate&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-06-08T12:51:54Z&quot;</span><span class="op">,</span>
+                        <span class="st">&quot;encodingProfileKey&quot;</span> <span class="op">:</span> <span class="dv">10</span><span class="op">,</span>
+                        <span class="st">&quot;physicalPathKey&quot;</span> <span class="op">:</span> <span class="dv">39</span><span class="op">,</span>
+                        <span class="st">&quot;sizeInBytes&quot;</span> <span class="op">:</span> <span class="dv">19282793</span>
                     <span class="op">}</span>
                 ]<span class="op">,</span>
                 <span class="st">&quot;providerName&quot;</span> <span class="op">:</span> <span class="st">&quot;default&quot;</span><span class="op">,</span>
+                <span class="st">&quot;retentionInMinutes&quot;</span> <span class="op">:</span> <span class="dv">60</span><span class="op">,</span>
+                <span class="st">&quot;startPublishing&quot;</span> <span class="op">:</span> <span class="st">&quot;2018-06-08T12:31:07Z&quot;</span><span class="op">,</span>
                 <span class="st">&quot;title&quot;</span> <span class="op">:</span> <span class="st">&quot;My Title of the video content&quot;</span><span class="op">,</span>
                 <span class="st">&quot;videoDetails&quot;</span> <span class="op">:</span> 
                 <span class="op">{</span>
-                    <span class="st">&quot;audioBitRate&quot;</span> <span class="op">:</span> <span class="dv">83050</span><span class="op">,</span>
-                    <span class="st">&quot;audioChannels&quot;</span> <span class="op">:</span> <span class="dv">1</span><span class="op">,</span>
+                    <span class="st">&quot;audioBitRate&quot;</span> <span class="op">:</span> <span class="dv">254857</span><span class="op">,</span>
+                    <span class="st">&quot;audioChannels&quot;</span> <span class="op">:</span> <span class="dv">2</span><span class="op">,</span>
                     <span class="st">&quot;audioCodecName&quot;</span> <span class="op">:</span> <span class="st">&quot;aac&quot;</span><span class="op">,</span>
                     <span class="st">&quot;audioSampleRate&quot;</span> <span class="op">:</span> <span class="dv">48000</span><span class="op">,</span>
-                    <span class="st">&quot;bitRate&quot;</span> <span class="op">:</span> <span class="dv">551193</span><span class="op">,</span>
-                    <span class="st">&quot;durationInMilliSeconds&quot;</span> <span class="op">:</span> <span class="dv">5000</span><span class="op">,</span>
-                    <span class="st">&quot;videoAvgFrameRate&quot;</span> <span class="op">:</span> <span class="st">&quot;30/1&quot;</span><span class="op">,</span>
-                    <span class="st">&quot;videoBitRate&quot;</span> <span class="op">:</span> <span class="dv">465641</span><span class="op">,</span>
+                    <span class="st">&quot;bitRate&quot;</span> <span class="op">:</span> <span class="dv">3711950</span><span class="op">,</span>
+                    <span class="st">&quot;durationInMilliSeconds&quot;</span> <span class="op">:</span> <span class="dv">131000</span><span class="op">,</span>
+                    <span class="st">&quot;videoAvgFrameRate&quot;</span> <span class="op">:</span> <span class="st">&quot;25/1&quot;</span><span class="op">,</span>
+                    <span class="st">&quot;videoBitRate&quot;</span> <span class="op">:</span> <span class="dv">3332779</span><span class="op">,</span>
                     <span class="st">&quot;videoCodecName&quot;</span> <span class="op">:</span> <span class="st">&quot;h264&quot;</span><span class="op">,</span>
-                    <span class="st">&quot;videoHeight&quot;</span> <span class="op">:</span> <span class="dv">320</span><span class="op">,</span>
-                    <span class="st">&quot;videoProfile&quot;</span> <span class="op">:</span> <span class="st">&quot;Constrained Baseline&quot;</span><span class="op">,</span>
-                    <span class="st">&quot;videoWidth&quot;</span> <span class="op">:</span> <span class="dv">560</span>
+                    <span class="st">&quot;videoHeight&quot;</span> <span class="op">:</span> <span class="dv">720</span><span class="op">,</span>
+                    <span class="st">&quot;videoProfile&quot;</span> <span class="op">:</span> <span class="st">&quot;High&quot;</span><span class="op">,</span>
+                    <span class="st">&quot;videoWidth&quot;</span> <span class="op">:</span> <span class="dv">1280</span>
                 <span class="op">}</span>
             <span class="op">}</span>
         ]<span class="op">,</span>
-        <span class="st">&quot;numFound&quot;</span> <span class="op">:</span> <span class="dv">91</span>
+        <span class="st">&quot;numFound&quot;</span> <span class="op">:</span> <span class="dv">1</span>
     <span class="op">}</span>
 <span class="op">}</span></code></pre></div>
 <h2 id="error-response">Error Response</h2>
 <p>See <a href="A.1-Common-error-responses.html">Common Error Responses</a></p>
 <h2 id="sample-call">Sample Call</h2>
 <p>Assuming: * UserKey: 5 * APIKey: SU1.8ZO1O2zVeBMNv9lzZ0whABXSAdjWrR~rpcnI5eaHNO2gysrNdAv8BNoWZB1eLP</p>
-<p><code>curl -k -v -u 5:SU1.8ZO1O2zVeBMNv9lzZ0whABXSAdjWrR~rpcnI5eaHNO2gysrNdAv8BNoWZB1eLP  &quot;https://mms-api.catrasoft.cloud/catramms/v1/content?start=0&amp;rows=1&amp;contentType=video&amp;startIngestionDate=2018-04-26T07:19:11Z&amp;endIngestionDate=2018-04-26T07:20:11Z&quot;</code></p>
+<p><code>curl -k -v -u 5:SU1.8ZO1O2zVeBMNv9lzZ0whABXSAdjWrR~rpcnI5eaHNO2gysrNdAv8BNoWZB1eLP  &quot;https://mms-api.catrasoft.cloud/catramms/v1/mediaItems?start=0&amp;rows=1&amp;contentType=video&amp;startIngestionDate=2018-04-26T07:19:11Z&amp;endIngestionDate=2018-04-26T07:20:11Z&quot;</code></p>
 <p>or</p>
-<p><code>curl -k -v -u 5:SU1.8ZO1O2zVeBMNv9lzZ0whABXSAdjWrR~rpcnI5eaHNO2gysrNdAv8BNoWZB1eLP  &quot;https://mms-api.catrasoft.cloud/catramms/v1/content/141&quot;</code></p>
+<p><code>curl -k -v -u 5:SU1.8ZO1O2zVeBMNv9lzZ0whABXSAdjWrR~rpcnI5eaHNO2gysrNdAv8BNoWZB1eLP  &quot;https://mms-api.catrasoft.cloud/catramms/v1/mediaItems/141&quot;</code></p>
