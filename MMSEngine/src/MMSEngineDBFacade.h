@@ -638,7 +638,7 @@ public:
 
     tuple<int64_t,shared_ptr<Workspace>,bool,bool> checkAPIKey (string apiKey);
 
-    int64_t login (
+    pair<int64_t,string> login (
         string eMailAddress, string password, 
         vector<tuple<string,string,bool>>& vWorkspaceNameAPIKeyAndIfOwner);
 

@@ -971,12 +971,13 @@ tuple<int64_t,shared_ptr<Workspace>,bool,bool> MMSEngineDBFacade::checkAPIKey (s
     return userKeyWorkspaceAndFlags;
 }
 
-int64_t MMSEngineDBFacade::login (
+pair<int64_t,string> MMSEngineDBFacade::login (
         string eMailAddress, string password, 
         vector<tuple<string,string,bool>>& vWorkspaceNameAPIKeyAndIfOwner)
 {
     shared_ptr<Workspace> workspace;
     int64_t         userKey;
+    string          userName;
     string          flags;
     string          lastSQLCommand;
 
@@ -991,7 +992,7 @@ int64_t MMSEngineDBFacade::login (
         
         {
             lastSQLCommand = 
-                "select userKey from MMS_User where eMailAddress = ? and password = ?";
+                "select userKey, name from MMS_User where eMailAddress = ? and password = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, eMailAddress);
@@ -1001,6 +1002,7 @@ int64_t MMSEngineDBFacade::login (
             if (resultSet->next())
             {
                 userKey = resultSet->getInt64("userKey");
+                userName = resultSet->getString("name");
             }
             else
             {
@@ -1111,7 +1113,7 @@ int64_t MMSEngineDBFacade::login (
         throw e;
     }
     
-    return userKey;
+    return make_pair(userKey, userName);
 }
 
 /*

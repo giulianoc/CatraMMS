@@ -1615,21 +1615,23 @@ void API::login(
             
             vector<tuple<string,string,bool>> vWorkspaceNameAPIKeyAndIfOwner;
             
-            int userKey = _mmsEngineDBFacade->login(
+            pair<int64_t,string> userKeyAndName = _mmsEngineDBFacade->login(
                     email, 
                     password,
                     vWorkspaceNameAPIKeyAndIfOwner
                 );
 
             _logger->info(__FILEREF__ + "Login User"
-                + ", userKey: " + to_string(userKey)
+                + ", userKey: " + to_string(userKeyAndName.first)
+                + ", userName: " + userKeyAndName.second
                 + ", vWorkspaceNameAPIKeyAndIfOwner.size: " + to_string(vWorkspaceNameAPIKeyAndIfOwner.size())
                 + ", email: " + email
             );
             
             string responseBody = string("{ ");
 
-            responseBody += ("\"userKey\": " + to_string(userKey) + ", ");
+            responseBody += ("\"userKey\": " + to_string(userKeyAndName.first) + ", ");
+            responseBody += ("\"userName\": \"" + userKeyAndName.second + "\", ");
             
             responseBody += ("\"workspaces\": [ ");
 
