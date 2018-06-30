@@ -4,7 +4,6 @@ import org.apache.commons.httpclient.*;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
-import org.primefaces.model.UploadedFile;
 import sun.net.www.protocol.http.HttpURLConnection;
 
 import javax.net.ssl.*;

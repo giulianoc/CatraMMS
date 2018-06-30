@@ -27,7 +27,8 @@ public class Login implements Serializable {
     private String originURI;
     private String pwd;
     private String msg;
-    private String user;
+    private String emailAddress;
+    private String userName;
 
     //validate login
     public String validateUsernamePassword()
@@ -39,7 +40,10 @@ public class Login implements Serializable {
         try
         {
             CatraMMS catraMMS = new CatraMMS();
-            userKey = catraMMS.login(user, pwd, workspaceDetailsList);
+            List<Object> userKeyAndPassword = catraMMS.login(emailAddress, pwd, workspaceDetailsList);
+
+            userKey = (Long) userKeyAndPassword.get(0);
+            userName = (String) userKeyAndPassword.get(1);
 
             if (workspaceDetailsList.size() == 0)
                 throw new Exception("No Workspace available");
@@ -58,7 +62,7 @@ public class Login implements Serializable {
         if (valid)
         {
             HttpSession session = SessionUtils.getSession();
-            session.setAttribute("username", user);
+            session.setAttribute("username", userName);
             session.setAttribute("userKey", userKey);
             session.setAttribute("workspaceDetailsList", workspaceDetailsList);
             session.setAttribute("workspaceName", workspaceDetailsList.get(0).getName());
@@ -102,12 +106,23 @@ public class Login implements Serializable {
     }
 
     //logout event, invalidate session
-    public String logout()
+    public void logout()
     {
-        HttpSession session = SessionUtils.getSession();
-        session.invalidate();
+        try
+        {
+            HttpSession session = SessionUtils.getSession();
+            session.invalidate();
 
-        return "login";
+            String url = "login.xhtml";
+
+            mLogger.info("Redirect to " + url);
+            FacesContext.getCurrentInstance().getExternalContext().redirect(url);
+            // return "login";
+        }
+        catch (Exception e)
+        {
+            mLogger.error("Redirect failed: " + originURI);
+        }
     }
 
     public String getOriginURI() {
@@ -134,12 +149,19 @@ public class Login implements Serializable {
         this.msg = msg;
     }
 
-    public String getUser() {
-        return user;
+    public String getEmailAddress() {
+        return emailAddress;
     }
 
-    public void setUser(String user) {
-        this.user = user;
+    public void setEmailAddress(String emailAddress) {
+        this.emailAddress = emailAddress;
     }
 
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
 }

@@ -10,8 +10,8 @@ public class IngestionJob implements Serializable {
     private Long ingestionJobKey;
     private String label;
     private String ingestionType;
-    private Date startIngestion;
-    private Date endIngestion;
+    private Date startProcessing;
+    private Date endProcessing;
     private String status;
     private String errorMessage;
     private Long downloadingProgress;
@@ -44,20 +44,20 @@ public class IngestionJob implements Serializable {
         this.ingestionType = ingestionType;
     }
 
-    public Date getStartIngestion() {
-        return startIngestion;
+    public Date getStartProcessing() {
+        return startProcessing;
     }
 
-    public void setStartIngestion(Date startIngestion) {
-        this.startIngestion = startIngestion;
+    public void setStartProcessing(Date startProcessing) {
+        this.startProcessing = startProcessing;
     }
 
-    public Date getEndIngestion() {
-        return endIngestion;
+    public Date getEndProcessing() {
+        return endProcessing;
     }
 
-    public void setEndIngestion(Date endIngestion) {
-        this.endIngestion = endIngestion;
+    public void setEndProcessing(Date endProcessing) {
+        this.endProcessing = endProcessing;
     }
 
     public String getStatus() {

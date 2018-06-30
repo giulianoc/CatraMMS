@@ -28,7 +28,7 @@ public class CatraMMS {
     private String mmsBinaryHostName = "mms-binary.catrasoft.cloud";
     private int mmsBinaryPort = 80;
 
-    public Long login(String username, String password, List<WorkspaceDetails> workspaceDetailsList)
+    public List<Object> login(String username, String password, List<WorkspaceDetails> workspaceDetailsList)
             throws Exception
     {
         String mmsInfo;
@@ -60,12 +60,16 @@ public class CatraMMS {
             throw new Exception(errorMessage);
         }
 
+        List<Object> userKeyAndName = new ArrayList<>();
+
         Long userKey;
+        String userName;
 
         try
         {
             JSONObject joWMMSInfo = new JSONObject(mmsInfo);
             userKey = joWMMSInfo.getLong("userKey");
+            userName = joWMMSInfo.getString("userName");
             JSONArray jaWorkspacesInfo = joWMMSInfo.getJSONArray("workspaces");
 
             for (int workspaceIndex = 0; workspaceIndex < jaWorkspacesInfo.length(); workspaceIndex++)
@@ -88,7 +92,10 @@ public class CatraMMS {
             throw new Exception(errorMessage);
         }
 
-        return userKey;
+        userKeyAndName.add(userKey);
+        userKeyAndName.add(userName);
+
+        return userKeyAndName;
     }
 
     public IngestionResult ingestWorkflow(String username, String password,
@@ -1203,11 +1210,14 @@ public class CatraMMS {
             ingestionJob.setIngestionJobKey(ingestionJobInfo.getLong("ingestionJobKey"));
             ingestionJob.setLabel(ingestionJobInfo.getString("label"));
             ingestionJob.setIngestionType(ingestionJobInfo.getString("ingestionType"));
-            ingestionJob.setStartIngestion(simpleDateFormat.parse(ingestionJobInfo.getString("startIngestion")));
-            if (ingestionJobInfo.isNull("endIngestion"))
-                ingestionJob.setEndIngestion(null);
+            if (ingestionJobInfo.isNull("startProcessing"))
+                ingestionJob.setStartProcessing(null);
             else
-                ingestionJob.setEndIngestion(simpleDateFormat.parse(ingestionJobInfo.getString("endIngestion")));
+                ingestionJob.setStartProcessing(simpleDateFormat.parse(ingestionJobInfo.getString("startProcessing")));
+            if (ingestionJobInfo.isNull("endProcessing"))
+                ingestionJob.setEndProcessing(null);
+            else
+                ingestionJob.setEndProcessing(simpleDateFormat.parse(ingestionJobInfo.getString("endProcessing")));
             ingestionJob.setStatus(ingestionJobInfo.getString("status"));
             if (ingestionJobInfo.isNull("errorMessage"))
                 ingestionJob.setErrorMessage(null);

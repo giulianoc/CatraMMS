@@ -1,9 +1,10 @@
 <?xml version='1.0' encoding='UTF-8' ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html
+        xmlns:p="http://primefaces.org/ui"
         xmlns:f="http://xmlns.jcp.org/jsf/core"
         xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:h="http://java.sun.com/jsf/html">
+        xmlns:h="http://java.sun.com/jsf/html">
 
 <f:metadata>
     <f:viewParam name="originURI" value="#{login.originURI}" />
@@ -14,20 +15,38 @@
 </h:head>
 <h:body>
     <h:form>
-        <h3>MMS Login</h3>
-        <h:outputText value="Username" />
-        <h:inputText id="username" value="#{login.user}"></h:inputText>
-        <h:message for="username"></h:message>
-        <br></br><br></br>
+        <p:panel header="MMS Login" style="width: 40%;margin-top:100px;margin-left: 30%" >
+            <p:panelGrid style="width: 100%" styleClass="ui-noborder" >
 
-        <h:outputText value="Password" />
-        <h:inputSecret id="password" value="#{login.pwd}"></h:inputSecret>
-        <h:message for="password"></h:message>
-        <br></br><br></br>
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Username" />
+                    </p:column>
+                    <p:column>
+                        <p:inputText style="width: 100%" value="#{login.emailAddress}" placeholder="username" />
+                    </p:column>
+                </p:row>
 
-        <h:commandButton action="#{login.validateUsernamePassword}"
-                         value="Login">
-        </h:commandButton>
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Password" />
+                    </p:column>
+                    <p:column>
+                        <p:password style="width: 100%" value="#{login.pwd}" />
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                    </p:column>
+                    <p:column>
+                        <p:commandButton action="#{login.validateUsernamePassword}"
+                                         value="Login">
+                        </p:commandButton>
+                    </p:column>
+                </p:row>
+            </p:panelGrid>
+        </p:panel>
     </h:form>
 </h:body>
 </html>

@@ -160,7 +160,7 @@
 
             <p:toolbarGroup align="right">
 
-                <p:outputLabel value="Welcome #{login.user}" />
+                <p:outputLabel value="Welcome #{login.userName}" />
 
                 <span class="ui-separator">
                     <span class="ui-icon ui-icon-grip-dotted-vertical" />
@@ -241,8 +241,8 @@
             <p:tab rendered="#{mediaItemDetails.mediaItem.contentType == 'Video'}" title="Video Info">
 
                 <p:panelGrid columns="2" cellpadding="10">
-                    <p:outputLabel value="Duration in milliseconds: " />
-                    <p:outputLabel value="#{mediaItemDetails.mediaItem.videoDetails.durationInMilliseconds}" />
+                    <p:outputLabel value="Duration: " />
+                    <p:outputLabel value="#{mediaItemDetails.getDurationAsString(mediaItemDetails.mediaItem.videoDetails.durationInMilliseconds)} (#{mediaItemDetails.mediaItem.videoDetails.durationInMilliseconds})" />
 
                     <p:outputLabel value="Bit Rate: " />
                     <p:outputLabel value="#{mediaItemDetails.mediaItem.videoDetails.bitRate}" />
@@ -284,8 +284,8 @@
             <p:tab rendered="#{mediaItemDetails.mediaItem.contentType == 'Audio'}" title="Audio Info">
 
                 <p:panelGrid columns="2" cellpadding="10">
-                    <p:outputLabel value="Duration in milliseconds: " />
-                    <p:outputLabel value="#{mediaItemDetails.mediaItem.audioDetails.durationInMilliseconds}" />
+                    <p:outputLabel value="Duration: " />
+                    <p:outputLabel value="#{mediaItemDetails.getDurationAsString(mediaItemDetails.mediaItem.audioDetails.durationInMilliseconds)} (#{mediaItemDetails.mediaItem.audioDetails.durationInMilliseconds})" />
 
                     <p:outputLabel value="Codec Name: " />
                     <p:outputLabel value="#{mediaItemDetails.mediaItem.audioDetails.codecName}" />

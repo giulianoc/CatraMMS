@@ -31,7 +31,7 @@
 
             <p:toolbarGroup align="right">
 
-                <p:outputLabel value="Welcome #{login.user}" />
+                <p:outputLabel value="Welcome #{login.userName}" />
 
                 <span class="ui-separator">
                     <span class="ui-icon ui-icon-grip-dotted-vertical" />
@@ -75,13 +75,13 @@
             <p:outputLabel value="Type: " />
             <p:outputLabel value="#{ingestionJobDetails.ingestionJob.ingestionType}" />
 
-            <p:outputLabel value="Start: " />
-            <p:outputLabel value="#{ingestionJobDetails.ingestionJob.startIngestion}">
+            <p:outputLabel value="Start Processing: " />
+            <p:outputLabel value="#{ingestionJobDetails.ingestionJob.startProcessing}">
                 <f:convertDateTime type="date" pattern="dd-MM-yyyy HH:mm:ss" timeZone="CET"/>
             </p:outputLabel>
 
-            <p:outputLabel value="End: " />
-            <p:outputLabel value="#{ingestionJobDetails.ingestionJob.endIngestion}">
+            <p:outputLabel value="End Processing: " />
+            <p:outputLabel value="#{ingestionJobDetails.ingestionJob.endProcessing}">
                 <f:convertDateTime type="date" pattern="dd-MM-yyyy HH:mm:ss" timeZone="CET"/>
             </p:outputLabel>
 
