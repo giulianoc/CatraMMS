@@ -2847,7 +2847,7 @@ int64_t MMSEngineDBFacade::addIngestionJob (
         {
             {
                 lastSQLCommand = 
-                    "insert into MMS_IngestionJob (ingestionJobKey, ingestionRootKey, label, mediaItemKey, physicalPathKey, metaDataContent, ingestionType, startProcessing, endIngestion, downloadingProgress, uploadingProgress, sourceBinaryTransferred, processorMMS, status, errorMessage) values ("
+                    "insert into MMS_IngestionJob (ingestionJobKey, ingestionRootKey, label, mediaItemKey, physicalPathKey, metaDataContent, ingestionType, startProcessing, endProcessing, downloadingProgress, uploadingProgress, sourceBinaryTransferred, processorMMS, status, errorMessage) values ("
                                                   "NULL,            ?,                ?,     NULL,         NULL,            ?,               ?,             NULL,            NULL,         NULL,                NULL,              0,                       NULL,         ?,      NULL)";
 
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -3136,7 +3136,7 @@ void MMSEngineDBFacade::updateIngestionJob (
         if (MMSEngineDBFacade::isIngestionStatusFinalState(newIngestionStatus))
         {
             lastSQLCommand = 
-                "update MMS_IngestionJob set status = ?, endIngestion = NOW(), processorMMS = ?, errorMessage = ? where ingestionJobKey = ?";
+                "update MMS_IngestionJob set status = ?, endProcessing = NOW(), processorMMS = ?, errorMessage = ? where ingestionJobKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -3291,7 +3291,7 @@ void MMSEngineDBFacade::updateIngestionJob (
         if (MMSEngineDBFacade::isIngestionStatusFinalState(newIngestionStatus))
         {
             lastSQLCommand = 
-                "update MMS_IngestionJob set status = ?, mediaItemKey = ?, physicalPathKey = ?, endIngestion = NOW(), processorMMS = ?, errorMessage = ? where ingestionJobKey = ?";
+                "update MMS_IngestionJob set status = ?, mediaItemKey = ?, physicalPathKey = ?, endProcessing = NOW(), processorMMS = ?, errorMessage = ? where ingestionJobKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -3455,7 +3455,7 @@ void MMSEngineDBFacade::updateIngestionJob (
         if (MMSEngineDBFacade::isIngestionStatusFinalState(newIngestionStatus))
         {
             lastSQLCommand = 
-                "update MMS_IngestionJob set ingestionType = ?, status = ?, endIngestion = NOW(), processorMMS = ?, errorMessage = ? where ingestionJobKey = ?";
+                "update MMS_IngestionJob set ingestionType = ?, status = ?, endProcessing = NOW(), processorMMS = ?, errorMessage = ? where ingestionJobKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -3607,7 +3607,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
             }
 
             lastSQLCommand = 
-                "update MMS_IngestionJob set status = ?, endIngestion = NOW() where ingestionJobKey in "
+                "update MMS_IngestionJob set status = ?, endProcessing = NOW() where ingestionJobKey in "
                 "(select ingestionJobKey from MMS_IngestionJobDependency where dependOnIngestionJobKey = ? and dependOnSuccess = ?)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
@@ -10742,7 +10742,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             IngestionStatus newIngestionStatus = IngestionStatus::End_TaskSuccess;
             
             lastSQLCommand = 
-                "update MMS_IngestionJob set mediaItemKey = ?, status = ?, endIngestion = NOW(), processorMMS = NULL where ingestionJobKey = ?";
+                "update MMS_IngestionJob set mediaItemKey = ?, status = ?, endProcessing = NOW(), processorMMS = NULL where ingestionJobKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
