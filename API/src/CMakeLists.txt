@@ -30,9 +30,9 @@ SET (SOURCES_API
 	API.cpp
 )
 
-SET (SOURCES_UPLOADBINARY
-	UploadBinary.cpp
-)
+#SET (SOURCES_UPLOADBINARY
+#	UploadBinary.cpp
+#)
 
 SET (SOURCES_FFMPEGENCODER
 	FFMPEGEncoder.cpp
@@ -89,33 +89,33 @@ target_link_libraries (api.fcgi ErrMsg)
     list(APPEND TARGETS api.fcgi)
 
 #UploadBinary
-    add_executable(uploadBinary.cgi ${SOURCES_UPLOADBINARY} ${COMMON_SOURCES} ${HEADERS})
-    target_link_libraries (uploadBinary.cgi MMSEngine)
-    target_link_libraries (uploadBinary.cgi FFMpeg)
-    target_link_libraries (uploadBinary.cgi mysqlcppconn)
-    target_link_libraries (uploadBinary.cgi jsoncpp)
-    if (APPLE)
-    else()
-	    target_link_libraries (uploadBinary.cgi Magick++-7.Q16HDRI)
-    endif()
-	#target_link_libraries(uploadBinary.cgi fcgi++)
-    target_link_libraries(uploadBinary.cgi curl)
-    target_link_libraries(uploadBinary.cgi curlpp)
-    target_link_libraries(uploadBinary.cgi fcgi)
-    target_link_libraries (uploadBinary.cgi Tools)
-target_link_libraries (uploadBinary.cgi ErrMsg)
-    if(CRYPTO_FOUND)
-	    if (APPLE)
-		    target_link_libraries (uploadBinary.cgi ${CRYPTO_LIBRARIES})
-	    else()
-		target_link_libraries (uploadBinary.cgi crypt)
-	    endif()
-    endif()
-    if (ZLIB_FOUND)
-	    target_link_libraries(uploadBinary.cgi ${ZLIB_LIBRARIES})
-    endif()
-    target_link_libraries (uploadBinary.cgi pthread)
-    list(APPEND TARGETS uploadBinary.cgi)
+#    add_executable(uploadBinary.cgi ${SOURCES_UPLOADBINARY} ${COMMON_SOURCES} ${HEADERS})
+#    target_link_libraries (uploadBinary.cgi MMSEngine)
+#    target_link_libraries (uploadBinary.cgi FFMpeg)
+#    target_link_libraries (uploadBinary.cgi mysqlcppconn)
+#    target_link_libraries (uploadBinary.cgi jsoncpp)
+#    if (APPLE)
+#    else()
+#	    target_link_libraries (uploadBinary.cgi Magick++-7.Q16HDRI)
+#    endif()
+#	#target_link_libraries(uploadBinary.cgi fcgi++)
+#    target_link_libraries(uploadBinary.cgi curl)
+#    target_link_libraries(uploadBinary.cgi curlpp)
+#    target_link_libraries(uploadBinary.cgi fcgi)
+#    target_link_libraries (uploadBinary.cgi Tools)
+#target_link_libraries (uploadBinary.cgi ErrMsg)
+#    if(CRYPTO_FOUND)
+#	    if (APPLE)
+#		    target_link_libraries (uploadBinary.cgi ${CRYPTO_LIBRARIES})
+#	    else()
+#		target_link_libraries (uploadBinary.cgi crypt)
+#	    endif()
+#    endif()
+#    if (ZLIB_FOUND)
+#	    target_link_libraries(uploadBinary.cgi ${ZLIB_LIBRARIES})
+#    endif()
+#    target_link_libraries (uploadBinary.cgi pthread)
+#    list(APPEND TARGETS uploadBinary.cgi)
 
 #FFMPEGEncoder
     add_executable(ffmpegEncoder.fcgi ${SOURCES_FFMPEGENCODER} ${COMMON_SOURCES} ${HEADERS})
@@ -147,5 +147,5 @@ target_link_libraries (ffmpegEncoder.fcgi ErrMsg)
     list(APPEND TARGETS ffmpegEncoder.fcgi)
 
 
-install (TARGETS api.fcgi uploadBinary.cgi ffmpegEncoder.fcgi DESTINATION bin/cgi)
+install (TARGETS api.fcgi ffmpegEncoder.fcgi DESTINATION bin/cgi)
 

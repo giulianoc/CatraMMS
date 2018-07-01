@@ -1,0 +1,45 @@
+<h2 id="overview">Overview</h2>
+<ul>
+<li>Share a Workspace with another User</li>
+<li>Create a new User if not already present in the MMS</li>
+<li>An email is sent to the User containing the confirmation code. It will be used to confirm that the User is able to work with the shared Workspace (<a href="COMMAND.2-Confirm-the-User-registration.html">confirm</a>).</li>
+<li>The userKey is returned to the client</li>
+</ul>
+<h2 id="uri">URI</h2>
+<p>/catramms/v1/workspace/:WorkspaceKey/share?:ingestWorkflow&amp;:createProfiles&amp;:deliveryAuthorization&amp;:shareWorkspace</p>
+<h2 id="method">Method</h2>
+<p>PUT</p>
+<h2 id="url-params">URL Params</h2>
+<h3 id="required">Required</h3>
+<ul>
+<li>WorkspaceKey=[number]</li>
+<li>example: WorkspaceKey=12</li>
+<li>ingestWorkflow=[boolean]</li>
+<li>example: ingestWorkflow=true</li>
+<li>createProfiles=[boolean]</li>
+<li>example: createProfiles=true</li>
+<li>deliveryAuthorization=[boolean]</li>
+<li>example: deliveryAuthorization=true</li>
+<li>shareWorkspace=[boolean]</li>
+<li>example: shareWorkspace=true</li>
+</ul>
+<h3 id="optional">Optional</h3>
+<p>None</p>
+<h2 id="payload-data">Payload Data</h2>
+<div class="sourceCode"><pre class="sourceCode javascript"><code class="sourceCode javascript"><span class="op">{</span>
+   <span class="st">&quot;Name&quot;</span><span class="op">:</span> <span class="st">&quot;giuliano&quot;</span><span class="op">,</span>
+   <span class="st">&quot;EMail&quot;</span><span class="op">:</span> <span class="st">&quot;admin@mycompany.com&quot;</span><span class="op">,</span>
+   <span class="st">&quot;Password&quot;</span><span class="op">:</span> <span class="st">&quot;kskhkd_3rR&quot;</span><span class="op">,</span>
+   <span class="st">&quot;Country&quot;</span><span class="op">:</span> <span class="st">&quot;Italy&quot;</span>
+<span class="op">}</span></code></pre></div>
+<h2 id="success-response">Success Response</h2>
+<h3 id="code">Code</h3>
+<p>201 Created</p>
+<h3 id="content">Content</h3>
+<div class="sourceCode"><pre class="sourceCode javascript"><code class="sourceCode javascript"><span class="op">{</span> 
+   <span class="st">&quot;userKey&quot;</span><span class="op">:</span> <span class="dv">12</span>
+<span class="op">}</span></code></pre></div>
+<h2 id="error-response">Error Response</h2>
+<p>See <a href="A.1-Common-error-responses.html">Common Error Responses</a></p>
+<h2 id="sample-call">Sample Call</h2>
+<p>curl -k -v -X POST -d '{&quot;Name&quot;: &quot;Giuliano&quot;, &quot;EMail&quot;: &quot;giuliano@catrasoftware.it&quot;, &quot;Password&quot;: &quot;giuliano&quot;, &quot;Country&quot;: &quot;Italy&quot; }' https://mms-api.catrasoft.cloud/catramms/v1/workspace/123/share?ingestWorkflow=true&amp;createProfiles=false&amp;deliveryAuthorization=false&amp;shareWorkspace=false</p>

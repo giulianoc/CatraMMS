@@ -259,8 +259,9 @@ int APICommon::operator()()
                 requestURI = it->second;
         }
 
-        tuple<int64_t,shared_ptr<Workspace>,bool, bool> userKeyWorkspaceAndFlags;
-        if (basicAuthenticationRequired(requestURI, queryParameters))
+        tuple<int64_t,shared_ptr<Workspace>,bool, bool, bool, bool, bool> userKeyWorkspaceAndFlags;
+        bool basicAuthenticationPresent = basicAuthenticationRequired(requestURI, queryParameters);
+        if (basicAuthenticationPresent)
         {
             try
             {
@@ -388,7 +389,7 @@ int APICommon::operator()()
             if ((it = requestDetails.find("REQUEST_METHOD")) != requestDetails.end())
                 requestMethod = it->second;
 
-            string xCatraMMSResumeHeader;
+            // string xCatraMMSResumeHeader;
             /*
             if (requestToUploadBinary)
             {
@@ -398,8 +399,8 @@ int APICommon::operator()()
              */
 
             manageRequestAndResponse(request, requestURI, requestMethod, queryParameters,
-                    userKeyWorkspaceAndFlags, contentLength, requestBody,
-                    xCatraMMSResumeHeader, requestDetails);            
+                    basicAuthenticationPresent, userKeyWorkspaceAndFlags, 
+                    contentLength, requestBody, requestDetails);            
         }
         catch(runtime_error e)
         {
@@ -467,6 +468,7 @@ bool APICommon::basicAuthenticationRequired(
     return basicAuthenticationRequired;
 }
 
+/*
 int APICommon::manageBinaryRequest()
 {    
 
@@ -535,7 +537,7 @@ int APICommon::manageBinaryRequest()
         throw runtime_error(errorMessage);
     }
 
-    tuple<int64_t,shared_ptr<Workspace>,bool, bool> userKeyWorkspaceAndFlags;
+    tuple<int64_t,shared_ptr<Workspace>,bool, bool,bool,bool> userKeyWorkspaceAndFlags;
     try
     {
         unordered_map<string, string>::iterator it;
@@ -681,6 +683,7 @@ int APICommon::manageBinaryRequest()
 
     return 0;
 }
+*/
 
 /*
 bool APICommon::requestToUploadBinary(unordered_map<string, string>& queryParameters)

@@ -1,0 +1,4 @@
+<p>The same repository where all the contents are saved can be shared with other users.</p>
+<p>The User requesting the sharing needs to have the 'ShareWorkspace' permission to do this activity. Moreover, the User requesting the sharing will decide the permissions that will have the new User on the Shared Workspace.</p>
+<p>The sharing of a Workspace is done in two steps: 1. share a Workspace: <a href="Command.13-Share-Workspace.html">command details</a> (HTTP PUT) 1. <strong>confirm the sharing of the Workspace</strong>. This API will send the confirmation code to the MMS system so that the User/Workspace will be enabled. It will return the API Key associated to the User and Workspace. The API Key has to be used to call any MMS API. 1. <a href="COMMAND.2-Confirm-the-User-registration.html">Confirm command details</a> (HTTP PUT)</p>
+<p>The API Key has to be 'saved' because it has to be used in any MMS API.</p>

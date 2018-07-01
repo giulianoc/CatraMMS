@@ -611,7 +611,7 @@ public:
 
     bool isMetadataPresent(Json::Value root, string field);
 
-    tuple<int64_t,int64_t,string> registerUser(
+    tuple<int64_t,int64_t,string> registerUserAndAddWorkspace(
         string userName,
         string userEmailAddress,
         string userPassword,
@@ -627,6 +627,15 @@ public:
         string languageCode,
         chrono::system_clock::time_point userExpirationDate);
     
+    pair<int64_t,string> registerUserIfNotPresentAndShareWorkspace(
+        string userName,
+        string userEmailAddress,
+        string userPassword,
+        string userCountry,
+        bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization, bool shareWorkspace,
+        int64_t workspaceKeyToBeShared,
+        chrono::system_clock::time_point userExpirationDate);
+
     tuple<string,string,string> confirmUser(string confirmationCode);
 
     /*
@@ -636,11 +645,11 @@ public:
     */
     // string getPassword(string emailAddress);
 
-    tuple<int64_t,shared_ptr<Workspace>,bool,bool> checkAPIKey (string apiKey);
+    tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool> checkAPIKey (string apiKey);
 
     pair<int64_t,string> login (
         string eMailAddress, string password, 
-        vector<tuple<string,string,bool>>& vWorkspaceNameAPIKeyAndIfOwner);
+        vector<tuple<string,string,bool,bool,bool,bool,bool,bool>>& vWorkspaceNameAPIKeyIfOwnerAndFlags);
 
     int64_t addEncodingProfilesSet (
         shared_ptr<MySQLConnection> conn, int64_t workspaceKey,

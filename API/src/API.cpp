@@ -238,12 +238,13 @@ void API::stopUploadFileProgressThread()
     this_thread::sleep_for(chrono::seconds(_progressUpdatePeriodInSeconds));
 }
 
+/*
 void API::getBinaryAndResponse(
         string requestURI,
         string requestMethod,
         string xCatraMMSResumeHeader,
         unordered_map<string, string> queryParameters,
-        tuple<int64_t,shared_ptr<Workspace>,bool,bool>& userKeyWorkspaceAndFlags,
+        tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool>& userKeyWorkspaceAndFlags,
         unsigned long contentLength
 )
 {
@@ -256,27 +257,58 @@ void API::getBinaryAndResponse(
 
     throw runtime_error(errorMessage);
 }
+*/
 
 void API::manageRequestAndResponse(
         FCGX_Request& request,
         string requestURI,
         string requestMethod,
         unordered_map<string, string> queryParameters,
-        tuple<int64_t,shared_ptr<Workspace>,bool,bool>& userKeyWorkspaceAndFlags,
+        bool basicAuthenticationPresent,
+        tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool>& userKeyWorkspaceAndFlags,
         unsigned long contentLength,
         string requestBody,
-        string xCatraMMSResumeHeader,
         unordered_map<string, string>& requestDetails
 )
 {
     
-    _logger->info(__FILEREF__ + "Received manageRequestAndResponse"
-        + ", requestURI: " + requestURI
-        + ", requestMethod: " + requestMethod
-        + ", requestBody: " + requestBody
-        + ", contentLength: " + to_string(contentLength)
-        + ", xCatraMMSResumeHeader: " + xCatraMMSResumeHeader
-    );
+    int64_t userKey;
+    shared_ptr<Workspace> workspace;
+    bool admin;
+    bool ingestWorkflow;
+    bool createProfiles;
+    bool deliveryAuthorization;
+    bool shareWorkspace;
+
+    if (basicAuthenticationPresent)
+    {
+        tie(userKey, workspace, admin, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace) 
+                = userKeyWorkspaceAndFlags;
+
+        _logger->info(__FILEREF__ + "Received manageRequestAndResponse"
+            + ", requestURI: " + requestURI
+            + ", requestMethod: " + requestMethod
+            + ", requestBody: " + requestBody
+            + ", contentLength: " + to_string(contentLength)
+            + ", userKey        " + to_string(userKey)
+            + ", workspace->_name: " + workspace->_name
+            + ", admin: " + to_string(admin)
+            + ", ingestWorkflow: " + to_string(ingestWorkflow)
+            + ", createProfiles: " + to_string(createProfiles)
+            + ", deliveryAuthorization: " + to_string(deliveryAuthorization)
+            + ", shareWorkspace: " + to_string(shareWorkspace)
+        );        
+    }
+    else
+    {
+        _logger->info(__FILEREF__ + "Received manageRequestAndResponse"
+            + ", requestURI: " + requestURI
+            + ", requestMethod: " + requestMethod
+            + ", requestBody: " + requestBody
+            + ", contentLength: " + to_string(contentLength)
+        );        
+    }
+        
 
     auto methodIt = queryParameters.find("method");
     if (methodIt == queryParameters.end())
@@ -432,31 +464,18 @@ void API::manageRequestAndResponse(
     }
     else if (method == "login")
     {
-        /*
-        bool isAdminAPI = get<2>(userKeyWorkspaceAndFlags);
-        if (!isAdminAPI)
-        {
-            string errorMessage = string("APIKey flags does not have the ADMIN permission"
-                    ", isAdminAPI: " + to_string(isAdminAPI)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 403, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        */
-        
         login(request, requestBody);
     }
     else if (method == "registerUser")
     {
-        /*
-        bool isAdminAPI = get<2>(userKeyWorkspaceAndFlags);
-        if (!isAdminAPI)
+        registerUser(request, requestBody);
+    }
+    else if (method == "shareWorkspace")
+    {
+        if (!shareWorkspace)
         {
-            string errorMessage = string("APIKey flags does not have the ADMIN permission"
-                    ", isAdminAPI: " + to_string(isAdminAPI)
+            string errorMessage = string("APIKey does not have the permission"
+                    ", shareWorkspace: " + to_string(shareWorkspace)
                     );
             _logger->error(__FILEREF__ + errorMessage);
 
@@ -464,37 +483,19 @@ void API::manageRequestAndResponse(
 
             throw runtime_error(errorMessage);
         }
-        */
-        
-        registerUser(request, requestBody);
+
+        shareWorkspace_(request, queryParameters, requestBody);
     }
     else if (method == "confirmUser")
     {
-        /*
-        bool isAdminAPI = get<2>(userKeyWorkspaceAndFlags);
-        if (!isAdminAPI)
-        {
-            string errorMessage = string("APIKey flags does not have the ADMIN permission"
-                    ", isAdminAPI: " + to_string(isAdminAPI)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 403, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        */
-        
         confirmUser(request, queryParameters);
     }
     else if (method == "createDeliveryAuthorization")
     {
-        /*
-        bool isAdminAPI = get<2>(userKeyWorkspaceAndFlags);
-        if (!isAdminAPI)
+        if (!deliveryAuthorization)
         {
-            string errorMessage = string("APIKey flags does not have the ADMIN permission"
-                    ", isAdminAPI: " + to_string(isAdminAPI)
+            string errorMessage = string("APIKey does not have the permission"
+                    ", deliveryAuthorization: " + to_string(deliveryAuthorization)
                     );
             _logger->error(__FILEREF__ + errorMessage);
 
@@ -502,25 +503,21 @@ void API::manageRequestAndResponse(
 
             throw runtime_error(errorMessage);
         }
-        */
 
         string clientIPAddress;
         auto remoteAddrIt = requestDetails.find("REMOTE_ADDR");
         if (remoteAddrIt != requestDetails.end())
             clientIPAddress = remoteAddrIt->second;
             
-        createDeliveryAuthorization(request, get<0>(userKeyWorkspaceAndFlags),
-                get<1>(userKeyWorkspaceAndFlags),
+        createDeliveryAuthorization(request, userKey, workspace,
                 clientIPAddress, queryParameters);
     }
     else if (method == "ingestion")
     {
-        /*
-        bool isUserAPI = get<2>(userKeyWorkspaceAndFlags);
-        if (!isUserAPI)
+        if (!ingestWorkflow)
         {
-            string errorMessage = string("APIKey flags does not have the USER permission"
-                    ", isUserAPI: " + to_string(isUserAPI)
+            string errorMessage = string("APIKey does not have the permission"
+                    ", ingestWorkflow: " + to_string(ingestWorkflow)
                     );
             _logger->error(__FILEREF__ + errorMessage);
 
@@ -528,115 +525,37 @@ void API::manageRequestAndResponse(
 
             throw runtime_error(errorMessage);
         }
-        */
         
-        ingestion(request, get<1>(userKeyWorkspaceAndFlags), queryParameters, requestBody);
+        ingestion(request, workspace, queryParameters, requestBody);
     }
     else if (method == "ingestionRootsStatus")
     {
-        /*
-        bool isUserAPI = get"ingestion<2>(userKeyWorkspaceAndFlags);
-        if (!isUserAPI)
-        {
-            string errorMessage = string("APIKey flags does not have the USER permission"
-                    ", isUserAPI: " + to_string(isUserAPI)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 403, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        */
-        
-        ingestionRootsStatus(request, get<1>(userKeyWorkspaceAndFlags), queryParameters, requestBody);
+        ingestionRootsStatus(request, workspace, queryParameters, requestBody);
     }
     else if (method == "ingestionJobsStatus")
     {
-        /*
-        bool isUserAPI = get"ingestion<2>(userKeyWorkspaceAndFlags);
-        if (!isUserAPI)
-        {
-            string errorMessage = string("APIKey flags does not have the USER permission"
-                    ", isUserAPI: " + to_string(isUserAPI)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 403, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        */
-        
-        ingestionJobsStatus(request, get<1>(userKeyWorkspaceAndFlags), queryParameters, requestBody);
+        ingestionJobsStatus(request, workspace, queryParameters, requestBody);
     }
     else if (method == "encodingJobsStatus")
     {
-        /*
-        bool isUserAPI = get"ingestion<2>(userKeyWorkspaceAndFlags);
-        if (!isUserAPI)
-        {
-            string errorMessage = string("APIKey flags does not have the USER permission"
-                    ", isUserAPI: " + to_string(isUserAPI)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 403, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        */
-        
-        encodingJobsStatus(request, get<1>(userKeyWorkspaceAndFlags), queryParameters, requestBody);
+        encodingJobsStatus(request, workspace, queryParameters, requestBody);
     }
     else if (method == "mediaItemsList")
     {
-        /*
-        bool isUserAPI = get<2>(userKeyWorkspaceAndFlags);
-        if (!isUserAPI)
-        {
-            string errorMessage = string("APIKey flags does not have the USER permission"
-                    ", isUserAPI: " + to_string(isUserAPI)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 403, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        */
-        
-        mediaItemsList(request, get<1>(userKeyWorkspaceAndFlags), queryParameters, requestBody);
+        mediaItemsList(request, workspace, queryParameters, requestBody);
     }
     else if (method == "uploadedBinary")
     {
-        /*
-        bool isUserAPI = get<2>(userKeyWorkspaceAndFlags);
-        if (!isUserAPI)
-        {
-            string errorMessage = string("APIKey flags does not have the USER permission"
-                    ", isUserAPI: " + to_string(isUserAPI)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 403, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        */
-                
-        uploadedBinary(request, requestMethod, xCatraMMSResumeHeader,
+        uploadedBinary(request, requestMethod,
             queryParameters, userKeyWorkspaceAndFlags, // contentLength,
                 requestDetails);
     }
     else if (method == "addEncodingProfilesSet")
     {
-        /*
-        bool isUserAPI = get<2>(userKeyWorkspaceAndFlags);
-        if (!isUserAPI)
+        if (!createProfiles)
         {
-            string errorMessage = string("APIKey flags does not have the USER permission"
-                    ", isUserAPI: " + to_string(isUserAPI)
+            string errorMessage = string("APIKey does not have the permission"
+                    ", createProfiles: " + to_string(createProfiles)
                     );
             _logger->error(__FILEREF__ + errorMessage);
 
@@ -644,38 +563,20 @@ void API::manageRequestAndResponse(
 
             throw runtime_error(errorMessage);
         }
-        */
                 
-        addEncodingProfilesSet(request, get<1>(userKeyWorkspaceAndFlags),
+        addEncodingProfilesSet(request, workspace,
             queryParameters, requestBody);
     }
     else if (method == "encodingProfilesSetsList")
     {
-        /*
-        bool isUserAPI = get<2>(userKeyWorkspaceAndFlags);
-        if (!isUserAPI)
-        {
-            string errorMessage = string("APIKey flags does not have the USER permission"
-                    ", isUserAPI: " + to_string(isUserAPI)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 403, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        */
-        
-        encodingProfilesSetsList(request, get<1>(userKeyWorkspaceAndFlags), queryParameters);
+        encodingProfilesSetsList(request, workspace, queryParameters);
     }
     else if (method == "addEncodingProfile")
     {
-        /*
-        bool isUserAPI = get<2>(userKeyWorkspaceAndFlags);
-        if (!isUserAPI)
+        if (!createProfiles)
         {
-            string errorMessage = string("APIKey flags does not have the USER permission"
-                    ", isUserAPI: " + to_string(isUserAPI)
+            string errorMessage = string("APIKey does not have the permission"
+                    ", createProfiles: " + to_string(createProfiles)
                     );
             _logger->error(__FILEREF__ + errorMessage);
 
@@ -683,37 +584,20 @@ void API::manageRequestAndResponse(
 
             throw runtime_error(errorMessage);
         }
-        */
                 
-        addEncodingProfile(request, get<1>(userKeyWorkspaceAndFlags),
+        addEncodingProfile(request, workspace,
             queryParameters, requestBody);
     }
     else if (method == "encodingProfilesList")
     {
-        /*
-        bool isUserAPI = get<2>(userKeyWorkspaceAndFlags);
-        if (!isUserAPI)
-        {
-            string errorMessage = string("APIKey flags does not have the USER permission"
-                    ", isUserAPI: " + to_string(isUserAPI)
-                    );
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 403, errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        */
-        
-        encodingProfilesList(request, get<1>(userKeyWorkspaceAndFlags), queryParameters);
+        encodingProfilesList(request, workspace, queryParameters);
     }
     else if (method == "testEmail")
     {
-        bool isAdminAPI = get<2>(userKeyWorkspaceAndFlags);
-        if (!isAdminAPI)
+        if (!admin)
         {
-            string errorMessage = string("APIKey flags does not have the ADMIN permission"
-                    ", isAdminAPI: " + to_string(isAdminAPI)
+            string errorMessage = string("APIKey does not have the permission"
+                    ", admin: " + to_string(admin)
                     );
             _logger->error(__FILEREF__ + errorMessage);
 
@@ -721,7 +605,7 @@ void API::manageRequestAndResponse(
 
             throw runtime_error(errorMessage);
         }
-        
+                
         string to = "giulianocatrambone@gmail.com";
         string subject = "Email test";
 
@@ -1334,7 +1218,7 @@ void API::registerUser(
             );
             
             tuple<int64_t,int64_t,string> workspaceKeyUserKeyAndConfirmationCode = 
-                _mmsEngineDBFacade->registerUser(
+                _mmsEngineDBFacade->registerUserAndAddWorkspace(
                     name, 
                     email, 
                     password,
@@ -1351,7 +1235,7 @@ void API::registerUser(
                     chrono::system_clock::now() + chrono::hours(24 * 365 * 10)     // chrono::system_clock::time_point userExpirationDate
                 );
 
-            _logger->info(__FILEREF__ + "Registered User"
+            _logger->info(__FILEREF__ + "Registered User and added Workspace"
                 + ", workspaceName: " + workspaceName
                 + ", email: " + email
                 + ", userKey: " + to_string(get<1>(workspaceKeyUserKeyAndConfirmationCode))
@@ -1370,6 +1254,248 @@ void API::registerUser(
             vector<string> emailBody;
             emailBody.push_back(string("<p>Hi ") + name + ",</p>");
             emailBody.push_back(string("<p>here follows the confirmation code ") + get<2>(workspaceKeyUserKeyAndConfirmationCode) + "</p>");
+            emailBody.push_back("<p>Bye</p>");
+            emailBody.push_back("<p>MMS technical support</p>");
+
+            EMailSender emailSender(_logger, _configuration);
+            emailSender.sendEmail(to, subject, emailBody);
+        }
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + api + " failed"
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error: ") + e.what();
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + api + " failed"
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::shareWorkspace_(
+        FCGX_Request& request,
+        unordered_map<string, string> queryParameters,
+        string requestBody)
+{
+    string api = "shareWorkspace";
+
+    _logger->info(__FILEREF__ + "Received " + api
+        + ", requestBody: " + requestBody
+    );
+
+    try
+    {
+        int64_t workspaceKeyToBeShared;
+        auto workspaceKeyIt = queryParameters.find("workspaceKey");
+        if (workspaceKeyIt == queryParameters.end())
+        {
+            string errorMessage = string("The 'workspaceKey' parameter is not found");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        workspaceKeyToBeShared = stoll(workspaceKeyIt->second);
+
+        bool ingestWorkflow;
+        auto ingestWorkflowIt = queryParameters.find("ingestWorkflow");
+        if (ingestWorkflowIt == queryParameters.end())
+        {
+            string errorMessage = string("The 'ingestWorkflow' parameter is not found");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        ingestWorkflow = (ingestWorkflowIt->second == "true" ? true : false);
+
+        bool createProfiles;
+        auto createProfilesIt = queryParameters.find("createProfiles");
+        if (createProfilesIt == queryParameters.end())
+        {
+            string errorMessage = string("The 'createProfiles' parameter is not found");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        createProfiles = (createProfilesIt->second == "true" ? true : false);
+
+        bool deliveryAuthorization;
+        auto deliveryAuthorizationIt = queryParameters.find("deliveryAuthorization");
+        if (deliveryAuthorizationIt == queryParameters.end())
+        {
+            string errorMessage = string("The 'deliveryAuthorization' parameter is not found");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        deliveryAuthorization = (deliveryAuthorizationIt->second == "true" ? true : false);
+
+        bool shareWorkspace;
+        auto shareWorkspaceIt = queryParameters.find("shareWorkspace");
+        if (shareWorkspaceIt == queryParameters.end())
+        {
+            string errorMessage = string("The 'shareWorkspace' parameter is not found");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        shareWorkspace = (shareWorkspaceIt->second == "true" ? true : false);
+
+        string name;
+        string email;
+        string password;
+        string country;
+
+        Json::Value metadataRoot;
+        try
+        {
+            Json::CharReaderBuilder builder;
+            Json::CharReader* reader = builder.newCharReader();
+            string errors;
+
+            bool parsingSuccessful = reader->parse(requestBody.c_str(),
+                    requestBody.c_str() + requestBody.size(), 
+                    &metadataRoot, &errors);
+            delete reader;
+
+            if (!parsingSuccessful)
+            {
+                string errorMessage = string("Json metadata failed during the parsing")
+                        + ", errors: " + errors
+                        + ", json data: " + requestBody
+                        ;
+                _logger->error(__FILEREF__ + errorMessage);
+
+                sendError(request, 400, errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+        catch(exception e)
+        {
+            string errorMessage = string("Json metadata failed during the parsing"
+                    ", json data: " + requestBody
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        {
+            vector<string> mandatoryFields = {
+                "Name",
+                "EMail",
+                "Password",
+                "Country"
+            };
+            for (string field: mandatoryFields)
+            {
+                if (!_mmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
+                {
+                    string errorMessage = string("Json field is not present or it is null")
+                            + ", Json field: " + field;
+                    _logger->error(__FILEREF__ + errorMessage);
+
+                    sendError(request, 400, errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+            }
+
+            email = metadataRoot.get("EMail", "XXX").asString();
+            password = metadataRoot.get("Password", "XXX").asString();
+            name = metadataRoot.get("Name", "XXX").asString();
+            country = metadataRoot.get("Country", "XXX").asString();
+        }
+
+        try
+        {
+            _logger->info(__FILEREF__ + "Registering User"
+                + ", email: " + email
+            );
+            
+            tuple<int64_t,string> userKeyAndConfirmationCode = 
+                _mmsEngineDBFacade->registerUserIfNotPresentAndShareWorkspace(
+                    name, 
+                    email, 
+                    password,
+                    country, 
+                    ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace,
+                    workspaceKeyToBeShared,
+                    chrono::system_clock::now() + chrono::hours(24 * 365 * 10)     // chrono::system_clock::time_point userExpirationDate
+                );
+
+            _logger->info(__FILEREF__ + "Registered User and shared Workspace"
+                + ", workspaceKeyToBeShared: " + to_string(workspaceKeyToBeShared)
+                + ", email: " + email
+                + ", userKey: " + to_string(get<0>(userKeyAndConfirmationCode))
+                + ", confirmationCode: " + get<1>(userKeyAndConfirmationCode)
+            );
+            
+            string responseBody = string("{ ")
+                + ", \"userKey\": " + to_string(get<0>(userKeyAndConfirmationCode)) + " "
+                + "}";
+            sendSuccess(request, 201, responseBody);
+            
+            string to = email;
+            string subject = "Confirmation code";
+            
+            vector<string> emailBody;
+            emailBody.push_back(string("<p>Hi ") + name + ",</p>");
+            emailBody.push_back(string("<p>here follows the confirmation code ") + get<1>(userKeyAndConfirmationCode) + "</p>");
             emailBody.push_back("<p>Bye</p>");
             emailBody.push_back("<p>MMS technical support</p>");
 
@@ -1613,18 +1739,18 @@ void API::login(
                 + ", email: " + email
             );
             
-            vector<tuple<string,string,bool>> vWorkspaceNameAPIKeyAndIfOwner;
+            vector<tuple<string,string,bool,bool,bool,bool,bool,bool>> vWorkspaceNameAPIKeyIfOwnerAndFlags;
             
             pair<int64_t,string> userKeyAndName = _mmsEngineDBFacade->login(
                     email, 
                     password,
-                    vWorkspaceNameAPIKeyAndIfOwner
+                    vWorkspaceNameAPIKeyIfOwnerAndFlags
                 );
 
             _logger->info(__FILEREF__ + "Login User"
                 + ", userKey: " + to_string(userKeyAndName.first)
                 + ", userName: " + userKeyAndName.second
-                + ", vWorkspaceNameAPIKeyAndIfOwner.size: " + to_string(vWorkspaceNameAPIKeyAndIfOwner.size())
+                + ", vWorkspaceNameAPIKeyIfOwnerAndFlags.size: " + to_string(vWorkspaceNameAPIKeyIfOwnerAndFlags.size())
                 + ", email: " + email
             );
             
@@ -1636,22 +1762,39 @@ void API::login(
             responseBody += ("\"workspaces\": [ ");
 
             bool firstEntry = true;
-            for (tuple<string,string,bool> workspaceNameAPIKeyAndIfOwner: vWorkspaceNameAPIKeyAndIfOwner)
+            for (tuple<string,string,bool,bool,bool,bool,bool,bool> workspaceNameAPIKeyIfOwnerAndFlags: vWorkspaceNameAPIKeyIfOwnerAndFlags)
             {
                 string workspaceName;
                 string apiKey;
                 bool ifOwner;
+                bool admin;
+                bool ingestWorkflow;
+                bool createProfiles;
+                bool deliveryAuthorization;
+                bool shareWorkspace;
                 
-                tie(workspaceName, apiKey, ifOwner) = workspaceNameAPIKeyAndIfOwner;
+                tie(workspaceName, apiKey, ifOwner, admin, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace) 
+                        = workspaceNameAPIKeyIfOwnerAndFlags;
                 
                 if (!firstEntry)
                     responseBody += ", ";
                 
-                string owner = ifOwner ? "true" : "false";
+                string sIfOwner = ifOwner ? "true" : "false";
+                string sAdmin = admin ? "true" : "false";
+                string sIngestWorkflow = ingestWorkflow ? "true" : "false";
+                string sCreateProfiles = createProfiles ? "true" : "false";
+                string sDeliveryAuthorization = deliveryAuthorization ? "true" : "false";
+                string sShareWorkspace = shareWorkspace ? "true" : "false";
+                
                 responseBody += ("{ ");
                 responseBody += ("\"workspaceName\": \"" + workspaceName + "\", ");
                 responseBody += ("\"apiKey\": \"" + apiKey + "\", ");
-                responseBody += ("\"owner\": " + owner + " ");
+                responseBody += ("\"owner\": " + sIfOwner + ", ");
+                responseBody += ("\"admin\": " + sAdmin + ", ");
+                responseBody += ("\"ingestWorkflow\": " + sIngestWorkflow + ", ");
+                responseBody += ("\"createProfiles\": " + sCreateProfiles + ", ");
+                responseBody += ("\"deliveryAuthorization\": " + sDeliveryAuthorization + ", ");
+                responseBody += ("\"shareWorkspace\": " + sShareWorkspace + " ");
                 responseBody += ("} ");
 
                 if (firstEntry)
@@ -3426,9 +3569,8 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
 void API::uploadedBinary(
         FCGX_Request& request,
         string requestMethod,
-        string xCatraMMSResumeHeader,
         unordered_map<string, string> queryParameters,
-        tuple<int64_t,shared_ptr<Workspace>,bool,bool> userKeyWorkspaceAndFlags,
+        tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool> userKeyWorkspaceAndFlags,
         // unsigned long contentLength,
         unordered_map<string, string>& requestDetails
 )

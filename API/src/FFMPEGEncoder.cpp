@@ -133,12 +133,13 @@ FFMPEGEncoder::FFMPEGEncoder(Json::Value configuration,
 FFMPEGEncoder::~FFMPEGEncoder() {
 }
 
+/*
 void FFMPEGEncoder::getBinaryAndResponse(
         string requestURI,
         string requestMethod,
         string xCatraMMSResumeHeader,
         unordered_map<string, string> queryParameters,
-        tuple<int64_t,shared_ptr<Workspace>,bool,bool>& userKeyWorkspaceAndFlags,
+        tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool>& userKeyWorkspaceAndFlags,
         unsigned long contentLength
 )
 {
@@ -151,16 +152,17 @@ void FFMPEGEncoder::getBinaryAndResponse(
 
     throw runtime_error(errorMessage);
 }
+*/
 
 void FFMPEGEncoder::manageRequestAndResponse(
         FCGX_Request& request,
         string requestURI,
         string requestMethod,
         unordered_map<string, string> queryParameters,
-        tuple<int64_t,shared_ptr<Workspace>,bool,bool>& userKeyWorkspaceAndFlags,
+        bool basicAuthenticationPresent,
+        tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool>& userKeyWorkspaceAndFlags,
         unsigned long contentLength,
         string requestBody,
-        string xCatraMMSResumeHeader,
         unordered_map<string, string>& requestDetails
 )
 {
