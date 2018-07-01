@@ -649,7 +649,7 @@ public:
 
     pair<int64_t,string> login (
         string eMailAddress, string password, 
-        vector<tuple<string,string,bool,bool,bool,bool,bool,bool>>& vWorkspaceNameAPIKeyIfOwnerAndFlags);
+        vector<tuple<int64_t,string,string,bool,bool,bool,bool,bool,bool>>& vWorkspaceNameAPIKeyIfOwnerAndFlags);
 
     int64_t addEncodingProfilesSet (
         shared_ptr<MySQLConnection> conn, int64_t workspaceKey,

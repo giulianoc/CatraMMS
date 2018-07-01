@@ -1739,7 +1739,7 @@ void API::login(
                 + ", email: " + email
             );
             
-            vector<tuple<string,string,bool,bool,bool,bool,bool,bool>> vWorkspaceNameAPIKeyIfOwnerAndFlags;
+            vector<tuple<int64_t,string,string,bool,bool,bool,bool,bool,bool>> vWorkspaceNameAPIKeyIfOwnerAndFlags;
             
             pair<int64_t,string> userKeyAndName = _mmsEngineDBFacade->login(
                     email, 
@@ -1762,8 +1762,9 @@ void API::login(
             responseBody += ("\"workspaces\": [ ");
 
             bool firstEntry = true;
-            for (tuple<string,string,bool,bool,bool,bool,bool,bool> workspaceNameAPIKeyIfOwnerAndFlags: vWorkspaceNameAPIKeyIfOwnerAndFlags)
+            for (tuple<int64_t,string,string,bool,bool,bool,bool,bool,bool> workspaceNameAPIKeyIfOwnerAndFlags: vWorkspaceNameAPIKeyIfOwnerAndFlags)
             {
+                int64_t workspaceKey;
                 string workspaceName;
                 string apiKey;
                 bool ifOwner;
@@ -1773,7 +1774,8 @@ void API::login(
                 bool deliveryAuthorization;
                 bool shareWorkspace;
                 
-                tie(workspaceName, apiKey, ifOwner, admin, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace) 
+                tie(workspaceKey, workspaceName, apiKey, ifOwner, admin, ingestWorkflow, 
+                        createProfiles, deliveryAuthorization, shareWorkspace) 
                         = workspaceNameAPIKeyIfOwnerAndFlags;
                 
                 if (!firstEntry)
@@ -1787,6 +1789,7 @@ void API::login(
                 string sShareWorkspace = shareWorkspace ? "true" : "false";
                 
                 responseBody += ("{ ");
+                responseBody += ("\"workspaceKey\": " + to_string(workspaceKey) + ", ");
                 responseBody += ("\"workspaceName\": \"" + workspaceName + "\", ");
                 responseBody += ("\"apiKey\": \"" + apiKey + "\", ");
                 responseBody += ("\"owner\": " + sIfOwner + ", ");

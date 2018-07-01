@@ -1315,7 +1315,7 @@ tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool> MMSEngineDBFacade:
 
 pair<int64_t,string> MMSEngineDBFacade::login (
         string eMailAddress, string password, 
-        vector<tuple<string,string,bool,bool,bool,bool,bool,bool>>& vWorkspaceNameAPIKeyIfOwnerAndFlags)
+        vector<tuple<int64_t,string,string,bool,bool,bool,bool,bool,bool>>& vWorkspaceNameAPIKeyIfOwnerAndFlags)
 {
     int64_t         userKey;
     string          userName;
@@ -1358,7 +1358,7 @@ pair<int64_t,string> MMSEngineDBFacade::login (
 
         {
             lastSQLCommand = 
-                "select w.name, a.apiKey, a.isOwner, a.flags from MMS_APIKey a, MMS_Workspace w where a.workspaceKey = w.workspaceKey and userKey = ?";
+                "select w.workspaceKey, w.name, a.apiKey, a.isOwner, a.flags from MMS_APIKey a, MMS_Workspace w where a.workspaceKey = w.workspaceKey and userKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, userKey);
@@ -1366,13 +1366,14 @@ pair<int64_t,string> MMSEngineDBFacade::login (
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             while (resultSet->next())
             {
+                int64_t workspaceKey = resultSet->getInt64("workspaceKey");
                 string workspaceName = resultSet->getString("name");
                 string apiKey = resultSet->getString("apiKey");
                 bool owner = resultSet->getInt("isOwner");
                 string flags = resultSet->getString("flags");
                 
-                tuple<string,string,bool,bool,bool,bool,bool,bool> workspaceNameAPIKeyIfOwnerAndFlags =
-                    make_tuple(workspaceName, apiKey, owner,
+                tuple<int64_t,string,string,bool,bool,bool,bool,bool,bool> workspaceNameAPIKeyIfOwnerAndFlags =
+                    make_tuple(workspaceKey, workspaceName, apiKey, owner,
                         flags.find("ADMIN") == string::npos ? false : true,
                         flags.find("INGEST_WORKFLOW") == string::npos ? false : true,
                         flags.find("CREATE_PROFILES") == string::npos ? false : true,
