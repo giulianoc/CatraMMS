@@ -608,7 +608,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerUserIfNotPresentAndShareWorkspac
         userKey = -1;
         {
             lastSQLCommand = 
-                "select userKey from MMS_User where userEmailAddress = ?";
+                "select userKey from MMS_User where eMailAddress = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -702,7 +702,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerUserIfNotPresentAndShareWorkspac
 
             lastSQLCommand = 
                     "insert into MMS_ConfirmationCode (userKey, flags, workspaceKey, isSharedWorkspace, creationDate, confirmationCode) values ("
-                    "?, ?, 1, NOW(), ?)";
+                    "?, ?, ?, 1, NOW(), ?)";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, userKey);
