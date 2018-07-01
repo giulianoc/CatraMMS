@@ -1486,7 +1486,7 @@ void API::shareWorkspace_(
             );
             
             string responseBody = string("{ ")
-                + ", \"userKey\": " + to_string(get<0>(userKeyAndConfirmationCode)) + " "
+                + "\"userKey\": " + to_string(get<0>(userKeyAndConfirmationCode)) + " "
                 + "}";
             sendSuccess(request, 201, responseBody);
             
