@@ -31,6 +31,122 @@
     <ui:include src="/common/loadingDialog.xhtml"/>
     <ui:include src="/common/globalConfirm.xhtml"/>
 
+    <p:dialog widgetVar="shareWorkspace" modal="true"
+              header="Share Workspace" appendTo="@(body)" width="600"
+              showEffect="fade" hideEffect="fade" resizable="false" draggable="true">
+
+        <h:form id="shareWorkspaceForm">
+
+            <p:outputLabel value="Workspace to be shared: " />
+            <p:outputLabel value="#{sessionScope.currentWorkspaceDetails.name}" style="font-weight: bold" />
+            <p:panelGrid cellpadding="10" style="width: 100%" >
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Name" />
+                    </p:column>
+                    <p:column>
+                        <p:inputText autocomplete="true"
+                                     value="#{mediaItems.shareWorkspaceName}"
+                                     placeholder="name"/>
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="EMail" />
+                    </p:column>
+                    <p:column>
+                        <p:inputText autocomplete="true"
+                                     value="#{mediaItems.shareWorkspaceEMail}"
+                                     placeholder="name"/>
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Password" />
+                    </p:column>
+                    <p:column>
+                        <p:password value="#{mediaItems.shareWorkspacePassword}" />
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Country" />
+                    </p:column>
+                    <p:column>
+                        <p:inputText autocomplete="true"
+                                     value="#{mediaItems.shareWorkspaceCountry}"
+                                     placeholder="name"/>
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Ingest Workflow" />
+                    </p:column>
+                    <p:column>
+                        <p:selectBooleanCheckbox
+                                value="#{mediaItems.shareWorkspaceIngestWorkflow}"
+                                disabled="#{!sessionScope.currentWorkspaceDetails.ingestWorkflow}"
+                                />
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Create Profiles" />
+                    </p:column>
+                    <p:column>
+                        <p:selectBooleanCheckbox
+                                value="#{mediaItems.shareWorkspaceCreateProfiles}"
+                                disabled="#{!sessionScope.currentWorkspaceDetails.createProfiles}"
+                                />
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Delivery Authorization" />
+                    </p:column>
+                    <p:column>
+                        <p:selectBooleanCheckbox
+                                value="#{mediaItems.shareWorkspaceDeliveryAuthorization}"
+                                disabled="#{!sessionScope.currentWorkspaceDetails.deliveryAuthorization}"
+                                />
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Share Workspace" />
+                    </p:column>
+                    <p:column>
+                        <p:selectBooleanCheckbox
+                                value="#{mediaItems.shareWorkspaceShareWorkspace}"
+                                disabled="#{!sessionScope.currentWorkspaceDetails.shareWorkspace}"
+                                />
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                    </p:column>
+                    <p:column>
+                        <p:commandButton action="#{mediaItems.shareWorkspace}"
+                                         value="Share Workspace"
+                                         oncomplete="PF('shareWorkspace').hide()" >
+                            <p:confirm header="Confirmation" message="Are you sure?" icon="ui-icon-alert" />
+                        </p:commandButton>
+                    </p:column>
+                </p:row>
+
+            </p:panelGrid>
+
+        </h:form>
+    </p:dialog>
+
     <h:form id="viewForm">
 
         <p:growl id="growl" showDetail="true" sticky="false" escape="false" autoUpdate="true" life="5000" />
@@ -48,18 +164,27 @@
                     <span class="ui-icon ui-icon-grip-dotted-vertical" />
                 </span>
 
-                <p:commandLink value="Logout" action="#{login.logout}" />
-
-                <span class="ui-separator">
-                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
-                </span>
-
                 <p:outputLabel value="Workspace:" />
                 <p:selectOneMenu id="workspaceName" value="#{mediaItems.workspaceName}"
                                  autoWidth="false">
                     <f:selectItems value="#{mediaItems.workspaceNames}" />
                     <p:ajax global="false" onstart="on_start()" event="change" listener="#{mediaItems.workspaceNameChanged()}" />
                 </p:selectOneMenu>
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:commandLink value="Share Workspace"
+                               disabled="#{!sessionScope.currentWorkspaceDetails.shareWorkspace}"
+                               update="shareWorkspaceForm"
+                               oncomplete="PF('shareWorkspace').show()" />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:commandLink value="Logout" action="#{login.logout}" />
 
                 <span class="ui-separator">
                     <span class="ui-icon ui-icon-grip-dotted-vertical" />

@@ -154,6 +154,20 @@ public class HttpFeedFetcher {
     }
 
     static public String fetchPostHttpsJson(String url, int timeoutInSeconds, int maxRetriesNumber,
+                                            String user, String password, String postBodyRequest)
+            throws Exception
+    {
+        return fetchBodyHttpsJson("POST", url, timeoutInSeconds, maxRetriesNumber, user, password, postBodyRequest);
+    }
+
+    static public String fetchPutHttpsJson(String url, int timeoutInSeconds, int maxRetriesNumber,
+                                            String user, String password, String postBodyRequest)
+            throws Exception
+    {
+        return fetchBodyHttpsJson("PUT", url, timeoutInSeconds, maxRetriesNumber, user, password, postBodyRequest);
+    }
+
+    static private String fetchBodyHttpsJson(String httpMethod, String url, int timeoutInSeconds, int maxRetriesNumber,
                                         String user, String password, String postBodyRequest)
             throws Exception
     {
@@ -226,7 +240,7 @@ public class HttpFeedFetcher {
                     }
 
                     conn.setDoOutput(true); // false because I do not need to append any data to this request
-                    conn.setRequestMethod("POST");
+                    conn.setRequestMethod(httpMethod);
                     {
                         byte[] bytes = postBodyRequest.getBytes("UTF-8");
                         int clength = bytes.length;

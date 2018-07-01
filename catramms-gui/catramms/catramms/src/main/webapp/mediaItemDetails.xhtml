@@ -364,7 +364,7 @@
                             </p:menuitem>
 
                             <p:menuitem id="playLink" value="Edit Video"
-                                        disabled="#{mediaItemDetails.mediaItem.contentType != 'Video'}"
+                                        disabled="#{mediaItemDetails.mediaItem.contentType != 'Video' || !sessionScope.currentWorkspaceDetails.deliveryAuthorization}"
                                         actionListener="#{mediaItemDetails.prepareCurrentMediaURL(physicalPath.physicalPathKey)}"
                                         update="showVideoForm"
                                         oncomplete="PF('showVideo').show()">

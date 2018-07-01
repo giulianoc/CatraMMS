@@ -54,7 +54,7 @@ public class SessionUtils {
         {
             String apiKey = null;
 
-            String workspaceName = (String) session.getAttribute("workspaceName");
+            WorkspaceDetails currentWorkspaceDetails = (WorkspaceDetails) session.getAttribute("currentWorkspaceDetails");
             List<WorkspaceDetails> workspaceDetailsList =
                     (List<WorkspaceDetails>) session.getAttribute("workspaceDetailsList");
 
@@ -62,7 +62,7 @@ public class SessionUtils {
             {
                 for (WorkspaceDetails workspaceDetails: workspaceDetailsList)
                 {
-                    if (workspaceDetails.getName().equalsIgnoreCase(workspaceName))
+                    if (workspaceDetails.getName().equalsIgnoreCase(currentWorkspaceDetails.getName()))
                     {
                         apiKey = workspaceDetails.getApiKey();
 

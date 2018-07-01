@@ -45,6 +45,16 @@ public class MediaItems implements Serializable {
     private Long maxStorageInMB = new Long(0);
     private List<MediaItem> mediaItemsList = new ArrayList<>();
 
+    private String shareWorkspaceName;
+    private String shareWorkspaceEMail;
+    private String shareWorkspacePassword;
+    private String shareWorkspaceCountry;
+    private boolean shareWorkspaceIngestWorkflow;
+    private boolean shareWorkspaceCreateProfiles;
+    private boolean shareWorkspaceDeliveryAuthorization;
+    private boolean shareWorkspaceShareWorkspace;
+    private Long shareWorkspaceUserKey;
+
     @PostConstruct
     public void init()
     {
@@ -85,17 +95,6 @@ public class MediaItems implements Serializable {
 
             end = calendar.getTime();
         }
-    }
-
-    public void workspaceNameChanged()
-    {
-        HttpSession session = SessionUtils.getSession();
-
-        mLogger.info("workspaceNameChanged"
-                + ", workspaceName: " + session.getAttribute("workspaceName")
-        );
-
-        fillList(true);
     }
 
     public void contentTypeChanged()
@@ -285,18 +284,84 @@ public class MediaItems implements Serializable {
         return calendar.getTime();
     }
 
+    public void shareWorkspace()
+    {
+        try {
+            Long userKey = SessionUtils.getUserKey();
+            String apiKey = SessionUtils.getAPIKey();
+            HttpSession session = SessionUtils.getSession();
+
+            WorkspaceDetails currentWorkspaceDetails = (WorkspaceDetails) session.getAttribute("currentWorkspaceDetails");
+
+            if (userKey == null || apiKey == null || apiKey.equalsIgnoreCase(""))
+            {
+                mLogger.warn("no input to require mediaItemsKey"
+                                + ", userKey: " + userKey
+                                + ", apiKey: " + apiKey
+                );
+            }
+            else
+            {
+                String username = userKey.toString();
+                String password = apiKey;
+
+                CatraMMS catraMMS = new CatraMMS();
+                shareWorkspaceUserKey = catraMMS.shareWorkspace(
+                        username, password, shareWorkspaceName, shareWorkspaceEMail, shareWorkspacePassword,
+                        shareWorkspaceCountry, shareWorkspaceIngestWorkflow, shareWorkspaceCreateProfiles,
+                        shareWorkspaceDeliveryAuthorization, shareWorkspaceShareWorkspace,
+                        currentWorkspaceDetails.getWorkspaceKey());
+            }
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "shareWorkspace failed: " + e;
+            mLogger.error(errorMessage);
+
+            FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                    "Share Workspace", errorMessage);
+            FacesContext context = FacesContext.getCurrentInstance();
+            context.addMessage(null, message);
+        }
+    }
+
+    public void workspaceNameChanged()
+    {
+        HttpSession session = SessionUtils.getSession();
+
+        WorkspaceDetails currentWorkspaceDetails = (WorkspaceDetails) session.getAttribute("currentWorkspaceDetails");
+        mLogger.info("workspaceNameChanged"
+                        + ", workspaceName: " + currentWorkspaceDetails.getName()
+        );
+
+        fillList(true);
+    }
+
     public String getWorkspaceName()
     {
         HttpSession session = SessionUtils.getSession();
 
-        return (String) session.getAttribute("workspaceName");
+        WorkspaceDetails currentWorkspaceDetails = (WorkspaceDetails) session.getAttribute("currentWorkspaceDetails");
+
+        return currentWorkspaceDetails.getName();
     }
 
     public void setWorkspaceName(String workspaceName)
     {
         HttpSession session = SessionUtils.getSession();
 
-        session.setAttribute("workspaceName", workspaceName);
+        List<WorkspaceDetails> workspaceDetailsList =
+                (List<WorkspaceDetails>) session.getAttribute("workspaceDetailsList");
+
+        for (WorkspaceDetails workspaceDetails: workspaceDetailsList)
+        {
+            if (workspaceDetails.getName().equalsIgnoreCase(workspaceName))
+            {
+                session.setAttribute("currentWorkspaceDetails", workspaceDetails);
+
+                break;
+            }
+        }
     }
 
     public List<String> getWorkspaceNames()
@@ -399,5 +464,77 @@ public class MediaItems implements Serializable {
 
     public void setMaxStorageInMB(Long maxStorageInMB) {
         this.maxStorageInMB = maxStorageInMB;
+    }
+
+    public String getShareWorkspaceName() {
+        return shareWorkspaceName;
+    }
+
+    public void setShareWorkspaceName(String shareWorkspaceName) {
+        this.shareWorkspaceName = shareWorkspaceName;
+    }
+
+    public String getShareWorkspaceEMail() {
+        return shareWorkspaceEMail;
+    }
+
+    public void setShareWorkspaceEMail(String shareWorkspaceEMail) {
+        this.shareWorkspaceEMail = shareWorkspaceEMail;
+    }
+
+    public String getShareWorkspacePassword() {
+        return shareWorkspacePassword;
+    }
+
+    public void setShareWorkspacePassword(String shareWorkspacePassword) {
+        this.shareWorkspacePassword = shareWorkspacePassword;
+    }
+
+    public String getShareWorkspaceCountry() {
+        return shareWorkspaceCountry;
+    }
+
+    public void setShareWorkspaceCountry(String shareWorkspaceCountry) {
+        this.shareWorkspaceCountry = shareWorkspaceCountry;
+    }
+
+    public boolean isShareWorkspaceIngestWorkflow() {
+        return shareWorkspaceIngestWorkflow;
+    }
+
+    public void setShareWorkspaceIngestWorkflow(boolean shareWorkspaceIngestWorkflow) {
+        this.shareWorkspaceIngestWorkflow = shareWorkspaceIngestWorkflow;
+    }
+
+    public boolean isShareWorkspaceCreateProfiles() {
+        return shareWorkspaceCreateProfiles;
+    }
+
+    public void setShareWorkspaceCreateProfiles(boolean shareWorkspaceCreateProfiles) {
+        this.shareWorkspaceCreateProfiles = shareWorkspaceCreateProfiles;
+    }
+
+    public boolean isShareWorkspaceDeliveryAuthorization() {
+        return shareWorkspaceDeliveryAuthorization;
+    }
+
+    public void setShareWorkspaceDeliveryAuthorization(boolean shareWorkspaceDeliveryAuthorization) {
+        this.shareWorkspaceDeliveryAuthorization = shareWorkspaceDeliveryAuthorization;
+    }
+
+    public boolean isShareWorkspaceShareWorkspace() {
+        return shareWorkspaceShareWorkspace;
+    }
+
+    public void setShareWorkspaceShareWorkspace(boolean shareWorkspaceShareWorkspace) {
+        this.shareWorkspaceShareWorkspace = shareWorkspaceShareWorkspace;
+    }
+
+    public Long getShareWorkspaceUserKey() {
+        return shareWorkspaceUserKey;
+    }
+
+    public void setShareWorkspaceUserKey(Long shareWorkspaceUserKey) {
+        this.shareWorkspaceUserKey = shareWorkspaceUserKey;
     }
 }

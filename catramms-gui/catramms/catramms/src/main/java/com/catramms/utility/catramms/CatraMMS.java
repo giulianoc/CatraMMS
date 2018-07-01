@@ -28,6 +28,70 @@ public class CatraMMS {
     private String mmsBinaryHostName = "mms-binary.catrasoft.cloud";
     private int mmsBinaryPort = 80;
 
+
+    public Long shareWorkspace(String username, String password,
+                               String userNameToShare, String emailAddressToShare,
+                               String passwordToShare, String countryToShare,
+                               Boolean ingestWorkflow, Boolean createProfiles,
+                               Boolean deliveryAuthorization, Boolean shareWorkspace,
+                               Long workspaceKeyToShare)
+            throws Exception
+    {
+        String mmsInfo;
+        try
+        {
+            String mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort + "/catramms/v1/workspace/"
+                    + workspaceKeyToShare + "/share"
+                    + "?ingestWorkflow=" + ingestWorkflow.toString()
+                    + "&createProfiles=" + createProfiles.toString()
+                    + "&deliveryAuthorization=" + deliveryAuthorization.toString()
+                    + "&shareWorkspace=" + shareWorkspace.toString()
+            ;
+
+            String postBodyRequest = "{ "
+                    + "\"Name\": \"" + userNameToShare + "\", "
+                    + "\"EMail\": \"" + emailAddressToShare + "\", "
+                    + "\"Password\": \"" + passwordToShare + "\", "
+                    + "\"Country\": \"" + countryToShare + "\" "
+                    + "} "
+                    ;
+
+            mLogger.info("login"
+                            + ", mmsURL: " + mmsURL
+                            + ", postBodyRequest: " + postBodyRequest
+            );
+
+            Date now = new Date();
+            mmsInfo = HttpFeedFetcher.fetchPutHttpsJson(mmsURL, timeoutInSeconds, maxRetriesNumber,
+                    username, password, postBodyRequest);
+            mLogger.info("Elapsed time login (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "shareWorkspace failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+
+        Long userKey;
+
+        try
+        {
+            JSONObject joWMMSInfo = new JSONObject(mmsInfo);
+            userKey = joWMMSInfo.getLong("userKey");
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "Parsing workspaceDetails failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+
+        return userKey;
+    }
+
     public List<Object> login(String username, String password, List<WorkspaceDetails> workspaceDetailsList)
             throws Exception
     {
@@ -77,9 +141,15 @@ public class CatraMMS {
                 JSONObject workspaceInfo = jaWorkspacesInfo.getJSONObject(workspaceIndex);
 
                 WorkspaceDetails workspaceDetails = new WorkspaceDetails();
+                workspaceDetails.setWorkspaceKey(workspaceInfo.getLong("workspaceKey"));
                 workspaceDetails.setName(workspaceInfo.getString("workspaceName"));
                 workspaceDetails.setApiKey(workspaceInfo.getString("apiKey"));
                 workspaceDetails.setOwner(workspaceInfo.getBoolean("owner"));
+                workspaceDetails.setAdmin(workspaceInfo.getBoolean("admin"));
+                workspaceDetails.setIngestWorkflow(workspaceInfo.getBoolean("ingestWorkflow"));
+                workspaceDetails.setCreateProfiles(workspaceInfo.getBoolean("createProfiles"));
+                workspaceDetails.setDeliveryAuthorization(workspaceInfo.getBoolean("deliveryAuthorization"));
+                workspaceDetails.setShareWorkspace(workspaceInfo.getBoolean("shareWorkspace"));
 
                 workspaceDetailsList.add(workspaceDetails);
             }

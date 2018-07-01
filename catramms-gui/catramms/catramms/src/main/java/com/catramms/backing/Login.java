@@ -65,11 +65,12 @@ public class Login implements Serializable {
             session.setAttribute("username", userName);
             session.setAttribute("userKey", userKey);
             session.setAttribute("workspaceDetailsList", workspaceDetailsList);
-            session.setAttribute("workspaceName", workspaceDetailsList.get(0).getName());
+            session.setAttribute("currentWorkspaceDetails", workspaceDetailsList.get(0));
 
             try
             {
-                if (originURI == null || originURI.equalsIgnoreCase(""))
+                if (originURI == null || originURI.equalsIgnoreCase("")
+                        || originURI.equalsIgnoreCase("/catramms/login.xhtml"))
                     originURI = "mediaItems.xhtml";
 
                 mLogger.info("Redirect to " + originURI);
