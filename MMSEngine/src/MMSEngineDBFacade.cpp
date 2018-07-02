@@ -5514,150 +5514,6 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                     }
                 }
 
-                if (contentType == ContentType::Video)
-                {
-                    int64_t durationInMilliSeconds;
-                    int videoWidth;
-                    int videoHeight;
-                    long bitRate;
-                    string videoCodecName;
-                    string videoProfile;
-                    string videoAvgFrameRate;
-                    long videoBitRate;
-                    string audioCodecName;
-                    long audioSampleRate;
-                    int audioChannels;
-                    long audioBitRate;
-
-                    int64_t physicalPathKey = -1;
-                    tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
-                        videoDetails = getVideoDetails(localMediaItemKey, physicalPathKey);
-
-                    tie(durationInMilliSeconds, bitRate,
-                        videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
-                        audioCodecName, audioSampleRate, audioChannels, audioBitRate) = videoDetails;
-
-                    Json::Value videoDetailsRoot;
-
-                    field = "durationInMilliSeconds";
-                    videoDetailsRoot[field] = durationInMilliSeconds;
-
-                    field = "videoWidth";
-                    videoDetailsRoot[field] = videoWidth;
-
-                    field = "videoHeight";
-                    videoDetailsRoot[field] = videoHeight;
-
-                    field = "bitRate";
-                    videoDetailsRoot[field] = (int64_t) bitRate;
-
-                    field = "videoCodecName";
-                    videoDetailsRoot[field] = videoCodecName;
-
-                    field = "videoProfile";
-                    videoDetailsRoot[field] = videoProfile;
-
-                    field = "videoAvgFrameRate";
-                    videoDetailsRoot[field] = videoAvgFrameRate;
-
-                    field = "videoBitRate";
-                    videoDetailsRoot[field] = (int64_t) videoBitRate;
-
-                    field = "audioCodecName";
-                    videoDetailsRoot[field] = audioCodecName;
-
-                    field = "audioSampleRate";
-                    videoDetailsRoot[field] = (int64_t) audioSampleRate;
-
-                    field = "audioChannels";
-                    videoDetailsRoot[field] = audioChannels;
-
-                    field = "audioBitRate";
-                    videoDetailsRoot[field] = (int64_t) audioBitRate;
-
-
-                    field = "videoDetails";
-                    mediaItemRoot[field] = videoDetailsRoot;
-                }
-                else if (contentType == ContentType::Audio)
-                {
-                    int64_t durationInMilliSeconds;
-                    string codecName;
-                    long bitRate;
-                    long sampleRate;
-                    int channels;
-
-                    int64_t physicalPathKey = -1;
-                    tuple<int64_t,string,long,long,int>
-                        audioDetails = getAudioDetails(localMediaItemKey, physicalPathKey);
-
-                    tie(durationInMilliSeconds, codecName, bitRate, sampleRate, channels) 
-                            = audioDetails;
-
-                    Json::Value audioDetailsRoot;
-
-                    field = "durationInMilliSeconds";
-                    audioDetailsRoot[field] = durationInMilliSeconds;
-
-                    field = "codecName";
-                    audioDetailsRoot[field] = codecName;
-
-                    field = "bitRate";
-                    audioDetailsRoot[field] = (int64_t) bitRate;
-
-                    field = "sampleRate";
-                    audioDetailsRoot[field] = (int64_t) sampleRate;
-
-                    field = "channels";
-                    audioDetailsRoot[field] = channels;
-
-
-                    field = "audioDetails";
-                    mediaItemRoot[field] = audioDetailsRoot;
-                }
-                else if (contentType == ContentType::Image)
-                {
-                    int width;
-                    int height;
-                    string format;
-                    int quality;
-
-                    int64_t physicalPathKey = -1;
-                    tuple<int,int,string,int>
-                        imageDetails = getImageDetails(localMediaItemKey, physicalPathKey);
-
-                    tie(width, height, format, quality) 
-                            = imageDetails;
-
-                    Json::Value imageDetailsRoot;
-
-                    field = "width";
-                    imageDetailsRoot[field] = width;
-
-                    field = "height";
-                    imageDetailsRoot[field] = height;
-
-                    field = "format";
-                    imageDetailsRoot[field] = format;
-
-                    field = "quality";
-                    imageDetailsRoot[field] = quality;
-
-
-                    field = "imageDetails";
-                    mediaItemRoot[field] = imageDetailsRoot;
-                }
-                else
-                {
-                    string errorMessage = __FILEREF__ + "ContentType unmanaged"
-                        + ", mediaItemKey: " + to_string(localMediaItemKey)
-                        + ", lastSQLCommand: " + lastSQLCommand
-                    ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);  
-                }
-
                 {
                     Json::Value mediaItemProfilesRoot(Json::arrayValue);
                     
@@ -5673,9 +5529,11 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                     while (resultSetProfiles->next())
                     {
                         Json::Value profileRoot;
+                        
+                        int64_t physicalPathKey = resultSetProfiles->getInt64("physicalPathKey");
 
                         field = "physicalPathKey";
-                        profileRoot[field] = resultSetProfiles->getInt64("physicalPathKey");
+                        profileRoot[field] = physicalPathKey;
 
 
                         field = "fileFormat";
@@ -5700,6 +5558,146 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                         field = "creationDate";
                         profileRoot[field] = static_cast<string>(resultSetProfiles->getString("creationDate"));
 
+                        if (contentType == ContentType::Video)
+                        {
+                            int64_t durationInMilliSeconds;
+                            int videoWidth;
+                            int videoHeight;
+                            long bitRate;
+                            string videoCodecName;
+                            string videoProfile;
+                            string videoAvgFrameRate;
+                            long videoBitRate;
+                            string audioCodecName;
+                            long audioSampleRate;
+                            int audioChannels;
+                            long audioBitRate;
+
+                            tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
+                                videoDetails = getVideoDetails(localMediaItemKey, physicalPathKey);
+
+                            tie(durationInMilliSeconds, bitRate,
+                                videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
+                                audioCodecName, audioSampleRate, audioChannels, audioBitRate) = videoDetails;
+
+                            Json::Value videoDetailsRoot;
+
+                            field = "durationInMilliSeconds";
+                            videoDetailsRoot[field] = durationInMilliSeconds;
+
+                            field = "videoWidth";
+                            videoDetailsRoot[field] = videoWidth;
+
+                            field = "videoHeight";
+                            videoDetailsRoot[field] = videoHeight;
+
+                            field = "bitRate";
+                            videoDetailsRoot[field] = (int64_t) bitRate;
+
+                            field = "videoCodecName";
+                            videoDetailsRoot[field] = videoCodecName;
+
+                            field = "videoProfile";
+                            videoDetailsRoot[field] = videoProfile;
+
+                            field = "videoAvgFrameRate";
+                            videoDetailsRoot[field] = videoAvgFrameRate;
+
+                            field = "videoBitRate";
+                            videoDetailsRoot[field] = (int64_t) videoBitRate;
+
+                            field = "audioCodecName";
+                            videoDetailsRoot[field] = audioCodecName;
+
+                            field = "audioSampleRate";
+                            videoDetailsRoot[field] = (int64_t) audioSampleRate;
+
+                            field = "audioChannels";
+                            videoDetailsRoot[field] = audioChannels;
+
+                            field = "audioBitRate";
+                            videoDetailsRoot[field] = (int64_t) audioBitRate;
+
+
+                            field = "videoDetails";
+                            profileRoot[field] = videoDetailsRoot;
+                        }
+                        else if (contentType == ContentType::Audio)
+                        {
+                            int64_t durationInMilliSeconds;
+                            string codecName;
+                            long bitRate;
+                            long sampleRate;
+                            int channels;
+
+                            tuple<int64_t,string,long,long,int>
+                                audioDetails = getAudioDetails(localMediaItemKey, physicalPathKey);
+
+                            tie(durationInMilliSeconds, codecName, bitRate, sampleRate, channels) 
+                                    = audioDetails;
+
+                            Json::Value audioDetailsRoot;
+
+                            field = "durationInMilliSeconds";
+                            audioDetailsRoot[field] = durationInMilliSeconds;
+
+                            field = "codecName";
+                            audioDetailsRoot[field] = codecName;
+
+                            field = "bitRate";
+                            audioDetailsRoot[field] = (int64_t) bitRate;
+
+                            field = "sampleRate";
+                            audioDetailsRoot[field] = (int64_t) sampleRate;
+
+                            field = "channels";
+                            audioDetailsRoot[field] = channels;
+
+
+                            field = "audioDetails";
+                            profileRoot[field] = audioDetailsRoot;
+                        }
+                        else if (contentType == ContentType::Image)
+                        {
+                            int width;
+                            int height;
+                            string format;
+                            int quality;
+
+                            tuple<int,int,string,int>
+                                imageDetails = getImageDetails(localMediaItemKey, physicalPathKey);
+
+                            tie(width, height, format, quality) 
+                                    = imageDetails;
+
+                            Json::Value imageDetailsRoot;
+
+                            field = "width";
+                            imageDetailsRoot[field] = width;
+
+                            field = "height";
+                            imageDetailsRoot[field] = height;
+
+                            field = "format";
+                            imageDetailsRoot[field] = format;
+
+                            field = "quality";
+                            imageDetailsRoot[field] = quality;
+
+
+                            field = "imageDetails";
+                            profileRoot[field] = imageDetailsRoot;
+                        }
+                        else
+                        {
+                            string errorMessage = __FILEREF__ + "ContentType unmanaged"
+                                + ", mediaItemKey: " + to_string(localMediaItemKey)
+                                + ", lastSQLCommand: " + lastSQLCommand
+                            ;
+                            _logger->error(errorMessage);
+
+                            throw runtime_error(errorMessage);  
+                        }
 
                         mediaItemProfilesRoot.append(profileRoot);
                     }
