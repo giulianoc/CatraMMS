@@ -271,7 +271,7 @@ int APICommon::operator()()
                 {
                     _logger->error(__FILEREF__ + "No APIKey present into the request");
 
-                    throw NoAPIKeyPresentIntoRequest();
+                    throw WrongBasicAuthentication();
                 }
 
                 string authorizationPrefix = "Basic ";
@@ -281,7 +281,7 @@ int APICommon::operator()()
                         + ", Authorization: " + it->second
                     );
 
-                    throw NoAPIKeyPresentIntoRequest();
+                    throw WrongBasicAuthentication();
                 }
 
                 string usernameAndPasswordBase64 = it->second.substr(authorizationPrefix.length());
@@ -294,7 +294,7 @@ int APICommon::operator()()
                         + ", usernameAndPassword: " + usernameAndPassword
                     );
 
-                    throw NoAPIKeyPresentIntoRequest();
+                    throw WrongBasicAuthentication();
                 }
 
                 string userKey = usernameAndPassword.substr(0, userNameSeparator);
@@ -303,19 +303,20 @@ int APICommon::operator()()
                 // workspaceAndFlags = _mmsEngine->checkAPIKey (apiKey);
                 userKeyWorkspaceAndFlags = _mmsEngineDBFacade->checkAPIKey(apiKey);
 
-                if (get<1>(userKeyWorkspaceAndFlags)->_workspaceKey != stoll(userKey))
+                if (get<0>(userKeyWorkspaceAndFlags) != stoll(userKey))
                 {
-                    _logger->error(__FILEREF__ + "Username (WorkspaceKey) is not the same Workspace the apiKey is referring"
-                        + ", username (userKey): " + userKey
+                    _logger->error(__FILEREF__ + "Username of the basic authorization (UserKey) is not the same UserKey the apiKey is referring"
+                        + ", username of basic authorization (userKey): " + userKey
+                        + ", userKey associated to the APIKey: " + to_string(get<0>(userKeyWorkspaceAndFlags))
                         + ", apiKey: " + apiKey
                     );
 
-                    throw NoAPIKeyPresentIntoRequest();
+                    throw WrongBasicAuthentication();
                 }        
 
                 _logger->info(__FILEREF__ + "APIKey and Workspace verified successful");
             }
-            catch(NoAPIKeyPresentIntoRequest e)
+            catch(WrongBasicAuthentication e)
             {
                 _logger->error(__FILEREF__ + "APIKey failed"
                     + ", e.what(): " + e.what()
@@ -546,7 +547,7 @@ int APICommon::manageBinaryRequest()
         {
             _logger->error(__FILEREF__ + "No APIKey present into the request");
 
-            throw NoAPIKeyPresentIntoRequest();
+            throw WrongBasicAuthentication();
         }
 
         string authorizationPrefix = "Basic ";
@@ -556,7 +557,7 @@ int APICommon::manageBinaryRequest()
                 + ", Authorization: " + it->second
             );
 
-            throw NoAPIKeyPresentIntoRequest();
+            throw WrongBasicAuthentication();
         }
 
         string usernameAndPasswordBase64 = it->second.substr(authorizationPrefix.length());
@@ -569,7 +570,7 @@ int APICommon::manageBinaryRequest()
                 + ", usernameAndPassword: " + usernameAndPassword
             );
 
-            throw NoAPIKeyPresentIntoRequest();
+            throw WrongBasicAuthentication();
         }
 
         string userKey = usernameAndPassword.substr(0, userNameSeparator);
@@ -585,12 +586,12 @@ int APICommon::manageBinaryRequest()
                 + ", apiKey: " + apiKey
             );
 
-            throw NoAPIKeyPresentIntoRequest();
+            throw WrongBasicAuthentication();
         }        
 
         _logger->info(__FILEREF__ + "APIKey and Workspace verified successful");
     }
-    catch(NoAPIKeyPresentIntoRequest e)
+    catch(WrongBasicAuthentication e)
     {
         _logger->error(__FILEREF__ + "APIKey failed"
             + ", e.what(): " + e.what()

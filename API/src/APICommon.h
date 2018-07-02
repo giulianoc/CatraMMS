@@ -21,10 +21,10 @@
 #include "spdlog/spdlog.h"
 #include "fcgi_config.h"
 
-struct NoAPIKeyPresentIntoRequest: public exception {    
+struct WrongBasicAuthentication: public exception {    
     char const* what() const throw() 
     {
-        return "No APIKey present into the Request";
+        return "Wrong Basic Authentication present into the Request";
     }; 
 };
 

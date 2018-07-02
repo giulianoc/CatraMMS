@@ -54,6 +54,7 @@ public class MediaItems implements Serializable {
     private boolean shareWorkspaceDeliveryAuthorization;
     private boolean shareWorkspaceShareWorkspace;
     private Long shareWorkspaceUserKey;
+    private String shareWorkspaceConfirmationCode;
 
     @PostConstruct
     public void init()
@@ -311,6 +312,11 @@ public class MediaItems implements Serializable {
                         shareWorkspaceCountry, shareWorkspaceIngestWorkflow, shareWorkspaceCreateProfiles,
                         shareWorkspaceDeliveryAuthorization, shareWorkspaceShareWorkspace,
                         currentWorkspaceDetails.getWorkspaceKey());
+
+                FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                        "Share Workspace", "ShareWorkspace Success");
+                FacesContext context = FacesContext.getCurrentInstance();
+                context.addMessage(null, message);
             }
         }
         catch (Exception e)
@@ -320,6 +326,49 @@ public class MediaItems implements Serializable {
 
             FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
                     "Share Workspace", errorMessage);
+            FacesContext context = FacesContext.getCurrentInstance();
+            context.addMessage(null, message);
+        }
+    }
+
+    public void confirmUser()
+    {
+        try {
+            Long userKey = SessionUtils.getUserKey();
+            String apiKey = SessionUtils.getAPIKey();
+            HttpSession session = SessionUtils.getSession();
+
+            WorkspaceDetails currentWorkspaceDetails = (WorkspaceDetails) session.getAttribute("currentWorkspaceDetails");
+
+            if (userKey == null || apiKey == null || apiKey.equalsIgnoreCase(""))
+            {
+                mLogger.warn("no input to require mediaItemsKey"
+                                + ", userKey: " + userKey
+                                + ", apiKey: " + apiKey
+                );
+            }
+            else
+            {
+                String username = userKey.toString();
+                String password = apiKey;
+
+                CatraMMS catraMMS = new CatraMMS();
+                String apyKey = catraMMS.confirmUser(
+                        shareWorkspaceUserKey, shareWorkspaceConfirmationCode);
+
+                FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                        "Confirm", "Confirm Success");
+                FacesContext context = FacesContext.getCurrentInstance();
+                context.addMessage(null, message);
+            }
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "confirmUser failed: " + e;
+            mLogger.error(errorMessage);
+
+            FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                    "Confirm", errorMessage);
             FacesContext context = FacesContext.getCurrentInstance();
             context.addMessage(null, message);
         }
@@ -536,5 +585,13 @@ public class MediaItems implements Serializable {
 
     public void setShareWorkspaceUserKey(Long shareWorkspaceUserKey) {
         this.shareWorkspaceUserKey = shareWorkspaceUserKey;
+    }
+
+    public String getShareWorkspaceConfirmationCode() {
+        return shareWorkspaceConfirmationCode;
+    }
+
+    public void setShareWorkspaceConfirmationCode(String shareWorkspaceConfirmationCode) {
+        this.shareWorkspaceConfirmationCode = shareWorkspaceConfirmationCode;
     }
 }

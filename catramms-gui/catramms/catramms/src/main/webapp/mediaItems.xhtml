@@ -135,7 +135,38 @@
                     </p:column>
                     <p:column>
                         <p:commandButton action="#{mediaItems.shareWorkspace}"
-                                         value="Share Workspace"
+                                         value="1. Share Workspace" >
+                            <p:confirm header="Confirmation" message="Are you sure?" icon="ui-icon-alert" />
+                        </p:commandButton>
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="User Key" />
+                    </p:column>
+                    <p:column>
+                        <p:inputText value="#{mediaItems.shareWorkspaceUserKey}"
+                                     placeholder="user key"/>
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Confirmation Code" />
+                    </p:column>
+                    <p:column>
+                        <p:inputText value="#{mediaItems.shareWorkspaceConfirmationCode}"
+                                     placeholder="confirmation code"/>
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                    </p:column>
+                    <p:column>
+                        <p:commandButton action="#{mediaItems.confirmUser}"
+                                         value="2. Confirm"
                                          oncomplete="PF('shareWorkspace').hide()" >
                             <p:confirm header="Confirmation" message="Are you sure?" icon="ui-icon-alert" />
                         </p:commandButton>
@@ -149,7 +180,9 @@
 
     <h:form id="viewForm">
 
-        <p:growl id="growl" showDetail="true" sticky="false" escape="false" autoUpdate="true" life="5000" />
+        <p:growl id="growl" showDetail="true" sticky="false" escape="false" life="5000">
+            <p:autoUpdate />
+        </p:growl>
 
         <p:toolbar>
             <p:toolbarGroup align="left">

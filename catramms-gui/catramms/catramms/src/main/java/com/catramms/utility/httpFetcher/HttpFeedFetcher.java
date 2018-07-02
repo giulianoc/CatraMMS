@@ -232,6 +232,7 @@ public class HttpFeedFetcher {
                     });
                     */
 
+                    if (user != null && password != null)
                     {
                         String encoded = DatatypeConverter.printBase64Binary((user + ":" + password).getBytes("utf-8"));
                         conn.setRequestProperty("Authorization", "Basic " + encoded);
@@ -242,8 +243,17 @@ public class HttpFeedFetcher {
                     conn.setDoOutput(true); // false because I do not need to append any data to this request
                     conn.setRequestMethod(httpMethod);
                     {
-                        byte[] bytes = postBodyRequest.getBytes("UTF-8");
-                        int clength = bytes.length;
+                        int clength;
+                        byte[] bytes = null;
+                        if (postBodyRequest != null)
+                        {
+                            bytes = postBodyRequest.getBytes("UTF-8");
+                            clength = bytes.length;
+                        }
+                        else
+                        {
+                            clength = 0;
+                        }
 
                         conn.setRequestProperty("Content-Type", "application/json");
                         mLogger.info("Header. " + "Content-Type: " + "application/json");
@@ -253,11 +263,14 @@ public class HttpFeedFetcher {
 
                         conn.setDoInput(true); // false means the response is ignored
 
-                        // con.getOutputStream().write(postBodyRequest.getBytes(), 0, clength);
-                        OutputStream outputStream = conn.getOutputStream();
-                        outputStream.write(bytes);
-                        outputStream.flush();
-                        outputStream.close();
+                        if (clength > 0)
+                        {
+                            // con.getOutputStream().write(postBodyRequest.getBytes(), 0, clength);
+                            OutputStream outputStream = conn.getOutputStream();
+                            outputStream.write(bytes);
+                            outputStream.flush();
+                            outputStream.close();
+                        }
                     }
 
                     mLogger.info("conn.getResponseCode...");

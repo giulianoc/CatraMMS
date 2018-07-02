@@ -56,7 +56,7 @@ public class CatraMMS {
                     + "} "
                     ;
 
-            mLogger.info("login"
+            mLogger.info("shareWorkspace"
                             + ", mmsURL: " + mmsURL
                             + ", postBodyRequest: " + postBodyRequest
             );
@@ -90,6 +90,54 @@ public class CatraMMS {
         }
 
         return userKey;
+    }
+
+    public String confirmUser(Long userKey, String confirmationCode)
+            throws Exception
+    {
+        String mmsInfo;
+        try
+        {
+            String mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort
+                    + "/catramms/v1/user/" + userKey + "/" + confirmationCode;
+
+            String username = null;
+            String password = null;
+            String postBodyRequest = null;
+
+            mLogger.info("confirmUser"
+                            + ", mmsURL: " + mmsURL
+            );
+
+            Date now = new Date();
+            mmsInfo = HttpFeedFetcher.fetchPutHttpsJson(mmsURL, timeoutInSeconds, maxRetriesNumber,
+                    username, password, postBodyRequest);
+            mLogger.info("Elapsed time login (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "shareWorkspace failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+
+        String apiKey;
+
+        try
+        {
+            JSONObject joWMMSInfo = new JSONObject(mmsInfo);
+            apiKey = joWMMSInfo.getString("apiKey");
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "Parsing workspaceDetails failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+
+        return apiKey;
     }
 
     public List<Object> login(String username, String password, List<WorkspaceDetails> workspaceDetailsList)

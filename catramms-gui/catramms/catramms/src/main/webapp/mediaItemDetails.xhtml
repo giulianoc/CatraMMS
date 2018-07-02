@@ -29,7 +29,9 @@
               onHide="document.getElementById('showVideoForm:binaryLinkPlayer:media-player').pause()">
 
         <h:form id="showVideoForm">
-            <p:growl id="growl" showDetail="true" sticky="false" escape="false" autoUpdate="true" life="5000" />
+            <p:growl id="growl" showDetail="true" sticky="false" escape="false" life="5000">
+                <p:autoUpdate />
+            </p:growl>
 
             <p:outputLabel value="Physical Path Key: #{mediaItemDetails.currentPhysicalPathKey}" />
             <p:outputLabel value=", FramesPerSeconds: " />

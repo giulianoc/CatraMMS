@@ -33,7 +33,9 @@
 
     <h:form id="viewForm">
 
-        <p:growl id="growl" showDetail="true" sticky="false" escape="false" autoUpdate="true" life="5000" />
+        <p:growl id="growl" showDetail="true" sticky="false" escape="false" life="5000">
+            <p:autoUpdate />
+        </p:growl>
 
         <p:toolbar>
             <p:toolbarGroup align="left">
@@ -115,6 +117,7 @@
                 <p:commandButton global="false" onstart="on_start()" icon="ui-icon ui-icon-search"
                                  actionListener="#{ingestionWorkflows.fillList(true)}" />
 
+                <!--
                 <span class="ui-separator">
                     <span class="ui-icon ui-icon-grip-dotted-vertical" />
                 </span>
@@ -125,6 +128,7 @@
                     <p:ajax
                             listener="#{ingestionWorkflows.fillList(true)}" update="ingestionWorkflowDataTable" />
                 </p:selectBooleanButton>
+                -->
             </p:toolbarGroup>
         </p:toolbar>
 
