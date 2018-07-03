@@ -2893,8 +2893,8 @@ void Validator::validateOverlayImageOnVideoMetadata(int64_t workspaceKey,
 {
     
     vector<string> mandatoryFields = {
-        "imagePosition_X_InPixel",
-        "imagePosition_Y_InPixel"
+        "ImagePosition_X_InPixel",
+        "ImagePosition_Y_InPixel"
     };
     for (string mandatoryField: mandatoryFields)
     {

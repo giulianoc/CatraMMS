@@ -38,6 +38,12 @@ CatraMMS_PATH=/home/mms/catramms
 #used by ImageMagick to look for the configuration files
 export MAGICK_CONFIGURE_PATH=$CatraMMS_PATH/ImageMagick-7.0.7-22/etc/ImageMagick-7
 
+#When Image Magick read a png file we had the error 'error bad parameters to zlib'
+#This is probable because of more than one libz available or it is related
+#to the version of OS. Solution is the next export. I guess, upgrading the OS,
+#we can try to remove the next export
+export LD_PRELOAD=libz.so.1
+
 export LD_LIBRARY_PATH=$CatraMMS_PATH/CatraLibraries/lib:$CatraMMS_PATH/CatraMMS/lib:$CatraMMS_PATH/ImageMagick-7.0.7-22/lib:$CatraMMS_PATH/curlpp//lib:$CatraMMS_PATH/ffmpeg-3.4.2/lib:$CatraMMS_PATH/jsoncpp/lib:$CatraMMS_PATH/mysql-connector-c++-1.1.9-linux-ubuntu16.10-x86-64bit/lib
 
 if [ "$command" == "start" ]

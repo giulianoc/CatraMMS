@@ -13,6 +13,7 @@
 #include "MMSEngineDBFacade.h"
 #include "ActiveEncodingsManager.h"
 #include "MMSStorage.h"
+#include "Magick++.h"
 
 Json::Value loadConfigurationFile(string configurationPathName);
 
@@ -71,6 +72,8 @@ int main (int iArgc, char *pArgv [])
     if (!noDaemon)
         Service::launchUnixDaemon(pidFilePathName);
 
+    Magick::InitializeMagick(*pArgv);
+    
     Json::Value configuration = loadConfigurationFile(configPathName);
 
     string logPathName =  configuration["log"]["mms"].get("pathName", "XXX").asString();

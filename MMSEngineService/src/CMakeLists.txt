@@ -67,6 +67,8 @@ target_link_libraries (mmsEngineService curlpp)
 if (APPLE) 
 else()  
         target_link_libraries (mmsEngineService Magick++-7.Q16HDRI)
+		target_link_libraries (mmsEngineService MagickCore-7.Q16HDRI)
+		target_link_libraries (mmsEngineService MagickWand-7.Q16HDRI)
 endif() 
 
 target_link_libraries (mmsEngineService Scheduler)

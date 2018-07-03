@@ -17,6 +17,7 @@
 #include "RetentionTimes.h"
 #include "catralibraries/md5.h"
 #include "EMailSender.h"
+#include "Magick++.h"
 
 
 MMSEngineProcessor::MMSEngineProcessor(
