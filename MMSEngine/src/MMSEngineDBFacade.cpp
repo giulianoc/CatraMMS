@@ -2743,8 +2743,26 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 
             tie(ingestionJobKey, workspace, metaDataContent, ingestionType, ingestionStatus) = ingestionToBeManaged;
 
-            lastSQLCommand = 
-                "update MMS_IngestionJob set startProcessing = NOW(), processorMMS = ? where ingestionJobKey = ?";
+            if (ingestionStatus == IngestionStatus::SourceMovingInProgress
+                    || ingestionStatus == IngestionStatus::SourceCopingInProgress
+                    || ingestionStatus == IngestionStatus::SourceUploadingInProgress)
+            {
+                // let's consider IngestionStatus::SourceUploadingInProgress
+                // In this scenarios, the content was already uploaded by the client (sourceBinaryTransferred = 1),
+                // if we set startProcessing = NOW() we would not have any difference with endProcessing
+                // So, in this scenarios (SourceUploadingInProgress), startProcessing-endProcessing is the time
+                // between the client ingested the Workflow and the content completely uploaded.
+                // In this case, if the client has to upload 10 contents sequentially, the last one is the sum
+                // of all the other contents
+
+                lastSQLCommand = 
+                    "update MMS_IngestionJob set processorMMS = ? where ingestionJobKey = ?";                
+            }
+            else
+            {
+                lastSQLCommand = 
+                    "update MMS_IngestionJob set startProcessing = NOW(), processorMMS = ? where ingestionJobKey = ?";                
+            }
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, processorMMS);
