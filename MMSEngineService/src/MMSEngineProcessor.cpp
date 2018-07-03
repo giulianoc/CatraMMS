@@ -1767,7 +1767,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                     e.what(), "" // ProcessorMMS
             );
 
-            throw e;
+            throw runtime_error(e.what());
         }
         catch( Magick::Warning &e )
         {
@@ -1795,7 +1795,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                     e.what(), "" // ProcessorMMS
             );
 
-            throw e;
+            throw runtime_error(e.what());
         }
         catch( Magick::ErrorFileOpen &e ) 
         { 
@@ -1823,7 +1823,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                     e.what(), "" // ProcessorMMS
             );
 
-            throw e;
+            throw runtime_error(e.what());
         }
         catch (Magick::Error &e)
         { 
@@ -1851,7 +1851,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
                     e.what(), "" // ProcessorMMS
             );
 
-            throw e;
+            throw runtime_error(e.what());
         }
         catch(exception e)
         {
