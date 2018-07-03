@@ -23,6 +23,139 @@
     <ui:include src="/common/loadingDialog.xhtml"/>
     <h:outputScript library="js" name="smpte.js" target="head" />
 
+    <p:dialog widgetVar="showPhysicalPathDetails" modal="true"
+              header="Physical Path Details" appendTo="@(body)" width="900" height="400"
+              showEffect="fade" hideEffect="fade" resizable="true" draggable="true">
+
+        <h:form id="showPhysicalPathDetailsForm">
+
+            <p:tabView id="physicalPathDetailsTabView" dynamic="false" cache="true">
+
+                <p:tab title="Physical Path Info">
+
+                    <p:panelGrid columns="2" cellpadding="10">
+                        <p:outputLabel value="Physical Path Key: " />
+                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.physicalPathKey}" />
+
+                        <p:outputLabel value="File Format: " />
+                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.fileFormat}" />
+
+                        <p:outputLabel value="Size In Bytes: " />
+                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.sizeInBytes}" >
+                            <f:convertNumber type="number" groupingUsed="true" locale="it" />
+                        </p:outputLabel>
+
+                        <p:outputLabel value="Creation Date: " />
+                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.creationDate}">
+                            <f:convertDateTime type="date" pattern="dd-MM-yyyy HH:mm:ss" timeZone="CET"/>
+                        </p:outputLabel>
+
+                        <p:outputLabel value="Encoding Profile Key: " />
+                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.encodingProfileKey}" />
+
+                    </p:panelGrid>
+
+                </p:tab>
+
+                <p:tab rendered="#{mediaItemDetails.mediaItem.contentType == 'Video'}" title="Video Info">
+
+                    <p:panelGrid columns="2" cellpadding="10">
+                        <p:outputLabel value="Duration: " />
+                        <p:outputLabel value="#{mediaItemDetails.getDurationAsString(mediaItemDetails.currentPhysicalPath.videoDetails.durationInMilliseconds)} (#{mediaItemDetails.currentPhysicalPath.videoDetails.durationInMilliseconds})" />
+
+                        <p:outputLabel value="Bit Rate (bytes/secs): " />
+                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.videoDetails.bitRate}">
+                            <f:convertNumber type="number" groupingUsed="true" locale="it" />
+                        </p:outputLabel>
+
+                        <p:outputLabel value="Video Codec Name: " />
+                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.videoDetails.videoCodecName}" />
+
+                        <p:outputLabel value="Video Bit Rate (bytes/secs): " />
+                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.videoDetails.videoBitRate}">
+                            <f:convertNumber type="number" groupingUsed="true" locale="it" />
+                        </p:outputLabel>
+
+                        <p:outputLabel value="Video Profile: " />
+                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.videoDetails.videoProfile}" />
+
+                        <p:outputLabel value="Video Avg Frame Rate: " />
+                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.videoDetails.videoAvgFrameRate}" />
+
+                        <p:outputLabel value="Video Width: " />
+                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.videoDetails.videoWidth}" />
+
+                        <p:outputLabel value="Video Height: " />
+                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.videoDetails.videoHeight}" />
+
+                        <p:outputLabel value="Audio Codec Name: " />
+                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.videoDetails.audioCodecName}" />
+
+                        <p:outputLabel value="Audio Bit Rate (bytes/secs): " />
+                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.videoDetails.audioBitRate}">
+                            <f:convertNumber type="number" groupingUsed="true" locale="it" />
+                        </p:outputLabel>
+
+                        <p:outputLabel value="Audio Channels: " />
+                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.videoDetails.audioChannels}" />
+
+                        <p:outputLabel value="Audio Sample Rate (Hz): " />
+                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.videoDetails.audioSampleRate}">
+                            <f:convertNumber type="number" groupingUsed="true" locale="it" />
+                        </p:outputLabel>
+
+                    </p:panelGrid>
+
+                </p:tab>
+
+                <p:tab rendered="#{mediaItemDetails.mediaItem.contentType == 'Audio'}" title="Audio Info">
+
+                    <p:panelGrid columns="2" cellpadding="10">
+                        <p:outputLabel value="Duration: " />
+                        <p:outputLabel value="#{mediaItemDetails.getDurationAsString(mediaItemDetails.currentPhysicalPath.audioDetails.durationInMilliseconds)} (#{mediaItemDetails.mediaItem.audioDetails.durationInMilliseconds})" />
+
+                        <p:outputLabel value="Codec Name: " />
+                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.audioDetails.codecName}" />
+
+                        <p:outputLabel value="Bit Rate (bytes/secs): " />
+                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.audioDetails.bitRate}">
+                            <f:convertNumber type="number" groupingUsed="true" locale="it" />
+                        </p:outputLabel>
+
+                        <p:outputLabel value="Sample Rate (Hz): " />
+                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.audioDetails.sampleRate}">
+                            <f:convertNumber type="number" groupingUsed="true" locale="it" />
+                        </p:outputLabel>
+
+                        <p:outputLabel value="Channels: " />
+                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.audioDetails.channels}" />
+                    </p:panelGrid>
+
+                </p:tab>
+
+                <p:tab rendered="#{mediaItemDetails.mediaItem.contentType == 'Image'}" title="Image Info">
+
+                    <p:panelGrid columns="2" cellpadding="10">
+                        <p:outputLabel value="Width: " />
+                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.imageDetails.width}" />
+
+                        <p:outputLabel value="Height: " />
+                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.imageDetails.height}" />
+
+                        <p:outputLabel value="Format: " />
+                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.imageDetails.format}" />
+
+                        <p:outputLabel value="Quality: " />
+                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.imageDetails.quality}" />
+
+                    </p:panelGrid>
+
+                </p:tab>
+
+            </p:tabView>
+        </h:form>
+    </p:dialog>
+
     <p:dialog widgetVar="showVideo" modal="true"
               header="Player" appendTo="@(body)" width="900" height="600"
               showEffect="fade" hideEffect="fade" resizable="true" draggable="true"
@@ -33,7 +166,7 @@
                 <p:autoUpdate />
             </p:growl>
 
-            <p:outputLabel value="Physical Path Key: #{mediaItemDetails.currentPhysicalPathKey}" />
+            <p:outputLabel value="Physical Path Key: #{mediaItemDetails.currentPhysicalPath.physicalPathKey}" />
             <p:outputLabel value=", FramesPerSeconds: " />
             <!-- next outputLabel is also used inside javascript to retrieve the framesPerSeconds -->
             <p:outputLabel id="framesPerSeconds"
@@ -209,6 +342,20 @@
                     <p:outputLabel value="Content Type: " />
                     <p:outputLabel value="#{mediaItemDetails.mediaItem.contentType}" />
 
+                    <p:outputLabel
+                            rendered="#{mediaItemDetails.mediaItem.contentType == 'Video' and mediaItemDetails.mediaItem.physicalPathList.size() > 0}"
+                            value="Duration: " />
+                    <p:outputLabel
+                            rendered="#{mediaItemDetails.mediaItem.contentType == 'Video' and mediaItemDetails.mediaItem.physicalPathList.size() > 0}"
+                            value="#{mediaItemDetails.getDurationAsString(mediaItemDetails.mediaItem.physicalPathList.get(0).videoDetails.durationInMilliseconds)} (#{mediaItemDetails.mediaItem.physicalPathList.get(0).videoDetails.durationInMilliseconds})" />
+
+                    <p:outputLabel
+                            rendered="#{mediaItemDetails.mediaItem.contentType == 'Audio' and mediaItemDetails.mediaItem.physicalPathList.size() > 0}"
+                            value="Duration: " />
+                    <p:outputLabel
+                            rendered="#{mediaItemDetails.mediaItem.contentType == 'Audio' and mediaItemDetails.mediaItem.physicalPathList.size() > 0}"
+                            value="#{mediaItemDetails.getDurationAsString(mediaItemDetails.mediaItem.physicalPathList.get(0).audioDetails.durationInMilliseconds)} (#{mediaItemDetails.mediaItem.physicalPathList.get(0).audioDetails.durationInMilliseconds})" />
+
                     <p:outputLabel value="Ingestion Date: " />
                     <p:outputLabel value="#{mediaItemDetails.mediaItem.ingestionDate}">
                         <f:convertDateTime type="date" pattern="dd-MM-yyyy HH:mm:ss" timeZone="CET"/>
@@ -240,118 +387,85 @@
 
             </p:tab>
 
-            <p:tab rendered="#{mediaItemDetails.mediaItem.contentType == 'Video'}" title="Video Info">
-
-                <p:panelGrid columns="2" cellpadding="10">
-                    <p:outputLabel value="Duration: " />
-                    <p:outputLabel value="#{mediaItemDetails.getDurationAsString(mediaItemDetails.mediaItem.videoDetails.durationInMilliseconds)} (#{mediaItemDetails.mediaItem.videoDetails.durationInMilliseconds})" />
-
-                    <p:outputLabel value="Bit Rate: " />
-                    <p:outputLabel value="#{mediaItemDetails.mediaItem.videoDetails.bitRate}" />
-
-                    <p:outputLabel value="Video Codec Name: " />
-                    <p:outputLabel value="#{mediaItemDetails.mediaItem.videoDetails.videoCodecName}" />
-
-                    <p:outputLabel value="Video Bit Rate: " />
-                    <p:outputLabel value="#{mediaItemDetails.mediaItem.videoDetails.videoBitRate}" />
-
-                    <p:outputLabel value="Video Profile: " />
-                    <p:outputLabel value="#{mediaItemDetails.mediaItem.videoDetails.videoProfile}" />
-
-                    <p:outputLabel value="Video Avg Frame Rate: " />
-                    <p:outputLabel value="#{mediaItemDetails.mediaItem.videoDetails.videoAvgFrameRate}" />
-
-                    <p:outputLabel value="Video Width: " />
-                    <p:outputLabel value="#{mediaItemDetails.mediaItem.videoDetails.videoWidth}" />
-
-                    <p:outputLabel value="Video Height: " />
-                    <p:outputLabel value="#{mediaItemDetails.mediaItem.videoDetails.videoHeight}" />
-
-                    <p:outputLabel value="Audio Codec Name: " />
-                    <p:outputLabel value="#{mediaItemDetails.mediaItem.videoDetails.audioCodecName}" />
-
-                    <p:outputLabel value="Audio Bit Rate: " />
-                    <p:outputLabel value="#{mediaItemDetails.mediaItem.videoDetails.audioBitRate}" />
-
-                    <p:outputLabel value="Audio Channels: " />
-                    <p:outputLabel value="#{mediaItemDetails.mediaItem.videoDetails.audioChannels}" />
-
-                    <p:outputLabel value="Audio Sample Rate: " />
-                    <p:outputLabel value="#{mediaItemDetails.mediaItem.videoDetails.audioSampleRate}" />
-
-                </p:panelGrid>
-
-            </p:tab>
-
-            <p:tab rendered="#{mediaItemDetails.mediaItem.contentType == 'Audio'}" title="Audio Info">
-
-                <p:panelGrid columns="2" cellpadding="10">
-                    <p:outputLabel value="Duration: " />
-                    <p:outputLabel value="#{mediaItemDetails.getDurationAsString(mediaItemDetails.mediaItem.audioDetails.durationInMilliseconds)} (#{mediaItemDetails.mediaItem.audioDetails.durationInMilliseconds})" />
-
-                    <p:outputLabel value="Codec Name: " />
-                    <p:outputLabel value="#{mediaItemDetails.mediaItem.audioDetails.codecName}" />
-
-                    <p:outputLabel value="Bit Rate: " />
-                    <p:outputLabel value="#{mediaItemDetails.mediaItem.audioDetails.bitRate}" />
-
-                    <p:outputLabel value="Sample Rate: " />
-                    <p:outputLabel value="#{mediaItemDetails.mediaItem.audioDetails.sampleRate}" />
-
-                    <p:outputLabel value="Channels: " />
-                    <p:outputLabel value="#{mediaItemDetails.mediaItem.audioDetails.channels}" />
-                </p:panelGrid>
-
-            </p:tab>
-
-            <p:tab rendered="#{mediaItemDetails.mediaItem.contentType == 'Image'}" title="Image Info">
-
-                <p:panelGrid columns="2" cellpadding="10">
-                    <p:outputLabel value="Width: " />
-                    <p:outputLabel value="#{mediaItemDetails.mediaItem.imageDetails.width}" />
-
-                    <p:outputLabel value="Height: " />
-                    <p:outputLabel value="#{mediaItemDetails.mediaItem.imageDetails.height}" />
-
-                    <p:outputLabel value="Format: " />
-                    <p:outputLabel value="#{mediaItemDetails.mediaItem.imageDetails.format}" />
-
-                    <p:outputLabel value="Quality: " />
-                    <p:outputLabel value="#{mediaItemDetails.mediaItem.imageDetails.quality}" />
-
-                </p:panelGrid>
-
-            </p:tab>
-
             <p:tab title="Physical Paths (#{mediaItemDetails.mediaItem.physicalPathList.size()})">
 
                 <p:dataTable resizableColumns="true" id="physicalPathTable" var="physicalPath" rowIndexVar="rowId"
                              value="#{mediaItemDetails.mediaItem.physicalPathList}" rowKey="#{physicalPath.physicalPathKey}"
                              selectionMode="single" >
 
-                    <p:column headerText="Physical Path Key" >
+                    <p:column style="width:80px;" headerText="Physical&lt;br&gt;Path Key" >
                         <p:outputLabel value="#{physicalPath.physicalPathKey}" />
                     </p:column>
 
-                    <p:column headerText="File Format" >
-                        <p:outputLabel value="#{physicalPath.fileFormat}" />
-                    </p:column>
-
-                    <p:column headerText="Encoding Profile Key" >
+                    <p:column style="width:100px;" headerText="Encoding&lt;br&gt;Profile Key" >
                         <p:outputLabel rendered="#{physicalPath.encodingProfileKey != null}"
                                        value="#{physicalPath.encodingProfileKey}" />
                         <p:outputLabel rendered="#{physicalPath.encodingProfileKey == null}"
                                        value="&lt;source file&gt;" />
                     </p:column>
 
-                    <p:column headerText="Creation Date" >
-                        <p:outputLabel value="#{physicalPath.creationDate}">
-                            <f:convertDateTime type="date" pattern="dd-MM-yyyy HH:mm:ss" timeZone="CET"/>
+
+
+                    <p:column headerText="Video codec" rendered="#{mediaItemDetails.mediaItem.contentType == 'Video'}">
+                        <p:outputLabel value="#{physicalPath.videoDetails.videoCodecName}" />
+                    </p:column>
+
+                    <p:column headerText="Audio codec" rendered="#{mediaItemDetails.mediaItem.contentType == 'Video'}">
+                        <p:outputLabel value="#{physicalPath.videoDetails.audioCodecName}" />
+                    </p:column>
+
+                    <p:column style="width:100px;" headerText="Bit Rate&lt;br&gt;(bytes/secs)" rendered="#{mediaItemDetails.mediaItem.contentType == 'Video'}">
+                        <p:outputLabel value="#{physicalPath.videoDetails.bitRate}">
+                            <f:convertNumber type="number" groupingUsed="true" locale="it" />
                         </p:outputLabel>
                     </p:column>
 
-                    <p:column headerText="Size in Bytes" >
-                        <p:outputLabel value="#{physicalPath.sizeInBytes}" />
+                    <p:column style="width:90px;" headerText="Resolution" rendered="#{mediaItemDetails.mediaItem.contentType == 'Video'}">
+                        <p:outputLabel value="#{physicalPath.videoDetails.videoWidth} x #{physicalPath.videoDetails.videoHeight}" />
+                    </p:column>
+
+
+
+                    <p:column headerText="Codec" rendered="#{mediaItemDetails.mediaItem.contentType == 'Audio'}">
+                        <p:outputLabel value="#{physicalPath.audioDetails.codecName}" />
+                    </p:column>
+
+                    <p:column style="width:100px;" headerText="Bit Rate&lt;br&gt;(bytes/secs)" rendered="#{mediaItemDetails.mediaItem.contentType == 'Audio'}">
+                        <p:outputLabel value="#{physicalPath.audioDetails.bitRate}">
+                            <f:convertNumber type="number" groupingUsed="true" locale="it" />
+                        </p:outputLabel>
+                    </p:column>
+
+                    <p:column style="width:80px;" headerText="Sample Rate&lt;br&gt;(Hz)" rendered="#{mediaItemDetails.mediaItem.contentType == 'Audio'}">
+                        <p:outputLabel value="#{physicalPath.audioDetails.sampleRate}">
+                            <f:convertNumber type="number" groupingUsed="true" locale="it" />
+                        </p:outputLabel>
+                    </p:column>
+
+                    <p:column style="width:80px;" headerText="Channels" rendered="#{mediaItemDetails.mediaItem.contentType == 'Audio'}">
+                        <p:outputLabel value="#{physicalPath.audioDetails.channels}" />
+                    </p:column>
+
+
+
+                    <p:column headerText="Format" rendered="#{mediaItemDetails.mediaItem.contentType == 'Image'}">
+                        <p:outputLabel value="#{physicalPath.imageDetails.format}" />
+                    </p:column>
+
+                    <p:column style="width:90px;" headerText="Resolution" rendered="#{mediaItemDetails.mediaItem.contentType == 'Image'}">
+                        <p:outputLabel value="#{physicalPath.imageDetails.width} x #{physicalPath.imageDetails.height}" />
+                    </p:column>
+
+                    <p:column style="width:70px;" headerText="Quality" rendered="#{mediaItemDetails.mediaItem.contentType == 'Image'}">
+                        <p:outputLabel value="#{physicalPath.imageDetails.quality}" />
+                    </p:column>
+
+
+
+                    <p:column style="width:110px;" headerText="Size in Bytes" >
+                        <p:outputLabel value="#{physicalPath.sizeInBytes}" >
+                            <f:convertNumber type="number" groupingUsed="true" locale="it" />
+                        </p:outputLabel>
                     </p:column>
 
                     <p:column style="width:50px;" headerText="">
@@ -359,6 +473,12 @@
                         <p:commandButton id="dynaButtonOptions" type="button" icon="fa fa-navicon"/>
                         <p:menu toggleable="true" collapsed="true" overlay="true" trigger="dynaButtonOptions"
                                 my="left top" at="left bottom">
+                            <p:menuitem value="Physical Path Details"
+                                        actionListener="#{mediaItemDetails.setCurrentPhysicalPath(physicalPath)}"
+                                        update="showPhysicalPathDetailsForm"
+                                        oncomplete="PF('showPhysicalPathDetails').show()">
+                            </p:menuitem>
+
                             <p:menuitem disabled="#{physicalPath.encodingProfileKey == null}"
                                         value="Encoding Profile Details"
                                         outcome="/encodingProfileDetails.xhtml?faces-redirect=true">
@@ -367,7 +487,7 @@
 
                             <p:menuitem id="playLink" value="Edit Video"
                                         disabled="#{mediaItemDetails.mediaItem.contentType != 'Video' || !sessionScope.currentWorkspaceDetails.deliveryAuthorization}"
-                                        actionListener="#{mediaItemDetails.prepareCurrentMediaURL(physicalPath.physicalPathKey)}"
+                                        actionListener="#{mediaItemDetails.prepareCurrentMediaURL(physicalPath)}"
                                         update="showVideoForm"
                                         oncomplete="PF('showVideo').show()">
                             </p:menuitem>

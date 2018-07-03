@@ -298,6 +298,7 @@
                 <p:column>
                     <p:inputNumber id="taskFileSizeInBytes_Add_Content"
                                    required="false"
+                                   decimalPlaces="0"
                                    value="#{newWorkflow.taskFileSizeInBytes}"
                                    autocomplete="true"
                                    placeholder="file size in bytes"/>
@@ -697,6 +698,7 @@
                                    required="#{newWorkflow.taskCutEndType == 'framesNumber' and newWorkflow.nodeType == 'Cut'}"
                     -->
                     <p:inputNumber id="taskFramesNumber_Cut"
+                                   decimalPlaces="0"
                                    value="#{newWorkflow.taskFramesNumber}"
                                    autocomplete="true"
                                    placeholder="frames number"/>
@@ -1177,6 +1179,7 @@
                 </p:column>
                 <p:column>
                     <p:inputNumber id="taskOverlayFontSize_Overlay_Text_On_Video"
+                                   decimalPlaces="0"
                                    required="false"
                                    value="#{newWorkflow.taskOverlayFontSize}"
                                    autocomplete="true"
@@ -1203,6 +1206,7 @@
                 </p:column>
                 <p:column>
                     <p:inputNumber id="taskOverlayTextPercentageOpacity_Overlay_Text_On_Video"
+                                   decimalPlaces="0"
                                    required="false"
                                    value="#{newWorkflow.taskOverlayTextPercentageOpacity}"
                                    autocomplete="true"
@@ -1241,6 +1245,7 @@
                 </p:column>
                 <p:column>
                     <p:inputNumber id="taskOverlayBoxPercentageOpacity_Overlay_Text_On_Video"
+                                   decimalPlaces="0"
                                    required="false"
                                    value="#{newWorkflow.taskOverlayBoxPercentageOpacity}"
                                    autocomplete="true"
@@ -1471,6 +1476,7 @@
                 </p:column>
                 <p:column>
                     <p:inputNumber id="taskFrameWidth_Frame"
+                                   decimalPlaces="0"
                                    required="false"
                                    value="#{newWorkflow.taskFrameWidth}"
                                    autocomplete="true"
@@ -1484,6 +1490,7 @@
                 </p:column>
                 <p:column>
                     <p:inputNumber id="taskFrameHeight_Frame"
+                                   decimalPlaces="0"
                                    required="false"
                                    value="#{newWorkflow.taskFrameHeight}"
                                    autocomplete="true"
@@ -1693,6 +1700,7 @@
                                    required="#{newWorkflow.nodeType == 'Periodical-Frames'}"
                     -->
                     <p:inputNumber id="taskFramePeriodInSeconds_Periodical_Frames"
+                                   decimalPlaces="0"
                                    value="#{newWorkflow.taskFramePeriodInSeconds}"
                                    autocomplete="true"
                                    placeholder="period in seconds"/>
@@ -1719,6 +1727,7 @@
                 </p:column>
                 <p:column>
                     <p:inputNumber id="taskFrameMaxFramesNumber_Periodical_Frames"
+                                   decimalPlaces="0"
                                    required="false"
                                    value="#{newWorkflow.taskFrameMaxFramesNumber}"
                                    autocomplete="true"
@@ -1732,6 +1741,7 @@
                 </p:column>
                 <p:column>
                     <p:inputNumber id="taskFrameWidth_Periodical_Frames"
+                                   decimalPlaces="0"
                                    required="false"
                                    value="#{newWorkflow.taskFrameWidth}"
                                    autocomplete="true"
@@ -1745,6 +1755,7 @@
                 </p:column>
                 <p:column>
                     <p:inputNumber id="taskFrameHeight_Periodical_Frames"
+                                   decimalPlaces="0"
                                    required="false"
                                    value="#{newWorkflow.taskFrameHeight}"
                                    autocomplete="true"
@@ -1963,6 +1974,7 @@
                 </p:column>
                 <p:column>
                     <p:inputNumber id="taskFrameMaxFramesNumber_I_Frames"
+                                   decimalPlaces="0"
                                    required="false"
                                    value="#{newWorkflow.taskFrameMaxFramesNumber}"
                                    autocomplete="true"
@@ -1976,6 +1988,7 @@
                 </p:column>
                 <p:column>
                     <p:inputNumber id="taskFrameWidth_I_Frames"
+                                   decimalPlaces="0"
                                    required="false"
                                    value="#{newWorkflow.taskFrameWidth}"
                                    autocomplete="true"
@@ -1989,6 +2002,7 @@
                 </p:column>
                 <p:column>
                     <p:inputNumber id="taskFrameHeight_I_Frames"
+                                   decimalPlaces="0"
                                    required="false"
                                    value="#{newWorkflow.taskFrameHeight}"
                                    autocomplete="true"
@@ -2194,6 +2208,7 @@
                                    required="#{newWorkflow.nodeType == 'Motion-JPEG-by-Periodical-Frames'}"
                     -->
                     <p:inputNumber id="taskFramePeriodInSeconds_Motion_JPEG_by_Periodical_Frames"
+                                   decimalPlaces="0"
                                    value="#{newWorkflow.taskFramePeriodInSeconds}"
                                    autocomplete="true"
                                    placeholder="period in seconds"/>
@@ -2220,6 +2235,7 @@
                 </p:column>
                 <p:column>
                     <p:inputNumber id="taskFrameMaxFramesNumber_Motion_JPEG_by_Periodical_Frames"
+                                   decimalPlaces="0"
                                    required="false"
                                    value="#{newWorkflow.taskFrameMaxFramesNumber}"
                                    autocomplete="true"
@@ -2233,6 +2249,7 @@
                 </p:column>
                 <p:column>
                     <p:inputNumber id="taskFrameWidth_Motion_JPEG_by_Periodical_Frames"
+                                   decimalPlaces="0"
                                    required="false"
                                    value="#{newWorkflow.taskFrameWidth}"
                                    autocomplete="true"
@@ -2246,6 +2263,7 @@
                 </p:column>
                 <p:column>
                     <p:inputNumber id="taskFrameHeight_Motion_JPEG_by_Periodical_Frames"
+                                   decimalPlaces="0"
                                    required="false"
                                    value="#{newWorkflow.taskFrameHeight}"
                                    autocomplete="true"
@@ -2465,6 +2483,7 @@
                 </p:column>
                 <p:column>
                     <p:inputNumber id="taskFrameMaxFramesNumber_Motion_JPEG_by_I_Frames"
+                                   decimalPlaces="0"
                                    required="false"
                                    value="#{newWorkflow.taskFrameMaxFramesNumber}"
                                    autocomplete="true"
@@ -2478,6 +2497,7 @@
                 </p:column>
                 <p:column>
                     <p:inputNumber id="taskFrameWidth_Motion_JPEG_by_I_Frames"
+                                   decimalPlaces="0"
                                    required="false"
                                    value="#{newWorkflow.taskFrameWidth}"
                                    autocomplete="true"
@@ -2491,6 +2511,7 @@
                 </p:column>
                 <p:column>
                     <p:inputNumber id="taskFrameHeight_Motion_JPEG_by_I_Frames"
+                                   decimalPlaces="0"
                                    required="false"
                                    value="#{newWorkflow.taskFrameHeight}"
                                    autocomplete="true"
@@ -2696,6 +2717,7 @@
                 </p:column>
                 <p:column>
                     <p:inputNumber id="taskFrameDurationOfEachSlideInSeconds_Slideshow"
+                                   decimalPlaces="0"
                                    required="false"
                                    value="#{newWorkflow.taskFrameDurationOfEachSlideInSeconds}"
                                    autocomplete="true"
@@ -2709,6 +2731,7 @@
                 </p:column>
                 <p:column>
                     <p:inputNumber id="taskFrameOutputFrameRate_Slideshow"
+                                   decimalPlaces="0"
                                    required="false"
                                    value="#{newWorkflow.taskFrameOutputFrameRate}"
                                    autocomplete="true"

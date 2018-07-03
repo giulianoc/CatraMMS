@@ -27,6 +27,7 @@ SET (ETCs
 	encoder.sh
 	mmsEngineService.sh
 	ffmpegHelper.sh
+	imageMagickHelper.sh
 	nginx.sh
 	tomcat.sh
 	mms.cfg

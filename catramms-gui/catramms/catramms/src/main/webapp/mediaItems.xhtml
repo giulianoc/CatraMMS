@@ -38,6 +38,7 @@
         <h:form id="shareWorkspaceForm">
 
             <p:outputLabel value="Workspace to be shared: " />
+            <br />
             <p:outputLabel value="#{sessionScope.currentWorkspaceDetails.name}" style="font-weight: bold" />
             <p:panelGrid cellpadding="10" style="width: 100%" >
                 <p:row>
@@ -45,7 +46,8 @@
                         <p:outputLabel value="Name" />
                     </p:column>
                     <p:column>
-                        <p:inputText autocomplete="true"
+                        <p:inputText style="width: 100%"
+                                     autocomplete="true"
                                      value="#{mediaItems.shareWorkspaceName}"
                                      placeholder="name"/>
                     </p:column>
@@ -56,7 +58,8 @@
                         <p:outputLabel value="EMail" />
                     </p:column>
                     <p:column>
-                        <p:inputText autocomplete="true"
+                        <p:inputText style="width: 100%"
+                                     autocomplete="true"
                                      value="#{mediaItems.shareWorkspaceEMail}"
                                      placeholder="name"/>
                     </p:column>
@@ -67,7 +70,7 @@
                         <p:outputLabel value="Password" />
                     </p:column>
                     <p:column>
-                        <p:password value="#{mediaItems.shareWorkspacePassword}" />
+                        <p:password style="width: 100%" value="#{mediaItems.shareWorkspacePassword}" />
                     </p:column>
                 </p:row>
 
@@ -76,7 +79,8 @@
                         <p:outputLabel value="Country" />
                     </p:column>
                     <p:column>
-                        <p:inputText autocomplete="true"
+                        <p:inputText style="width: 100%"
+                                     autocomplete="true"
                                      value="#{mediaItems.shareWorkspaceCountry}"
                                      placeholder="name"/>
                     </p:column>
@@ -146,7 +150,8 @@
                         <p:outputLabel value="User Key" />
                     </p:column>
                     <p:column>
-                        <p:inputText value="#{mediaItems.shareWorkspaceUserKey}"
+                        <p:inputText style="width: 100%"
+                                     value="#{mediaItems.shareWorkspaceUserKey}"
                                      placeholder="user key"/>
                     </p:column>
                 </p:row>
@@ -156,7 +161,8 @@
                         <p:outputLabel value="Confirmation Code" />
                     </p:column>
                     <p:column>
-                        <p:inputText value="#{mediaItems.shareWorkspaceConfirmationCode}"
+                        <p:inputText style="width: 100%"
+                                     value="#{mediaItems.shareWorkspaceConfirmationCode}"
                                      placeholder="confirmation code"/>
                     </p:column>
                 </p:row>

@@ -8,9 +8,9 @@
     <p:tieredMenu styleClass="tieredMenuClass" overlay="true" trigger="dynaButtonIngestion"
                   my="left top" at="left bottom" style="width:200px">
         <p:submenu label="Ingestion">
+            <!-- disabled="#{!sessionScope.currentWorkspaceDetails.ingestWorkflow}" -->
             <p:menuitem
                     value="New Workflow"
-                    disabled="#{!sessionScope.currentWorkspaceDetails.ingestWorkflow}"
                     outcome="/newWorkflow/newWorkflow.xhtml"
                     icon="ui-icon-search"/>
             <p:menuitem value="Workflows" outcome="/ingestionWorkflows.xhtml" icon="ui-icon-search"/>
@@ -20,7 +20,6 @@
 
         <p:submenu label="Contents">
             <p:menuitem value="Media Items" outcome="/mediaItems.xhtml" icon="ui-icon-search"/>
-            <p:menuitem value="Physical Paths" outcome="/encodingProfiles.xhtml" icon="ui-icon-search"/>
         </p:submenu>
 
         <p:submenu label="Encoding Profiles">

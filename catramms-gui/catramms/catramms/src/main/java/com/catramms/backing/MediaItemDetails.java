@@ -2,6 +2,7 @@ package com.catramms.backing;
 
 import com.catramms.backing.common.SessionUtils;
 import com.catramms.backing.entity.MediaItem;
+import com.catramms.backing.entity.PhysicalPath;
 import com.catramms.utility.catramms.CatraMMS;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
@@ -34,7 +35,7 @@ public class MediaItemDetails implements Serializable {
     private MediaItem mediaItem = null;
     private Long framesPerSecond;
     private Long mediaItemKey;
-    private Long currentPhysicalPathKey;
+    private PhysicalPath currentPhysicalPath;
     private String currentMediaURL;
     private String videoCurrentTime;
     private String videoMarkIn = "";
@@ -84,33 +85,6 @@ public class MediaItemDetails implements Serializable {
             String errorMessage = "Exception: " + e;
             mLogger.error(errorMessage);
         }
-
-        long defaultFramesPerSeconds = 25;
-        try
-        {
-            framesPerSecond = null;
-
-            String videoAvgFrameRate = mediaItem.getVideoDetails().getVideoAvgFrameRate();
-            int endIndexOfFrameRate = videoAvgFrameRate.indexOf('/');
-            if (endIndexOfFrameRate != -1)
-                framesPerSecond = Long.parseLong(videoAvgFrameRate.substring(0, endIndexOfFrameRate));
-
-            if (framesPerSecond == null)
-            {
-                mLogger.error("No frame rate found");
-
-                framesPerSecond = new Long(defaultFramesPerSeconds);
-            }
-        }
-        catch (Exception e)
-        {
-            String errorMessage = "Exception: " + e;
-            mLogger.error(errorMessage);
-
-            framesPerSecond = new Long(defaultFramesPerSeconds);
-        }
-
-        mLogger.info("framesPerSecond: " + framesPerSecond);
     }
 
     public void updateVideoTimeCode()
@@ -338,7 +312,7 @@ public class MediaItemDetails implements Serializable {
             String predefined = "cut";
 
             JSONObject joCut = new JSONObject();
-            joCut.put("key", currentPhysicalPathKey);
+            joCut.put("key", currentPhysicalPath.getPhysicalPathKey());
 
             JSONArray jaMarks = new JSONArray();
             joCut.put("marks", jaMarks);
@@ -371,7 +345,7 @@ public class MediaItemDetails implements Serializable {
         }
     }
 
-    public void prepareCurrentMediaURL(Long physicalPathKey)
+    public void prepareCurrentMediaURL(PhysicalPath physicalPath)
     {
         long ttlInSeconds = 60 * 60;
         int maxRetries = 20;
@@ -395,9 +369,10 @@ public class MediaItemDetails implements Serializable {
 
                 CatraMMS catraMMS = new CatraMMS();
                 currentMediaURL = catraMMS.getDeliveryURL(
-                        username, password, physicalPathKey,
+                        username, password, physicalPath.getPhysicalPathKey(),
                         ttlInSeconds, maxRetries);
-                currentPhysicalPathKey = physicalPathKey;
+
+                setCurrentPhysicalPath(physicalPath);
             }
 
             markList.clear();
@@ -407,10 +382,40 @@ public class MediaItemDetails implements Serializable {
             String errorMessage = "Exception: " + e;
             mLogger.error(errorMessage);
         }
+
+        long defaultFramesPerSeconds = 25;
+        try
+        {
+            framesPerSecond = null;
+
+            String videoAvgFrameRate = physicalPath.getVideoDetails().getVideoAvgFrameRate();
+            int endIndexOfFrameRate = videoAvgFrameRate.indexOf('/');
+            if (endIndexOfFrameRate != -1)
+                framesPerSecond = Long.parseLong(videoAvgFrameRate.substring(0, endIndexOfFrameRate));
+
+            if (framesPerSecond == null)
+            {
+                mLogger.error("No frame rate found");
+
+                framesPerSecond = new Long(defaultFramesPerSeconds);
+            }
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "Exception: " + e;
+            mLogger.error(errorMessage);
+
+            framesPerSecond = new Long(defaultFramesPerSeconds);
+        }
+
+        mLogger.info("framesPerSecond: " + framesPerSecond);
     }
 
     public String getDurationAsString(Long durationInMilliseconds)
     {
+        if (durationInMilliseconds == null)
+            return "";
+
         String duration;
 
         int hours = (int) (durationInMilliseconds / 3600000);
@@ -460,12 +465,12 @@ public class MediaItemDetails implements Serializable {
         this.currentMediaURL = currentMediaURL;
     }
 
-    public Long getCurrentPhysicalPathKey() {
-        return currentPhysicalPathKey;
+    public PhysicalPath getCurrentPhysicalPath() {
+        return currentPhysicalPath;
     }
 
-    public void setCurrentPhysicalPathKey(Long currentPhysicalPathKey) {
-        this.currentPhysicalPathKey = currentPhysicalPathKey;
+    public void setCurrentPhysicalPath(PhysicalPath currentPhysicalPath) {
+        this.currentPhysicalPath = currentPhysicalPath;
     }
 
     public String getVideoMarkIn() {

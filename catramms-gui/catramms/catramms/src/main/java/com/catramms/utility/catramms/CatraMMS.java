@@ -1203,45 +1203,6 @@ public class CatraMMS {
 
             if (deep)
             {
-                if (mediaItem.getContentType().equalsIgnoreCase("video"))
-                {
-                    JSONObject videoDetailsInfo = mediaItemInfo.getJSONObject("videoDetails");
-
-                    mediaItem.getVideoDetails().setDurationInMilliseconds(videoDetailsInfo.getLong("durationInMilliSeconds"));
-                    mediaItem.getVideoDetails().setBitRate(videoDetailsInfo.getLong("bitRate"));
-
-                    mediaItem.getVideoDetails().setVideoCodecName(videoDetailsInfo.getString("videoCodecName"));
-                    mediaItem.getVideoDetails().setVideoBitRate(videoDetailsInfo.getLong("videoBitRate"));
-                    mediaItem.getVideoDetails().setVideoProfile(videoDetailsInfo.getString("videoProfile"));
-                    mediaItem.getVideoDetails().setVideoAvgFrameRate(videoDetailsInfo.getString("videoAvgFrameRate"));
-                    mediaItem.getVideoDetails().setVideoWidth(videoDetailsInfo.getLong("videoWidth"));
-                    mediaItem.getVideoDetails().setVideoHeight(videoDetailsInfo.getLong("videoHeight"));
-
-                    mediaItem.getVideoDetails().setAudioCodecName(videoDetailsInfo.getString("audioCodecName"));
-                    mediaItem.getVideoDetails().setAudioBitRate(videoDetailsInfo.getLong("audioBitRate"));
-                    mediaItem.getVideoDetails().setAudioChannels(videoDetailsInfo.getLong("audioChannels"));
-                    mediaItem.getVideoDetails().setAudioSampleRate(videoDetailsInfo.getLong("audioSampleRate"));
-                }
-                else if (mediaItem.getContentType().equalsIgnoreCase("audio"))
-                {
-                    JSONObject audioDetailsInfo = mediaItemInfo.getJSONObject("audioDetails");
-
-                    mediaItem.getAudioDetails().setDurationInMilliseconds(audioDetailsInfo.getLong("durationInMilliSeconds"));
-                    mediaItem.getAudioDetails().setCodecName(audioDetailsInfo.getString("codecName"));
-                    mediaItem.getAudioDetails().setBitRate(audioDetailsInfo.getLong("bitRate"));
-                    mediaItem.getAudioDetails().setSampleRate(audioDetailsInfo.getLong("sampleRate"));
-                    mediaItem.getAudioDetails().setChannels(audioDetailsInfo.getLong("channels"));
-                }
-                else if (mediaItem.getContentType().equalsIgnoreCase("image"))
-                {
-                    JSONObject imageDetailsInfo = mediaItemInfo.getJSONObject("imageDetails");
-
-                    mediaItem.getImageDetails().setWidth(imageDetailsInfo.getLong("width"));
-                    mediaItem.getImageDetails().setHeight(imageDetailsInfo.getLong("height"));
-                    mediaItem.getImageDetails().setFormat(imageDetailsInfo.getString("format"));
-                    mediaItem.getImageDetails().setQuality(imageDetailsInfo.getLong("quality"));
-                }
-
                 JSONArray jaPhysicalPaths = mediaItemInfo.getJSONArray("physicalPaths");
 
                 mediaItem.setSourcePhysicalPath(null);
@@ -1266,8 +1227,48 @@ public class CatraMMS {
                         physicalPath.setEncodingProfileKey(physicalPathInfo.getLong("encodingProfileKey"));
                     physicalPath.setSizeInBytes(physicalPathInfo.getLong("sizeInBytes"));
 
+                    // physicalPath.setMediaItem(mediaItem);
+
+                    if (mediaItem.getContentType().equalsIgnoreCase("video"))
+                    {
+                        JSONObject videoDetailsInfo = physicalPathInfo.getJSONObject("videoDetails");
+
+                        physicalPath.getVideoDetails().setDurationInMilliseconds(videoDetailsInfo.getLong("durationInMilliSeconds"));
+                        physicalPath.getVideoDetails().setBitRate(videoDetailsInfo.getLong("bitRate"));
+
+                        physicalPath.getVideoDetails().setVideoCodecName(videoDetailsInfo.getString("videoCodecName"));
+                        physicalPath.getVideoDetails().setVideoBitRate(videoDetailsInfo.getLong("videoBitRate"));
+                        physicalPath.getVideoDetails().setVideoProfile(videoDetailsInfo.getString("videoProfile"));
+                        physicalPath.getVideoDetails().setVideoAvgFrameRate(videoDetailsInfo.getString("videoAvgFrameRate"));
+                        physicalPath.getVideoDetails().setVideoWidth(videoDetailsInfo.getLong("videoWidth"));
+                        physicalPath.getVideoDetails().setVideoHeight(videoDetailsInfo.getLong("videoHeight"));
+
+                        physicalPath.getVideoDetails().setAudioCodecName(videoDetailsInfo.getString("audioCodecName"));
+                        physicalPath.getVideoDetails().setAudioBitRate(videoDetailsInfo.getLong("audioBitRate"));
+                        physicalPath.getVideoDetails().setAudioChannels(videoDetailsInfo.getLong("audioChannels"));
+                        physicalPath.getVideoDetails().setAudioSampleRate(videoDetailsInfo.getLong("audioSampleRate"));
+                    }
+                    else if (mediaItem.getContentType().equalsIgnoreCase("audio"))
+                    {
+                        JSONObject audioDetailsInfo = physicalPathInfo.getJSONObject("audioDetails");
+
+                        physicalPath.getAudioDetails().setDurationInMilliseconds(audioDetailsInfo.getLong("durationInMilliSeconds"));
+                        physicalPath.getAudioDetails().setCodecName(audioDetailsInfo.getString("codecName"));
+                        physicalPath.getAudioDetails().setBitRate(audioDetailsInfo.getLong("bitRate"));
+                        physicalPath.getAudioDetails().setSampleRate(audioDetailsInfo.getLong("sampleRate"));
+                        physicalPath.getAudioDetails().setChannels(audioDetailsInfo.getLong("channels"));
+                    }
+                    else if (mediaItem.getContentType().equalsIgnoreCase("image"))
+                    {
+                        JSONObject imageDetailsInfo = physicalPathInfo.getJSONObject("imageDetails");
+
+                        physicalPath.getImageDetails().setWidth(imageDetailsInfo.getLong("width"));
+                        physicalPath.getImageDetails().setHeight(imageDetailsInfo.getLong("height"));
+                        physicalPath.getImageDetails().setFormat(imageDetailsInfo.getString("format"));
+                        physicalPath.getImageDetails().setQuality(imageDetailsInfo.getLong("quality"));
+                    }
+
                     mediaItem.getPhysicalPathList().add(physicalPath);
-                    physicalPath.setMediaItem(mediaItem);
                 }
             }
         }

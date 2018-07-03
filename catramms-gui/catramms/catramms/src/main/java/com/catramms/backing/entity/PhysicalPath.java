@@ -13,7 +13,11 @@ public class PhysicalPath implements Serializable{
     private Long encodingProfileKey;
     private Long sizeInBytes;
 
-    private MediaItem mediaItem;
+    private VideoDetails videoDetails = new VideoDetails();
+    private AudioDetails audioDetails = new AudioDetails();
+    private ImageDetails imageDetails = new ImageDetails();
+
+    // private MediaItem mediaItem;
 
     public String getFileFormat() {
         return fileFormat;
@@ -55,11 +59,37 @@ public class PhysicalPath implements Serializable{
         this.sizeInBytes = sizeInBytes;
     }
 
+    /*
     public MediaItem getMediaItem() {
         return mediaItem;
     }
 
     public void setMediaItem(MediaItem mediaItem) {
         this.mediaItem = mediaItem;
+    }
+    */
+
+    public VideoDetails getVideoDetails() {
+        return videoDetails;
+    }
+
+    public void setVideoDetails(VideoDetails videoDetails) {
+        this.videoDetails = videoDetails;
+    }
+
+    public AudioDetails getAudioDetails() {
+        return audioDetails;
+    }
+
+    public void setAudioDetails(AudioDetails audioDetails) {
+        this.audioDetails = audioDetails;
+    }
+
+    public ImageDetails getImageDetails() {
+        return imageDetails;
+    }
+
+    public void setImageDetails(ImageDetails imageDetails) {
+        this.imageDetails = imageDetails;
     }
 }
