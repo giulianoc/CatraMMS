@@ -890,7 +890,7 @@
                     <!--
                                  required="#{newWorkflow.nodeType == 'Overlay-Image-On-Video'}"
                     -->
-                    <p:inputText id="taskLabel_Overlay_Image_On_Video"
+                    <p:inputText id="taskLabel_Overlay_Image_On_Video" style="width: 100%"
                                  value="#{newWorkflow.taskLabel}"
                                  autocomplete="true"
                                  placeholder="label"/>
@@ -905,10 +905,13 @@
                     <!--
                                  required="#{newWorkflow.nodeType == 'Overlay-Image-On-Video'}"
                     -->
-                    <p:inputText id="taskOverlayPositionXInPixel_Overlay_Image_On_Video"
+                    <p:inputText id="taskOverlayPositionXInPixel_Overlay_Image_On_Video" style="width: 100%"
                                  value="#{newWorkflow.taskOverlayPositionXInPixel}"
+                                 title="It's possible to use also video_width, video_height, image_width and image_height"
                                  autocomplete="true"
                                  placeholder="label"/>
+                    <p:tooltip for="taskOverlayPositionXInPixel_Overlay_Image_On_Video"
+                               showEffect="clip" hideEffect="explode" position="left"/>
                 </p:column>
             </p:row>
 
@@ -920,10 +923,13 @@
                     <!--
                                  required="#{newWorkflow.nodeType == 'Overlay-Image-On-Video'}"
                     -->
-                    <p:inputText id="taskOverlayPositionYInPixel_Overlay_Image_On_Video"
+                    <p:inputText id="taskOverlayPositionYInPixel_Overlay_Image_On_Video" style="width: 100%"
                                  value="#{newWorkflow.taskOverlayPositionYInPixel}"
+                                 title="It's possible to use also video_width, video_height, image_width and image_height"
                                  autocomplete="true"
                                  placeholder="label"/>
+                    <p:tooltip for="taskOverlayPositionYInPixel_Overlay_Image_On_Video"
+                               showEffect="clip" hideEffect="explode" position="left"/>
                 </p:column>
             </p:row>
 
@@ -952,7 +958,7 @@
                     <p:outputLabel value="Unique Name"/>
                 </p:column>
                 <p:column>
-                    <p:inputText id="taskUniqueName_Overlay_Image_On_Video"
+                    <p:inputText id="taskUniqueName_Overlay_Image_On_Video" style="width: 100%"
                                  required="false"
                                  value="#{newWorkflow.taskUniqueName}"
                                  autocomplete="true"
@@ -1034,7 +1040,7 @@
                     <p:outputLabel value="Ingester"/>
                 </p:column>
                 <p:column>
-                    <p:inputText id="taskIngester_Overlay_Image_On_Video"
+                    <p:inputText id="taskIngester_Overlay_Image_On_Video" style="width: 100%"
                                  required="false"
                                  value="#{newWorkflow.taskIngester}"
                                  autocomplete="true"
@@ -1047,7 +1053,7 @@
                     <p:outputLabel value="Keywords"/>
                 </p:column>
                 <p:column>
-                    <p:inputText id="taskKeywords_Overlay_Image_On_Video"
+                    <p:inputText id="taskKeywords_Overlay_Image_On_Video" style="width: 100%"
                                  required="false"
                                  value="#{newWorkflow.taskKeywords}"
                                  autocomplete="true"
@@ -1060,7 +1066,7 @@
                     <p:outputLabel value="Content Provider Name"/>
                 </p:column>
                 <p:column>
-                    <p:inputText id="taskContentProviderName_Overlay_Image_On_Video"
+                    <p:inputText id="taskContentProviderName_Overlay_Image_On_Video" style="width: 100%"
                                  required="false"
                                  value="#{newWorkflow.taskContentProviderName}"
                                  autocomplete="true"
@@ -1073,7 +1079,7 @@
                     <p:outputLabel value="Delivery File Name"/>
                 </p:column>
                 <p:column>
-                    <p:inputText id="taskDeliveryFileName_Overlay_Image_On_Video"
+                    <p:inputText id="taskDeliveryFileName_Overlay_Image_On_Video" style="width: 100%"
                                  required="false"
                                  value="#{newWorkflow.taskDeliveryFileName}"
                                  autocomplete="true"

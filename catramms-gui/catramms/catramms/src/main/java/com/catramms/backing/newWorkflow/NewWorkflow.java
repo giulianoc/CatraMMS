@@ -71,6 +71,7 @@ public class NewWorkflow implements Serializable {
     private String mediaItemsContentType;
     private List<String> mediaItemsContentTypesList = new ArrayList<>();
     private Long mediaItemsMaxMediaItemsNumber = new Long(100);
+    private String mediaItemsToBeAddedOrReplaced;
     private String taskReferences;
 
 
@@ -202,6 +203,8 @@ public class NewWorkflow implements Serializable {
             taskContentTypesList.add("audio");
             taskContentTypesList.add("image");
         }
+
+        mediaItemsToBeAddedOrReplaced = "toBeReplaced";
 
         // needed otherwise when the ingestionWorkflowDetails is built at the beginning will generate
         // the excetion ...at java.net.URLEncoder.encode(URLEncoder.java:204)
@@ -1993,6 +1996,8 @@ public class NewWorkflow implements Serializable {
             }
             else if (tnSelectedNode.getData() instanceof Task)
             {
+                String userName = SessionUtils.getUserName();
+
                 tnWorkingNode = tnSelectedNode;
 
                 Task task = (Task) tnWorkingNode.getData();
@@ -2018,7 +2023,10 @@ public class NewWorkflow implements Serializable {
                     taskRetention = task.getRetention();
                     taskTitle = task.getTitle();
                     taskUniqueName = task.getUniqueName();
-                    taskIngester = task.getIngester();
+                    if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
+                        taskIngester = task.getIngester();
+                    else
+                        taskIngester = userName;
                     taskKeywords = task.getKeywords();
                     taskMD5FileChecksum = task.getMd5FileCheckSum();
                     taskFileSizeInBytes = task.getFileSizeInBytes();
@@ -2059,7 +2067,10 @@ public class NewWorkflow implements Serializable {
                     taskRetention = task.getRetention();
                     taskTitle = task.getTitle();
                     taskUniqueName = task.getUniqueName();
-                    taskIngester = task.getIngester();
+                    if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
+                        taskIngester = task.getIngester();
+                    else
+                        taskIngester = userName;
                     taskKeywords = task.getKeywords();
                     taskContentProviderName= task.getContentProviderName();
                     taskDeliveryFileName= task.getDeliveryFileName();
@@ -2100,7 +2111,10 @@ public class NewWorkflow implements Serializable {
                     taskRetention = task.getRetention();
                     taskTitle = task.getTitle();
                     taskUniqueName = task.getUniqueName();
-                    taskIngester = task.getIngester();
+                    if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
+                        taskIngester = task.getIngester();
+                    else
+                        taskIngester = userName;
                     taskKeywords = task.getKeywords();
                     taskContentProviderName= task.getContentProviderName();
                     taskDeliveryFileName= task.getDeliveryFileName();
@@ -2135,7 +2149,10 @@ public class NewWorkflow implements Serializable {
                     taskRetention = task.getRetention();
                     taskTitle = task.getTitle();
                     taskUniqueName = task.getUniqueName();
-                    taskIngester = task.getIngester();
+                    if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
+                        taskIngester = task.getIngester();
+                    else
+                        taskIngester = userName;
                     taskKeywords = task.getKeywords();
                     taskContentProviderName= task.getContentProviderName();
                     taskDeliveryFileName= task.getDeliveryFileName();
@@ -2179,7 +2196,10 @@ public class NewWorkflow implements Serializable {
                     taskRetention = task.getRetention();
                     taskTitle = task.getTitle();
                     taskUniqueName = task.getUniqueName();
-                    taskIngester = task.getIngester();
+                    if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
+                        taskIngester = task.getIngester();
+                    else
+                        taskIngester = userName;
                     taskKeywords = task.getKeywords();
                     taskContentProviderName= task.getContentProviderName();
                     taskDeliveryFileName= task.getDeliveryFileName();
@@ -2214,7 +2234,10 @@ public class NewWorkflow implements Serializable {
                     taskRetention = task.getRetention();
                     taskTitle = task.getTitle();
                     taskUniqueName = task.getUniqueName();
-                    taskIngester = task.getIngester();
+                    if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
+                        taskIngester = task.getIngester();
+                    else
+                        taskIngester = userName;
                     taskKeywords = task.getKeywords();
                     taskContentProviderName= task.getContentProviderName();
                     taskDeliveryFileName= task.getDeliveryFileName();
@@ -2251,7 +2274,10 @@ public class NewWorkflow implements Serializable {
                     taskRetention = task.getRetention();
                     taskTitle = task.getTitle();
                     taskUniqueName = task.getUniqueName();
-                    taskIngester = task.getIngester();
+                    if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
+                        taskIngester = task.getIngester();
+                    else
+                        taskIngester = userName;
                     taskKeywords = task.getKeywords();
                     taskContentProviderName= task.getContentProviderName();
                     taskDeliveryFileName= task.getDeliveryFileName();
@@ -2287,7 +2313,10 @@ public class NewWorkflow implements Serializable {
                     taskRetention = task.getRetention();
                     taskTitle = task.getTitle();
                     taskUniqueName = task.getUniqueName();
-                    taskIngester = task.getIngester();
+                    if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
+                        taskIngester = task.getIngester();
+                    else
+                        taskIngester = userName;
                     taskKeywords = task.getKeywords();
                     taskContentProviderName= task.getContentProviderName();
                     taskDeliveryFileName= task.getDeliveryFileName();
@@ -2324,7 +2353,10 @@ public class NewWorkflow implements Serializable {
                     taskRetention = task.getRetention();
                     taskTitle = task.getTitle();
                     taskUniqueName = task.getUniqueName();
-                    taskIngester = task.getIngester();
+                    if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
+                        taskIngester = task.getIngester();
+                    else
+                        taskIngester = userName;
                     taskKeywords = task.getKeywords();
                     taskContentProviderName= task.getContentProviderName();
                     taskDeliveryFileName= task.getDeliveryFileName();
@@ -2360,7 +2392,10 @@ public class NewWorkflow implements Serializable {
                     taskRetention = task.getRetention();
                     taskTitle = task.getTitle();
                     taskUniqueName = task.getUniqueName();
-                    taskIngester = task.getIngester();
+                    if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
+                        taskIngester = task.getIngester();
+                    else
+                        taskIngester = userName;
                     taskKeywords = task.getKeywords();
                     taskContentProviderName= task.getContentProviderName();
                     taskDeliveryFileName= task.getDeliveryFileName();
@@ -2394,7 +2429,10 @@ public class NewWorkflow implements Serializable {
                     taskRetention = task.getRetention();
                     taskTitle = task.getTitle();
                     taskUniqueName = task.getUniqueName();
-                    taskIngester = task.getIngester();
+                    if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
+                        taskIngester = task.getIngester();
+                    else
+                        taskIngester = userName;
                     taskKeywords = task.getKeywords();
                     taskContentProviderName= task.getContentProviderName();
                     taskDeliveryFileName= task.getDeliveryFileName();
@@ -3020,7 +3058,9 @@ public class NewWorkflow implements Serializable {
                         + ", mediaItemsSelectedList.size: " + mediaItemsSelectedList.size()
         );
 
-        taskReferences = "";
+        if (mediaItemsToBeAddedOrReplaced.equalsIgnoreCase("toBeReplaced"))
+            taskReferences = "";
+
         for (MediaItem mediaItem: mediaItemsSelectedList)
         {
             if (nodeType.equalsIgnoreCase("Remove-Content"))
@@ -3706,5 +3746,13 @@ public class NewWorkflow implements Serializable {
 
     public void setTimeInSecondsDecimalsPrecision(Long timeInSecondsDecimalsPrecision) {
         this.timeInSecondsDecimalsPrecision = timeInSecondsDecimalsPrecision;
+    }
+
+    public String getMediaItemsToBeAddedOrReplaced() {
+        return mediaItemsToBeAddedOrReplaced;
+    }
+
+    public void setMediaItemsToBeAddedOrReplaced(String mediaItemsToBeAddedOrReplaced) {
+        this.mediaItemsToBeAddedOrReplaced = mediaItemsToBeAddedOrReplaced;
     }
 }
