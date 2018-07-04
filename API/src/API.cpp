@@ -1604,7 +1604,7 @@ void API::confirmUser(
             vector<string> emailBody;
             emailBody.push_back(string("<p>Hi ") + name + ",</p>");
             emailBody.push_back(string("<p>Your registration is now completed and you can enjoy working with MMS</p>"));
-            emailBody.push_back("<p>Bye</p>");
+            emailBody.push_back("<p>Best regards</p>");
             emailBody.push_back("<p>MMS technical support</p>");
 
             EMailSender emailSender(_logger, _configuration);
