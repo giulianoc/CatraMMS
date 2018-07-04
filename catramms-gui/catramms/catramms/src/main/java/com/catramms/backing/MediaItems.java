@@ -314,7 +314,7 @@ public class MediaItems implements Serializable {
                         currentWorkspaceDetails.getWorkspaceKey());
 
                 FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
-                        "Share Workspace", "ShareWorkspace Success");
+                        "Share Workspace", "Success");
                 FacesContext context = FacesContext.getCurrentInstance();
                 context.addMessage(null, message);
             }
@@ -333,34 +333,16 @@ public class MediaItems implements Serializable {
 
     public void confirmUser()
     {
-        try {
-            Long userKey = SessionUtils.getUserKey();
-            String apiKey = SessionUtils.getAPIKey();
-            HttpSession session = SessionUtils.getSession();
+        try
+        {
+            CatraMMS catraMMS = new CatraMMS();
+            String apyKey = catraMMS.confirmUser(
+                    shareWorkspaceUserKey, shareWorkspaceConfirmationCode);
 
-            WorkspaceDetails currentWorkspaceDetails = (WorkspaceDetails) session.getAttribute("currentWorkspaceDetails");
-
-            if (userKey == null || apiKey == null || apiKey.equalsIgnoreCase(""))
-            {
-                mLogger.warn("no input to require mediaItemsKey"
-                                + ", userKey: " + userKey
-                                + ", apiKey: " + apiKey
-                );
-            }
-            else
-            {
-                String username = userKey.toString();
-                String password = apiKey;
-
-                CatraMMS catraMMS = new CatraMMS();
-                String apyKey = catraMMS.confirmUser(
-                        shareWorkspaceUserKey, shareWorkspaceConfirmationCode);
-
-                FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
-                        "Confirm", "Confirm Success");
-                FacesContext context = FacesContext.getCurrentInstance();
-                context.addMessage(null, message);
-            }
+            FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                    "Confirm", "Success");
+            FacesContext context = FacesContext.getCurrentInstance();
+            context.addMessage(null, message);
         }
         catch (Exception e)
         {

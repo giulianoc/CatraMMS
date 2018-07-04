@@ -1,20 +1,149 @@
 <?xml version='1.0' encoding='UTF-8' ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html
+        xmlns="http://www.w3.org/1999/xhtml"
         xmlns:p="http://primefaces.org/ui"
         xmlns:f="http://xmlns.jcp.org/jsf/core"
-        xmlns="http://www.w3.org/1999/xhtml"
-        xmlns:h="http://java.sun.com/jsf/html">
+        xmlns:h="http://java.sun.com/jsf/html"
+        xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+        >
 
 <f:metadata>
     <f:viewParam name="originURI" value="#{login.originURI}" />
 </f:metadata>
 
 <h:head>
+    <h:outputStylesheet library="css" name="catramms.css"  />
+
     <title>login</title>
 </h:head>
+
 <h:body>
-    <h:form>
+    <ui:include src="/common/loadingDialog.xhtml"/>
+    <ui:include src="/common/globalConfirm.xhtml"/>
+
+    <p:dialog widgetVar="registration" modal="true"
+              header="Registration" appendTo="@(body)" width="600"
+              showEffect="fade" hideEffect="fade" resizable="false" draggable="true">
+
+        <h:form id="registrationForm">
+
+            <p:panelGrid cellpadding="10" style="width: 100%" >
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Name" />
+                    </p:column>
+                    <p:column>
+                        <p:inputText style="width: 100%"
+                                     autocomplete="true"
+                                     value="#{login.registrationName}"
+                                     placeholder="name"/>
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="EMail" />
+                    </p:column>
+                    <p:column>
+                        <p:inputText style="width: 100%"
+                                     autocomplete="true"
+                                     value="#{login.registrationEMail}"
+                                     placeholder="name"/>
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Password" />
+                    </p:column>
+                    <p:column>
+                        <p:password style="width: 100%" value="#{login.registrationPassword}" />
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Country" />
+                    </p:column>
+                    <p:column>
+                        <p:inputText style="width: 100%"
+                                     autocomplete="true"
+                                     value="#{login.registrationCountry}"
+                                     placeholder="name"/>
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Default Workspace Name" />
+                    </p:column>
+                    <p:column>
+                        <p:inputText style="width: 100%"
+                                     autocomplete="true"
+                                     value="#{login.registrationWorkspaceName}"
+                                     placeholder="workspace name"/>
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                    </p:column>
+                    <p:column>
+                        <p:commandButton action="#{login.register}"
+                                         value="1. Register" >
+                            <p:confirm header="Confirmation" message="Are you sure?" icon="ui-icon-alert" />
+                        </p:commandButton>
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="User Key" />
+                    </p:column>
+                    <p:column>
+                        <p:inputNumber style="width: 100%"
+                                       decimalPlaces="0"
+                                       value="#{login.registrationUserKey}"
+                                       placeholder="user key"
+                                />
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Confirmation Code" />
+                    </p:column>
+                    <p:column>
+                        <p:inputText style="width: 100%"
+                                     value="#{login.registrationConfirmationCode}"
+                                     placeholder="confirmation code"/>
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                    </p:column>
+                    <p:column>
+                        <p:commandButton action="#{login.confirmUser}"
+                                         value="2. Confirm"
+                                         oncomplete="PF('registration').hide()" >
+                            <p:confirm header="Confirmation" message="Are you sure?" icon="ui-icon-alert" />
+                        </p:commandButton>
+                    </p:column>
+                </p:row>
+
+            </p:panelGrid>
+
+        </h:form>
+    </p:dialog>
+
+    <h:form id="viewForm">
+
+        <p:growl id="growl" showDetail="true" sticky="false" escape="false" life="5000">
+            <p:autoUpdate />
+        </p:growl>
+
         <p:panel header="MMS Login" style="width: 40%;margin-top:100px;margin-left: 30%" >
             <p:panelGrid style="width: 100%" styleClass="ui-noborder" >
 
@@ -45,8 +174,19 @@
                         </p:commandButton>
                     </p:column>
                 </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:commandLink value="Registration and Confirmation"
+                                       update="registrationForm"
+                                       oncomplete="PF('registration').show()" />
+                    </p:column>
+                    <p:column>
+                    </p:column>
+                </p:row>
             </p:panelGrid>
         </p:panel>
+
     </h:form>
 </h:body>
 </html>

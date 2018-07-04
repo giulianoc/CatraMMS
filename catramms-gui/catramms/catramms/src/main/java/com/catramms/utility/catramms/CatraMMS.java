@@ -92,6 +92,64 @@ public class CatraMMS {
         return userKey;
     }
 
+    public Long register(String userNameToRegister, String emailAddressToRegister,
+                         String passwordToRegister, String countryToRegister,
+                         String workspaceNameToRegister)
+            throws Exception
+    {
+        String mmsInfo;
+        try
+        {
+            String mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort + "/catramms/v1/user";
+
+            String postBodyRequest = "{ "
+                    + "\"Name\": \"" + userNameToRegister + "\", "
+                    + "\"EMail\": \"" + emailAddressToRegister + "\", "
+                    + "\"Password\": \"" + passwordToRegister + "\", "
+                    + "\"Country\": \"" + countryToRegister + "\", "
+                    + "\"WorkspaceName\": \"" + workspaceNameToRegister + "\" "
+                    + "} "
+                    ;
+
+            mLogger.info("register"
+                            + ", mmsURL: " + mmsURL
+                            + ", postBodyRequest: " + postBodyRequest
+            );
+
+            String username = null;
+            String password = null;
+
+            Date now = new Date();
+            mmsInfo = HttpFeedFetcher.fetchPostHttpsJson(mmsURL, timeoutInSeconds, maxRetriesNumber,
+                    username, password, postBodyRequest);
+            mLogger.info("Elapsed time login (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "shareWorkspace failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+
+        Long userKey;
+
+        try
+        {
+            JSONObject joWMMSInfo = new JSONObject(mmsInfo);
+            userKey = joWMMSInfo.getLong("userKey");
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "Parsing workspaceDetails failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+
+        return userKey;
+    }
+
     public String confirmUser(Long userKey, String confirmationCode)
             throws Exception
     {

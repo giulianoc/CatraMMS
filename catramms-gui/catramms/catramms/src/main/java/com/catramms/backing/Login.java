@@ -9,6 +9,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.annotation.PostConstruct;
 import javax.faces.application.FacesMessage;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.SessionScoped;
@@ -29,6 +30,34 @@ public class Login implements Serializable {
     private String msg;
     private String emailAddress;
     private String userName;
+
+    private String registrationName;
+    private String registrationEMail;
+    private String registrationPassword;
+    private String registrationCountry;
+    private Long registrationUserKey;
+    private String registrationConfirmationCode;
+    private String registrationWorkspaceName;
+
+    @PostConstruct
+    public void init()
+    {
+        mLogger.debug("init");
+
+        originURI = "";
+        pwd = "";
+        msg = "";
+        emailAddress = "";
+        userName = "";
+
+        registrationName = "";
+        registrationEMail = "";
+        registrationPassword = "";
+        registrationCountry = "";
+        registrationUserKey = new Long(0);
+        registrationConfirmationCode = "";
+        registrationWorkspaceName = "";
+    }
 
     //validate login
     public String validateUsernamePassword()
@@ -126,6 +155,58 @@ public class Login implements Serializable {
         }
     }
 
+    public void register()
+    {
+        try
+        {
+            mLogger.info("register...");
+
+            CatraMMS catraMMS = new CatraMMS();
+            registrationUserKey = catraMMS.register(
+                    registrationName, registrationEMail, registrationPassword,
+                    registrationCountry, registrationWorkspaceName);
+
+            FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                    "Registration", "Success");
+            FacesContext context = FacesContext.getCurrentInstance();
+            context.addMessage(null, message);
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "registration failed: " + e;
+            mLogger.error(errorMessage);
+
+            FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                    "Registration", errorMessage);
+            FacesContext context = FacesContext.getCurrentInstance();
+            context.addMessage(null, message);
+        }
+    }
+
+    public void confirmUser()
+    {
+        try
+        {
+            CatraMMS catraMMS = new CatraMMS();
+            String apyKey = catraMMS.confirmUser(
+                    registrationUserKey, registrationConfirmationCode);
+
+            FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                    "Confirm", "Confirm Success");
+            FacesContext context = FacesContext.getCurrentInstance();
+            context.addMessage(null, message);
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "confirmUser failed: " + e;
+            mLogger.error(errorMessage);
+
+            FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                    "Confirm", errorMessage);
+            FacesContext context = FacesContext.getCurrentInstance();
+            context.addMessage(null, message);
+        }
+    }
     public String getOriginURI() {
         return originURI;
     }
@@ -164,5 +245,61 @@ public class Login implements Serializable {
 
     public void setUserName(String userName) {
         this.userName = userName;
+    }
+
+    public String getRegistrationName() {
+        return registrationName;
+    }
+
+    public void setRegistrationName(String registrationName) {
+        this.registrationName = registrationName;
+    }
+
+    public String getRegistrationEMail() {
+        return registrationEMail;
+    }
+
+    public void setRegistrationEMail(String registrationEMail) {
+        this.registrationEMail = registrationEMail;
+    }
+
+    public String getRegistrationPassword() {
+        return registrationPassword;
+    }
+
+    public void setRegistrationPassword(String registrationPassword) {
+        this.registrationPassword = registrationPassword;
+    }
+
+    public String getRegistrationCountry() {
+        return registrationCountry;
+    }
+
+    public void setRegistrationCountry(String registrationCountry) {
+        this.registrationCountry = registrationCountry;
+    }
+
+    public Long getRegistrationUserKey() {
+        return registrationUserKey;
+    }
+
+    public void setRegistrationUserKey(Long registrationUserKey) {
+        this.registrationUserKey = registrationUserKey;
+    }
+
+    public String getRegistrationConfirmationCode() {
+        return registrationConfirmationCode;
+    }
+
+    public void setRegistrationConfirmationCode(String registrationConfirmationCode) {
+        this.registrationConfirmationCode = registrationConfirmationCode;
+    }
+
+    public String getRegistrationWorkspaceName() {
+        return registrationWorkspaceName;
+    }
+
+    public void setRegistrationWorkspaceName(String registrationWorkspaceName) {
+        this.registrationWorkspaceName = registrationWorkspaceName;
     }
 }
