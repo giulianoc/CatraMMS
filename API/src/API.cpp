@@ -1255,7 +1255,7 @@ void API::registerUser(
             emailBody.push_back(string("<p>Hi ") + name + ",</p>");
             emailBody.push_back(string("<p>the registration has been done successfully, user and default Workspace have been created</p>"));
             emailBody.push_back(string("<p>here follows the user key ") + to_string(get<1>(workspaceKeyUserKeyAndConfirmationCode)) 
-                + " and the confirmation code ") + get<2>(workspaceKeyUserKeyAndConfirmationCode) + " to be used to confirm the registration</p>");
+                + " and the confirmation code " + get<2>(workspaceKeyUserKeyAndConfirmationCode) + " to be used to confirm the registration</p>");
             emailBody.push_back("<p>Have a nice day, best regards</p>");
             emailBody.push_back("<p>MMS technical support</p>");
 
@@ -1499,7 +1499,7 @@ void API::shareWorkspace_(
             emailBody.push_back(string("<p>Hi ") + name + ",</p>");
             emailBody.push_back(string("<p>the workspace has been shared successfully</p>"));
             emailBody.push_back(string("<p>here follows the user key ") + to_string(get<0>(userKeyAndConfirmationCode)) 
-                + " and the confirmation code ") + get<1>(userKeyAndConfirmationCode) + " to be used to confirm the sharing of the Workspace</p>");
+                + " and the confirmation code " + get<1>(userKeyAndConfirmationCode) + " to be used to confirm the sharing of the Workspace</p>");
             emailBody.push_back("<p>Have a nice day, best regards</p>");
             emailBody.push_back("<p>MMS technical support</p>");
 
