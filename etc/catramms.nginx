@@ -100,7 +100,7 @@ server {
 			rewrite ^/catramms/(v[0-9]+)/profilesSet/image/?$ /api?version=$1&method=addEncodingProfilesSet&contentType=image last;
 			rewrite ^/catramms/(v[0-9]+)/profile/image/?$ /api?version=$1&method=addEncodingProfile&contentType=image last;
 		}
-		if ($request_method = REMOVE) {
+		if ($request_method = DELETE) {
 			rewrite ^/catramms/(v[0-9]+)/profile/([0-9]+)/?$ /api?version=$1&method=removeEncodingProfile&encodingProfileKey=$2 last;
 		}
 

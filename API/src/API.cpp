@@ -4515,7 +4515,7 @@ void API::removeEncodingProfile(
 
         string responseBody;
         
-        sendSuccess(request, 201, responseBody);
+        sendSuccess(request, 200, responseBody);
     }
     catch(runtime_error e)
     {
