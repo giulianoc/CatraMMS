@@ -196,6 +196,11 @@ private:
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters);
 
+    void removeEncodingProfilesSet(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters);
+
     void createDeliveryAuthorization(
         FCGX_Request& request,
         int64_t userKey,

@@ -531,10 +531,19 @@
                 <p:outputLabel value="#{encodingProfile.fileFormat}" />
             </p:column>
 
-            <p:column style="width:80px;" headerText="">
+            <p:column style="width:120px;" headerText="">
                 <h:link outcome="/encodingProfileDetails.xhtml?faces-redirect=true" value="Details">
                     <f:param name="encodingProfileKey" value="#{encodingProfile.encodingProfileKey}" />
                 </h:link>
+
+                <p:outputLabel value=" - " />
+
+                <p:commandLink value="Remove"
+                               action="#{encodingProfiles.removeEncodingProfile(encodingProfile.encodingProfileKey)}"
+                               update="encodingProfileDataTable"
+                        >
+                    <p:confirm header="Confirmation" message="Are you sure?" icon="ui-icon-alert" />
+                </p:commandLink>
             </p:column>
 
         </p:dataTable>

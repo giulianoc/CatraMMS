@@ -1,11 +1,15 @@
 package com.catramms.backing;
 
 import com.catramms.backing.common.SessionUtils;
+import com.catramms.backing.entity.EncodingProfile;
 import com.catramms.backing.entity.EncodingProfilesSet;
 import com.catramms.utility.catramms.CatraMMS;
 import org.apache.log4j.Logger;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import javax.annotation.PostConstruct;
+import javax.faces.application.FacesMessage;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
 import javax.faces.context.FacesContext;
@@ -33,6 +37,10 @@ public class EncodingProfilesSets implements Serializable {
 
     private List<EncodingProfilesSet> encodingProfilesSetList = new ArrayList<>();
 
+    private String addProfilesSetLabel;
+    private List<EncodingProfile> addProfilesSetEncodingProfileList = new ArrayList<>();
+    private List<EncodingProfile> addProfilesSetEncodingProfileSelectedList = new ArrayList<>();
+
     @PostConstruct
     public void init()
     {
@@ -46,11 +54,166 @@ public class EncodingProfilesSets implements Serializable {
 
             contentType = contentTypesList.get(0);
         }
+
+        updateEncodingProfileList();
     }
 
     public void contentTypeChanged()
     {
+
         fillList(true);
+        updateEncodingProfileList();
+    }
+
+    public void updateEncodingProfileList()
+    {
+        try
+        {
+            Long userKey = SessionUtils.getUserKey();
+            String apiKey = SessionUtils.getAPIKey();
+
+            if (userKey == null || apiKey == null || apiKey.equalsIgnoreCase(""))
+            {
+                mLogger.warn("no input to require mediaItemsKey"
+                                + ", userKey: " + userKey
+                                + ", apiKey: " + apiKey
+                );
+            }
+            else
+            {
+                String username = userKey.toString();
+                String password = apiKey;
+
+                addProfilesSetEncodingProfileList.clear();
+
+                CatraMMS catraMMS = new CatraMMS();
+                catraMMS.getEncodingProfiles(
+                        username, password,
+                        contentType, addProfilesSetEncodingProfileList);
+            }
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "Exception: " + e;
+            mLogger.error(errorMessage);
+        }
+    }
+
+    public void prepareAddEncodingProfilesSet()
+    {
+        addProfilesSetEncodingProfileSelectedList.clear();
+    }
+
+    public void addEncodingProfilesSet()
+    {
+        String jsonEncodingProfilesSet;
+
+        try
+        {
+            JSONObject joEncodingProfilesSet = new JSONObject();
+            joEncodingProfilesSet.put("Label", addProfilesSetLabel);
+
+            JSONArray jaEncodingProfiles = new JSONArray();
+            joEncodingProfilesSet.put("Profiles", jaEncodingProfiles);
+
+            for (EncodingProfile encodingProfile: addProfilesSetEncodingProfileSelectedList)
+            {
+                jaEncodingProfiles.put(encodingProfile.getLabel());
+            }
+
+            jsonEncodingProfilesSet = joEncodingProfilesSet.toString(4);
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "Exception: " + e;
+            mLogger.error(errorMessage);
+
+            FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Encoding Profiles Set",
+                    "Add failed");
+            FacesContext.getCurrentInstance().addMessage(null, message);
+
+            return;
+        }
+
+        try
+        {
+            Long userKey = SessionUtils.getUserKey();
+            String apiKey = SessionUtils.getAPIKey();
+
+            if (userKey == null || apiKey == null || apiKey.equalsIgnoreCase(""))
+            {
+                mLogger.warn("no input to require mediaItemsKey"
+                                + ", userKey: " + userKey
+                                + ", apiKey: " + apiKey
+                );
+            }
+            else
+            {
+                String username = userKey.toString();
+                String password = apiKey;
+
+                CatraMMS catraMMS = new CatraMMS();
+                catraMMS.addEncodingProfilesSet(
+                        username, password,
+                        contentType, jsonEncodingProfilesSet);
+
+                fillList(false);
+
+                FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Encoding Profiles Set",
+                        "Add successful");
+                FacesContext.getCurrentInstance().addMessage(null, message);
+            }
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "Exception: " + e;
+            mLogger.error(errorMessage);
+
+            FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Encoding Profiles Set",
+                    "Add failed");
+            FacesContext.getCurrentInstance().addMessage(null, message);
+        }
+    }
+
+    public void removeEncodingProfilesSet(Long encodingProfilesSetKey)
+    {
+        try
+        {
+            Long userKey = SessionUtils.getUserKey();
+            String apiKey = SessionUtils.getAPIKey();
+
+            if (userKey == null || apiKey == null || apiKey.equalsIgnoreCase(""))
+            {
+                mLogger.warn("no input to require removeEncodingProfilesSet"
+                                + ", userKey: " + userKey
+                                + ", apiKey: " + apiKey
+                );
+            }
+            else
+            {
+                String username = userKey.toString();
+                String password = apiKey;
+
+                CatraMMS catraMMS = new CatraMMS();
+                catraMMS.removeEncodingProfilesSet(
+                        username, password, encodingProfilesSetKey);
+
+                fillList(false);
+
+                FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Encoding Profiles Set",
+                        "Remove successful");
+                FacesContext.getCurrentInstance().addMessage(null, message);
+            }
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "Exception: " + e;
+            mLogger.error(errorMessage);
+
+            FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Encoding Profiles Set",
+                    "Remove failed");
+            FacesContext.getCurrentInstance().addMessage(null, message);
+        }
     }
 
     public void fillList(boolean toBeRedirected)
@@ -137,5 +300,29 @@ public class EncodingProfilesSets implements Serializable {
 
     public void setEncodingProfilesSetList(List<EncodingProfilesSet> encodingProfilesSetList) {
         this.encodingProfilesSetList = encodingProfilesSetList;
+    }
+
+    public List<EncodingProfile> getAddProfilesSetEncodingProfileList() {
+        return addProfilesSetEncodingProfileList;
+    }
+
+    public void setAddProfilesSetEncodingProfileList(List<EncodingProfile> addProfilesSetEncodingProfileList) {
+        this.addProfilesSetEncodingProfileList = addProfilesSetEncodingProfileList;
+    }
+
+    public List<EncodingProfile> getAddProfilesSetEncodingProfileSelectedList() {
+        return addProfilesSetEncodingProfileSelectedList;
+    }
+
+    public void setAddProfilesSetEncodingProfileSelectedList(List<EncodingProfile> addProfilesSetEncodingProfileSelectedList) {
+        this.addProfilesSetEncodingProfileSelectedList = addProfilesSetEncodingProfileSelectedList;
+    }
+
+    public String getAddProfilesSetLabel() {
+        return addProfilesSetLabel;
+    }
+
+    public void setAddProfilesSetLabel(String addProfilesSetLabel) {
+        this.addProfilesSetLabel = addProfilesSetLabel;
     }
 }

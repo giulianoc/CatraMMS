@@ -167,6 +167,14 @@ public class HttpFeedFetcher {
         return fetchBodyHttpsJson("PUT", url, timeoutInSeconds, maxRetriesNumber, user, password, postBodyRequest);
     }
 
+    static public String fetchDeleteHttpsJson(String url, int timeoutInSeconds, int maxRetriesNumber,
+                                           String user, String password)
+            throws Exception
+    {
+        String postBodyRequest = null;
+        return fetchBodyHttpsJson("DELETE", url, timeoutInSeconds, maxRetriesNumber, user, password, postBodyRequest);
+    }
+
     static private String fetchBodyHttpsJson(String httpMethod, String url, int timeoutInSeconds, int maxRetriesNumber,
                                         String user, String password, String postBodyRequest)
             throws Exception
@@ -255,8 +263,11 @@ public class HttpFeedFetcher {
                             clength = 0;
                         }
 
-                        conn.setRequestProperty("Content-Type", "application/json");
-                        mLogger.info("Header. " + "Content-Type: " + "application/json");
+                        if (clength > 0)
+                        {
+                            conn.setRequestProperty("Content-Type", "application/json");
+                            mLogger.info("Header. " + "Content-Type: " + "application/json");
+                        }
 
                         conn.setRequestProperty("Content-Length", String.valueOf(clength));
                         mLogger.info("Header. " + "Content-Length: " + String.valueOf(clength));

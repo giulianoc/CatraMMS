@@ -683,6 +683,9 @@ public:
         MMSEngineDBFacade::ContentType contentType, 
         int64_t encodingProfilesSetKey);
 
+    void removeEncodingProfilesSet(
+        int64_t workspaceKey, int64_t encodingProfilesSetKey);
+
     void getExpiredMediaItemKeys(
         string processorMMS,
         vector<pair<shared_ptr<Workspace>,int64_t>>& mediaItemKeyToBeRemoved,

@@ -605,6 +605,23 @@ void API::manageRequestAndResponse(
         removeEncodingProfile(request, workspace,
             queryParameters);
     }
+    else if (method == "removeEncodingProfilesSet")
+    {
+        if (!createProfiles)
+        {
+            string errorMessage = string("APIKey does not have the permission"
+                    ", createProfiles: " + to_string(createProfiles)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+                
+        removeEncodingProfilesSet(request, workspace,
+            queryParameters);
+    }
     else if (method == "encodingProfilesList")
     {
         encodingProfilesList(request, workspace, queryParameters);
@@ -4507,6 +4524,86 @@ void API::removeEncodingProfile(
         catch(exception e)
         {
             _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeEncodingProfile failed"
+                + ", e.what(): " + e.what()
+            );
+
+            throw e;
+        }
+
+        string responseBody;
+        
+        sendSuccess(request, 200, responseBody);
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error: ") + e.what();
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::removeEncodingProfilesSet(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters)
+{
+    string api = "removeEncodingProfilesSet";
+
+    _logger->info(__FILEREF__ + "Received " + api
+    );
+
+    try
+    {
+        auto encodingProfilesSetKeyIt = queryParameters.find("encodingProfilesSetKey");
+        if (encodingProfilesSetKeyIt == queryParameters.end())
+        {
+            string errorMessage = string("'encodingProfilesSetKey' URI parameter is missing");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);            
+        }
+        int64_t encodingProfilesSetKey = stoll(encodingProfilesSetKeyIt->second);
+        
+        try
+        {
+            _mmsEngineDBFacade->removeEncodingProfilesSet(
+                workspace->_workspaceKey, encodingProfilesSetKey);
+        }
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeEncodingProfilesSet failed"
+                + ", e.what(): " + e.what()
+            );
+
+            throw e;
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeEncodingProfilesSet failed"
                 + ", e.what(): " + e.what()
             );
 

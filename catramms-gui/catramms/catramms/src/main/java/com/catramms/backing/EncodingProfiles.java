@@ -253,6 +253,10 @@ public class EncodingProfiles implements Serializable {
             String errorMessage = "Exception: " + e;
             mLogger.error(errorMessage);
 
+            FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Encoding Profile",
+                    "Add failed");
+            FacesContext.getCurrentInstance().addMessage(null, message);
+
             return;
         }
 
@@ -279,12 +283,61 @@ public class EncodingProfiles implements Serializable {
                         contentType, jsonEncodingProfile);
 
                 fillList(false);
+
+                FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Encoding Profile",
+                        "Add successful");
+                FacesContext.getCurrentInstance().addMessage(null, message);
             }
         }
         catch (Exception e)
         {
             String errorMessage = "Exception: " + e;
             mLogger.error(errorMessage);
+
+            FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Encoding Profile",
+                    "Add failed");
+            FacesContext.getCurrentInstance().addMessage(null, message);
+        }
+    }
+
+    public void removeEncodingProfile(Long encodingProfileKey)
+    {
+        try
+        {
+            Long userKey = SessionUtils.getUserKey();
+            String apiKey = SessionUtils.getAPIKey();
+
+            if (userKey == null || apiKey == null || apiKey.equalsIgnoreCase(""))
+            {
+                mLogger.warn("no input to require mediaItemsKey"
+                                + ", userKey: " + userKey
+                                + ", apiKey: " + apiKey
+                );
+            }
+            else
+            {
+                String username = userKey.toString();
+                String password = apiKey;
+
+                CatraMMS catraMMS = new CatraMMS();
+                catraMMS.removeEncodingProfile(
+                        username, password, encodingProfileKey);
+
+                fillList(false);
+
+                FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Encoding Profile",
+                        "Remove successful");
+                FacesContext.getCurrentInstance().addMessage(null, message);
+            }
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "Exception: " + e;
+            mLogger.error(errorMessage);
+
+            FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Encoding Profile",
+                    "Remove failed");
+            FacesContext.getCurrentInstance().addMessage(null, message);
         }
     }
 

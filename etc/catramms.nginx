@@ -102,6 +102,7 @@ server {
 		}
 		if ($request_method = DELETE) {
 			rewrite ^/catramms/(v[0-9]+)/profile/([0-9]+)/?$ /api?version=$1&method=removeEncodingProfile&encodingProfileKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/profilesSet/([0-9]+)/?$ /api?version=$1&method=removeEncodingProfilesSet&encodingProfilesSetKey=$2 last;
 		}
 
 		if ($request_method = GET) {
