@@ -403,7 +403,7 @@ public class CatraMMS {
         }
         catch (Exception e)
         {
-            String errorMessage = "addEncodingProfile MMS failed. Exception: " + e;
+            String errorMessage = "removeEncodingProfile MMS failed. Exception: " + e;
             mLogger.error(errorMessage);
 
             throw new Exception(errorMessage);
@@ -414,22 +414,22 @@ public class CatraMMS {
                                    String contentType, String jsonEncodingProfilesSet)
             throws Exception
     {
-        Long encodingProfileKey;
+        Long encodingProfilesSetKey;
 
         String mmsInfo;
         try
         {
-            String mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort + "/catramms/v1/profile/" + contentType;
+            String mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort + "/catramms/v1/profilesSet/" + contentType;
 
-            mLogger.info("addEncodingProfile"
+            mLogger.info("addEncodingProfilesSet"
                             + ", mmsURL: " + mmsURL
                             + ", contentType: " + contentType
-                            + ", jsonEncodingProfile: " + jsonEncodingProfile
+                            + ", jsonEncodingProfilesSet: " + jsonEncodingProfilesSet
             );
 
             Date now = new Date();
             mmsInfo = HttpFeedFetcher.fetchPutHttpsJson(mmsURL, timeoutInSeconds, maxRetriesNumber,
-                    username, password, jsonEncodingProfile);
+                    username, password, jsonEncodingProfilesSet);
             mLogger.info("Elapsed time login (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
         }
         catch (Exception e)
@@ -443,9 +443,12 @@ public class CatraMMS {
         try
         {
             JSONObject joWMMSInfo = new JSONObject(mmsInfo);
+            JSONObject joEncodingProfilesSet = joWMMSInfo.getJSONObject("encodingProfilesSet");
 
-            encodingProfileKey = joWMMSInfo.getLong("encodingProfileKey");
-            String encodingProfileLabel = joWMMSInfo.getString("label");
+            encodingProfilesSetKey = joEncodingProfilesSet.getLong("encodingProfilesSetKey");
+            String encodingProfilesSetLabel = joEncodingProfilesSet.getString("label");
+
+            // ...
         }
         catch (Exception e)
         {
@@ -455,21 +458,21 @@ public class CatraMMS {
             throw new Exception(errorMessage);
         }
 
-        return encodingProfileKey;
+        return encodingProfilesSetKey;
     }
 
-    public void removeEncodingProfile(String username, String password,
-                                      Long encodingProfileKey)
+    public void removeEncodingProfilesSet(String username, String password,
+                                      Long encodingProfilesSetKey)
             throws Exception
     {
         String mmsInfo;
         try
         {
-            String mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort + "/catramms/v1/profile/" + encodingProfileKey;
+            String mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort + "/catramms/v1/profilesSet/" + encodingProfilesSetKey;
 
-            mLogger.info("removeEncodingProfile"
+            mLogger.info("removeEncodingProfilesSet"
                             + ", mmsURL: " + mmsURL
-                            + ", encodingProfileKey: " + encodingProfileKey
+                            + ", encodingProfilesSetKey: " + encodingProfilesSetKey
             );
 
             Date now = new Date();
@@ -479,7 +482,7 @@ public class CatraMMS {
         }
         catch (Exception e)
         {
-            String errorMessage = "addEncodingProfile MMS failed. Exception: " + e;
+            String errorMessage = "removeEncodingProfilesSet MMS failed. Exception: " + e;
             mLogger.error(errorMessage);
 
             throw new Exception(errorMessage);
@@ -1212,7 +1215,7 @@ public class CatraMMS {
             Date now = new Date();
             mmsInfo = HttpFeedFetcher.fetchGetHttpsJson(mmsURL, timeoutInSeconds, maxRetriesNumber,
                     username, password);
-            mLogger.info("Elapsed time getMediaItems (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
+            mLogger.info("Elapsed time getEncodingProfilesSets (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
         }
         catch (Exception e)
         {

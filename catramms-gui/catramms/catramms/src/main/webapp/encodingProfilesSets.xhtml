@@ -36,65 +36,70 @@
                         <p:outputLabel value="Label" style="font-weight: bold"/>
                     </p:column>
                     <p:column>
-                        <!--
-                                     required="#{newWorkflow.nodeType == 'Add-Content'}"
-                        -->
                         <p:inputText value="#{encodingProfilesSets.addProfilesSetLabel}"
                                      required="true"
                                      autocomplete="true"
                                      placeholder="label"/>
                     </p:column>
                 </p:row>
+
+                <p:row>
+                    <p:column colspan="2">
+                        <p:dataTable resizableColumns="true" id="addEncodingProfileDataTable"
+                                     var="encodingProfile" rowIndexVar="rowId"
+                                     value="#{encodingProfilesSets.addProfilesSetEncodingProfileList}"
+                                     rowKey="#{encodingProfile.encodingProfileKey}"
+                                     selection="#{encodingProfilesSets.addProfilesSetEncodingProfileSelectedList}" >
+
+                            <f:facet name="header">
+
+                                <p:toolbar>
+                                    <p:toolbarGroup align="left">
+                                        <!-- panelGroup is to make 'rendered' working on update -->
+                                        <h:panelGroup>
+                                            <p:outputLabel styleClass="red" value="#{encodingProfilesSets.addProfilesSetEncodingProfileList.size()}" />
+                                            <p:outputLabel value=" encoding profiles" />
+                                        </h:panelGroup>
+                                    </p:toolbarGroup>
+
+                                    <p:toolbarGroup align="right">
+
+                                    </p:toolbarGroup>
+                                </p:toolbar>
+
+                            </f:facet>
+
+                            <p:column selectionMode="multiple" style="width:16px;text-align:center"/>
+
+                            <p:column style="width:100px;" headerText="Profile Key" >
+                                <p:outputLabel value="#{encodingProfile.encodingProfileKey}" />
+                            </p:column>
+
+                            <p:column headerText="Label" >
+                                <p:outputLabel value="#{encodingProfile.label}" />
+                            </p:column>
+
+                            <p:column style="width:100px;" headerText="File Format" >
+                                <p:outputLabel value="#{encodingProfile.fileFormat}" />
+                            </p:column>
+
+                        </p:dataTable>
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                    </p:column>
+                    <p:column>
+                        <p:commandButton actionListener="#{encodingProfilesSets.addEncodingProfilesSet}"
+                                         icon="ui-icon-search" value="Add"
+                                         onclick="PF('addEncodingProfilesSet').hide()"
+                                         update="viewForm:encodingProfilesSetsDataTable"
+                                />
+                    </p:column>
+                </p:row>
             </p:panelGrid>
 
-            <br />
-
-            <p:dataTable resizableColumns="true" id="addEncodingProfileDataTable"
-                         var="encodingProfile" rowIndexVar="rowId"
-                         value="#{encodingProfilesSets.addProfilesSetEncodingProfileList}"
-                         rowKey="#{encodingProfile.encodingProfileKey}"
-                         selection="#{encodingProfilesSets.addProfilesSetEncodingProfileSelectedList}" >
-
-                <f:facet name="header">
-
-                    <p:toolbar>
-                        <p:toolbarGroup align="left">
-                            <!-- panelGroup is to make 'rendered' working on update -->
-                            <h:panelGroup>
-                                <p:outputLabel styleClass="red" value="#{encodingProfilesSets.addProfilesSetEncodingProfileList.size()}" />
-                                <p:outputLabel value=" encoding profiles" />
-                            </h:panelGroup>
-                        </p:toolbarGroup>
-
-                        <p:toolbarGroup align="right">
-
-                        </p:toolbarGroup>
-                    </p:toolbar>
-
-                </f:facet>
-
-                <p:column selectionMode="multiple" style="width:16px;text-align:center"/>
-
-                <p:column style="width:100px;" headerText="Profile Key" >
-                    <p:outputLabel value="#{encodingProfile.encodingProfileKey}" />
-                </p:column>
-
-                <p:column headerText="Label" >
-                    <p:outputLabel value="#{encodingProfile.label}" />
-                </p:column>
-
-                <p:column style="width:100px;" headerText="File Format" >
-                    <p:outputLabel value="#{encodingProfile.fileFormat}" />
-                </p:column>
-
-                <f:facet name="footer">
-                    <p:commandButton process="addEncodingProfileDataTable"
-                                     actionListener="#{encodingProfilesSets.addEncodingProfilesSet}"
-                                     icon="ui-icon-search" value="Add"
-                                     onclick="PF('addEncodingProfilesSet').hide()"
-                            />
-                </f:facet>
-            </p:dataTable>
 
         </h:form>
     </p:dialog>
@@ -201,10 +206,19 @@
                 <p:outputLabel value="#{encodingProfilesSet.contentType}" />
             </p:column>
 
-            <p:column style="width:80px;" headerText="">
+            <p:column style="width:140px;" headerText="">
                 <h:link outcome="/encodingProfilesSetDetails.xhtml?faces-redirect=true" value="Details">
                     <f:param name="encodingProfilesSetKey" value="#{encodingProfilesSet.encodingProfilesSetKey}" />
                 </h:link>
+
+                <p:outputLabel value=" - " />
+
+                <p:commandLink value="Remove"
+                               action="#{encodingProfilesSets.removeEncodingProfilesSet(encodingProfilesSet.encodingProfilesSetKey)}"
+                               update="encodingProfilesSetsDataTable"
+                        >
+                    <p:confirm header="Confirmation" message="Are you sure?" icon="ui-icon-alert" />
+                </p:commandLink>
             </p:column>
 
         </p:dataTable>

@@ -107,31 +107,34 @@
                     <f:convertDateTime type="date" pattern="dd-MM-yyyy HH:mm:ss" timeZone="CET"/>
                 </p:outputLabel>
             </p:column>
-
-            <f:facet name="footer">
-                <p:toolbar>
-                    <f:facet name="right">
-                        <p:outputLabel value="Selection " />
-
-                        <p:selectOneRadio id="mediaItemsToBeAddedOrReplaced"
-                                          value="#{newWorkflow.mediaItemsToBeAddedOrReplaced}">
-                            <f:selectItem itemLabel="To be added" itemValue="toBeAdded"/>
-                            <f:selectItem itemLabel="To be replaced" itemValue="toBeReplaced"/>
-                        </p:selectOneRadio>
-
-                        <span class="ui-separator">
-                            <span class="ui-icon ui-icon-grip-dotted-vertical" />
-                        </span>
-
-                        <p:commandButton process="mediaItemDataTable"
-                                         update="viewForm:taskReferences_Remove_Content,viewForm:taskReferences_Concat_Demuxer,viewForm:taskReferences_Cut,viewForm:taskReferences_Overlay_Image_On_Video,viewForm:taskReferences_Overlay_Text_On_Video,viewForm:taskReferences_Frame,viewForm:taskReferences_Periodical_Frames,viewForm:taskReferences_I_Frames,viewForm:taskReferences_Motion_JPEG_by_Periodical_Frames,viewForm:taskReferences_Motion_JPEG_by_I_Frames,viewForm:taskReferences_Slideshow,viewForm:taskReferences_Encode"
-                                         icon="ui-icon-search" value="Save"
-                                         onclick="PF('selectMediaItems').hide()"
-                                />
-                    </f:facet>
-                </p:toolbar>
-            </f:facet>
         </p:dataTable>
+
+        <br />
+
+        <p:toolbar>
+            <p:toolbarGroup align="left">
+            </p:toolbarGroup>
+
+            <p:toolbarGroup align="right">
+                <p:outputLabel value="Selection " />
+
+                <p:selectOneRadio id="mediaItemsToBeAddedOrReplaced"
+                                  value="#{newWorkflow.mediaItemsToBeAddedOrReplaced}">
+                    <f:selectItem itemLabel="To be added" itemValue="toBeAdded"/>
+                    <f:selectItem itemLabel="To be replaced" itemValue="toBeReplaced"/>
+                </p:selectOneRadio>
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:commandButton process="mediaItemDataTable"
+                                 update="viewForm:taskReferences_Remove_Content,viewForm:taskReferences_Concat_Demuxer,viewForm:taskReferences_Cut,viewForm:taskReferences_Overlay_Image_On_Video,viewForm:taskReferences_Overlay_Text_On_Video,viewForm:taskReferences_Frame,viewForm:taskReferences_Periodical_Frames,viewForm:taskReferences_I_Frames,viewForm:taskReferences_Motion_JPEG_by_Periodical_Frames,viewForm:taskReferences_Motion_JPEG_by_I_Frames,viewForm:taskReferences_Slideshow,viewForm:taskReferences_Encode"
+                                 icon="ui-icon-search" value="Save"
+                                 onclick="PF('selectMediaItems').hide()"
+                        />
+            </p:toolbarGroup>
+        </p:toolbar>
 
     </h:form>
 </p:dialog>

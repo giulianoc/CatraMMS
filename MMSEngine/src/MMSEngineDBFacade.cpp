@@ -13266,7 +13266,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "encodingProfileKey			BIGINT UNSIGNED NOT NULL,"
                     "constraint MMS_EncodingProfilesSetMapping_PK PRIMARY KEY (encodingProfilesSetKey, encodingProfileKey), "
                     "constraint MMS_EncodingProfilesSetMapping_FK1 foreign key (encodingProfilesSetKey) "
-                        "references MMS_EncodingProfilesSet (encodingProfilesSetKey), "
+                        "references MMS_EncodingProfilesSet (encodingProfilesSetKey) on delete cascade, "
                     "constraint MMS_EncodingProfilesSetMapping_FK2 foreign key (encodingProfileKey) "
                         "references MMS_EncodingProfile (encodingProfileKey) on delete cascade) "
                     "ENGINE=InnoDB";

@@ -110,6 +110,8 @@ public class EncodingProfilesSets implements Serializable {
 
         try
         {
+            mLogger.info("addEncodingProfilesSet. Label: " + addProfilesSetLabel);
+
             JSONObject joEncodingProfilesSet = new JSONObject();
             joEncodingProfilesSet.put("Label", addProfilesSetLabel);
 
