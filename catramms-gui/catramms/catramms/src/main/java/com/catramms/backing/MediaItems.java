@@ -45,7 +45,7 @@ public class MediaItems implements Serializable {
     private Long maxStorageInMB = new Long(0);
     private List<MediaItem> mediaItemsList = new ArrayList<>();
 
-    private String shareWorkspaceName;
+    private String shareWorkspaceUserName;
     private String shareWorkspaceEMail;
     private String shareWorkspacePassword;
     private String shareWorkspaceCountry;
@@ -285,6 +285,18 @@ public class MediaItems implements Serializable {
         return calendar.getTime();
     }
 
+    public void prepareWhareWorkspace()
+    {
+        shareWorkspaceUserName = "";
+        shareWorkspaceEMail = "";
+        shareWorkspacePassword = "";
+        shareWorkspaceCountry = "";
+        shareWorkspaceIngestWorkflow = false;
+        shareWorkspaceCreateProfiles = false;
+        shareWorkspaceDeliveryAuthorization = false;
+        shareWorkspaceShareWorkspace = false;
+    }
+
     public void shareWorkspace()
     {
         try {
@@ -308,7 +320,7 @@ public class MediaItems implements Serializable {
 
                 CatraMMS catraMMS = new CatraMMS();
                 shareWorkspaceUserKey = catraMMS.shareWorkspace(
-                        username, password, shareWorkspaceName, shareWorkspaceEMail, shareWorkspacePassword,
+                        username, password, shareWorkspaceUserName, shareWorkspaceEMail, shareWorkspacePassword,
                         shareWorkspaceCountry, shareWorkspaceIngestWorkflow, shareWorkspaceCreateProfiles,
                         shareWorkspaceDeliveryAuthorization, shareWorkspaceShareWorkspace,
                         currentWorkspaceDetails.getWorkspaceKey());
@@ -497,12 +509,12 @@ public class MediaItems implements Serializable {
         this.maxStorageInMB = maxStorageInMB;
     }
 
-    public String getShareWorkspaceName() {
-        return shareWorkspaceName;
+    public String getShareWorkspaceUserName() {
+        return shareWorkspaceUserName;
     }
 
-    public void setShareWorkspaceName(String shareWorkspaceName) {
-        this.shareWorkspaceName = shareWorkspaceName;
+    public void setShareWorkspaceUserName(String shareWorkspaceUserName) {
+        this.shareWorkspaceUserName = shareWorkspaceUserName;
     }
 
     public String getShareWorkspaceEMail() {

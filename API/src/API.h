@@ -191,6 +191,11 @@ private:
         unordered_map<string, string> queryParameters,
         string requestBody);
 
+    void removeEncodingProfile(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters);
+
     void createDeliveryAuthorization(
         FCGX_Request& request,
         int64_t userKey,

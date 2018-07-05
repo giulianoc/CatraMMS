@@ -23,6 +23,408 @@
     <ui:include src="/common/loadingDialog.xhtml"/>
     <ui:include src="/common/globalConfirm.xhtml"/>
 
+    <p:dialog widgetVar="addEncodingProfile" modal="true"
+              header="Add Encoding Profile" appendTo="@(body)" width="600" height="500"
+              showEffect="fade" hideEffect="fade" resizable="false" draggable="true">
+
+        <h:form id="addEncodingProfileForm">
+
+            <p:panelGrid cellpadding="10" style="width: 100%" >
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Label" style="font-weight: bold" />
+                    </p:column>
+                    <p:column>
+                        <p:inputText style="width: 100%"
+                                     required="true"
+                                     autocomplete="true"
+                                     value="#{encodingProfiles.addEncodingProfileLabel}"
+                                     placeholder="label"/>
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Content type" />
+                    </p:column>
+                    <p:column>
+                        <p:selectOneMenu id="addEncodingProfileContentType"
+                                         value="#{encodingProfiles.addEncodingProfileContentType}"
+                                         autoWidth="false">
+                            <f:selectItems value="#{encodingProfiles.contentTypesList}" />
+                            <!-- updte should be update="encodingParameters,addEncodingProfileFileFormat"
+                                    but, the 'Add Encoding Profile' button, in case of audio and image would be too below.
+                                    For this reason we will update the entire form
+                            -->
+                            <p:ajax event="change" update="addEncodingProfileForm"/>
+                        </p:selectOneMenu>
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="File Format" style="font-weight: bold" />
+                    </p:column>
+                    <p:column>
+                        <p:selectOneMenu id="addEncodingProfileFileFormat"
+                                         value="#{encodingProfiles.addEncodingProfileFileFormat}"
+                                         autoWidth="false">
+                            <f:selectItems value="#{encodingProfiles.fileFormatList}" />
+                        </p:selectOneMenu>
+                    </p:column>
+                </p:row>
+
+            </p:panelGrid>
+
+            <p:scrollPanel mode="nativo">
+                <p:panel id="encodingParameters">
+
+                    <p:panel header="Video Encoding Parameters"
+                             rendered="#{encodingProfiles.addEncodingProfileContentType == 'video'}">
+                        <p:panelGrid cellpadding="10" style="width: 100%" >
+                            <p:row>
+                                <p:column>
+                                    <p:outputLabel value="Codec" style="font-weight: bold" />
+                                </p:column>
+                                <p:column>
+                                    <p:selectOneMenu id="addEncodingProfileVideoCodec"
+                                                     value="#{encodingProfiles.addEncodingProfileVideoCodec}"
+                                                     autoWidth="false">
+                                        <f:selectItems value="#{encodingProfiles.videoCodecsList}" />
+                                        <p:ajax event="change" listener="#{encodingProfiles.videoCodecChanged}"
+                                                update="addEncodingProfileVideoProfile"/>
+                                    </p:selectOneMenu>
+                                </p:column>
+                            </p:row>
+
+                            <p:row>
+                                <p:column>
+                                    <p:outputLabel value="Profile" />
+                                </p:column>
+                                <p:column>
+                                    <p:selectOneMenu id="addEncodingProfileVideoProfile"
+                                                     value="#{encodingProfiles.addEncodingProfileVideoProfile}"
+                                                     autoWidth="false">
+                                        <f:selectItem itemLabel="Select One" itemValue="" />
+                                        <f:selectItems value="#{encodingProfiles.videoProfilesList}" />
+                                    </p:selectOneMenu>
+                                </p:column>
+                            </p:row>
+
+                            <p:row>
+                                <p:column>
+                                    <p:outputLabel value="Width" style="font-weight: bold" />
+                                </p:column>
+                                <p:column>
+                                    <p:inputNumber id="addEncodingProfileVideoWidth" style="width: 100%"
+                                                   required="true"
+                                                   decimalPlaces="0"
+                                                   value="#{encodingProfiles.addEncodingProfileVideoWidth}"
+                                                   title="Samples: 360, ... or even -1 and -2"
+                                                   autocomplete="true"
+                                                   placeholder="width"/>
+                                    <p:tooltip for="addEncodingProfileVideoWidth" showEffect="clip"
+                                               hideEffect="explode" position="left"/>
+                                </p:column>
+                            </p:row>
+
+                            <p:row>
+                                <p:column>
+                                    <p:outputLabel value="Height" style="font-weight: bold" />
+                                </p:column>
+                                <p:column>
+                                    <p:inputNumber id="addEncodingProfileVideoHeight" style="width: 100%"
+                                                   required="true"
+                                                   decimalPlaces="0"
+                                                   value="#{encodingProfiles.addEncodingProfileVideoHeight}"
+                                                   title="Samples: 480, ... or even -1 and -2"
+                                                   autocomplete="true"
+                                                   placeholder="height"/>
+                                    <p:tooltip for="addEncodingProfileVideoHeight" showEffect="clip"
+                                               hideEffect="explode" position="left"/>
+                                </p:column>
+                            </p:row>
+
+                            <p:row>
+                                <p:column>
+                                    <p:outputLabel value="Two passes" style="font-weight: bold" />
+                                </p:column>
+                                <p:column>
+                                    <p:selectBooleanButton id="addEncodingProfileVideoTwoPasses"
+                                                           value="#{encodingProfiles.addEncodingProfileVideoTwoPasses}"
+                                                           onLabel="YES" offLabel="NO" onIcon="ui-icon-check" offIcon="ui-icon-check">
+                                    </p:selectBooleanButton>
+                                </p:column>
+                            </p:row>
+
+                            <p:row>
+                                <p:column>
+                                    <p:outputLabel value="Bit rate (kbps)" />
+                                </p:column>
+                                <p:column>
+                                    <p:inputNumber id="addEncodingProfileVideoKBitRate" style="width: 100%"
+                                                   decimalPlaces="0"
+                                                   value="#{encodingProfiles.addEncodingProfileVideoKBitRate}"
+                                                   title="Samples: 500, ..."
+                                                   autocomplete="true"
+                                                   placeholder="bit rate (kbps)"/>
+                                    <p:tooltip for="addEncodingProfileVideoKBitRate" showEffect="clip"
+                                               hideEffect="explode" position="left"/>
+                                </p:column>
+                            </p:row>
+
+                            <p:row>
+                                <p:column>
+                                    <p:outputLabel value="Other output parameters" />
+                                </p:column>
+                                <p:column>
+                                    <p:inputText id="addEncodingProfileVideoOtherOutputParameters" style="width: 100%"
+                                                 required="false"
+                                                 value="#{encodingProfiles.addEncodingProfileVideoOtherOutputParameters}"
+                                                 title="Sample: -preset medium -level 4.0 -crf 23"
+                                                 autocomplete="true"
+                                                 placeholder="other output parameters"/>
+                                    <p:tooltip for="addEncodingProfileVideoOtherOutputParameters"
+                                               showEffect="clip" hideEffect="explode" position="left"/>
+                                </p:column>
+                            </p:row>
+
+                            <p:row>
+                                <p:column>
+                                    <p:outputLabel value="Frame rate" />
+                                </p:column>
+                                <p:column>
+                                    <p:inputNumber id="addEncodingProfileVideoFrameRate" style="width: 100%"
+                                                   decimalPlaces="0"
+                                                   value="#{encodingProfiles.addEncodingProfileVideoFrameRate}"
+                                                   title="Samples: 25, ..."
+                                                   autocomplete="true"
+                                                   placeholder="frame rate"/>
+                                    <p:tooltip for="addEncodingProfileVideoFrameRate" showEffect="clip"
+                                               hideEffect="explode" position="left"/>
+                                </p:column>
+                            </p:row>
+
+                            <p:row>
+                                <p:column>
+                                    <p:outputLabel value="Key frame interval in seconds" />
+                                </p:column>
+                                <p:column>
+                                    <p:inputNumber id="addEncodingProfileVideoKeyFrameIntervalInSeconds" style="width: 100%"
+                                                   decimalPlaces="0"
+                                                   value="#{encodingProfiles.addEncodingProfileVideoKeyFrameIntervalInSeconds}"
+                                                   title="Samples: 2, ..."
+                                                   autocomplete="true"
+                                                   placeholder="key frame interval in seconds"/>
+                                    <p:tooltip for="addEncodingProfileVideoKeyFrameIntervalInSeconds" showEffect="clip"
+                                               hideEffect="explode" position="left"/>
+                                </p:column>
+                            </p:row>
+
+                            <p:row>
+                                <p:column>
+                                    <p:outputLabel value="Max rate (kbps)" />
+                                </p:column>
+                                <p:column>
+                                    <p:inputNumber id="addEncodingProfileVideoMaxRate" style="width: 100%"
+                                                   decimalPlaces="0"
+                                                   value="#{encodingProfiles.addEncodingProfileVideoMaxRate}"
+                                                   title="Samples: 1000, ..."
+                                                   autocomplete="true"
+                                                   placeholder="max rate (kbps)"/>
+                                    <p:tooltip for="addEncodingProfileVideoMaxRate" showEffect="clip"
+                                               hideEffect="explode" position="left"/>
+                                </p:column>
+                            </p:row>
+
+                            <p:row>
+                                <p:column>
+                                    <p:outputLabel value="Buffer size (kbps)" />
+                                </p:column>
+                                <p:column>
+                                    <p:inputNumber id="addEncodingProfileVideoBufferSize" style="width: 100%"
+                                                   decimalPlaces="0"
+                                                   value="#{encodingProfiles.addEncodingProfileVideoBufferSize}"
+                                                   title="Samples: 1000, ..."
+                                                   autocomplete="true"
+                                                   placeholder="buffer size (kbps)"/>
+                                    <p:tooltip for="addEncodingProfileVideoBufferSize" showEffect="clip"
+                                               hideEffect="explode" position="left"/>
+                                </p:column>
+                            </p:row>
+
+                        </p:panelGrid>
+                    </p:panel>
+
+                    <br/>
+
+                    <p:panel header="Audio Encoding Parameters"
+                             rendered="#{encodingProfiles.addEncodingProfileContentType == 'video' or encodingProfiles.addEncodingProfileContentType == 'audio'}" >
+                        <p:panelGrid cellpadding="10" style="width: 100%">
+                            <p:row>
+                                <p:column>
+                                    <p:outputLabel value="Codec" style="font-weight: bold" />
+                                </p:column>
+                                <p:column>
+                                    <p:selectOneMenu id="addEncodingProfileAudioCodec"
+                                                     value="#{encodingProfiles.addEncodingProfileAudioCodec}"
+                                                     autoWidth="false">
+                                        <f:selectItems value="#{encodingProfiles.audioCodecsList}" />
+                                    </p:selectOneMenu>
+                                </p:column>
+                            </p:row>
+
+                            <p:row>
+                                <p:column>
+                                    <p:outputLabel value="Bit rate (kbps)" />
+                                </p:column>
+                                <p:column>
+                                    <p:inputNumber id="addEncodingProfileAudioKBitRate" style="width: 100%"
+                                                   decimalPlaces="0"
+                                                   value="#{encodingProfiles.addEncodingProfileAudioKBitRate}"
+                                                   title="Samples: 500, ..."
+                                                   autocomplete="true"
+                                                   placeholder="bit rate (kbps)"/>
+                                    <p:tooltip for="addEncodingProfileAudioKBitRate" showEffect="clip"
+                                               hideEffect="explode" position="left"/>
+                                </p:column>
+                            </p:row>
+
+                            <p:row>
+                                <p:column>
+                                    <p:outputLabel value="Other output parameters" />
+                                </p:column>
+                                <p:column>
+                                    <p:inputText id="addEncodingProfileAudioOtherOutputParameters" style="width: 100%"
+                                                 required="false"
+                                                 value="#{encodingProfiles.addEncodingProfileAudioOtherOutputParameters}"
+                                                 title="Sample: -preset medium -level 4.0 -crf 23"
+                                                 autocomplete="true"
+                                                 placeholder="other output parameters"/>
+                                    <p:tooltip for="addEncodingProfileAudioOtherOutputParameters"
+                                               showEffect="clip" hideEffect="explode" position="left"/>
+                                </p:column>
+                            </p:row>
+
+                            <p:row>
+                                <p:column>
+                                    <p:outputLabel value="Channels number" />
+                                </p:column>
+                                <p:column>
+                                    <p:selectBooleanButton id="addEncodingProfileAudioChannelsNumber"
+                                                           value="#{encodingProfiles.addEncodingProfileAudioStereo}"
+                                                           onLabel="Stereo" offLabel="Mono" onIcon="ui-icon-check" offIcon="ui-icon-check">
+                                    </p:selectBooleanButton>
+                                </p:column>
+                            </p:row>
+
+                            <p:row>
+                                <p:column>
+                                    <p:outputLabel value="Sample rate (Hz)" />
+                                </p:column>
+                                <p:column>
+                                    <p:selectOneMenu id="addEncodingProfileAudioSampleRate"
+                                                     value="#{encodingProfiles.addEncodingProfileAudioSampleRate}"
+                                                     autoWidth="false">
+                                        <f:selectItem itemLabel="Select One" itemValue="" />
+                                        <f:selectItems value="#{encodingProfiles.audioSampleRateList}" />
+                                    </p:selectOneMenu>
+                                    <!--
+                                    <p:inputNumber id="addEncodingProfileAudioSampleRate" style="width: 100%"
+                                                   decimalPlaces="0"
+                                                   value="#{encodingProfiles.addEncodingProfileAudioSampleRate}"
+                                                   title="Sample: 48000"
+                                                   autocomplete="true"
+                                                   placeholder="sample rate (Hz)"/>
+                                    <p:tooltip for="addEncodingProfileAudioKBitRate" showEffect="clip"
+                                               hideEffect="explode" position="left"/>
+                                               -->
+                                </p:column>
+                            </p:row>
+
+                        </p:panelGrid>
+                    </p:panel>
+
+                    <br/>
+
+                    <p:panel header="Image Encoding Parameters"
+                             rendered="#{encodingProfiles.addEncodingProfileContentType == 'image'}" >
+                        <p:panelGrid cellpadding="10" style="width: 100%">
+
+                            <p:row>
+                                <p:column>
+                                    <p:outputLabel value="Width" style="font-weight: bold" />
+                                </p:column>
+                                <p:column>
+                                    <p:inputNumber id="addEncodingProfileImageWidth" style="width: 100%"
+                                                   required="true"
+                                                   decimalPlaces="0"
+                                                   value="#{encodingProfiles.addEncodingProfileImageWidth}"
+                                                   title="Sample: 360"
+                                                   autocomplete="true"
+                                                   placeholder="width"/>
+                                    <p:tooltip for="addEncodingProfileImageWidth" showEffect="clip"
+                                               hideEffect="explode" position="left"/>
+                                </p:column>
+                            </p:row>
+
+                            <p:row>
+                                <p:column>
+                                    <p:outputLabel value="Height" style="font-weight: bold" />
+                                </p:column>
+                                <p:column>
+                                    <p:inputNumber id="addEncodingProfileImageHeight" style="width: 100%"
+                                                   required="true"
+                                                   decimalPlaces="0"
+                                                   value="#{encodingProfiles.addEncodingProfileImageHeight}"
+                                                   title="Sample: 480"
+                                                   autocomplete="true"
+                                                   placeholder="height"/>
+                                    <p:tooltip for="addEncodingProfileImageHeight" showEffect="clip"
+                                               hideEffect="explode" position="left"/>
+                                </p:column>
+                            </p:row>
+
+                            <p:row>
+                                <p:column>
+                                    <p:outputLabel value="Aspect ratio" />
+                                </p:column>
+                                <p:column>
+                                    <p:selectBooleanButton id="addEncodingProfileImageAspectRatio"
+                                                           value="#{encodingProfiles.addEncodingProfileImageAspectRatio}"
+                                                           onLabel="YES" offLabel="NO" onIcon="ui-icon-check" offIcon="ui-icon-check">
+                                    </p:selectBooleanButton>
+                                </p:column>
+                            </p:row>
+
+                            <p:row>
+                                <p:column>
+                                    <p:outputLabel value="Interlace type" />
+                                </p:column>
+                                <p:column>
+                                    <p:selectOneMenu value="#{encodingProfiles.addEncodingProfileImageInterlaceType}"
+                                                     autoWidth="false">
+                                        <f:selectItems value="#{encodingProfiles.imageInterlaceTypeList}" />
+                                    </p:selectOneMenu>
+                                </p:column>
+                            </p:row>
+
+                        </p:panelGrid>
+                    </p:panel>
+
+                </p:panel>
+            </p:scrollPanel>
+
+            <br />
+
+            <p:commandButton value="Add Encoding Profile"
+                             actionListener="#{encodingProfiles.addEncodingProfile}"
+                             update="viewForm:encodingProfileDataTable"
+                             oncomplete="PF('addEncodingProfile').hide()" />
+
+        </h:form>
+    </p:dialog>
+
     <h:form id="viewForm">
 
         <p:growl id="growl" showDetail="true" sticky="false" escape="false" life="5000" >
@@ -36,7 +438,7 @@
 
             <p:toolbarGroup align="right">
 
-                <p:outputLabel value="Welcome #{login.userName}" />
+                <p:outputLabel value="Welcome #{login.userName} (#{sessionScope.currentWorkspaceDetails.name})" />
 
                 <span class="ui-separator">
                     <span class="ui-icon ui-icon-grip-dotted-vertical" />
@@ -78,6 +480,15 @@
 
                 <p:commandButton global="false" onstart="on_start()" icon="ui-icon ui-icon-search"
                                  actionListener="#{encodingProfiles.fillList(true)}" />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:commandButton value="Add Encoding Profile"
+                               update="addEncodingProfileForm"
+                               oncomplete="PF('addEncodingProfile').show()" />
+
             </p:toolbarGroup>
         </p:toolbar>
 

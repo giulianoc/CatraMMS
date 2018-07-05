@@ -334,6 +334,54 @@ public class CatraMMS {
         return workflowRoot;
     }
 
+    public Long addEncodingProfile(String username, String password,
+                                   String contentType, String jsonEncodingProfile)
+            throws Exception
+    {
+        Long encodingProfileKey;
+
+        String mmsInfo;
+        try
+        {
+            String mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort + "/catramms/v1/profile/" + contentType;
+
+            mLogger.info("addEncodingProfile"
+                            + ", mmsURL: " + mmsURL
+                            + ", contentType: " + contentType
+                            + ", jsonEncodingProfile: " + jsonEncodingProfile
+            );
+
+            Date now = new Date();
+            mmsInfo = HttpFeedFetcher.fetchPutHttpsJson(mmsURL, timeoutInSeconds, maxRetriesNumber,
+                    username, password, jsonEncodingProfile);
+            mLogger.info("Elapsed time login (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "addEncodingProfile MMS failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+
+        try
+        {
+            JSONObject joWMMSInfo = new JSONObject(mmsInfo);
+
+            encodingProfileKey = joWMMSInfo.getLong("encodingProfileKey");
+            String encodingProfileLabel = joWMMSInfo.getString("label");
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "Parsing workspaceDetails failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+
+        return encodingProfileKey;
+    }
+
     public Vector<Long> getMediaItems(String username, String password,
                           Long maxMediaItemsNumber, String contentType,
                           Date start, Date end,

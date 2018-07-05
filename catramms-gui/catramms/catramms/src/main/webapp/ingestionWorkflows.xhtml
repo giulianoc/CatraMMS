@@ -44,7 +44,7 @@
 
             <p:toolbarGroup align="right">
 
-                <p:outputLabel value="Welcome #{login.userName}" />
+                <p:outputLabel value="Welcome #{login.userName} (#{sessionScope.currentWorkspaceDetails.name})" />
 
                 <span class="ui-separator">
                     <span class="ui-icon ui-icon-grip-dotted-vertical" />
@@ -168,11 +168,23 @@
             </p:column>
 
             <p:column headerText="Title" >
-                <p:outputLabel value="#{ingestionWorkflow.label}" />
+                <p:outputLabel
+                        id="ingestionWorkflowLabel"
+                        value="#{ingestionWorkflow.label}"
+                        title="#{ingestionWorkflow.label}"
+                        />
+                <p:tooltip for="ingestionWorkflowLabel" showEffect="clip"
+                           hideEffect="explode" position="left"/>
             </p:column>
 
             <p:column style="width:170px;" headerText="Status" >
-                <p:outputLabel value="#{ingestionWorkflow.status}" />
+                <p:outputLabel
+                        id="ingestionWorkflowStatus"
+                        value="#{ingestionWorkflow.status}"
+                        title="#{ingestionWorkflow.status}"
+                        />
+                <p:tooltip for="ingestionWorkflowStatus" showEffect="clip"
+                           hideEffect="explode" position="left"/>
             </p:column>
 
             <p:column style="width:160px;" headerText="Ingestion Date" >

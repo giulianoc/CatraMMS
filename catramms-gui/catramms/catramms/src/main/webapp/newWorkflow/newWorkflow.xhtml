@@ -38,7 +38,7 @@
 
             <p:toolbarGroup align="right">
 
-                <p:outputLabel value="Welcome #{login.userName}" />
+                <p:outputLabel value="Welcome #{login.userName} (#{sessionScope.currentWorkspaceDetails.name})" />
 
                 <span class="ui-separator">
                     <span class="ui-icon ui-icon-grip-dotted-vertical" />
@@ -106,6 +106,7 @@
                     <f:facet name="left">
                         <p:commandButton id="onSuccessTooltip" icon="fa fa-check"
                                          title="OnSuccess"
+                                         disabled="#{!(newWorkflow.tnSelectedNode != null and (newWorkflow.tnSelectedNode.type == 'Task' or newWorkflow.tnSelectedNode.type == 'GroupOfTask'))}"
                                          update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
                                          action="#{newWorkflow.addOnSuccessEvent}"
                                 />
@@ -113,6 +114,7 @@
 
                         <p:commandButton id="onErrorTooltip" icon="fa fa-close"
                                          title="OnError"
+                                         disabled="#{!(newWorkflow.tnSelectedNode != null and (newWorkflow.tnSelectedNode.type == 'Task' or newWorkflow.tnSelectedNode.type == 'GroupOfTask'))}"
                                          update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
                                          action="#{newWorkflow.addOnErrorEvent}"
                                 />
@@ -120,6 +122,7 @@
 
                         <p:commandButton id="onCompleteTooltip" icon="fa fa-file-text-o"
                                          title="OnComplete"
+                                         disabled="#{!(newWorkflow.tnSelectedNode != null and (newWorkflow.tnSelectedNode.type == 'Task' or newWorkflow.tnSelectedNode.type == 'GroupOfTask'))}"
                                          update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
                                          action="#{newWorkflow.addOnCompleteEvent}"
                                 />
@@ -131,6 +134,7 @@
 
                         <p:commandButton id="addGroupOfTaskTooltip" icon="fa fa-navicon"
                                          title="Add Group of Task"
+                                         disabled="#{!(newWorkflow.tnSelectedNode != null and (newWorkflow.tnSelectedNode.type == 'Workflow' or newWorkflow.tnSelectedNode.type == 'GroupOfTask' or newWorkflow.tnSelectedNode.type == 'Event'))}"
                                          update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
                                          action="#{newWorkflow.addGroupOfTasks}"
                                 />
@@ -142,6 +146,7 @@
 
                         <p:commandButton id="addContentTooltip" icon="fa fa-plus"
                                          title="Add-Content"
+                                         disabled="#{!(newWorkflow.tnSelectedNode != null and (newWorkflow.tnSelectedNode.type == 'Workflow' or newWorkflow.tnSelectedNode.type == 'GroupOfTask' or newWorkflow.tnSelectedNode.type == 'Event'))}"
                                          update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
                                          action="#{newWorkflow.addTask('Add-Content')}"
                                 />
@@ -149,6 +154,7 @@
 
                         <p:commandButton id="removeContentTooltip" icon="fa fa-eraser"
                                          title="Remove-Content"
+                                         disabled="#{!(newWorkflow.tnSelectedNode != null and (newWorkflow.tnSelectedNode.type == 'Workflow' or newWorkflow.tnSelectedNode.type == 'GroupOfTask' or newWorkflow.tnSelectedNode.type == 'Event'))}"
                                          update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
                                          action="#{newWorkflow.addTask('Remove-Content')}"
                                 />
@@ -160,6 +166,7 @@
 
                         <p:commandButton id="concatDemuxerTooltip" icon="fa fa-forward"
                                          title="Concat-Demuxer"
+                                         disabled="#{!(newWorkflow.tnSelectedNode != null and (newWorkflow.tnSelectedNode.type == 'Workflow' or newWorkflow.tnSelectedNode.type == 'GroupOfTask' or newWorkflow.tnSelectedNode.type == 'Event'))}"
                                          update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
                                          action="#{newWorkflow.addTask('Concat-Demuxer')}"
                                 />
@@ -167,6 +174,7 @@
 
                         <p:commandButton id="cutTooltip" icon="fa fa-cut"
                                          title="Cut"
+                                         disabled="#{!(newWorkflow.tnSelectedNode != null and (newWorkflow.tnSelectedNode.type == 'Workflow' or newWorkflow.tnSelectedNode.type == 'GroupOfTask' or newWorkflow.tnSelectedNode.type == 'Event'))}"
                                          update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
                                          action="#{newWorkflow.addTask('Cut')}"
                                 />
@@ -178,6 +186,7 @@
 
                         <p:commandButton id="encodeTooltip" icon="fa fa-file-video-o"
                                          title="Encode"
+                                         disabled="#{!(newWorkflow.tnSelectedNode != null and (newWorkflow.tnSelectedNode.type == 'Workflow' or newWorkflow.tnSelectedNode.type == 'GroupOfTask' or newWorkflow.tnSelectedNode.type == 'Event'))}"
                                          update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
                                          action="#{newWorkflow.addTask('Encode')}"
                                 />
@@ -189,6 +198,7 @@
 
                         <p:commandButton id="overlayImageTooltip" icon="fa fa-file-picture-o"
                                          title="Overlay-Image-On-Video"
+                                         disabled="#{!(newWorkflow.tnSelectedNode != null and (newWorkflow.tnSelectedNode.type == 'Workflow' or newWorkflow.tnSelectedNode.type == 'GroupOfTask' or newWorkflow.tnSelectedNode.type == 'Event'))}"
                                          update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
                                          action="#{newWorkflow.addTask('Overlay-Image-On-Video')}"
                                 />
@@ -196,6 +206,7 @@
 
                         <p:commandButton id="overlayTextTooltip" icon="fa fa-file-powerpoint-o"
                                          title="Overlay-Text-On-Video"
+                                         disabled="#{!(newWorkflow.tnSelectedNode != null and (newWorkflow.tnSelectedNode.type == 'Workflow' or newWorkflow.tnSelectedNode.type == 'GroupOfTask' or newWorkflow.tnSelectedNode.type == 'Event'))}"
                                          update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
                                          action="#{newWorkflow.addTask('Overlay-Text-On-Video')}"
                                 />
@@ -214,7 +225,7 @@
                         dynamic="true"  >
 
                     <p:ajax event="select" listener="#{newWorkflow.selectionChanged}"
-                            update="viewForm:taskDetailProperties"/>
+                            update="viewForm:taskDetailProperties,viewForm:workflowTreeToolbar"/>
 
                     <p:treeNode type="Workflow" expandedIcon="ui-icon-folder-open" collapsedIcon="ui-icon-folder-collapsed">
                         <h:outputText value="#{node}"/>

@@ -192,7 +192,7 @@
                                  required="false"
                                  value="#{newWorkflow.taskTitle}"
                                  autocomplete="true"
-                                 placeholder="title"/>
+                                 placeholder="title of the content"/>
                 </p:column>
             </p:row>
 
@@ -259,6 +259,7 @@
                 <p:column>
                     <p:inputText id="taskIngester_Add_Content"
                                  required="false"
+                                 readonly="true"
                                  value="#{newWorkflow.taskIngester}"
                                  autocomplete="true"
                                  placeholder="ingester"/>
@@ -274,7 +275,7 @@
                                  required="false"
                                  value="#{newWorkflow.taskKeywords}"
                                  autocomplete="true"
-                                 placeholder="ingester"/>
+                                 placeholder="keywords"/>
                 </p:column>
             </p:row>
 
@@ -463,7 +464,7 @@
                                  required="false"
                                  value="#{newWorkflow.taskTitle}"
                                  autocomplete="true"
-                                 placeholder="title"/>
+                                 placeholder="title of the content"/>
                 </p:column>
             </p:row>
 
@@ -530,6 +531,7 @@
                 <p:column>
                     <p:inputText id="taskIngester_Concat_Demuxer"
                                  required="false"
+                                 readonly="true"
                                  value="#{newWorkflow.taskIngester}"
                                  autocomplete="true"
                                  placeholder="ingester"/>
@@ -545,7 +547,7 @@
                                  required="false"
                                  value="#{newWorkflow.taskKeywords}"
                                  autocomplete="true"
-                                 placeholder="ingester"/>
+                                 placeholder="keywords"/>
                 </p:column>
             </p:row>
 
@@ -639,8 +641,11 @@
                     <p:inputNumber id="taskStartTimeInSeconds_Cut"
                                    decimalPlaces="#{newWorkflow.timeInSecondsDecimalsPrecision}"
                                    value="#{newWorkflow.taskStartTimeInSeconds}"
+                                   title="Sample: 15.68"
                                    autocomplete="true"
-                                   placeholder="label"/>
+                                   placeholder="start time in seconds"/>
+                    <p:tooltip for="taskStartTimeInSeconds_Cut" showEffect="clip"
+                               hideEffect="explode" position="left"/>
                 </p:column>
             </p:row>
 
@@ -677,8 +682,11 @@
                     <p:inputNumber id="taskEndTimeInSeconds_Cut"
                                    decimalPlaces="#{newWorkflow.timeInSecondsDecimalsPrecision}"
                                    value="#{newWorkflow.taskEndTimeInSeconds}"
+                                   title="Sample: 25.83"
                                    autocomplete="true"
                                    placeholder="end time in seconds"/>
+                    <p:tooltip for="taskEndTimeInSeconds_Cut" showEffect="clip"
+                               hideEffect="explode" position="left"/>
                 </p:column>
             </p:row>
 
@@ -700,8 +708,11 @@
                     <p:inputNumber id="taskFramesNumber_Cut"
                                    decimalPlaces="0"
                                    value="#{newWorkflow.taskFramesNumber}"
+                                   title="Sample: 50"
                                    autocomplete="true"
                                    placeholder="frames number"/>
+                    <p:tooltip for="taskFramesNumber_Cut" showEffect="clip"
+                               hideEffect="explode" position="left"/>
                 </p:column>
             </p:row>
 
@@ -727,20 +738,6 @@
 
             <p:row>
                 <p:column>
-                    <p:outputLabel value="Unique Name"/>
-                </p:column>
-                <p:column>
-                    <p:inputText id="taskUniqueName_Cut"
-                                 required="false"
-                                 value="#{newWorkflow.taskUniqueName}"
-                                 autocomplete="true"
-                                 placeholder="unique name"/>
-                </p:column>
-            </p:row>
-
-
-            <p:row>
-                <p:column>
                     <p:outputLabel value="Title"/>
                 </p:column>
                 <p:column>
@@ -748,7 +745,7 @@
                                  required="false"
                                  value="#{newWorkflow.taskTitle}"
                                  autocomplete="true"
-                                 placeholder="title"/>
+                                 placeholder="title of the content"/>
                 </p:column>
             </p:row>
 
@@ -816,6 +813,7 @@
                 <p:column>
                     <p:inputText id="taskIngester_Cut"
                                  required="false"
+                                 readonly="true"
                                  value="#{newWorkflow.taskIngester}"
                                  autocomplete="true"
                                  placeholder="ingester"/>
@@ -831,7 +829,7 @@
                                  required="false"
                                  value="#{newWorkflow.taskKeywords}"
                                  autocomplete="true"
-                                 placeholder="ingester"/>
+                                 placeholder="keywords"/>
                 </p:column>
             </p:row>
 
@@ -858,6 +856,19 @@
                                  value="#{newWorkflow.taskDeliveryFileName}"
                                  autocomplete="true"
                                  placeholder="delivery file name"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Unique Name"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskUniqueName_Cut"
+                                 required="false"
+                                 value="#{newWorkflow.taskUniqueName}"
+                                 autocomplete="true"
+                                 placeholder="unique name"/>
                 </p:column>
             </p:row>
 
@@ -907,9 +918,9 @@
                     -->
                     <p:inputText id="taskOverlayPositionXInPixel_Overlay_Image_On_Video" style="width: 100%"
                                  value="#{newWorkflow.taskOverlayPositionXInPixel}"
-                                 title="It's possible to use also video_width, video_height, image_width and image_height"
+                                 title="Samples: 50 or (video_width-image_width)-20"
                                  autocomplete="true"
-                                 placeholder="label"/>
+                                 placeholder="image position X in pixel"/>
                     <p:tooltip for="taskOverlayPositionXInPixel_Overlay_Image_On_Video"
                                showEffect="clip" hideEffect="explode" position="left"/>
                 </p:column>
@@ -925,9 +936,9 @@
                     -->
                     <p:inputText id="taskOverlayPositionYInPixel_Overlay_Image_On_Video" style="width: 100%"
                                  value="#{newWorkflow.taskOverlayPositionYInPixel}"
-                                 title="It's possible to use also video_width, video_height, image_width and image_height"
+                                 title="Samples: 30 or (video_height-image_height)-10"
                                  autocomplete="true"
-                                 placeholder="label"/>
+                                 placeholder="image position Y in pixel"/>
                     <p:tooltip for="taskOverlayPositionYInPixel_Overlay_Image_On_Video"
                                showEffect="clip" hideEffect="explode" position="left"/>
                 </p:column>
@@ -955,19 +966,6 @@
 
             <p:row>
                 <p:column>
-                    <p:outputLabel value="Unique Name"/>
-                </p:column>
-                <p:column>
-                    <p:inputText id="taskUniqueName_Overlay_Image_On_Video" style="width: 100%"
-                                 required="false"
-                                 value="#{newWorkflow.taskUniqueName}"
-                                 autocomplete="true"
-                                 placeholder="unique name"/>
-                </p:column>
-            </p:row>
-
-            <p:row>
-                <p:column>
                     <p:outputLabel value="Title"/>
                 </p:column>
                 <p:column>
@@ -975,7 +973,7 @@
                                  required="false"
                                  value="#{newWorkflow.taskTitle}"
                                  autocomplete="true"
-                                 placeholder="title"/>
+                                 placeholder="title of the content"/>
                 </p:column>
             </p:row>
 
@@ -1042,6 +1040,7 @@
                 <p:column>
                     <p:inputText id="taskIngester_Overlay_Image_On_Video" style="width: 100%"
                                  required="false"
+                                 readonly="true"
                                  value="#{newWorkflow.taskIngester}"
                                  autocomplete="true"
                                  placeholder="ingester"/>
@@ -1057,7 +1056,7 @@
                                  required="false"
                                  value="#{newWorkflow.taskKeywords}"
                                  autocomplete="true"
-                                 placeholder="ingester"/>
+                                 placeholder="keywords"/>
                 </p:column>
             </p:row>
 
@@ -1084,6 +1083,19 @@
                                  value="#{newWorkflow.taskDeliveryFileName}"
                                  autocomplete="true"
                                  placeholder="delivery file name"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Unique Name"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskUniqueName_Overlay_Image_On_Video" style="width: 100%"
+                                 required="false"
+                                 value="#{newWorkflow.taskUniqueName}"
+                                 autocomplete="true"
+                                 placeholder="unique name"/>
                 </p:column>
             </p:row>
 
@@ -1148,8 +1160,11 @@
                     <p:inputText id="taskOverlayPositionXInPixel_Overlay_Text_On_Video"
                                  required="false" style="width: 100%"
                                  value="#{newWorkflow.taskOverlayPositionXInPixel}"
+                                 title="Samples: 50 or (video_width-text_width)-20 or video_width-line_w-10"
                                  autocomplete="true"
                                  placeholder="text position X in pixel"/>
+                    <p:tooltip for="taskOverlayPositionXInPixel_Overlay_Text_On_Video"
+                               showEffect="clip" hideEffect="explode" position="left"/>
                 </p:column>
             </p:row>
 
@@ -1161,8 +1176,11 @@
                     <p:inputText id="taskOverlayPositionYInPixel_Overlay_Text_On_Video"
                                  required="false" style="width: 100%"
                                  value="#{newWorkflow.taskOverlayPositionYInPixel}"
+                                 title="Samples: 50 or (video_height-text_height)-10 or video_height-line_h-10"
                                  autocomplete="true"
                                  placeholder="text position Y in pixel"/>
+                    <p:tooltip for="taskOverlayPositionYInPixel_Overlay_Text_On_Video"
+                               showEffect="clip" hideEffect="explode" position="left"/>
                 </p:column>
             </p:row>
 
@@ -1174,8 +1192,11 @@
                     <p:inputText id="taskOverlayFontType_Overlay_Text_On_Video"
                                  required="false"
                                  value="#{newWorkflow.taskOverlayFontType}"
+                                 title="ttf file name. Sample: FreeSerif.ttf or FreeSans.ttf or ..."
                                  autocomplete="true"
                                  placeholder="font type"/>
+                    <p:tooltip for="taskOverlayFontType_Overlay_Text_On_Video"
+                               showEffect="clip" hideEffect="explode" position="left"/>
                 </p:column>
             </p:row>
 
@@ -1188,8 +1209,11 @@
                                    decimalPlaces="0"
                                    required="false"
                                    value="#{newWorkflow.taskOverlayFontSize}"
+                                   title="Samples: 16 or 24 or ..."
                                    autocomplete="true"
                                    placeholder="font size"/>
+                    <p:tooltip for="taskOverlayFontSize_Overlay_Text_On_Video"
+                               showEffect="clip" hideEffect="explode" position="left"/>
                 </p:column>
             </p:row>
 
@@ -1201,8 +1225,11 @@
                     <p:inputText id="taskOverlayFontColor_Overlay_Text_On_Video"
                                  required="false"
                                  value="#{newWorkflow.taskOverlayFontColor}"
+                                 title="Samples: yellow or ..."
                                  autocomplete="true"
                                  placeholder="font color"/>
+                    <p:tooltip for="taskOverlayFontColor_Overlay_Text_On_Video"
+                               showEffect="clip" hideEffect="explode" position="left"/>
                 </p:column>
             </p:row>
 
@@ -1215,8 +1242,11 @@
                                    decimalPlaces="0"
                                    required="false"
                                    value="#{newWorkflow.taskOverlayTextPercentageOpacity}"
+                                   title="Samples: 20 or ..."
                                    autocomplete="true"
-                                   placeholder="font size"/>
+                                   placeholder="text percentage opacity"/>
+                    <p:tooltip for="taskOverlayTextPercentageOpacity_Overlay_Text_On_Video"
+                               showEffect="clip" hideEffect="explode" position="left"/>
                 </p:column>
             </p:row>
 
@@ -1240,8 +1270,11 @@
                     <p:inputText id="taskOverlayBoxColor_Overlay_Text_On_Video"
                                  required="false"
                                  value="#{newWorkflow.taskOverlayBoxColor}"
+                                 title="Samples: red or ..."
                                  autocomplete="true"
                                  placeholder="box color"/>
+                    <p:tooltip for="taskOverlayBoxColor_Overlay_Text_On_Video"
+                               showEffect="clip" hideEffect="explode" position="left"/>
                 </p:column>
             </p:row>
 
@@ -1254,21 +1287,11 @@
                                    decimalPlaces="0"
                                    required="false"
                                    value="#{newWorkflow.taskOverlayBoxPercentageOpacity}"
+                                   title="Samples: 13 or ..."
                                    autocomplete="true"
                                    placeholder="box percentage opacity"/>
-                </p:column>
-            </p:row>
-
-            <p:row>
-                <p:column>
-                    <p:outputLabel value="Unique Name"/>
-                </p:column>
-                <p:column>
-                    <p:inputText id="taskUniqueName_Overlay_Text_On_Video"
-                                 required="false"
-                                 value="#{newWorkflow.taskUniqueName}"
-                                 autocomplete="true"
-                                 placeholder="unique name"/>
+                    <p:tooltip for="taskOverlayBoxPercentageOpacity_Overlay_Text_On_Video"
+                               showEffect="clip" hideEffect="explode" position="left"/>
                 </p:column>
             </p:row>
 
@@ -1314,7 +1337,7 @@
                                  required="false"
                                  value="#{newWorkflow.taskTitle}"
                                  autocomplete="true"
-                                 placeholder="title"/>
+                                 placeholder="title of the content"/>
                 </p:column>
             </p:row>
 
@@ -1382,6 +1405,7 @@
                 <p:column>
                     <p:inputText id="taskIngester_Overlay_Text_On_Video"
                                  required="false"
+                                 readonly="true"
                                  value="#{newWorkflow.taskIngester}"
                                  autocomplete="true"
                                  placeholder="ingester"/>
@@ -1397,7 +1421,7 @@
                                  required="false"
                                  value="#{newWorkflow.taskKeywords}"
                                  autocomplete="true"
-                                 placeholder="ingester"/>
+                                 placeholder="keywords"/>
                 </p:column>
             </p:row>
 
@@ -1424,6 +1448,19 @@
                                  value="#{newWorkflow.taskDeliveryFileName}"
                                  autocomplete="true"
                                  placeholder="delivery file name"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Unique Name"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskUniqueName_Overlay_Text_On_Video"
+                                 required="false"
+                                 value="#{newWorkflow.taskUniqueName}"
+                                 autocomplete="true"
+                                 placeholder="unique name"/>
                 </p:column>
             </p:row>
 
@@ -1471,8 +1508,11 @@
                                    required="false"
                                    decimalPlaces="#{newWorkflow.timeInSecondsDecimalsPrecision}"
                                    value="#{newWorkflow.taskFrameInstantInSeconds}"
+                                   title="Sample: 15.68"
                                    autocomplete="true"
                                    placeholder="instant in seconds"/>
+                    <p:tooltip for="taskFrameInstantInSeconds_Frame" showEffect="clip"
+                               hideEffect="explode" position="left"/>
                 </p:column>
             </p:row>
 
@@ -1485,8 +1525,11 @@
                                    decimalPlaces="0"
                                    required="false"
                                    value="#{newWorkflow.taskFrameWidth}"
+                                   title="Samples: 360 or ..."
                                    autocomplete="true"
-                                   placeholder="font type"/>
+                                   placeholder="width"/>
+                    <p:tooltip for="taskFrameWidth_Frame" showEffect="clip"
+                               hideEffect="explode" position="left"/>
                 </p:column>
             </p:row>
 
@@ -1499,8 +1542,11 @@
                                    decimalPlaces="0"
                                    required="false"
                                    value="#{newWorkflow.taskFrameHeight}"
+                                   title="Samples: 240 or ..."
                                    autocomplete="true"
-                                   placeholder="font size"/>
+                                   placeholder="height"/>
+                    <p:tooltip for="taskFrameHeight_Frame" showEffect="clip"
+                               hideEffect="explode" position="left"/>
                 </p:column>
 
             </p:row>
@@ -1527,20 +1573,6 @@
 
             <p:row>
                 <p:column>
-                    <p:outputLabel value="Unique Name"/>
-                </p:column>
-                <p:column>
-                    <p:inputText id="taskUniqueName_Frame"
-                                 required="false"
-                                 value="#{newWorkflow.taskUniqueName}"
-                                 autocomplete="true"
-                                 placeholder="unique name"/>
-                </p:column>
-
-            </p:row>
-
-            <p:row>
-                <p:column>
                     <p:outputLabel value="Title"/>
                 </p:column>
                 <p:column colspan="3">
@@ -1548,7 +1580,7 @@
                                  required="false"
                                  value="#{newWorkflow.taskTitle}"
                                  autocomplete="true"
-                                 placeholder="title"/>
+                                 placeholder="title of the content"/>
                 </p:column>
 
             </p:row>
@@ -1617,6 +1649,7 @@
                 <p:column>
                     <p:inputText id="taskIngester_Frame"
                                  required="false"
+                                 readonly="true"
                                  value="#{newWorkflow.taskIngester}"
                                  autocomplete="true"
                                  placeholder="ingester"/>
@@ -1632,7 +1665,7 @@
                                  required="false"
                                  value="#{newWorkflow.taskKeywords}"
                                  autocomplete="true"
-                                 placeholder="ingester"/>
+                                 placeholder="keywords"/>
                 </p:column>
             </p:row>
 
@@ -1660,6 +1693,20 @@
                                  autocomplete="true"
                                  placeholder="delivery file name"/>
                 </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Unique Name"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskUniqueName_Frame"
+                                 required="false"
+                                 value="#{newWorkflow.taskUniqueName}"
+                                 autocomplete="true"
+                                 placeholder="unique name"/>
+                </p:column>
+
             </p:row>
 
         </p:panelGrid>
@@ -1708,8 +1755,11 @@
                     <p:inputNumber id="taskFramePeriodInSeconds_Periodical_Frames"
                                    decimalPlaces="0"
                                    value="#{newWorkflow.taskFramePeriodInSeconds}"
+                                   title="Samples: 10, ..."
                                    autocomplete="true"
                                    placeholder="period in seconds"/>
+                    <p:tooltip for="taskFramePeriodInSeconds_Periodical_Frames" showEffect="clip"
+                               hideEffect="explode" position="left"/>
                 </p:column>
             </p:row>
 
@@ -1722,8 +1772,11 @@
                                    required="false"
                                    decimalPlaces="#{newWorkflow.timeInSecondsDecimalsPrecision}"
                                    value="#{newWorkflow.taskStartTimeInSeconds}"
+                                   title="Sample: 15.68"
                                    autocomplete="true"
-                                   placeholder="label"/>
+                                   placeholder="start time in seconds"/>
+                    <p:tooltip for="taskStartTimeInSeconds_Periodical_Frames" showEffect="clip"
+                               hideEffect="explode" position="left"/>
                 </p:column>
             </p:row>
 
@@ -1736,8 +1789,11 @@
                                    decimalPlaces="0"
                                    required="false"
                                    value="#{newWorkflow.taskFrameMaxFramesNumber}"
+                                   title="Sample: 50"
                                    autocomplete="true"
                                    placeholder="max frames number"/>
+                    <p:tooltip for="taskFrameMaxFramesNumber_Periodical_Frames" showEffect="clip"
+                               hideEffect="explode" position="left"/>
                 </p:column>
             </p:row>
 
@@ -1750,8 +1806,11 @@
                                    decimalPlaces="0"
                                    required="false"
                                    value="#{newWorkflow.taskFrameWidth}"
+                                   title="Samples: 360, ..."
                                    autocomplete="true"
                                    placeholder="font type"/>
+                    <p:tooltip for="taskFrameWidth_Periodical_Frames" showEffect="clip"
+                               hideEffect="explode" position="left"/>
                 </p:column>
             </p:row>
 
@@ -1764,8 +1823,11 @@
                                    decimalPlaces="0"
                                    required="false"
                                    value="#{newWorkflow.taskFrameHeight}"
+                                   title="Samples: 360, ..."
                                    autocomplete="true"
                                    placeholder="font size"/>
+                    <p:tooltip for="taskFrameHeight_Periodical_Frames" showEffect="clip"
+                               hideEffect="explode" position="left"/>
                 </p:column>
 
             </p:row>
@@ -1792,20 +1854,6 @@
 
             <p:row>
                 <p:column>
-                    <p:outputLabel value="Unique Name"/>
-                </p:column>
-                <p:column>
-                    <p:inputText id="taskUniqueName_Periodical_Frames"
-                                 required="false"
-                                 value="#{newWorkflow.taskUniqueName}"
-                                 autocomplete="true"
-                                 placeholder="unique name"/>
-                </p:column>
-
-            </p:row>
-
-            <p:row>
-                <p:column>
                     <p:outputLabel value="Title"/>
                 </p:column>
                 <p:column colspan="3">
@@ -1813,7 +1861,7 @@
                                  required="false"
                                  value="#{newWorkflow.taskTitle}"
                                  autocomplete="true"
-                                 placeholder="title"/>
+                                 placeholder="title of the content"/>
                 </p:column>
             </p:row>
 
@@ -1880,6 +1928,7 @@
                 <p:column>
                     <p:inputText id="taskIngester_Periodical_Frames"
                                  required="false"
+                                 readonly="true"
                                  value="#{newWorkflow.taskIngester}"
                                  autocomplete="true"
                                  placeholder="ingester"/>
@@ -1895,7 +1944,7 @@
                                  required="false"
                                  value="#{newWorkflow.taskKeywords}"
                                  autocomplete="true"
-                                 placeholder="ingester"/>
+                                 placeholder="keywords"/>
                 </p:column>
             </p:row>
 
@@ -1923,6 +1972,20 @@
                                  autocomplete="true"
                                  placeholder="delivery file name"/>
                 </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Unique Name"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskUniqueName_Periodical_Frames"
+                                 required="false"
+                                 value="#{newWorkflow.taskUniqueName}"
+                                 autocomplete="true"
+                                 placeholder="unique name"/>
+                </p:column>
+
             </p:row>
 
         </p:panelGrid>
@@ -1969,8 +2032,11 @@
                                    required="false"
                                    decimalPlaces="#{newWorkflow.timeInSecondsDecimalsPrecision}"
                                    value="#{newWorkflow.taskStartTimeInSeconds}"
+                                   title="Sample: 15.68"
                                    autocomplete="true"
-                                   placeholder="label"/>
+                                   placeholder="start time in seconds"/>
+                    <p:tooltip for="taskStartTimeInSeconds_I_Frames" showEffect="clip"
+                               hideEffect="explode" position="left"/>
                 </p:column>
             </p:row>
 
@@ -1983,8 +2049,11 @@
                                    decimalPlaces="0"
                                    required="false"
                                    value="#{newWorkflow.taskFrameMaxFramesNumber}"
+                                   title="Sample: 50"
                                    autocomplete="true"
                                    placeholder="max frames number"/>
+                    <p:tooltip for="taskFrameMaxFramesNumber_I_Frames" showEffect="clip"
+                               hideEffect="explode" position="left"/>
                 </p:column>
             </p:row>
 
@@ -1997,8 +2066,11 @@
                                    decimalPlaces="0"
                                    required="false"
                                    value="#{newWorkflow.taskFrameWidth}"
+                                   title="Samples: 360, ..."
                                    autocomplete="true"
                                    placeholder="font type"/>
+                    <p:tooltip for="taskFrameWidth_I_Frames" showEffect="clip"
+                               hideEffect="explode" position="left"/>
                 </p:column>
             </p:row>
 
@@ -2011,8 +2083,11 @@
                                    decimalPlaces="0"
                                    required="false"
                                    value="#{newWorkflow.taskFrameHeight}"
+                                   title="240, ..."
                                    autocomplete="true"
                                    placeholder="font size"/>
+                    <p:tooltip for="taskFrameHeight_I_Frames" showEffect="clip"
+                               hideEffect="explode" position="left"/>
                 </p:column>
             </p:row>
 
@@ -2038,19 +2113,6 @@
 
             <p:row>
                 <p:column>
-                    <p:outputLabel value="Unique Name"/>
-                </p:column>
-                <p:column>
-                    <p:inputText id="taskUniqueName_I_Frames"
-                                 required="false"
-                                 value="#{newWorkflow.taskUniqueName}"
-                                 autocomplete="true"
-                                 placeholder="unique name"/>
-                </p:column>
-            </p:row>
-
-            <p:row>
-                <p:column>
                     <p:outputLabel value="Title"/>
                 </p:column>
                 <p:column colspan="3">
@@ -2058,7 +2120,7 @@
                                  required="false"
                                  value="#{newWorkflow.taskTitle}"
                                  autocomplete="true"
-                                 placeholder="title"/>
+                                 placeholder="title of the content"/>
                 </p:column>
             </p:row>
 
@@ -2125,6 +2187,7 @@
                 <p:column>
                     <p:inputText id="taskIngester_I_Frames"
                                  required="false"
+                                 readonly="true"
                                  value="#{newWorkflow.taskIngester}"
                                  autocomplete="true"
                                  placeholder="ingester"/>
@@ -2140,7 +2203,7 @@
                                  required="false"
                                  value="#{newWorkflow.taskKeywords}"
                                  autocomplete="true"
-                                 placeholder="ingester"/>
+                                 placeholder="keywords"/>
                 </p:column>
             </p:row>
 
@@ -2167,6 +2230,19 @@
                                  value="#{newWorkflow.taskDeliveryFileName}"
                                  autocomplete="true"
                                  placeholder="delivery file name"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Unique Name"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskUniqueName_I_Frames"
+                                 required="false"
+                                 value="#{newWorkflow.taskUniqueName}"
+                                 autocomplete="true"
+                                 placeholder="unique name"/>
                 </p:column>
             </p:row>
 
@@ -2216,8 +2292,11 @@
                     <p:inputNumber id="taskFramePeriodInSeconds_Motion_JPEG_by_Periodical_Frames"
                                    decimalPlaces="0"
                                    value="#{newWorkflow.taskFramePeriodInSeconds}"
+                                   title="Samples: 30, ..."
                                    autocomplete="true"
                                    placeholder="period in seconds"/>
+                    <p:tooltip for="taskFramePeriodInSeconds_Motion_JPEG_by_Periodical_Frames" showEffect="clip"
+                               hideEffect="explode" position="left"/>
                 </p:column>
             </p:row>
 
@@ -2230,8 +2309,11 @@
                                    required="false"
                                    decimalPlaces="#{newWorkflow.timeInSecondsDecimalsPrecision}"
                                    value="#{newWorkflow.taskStartTimeInSeconds}"
+                                   title="Sample: 15.68"
                                    autocomplete="true"
-                                   placeholder="label"/>
+                                   placeholder="start time in seconds"/>
+                    <p:tooltip for="taskStartTimeInSeconds_Motion_JPEG_by_Periodical_Frames" showEffect="clip"
+                               hideEffect="explode" position="left"/>
                 </p:column>
             </p:row>
 
@@ -2244,8 +2326,11 @@
                                    decimalPlaces="0"
                                    required="false"
                                    value="#{newWorkflow.taskFrameMaxFramesNumber}"
+                                   title="Sample: 50"
                                    autocomplete="true"
                                    placeholder="max frames number"/>
+                    <p:tooltip for="taskFrameMaxFramesNumber_Motion_JPEG_by_Periodical_Frames" showEffect="clip"
+                               hideEffect="explode" position="left"/>
                 </p:column>
             </p:row>
 
@@ -2258,8 +2343,11 @@
                                    decimalPlaces="0"
                                    required="false"
                                    value="#{newWorkflow.taskFrameWidth}"
+                                   title="Samples: 420, ..."
                                    autocomplete="true"
                                    placeholder="font type"/>
+                    <p:tooltip for="taskFrameWidth_Motion_JPEG_by_Periodical_Frames" showEffect="clip"
+                               hideEffect="explode" position="left"/>
                 </p:column>
             </p:row>
 
@@ -2272,8 +2360,11 @@
                                    decimalPlaces="0"
                                    required="false"
                                    value="#{newWorkflow.taskFrameHeight}"
+                                   title="Samples: 320, ..."
                                    autocomplete="true"
                                    placeholder="font size"/>
+                    <p:tooltip for="taskFrameHeight_Motion_JPEG_by_Periodical_Frames" showEffect="clip"
+                               hideEffect="explode" position="left"/>
                 </p:column>
             </p:row>
 
@@ -2299,20 +2390,6 @@
 
             <p:row>
                 <p:column>
-                    <p:outputLabel value="Unique Name"/>
-                </p:column>
-                <p:column>
-                    <p:inputText id="taskUniqueName_Motion_JPEG_by_Periodical_Frames"
-                                 required="false"
-                                 value="#{newWorkflow.taskUniqueName}"
-                                 autocomplete="true"
-                                 placeholder="unique name"/>
-                </p:column>
-
-            </p:row>
-
-            <p:row>
-                <p:column>
                     <p:outputLabel value="Title"/>
                 </p:column>
                 <p:column colspan="3">
@@ -2320,7 +2397,7 @@
                                  required="false"
                                  value="#{newWorkflow.taskTitle}"
                                  autocomplete="true"
-                                 placeholder="title"/>
+                                 placeholder="title of the content"/>
                 </p:column>
 
             </p:row>
@@ -2389,6 +2466,7 @@
                 <p:column>
                     <p:inputText id="taskIngester_Motion_JPEG_by_Periodical_Frames"
                                  required="false"
+                                 readonly="true"
                                  value="#{newWorkflow.taskIngester}"
                                  autocomplete="true"
                                  placeholder="ingester"/>
@@ -2404,7 +2482,7 @@
                                  required="false"
                                  value="#{newWorkflow.taskKeywords}"
                                  autocomplete="true"
-                                 placeholder="ingester"/>
+                                 placeholder="keywords"/>
                 </p:column>
             </p:row>
 
@@ -2432,6 +2510,20 @@
                                  autocomplete="true"
                                  placeholder="delivery file name"/>
                 </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Unique Name"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskUniqueName_Motion_JPEG_by_Periodical_Frames"
+                                 required="false"
+                                 value="#{newWorkflow.taskUniqueName}"
+                                 autocomplete="true"
+                                 placeholder="unique name"/>
+                </p:column>
+
             </p:row>
 
         </p:panelGrid>
@@ -2478,8 +2570,11 @@
                                    required="false"
                                    decimalPlaces="#{newWorkflow.timeInSecondsDecimalsPrecision}"
                                    value="#{newWorkflow.taskStartTimeInSeconds}"
+                                   title="Sample: 15.68"
                                    autocomplete="true"
-                                   placeholder="label"/>
+                                   placeholder="start time in seconds"/>
+                    <p:tooltip for="taskStartTimeInSeconds_Motion_JPEG_by_I_Frames" showEffect="clip"
+                               hideEffect="explode" position="left"/>
                 </p:column>
             </p:row>
 
@@ -2492,8 +2587,11 @@
                                    decimalPlaces="0"
                                    required="false"
                                    value="#{newWorkflow.taskFrameMaxFramesNumber}"
+                                   title="Sample: 50"
                                    autocomplete="true"
                                    placeholder="max frames number"/>
+                    <p:tooltip for="taskFrameMaxFramesNumber_Motion_JPEG_by_I_Frames" showEffect="clip"
+                               hideEffect="explode" position="left"/>
                 </p:column>
             </p:row>
 
@@ -2506,8 +2604,11 @@
                                    decimalPlaces="0"
                                    required="false"
                                    value="#{newWorkflow.taskFrameWidth}"
+                                   title="Samples: 460, ..."
                                    autocomplete="true"
                                    placeholder="font type"/>
+                    <p:tooltip for="taskFrameWidth_Motion_JPEG_by_I_Frames" showEffect="clip"
+                               hideEffect="explode" position="left"/>
                 </p:column>
             </p:row>
 
@@ -2520,8 +2621,11 @@
                                    decimalPlaces="0"
                                    required="false"
                                    value="#{newWorkflow.taskFrameHeight}"
+                                   title="Samples: 320, ..."
                                    autocomplete="true"
                                    placeholder="font size"/>
+                    <p:tooltip for="taskFrameHeight_Motion_JPEG_by_I_Frames" showEffect="clip"
+                               hideEffect="explode" position="left"/>
                 </p:column>
             </p:row>
 
@@ -2547,20 +2651,6 @@
 
             <p:row>
                 <p:column>
-                    <p:outputLabel value="Unique Name"/>
-                </p:column>
-                <p:column>
-                    <p:inputText id="taskUniqueName_Motion_JPEG_by_I_Frames"
-                                 required="false"
-                                 value="#{newWorkflow.taskUniqueName}"
-                                 autocomplete="true"
-                                 placeholder="unique name"/>
-                </p:column>
-
-            </p:row>
-
-            <p:row>
-                <p:column>
                     <p:outputLabel value="Title"/>
                 </p:column>
                 <p:column colspan="3">
@@ -2568,7 +2658,7 @@
                                  required="false"
                                  value="#{newWorkflow.taskTitle}"
                                  autocomplete="true"
-                                 placeholder="title"/>
+                                 placeholder="title of the content"/>
                 </p:column>
 
             </p:row>
@@ -2637,6 +2727,7 @@
                 <p:column>
                     <p:inputText id="taskIngester_Motion_JPEG_by_I_Frames"
                                  required="false"
+                                 readonly="true"
                                  value="#{newWorkflow.taskIngester}"
                                  autocomplete="true"
                                  placeholder="ingester"/>
@@ -2652,7 +2743,7 @@
                                  required="false"
                                  value="#{newWorkflow.taskKeywords}"
                                  autocomplete="true"
-                                 placeholder="ingester"/>
+                                 placeholder="keywords"/>
                 </p:column>
             </p:row>
 
@@ -2680,6 +2771,20 @@
                                  autocomplete="true"
                                  placeholder="delivery file name"/>
                 </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Unique Name"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskUniqueName_Motion_JPEG_by_I_Frames"
+                                 required="false"
+                                 value="#{newWorkflow.taskUniqueName}"
+                                 autocomplete="true"
+                                 placeholder="unique name"/>
+                </p:column>
+
             </p:row>
 
         </p:panelGrid>
@@ -2726,8 +2831,11 @@
                                    decimalPlaces="0"
                                    required="false"
                                    value="#{newWorkflow.taskFrameDurationOfEachSlideInSeconds}"
+                                   title="Samples: 5, ..."
                                    autocomplete="true"
                                    placeholder="duration of each slide in seconds"/>
+                    <p:tooltip for="taskFrameDurationOfEachSlideInSeconds_Slideshow" showEffect="clip"
+                               hideEffect="explode" position="left"/>
                 </p:column>
             </p:row>
 
@@ -2740,8 +2848,11 @@
                                    decimalPlaces="0"
                                    required="false"
                                    value="#{newWorkflow.taskFrameOutputFrameRate}"
+                                   title="Samples: 25, ..."
                                    autocomplete="true"
                                    placeholder="output frame rate"/>
+                    <p:tooltip for="taskFrameOutputFrameRate_Slideshow" showEffect="clip"
+                               hideEffect="explode" position="left"/>
                 </p:column>
             </p:row>
 
@@ -2767,19 +2878,6 @@
 
             <p:row>
                 <p:column>
-                    <p:outputLabel value="Unique Name"/>
-                </p:column>
-                <p:column>
-                    <p:inputText id="taskUniqueName_Slideshow"
-                                 required="false"
-                                 value="#{newWorkflow.taskUniqueName}"
-                                 autocomplete="true"
-                                 placeholder="unique name"/>
-                </p:column>
-            </p:row>
-
-            <p:row>
-                <p:column>
                     <p:outputLabel value="Title"/>
                 </p:column>
                 <p:column colspan="3">
@@ -2787,7 +2885,7 @@
                                  required="false"
                                  value="#{newWorkflow.taskTitle}"
                                  autocomplete="true"
-                                 placeholder="title"/>
+                                 placeholder="title of the content"/>
                 </p:column>
 
             </p:row>
@@ -2856,6 +2954,7 @@
                 <p:column>
                     <p:inputText id="taskIngester_Slideshow"
                                  required="false"
+                                 readonly="true"
                                  value="#{newWorkflow.taskIngester}"
                                  autocomplete="true"
                                  placeholder="ingester"/>
@@ -2871,7 +2970,7 @@
                                  required="false"
                                  value="#{newWorkflow.taskKeywords}"
                                  autocomplete="true"
-                                 placeholder="ingester"/>
+                                 placeholder="keywords"/>
                 </p:column>
             </p:row>
 
@@ -2898,6 +2997,19 @@
                                  value="#{newWorkflow.taskDeliveryFileName}"
                                  autocomplete="true"
                                  placeholder="delivery file name"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Unique Name"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskUniqueName_Slideshow"
+                                 required="false"
+                                 value="#{newWorkflow.taskUniqueName}"
+                                 autocomplete="true"
+                                 placeholder="unique name"/>
                 </p:column>
             </p:row>
 

@@ -32,14 +32,14 @@
     <ui:include src="/common/globalConfirm.xhtml"/>
 
     <p:dialog widgetVar="shareWorkspace" modal="true"
-              header="Share Workspace" appendTo="@(body)" width="600"
+              header="Share Workspace With" appendTo="@(body)" width="600"
               showEffect="fade" hideEffect="fade" resizable="false" draggable="true">
 
         <h:form id="shareWorkspaceForm">
 
             <p:outputLabel value="Workspace to be shared: " />
-            <br />
             <p:outputLabel value="#{sessionScope.currentWorkspaceDetails.name}" style="font-weight: bold" />
+            <br />
             <p:panelGrid cellpadding="10" style="width: 100%" >
                 <p:row>
                     <p:column>
@@ -48,7 +48,7 @@
                     <p:column>
                         <p:inputText style="width: 100%"
                                      autocomplete="true"
-                                     value="#{mediaItems.shareWorkspaceName}"
+                                     value="#{mediaItems.shareWorkspaceUserName}"
                                      placeholder="name"/>
                     </p:column>
                 </p:row>
@@ -91,9 +91,10 @@
                         <p:outputLabel value="Ingest Workflow" />
                     </p:column>
                     <p:column>
+                        <!-- disabled="#{!sessionScope.currentWorkspaceDetails.ingestWorkflow}" -->
                         <p:selectBooleanCheckbox
                                 value="#{mediaItems.shareWorkspaceIngestWorkflow}"
-                                disabled="#{!sessionScope.currentWorkspaceDetails.ingestWorkflow}"
+                                disabled="#{!sessionScope.currentWorkspaceDetails.owner}"
                                 />
                     </p:column>
                 </p:row>
@@ -103,9 +104,10 @@
                         <p:outputLabel value="Create Profiles" />
                     </p:column>
                     <p:column>
+                        <!-- disabled="#{!sessionScope.currentWorkspaceDetails.createProfiles}" -->
                         <p:selectBooleanCheckbox
                                 value="#{mediaItems.shareWorkspaceCreateProfiles}"
-                                disabled="#{!sessionScope.currentWorkspaceDetails.createProfiles}"
+                                disabled="#{!sessionScope.currentWorkspaceDetails.owner}"
                                 />
                     </p:column>
                 </p:row>
@@ -115,9 +117,10 @@
                         <p:outputLabel value="Delivery Authorization" />
                     </p:column>
                     <p:column>
+                        <!-- disabled="#{!sessionScope.currentWorkspaceDetails.deliveryAuthorization}" -->
                         <p:selectBooleanCheckbox
                                 value="#{mediaItems.shareWorkspaceDeliveryAuthorization}"
-                                disabled="#{!sessionScope.currentWorkspaceDetails.deliveryAuthorization}"
+                                disabled="#{!sessionScope.currentWorkspaceDetails.owner}"
                                 />
                     </p:column>
                 </p:row>
@@ -127,9 +130,10 @@
                         <p:outputLabel value="Share Workspace" />
                     </p:column>
                     <p:column>
+                        <!-- disabled="#{!sessionScope.currentWorkspaceDetails.shareWorkspace}" -->
                         <p:selectBooleanCheckbox
                                 value="#{mediaItems.shareWorkspaceShareWorkspace}"
-                                disabled="#{!sessionScope.currentWorkspaceDetails.shareWorkspace}"
+                                disabled="#{!sessionScope.currentWorkspaceDetails.owner}"
                                 />
                     </p:column>
                 </p:row>
@@ -199,7 +203,7 @@
 
             <p:toolbarGroup align="right">
 
-                <p:outputLabel value="Welcome #{login.userName}" />
+                <p:outputLabel value="Welcome #{login.userName} (#{sessionScope.currentWorkspaceDetails.name})" />
 
                 <span class="ui-separator">
                     <span class="ui-icon ui-icon-grip-dotted-vertical" />
@@ -209,15 +213,17 @@
                 <p:selectOneMenu id="workspaceName" value="#{mediaItems.workspaceName}"
                                  autoWidth="false">
                     <f:selectItems value="#{mediaItems.workspaceNames}" />
-                    <p:ajax global="false" onstart="on_start()" event="change" listener="#{mediaItems.workspaceNameChanged()}" />
+                    <p:ajax global="false" onstart="on_start()" event="change"
+                            listener="#{mediaItems.workspaceNameChanged()}" />
                 </p:selectOneMenu>
 
                 <span class="ui-separator">
                     <span class="ui-icon ui-icon-grip-dotted-vertical" />
                 </span>
 
-                <p:commandLink value="Share Workspace"
+                <p:commandLink value="Share Workspace With"
                                disabled="#{!sessionScope.currentWorkspaceDetails.shareWorkspace}"
+                               actionListener="#{mediaItems.prepareWhareWorkspace}"
                                update="shareWorkspaceForm"
                                oncomplete="PF('shareWorkspace').show()" />
 
@@ -341,7 +347,13 @@
             </p:column>
 
             <p:column headerText="Title" >
-                <p:outputLabel value="#{mediaItem.title}" />
+                <p:outputLabel
+                        id="mediaItemTitle"
+                        value="#{mediaItem.title}"
+                        title="#{mediaItem.title}"
+                        />
+                <p:tooltip for="mediaItemTitle"
+                           showEffect="clip" hideEffect="explode" position="left"/>
             </p:column>
 
             <p:column style="width:160px;" headerText="Start Publishing" >

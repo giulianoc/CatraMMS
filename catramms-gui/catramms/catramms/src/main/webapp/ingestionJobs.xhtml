@@ -45,7 +45,7 @@
 
             <p:toolbarGroup align="right">
 
-                <p:outputLabel value="Welcome #{login.userName}" />
+                <p:outputLabel value="Welcome #{login.userName} (#{sessionScope.currentWorkspaceDetails.name})" />
 
                 <span class="ui-separator">
                     <span class="ui-icon ui-icon-grip-dotted-vertical" />
@@ -178,14 +178,23 @@
             </p:column>
 
             <p:column headerText="Label" >
-                <p:outputLabel id="label" value="#{ingestionJob.label}" />
+                <p:outputLabel
+                        id="label"
+                        value="#{ingestionJob.label}"
+                        title="#{ingestionJob.label}"
+                        />
                 <p:tooltip for="label"
-                           value="#{ingestionJob.label}"
                            showEffect="clip" hideEffect="explode" position="left"/>
             </p:column>
 
             <p:column style="width:130px;" headerText="Type" >
-                <p:outputLabel value="#{ingestionJob.ingestionType}" />
+                <p:outputLabel
+                        id="ingestionJobIngestionType"
+                        value="#{ingestionJob.ingestionType}"
+                        title="#{ingestionJob.ingestionType}"
+                        />
+                <p:tooltip for="ingestionJobIngestionType"
+                           showEffect="clip" hideEffect="explode" position="left"/>
             </p:column>
 
             <p:column style="width:160px;" headerText="Start Processing" >
@@ -201,7 +210,13 @@
             </p:column>
 
             <p:column style="width:150px;" headerText="Status" >
-                <p:outputLabel value="#{ingestionJob.status}" />
+                <p:outputLabel
+                        id="ingestionJobStatus"
+                        value="#{ingestionJob.status}"
+                        title="#{ingestionJob.status}"
+                        />
+                <p:tooltip for="ingestionJobStatus"
+                           showEffect="clip" hideEffect="explode" position="left"/>
             </p:column>
 
             <p:column style="width:90px;" headerText="Dwl&lt;br&gt;progress" >

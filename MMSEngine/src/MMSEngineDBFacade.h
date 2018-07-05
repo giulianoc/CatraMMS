@@ -673,6 +673,9 @@ public:
         EncodingTechnology encodingTechnology,
         string jsonEncodingProfile);
 
+    void removeEncodingProfile(
+        int64_t workspaceKey, int64_t encodingProfileKey);
+
     int64_t addEncodingProfileIntoSet(
         shared_ptr<MySQLConnection> conn,
         int64_t workspaceKey,
