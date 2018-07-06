@@ -729,6 +729,7 @@ public:
         string errorMessage,
         string processorMMS);
 
+    /*
     void updateIngestionJob (
         int64_t ingestionJobKey,
         IngestionStatus newIngestionStatus,
@@ -736,7 +737,8 @@ public:
         int64_t physicalPathKey,
         string errorMessage,
         string processorMMS);
-
+    */
+    
     void updateIngestionJob (
         int64_t ingestionJobKey,
         IngestionType ingestionType,

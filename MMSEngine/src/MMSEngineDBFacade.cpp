@@ -3816,6 +3816,7 @@ void MMSEngineDBFacade::updateIngestionJob (
     }    
 }
 
+/*
 void MMSEngineDBFacade::updateIngestionJob (
         int64_t ingestionJobKey,
         IngestionStatus newIngestionStatus,
@@ -3980,6 +3981,7 @@ void MMSEngineDBFacade::updateIngestionJob (
         throw e;
     }    
 }
+*/
 
 void MMSEngineDBFacade::updateIngestionJob (
         int64_t ingestionJobKey,
@@ -9804,7 +9806,7 @@ int MMSEngineDBFacade::addOverlayTextOnVideoJob (
         }
         
         throw e;
-    }        
+    }
 }
 
 int MMSEngineDBFacade::updateEncodingJob (
@@ -9979,8 +9981,55 @@ int MMSEngineDBFacade::updateEncodingJob (
                 + ", encodedPhysicalPathKey: " + to_string(encodedPhysicalPathKey)
                 + ", errorMessage: " + errorMessage
                 + ", processorMMS: " + processorMMS
-            );                            
-            updateIngestionJob (ingestionJobKey, ingestionStatus, mediaItemKey, encodedPhysicalPathKey, errorMessage, processorMMS);
+            );
+            
+            // updateIngestionJob (ingestionJobKey, ingestionStatus, mediaItemKey, encodedPhysicalPathKey, errorMessage, processorMMS);
+            {
+                lastSQLCommand = 
+                    "update MMS_IngestionJob set status = ?, mediaItemKey = ?, physicalPathKey = ?, endProcessing = NOW(), processorMMS = NULL, errorMessage = NULL where ingestionJobKey = ?";
+
+                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                int queryParameterIndex = 1;
+                preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(ingestionStatus));
+                if (mediaItemKey == -1)
+                    preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
+                else
+                    preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+                if (encodedPhysicalPathKey == -1)
+                    preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
+                else
+                    preparedStatement->setInt64(queryParameterIndex++, encodedPhysicalPathKey);
+                preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+
+                int rowsUpdated = preparedStatement->executeUpdate();
+                if (rowsUpdated != 1)
+                {
+                    string errorMessage = __FILEREF__ + "no update was done"
+                            + ", mediaItemKey: " + to_string(mediaItemKey)
+                            + ", encodedPhysicalPathKey: " + to_string(encodedPhysicalPathKey)
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", rowsUpdated: " + to_string(rowsUpdated)
+                            + ", lastSQLCommand: " + lastSQLCommand
+                    ;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);                    
+                }            
+            }
+            
+            {
+                lastSQLCommand = 
+                    "insert into MMS_IngestionJobOutput (ingestionJobKey, mediaItemKey, physicalPathKey) values ("
+                    "?, ?, ?)";
+
+                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                int queryParameterIndex = 1;
+                preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+                preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+                preparedStatement->setInt64(queryParameterIndex++, encodedPhysicalPathKey);
+
+                preparedStatement->executeUpdate();
+            }
         }
         else if (newEncodingStatus == EncodingStatus::End_Failed)
         {
@@ -11325,6 +11374,20 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", newIngestionStatus: " + MMSEngineDBFacade::toString(newIngestionStatus)
             );
+
+            {
+                lastSQLCommand = 
+                    "insert into MMS_IngestionJobOutput (ingestionJobKey, mediaItemKey, physicalPathKey) values ("
+                    "?, ?, ?)";
+
+                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                int queryParameterIndex = 1;
+                preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+                preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+                preparedStatement->setInt64(queryParameterIndex++, physicalPathKey);
+
+                preparedStatement->executeUpdate();
+            }
 
             manageIngestionJobStatusUpdate (ingestionJobKey, newIngestionStatus, conn);
         }
@@ -13309,7 +13372,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ingestionRootKey           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "workspaceKey               BIGINT UNSIGNED NOT NULL,"
                     "type                       VARCHAR (64) NOT NULL,"
-                    "label                      VARCHAR (128) NULL,"
+                    "label                      VARCHAR (256) NULL,"
                     "ingestionDate              TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "lastUpdate                 TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "status           			VARCHAR (64) NOT NULL,"
@@ -13376,7 +13439,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                 "create table if not exists MMS_IngestionJob ("
                     "ingestionJobKey  			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "ingestionRootKey           BIGINT UNSIGNED NOT NULL,"
-                    "label                      VARCHAR (128) NULL,"
+                    "label                      VARCHAR (256) NULL,"
                     "mediaItemKey               BIGINT UNSIGNED NULL,"
                     "physicalPathKey            BIGINT UNSIGNED NULL,"
                     "metaDataContent            TEXT CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
@@ -13392,6 +13455,30 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "constraint MMS_IngestionJob_PK PRIMARY KEY (ingestionJobKey), "
                     "constraint MMS_IngestionJob_FK foreign key (ingestionRootKey) "
                         "references MMS_IngestionRoot (ingestionRootKey) on delete cascade) "	   	        				
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
+        try
+        {
+            lastSQLCommand = 
+                "create table if not exists MMS_IngestionJobOutput ("
+                    "ingestionJobKey			BIGINT UNSIGNED NOT NULL,"
+                    "mediaItemKey			BIGINT UNSIGNED NOT NULL,"
+                    "physicalPathKey  			BIGINT UNSIGNED NOT NULL,"
+                    "UNIQUE (ingestionJobKey, mediaItemKey, physicalPathKey)) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }

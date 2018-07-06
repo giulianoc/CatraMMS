@@ -61,6 +61,7 @@ public class NewWorkflow implements Serializable {
     private IngestionResult workflowRoot = new IngestionResult();
     private List<IngestionResult> ingestionJobList = new ArrayList<>();
     private int taskNumber;
+    private String ingestWorkflowErrorMessage;
 
     private Long mediaItemsNumber = new Long(0);
     private List<MediaItem> mediaItemsList = new ArrayList<>();
@@ -1461,6 +1462,8 @@ public class NewWorkflow implements Serializable {
         String username;
         String password;
 
+        ingestWorkflowErrorMessage = null;
+
         try
         {
             Long userKey = SessionUtils.getUserKey();
@@ -1480,6 +1483,8 @@ public class NewWorkflow implements Serializable {
         {
             String errorMessage = "Exception: " + e;
             mLogger.error(errorMessage);
+
+            ingestWorkflowErrorMessage = errorMessage;
 
             FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Ingestion",
                     "Ingestion Workflow failed: " + errorMessage);
@@ -3754,5 +3759,13 @@ public class NewWorkflow implements Serializable {
 
     public void setMediaItemsToBeAddedOrReplaced(String mediaItemsToBeAddedOrReplaced) {
         this.mediaItemsToBeAddedOrReplaced = mediaItemsToBeAddedOrReplaced;
+    }
+
+    public String getIngestWorkflowErrorMessage() {
+        return ingestWorkflowErrorMessage;
+    }
+
+    public void setIngestWorkflowErrorMessage(String ingestWorkflowErrorMessage) {
+        this.ingestWorkflowErrorMessage = ingestWorkflowErrorMessage;
     }
 }

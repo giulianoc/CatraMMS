@@ -169,8 +169,10 @@
             <p:outputLabel value="Physical Path Key: #{mediaItemDetails.currentPhysicalPath.physicalPathKey}" />
             <p:outputLabel value=", FramesPerSeconds: " />
             <!-- next outputLabel is also used inside javascript to retrieve the framesPerSeconds -->
-            <p:outputLabel id="framesPerSeconds"
+            <p:outputLabel id="framesPerSeconds" style="font-weight: bold"
                            value="#{mediaItemDetails.framesPerSecond}" />
+
+            <br />
 
             <p:scrollPanel mode="native" style="width: 100%; height: 400px">
                 <media:video
