@@ -488,14 +488,14 @@
                             </p:menuitem>
 
                             <p:menuitem value="Play Video"
-                                        disabled="#{mediaItemDetails.mediaItem.contentType != 'Video' || !sessionScope.currentWorkspaceDetails.deliveryAuthorization}"
+                                        disabled="#{mediaItemDetails.mediaItem.contentType != 'Video' or !sessionScope.currentWorkspaceDetails.deliveryAuthorization}"
                                         actionListener="#{mediaItemDetails.prepareCurrentMediaURL(physicalPath, false)}"
                                         update="showVideoForm"
                                         oncomplete="PF('showVideo').show()">
                             </p:menuitem>
 
                             <p:menuitem value="Edit Video"
-                                        disabled="#{mediaItemDetails.mediaItem.contentType != 'Video' || !sessionScope.currentWorkspaceDetails.deliveryAuthorization}"
+                                        disabled="#{mediaItemDetails.mediaItem.contentType != 'Video' or !sessionScope.currentWorkspaceDetails.deliveryAuthorization or !sessionScope.currentWorkspaceDetails.editMedia}"
                                         actionListener="#{mediaItemDetails.prepareCurrentMediaURL(physicalPath, true)}"
                                         update="showVideoForm"
                                         oncomplete="PF('showVideo').show()">
