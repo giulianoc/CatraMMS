@@ -1852,7 +1852,7 @@ void API::login(
                 responseBody += ("\"ingestWorkflow\": " + sIngestWorkflow + ", ");
                 responseBody += ("\"createProfiles\": " + sCreateProfiles + ", ");
                 responseBody += ("\"deliveryAuthorization\": " + sDeliveryAuthorization + ", ");
-                responseBody += ("\"shareWorkspace\": " + sShareWorkspace + " ");
+                responseBody += ("\"shareWorkspace\": " + sShareWorkspace + ", ");
                 responseBody += ("\"editMedia\": " + sEditMedia + " ");
                 responseBody += ("} ");
 
