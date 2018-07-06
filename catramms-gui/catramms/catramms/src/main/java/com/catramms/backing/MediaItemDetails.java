@@ -36,6 +36,7 @@ public class MediaItemDetails implements Serializable {
     private Long framesPerSecond;
     private Long mediaItemKey;
     private PhysicalPath currentPhysicalPath;
+    private boolean editVideo;
     private String currentMediaURL;
     private String videoCurrentTime;
     private String videoMarkIn = "";
@@ -345,10 +346,12 @@ public class MediaItemDetails implements Serializable {
         }
     }
 
-    public void prepareCurrentMediaURL(PhysicalPath physicalPath)
+    public void prepareCurrentMediaURL(PhysicalPath physicalPath, boolean editMedia)
     {
         long ttlInSeconds = 60 * 60;
         int maxRetries = 20;
+
+        this.editVideo = editMedia;
 
         try
         {
@@ -519,5 +522,13 @@ public class MediaItemDetails implements Serializable {
 
     public void setFramesPerSecond(Long framesPerSecond) {
         this.framesPerSecond = framesPerSecond;
+    }
+
+    public boolean isEditVideo() {
+        return editVideo;
+    }
+
+    public void setEditVideo(boolean editVideo) {
+        this.editVideo = editVideo;
     }
 }

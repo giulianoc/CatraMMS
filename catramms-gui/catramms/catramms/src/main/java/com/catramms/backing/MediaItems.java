@@ -53,6 +53,7 @@ public class MediaItems implements Serializable {
     private boolean shareWorkspaceCreateProfiles;
     private boolean shareWorkspaceDeliveryAuthorization;
     private boolean shareWorkspaceShareWorkspace;
+    private boolean shareWorkspaceEditMedia;
     private Long shareWorkspaceUserKey;
     private String shareWorkspaceConfirmationCode;
 
@@ -295,6 +296,7 @@ public class MediaItems implements Serializable {
         shareWorkspaceCreateProfiles = false;
         shareWorkspaceDeliveryAuthorization = false;
         shareWorkspaceShareWorkspace = false;
+        shareWorkspaceEditMedia = false;
     }
 
     public void shareWorkspace()
@@ -322,7 +324,7 @@ public class MediaItems implements Serializable {
                 shareWorkspaceUserKey = catraMMS.shareWorkspace(
                         username, password, shareWorkspaceUserName, shareWorkspaceEMail, shareWorkspacePassword,
                         shareWorkspaceCountry, shareWorkspaceIngestWorkflow, shareWorkspaceCreateProfiles,
-                        shareWorkspaceDeliveryAuthorization, shareWorkspaceShareWorkspace,
+                        shareWorkspaceDeliveryAuthorization, shareWorkspaceShareWorkspace, shareWorkspaceEditMedia,
                         currentWorkspaceDetails.getWorkspaceKey());
 
                 FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
@@ -547,6 +549,14 @@ public class MediaItems implements Serializable {
 
     public void setShareWorkspaceIngestWorkflow(boolean shareWorkspaceIngestWorkflow) {
         this.shareWorkspaceIngestWorkflow = shareWorkspaceIngestWorkflow;
+    }
+
+    public boolean isShareWorkspaceEditMedia() {
+        return shareWorkspaceEditMedia;
+    }
+
+    public void setShareWorkspaceEditMedia(boolean shareWorkspaceEditMedia) {
+        this.shareWorkspaceEditMedia = shareWorkspaceEditMedia;
     }
 
     public boolean isShareWorkspaceCreateProfiles() {

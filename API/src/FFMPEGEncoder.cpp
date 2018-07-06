@@ -160,7 +160,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         string requestMethod,
         unordered_map<string, string> queryParameters,
         bool basicAuthenticationPresent,
-        tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool>& userKeyWorkspaceAndFlags,
+        tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool,bool>& userKeyWorkspaceAndFlags,
         unsigned long contentLength,
         string requestBody,
         unordered_map<string, string>& requestDetails

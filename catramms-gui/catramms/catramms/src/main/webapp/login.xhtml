@@ -171,9 +171,7 @@
                     <p:column>
                     </p:column>
                     <p:column>
-                        <p:commandButton action="#{login.validateUsernamePassword}"
-                                         value="Login">
-                        </p:commandButton>
+                        <p:commandButton value="Login" actionListener="#{login.login}" />
                     </p:column>
                 </p:row>
 

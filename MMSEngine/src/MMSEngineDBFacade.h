@@ -632,7 +632,7 @@ public:
         string userEmailAddress,
         string userPassword,
         string userCountry,
-        bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization, bool shareWorkspace,
+        bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization, bool shareWorkspace, bool editMedia,
         int64_t workspaceKeyToBeShared,
         chrono::system_clock::time_point userExpirationDate);
 
@@ -645,11 +645,11 @@ public:
     */
     // string getPassword(string emailAddress);
 
-    tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool> checkAPIKey (string apiKey);
+    tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool,bool> checkAPIKey (string apiKey);
 
     pair<int64_t,string> login (
         string eMailAddress, string password, 
-        vector<tuple<int64_t,string,string,bool,bool,bool,bool,bool,bool>>& vWorkspaceNameAPIKeyIfOwnerAndFlags);
+        vector<tuple<int64_t,string,string,bool,bool,bool,bool,bool,bool,bool>>& vWorkspaceNameAPIKeyIfOwnerAndFlags);
 
     int64_t addEncodingProfilesSet (
         shared_ptr<MySQLConnection> conn, int64_t workspaceKey,

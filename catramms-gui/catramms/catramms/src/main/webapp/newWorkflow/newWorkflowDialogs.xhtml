@@ -29,13 +29,13 @@
     <h:form id="selectMediaItemsForm">
 
         <p:toolbar>
-            <f:facet name="left">
+            <p:toolbarGroup align="left">
                 <p:outputLabel styleClass="red" value="#{newWorkflow.mediaItemsList.size()}" />
                 <p:outputLabel styleClass="red" value=" / #{newWorkflow.mediaItemsNumber}" />
                 <p:outputLabel value=" media items" />
-            </f:facet>
+            </p:toolbarGroup>
 
-            <f:facet name="right">
+            <p:toolbarGroup align="right">
                 <p:outputLabel value="Type:" />
                 <p:selectOneMenu id="contentType" value="#{newWorkflow.mediaItemsContentType}"
                                  autoWidth="false">
@@ -75,7 +75,7 @@
                                  actionListener="#{newWorkflow.fillMediaItems}"
                         update=":selectMediaItemsForm"
                         />
-            </f:facet>
+            </p:toolbarGroup>
         </p:toolbar>
 
         <p:dataTable resizableColumns="true" id="mediaItemDataTable" var="mediaItem" rowIndexVar="rowId"
@@ -111,30 +111,27 @@
 
         <br />
 
-        <p:toolbar>
-            <p:toolbarGroup align="left">
-            </p:toolbarGroup>
+        <p:panelGrid cellpadding="10" style="width: 100%">
 
-            <p:toolbarGroup align="right">
-                <p:outputLabel value="Selection " />
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Selection " />
 
-                <p:selectOneRadio id="mediaItemsToBeAddedOrReplaced"
-                                  value="#{newWorkflow.mediaItemsToBeAddedOrReplaced}">
-                    <f:selectItem itemLabel="To be added" itemValue="toBeAdded"/>
-                    <f:selectItem itemLabel="To be replaced" itemValue="toBeReplaced"/>
-                </p:selectOneRadio>
-
-                <span class="ui-separator">
-                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
-                </span>
-
-                <p:commandButton process="mediaItemDataTable"
-                                 update="viewForm:taskReferences_Remove_Content,viewForm:taskReferences_Concat_Demuxer,viewForm:taskReferences_Cut,viewForm:taskReferences_Overlay_Image_On_Video,viewForm:taskReferences_Overlay_Text_On_Video,viewForm:taskReferences_Frame,viewForm:taskReferences_Periodical_Frames,viewForm:taskReferences_I_Frames,viewForm:taskReferences_Motion_JPEG_by_Periodical_Frames,viewForm:taskReferences_Motion_JPEG_by_I_Frames,viewForm:taskReferences_Slideshow,viewForm:taskReferences_Encode"
-                                 icon="ui-icon-search" value="Save"
-                                 onclick="PF('selectMediaItems').hide()"
-                        />
-            </p:toolbarGroup>
-        </p:toolbar>
+                    <p:selectOneRadio id="mediaItemsToBeAddedOrReplaced"
+                                      value="#{newWorkflow.mediaItemsToBeAddedOrReplaced}">
+                        <f:selectItem itemLabel="To be added" itemValue="toBeAdded"/>
+                        <f:selectItem itemLabel="To be replaced" itemValue="toBeReplaced"/>
+                    </p:selectOneRadio>
+                </p:column>
+                <p:column>
+                    <p:commandButton process="mediaItemDataTable"
+                                     update="viewForm:taskReferences_Remove_Content,viewForm:taskReferences_Concat_Demuxer,viewForm:taskReferences_Cut,viewForm:taskReferences_Overlay_Image_On_Video,viewForm:taskReferences_Overlay_Text_On_Video,viewForm:taskReferences_Frame,viewForm:taskReferences_Periodical_Frames,viewForm:taskReferences_I_Frames,viewForm:taskReferences_Motion_JPEG_by_Periodical_Frames,viewForm:taskReferences_Motion_JPEG_by_I_Frames,viewForm:taskReferences_Slideshow,viewForm:taskReferences_Encode"
+                                     icon="ui-icon-search" value="Save"
+                                     onclick="PF('selectMediaItems').hide()"
+                            />
+                </p:column>
+            </p:row>
+        </p:panelGrid>
 
     </h:form>
 </p:dialog>

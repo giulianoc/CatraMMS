@@ -34,7 +34,7 @@ public class CatraMMS {
                                String passwordToShare, String countryToShare,
                                Boolean ingestWorkflow, Boolean createProfiles,
                                Boolean deliveryAuthorization, Boolean shareWorkspace,
-                               Long workspaceKeyToShare)
+                               Boolean editMedia, Long workspaceKeyToShare)
             throws Exception
     {
         String mmsInfo;
@@ -46,6 +46,7 @@ public class CatraMMS {
                     + "&createProfiles=" + createProfiles.toString()
                     + "&deliveryAuthorization=" + deliveryAuthorization.toString()
                     + "&shareWorkspace=" + shareWorkspace.toString()
+                    + "&editMedia=" + editMedia.toString()
             ;
 
             String postBodyRequest = "{ "
@@ -256,6 +257,7 @@ public class CatraMMS {
                 workspaceDetails.setCreateProfiles(workspaceInfo.getBoolean("createProfiles"));
                 workspaceDetails.setDeliveryAuthorization(workspaceInfo.getBoolean("deliveryAuthorization"));
                 workspaceDetails.setShareWorkspace(workspaceInfo.getBoolean("shareWorkspace"));
+                workspaceDetails.setEditMedia(workspaceInfo.getBoolean("editMedia"));
 
                 workspaceDetailsList.add(workspaceDetails);
             }

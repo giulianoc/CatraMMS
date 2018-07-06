@@ -60,9 +60,8 @@ public class Login implements Serializable {
     }
 
     //validate login
-    public String validateUsernamePassword()
+    public void login()
     {
-        boolean valid;
         Long userKey = null;
         List<WorkspaceDetails> workspaceDetailsList = new ArrayList<>();
 
@@ -75,83 +74,67 @@ public class Login implements Serializable {
             userName = (String) userKeyAndPassword.get(1);
 
             if (workspaceDetailsList.size() == 0)
-                throw new Exception("No Workspace available");
+            {
+                String errorMessage = "No Workspace available for the User";
+                mLogger.error(errorMessage);
 
-            valid = true;
+                FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Login",
+                        errorMessage);
+                FacesContext.getCurrentInstance().addMessage(null, message);
+
+                return;
+            }
+
+            {
+                HttpSession session = SessionUtils.getSession();
+                session.setAttribute("username", userName);
+                session.setAttribute("userKey", userKey);
+                session.setAttribute("workspaceDetailsList", workspaceDetailsList);
+                session.setAttribute("currentWorkspaceDetails", workspaceDetailsList.get(0));
+
+                try
+                {
+                    mLogger.info("OriginURI: " + originURI);
+                    if (originURI == null || originURI.equalsIgnoreCase("")
+                            || originURI.equalsIgnoreCase("/catramms/login.xhtml"))
+                        originURI = "mediaItems.xhtml";
+
+                    mLogger.info("Redirect to " + originURI);
+                    FacesContext.getCurrentInstance().getExternalContext().redirect(originURI);
+                }
+                catch (Exception e)
+                {
+                    mLogger.error("Redirect failed: " + originURI);
+                }
+            }
         }
         catch (Exception e)
         {
             String errorMessage = "Login MMS failed. Exception: " + e;
             mLogger.error(errorMessage);
 
-            valid = false;
+            FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Login",
+                    "Incorrect Username and/or Passowrd");
+            FacesContext.getCurrentInstance().addMessage(null, message);
         }
-
-        mLogger.info("OriginURI: " + originURI);
-        if (valid)
-        {
-            HttpSession session = SessionUtils.getSession();
-            session.setAttribute("username", userName);
-            session.setAttribute("userKey", userKey);
-            session.setAttribute("workspaceDetailsList", workspaceDetailsList);
-            session.setAttribute("currentWorkspaceDetails", workspaceDetailsList.get(0));
-
-            try
-            {
-                if (originURI == null || originURI.equalsIgnoreCase("")
-                        || originURI.equalsIgnoreCase("/catramms/login.xhtml"))
-                    originURI = "mediaItems.xhtml";
-
-                mLogger.info("Redirect to " + originURI);
-                FacesContext.getCurrentInstance().getExternalContext().redirect(originURI);
-            }
-            catch (Exception e)
-            {
-                mLogger.error("Redirect failed: " + originURI);
-            }
-        }
-        else
-        {
-            FacesContext.getCurrentInstance().addMessage(
-                    null,
-                    new FacesMessage(FacesMessage.SEVERITY_WARN,
-                            "Incorrect Username and Passowrd",
-                            "Please enter correct username and Password"));
-
-            try
-            {
-                originURI = "/catramms/login.xhtml";
-
-                mLogger.info("Redirect to " + originURI);
-                FacesContext.getCurrentInstance().getExternalContext().redirect(originURI);
-            }
-            catch (Exception e)
-            {
-                mLogger.error("Redirect failed: " + originURI);
-            }
-            // return "login";
-        }
-
-        return "";
     }
 
     //logout event, invalidate session
     public void logout()
     {
+        String url = "/catramms/login.xhtml";
+
         try
         {
             HttpSession session = SessionUtils.getSession();
             session.invalidate();
 
-            String url = "login.xhtml";
-
             mLogger.info("Redirect to " + url);
             FacesContext.getCurrentInstance().getExternalContext().redirect(url);
-            // return "login";
         }
         catch (Exception e)
         {
-            mLogger.error("Redirect failed: " + originURI);
+            mLogger.error("Redirect failed: " + url);
         }
     }
 

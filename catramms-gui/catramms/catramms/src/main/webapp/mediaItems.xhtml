@@ -140,10 +140,24 @@
 
                 <p:row>
                     <p:column>
+                        <p:outputLabel value="Edit Media" />
+                    </p:column>
+                    <p:column>
+                        <!-- disabled="#{!sessionScope.currentWorkspaceDetails.shareWorkspace}" -->
+                        <p:selectBooleanCheckbox
+                                value="#{mediaItems.shareWorkspaceEditMedia}"
+                                disabled="#{!sessionScope.currentWorkspaceDetails.owner}"
+                                />
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
                     </p:column>
                     <p:column>
                         <p:commandButton action="#{mediaItems.shareWorkspace}"
-                                         value="1. Share Workspace" >
+                                         value="1. Share Workspace"
+                                         update="shareWorkspaceUserKey">
                             <p:confirm header="Confirmation" message="Are you sure?" icon="ui-icon-alert" />
                         </p:commandButton>
                     </p:column>
@@ -154,7 +168,7 @@
                         <p:outputLabel value="User Key" />
                     </p:column>
                     <p:column>
-                        <p:inputNumber style="width: 100%"
+                        <p:inputNumber id="shareWorkspaceUserKey" style="width: 100%"
                                        decimalPlaces="0"
                                        value="#{mediaItems.shareWorkspaceUserKey}"
                                        placeholder="user key"

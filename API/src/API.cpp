@@ -265,7 +265,7 @@ void API::manageRequestAndResponse(
         string requestMethod,
         unordered_map<string, string> queryParameters,
         bool basicAuthenticationPresent,
-        tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool>& userKeyWorkspaceAndFlags,
+        tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool,bool>& userKeyWorkspaceAndFlags,
         unsigned long contentLength,
         string requestBody,
         unordered_map<string, string>& requestDetails
@@ -279,10 +279,11 @@ void API::manageRequestAndResponse(
     bool createProfiles;
     bool deliveryAuthorization;
     bool shareWorkspace;
+    bool editMedia;
 
     if (basicAuthenticationPresent)
     {
-        tie(userKey, workspace, admin, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace) 
+        tie(userKey, workspace, admin, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace, editMedia) 
                 = userKeyWorkspaceAndFlags;
 
         _logger->info(__FILEREF__ + "Received manageRequestAndResponse"
@@ -297,6 +298,7 @@ void API::manageRequestAndResponse(
             + ", createProfiles: " + to_string(createProfiles)
             + ", deliveryAuthorization: " + to_string(deliveryAuthorization)
             + ", shareWorkspace: " + to_string(shareWorkspace)
+            + ", editMedia: " + to_string(editMedia)
         );        
     }
     else
@@ -1428,6 +1430,19 @@ void API::shareWorkspace_(
         }
         shareWorkspace = (shareWorkspaceIt->second == "true" ? true : false);
 
+        bool editMedia;
+        auto editMediaIt = queryParameters.find("editMedia");
+        if (editMediaIt == queryParameters.end())
+        {
+            string errorMessage = string("The 'editMedia' parameter is not found");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        editMedia = (editMediaIt->second == "true" ? true : false);
+
         string name;
         string email;
         string password;
@@ -1509,7 +1524,7 @@ void API::shareWorkspace_(
                     email, 
                     password,
                     country, 
-                    ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace,
+                    ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace, editMedia,
                     workspaceKeyToBeShared,
                     chrono::system_clock::now() + chrono::hours(24 * 365 * 10)     // chrono::system_clock::time_point userExpirationDate
                 );
@@ -1777,7 +1792,7 @@ void API::login(
                 + ", email: " + email
             );
             
-            vector<tuple<int64_t,string,string,bool,bool,bool,bool,bool,bool>> vWorkspaceNameAPIKeyIfOwnerAndFlags;
+            vector<tuple<int64_t,string,string,bool,bool,bool,bool,bool,bool,bool>> vWorkspaceNameAPIKeyIfOwnerAndFlags;
             
             pair<int64_t,string> userKeyAndName = _mmsEngineDBFacade->login(
                     email, 
@@ -1800,7 +1815,7 @@ void API::login(
             responseBody += ("\"workspaces\": [ ");
 
             bool firstEntry = true;
-            for (tuple<int64_t,string,string,bool,bool,bool,bool,bool,bool> workspaceNameAPIKeyIfOwnerAndFlags: vWorkspaceNameAPIKeyIfOwnerAndFlags)
+            for (tuple<int64_t,string,string,bool,bool,bool,bool,bool,bool,bool> workspaceNameAPIKeyIfOwnerAndFlags: vWorkspaceNameAPIKeyIfOwnerAndFlags)
             {
                 int64_t workspaceKey;
                 string workspaceName;
@@ -1811,9 +1826,10 @@ void API::login(
                 bool createProfiles;
                 bool deliveryAuthorization;
                 bool shareWorkspace;
-                
+                bool editMedia;
+
                 tie(workspaceKey, workspaceName, apiKey, ifOwner, admin, ingestWorkflow, 
-                        createProfiles, deliveryAuthorization, shareWorkspace) 
+                        createProfiles, deliveryAuthorization, shareWorkspace, editMedia) 
                         = workspaceNameAPIKeyIfOwnerAndFlags;
                 
                 if (!firstEntry)
@@ -1825,7 +1841,8 @@ void API::login(
                 string sCreateProfiles = createProfiles ? "true" : "false";
                 string sDeliveryAuthorization = deliveryAuthorization ? "true" : "false";
                 string sShareWorkspace = shareWorkspace ? "true" : "false";
-                
+                string sEditMedia = editMedia ? "true" : "false";
+
                 responseBody += ("{ ");
                 responseBody += ("\"workspaceKey\": " + to_string(workspaceKey) + ", ");
                 responseBody += ("\"workspaceName\": \"" + workspaceName + "\", ");
@@ -1836,6 +1853,7 @@ void API::login(
                 responseBody += ("\"createProfiles\": " + sCreateProfiles + ", ");
                 responseBody += ("\"deliveryAuthorization\": " + sDeliveryAuthorization + ", ");
                 responseBody += ("\"shareWorkspace\": " + sShareWorkspace + " ");
+                responseBody += ("\"editMedia\": " + sEditMedia + " ");
                 responseBody += ("} ");
 
                 if (firstEntry)
@@ -3611,7 +3629,7 @@ void API::uploadedBinary(
         FCGX_Request& request,
         string requestMethod,
         unordered_map<string, string> queryParameters,
-        tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool> userKeyWorkspaceAndFlags,
+        tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool,bool> userKeyWorkspaceAndFlags,
         // unsigned long contentLength,
         unordered_map<string, string>& requestDetails
 )

@@ -180,15 +180,16 @@
                         controls="true" />
             </p:scrollPanel>
 
-            <p:remoteCommand name="updateVideoTimeCode"
-                             update="timecode,markInButton,markOutButton"
-                             global="false"
-                             actionListener="#{mediaItemDetails.updateVideoTimeCode}"
-                    />
+            <p:panel rendered="#{mediaItemDetails.editVideo}" >
 
-            <!-- <p:remoteCommand oncomplete="initPlayerListener" autoRun="true" /> -->
+                <p:remoteCommand name="updateVideoTimeCode"
+                                 update="timecode,markInButton,markOutButton"
+                                 global="false"
+                                 actionListener="#{mediaItemDetails.updateVideoTimeCode}"
+                        />
 
-            <p:panel>
+                <!-- <p:remoteCommand oncomplete="initPlayerListener" autoRun="true" /> -->
+
                 <p:toolbar >
                     <p:toolbarGroup align="left">
                         <p:commandButton global="false" icon="fa fa-minus" onclick="seekFrames(-1)" />
@@ -281,6 +282,7 @@
                                 />
                     </p:column>
                 </p:dataTable>
+
             </p:panel>
         </h:form>
 
@@ -485,9 +487,16 @@
                                 <f:param name="encodingProfileKey" value="#{physicalPath.encodingProfileKey}" />
                             </p:menuitem>
 
-                            <p:menuitem id="playLink" value="Edit Video"
+                            <p:menuitem value="Play Video"
                                         disabled="#{mediaItemDetails.mediaItem.contentType != 'Video' || !sessionScope.currentWorkspaceDetails.deliveryAuthorization}"
-                                        actionListener="#{mediaItemDetails.prepareCurrentMediaURL(physicalPath)}"
+                                        actionListener="#{mediaItemDetails.prepareCurrentMediaURL(physicalPath, false)}"
+                                        update="showVideoForm"
+                                        oncomplete="PF('showVideo').show()">
+                            </p:menuitem>
+
+                            <p:menuitem value="Edit Video"
+                                        disabled="#{mediaItemDetails.mediaItem.contentType != 'Video' || !sessionScope.currentWorkspaceDetails.deliveryAuthorization}"
+                                        actionListener="#{mediaItemDetails.prepareCurrentMediaURL(physicalPath, true)}"
                                         update="showVideoForm"
                                         oncomplete="PF('showVideo').show()">
                             </p:menuitem>

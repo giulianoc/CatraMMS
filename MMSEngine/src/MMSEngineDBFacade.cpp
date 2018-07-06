@@ -326,6 +326,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
                 bool createProfiles = true;
                 bool deliveryAuthorization = true;
                 bool shareWorkspace = true;
+                bool editMedia = true;
 
                 if (admin)
                 {
@@ -360,6 +361,13 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
                     if (flags != "")
                        flags.append(",");
                     flags.append("SHARE_WORKSPACE");
+                }
+
+                if (editMedia)
+                {
+                    if (flags != "")
+                       flags.append(",");
+                    flags.append("EDIT_MEDIA");
                 }
             }
             
@@ -574,7 +582,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerUserIfNotPresentAndShareWorkspac
     string userEmailAddress,
     string userPassword,
     string userCountry,
-    bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization, bool shareWorkspace,
+    bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization, bool shareWorkspace, bool editMedia,
     int64_t workspaceKeyToBeShared,
     chrono::system_clock::time_point userExpirationDate
 )
@@ -697,6 +705,13 @@ pair<int64_t,string> MMSEngineDBFacade::registerUserIfNotPresentAndShareWorkspac
                     if (flags != "")
                        flags.append(",");
                     flags.append("SHARE_WORKSPACE");
+                }
+
+                if (editMedia)
+                {
+                    if (flags != "")
+                       flags.append(",");
+                    flags.append("EDIT_MEDIA");
                 }
             }
 
@@ -1188,7 +1203,7 @@ tuple<string,string,string> MMSEngineDBFacade::confirmUser(
     }    
 }
 
-tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool> MMSEngineDBFacade::checkAPIKey (string apiKey)
+tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool,bool> MMSEngineDBFacade::checkAPIKey (string apiKey)
 {
     shared_ptr<Workspace> workspace;
     int64_t         userKey;
@@ -1300,14 +1315,15 @@ tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool> MMSEngineDBFacade:
         throw e;
     }
     
-    tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool> userKeyWorkspaceAndFlags;
+    tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool,bool> userKeyWorkspaceAndFlags;
     
     userKeyWorkspaceAndFlags = make_tuple(userKey, workspace,
         flags.find("ADMIN") == string::npos ? false : true,
         flags.find("INGEST_WORKFLOW") == string::npos ? false : true,
         flags.find("CREATE_PROFILES") == string::npos ? false : true,
         flags.find("DELIVERY_AUTHORIZATION") == string::npos ? false : true,
-        flags.find("SHARE_WORKSPACE") == string::npos ? false : true
+        flags.find("SHARE_WORKSPACE") == string::npos ? false : true,
+        flags.find("EDIT_MEDIA") == string::npos ? false : true
     );
             
     return userKeyWorkspaceAndFlags;
@@ -1315,7 +1331,7 @@ tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool> MMSEngineDBFacade:
 
 pair<int64_t,string> MMSEngineDBFacade::login (
         string eMailAddress, string password, 
-        vector<tuple<int64_t,string,string,bool,bool,bool,bool,bool,bool>>& vWorkspaceNameAPIKeyIfOwnerAndFlags)
+        vector<tuple<int64_t,string,string,bool,bool,bool,bool,bool,bool,bool>>& vWorkspaceNameAPIKeyIfOwnerAndFlags)
 {
     int64_t         userKey;
     string          userName;
@@ -1372,13 +1388,14 @@ pair<int64_t,string> MMSEngineDBFacade::login (
                 bool owner = resultSet->getInt("isOwner");
                 string flags = resultSet->getString("flags");
                 
-                tuple<int64_t,string,string,bool,bool,bool,bool,bool,bool> workspaceNameAPIKeyIfOwnerAndFlags =
+                tuple<int64_t,string,string,bool,bool,bool,bool,bool,bool,bool> workspaceNameAPIKeyIfOwnerAndFlags =
                     make_tuple(workspaceKey, workspaceName, apiKey, owner,
                         flags.find("ADMIN") == string::npos ? false : true,
                         flags.find("INGEST_WORKFLOW") == string::npos ? false : true,
                         flags.find("CREATE_PROFILES") == string::npos ? false : true,
                         flags.find("DELIVERY_AUTHORIZATION") == string::npos ? false : true,
-                        flags.find("SHARE_WORKSPACE") == string::npos ? false : true
+                        flags.find("SHARE_WORKSPACE") == string::npos ? false : true,
+                        flags.find("EDIT_MEDIA") == string::npos ? false : true
                     );
                 
                 vWorkspaceNameAPIKeyIfOwnerAndFlags.push_back(workspaceNameAPIKeyIfOwnerAndFlags);

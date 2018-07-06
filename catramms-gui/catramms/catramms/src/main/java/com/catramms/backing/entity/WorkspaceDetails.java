@@ -15,6 +15,7 @@ public class WorkspaceDetails implements Serializable {
     private Boolean createProfiles;
     private Boolean deliveryAuthorization;
     private Boolean shareWorkspace;
+    private Boolean editMedia;
 
     public Long getWorkspaceKey() {
         return workspaceKey;
@@ -86,5 +87,13 @@ public class WorkspaceDetails implements Serializable {
 
     public void setShareWorkspace(Boolean shareWorkspace) {
         this.shareWorkspace = shareWorkspace;
+    }
+
+    public Boolean getEditMedia() {
+        return editMedia;
+    }
+
+    public void setEditMedia(Boolean editMedia) {
+        this.editMedia = editMedia;
     }
 }
