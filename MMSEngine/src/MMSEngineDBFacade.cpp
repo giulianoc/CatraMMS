@@ -3406,8 +3406,8 @@ int64_t MMSEngineDBFacade::addIngestionJob (
         {
             {
                 lastSQLCommand = 
-                    "insert into MMS_IngestionJob (ingestionJobKey, ingestionRootKey, label, mediaItemKey, physicalPathKey, metaDataContent, ingestionType, startProcessing, endProcessing, downloadingProgress, uploadingProgress, sourceBinaryTransferred, processorMMS, status, errorMessage) values ("
-                                                  "NULL,            ?,                ?,     NULL,         NULL,            ?,               ?,             NULL,            NULL,         NULL,                NULL,              0,                       NULL,         ?,      NULL)";
+                    "insert into MMS_IngestionJob (ingestionJobKey, ingestionRootKey, label, metaDataContent, ingestionType, startProcessing, endProcessing, downloadingProgress, uploadingProgress, sourceBinaryTransferred, processorMMS, status, errorMessage) values ("
+                                                  "NULL,            ?,                ?,     ?,               ?,             NULL,            NULL,         NULL,                NULL,              0,                       NULL,         ?,      NULL)";
 
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
@@ -4732,8 +4732,9 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
             {
                 Json::Value workflowRoot;
                 
+                int64_t currentIngestionRootKey = resultSet->getInt64("ingestionRootKey");
                 field = "ingestionRootKey";
-                workflowRoot[field] = resultSet->getInt64("ingestionRootKey");
+                workflowRoot[field] = currentIngestionRootKey;
 
                 field = "label";
                 workflowRoot[field] = static_cast<string>(resultSet->getString("label"));
@@ -4750,21 +4751,20 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
                 Json::Value ingestionJobsRoot(Json::arrayValue);
                 {            
                     lastSQLCommand = 
-                        "select ingestionJobKey, label, mediaItemKey, physicalPathKey, ingestionType, "
+                        "select ingestionJobKey, label, ingestionType, "
                         "DATE_FORMAT(convert_tz(startProcessing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as startProcessing, "
                         "DATE_FORMAT(convert_tz(endProcessing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endProcessing, "
                         "IF(startProcessing is null, NOW(), startProcessing) as newStartProcessing, "
                         "IF(endProcessing is null, NOW(), endProcessing) as newEndProcessing, downloadingProgress, uploadingProgress, "
                         "status, errorMessage from MMS_IngestionJob where ingestionRootKey = ? order by newStartProcessing, newEndProcessing asc";
-
-                    shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                    shared_ptr<sql::PreparedStatement> preparedStatementIngestionJob (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
-                    preparedStatement->setInt64(queryParameterIndex++, ingestionRootKey);
-                    shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-                    while (resultSet->next())
+                    preparedStatementIngestionJob->setInt64(queryParameterIndex++, currentIngestionRootKey);
+                    shared_ptr<sql::ResultSet> resultSetIngestionJob (preparedStatementIngestionJob->executeQuery());
+                    while (resultSetIngestionJob->next())
                     {
                         Json::Value ingestionJobRoot = getIngestionJobRoot(
-                                resultSet, conn);
+                                resultSetIngestionJob, conn);
 
                         ingestionJobsRoot.append(ingestionJobRoot);
                     }
@@ -4930,7 +4930,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
         Json::Value ingestionJobsRoot(Json::arrayValue);
         {            
             lastSQLCommand = 
-                "select ij.ingestionJobKey, ij.label, ij.mediaItemKey, ij.physicalPathKey, ij.ingestionType, "
+                "select ij.ingestionJobKey, ij.label, ij.ingestionType, "
                 "DATE_FORMAT(convert_tz(ij.startProcessing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as startProcessing, "
                 "DATE_FORMAT(convert_tz(ij.endProcessing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endProcessing, "
                 "IF(ij.startProcessing is null, NOW(), ij.startProcessing) as newStartProcessing, "
@@ -5302,30 +5302,32 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
         else
             ingestionJobRoot[field] = static_cast<string>(resultSet->getString("label"));
 
+        Json::Value mediaItemsRoot(Json::arrayValue);
         {
-            int64_t mediaItemKey = -1;
-            int64_t physicalPathKey = -1;
+            lastSQLCommand = 
+                "select mediaItemKey, physicalPathKey from MMS_IngestionJobOutput where ingestionJobKey = ?";
 
-            field = "mediaItemKey";
-            if (resultSet->isNull("mediaItemKey"))
-                ingestionJobRoot[field] = Json::nullValue;
-            else
+            shared_ptr<sql::PreparedStatement> preparedStatementMediaItems (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatementMediaItems->setInt64(queryParameterIndex++, ingestionJobKey);
+            shared_ptr<sql::ResultSet> resultSetMediaItems (preparedStatementMediaItems->executeQuery());
+            while (resultSetMediaItems->next())
             {
-                mediaItemKey = resultSet->getInt64("mediaItemKey");
+                Json::Value mediaItemRoot;
 
-                ingestionJobRoot[field] = mediaItemKey;
-            }
+                field = "mediaItemKey";
+                int64_t mediaItemKey = resultSetMediaItems->getInt64("mediaItemKey");
+                mediaItemRoot[field] = mediaItemKey;
 
-            field = "physicalPathKey";
-            if (resultSet->isNull("physicalPathKey"))
-                ingestionJobRoot[field] = Json::nullValue;
-            else
-            {
-                physicalPathKey = resultSet->getInt64("physicalPathKey");
+                field = "physicalPathKey";
+                int64_t physicalPathKey = resultSetMediaItems->getInt64("physicalPathKey");
+                mediaItemRoot[field] = physicalPathKey;
 
-                ingestionJobRoot[field] = physicalPathKey;
+                mediaItemsRoot.append(mediaItemRoot);
             }
         }
+        field = "mediaItems";
+        ingestionJobRoot[field] = mediaItemsRoot;
 
         field = "startProcessing";
         if (resultSet->isNull("startProcessing"))
@@ -6914,15 +6916,15 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
     }    
 }
 
-tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
-    int64_t referenceIngestionJobKey, bool warningIfMissing)
+void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
+    int64_t referenceIngestionJobKey, 
+        vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>>& mediaItemsDetails,
+        bool warningIfMissing)
 {
     string      lastSQLCommand;
         
     shared_ptr<MySQLConnection> conn;
     
-    tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyPhysicalPathKeyAndContentType;
-
     try
     {
         conn = _connectionPool->borrow();	
@@ -6930,63 +6932,52 @@ tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMedi
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
-        int64_t mediaItemKey = -1;
-        int64_t physicalPathKey = -1;
         {
             lastSQLCommand = 
-                "select mediaItemKey, physicalPathKey from MMS_IngestionJob where ingestionJobKey = ?";
+                "select mediaItemKey, physicalPathKey from MMS_IngestionJobOutput where ingestionJobKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, referenceIngestionJobKey);
 
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-            if (resultSet->next() && !resultSet->isNull("mediaItemKey"))
+            while (resultSet->next())
             {
-                mediaItemKey = resultSet->getInt64("mediaItemKey");
-                if (!resultSet->isNull("physicalPathKey"))
-                    physicalPathKey = resultSet->getInt64("physicalPathKey");
+                int64_t mediaItemKey = resultSet->getInt64("mediaItemKey");
+                int64_t physicalPathKey = resultSet->getInt64("physicalPathKey");
+
+                ContentType contentType;
+                {
+                    lastSQLCommand = 
+                        "select contentType from MMS_MediaItem where mediaItemKey = ?";
+                    shared_ptr<sql::PreparedStatement> preparedStatementMediaItem (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                    int queryParameterIndex = 1;
+                    preparedStatementMediaItem->setInt64(queryParameterIndex++, mediaItemKey);
+
+                    shared_ptr<sql::ResultSet> resultSetMediaItem (preparedStatementMediaItem->executeQuery());
+                    if (resultSetMediaItem->next())
+                    {
+                        contentType = MMSEngineDBFacade::toContentType(resultSetMediaItem->getString("contentType"));
+                    }
+                    else
+                    {
+                        string errorMessage = __FILEREF__ + "MediaItemKey is not found"
+                            + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
+                            + ", mediaItemKey: " + to_string(mediaItemKey)
+                            + ", lastSQLCommand: " + lastSQLCommand
+                        ;
+                        if (warningIfMissing)
+                            _logger->warn(errorMessage);
+                        else
+                            _logger->error(errorMessage);
+
+                        throw MediaItemKeyNotFound(errorMessage);                    
+                    }            
+                }
+
+                tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyPhysicalPathKeyAndContentType 
+                        = make_tuple(mediaItemKey, physicalPathKey, contentType);
+                mediaItemsDetails.push_back(mediaItemKeyPhysicalPathKeyAndContentType);
             }
-            else
-            {
-                string errorMessage = __FILEREF__ + "ingestionJobKey is not found"
-                    + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
-                    + ", lastSQLCommand: " + lastSQLCommand
-                ;
-                if (warningIfMissing)
-                    _logger->warn(errorMessage);
-                else
-                    _logger->error(errorMessage);
-
-                throw MediaItemKeyNotFound(errorMessage);                    
-            }            
-        }
-
-        {
-            lastSQLCommand = 
-                "select contentType from MMS_MediaItem where mediaItemKey = ?";
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
-
-            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-            if (resultSet->next())
-            {
-                mediaItemKeyPhysicalPathKeyAndContentType = make_tuple(
-                        mediaItemKey, physicalPathKey, MMSEngineDBFacade::toContentType(resultSet->getString("contentType")));
-            }
-            else
-            {
-                string errorMessage = __FILEREF__ + "MediaItemKey is not found"
-                    + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
-                    + ", lastSQLCommand: " + lastSQLCommand
-                ;
-                if (warningIfMissing)
-                    _logger->warn(errorMessage);
-                else
-                    _logger->error(errorMessage);
-
-                throw MediaItemKeyNotFound(errorMessage);                    
-            }            
         }
 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
@@ -7054,9 +7045,7 @@ tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMedi
         _connectionPool->unborrow(conn);
         
         throw e;
-    }
-    
-    return mediaItemKeyPhysicalPathKeyAndContentType;
+    }    
 }
 
 pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyDetailsByUniqueName(
@@ -9986,27 +9975,17 @@ int MMSEngineDBFacade::updateEncodingJob (
             // updateIngestionJob (ingestionJobKey, ingestionStatus, mediaItemKey, encodedPhysicalPathKey, errorMessage, processorMMS);
             {
                 lastSQLCommand = 
-                    "update MMS_IngestionJob set status = ?, mediaItemKey = ?, physicalPathKey = ?, endProcessing = NOW(), processorMMS = NULL, errorMessage = NULL where ingestionJobKey = ?";
+                    "update MMS_IngestionJob set status = ?, endProcessing = NOW(), processorMMS = NULL, errorMessage = NULL where ingestionJobKey = ?";
 
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
                 preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(ingestionStatus));
-                if (mediaItemKey == -1)
-                    preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
-                else
-                    preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
-                if (encodedPhysicalPathKey == -1)
-                    preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
-                else
-                    preparedStatement->setInt64(queryParameterIndex++, encodedPhysicalPathKey);
                 preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 
                 int rowsUpdated = preparedStatement->executeUpdate();
                 if (rowsUpdated != 1)
                 {
                     string errorMessage = __FILEREF__ + "no update was done"
-                            + ", mediaItemKey: " + to_string(mediaItemKey)
-                            + ", encodedPhysicalPathKey: " + to_string(encodedPhysicalPathKey)
                             + ", ingestionJobKey: " + to_string(ingestionJobKey)
                             + ", rowsUpdated: " + to_string(rowsUpdated)
                             + ", lastSQLCommand: " + lastSQLCommand
@@ -11348,11 +11327,10 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             IngestionStatus newIngestionStatus = IngestionStatus::End_TaskSuccess;
             
             lastSQLCommand = 
-                "update MMS_IngestionJob set mediaItemKey = ?, status = ?, endProcessing = NOW(), processorMMS = NULL where ingestionJobKey = ?";
+                "update MMS_IngestionJob set status = ?, endProcessing = NOW(), processorMMS = NULL where ingestionJobKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(newIngestionStatus));
             preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
 
@@ -11360,7 +11338,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             if (rowsUpdated != 1)
             {
                 string errorMessage = __FILEREF__ + "no update was done"
-                        + ", mediaItemKey: " + to_string(mediaItemKey)
+                        + ", newIngestionStatus: " + toString(newIngestionStatus)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                         + ", rowsUpdated: " + to_string(rowsUpdated)
                         + ", lastSQLCommand: " + lastSQLCommand
@@ -13440,8 +13418,6 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "ingestionJobKey  			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "ingestionRootKey           BIGINT UNSIGNED NOT NULL,"
                     "label                      VARCHAR (256) NULL,"
-                    "mediaItemKey               BIGINT UNSIGNED NULL,"
-                    "physicalPathKey            BIGINT UNSIGNED NULL,"
                     "metaDataContent            TEXT CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
                     "ingestionType              VARCHAR (64) NOT NULL,"
                     "startProcessing            DATETIME NULL,"

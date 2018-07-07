@@ -50,6 +50,8 @@ elif [ "$command" == "stop" ]
 then
 	#PIDFILE is not created in case of nodaemon
 	kill -9 `cat $PIDFILE`
+	pkill ffmpeg
+	sleep 2
 	ps -ef | grep ffmpeg | grep -v grep
 fi
 

@@ -805,8 +805,10 @@ public:
     pair<int64_t,MMSEngineDBFacade::ContentType> getMediaItemKeyDetailsByPhysicalPathKey(
         int64_t physicalPathKey, bool warningIfMissing);
     
-    tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> getMediaItemDetailsByIngestionJobKey(
-        int64_t referenceIngestionJobKey, bool warningIfMissing);
+    void getMediaItemDetailsByIngestionJobKey(
+        int64_t referenceIngestionJobKey, 
+            vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>>& mediaItemsDetails,
+            bool warningIfMissing);
 
     pair<int64_t,MMSEngineDBFacade::ContentType> getMediaItemKeyDetailsByUniqueName(
         int64_t workspaceKey, string referenceUniqueName, bool warningIfMissing);

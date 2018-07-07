@@ -1260,12 +1260,26 @@ void Validator::validateRemoveContentMetadata(int64_t workspaceKey,
                 }
                 else if (referenceIngestionJobKey != -1)
                 {
-                    tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyPhysicalPathKeyAndContentType = 
-                            _mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
-                            referenceIngestionJobKey, warningIfMissing);  
+                    // the difference with the other if is that here, associated to the ingestionJobKey,
+                    // we may have a list of mediaItems (i.e.: periodic-frame)
+                    vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>> mediaItemsDetails;
+                    
+                    _mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
+                            referenceIngestionJobKey, mediaItemsDetails, warningIfMissing);  
 
-                    tie(referenceMediaItemKey, referencePhysicalPathKey, referenceContentType) =
+                    for (tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> 
+                            mediaItemKeyPhysicalPathKeyAndContentType: mediaItemsDetails)
+                    {
+                        tie(referenceMediaItemKey, referencePhysicalPathKey, referenceContentType) =
                             mediaItemKeyPhysicalPathKeyAndContentType;
+                        
+                        if (referencePhysicalPathKey != -1)
+                            dependencies.push_back(make_pair(referencePhysicalPathKey,DependencyType::PhysicalPathKey));
+                        else if (referenceMediaItemKey != -1)
+                            dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
+                        else    // referenceLabel
+                            ;
+                    }
                 }
                 else if (referenceUniqueName != "")
                 {
@@ -1300,37 +1314,17 @@ void Validator::validateRemoveContentMetadata(int64_t workspaceKey,
                 throw runtime_error(errorMessage);
             }
 
-            if (referenceLabel == false && referencePhysicalPathKey == -1)
+            if (referenceIngestionJobKey == -1)
             {
-                int64_t encodingProfileKey = -1;
+                // case referenceIngestionJobKey != -1 is already managed inside the previous if
                 
-                field = "EncodingProfileKey";
-                if (isMetadataPresent(referenceRoot, field))
-                {
-                    int64_t encodingProfileKey = referenceRoot.get(field, "0").asInt64();
-
-                    referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
-                            referenceMediaItemKey, encodingProfileKey);
-                }  
-                else
-                {
-                    field = "EncodingProfileLabel";
-                    if (isMetadataPresent(referenceRoot, field))
-                    {
-                        string encodingProfileLabel = referenceRoot.get(field, "0").asString();
-
-                        referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(workspaceKey,
-                                referenceMediaItemKey, referenceContentType, encodingProfileLabel);
-                    }        
-                }
+                if (referencePhysicalPathKey != -1)
+                    dependencies.push_back(make_pair(referencePhysicalPathKey,DependencyType::PhysicalPathKey));
+                else if (referenceMediaItemKey != -1)
+                    dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
+                else    // referenceLabel
+                    ;
             }
-            
-            if (referencePhysicalPathKey != -1)
-                dependencies.push_back(make_pair(referencePhysicalPathKey,DependencyType::PhysicalPathKey));
-            else if (referenceMediaItemKey != -1)
-                dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
-            else    // referenceLabel
-                ;
         }
     }    
 }
@@ -1470,14 +1464,31 @@ void Validator::validateEncodeMetadata(int64_t workspaceKey,
             }
             else if (referenceIngestionJobKey != -1)
             {
-                int64_t localReferencePhysicalPathKey;
-                
-                tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyPhysicalPathKeyAndContentType = 
-                        _mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
-                        referenceIngestionJobKey, warningIfMissing);  
+                // the difference with the other if is that here, associated to the ingestionJobKey,
+                // we may have a list of mediaItems (i.e.: periodic-frame)
+                vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>> mediaItemsDetails;
 
-                tie(referenceMediaItemKey, localReferencePhysicalPathKey, referenceContentType) =
+                _mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
+                        referenceIngestionJobKey, mediaItemsDetails, warningIfMissing);  
+
+                for (tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> 
+                        mediaItemKeyPhysicalPathKeyAndContentType: mediaItemsDetails)
+                {
+                    int64_t localReferencePhysicalPathKey;
+
+                    tie(referenceMediaItemKey, localReferencePhysicalPathKey, referenceContentType) =
                         mediaItemKeyPhysicalPathKeyAndContentType;
+
+                    /*
+                    if (referencePhysicalPathKey != -1)
+                        dependencies.push_back(make_pair(referencePhysicalPathKey,DependencyType::PhysicalPathKey));
+                    else 
+                    */
+                    if (referenceMediaItemKey != -1)
+                        dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
+                    else    // referenceLabel
+                        ;
+                }                
             }
             else if (referenceUniqueName != "")
             {
@@ -1512,37 +1523,42 @@ void Validator::validateEncodeMetadata(int64_t workspaceKey,
             throw runtime_error(errorMessage);
         }
         
-        if (referenceLabel == false && referencePhysicalPathKey == -1)
+        if (referenceIngestionJobKey == -1)
         {
-            int64_t encodingProfileKey = -1;
-
-            field = "EncodingProfileKey";
-            if (isMetadataPresent(referenceRoot, field))
+            // case referenceIngestionJobKey != -1 is already managed inside the previous if
+            
+            if (referenceLabel == false && referencePhysicalPathKey == -1)
             {
-                int64_t encodingProfileKey = referenceRoot.get(field, "0").asInt64();
+                int64_t encodingProfileKey = -1;
 
-                referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
-                        referenceMediaItemKey, encodingProfileKey);
-            }  
-            else
-            {
-                field = "EncodingProfileLabel";
+                field = "EncodingProfileKey";
                 if (isMetadataPresent(referenceRoot, field))
                 {
-                    string encodingProfileLabel = referenceRoot.get(field, "0").asString();
+                    int64_t encodingProfileKey = referenceRoot.get(field, "0").asInt64();
 
-                    referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(workspaceKey, 
-                            referenceMediaItemKey, referenceContentType, encodingProfileLabel);
-                }        
+                    referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
+                            referenceMediaItemKey, encodingProfileKey);
+                }  
+                else
+                {
+                    field = "EncodingProfileLabel";
+                    if (isMetadataPresent(referenceRoot, field))
+                    {
+                        string encodingProfileLabel = referenceRoot.get(field, "0").asString();
+
+                        referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(workspaceKey, 
+                                referenceMediaItemKey, referenceContentType, encodingProfileLabel);
+                    }        
+                }
             }
-        }
 
-        if (referencePhysicalPathKey != -1)
-            dependencies.push_back(make_pair(referencePhysicalPathKey,DependencyType::PhysicalPathKey));
-        else if (referenceMediaItemKey != -1)
-            dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
-        else    // referenceLabel
-            ;
+            if (referencePhysicalPathKey != -1)
+                dependencies.push_back(make_pair(referencePhysicalPathKey,DependencyType::PhysicalPathKey));
+            else if (referenceMediaItemKey != -1)
+                dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
+            else    // referenceLabel
+                ;
+        }
     }    
 }
 
@@ -1676,14 +1692,31 @@ void Validator::validateFrameMetadata(int64_t workspaceKey,
             }
             else if (referenceIngestionJobKey != -1)
             {
-                int64_t localReferencePhysicalPathKey;
-                
-                tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyPhysicalPathKeyAndContentType = 
-                        _mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
-                        referenceIngestionJobKey, warningIfMissing);  
+                // the difference with the other if is that here, associated to the ingestionJobKey,
+                // we may have a list of mediaItems (i.e.: periodic-frame)
+                vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>> mediaItemsDetails;
 
-                tie(referenceMediaItemKey, localReferencePhysicalPathKey, referenceContentType) =
+                _mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
+                        referenceIngestionJobKey, mediaItemsDetails, warningIfMissing);  
+
+                for (tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> 
+                        mediaItemKeyPhysicalPathKeyAndContentType: mediaItemsDetails)
+                {
+                    int64_t localReferencePhysicalPathKey;
+
+                    tie(referenceMediaItemKey, localReferencePhysicalPathKey, referenceContentType) =
                         mediaItemKeyPhysicalPathKeyAndContentType;
+
+                    /*
+                    if (referencePhysicalPathKey != -1)
+                        dependencies.push_back(make_pair(referencePhysicalPathKey,DependencyType::PhysicalPathKey));
+                    else 
+                    */ 
+                    if (referenceMediaItemKey != -1)
+                        dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
+                    else    // referenceLabel
+                        ;
+                }                
             }
             else if (referenceUniqueName != "")
             {
@@ -1732,37 +1765,17 @@ void Validator::validateFrameMetadata(int64_t workspaceKey,
             throw runtime_error(errorMessage);
         }
 
-        if (referenceLabel == false && referencePhysicalPathKey == -1)
+        if (referenceIngestionJobKey == -1)
         {
-            int64_t encodingProfileKey = -1;
+            // case referenceIngestionJobKey != -1 is already managed inside the previous if
 
-            field = "EncodingProfileKey";
-            if (isMetadataPresent(referenceRoot, field))
-            {
-                int64_t encodingProfileKey = referenceRoot.get(field, "0").asInt64();
-
-                referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
-                        referenceMediaItemKey, encodingProfileKey);
-            }  
-            else
-            {
-                field = "EncodingProfileLabel";
-                if (isMetadataPresent(referenceRoot, field))
-                {
-                    string encodingProfileLabel = referenceRoot.get(field, "0").asString();
-
-                    referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(workspaceKey,
-                            referenceMediaItemKey, referenceContentType, encodingProfileLabel);
-                }        
-            }
+            if (referencePhysicalPathKey != -1)
+                dependencies.push_back(make_pair(referencePhysicalPathKey,DependencyType::PhysicalPathKey));
+            else if (referenceMediaItemKey != -1)
+                dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
+            else    // referenceLabel
+                ;
         }
-
-        if (referencePhysicalPathKey != -1)
-            dependencies.push_back(make_pair(referencePhysicalPathKey,DependencyType::PhysicalPathKey));
-        else if (referenceMediaItemKey != -1)
-            dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
-        else    // referenceLabel
-            ;
     }    
 }
 
@@ -1900,14 +1913,31 @@ void Validator::validatePeriodicalFramesMetadata(int64_t workspaceKey,
             }
             else if (referenceIngestionJobKey != -1)
             {
-                int64_t localReferencePhysicalPathKey;
-                
-                tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyPhysicalPathKeyAndContentType = 
-                        _mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
-                        referenceIngestionJobKey, warningIfMissing);  
+                // the difference with the other if is that here, associated to the ingestionJobKey,
+                // we may have a list of mediaItems (i.e.: periodic-frame)
+                vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>> mediaItemsDetails;
 
-                tie(referenceMediaItemKey, localReferencePhysicalPathKey, referenceContentType) =
+                _mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
+                        referenceIngestionJobKey, mediaItemsDetails, warningIfMissing);  
+
+                for (tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> 
+                        mediaItemKeyPhysicalPathKeyAndContentType: mediaItemsDetails)
+                {
+                    int64_t localReferencePhysicalPathKey;
+
+                    tie(referenceMediaItemKey, localReferencePhysicalPathKey, referenceContentType) =
                         mediaItemKeyPhysicalPathKeyAndContentType;
+
+                    /*
+                    if (referencePhysicalPathKey != -1)
+                        dependencies.push_back(make_pair(referencePhysicalPathKey,DependencyType::PhysicalPathKey));
+                    else 
+                    */
+                    if (referenceMediaItemKey != -1)
+                        dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
+                    else    // referenceLabel
+                        ;
+                }                
             }
             else if (referenceUniqueName != "")
             {
@@ -1956,37 +1986,17 @@ void Validator::validatePeriodicalFramesMetadata(int64_t workspaceKey,
             throw runtime_error(errorMessage);
         }
 
-        if (referenceLabel == false && referencePhysicalPathKey == -1)
+        if (referenceIngestionJobKey == -1)
         {
-            int64_t encodingProfileKey = -1;
+            // case referenceIngestionJobKey != -1 is already managed inside the previous if
 
-            field = "EncodingProfileKey";
-            if (isMetadataPresent(referenceRoot, field))
-            {
-                int64_t encodingProfileKey = referenceRoot.get(field, "0").asInt64();
-
-                referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
-                        referenceMediaItemKey, encodingProfileKey);
-            }  
-            else
-            {
-                field = "EncodingProfileLabel";
-                if (isMetadataPresent(referenceRoot, field))
-                {
-                    string encodingProfileLabel = referenceRoot.get(field, "0").asString();
-
-                    referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(workspaceKey,
-                            referenceMediaItemKey, referenceContentType, encodingProfileLabel);
-                }        
-            }
+            if (referencePhysicalPathKey != -1)
+                dependencies.push_back(make_pair(referencePhysicalPathKey,DependencyType::PhysicalPathKey));
+            else if (referenceMediaItemKey != -1)
+                dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
+            else    // referenceLabel
+                ;
         }
-
-        if (referencePhysicalPathKey != -1)
-            dependencies.push_back(make_pair(referencePhysicalPathKey,DependencyType::PhysicalPathKey));
-        else if (referenceMediaItemKey != -1)
-            dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
-        else    // referenceLabel
-            ;
     }        
 }
 
@@ -2120,14 +2130,31 @@ void Validator::validateIFramesMetadata(int64_t workspaceKey,
             }
             else if (referenceIngestionJobKey != -1)
             {
-                int64_t referencePhysicalPathKey;
-                
-                tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyPhysicalPathKeyAndContentType = 
-                        _mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
-                        referenceIngestionJobKey, warningIfMissing);  
+                // the difference with the other if is that here, associated to the ingestionJobKey,
+                // we may have a list of mediaItems (i.e.: periodic-frame)
+                vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>> mediaItemsDetails;
 
-                tie(referenceMediaItemKey, referencePhysicalPathKey, referenceContentType) =
+                _mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
+                        referenceIngestionJobKey, mediaItemsDetails, warningIfMissing);  
+
+                for (tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> 
+                        mediaItemKeyPhysicalPathKeyAndContentType: mediaItemsDetails)
+                {
+                    int64_t localReferencePhysicalPathKey;
+
+                    tie(referenceMediaItemKey, localReferencePhysicalPathKey, referenceContentType) =
                         mediaItemKeyPhysicalPathKeyAndContentType;
+
+                    /*
+                    if (referencePhysicalPathKey != -1)
+                        dependencies.push_back(make_pair(referencePhysicalPathKey,DependencyType::PhysicalPathKey));
+                    else
+                    */ 
+                    if (referenceMediaItemKey != -1)
+                        dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
+                    else    // referenceLabel
+                        ;
+                }                
             }
             else if (referenceUniqueName != "")
             {
@@ -2190,37 +2217,17 @@ void Validator::validateIFramesMetadata(int64_t workspaceKey,
             throw runtime_error(errorMessage);
         }
 
-        if (referenceLabel == false && referencePhysicalPathKey == -1)
+        if (referenceIngestionJobKey == -1)
         {
-            int64_t encodingProfileKey = -1;
+            // case referenceIngestionJobKey != -1 is already managed inside the previous if
 
-            field = "EncodingProfileKey";
-            if (isMetadataPresent(referenceRoot, field))
-            {
-                int64_t encodingProfileKey = referenceRoot.get(field, "0").asInt64();
-
-                referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
-                        referenceMediaItemKey, encodingProfileKey);
-            }  
-            else
-            {
-                field = "EncodingProfileLabel";
-                if (isMetadataPresent(referenceRoot, field))
-                {
-                    string encodingProfileLabel = referenceRoot.get(field, "0").asString();
-
-                    referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(workspaceKey,
-                            referenceMediaItemKey, referenceContentType, encodingProfileLabel);
-                }        
-            }
+            if (referencePhysicalPathKey != -1)
+                dependencies.push_back(make_pair(referencePhysicalPathKey,DependencyType::PhysicalPathKey));
+            else if (referenceMediaItemKey != -1)
+                dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
+            else    // referenceLabel
+                ;
         }
-
-        if (referencePhysicalPathKey != -1)
-            dependencies.push_back(make_pair(referencePhysicalPathKey,DependencyType::PhysicalPathKey));
-        else if (referenceMediaItemKey != -1)
-            dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
-        else    // referenceLabel
-            ;
     }    
 }
 
@@ -2356,14 +2363,31 @@ void Validator::validateSlideshowMetadata(int64_t workspaceKey,
                 }
                 else if (referenceIngestionJobKey != -1)
                 {
-                    int64_t localReferencePhysicalPathKey;
+                    // the difference with the other if is that here, associated to the ingestionJobKey,
+                    // we may have a list of mediaItems (i.e.: periodic-frame)
+                    vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>> mediaItemsDetails;
 
-                    tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyPhysicalPathKeyAndContentType = 
-                            _mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
-                            referenceIngestionJobKey, warningIfMissing);  
+                    _mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
+                            referenceIngestionJobKey, mediaItemsDetails, warningIfMissing);  
 
-                    tie(referenceMediaItemKey, localReferencePhysicalPathKey, referenceContentType) =
+                    for (tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> 
+                            mediaItemKeyPhysicalPathKeyAndContentType: mediaItemsDetails)
+                    {
+                        int64_t localReferencePhysicalPathKey;
+
+                        tie(referenceMediaItemKey, localReferencePhysicalPathKey, referenceContentType) =
                             mediaItemKeyPhysicalPathKeyAndContentType;
+
+                        /*
+                        if (referencePhysicalPathKey != -1)
+                            dependencies.push_back(make_pair(referencePhysicalPathKey,DependencyType::PhysicalPathKey));
+                        else 
+                        */
+                        if (referenceMediaItemKey != -1)
+                            dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
+                        else    // referenceLabel
+                            ;
+                    }                
                 }
                 else if (referenceUniqueName != "")
                 {
@@ -2412,37 +2436,17 @@ void Validator::validateSlideshowMetadata(int64_t workspaceKey,
                 throw runtime_error(errorMessage);
             }
 
-            if (referenceLabel == false && referencePhysicalPathKey == -1)
+            if (referenceIngestionJobKey == -1)
             {
-                int64_t encodingProfileKey = -1;
-                
-                field = "EncodingProfileKey";
-                if (isMetadataPresent(referenceRoot, field))
-                {
-                    int64_t encodingProfileKey = referenceRoot.get(field, "0").asInt64();
-
-                    referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
-                            referenceMediaItemKey, encodingProfileKey);
-                }  
-                else
-                {
-                    field = "EncodingProfileLabel";
-                    if (isMetadataPresent(referenceRoot, field))
-                    {
-                        string encodingProfileLabel = referenceRoot.get(field, "0").asString();
-
-                        referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(workspaceKey,
-                                referenceMediaItemKey, referenceContentType, encodingProfileLabel);
-                    }        
-                }
-            }
+                // case referenceIngestionJobKey != -1 is already managed inside the previous if
             
-            if (referencePhysicalPathKey != -1)
-                dependencies.push_back(make_pair(referencePhysicalPathKey,DependencyType::PhysicalPathKey));
-            else if (referenceMediaItemKey != -1)
-                dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
-            else    // referenceLabel
-                ;
+                if (referencePhysicalPathKey != -1)
+                    dependencies.push_back(make_pair(referencePhysicalPathKey,DependencyType::PhysicalPathKey));
+                else if (referenceMediaItemKey != -1)
+                    dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
+                else    // referenceLabel
+                    ;
+            }
         }
     }
 }
@@ -2578,14 +2582,31 @@ void Validator::validateConcatDemuxerMetadata(int64_t workspaceKey,
                 }
                 else if (referenceIngestionJobKey != -1)
                 {
-                    int64_t localReferencePhysicalPathKey;
+                    // the difference with the other if is that here, associated to the ingestionJobKey,
+                    // we may have a list of mediaItems (i.e.: periodic-frame)
+                    vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>> mediaItemsDetails;
 
-                    tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyPhysicalPathKeyAndContentType = 
-                            _mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
-                            referenceIngestionJobKey, warningIfMissing);  
+                    _mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
+                            referenceIngestionJobKey, mediaItemsDetails, warningIfMissing);  
 
-                    tie(referenceMediaItemKey, localReferencePhysicalPathKey, referenceContentType) =
+                    for (tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> 
+                            mediaItemKeyPhysicalPathKeyAndContentType: mediaItemsDetails)
+                    {
+                        int64_t localReferencePhysicalPathKey;
+
+                        tie(referenceMediaItemKey, localReferencePhysicalPathKey, referenceContentType) =
                             mediaItemKeyPhysicalPathKeyAndContentType;
+
+                        /*
+                        if (referencePhysicalPathKey != -1)
+                            dependencies.push_back(make_pair(referencePhysicalPathKey,DependencyType::PhysicalPathKey));
+                        else 
+                        */
+                        if (referenceMediaItemKey != -1)
+                            dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
+                        else    // referenceLabel
+                            ;
+                    }                
                 }
                 else if (referenceUniqueName != "")
                 {
@@ -2635,37 +2656,17 @@ void Validator::validateConcatDemuxerMetadata(int64_t workspaceKey,
                 throw runtime_error(errorMessage);
             }
 
-            if (referenceLabel == false && referencePhysicalPathKey == -1)
+            if (referenceIngestionJobKey == -1)
             {
-                int64_t encodingProfileKey = -1;
-                
-                field = "EncodingProfileKey";
-                if (isMetadataPresent(referenceRoot, field))
-                {
-                    int64_t encodingProfileKey = referenceRoot.get(field, "0").asInt64();
-
-                    referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
-                            referenceMediaItemKey, encodingProfileKey);
-                }  
-                else
-                {
-                    field = "EncodingProfileLabel";
-                    if (isMetadataPresent(referenceRoot, field))
-                    {
-                        string encodingProfileLabel = referenceRoot.get(field, "0").asString();
-
-                        referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(workspaceKey,
-                                referenceMediaItemKey, referenceContentType, encodingProfileLabel);
-                    }        
-                }
-            }
+                // case referenceIngestionJobKey != -1 is already managed inside the previous if
             
-            if (referencePhysicalPathKey != -1)
-                dependencies.push_back(make_pair(referencePhysicalPathKey,DependencyType::PhysicalPathKey));
-            else if (referenceMediaItemKey != -1)
-                dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
-            else    // referenceLabel
-                ;
+                if (referencePhysicalPathKey != -1)
+                    dependencies.push_back(make_pair(referencePhysicalPathKey,DependencyType::PhysicalPathKey));
+                else if (referenceMediaItemKey != -1)
+                    dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
+                else    // referenceLabel
+                    ;
+            }
         }
     }
 }
@@ -2798,14 +2799,31 @@ void Validator::validateCutMetadata(int64_t workspaceKey,
             }
             else if (referenceIngestionJobKey != -1)
             {
-                int64_t localReferencePhysicalPathKey;
+                // the difference with the other if is that here, associated to the ingestionJobKey,
+                // we may have a list of mediaItems (i.e.: periodic-frame)
+                vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>> mediaItemsDetails;
 
-                tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyPhysicalPathKeyAndContentType = 
-                        _mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
-                        referenceIngestionJobKey, warningIfMissing);  
+                _mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
+                        referenceIngestionJobKey, mediaItemsDetails, warningIfMissing);  
 
-                tie(referenceMediaItemKey, localReferencePhysicalPathKey, referenceContentType) =
+                for (tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> 
+                        mediaItemKeyPhysicalPathKeyAndContentType: mediaItemsDetails)
+                {
+                    int64_t localReferencePhysicalPathKey;
+
+                    tie(referenceMediaItemKey, localReferencePhysicalPathKey, referenceContentType) =
                         mediaItemKeyPhysicalPathKeyAndContentType;
+
+                    /*
+                    if (referencePhysicalPathKey != -1)
+                        dependencies.push_back(make_pair(referencePhysicalPathKey,DependencyType::PhysicalPathKey));
+                    else
+                    */
+                    if (referenceMediaItemKey != -1)
+                        dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
+                    else    // referenceLabel
+                        ;
+                }                
             }
             else if (referenceUniqueName != "")
             {
@@ -2854,37 +2872,17 @@ void Validator::validateCutMetadata(int64_t workspaceKey,
             throw runtime_error(errorMessage);
         }
 
-        if (referenceLabel == false && referencePhysicalPathKey == -1)
+        if (referenceIngestionJobKey == -1)
         {
-            int64_t encodingProfileKey = -1;
+            // case referenceIngestionJobKey != -1 is already managed inside the previous if
 
-            field = "EncodingProfileKey";
-            if (isMetadataPresent(referenceRoot, field))
-            {
-                int64_t encodingProfileKey = referenceRoot.get(field, "0").asInt64();
-
-                referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
-                        referenceMediaItemKey, encodingProfileKey);
-            }  
-            else
-            {
-                field = "EncodingProfileLabel";
-                if (isMetadataPresent(referenceRoot, field))
-                {
-                    string encodingProfileLabel = referenceRoot.get(field, "0").asString();
-
-                    referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(workspaceKey,
-                            referenceMediaItemKey, referenceContentType, encodingProfileLabel);
-                }        
-            }
+            if (referencePhysicalPathKey != -1)
+                dependencies.push_back(make_pair(referencePhysicalPathKey,DependencyType::PhysicalPathKey));
+            else if (referenceMediaItemKey != -1)
+                dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
+            else    // referenceLabel
+                ;
         }
-
-        if (referencePhysicalPathKey != -1)
-            dependencies.push_back(make_pair(referencePhysicalPathKey,DependencyType::PhysicalPathKey));
-        else if (referenceMediaItemKey != -1)
-            dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
-        else    // referenceLabel
-            ;
     }        
 }
 
@@ -3011,14 +3009,31 @@ void Validator::validateOverlayImageOnVideoMetadata(int64_t workspaceKey,
                 }
                 else if (referenceIngestionJobKey != -1)
                 {
-                    int64_t localReferencePhysicalPathKey;
+                    // the difference with the other if is that here, associated to the ingestionJobKey,
+                    // we may have a list of mediaItems (i.e.: periodic-frame)
+                    vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>> mediaItemsDetails;
 
-                    tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyPhysicalPathKeyAndContentType = 
-                            _mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
-                            referenceIngestionJobKey, warningIfMissing);  
+                    _mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
+                            referenceIngestionJobKey, mediaItemsDetails, warningIfMissing);  
 
-                    tie(referenceMediaItemKey, localReferencePhysicalPathKey, referenceContentType) =
+                    for (tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> 
+                            mediaItemKeyPhysicalPathKeyAndContentType: mediaItemsDetails)
+                    {
+                        int64_t localReferencePhysicalPathKey;
+
+                        tie(referenceMediaItemKey, localReferencePhysicalPathKey, referenceContentType) =
                             mediaItemKeyPhysicalPathKeyAndContentType;
+
+                        /*
+                        if (referencePhysicalPathKey != -1)
+                            dependencies.push_back(make_pair(referencePhysicalPathKey,DependencyType::PhysicalPathKey));
+                        else 
+                        */
+                        if (referenceMediaItemKey != -1)
+                            dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
+                        else    // referenceLabel
+                            ;
+                    }                
                 }
                 else if (referenceUniqueName != "")
                 {
@@ -3095,37 +3110,17 @@ void Validator::validateOverlayImageOnVideoMetadata(int64_t workspaceKey,
                 }
             }
 
-            if (referenceLabel == false && referencePhysicalPathKey == -1)
+            if (referenceIngestionJobKey == -1)
             {
-                int64_t encodingProfileKey = -1;
-                
-                field = "EncodingProfileKey";
-                if (isMetadataPresent(referenceRoot, field))
-                {
-                    int64_t encodingProfileKey = referenceRoot.get(field, "0").asInt64();
-
-                    referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
-                            referenceMediaItemKey, encodingProfileKey);
-                }  
-                else
-                {
-                    field = "EncodingProfileLabel";
-                    if (isMetadataPresent(referenceRoot, field))
-                    {
-                        string encodingProfileLabel = referenceRoot.get(field, "0").asString();
-
-                        referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(workspaceKey,
-                                referenceMediaItemKey, referenceContentType, encodingProfileLabel);
-                    }        
-                }
-            }
+                // case referenceIngestionJobKey != -1 is already managed inside the previous if
             
-            if (referencePhysicalPathKey != -1)
-                dependencies.push_back(make_pair(referencePhysicalPathKey,DependencyType::PhysicalPathKey));
-            else if (referenceMediaItemKey != -1)
-                dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
-            else    // referenceLabel
-                ;
+                if (referencePhysicalPathKey != -1)
+                    dependencies.push_back(make_pair(referencePhysicalPathKey,DependencyType::PhysicalPathKey));
+                else if (referenceMediaItemKey != -1)
+                    dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
+                else    // referenceLabel
+                    ;
+            }
         }
     }
 }
@@ -3337,14 +3332,31 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey,
             }
             else if (referenceIngestionJobKey != -1)
             {
-                int64_t localReferencePhysicalPathKey;
+                // the difference with the other if is that here, associated to the ingestionJobKey,
+                // we may have a list of mediaItems (i.e.: periodic-frame)
+                vector<tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType>> mediaItemsDetails;
 
-                tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyPhysicalPathKeyAndContentType = 
-                        _mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
-                        referenceIngestionJobKey, warningIfMissing);  
+                _mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
+                        referenceIngestionJobKey, mediaItemsDetails, warningIfMissing);  
 
-                tie(referenceMediaItemKey, localReferencePhysicalPathKey, referenceContentType) =
+                for (tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> 
+                        mediaItemKeyPhysicalPathKeyAndContentType: mediaItemsDetails)
+                {
+                    int64_t localReferencePhysicalPathKey;
+
+                    tie(referenceMediaItemKey, localReferencePhysicalPathKey, referenceContentType) =
                         mediaItemKeyPhysicalPathKeyAndContentType;
+
+                    /*
+                    if (referencePhysicalPathKey != -1)
+                        dependencies.push_back(make_pair(referencePhysicalPathKey,DependencyType::PhysicalPathKey));
+                    else 
+                    */
+                    if (referenceMediaItemKey != -1)
+                        dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
+                    else    // referenceLabel
+                        ;
+                }                
             }
             else if (referenceUniqueName != "")
             {
@@ -3393,37 +3405,17 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey,
             throw runtime_error(errorMessage);
         }
 
-        if (referenceLabel == false && referencePhysicalPathKey == -1)
+        if (referenceIngestionJobKey == -1)
         {
-            int64_t encodingProfileKey = -1;
+            // case referenceIngestionJobKey != -1 is already managed inside the previous if
 
-            field = "EncodingProfileKey";
-            if (isMetadataPresent(referenceRoot, field))
-            {
-                int64_t encodingProfileKey = referenceRoot.get(field, "0").asInt64();
-
-                referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(
-                        referenceMediaItemKey, encodingProfileKey);
-            }  
-            else
-            {
-                field = "EncodingProfileLabel";
-                if (isMetadataPresent(referenceRoot, field))
-                {
-                    string encodingProfileLabel = referenceRoot.get(field, "0").asString();
-
-                    referencePhysicalPathKey = _mmsEngineDBFacade->getPhysicalPathDetails(workspaceKey,
-                            referenceMediaItemKey, referenceContentType, encodingProfileLabel);
-                }        
-            }
+            if (referencePhysicalPathKey != -1)
+                dependencies.push_back(make_pair(referencePhysicalPathKey,DependencyType::PhysicalPathKey));
+            else if (referenceMediaItemKey != -1)
+                dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
+            else    // referenceLabel
+                ;
         }
-
-        if (referencePhysicalPathKey != -1)
-            dependencies.push_back(make_pair(referencePhysicalPathKey,DependencyType::PhysicalPathKey));
-        else if (referenceMediaItemKey != -1)
-            dependencies.push_back(make_pair(referenceMediaItemKey, DependencyType::MediaItemKey));
-        else    // referenceLabel
-            ;
     }        
 }
 
