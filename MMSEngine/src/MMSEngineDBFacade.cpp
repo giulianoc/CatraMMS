@@ -4764,7 +4764,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
                     while (resultSetIngestionJob->next())
                     {
                         Json::Value ingestionJobRoot = getIngestionJobRoot(
-                                resultSetIngestionJob, conn);
+                                resultSetIngestionJob, currentIngestionRootKey, conn);
 
                         ingestionJobsRoot.append(ingestionJobRoot);
                     }
@@ -4930,7 +4930,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
         Json::Value ingestionJobsRoot(Json::arrayValue);
         {            
             lastSQLCommand = 
-                "select ij.ingestionJobKey, ij.label, ij.ingestionType, "
+                "select ir.ingestionRootKey, ij.ingestionJobKey, ij.label, ij.ingestionType, "
                 "DATE_FORMAT(convert_tz(ij.startProcessing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as startProcessing, "
                 "DATE_FORMAT(convert_tz(ij.endProcessing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endProcessing, "
                 "IF(ij.startProcessing is null, NOW(), ij.startProcessing) as newStartProcessing, "
@@ -4956,7 +4956,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
             while (resultSet->next())
             {
                 Json::Value ingestionJobRoot = getIngestionJobRoot(
-                        resultSet, conn);
+                        resultSet, resultSet->getInt64("ingestionRootKey"), conn);
 
                 ingestionJobsRoot.append(ingestionJobRoot);
             }
@@ -5278,6 +5278,7 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
 
 Json::Value MMSEngineDBFacade::getIngestionJobRoot(
         shared_ptr<sql::ResultSet> resultSet,
+        int64_t ingestionRootKey,
         shared_ptr<MySQLConnection> conn
 )
 {
@@ -5358,6 +5359,9 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
             else
                 ingestionJobRoot[field] = resultSet->getInt64("uploadingProgress");
         }
+
+        field = "ingestionRootKey";
+        ingestionJobRoot[field] = ingestionRootKey;
 
         field = "status";
         ingestionJobRoot[field] = static_cast<string>(resultSet->getString("status"));

@@ -1030,6 +1030,7 @@ private:
     
     Json::Value getIngestionJobRoot(
         shared_ptr<sql::ResultSet> resultSet,
+        int64_t ingestionRootKey,
         shared_ptr<MySQLConnection> conn);
 
     void manageIngestionJobStatusUpdate (
