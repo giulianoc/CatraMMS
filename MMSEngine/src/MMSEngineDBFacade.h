@@ -778,7 +778,7 @@ public:
         bool asc, string status);
 
     Json::Value getMediaItemsList (
-        int64_t workspaceKey, int64_t mediaItemKey,
+        int64_t workspaceKey, int64_t mediaItemKey, int64_t physicalPathKey,
         int start, int rows,
         bool contentTypePresent, ContentType contentType,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate);

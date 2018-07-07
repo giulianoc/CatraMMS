@@ -2461,6 +2461,17 @@ void API::mediaItemsList(
         if (mediaItemKeyIt != queryParameters.end() && mediaItemKeyIt->second != "")
         {
             mediaItemKey = stoll(mediaItemKeyIt->second);
+            if (mediaItemKey == 0)
+                mediaItemKey = -1;
+        }
+
+        int64_t physicalPathKey = -1;
+        auto physicalPathKeyIt = queryParameters.find("physicalPathKey");
+        if (physicalPathKeyIt != queryParameters.end() && physicalPathKeyIt->second != "")
+        {
+            physicalPathKey = stoll(physicalPathKeyIt->second);
+            if (physicalPathKey == 0)
+                physicalPathKey = -1;
         }
 
         int start = 0;
@@ -2503,7 +2514,7 @@ void API::mediaItemsList(
         {
             
             Json::Value ingestionStatusRoot = _mmsEngineDBFacade->getMediaItemsList(
-                    workspace->_workspaceKey, mediaItemKey,
+                    workspace->_workspaceKey, mediaItemKey, physicalPathKey,
                     start, rows,
                     contentTypePresent, contentType,
                     startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate);

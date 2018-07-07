@@ -5516,7 +5516,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
 }
 
 Json::Value MMSEngineDBFacade::getMediaItemsList (
-        int64_t workspaceKey, int64_t mediaItemKey,
+        int64_t workspaceKey, int64_t mediaItemKey, int64_t physicalPathKey,
         int start, int rows,
         bool contentTypePresent, ContentType contentType,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate
@@ -5534,6 +5534,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
         _logger->info(__FILEREF__ + "getMediaItemsList"
             + ", workspaceKey: " + to_string(workspaceKey)
             + ", mediaItemKey: " + to_string(mediaItemKey)
+            + ", physicalPathKey: " + to_string(physicalPathKey)
             + ", start: " + to_string(start)
             + ", rows: " + to_string(rows)
             + ", contentTypePresent: " + to_string(contentTypePresent)
@@ -5563,6 +5564,12 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                 requestParametersRoot[field] = mediaItemKey;
             }
             
+            if (physicalPathKey != -1)
+            {
+                field = "physicalPathKey";
+                requestParametersRoot[field] = physicalPathKey;
+            }
+
             if (contentTypePresent)
             {
                 field = "contentType";
@@ -5582,8 +5589,31 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
             mediaItemsListRoot[field] = requestParametersRoot;
         }
         
+        int64_t newMediaItemKey = mediaItemKey;
+        if (mediaItemKey == -1 && physicalPathKey != -1)
+        {
+            lastSQLCommand = 
+                string("select mediaItemKey from MMS_PhysicalPath where physicalPathKey = ?");
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, physicalPathKey);
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                newMediaItemKey = resultSet->getInt64("mediaItemKey");
+            }
+            else
+            {
+                string errorMessage ("physicalPathKey does not exist");
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+        
         string sqlWhere = string ("where workspaceKey = ? ");
-        if (mediaItemKey != -1)
+        if (newMediaItemKey != -1)
             sqlWhere += ("and mediaItemKey = ? ");
         if (contentTypePresent)
             sqlWhere += ("and contentType = ? ");
@@ -5599,8 +5629,8 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
-            if (mediaItemKey != -1)
-                preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+            if (newMediaItemKey != -1)
+                preparedStatement->setInt64(queryParameterIndex++, newMediaItemKey);
             if (contentTypePresent)
                 preparedStatement->setString(queryParameterIndex++, toString(contentType));
             if (startAndEndIngestionDatePresent)
@@ -5654,8 +5684,8 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
-            if (mediaItemKey != -1)
-                preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+            if (newMediaItemKey != -1)
+                preparedStatement->setInt64(queryParameterIndex++, newMediaItemKey);
             if (contentTypePresent)
                 preparedStatement->setString(queryParameterIndex++, toString(contentType));
             if (startAndEndIngestionDatePresent)
