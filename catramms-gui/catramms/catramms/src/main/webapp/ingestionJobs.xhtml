@@ -129,6 +129,7 @@
                 <p:commandButton global="false" onstart="on_start()" icon="ui-icon ui-icon-search"
                                  actionListener="#{ingestionJobs.fillList(true)}" />
 
+                <!--
                 <span class="ui-separator">
                     <span class="ui-icon ui-icon-grip-dotted-vertical" />
                 </span>
@@ -139,6 +140,7 @@
                     <p:ajax
                             listener="#{ingestionJobs.fillList(true)}" update="ingestionJobDataTable" />
                 </p:selectBooleanButton>
+                -->
             </p:toolbarGroup>
         </p:toolbar>
 
@@ -235,6 +237,12 @@
                 <p:commandButton id="dynaButtonOptions" type="button" icon="fa fa-navicon"/>
                 <p:menu toggleable="true" collapsed="true" overlay="true" trigger="dynaButtonOptions"
                         my="left top" at="left bottom">
+                    <p:menuitem disabled="#{ingestionJob.ingestionRookKey == null}"
+                                value="Ingestion Workflow Details"
+                                outcome="/ingestionWorkflowDetails.xhtml?faces-redirect=true">
+                        <f:param name="ingestionRootKey" value="#{ingestionJob.ingestionRookKey}" />
+                    </p:menuitem>
+
                     <p:menuitem value="Ingestion Details"
                                 outcome="/ingestionJobDetails.xhtml?faces-redirect=true">
                         <f:param name="ingestionJobKey" value="#{ingestionJob.ingestionJobKey}" />

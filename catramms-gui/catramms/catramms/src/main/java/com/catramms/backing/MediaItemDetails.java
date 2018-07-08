@@ -35,6 +35,7 @@ public class MediaItemDetails implements Serializable {
     private MediaItem mediaItem = null;
     private Long framesPerSecond;
     private Long mediaItemKey;
+    private Long physicalPathKey;
     private PhysicalPath currentPhysicalPath;
     private boolean editVideo;
     private String currentMediaURL;
@@ -52,9 +53,9 @@ public class MediaItemDetails implements Serializable {
         addMarkButtonDisabled = true;
 
 
-        if (mediaItemKey == null)
+        if (mediaItemKey == null && physicalPathKey == null)
         {
-            String errorMessage = "mediaItemKey is null";
+            String errorMessage = "mediaItemKey/physicalPathKey is null";
             mLogger.error(errorMessage);
 
             return;
@@ -77,8 +78,12 @@ public class MediaItemDetails implements Serializable {
                 String password = apiKey;
 
                 CatraMMS catraMMS = new CatraMMS();
+                mLogger.info("catraMMS.getMediaItem"
+                                + ", mediaItemKey: " + mediaItemKey
+                                + ", physicalPathKey: " + physicalPathKey
+                );
                 mediaItem = catraMMS.getMediaItem(
-                        username, password, mediaItemKey);
+                        username, password, mediaItemKey, physicalPathKey);
             }
         }
         catch (Exception e)
@@ -458,6 +463,14 @@ public class MediaItemDetails implements Serializable {
 
     public void setMediaItemKey(Long mediaItemKey) {
         this.mediaItemKey = mediaItemKey;
+    }
+
+    public Long getPhysicalPathKey() {
+        return physicalPathKey;
+    }
+
+    public void setPhysicalPathKey(Long physicalPathKey) {
+        this.physicalPathKey = physicalPathKey;
     }
 
     public String getCurrentMediaURL() {

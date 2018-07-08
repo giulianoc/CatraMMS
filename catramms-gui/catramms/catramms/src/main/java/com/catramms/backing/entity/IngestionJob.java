@@ -1,7 +1,9 @@
 package com.catramms.backing.entity;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Created by multi on 09.06.18.
@@ -16,9 +18,17 @@ public class IngestionJob implements Serializable {
     private String errorMessage;
     private Long downloadingProgress;
     private Long uploadingProgress;
-    private Long mediaItemKey;
-    private Long physicalPathKey;
+    private List<IngestionJobMediaItem> ingestionJobMediaItemList = new ArrayList<>();
     private EncodingJob encodingJob = null;
+    private Long ingestionRookKey;
+
+    public Long getIngestionRookKey() {
+        return ingestionRookKey;
+    }
+
+    public void setIngestionRookKey(Long ingestionRookKey) {
+        this.ingestionRookKey = ingestionRookKey;
+    }
 
     public Long getIngestionJobKey() {
         return ingestionJobKey;
@@ -92,20 +102,12 @@ public class IngestionJob implements Serializable {
         this.uploadingProgress = uploadingProgress;
     }
 
-    public Long getMediaItemKey() {
-        return mediaItemKey;
+    public List<IngestionJobMediaItem> getIngestionJobMediaItemList() {
+        return ingestionJobMediaItemList;
     }
 
-    public void setMediaItemKey(Long mediaItemKey) {
-        this.mediaItemKey = mediaItemKey;
-    }
-
-    public Long getPhysicalPathKey() {
-        return physicalPathKey;
-    }
-
-    public void setPhysicalPathKey(Long physicalPathKey) {
-        this.physicalPathKey = physicalPathKey;
+    public void setIngestionJobMediaItemList(List<IngestionJobMediaItem> ingestionJobMediaItemList) {
+        this.ingestionJobMediaItemList = ingestionJobMediaItemList;
     }
 
     public EncodingJob getEncodingJob() {

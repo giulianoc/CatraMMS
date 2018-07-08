@@ -53,7 +53,7 @@ public class IngestionJobs implements Serializable {
 
         ascending = false;
 
-        autoRefresh = false;
+        autoRefresh = true;
         autoRefreshPeriodInSeconds = 30;
 
         {

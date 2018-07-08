@@ -10043,6 +10043,8 @@ int MMSEngineDBFacade::updateEncodingJob (
 
                 preparedStatement->executeUpdate();
             }
+            
+            manageIngestionJobStatusUpdate (ingestionJobKey, ingestionStatus, conn);
         }
         else if (newEncodingStatus == EncodingStatus::End_Failed)
         {

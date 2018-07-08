@@ -569,7 +569,7 @@ public class CatraMMS {
     }
 
     public MediaItem getMediaItem(String username, String password,
-                                         Long mediaItemKey)
+                                         Long mediaItemKey, Long physicalPathKey)
             throws Exception
     {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
@@ -578,7 +578,11 @@ public class CatraMMS {
         String mmsInfo;
         try
         {
-            String mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort + "/catramms/v1/mediaItems/" + mediaItemKey;
+            String mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort + "/catramms/v1/mediaItems/"
+                    + (mediaItemKey == null ? 0 : mediaItemKey)
+                    + "/"
+                    + (physicalPathKey == null ? 0 : physicalPathKey)
+                    ;
 
             mLogger.info("mmsURL: " + mmsURL);
 
@@ -1412,7 +1416,8 @@ public class CatraMMS {
             mediaItem.setStartPublishing(simpleDateFormat.parse(mediaItemInfo.getString("startPublishing")));
             mediaItem.setEndPublishing(simpleDateFormat.parse(mediaItemInfo.getString("endPublishing")));
             mediaItem.setIngester(mediaItemInfo.getString("ingester"));
-            mediaItem.setKeywords(mediaItemInfo.getString("keywords"));
+            if (!mediaItemInfo.isNull("keywords"))
+                mediaItem.setKeywords(mediaItemInfo.getString("keywords"));
             mediaItem.setProviderName(mediaItemInfo.getString("providerName"));
             mediaItem.setRetentionInMinutes(mediaItemInfo.getLong("retentionInMinutes"));
 
@@ -1565,14 +1570,23 @@ public class CatraMMS {
                 ingestionJob.setUploadingProgress(null);
             else
                 ingestionJob.setUploadingProgress(ingestionJobInfo.getLong("uploadingProgress"));
-            if (ingestionJobInfo.isNull("mediaItemKey"))
-                ingestionJob.setMediaItemKey(null);
+
+            if (ingestionJobInfo.isNull("ingestionRootKey"))
+                ingestionJob.setIngestionRookKey(null);
             else
-                ingestionJob.setMediaItemKey(ingestionJobInfo.getLong("mediaItemKey"));
-            if (ingestionJobInfo.isNull("physicalPathKey"))
-                ingestionJob.setPhysicalPathKey(null);
-            else
-                ingestionJob.setPhysicalPathKey(ingestionJobInfo.getLong("physicalPathKey"));
+                ingestionJob.setIngestionRookKey(ingestionJobInfo.getLong("ingestionRootKey"));
+
+            JSONArray jaMediaItems = ingestionJobInfo.getJSONArray("mediaItems");
+            for (int mediaItemIndex = 0; mediaItemIndex < jaMediaItems.length(); mediaItemIndex++)
+            {
+                JSONObject joMediaItem = jaMediaItems.getJSONObject(mediaItemIndex);
+
+                IngestionJobMediaItem ingestionJobMediaItem = new IngestionJobMediaItem();
+                ingestionJobMediaItem.setMediaItemKey(joMediaItem.getLong("mediaItemKey"));
+                ingestionJobMediaItem.setPhysicalPathKey(joMediaItem.getLong("physicalPathKey"));
+
+                ingestionJob.getIngestionJobMediaItemList().add(ingestionJobMediaItem);
+            }
 
             if (ingestionJobInfo.has("encodingJob")) {
                 JSONObject encodingJobInfo = ingestionJobInfo.getJSONObject("encodingJob");

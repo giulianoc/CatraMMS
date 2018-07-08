@@ -123,7 +123,11 @@
             </p:column>
 
             <p:column style="width:150px;" headerText="Status" >
-                <p:outputLabel value="#{ingestionJob.status}" />
+                <p:outputLabel id="ingestionJobStatus"
+                               value="#{ingestionJob.status}"
+                               title="#{ingestionJob.status}"
+                        />
+                <p:tooltip for="ingestionJobStatus" showEffect="clip" hideEffect="explode" position="left"/>
             </p:column>
 
             <p:column style="width:90px;" headerText="Dwl&lt;br&gt;progress" >

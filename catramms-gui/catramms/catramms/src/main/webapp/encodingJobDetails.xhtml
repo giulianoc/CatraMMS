@@ -95,45 +95,62 @@
             <p:outputLabel value="#{encodingJobDetails.encodingJob.type}" />
 
 
-            <!-- commented because we do not have the mediaItemKey but the PhysicalPathKey
-            I do not have time now to solve this issue!!!
             <p:outputLabel rendered="#{encodingJobDetails.encodingJob.type == 'EncodeVideoAudio' or encodingJobDetails.encodingJob.type == 'EncodeImage'}"
-                           value="Media: " />
-            <h:link rendered="#{encodingJobDetails.encodingJob.type == 'EncodeVideoAudio' or encodingJobDetails.encodingJob.type == 'EncodeImage'}"
-                    outcome="/mediaItemDetails.xhtml?faces-redirect=true" value="Details">
-                <f:param name="mediaItemKey" value="#{encodingJobDetails.encodingJob.sourcePhysicalPathKey}" />
-            </h:link>
+                           value="Source Physical Path Key: " />
+            <p:panel rendered="#{encodingJobDetails.encodingJob.type == 'EncodeVideoAudio' or encodingJobDetails.encodingJob.type == 'EncodeImage'}">
+                <p:outputLabel value="#{encodingJobDetails.encodingJob.sourcePhysicalPathKey} (" />
+                <h:link
+                        outcome="/mediaItemDetails.xhtml?faces-redirect=true" value="Media Item Details">
+                    <f:param name="physicalPathKey" value="#{encodingJobDetails.encodingJob.sourcePhysicalPathKey}" />
+                </h:link>
+                <p:outputLabel value=")" />
+            </p:panel>
 
             <p:outputLabel rendered="#{encodingJobDetails.encodingJob.type == 'EncodeVideoAudio' or encodingJobDetails.encodingJob.type == 'EncodeImage'}"
-                           value="Encoding Profile: " />
-            <h:link rendered="#{encodingJobDetails.encodingJob.type == 'EncodeVideoAudio' or encodingJobDetails.encodingJob.type == 'EncodeImage'}"
-                    outcome="/encodingProfileDetails.xhtml?faces-redirect=true" value="Encoding Profile Details">
-                <f:param name="encodingProfileKey" value="#{encodingJobDetails.encodingJob.encodingProfileKey}" />
-            </h:link>
+                           value="Encoding Profile Key: " />
+            <p:panel rendered="#{encodingJobDetails.encodingJob.type == 'EncodeVideoAudio' or encodingJobDetails.encodingJob.type == 'EncodeImage'}">
+                <p:outputLabel value="#{encodingJobDetails.encodingJob.encodingProfileKey} (" />
+                <h:link
+                        outcome="/encodingProfileDetails.xhtml?faces-redirect=true" value="Encoding Profile Details">
+                    <f:param name="encodingProfileKey" value="#{encodingJobDetails.encodingJob.encodingProfileKey}" />
+                </h:link>
+                <p:outputLabel value=")" />
+            </p:panel>
 
 
             <p:outputLabel rendered="#{encodingJobDetails.encodingJob.type == 'OverlayImageOnVideo'}"
-                           value="Video: " />
-            <h:link rendered="#{encodingJobDetails.encodingJob.type == 'OverlayImageOnVideo'}"
-                    outcome="/mediaItemDetails.xhtml?faces-redirect=true" value="Details">
-                <f:param name="mediaItemKey" value="#{encodingJobDetails.encodingJob.sourceVideoPhysicalPathKey}" />
-            </h:link>
+                           value="Video Physical Path Key: " />
+            <p:panel rendered="#{encodingJobDetails.encodingJob.type == 'OverlayImageOnVideo'}">
+                <p:outputLabel value="#{encodingJobDetails.encodingJob.sourceVideoPhysicalPathKey} (" />
+                <h:link
+                        outcome="/mediaItemDetails.xhtml?faces-redirect=true" value="Video Item Details">
+                    <f:param name="physicalPathKey" value="#{encodingJobDetails.encodingJob.sourceVideoPhysicalPathKey}" />
+                </h:link>
+                <p:outputLabel value=")" />
+            </p:panel>
 
             <p:outputLabel rendered="#{encodingJobDetails.encodingJob.type == 'OverlayImageOnVideo'}"
-                           value="Image: " />
-            <h:link rendered="#{encodingJobDetails.encodingJob.type == 'OverlayImageOnVideo'}"
-                    outcome="/mediaItemDetails.xhtml?faces-redirect=true" value="Details">
-                <f:param name="mediaItemKey" value="#{encodingJobDetails.encodingJob.sourceImagePhysicalPathKey}" />
-            </h:link>
+                           value="Image Physical Path Key: " />
+            <p:panel rendered="#{encodingJobDetails.encodingJob.type == 'OverlayImageOnVideo'}">
+                <p:outputLabel value="#{encodingJobDetails.encodingJob.sourceImagePhysicalPathKey} (" />
+                <h:link
+                        outcome="/mediaItemDetails.xhtml?faces-redirect=true" value="Image Item Details">
+                    <f:param name="physicalPathKey" value="#{encodingJobDetails.encodingJob.sourceImagePhysicalPathKey}" />
+                </h:link>
+                <p:outputLabel value=")" />
+            </p:panel>
 
 
             <p:outputLabel rendered="#{encodingJobDetails.encodingJob.type == 'OverlayTextOnVideo'}"
-                           value="Video: " />
-            <h:link rendered="#{encodingJobDetails.encodingJob.type == 'OverlayTextOnVideo'}"
-                    outcome="/mediaItemDetails.xhtml?faces-redirect=true" value="Video Details">
-                <f:param name="mediaItemKey" value="#{encodingJobDetails.encodingJob.sourceVideoPhysicalPathKey}" />
-            </h:link>
-            -->
+                           value="Video Physical Path Key: " />
+            <p:panel rendered="#{encodingJobDetails.encodingJob.type == 'OverlayTextOnVideo'}">
+                <p:outputLabel value="#{encodingJobDetails.encodingJob.sourceVideoPhysicalPathKey} (" />
+                <h:link
+                        outcome="/mediaItemDetails.xhtml?faces-redirect=true" value="Video Item Details">
+                    <f:param name="physicalPathKey" value="#{encodingJobDetails.encodingJob.sourceVideoPhysicalPathKey}" />
+                </h:link>
+                <p:outputLabel value=")" />
+            </p:panel>
 
 
             <p:outputLabel value="Parameters: " />
