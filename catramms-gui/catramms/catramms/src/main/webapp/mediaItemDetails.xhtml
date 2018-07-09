@@ -157,6 +157,18 @@
         </h:form>
     </p:dialog>
 
+    <p:dialog widgetVar="showImage" modal="true"
+              header="Player" appendTo="@(body)" width="900" height="600"
+              showEffect="fade" hideEffect="fade" resizable="true" draggable="true" >
+
+        <h:form id="showImageForm">
+            <p:outputLabel value="Physical Path Key: #{mediaItemDetails.currentPhysicalPath.physicalPathKey}" />
+
+            <h:graphicImage width="50" value="#{mediaItemDetails.currentMediaURL}" />
+        </h:form>
+
+    </p:dialog>
+
     <p:dialog widgetVar="showVideo" modal="true"
               header="Player" appendTo="@(body)" width="900" height="600"
               showEffect="fade" hideEffect="fade" resizable="true" draggable="true"
@@ -490,16 +502,26 @@
                                 <f:param name="encodingProfileKey" value="#{physicalPath.encodingProfileKey}" />
                             </p:menuitem>
 
+                            <p:menuitem value="Show Image"
+                                        rendered="#{mediaItemDetails.mediaItem.contentType == 'Image'}"
+                                        disabled="#{!sessionScope.currentWorkspaceDetails.deliveryAuthorization}"
+                                        actionListener="#{mediaItemDetails.prepareCurrentMediaURL(physicalPath, mediaItemDetails.mediaItem.contentType, false)}"
+                                        update="showImageForm"
+                                        oncomplete="PF('showImage').show()">
+                            </p:menuitem>
+
                             <p:menuitem value="Play Video"
-                                        disabled="#{mediaItemDetails.mediaItem.contentType != 'Video' or !sessionScope.currentWorkspaceDetails.deliveryAuthorization}"
-                                        actionListener="#{mediaItemDetails.prepareCurrentMediaURL(physicalPath, false)}"
+                                        rendered="#{mediaItemDetails.mediaItem.contentType == 'Video' or mediaItemDetails.mediaItem.contentType == 'Audio'}"
+                                        disabled="#{!sessionScope.currentWorkspaceDetails.deliveryAuthorization}"
+                                        actionListener="#{mediaItemDetails.prepareCurrentMediaURL(physicalPath, mediaItemDetails.mediaItem.contentType, false)}"
                                         update="showVideoForm"
                                         oncomplete="PF('showVideo').show()">
                             </p:menuitem>
 
                             <p:menuitem value="Edit Video"
-                                        disabled="#{mediaItemDetails.mediaItem.contentType != 'Video' or !sessionScope.currentWorkspaceDetails.deliveryAuthorization or !sessionScope.currentWorkspaceDetails.editMedia}"
-                                        actionListener="#{mediaItemDetails.prepareCurrentMediaURL(physicalPath, true)}"
+                                        rendered="#{mediaItemDetails.mediaItem.contentType == 'Video' or mediaItemDetails.mediaItem.contentType == 'Audio'}"
+                                        disabled="#{!sessionScope.currentWorkspaceDetails.deliveryAuthorization or !sessionScope.currentWorkspaceDetails.editMedia}"
+                                        actionListener="#{mediaItemDetails.prepareCurrentMediaURL(physicalPath, mediaItemDetails.mediaItem.contentType, true)}"
                                         update="showVideoForm"
                                         oncomplete="PF('showVideo').show()">
                             </p:menuitem>

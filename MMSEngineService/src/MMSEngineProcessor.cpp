@@ -4072,6 +4072,14 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
         parametersRoot[field] = fileFormat;
     }
 
+    // this scenario is for example for the Cut or Concat-Demux or Periodical-Frames
+    // that generate a new content (or contents in case of Periodical-Frames)
+    // and the Parameters json will contain the parameters
+    // for the new content.
+    // It will contain also parameters for the Cut or Concat-Demux or Periodical-Frames or ...,
+    // we will leave there even because we know they will not be used by the
+    // Add-Content task
+    
     string mediaMetadata;
     {
         Json::StreamWriterBuilder wbuilder;

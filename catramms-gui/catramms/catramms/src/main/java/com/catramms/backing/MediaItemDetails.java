@@ -351,12 +351,10 @@ public class MediaItemDetails implements Serializable {
         }
     }
 
-    public void prepareCurrentMediaURL(PhysicalPath physicalPath, boolean editMedia)
+    public void prepareCurrentMediaURL(PhysicalPath physicalPath, String contentType, boolean editMedia)
     {
         long ttlInSeconds = 60 * 60;
         int maxRetries = 20;
-
-        this.editVideo = editMedia;
 
         try
         {
@@ -391,32 +389,37 @@ public class MediaItemDetails implements Serializable {
             mLogger.error(errorMessage);
         }
 
-        long defaultFramesPerSeconds = 25;
-        try
+        if (contentType.equalsIgnoreCase("video"))
         {
-            framesPerSecond = null;
+            this.editVideo = editMedia;
 
-            String videoAvgFrameRate = physicalPath.getVideoDetails().getVideoAvgFrameRate();
-            int endIndexOfFrameRate = videoAvgFrameRate.indexOf('/');
-            if (endIndexOfFrameRate != -1)
-                framesPerSecond = Long.parseLong(videoAvgFrameRate.substring(0, endIndexOfFrameRate));
-
-            if (framesPerSecond == null)
+            long defaultFramesPerSeconds = 25;
+            try
             {
-                mLogger.error("No frame rate found");
+                framesPerSecond = null;
+
+                String videoAvgFrameRate = physicalPath.getVideoDetails().getVideoAvgFrameRate();
+                int endIndexOfFrameRate = videoAvgFrameRate.indexOf('/');
+                if (endIndexOfFrameRate != -1)
+                    framesPerSecond = Long.parseLong(videoAvgFrameRate.substring(0, endIndexOfFrameRate));
+
+                if (framesPerSecond == null)
+                {
+                    mLogger.error("No frame rate found");
+
+                    framesPerSecond = new Long(defaultFramesPerSeconds);
+                }
+            }
+            catch (Exception e)
+            {
+                String errorMessage = "Exception: " + e;
+                mLogger.error(errorMessage);
 
                 framesPerSecond = new Long(defaultFramesPerSeconds);
             }
-        }
-        catch (Exception e)
-        {
-            String errorMessage = "Exception: " + e;
-            mLogger.error(errorMessage);
 
-            framesPerSecond = new Long(defaultFramesPerSeconds);
+            mLogger.info("framesPerSecond: " + framesPerSecond);
         }
-
-        mLogger.info("framesPerSecond: " + framesPerSecond);
     }
 
     public String getDurationAsString(Long durationInMilliseconds)

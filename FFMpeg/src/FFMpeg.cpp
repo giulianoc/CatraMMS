@@ -190,14 +190,17 @@ void FFMpeg::encodeContent(
                 ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
             #endif
 
-            _logger->info(__FILEREF__ + "Executing ffmpeg command"
-                        + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-            );
 
             try
             {
+                _logger->info(__FILEREF__ + "Executing ffmpeg command"
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+                );
+
+                chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
+
                 int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
                 if (executeCommandStatus != 0)
                 {
@@ -211,6 +214,15 @@ void FFMpeg::encodeContent(
 
                     throw runtime_error(errorMessage);
                 }
+
+                chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
+
+                _logger->info(__FILEREF__ + "Executed ffmpeg command"
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+                    + ", ffmpegCommandDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
+                );
             }
             catch(runtime_error e)
             {
@@ -290,14 +302,17 @@ void FFMpeg::encodeContent(
                     ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
                 #endif
 
-                _logger->info(__FILEREF__ + "Executing ffmpeg command (first step)"
-                        + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                );
 
                 try
                 {
+                    _logger->info(__FILEREF__ + "Executing ffmpeg command (first step)"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+                    );
+
+                    chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
+                    
                     int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
                     if (executeCommandStatus != 0)
                     {
@@ -311,6 +326,15 @@ void FFMpeg::encodeContent(
 
                         throw runtime_error(errorMessage);
                     }
+
+                    chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
+
+                    _logger->info(__FILEREF__ + "Executed ffmpeg command"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+                        + ", ffmpegCommandDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
+                    );
                 }
                 catch(runtime_error e)
                 {
@@ -372,15 +396,17 @@ void FFMpeg::encodeContent(
                     ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
                 #endif
 
-                _logger->info(__FILEREF__ + "Executing ffmpeg command (second step)"
-                        + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                );
-
                 _currentlyAtSecondPass = true;
                 try
                 {
+                    _logger->info(__FILEREF__ + "Executing ffmpeg command (second step)"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+                    );
+
+                    chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
+
                     int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
                     if (executeCommandStatus != 0)
                     {
@@ -394,6 +420,15 @@ void FFMpeg::encodeContent(
 
                         throw runtime_error(errorMessage);
                     }
+                    
+                    chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
+
+                    _logger->info(__FILEREF__ + "Executed ffmpeg command"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+                        + ", ffmpegCommandDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
+                    );
                 }
                 catch(runtime_error e)
                 {
@@ -460,14 +495,16 @@ void FFMpeg::encodeContent(
                     ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
                 #endif
 
-                _logger->info(__FILEREF__ + "Executing ffmpeg command"
-                        + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                );
-
                 try
                 {
+                    _logger->info(__FILEREF__ + "Executing ffmpeg command"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+                    );
+                    
+                    chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
+
                     int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
                     if (executeCommandStatus != 0)
                     {
@@ -481,6 +518,15 @@ void FFMpeg::encodeContent(
 
                         throw runtime_error(errorMessage);
                     }
+
+                    chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
+
+                    _logger->info(__FILEREF__ + "Executed ffmpeg command"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+                        + ", ffmpegCommandDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
+                    );
                 }
                 catch(runtime_error e)
                 {
@@ -687,14 +733,16 @@ void FFMpeg::overlayImageOnVideo(
                     ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
                 #endif
 
-                _logger->info(__FILEREF__ + "Executing ffmpeg command"
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                );
-
                 try
                 {
+                    _logger->info(__FILEREF__ + "Executing ffmpeg command"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+                    );
+
+                    chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
+
                     int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
                     if (executeCommandStatus != 0)
                     {
@@ -708,6 +756,15 @@ void FFMpeg::overlayImageOnVideo(
 
                         throw runtime_error(errorMessage);
                     }
+
+                    chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
+
+                    _logger->info(__FILEREF__ + "Executed ffmpeg command"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+                        + ", ffmpegCommandDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
+                    );
                 }
                 catch(runtime_error e)
                 {
@@ -968,14 +1025,16 @@ void FFMpeg::overlayTextOnVideo(
                     ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
                 #endif
 
-                _logger->info(__FILEREF__ + "Executing ffmpeg command"
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                );
-
                 try
                 {
+                    _logger->info(__FILEREF__ + "Executing ffmpeg command"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+                    );
+
+                    chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
+
                     int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
                     if (executeCommandStatus != 0)
                     {
@@ -989,6 +1048,15 @@ void FFMpeg::overlayTextOnVideo(
 
                         throw runtime_error(errorMessage);
                     }
+
+                    chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
+
+                    _logger->info(__FILEREF__ + "Executed ffmpeg command"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+                        + ", ffmpegCommandDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
+                    );
                 }
                 catch(runtime_error e)
                 {
@@ -1352,12 +1420,14 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
         ffprobeExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
     #endif
 
-    _logger->info(__FILEREF__ + "Executing ffprobe command"
-        + ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
-    );
-
     try
     {
+        _logger->info(__FILEREF__ + "Executing ffprobe command"
+            + ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
+        );
+
+        chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
+
         int executeCommandStatus = ProcessUtility::execute(ffprobeExecuteCommand);
         if (executeCommandStatus != 0)
         {
@@ -1370,6 +1440,13 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
 
             throw runtime_error(errorMessage);
         }
+        
+        chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
+
+        _logger->info(__FILEREF__ + "Executed ffmpeg command"
+            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+            + ", ffmpegCommandDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
+        );
     }
     catch(runtime_error e)
     {
@@ -1963,12 +2040,15 @@ vector<string> FFMpeg::generateFramesToIngest(
         ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
     #endif
 
-    _logger->info(__FILEREF__ + "Executing ffmpeg command"
-        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-    );
-
     try
     {
+        _logger->info(__FILEREF__ + "Executing ffmpeg command"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+        );
+
+        chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
+
         int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
         if (executeCommandStatus != 0)
         {
@@ -1981,6 +2061,14 @@ vector<string> FFMpeg::generateFramesToIngest(
 
             throw runtime_error(errorMessage);
         }
+
+        chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
+        
+        _logger->info(__FILEREF__ + "Executed ffmpeg command"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+            + ", ffmpegCommandDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
+        );
     }
     catch(runtime_error e)
     {
@@ -2116,12 +2204,15 @@ void FFMpeg::generateConcatMediaToIngest(
         ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
     #endif
 
-    _logger->info(__FILEREF__ + "Executing ffmpeg command"
-        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-    );
-
     try
     {
+        _logger->info(__FILEREF__ + "Executing ffmpeg command"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+        );
+
+        chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
+
         int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
         if (executeCommandStatus != 0)
         {
@@ -2134,6 +2225,14 @@ void FFMpeg::generateConcatMediaToIngest(
 
             throw runtime_error(errorMessage);
         }
+        
+        chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
+
+        _logger->info(__FILEREF__ + "Executed ffmpeg command"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+            + ", ffmpegCommandDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
+        );
     }
     catch(runtime_error e)
     {
@@ -2208,12 +2307,15 @@ void FFMpeg::generateSlideshowMediaToIngest(
         ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
     #endif
 
-    _logger->info(__FILEREF__ + "Executing ffmpeg command"
-        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-    );
-
     try
     {
+        _logger->info(__FILEREF__ + "Executing ffmpeg command"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+        );
+
+        chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
+
         int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
         if (executeCommandStatus != 0)
         {
@@ -2226,6 +2328,14 @@ void FFMpeg::generateSlideshowMediaToIngest(
 
             throw runtime_error(errorMessage);
         }
+        
+        chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
+
+        _logger->info(__FILEREF__ + "Executed ffmpeg command"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+            + ", ffmpegCommandDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
+        );
     }
     catch(runtime_error e)
     {
@@ -2282,12 +2392,15 @@ void FFMpeg::generateCutMediaToIngest(
         ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
     #endif
 
-    _logger->info(__FILEREF__ + "Executing ffmpeg command"
-        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-    );
-
     try
     {
+        _logger->info(__FILEREF__ + "Executing ffmpeg command"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+        );
+
+        chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
+
         int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
         if (executeCommandStatus != 0)
         {
@@ -2300,6 +2413,14 @@ void FFMpeg::generateCutMediaToIngest(
 
             throw runtime_error(errorMessage);
         }
+        
+        chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
+
+        _logger->info(__FILEREF__ + "Executed ffmpeg command"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+            + ", ffmpegCommandDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
+        );
     }
     catch(runtime_error e)
     {
