@@ -1444,7 +1444,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
         chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
 
         _logger->info(__FILEREF__ + "Executed ffmpeg command"
-            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+            + ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
             + ", ffmpegCommandDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
         );
     }
