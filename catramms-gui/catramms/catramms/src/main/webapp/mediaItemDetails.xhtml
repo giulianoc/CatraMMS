@@ -158,13 +158,17 @@
     </p:dialog>
 
     <p:dialog widgetVar="showImage" modal="true"
-              header="Player" appendTo="@(body)" width="900" height="600"
+              header="Player" appendTo="@(body)"
               showEffect="fade" hideEffect="fade" resizable="true" draggable="true" >
 
         <h:form id="showImageForm">
             <p:outputLabel value="Physical Path Key: #{mediaItemDetails.currentPhysicalPath.physicalPathKey}" />
 
-            <h:graphicImage width="50" value="#{mediaItemDetails.currentMediaURL}" />
+            <br />
+
+            <p:scrollPanel mode="native" style="height: 600px">
+                <h:graphicImage value="#{mediaItemDetails.currentMediaURL}" />
+            </p:scrollPanel>
         </h:form>
 
     </p:dialog>

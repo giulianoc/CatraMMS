@@ -2732,6 +2732,10 @@ void MMSEngineProcessor::generateAndIngestSlideshow(
             localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::AddContent);
             localAssetIngestionEvent->setIngestionRowToBeUpdatedAsSuccess(true);
 
+            // to manage a ffmpeg bug generating a corrupted/wrong avgFrameRate, we will
+            // force the slideshow file to have the avgFrameRate as specified in the parameter
+            localAssetIngestionEvent->setForcedAvgFrameRate(to_string(outputFrameRate));            
+
             localAssetIngestionEvent->setMetadataContent(mediaMetaDataContent);
 
             shared_ptr<Event2>    event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
@@ -2788,7 +2792,7 @@ void MMSEngineProcessor::generateAndIngestConcatenation(
         MMSEngineDBFacade::ContentType concatContentType;
         bool concatContentTypeInitialized = false;
         vector<string> sourcePhysicalPaths;
-        string forcedAvgFrameRate("");
+        string forcedAvgFrameRate;
         
         for (pair<int64_t,Validator::DependencyType>& keyAndDependencyType: dependencies)
         {
@@ -2890,10 +2894,10 @@ void MMSEngineProcessor::generateAndIngestConcatenation(
                 tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> videoDetails 
                     = _mmsEngineDBFacade->getVideoDetails(sourceMediaItemKey, sourcePhysicalPathKey);
 
-                    tie(localDurationInMilliSeconds, localBitRate, localVideoCodecName,
-                        localVideoProfile, localVideoWidth, localVideoHeight, forcedAvgFrameRate,
-                        localVideoBitRate, localAudioCodecName, localAudioSampleRate, localAudioChannels, localAudioBitRate)
-                        = videoDetails;
+                tie(localDurationInMilliSeconds, localBitRate, localVideoCodecName,
+                    localVideoProfile, localVideoWidth, localVideoHeight, forcedAvgFrameRate,
+                    localVideoBitRate, localAudioCodecName, localAudioSampleRate, localAudioChannels, localAudioBitRate)
+                    = videoDetails;
             }
         }
 
