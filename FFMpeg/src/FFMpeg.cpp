@@ -193,7 +193,7 @@ void FFMpeg::encodeContent(
 
             try
             {
-                _logger->info(__FILEREF__ + "Executing ffmpeg command"
+                _logger->info(__FILEREF__ + "encodeContent: Executing ffmpeg command"
                     + ", encodingJobKey: " + to_string(encodingJobKey)
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
@@ -204,7 +204,7 @@ void FFMpeg::encodeContent(
                 int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
                 if (executeCommandStatus != 0)
                 {
-                    string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+                    string errorMessage = __FILEREF__ + "encodeContent: ffmpeg: ffmpeg command failed"
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                         + ", executeCommandStatus: " + to_string(executeCommandStatus)
@@ -217,7 +217,7 @@ void FFMpeg::encodeContent(
 
                 chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
 
-                _logger->info(__FILEREF__ + "Executed ffmpeg command"
+                _logger->info(__FILEREF__ + "encodeContent: Executed ffmpeg command"
                     + ", encodingJobKey: " + to_string(encodingJobKey)
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
@@ -305,7 +305,7 @@ void FFMpeg::encodeContent(
 
                 try
                 {
-                    _logger->info(__FILEREF__ + "Executing ffmpeg command (first step)"
+                    _logger->info(__FILEREF__ + "encodeContent: Executing ffmpeg command (first step)"
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                         + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
@@ -316,7 +316,7 @@ void FFMpeg::encodeContent(
                     int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
                     if (executeCommandStatus != 0)
                     {
-                        string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+                        string errorMessage = __FILEREF__ + "encodeContent: ffmpeg command failed"
                             + ", encodingJobKey: " + to_string(encodingJobKey)
                             + ", ingestionJobKey: " + to_string(ingestionJobKey)
                             + ", executeCommandStatus: " + to_string(executeCommandStatus)
@@ -329,7 +329,7 @@ void FFMpeg::encodeContent(
 
                     chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
 
-                    _logger->info(__FILEREF__ + "Executed ffmpeg command"
+                    _logger->info(__FILEREF__ + "encodeContent: Executed ffmpeg command"
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                         + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
@@ -399,7 +399,7 @@ void FFMpeg::encodeContent(
                 _currentlyAtSecondPass = true;
                 try
                 {
-                    _logger->info(__FILEREF__ + "Executing ffmpeg command (second step)"
+                    _logger->info(__FILEREF__ + "encodeContent: Executing ffmpeg command (second step)"
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                         + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
@@ -410,7 +410,7 @@ void FFMpeg::encodeContent(
                     int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
                     if (executeCommandStatus != 0)
                     {
-                        string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+                        string errorMessage = __FILEREF__ + "encodeContent: ffmpeg command failed"
                             + ", encodingJobKey: " + to_string(encodingJobKey)
                             + ", ingestionJobKey: " + to_string(ingestionJobKey)
                             + ", executeCommandStatus: " + to_string(executeCommandStatus)
@@ -423,7 +423,7 @@ void FFMpeg::encodeContent(
                     
                     chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
 
-                    _logger->info(__FILEREF__ + "Executed ffmpeg command"
+                    _logger->info(__FILEREF__ + "encodeContent: Executed ffmpeg command"
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                         + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
@@ -497,7 +497,7 @@ void FFMpeg::encodeContent(
 
                 try
                 {
-                    _logger->info(__FILEREF__ + "Executing ffmpeg command"
+                    _logger->info(__FILEREF__ + "encodeContent: Executing ffmpeg command"
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                         + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
@@ -508,7 +508,7 @@ void FFMpeg::encodeContent(
                     int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
                     if (executeCommandStatus != 0)
                     {
-                        string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+                        string errorMessage = __FILEREF__ + "encodeContent: ffmpeg command failed"
                             + ", encodingJobKey: " + to_string(encodingJobKey)
                             + ", ingestionJobKey: " + to_string(ingestionJobKey)
                             + ", executeCommandStatus: " + to_string(executeCommandStatus)
@@ -521,7 +521,7 @@ void FFMpeg::encodeContent(
 
                     chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
 
-                    _logger->info(__FILEREF__ + "Executed ffmpeg command"
+                    _logger->info(__FILEREF__ + "encodeContent: Executed ffmpeg command"
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                         + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
@@ -735,7 +735,7 @@ void FFMpeg::overlayImageOnVideo(
 
                 try
                 {
-                    _logger->info(__FILEREF__ + "Executing ffmpeg command"
+                    _logger->info(__FILEREF__ + "overlayImageOnVideo: Executing ffmpeg command"
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                         + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
@@ -746,7 +746,7 @@ void FFMpeg::overlayImageOnVideo(
                     int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
                     if (executeCommandStatus != 0)
                     {
-                        string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+                        string errorMessage = __FILEREF__ + "overlayImageOnVideo: ffmpeg command failed"
                             + ", encodingJobKey: " + to_string(encodingJobKey)
                             + ", ingestionJobKey: " + to_string(ingestionJobKey)
                             + ", executeCommandStatus: " + to_string(executeCommandStatus)
@@ -759,7 +759,7 @@ void FFMpeg::overlayImageOnVideo(
 
                     chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
 
-                    _logger->info(__FILEREF__ + "Executed ffmpeg command"
+                    _logger->info(__FILEREF__ + "overlayImageOnVideo: Executed ffmpeg command"
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                         + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
@@ -1027,7 +1027,7 @@ void FFMpeg::overlayTextOnVideo(
 
                 try
                 {
-                    _logger->info(__FILEREF__ + "Executing ffmpeg command"
+                    _logger->info(__FILEREF__ + "overlayTextOnVideo: Executing ffmpeg command"
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                         + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
@@ -1038,7 +1038,7 @@ void FFMpeg::overlayTextOnVideo(
                     int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
                     if (executeCommandStatus != 0)
                     {
-                        string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+                        string errorMessage = __FILEREF__ + "overlayTextOnVideo: ffmpeg command failed"
                             + ", encodingJobKey: " + to_string(encodingJobKey)
                             + ", ingestionJobKey: " + to_string(ingestionJobKey)
                             + ", executeCommandStatus: " + to_string(executeCommandStatus)
@@ -1051,7 +1051,7 @@ void FFMpeg::overlayTextOnVideo(
 
                     chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
 
-                    _logger->info(__FILEREF__ + "Executed ffmpeg command"
+                    _logger->info(__FILEREF__ + "overlayTextOnVideo: Executed ffmpeg command"
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                         + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
@@ -1422,7 +1422,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
 
     try
     {
-        _logger->info(__FILEREF__ + "Executing ffprobe command"
+        _logger->info(__FILEREF__ + "getMediaInfo: Executing ffprobe command"
             + ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
         );
 
@@ -1431,7 +1431,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
         int executeCommandStatus = ProcessUtility::execute(ffprobeExecuteCommand);
         if (executeCommandStatus != 0)
         {
-            string errorMessage = __FILEREF__ + "ffmpeg: ffprobe command failed"
+            string errorMessage = __FILEREF__ + "getMediaInfo: ffmpeg: ffprobe command failed"
                     + ", executeCommandStatus: " + to_string(executeCommandStatus)
                     + ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
             ;
@@ -1443,7 +1443,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
         
         chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
 
-        _logger->info(__FILEREF__ + "Executed ffmpeg command"
+        _logger->info(__FILEREF__ + "getMediaInfo: Executed ffmpeg command"
             + ", ffprobeExecuteCommand: " + ffprobeExecuteCommand
             + ", ffmpegCommandDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
         );
@@ -2042,7 +2042,7 @@ vector<string> FFMpeg::generateFramesToIngest(
 
     try
     {
-        _logger->info(__FILEREF__ + "Executing ffmpeg command"
+        _logger->info(__FILEREF__ + "generateFramesToIngest: Executing ffmpeg command"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
         );
@@ -2052,7 +2052,7 @@ vector<string> FFMpeg::generateFramesToIngest(
         int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
         if (executeCommandStatus != 0)
         {
-            string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+            string errorMessage = __FILEREF__ + "generateFramesToIngest: ffmpeg command failed"
                     + ", executeCommandStatus: " + to_string(executeCommandStatus)
                     + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
             ;
@@ -2064,7 +2064,7 @@ vector<string> FFMpeg::generateFramesToIngest(
 
         chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
         
-        _logger->info(__FILEREF__ + "Executed ffmpeg command"
+        _logger->info(__FILEREF__ + "generateFramesToIngest: Executed ffmpeg command"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
             + ", ffmpegCommandDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
@@ -2206,7 +2206,7 @@ void FFMpeg::generateConcatMediaToIngest(
 
     try
     {
-        _logger->info(__FILEREF__ + "Executing ffmpeg command"
+        _logger->info(__FILEREF__ + "generateConcatMediaToIngest: Executing ffmpeg command"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
         );
@@ -2216,7 +2216,7 @@ void FFMpeg::generateConcatMediaToIngest(
         int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
         if (executeCommandStatus != 0)
         {
-            string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+            string errorMessage = __FILEREF__ + "generateConcatMediaToIngest: ffmpeg command failed"
                     + ", executeCommandStatus: " + to_string(executeCommandStatus)
                     + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
             ;
@@ -2228,7 +2228,7 @@ void FFMpeg::generateConcatMediaToIngest(
         
         chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
 
-        _logger->info(__FILEREF__ + "Executed ffmpeg command"
+        _logger->info(__FILEREF__ + "generateConcatMediaToIngest: Executed ffmpeg command"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
             + ", ffmpegCommandDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
@@ -2309,7 +2309,7 @@ void FFMpeg::generateSlideshowMediaToIngest(
 
     try
     {
-        _logger->info(__FILEREF__ + "Executing ffmpeg command"
+        _logger->info(__FILEREF__ + "generateConcatMediaToIngest: Executing ffmpeg command"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
         );
@@ -2319,7 +2319,7 @@ void FFMpeg::generateSlideshowMediaToIngest(
         int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
         if (executeCommandStatus != 0)
         {
-            string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+            string errorMessage = __FILEREF__ + "generateConcatMediaToIngest: ffmpeg command failed"
                     + ", executeCommandStatus: " + to_string(executeCommandStatus)
                     + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
             ;
@@ -2331,7 +2331,7 @@ void FFMpeg::generateSlideshowMediaToIngest(
         
         chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
 
-        _logger->info(__FILEREF__ + "Executed ffmpeg command"
+        _logger->info(__FILEREF__ + "generateConcatMediaToIngest: Executed ffmpeg command"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
             + ", ffmpegCommandDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
@@ -2394,7 +2394,7 @@ void FFMpeg::generateCutMediaToIngest(
 
     try
     {
-        _logger->info(__FILEREF__ + "Executing ffmpeg command"
+        _logger->info(__FILEREF__ + "generateCutMediaToIngest: Executing ffmpeg command"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
         );
@@ -2404,7 +2404,7 @@ void FFMpeg::generateCutMediaToIngest(
         int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
         if (executeCommandStatus != 0)
         {
-            string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+            string errorMessage = __FILEREF__ + "generateCutMediaToIngest: ffmpeg command failed"
                     + ", executeCommandStatus: " + to_string(executeCommandStatus)
                     + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
             ;
@@ -2416,7 +2416,7 @@ void FFMpeg::generateCutMediaToIngest(
         
         chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
 
-        _logger->info(__FILEREF__ + "Executed ffmpeg command"
+        _logger->info(__FILEREF__ + "generateCutMediaToIngest: Executed ffmpeg command"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
             + ", ffmpegCommandDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
