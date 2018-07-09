@@ -5306,7 +5306,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
         Json::Value mediaItemsRoot(Json::arrayValue);
         {
             lastSQLCommand = 
-                "select mediaItemKey, physicalPathKey from MMS_IngestionJobOutput where ingestionJobKey = ?";
+                "select mediaItemKey, physicalPathKey from MMS_IngestionJobOutput where ingestionJobKey = ? order by mediaItemKey";
 
             shared_ptr<sql::PreparedStatement> preparedStatementMediaItems (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -6967,8 +6967,9 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
         );
 
         {
+            // order by in the next select is important  to have the right order in case of dependency in a workflow
             lastSQLCommand = 
-                "select mediaItemKey, physicalPathKey from MMS_IngestionJobOutput where ingestionJobKey = ?";
+                "select mediaItemKey, physicalPathKey from MMS_IngestionJobOutput where ingestionJobKey = ? order by mediaItemKey";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, referenceIngestionJobKey);
