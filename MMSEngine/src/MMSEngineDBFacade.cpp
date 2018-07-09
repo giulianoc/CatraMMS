@@ -11360,6 +11360,13 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
         }
         
         {
+            // we can have two scenarios:
+            //  1. this ingestion will generate just one output file (most of the cases)
+            //      in this case we will 
+            //          update the ingestionJobKey with the status
+            //          will add the row in MMS_IngestionJobOutput
+            //          will call manageIngestionJobStatusUpdate
+            //  2. this ingestion will generate multiple files (i.e. Periodical-Frames task)
             IngestionStatus newIngestionStatus = IngestionStatus::End_TaskSuccess;
             
             lastSQLCommand = 

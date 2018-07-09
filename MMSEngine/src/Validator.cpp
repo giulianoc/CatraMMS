@@ -2234,8 +2234,8 @@ void Validator::validateIFramesMetadata(int64_t workspaceKey,
 void Validator::validateSlideshowMetadata(int64_t workspaceKey,
     Json::Value parametersRoot, vector<pair<int64_t,DependencyType>>& dependencies)
 {
-    // see sample in directory samples
-        
+
+    /*
     vector<string> mandatoryFields = {
         "References"
     };
@@ -2255,6 +2255,7 @@ void Validator::validateSlideshowMetadata(int64_t workspaceKey,
             throw runtime_error(errorMessage);
         }
     }
+    */
 
     /*
     string field = "SourceFileName";
@@ -2271,12 +2272,15 @@ void Validator::validateSlideshowMetadata(int64_t workspaceKey,
     }
     */
     
+    // References is optional because in case of dependency managed automatically
+    // by MMS (i.e.: onSuccess)
     string field = "References";
+    if (isMetadataPresent(parametersRoot, field))
     {
         Json::Value referencesRoot = parametersRoot[field];
         if (referencesRoot.size() < 1)
         {
-            string errorMessage = __FILEREF__ + "Field is present but it does not have enough elements (1)"
+            string errorMessage = __FILEREF__ + "Field is present but it does not have enough elements"
                     + ", Field: " + field;
             _logger->error(errorMessage);
 

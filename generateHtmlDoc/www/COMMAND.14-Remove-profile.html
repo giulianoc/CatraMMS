@@ -1,0 +1,33 @@
+<h2 id="overview">Overview</h2>
+<p>This command is used to remove one 'Profile' or a set of profiles from the CatraMMS.</p>
+<h2 id="uri">URI</h2>
+<ul>
+<li>to remove an encoding profile (video, audio or image)</li>
+<li>/catramms/v1/profile/:encodingProfileKey</li>
+<li>to remove an encoding profiles set (video, audio or image)</li>
+<li>/catramms/v1/profilesSet/:encodingProfilesSetKey</li>
+</ul>
+<h2 id="method">Method</h2>
+<p>DELETE</p>
+<h2 id="url-params">URL Params</h2>
+<h3 id="required">Required</h3>
+<ul>
+<li>encodingProfileKey: encoding profile key to be removed</li>
+<li>Example: 456</li>
+<li>encodingProfilesSetKey: encoding profile set key to be removed</li>
+<li>Example: 765</li>
+</ul>
+<h3 id="optional">Optional</h3>
+<p>None</p>
+<h2 id="payload-data">Payload Data</h2>
+<p>None</p>
+<h2 id="success-response">Success Response</h2>
+<h3 id="code">Code</h3>
+<p>200 OK</p>
+<h3 id="content">Content</h3>
+<p>None</p>
+<h2 id="error-response">Error Response</h2>
+<p>See <a href="A.1-Common-error-responses.html">Common Error Responses</a></p>
+<h2 id="sample-call">Sample Call</h2>
+<p>Assuming: * UserKey: 5 * APIKey: SU1.8ZO1O2zVeBMNv9lzZ0whABXSAdjWrR~rpcnI5eaHNO2gysrNdAv8BNoWZB1eLP</p>
+<p><code>curl -k -v -X DELETE -u 5:SU1.8ZO1O2zVeBMNv9lzZ0whABXSAdjWrR~rpcnI5eaHNO2gysrNdAv8BNoWZB1eLP https://mms-api.catrasoft.cloud/catramms/v1/profile/456</code></p>

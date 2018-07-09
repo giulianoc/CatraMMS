@@ -2405,6 +2405,18 @@ void MMSEngineProcessor::generateAndIngestFrames(
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", generatedFramesFileNames.size: " + to_string(generatedFramesFileNames.size())
         );
+        
+        // we have one ingestion job row and many generatd frames to be ingested
+        // We want to update the ingestion row just once at the end in case of success
+        // or when an error happens.
+        // To do this we will add a field in the localAssetIngestionEvent structure (ingestionRowToBeUpdatedAsSuccess)
+        // and we will set it to false but the last frame that we will set to true
+        // In case of error, handleLocalAssetIngestionEvent will update ingestion row
+        // and we will not call anymore handleLocalAssetIngestionEvent for the next frames
+        // When I say 'update the ingestion row', it's not just the update but it is also
+        // manageIngestionJobStatusUpdate
+        bool generatedFrameIngestionFailed = false;
+        
         for (string generatedFrameFileName: generatedFramesFileNames)
         {
             _logger->info(__FILEREF__ + "Generated Frame to ingest"
@@ -2440,16 +2452,18 @@ void MMSEngineProcessor::generateAndIngestFrames(
                 + ", fileFormat: " + fileFormat
             );
             
-            string imageMetaDataContent = generateImageMetadataToIngest(
+            string imageMetaDataContent = generateMediaMetadataToIngest(
                     ingestionJobKey,
-                    mjpeg,
+                    // mjpeg,
                     fileFormat,
                     parametersRoot
             );
 
             {
-                shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
-                        ->getFreeEvent<LocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
+                // shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
+                //        ->getFreeEvent<LocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
+                shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent 
+                        = make_shared<LocalAssetIngestionEvent>();
 
                 localAssetIngestionEvent->setSource(MMSENGINEPROCESSORNAME);
                 localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
@@ -2464,6 +2478,30 @@ void MMSEngineProcessor::generateAndIngestFrames(
 
                 localAssetIngestionEvent->setMetadataContent(imageMetaDataContent);
 
+                try
+                {
+                    handleLocalAssetIngestionEvent (localAssetIngestionEvent);
+                }
+                catch(runtime_error e)
+                {
+                    generatedFrameIngestionFailed = true;
+                    
+                    _logger->error(__FILEREF__ + "handleLocalAssetIngestionEvent failed"
+                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", exception: " + e.what()
+                    );
+                }
+                catch(exception e)
+                {
+                    generatedFrameIngestionFailed = true;
+                    
+                    _logger->error(__FILEREF__ + "handleLocalAssetIngestionEvent failed"
+                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", exception: " + e.what()
+                    );
+                }
+                
+                /*
                 shared_ptr<Event2>    event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
                 _multiEventsSet->addEvent(event);
 
@@ -2472,6 +2510,7 @@ void MMSEngineProcessor::generateAndIngestFrames(
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", getEventKey().first: " + to_string(event->getEventKey().first)
                     + ", getEventKey().second: " + to_string(event->getEventKey().second));
+                */
             }
         }
     }
@@ -2646,7 +2685,7 @@ void MMSEngineProcessor::generateAndIngestSlideshow(
                             
         string mediaMetaDataContent = generateMediaMetadataToIngest(
                 ingestionJobKey,
-                true,
+                // true,
                 fileFormat,
                 parametersRoot
         );
@@ -2868,7 +2907,7 @@ void MMSEngineProcessor::generateAndIngestConcatenation(
                 
         string mediaMetaDataContent = generateMediaMetadataToIngest(
                 ingestionJobKey,
-                concatContentType == MMSEngineDBFacade::ContentType::Video ? true : false,
+                // concatContentType == MMSEngineDBFacade::ContentType::Video ? true : false,
                 fileFormat,
                 parametersRoot
         );
@@ -3152,7 +3191,7 @@ void MMSEngineProcessor::generateAndIngestCutMedia(
         
         string mediaMetaDataContent = generateMediaMetadataToIngest(
                 ingestionJobKey,
-                contentType == MMSEngineDBFacade::ContentType::Video ? true : false,
+                // contentType == MMSEngineDBFacade::ContentType::Video ? true : false,
                 fileFormat,
                 parametersRoot
         );
@@ -3858,6 +3897,7 @@ size_t MMSEngineProcessor:: emailPayloadFeed(void *ptr, size_t size, size_t nmem
 }
 */
 
+/*
 string MMSEngineProcessor::generateImageMetadataToIngest(
         int64_t ingestionJobKey,
         bool mjpeg,
@@ -3945,88 +3985,16 @@ string MMSEngineProcessor::generateImageMetadataToIngest(
 
     return imageMetadata;
 }
+*/
 
 string MMSEngineProcessor::generateMediaMetadataToIngest(
         int64_t ingestionJobKey,
-        bool video,
+        // bool video,
         string fileFormat,
         Json::Value parametersRoot
 )
 {
     /*
-    string title;
-    string field = "title";
-    if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-        title = parametersRoot.get(field, "XXX").asString();
-    
-    string subTitle;
-    field = "SubTitle";
-    if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-        subTitle = parametersRoot.get(field, "XXX").asString();
-
-    string ingester;
-    field = "Ingester";
-    if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-        ingester = parametersRoot.get(field, "XXX").asString();
-
-    string keywords;
-    field = "Keywords";
-    if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-        keywords = parametersRoot.get(field, "XXX").asString();
-
-    string description;
-    field = "Description";
-    if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-        description = parametersRoot.get(field, "XXX").asString();
-
-    string logicalType;
-    field = "LogicalType";
-    if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-        logicalType = parametersRoot.get(field, "XXX").asString();
-
-    string contentProviderName;
-    field = "ContentProviderName";
-    if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-        contentProviderName = parametersRoot.get(field, "XXX").asString();
-    
-    string territories;
-    field = "Territories";
-    if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-    {
-        {
-            Json::StreamWriterBuilder wbuilder;
-            
-            territories = Json::writeString(wbuilder, parametersRoot[field]);
-        }
-    }
-    
-    string mediaMetadata = string("")
-        + "{"
-            + "\"ContentType\": \"" + (video ? "video" : "audio") + "\""
-            + ", \"FileFormat\": \"" + fileFormat + "\""
-            ;
-    if (title != "")
-        mediaMetadata += ", \"Title\": \"" + title + "\"";
-    if (subTitle != "")
-        mediaMetadata += ", \"SubTitle\": \"" + subTitle + "\"";
-    if (ingester != "")
-        mediaMetadata += ", \"Ingester\": \"" + ingester + "\"";
-    if (keywords != "")
-        mediaMetadata += ", \"Keywords\": \"" + keywords + "\"";
-    if (description != "")
-        mediaMetadata += ", \"Description\": \"" + description + "\"";
-    if (logicalType != "")
-        mediaMetadata += ", \"LogicalType\": \"" + logicalType + "\"";
-    if (contentProviderName != "")
-        mediaMetadata += ", \"ContentProviderName\": \"" + contentProviderName + "\"";
-    if (territories != "")
-        mediaMetadata += ", \"Territories\": \"" + territories + "\"";
-                            
-    mediaMetadata +=
-        string("}")
-    ;
-    */
-    
     string expectedContentType = (video ? "video" : "audio");
     string field = "ContentType";
     if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
@@ -4049,8 +4017,9 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
     {
         parametersRoot[field] = expectedContentType;
     }
+    */
     
-    field = "FileFormat";
+    string field = "FileFormat";
     if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
     {
         string fileFormatSpecifiedByUser = parametersRoot.get(field, "XXX").asString();

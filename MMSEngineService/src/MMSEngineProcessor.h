@@ -88,16 +88,18 @@ private:
         Json::Value parametersRoot,
         vector<pair<int64_t,Validator::DependencyType>>& dependencies);
     
+    /*
     string generateImageMetadataToIngest(
         int64_t ingestionJobKey,
         bool mjpeg,
         string fileFormat,
         Json::Value parametersRoot
     );
+    */
 
     string generateMediaMetadataToIngest(
         int64_t ingestionJobKey,
-        bool video,
+        // bool video,
         string fileFormat,
         Json::Value parametersRoot);
 

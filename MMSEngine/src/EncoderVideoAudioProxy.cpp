@@ -3538,7 +3538,7 @@ int EncoderVideoAudioProxy::getEncodingProgress(int64_t encodingJobKey)
                         _logger->info(__FILEREF__ + "Retrieving encodingProgress"
                             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
-                            + "encodingProgress: " + to_string(encodingProgress)
+                            + ", encodingProgress: " + to_string(encodingProgress)
                                 );                                        
                     }
                     else
