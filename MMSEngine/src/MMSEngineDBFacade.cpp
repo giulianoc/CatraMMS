@@ -10869,7 +10869,8 @@ string MMSEngineDBFacade::nextRelativePathToBeUsed (
 
 pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
         shared_ptr<Workspace> workspace,
-        int64_t ingestionJobKey,        
+        int64_t ingestionJobKey,
+        bool ingestionRowToBeUpdatedAsSuccess,        
         MMSEngineDBFacade::ContentType contentType,
         Json::Value parametersRoot,
         string relativePath,
@@ -11369,32 +11370,37 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             //  2. this ingestion will generate multiple files (i.e. Periodical-Frames task)
             IngestionStatus newIngestionStatus = IngestionStatus::End_TaskSuccess;
             
-            lastSQLCommand = 
-                "update MMS_IngestionJob set status = ?, endProcessing = NOW(), processorMMS = NULL where ingestionJobKey = ?";
-
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(newIngestionStatus));
-            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
-
-            int rowsUpdated = preparedStatement->executeUpdate();
-            if (rowsUpdated != 1)
+            if (ingestionRowToBeUpdatedAsSuccess)
             {
-                string errorMessage = __FILEREF__ + "no update was done"
-                        + ", newIngestionStatus: " + toString(newIngestionStatus)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", rowsUpdated: " + to_string(rowsUpdated)
-                        + ", lastSQLCommand: " + lastSQLCommand
-                ;
-                _logger->error(errorMessage);
+                lastSQLCommand = 
+                    "update MMS_IngestionJob set status = ?, endProcessing = NOW(), processorMMS = NULL where ingestionJobKey = ?";
 
-                throw runtime_error(errorMessage);                    
+                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                int queryParameterIndex = 1;
+                preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(newIngestionStatus));
+                preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+
+                int rowsUpdated = preparedStatement->executeUpdate();
+                if (rowsUpdated != 1)
+                {
+                    string errorMessage = __FILEREF__ + "no update was done"
+                            + ", newIngestionStatus: " + toString(newIngestionStatus)
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", rowsUpdated: " + to_string(rowsUpdated)
+                            + ", lastSQLCommand: " + lastSQLCommand
+                    ;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);                    
+                }
+
+                _logger->info(__FILEREF__ + "Update IngestionJobs"
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", newIngestionStatus: " + MMSEngineDBFacade::toString(newIngestionStatus)
+                );
+
+                manageIngestionJobStatusUpdate (ingestionJobKey, newIngestionStatus, conn);
             }
-
-            _logger->info(__FILEREF__ + "Update IngestionJobs"
-                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", newIngestionStatus: " + MMSEngineDBFacade::toString(newIngestionStatus)
-            );
 
             {
                 lastSQLCommand = 
@@ -11409,8 +11415,6 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
 
                 preparedStatement->executeUpdate();
             }
-
-            manageIngestionJobStatusUpdate (ingestionJobKey, newIngestionStatus, conn);
         }
 
         // conn->_sqlConnection->commit(); OR execute COMMIT

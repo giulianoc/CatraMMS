@@ -43,6 +43,7 @@ private:
     string                  _ingestionSourceFileName;
     string                  _mmsSourceFileName;
     string                  _forcedAvgFrameRate;
+    bool                    _ingestionRowToBeUpdatedAsSuccess;
 
 public:
     void setMMSSourceFileName(string mmsSourceFileName)
@@ -88,6 +89,15 @@ public:
     int64_t getIngestionJobKey()
     {
         return _ingestionJobKey;
+    }
+
+    void setIngestionRowToBeUpdatedAsSuccess(bool ingestionRowToBeUpdatedAsSuccess)
+    {
+        _ingestionRowToBeUpdatedAsSuccess   = ingestionRowToBeUpdatedAsSuccess;
+    }    
+    bool getIngestionRowToBeUpdatedAsSuccess()
+    {
+        return _ingestionRowToBeUpdatedAsSuccess;
     }
 
     void setWorkspace(shared_ptr<Workspace> workspace)

@@ -2236,6 +2236,7 @@ pair<int64_t,int64_t> EncoderVideoAudioProxy::processOverlayedImageOnVideo(strin
         mediaItemKeyAndPhysicalPathKey = _mmsEngineDBFacade->saveIngestedContentMetadata (
                     _encodingItem->_workspace,
                     _encodingItem->_ingestionJobKey,
+                    true, // ingestionRowToBeUpdatedAsSuccess
                     contentType,
                     _encodingItem->_overlayImageOnVideoData->_overlayParametersRoot,
                     relativePathToBeUsed,
@@ -3103,6 +3104,7 @@ pair<int64_t,int64_t> EncoderVideoAudioProxy::processOverlayedTextOnVideo(string
         mediaItemKeyAndPhysicalPathKey = _mmsEngineDBFacade->saveIngestedContentMetadata (
                     _encodingItem->_workspace,
                     _encodingItem->_ingestionJobKey,
+                    true, // ingestionRowToBeUpdatedAsSuccess
                     contentType,
                     _encodingItem->_overlayTextOnVideoData->_overlayTextParametersRoot,
                     relativePathToBeUsed,

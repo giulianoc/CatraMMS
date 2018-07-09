@@ -915,6 +915,7 @@ public:
     pair<int64_t,int64_t> saveIngestedContentMetadata(
         shared_ptr<Workspace> workspace,
         int64_t ingestionJobKey,
+        bool ingestionRowToBeUpdatedAsSuccess,
         MMSEngineDBFacade::ContentType contentType,
         Json::Value parametersRoot,
         string relativePath,
