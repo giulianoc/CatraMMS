@@ -2734,7 +2734,7 @@ void MMSEngineProcessor::generateAndIngestSlideshow(
 
             // to manage a ffmpeg bug generating a corrupted/wrong avgFrameRate, we will
             // force the slideshow file to have the avgFrameRate as specified in the parameter
-            localAssetIngestionEvent->setForcedAvgFrameRate(to_string(outputFrameRate));            
+            localAssetIngestionEvent->setForcedAvgFrameRate(to_string(outputFrameRate) + "/1");            
 
             localAssetIngestionEvent->setMetadataContent(mediaMetaDataContent);
 
