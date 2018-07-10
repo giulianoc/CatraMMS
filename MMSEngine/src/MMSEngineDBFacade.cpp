@@ -10985,7 +10985,11 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
 
             field = "UserData";
             if (isMetadataPresent(parametersRoot, field))
-                userData = parametersRoot.get(field, "").asString();
+            {
+                Json::StreamWriterBuilder wbuilder;
+
+                userData = Json::writeString(wbuilder, parametersRoot[field]);                        
+            }
 
             field = "Keywords";
             if (isMetadataPresent(parametersRoot, field))
