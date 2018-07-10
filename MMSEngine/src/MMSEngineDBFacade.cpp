@@ -5673,7 +5673,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
         Json::Value mediaItemsRoot(Json::arrayValue);
         {
             lastSQLCommand = 
-                string("select mediaItemKey, title, ingester, keywords, contentProviderKey, "
+                string("select mediaItemKey, title, ingester, keywords, userData, contentProviderKey, "
                     "DATE_FORMAT(convert_tz(ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate, "
                     "DATE_FORMAT(convert_tz(startPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as startPublishing, "
                     "DATE_FORMAT(convert_tz(endPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endPublishing, "
@@ -5720,6 +5720,11 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                 else
                     mediaItemRoot[field] = static_cast<string>(resultSet->getString("keywords"));
 
+                field = "userData";
+                if (resultSet->isNull("userData"))
+                    mediaItemRoot[field] = Json::nullValue;
+                else
+                    mediaItemRoot[field] = static_cast<string>(resultSet->getString("userData"));
 
                 field = "ingestionDate";
                 mediaItemRoot[field] = static_cast<string>(resultSet->getString("ingestionDate"));
@@ -10964,6 +10969,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
         {
             string title = "";
             string ingester = "";
+            string userData = "";
             string keywords = "";
             string deliveryFileName = "";
             string sContentType;
@@ -10976,6 +10982,10 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             field = "Ingester";
             if (isMetadataPresent(parametersRoot, field))
                 ingester = parametersRoot.get(field, "").asString();
+
+            field = "UserData";
+            if (isMetadataPresent(parametersRoot, field))
+                userData = parametersRoot.get(field, "").asString();
 
             field = "Keywords";
             if (isMetadataPresent(parametersRoot, field))
@@ -11085,7 +11095,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             }
             
             lastSQLCommand = 
-                "insert into MMS_MediaItem (mediaItemKey, workspaceKey, contentProviderKey, title, ingester, keywords, " 
+                "insert into MMS_MediaItem (mediaItemKey, workspaceKey, contentProviderKey, title, ingester, keywords, userData, " 
                 "deliveryFileName, ingestionJobKey, ingestionDate, contentType, startPublishing, endPublishing, retentionInMinutes, processorMMS) values ("
                 "NULL, ?, ?, ?, ?, ?, ?, ?, NULL, ?, "
                 "convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone), "
@@ -11105,6 +11115,10 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
             else
                 preparedStatement->setString(queryParameterIndex++, keywords);
+            if (userData == "")
+                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+            else
+                preparedStatement->setString(queryParameterIndex++, userData);
             if (deliveryFileName == "")
                 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
             else
@@ -13584,6 +13598,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "title                  VARCHAR (256) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
                     "ingester               VARCHAR (128) NULL,"
                     "keywords               VARCHAR (128) CHARACTER SET utf8 COLLATE utf8_bin NULL,"
+                    "userData               JSON,"
                     "deliveryFileName       VARCHAR (128) NULL,"
                     "ingestionJobKey        BIGINT UNSIGNED NOT NULL,"
                     "ingestionDate          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
