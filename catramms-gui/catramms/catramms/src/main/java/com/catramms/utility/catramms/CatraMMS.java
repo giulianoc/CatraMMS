@@ -1418,6 +1418,8 @@ public class CatraMMS {
             mediaItem.setIngester(mediaItemInfo.getString("ingester"));
             if (!mediaItemInfo.isNull("keywords"))
                 mediaItem.setKeywords(mediaItemInfo.getString("keywords"));
+            if (!mediaItemInfo.isNull("userData"))
+                mediaItem.setUserData(mediaItemInfo.getString("userData"));
             mediaItem.setProviderName(mediaItemInfo.getString("providerName"));
             mediaItem.setRetentionInMinutes(mediaItemInfo.getLong("retentionInMinutes"));
 
