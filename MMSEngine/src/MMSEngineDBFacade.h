@@ -737,11 +737,20 @@ public:
     shared_ptr<MySQLConnection> endIngestionJobs (
         shared_ptr<MySQLConnection> conn, bool commit);
 
+    /*
     void updateIngestionJob (
         int64_t ingestionJobKey,
         string processorMMS);
+    */
+    
+    void updateIngestionJob (
+        int64_t ingestionJobKey,
+        IngestionStatus newIngestionStatus,
+        string errorMessage,
+        string processorMMS);
 
     void updateIngestionJob (
+        shared_ptr<MySQLConnection> conn,
         int64_t ingestionJobKey,
         IngestionStatus newIngestionStatus,
         string errorMessage,
@@ -757,13 +766,15 @@ public:
         string processorMMS);
     */
     
+    /*
     void updateIngestionJob (
         int64_t ingestionJobKey,
         IngestionType ingestionType,
         IngestionStatus newIngestionStatus,
         string errorMessage,
         string processorMMS);
-
+    */
+    
     bool updateIngestionJobSourceDownloadingInProgress (
         int64_t ingestionJobKey,
         double downloadingPercentage);

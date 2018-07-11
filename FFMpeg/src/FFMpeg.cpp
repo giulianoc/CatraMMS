@@ -1977,13 +1977,13 @@ vector<string> FFMpeg::generateFramesToIngest(
         {
             if (extensionIndex != string::npos)
             {
-                imageBaseFileName = localImageFileName.substr(0, extensionIndex) + "_";
+                imageBaseFileName = localImageFileName.substr(0, extensionIndex);
 
                 localImageFileName.insert(extensionIndex, "_%04d");                
             }
             else
             {
-                imageBaseFileName = localImageFileName + "_";
+                imageBaseFileName = localImageFileName;
 
                 localImageFileName.append("_%04d").append(".jpg");      // default is jpg
             }
