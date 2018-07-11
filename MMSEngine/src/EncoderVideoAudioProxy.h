@@ -116,6 +116,7 @@ private:
     string                              _ffmpegEncodeURI;
     string                              _ffmpegOverlayImageOnVideoURI;
     string                              _ffmpegOverlayTextOnVideoURI;
+    string                              _ffmpegGenerateFramesURI;
     
     #ifdef __LOCALENCODER__
         shared_ptr<FFMpeg>              _ffmpeg;

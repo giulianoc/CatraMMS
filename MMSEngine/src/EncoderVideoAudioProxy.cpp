@@ -113,6 +113,10 @@ void EncoderVideoAudioProxy::init(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", ffmpeg->overlayTextOnVideoURI: " + _ffmpegOverlayTextOnVideoURI
     );
+    _ffmpegGenerateFramesURI = _configuration["ffmpeg"].get("generateFramesURI", "").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", ffmpeg->generateFramesURI: " + _ffmpegGenerateFramesURI
+    );
             
     #ifdef __LOCALENCODER__
         _ffmpegMaxCapacity      = 1;
@@ -3503,7 +3507,7 @@ void EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
                     + "://"
                     + _currentUsedFFMpegEncoderHost + ":"
                     + to_string(_ffmpegEncoderPort)
-                    + _ffmpegOverlayImageOnVideoURI
+                    + _ffmpegGenerateFramesURI
                     + "/" + to_string(_encodingItem->_encodingJobKey)
             ;
             string body;
