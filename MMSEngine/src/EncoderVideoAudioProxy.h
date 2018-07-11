@@ -21,6 +21,12 @@
 #include "MMSStorage.h"
 #include "EncodersLoadBalancer.h"
 #include "spdlog/spdlog.h"
+#include "catralibraries/MultiEventsSet.h"
+
+
+#define ENCODERVIDEOAUDIOPROXY                          "EncoderVideoAudioProxy"
+#define MMSENGINEPROCESSORNAME                          "MMSEngineProcessor"
+
 
 struct MaxConcurrentJobsReached: public exception {
     char const* what() const throw() 
@@ -66,6 +72,7 @@ public:
     void init(
         int proxyIdentifier, mutex* mtEncodingJobs,
         Json::Value configuration,
+        shared_ptr<MultiEventsSet> multiEventsSet,
         shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
         shared_ptr<MMSStorage> mmsStorage,
         shared_ptr<EncodersLoadBalancer> encodersLoadBalancer,
@@ -90,6 +97,7 @@ private:
     Json::Value                         _configuration;
     mutex*                              _mtEncodingJobs;
     EncodingJobStatus*                  _status;
+    shared_ptr<MultiEventsSet>          _multiEventsSet;
     shared_ptr<MMSEngineDBFacade>       _mmsEngineDBFacade;
     shared_ptr<MMSStorage>              _mmsStorage;
     shared_ptr<EncodersLoadBalancer>    _encodersLoadBalancer;
@@ -130,6 +138,9 @@ private:
     string overlayTextOnVideo_through_ffmpeg();
     pair<int64_t,int64_t> processOverlayedTextOnVideo(string stagingEncodedAssetPathName);    
     
+    void generateFrames();
+    void generateFrames_through_ffmpeg();
+    void processGeneratedFrames();
 
     bool getEncodingStatus(int64_t encodingJobKey);
 };

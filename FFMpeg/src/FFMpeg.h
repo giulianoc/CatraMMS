@@ -92,7 +92,7 @@ public:
 
     vector<string> generateFramesToIngest(
         int64_t ingestionJobKey,
-        string imageDirecotry,
+        string imageDirectory,
         string imageFileName,
         double startTimeInSeconds,
         int framesNumber,

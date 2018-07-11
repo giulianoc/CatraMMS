@@ -15,6 +15,7 @@
 
 ActiveEncodingsManager::ActiveEncodingsManager(
     Json::Value configuration,
+    shared_ptr<MultiEventsSet> multiEventsSet,
     shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
     shared_ptr<MMSStorage> mmsStorage,
     shared_ptr<spdlog::logger> logger) 
@@ -37,7 +38,7 @@ ActiveEncodingsManager::ActiveEncodingsManager(
         {
             encodingJob._encoderVideoAudioProxy.init(
                 lastProxyIdentifier++, &_mtEncodingJobs,
-                    _configuration, _mmsEngineDBFacade,
+                    _configuration, multiEventsSet, _mmsEngineDBFacade,
                     _mmsStorage, _encodersLoadBalancer,
                     #ifdef __LOCALENCODER__
                         &_runningEncodingsNumber,
@@ -49,7 +50,7 @@ ActiveEncodingsManager::ActiveEncodingsManager(
         {
             encodingJob._encoderVideoAudioProxy.init(
                 lastProxyIdentifier++, &_mtEncodingJobs,
-                    _configuration, _mmsEngineDBFacade,
+                    _configuration, multiEventsSet, _mmsEngineDBFacade,
                     _mmsStorage, _encodersLoadBalancer,
                     #ifdef __LOCALENCODER__
                         &_runningEncodingsNumber,
@@ -61,7 +62,7 @@ ActiveEncodingsManager::ActiveEncodingsManager(
         {
             encodingJob._encoderVideoAudioProxy.init(
                 lastProxyIdentifier++, &_mtEncodingJobs,
-                    _configuration, _mmsEngineDBFacade,
+                    _configuration, multiEventsSet, _mmsEngineDBFacade,
                     _mmsStorage, _encodersLoadBalancer,
                     #ifdef __LOCALENCODER__
                         &_runningEncodingsNumber,

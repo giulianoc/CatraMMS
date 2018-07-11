@@ -229,6 +229,40 @@ void MMSEngineProcessor::operator ()()
                 );
             }
             break;
+            case MMSENGINE_EVENTTYPEIDENTIFIER_MULTILOCALASSETINGESTIONEVENT:	// 5
+            {
+                _logger->debug(__FILEREF__ + "1. Received MULTILOCALASSETINGESTIONEVENT"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                );
+
+                shared_ptr<MultiLocalAssetIngestionEvent>    multiLocalAssetIngestionEvent = dynamic_pointer_cast<MultiLocalAssetIngestionEvent>(event);
+
+                try
+                {
+                    handleMultiLocalAssetIngestionEvent (multiLocalAssetIngestionEvent);
+                }
+                catch(runtime_error e)
+                {
+                    _logger->error(__FILEREF__ + "handleMultiLocalAssetIngestionEvent failed"
+                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", exception: " + e.what()
+                    );
+                }
+                catch(exception e)
+                {
+                    _logger->error(__FILEREF__ + "handleMultiLocalAssetIngestionEvent failed"
+                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", exception: " + e.what()
+                    );
+                }
+
+                _multiEventsSet->getEventsFactory()->releaseEvent<MultiLocalAssetIngestionEvent>(multiLocalAssetIngestionEvent);
+
+                _logger->debug(__FILEREF__ + "2. Received MULTILOCALASSETINGESTIONEVENT"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                );
+            }
+            break;
             default:
                 throw runtime_error(string("Event type identifier not managed")
                         + to_string(event->getEventKey().first));
@@ -2145,6 +2179,268 @@ void MMSEngineProcessor::removeContent(
     }
 }
 
+void MMSEngineProcessor::handleMultiLocalAssetIngestionEvent (
+    shared_ptr<MultiLocalAssetIngestionEvent> multiLocalAssetIngestionEvent)
+{
+    
+    string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
+            multiLocalAssetIngestionEvent->getWorkspace());
+    vector<string> generatedFramesFileNames;
+    
+    try
+    {
+        // get files from file system
+    
+        
+        {
+            string imageBaseFileName = to_string(multiLocalAssetIngestionEvent->getIngestionJobKey()) + "_";
+
+            FileIO::DirectoryEntryType_t detDirectoryEntryType;
+            shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (workspaceIngestionRepository + "/");
+
+            bool scanDirectoryFinished = false;
+            while (!scanDirectoryFinished)
+            {
+                string directoryEntry;
+                try
+                {
+                    string directoryEntry = FileIO::readDirectory (directory,
+                        &detDirectoryEntryType);
+
+                    if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
+                        continue;
+
+                    if (directoryEntry.size() >= imageBaseFileName.size() && 0 == directoryEntry.compare(0, imageBaseFileName.size(), imageBaseFileName))
+                        generatedFramesFileNames.push_back(directoryEntry);
+                }
+                catch(DirectoryListFinished e)
+                {
+                    scanDirectoryFinished = true;
+                }
+                catch(runtime_error e)
+                {
+                    string errorMessage = __FILEREF__ + "ffmpeg: listing directory failed"
+                           + ", e.what(): " + e.what()
+                    ;
+                    _logger->error(errorMessage);
+
+                    throw e;
+                }
+                catch(exception e)
+                {
+                    string errorMessage = __FILEREF__ + "ffmpeg: listing directory failed"
+                           + ", e.what(): " + e.what()
+                    ;
+                    _logger->error(errorMessage);
+
+                    throw e;
+                }
+            }
+
+            FileIO::closeDirectory (directory);
+        }
+                
+        // we have one ingestion job row and many generatd frames to be ingested
+        // We want to update the ingestion row just once at the end in case of success
+        // or when an error happens.
+        // To do this we will add a field in the localAssetIngestionEvent structure (ingestionRowToBeUpdatedAsSuccess)
+        // and we will set it to false but the last frame that we will set to true
+        // In case of error, handleLocalAssetIngestionEvent will update ingestion row
+        // and we will not call anymore handleLocalAssetIngestionEvent for the next frames
+        // When I say 'update the ingestion row', it's not just the update but it is also
+        // manageIngestionJobStatusUpdate
+        bool generatedFrameIngestionFailed = false;
+        
+        for(vector<string>::iterator it = generatedFramesFileNames.begin(); 
+                it != generatedFramesFileNames.end(); ++it) 
+        {
+            string generatedFrameFileName = *it;
+
+            if (generatedFrameIngestionFailed)
+            {
+                string workspaceIngestionBinaryPathName = workspaceIngestionRepository 
+                        + "/"
+                        + generatedFrameFileName
+                        ;
+                
+                _logger->info(__FILEREF__ + "Remove file"
+                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
+                    + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
+                );
+                FileIO::remove(workspaceIngestionBinaryPathName);
+            }
+            else
+            {
+                _logger->info(__FILEREF__ + "Generated Frame to ingest"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
+                    + ", generatedFrameFileName: " + generatedFrameFileName
+                    // + ", textToBeReplaced: " + textToBeReplaced
+                    // + ", textToReplace: " + textToReplace
+                );
+
+                string fileFormat;
+                size_t extensionIndex = generatedFrameFileName.find_last_of(".");
+                if (extensionIndex == string::npos)
+                {
+                    string errorMessage = __FILEREF__ + "No fileFormat (extension of the file) found in generatedFileName"
+                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                            + ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
+                            + ", generatedFrameFileName: " + generatedFrameFileName
+                    ;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+                fileFormat = generatedFrameFileName.substr(extensionIndex + 1);
+
+    //            if (mmsSourceFileName.find(textToBeReplaced) != string::npos)
+    //                mmsSourceFileName.replace(mmsSourceFileName.find(textToBeReplaced), textToBeReplaced.length(), textToReplace);
+
+                _logger->info(__FILEREF__ + "Generated Frame to ingest"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
+                    + ", new generatedFrameFileName: " + generatedFrameFileName
+                    + ", fileFormat: " + fileFormat
+                );
+
+                string imageMetaDataContent = generateMediaMetadataToIngest(
+                        multiLocalAssetIngestionEvent->getIngestionJobKey(),
+                        // mjpeg,
+                        fileFormat,
+                        multiLocalAssetIngestionEvent->getParametersRoot()
+                );
+
+                {
+                    // shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
+                    //        ->getFreeEvent<LocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
+                    shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent 
+                            = make_shared<LocalAssetIngestionEvent>();
+
+                    localAssetIngestionEvent->setSource(MMSENGINEPROCESSORNAME);
+                    localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
+                    localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
+
+                    localAssetIngestionEvent->setIngestionJobKey(multiLocalAssetIngestionEvent->getIngestionJobKey());
+                    localAssetIngestionEvent->setIngestionSourceFileName(generatedFrameFileName);
+                    localAssetIngestionEvent->setMMSSourceFileName(generatedFrameFileName);
+                    localAssetIngestionEvent->setWorkspace(multiLocalAssetIngestionEvent->getWorkspace());
+                    localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::AddContent);
+                    localAssetIngestionEvent->setIngestionRowToBeUpdatedAsSuccess(
+                        it + 1 == generatedFramesFileNames.end() ? true : false);
+
+                    localAssetIngestionEvent->setMetadataContent(imageMetaDataContent);
+
+                    try
+                    {
+                        handleLocalAssetIngestionEvent (localAssetIngestionEvent);
+                    }
+                    catch(runtime_error e)
+                    {
+                        generatedFrameIngestionFailed = true;
+
+                        _logger->error(__FILEREF__ + "handleLocalAssetIngestionEvent failed"
+                            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                            + ", exception: " + e.what()
+                        );
+                    }
+                    catch(exception e)
+                    {
+                        generatedFrameIngestionFailed = true;
+
+                        _logger->error(__FILEREF__ + "handleLocalAssetIngestionEvent failed"
+                            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                            + ", exception: " + e.what()
+                        );
+                    }
+
+//                    shared_ptr<Event2>    event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
+//                    _multiEventsSet->addEvent(event);
+//
+//                    _logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
+//                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
+//                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+//                        + ", getEventKey().first: " + to_string(event->getEventKey().first)
+//                        + ", getEventKey().second: " + to_string(event->getEventKey().second));
+                }
+            }
+        }
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "handleMultiLocalAssetIngestionEvent failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
+            + ", e.what(): " + e.what()
+        );
+        
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+        _mmsEngineDBFacade->updateIngestionJob (multiLocalAssetIngestionEvent->getIngestionJobKey(),
+            MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+            e.what(), "" //ProcessorMMS
+        );
+
+        bool exceptionInCaseOfError = false;
+        
+        for(vector<string>::iterator it = generatedFramesFileNames.begin(); 
+                it != generatedFramesFileNames.end(); ++it) 
+        {
+            string workspaceIngestionBinaryPathName = workspaceIngestionRepository + "/" + *it;
+            
+            _logger->info(__FILEREF__ + "Remove file"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                + ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
+                + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
+            );
+            FileIO::remove(workspaceIngestionBinaryPathName, exceptionInCaseOfError);
+        }
+        
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "handleMultiLocalAssetIngestionEvent failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
+        );
+        
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+        _mmsEngineDBFacade->updateIngestionJob (multiLocalAssetIngestionEvent->getIngestionJobKey(),
+            MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+            e.what(), "" //ProcessorMMS
+        );
+
+        bool exceptionInCaseOfError = false;
+        
+        for(vector<string>::iterator it = generatedFramesFileNames.begin(); 
+                it != generatedFramesFileNames.end(); ++it) 
+        {
+            string workspaceIngestionBinaryPathName = workspaceIngestionRepository + "/" + *it;
+            
+            _logger->info(__FILEREF__ + "Remove file"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                + ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
+                + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
+            );
+            FileIO::remove(workspaceIngestionBinaryPathName, exceptionInCaseOfError);
+        }
+        
+        throw e;
+    }
+    
+}
+
 void MMSEngineProcessor::generateAndIngestFrames(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
@@ -2168,6 +2464,29 @@ void MMSEngineProcessor::generateAndIngestFrames(
             throw runtime_error(errorMessage);
         }
         
+        int periodInSeconds;
+        double startTimeInSeconds;
+        int maxFramesNumber;
+        string videoFilter;
+        bool mjpeg;
+        int imageWidth;
+        int imageHeight;
+        string imageFileName;
+        int64_t sourcePhysicalPathKey;
+        string sourcePhysicalPath;
+        fillGenerateFramesParameters(
+                workspace,
+                ingestionJobKey,
+                ingestionType,
+                parametersRoot,
+                dependencies,
+                
+                periodInSeconds, startTimeInSeconds,
+                maxFramesNumber, videoFilter,
+                mjpeg, imageWidth, imageHeight, imageFileName,
+                sourcePhysicalPathKey, sourcePhysicalPath);
+        
+        /*
         int periodInSeconds = -1;
         if (ingestionType == MMSEngineDBFacade::IngestionType::Frame)
         {
@@ -2298,7 +2617,7 @@ void MMSEngineProcessor::generateAndIngestFrames(
                     = mediaItemKeyContentTypeAndAvgFrameRate;
             
             sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourcePhysicalPathKey);
-       }
+        }
 
         int64_t durationInMilliSeconds;
         int videoWidth;
@@ -2375,30 +2694,32 @@ void MMSEngineProcessor::generateAndIngestFrames(
         // string textToBeReplaced;
         // string textToReplace;
         {
-            localSourceFileName = to_string(ingestionJobKey) + /* "_source" + */ ".jpg";
-            /*
-            size_t extensionIndex = sourceFileName.find_last_of(".");
-            if (extensionIndex != string::npos)
-                temporaryFileName.append(sourceFileName.substr(extensionIndex));
-            */
+            localSourceFileName = to_string(ingestionJobKey) + ".jpg";
+            // size_t extensionIndex = sourceFileName.find_last_of(".");
+            // if (extensionIndex != string::npos)
+            //    temporaryFileName.append(sourceFileName.substr(extensionIndex))
 
             // textToBeReplaced = to_string(ingestionJobKey) + "_source";
             // textToReplace = sourceFileName.substr(0, extensionIndex);
         }
+        */
         
+        string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
+                workspace);
+
         FFMpeg ffmpeg (_configuration, _logger);
 
         vector<string> generatedFramesFileNames = ffmpeg.generateFramesToIngest(
                 ingestionJobKey,
                 workspaceIngestionRepository,
-                localSourceFileName,
+                imageFileName,
                 startTimeInSeconds,
                 maxFramesNumber,
                 videoFilter,
                 periodInSeconds,
                 mjpeg,
-                width == -1 ? videoWidth : width, 
-                height == -1 ? videoHeight : height,
+                imageWidth, 
+                imageHeight,
                 sourcePhysicalPath
         );
 
@@ -2554,6 +2875,354 @@ void MMSEngineProcessor::generateAndIngestFrames(
     catch(exception e)
     {
         _logger->error(__FILEREF__ + "generateAndIngestFrame failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+        );
+        
+        throw e;
+    }
+}
+
+void MMSEngineProcessor::manageGenerateFramesTask(
+        int64_t ingestionJobKey,
+        shared_ptr<Workspace> workspace,
+        MMSEngineDBFacade::IngestionType ingestionType,
+        Json::Value parametersRoot,
+        vector<pair<int64_t,Validator::DependencyType>>& dependencies
+)
+{
+    try
+    {
+        if (dependencies.size() != 1)
+        {
+            string errorMessage = __FILEREF__ + "Wrong number of dependencies"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", dependencies.size: " + to_string(dependencies.size());
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        MMSEngineDBFacade::EncodingPriority encodingPriority;
+        string field = "EncodingPriority";
+        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+            encodingPriority = 
+                    static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority);
+        }
+        else
+        {
+            encodingPriority =
+                MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
+        }
+
+        int periodInSeconds;
+        double startTimeInSeconds;
+        int maxFramesNumber;
+        string videoFilter;
+        bool mjpeg;
+        int imageWidth;
+        int imageHeight;
+        string imageFileName;
+        int64_t sourcePhysicalPathKey;
+        string sourcePhysicalPath;
+        fillGenerateFramesParameters(
+                workspace,
+                ingestionJobKey,
+                ingestionType,
+                parametersRoot,
+                dependencies,
+                
+                periodInSeconds, startTimeInSeconds,
+                maxFramesNumber, videoFilter,
+                mjpeg, imageWidth, imageHeight, imageFileName,
+                sourcePhysicalPathKey, sourcePhysicalPath);
+
+        string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
+                workspace);
+
+        _mmsEngineDBFacade->addEncoding_GenerateFramesJob (
+                ingestionJobKey, encodingPriority,
+                workspaceIngestionRepository, imageFileName, 
+                startTimeInSeconds, maxFramesNumber, 
+                videoFilter, periodInSeconds, 
+                mjpeg, imageWidth, imageHeight,
+                sourcePhysicalPathKey
+                );
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "manageOverlayTextOnVideoTask failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
+        );
+        
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "manageOverlayTextOnVideoTask failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+        );
+        
+        throw e;
+    }
+}
+
+void MMSEngineProcessor::fillGenerateFramesParameters(
+    shared_ptr<Workspace> workspace,
+    int64_t ingestionJobKey,
+    MMSEngineDBFacade::IngestionType ingestionType,
+    Json::Value parametersRoot,
+    vector<pair<int64_t,Validator::DependencyType>>& dependencies,
+        
+    int& periodInSeconds, double& startTimeInSeconds,
+    int& maxFramesNumber, string& videoFilter,
+    bool& mjpeg, int& imageWidth, int& imageHeight,
+    string& imageFileName,
+    int64_t& sourcePhysicalPathKey, string& sourcePhysicalPath
+)
+{
+    try
+    {
+        string field;
+        
+        periodInSeconds = -1;
+        if (ingestionType == MMSEngineDBFacade::IngestionType::Frame)
+        {
+        }
+        else if (ingestionType == MMSEngineDBFacade::IngestionType::PeriodicalFrames
+                || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByPeriodicalFrames)
+        {
+            field = "PeriodInSeconds";
+            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            periodInSeconds = parametersRoot.get(field, "XXX").asInt();
+        }
+        else // if (ingestionType == MMSEngineDBFacade::IngestionType::IFrames || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByIFrames)
+        {
+            
+        }
+            
+        startTimeInSeconds = 0;
+        if (ingestionType == MMSEngineDBFacade::IngestionType::Frame)
+        {
+            field = "InstantInSeconds";
+            if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            {
+                startTimeInSeconds = parametersRoot.get(field, "XXX").asDouble();
+            }
+        }
+        else if (ingestionType == MMSEngineDBFacade::IngestionType::PeriodicalFrames
+                || ingestionType == MMSEngineDBFacade::IngestionType::IFrames
+                || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByPeriodicalFrames
+                || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByIFrames)
+        {
+            field = "StartTimeInSeconds";
+            if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            {
+                startTimeInSeconds = parametersRoot.get(field, "XXX").asDouble();
+            }
+        }
+
+        maxFramesNumber = -1;
+        if (ingestionType == MMSEngineDBFacade::IngestionType::Frame)
+        {
+            maxFramesNumber = 1;
+        }
+        else if (ingestionType == MMSEngineDBFacade::IngestionType::PeriodicalFrames
+                || ingestionType == MMSEngineDBFacade::IngestionType::IFrames
+                || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByPeriodicalFrames
+                || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByIFrames)
+        {
+            field = "MaxFramesNumber";
+            if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            {
+                maxFramesNumber = parametersRoot.get(field, "XXX").asInt();
+            }
+        }
+
+        if (ingestionType == MMSEngineDBFacade::IngestionType::Frame)
+        {
+        }
+        else if (ingestionType == MMSEngineDBFacade::IngestionType::PeriodicalFrames)
+        {
+            videoFilter = "PeriodicFrame";
+        }
+        else if (ingestionType == MMSEngineDBFacade::IngestionType::IFrames)
+        {
+            videoFilter = "All-I-Frames";
+        }
+
+        if (ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByPeriodicalFrames
+                || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByIFrames)
+        {
+            mjpeg = true;
+        }
+        else
+        {
+            mjpeg = false;
+        }
+
+        int width = -1;
+        field = "Width";
+        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+            width = parametersRoot.get(field, "XXX").asInt();
+        }
+
+        int height = -1;
+        field = "Height";
+        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+            height = parametersRoot.get(field, "XXX").asInt();
+        }
+
+        int64_t sourceMediaItemKey;
+        // int64_t sourcePhysicalPathKey;
+        // string sourcePhysicalPath;
+        pair<int64_t,Validator::DependencyType>& keyAndDependencyType = dependencies.back();
+        if (keyAndDependencyType.second == Validator::DependencyType::MediaItemKey)
+        {
+            sourceMediaItemKey = keyAndDependencyType.first;
+
+            sourcePhysicalPathKey = -1;
+            int64_t encodingProfileKey = -1;
+            pair<int64_t,string> physicalPathKeyAndPhysicalPath 
+                    = _mmsStorage->getPhysicalPath(sourceMediaItemKey, encodingProfileKey);
+            
+            int64_t localPhysicalPathKey;
+            tie(localPhysicalPathKey,sourcePhysicalPath) = physicalPathKeyAndPhysicalPath;
+        }
+        else
+        {
+            sourcePhysicalPathKey = keyAndDependencyType.first;
+            
+            bool warningIfMissing = false;
+            pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyContentTypeAndAvgFrameRate =
+                _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+                    sourcePhysicalPathKey, warningIfMissing);
+    
+            MMSEngineDBFacade::ContentType localContentType;
+            tie(sourceMediaItemKey,localContentType)
+                    = mediaItemKeyContentTypeAndAvgFrameRate;
+            
+            sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourcePhysicalPathKey);
+       }
+
+        int64_t durationInMilliSeconds;
+        int videoWidth;
+        int videoHeight;
+        try
+        {
+            long bitRate;
+            string videoCodecName;
+            string videoProfile;
+            string videoAvgFrameRate;
+            long videoBitRate;
+            string audioCodecName;
+            long audioSampleRate;
+            int audioChannels;
+            long audioBitRate;
+        
+            tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
+                videoDetails = _mmsEngineDBFacade->getVideoDetails(sourceMediaItemKey, sourcePhysicalPathKey);
+            
+            tie(durationInMilliSeconds, bitRate,
+                videoCodecName, videoProfile, videoWidth, videoHeight, videoAvgFrameRate, videoBitRate,
+                audioCodecName, audioSampleRate, audioChannels, audioBitRate) = videoDetails;
+        }
+        catch(runtime_error e)
+        {
+            string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->getVideoDetails failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", e.what(): " + e.what()
+            ;
+
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        catch(exception e)
+        {
+            string errorMessage = __FILEREF__ + "_mmsEngineDBFacade->getVideoDetails failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", e.what(): " + e.what()
+            ;
+
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        imageWidth = width == -1 ? videoWidth : width;
+        imageHeight = height == -1 ? videoHeight : height;
+
+        if (durationInMilliSeconds < startTimeInSeconds * 1000)
+        {
+            string errorMessage = __FILEREF__ + "Frame was not generated because instantInSeconds is bigger than the video duration"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", video sourceMediaItemKey: " + to_string(sourceMediaItemKey)
+                    + ", startTimeInSeconds: " + to_string(startTimeInSeconds)
+                    + ", durationInMilliSeconds: " + to_string(durationInMilliSeconds)
+            ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        /*
+        string sourceFileName;
+        field = "SourceFileName";
+        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+            sourceFileName = parametersRoot.get(field, "XXX").asString();
+        }
+
+        string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
+                workspace);
+        */
+
+        // string textToBeReplaced;
+        // string textToReplace;
+        {
+            imageFileName = to_string(ingestionJobKey) + /* "_source" + */ ".jpg";
+            /*
+            size_t extensionIndex = sourceFileName.find_last_of(".");
+            if (extensionIndex != string::npos)
+                temporaryFileName.append(sourceFileName.substr(extensionIndex));
+            */
+
+            // textToBeReplaced = to_string(ingestionJobKey) + "_source";
+            // textToReplace = sourceFileName.substr(0, extensionIndex);
+        }    
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "fillGenerateFramesParameters failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
+        );
+        
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "fillGenerateFramesParameters failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );
@@ -3497,7 +4166,7 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
                     = mediaItemKeyContentTypeAndAvgFrameRate;
         }
 
-        _mmsEngineDBFacade->addOverlayImageOnVideoJob (ingestionJobKey,
+        _mmsEngineDBFacade->addEncoding_OverlayImageOnVideoJob (ingestionJobKey,
                 sourceMediaItemKey_1, sourcePhysicalPathKey_1,
                 sourceMediaItemKey_2, sourcePhysicalPathKey_2,
                 imagePosition_X_InPixel, imagePosition_Y_InPixel,
@@ -3655,7 +4324,7 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
                     = mediaItemKeyContentTypeAndAvgFrameRate;
         }
 
-        _mmsEngineDBFacade->addOverlayTextOnVideoJob (
+        _mmsEngineDBFacade->addEncoding_OverlayTextOnVideoJob (
                 ingestionJobKey, encodingPriority,
                 
                 sourceMediaItemKey, sourcePhysicalPathKey,

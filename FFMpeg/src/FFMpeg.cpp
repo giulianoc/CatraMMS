@@ -1927,7 +1927,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
 
 vector<string> FFMpeg::generateFramesToIngest(
         int64_t ingestionJobKey,
-        string imageDirecotry,
+        string imageDirectory,
         string imageFileName,
         double startTimeInSeconds,
         int framesNumber,
@@ -1940,7 +1940,7 @@ vector<string> FFMpeg::generateFramesToIngest(
 {
     _logger->info(__FILEREF__ + "generateFramesToIngest"
         + ", ingestionJobKey: " + to_string(ingestionJobKey)
-        + ", imageDirecotry: " + imageDirecotry
+        + ", imageDirectory: " + imageDirectory
         + ", imageFileName: " + imageFileName
         + ", startTimeInSeconds: " + to_string(startTimeInSeconds)
         + ", framesNumber: " + to_string(framesNumber)
@@ -1977,13 +1977,13 @@ vector<string> FFMpeg::generateFramesToIngest(
         {
             if (extensionIndex != string::npos)
             {
-                imageBaseFileName = localImageFileName.substr(0, extensionIndex);
+                imageBaseFileName = localImageFileName.substr(0, extensionIndex) + "_";
 
                 localImageFileName.insert(extensionIndex, "_%04d");                
             }
             else
             {
-                imageBaseFileName = localImageFileName;
+                imageBaseFileName = localImageFileName + "_";
 
                 localImageFileName.append("_%04d").append(".jpg");      // default is jpg
             }
@@ -2031,7 +2031,7 @@ vector<string> FFMpeg::generateFramesToIngest(
             + inputOptions
             + "-i " + mmsAssetPathName + " "
             + outputOptions
-            + imageDirecotry + "/" + localImageFileName + " "
+            + imageDirectory + "/" + localImageFileName + " "
             + "> " + outputFfmpegPathFileName + " "
             + "2>&1"
             ;
@@ -2097,7 +2097,7 @@ vector<string> FFMpeg::generateFramesToIngest(
         // get files from file system
     
         FileIO::DirectoryEntryType_t detDirectoryEntryType;
-        shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (imageDirecotry + "/");
+        shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (imageDirectory + "/");
 
         bool scanDirectoryFinished = false;
         while (!scanDirectoryFinished)

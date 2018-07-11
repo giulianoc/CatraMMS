@@ -190,7 +190,8 @@ public:
         EncodeVideoAudio    = 0,
         EncodeImage         = 1,
         OverlayImageOnVideo = 2,
-        OverlayTextOnVideo     = 3
+        OverlayTextOnVideo  = 3,
+        GenerateFrames      = 4
     };
     static const char* toString(const EncodingType& encodingType)
     {
@@ -204,6 +205,8 @@ public:
                 return "OverlayImageOnVideo";
             case EncodingType::OverlayTextOnVideo:
                 return "OverlayTextOnVideo";
+            case EncodingType::GenerateFrames:
+                return "GenerateFrames";
             default:
             throw runtime_error(string("Wrong EncodingType"));
         }
@@ -222,6 +225,8 @@ public:
             return EncodingType::OverlayImageOnVideo;
         else if (lowerCase == "overlaytextonvideo")
             return EncodingType::OverlayTextOnVideo;
+        else if (lowerCase == "generateframes")
+            return EncodingType::GenerateFrames;
         else
             throw runtime_error(string("Wrong EncodingType")
                     + ", encodingType: " + encodingType
@@ -318,6 +323,7 @@ public:
             string                                  _imageFileName;
             string                                  _imageRelativePath;
 
+            // MMS_IngestionJob -> metaDataContent
             Json::Value                             _overlayParametersRoot;
         };
         
@@ -327,12 +333,24 @@ public:
             string                                  _videoRelativePath;
             int64_t                                 _videoDurationInMilliSeconds;
 
+            // MMS_IngestionJob -> metaDataContent
             Json::Value                             _overlayTextParametersRoot;
+        };
+
+        struct GenerateFramesData {
+            unsigned long                           _mmsVideoPartitionNumber;
+            string                                  _videoFileName;
+            string                                  _videoRelativePath;
+            int64_t                                 _videoDurationInMilliSeconds;
+
+            // MMS_IngestionJob -> metaDataContent (you need it when the generated frames have to be ingested)
+            Json::Value                             _generateFramesParametersRoot;
         };
 
         shared_ptr<EncodeData>                      _encodeData;
         shared_ptr<OverlayImageOnVideoData>         _overlayImageOnVideoData;
-        shared_ptr<OverlayTextOnVideoData>             _overlayTextOnVideoData;
+        shared_ptr<OverlayTextOnVideoData>          _overlayTextOnVideoData;
+        shared_ptr<GenerateFramesData>              _generateFramesData;
     } ;
 
     enum class WorkspaceType {
@@ -874,14 +892,14 @@ public:
         int64_t sourcePhysicalPathKey,
         EncodingPriority encodingPriority);
 
-    int addOverlayImageOnVideoJob (
+    int addEncoding_OverlayImageOnVideoJob (
         int64_t ingestionJobKey,
         int64_t mediaItemKey_1, int64_t physicalPathKey_1,
         int64_t mediaItemKey_2, int64_t physicalPathKey_2,
         string imagePosition_X_InPixel, string imagePosition_Y_InPixel,
         EncodingPriority encodingPriority);
 
-    int addOverlayTextOnVideoJob (
+    int addEncoding_OverlayTextOnVideoJob (
         int64_t ingestionJobKey,
         EncodingPriority encodingPriority,
 
@@ -896,6 +914,15 @@ public:
         bool boxEnable,
         string boxColor,
         int boxPercentageOpacity);
+
+    int addEncoding_GenerateFramesJob (
+        int64_t ingestionJobKey,
+        EncodingPriority encodingPriority,
+        string imageDirectory, string imageFileName, 
+        double startTimeInSeconds, int maxFramesNumber, 
+        string videoFilter, int periodInSeconds, 
+        bool mjpeg, int imageWidth, int imageHeight,
+        int64_t sourceVideoPhysicalPathKey);
 
     int updateEncodingJob (
         int64_t encodingJobKey,

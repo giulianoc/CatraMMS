@@ -22,6 +22,7 @@
     #include <curlpp/Infos.hpp>
 #endif
 #include "catralibraries/ProcessUtility.h"
+#include "MultiLocalAssetIngestionEvent.h"
 #include "catralibraries/Convert.h"
 #include "Validator.h"
 #include "FFMpeg.h"
@@ -40,6 +41,7 @@ void EncoderVideoAudioProxy::init(
         int proxyIdentifier,
         mutex* mtEncodingJobs,
         Json::Value configuration,
+        shared_ptr<MultiEventsSet> multiEventsSet,
         shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
         shared_ptr<MMSStorage> mmsStorage,
         shared_ptr<EncodersLoadBalancer> encodersLoadBalancer,
@@ -56,6 +58,7 @@ void EncoderVideoAudioProxy::init(
     _logger                 = logger;
     _configuration          = configuration;
     
+    _multiEventsSet         = multiEventsSet;
     _mmsEngineDBFacade      = mmsEngineDBFacade;
     _mmsStorage             = mmsStorage;
     _encodersLoadBalancer   = encodersLoadBalancer;
@@ -156,6 +159,10 @@ void EncoderVideoAudioProxy::operator()()
         {
             stagingEncodedAssetPathName = overlayTextOnVideo();
         }
+        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::GenerateFrames)
+        {
+            generateFrames();
+        }
         else
         {
             string errorMessage = string("Wrong EncodingType")
@@ -184,6 +191,12 @@ void EncoderVideoAudioProxy::operator()()
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::OverlayTextOnVideo)
         {
             _logger->warn(__FILEREF__ + "overlayTextOnVideo: " + e.what()
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            );
+        }
+        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::GenerateFrames)
+        {
+            _logger->warn(__FILEREF__ + "generateFrames: " + e.what()
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             );
         }
@@ -237,6 +250,12 @@ void EncoderVideoAudioProxy::operator()()
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::OverlayTextOnVideo)
         {
             _logger->error(__FILEREF__ + "overlayTextOnVideo: " + e.what()
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            );
+        }
+        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::GenerateFrames)
+        {
+            _logger->error(__FILEREF__ + "generateFrames: " + e.what()
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             );
         }
@@ -302,6 +321,12 @@ void EncoderVideoAudioProxy::operator()()
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             );
         }
+        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::GenerateFrames)
+        {
+            _logger->error(__FILEREF__ + "generateFrames: " + e.what()
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            );
+        }
 
         _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -363,6 +388,12 @@ void EncoderVideoAudioProxy::operator()()
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::OverlayTextOnVideo)
         {
             _logger->error(__FILEREF__ + "overlayTextOnVideo: " + e.what()
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            );
+        }
+        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::GenerateFrames)
+        {
+            _logger->error(__FILEREF__ + "generateFrames: " + e.what()
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             );
         }
@@ -439,6 +470,10 @@ void EncoderVideoAudioProxy::operator()()
             mediaItemKey = mediaItemKeyAndPhysicalPathKey.first;
             encodedPhysicalPathKey = mediaItemKeyAndPhysicalPathKey.second;
         }
+        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::GenerateFrames)
+        {
+            processGeneratedFrames();            
+        }
         else
         {
             string errorMessage = string("Wrong EncodingType")
@@ -467,6 +502,12 @@ void EncoderVideoAudioProxy::operator()()
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::OverlayTextOnVideo)
         {
             _logger->error(__FILEREF__ + "processOverlayedTextOnVideo failed: " + e.what()
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            );
+        }
+        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::GenerateFrames)
+        {
+            _logger->error(__FILEREF__ + "processGeneratedFrames failed: " + e.what()
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             );
         }
@@ -556,6 +597,12 @@ void EncoderVideoAudioProxy::operator()()
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             );
         }
+        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::GenerateFrames)
+        {
+            _logger->error(__FILEREF__ + "processGeneratedFrames failed: " + e.what()
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            );
+        }
 
         if (FileIO::fileExisting(stagingEncodedAssetPathName)
                 || FileIO::directoryExisting(stagingEncodedAssetPathName))
@@ -623,44 +670,50 @@ void EncoderVideoAudioProxy::operator()()
         return;
     }
 
-    try
+    if (_encodingItem->_encodingType != MMSEngineDBFacade::EncodingType::GenerateFrames)
     {
-        _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob NoError"
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
-        );
-
-        _mmsEngineDBFacade->updateEncodingJob (
-            _encodingItem->_encodingJobKey, 
-            MMSEngineDBFacade::EncodingError::NoError,
-            mediaItemKey, encodedPhysicalPathKey,
-            _encodingItem->_ingestionJobKey);
-    }
-    catch(exception e)
-    {
-        _logger->error(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob failed: " + e.what()
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-        );
-
+        // the updateEncodingJob in case of GenerateFrames it is done into the processGeneratedFrames
+        //  because it generates a log of output media items and the manage of updateEncodingJob is different
+        
+        try
         {
-            lock_guard<mutex> locker(*_mtEncodingJobs);
+            _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob NoError"
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+                + ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+                + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            );
 
-            *_status = EncodingJobStatus::Free;
+            _mmsEngineDBFacade->updateEncodingJob (
+                _encodingItem->_encodingJobKey, 
+                MMSEngineDBFacade::EncodingError::NoError,
+                mediaItemKey, encodedPhysicalPathKey,
+                _encodingItem->_ingestionJobKey);
         }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob failed: " + e.what()
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            );
 
-        _logger->info(__FILEREF__ + "EncoderVideoAudioProxy finished"
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
-        );
+            {
+                lock_guard<mutex> locker(*_mtEncodingJobs);
 
-        // throw e;
-        return;
+                *_status = EncodingJobStatus::Free;
+            }
+
+            _logger->info(__FILEREF__ + "EncoderVideoAudioProxy finished"
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+                + ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+                + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            );
+
+            // throw e;
+            return;
+        }
     }
     
     {
@@ -3317,6 +3370,494 @@ pair<int64_t,int64_t> EncoderVideoAudioProxy::processOverlayedTextOnVideo(string
     
     return mediaItemKeyAndPhysicalPathKey;
 }
+
+void EncoderVideoAudioProxy::generateFrames()
+{    
+    /*
+    _logger->info(__FILEREF__ + "Creating encoderVideoAudioProxy thread"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+        + ", _encodingItem->_encodingProfileTechnology" + to_string(static_cast<int>(_encodingItem->_encodingProfileTechnology))
+        + ", _mp4Encoder: " + _mp4Encoder
+    );
+
+    if (
+        (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MP4 &&
+            _mp4Encoder == "FFMPEG") ||
+        (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MPEG2_TS &&
+            _mpeg2TSEncoder == "FFMPEG") ||
+        _encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::WEBM ||
+        (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::Adobe &&
+            _mpeg2TSEncoder == "FFMPEG")
+    )
+    {
+    */
+        generateFrames_through_ffmpeg();
+    /*
+    }
+    else if (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::WindowsMedia)
+    {
+        string errorMessage = __FILEREF__ + "No Encoder available to encode WindowsMedia technology"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                ;
+        _logger->error(errorMessage);
+        
+        throw runtime_error(errorMessage);
+    }
+    else
+    {
+        string errorMessage = __FILEREF__ + "Unknown technology and no Encoder available to encode"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                ;
+        _logger->error(errorMessage);
+        
+        throw runtime_error(errorMessage);
+    }
+    */    
+}
+
+void EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
+{
+    
+    string imageDirectory;
+    string imageFileName;
+    double startTimeInSeconds;
+    int maxFramesNumber;  
+    string videoFilter;
+    int periodInSeconds;
+    bool mjpeg;
+    int imageWidth;
+    int imageHeight;
+    int64_t ingestionJobKey;
+
+    // _encodingItem->_parametersRoot filled in MMSEngineDBFacade::addOverlayImageOnVideoJob
+    {
+        string field = "imageDirectory";
+        imageDirectory = _encodingItem->_parametersRoot.get(field, "XXX").asString();
+
+        field = "imageFileName";
+        imageFileName = _encodingItem->_parametersRoot.get(field, "XXX").asString();
+
+        field = "startTimeInSeconds";
+        startTimeInSeconds = _encodingItem->_parametersRoot.get(field, 0).asDouble();
+
+        field = "maxFramesNumber";
+        maxFramesNumber = _encodingItem->_parametersRoot.get(field, 0).asInt();
+
+        field = "videoFilter";
+        videoFilter = _encodingItem->_parametersRoot.get(field, "XXX").asString();
+
+        field = "periodInSeconds";
+        periodInSeconds = _encodingItem->_parametersRoot.get(field, 0).asInt();
+
+        field = "mjpeg";
+        mjpeg = _encodingItem->_parametersRoot.get(field, 0).asBool();
+
+        field = "imageWidth";
+        imageWidth = _encodingItem->_parametersRoot.get(field, 0).asInt();
+
+        field = "imageHeight";
+        imageHeight = _encodingItem->_parametersRoot.get(field, 0).asInt();
+
+        field = "ingestionJobKey";
+        ingestionJobKey = _encodingItem->_parametersRoot.get(field, 0).asInt64();
+    }
+    
+    string mmsSourceVideoAssetPathName;
+
+    
+    #ifdef __LOCALENCODER__
+        if (*_pRunningEncodingsNumber > _ffmpegMaxCapacity)
+        {
+            _logger->info("Max ffmpeg encoder capacity is reached"
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            );
+
+            throw MaxConcurrentJobsReached();
+        }
+    #endif
+
+    // stagingEncodedAssetPathName preparation
+    {        
+        mmsSourceVideoAssetPathName = _mmsStorage->getMMSAssetPathName(
+            _encodingItem->_generateFramesData->_mmsVideoPartitionNumber,
+            _encodingItem->_workspace->_directoryName,
+            _encodingItem->_generateFramesData->_videoRelativePath,
+            _encodingItem->_generateFramesData->_videoFileName);
+    }
+
+    #ifdef __LOCALENCODER__
+        (*_pRunningEncodingsNumber)++;
+
+    #else
+        string ffmpegEncoderURL;
+        ostringstream response;
+        try
+        {
+            _currentUsedFFMpegEncoderHost = _encodersLoadBalancer->getEncoderHost(_encodingItem->_workspace);
+            _logger->info(__FILEREF__ + "Configuration item"
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                + ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
+            );
+            ffmpegEncoderURL = 
+                    _ffmpegEncoderProtocol
+                    + "://"
+                    + _currentUsedFFMpegEncoderHost + ":"
+                    + to_string(_ffmpegEncoderPort)
+                    + _ffmpegOverlayImageOnVideoURI
+                    + "/" + to_string(_encodingItem->_encodingJobKey)
+            ;
+            string body;
+            {
+                Json::Value generateFramesMedatada;
+                
+                generateFramesMedatada["imageDirectory"] = imageDirectory;
+                generateFramesMedatada["imageFileName"] = imageFileName;
+                generateFramesMedatada["startTimeInSeconds"] = startTimeInSeconds;
+                generateFramesMedatada["maxFramesNumber"] = maxFramesNumber;
+                generateFramesMedatada["videoFilter"] = videoFilter;
+                generateFramesMedatada["periodInSeconds"] = periodInSeconds;
+                generateFramesMedatada["mjpeg"] = mjpeg;
+                generateFramesMedatada["imageWidth"] = imageWidth;
+                generateFramesMedatada["imageHeight"] = imageHeight;
+                generateFramesMedatada["ingestionJobKey"] = (Json::LargestUInt) (_encodingItem->_ingestionJobKey);
+                generateFramesMedatada["mmsSourceVideoAssetPathName"] = mmsSourceVideoAssetPathName;
+
+                {
+                    Json::StreamWriterBuilder wbuilder;
+                    
+                    body = Json::writeString(wbuilder, generateFramesMedatada);
+                }
+            }
+            
+            list<string> header;
+
+            header.push_back("Content-Type: application/json");
+            {
+                string userPasswordEncoded = Convert::base64_encode(_ffmpegEncoderUser + ":" + _ffmpegEncoderPassword);
+                string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
+
+                header.push_back(basicAuthorization);
+            }
+            
+            curlpp::Cleanup cleaner;
+            curlpp::Easy request;
+
+            // Setting the URL to retrive.
+            request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
+
+            if (_ffmpegEncoderProtocol == "https")
+            {
+                /*
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;                                          
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;                                  
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;                              
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;                                    
+                    typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;                           
+                    typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;                                         
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;                                          
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;                                          
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;                                 
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;                                    
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;                          
+                    typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;                                    
+                 */
+                                                                                                  
+                
+                /*
+                // cert is stored PEM coded in file... 
+                // since PEM is default, we needn't set it for PEM 
+                // curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
+                curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
+                equest.setOpt(sslCertType);
+
+                // set the cert for client authentication
+                // "testcert.pem"
+                // curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
+                curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
+                request.setOpt(sslCert);
+                 */
+
+                /*
+                // sorry, for engine we must set the passphrase
+                //   (if the key has one...)
+                // const char *pPassphrase = NULL;
+                if(pPassphrase)
+                  curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
+
+                // if we use a key stored in a crypto engine,
+                //   we must set the key type to "ENG"
+                // pKeyType  = "PEM";
+                curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
+
+                // set the private key (file or ID in engine)
+                // pKeyName  = "testkey.pem";
+                curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
+
+                // set the file with the certs vaildating the server
+                // *pCACertFile = "cacert.pem";
+                curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
+                */
+                
+                // disconnect if we can't validate server's cert
+                bool bSslVerifyPeer = false;
+                curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
+                request.setOpt(sslVerifyPeer);
+                
+                curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
+                request.setOpt(sslVerifyHost);
+                
+                // request.setOpt(new curlpp::options::SslEngineDefault());                                              
+
+            }
+            request.setOpt(new curlpp::options::HttpHeader(header));
+            request.setOpt(new curlpp::options::PostFields(body));
+            request.setOpt(new curlpp::options::PostFieldSize(body.length()));
+
+            request.setOpt(new curlpp::options::WriteStream(&response));
+
+            chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
+
+            _logger->info(__FILEREF__ + "Generating Frames"
+                    + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                    + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                    + ", ffmpegEncoderURL: " + ffmpegEncoderURL
+                    + ", body: " + body
+            );
+            request.perform();
+
+            string sResponse = response.str();
+            // LF and CR create problems to the json parser...
+            while (sResponse.back() == 10 || sResponse.back() == 13)
+                sResponse.pop_back();
+
+            Json::Value generateFramesContentResponse;
+            try
+            {                
+                Json::CharReaderBuilder builder;
+                Json::CharReader* reader = builder.newCharReader();
+                string errors;
+
+                bool parsingSuccessful = reader->parse(sResponse.c_str(),
+                        sResponse.c_str() + sResponse.size(), 
+                        &generateFramesContentResponse, &errors);
+                delete reader;
+
+                if (!parsingSuccessful)
+                {
+                    string errorMessage = __FILEREF__ + "failed to parse the response body"
+                            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                            + ", errors: " + errors
+                            + ", sResponse: " + sResponse
+                            ;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }               
+            }
+            catch(runtime_error e)
+            {
+                string errorMessage = string("response Body json is not well format")
+                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                        + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                        + ", sResponse: " + sResponse
+                        + ", e.what(): " + e.what()
+                        ;
+                _logger->error(__FILEREF__ + errorMessage);
+
+                throw e;
+            }
+            catch(...)
+            {
+                string errorMessage = string("response Body json is not well format")
+                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                        + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                        + ", sResponse: " + sResponse
+                        ;
+                _logger->error(__FILEREF__ + errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+
+            {
+                // same string declared in FFMPEGEncoder.cpp
+                string noEncodingAvailableMessage("__NO-ENCODING-AVAILABLE__");
+            
+                string field = "error";
+                if (Validator::isMetadataPresent(generateFramesContentResponse, field))
+                {
+                    string error = generateFramesContentResponse.get(field, "XXX").asString();
+                    
+                    if (error.find(noEncodingAvailableMessage) != string::npos)
+                    {
+                        string errorMessage = string("No Encodings available")
+                                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                                + ", sResponse: " + sResponse
+                                ;
+                        _logger->warn(__FILEREF__ + errorMessage);
+
+                        throw MaxConcurrentJobsReached();
+                    }
+                    else
+                    {
+                        string errorMessage = string("FFMPEGEncoder error")
+                                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                                + ", sResponse: " + sResponse
+                                ;
+                        _logger->error(__FILEREF__ + errorMessage);
+
+                        throw runtime_error(errorMessage);
+                    }                        
+                }
+                /*
+                else
+                {
+                    string field = "ffmpegEncoderHost";
+                    if (Validator::isMetadataPresent(encodeContentResponse, field))
+                    {
+                        _currentUsedFFMpegEncoderHost = encodeContentResponse.get("ffmpegEncoderHost", "XXX").asString();
+                        
+                        _logger->info(__FILEREF__ + "Retrieving ffmpegEncoderHost"
+                            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                            + "_currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost
+                                );                                        
+                    }
+                    else
+                    {
+                        string errorMessage = string("Unexpected FFMPEGEncoder response")
+                                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                                + ", sResponse: " + sResponse
+                                ;
+                        _logger->error(__FILEREF__ + errorMessage);
+
+                        throw runtime_error(errorMessage);
+                    }
+                }
+                */                        
+            }
+            
+            // loop waiting the end of the encoding
+            bool encodingFinished = false;
+            int maxEncodingStatusFailures = 1;
+            int encodingStatusFailures = 0;
+            while(!(encodingFinished || encodingStatusFailures >= maxEncodingStatusFailures))
+            {
+                this_thread::sleep_for(chrono::seconds(_intervalInSecondsToCheckEncodingFinished));
+                
+                try
+                {
+                    encodingFinished = getEncodingStatus(_encodingItem->_encodingJobKey);
+                }
+                catch(...)
+                {
+                    _logger->error(__FILEREF__ + "getEncodingStatus failed");
+                    
+                    encodingStatusFailures++;
+                }
+            }
+            
+            chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
+            
+            _logger->info(__FILEREF__ + "Generated Frames"
+                    + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                    + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                    + ", ffmpegEncoderURL: " + ffmpegEncoderURL
+                    + ", body: " + body
+                    + ", sResponse: " + sResponse
+                    + ", encodingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count())
+                    + ", _intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
+            );
+        }
+        catch(MaxConcurrentJobsReached e)
+        {
+            string errorMessage = string("MaxConcurrentJobsReached")
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                + ", response.str(): " + response.str()
+                + ", e.what(): " + e.what()
+                ;
+            _logger->warn(__FILEREF__ + errorMessage);
+
+            throw e;
+        }
+        catch (curlpp::LogicError & e) 
+        {
+            _logger->error(__FILEREF__ + "Encoding URL failed (LogicError)"
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+                + ", exception: " + e.what()
+                + ", response.str(): " + response.str()
+            );
+            
+            throw e;
+        }
+        catch (curlpp::RuntimeError & e) 
+        {
+            _logger->error(__FILEREF__ + "Encoding URL failed (RuntimeError)"
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+                + ", exception: " + e.what()
+                + ", response.str(): " + response.str()
+            );
+
+            throw e;
+        }
+        catch (runtime_error e)
+        {
+            _logger->error(__FILEREF__ + "Encoding URL failed (runtime_error)"
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+                + ", exception: " + e.what()
+                + ", response.str(): " + response.str()
+            );
+
+            throw e;
+        }
+        catch (exception e)
+        {
+            _logger->error(__FILEREF__ + "Encoding URL failed (exception)"
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+                + ", exception: " + e.what()
+                + ", response.str(): " + response.str()
+            );
+
+            throw e;
+        }
+    #endif
+}
+
+void EncoderVideoAudioProxy::processGeneratedFrames()
+{
+    shared_ptr<MultiLocalAssetIngestionEvent>    multiLocalAssetIngestionEvent = _multiEventsSet->getEventsFactory()
+            ->getFreeEvent<MultiLocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_MULTILOCALASSETINGESTIONEVENT);
+
+    multiLocalAssetIngestionEvent->setSource(ENCODERVIDEOAUDIOPROXY);
+    multiLocalAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
+    multiLocalAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
+
+    multiLocalAssetIngestionEvent->setIngestionJobKey(_encodingItem->_ingestionJobKey);
+    multiLocalAssetIngestionEvent->setWorkspace(_encodingItem->_workspace);
+    multiLocalAssetIngestionEvent->setParametersRoot(_encodingItem->_generateFramesData->_generateFramesParametersRoot);
+
+    shared_ptr<Event2>    event = dynamic_pointer_cast<Event2>(multiLocalAssetIngestionEvent);
+    _multiEventsSet->addEvent(event);
+
+    _logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (MULTIINGESTASSETEVENT)"
+        + ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+        + ", getEventKey().first: " + to_string(event->getEventKey().first)
+        + ", getEventKey().second: " + to_string(event->getEventKey().second));
+}
+
 
 int EncoderVideoAudioProxy::getEncodingProgress(int64_t encodingJobKey)
 {

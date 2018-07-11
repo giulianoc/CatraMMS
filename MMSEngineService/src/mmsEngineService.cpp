@@ -132,7 +132,7 @@ int main (int iArgc, char *pArgv [])
 
     logger->info(__FILEREF__ + "Creating ActiveEncodingsManager"
             );
-    ActiveEncodingsManager      activeEncodingsManager(configuration, mmsEngineDBFacade, mmsStorage, logger);
+    ActiveEncodingsManager      activeEncodingsManager(configuration, multiEventsSet, mmsEngineDBFacade, mmsStorage, logger);
 
 //    MMSEngineProcessor      mmsEngineProcessor(0, logger, multiEventsSet, 
 //            mmsEngineDBFacade, mmsStorage, &activeEncodingsManager, configuration);

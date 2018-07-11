@@ -12,6 +12,7 @@
 #include "MMSStorage.h"
 #include "ActiveEncodingsManager.h"
 #include "LocalAssetIngestionEvent.h"
+#include "MultiLocalAssetIngestionEvent.h"
 #include "Validator.h"
 #include "json/json.h"
 
@@ -78,6 +79,9 @@ private:
     void handleLocalAssetIngestionEvent (
         shared_ptr<LocalAssetIngestionEvent> localAssetIngestionEvent);
 
+    void handleMultiLocalAssetIngestionEvent (
+        shared_ptr<MultiLocalAssetIngestionEvent> multiLocalAssetIngestionEvent);
+
     void handleCheckEncodingEvent ();
 
     void handleContentRetentionEvent ();
@@ -127,6 +131,26 @@ private:
         MMSEngineDBFacade::IngestionType ingestionType,
         Json::Value parametersRoot,
         vector<pair<int64_t,Validator::DependencyType>>& dependencies);
+
+    void manageGenerateFramesTask(
+        int64_t ingestionJobKey,
+        shared_ptr<Workspace> workspace,
+        MMSEngineDBFacade::IngestionType ingestionType,
+        Json::Value parametersRoot,
+        vector<pair<int64_t,Validator::DependencyType>>& dependencies);
+
+    void fillGenerateFramesParameters(
+        shared_ptr<Workspace> workspace,
+        int64_t ingestionJobKey,
+        MMSEngineDBFacade::IngestionType ingestionType,
+        Json::Value parametersRoot,
+        vector<pair<int64_t,Validator::DependencyType>>& dependencies,
+        
+        int& periodInSeconds, double& startTimeInSeconds,
+        int& maxFramesNumber, string& videoFilter,
+        bool& mjpeg, int& imageWidth, int& imageHeight,
+        string& imageFileName,
+        int64_t& sourcePhysicalPathKey, string& sourcePhysicalPath);
 
     void generateAndIngestSlideshow(
         int64_t ingestionJobKey,

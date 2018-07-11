@@ -479,6 +479,106 @@ void FFMPEGEncoder::manageRequestAndResponse(
             throw runtime_error(errorMessage);
         }
     }
+    else if (method == "generateFrames")
+    {
+        auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
+        if (encodingJobKeyIt == queryParameters.end())
+        {
+            string errorMessage = string("The 'encodingJobKey' parameter is not found");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
+        
+        lock_guard<mutex> locker(_encodingMutex);
+
+        shared_ptr<Encoding>    selectedEncoding;
+        bool                    encodingFound = false;
+        for (shared_ptr<Encoding> encoding: _encodingsCapability)
+        {
+            if (!encoding->_running)
+            {
+                encodingFound = true;
+                selectedEncoding = encoding;
+                
+                break;
+            }
+        }
+
+        if (!encodingFound)
+        {
+            // same string declared in EncoderVideoAudioProxy.cpp
+            string noEncodingAvailableMessage("__NO-ENCODING-AVAILABLE__");
+            
+            string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
+                    + ", " + noEncodingAvailableMessage;
+            
+            _logger->warn(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            // throw runtime_error(noEncodingAvailableMessage);
+            return;
+        }
+        
+        try
+        {            
+            selectedEncoding->_running = true;
+
+            _logger->info(__FILEREF__ + "Creating generateFrames thread"
+                + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
+                + ", requestBody: " + requestBody
+            );
+            thread generateFramesThread(&FFMPEGEncoder::generateFrames, this, selectedEncoding, encodingJobKey, requestBody);
+            generateFramesThread.detach();
+        }
+        catch(exception e)
+        {
+            selectedEncoding->_running = false;
+
+            _logger->error(__FILEREF__ + "generateFrames failed"
+                + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
+                + ", requestBody: " + requestBody
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        try
+        {            
+            string responseBody = string("{ ")
+                    + "\"encodingJobKey\": " + to_string(encodingJobKey) + " "
+                    + ", \"ffmpegEncoderHost\": \"" + System::getHostName() + "\" "
+                    + "}";
+
+            sendSuccess(request, 200, responseBody);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "generateFramesThread failed"
+                + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
+                + ", requestBody: " + requestBody
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
     else if (method == "encodingStatus")
     {
         auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
@@ -1151,3 +1251,116 @@ void FFMPEGEncoder::overlayTextOnVideo(
     }
 }
 
+void FFMPEGEncoder::generateFrames(
+        // FCGX_Request& request,
+        shared_ptr<Encoding> encoding,
+        int64_t encodingJobKey,
+        string requestBody)
+{
+    string api = "generateFrames";
+
+    _logger->info(__FILEREF__ + "Received " + api
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+        + ", requestBody: " + requestBody
+    );
+
+    try
+    {
+        encoding->_encodingJobKey = encodingJobKey;
+
+        Json::Value generateFramesMedatada;
+        try
+        {
+            Json::CharReaderBuilder builder;
+            Json::CharReader* reader = builder.newCharReader();
+            string errors;
+
+            bool parsingSuccessful = reader->parse(requestBody.c_str(),
+                    requestBody.c_str() + requestBody.size(), 
+                    &generateFramesMedatada, &errors);
+            delete reader;
+
+            if (!parsingSuccessful)
+            {
+                string errorMessage = __FILEREF__ + "failed to parse the requestBody"
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", errors: " + errors
+                        + ", requestBody: " + requestBody
+                        ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+        catch(...)
+        {
+            string errorMessage = string("requestBody json is not well format")
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+                    + ", requestBody: " + requestBody
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        
+        string imageDirectory = generateFramesMedatada.get("imageDirectory", "XXX").asString();
+        string imageFileName = generateFramesMedatada.get("imageFileName", "XXX").asString();
+        double startTimeInSeconds = generateFramesMedatada.get("startTimeInSeconds", -1).asDouble();
+        int maxFramesNumber = generateFramesMedatada.get("maxFramesNumber", -1).asInt();
+        string videoFilter = generateFramesMedatada.get("videoFilter", "XXX").asString();
+        int periodInSeconds = generateFramesMedatada.get("periodInSeconds", -1).asInt();
+        bool mjpeg = generateFramesMedatada.get("mjpeg", -1).asBool();
+        int imageWidth = generateFramesMedatada.get("imageWidth", -1).asInt();
+        int imageHeight = generateFramesMedatada.get("imageHeight", -1).asInt();
+        int64_t ingestionJobKey = generateFramesMedatada.get("ingestionJobKey", -1).asInt64();
+        string mmsSourceVideoAssetPathName = generateFramesMedatada.get("mmsSourceVideoAssetPathName", "XXX").asString();
+
+        vector<string> generatedFramesFileNames = encoding->_ffmpeg->generateFramesToIngest(
+                ingestionJobKey,
+                imageDirectory,
+                imageFileName,
+                startTimeInSeconds,
+                maxFramesNumber,
+                videoFilter,
+                periodInSeconds,
+                mjpeg,
+                imageWidth, 
+                imageHeight,
+                mmsSourceVideoAssetPathName
+        );
+        
+        encoding->_running = false;
+        
+        _logger->info(__FILEREF__ + "generateFrames finished"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", imageFileName: " + imageFileName
+        );
+    }
+    catch(runtime_error e)
+    {
+        encoding->_running = false;
+
+        string errorMessage = string ("API failed")
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        ;
+
+        _logger->error(__FILEREF__ + errorMessage);
+    }
+    catch(exception e)
+    {
+        encoding->_running = false;
+
+        string errorMessage = string("API failed")
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        ;
+
+        _logger->error(__FILEREF__ + errorMessage);
+    }
+}

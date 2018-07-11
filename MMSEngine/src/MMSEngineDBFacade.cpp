@@ -8302,6 +8302,175 @@ void MMSEngineDBFacade::getEncodingJobs(
                         }
                     }
                 }
+                else if (encodingItem->_encodingType == EncodingType::GenerateFrames)
+                {
+                    encodingItem->_generateFramesData = make_shared<EncodingItem::GenerateFramesData>();
+                    
+                    int64_t sourceVideoPhysicalPathKey;
+
+                    {
+                        string field = "sourceVideoPhysicalPathKey";
+                        sourceVideoPhysicalPathKey = encodingItem->_parametersRoot.get(field, 0).asInt64();
+                    }
+
+                    int64_t videoMediaItemKey;
+                    {
+                        lastSQLCommand = 
+                            "select m.workspaceKey, p.partitionNumber, p.mediaItemKey, p.fileName, p.relativePath "
+                            "from MMS_MediaItem m, MMS_PhysicalPath p where m.mediaItemKey = p.mediaItemKey and p.physicalPathKey = ?";
+                        shared_ptr<sql::PreparedStatement> preparedStatementPhysicalPath (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                        int queryParameterIndex = 1;
+                        preparedStatementPhysicalPath->setInt64(queryParameterIndex++, sourceVideoPhysicalPathKey);
+
+                        shared_ptr<sql::ResultSet> physicalPathResultSet (preparedStatementPhysicalPath->executeQuery());
+                        if (physicalPathResultSet->next())
+                        {
+                            encodingItem->_workspace = getWorkspace(physicalPathResultSet->getInt64("workspaceKey"));
+
+                            encodingItem->_generateFramesData->_mmsVideoPartitionNumber = physicalPathResultSet->getInt("partitionNumber");
+                            encodingItem->_generateFramesData->_videoFileName = physicalPathResultSet->getString("fileName");
+                            encodingItem->_generateFramesData->_videoRelativePath = physicalPathResultSet->getString("relativePath");
+                            
+                            videoMediaItemKey = physicalPathResultSet->getInt64("mediaItemKey");
+                        }
+                        else
+                        {
+                            string errorMessage = __FILEREF__ + "select failed, no row returned"
+                                    + ", sourceVideoPhysicalPathKey: " + to_string(sourceVideoPhysicalPathKey)
+                                    + ", lastSQLCommand: " + lastSQLCommand
+                            ;
+                            _logger->error(errorMessage);
+
+                            // in case an encoding job row generate an error, we have to make it to Failed
+                            // otherwise we will indefinitely get this error
+                            {
+                                lastSQLCommand = 
+                                    "update MMS_EncodingJob set status = ? where encodingJobKey = ?";
+                                shared_ptr<sql::PreparedStatement> preparedStatementUpdate (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                                int queryParameterIndex = 1;
+                                preparedStatementUpdate->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
+                                preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
+
+                                int rowsUpdated = preparedStatementUpdate->executeUpdate();
+                            }
+
+                            continue;
+                            // throw runtime_error(errorMessage);
+                        }
+                    }
+                    
+                    {
+                        lastSQLCommand = 
+                            "select durationInMilliSeconds from MMS_VideoItemProfile where physicalPathKey = ?";
+                        shared_ptr<sql::PreparedStatement> preparedStatementVideo (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                        int queryParameterIndex = 1;
+                        preparedStatementVideo->setInt64(queryParameterIndex++, sourceVideoPhysicalPathKey);
+
+                        shared_ptr<sql::ResultSet> videoResultSet (preparedStatementVideo->executeQuery());
+                        if (videoResultSet->next())
+                        {
+                            encodingItem->_generateFramesData->_videoDurationInMilliSeconds = videoResultSet->getInt64("durationInMilliSeconds");
+                        }
+                        else
+                        {
+                            string errorMessage = __FILEREF__ + "select failed, no row returned"
+                                    + ", sourceVideoPhysicalPathKey: " + to_string(sourceVideoPhysicalPathKey)
+                                    + ", lastSQLCommand: " + lastSQLCommand
+                            ;
+                            _logger->error(errorMessage);
+
+                            // in case an encoding job row generate an error, we have to make it to Failed
+                            // otherwise we will indefinitely get this error
+                            {
+                                lastSQLCommand = 
+                                    "update MMS_EncodingJob set status = ? where encodingJobKey = ?";
+                                shared_ptr<sql::PreparedStatement> preparedStatementUpdate (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                                int queryParameterIndex = 1;
+                                preparedStatementUpdate->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
+                                preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
+
+                                int rowsUpdated = preparedStatementUpdate->executeUpdate();
+                            }
+
+                            continue;
+                            // throw runtime_error(errorMessage);
+                        }
+                    }
+
+                    {
+                        lastSQLCommand = 
+                            "select metaDataContent from MMS_IngestionJob where ingestionJobKey = ?";
+                        shared_ptr<sql::PreparedStatement> preparedStatementIngestion (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                        int queryParameterIndex = 1;
+                        preparedStatementIngestion->setInt64(queryParameterIndex++, encodingItem->_ingestionJobKey);
+
+                        shared_ptr<sql::ResultSet> imgestionResultSet (preparedStatementIngestion->executeQuery());
+                        if (imgestionResultSet->next())
+                        {
+                            string generateFramesParameters = imgestionResultSet->getString("metaDataContent");
+                            
+                            {
+                                Json::CharReaderBuilder builder;
+                                Json::CharReader* reader = builder.newCharReader();
+                                string errors;
+
+                                bool parsingSuccessful = reader->parse(generateFramesParameters.c_str(),
+                                        generateFramesParameters.c_str() + generateFramesParameters.size(), 
+                                        &(encodingItem->_generateFramesData->_generateFramesParametersRoot), &errors);
+                                delete reader;
+
+                                if (!parsingSuccessful)
+                                {
+                                    string errorMessage = __FILEREF__ + "failed to parse 'parameters'"
+                                            + ", errors: " + errors
+                                            + ", generateFramesParameters: " + generateFramesParameters
+                                            ;
+                                    _logger->error(errorMessage);
+
+                                    // in case an encoding job row generate an error, we have to make it to Failed
+                                    // otherwise we will indefinitely get this error
+                                    {
+                                        lastSQLCommand = 
+                                            "update MMS_EncodingJob set status = ? where encodingJobKey = ?";
+                                        shared_ptr<sql::PreparedStatement> preparedStatementUpdate (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                                        int queryParameterIndex = 1;
+                                        preparedStatementUpdate->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
+                                        preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
+
+                                        int rowsUpdated = preparedStatementUpdate->executeUpdate();
+                                    }
+
+                                    continue;
+                                    // throw runtime_error(errorMessage);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            string errorMessage = __FILEREF__ + "select failed, no row returned"
+                                    + ", encodingItem->_ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+                                    + ", lastSQLCommand: " + lastSQLCommand
+                            ;
+                            _logger->error(errorMessage);
+
+                            // in case an encoding job row generate an error, we have to make it to Failed
+                            // otherwise we will indefinitely get this error
+                            {
+                                lastSQLCommand = 
+                                    "update MMS_EncodingJob set status = ? where encodingJobKey = ?";
+                                shared_ptr<sql::PreparedStatement> preparedStatementUpdate (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                                int queryParameterIndex = 1;
+                                preparedStatementUpdate->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
+                                preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
+
+                                int rowsUpdated = preparedStatementUpdate->executeUpdate();
+                            }
+
+                            continue;
+                            // throw runtime_error(errorMessage);
+                        }
+                    }
+                }
                 else
                 {
                     string errorMessage = __FILEREF__ + "EncodingType is wrong"
@@ -9163,7 +9332,7 @@ int MMSEngineDBFacade::addEncodingJob (
     }        
 }
 
-int MMSEngineDBFacade::addOverlayImageOnVideoJob (
+int MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
     int64_t ingestionJobKey,
     int64_t mediaItemKey_1, int64_t physicalPathKey_1,
     int64_t mediaItemKey_2, int64_t physicalPathKey_2,
@@ -9529,7 +9698,7 @@ int MMSEngineDBFacade::addOverlayImageOnVideoJob (
     }        
 }
 
-int MMSEngineDBFacade::addOverlayTextOnVideoJob (
+int MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob (
     int64_t ingestionJobKey,
     EncodingPriority encodingPriority,
         
@@ -9640,6 +9809,257 @@ int MMSEngineDBFacade::addOverlayTextOnVideoJob (
 
                 + "} ";
        {
+            lastSQLCommand = 
+                "insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, parameters, encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, failuresNumber) values ("
+                                            "NULL,           ?,               ?,    ?,          ?,                NULL,             NULL,           NULL,             ?,      NULL,         0)";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+            preparedStatement->setString(queryParameterIndex++, toString(encodingType));
+            preparedStatement->setString(queryParameterIndex++, parameters);
+            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(encodingPriority));
+            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
+
+            preparedStatement->executeUpdate();
+        }
+        
+        {            
+            IngestionStatus newIngestionStatus = IngestionStatus::EncodingQueued;
+
+            lastSQLCommand = 
+                "update MMS_IngestionJob set status = ?, processorMMS = NULL where ingestionJobKey = ?";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(newIngestionStatus));
+            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+
+            int rowsUpdated = preparedStatement->executeUpdate();
+            if (rowsUpdated != 1)
+            {
+                string errorMessage = __FILEREF__ + "no update was done"
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", rowsUpdated: " + to_string(rowsUpdated)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }
+
+            manageIngestionJobStatusUpdate (ingestionJobKey, newIngestionStatus, conn);
+        }
+
+        // conn->_sqlConnection->commit(); OR execute COMMIT
+        {
+            lastSQLCommand = 
+                "COMMIT";
+
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute(lastSQLCommand);
+        }
+        autoCommit = true;
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        try
+        {
+            // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+            if (!autoCommit)
+            {
+                shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                statement->execute("ROLLBACK");
+            }
+
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(sql::SQLException se)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + se.what()
+            );
+        
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + e.what()
+            );
+        
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        try
+        {
+            // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+            if (!autoCommit)
+            {
+                shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                statement->execute("ROLLBACK");
+            }
+
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(sql::SQLException se)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + se.what()
+            );
+        
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + e.what()
+            );
+        
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        
+        throw e;
+    }        
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        try
+        {
+            // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+            if (!autoCommit)
+            {
+                shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                statement->execute("ROLLBACK");
+            }
+
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(sql::SQLException se)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + se.what()
+            );
+        
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + e.what()
+            );
+        
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        
+        throw e;
+    }
+}
+
+int MMSEngineDBFacade::addEncoding_GenerateFramesJob (
+    int64_t ingestionJobKey,
+    EncodingPriority encodingPriority,
+        
+    string imageDirectory, string imageFileName, 
+    double startTimeInSeconds, int maxFramesNumber, 
+    string videoFilter, int periodInSeconds, 
+    bool mjpeg, int imageWidth, int imageHeight,
+    int64_t sourceVideoPhysicalPathKey
+)
+{
+
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn;
+    bool autoCommit = true;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        autoCommit = false;
+        // conn->_sqlConnection->setAutoCommit(autoCommit); OR execute the statement START TRANSACTION
+        {
+            lastSQLCommand = 
+                "START TRANSACTION";
+
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute(lastSQLCommand);
+        }
+                        
+        EncodingType encodingType = EncodingType::GenerateFrames;
+        
+        string parameters = string()
+                + "{ "
+                + "\"imageDirectory\": \"" + imageDirectory + "\""
+
+                + ", \"imageFileName\": \"" + imageFileName + "\""
+                + ", \"startTimeInSeconds\": " + to_string(startTimeInSeconds)
+                + ", \"maxFramesNumber\": " + to_string(maxFramesNumber)
+                + ", \"videoFilter\": \"" + videoFilter + "\""
+                + ", \"periodInSeconds\": " + to_string(periodInSeconds)
+                + ", \"mjpeg\": " + (mjpeg ? "true" : "false")
+                + ", \"imageWidth\": " + to_string(imageWidth)
+                + ", \"imageHeight\": " + to_string(imageHeight)
+                + ", \"ingestionJobKey\": " + to_string(ingestionJobKey)
+                + ", \"sourceVideoPhysicalPathKey\": " + to_string(sourceVideoPhysicalPathKey)
+
+                + "} ";
+        {
             lastSQLCommand = 
                 "insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, parameters, encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, failuresNumber) values ("
                                             "NULL,           ?,               ?,    ?,          ?,                NULL,             NULL,           NULL,             ?,      NULL,         0)";
