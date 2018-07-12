@@ -40,6 +40,8 @@ SET (HEADERS
 	EncoderVideoAudioProxy.h
 	EncodersLoadBalancer.h
 	EMailSender.h
+	LocalAssetIngestionEvent.h
+	MultiLocalAssetIngestionEvent.h
 )
 
 include_directories ("${PROJECT_SOURCE_DIR}/../spdlog/include")

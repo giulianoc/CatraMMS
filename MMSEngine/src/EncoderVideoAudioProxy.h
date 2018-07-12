@@ -133,7 +133,7 @@ private:
 
     string overlayImageOnVideo();
     string overlayImageOnVideo_through_ffmpeg();
-    pair<int64_t,int64_t> processOverlayedImageOnVideo(string stagingEncodedAssetPathName);    
+    void processOverlayedImageOnVideo(string stagingEncodedAssetPathName);    
 
     string overlayTextOnVideo();
     string overlayTextOnVideo_through_ffmpeg();
@@ -144,6 +144,11 @@ private:
     void processGeneratedFrames();
 
     bool getEncodingStatus(int64_t encodingJobKey);
+
+    string generateMediaMetadataToIngest(
+        int64_t ingestionJobKey,
+        string fileFormat,
+        Json::Value parametersRoot);
 };
 
 #endif

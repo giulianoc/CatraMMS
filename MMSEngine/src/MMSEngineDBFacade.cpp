@@ -10422,31 +10422,23 @@ int MMSEngineDBFacade::updateEncodingJob (
         
         if (newEncodingStatus == EncodingStatus::End_ProcessedSuccessful)
         {
-            IngestionStatus newIngestionStatus = IngestionStatus::End_TaskSuccess;
-            
-            string errorMessage;
-            string processorMMS;
-            _logger->info(__FILEREF__ + "Update IngestionJob"
-                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", IngestionStatus: " + toString(newIngestionStatus)
-                + ", errorMessage: " + errorMessage
-                + ", processorMMS: " + processorMMS
-            );                            
-            updateIngestionJob (conn, ingestionJobKey, newIngestionStatus, errorMessage, processorMMS);
-            
-            // in one scenario we may have newEncodingStatus == EncodingStatus::End_ProcessedSuccessful
-            // but it is not needed to add mediaItemKey and physicalPathKey.
-            // The scenario is the Generate-Frames:
-            // 1. mmsEncoder generates the frames (images to be ingested)
-            // 2. EncoderVideoAudioProxy->processGeneratedFrames create the event multiLocalAssetIngestionEvent
-            // multiLocalAssetIngestionEvent:
-            //    3. handleLocalAssetIngestionEvent ingest one by one the images specifying that the IngestionJob entry does not have to be updated 
-            //      (this because we have several images to be ingested but just one IngestionJob entry to be updated)
-            //    4. updateEncodingJob is done (internally it will update IngestionJob as well).
-            //          In this case we have newEncodingStatus == EncodingStatus::End_ProcessedSuccessful but we do not have to add into MMS_IngestionJobOutput
-            //          because already fed by nr. 3 (handleLocalAssetIngestionEvent)
+            // In the Generate-Frames scenario we will have mediaItemKey and encodedPhysicalPathKey set to -1.
+            // In this case we do not have to update the IngestionJob because this is done when all the images (the files generated)
+            // will be ingested
             if (mediaItemKey != -1 && encodedPhysicalPathKey != -1)
             {
+                IngestionStatus newIngestionStatus = IngestionStatus::End_TaskSuccess;
+
+                string errorMessage;
+                string processorMMS;
+                _logger->info(__FILEREF__ + "Update IngestionJob"
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", IngestionStatus: " + toString(newIngestionStatus)
+                    + ", errorMessage: " + errorMessage
+                    + ", processorMMS: " + processorMMS
+                );                            
+                updateIngestionJob (conn, ingestionJobKey, newIngestionStatus, errorMessage, processorMMS);
+            
                 lastSQLCommand = 
                     "insert into MMS_IngestionJobOutput (ingestionJobKey, mediaItemKey, physicalPathKey) values ("
                     "?, ?, ?)";

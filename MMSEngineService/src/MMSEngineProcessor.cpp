@@ -3413,20 +3413,15 @@ void MMSEngineProcessor::generateAndIngestSlideshow(
             }
         }
 
-        int durationOfEachSlideInSeconds = 5;
+        double durationOfEachSlideInSeconds = 2;
         string field = "DurationOfEachSlideInSeconds";
         if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
         {
-            durationOfEachSlideInSeconds = parametersRoot.get(field, "XXX").asInt();
+            durationOfEachSlideInSeconds = parametersRoot.get(field, "XXX").asDouble();
         }
 
-        int outputFrameRate = 30;
-        field = "OutputFrameRate";
-        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-        {
-            outputFrameRate = parametersRoot.get(field, "XXX").asInt();
-        }
-
+        int outputFrameRate = 25;
+        
         string sourceFileName;
         field = "SourceFileName";
         if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
@@ -3453,8 +3448,8 @@ void MMSEngineProcessor::generateAndIngestSlideshow(
         
         FFMpeg ffmpeg (_configuration, _logger);
         ffmpeg.generateSlideshowMediaToIngest(ingestionJobKey, 
-                sourcePhysicalPaths, durationOfEachSlideInSeconds, outputFrameRate,
-                slideshowMediaPathName);
+                sourcePhysicalPaths, durationOfEachSlideInSeconds,
+                outputFrameRate, slideshowMediaPathName);
 
         _logger->info(__FILEREF__ + "generateSlideshowMediaToIngest done"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)

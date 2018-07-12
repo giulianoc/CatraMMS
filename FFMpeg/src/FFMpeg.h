@@ -113,7 +113,7 @@ public:
     void generateSlideshowMediaToIngest(
         int64_t ingestionJobKey,
         vector<string>& sourcePhysicalPaths,
-        int durationOfEachSlideInSeconds, 
+        double durationOfEachSlideInSeconds, 
         int outputFrameRate,
         string slideshowMediaPathName);
 

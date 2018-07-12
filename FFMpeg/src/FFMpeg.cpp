@@ -2254,7 +2254,7 @@ void FFMpeg::generateConcatMediaToIngest(
 void FFMpeg::generateSlideshowMediaToIngest(
         int64_t ingestionJobKey,
         vector<string>& sourcePhysicalPaths,
-        int durationOfEachSlideInSeconds, 
+        double durationOfEachSlideInSeconds, 
         int outputFrameRate,
         string slideshowMediaPathName)
 {
@@ -2269,7 +2269,7 @@ void FFMpeg::generateSlideshowMediaToIngest(
     for (string sourcePhysicalPath: sourcePhysicalPaths)
     {
         slideshowListFile << "file '" << sourcePhysicalPath << "'" << endl;
-        // slideshowListFile << "duration " << durationOfEachSlideInSeconds << endl;
+        slideshowListFile << "duration " << durationOfEachSlideInSeconds << endl;
         
         lastSourcePhysicalPath = sourcePhysicalPath;
     }
@@ -2289,11 +2289,10 @@ void FFMpeg::generateSlideshowMediaToIngest(
     string ffmpegExecuteCommand = 
             _ffmpegPath + "/ffmpeg "
             + "-f concat -safe 0 " 
-            + "-framerate 5/1 "
+            // + "-framerate 5/1 "
             + "-i " + slideshowListPathName + " "
             + "-c:v libx264 "
-            // + "-r " + to_string(outputFrameRate) + " "
-            + "-r 25 "
+            + "-r " + to_string(outputFrameRate) + " "
             + "-vsync vfr "
             + "-pix_fmt yuv420p " + slideshowMediaPathName + " "
             + "> " + outputFfmpegPathFileName + " "

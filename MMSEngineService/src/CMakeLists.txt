@@ -33,7 +33,6 @@ SET (HEADERS
 	CheckIngestionTimes.h
 	CheckEncodingTimes.h
 	RetentionTimes.h
-	LocalAssetIngestionEvent.h
 )
 
 include_directories ("${PROJECT_SOURCE_DIR}/../spdlog/include")
