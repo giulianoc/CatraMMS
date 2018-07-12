@@ -5422,7 +5422,8 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
 
         if (ingestionType == IngestionType::Encode 
                 || ingestionType == IngestionType::OverlayImageOnVideo
-                || ingestionType == IngestionType::OverlayTextOnVideo)
+                || ingestionType == IngestionType::OverlayTextOnVideo
+                || ingestionType == IngestionType::GenerateFrames)
         {
             lastSQLCommand = 
                 "select encodingJobKey, type, parameters, status, encodingProgress, encodingPriority, "
