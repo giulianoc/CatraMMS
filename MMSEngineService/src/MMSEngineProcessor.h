@@ -103,8 +103,8 @@ private:
 
     string generateMediaMetadataToIngest(
         int64_t ingestionJobKey,
-        // bool video,
         string fileFormat,
+        string title,
         Json::Value parametersRoot);
 
     void manageEncodeTask(

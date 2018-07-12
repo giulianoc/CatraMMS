@@ -2320,10 +2320,24 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEvent (
                     + ", fileFormat: " + fileFormat
                 );
 
+                string title;
+                {
+                    string field = "Title";
+                    if (_mmsEngineDBFacade->isMetadataPresent(multiLocalAssetIngestionEvent->getParametersRoot(), field))
+                        title = multiLocalAssetIngestionEvent->getParametersRoot().get(field, "XXX").asString();                    
+                    title += (
+                            " (" 
+                            + to_string(it - generatedFramesFileNames.begin() + 1) 
+                            + " / "
+                            + to_string(generatedFramesFileNames.size())
+                            + ")"
+                            );
+                }
                 string imageMetaDataContent = generateMediaMetadataToIngest(
                         multiLocalAssetIngestionEvent->getIngestionJobKey(),
                         // mjpeg,
                         fileFormat,
+                        title,
                         multiLocalAssetIngestionEvent->getParametersRoot()
                 );
 
@@ -2873,10 +2887,11 @@ void MMSEngineProcessor::generateAndIngestFrames(
                         + ", fileFormat: " + fileFormat
                     );
 
+                    string title;
                     string imageMetaDataContent = generateMediaMetadataToIngest(
                             ingestionJobKey,
-                            // mjpeg,
                             fileFormat,
+                            title,
                             parametersRoot
                     );
 
@@ -3447,10 +3462,12 @@ void MMSEngineProcessor::generateAndIngestSlideshow(
             + ", slideshowMediaPathName: " + slideshowMediaPathName
         );
                             
+        string title;
         string mediaMetaDataContent = generateMediaMetadataToIngest(
                 ingestionJobKey,
                 // true,
                 fileFormat,
+                title,
                 parametersRoot
         );
 
@@ -3674,10 +3691,12 @@ void MMSEngineProcessor::generateAndIngestConcatenation(
             + ", concatenatedMediaPathName: " + concatenatedMediaPathName
         );
                 
+        string title;
         string mediaMetaDataContent = generateMediaMetadataToIngest(
                 ingestionJobKey,
                 // concatContentType == MMSEngineDBFacade::ContentType::Video ? true : false,
                 fileFormat,
+                title,
                 parametersRoot
         );
 
@@ -3960,10 +3979,11 @@ void MMSEngineProcessor::generateAndIngestCutMedia(
             + ", cutMediaPathName: " + cutMediaPathName
         );
         
+        string title;
         string mediaMetaDataContent = generateMediaMetadataToIngest(
                 ingestionJobKey,
-                // contentType == MMSEngineDBFacade::ContentType::Video ? true : false,
                 fileFormat,
+                title,
                 parametersRoot
         );
 
@@ -4761,8 +4781,8 @@ string MMSEngineProcessor::generateImageMetadataToIngest(
 
 string MMSEngineProcessor::generateMediaMetadataToIngest(
         int64_t ingestionJobKey,
-        // bool video,
         string fileFormat,
+        string title,
         Json::Value parametersRoot
 )
 {
@@ -4812,6 +4832,10 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
     {
         parametersRoot[field] = fileFormat;
     }
+    
+    field = "Title";
+    if (title != "")
+        parametersRoot[field] = title;
 
     // this scenario is for example for the Cut or Concat-Demux or Periodical-Frames
     // that generate a new content (or contents in case of Periodical-Frames)
