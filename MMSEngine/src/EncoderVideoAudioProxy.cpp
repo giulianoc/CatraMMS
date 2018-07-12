@@ -3695,7 +3695,7 @@ void EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 
 void EncoderVideoAudioProxy::processGeneratedFrames()
 {
-    _mmsEngineDBFacade->updateEncodingJob (_encodingItem->_encodingJobKey, 100);
+    _mmsEngineDBFacade->updateEncodingJobProgress (_encodingItem->_encodingJobKey, 100);
     
     // here we do not have just a profile to be added into MMS but we have
     // one or more MediaItemKeys that have to be ingested
