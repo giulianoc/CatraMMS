@@ -3432,6 +3432,7 @@ void EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
     int imageWidth;
     int imageHeight;
     int64_t ingestionJobKey;
+    int64_t videoDurationInMilliSeconds;
 
     // _encodingItem->_parametersRoot filled in MMSEngineDBFacade::addOverlayImageOnVideoJob
     {
@@ -3464,6 +3465,9 @@ void EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 
         field = "ingestionJobKey";
         ingestionJobKey = _encodingItem->_parametersRoot.get(field, 0).asInt64();
+
+        field = "videoDurationInMilliSeconds";
+        videoDurationInMilliSeconds = _encodingItem->_parametersRoot.get(field, 0).asInt64();
     }
     
     string mmsSourceVideoAssetPathName;
@@ -3525,6 +3529,7 @@ void EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
                 generateFramesMedatada["imageHeight"] = imageHeight;
                 generateFramesMedatada["ingestionJobKey"] = (Json::LargestUInt) (_encodingItem->_ingestionJobKey);
                 generateFramesMedatada["mmsSourceVideoAssetPathName"] = mmsSourceVideoAssetPathName;
+                generateFramesMedatada["videoDurationInMilliSeconds"] = (Json::LargestUInt) (videoDurationInMilliSeconds);
 
                 {
                     Json::StreamWriterBuilder wbuilder;
