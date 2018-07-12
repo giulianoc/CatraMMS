@@ -1304,7 +1304,6 @@ void FFMPEGEncoder::generateFrames(
         }
         
         string imageDirectory = generateFramesMedatada.get("imageDirectory", "XXX").asString();
-        string imageFileName = generateFramesMedatada.get("imageFileName", "XXX").asString();
         double startTimeInSeconds = generateFramesMedatada.get("startTimeInSeconds", -1).asDouble();
         int maxFramesNumber = generateFramesMedatada.get("maxFramesNumber", -1).asInt();
         string videoFilter = generateFramesMedatada.get("videoFilter", "XXX").asString();
@@ -1320,7 +1319,7 @@ void FFMPEGEncoder::generateFrames(
                 ingestionJobKey,
                 encodingJobKey,
                 imageDirectory,
-                imageFileName,
+                to_string(ingestionJobKey),    // imageBaseFileName,
                 startTimeInSeconds,
                 maxFramesNumber,
                 videoFilter,
@@ -1337,7 +1336,6 @@ void FFMPEGEncoder::generateFrames(
         _logger->info(__FILEREF__ + "generateFrames finished"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", encodingJobKey: " + to_string(encodingJobKey)
-            + ", imageFileName: " + imageFileName
         );
     }
     catch(runtime_error e)

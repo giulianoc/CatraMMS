@@ -1929,7 +1929,7 @@ vector<string> FFMpeg::generateFramesToIngest(
         int64_t ingestionJobKey,
         int64_t encodingJobKey,
         string imageDirectory,
-        string imageFileName,
+        string imageBaseFileName,
         double startTimeInSeconds,
         int framesNumber,
         string videoFilter,
@@ -1944,7 +1944,7 @@ vector<string> FFMpeg::generateFramesToIngest(
         + ", ingestionJobKey: " + to_string(ingestionJobKey)
         + ", encodingJobKey: " + to_string(encodingJobKey)
         + ", imageDirectory: " + imageDirectory
-        + ", imageFileName: " + imageFileName
+        + ", imageBaseFileName: " + imageBaseFileName
         + ", startTimeInSeconds: " + to_string(startTimeInSeconds)
         + ", framesNumber: " + to_string(framesNumber)
         + ", videoFilter: " + videoFilter
@@ -1963,10 +1963,6 @@ vector<string> FFMpeg::generateFramesToIngest(
         
     vector<string> generatedFramesFileNames;
     
-    string localImageFileName = imageFileName;
-
-    size_t extensionIndex = localImageFileName.find_last_of(".");
-    
     _outputFfmpegPathFileName =
             _ffmpegTempDir
             + to_string(_currentIngestionJobKey)
@@ -1975,31 +1971,17 @@ vector<string> FFMpeg::generateFramesToIngest(
             + ".generateFrame.log"
             ;
         
-    string imageBaseFileName;
+    string localImageFileName;
     if (mjpeg)
     {
-        if (extensionIndex == string::npos)
-            localImageFileName.append(".mjpeg");
-        else if (localImageFileName.substr(extensionIndex) != ".mjpeg")
-            localImageFileName = localImageFileName.substr(0, extensionIndex).append(".mjpeg");
+        localImageFileName = imageBaseFileName + ".mjpeg";
     }
     else
     {
         if (framesNumber == -1 || framesNumber > 1)
-        {
-            if (extensionIndex != string::npos)
-            {
-                imageBaseFileName = localImageFileName.substr(0, extensionIndex);
-
-                localImageFileName.insert(extensionIndex, "_%04d");                
-            }
-            else
-            {
-                imageBaseFileName = localImageFileName;
-
-                localImageFileName.append("_%04d").append(".jpg");      // default is jpg
-            }
-        }
+            localImageFileName = imageBaseFileName + "_%04d.jpg";
+        else
+            localImageFileName = imageBaseFileName + ".jpg";
     }
 
     string videoFilterParameters;

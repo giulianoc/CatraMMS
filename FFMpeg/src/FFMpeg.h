@@ -94,7 +94,7 @@ public:
         int64_t ingestionJobKey,
         int64_t encodingJobKey,
         string imageDirectory,
-        string imageFileName,
+        string imageBaseFileName,
         double startTimeInSeconds,
         int framesNumber,
         string videoFilter,

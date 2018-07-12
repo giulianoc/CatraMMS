@@ -153,6 +153,17 @@
             </p:panel>
 
 
+            <p:outputLabel rendered="#{encodingJobDetails.encodingJob.type == 'GenerateFrames'}"
+                           value="Video Physical Path Key: " />
+            <p:panel rendered="#{encodingJobDetails.encodingJob.type == 'GenerateFrames'}">
+                <p:outputLabel value="#{encodingJobDetails.encodingJob.sourceVideoPhysicalPathKey} (" />
+                <h:link
+                        outcome="/mediaItemDetails.xhtml?faces-redirect=true" value="Video Item Details">
+                    <f:param name="physicalPathKey" value="#{encodingJobDetails.encodingJob.sourceVideoPhysicalPathKey}" />
+                </h:link>
+                <p:outputLabel value=")" />
+            </p:panel>
+
             <p:outputLabel value="Parameters: " />
             <p:outputLabel value="#{encodingJobDetails.encodingJob.parameters}" />
         </p:panelGrid>

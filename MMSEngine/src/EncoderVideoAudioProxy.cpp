@@ -3224,153 +3224,6 @@ pair<int64_t,int64_t> EncoderVideoAudioProxy::processOverlayedTextOnVideo(string
         throw e;
     }    
 
-    /*
-    int64_t encodedPhysicalPathKey;
-    string encodedFileName;
-    string mmsAssetPathName;
-    unsigned long mmsPartitionIndexUsed;
-    try
-    {
-        size_t fileNameIndex = stagingEncodedAssetPathName.find_last_of("/");
-        if (fileNameIndex == string::npos)
-        {
-            string errorMessage = __FILEREF__ + "No fileName find in the asset path name"
-                    + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-
-        encodedFileName = stagingEncodedAssetPathName.substr(fileNameIndex + 1);
-
-        bool partitionIndexToBeCalculated = true;
-        bool deliveryRepositoriesToo = true;
-
-        mmsAssetPathName = _mmsStorage->moveAssetInMMSRepository(
-            stagingEncodedAssetPathName,
-            _encodingItem->_workspace->_directoryName,
-            encodedFileName,
-            _encodingItem->_relativePath,
-
-            partitionIndexToBeCalculated,
-            &mmsPartitionIndexUsed, // OUT if bIsPartitionIndexToBeCalculated is true, IN is bIsPartitionIndexToBeCalculated is false
-
-            deliveryRepositoriesToo,
-            _encodingItem->_workspace->_territories
-        );
-    }
-    catch(runtime_error e)
-    {
-        _logger->error(__FILEREF__ + "_mmsStorage->moveAssetInMMSRepository failed"
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
-            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-            + ", _encodingItem->_workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
-            + ", _encodingItem->_relativePath: " + _encodingItem->_relativePath
-            + ", e.what(): " + e.what()
-        );
-
-        throw e;
-    }
-    catch(exception e)
-    {
-        _logger->error(__FILEREF__ + "_mmsStorage->moveAssetInMMSRepository failed"
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
-            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-            + ", _encodingItem->_workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
-            + ", _encodingItem->_relativePath: " + _encodingItem->_relativePath
-        );
-
-        throw e;
-    }
-
-    try
-    {
-        unsigned long long mmsAssetSizeInBytes;
-        {
-            FileIO::DirectoryEntryType_t detSourceFileType = 
-                    FileIO::getDirectoryEntryType(mmsAssetPathName);
-
-            // file in case of .3gp content OR directory in case of IPhone content
-            if (detSourceFileType != FileIO::TOOLS_FILEIO_DIRECTORY &&
-                    detSourceFileType != FileIO::TOOLS_FILEIO_REGULARFILE) 
-            {
-                string errorMessage = __FILEREF__ + "Wrong directory entry type"
-                        + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                        + ", mmsAssetPathName: " + mmsAssetPathName
-                        ;
-
-                _logger->error(errorMessage);
-                throw runtime_error(errorMessage);
-            }
-
-            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
-            {
-                mmsAssetSizeInBytes = FileIO::getDirectorySizeInBytes(mmsAssetPathName);   
-            }
-            else
-            {
-                bool inCaseOfLinkHasItToBeRead = false;
-                mmsAssetSizeInBytes = FileIO::getFileSizeInBytes(mmsAssetPathName,
-                        inCaseOfLinkHasItToBeRead);   
-            }
-        }
-
-
-        encodedPhysicalPathKey = _mmsEngineDBFacade->saveEncodedContentMetadata(
-            _encodingItem->_workspace->_workspaceKey,
-            _encodingItem->_mediaItemKey,
-            encodedFileName,
-            _encodingItem->_relativePath,
-            mmsPartitionIndexUsed,
-            mmsAssetSizeInBytes,
-            encodingProfileKey);
-        
-        _logger->info(__FILEREF__ + "Saved the Encoded content"
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
-            + ", encodedPhysicalPathKey: " + to_string(encodedPhysicalPathKey)
-        );
-    }
-    catch(exception e)
-    {
-        _logger->error(__FILEREF__ + "_mmsEngineDBFacade->saveEncodedContentMetadata failed"
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
-            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-        );
-
-        FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(mmsAssetPathName);
-
-        _logger->info(__FILEREF__ + "Remove"
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", mmsAssetPathName: " + mmsAssetPathName
-        );
-
-        // file in case of .3gp content OR directory in case of IPhone content
-        if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
-        {
-            Boolean_t bRemoveRecursively = true;
-            FileIO::removeDirectory(mmsAssetPathName, bRemoveRecursively);
-        }
-        else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
-        {
-            FileIO::remove(mmsAssetPathName);
-        }
-
-        throw e;
-    }
-     */
     
     return mediaItemKeyAndPhysicalPathKey;
 }
@@ -3423,7 +3276,6 @@ void EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 {
     
     string imageDirectory;
-    string imageFileName;
     double startTimeInSeconds;
     int maxFramesNumber;  
     string videoFilter;
@@ -3438,9 +3290,6 @@ void EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
     {
         string field = "imageDirectory";
         imageDirectory = _encodingItem->_parametersRoot.get(field, "XXX").asString();
-
-        field = "imageFileName";
-        imageFileName = _encodingItem->_parametersRoot.get(field, "XXX").asString();
 
         field = "startTimeInSeconds";
         startTimeInSeconds = _encodingItem->_parametersRoot.get(field, 0).asDouble();
@@ -3519,7 +3368,6 @@ void EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
                 Json::Value generateFramesMedatada;
                 
                 generateFramesMedatada["imageDirectory"] = imageDirectory;
-                generateFramesMedatada["imageFileName"] = imageFileName;
                 generateFramesMedatada["startTimeInSeconds"] = startTimeInSeconds;
                 generateFramesMedatada["maxFramesNumber"] = maxFramesNumber;
                 generateFramesMedatada["videoFilter"] = videoFilter;
@@ -3847,8 +3695,13 @@ void EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 
 void EncoderVideoAudioProxy::processGeneratedFrames()
 {
+    // here we do not have just a profile to be added into MMS but we have
+    // one or more MediaItemKeys that have to be ingested
+    // One MIK in case of a .mjpeg
+    // One or more MIKs in case of .jpg
+    
     shared_ptr<MultiLocalAssetIngestionEvent>    multiLocalAssetIngestionEvent = _multiEventsSet->getEventsFactory()
-            ->getFreeEvent<MultiLocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_MULTILOCALASSETINGESTIONEVENT);
+        ->getFreeEvent<MultiLocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_MULTILOCALASSETINGESTIONEVENT);
 
     multiLocalAssetIngestionEvent->setSource(ENCODERVIDEOAUDIOPROXY);
     multiLocalAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);

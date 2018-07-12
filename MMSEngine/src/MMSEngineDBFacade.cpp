@@ -10025,7 +10025,7 @@ int MMSEngineDBFacade::addEncoding_GenerateFramesJob (
     int64_t ingestionJobKey,
     EncodingPriority encodingPriority,
         
-    string imageDirectory, string imageFileName, 
+    string imageDirectory,
     double startTimeInSeconds, int maxFramesNumber, 
     string videoFilter, int periodInSeconds, 
     bool mjpeg, int imageWidth, int imageHeight,
@@ -10062,7 +10062,6 @@ int MMSEngineDBFacade::addEncoding_GenerateFramesJob (
                 + "{ "
                 + "\"imageDirectory\": \"" + imageDirectory + "\""
 
-                + ", \"imageFileName\": \"" + imageFileName + "\""
                 + ", \"startTimeInSeconds\": " + to_string(startTimeInSeconds)
                 + ", \"maxFramesNumber\": " + to_string(maxFramesNumber)
                 + ", \"videoFilter\": \"" + videoFilter + "\""

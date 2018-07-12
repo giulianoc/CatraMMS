@@ -929,7 +929,7 @@ public:
     int addEncoding_GenerateFramesJob (
         int64_t ingestionJobKey,
         EncodingPriority encodingPriority,
-        string imageDirectory, string imageFileName, 
+        string imageDirectory, 
         double startTimeInSeconds, int maxFramesNumber, 
         string videoFilter, int periodInSeconds, 
         bool mjpeg, int imageWidth, int imageHeight,

@@ -2206,7 +2206,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEvent (
     {
         // get files from file system       
         {
-            string imageBaseFileName = to_string(multiLocalAssetIngestionEvent->getIngestionJobKey());
+            string generatedFrames_BaseFileName = to_string(multiLocalAssetIngestionEvent->getIngestionJobKey());
 
             FileIO::DirectoryEntryType_t detDirectoryEntryType;
             shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (workspaceIngestionRepository + "/");
@@ -2223,7 +2223,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEvent (
                     if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
                         continue;
 
-                    if (directoryEntry.size() >= imageBaseFileName.size() && 0 == directoryEntry.compare(0, imageBaseFileName.size(), imageBaseFileName))
+                    if (directoryEntry.size() >= generatedFrames_BaseFileName.size() && 0 == directoryEntry.compare(0, generatedFrames_BaseFileName.size(), generatedFrames_BaseFileName))
                         generatedFramesFileNames.push_back(directoryEntry);
                 }
                 catch(DirectoryListFinished e)
@@ -2253,11 +2253,13 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEvent (
             FileIO::closeDirectory (directory);
         }
            
-        // we have one ingestion job row and many generatd frames to be ingested
-        // We want to update the ingestion row just once at the end in case of success
-        // or when an error happens.
+        // we have one ingestion job row and one or more generated frames to be ingested
+        // One MIK in case of a .mjpeg
+        // One or more MIKs in case of .jpg
+        // We want to update the ingestion row just once at the end,
+        // in case of success or when an error happens.
         // To do this we will add a field in the localAssetIngestionEvent structure (ingestionRowToBeUpdatedAsSuccess)
-        // and we will set it to false but the last frame that we will set to true
+        // and we will set it to false except for the last frame where we will set to true
         // In case of error, handleLocalAssetIngestionEvent will update ingestion row
         // and we will not call anymore handleLocalAssetIngestionEvent for the next frames
         // When I say 'update the ingestion row', it's not just the update but it is also
@@ -2340,7 +2342,8 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEvent (
                     localAssetIngestionEvent->setMMSSourceFileName(generatedFrameFileName);
                     localAssetIngestionEvent->setWorkspace(multiLocalAssetIngestionEvent->getWorkspace());
                     localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::AddContent);
-                    localAssetIngestionEvent->setIngestionRowToBeUpdatedAsSuccess(false);
+                    localAssetIngestionEvent->setIngestionRowToBeUpdatedAsSuccess(
+                        it + 1 == generatedFramesFileNames.end() ? true : false);
 
                     localAssetIngestionEvent->setMetadataContent(imageMetaDataContent);
 
@@ -2379,6 +2382,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEvent (
             }
         }
         
+        /*
         if (generatedFrameIngestionFailed)
         {
             _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
@@ -2416,6 +2420,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEvent (
                 mediaItemKey, encodedPhysicalPathKey,
                 multiLocalAssetIngestionEvent->getIngestionJobKey());
         }
+        */
     }
     catch(runtime_error e)
     {
@@ -2521,7 +2526,6 @@ void MMSEngineProcessor::generateAndIngestFrames(
         bool mjpeg;
         int imageWidth;
         int imageHeight;
-        string imageFileName;
         int64_t sourcePhysicalPathKey;
         string sourcePhysicalPath;
         int64_t durationInMilliSeconds;
@@ -2534,7 +2538,7 @@ void MMSEngineProcessor::generateAndIngestFrames(
                 
                 periodInSeconds, startTimeInSeconds,
                 maxFramesNumber, videoFilter,
-                mjpeg, imageWidth, imageHeight, imageFileName,
+                mjpeg, imageWidth, imageHeight,
                 sourcePhysicalPathKey, sourcePhysicalPath, durationInMilliSeconds);
         
         /*
@@ -2764,7 +2768,7 @@ void MMSEngineProcessor::generateAndIngestFrames(
                 ingestionJobKey,
                 0,  // encodingJobKey
                 workspaceIngestionRepository,
-                imageFileName,
+                to_string(ingestionJobKey),    // imageBaseFileName,
                 startTimeInSeconds,
                 maxFramesNumber,
                 videoFilter,
@@ -2997,7 +3001,6 @@ void MMSEngineProcessor::manageGenerateFramesTask(
         bool mjpeg;
         int imageWidth;
         int imageHeight;
-        string imageFileName;
         int64_t sourcePhysicalPathKey;
         string sourcePhysicalPath;
         int64_t durationInMilliSeconds;
@@ -3010,7 +3013,7 @@ void MMSEngineProcessor::manageGenerateFramesTask(
                 
                 periodInSeconds, startTimeInSeconds,
                 maxFramesNumber, videoFilter,
-                mjpeg, imageWidth, imageHeight, imageFileName,
+                mjpeg, imageWidth, imageHeight,
                 sourcePhysicalPathKey, sourcePhysicalPath,
                 durationInMilliSeconds);
 
@@ -3019,7 +3022,7 @@ void MMSEngineProcessor::manageGenerateFramesTask(
 
         _mmsEngineDBFacade->addEncoding_GenerateFramesJob (
                 ingestionJobKey, encodingPriority,
-                workspaceIngestionRepository, imageFileName, 
+                workspaceIngestionRepository, 
                 startTimeInSeconds, maxFramesNumber, 
                 videoFilter, periodInSeconds, 
                 mjpeg, imageWidth, imageHeight,
@@ -3058,7 +3061,6 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
     int& periodInSeconds, double& startTimeInSeconds,
     int& maxFramesNumber, string& videoFilter,
     bool& mjpeg, int& imageWidth, int& imageHeight,
-    string& imageFileName,
     int64_t& sourcePhysicalPathKey, string& sourcePhysicalPath,
     int64_t& durationInMilliSeconds
 )
@@ -3272,18 +3274,8 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
                 workspace);
         */
 
-        // string textToBeReplaced;
-        // string textToReplace;
         {
-            imageFileName = to_string(ingestionJobKey) + /* "_source" + */ ".jpg";
-            /*
-            size_t extensionIndex = sourceFileName.find_last_of(".");
-            if (extensionIndex != string::npos)
-                temporaryFileName.append(sourceFileName.substr(extensionIndex));
-            */
-
-            // textToBeReplaced = to_string(ingestionJobKey) + "_source";
-            // textToReplace = sourceFileName.substr(0, extensionIndex);
+            // imageFileName = to_string(ingestionJobKey) + /* "_source" + */ ".jpg";
         }    
     }
     catch(runtime_error e)

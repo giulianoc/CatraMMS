@@ -1387,6 +1387,11 @@ public class CatraMMS {
                 {
                     encodingJob.setSourceVideoPhysicalPathKey(joParameters.getLong("sourceVideoPhysicalPathKey"));
                 }
+                else if (encodingJob.getType().equalsIgnoreCase("GenerateFrames")
+                        )
+                {
+                    encodingJob.setSourceVideoPhysicalPathKey(joParameters.getLong("sourceVideoPhysicalPathKey"));
+                }
                 else
                 {
                     mLogger.error("Wrong encodingJob.getType(): " + encodingJob.getType());
