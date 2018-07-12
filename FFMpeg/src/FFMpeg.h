@@ -92,6 +92,7 @@ public:
 
     vector<string> generateFramesToIngest(
         int64_t ingestionJobKey,
+        int64_t encodingJobKey,
         string imageDirectory,
         string imageFileName,
         double startTimeInSeconds,
@@ -101,7 +102,8 @@ public:
         bool mjpeg,
         int imageWidth,
         int imageHeight,
-        string mmsAssetPathName);
+        string mmsAssetPathName,
+        int64_t videoDurationInMilliSeconds);
 
     void generateConcatMediaToIngest(
         int64_t ingestionJobKey,

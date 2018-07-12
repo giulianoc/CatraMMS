@@ -10024,7 +10024,8 @@ int MMSEngineDBFacade::addEncoding_GenerateFramesJob (
     double startTimeInSeconds, int maxFramesNumber, 
     string videoFilter, int periodInSeconds, 
     bool mjpeg, int imageWidth, int imageHeight,
-    int64_t sourceVideoPhysicalPathKey
+    int64_t sourceVideoPhysicalPathKey,
+    int64_t videoDurationInMilliSeconds
 )
 {
 
@@ -10066,6 +10067,7 @@ int MMSEngineDBFacade::addEncoding_GenerateFramesJob (
                 + ", \"imageHeight\": " + to_string(imageHeight)
                 + ", \"ingestionJobKey\": " + to_string(ingestionJobKey)
                 + ", \"sourceVideoPhysicalPathKey\": " + to_string(sourceVideoPhysicalPathKey)
+                + ", \"videoDurationInMilliSeconds\": " + to_string(videoDurationInMilliSeconds)
 
                 + "} ";
         {

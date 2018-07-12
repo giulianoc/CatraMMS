@@ -1927,6 +1927,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
 
 vector<string> FFMpeg::generateFramesToIngest(
         int64_t ingestionJobKey,
+        int64_t encodingJobKey,
         string imageDirectory,
         string imageFileName,
         double startTimeInSeconds,
@@ -1936,10 +1937,12 @@ vector<string> FFMpeg::generateFramesToIngest(
         bool mjpeg,
         int imageWidth,
         int imageHeight,
-        string mmsAssetPathName)
+        string mmsAssetPathName,
+        int64_t videoDurationInMilliSeconds)
 {
     _logger->info(__FILEREF__ + "generateFramesToIngest"
         + ", ingestionJobKey: " + to_string(ingestionJobKey)
+        + ", encodingJobKey: " + to_string(encodingJobKey)
         + ", imageDirectory: " + imageDirectory
         + ", imageFileName: " + imageFileName
         + ", startTimeInSeconds: " + to_string(startTimeInSeconds)
@@ -1950,16 +1953,25 @@ vector<string> FFMpeg::generateFramesToIngest(
         + ", imageWidth: " + to_string(imageWidth)
         + ", imageHeight: " + to_string(imageHeight)
         + ", mmsAssetPathName: " + mmsAssetPathName
+        + ", videoDurationInMilliSeconds: " + to_string(videoDurationInMilliSeconds)
     );
+    
+    _currentDurationInMilliSeconds      = videoDurationInMilliSeconds;
+    _currentMMSSourceAssetPathName      = mmsAssetPathName;
+    _currentIngestionJobKey             = ingestionJobKey;
+    _currentEncodingJobKey              = encodingJobKey;
+        
     vector<string> generatedFramesFileNames;
     
     string localImageFileName = imageFileName;
 
     size_t extensionIndex = localImageFileName.find_last_of(".");
     
-    string outputFfmpegPathFileName =
+    _outputFfmpegPathFileName =
             _ffmpegTempDir
-            + to_string(ingestionJobKey)
+            + to_string(_currentIngestionJobKey)
+            + "_"
+            + to_string(_currentEncodingJobKey)
             + ".generateFrame.log"
             ;
         
@@ -2032,7 +2044,7 @@ vector<string> FFMpeg::generateFramesToIngest(
             + "-i " + mmsAssetPathName + " "
             + outputOptions
             + imageDirectory + "/" + localImageFileName + " "
-            + "> " + outputFfmpegPathFileName + " "
+            + "> " + _outputFfmpegPathFileName + " "
             + "2>&1"
             ;
 
@@ -2073,7 +2085,7 @@ vector<string> FFMpeg::generateFramesToIngest(
     catch(runtime_error e)
     {
         string lastPartOfFfmpegOutputFile = getLastPartOfFile(
-                outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
+                _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
         string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
                 + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                 + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
@@ -2082,13 +2094,13 @@ vector<string> FFMpeg::generateFramesToIngest(
         _logger->error(errorMessage);
 
         bool exceptionInCaseOfError = false;
-        FileIO::remove(outputFfmpegPathFileName, exceptionInCaseOfError);
+        FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
 
         throw e;
     }
 
     bool exceptionInCaseOfError = false;
-    FileIO::remove(outputFfmpegPathFileName, exceptionInCaseOfError);
+    FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
      
     if (mjpeg || framesNumber == 1)
         generatedFramesFileNames.push_back(localImageFileName);

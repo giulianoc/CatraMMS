@@ -150,7 +150,8 @@ private:
         int& maxFramesNumber, string& videoFilter,
         bool& mjpeg, int& imageWidth, int& imageHeight,
         string& imageFileName,
-        int64_t& sourcePhysicalPathKey, string& sourcePhysicalPath);
+        int64_t& sourcePhysicalPathKey, string& sourcePhysicalPath,
+        int64_t& durationInMilliSeconds);
 
     void generateAndIngestSlideshow(
         int64_t ingestionJobKey,

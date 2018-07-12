@@ -2509,6 +2509,7 @@ void MMSEngineProcessor::generateAndIngestFrames(
         string imageFileName;
         int64_t sourcePhysicalPathKey;
         string sourcePhysicalPath;
+        int64_t durationInMilliSeconds;
         fillGenerateFramesParameters(
                 workspace,
                 ingestionJobKey,
@@ -2519,7 +2520,7 @@ void MMSEngineProcessor::generateAndIngestFrames(
                 periodInSeconds, startTimeInSeconds,
                 maxFramesNumber, videoFilter,
                 mjpeg, imageWidth, imageHeight, imageFileName,
-                sourcePhysicalPathKey, sourcePhysicalPath);
+                sourcePhysicalPathKey, sourcePhysicalPath, durationInMilliSeconds);
         
         /*
         int periodInSeconds = -1;
@@ -2746,6 +2747,7 @@ void MMSEngineProcessor::generateAndIngestFrames(
 
         vector<string> generatedFramesFileNames = ffmpeg.generateFramesToIngest(
                 ingestionJobKey,
+                0,  // encodingJobKey
                 workspaceIngestionRepository,
                 imageFileName,
                 startTimeInSeconds,
@@ -2755,7 +2757,8 @@ void MMSEngineProcessor::generateAndIngestFrames(
                 mjpeg,
                 imageWidth, 
                 imageHeight,
-                sourcePhysicalPath
+                sourcePhysicalPath,
+                durationInMilliSeconds
         );
 
         _logger->info(__FILEREF__ + "generateFramesToIngest done"
@@ -2982,6 +2985,7 @@ void MMSEngineProcessor::manageGenerateFramesTask(
         string imageFileName;
         int64_t sourcePhysicalPathKey;
         string sourcePhysicalPath;
+        int64_t durationInMilliSeconds;
         fillGenerateFramesParameters(
                 workspace,
                 ingestionJobKey,
@@ -2992,7 +2996,8 @@ void MMSEngineProcessor::manageGenerateFramesTask(
                 periodInSeconds, startTimeInSeconds,
                 maxFramesNumber, videoFilter,
                 mjpeg, imageWidth, imageHeight, imageFileName,
-                sourcePhysicalPathKey, sourcePhysicalPath);
+                sourcePhysicalPathKey, sourcePhysicalPath,
+                durationInMilliSeconds);
 
         string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
                 workspace);
@@ -3003,7 +3008,8 @@ void MMSEngineProcessor::manageGenerateFramesTask(
                 startTimeInSeconds, maxFramesNumber, 
                 videoFilter, periodInSeconds, 
                 mjpeg, imageWidth, imageHeight,
-                sourcePhysicalPathKey
+                sourcePhysicalPathKey,
+                durationInMilliSeconds
                 );
     }
     catch(runtime_error e)
@@ -3038,7 +3044,8 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
     int& maxFramesNumber, string& videoFilter,
     bool& mjpeg, int& imageWidth, int& imageHeight,
     string& imageFileName,
-    int64_t& sourcePhysicalPathKey, string& sourcePhysicalPath
+    int64_t& sourcePhysicalPathKey, string& sourcePhysicalPath,
+    int64_t& durationInMilliSeconds
 )
 {
     try
@@ -3175,7 +3182,6 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
             sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourcePhysicalPathKey);
        }
 
-        int64_t durationInMilliSeconds;
         int videoWidth;
         int videoHeight;
         try

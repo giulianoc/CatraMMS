@@ -1314,9 +1314,11 @@ void FFMPEGEncoder::generateFrames(
         int imageHeight = generateFramesMedatada.get("imageHeight", -1).asInt();
         int64_t ingestionJobKey = generateFramesMedatada.get("ingestionJobKey", -1).asInt64();
         string mmsSourceVideoAssetPathName = generateFramesMedatada.get("mmsSourceVideoAssetPathName", "XXX").asString();
+        int64_t videoDurationInMilliSeconds = generateFramesMedatada.get("videoDurationInMilliSeconds", -1).asInt64();
 
         vector<string> generatedFramesFileNames = encoding->_ffmpeg->generateFramesToIngest(
                 ingestionJobKey,
+                encodingJobKey,
                 imageDirectory,
                 imageFileName,
                 startTimeInSeconds,
@@ -1326,7 +1328,8 @@ void FFMPEGEncoder::generateFrames(
                 mjpeg,
                 imageWidth, 
                 imageHeight,
-                mmsSourceVideoAssetPathName
+                mmsSourceVideoAssetPathName,
+                videoDurationInMilliSeconds
         );
         
         encoding->_running = false;

@@ -933,7 +933,8 @@ public:
         double startTimeInSeconds, int maxFramesNumber, 
         string videoFilter, int periodInSeconds, 
         bool mjpeg, int imageWidth, int imageHeight,
-        int64_t sourceVideoPhysicalPathKey);
+        int64_t sourceVideoPhysicalPathKey,
+        int64_t videoDurationInMilliSeconds);
 
     int updateEncodingJob (
         int64_t encodingJobKey,
