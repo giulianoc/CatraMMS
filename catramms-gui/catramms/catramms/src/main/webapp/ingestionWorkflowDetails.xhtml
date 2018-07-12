@@ -107,7 +107,11 @@
             </p:column>
 
             <p:column style="width:150px;" headerText="Ingestion Type" >
-                <p:outputLabel value="#{ingestionJob.ingestionType}" />
+                <p:outputLabel id="ingestionType"
+                        value="#{ingestionJob.ingestionType}"
+                        title="#{ingestionJob.ingestionType}"
+                        />
+                <p:tooltip for="ingestionType" showEffect="clip" hideEffect="explode" position="left"/>
             </p:column>
 
             <p:column style="width:160px;" headerText="Start Processing" >
