@@ -3850,6 +3850,7 @@ void EncoderVideoAudioProxy::processGeneratedFrames()
     multiLocalAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
 
     multiLocalAssetIngestionEvent->setIngestionJobKey(_encodingItem->_ingestionJobKey);
+    multiLocalAssetIngestionEvent->setEncodingJobKey(_encodingItem->_encodingJobKey);
     multiLocalAssetIngestionEvent->setWorkspace(_encodingItem->_workspace);
     multiLocalAssetIngestionEvent->setParametersRoot(_encodingItem->_generateFramesData->_generateFramesParametersRoot);
 

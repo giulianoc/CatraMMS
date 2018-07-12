@@ -2204,9 +2204,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEvent (
     
     try
     {
-        // get files from file system
-    
-        
+        // get files from file system       
         {
             string imageBaseFileName = to_string(multiLocalAssetIngestionEvent->getIngestionJobKey());
 
@@ -2255,151 +2253,168 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEvent (
             FileIO::closeDirectory (directory);
         }
            
-        if (generatedFramesFileNames.size() == 0)
-        {
-            MMSEngineDBFacade::IngestionStatus newIngestionStatus 
-                    = MMSEngineDBFacade::IngestionStatus::End_TaskSuccess;
+        // we have one ingestion job row and many generatd frames to be ingested
+        // We want to update the ingestion row just once at the end in case of success
+        // or when an error happens.
+        // To do this we will add a field in the localAssetIngestionEvent structure (ingestionRowToBeUpdatedAsSuccess)
+        // and we will set it to false but the last frame that we will set to true
+        // In case of error, handleLocalAssetIngestionEvent will update ingestion row
+        // and we will not call anymore handleLocalAssetIngestionEvent for the next frames
+        // When I say 'update the ingestion row', it's not just the update but it is also
+        // manageIngestionJobStatusUpdate
+        bool generatedFrameIngestionFailed = false;
 
-            string errorMessage;
-            string processorMMS;
-            _logger->info(__FILEREF__ + "Update IngestionJob"
-                + ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
-                + ", IngestionStatus: " + MMSEngineDBFacade::toString(newIngestionStatus)
-                + ", errorMessage: " + errorMessage
-                + ", processorMMS: " + processorMMS
-            );                            
-            _mmsEngineDBFacade->updateIngestionJob (
-                multiLocalAssetIngestionEvent->getIngestionJobKey(), 
-                newIngestionStatus, errorMessage, processorMMS);
+        for(vector<string>::iterator it = generatedFramesFileNames.begin(); 
+                it != generatedFramesFileNames.end(); ++it) 
+        {
+            string generatedFrameFileName = *it;
+
+            if (generatedFrameIngestionFailed)
+            {
+                string workspaceIngestionBinaryPathName = workspaceIngestionRepository 
+                        + "/"
+                        + generatedFrameFileName
+                        ;
+
+                _logger->info(__FILEREF__ + "Remove file"
+                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
+                    + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
+                );
+                FileIO::remove(workspaceIngestionBinaryPathName);
+            }
+            else
+            {
+                _logger->info(__FILEREF__ + "Generated Frame to ingest"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
+                    + ", generatedFrameFileName: " + generatedFrameFileName
+                    // + ", textToBeReplaced: " + textToBeReplaced
+                    // + ", textToReplace: " + textToReplace
+                );
+
+                string fileFormat;
+                size_t extensionIndex = generatedFrameFileName.find_last_of(".");
+                if (extensionIndex == string::npos)
+                {
+                    string errorMessage = __FILEREF__ + "No fileFormat (extension of the file) found in generatedFileName"
+                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                            + ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
+                            + ", generatedFrameFileName: " + generatedFrameFileName
+                    ;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+                fileFormat = generatedFrameFileName.substr(extensionIndex + 1);
+
+    //            if (mmsSourceFileName.find(textToBeReplaced) != string::npos)
+    //                mmsSourceFileName.replace(mmsSourceFileName.find(textToBeReplaced), textToBeReplaced.length(), textToReplace);
+
+                _logger->info(__FILEREF__ + "Generated Frame to ingest"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
+                    + ", new generatedFrameFileName: " + generatedFrameFileName
+                    + ", fileFormat: " + fileFormat
+                );
+
+                string imageMetaDataContent = generateMediaMetadataToIngest(
+                        multiLocalAssetIngestionEvent->getIngestionJobKey(),
+                        // mjpeg,
+                        fileFormat,
+                        multiLocalAssetIngestionEvent->getParametersRoot()
+                );
+
+                {
+                    // shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
+                    //        ->getFreeEvent<LocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
+                    shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent 
+                            = make_shared<LocalAssetIngestionEvent>();
+
+                    localAssetIngestionEvent->setSource(MMSENGINEPROCESSORNAME);
+                    localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
+                    localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
+
+                    localAssetIngestionEvent->setIngestionJobKey(multiLocalAssetIngestionEvent->getIngestionJobKey());
+                    localAssetIngestionEvent->setIngestionSourceFileName(generatedFrameFileName);
+                    localAssetIngestionEvent->setMMSSourceFileName(generatedFrameFileName);
+                    localAssetIngestionEvent->setWorkspace(multiLocalAssetIngestionEvent->getWorkspace());
+                    localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::AddContent);
+                    localAssetIngestionEvent->setIngestionRowToBeUpdatedAsSuccess(false);
+
+                    localAssetIngestionEvent->setMetadataContent(imageMetaDataContent);
+
+                    try
+                    {
+                        handleLocalAssetIngestionEvent (localAssetIngestionEvent);
+                    }
+                    catch(runtime_error e)
+                    {
+                        generatedFrameIngestionFailed = true;
+
+                        _logger->error(__FILEREF__ + "handleLocalAssetIngestionEvent failed"
+                            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                            + ", exception: " + e.what()
+                        );
+                    }
+                    catch(exception e)
+                    {
+                        generatedFrameIngestionFailed = true;
+
+                        _logger->error(__FILEREF__ + "handleLocalAssetIngestionEvent failed"
+                            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                            + ", exception: " + e.what()
+                        );
+                    }
+
+//                    shared_ptr<Event2>    event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
+//                    _multiEventsSet->addEvent(event);
+//
+//                    _logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
+//                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
+//                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+//                        + ", getEventKey().first: " + to_string(event->getEventKey().first)
+//                        + ", getEventKey().second: " + to_string(event->getEventKey().second));
+                }
+            }
+        }
+        
+        if (generatedFrameIngestionFailed)
+        {
+            _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
+                + ", _encodingItem->_encodingJobKey: " + to_string(multiLocalAssetIngestionEvent->getEncodingJobKey())
+                + ", _encodingItem->_ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
+            );
+
+            int64_t mediaItemKey = -1;
+            int64_t encodedPhysicalPathKey = -1;
+            // PunctualError is used because, in case it always happens, the encoding will never reach a final state
+            int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (
+                    multiLocalAssetIngestionEvent->getEncodingJobKey(), 
+                    MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
+                    mediaItemKey, encodedPhysicalPathKey,
+                    multiLocalAssetIngestionEvent->getIngestionJobKey());
+
+            _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
+                + ", _encodingItem->_encodingJobKey: " + to_string(multiLocalAssetIngestionEvent->getEncodingJobKey())
+                + ", _encodingItem->_ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
+                + ", encodingFailureNumber: " + to_string(encodingFailureNumber)
+            );
         }
         else
         {
-            // we have one ingestion job row and many generatd frames to be ingested
-            // We want to update the ingestion row just once at the end in case of success
-            // or when an error happens.
-            // To do this we will add a field in the localAssetIngestionEvent structure (ingestionRowToBeUpdatedAsSuccess)
-            // and we will set it to false but the last frame that we will set to true
-            // In case of error, handleLocalAssetIngestionEvent will update ingestion row
-            // and we will not call anymore handleLocalAssetIngestionEvent for the next frames
-            // When I say 'update the ingestion row', it's not just the update but it is also
-            // manageIngestionJobStatusUpdate
-            bool generatedFrameIngestionFailed = false;
+            _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob NoError"
+                + ", _encodingItem->_encodingJobKey: " + to_string(multiLocalAssetIngestionEvent->getEncodingJobKey())
+                + ", _encodingItem->_ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
+            );
 
-            for(vector<string>::iterator it = generatedFramesFileNames.begin(); 
-                    it != generatedFramesFileNames.end(); ++it) 
-            {
-                string generatedFrameFileName = *it;
-
-                if (generatedFrameIngestionFailed)
-                {
-                    string workspaceIngestionBinaryPathName = workspaceIngestionRepository 
-                            + "/"
-                            + generatedFrameFileName
-                            ;
-
-                    _logger->info(__FILEREF__ + "Remove file"
-                            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
-                        + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
-                    );
-                    FileIO::remove(workspaceIngestionBinaryPathName);
-                }
-                else
-                {
-                    _logger->info(__FILEREF__ + "Generated Frame to ingest"
-                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
-                        + ", generatedFrameFileName: " + generatedFrameFileName
-                        // + ", textToBeReplaced: " + textToBeReplaced
-                        // + ", textToReplace: " + textToReplace
-                    );
-
-                    string fileFormat;
-                    size_t extensionIndex = generatedFrameFileName.find_last_of(".");
-                    if (extensionIndex == string::npos)
-                    {
-                        string errorMessage = __FILEREF__ + "No fileFormat (extension of the file) found in generatedFileName"
-                            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                                + ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
-                                + ", generatedFrameFileName: " + generatedFrameFileName
-                        ;
-                        _logger->error(errorMessage);
-
-                        throw runtime_error(errorMessage);
-                    }
-                    fileFormat = generatedFrameFileName.substr(extensionIndex + 1);
-
-        //            if (mmsSourceFileName.find(textToBeReplaced) != string::npos)
-        //                mmsSourceFileName.replace(mmsSourceFileName.find(textToBeReplaced), textToBeReplaced.length(), textToReplace);
-
-                    _logger->info(__FILEREF__ + "Generated Frame to ingest"
-                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
-                        + ", new generatedFrameFileName: " + generatedFrameFileName
-                        + ", fileFormat: " + fileFormat
-                    );
-
-                    string imageMetaDataContent = generateMediaMetadataToIngest(
-                            multiLocalAssetIngestionEvent->getIngestionJobKey(),
-                            // mjpeg,
-                            fileFormat,
-                            multiLocalAssetIngestionEvent->getParametersRoot()
-                    );
-
-                    {
-                        // shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
-                        //        ->getFreeEvent<LocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
-                        shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent 
-                                = make_shared<LocalAssetIngestionEvent>();
-
-                        localAssetIngestionEvent->setSource(MMSENGINEPROCESSORNAME);
-                        localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
-                        localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
-
-                        localAssetIngestionEvent->setIngestionJobKey(multiLocalAssetIngestionEvent->getIngestionJobKey());
-                        localAssetIngestionEvent->setIngestionSourceFileName(generatedFrameFileName);
-                        localAssetIngestionEvent->setMMSSourceFileName(generatedFrameFileName);
-                        localAssetIngestionEvent->setWorkspace(multiLocalAssetIngestionEvent->getWorkspace());
-                        localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::AddContent);
-                        localAssetIngestionEvent->setIngestionRowToBeUpdatedAsSuccess(
-                            it + 1 == generatedFramesFileNames.end() ? true : false);
-
-                        localAssetIngestionEvent->setMetadataContent(imageMetaDataContent);
-
-                        try
-                        {
-                            handleLocalAssetIngestionEvent (localAssetIngestionEvent);
-                        }
-                        catch(runtime_error e)
-                        {
-                            generatedFrameIngestionFailed = true;
-
-                            _logger->error(__FILEREF__ + "handleLocalAssetIngestionEvent failed"
-                                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                                + ", exception: " + e.what()
-                            );
-                        }
-                        catch(exception e)
-                        {
-                            generatedFrameIngestionFailed = true;
-
-                            _logger->error(__FILEREF__ + "handleLocalAssetIngestionEvent failed"
-                                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                                + ", exception: " + e.what()
-                            );
-                        }
-
-    //                    shared_ptr<Event2>    event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
-    //                    _multiEventsSet->addEvent(event);
-    //
-    //                    _logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
-    //                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
-    //                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-    //                        + ", getEventKey().first: " + to_string(event->getEventKey().first)
-    //                        + ", getEventKey().second: " + to_string(event->getEventKey().second));
-                    }
-                }
-            }
+            int64_t mediaItemKey = -1;
+            int64_t encodedPhysicalPathKey = -1;
+            _mmsEngineDBFacade->updateEncodingJob (
+                multiLocalAssetIngestionEvent->getEncodingJobKey(), 
+                MMSEngineDBFacade::EncodingError::NoError,
+                mediaItemKey, encodedPhysicalPathKey,
+                multiLocalAssetIngestionEvent->getIngestionJobKey());
         }
     }
     catch(runtime_error e)

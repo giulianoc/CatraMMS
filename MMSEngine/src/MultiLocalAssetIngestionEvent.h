@@ -36,6 +36,7 @@ using namespace std;
 class MultiLocalAssetIngestionEvent: public Event2 {
 private:    
     int64_t                 _ingestionJobKey;
+    int64_t                 _encodingJobKey;
     shared_ptr<Workspace>   _workspace;
     Json::Value             _parametersRoot;
 
@@ -47,6 +48,15 @@ public:
     int64_t getIngestionJobKey()
     {
         return _ingestionJobKey;
+    }
+
+    void setEncodingJobKey(int64_t encodingJobKey)
+    {
+        _encodingJobKey   = encodingJobKey;
+    }    
+    int64_t getEncodingJobKey()
+    {
+        return _encodingJobKey;
     }
 
     void setWorkspace(shared_ptr<Workspace> workspace)
