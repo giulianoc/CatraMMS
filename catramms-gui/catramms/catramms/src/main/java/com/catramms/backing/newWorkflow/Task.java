@@ -61,7 +61,7 @@ public class Task implements Serializable
     private Long frameHeight;
     private Long framePeriodInSeconds;
     private Long frameMaxFramesNumber;
-    private Long frameDurationOfEachSlideInSeconds;
+    private Float frameDurationOfEachSlideInSeconds;
     private Long frameOutputFrameRate;
 
     private boolean childTaskCreated;
@@ -470,11 +470,11 @@ public class Task implements Serializable
         this.framePeriodInSeconds = framePeriodInSeconds;
     }
 
-    public Long getFrameDurationOfEachSlideInSeconds() {
+    public Float getFrameDurationOfEachSlideInSeconds() {
         return frameDurationOfEachSlideInSeconds;
     }
 
-    public void setFrameDurationOfEachSlideInSeconds(Long frameDurationOfEachSlideInSeconds) {
+    public void setFrameDurationOfEachSlideInSeconds(Float frameDurationOfEachSlideInSeconds) {
         this.frameDurationOfEachSlideInSeconds = frameDurationOfEachSlideInSeconds;
     }
 

@@ -129,8 +129,7 @@ public class NewWorkflow implements Serializable {
     private Long taskFrameHeight;
     private Long taskFramePeriodInSeconds;
     private Long taskFrameMaxFramesNumber;
-    private Long taskFrameDurationOfEachSlideInSeconds;
-    private Long taskFrameOutputFrameRate;
+    private Float taskFrameDurationOfEachSlideInSeconds;
 
     private String taskContentType;
     List<String> taskContentTypesList = new ArrayList<>();
@@ -2429,7 +2428,6 @@ public class NewWorkflow implements Serializable {
                     taskReferences = task.getReferences() == null ? "" : task.getReferences();
                     taskLabel = task.getLabel();
                     taskFrameDurationOfEachSlideInSeconds= task.getFrameDurationOfEachSlideInSeconds();
-                    taskFrameOutputFrameRate = task.getFrameOutputFrameRate();
                     taskUserData = task.getUserData();
                     taskRetention = task.getRetention();
                     taskTitle = task.getTitle();
@@ -2743,7 +2741,6 @@ public class NewWorkflow implements Serializable {
                 task.setReferences(taskReferences);
                 task.setLabel(taskLabel);
                 task.setFrameDurationOfEachSlideInSeconds(taskFrameDurationOfEachSlideInSeconds);
-                task.setFrameOutputFrameRate(taskFrameOutputFrameRate);
                 task.setUserData(taskUserData);
                 task.setRetention(taskRetention);
                 task.setTitle(taskTitle);
@@ -3641,20 +3638,12 @@ public class NewWorkflow implements Serializable {
         this.taskFrameMaxFramesNumber = taskFrameMaxFramesNumber;
     }
 
-    public Long getTaskFrameDurationOfEachSlideInSeconds() {
+    public Float getTaskFrameDurationOfEachSlideInSeconds() {
         return taskFrameDurationOfEachSlideInSeconds;
     }
 
-    public void setTaskFrameDurationOfEachSlideInSeconds(Long taskFrameDurationOfEachSlideInSeconds) {
+    public void setTaskFrameDurationOfEachSlideInSeconds(Float taskFrameDurationOfEachSlideInSeconds) {
         this.taskFrameDurationOfEachSlideInSeconds = taskFrameDurationOfEachSlideInSeconds;
-    }
-
-    public Long getTaskFrameOutputFrameRate() {
-        return taskFrameOutputFrameRate;
-    }
-
-    public void setTaskFrameOutputFrameRate(Long taskFrameOutputFrameRate) {
-        this.taskFrameOutputFrameRate = taskFrameOutputFrameRate;
     }
 
     public String getMediaItemsSelectionMode() {

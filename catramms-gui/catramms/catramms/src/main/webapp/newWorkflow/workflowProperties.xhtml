@@ -2828,30 +2828,13 @@
                 </p:column>
                 <p:column>
                     <p:inputNumber id="taskFrameDurationOfEachSlideInSeconds_Slideshow"
-                                   decimalPlaces="0"
+                                   decimalPlaces="#{newWorkflow.timeInSecondsDecimalsPrecision}"
                                    required="false"
                                    value="#{newWorkflow.taskFrameDurationOfEachSlideInSeconds}"
-                                   title="Samples: 5, ..."
+                                   title="Samples: 0.5, 2, 5, ..."
                                    autocomplete="true"
                                    placeholder="duration of each slide in seconds"/>
                     <p:tooltip for="taskFrameDurationOfEachSlideInSeconds_Slideshow" showEffect="clip"
-                               hideEffect="explode" position="left"/>
-                </p:column>
-            </p:row>
-
-            <p:row>
-                <p:column>
-                    <p:outputLabel value="Output Frame Rate"/>
-                </p:column>
-                <p:column>
-                    <p:inputNumber id="taskFrameOutputFrameRate_Slideshow"
-                                   decimalPlaces="0"
-                                   required="false"
-                                   value="#{newWorkflow.taskFrameOutputFrameRate}"
-                                   title="Samples: 25, ..."
-                                   autocomplete="true"
-                                   placeholder="output frame rate"/>
-                    <p:tooltip for="taskFrameOutputFrameRate_Slideshow" showEffect="clip"
                                hideEffect="explode" position="left"/>
                 </p:column>
             </p:row>

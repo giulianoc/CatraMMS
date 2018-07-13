@@ -137,7 +137,7 @@ private:
 
     string overlayTextOnVideo();
     string overlayTextOnVideo_through_ffmpeg();
-    pair<int64_t,int64_t> processOverlayedTextOnVideo(string stagingEncodedAssetPathName);    
+    void processOverlayedTextOnVideo(string stagingEncodedAssetPathName);    
     
     void generateFrames();
     void generateFrames_through_ffmpeg();

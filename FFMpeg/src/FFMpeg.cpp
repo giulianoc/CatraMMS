@@ -670,24 +670,8 @@ void FFMpeg::overlayImageOnVideo(
         _currentEncodingJobKey              = encodingJobKey;
         
 
-        string stagingEncodedAssetPath;
-        {
-            size_t fileNameIndex = stagingEncodedAssetPathName.find_last_of("/");
-            if (fileNameIndex == string::npos)
-            {
-                string errorMessage = __FILEREF__ + "ffmpeg: No fileName find in the staging encoded asset path name"
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-            
-            stagingEncodedAssetPath = stagingEncodedAssetPathName.substr(0, fileNameIndex);
-        }
-        _outputFfmpegPathFileName = string(stagingEncodedAssetPath)
-                + "/"
+        _outputFfmpegPathFileName =
+                _ffmpegTempDir + "/"
                 + to_string(_currentIngestionJobKey)
                 + "_"
                 + to_string(_currentEncodingJobKey)
@@ -917,25 +901,8 @@ void FFMpeg::overlayTextOnVideo(
         _currentEncodingJobKey              = encodingJobKey;
         
 
-        string stagingEncodedAssetPath;
-        {
-            size_t fileNameIndex = stagingEncodedAssetPathName.find_last_of("/");
-            if (fileNameIndex == string::npos)
-            {
-                string errorMessage = __FILEREF__ + "ffmpeg: No fileName find in the staging encoded asset path name"
-                        + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                        + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-                        ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-            
-            stagingEncodedAssetPath = stagingEncodedAssetPathName.substr(0, fileNameIndex);
-        }
-        _outputFfmpegPathFileName = string(stagingEncodedAssetPath)
-                + "/"
+        _outputFfmpegPathFileName =
+                _ffmpegTempDir + "/"
                 + to_string(_currentIngestionJobKey)
                 + "_"
                 + to_string(_currentEncodingJobKey)
@@ -1395,7 +1362,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
     string sourceFileName = mmsAssetPathName.substr(fileNameIndex + 1);
 
     string      detailsPathFileName =
-            _ffmpegTempDir + sourceFileName + ".json";
+            _ffmpegTempDir + "/" + sourceFileName + ".json";
     
     /*
      * ffprobe:
@@ -1964,7 +1931,7 @@ vector<string> FFMpeg::generateFramesToIngest(
     vector<string> generatedFramesFileNames;
     
     _outputFfmpegPathFileName =
-            _ffmpegTempDir
+            _ffmpegTempDir + "/"
             + to_string(_currentIngestionJobKey)
             + "_"
             + to_string(_currentEncodingJobKey)
@@ -2160,7 +2127,7 @@ void FFMpeg::generateConcatMediaToIngest(
         string concatenatedMediaPathName)
 {
     string concatenationListPathName =
-        _ffmpegTempDir
+        _ffmpegTempDir + "/"
         + to_string(ingestionJobKey)
         + ".concatList.txt"
         ;
@@ -2177,7 +2144,7 @@ void FFMpeg::generateConcatMediaToIngest(
     concatListFile.close();
 
     string outputFfmpegPathFileName =
-            _ffmpegTempDir
+            _ffmpegTempDir + "/"
             + to_string(ingestionJobKey)
             + ".concat.log"
             ;
@@ -2259,7 +2226,7 @@ void FFMpeg::generateSlideshowMediaToIngest(
         string slideshowMediaPathName)
 {
     string slideshowListPathName =
-        _ffmpegTempDir
+        _ffmpegTempDir + "/"
         + to_string(ingestionJobKey)
         + ".slideshowList.txt"
         ;
@@ -2277,7 +2244,7 @@ void FFMpeg::generateSlideshowMediaToIngest(
     slideshowListFile.close();
 
     string outputFfmpegPathFileName =
-            _ffmpegTempDir
+            _ffmpegTempDir + "/"
             + to_string(ingestionJobKey)
             + ".slideshow.log"
             ;
@@ -2364,7 +2331,7 @@ void FFMpeg::generateCutMediaToIngest(
 {
 
     string outputFfmpegPathFileName =
-            _ffmpegTempDir
+            _ffmpegTempDir + "/"
             + to_string(ingestionJobKey)
             + ".cut.log"
             ;
