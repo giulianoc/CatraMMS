@@ -10427,7 +10427,7 @@ int MMSEngineDBFacade::addEncoding_SlideShowJob (
                 );
 
         _logger->info(__FILEREF__ + "insert into MMS_EncodingJob"
-            + ", parameters.length: " + parameters.length());
+            + ", parameters.length: " + to_string(parameters.length()));
         
         {
             lastSQLCommand = 
