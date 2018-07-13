@@ -10426,6 +10426,9 @@ int MMSEngineDBFacade::addEncoding_SlideShowJob (
                 + "} "
                 );
 
+        _logger->info(__FILEREF__ + "insert into MMS_EncodingJob"
+            + ", parameters.length: " + parameters.length());
+        
         {
             lastSQLCommand = 
                 "insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, parameters, encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, failuresNumber) values ("
@@ -14811,7 +14814,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "encodingJobKey  			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "ingestionJobKey			BIGINT UNSIGNED NOT NULL,"
                     "type                               VARCHAR (64) NOT NULL,"
-                    "parameters                         VARCHAR (1024) NOT NULL,"
+                    "parameters                         VARCHAR (10240) NOT NULL,"
                     "encodingPriority			TINYINT NOT NULL,"
                     "encodingJobStart			TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "encodingJobEnd			DATETIME NULL,"
