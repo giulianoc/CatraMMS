@@ -493,7 +493,7 @@ public class CatraMMS {
 
     public Vector<Long> getMediaItems(String username, String password,
                           Long maxMediaItemsNumber, String contentType,
-                          Date start, Date end,
+                          Date start, Date end, String title,
                           List<MediaItem> mediaItemsList)
             throws Exception
     {
@@ -511,6 +511,7 @@ public class CatraMMS {
                     + "?start=0"
                     + "&rows=" + maxMediaItemsNumber
                     + "&contentType=" + contentType
+                    + "&title=" + java.net.URLEncoder.encode(title, "UTF-8")
                     + "&startIngestionDate=" + simpleDateFormat.format(start)
                     + "&endIngestionDate=" + simpleDateFormat.format(end);
 

@@ -2511,13 +2511,21 @@ void API::mediaItemsList(
             startAndEndIngestionDatePresent = true;
         }
 
+        string title;
+        auto titleIt = queryParameters.find("title");
+        if (titleIt != queryParameters.end() && titleIt->second != "")
+        {
+            title = titleIt->second;
+        }
+
         {
             
             Json::Value ingestionStatusRoot = _mmsEngineDBFacade->getMediaItemsList(
                     workspace->_workspaceKey, mediaItemKey, physicalPathKey,
                     start, rows,
                     contentTypePresent, contentType,
-                    startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate);
+                    startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
+                    title);
 
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, ingestionStatusRoot);

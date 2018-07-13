@@ -69,6 +69,7 @@ public class NewWorkflow implements Serializable {
     private String mediaItemsSelectionMode;
     private Date mediaItemsBegin;
     private Date mediaItemsEnd;
+    private String mediaItemsTitle;
     private String mediaItemsContentType;
     private List<String> mediaItemsContentTypesList = new ArrayList<>();
     private Long mediaItemsMaxMediaItemsNumber = new Long(100);
@@ -749,6 +750,8 @@ public class NewWorkflow implements Serializable {
                     joParameters.put("Retention", task.getRetention());
                 if (task.getTitle() != null && !task.getTitle().equalsIgnoreCase(""))
                     joParameters.put("Title", task.getTitle());
+                if (task.getEncodingPriority() != null && !task.getEncodingPriority().equalsIgnoreCase(""))
+                    joParameters.put("EncodingPriority", task.getEncodingPriority());
                 if (task.getUniqueName() != null && !task.getUniqueName().equalsIgnoreCase(""))
                     joParameters.put("UniqueName", task.getUniqueName());
                 if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
@@ -835,14 +838,14 @@ public class NewWorkflow implements Serializable {
                     joParameters.put("BoxColor", task.getOverlayBoxColor());
                 if (task.getOverlayBoxPercentageOpacity() != null)
                     joParameters.put("BoxPercentageOpacity", task.getOverlayBoxPercentageOpacity());
-                if (task.getEncodingPriority() != null && !task.getEncodingPriority().equalsIgnoreCase(""))
-                    joParameters.put("EncodingPriority", task.getEncodingPriority());
                 if (task.getUserData() != null && !task.getUserData().equalsIgnoreCase(""))
                     joParameters.put("UserData", task.getUserData());
                 if (task.getRetention() != null && !task.getRetention().equalsIgnoreCase(""))
                     joParameters.put("Retention", task.getRetention());
                 if (task.getTitle() != null && !task.getTitle().equalsIgnoreCase(""))
                     joParameters.put("Title", task.getTitle());
+                if (task.getEncodingPriority() != null && !task.getEncodingPriority().equalsIgnoreCase(""))
+                    joParameters.put("EncodingPriority", task.getEncodingPriority());
                 if (task.getUniqueName() != null && !task.getUniqueName().equalsIgnoreCase(""))
                     joParameters.put("UniqueName", task.getUniqueName());
                 if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
@@ -991,6 +994,8 @@ public class NewWorkflow implements Serializable {
                     joParameters.put("Retention", task.getRetention());
                 if (task.getTitle() != null && !task.getTitle().equalsIgnoreCase(""))
                     joParameters.put("Title", task.getTitle());
+                if (task.getEncodingPriority() != null && !task.getEncodingPriority().equalsIgnoreCase(""))
+                    joParameters.put("EncodingPriority", task.getEncodingPriority());
                 if (task.getUniqueName() != null && !task.getUniqueName().equalsIgnoreCase(""))
                     joParameters.put("UniqueName", task.getUniqueName());
                 if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
@@ -1060,6 +1065,8 @@ public class NewWorkflow implements Serializable {
                     joParameters.put("Retention", task.getRetention());
                 if (task.getTitle() != null && !task.getTitle().equalsIgnoreCase(""))
                     joParameters.put("Title", task.getTitle());
+                if (task.getEncodingPriority() != null && !task.getEncodingPriority().equalsIgnoreCase(""))
+                    joParameters.put("EncodingPriority", task.getEncodingPriority());
                 if (task.getUniqueName() != null && !task.getUniqueName().equalsIgnoreCase(""))
                     joParameters.put("UniqueName", task.getUniqueName());
                 if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
@@ -1141,6 +1148,8 @@ public class NewWorkflow implements Serializable {
                     joParameters.put("Retention", task.getRetention());
                 if (task.getTitle() != null && !task.getTitle().equalsIgnoreCase(""))
                     joParameters.put("Title", task.getTitle());
+                if (task.getEncodingPriority() != null && !task.getEncodingPriority().equalsIgnoreCase(""))
+                    joParameters.put("EncodingPriority", task.getEncodingPriority());
                 if (task.getUniqueName() != null && !task.getUniqueName().equalsIgnoreCase(""))
                     joParameters.put("UniqueName", task.getUniqueName());
                 if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
@@ -1210,6 +1219,8 @@ public class NewWorkflow implements Serializable {
                     joParameters.put("Retention", task.getRetention());
                 if (task.getTitle() != null && !task.getTitle().equalsIgnoreCase(""))
                     joParameters.put("Title", task.getTitle());
+                if (task.getEncodingPriority() != null && !task.getEncodingPriority().equalsIgnoreCase(""))
+                    joParameters.put("EncodingPriority", task.getEncodingPriority());
                 if (task.getUniqueName() != null && !task.getUniqueName().equalsIgnoreCase(""))
                     joParameters.put("UniqueName", task.getUniqueName());
                 if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
@@ -1275,6 +1286,8 @@ public class NewWorkflow implements Serializable {
                     joParameters.put("Retention", task.getRetention());
                 if (task.getTitle() != null && !task.getTitle().equalsIgnoreCase(""))
                     joParameters.put("Title", task.getTitle());
+                if (task.getEncodingPriority() != null && !task.getEncodingPriority().equalsIgnoreCase(""))
+                    joParameters.put("EncodingPriority", task.getEncodingPriority());
                 if (task.getUniqueName() != null && !task.getUniqueName().equalsIgnoreCase(""))
                     joParameters.put("UniqueName", task.getUniqueName());
                 if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
@@ -2152,6 +2165,7 @@ public class NewWorkflow implements Serializable {
                     taskUserData = task.getUserData();
                     taskRetention = task.getRetention();
                     taskTitle = task.getTitle();
+                    taskEncodingPriority = task.getEncodingPriority();
                     taskUniqueName = task.getUniqueName();
                     if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
                         taskIngester = task.getIngester();
@@ -2195,10 +2209,10 @@ public class NewWorkflow implements Serializable {
                     taskOverlayBoxEnable = task.getOverlayBoxEnable();
                     taskOverlayBoxColor = task.getOverlayBoxColor();
                     taskOverlayBoxPercentageOpacity = task.getOverlayBoxPercentageOpacity();
-                    taskEncodingPriority = task.getEncodingPriority();
                     taskUserData = task.getUserData();
                     taskRetention = task.getRetention();
                     taskTitle = task.getTitle();
+                    taskEncodingPriority = task.getEncodingPriority();
                     taskUniqueName = task.getUniqueName();
                     if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
                         taskIngester = task.getIngester();
@@ -2277,6 +2291,7 @@ public class NewWorkflow implements Serializable {
                     taskUserData = task.getUserData();
                     taskRetention = task.getRetention();
                     taskTitle = task.getTitle();
+                    taskEncodingPriority = task.getEncodingPriority();
                     taskUniqueName = task.getUniqueName();
                     if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
                         taskIngester = task.getIngester();
@@ -2316,6 +2331,7 @@ public class NewWorkflow implements Serializable {
                     taskUserData = task.getUserData();
                     taskRetention = task.getRetention();
                     taskTitle = task.getTitle();
+                    taskEncodingPriority = task.getEncodingPriority();
                     taskUniqueName = task.getUniqueName();
                     if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
                         taskIngester = task.getIngester();
@@ -2356,6 +2372,7 @@ public class NewWorkflow implements Serializable {
                     taskUserData = task.getUserData();
                     taskRetention = task.getRetention();
                     taskTitle = task.getTitle();
+                    taskEncodingPriority = task.getEncodingPriority();
                     taskUniqueName = task.getUniqueName();
                     if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
                         taskIngester = task.getIngester();
@@ -2395,6 +2412,7 @@ public class NewWorkflow implements Serializable {
                     taskUserData = task.getUserData();
                     taskRetention = task.getRetention();
                     taskTitle = task.getTitle();
+                    taskEncodingPriority = task.getEncodingPriority();
                     taskUniqueName = task.getUniqueName();
                     if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
                         taskIngester = task.getIngester();
@@ -2431,6 +2449,7 @@ public class NewWorkflow implements Serializable {
                     taskUserData = task.getUserData();
                     taskRetention = task.getRetention();
                     taskTitle = task.getTitle();
+                    taskEncodingPriority = task.getEncodingPriority();
                     taskUniqueName = task.getUniqueName();
                     if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
                         taskIngester = task.getIngester();
@@ -2606,6 +2625,7 @@ public class NewWorkflow implements Serializable {
                 task.setUserData(taskUserData);
                 task.setRetention(taskRetention);
                 task.setTitle(taskTitle);
+                task.setEncodingPriority(taskEncodingPriority);
                 task.setUniqueName(taskUniqueName);
                 task.setIngester(taskIngester);
                 task.setKeywords(taskKeywords);
@@ -2628,10 +2648,10 @@ public class NewWorkflow implements Serializable {
                 task.setOverlayBoxEnable(taskOverlayBoxEnable);
                 task.setOverlayBoxColor(taskOverlayBoxColor);
                 task.setOverlayBoxPercentageOpacity(taskOverlayBoxPercentageOpacity);
-                task.setEncodingPriority(taskEncodingPriority);
                 task.setUserData(taskUserData);
                 task.setRetention(taskRetention);
                 task.setTitle(taskTitle);
+                task.setEncodingPriority(taskEncodingPriority);
                 task.setUniqueName(taskUniqueName);
                 task.setIngester(taskIngester);
                 task.setKeywords(taskKeywords);
@@ -2670,6 +2690,7 @@ public class NewWorkflow implements Serializable {
                 task.setUserData(taskUserData);
                 task.setRetention(taskRetention);
                 task.setTitle(taskTitle);
+                task.setEncodingPriority(taskEncodingPriority);
                 task.setUniqueName(taskUniqueName);
                 task.setIngester(taskIngester);
                 task.setKeywords(taskKeywords);
@@ -2689,6 +2710,7 @@ public class NewWorkflow implements Serializable {
                 task.setUserData(taskUserData);
                 task.setRetention(taskRetention);
                 task.setTitle(taskTitle);
+                task.setEncodingPriority(taskEncodingPriority);
                 task.setUniqueName(taskUniqueName);
                 task.setIngester(taskIngester);
                 task.setKeywords(taskKeywords);
@@ -2709,6 +2731,7 @@ public class NewWorkflow implements Serializable {
                 task.setUserData(taskUserData);
                 task.setRetention(taskRetention);
                 task.setTitle(taskTitle);
+                task.setEncodingPriority(taskEncodingPriority);
                 task.setUniqueName(taskUniqueName);
                 task.setIngester(taskIngester);
                 task.setKeywords(taskKeywords);
@@ -2728,6 +2751,7 @@ public class NewWorkflow implements Serializable {
                 task.setUserData(taskUserData);
                 task.setRetention(taskRetention);
                 task.setTitle(taskTitle);
+                task.setEncodingPriority(taskEncodingPriority);
                 task.setUniqueName(taskUniqueName);
                 task.setIngester(taskIngester);
                 task.setKeywords(taskKeywords);
@@ -2744,6 +2768,7 @@ public class NewWorkflow implements Serializable {
                 task.setUserData(taskUserData);
                 task.setRetention(taskRetention);
                 task.setTitle(taskTitle);
+                task.setEncodingPriority(taskEncodingPriority);
                 task.setUniqueName(taskUniqueName);
                 task.setIngester(taskIngester);
                 task.setKeywords(taskKeywords);
@@ -2875,12 +2900,13 @@ public class NewWorkflow implements Serializable {
                                 + ", mediaItemsContentType: " + mediaItemsContentType
                                 + ", mediaItemsBegin: " + mediaItemsBegin
                                 + ", mediaItemsEnd: " + mediaItemsEnd
+                                + ", mediaItemsTitle: " + mediaItemsTitle
                 );
 
                 CatraMMS catraMMS = new CatraMMS();
                 Vector<Long> mediaItemsData = catraMMS.getMediaItems(
                         username, password, mediaItemsMaxMediaItemsNumber,
-                        mediaItemsContentType, mediaItemsBegin, mediaItemsEnd, mediaItemsList);
+                        mediaItemsContentType, mediaItemsBegin, mediaItemsEnd, mediaItemsTitle, mediaItemsList);
                 mediaItemsNumber = mediaItemsData.get(0);
             }
         }
@@ -3058,6 +3084,8 @@ public class NewWorkflow implements Serializable {
 
         mLogger.info("taskReferences initialization"
                         + ", mediaItemsSelectedList.size: " + mediaItemsSelectedList.size()
+                        + ", mediaItemsToBeAddedOrReplaced: " + mediaItemsToBeAddedOrReplaced
+                        + ", taskReferences: " + taskReferences
         );
 
         if (mediaItemsToBeAddedOrReplaced.equalsIgnoreCase("toBeReplaced"))
@@ -3676,6 +3704,14 @@ public class NewWorkflow implements Serializable {
 
     public void setMediaItemsEnd(Date mediaItemsEnd) {
         this.mediaItemsEnd = mediaItemsEnd;
+    }
+
+    public String getMediaItemsTitle() {
+        return mediaItemsTitle;
+    }
+
+    public void setMediaItemsTitle(String mediaItemsTitle) {
+        this.mediaItemsTitle = mediaItemsTitle;
     }
 
     public String getMediaItemsContentType() {

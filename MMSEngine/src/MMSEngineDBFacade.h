@@ -822,7 +822,8 @@ public:
         int64_t workspaceKey, int64_t mediaItemKey, int64_t physicalPathKey,
         int start, int rows,
         bool contentTypePresent, ContentType contentType,
-        bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate);
+        bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
+        string title);
 
     Json::Value getEncodingProfilesSetList (
         int64_t workspaceKey, int64_t encodingProfilesSetKey,

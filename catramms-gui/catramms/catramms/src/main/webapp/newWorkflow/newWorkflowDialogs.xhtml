@@ -62,6 +62,15 @@
                     <span class="ui-icon ui-icon-grip-dotted-vertical" />
                 </span>
 
+                <p:outputLabel value="Title:" />
+                <p:inputText style="width:70px;" id="title"
+                             value="#{newWorkflow.mediaItemsTitle}"
+                             placeholder="title" />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
                 <p:outputLabel value="Max:" />
                 <p:spinner id="maxMediaItemsNumber"
                            value="#{newWorkflow.mediaItemsMaxMediaItemsNumber}"

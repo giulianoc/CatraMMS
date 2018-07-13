@@ -34,6 +34,7 @@ public class MediaItems implements Serializable {
     private boolean autoRefresh;
     private Date begin;
     private Date end;
+    private String title;
 
     private String contentType;
     private List<String> contentTypesList;
@@ -260,7 +261,7 @@ public class MediaItems implements Serializable {
                         CatraMMS catraMMS = new CatraMMS();
                         Vector<Long> mediaItemsData = catraMMS.getMediaItems(
                                 username, password, maxMediaItemsNumber,
-                                contentType, begin, end, mediaItemsList);
+                                contentType, begin, end, title, mediaItemsList);
 
                         mediaItemsNumber = mediaItemsData.get(0);
                         workSpaceUsageInMB = mediaItemsData.get(1);
@@ -597,5 +598,13 @@ public class MediaItems implements Serializable {
 
     public void setShareWorkspaceConfirmationCode(String shareWorkspaceConfirmationCode) {
         this.shareWorkspaceConfirmationCode = shareWorkspaceConfirmationCode;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
     }
 }

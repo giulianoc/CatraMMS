@@ -300,6 +300,15 @@
                     <span class="ui-icon ui-icon-grip-dotted-vertical" />
                 </span>
 
+                <p:outputLabel value="Title:" />
+                <p:inputText style="width:70px;" id="title"
+                             value="#{mediaItems.title}"
+                             placeholder="title" />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
                 <p:outputLabel value="Max:" />
                 <p:spinner id="maxMediaItemsNumber"
                            value="#{mediaItems.maxMediaItemsNumber}"
@@ -370,6 +379,7 @@
                            showEffect="clip" hideEffect="explode" position="left"/>
             </p:column>
 
+            <!--
             <p:column style="width:160px;" headerText="Start Publishing" >
                 <p:outputLabel id="startPublishing" value="#{mediaItem.startPublishing}">
                     <f:convertDateTime type="date" pattern="dd-MM-yyyy HH:mm:ss" timeZone="CET"/>
@@ -381,6 +391,7 @@
                     <f:convertDateTime type="date" pattern="dd-MM-yyyy HH:mm:ss" timeZone="CET"/>
                 </p:outputLabel>
             </p:column>
+            -->
 
             <p:column style="width:160px;" headerText="Ingestion Date" >
                 <p:outputLabel id="ingestionDate" value="#{mediaItem.ingestionDate}">

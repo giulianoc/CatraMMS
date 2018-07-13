@@ -5573,7 +5573,8 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
         int64_t workspaceKey, int64_t mediaItemKey, int64_t physicalPathKey,
         int start, int rows,
         bool contentTypePresent, ContentType contentType,
-        bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate
+        bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
+        string title
 )
 {    
     string      lastSQLCommand;
@@ -5596,6 +5597,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
             + ", startAndEndIngestionDatePresent: " + to_string(startAndEndIngestionDatePresent)
             + ", startIngestionDate: " + (startAndEndIngestionDatePresent ? startIngestionDate : "")
             + ", endIngestionDate: " + (startAndEndIngestionDatePresent ? endIngestionDate : "")
+            + ", title: " + title
         );
         
         conn = _connectionPool->borrow();	
@@ -5639,6 +5641,12 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                 requestParametersRoot[field] = endIngestionDate;
             }
             
+            if (title != "")
+            {
+                field = "title";
+                requestParametersRoot[field] = title;
+            }
+
             field = "requestParameters";
             mediaItemsListRoot[field] = requestParametersRoot;
         }
@@ -5673,6 +5681,8 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
             sqlWhere += ("and contentType = ? ");
         if (startAndEndIngestionDatePresent)
             sqlWhere += ("and ingestionDate >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) and ingestionDate <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
+        if (title != "")
+            sqlWhere += ("and title like ? ");
         
         Json::Value responseRoot;
         {
@@ -5692,6 +5702,8 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                 preparedStatement->setString(queryParameterIndex++, startIngestionDate);
                 preparedStatement->setString(queryParameterIndex++, endIngestionDate);
             }
+            if (title != "")
+                preparedStatement->setString(queryParameterIndex++, string("%") + title + "%");
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
@@ -5747,6 +5759,8 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                 preparedStatement->setString(queryParameterIndex++, startIngestionDate);
                 preparedStatement->setString(queryParameterIndex++, endIngestionDate);
             }
+            if (title != "")
+                preparedStatement->setString(queryParameterIndex++, string("%") + title + "%");
             preparedStatement->setInt(queryParameterIndex++, rows);
             preparedStatement->setInt(queryParameterIndex++, start);
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
