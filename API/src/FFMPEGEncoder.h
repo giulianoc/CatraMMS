@@ -85,6 +85,12 @@ private:
         int64_t encodingJobKey,
         string requestBody);
 
+    void slideShow(
+        // FCGX_Request& request,
+        shared_ptr<Encoding> encoding,
+        int64_t encodingJobKey,
+        string requestBody);
+
 };
 
 #endif

@@ -117,6 +117,7 @@ private:
     string                              _ffmpegOverlayImageOnVideoURI;
     string                              _ffmpegOverlayTextOnVideoURI;
     string                              _ffmpegGenerateFramesURI;
+    string                              _ffmpegSlideShowURI;
     
     #ifdef __LOCALENCODER__
         shared_ptr<FFMpeg>              _ffmpeg;
@@ -142,6 +143,10 @@ private:
     void generateFrames();
     void generateFrames_through_ffmpeg();
     void processGeneratedFrames();
+
+    string slideShow();
+    string slideShow_through_ffmpeg();
+    void processSlideShow(string stagingEncodedAssetPathName);    
 
     bool getEncodingStatus(int64_t encodingJobKey);
 

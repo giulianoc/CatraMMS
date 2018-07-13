@@ -909,10 +909,17 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
                             try
                             {
+                                /*
                                 generateAndIngestSlideshow(
                                         ingestionJobKey, 
                                         workspace, 
                                         parametersRoot, 
+                                        dependencies);
+                                */
+                                manageSlideShowTask(
+                                        ingestionJobKey,
+                                        workspace,
+                                        parametersRoot,
                                         dependencies);
                             }
                             catch(runtime_error e)
@@ -3314,6 +3321,153 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
     }
 }
 
+void MMSEngineProcessor::manageSlideShowTask(
+        int64_t ingestionJobKey,
+        shared_ptr<Workspace> workspace,
+        Json::Value parametersRoot,
+        vector<pair<int64_t,Validator::DependencyType>>& dependencies
+)
+{
+    try
+    {
+        if (dependencies.size() == 0)
+        {
+            string errorMessage = __FILEREF__ + "No images found"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", dependencies.size: " + to_string(dependencies.size());
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        
+        MMSEngineDBFacade::EncodingPriority encodingPriority;
+        string field = "EncodingPriority";
+        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+            encodingPriority = 
+                    static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority);
+        }
+        else
+        {
+            encodingPriority =
+                MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
+        }
+
+        MMSEngineDBFacade::ContentType slideshowContentType;
+        bool slideshowContentTypeInitialized = false;
+        vector<string> sourcePhysicalPaths;
+        
+        for (pair<int64_t,Validator::DependencyType>& keyAndDependencyType: dependencies)
+        {
+            // int64_t encodingProfileKey = -1;
+            // string sourcePhysicalPath = _mmsStorage->getPhysicalPath(keyAndDependencyType.first, encodingProfileKey);
+
+            int64_t sourceMediaItemKey;
+            int64_t sourcePhysicalPathKey;
+            string sourcePhysicalPath;
+            if (keyAndDependencyType.second == Validator::DependencyType::MediaItemKey)
+            {
+                sourceMediaItemKey = keyAndDependencyType.first;
+
+                sourcePhysicalPathKey = -1;
+                int64_t encodingProfileKey = -1;
+                pair<int64_t,string> physicalPathKeyAndPhysicalPath 
+                        = _mmsStorage->getPhysicalPath(sourceMediaItemKey, encodingProfileKey);
+
+                int64_t localPhysicalPathKey;
+                tie(localPhysicalPathKey,sourcePhysicalPath) = physicalPathKeyAndPhysicalPath;
+            }
+            else
+            {
+                sourcePhysicalPathKey = keyAndDependencyType.first;
+
+                bool warningIfMissing = false;
+                pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyContentTypeAndAvgFrameRate =
+                    _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+                        sourcePhysicalPathKey, warningIfMissing);
+
+                MMSEngineDBFacade::ContentType localContentType;
+                tie(sourceMediaItemKey,localContentType)
+                        = mediaItemKeyContentTypeAndAvgFrameRate;
+
+                sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourcePhysicalPathKey);
+            }
+            
+            sourcePhysicalPaths.push_back(sourcePhysicalPath);
+            
+            bool warningIfMissing = false;
+            
+            MMSEngineDBFacade::ContentType contentType = _mmsEngineDBFacade->getMediaItemKeyDetails(
+                sourceMediaItemKey, warningIfMissing);
+            
+            if (!slideshowContentTypeInitialized)
+            {
+                slideshowContentType = contentType;
+                if (slideshowContentType != MMSEngineDBFacade::ContentType::Image)
+                {
+                    string errorMessage = __FILEREF__ + "It is not possible to build a slideshow with a media that is not an Image"
+                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", slideshowContentType: " + MMSEngineDBFacade::toString(slideshowContentType)
+                            ;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+            }
+            else
+            {
+                if (slideshowContentType != contentType)
+                {
+                    string errorMessage = __FILEREF__ + "Not all the References have the same ContentType"
+                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", contentType: " + MMSEngineDBFacade::toString(contentType)
+                            + ", slideshowContentType: " + MMSEngineDBFacade::toString(slideshowContentType)
+                            ;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+            }
+        }
+
+        double durationOfEachSlideInSeconds = 2;
+        field = "DurationOfEachSlideInSeconds";
+        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+            durationOfEachSlideInSeconds = parametersRoot.get(field, "XXX").asDouble();
+        }
+
+        int outputFrameRate = 25;
+        
+        _mmsEngineDBFacade->addEncoding_SlideShowJob(ingestionJobKey,
+                sourcePhysicalPaths, durationOfEachSlideInSeconds, 
+                outputFrameRate, encodingPriority);
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "manageSlideShowTask failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
+        );
+        
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "manageSlideShowTask failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+        );
+        
+        throw e;
+    }
+}
+
+/*
 void MMSEngineProcessor::generateAndIngestSlideshow(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
@@ -3435,11 +3589,10 @@ void MMSEngineProcessor::generateAndIngestSlideshow(
                 // + "_source"
                 + "." + fileFormat
                 ;
-        /*
-        size_t extensionIndex = sourceFileName.find_last_of(".");
-        if (extensionIndex != string::npos)
-            localSourceFileName.append(sourceFileName.substr(extensionIndex));
-        */
+
+//        size_t extensionIndex = sourceFileName.find_last_of(".");
+//        if (extensionIndex != string::npos)
+//            localSourceFileName.append(sourceFileName.substr(extensionIndex));
         
         string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
             workspace);
@@ -3517,6 +3670,7 @@ void MMSEngineProcessor::generateAndIngestSlideshow(
         throw e;
     }
 }
+*/
 
 void MMSEngineProcessor::generateAndIngestConcatenation(
         int64_t ingestionJobKey,

@@ -141,6 +141,9 @@ server {
 		if ($request_method = POST) {
 			rewrite ^/catramms/(v[0-9]+)/encoder/generateFrames/([0-9]+)/?$ /encoder?version=$1&method=generateFrames&encodingJobKey=$2 last;
 		}
+		if ($request_method = POST) {
+			rewrite ^/catramms/(v[0-9]+)/encoder/slideShow/([0-9]+)/?$ /encoder?version=$1&method=slideShow&encodingJobKey=$2 last;
+		}
 		if ($request_method = GET) {
 			rewrite ^/catramms/(v[0-9]+)/encoder/progress/([0-9]+)/?$ /encoder?version=$1&method=encodingProgress&encodingJobKey=$2 last;
 		}

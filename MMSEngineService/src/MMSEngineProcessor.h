@@ -152,12 +152,19 @@ private:
         int64_t& sourcePhysicalPathKey, string& sourcePhysicalPath,
         int64_t& durationInMilliSeconds);
 
-    void generateAndIngestSlideshow(
+    void manageSlideShowTask(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
         vector<pair<int64_t,Validator::DependencyType>>& dependencies);
 
+    /*
+    void generateAndIngestSlideshow(
+        int64_t ingestionJobKey,
+        shared_ptr<Workspace> workspace,
+        Json::Value parametersRoot,
+        vector<pair<int64_t,Validator::DependencyType>>& dependencies);
+    */
     void generateAndIngestConcatenation(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,

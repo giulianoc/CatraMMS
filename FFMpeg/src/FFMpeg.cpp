@@ -116,6 +116,7 @@ void FFMpeg::encodeContent(
 
         );
 
+        /*
         string stagingEncodedAssetPath;
         {
             size_t fileNameIndex = stagingEncodedAssetPathName.find_last_of("/");
@@ -134,6 +135,13 @@ void FFMpeg::encodeContent(
         }
         _outputFfmpegPathFileName = string(stagingEncodedAssetPath)
                 + "/"
+                + to_string(_currentIngestionJobKey)
+                + "_"
+                + to_string(_currentEncodingJobKey)
+                + ".ffmpegoutput";
+        */
+        _outputFfmpegPathFileName =
+                _ffmpegTempDir + "/"
                 + to_string(_currentIngestionJobKey)
                 + "_"
                 + to_string(_currentEncodingJobKey)
@@ -263,7 +271,7 @@ void FFMpeg::encodeContent(
                     to_string(_currentIngestionJobKey)
                     + "_"
                     + to_string(_currentEncodingJobKey) + ".passlog";
-                string ffmpegPassLogPathFileName = string(stagingEncodedAssetPath)
+                string ffmpegPassLogPathFileName = _ffmpegTempDir // string(stagingEncodedAssetPath)
                     + "/"
                     + passlogFileName
                     ;
@@ -350,7 +358,7 @@ void FFMpeg::encodeContent(
                     _logger->error(errorMessage);
 
                     bool exceptionInCaseOfError = false;
-                    removeHavingPrefixFileName(stagingEncodedAssetPath, passlogFileName);
+                    removeHavingPrefixFileName(_ffmpegTempDir /* stagingEncodedAssetPath */, passlogFileName);
                     FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
 
                     throw e;
@@ -444,14 +452,14 @@ void FFMpeg::encodeContent(
                     _logger->error(errorMessage);
 
                     bool exceptionInCaseOfError = false;
-                    removeHavingPrefixFileName(stagingEncodedAssetPath, passlogFileName);
+                    removeHavingPrefixFileName(_ffmpegTempDir /* stagingEncodedAssetPath */, passlogFileName);
                     FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
 
                     throw e;
                 }
 
                 bool exceptionInCaseOfError = false;
-                removeHavingPrefixFileName(stagingEncodedAssetPath, passlogFileName);
+                removeHavingPrefixFileName(_ffmpegTempDir /* stagingEncodedAssetPath */, passlogFileName);
                 FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
             }
             else
