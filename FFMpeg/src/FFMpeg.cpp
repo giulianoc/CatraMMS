@@ -2151,7 +2151,7 @@ void FFMpeg::generateConcatMediaToIngest(
     }
     concatListFile.close();
 
-    string outputFfmpegPathFileName =
+    _outputFfmpegPathFileName =
             _ffmpegTempDir + "/"
             + to_string(ingestionJobKey)
             + ".concat.log"
@@ -2165,7 +2165,7 @@ void FFMpeg::generateConcatMediaToIngest(
             _ffmpegPath + "/ffmpeg "
             + "-f concat -safe 0 -i " + concatenationListPathName + " "
             + "-c copy " + concatenatedMediaPathName + " "
-            + "> " + outputFfmpegPathFileName + " "
+            + "> " + _outputFfmpegPathFileName + " "
             + "2>&1"
             ;
 
@@ -2206,7 +2206,7 @@ void FFMpeg::generateConcatMediaToIngest(
     catch(runtime_error e)
     {
         string lastPartOfFfmpegOutputFile = getLastPartOfFile(
-                outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
+                _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
         string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
                 + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                 + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
@@ -2216,14 +2216,14 @@ void FFMpeg::generateConcatMediaToIngest(
 
         bool exceptionInCaseOfError = false;
         FileIO::remove(concatenationListPathName, exceptionInCaseOfError);
-        FileIO::remove(outputFfmpegPathFileName, exceptionInCaseOfError);
+        FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
 
         throw e;
     }
 
     bool exceptionInCaseOfError = false;
     FileIO::remove(concatenationListPathName, exceptionInCaseOfError);
-    FileIO::remove(outputFfmpegPathFileName, exceptionInCaseOfError);    
+    FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
 }
 
 void FFMpeg::generateSlideshowMediaToIngest(
@@ -2251,7 +2251,7 @@ void FFMpeg::generateSlideshowMediaToIngest(
     slideshowListFile << "file '" << lastSourcePhysicalPath << "'" << endl;
     slideshowListFile.close();
 
-    string outputFfmpegPathFileName =
+    _outputFfmpegPathFileName =
             _ffmpegTempDir + "/"
             + to_string(ingestionJobKey)
             + ".slideshow.log"
@@ -2270,7 +2270,7 @@ void FFMpeg::generateSlideshowMediaToIngest(
             + "-r " + to_string(outputFrameRate) + " "
             + "-vsync vfr "
             + "-pix_fmt yuv420p " + slideshowMediaPathName + " "
-            + "> " + outputFfmpegPathFileName + " "
+            + "> " + _outputFfmpegPathFileName + " "
             + "2>&1"
             ;
 
@@ -2311,7 +2311,7 @@ void FFMpeg::generateSlideshowMediaToIngest(
     catch(runtime_error e)
     {
         string lastPartOfFfmpegOutputFile = getLastPartOfFile(
-                outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
+                _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
         string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
                 + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                 + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
@@ -2320,13 +2320,17 @@ void FFMpeg::generateSlideshowMediaToIngest(
         _logger->error(errorMessage);
 
         bool exceptionInCaseOfError = false;
-        FileIO::remove(outputFfmpegPathFileName, exceptionInCaseOfError);
+        FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+
+        FileIO::remove(slideshowListPathName, exceptionInCaseOfError);
 
         throw e;
     }
 
     bool exceptionInCaseOfError = false;
-    FileIO::remove(outputFfmpegPathFileName, exceptionInCaseOfError);    
+    FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
+    
+    FileIO::remove(slideshowListPathName, exceptionInCaseOfError);
 }
 
 void FFMpeg::generateCutMediaToIngest(
@@ -2338,7 +2342,7 @@ void FFMpeg::generateCutMediaToIngest(
         string cutMediaPathName)
 {
 
-    string outputFfmpegPathFileName =
+    _outputFfmpegPathFileName =
             _ffmpegTempDir + "/"
             + to_string(ingestionJobKey)
             + ".cut.log"
@@ -2355,7 +2359,7 @@ void FFMpeg::generateCutMediaToIngest(
             + "-ss " + to_string(startTimeInSeconds) + " "
             + (framesNumber != -1 ? ("-vframes " + to_string(framesNumber) + " ") : ("-to " + to_string(endTimeInSeconds) + " "))
             + "-c copy " + cutMediaPathName + " "
-            + "> " + outputFfmpegPathFileName + " "
+            + "> " + _outputFfmpegPathFileName + " "
             + "2>&1"
             ;
 
@@ -2396,7 +2400,7 @@ void FFMpeg::generateCutMediaToIngest(
     catch(runtime_error e)
     {
         string lastPartOfFfmpegOutputFile = getLastPartOfFile(
-                outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
+                _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
         string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
                 + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                 + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
@@ -2405,13 +2409,13 @@ void FFMpeg::generateCutMediaToIngest(
         _logger->error(errorMessage);
 
         bool exceptionInCaseOfError = false;
-        FileIO::remove(outputFfmpegPathFileName, exceptionInCaseOfError);
+        FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
 
         throw e;
     }
 
     bool exceptionInCaseOfError = false;
-    FileIO::remove(outputFfmpegPathFileName, exceptionInCaseOfError);    
+    FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
 }
 
 void FFMpeg::settingFfmpegParameters(

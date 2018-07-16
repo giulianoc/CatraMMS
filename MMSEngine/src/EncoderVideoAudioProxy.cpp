@@ -4271,6 +4271,10 @@ void EncoderVideoAudioProxy::processSlideShow(string stagingEncodedAssetPathName
 {
     try
     {
+        int outputFrameRate;  
+        string field = "outputFrameRate";
+        outputFrameRate = _encodingItem->_parametersRoot.get(field, 0).asInt();
+    
         size_t fileNameIndex = stagingEncodedAssetPathName.find_last_of("/");
         if (fileNameIndex == string::npos)
         {
@@ -4312,6 +4316,7 @@ void EncoderVideoAudioProxy::processSlideShow(string stagingEncodedAssetPathName
         localAssetIngestionEvent->setWorkspace(_encodingItem->_workspace);
         localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::AddContent);
         localAssetIngestionEvent->setIngestionRowToBeUpdatedAsSuccess(true);
+        localAssetIngestionEvent->setForcedAvgFrameRate(to_string(outputFrameRate) + "/1");
 
         localAssetIngestionEvent->setMetadataContent(mediaMetaDataContent);
 
