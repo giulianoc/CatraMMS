@@ -36,7 +36,22 @@
 
             <p:toolbarGroup align="right">
 
-                <p:outputLabel value="Welcome #{login.userName} (#{sessionScope.currentWorkspaceDetails.name})" />
+                <p:outputLabel value="Welcome #{login.userName}" />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:outputLabel value="Workspace:" />
+                <p:selectOneMenu id="workspaceName" value="#{encodingProfilesSetDetails.workspaceName}"
+                                 autoWidth="false">
+                    <f:selectItems value="#{encodingProfilesSetDetails.workspaceNames}" />
+                    <p:ajax
+                            global="true"
+                            event="change"
+                            listener="#{encodingProfilesSetDetails.init}"
+                            update="encodingProfilesSetDataTable" />
+                </p:selectOneMenu>
 
                 <span class="ui-separator">
                     <span class="ui-icon ui-icon-grip-dotted-vertical" />
@@ -68,7 +83,8 @@
             </p:toolbarGroup>
         </p:toolbar>
 
-        <p:dataTable resizableColumns="true" id="encodingProfilesSetDataTable" var="encodingProfile" rowIndexVar="rowId"
+        <p:dataTable resizableColumns="true"
+                     id="encodingProfilesSetDataTable" var="encodingProfile" rowIndexVar="rowId"
                      value="#{encodingProfilesSetDetails.encodingProfilesSet.encodingProfileList}" rowKey="#{encodingProfile.encodingProfileKey}"
                      selectionMode="single" stickyHeader="true"
                      widgetVar="encodingProfilesSetDataTable" >

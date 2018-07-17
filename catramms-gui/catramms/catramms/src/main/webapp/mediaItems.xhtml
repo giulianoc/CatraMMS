@@ -227,8 +227,8 @@
                 <p:selectOneMenu id="workspaceName" value="#{mediaItems.workspaceName}"
                                  autoWidth="false">
                     <f:selectItems value="#{mediaItems.workspaceNames}" />
-                    <p:ajax global="false" onstart="on_start()" event="change"
-                            listener="#{mediaItems.workspaceNameChanged()}" />
+                    <p:ajax global="true" event="change"
+                            listener="#{mediaItems.workspaceNameChanged}" />
                 </p:selectOneMenu>
 
                 <span class="ui-separator">
@@ -272,7 +272,7 @@
                 <p:selectOneMenu id="contentType" value="#{mediaItems.contentType}"
                                  autoWidth="false">
                     <f:selectItems value="#{mediaItems.contentTypesList}" />
-                    <p:ajax global="false" onstart="on_start()" event="change" listener="#{mediaItems.contentTypeChanged()}" />
+                    <p:ajax global="true" event="change" listener="#{mediaItems.contentTypeChanged()}" />
                 </p:selectOneMenu>
 
                 <span class="ui-separator">
@@ -281,7 +281,7 @@
 
                 <p:outputLabel value="Begin:" />
                 <p:calendar id="begin" value="#{mediaItems.begin}" pattern="dd-MM-yyyy HH:mm:ss" locale="my" >
-                    <p:ajax global="false" onstart="on_start()" event="dateSelect"
+                    <p:ajax global="true" event="dateSelect"
                             listener="#{mediaItems.beginChanged()}"
                             update="end" />
                 </p:calendar>
@@ -292,7 +292,7 @@
 
                 <p:outputLabel value="End:" />
                 <p:calendar id="end" value="#{mediaItems.end}" pattern="dd-MM-yyyy HH:mm:ss" locale="my" >
-                    <p:ajax global="false" onstart="on_start()" event="dateSelect" listener="#{mediaItems.endChanged()}"
+                    <p:ajax global="true" event="dateSelect" listener="#{mediaItems.endChanged()}"
                             update="begin" />
                 </p:calendar>
 
@@ -318,9 +318,10 @@
                     <span class="ui-icon ui-icon-grip-dotted-vertical" />
                 </span>
 
-                <p:commandButton global="false" onstart="on_start()" icon="ui-icon ui-icon-search"
+                <p:commandButton global="true" icon="ui-icon ui-icon-search"
                                  actionListener="#{mediaItems.fillList(true)}" />
 
+                <!--
                 <span class="ui-separator">
                     <span class="ui-icon ui-icon-grip-dotted-vertical" />
                 </span>
@@ -331,6 +332,7 @@
                     <p:ajax
                             listener="#{mediaItems.fillList(true)}" update="mediaItemDataTable" />
                 </p:selectBooleanButton>
+                -->
             </p:toolbarGroup>
         </p:toolbar>
 

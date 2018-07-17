@@ -438,7 +438,22 @@
 
             <p:toolbarGroup align="right">
 
-                <p:outputLabel value="Welcome #{login.userName} (#{sessionScope.currentWorkspaceDetails.name})" />
+                <p:outputLabel value="Welcome #{login.userName}" />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:outputLabel value="Workspace:" />
+                <p:selectOneMenu id="workspaceName" value="#{encodingProfiles.workspaceName}"
+                                 autoWidth="false">
+                    <f:selectItems value="#{encodingProfiles.workspaceNames}" />
+                    <p:ajax
+                            global="true"
+                            event="change"
+                            listener="#{encodingProfiles.fillList(false)}"
+                            update="encodingProfileDataTable" />
+                </p:selectOneMenu>
 
                 <span class="ui-separator">
                     <span class="ui-icon ui-icon-grip-dotted-vertical" />
@@ -471,14 +486,14 @@
                 <p:selectOneMenu id="contentType" value="#{encodingProfiles.contentType}"
                                  autoWidth="false">
                     <f:selectItems value="#{encodingProfiles.contentTypesList}" />
-                    <p:ajax global="false" onstart="on_start()" event="change" listener="#{encodingProfiles.contentTypeChanged()}" />
+                    <p:ajax global="true" event="change" listener="#{encodingProfiles.contentTypeChanged()}" />
                 </p:selectOneMenu>
 
                 <span class="ui-separator">
                     <span class="ui-icon ui-icon-grip-dotted-vertical" />
                 </span>
 
-                <p:commandButton global="false" onstart="on_start()" icon="ui-icon ui-icon-search"
+                <p:commandButton global="true" icon="ui-icon ui-icon-search"
                                  actionListener="#{encodingProfiles.fillList(true)}" />
 
                 <span class="ui-separator">

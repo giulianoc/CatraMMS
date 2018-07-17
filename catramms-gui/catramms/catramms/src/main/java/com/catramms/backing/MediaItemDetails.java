@@ -1,6 +1,7 @@
 package com.catramms.backing;
 
 import com.catramms.backing.common.SessionUtils;
+import com.catramms.backing.common.Workspace;
 import com.catramms.backing.entity.MediaItem;
 import com.catramms.backing.entity.PhysicalPath;
 import com.catramms.utility.catramms.CatraMMS;
@@ -27,7 +28,7 @@ import java.util.Map;
  */
 @ManagedBean
 @ViewScoped
-public class MediaItemDetails implements Serializable {
+public class MediaItemDetails extends Workspace implements Serializable {
 
     // static because the class is Serializable
     private static final Logger mLogger = Logger.getLogger(MediaItemDetails.class);
@@ -90,6 +91,8 @@ public class MediaItemDetails implements Serializable {
         {
             String errorMessage = "Exception: " + e;
             mLogger.error(errorMessage);
+
+            mediaItem = null;
         }
     }
 

@@ -31,7 +31,22 @@
 
             <p:toolbarGroup align="right">
 
-                <p:outputLabel value="Welcome #{login.userName} (#{sessionScope.currentWorkspaceDetails.name})" />
+                <p:outputLabel value="Welcome #{login.userName}" />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:outputLabel value="Workspace:" />
+                <p:selectOneMenu id="workspaceName" value="#{ingestionWorkflowDetails.workspaceName}"
+                                 autoWidth="false">
+                    <f:selectItems value="#{ingestionWorkflowDetails.workspaceNames}" />
+                    <p:ajax
+                            global="true"
+                            event="change"
+                            listener="#{ingestionWorkflowDetails.fillIngestionWorkflow}"
+                            update="ingestionJobsTable" />
+                </p:selectOneMenu>
 
                 <span class="ui-separator">
                     <span class="ui-icon ui-icon-grip-dotted-vertical" />
@@ -97,7 +112,7 @@
                      rowKey="#{ingestionJob.ingestionJobKey}"
                      selectionMode="single" >
 
-            <p:column style="width:80px;" headerText="Ing. Job&lt;br&gt;Key" >
+            <p:column style="width:70px;" headerText="Ing. Job&lt;br&gt;Key" >
                 <p:outputLabel value="#{ingestionJob.ingestionJobKey}" />
             </p:column>
 
@@ -106,7 +121,7 @@
                 <p:tooltip for="label" showEffect="clip" hideEffect="explode" position="left"/>
             </p:column>
 
-            <p:column style="width:150px;" headerText="Ingestion Type" >
+            <p:column style="width:130px;" headerText="Ingestion Type" >
                 <p:outputLabel id="ingestionType"
                         value="#{ingestionJob.ingestionType}"
                         title="#{ingestionJob.ingestionType}"
@@ -134,19 +149,22 @@
                 <p:tooltip for="ingestionJobStatus" showEffect="clip" hideEffect="explode" position="left"/>
             </p:column>
 
-            <p:column style="width:90px;" headerText="Dwl&lt;br&gt;progress" >
+            <p:column style="width:50px;" headerText="Dwl&lt;br&gt;prog" >
                 <p:outputLabel value="#{ingestionJob.downloadingProgress}" />
+                <p:outputLabel rendered="#{ingestionJob.downloadingProgress != null}" value="%"/>
             </p:column>
 
-            <p:column style="width:80px;" headerText="Upl&lt;br&gt;progress" >
+            <p:column style="width:50px;" headerText="Upl&lt;br&gt;progr" >
                 <p:outputLabel value="#{ingestionJob.uploadingProgress}" />
+                <p:outputLabel rendered="#{ingestionJob.uploadingProgress != null}" value="%"/>
             </p:column>
 
-            <p:column style="width:80px;" headerText="Enc&lt;br&gt;progress" >
+            <p:column style="width:50px;" headerText="Enc&lt;br&gt;progr" >
                 <p:outputLabel value="#{ingestionJob.encodingJob.progress}" />
+                <p:outputLabel rendered="#{ingestionJob.encodingJob != null}" value="%"/>
             </p:column>
 
-            <p:column style="width:50px;" headerText="">
+            <p:column style="width:40px;" headerText="">
 
                 <p:commandButton id="dynaButtonOptions" type="button" icon="fa fa-navicon"/>
                 <p:menu toggleable="true" collapsed="true" overlay="true" trigger="dynaButtonOptions"

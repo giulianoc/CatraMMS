@@ -1,6 +1,7 @@
 package com.catramms.backing;
 
 import com.catramms.backing.common.SessionUtils;
+import com.catramms.backing.common.Workspace;
 import com.catramms.backing.entity.MediaItem;
 import com.catramms.backing.entity.WorkspaceDetails;
 import com.catramms.utility.catramms.CatraMMS;
@@ -25,7 +26,7 @@ import java.util.*;
  */
 @ManagedBean
 @ViewScoped
-public class MediaItems implements Serializable {
+public class MediaItems extends Workspace implements Serializable {
 
     // static because the class is Serializable
     private static final Logger mLogger = Logger.getLogger(MediaItems.class);
@@ -63,7 +64,7 @@ public class MediaItems implements Serializable {
     {
         mLogger.debug("init");
 
-        autoRefresh = false;
+        autoRefresh = true;
         autoRefreshPeriodInSeconds = 30;
 
         {
@@ -383,6 +384,7 @@ public class MediaItems implements Serializable {
         fillList(true);
     }
 
+    /*
     public String getWorkspaceName()
     {
         HttpSession session = SessionUtils.getSession();
@@ -409,6 +411,7 @@ public class MediaItems implements Serializable {
             }
         }
     }
+    */
 
     public List<String> getWorkspaceNames()
     {

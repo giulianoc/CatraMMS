@@ -31,7 +31,22 @@
 
             <p:toolbarGroup align="right">
 
-                <p:outputLabel value="Welcome #{login.userName} (#{sessionScope.currentWorkspaceDetails.name})" />
+                <p:outputLabel value="Welcome #{login.userName}" />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:outputLabel value="Workspace:" />
+                <p:selectOneMenu id="workspaceName" value="#{encodingJobDetails.workspaceName}"
+                                 autoWidth="false">
+                    <f:selectItems value="#{encodingJobDetails.workspaceNames}" />
+                    <p:ajax
+                            global="true"
+                            event="change"
+                            listener="#{encodingJobDetails.init}"
+                            update="encodingJobDetailTabView" />
+                </p:selectOneMenu>
 
                 <span class="ui-separator">
                     <span class="ui-icon ui-icon-grip-dotted-vertical" />
@@ -64,109 +79,116 @@
             </p:toolbarGroup>
         </p:toolbar>
 
-        <p:panelGrid columns="2" cellpadding="10">
+        <p:tabView id="encodingJobDetailTabView" dynamic="false" cache="true">
 
-            <p:outputLabel value="Encoding Job Key: " />
-            <p:outputLabel value="#{encodingJobDetails.encodingJob.encodingJobKey}" />
+            <p:tab title="Info"
+               rendered="#{encodingJobDetails.encodingJob != null}">
 
-            <p:outputLabel value="Status: " />
-            <p:outputLabel value="#{encodingJobDetails.encodingJob.status}" />
+                <p:panelGrid columns="2" cellpadding="10">
 
-            <p:outputLabel value="Start: " />
-            <p:outputLabel value="#{encodingJobDetails.encodingJob.start}" >
-                <f:convertDateTime type="date" pattern="dd-MM-yyyy HH:mm:ss" timeZone="CET"/>
-            </p:outputLabel>
+                    <p:outputLabel value="Encoding Job Key: " />
+                    <p:outputLabel value="#{encodingJobDetails.encodingJob.encodingJobKey}" />
 
-            <p:outputLabel value="End: " />
-            <p:outputLabel value="#{encodingJobDetails.encodingJob.end}" >
-                <f:convertDateTime type="date" pattern="dd-MM-yyyy HH:mm:ss" timeZone="CET"/>
-            </p:outputLabel>
+                    <p:outputLabel value="Status: " />
+                    <p:outputLabel value="#{encodingJobDetails.encodingJob.status}" />
 
-            <p:outputLabel value="Progress: " />
-            <p:outputLabel value="#{encodingJobDetails.encodingJob.progress}" />
+                    <p:outputLabel value="Start: " />
+                    <p:outputLabel value="#{encodingJobDetails.encodingJob.start}" >
+                        <f:convertDateTime type="date" pattern="dd-MM-yyyy HH:mm:ss" timeZone="CET"/>
+                    </p:outputLabel>
 
-            <p:outputLabel value="Failures Number: " />
-            <p:outputLabel value="#{encodingJobDetails.encodingJob.failuresNumber}" />
+                    <p:outputLabel value="End: " />
+                    <p:outputLabel value="#{encodingJobDetails.encodingJob.end}" >
+                        <f:convertDateTime type="date" pattern="dd-MM-yyyy HH:mm:ss" timeZone="CET"/>
+                    </p:outputLabel>
 
-            <p:outputLabel value="Encoding Priority: " />
-            <p:outputLabel value="#{encodingJobDetails.encodingJob.encodingPriority}" />
+                    <p:outputLabel value="Progress: " />
+                    <p:outputLabel value="#{encodingJobDetails.encodingJob.progress}" />
 
-            <p:outputLabel value="Type: " />
-            <p:outputLabel value="#{encodingJobDetails.encodingJob.type}" />
+                    <p:outputLabel value="Failures Number: " />
+                    <p:outputLabel value="#{encodingJobDetails.encodingJob.failuresNumber}" />
 
+                    <p:outputLabel value="Encoding Priority: " />
+                    <p:outputLabel value="#{encodingJobDetails.encodingJob.encodingPriority}" />
 
-            <p:outputLabel rendered="#{encodingJobDetails.encodingJob.type == 'EncodeVideoAudio' or encodingJobDetails.encodingJob.type == 'EncodeImage'}"
-                           value="Source Physical Path Key: " />
-            <p:panel rendered="#{encodingJobDetails.encodingJob.type == 'EncodeVideoAudio' or encodingJobDetails.encodingJob.type == 'EncodeImage'}">
-                <p:outputLabel value="#{encodingJobDetails.encodingJob.sourcePhysicalPathKey} (" />
-                <h:link
-                        outcome="/mediaItemDetails.xhtml?faces-redirect=true" value="Media Item Details">
-                    <f:param name="physicalPathKey" value="#{encodingJobDetails.encodingJob.sourcePhysicalPathKey}" />
-                </h:link>
-                <p:outputLabel value=")" />
-            </p:panel>
-
-            <p:outputLabel rendered="#{encodingJobDetails.encodingJob.type == 'EncodeVideoAudio' or encodingJobDetails.encodingJob.type == 'EncodeImage'}"
-                           value="Encoding Profile Key: " />
-            <p:panel rendered="#{encodingJobDetails.encodingJob.type == 'EncodeVideoAudio' or encodingJobDetails.encodingJob.type == 'EncodeImage'}">
-                <p:outputLabel value="#{encodingJobDetails.encodingJob.encodingProfileKey} (" />
-                <h:link
-                        outcome="/encodingProfileDetails.xhtml?faces-redirect=true" value="Encoding Profile Details">
-                    <f:param name="encodingProfileKey" value="#{encodingJobDetails.encodingJob.encodingProfileKey}" />
-                </h:link>
-                <p:outputLabel value=")" />
-            </p:panel>
+                    <p:outputLabel value="Type: " />
+                    <p:outputLabel value="#{encodingJobDetails.encodingJob.type}" />
 
 
-            <p:outputLabel rendered="#{encodingJobDetails.encodingJob.type == 'OverlayImageOnVideo'}"
-                           value="Video Physical Path Key: " />
-            <p:panel rendered="#{encodingJobDetails.encodingJob.type == 'OverlayImageOnVideo'}">
-                <p:outputLabel value="#{encodingJobDetails.encodingJob.sourceVideoPhysicalPathKey} (" />
-                <h:link
-                        outcome="/mediaItemDetails.xhtml?faces-redirect=true" value="Video Item Details">
-                    <f:param name="physicalPathKey" value="#{encodingJobDetails.encodingJob.sourceVideoPhysicalPathKey}" />
-                </h:link>
-                <p:outputLabel value=")" />
-            </p:panel>
+                    <p:outputLabel rendered="#{encodingJobDetails.encodingJob.type == 'EncodeVideoAudio' or encodingJobDetails.encodingJob.type == 'EncodeImage'}"
+                                   value="Source Physical Path Key: " />
+                    <p:panel rendered="#{encodingJobDetails.encodingJob.type == 'EncodeVideoAudio' or encodingJobDetails.encodingJob.type == 'EncodeImage'}">
+                        <p:outputLabel value="#{encodingJobDetails.encodingJob.sourcePhysicalPathKey} (" />
+                        <h:link
+                                outcome="/mediaItemDetails.xhtml?faces-redirect=true" value="Media Item Details">
+                            <f:param name="physicalPathKey" value="#{encodingJobDetails.encodingJob.sourcePhysicalPathKey}" />
+                        </h:link>
+                        <p:outputLabel value=")" />
+                    </p:panel>
 
-            <p:outputLabel rendered="#{encodingJobDetails.encodingJob.type == 'OverlayImageOnVideo'}"
-                           value="Image Physical Path Key: " />
-            <p:panel rendered="#{encodingJobDetails.encodingJob.type == 'OverlayImageOnVideo'}">
-                <p:outputLabel value="#{encodingJobDetails.encodingJob.sourceImagePhysicalPathKey} (" />
-                <h:link
-                        outcome="/mediaItemDetails.xhtml?faces-redirect=true" value="Image Item Details">
-                    <f:param name="physicalPathKey" value="#{encodingJobDetails.encodingJob.sourceImagePhysicalPathKey}" />
-                </h:link>
-                <p:outputLabel value=")" />
-            </p:panel>
-
-
-            <p:outputLabel rendered="#{encodingJobDetails.encodingJob.type == 'OverlayTextOnVideo'}"
-                           value="Video Physical Path Key: " />
-            <p:panel rendered="#{encodingJobDetails.encodingJob.type == 'OverlayTextOnVideo'}">
-                <p:outputLabel value="#{encodingJobDetails.encodingJob.sourceVideoPhysicalPathKey} (" />
-                <h:link
-                        outcome="/mediaItemDetails.xhtml?faces-redirect=true" value="Video Item Details">
-                    <f:param name="physicalPathKey" value="#{encodingJobDetails.encodingJob.sourceVideoPhysicalPathKey}" />
-                </h:link>
-                <p:outputLabel value=")" />
-            </p:panel>
+                    <p:outputLabel rendered="#{encodingJobDetails.encodingJob.type == 'EncodeVideoAudio' or encodingJobDetails.encodingJob.type == 'EncodeImage'}"
+                                   value="Encoding Profile Key: " />
+                    <p:panel rendered="#{encodingJobDetails.encodingJob.type == 'EncodeVideoAudio' or encodingJobDetails.encodingJob.type == 'EncodeImage'}">
+                        <p:outputLabel value="#{encodingJobDetails.encodingJob.encodingProfileKey} (" />
+                        <h:link
+                                outcome="/encodingProfileDetails.xhtml?faces-redirect=true" value="Encoding Profile Details">
+                            <f:param name="encodingProfileKey" value="#{encodingJobDetails.encodingJob.encodingProfileKey}" />
+                        </h:link>
+                        <p:outputLabel value=")" />
+                    </p:panel>
 
 
-            <p:outputLabel rendered="#{encodingJobDetails.encodingJob.type == 'GenerateFrames'}"
-                           value="Video Physical Path Key: " />
-            <p:panel rendered="#{encodingJobDetails.encodingJob.type == 'GenerateFrames'}">
-                <p:outputLabel value="#{encodingJobDetails.encodingJob.sourceVideoPhysicalPathKey} (" />
-                <h:link
-                        outcome="/mediaItemDetails.xhtml?faces-redirect=true" value="Video Item Details">
-                    <f:param name="physicalPathKey" value="#{encodingJobDetails.encodingJob.sourceVideoPhysicalPathKey}" />
-                </h:link>
-                <p:outputLabel value=")" />
-            </p:panel>
+                    <p:outputLabel rendered="#{encodingJobDetails.encodingJob.type == 'OverlayImageOnVideo'}"
+                                   value="Video Physical Path Key: " />
+                    <p:panel rendered="#{encodingJobDetails.encodingJob.type == 'OverlayImageOnVideo'}">
+                        <p:outputLabel value="#{encodingJobDetails.encodingJob.sourceVideoPhysicalPathKey} (" />
+                        <h:link
+                                outcome="/mediaItemDetails.xhtml?faces-redirect=true" value="Video Item Details">
+                            <f:param name="physicalPathKey" value="#{encodingJobDetails.encodingJob.sourceVideoPhysicalPathKey}" />
+                        </h:link>
+                        <p:outputLabel value=")" />
+                    </p:panel>
 
-            <p:outputLabel value="Parameters: " />
-            <p:outputLabel value="#{encodingJobDetails.encodingJob.parameters}" />
-        </p:panelGrid>
+                    <p:outputLabel rendered="#{encodingJobDetails.encodingJob.type == 'OverlayImageOnVideo'}"
+                                   value="Image Physical Path Key: " />
+                    <p:panel rendered="#{encodingJobDetails.encodingJob.type == 'OverlayImageOnVideo'}">
+                        <p:outputLabel value="#{encodingJobDetails.encodingJob.sourceImagePhysicalPathKey} (" />
+                        <h:link
+                                outcome="/mediaItemDetails.xhtml?faces-redirect=true" value="Image Item Details">
+                            <f:param name="physicalPathKey" value="#{encodingJobDetails.encodingJob.sourceImagePhysicalPathKey}" />
+                        </h:link>
+                        <p:outputLabel value=")" />
+                    </p:panel>
+
+
+                    <p:outputLabel rendered="#{encodingJobDetails.encodingJob.type == 'OverlayTextOnVideo'}"
+                                   value="Video Physical Path Key: " />
+                    <p:panel rendered="#{encodingJobDetails.encodingJob.type == 'OverlayTextOnVideo'}">
+                        <p:outputLabel value="#{encodingJobDetails.encodingJob.sourceVideoPhysicalPathKey} (" />
+                        <h:link
+                                outcome="/mediaItemDetails.xhtml?faces-redirect=true" value="Video Item Details">
+                            <f:param name="physicalPathKey" value="#{encodingJobDetails.encodingJob.sourceVideoPhysicalPathKey}" />
+                        </h:link>
+                        <p:outputLabel value=")" />
+                    </p:panel>
+
+
+                    <p:outputLabel rendered="#{encodingJobDetails.encodingJob.type == 'GenerateFrames'}"
+                                   value="Video Physical Path Key: " />
+                    <p:panel rendered="#{encodingJobDetails.encodingJob.type == 'GenerateFrames'}">
+                        <p:outputLabel value="#{encodingJobDetails.encodingJob.sourceVideoPhysicalPathKey} (" />
+                        <h:link
+                                outcome="/mediaItemDetails.xhtml?faces-redirect=true" value="Video Item Details">
+                            <f:param name="physicalPathKey" value="#{encodingJobDetails.encodingJob.sourceVideoPhysicalPathKey}" />
+                        </h:link>
+                        <p:outputLabel value=")" />
+                    </p:panel>
+
+                    <p:outputLabel value="Parameters: " />
+                    <p:outputLabel value="#{encodingJobDetails.encodingJob.parameters}" />
+                </p:panelGrid>
+            </p:tab>
+        </p:tabView>
 
     </h:form>
 

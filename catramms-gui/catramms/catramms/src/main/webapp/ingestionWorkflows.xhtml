@@ -44,7 +44,22 @@
 
             <p:toolbarGroup align="right">
 
-                <p:outputLabel value="Welcome #{login.userName} (#{sessionScope.currentWorkspaceDetails.name})" />
+                <p:outputLabel value="Welcome #{login.userName}" />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:outputLabel value="Workspace:" />
+                <p:selectOneMenu id="workspaceName" value="#{ingestionWorkflows.workspaceName}"
+                                 autoWidth="false">
+                    <f:selectItems value="#{ingestionWorkflows.workspaceNames}" />
+                    <p:ajax
+                            global="true"
+                            event="change"
+                            listener="#{ingestionWorkflows.fillList(false)}"
+                            update="ingestionWorkflowDataTable" />
+                </p:selectOneMenu>
 
                 <span class="ui-separator">
                     <span class="ui-icon ui-icon-grip-dotted-vertical" />
@@ -75,7 +90,7 @@
             <p:toolbarGroup align="right">
                 <p:outputLabel value="Begin:" />
                 <p:calendar id="begin" value="#{ingestionWorkflows.begin}" pattern="dd-MM-yyyy HH:mm:ss" locale="my" >
-                    <p:ajax global="false" onstart="on_start()" event="dateSelect"
+                    <p:ajax global="true" event="dateSelect"
                             listener="#{ingestionWorkflows.beginChanged()}"
                             update="end" />
                 </p:calendar>
@@ -86,7 +101,7 @@
 
                 <p:outputLabel value="End:" />
                 <p:calendar id="end" value="#{ingestionWorkflows.end}" pattern="dd-MM-yyyy HH:mm:ss" locale="my" >
-                    <p:ajax global="false" onstart="on_start()" event="dateSelect" listener="#{ingestionWorkflows.endChanged()}"
+                    <p:ajax global="true" event="dateSelect" listener="#{ingestionWorkflows.endChanged()}"
                             update="begin" />
                 </p:calendar>
 
@@ -106,7 +121,7 @@
                 <p:selectBooleanButton
                         value="#{ingestionWorkflows.ascending}"
                         onLabel="Asc" offLabel="Desc" onIcon="ui-icon-check" offIcon="ui-icon-check">
-                    <p:ajax global="false" onstart="on_start()"
+                    <p:ajax global="true"
                             listener="#{ingestionWorkflows.fillList(true)}" />
                 </p:selectBooleanButton>
 
@@ -114,7 +129,7 @@
                     <span class="ui-icon ui-icon-grip-dotted-vertical" />
                 </span>
 
-                <p:commandButton global="false" onstart="on_start()" icon="ui-icon ui-icon-search"
+                <p:commandButton global="true" icon="ui-icon ui-icon-search"
                                  actionListener="#{ingestionWorkflows.fillList(true)}" />
 
                 <!--

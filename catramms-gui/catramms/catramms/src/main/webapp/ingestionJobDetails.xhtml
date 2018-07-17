@@ -31,7 +31,22 @@
 
             <p:toolbarGroup align="right">
 
-                <p:outputLabel value="Welcome #{login.userName} (#{sessionScope.currentWorkspaceDetails.name})" />
+                <p:outputLabel value="Welcome #{login.userName}" />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:outputLabel value="Workspace:" />
+                <p:selectOneMenu id="workspaceName" value="#{ingestionJobDetails.workspaceName}"
+                                 autoWidth="false">
+                    <f:selectItems value="#{ingestionJobDetails.workspaceNames}" />
+                    <p:ajax
+                            global="true"
+                            event="change"
+                            listener="#{ingestionJobDetails.init}"
+                            update="ingestionJobDetailsTabView" />
+                </p:selectOneMenu>
 
                 <span class="ui-separator">
                     <span class="ui-icon ui-icon-grip-dotted-vertical" />
@@ -64,68 +79,78 @@
             </p:toolbarGroup>
         </p:toolbar>
 
-        <p:panelGrid columns="2" cellpadding="10">
+        <p:tabView id="ingestionJobDetailsTabView" dynamic="false" cache="true">
 
-            <p:outputLabel value="Ingestion Job Key: " />
-            <p:outputLabel value="#{ingestionJobDetails.ingestionJob.ingestionJobKey}" />
+            <p:tab title="Ingestion Info">
 
-            <p:outputLabel value="Label: " />
-            <p:outputLabel value="#{ingestionJobDetails.ingestionJob.label}" />
+                <p:panelGrid rendered="#{ingestionJobDetails.ingestionJob != null}" columns="2" cellpadding="10">
 
-            <p:outputLabel value="Type: " />
-            <p:outputLabel value="#{ingestionJobDetails.ingestionJob.ingestionType}" />
+                    <p:outputLabel value="Ingestion Job Key: " />
+                    <p:outputLabel value="#{ingestionJobDetails.ingestionJob.ingestionJobKey}" />
 
-            <p:outputLabel value="Start Processing: " />
-            <p:outputLabel value="#{ingestionJobDetails.ingestionJob.startProcessing}">
-                <f:convertDateTime type="date" pattern="dd-MM-yyyy HH:mm:ss" timeZone="CET"/>
-            </p:outputLabel>
+                    <p:outputLabel value="Label: " />
+                    <p:outputLabel value="#{ingestionJobDetails.ingestionJob.label}" />
 
-            <p:outputLabel value="End Processing: " />
-            <p:outputLabel value="#{ingestionJobDetails.ingestionJob.endProcessing}">
-                <f:convertDateTime type="date" pattern="dd-MM-yyyy HH:mm:ss" timeZone="CET"/>
-            </p:outputLabel>
+                    <p:outputLabel value="Type: " />
+                    <p:outputLabel value="#{ingestionJobDetails.ingestionJob.ingestionType}" />
 
-            <p:outputLabel value="Status: " />
-            <p:outputLabel value="#{ingestionJobDetails.ingestionJob.status}" />
+                    <p:outputLabel value="Start Processing: " />
+                    <p:outputLabel value="#{ingestionJobDetails.ingestionJob.startProcessing}">
+                        <f:convertDateTime type="date" pattern="dd-MM-yyyy HH:mm:ss" timeZone="CET"/>
+                    </p:outputLabel>
 
-            <p:outputLabel value="Error Message: " />
-            <p:outputLabel value="#{ingestionJobDetails.ingestionJob.errorMessage}" />
+                    <p:outputLabel value="End Processing: " />
+                    <p:outputLabel value="#{ingestionJobDetails.ingestionJob.endProcessing}">
+                        <f:convertDateTime type="date" pattern="dd-MM-yyyy HH:mm:ss" timeZone="CET"/>
+                    </p:outputLabel>
 
-            <p:outputLabel value="Downloading Progress: " />
-            <p:outputLabel value="#{ingestionJobDetails.ingestionJob.downloadingProgress}" />
+                    <p:outputLabel value="Status: " />
+                    <p:outputLabel value="#{ingestionJobDetails.ingestionJob.status}" />
 
-            <p:outputLabel value="Uploading Progress: " />
-            <p:outputLabel value="#{ingestionJobDetails.ingestionJob.uploadingProgress}" />
+                    <p:outputLabel value="Error Message: " />
+                    <p:outputLabel value="#{ingestionJobDetails.ingestionJob.errorMessage}" />
 
-        </p:panelGrid>
+                    <p:outputLabel value="Downloading Progress: " />
+                    <p:outputLabel value="#{ingestionJobDetails.ingestionJob.downloadingProgress}" />
 
-        <br />
+                    <p:outputLabel value="Uploading Progress: " />
+                    <p:outputLabel value="#{ingestionJobDetails.ingestionJob.uploadingProgress}" />
 
-        <p:dataTable resizableColumns="true" id="ingestionJobMediaItemDataTable" var="mediaItem" rowIndexVar="rowId"
-                     value="#{ingestionJobDetails.ingestionJob.ingestionJobMediaItemList}"
-                     rowKey="#{mediaItem.mediaItemKey}" >
+                </p:panelGrid>
 
-            <f:facet name="header">
-                <p:outputLabel style="font-weight: bold"
-                        value="Media Items generated by the Ingestion Job" />
-            </f:facet>
+            </p:tab>
 
-            <p:column headerText="Media Item Key" >
-                <p:outputLabel value="#{mediaItem.mediaItemKey}" />
-            </p:column>
+            <p:tab title="Media Items generated by the Ingestion Job">
 
-            <p:column headerText="Physical Path Key" >
-                <p:outputLabel value="#{mediaItem.physicalPathKey}" />
-            </p:column>
+                <p:dataTable rendered="#{ingestionJobDetails.ingestionJob != null}"
+                             resizableColumns="true" id="ingestionJobMediaItemDataTable" var="mediaItem" rowIndexVar="rowId"
+                             value="#{ingestionJobDetails.ingestionJob.ingestionJobMediaItemList}"
+                             rowKey="#{mediaItem.mediaItemKey}" >
 
-            <p:column style="width:90px;" headerText="" >
-                <h:link disabled="#{mediaItem.mediaItemKey == null}"
-                        outcome="/mediaItemDetails.xhtml?faces-redirect=true" value="Details">
-                    <f:param name="mediaItemKey" value="#{mediaItem.mediaItemKey}" />
-                </h:link>
-            </p:column>
+                    <!--
+                    <f:facet name="header">
+                        <p:outputLabel style="font-weight: bold"
+                                value="Media Items generated by the Ingestion Job" />
+                    </f:facet>
+                    -->
+                    <p:column headerText="Media Item Key" >
+                        <p:outputLabel value="#{mediaItem.mediaItemKey}" />
+                    </p:column>
 
-        </p:dataTable>
+                    <p:column headerText="Physical Path Key" >
+                        <p:outputLabel value="#{mediaItem.physicalPathKey}" />
+                    </p:column>
+
+                    <p:column style="width:90px;" headerText="" >
+                        <h:link disabled="#{mediaItem.mediaItemKey == null}"
+                                outcome="/mediaItemDetails.xhtml?faces-redirect=true" value="Details">
+                            <f:param name="mediaItemKey" value="#{mediaItem.mediaItemKey}" />
+                        </h:link>
+                    </p:column>
+
+                </p:dataTable>
+            </p:tab>
+        </p:tabView>
 
     </h:form>
 
