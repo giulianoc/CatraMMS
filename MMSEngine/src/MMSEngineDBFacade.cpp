@@ -4416,7 +4416,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress (
             {
                 IngestionStatus ingestionStatus = MMSEngineDBFacade::toIngestionStatus(resultSet->getString("Status"));
                 
-                if (ingestionStatus == IngestionStatus::End_DownloadCancelledByUser)
+                if (ingestionStatus == IngestionStatus::End_DwlOrUplCancelledByUser)
                     toBeCancelled = true;
             }
             else
@@ -4483,11 +4483,12 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress (
     return toBeCancelled;
 }
 
-void MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress (
+bool MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress (
         int64_t ingestionJobKey,
         double uploadingPercentage)
 {
     
+    bool        toBeCancelled = false;
     string      lastSQLCommand;
     
     shared_ptr<MySQLConnection> conn;
@@ -4524,6 +4525,33 @@ void MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress (
             }
         }
         
+        {
+            lastSQLCommand = 
+                "select status from MMS_IngestionJob where ingestionJobKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+            
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                IngestionStatus ingestionStatus = MMSEngineDBFacade::toIngestionStatus(resultSet->getString("Status"));
+                
+                if (ingestionStatus == IngestionStatus::End_DwlOrUplCancelledByUser)
+                    toBeCancelled = true;
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "IngestionJob is not found"
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }            
+        }
+
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -4572,6 +4600,8 @@ void MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress (
         
         throw e;
     }
+
+    return toBeCancelled;
 }
 
 void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred (

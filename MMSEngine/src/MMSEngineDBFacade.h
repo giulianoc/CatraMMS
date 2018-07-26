@@ -385,7 +385,8 @@ public:
         ConcatDemuxer           = 10,
         Cut                     = 11,
         OverlayImageOnVideo     = 12,
-        OverlayTextOnVideo         = 13,
+        OverlayTextOnVideo      = 13,
+        FTPDelivery             = 14,
         EmailNotification       = 30,
         ContentUpdate           = 50,
         ContentRemove           = 60
@@ -422,6 +423,8 @@ public:
                 return "Overlay-Image-On-Video";
             case IngestionType::OverlayTextOnVideo:
                 return "Overlay-Text-On-Video";
+            case IngestionType::FTPDelivery:
+                return "FTPDelivery";
                 
             case IngestionType::EmailNotification:
                 return "Email-Notification";
@@ -465,6 +468,8 @@ public:
             return IngestionType::OverlayImageOnVideo;
         else if (lowerCase == "overlay-text-on-video")
             return IngestionType::OverlayTextOnVideo;
+        else if (lowerCase == "ftpdelivery")
+            return IngestionType::FTPDelivery;
 
         else if (lowerCase == "email-notification")
             return IngestionType::EmailNotification;
@@ -487,7 +492,7 @@ public:
         SourceUploadingInProgress,
         EncodingQueued,
 
-        End_DownloadCancelledByUser,   
+        End_DwlOrUplCancelledByUser,   
 
         End_ValidationMetadataFailed,   
 
@@ -517,8 +522,8 @@ public:
                 return "SourceUploadingInProgress";
             case IngestionStatus::EncodingQueued:
                 return "EncodingQueued";
-            case IngestionStatus::End_DownloadCancelledByUser:
-                return "End_DownloadCancelledByUser";
+            case IngestionStatus::End_DwlOrUplCancelledByUser:
+                return "End_DwlOrUplCancelledByUser";
             case IngestionStatus::End_ValidationMetadataFailed:
                 return "End_ValidationMetadataFailed";
             case IngestionStatus::End_ValidationMediaSourceFailed:
@@ -553,8 +558,8 @@ public:
             return IngestionStatus::SourceUploadingInProgress;
         else if (lowerCase == "encodingqueued")
             return IngestionStatus::EncodingQueued;
-        else if (lowerCase == "end_downloadcancelledbyuser")
-            return IngestionStatus::End_DownloadCancelledByUser;
+        else if (lowerCase == "end_dwloruplcancelledbyuser")
+            return IngestionStatus::End_DwlOrUplCancelledByUser;
         else if (lowerCase == "end_validationmetadatafailed")
             return IngestionStatus::End_ValidationMetadataFailed;
         else if (lowerCase == "end_validationmediasourcefailed")
@@ -791,7 +796,7 @@ public:
         int64_t ingestionJobKey,
         double downloadingPercentage);
 
-    void updateIngestionJobSourceUploadingInProgress (
+    bool updateIngestionJobSourceUploadingInProgress (
         int64_t ingestionJobKey,
         double uploadingPercentage);
 

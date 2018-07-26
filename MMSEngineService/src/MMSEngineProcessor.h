@@ -92,6 +92,12 @@ private:
         Json::Value parametersRoot,
         vector<pair<int64_t,Validator::DependencyType>>& dependencies);
     
+    void ftpDeliveryContent(
+        int64_t ingestionJobKey,
+        shared_ptr<Workspace> workspace,
+        Json::Value parametersRoot,
+        vector<pair<int64_t,Validator::DependencyType>>& dependencies);
+
     /*
     string generateImageMetadataToIngest(
         int64_t ingestionJobKey,
@@ -201,14 +207,23 @@ private:
     void copyMediaSourceFile(string sourceReferenceURL,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace);
 
-    int progressCallback(
+    int progressDownloadCallback(
         int64_t ingestionJobKey,
         chrono::system_clock::time_point& lastTimeProgressUpdate, 
         double& lastPercentageUpdated, bool& downloadingStoppedByUser,
         double dltotal, double dlnow,
         double ultotal, double ulnow);
 
-    // static size_t emailPayloadFeed(void *ptr, size_t size, size_t nmemb, void *userp);
+    int progressUploadCallback(
+        int64_t ingestionJobKey,
+        chrono::system_clock::time_point& lastTimeProgressUpdate, 
+        double& lastPercentageUpdated, bool& uploadingStoppedByUser,
+        double dltotal, double dlnow,
+        double ultotal, double ulnow);
+
+    void ftpUploadMediaSource(string mmsAssetPathName,
+        int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
+        string userName, string password, string ftpServer, string remoteDir);
 } ;
 
 #endif

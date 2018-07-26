@@ -760,6 +760,67 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 throw runtime_error(errorMessage);
                             }
                         }
+                        else if (ingestionType == MMSEngineDBFacade::IngestionType::FTPDelivery)
+                        {
+                            // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
+                            try
+                            {
+                                ftpDeliveryContent(
+                                        ingestionJobKey, 
+                                        workspace, 
+                                        parametersRoot, 
+                                        dependencies);
+                            }
+                            catch(runtime_error e)
+                            {
+                                _logger->error(__FILEREF__ + "ftpDeliveryContent failed"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                                        errorMessage,
+                                        "" // processorMMS
+                                        );
+
+                                throw runtime_error(errorMessage);
+                            }
+                            catch(exception e)
+                            {
+                                _logger->error(__FILEREF__ + "ftpDeliveryContent failed"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                                        errorMessage,
+                                        "" // processorMMS
+                                        );
+
+                                throw runtime_error(errorMessage);
+                            }
+                        }
                         else if (ingestionType == MMSEngineDBFacade::IngestionType::Encode)
                         {
                             try
@@ -2155,6 +2216,179 @@ void MMSEngineProcessor::removeContent(
                 "", // errorMessage
                 "" // ProcessorMMS
         );
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "generateAndIngestCutMedia failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
+        );
+        
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what(), 
+                "" // ProcessorMMS
+        );
+        
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "generateAndIngestCutMedia failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+        );
+        
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what(), 
+                "" // ProcessorMMS
+        );
+
+        throw e;
+    }
+}
+
+void MMSEngineProcessor::ftpDeliveryContent(
+        int64_t ingestionJobKey,
+        shared_ptr<Workspace> workspace,
+        Json::Value parametersRoot,
+        vector<pair<int64_t,Validator::DependencyType>>& dependencies
+)
+{
+    try
+    {
+        if (dependencies.size() == 0)
+        {
+            string errorMessage = __FILEREF__ + "No configured any media to be removed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", dependencies.size: " + to_string(dependencies.size());
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        string userName;
+        string password;
+        string ftpServer;
+        string remoteDir;
+        {
+            string field = "userName";
+            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            userName = parametersRoot.get(field, "XXX").asString();
+
+            field = "password";
+            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            password = parametersRoot.get(field, "XXX").asString();
+
+            field = "ftpServer";
+            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            ftpServer = parametersRoot.get(field, "XXX").asString();
+
+            field = "remoteDir";
+            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            remoteDir = parametersRoot.get(field, "XXX").asString();
+        }
+        
+        for (pair<int64_t,Validator::DependencyType>& keyAndDependencyType: dependencies)
+        {
+            int mmsPartitionNumber;
+            string workspaceDirectoryName;
+            string relativePath;
+            string fileName;
+            
+            if (keyAndDependencyType.second == Validator::DependencyType::MediaItemKey)
+            {
+                int64_t encodingProfileKey = -1;
+                
+                tuple<int64_t,int,shared_ptr<Workspace>,string,string,string> storageDetails 
+                    = _mmsEngineDBFacade->getStorageDetails(
+                        keyAndDependencyType.first, encodingProfileKey);
+
+                int64_t physicalPathKey;
+                shared_ptr<Workspace> workspace;
+                string deliveryFileName;
+                
+                tie(physicalPathKey, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName) 
+                        = storageDetails;
+                workspaceDirectoryName = workspace->_directoryName;
+            }
+            else
+            {
+                tuple<int,shared_ptr<Workspace>,string,string,string> storageDetails 
+                    = _mmsEngineDBFacade->getStorageDetails(keyAndDependencyType.first);
+
+                shared_ptr<Workspace> workspace;
+                string deliveryFileName;
+                
+                tie(mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName) 
+                        = storageDetails;
+                workspaceDirectoryName = workspace->_directoryName;
+            }
+
+            _logger->info(__FILEREF__ + "getMMSAssetPathName ..."
+                + ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
+                + ", workspaceDirectoryName: " + workspaceDirectoryName
+                + ", relativePath: " + relativePath
+                + ", fileName: " + fileName
+            );
+            string mmsAssetPathName = _mmsStorage->getMMSAssetPathName(
+                mmsPartitionNumber,
+                workspaceDirectoryName,
+                relativePath,
+                fileName);
+            
+            thread ftpUploadMediaSource(&MMSEngineProcessor::ftpUploadMediaSource, this, 
+                mmsAssetPathName, ingestionJobKey, workspace,
+                    userName, password, ftpServer, remoteDir);
+            ftpUploadMediaSource.detach();
+        }
     }
     catch(runtime_error e)
     {
@@ -5582,7 +5816,7 @@ RESUMING FILE TRANSFERS
 
                 chrono::system_clock::time_point lastProgressUpdate = chrono::system_clock::now();
                 double lastPercentageUpdated = -1.0;
-                curlpp::types::ProgressFunctionFunctor functor = bind(&MMSEngineProcessor::progressCallback, this,
+                curlpp::types::ProgressFunctionFunctor functor = bind(&MMSEngineProcessor::progressDownloadCallback, this,
                         ingestionJobKey, lastProgressUpdate, lastPercentageUpdated, downloadingStoppedByUser,
                         placeholders::_1, placeholders::_2, placeholders::_3, placeholders::_4);
                 request.setOpt(new curlpp::options::ProgressFunction(curlpp::types::ProgressFunctionFunctor(functor)));
@@ -5686,7 +5920,7 @@ RESUMING FILE TRANSFERS
 
                 chrono::system_clock::time_point lastTimeProgressUpdate = chrono::system_clock::now();
                 double lastPercentageUpdated = -1.0;
-                curlpp::types::ProgressFunctionFunctor functor = bind(&MMSEngineProcessor::progressCallback, this,
+                curlpp::types::ProgressFunctionFunctor functor = bind(&MMSEngineProcessor::progressDownloadCallback, this,
                         ingestionJobKey, lastTimeProgressUpdate, lastPercentageUpdated, downloadingStoppedByUser,
                         placeholders::_1, placeholders::_2, placeholders::_3, placeholders::_4);
                 request.setOpt(new curlpp::options::ProgressFunction(curlpp::types::ProgressFunctionFunctor(functor)));
@@ -5904,6 +6138,152 @@ RESUMING FILE TRANSFERS
     }
 }
 
+void MMSEngineProcessor::ftpUploadMediaSource(string mmsAssetPathName,
+        int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
+        string userName, string password, string ftpServer, string remoteDir)
+{
+
+    // curl -T localfile.ext ftp://username:password@ftp.server.com/remotedir/remotefile.zip
+
+
+    try 
+    {
+        bool uploadingStoppedByUser = false;
+
+        _logger->info(__FILEREF__ + "FTP Uploading"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", mmsAssetPathName: " + mmsAssetPathName
+        );
+
+        string ftpUrl = string("ftp://") + userName + ":" + password + "@" + ftpServer + remoteDir;
+
+        ifstream mmsAssetStream(mmsAssetPathName, ifstream::binary);
+
+        // https://curl.haxx.se/libcurl/c/libcurl-tutorial.html
+        // https://curl.haxx.se/libcurl/c/ftpupload.html
+        curlpp::Cleanup cleaner;
+        curlpp::Easy request;
+
+        request.setOpt(new curlpp::options::Url(ftpUrl));
+        request.setOpt(new curlpp::options::ReadStream(&mmsAssetStream));
+        
+        bool bCreatingMissingDir = true;
+        curlpp::OptionTrait<bool, CURLOPT_FTP_CREATE_MISSING_DIRS> creatingMissingDir(bCreatingMissingDir);
+        request.setOpt(creatingMissingDir);
+        
+        string ftpsPrefix("ftps");
+        if (ftpUrl.size() >= ftpsPrefix.size() && 0 == ftpUrl.compare(0, ftpsPrefix.size(), ftpsPrefix))
+        {
+            // this ia not implemented yet
+            // CURLOPT_FTP_SSL
+            // CURLOPT_FTPSSLAUTH
+
+            /*            
+            // disconnect if we can't validate server's cert
+            bool bSslVerifyPeer = false;
+            curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
+            request.setOpt(sslVerifyPeer);
+
+            curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
+            request.setOpt(sslVerifyHost);
+            */
+        }
+
+        chrono::system_clock::time_point lastProgressUpdate = chrono::system_clock::now();
+        double lastPercentageUpdated = -1.0;
+        curlpp::types::ProgressFunctionFunctor functor = bind(&MMSEngineProcessor::progressUploadCallback, this,
+                ingestionJobKey, lastProgressUpdate, lastPercentageUpdated, uploadingStoppedByUser,
+                placeholders::_1, placeholders::_2, placeholders::_3, placeholders::_4);
+        request.setOpt(new curlpp::options::ProgressFunction(curlpp::types::ProgressFunctionFunctor(functor)));
+        request.setOpt(new curlpp::options::NoProgress(0L));
+
+        _logger->info(__FILEREF__ + "FTP Uploading media file"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", mmsAssetPathName: " + mmsAssetPathName
+        );
+        request.perform();
+
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_TaskSuccess"
+            + ", errorMessage: " + ""
+        );                            
+        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
+                MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
+                "", // errorMessage
+                "" // ProcessorMMS
+        );
+    }
+    catch (curlpp::LogicError & e) 
+    {
+        _logger->error(__FILEREF__ + "Download failed (LogicError)"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey) 
+            + ", mmsAssetPathName: " + mmsAssetPathName 
+            + ", exception: " + e.what()
+        );
+
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what(), 
+                "");    // processorMMS
+
+        return;
+    }
+    catch (curlpp::RuntimeError & e) 
+    {
+        _logger->error(__FILEREF__ + "Download failed (RuntimeError)"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey) 
+            + ", mmsAssetPathName: " + mmsAssetPathName 
+            + ", exception: " + e.what()
+        );
+
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what(), 
+                ""); // processorMMS
+
+        return;
+    }
+    catch (exception e)
+    {
+        _logger->error(__FILEREF__ + "Download failed (exception)"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey) 
+            + ", mmsAssetPathName: " + mmsAssetPathName 
+            + ", exception: " + e.what()
+        );
+
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what(), 
+                ""); // processorMMS
+
+        return;
+    }
+}
+
 void MMSEngineProcessor::moveMediaSourceFile(string sourceReferenceURL,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace)
 {
@@ -6084,7 +6464,7 @@ void MMSEngineProcessor::copyMediaSourceFile(string sourceReferenceURL,
     }
 }
 
-int MMSEngineProcessor::progressCallback(
+int MMSEngineProcessor::progressDownloadCallback(
         int64_t ingestionJobKey,
         chrono::system_clock::time_point& lastTimeProgressUpdate, 
         double& lastPercentageUpdated, bool& downloadingStoppedByUser,
@@ -6129,6 +6509,57 @@ int MMSEngineProcessor::progressCallback(
         }
 
         if (downloadingStoppedByUser)
+            return 1;   // stop downloading
+    }
+
+    return 0;
+}
+
+int MMSEngineProcessor::progressUploadCallback(
+        int64_t ingestionJobKey,
+        chrono::system_clock::time_point& lastTimeProgressUpdate, 
+        double& lastPercentageUpdated, bool& uploadingStoppedByUser,
+        double dltotal, double dlnow,
+        double ultotal, double ulnow)
+{
+
+    chrono::system_clock::time_point now = chrono::system_clock::now();
+            
+    if (dltotal != 0 &&
+            (dltotal == dlnow 
+            || now - lastTimeProgressUpdate >= chrono::seconds(_progressUpdatePeriodInSeconds)))
+    {
+        double progress = (dlnow / dltotal) * 100;
+        // int uploadingPercentage = floorf(progress * 100) / 100;
+        // this is to have one decimal in the percentage
+        double uploadingPercentage = ((double) ((int) (progress * 10))) / 10;
+
+        _logger->info(__FILEREF__ + "Upload still running"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", uploadingPercentage: " + to_string(uploadingPercentage)
+            + ", dltotal: " + to_string(dltotal)
+            + ", dlnow: " + to_string(dlnow)
+            + ", ultotal: " + to_string(ultotal)
+            + ", ulnow: " + to_string(ulnow)
+        );
+        
+        lastTimeProgressUpdate = now;
+
+        if (lastPercentageUpdated != uploadingPercentage)
+        {
+            _logger->info(__FILEREF__ + "Update IngestionJob"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", uploadingPercentage: " + to_string(uploadingPercentage)
+            );                            
+            uploadingStoppedByUser = _mmsEngineDBFacade->updateIngestionJobSourceUploadingInProgress (
+                ingestionJobKey, uploadingPercentage);
+
+            lastPercentageUpdated = uploadingPercentage;
+        }
+
+        if (uploadingStoppedByUser)
             return 1;   // stop downloading
     }
 
