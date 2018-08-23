@@ -65,7 +65,7 @@ public class CatraMMS {
             Date now = new Date();
             mmsInfo = HttpFeedFetcher.fetchPutHttpsJson(mmsURL, timeoutInSeconds, maxRetriesNumber,
                     username, password, postBodyRequest);
-            mLogger.info("Elapsed time login (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
+            mLogger.info("Elapsed time shareWorkspace (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
         }
         catch (Exception e)
         {
@@ -123,7 +123,7 @@ public class CatraMMS {
             Date now = new Date();
             mmsInfo = HttpFeedFetcher.fetchPostHttpsJson(mmsURL, timeoutInSeconds, maxRetriesNumber,
                     username, password, postBodyRequest);
-            mLogger.info("Elapsed time login (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
+            mLogger.info("Elapsed time register (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
         }
         catch (Exception e)
         {
@@ -171,7 +171,7 @@ public class CatraMMS {
             Date now = new Date();
             mmsInfo = HttpFeedFetcher.fetchPutHttpsJson(mmsURL, timeoutInSeconds, maxRetriesNumber,
                     username, password, postBodyRequest);
-            mLogger.info("Elapsed time login (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
+            mLogger.info("Elapsed time confirmUser (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
         }
         catch (Exception e)
         {
@@ -401,7 +401,7 @@ public class CatraMMS {
             Date now = new Date();
             mmsInfo = HttpFeedFetcher.fetchDeleteHttpsJson(mmsURL, timeoutInSeconds, maxRetriesNumber,
                     username, password);
-            mLogger.info("Elapsed time login (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
+            mLogger.info("Elapsed time removeEncodingProfile (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
         }
         catch (Exception e)
         {
@@ -432,7 +432,7 @@ public class CatraMMS {
             Date now = new Date();
             mmsInfo = HttpFeedFetcher.fetchPutHttpsJson(mmsURL, timeoutInSeconds, maxRetriesNumber,
                     username, password, jsonEncodingProfilesSet);
-            mLogger.info("Elapsed time login (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
+            mLogger.info("Elapsed time addEncodingProfilesSet (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
         }
         catch (Exception e)
         {
@@ -445,6 +445,7 @@ public class CatraMMS {
         try
         {
             JSONObject joWMMSInfo = new JSONObject(mmsInfo);
+
             JSONObject joEncodingProfilesSet = joWMMSInfo.getJSONObject("encodingProfilesSet");
 
             encodingProfilesSetKey = joEncodingProfilesSet.getLong("encodingProfilesSetKey");
@@ -480,7 +481,7 @@ public class CatraMMS {
             Date now = new Date();
             mmsInfo = HttpFeedFetcher.fetchDeleteHttpsJson(mmsURL, timeoutInSeconds, maxRetriesNumber,
                     username, password);
-            mLogger.info("Elapsed time login (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
+            mLogger.info("Elapsed time removeEncodingProfilesSet (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
         }
         catch (Exception e)
         {
@@ -511,7 +512,7 @@ public class CatraMMS {
                     + "?start=0"
                     + "&rows=" + maxMediaItemsNumber
                     + "&contentType=" + contentType
-                    + "&title=" + java.net.URLEncoder.encode(title, "UTF-8")
+                    + "&title=" + (title == null ? "" : java.net.URLEncoder.encode(title, "UTF-8"))
                     + "&startIngestionDate=" + simpleDateFormat.format(start)
                     + "&endIngestionDate=" + simpleDateFormat.format(end);
 
@@ -524,7 +525,7 @@ public class CatraMMS {
         }
         catch (Exception e)
         {
-            String errorMessage = "Login MMS failed. Exception: " + e;
+            String errorMessage = "getMediaItems MMS failed. Exception: " + e;
             mLogger.error(errorMessage);
 
             throw new Exception(errorMessage);
@@ -664,7 +665,7 @@ public class CatraMMS {
         }
         catch (Exception e)
         {
-            String errorMessage = "Login MMS failed. Exception: " + e;
+            String errorMessage = "getIngestionWorkflows MMS failed. Exception: " + e;
             mLogger.error(errorMessage);
 
             throw new Exception(errorMessage);
@@ -796,7 +797,7 @@ public class CatraMMS {
         }
         catch (Exception e)
         {
-            String errorMessage = "Login MMS failed. Exception: " + e;
+            String errorMessage = "getIngestionJobs MMS failed. Exception: " + e;
             mLogger.error(errorMessage);
 
             throw new Exception(errorMessage);
@@ -854,7 +855,7 @@ public class CatraMMS {
         }
         catch (Exception e)
         {
-            String errorMessage = "Login MMS failed. Exception: " + e;
+            String errorMessage = "getIngestionJob MMS failed. Exception: " + e;
             mLogger.error(errorMessage);
 
             throw new Exception(errorMessage);
@@ -926,7 +927,7 @@ public class CatraMMS {
         }
         catch (Exception e)
         {
-            String errorMessage = "Login MMS failed. Exception: " + e;
+            String errorMessage = "getEncodingJobs MMS failed. Exception: " + e;
             mLogger.error(errorMessage);
 
             throw new Exception(errorMessage);
@@ -986,7 +987,7 @@ public class CatraMMS {
         }
         catch (Exception e)
         {
-            String errorMessage = "Login MMS failed. Exception: " + e;
+            String errorMessage = "getEncodingJob MMS failed. Exception: " + e;
             mLogger.error(errorMessage);
 
             throw new Exception(errorMessage);
@@ -1329,7 +1330,7 @@ public class CatraMMS {
             Date now = new Date();
             HttpFeedFetcher.fetchPostHttpBinary(mmsURL, timeoutInSeconds, maxRetriesNumber,
                     username, password, binaryPathName);
-            mLogger.info("Elapsed time login (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
+            mLogger.info("Elapsed time ingestBinaryContent (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
         }
         catch (Exception e)
         {

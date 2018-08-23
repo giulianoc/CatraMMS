@@ -34,34 +34,65 @@ MMSEngineDBFacade::MMSEngineDBFacade(
     // _defaultTerritoryName           = "default";
 
     size_t dbPoolSize = configuration["database"].get("poolSize", 5).asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", database->poolSize: " + to_string(dbPoolSize)
+    );
     string dbServer = configuration["database"].get("server", "XXX").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", database->server: " + dbServer
+    );
     _dbConnectionPoolStatsReportPeriodInSeconds = configuration["database"].get("dbConnectionPoolStatsReportPeriodInSeconds", 5).asInt();
-    /*
-    #ifdef __APPLE__
-        string dbUsername("root"); string dbPassword("giuliano"); string dbName("workKing");
-    #else
-        string dbUsername("root"); string dbPassword("root"); string dbName("catracms");
-    #endif
-     */
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", database->dbConnectionPoolStatsReportPeriodInSeconds: " + to_string(_dbConnectionPoolStatsReportPeriodInSeconds)
+    );
+
     string dbUsername = configuration["database"].get("userName", "XXX").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", database->userName: " + dbUsername
+    );
     string dbPassword;
     {
         string encryptedPassword = configuration["database"].get("password", "XXX").asString();
         dbPassword = Encrypt::decrypt(encryptedPassword);        
     }    
     string dbName = configuration["database"].get("dbName", "XXX").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", database->dbName: " + dbName
+    );
     string selectTestingConnection = configuration["database"].get("selectTestingConnection", "XXX").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", database->selectTestingConnection: " + selectTestingConnection
+    );
 
     _maxEncodingFailures            = configuration["encoding"].get("maxEncodingFailures", 3).asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", encoding->maxEncodingFailures: " + to_string(_maxEncodingFailures)
+    );
 
     _confirmationCodeRetentionInDays    = configuration["mms"].get("confirmationCodeRetentionInDays", 3).asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", mms->confirmationCodeRetentionInDays: " + to_string(_confirmationCodeRetentionInDays)
+    );
 
     _contentRetentionInMinutesDefaultValue    = configuration["mms"].get("contentRetentionInMinutesDefaultValue", 1).asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", mms->contentRetentionInMinutesDefaultValue: " + to_string(_contentRetentionInMinutesDefaultValue)
+    );
     
     _predefinedVideoProfilesDirectoryPath = configuration["encoding"]["predefinedProfiles"].get("videoDir", "XXX").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", encoding->predefinedProfiles->videoDir: " + _predefinedVideoProfilesDirectoryPath
+    );
     _predefinedAudioProfilesDirectoryPath = configuration["encoding"]["predefinedProfiles"].get("audioDir", "XXX").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", encoding->predefinedProfiles->audioDir: " + _predefinedAudioProfilesDirectoryPath
+    );
     _predefinedImageProfilesDirectoryPath = configuration["encoding"]["predefinedProfiles"].get("imageDir", "XXX").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", encoding->predefinedProfiles->imageDir: " + _predefinedImageProfilesDirectoryPath
+    );
 
+    _logger->info(__FILEREF__ + "Creating MySQLConnectionFactory...");
     _mySQLConnectionFactory = 
             make_shared<MySQLConnectionFactory>(dbServer, dbUsername, dbPassword, dbName,
             selectTestingConnection);
@@ -70,11 +101,13 @@ MMSEngineDBFacade::MMSEngineDBFacade(
     // 2018-05-22: It seems the problem is when the stdout of the spdlog is true!!!
     //      Stdout of the spdlog is now false and I commented the ofstream statement
     // ofstream aaa("/tmp/a.txt");
+    _logger->info(__FILEREF__ + "Creating DBConnectionPool...");
     _connectionPool = make_shared<DBConnectionPool<MySQLConnection>>(
             dbPoolSize, _mySQLConnectionFactory);
      
     _lastConnectionStatsReport = chrono::system_clock::now();
 
+    _logger->info(__FILEREF__ + "createTablesIfNeeded...");
     createTablesIfNeeded();
 }
 
@@ -13647,10 +13680,9 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
         try
         {
-            // maxEncodingPriority (0: low, 1: default, 2: high)
-            // workspaceType: (0: Live Sessions only, 1: Ingestion + Delivery, 2: Encoding Only)
-            // encodingPeriod: 0: Daily, 1: Weekly, 2: Monthly
-
+            // This table has to be present before the connection pool is created
+            // otherwise the connection pool fails.
+            // It has to be created before running the executable
             lastSQLCommand = 
                 "create table if not exists MMS_TestConnection ("
                     "testConnectionKey          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"

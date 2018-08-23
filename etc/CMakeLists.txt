@@ -30,6 +30,10 @@ SET (ETCs
 	imageMagickHelper.sh
 	nginx.sh
 	tomcat.sh
+	setupALL.sh
+	statusALL.sh
+	stopALL.sh
+	tailALL.sh
 	mms.cfg
 	crontab.txt
 	crontab.sh
