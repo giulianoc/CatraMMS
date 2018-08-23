@@ -121,9 +121,9 @@ server {
 server {
 	listen 80;
 
-	# server-1 is for the calls directly to the encoder server (progress and status(isFinished))
+	# mmsengine-1 is for the calls directly to the encoder server (progress and status(isFinished))
 	#we should call the encoder machine as encoder-1, encoder-2, ...
-	server_name server-1;
+	server_name mmsengine-1;
 
 	access_log   /usr/local/CatraMMS/logs/nginx/mms-encoder.access.log main;
 	error_log    /usr/local/CatraMMS/logs/nginx/mms-encoder.error.log notice;
