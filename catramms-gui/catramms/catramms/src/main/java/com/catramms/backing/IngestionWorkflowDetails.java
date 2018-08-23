@@ -1,6 +1,7 @@
 package com.catramms.backing;
 
 import com.catramms.backing.common.SessionUtils;
+import com.catramms.backing.common.Workspace;
 import com.catramms.backing.entity.IngestionWorkflow;
 import com.catramms.backing.entity.MediaItem;
 import com.catramms.utility.catramms.CatraMMS;
@@ -19,7 +20,7 @@ import java.io.Serializable;
  */
 @ManagedBean
 @ViewScoped
-public class IngestionWorkflowDetails implements Serializable {
+public class IngestionWorkflowDetails extends Workspace implements Serializable {
 
     // static because the class is Serializable
     private static final Logger mLogger = Logger.getLogger(IngestionWorkflowDetails.class);
@@ -46,32 +47,27 @@ public class IngestionWorkflowDetails implements Serializable {
         autoRefresh = true;
         autoRefreshPeriodInSeconds = 30;
 
-        try {
+        fillIngestionWorkflow();
+    }
+
+    public void fillIngestionWorkflow()
+    {
+        try
+        {
             userKey = SessionUtils.getUserKey();
             apiKey = SessionUtils.getAPIKey();
 
             if (userKey == null || apiKey == null || apiKey.equalsIgnoreCase(""))
             {
-                mLogger.warn("no input to require ingestionRoot"
+                String errorMessage = "no input to require ingestionRoot"
                                 + ", userKey: " + userKey
                                 + ", apiKey: " + apiKey
-                );
-            }
-            else
-            {
-                fillIngestionWorkflow();
-            }
-        }
-        catch (Exception e)
-        {
-            String errorMessage = "Exception: " + e;
-            mLogger.error(errorMessage);
-        }
-    }
+                ;
+                mLogger.error(errorMessage);
 
-    public void fillIngestionWorkflow()
-    {
-        try {
+                throw new Exception(errorMessage);
+            }
+
             String username = userKey.toString();
             String password = apiKey;
 

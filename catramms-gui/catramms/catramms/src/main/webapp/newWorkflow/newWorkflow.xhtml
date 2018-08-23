@@ -38,7 +38,22 @@
 
             <p:toolbarGroup align="right">
 
-                <p:outputLabel value="Welcome #{login.userName} (#{sessionScope.currentWorkspaceDetails.name})" />
+                <p:outputLabel value="Welcome #{login.userName}" />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:outputLabel value="Workspace:" />
+                <p:selectOneMenu id="workspaceName" value="#{newWorkflow.workspaceName}"
+                                 autoWidth="false">
+                    <f:selectItems value="#{newWorkflow.workspaceNames}" />
+                    <p:ajax
+                            global="true"
+                            event="change"
+                            listener="#{newWorkflow.init}"
+                            update="newWorkflowLayout" />
+                </p:selectOneMenu>
 
                 <span class="ui-separator">
                     <span class="ui-icon ui-icon-grip-dotted-vertical" />
@@ -100,13 +115,13 @@
             </p:toolbarGroup>
         </p:toolbar>
 
-        <p:layout style="width:100%;height: 500px">
+        <p:layout id="newWorkflowLayout" style="width:100%;height: 600px">
             <p:layoutUnit position="west" resizable="true" size="650" minSize="200" maxSize="800">
                 <p:toolbar id="workflowTreeToolbar">
                     <f:facet name="left">
                         <p:commandButton id="onSuccessTooltip" icon="fa fa-check"
                                          title="OnSuccess"
-                                         disabled="#{!(newWorkflow.tnSelectedNode != null and (newWorkflow.tnSelectedNode.type == 'Task' or newWorkflow.tnSelectedNode.type == 'GroupOfTask'))}"
+                                         disabled="#{!(newWorkflow.tnSelectedNode != null and (newWorkflow.tnSelectedNode.type == 'Task' or newWorkflow.tnSelectedNode.type == 'GroupOfTasks'))}"
                                          update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
                                          action="#{newWorkflow.addOnSuccessEvent}"
                                 />
@@ -114,7 +129,7 @@
 
                         <p:commandButton id="onErrorTooltip" icon="fa fa-close"
                                          title="OnError"
-                                         disabled="#{!(newWorkflow.tnSelectedNode != null and (newWorkflow.tnSelectedNode.type == 'Task' or newWorkflow.tnSelectedNode.type == 'GroupOfTask'))}"
+                                         disabled="#{!(newWorkflow.tnSelectedNode != null and (newWorkflow.tnSelectedNode.type == 'Task' or newWorkflow.tnSelectedNode.type == 'GroupOfTasks'))}"
                                          update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
                                          action="#{newWorkflow.addOnErrorEvent}"
                                 />
@@ -122,7 +137,7 @@
 
                         <p:commandButton id="onCompleteTooltip" icon="fa fa-file-text-o"
                                          title="OnComplete"
-                                         disabled="#{!(newWorkflow.tnSelectedNode != null and (newWorkflow.tnSelectedNode.type == 'Task' or newWorkflow.tnSelectedNode.type == 'GroupOfTask'))}"
+                                         disabled="#{!(newWorkflow.tnSelectedNode != null and (newWorkflow.tnSelectedNode.type == 'Task' or newWorkflow.tnSelectedNode.type == 'GroupOfTasks'))}"
                                          update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
                                          action="#{newWorkflow.addOnCompleteEvent}"
                                 />
@@ -134,7 +149,7 @@
 
                         <p:commandButton id="addGroupOfTaskTooltip" icon="fa fa-navicon"
                                          title="Add Group of Task"
-                                         disabled="#{!(newWorkflow.tnSelectedNode != null and (newWorkflow.tnSelectedNode.type == 'Workflow' or newWorkflow.tnSelectedNode.type == 'GroupOfTask' or newWorkflow.tnSelectedNode.type == 'Event'))}"
+                                         disabled="#{!(newWorkflow.tnSelectedNode != null and (newWorkflow.tnSelectedNode.type == 'Workflow' or newWorkflow.tnSelectedNode.type == 'GroupOfTasks' or newWorkflow.tnSelectedNode.type == 'Event'))}"
                                          update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
                                          action="#{newWorkflow.addGroupOfTasks}"
                                 />
@@ -146,7 +161,7 @@
 
                         <p:commandButton id="addContentTooltip" icon="fa fa-plus"
                                          title="Add-Content"
-                                         disabled="#{!(newWorkflow.tnSelectedNode != null and (newWorkflow.tnSelectedNode.type == 'Workflow' or newWorkflow.tnSelectedNode.type == 'GroupOfTask' or newWorkflow.tnSelectedNode.type == 'Event'))}"
+                                         disabled="#{!(newWorkflow.tnSelectedNode != null and (newWorkflow.tnSelectedNode.type == 'Workflow' or newWorkflow.tnSelectedNode.type == 'GroupOfTasks' or newWorkflow.tnSelectedNode.type == 'Event'))}"
                                          update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
                                          action="#{newWorkflow.addTask('Add-Content')}"
                                 />
@@ -154,7 +169,7 @@
 
                         <p:commandButton id="removeContentTooltip" icon="fa fa-eraser"
                                          title="Remove-Content"
-                                         disabled="#{!(newWorkflow.tnSelectedNode != null and (newWorkflow.tnSelectedNode.type == 'Workflow' or newWorkflow.tnSelectedNode.type == 'GroupOfTask' or newWorkflow.tnSelectedNode.type == 'Event'))}"
+                                         disabled="#{!(newWorkflow.tnSelectedNode != null and (newWorkflow.tnSelectedNode.type == 'Workflow' or newWorkflow.tnSelectedNode.type == 'GroupOfTasks' or newWorkflow.tnSelectedNode.type == 'Event'))}"
                                          update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
                                          action="#{newWorkflow.addTask('Remove-Content')}"
                                 />
@@ -166,7 +181,7 @@
 
                         <p:commandButton id="concatDemuxerTooltip" icon="fa fa-forward"
                                          title="Concat-Demuxer"
-                                         disabled="#{!(newWorkflow.tnSelectedNode != null and (newWorkflow.tnSelectedNode.type == 'Workflow' or newWorkflow.tnSelectedNode.type == 'GroupOfTask' or newWorkflow.tnSelectedNode.type == 'Event'))}"
+                                         disabled="#{!(newWorkflow.tnSelectedNode != null and (newWorkflow.tnSelectedNode.type == 'Workflow' or newWorkflow.tnSelectedNode.type == 'GroupOfTasks' or newWorkflow.tnSelectedNode.type == 'Event'))}"
                                          update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
                                          action="#{newWorkflow.addTask('Concat-Demuxer')}"
                                 />
@@ -174,7 +189,7 @@
 
                         <p:commandButton id="cutTooltip" icon="fa fa-cut"
                                          title="Cut"
-                                         disabled="#{!(newWorkflow.tnSelectedNode != null and (newWorkflow.tnSelectedNode.type == 'Workflow' or newWorkflow.tnSelectedNode.type == 'GroupOfTask' or newWorkflow.tnSelectedNode.type == 'Event'))}"
+                                         disabled="#{!(newWorkflow.tnSelectedNode != null and (newWorkflow.tnSelectedNode.type == 'Workflow' or newWorkflow.tnSelectedNode.type == 'GroupOfTasks' or newWorkflow.tnSelectedNode.type == 'Event'))}"
                                          update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
                                          action="#{newWorkflow.addTask('Cut')}"
                                 />
@@ -186,7 +201,7 @@
 
                         <p:commandButton id="encodeTooltip" icon="fa fa-file-video-o"
                                          title="Encode"
-                                         disabled="#{!(newWorkflow.tnSelectedNode != null and (newWorkflow.tnSelectedNode.type == 'Workflow' or newWorkflow.tnSelectedNode.type == 'GroupOfTask' or newWorkflow.tnSelectedNode.type == 'Event'))}"
+                                         disabled="#{!(newWorkflow.tnSelectedNode != null and (newWorkflow.tnSelectedNode.type == 'Workflow' or newWorkflow.tnSelectedNode.type == 'GroupOfTasks' or newWorkflow.tnSelectedNode.type == 'Event'))}"
                                          update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
                                          action="#{newWorkflow.addTask('Encode')}"
                                 />
@@ -198,7 +213,7 @@
 
                         <p:commandButton id="overlayImageTooltip" icon="fa fa-file-picture-o"
                                          title="Overlay-Image-On-Video"
-                                         disabled="#{!(newWorkflow.tnSelectedNode != null and (newWorkflow.tnSelectedNode.type == 'Workflow' or newWorkflow.tnSelectedNode.type == 'GroupOfTask' or newWorkflow.tnSelectedNode.type == 'Event'))}"
+                                         disabled="#{!(newWorkflow.tnSelectedNode != null and (newWorkflow.tnSelectedNode.type == 'Workflow' or newWorkflow.tnSelectedNode.type == 'GroupOfTasks' or newWorkflow.tnSelectedNode.type == 'Event'))}"
                                          update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
                                          action="#{newWorkflow.addTask('Overlay-Image-On-Video')}"
                                 />
@@ -206,7 +221,7 @@
 
                         <p:commandButton id="overlayTextTooltip" icon="fa fa-file-powerpoint-o"
                                          title="Overlay-Text-On-Video"
-                                         disabled="#{!(newWorkflow.tnSelectedNode != null and (newWorkflow.tnSelectedNode.type == 'Workflow' or newWorkflow.tnSelectedNode.type == 'GroupOfTask' or newWorkflow.tnSelectedNode.type == 'Event'))}"
+                                         disabled="#{!(newWorkflow.tnSelectedNode != null and (newWorkflow.tnSelectedNode.type == 'Workflow' or newWorkflow.tnSelectedNode.type == 'GroupOfTasks' or newWorkflow.tnSelectedNode.type == 'Event'))}"
                                          update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
                                          action="#{newWorkflow.addTask('Overlay-Text-On-Video')}"
                                 />
@@ -219,7 +234,7 @@
                 <p:sticky target="workflowTreeToolbar" />
 
                 <p:tree id="workflowTree"
-                        style="width: 100%;height: 400px"
+                        style="width: 100%"
                         value="#{newWorkflow.tnRoot}" var="node"
                         selectionMode="single" selection="#{newWorkflow.tnSelectedNode}"
                         dynamic="true"  >

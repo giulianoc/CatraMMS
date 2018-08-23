@@ -1,5 +1,6 @@
 package com.catramms.backing.newWorkflow;
 
+import com.catramms.backing.common.Workspace;
 import com.catramms.backing.common.SessionUtils;
 import com.catramms.backing.entity.EncodingProfile;
 import com.catramms.backing.entity.EncodingProfilesSet;
@@ -14,15 +15,12 @@ import org.primefaces.event.FileUploadEvent;
 import org.primefaces.event.NodeSelectEvent;
 import org.primefaces.model.DefaultTreeNode;
 import org.primefaces.model.TreeNode;
-import org.primefaces.model.UploadedFile;
 
 import javax.annotation.PostConstruct;
 import javax.faces.application.FacesMessage;
 import javax.faces.bean.ManagedBean;
-import javax.faces.bean.SessionScoped;
 import javax.faces.bean.ViewScoped;
 import javax.faces.context.FacesContext;
-import javax.servlet.http.HttpSession;
 import java.io.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -37,7 +35,7 @@ import java.util.*;
  */
 @ManagedBean
 @ViewScoped
-public class NewWorkflow implements Serializable {
+public class NewWorkflow extends Workspace implements Serializable {
 
     // static because the class is Serializable
     private static final Logger mLogger = Logger.getLogger(NewWorkflow.class);
@@ -275,6 +273,8 @@ public class NewWorkflow implements Serializable {
 
             mediaItemsEnd = calendar.getTime();
         }
+
+        mediaItemsTitle = "";
 
         buildWorkflow();
 
@@ -531,7 +531,7 @@ public class NewWorkflow implements Serializable {
                     for (String mediaItemKeyReference: mediaItemKeyReferences)
                     {
                         JSONObject joReference = new JSONObject();
-                        joReference.put("ReferenceMediaItemKey", Long.parseLong(mediaItemKeyReference));
+                        joReference.put("ReferenceMediaItemKey", Long.parseLong(mediaItemKeyReference.trim()));
 
                         jaReferences.put(joReference);
                     }
@@ -592,7 +592,7 @@ public class NewWorkflow implements Serializable {
                     for (String physicalPathKeyReference: physicalPathKeyReferences)
                     {
                         JSONObject joReference = new JSONObject();
-                        joReference.put("ReferencePhysicalPathKey", Long.parseLong(physicalPathKeyReference));
+                        joReference.put("ReferencePhysicalPathKey", Long.parseLong(physicalPathKeyReference.trim()));
 
                         jaReferences.put(joReference);
                     }
@@ -699,7 +699,7 @@ public class NewWorkflow implements Serializable {
                     for (String physicalPathKeyReference: physicalPathKeyReferences)
                     {
                         JSONObject joReference = new JSONObject();
-                        joReference.put("ReferencePhysicalPathKey", Long.parseLong(physicalPathKeyReference));
+                        joReference.put("ReferencePhysicalPathKey", Long.parseLong(physicalPathKeyReference.trim()));
 
                         jaReferences.put(joReference);
                     }
@@ -786,7 +786,7 @@ public class NewWorkflow implements Serializable {
                     for (String physicalPathKeyReference: physicalPathKeyReferences)
                     {
                         JSONObject joReference = new JSONObject();
-                        joReference.put("ReferencePhysicalPathKey", Long.parseLong(physicalPathKeyReference));
+                        joReference.put("ReferencePhysicalPathKey", Long.parseLong(physicalPathKeyReference.trim()));
 
                         jaReferences.put(joReference);
                     }
@@ -880,7 +880,7 @@ public class NewWorkflow implements Serializable {
                     for (String physicalPathKeyReference: physicalPathKeyReferences)
                     {
                         JSONObject joReference = new JSONObject();
-                        joReference.put("ReferencePhysicalPathKey", Long.parseLong(physicalPathKeyReference));
+                        joReference.put("ReferencePhysicalPathKey", Long.parseLong(physicalPathKeyReference.trim()));
 
                         jaReferences.put(joReference);
                     }
@@ -947,7 +947,7 @@ public class NewWorkflow implements Serializable {
                     for (String physicalPathKeyReference: physicalPathKeyReferences)
                     {
                         JSONObject joReference = new JSONObject();
-                        joReference.put("ReferencePhysicalPathKey", Long.parseLong(physicalPathKeyReference));
+                        joReference.put("ReferencePhysicalPathKey", Long.parseLong(physicalPathKeyReference.trim()));
 
                         jaReferences.put(joReference);
                     }
@@ -1030,7 +1030,7 @@ public class NewWorkflow implements Serializable {
                     for (String physicalPathKeyReference: physicalPathKeyReferences)
                     {
                         JSONObject joReference = new JSONObject();
-                        joReference.put("ReferencePhysicalPathKey", Long.parseLong(physicalPathKeyReference));
+                        joReference.put("ReferencePhysicalPathKey", Long.parseLong(physicalPathKeyReference.trim()));
 
                         jaReferences.put(joReference);
                     }
@@ -1101,7 +1101,7 @@ public class NewWorkflow implements Serializable {
                     for (String physicalPathKeyReference: physicalPathKeyReferences)
                     {
                         JSONObject joReference = new JSONObject();
-                        joReference.put("ReferencePhysicalPathKey", Long.parseLong(physicalPathKeyReference));
+                        joReference.put("ReferencePhysicalPathKey", Long.parseLong(physicalPathKeyReference.trim()));
 
                         jaReferences.put(joReference);
                     }
@@ -1184,7 +1184,7 @@ public class NewWorkflow implements Serializable {
                     for (String physicalPathKeyReference: physicalPathKeyReferences)
                     {
                         JSONObject joReference = new JSONObject();
-                        joReference.put("ReferencePhysicalPathKey", Long.parseLong(physicalPathKeyReference));
+                        joReference.put("ReferencePhysicalPathKey", Long.parseLong(physicalPathKeyReference.trim()));
 
                         jaReferences.put(joReference);
                     }
@@ -1255,7 +1255,7 @@ public class NewWorkflow implements Serializable {
                     for (String physicalPathKeyReference: physicalPathKeyReferences)
                     {
                         JSONObject joReference = new JSONObject();
-                        joReference.put("ReferencePhysicalPathKey", Long.parseLong(physicalPathKeyReference));
+                        joReference.put("ReferencePhysicalPathKey", Long.parseLong(physicalPathKeyReference.trim()));
 
                         jaReferences.put(joReference);
                     }
@@ -1322,7 +1322,7 @@ public class NewWorkflow implements Serializable {
                     for (String physicalPathKeyReference: physicalPathKeyReferences)
                     {
                         JSONObject joReference = new JSONObject();
-                        joReference.put("ReferencePhysicalPathKey", Long.parseLong(physicalPathKeyReference));
+                        joReference.put("ReferencePhysicalPathKey", Long.parseLong(physicalPathKeyReference.trim()));
 
                         jaReferences.put(joReference);
                     }
@@ -1378,7 +1378,7 @@ public class NewWorkflow implements Serializable {
                     for (String physicalPathKeyReference: physicalPathKeyReferences)
                     {
                         JSONObject joReference = new JSONObject();
-                        joReference.put("ReferencePhysicalPathKey", Long.parseLong(physicalPathKeyReference));
+                        joReference.put("ReferencePhysicalPathKey", Long.parseLong(physicalPathKeyReference.trim()));
 
                         jaReferences.put(joReference);
                     }

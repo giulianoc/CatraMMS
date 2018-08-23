@@ -1,6 +1,7 @@
 package com.catramms.backing;
 
 import com.catramms.backing.common.SessionUtils;
+import com.catramms.backing.common.Workspace;
 import com.catramms.backing.entity.EncodingProfile;
 import com.catramms.backing.entity.EncodingProfilesSet;
 import com.catramms.utility.catramms.CatraMMS;
@@ -27,7 +28,7 @@ import java.util.List;
  */
 @ManagedBean
 @ViewScoped
-public class EncodingProfilesSets implements Serializable {
+public class EncodingProfilesSets extends Workspace implements Serializable {
 
     // static because the class is Serializable
     private static final Logger mLogger = Logger.getLogger(EncodingProfilesSets.class);
@@ -275,6 +276,8 @@ public class EncodingProfilesSets implements Serializable {
                 {
                     String errorMessage = "Exception: " + e;
                     mLogger.error(errorMessage);
+
+                    encodingProfilesSetList.clear();
                 }
             }
         }

@@ -45,7 +45,22 @@
 
             <p:toolbarGroup align="right">
 
-                <p:outputLabel value="Welcome #{login.userName} (#{sessionScope.currentWorkspaceDetails.name})" />
+                <p:outputLabel value="Welcome #{login.userName}" />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:outputLabel value="Workspace:" />
+                <p:selectOneMenu id="workspaceName" value="#{encodingJobs.workspaceName}"
+                                 autoWidth="false">
+                    <f:selectItems value="#{encodingJobs.workspaceNames}" />
+                    <p:ajax
+                            global="true"
+                            event="change"
+                            listener="#{encodingJobs.fillList(false)}"
+                            update="encodingJobDataTable" />
+                </p:selectOneMenu>
 
                 <span class="ui-separator">
                     <span class="ui-icon ui-icon-grip-dotted-vertical" />
@@ -76,7 +91,7 @@
             <p:toolbarGroup align="right">
                 <p:outputLabel value="Begin:" />
                 <p:calendar id="begin" value="#{encodingJobs.begin}" pattern="dd-MM-yyyy HH:mm:ss" locale="my" >
-                    <p:ajax global="false" onstart="on_start()" event="dateSelect"
+                    <p:ajax global="true" event="dateSelect"
                             listener="#{encodingJobs.beginChanged()}"
                             update="end" />
                 </p:calendar>
@@ -87,7 +102,7 @@
 
                 <p:outputLabel value="End:" />
                 <p:calendar id="end" value="#{encodingJobs.end}" pattern="dd-MM-yyyy HH:mm:ss" locale="my" >
-                    <p:ajax global="false" onstart="on_start()" event="dateSelect" listener="#{encodingJobs.endChanged()}"
+                    <p:ajax global="true" event="dateSelect" listener="#{encodingJobs.endChanged()}"
                             update="begin" />
                 </p:calendar>
 
@@ -99,7 +114,7 @@
                 <p:selectOneMenu style="width:75px;" id="status"
                                  value="#{encodingJobs.status}">
                     <f:selectItems value="#{encodingJobs.statusOptions}" />
-                    <p:ajax global="false" onstart="on_start()" event="change" listener="#{encodingJobs.fillList(true)}" />
+                    <p:ajax global="true" event="change" listener="#{encodingJobs.fillList(true)}" />
                 </p:selectOneMenu>
 
                 <span class="ui-separator">
@@ -118,7 +133,7 @@
                 <p:selectBooleanButton
                         value="#{encodingJobs.ascending}"
                         onLabel="Asc" offLabel="Desc" onIcon="ui-icon-check" offIcon="ui-icon-check">
-                    <p:ajax global="false" onstart="on_start()"
+                    <p:ajax global="true"
                             listener="#{encodingJobs.fillList(true)}" />
                 </p:selectBooleanButton>
 
@@ -126,9 +141,10 @@
                     <span class="ui-icon ui-icon-grip-dotted-vertical" />
                 </span>
 
-                <p:commandButton global="false" onstart="on_start()" icon="ui-icon ui-icon-search"
+                <p:commandButton global="true" icon="ui-icon ui-icon-search"
                                  actionListener="#{encodingJobs.fillList(true)}" />
 
+                <!--
                 <span class="ui-separator">
                     <span class="ui-icon ui-icon-grip-dotted-vertical" />
                 </span>
@@ -139,6 +155,7 @@
                     <p:ajax
                             listener="#{encodingJobs.fillList(true)}" update="encodingJobDataTable" />
                 </p:selectBooleanButton>
+                -->
             </p:toolbarGroup>
         </p:toolbar>
 

@@ -611,7 +611,7 @@ public class CatraMMS {
 
             if (jaMediaItems.length() != 1)
             {
-                String errorMessage = "Wrong MediaItems number returned. jaMediaItems.length: " + jaMediaItems.length();
+                String errorMessage = "Wrong MediaItems number returned, expected one. jaMediaItems.length: " + jaMediaItems.length();
                 mLogger.error(errorMessage);
 
                 throw new Exception(errorMessage);
@@ -1105,7 +1105,7 @@ public class CatraMMS {
             Date now = new Date();
             mmsInfo = HttpFeedFetcher.fetchGetHttpsJson(mmsURL, timeoutInSeconds, maxRetriesNumber,
                     username, password);
-            mLogger.info("Elapsed time getMediaItems (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
+            mLogger.info("Elapsed time getEncodingProfiles (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
         }
         catch (Exception e)
         {
@@ -1120,6 +1120,8 @@ public class CatraMMS {
             JSONObject joMMSInfo = new JSONObject(mmsInfo);
             JSONObject joResponse = joMMSInfo.getJSONObject("response");
             JSONArray jaEncodingProfiles = joResponse.getJSONArray("encodingProfiles");
+
+            mLogger.info("jaEncodingProfiles.length(): " + jaEncodingProfiles.length());
 
             for (int encodingProfileIndex = 0;
                  encodingProfileIndex < jaEncodingProfiles.length();

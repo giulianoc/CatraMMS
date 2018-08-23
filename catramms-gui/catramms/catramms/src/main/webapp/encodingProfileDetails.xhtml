@@ -31,7 +31,22 @@
 
             <p:toolbarGroup align="right">
 
-                <p:outputLabel value="Welcome #{login.userName} (#{sessionScope.currentWorkspaceDetails.name})" />
+                <p:outputLabel value="Welcome #{login.userName}" />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:outputLabel value="Workspace:" />
+                <p:selectOneMenu id="workspaceName" value="#{encodingProfileDetails.workspaceName}"
+                                 autoWidth="false">
+                    <f:selectItems value="#{encodingProfileDetails.workspaceNames}" />
+                    <p:ajax
+                            global="true"
+                            event="change"
+                            listener="#{encodingProfileDetails.init}"
+                            update="encodingProfileDetailTabView" />
+                </p:selectOneMenu>
 
                 <span class="ui-separator">
                     <span class="ui-icon ui-icon-grip-dotted-vertical" />
@@ -64,9 +79,12 @@
             </p:toolbarGroup>
         </p:toolbar>
 
-        <p:tabView id="encodingProfileDetailTabView" dynamic="false" cache="true">
+        <p:tabView
+                id="encodingProfileDetailTabView" dynamic="false" cache="true">
 
-            <p:tab title="General Info">
+            <p:tab title="General Info"
+                   rendered="#{encodingProfileDetails.encodingProfile != null}"
+                    >
                 <p:panelGrid columns="2" cellpadding="10">
                     <p:outputLabel value="Encoding Profile Key: " />
                     <p:outputLabel value="#{encodingProfileDetails.encodingProfile.encodingProfileKey}" />
@@ -83,7 +101,7 @@
                 </p:panelGrid>
             </p:tab>
 
-            <p:tab rendered="#{encodingProfileDetails.encodingProfile.contentType == 'Video'}"
+            <p:tab rendered="#{encodingProfileDetails.encodingProfile != null and encodingProfileDetails.encodingProfile.contentType == 'Video'}"
                    title="Video Info">
 
                 <p:panelGrid columns="2" cellpadding="10">
@@ -124,7 +142,7 @@
                 </p:panelGrid>
             </p:tab>
 
-            <p:tab rendered="#{encodingProfileDetails.encodingProfile.contentType == 'Video' or encodingProfileDetails.encodingProfile.contentType == 'Audio'}"
+            <p:tab rendered="#{encodingProfileDetails.encodingProfile != null and (encodingProfileDetails.encodingProfile.contentType == 'Video' or encodingProfileDetails.encodingProfile.contentType == 'Audio')}"
                    title="Audio Info">
 
                 <p:panelGrid columns="2" cellpadding="10">
@@ -147,7 +165,7 @@
                 </p:panelGrid>
             </p:tab>
 
-            <p:tab rendered="#{encodingProfileDetails.encodingProfile.contentType == 'Image'}"
+            <p:tab rendered="#{encodingProfileDetails.encodingProfile != null and encodingProfileDetails.encodingProfile.contentType == 'Image'}"
                    title="Image Info">
 
                 <p:panelGrid columns="2" cellpadding="10">

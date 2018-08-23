@@ -1,6 +1,7 @@
 package com.catramms.backing;
 
 import com.catramms.backing.common.SessionUtils;
+import com.catramms.backing.common.Workspace;
 import com.catramms.backing.entity.IngestionWorkflow;
 import com.catramms.backing.entity.MediaItem;
 import com.catramms.backing.entity.WorkspaceDetails;
@@ -29,7 +30,7 @@ import java.util.List;
  */
 @ManagedBean
 @ViewScoped
-public class IngestionWorkflows implements Serializable {
+public class IngestionWorkflows extends Workspace implements Serializable {
 
     // static because the class is Serializable
     private static final Logger mLogger = Logger.getLogger(IngestionWorkflows.class);

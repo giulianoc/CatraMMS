@@ -316,7 +316,22 @@
 
             <p:toolbarGroup align="right">
 
-                <p:outputLabel value="Welcome #{login.userName} (#{sessionScope.currentWorkspaceDetails.name})" />
+                <p:outputLabel value="Welcome #{login.userName}" />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:outputLabel value="Workspace:" />
+                <p:selectOneMenu id="workspaceName" value="#{mediaItemDetails.workspaceName}"
+                                 autoWidth="false">
+                    <f:selectItems value="#{mediaItemDetails.workspaceNames}" />
+                    <p:ajax
+                            global="true"
+                            event="change"
+                            listener="#{mediaItemDetails.init}"
+                            update="mediaItemDetailTabView" />
+                </p:selectOneMenu>
 
                 <span class="ui-separator">
                     <span class="ui-icon ui-icon-grip-dotted-vertical" />
@@ -353,7 +368,7 @@
 
             <p:tab title="Media Info">
 
-                <p:panelGrid columns="2" cellpadding="10">
+                <p:panelGrid rendered="#{mediaItemDetails.mediaItem != null}" columns="2" cellpadding="10">
                     <p:outputLabel value="Media Item Key: " />
                     <p:outputLabel value="#{mediaItemDetails.mediaItem.mediaItemKey}" />
 
@@ -413,7 +428,8 @@
 
             <p:tab title="Physical Paths (#{mediaItemDetails.mediaItem.physicalPathList.size()})">
 
-                <p:dataTable resizableColumns="true" id="physicalPathTable" var="physicalPath" rowIndexVar="rowId"
+                <p:dataTable rendered="#{mediaItemDetails.mediaItem != null}"
+                             resizableColumns="true" id="physicalPathTable" var="physicalPath" rowIndexVar="rowId"
                              value="#{mediaItemDetails.mediaItem.physicalPathList}" rowKey="#{physicalPath.physicalPathKey}"
                              selectionMode="single" >
 

@@ -9,3 +9,8 @@ find /usr/local/CatraMMS/storage/MMSGUI/temporaryPushUploads -mtime +3 -type f -
 find /usr/local/CatraMMS/storage/IngestionRepository -mtime +3 -type f -delete
 find /usr/local/CatraMMS/storage/MMSWorkingAreaRepository -mtime +3 -type f -delete
 
+find /usr/local/CatraMMS/storage/DownloadRepository/* -empty -mtime +3 -type d -delete
+find /usr/local/CatraMMS/storage/StreamingRepository/* -empty -mtime +3 -type d -delete
+find /usr/local/CatraMMS/storage/MMSRepository/MMS_????/*/* -empty -mtime +3 -type d -delete
+find /usr/local/CatraMMS/storage/MMSWorkingAreaRepository/Staging/* -empty -mtime +3 -type d -delete
+
