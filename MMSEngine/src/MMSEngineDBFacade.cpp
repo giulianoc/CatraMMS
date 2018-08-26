@@ -14113,11 +14113,16 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
                         string jsonProfile;
                         {        
-                            ifstream profileFile(_predefinedVideoProfilesDirectoryPath + "/" + directoryEntry);
+                            ifstream profileFile(predefinedProfileDirectoryPath + "/" + directoryEntry);
                             stringstream buffer;
                             buffer << profileFile.rdbuf();
 
                             jsonProfile = buffer.str();
+
+                            _logger->info(__FILEREF__ + "Reading profile"
+                                + ", profile pathname: " + (predefinedProfileDirectoryPath + "/" + directoryEntry)
+                                + ", profile: " + jsonProfile
+                            );                            
                         }
 
                         string label = directoryEntry.substr(0, extensionIndex);
