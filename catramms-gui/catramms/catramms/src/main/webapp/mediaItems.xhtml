@@ -32,7 +32,7 @@
     <ui:include src="/common/globalConfirm.xhtml"/>
 
     <p:dialog widgetVar="shareWorkspace" modal="true"
-              header="Share Workspace With" appendTo="@(body)" width="600"
+              header="Share Workspace With" appendTo="@(body)" width="800"
               showEffect="fade" hideEffect="fade" resizable="false" draggable="true">
 
         <h:form id="shareWorkspaceForm">
@@ -61,7 +61,7 @@
                         <p:inputText style="width: 100%"
                                      autocomplete="true"
                                      value="#{mediaItems.shareWorkspaceEMail}"
-                                     placeholder="name"/>
+                                     placeholder="email"/>
                     </p:column>
                 </p:row>
 
@@ -82,7 +82,7 @@
                         <p:inputText style="width: 100%"
                                      autocomplete="true"
                                      value="#{mediaItems.shareWorkspaceCountry}"
-                                     placeholder="name"/>
+                                     placeholder="country"/>
                     </p:column>
                 </p:row>
 
@@ -160,6 +160,15 @@
                                          update="shareWorkspaceUserKey">
                             <p:confirm header="Confirmation" message="Are you sure?" icon="ui-icon-alert" />
                         </p:commandButton>
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column colspan="2">
+                        <ul>
+                            <li><p:outputLabel value="Now you will receive an email containing both the information User Key and Confirmation Code" /></li>
+                            <li><p:outputLabel value="Fill in User Key and Confirmation Code below in the appropriate fields and then Confirm (step no. 2)" /></li>
+                        </ul>
                     </p:column>
                 </p:row>
 
