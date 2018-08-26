@@ -1,5 +1,5 @@
 {
-	"Label" : "MMS_H264_medium_360p25_aac_92",
+	"Label" : "MMS_H264_veryslow_360p25_AAC_92",
 	"FileFormat" : "mp4",
 	"Video" : 
 	{
@@ -10,7 +10,7 @@
 		"FrameRate": 25,
 		"TwoPasses" : true,
 		"KBitRate" : 800,
-		"OtherOutputParameters": "-preset medium -level 4.0 -crf 22"
+		"OtherOutputParameters": "-preset veryslow -level 4.0 -crf 22"
 	},
 	"Audio" : 
 	{

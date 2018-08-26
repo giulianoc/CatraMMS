@@ -1,16 +1,16 @@
 {
-	"Label" : "MMS_H264_veryslow_1080p30_aac_160",
+	"Label" : "MMS_H264_veryfast_480p30_AAC_160",
 	"FileFormat" : "mp4",
 	"Video" : 
 	{
 		"Codec" : "libx264",
 		"Profile" : "main",
-		"Width" : 1920,
-		"Height" : 1080,
+		"Width" : 720,
+		"Height" : 480,
 		"FrameRate": 30,
 		"TwoPasses" : true,
-		"KBitRate" : 4000,
-		"OtherOutputParameters": "-preset veryslow -level 4.0 -crf 24"
+		"KBitRate" : 1000,
+		"OtherOutputParameters": "-preset veryfast -level 4.0 -crf 22"
 	},
 	"Audio" : 
 	{

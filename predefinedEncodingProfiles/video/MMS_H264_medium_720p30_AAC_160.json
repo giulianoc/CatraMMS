@@ -1,16 +1,16 @@
 {
-	"Label" : "MMS_H264_medium_480p30_aac_160",
+	"Label" : "MMS_H264_medium_720p30_AAC_160",
 	"FileFormat" : "mp4",
 	"Video" : 
 	{
 		"Codec" : "libx264",
 		"Profile" : "main",
-		"Width" : 720,
-		"Height" : 480,
+		"Width" : 1280,
+		"Height" : 720,
 		"FrameRate": 30,
 		"TwoPasses" : true,
-		"KBitRate" : 1000,
-		"OtherOutputParameters": "-preset medium -level 4.0 -crf 22"
+		"KBitRate" : 1500,
+		"OtherOutputParameters": "-preset medium -level 4.0 -crf 23"
 	},
 	"Audio" : 
 	{

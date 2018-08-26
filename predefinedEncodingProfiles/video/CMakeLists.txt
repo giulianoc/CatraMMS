@@ -21,18 +21,18 @@
 # with the authors.
 
 SET (PROFILEs
-	MMS_H264_medium_720p30_aac_160.json
-	MMS_H264_veryfast_720p30_aac_160.json
-	MMS_H264_veryslow_720p30_aac_160.json
-	MMS_H264_medium_1080p30_aac_160.json
-	MMS_H264_veryfast_1080p30_aac_160.json
-	MMS_H264_veryslow_1080p30_aac_160.json
-	MMS_H264_medium_360p25_aac_92.json
-	MMS_H264_veryfast_360p25_aac_92.json
-	MMS_H264_veryslow_360p25_aac_92.json
-	MMS_H264_medium_480p30_aac_160.json
-	MMS_H264_veryfast_480p30_aac_160.json
-	MMS_H264_veryslow_480p30_aac_160.json
+	MMS_H264_medium_720p30_AAC_160.json
+	MMS_H264_veryfast_720p30_AAC_160.json
+	MMS_H264_veryslow_720p30_AAC_160.json
+	MMS_H264_medium_1080p30_AAC_160.json
+	MMS_H264_veryfast_1080p30_AAC_160.json
+	MMS_H264_veryslow_1080p30_AAC_160.json
+	MMS_H264_medium_360p25_AAC_92.json
+	MMS_H264_veryfast_360p25_AAC_92.json
+	MMS_H264_veryslow_360p25_AAC_92.json
+	MMS_H264_medium_480p30_AAC_160.json
+	MMS_H264_veryfast_480p30_AAC_160.json
+	MMS_H264_veryslow_480p30_AAC_160.json
 )
 
 install (FILES ${PROFILEs} DESTINATION predefinedEncodingProfiles/video)

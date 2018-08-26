@@ -14039,114 +14039,157 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
         try
         {
-            MMSEngineDBFacade::ContentType contentType = MMSEngineDBFacade::ContentType::Video;
-            MMSEngineDBFacade::EncodingTechnology encodingTechnology = MMSEngineDBFacade::EncodingTechnology::MP4;
-
-            FileIO::DirectoryEntryType_t detDirectoryEntryType;
-            shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (_predefinedVideoProfilesDirectoryPath + "/");
-
-            bool scanDirectoryFinished = false;
-            while (!scanDirectoryFinished)
+            string predefinedProfilesDirectoryPath[3] = {
+                _predefinedVideoProfilesDirectoryPath,
+                _predefinedAudioProfilesDirectoryPath,
+                _predefinedImageProfilesDirectoryPath
+            };
+            string videoSuffix("video");
+            string audioSuffix("audio");
+            string imageSuffix("image");
+            
+            for (string predefinedProfileDirectoryPath: predefinedProfilesDirectoryPath)
             {
-                string directoryEntry;
-                try
+                MMSEngineDBFacade::ContentType contentType;
+                MMSEngineDBFacade::EncodingTechnology encodingTechnology;
+                
+                if (predefinedProfileDirectoryPath.size() >= videoSuffix.size() 
+                        && 0 == predefinedProfileDirectoryPath.compare(predefinedProfileDirectoryPath.size()-videoSuffix.size(), 
+                            videoSuffix.size(), videoSuffix))
                 {
-                    string directoryEntry = FileIO::readDirectory (directory,
-                        &detDirectoryEntryType);
+                    contentType = MMSEngineDBFacade::ContentType::Video;
+                    encodingTechnology = MMSEngineDBFacade::EncodingTechnology::MP4;
+                }
+                else if (predefinedProfileDirectoryPath.size() >= audioSuffix.size() 
+                        && 0 == predefinedProfileDirectoryPath.compare(predefinedProfileDirectoryPath.size()-audioSuffix.size(), 
+                            audioSuffix.size(), audioSuffix))
+                {
+                    contentType = MMSEngineDBFacade::ContentType::Audio;
+                    encodingTechnology = MMSEngineDBFacade::EncodingTechnology::MP4;
+                }
+                else if (predefinedProfileDirectoryPath.size() >= imageSuffix.size() 
+                        && 0 == predefinedProfileDirectoryPath.compare(predefinedProfileDirectoryPath.size()-imageSuffix.size(), 
+                            imageSuffix.size(), imageSuffix))
+                {
+                    contentType = MMSEngineDBFacade::ContentType::Image;
+                    encodingTechnology = MMSEngineDBFacade::EncodingTechnology::Image;
+                }
+                else
+                {
+                    string errorMessage = __FILEREF__ + "Wrong predefinedProfileDirectoryPath"
+                           + ", predefinedProfileDirectoryPath: " + predefinedProfileDirectoryPath
+                    ;
+                    _logger->error(errorMessage);
 
-                    if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
-                        continue;
+                    continue;
+                }
 
-                    size_t extensionIndex = directoryEntry.find_last_of(".");
-                    if (extensionIndex == string::npos
-                            || directoryEntry.substr(extensionIndex) != ".json")
+                FileIO::DirectoryEntryType_t detDirectoryEntryType;
+                shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (predefinedProfileDirectoryPath + "/");
+
+                bool scanDirectoryFinished = false;
+                while (!scanDirectoryFinished)
+                {
+                    string directoryEntry;
+                    try
                     {
-                        string errorMessage = __FILEREF__ + "Wrong filename (encoding profile) extention"
-                               + ", directoryEntry: " + directoryEntry
+                        string directoryEntry = FileIO::readDirectory (directory,
+                            &detDirectoryEntryType);
+
+                        if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
+                            continue;
+
+                        size_t extensionIndex = directoryEntry.find_last_of(".");
+                        if (extensionIndex == string::npos
+                                || directoryEntry.substr(extensionIndex) != ".json")
+                        {
+                            string errorMessage = __FILEREF__ + "Wrong filename (encoding profile) extention"
+                                   + ", directoryEntry: " + directoryEntry
+                            ;
+                            _logger->error(errorMessage);
+
+                            continue;
+                        }
+
+                        string jsonProfile;
+                        {        
+                            ifstream profileFile(_predefinedVideoProfilesDirectoryPath + "/" + directoryEntry);
+                            stringstream buffer;
+                            buffer << profileFile.rdbuf();
+
+                            jsonProfile = buffer.str();
+                        }
+
+                        string label = directoryEntry.substr(0, extensionIndex);
+                        {                               
+                            lastSQLCommand = 
+                                "select encodingProfileKey from MMS_EncodingProfile where workspaceKey is null and contentType = ? and label = ?";
+                            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                            int queryParameterIndex = 1;
+                            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
+                            preparedStatement->setString(queryParameterIndex++, label);
+                            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+                            if (resultSet->next())
+                            {
+                                int64_t encodingProfileKey     = resultSet->getInt64("encodingProfileKey");
+
+                                lastSQLCommand = 
+                                    "update MMS_EncodingProfile set technology = ?, jsonProfile = ? where encodingProfileKey = ?";
+
+                                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                                int queryParameterIndex = 1;
+                                preparedStatement->setInt(queryParameterIndex++, static_cast<int>(encodingTechnology));
+                                preparedStatement->setString(queryParameterIndex++, jsonProfile);
+                                preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
+
+                                preparedStatement->executeUpdate();
+                            }
+                            else
+                            {
+                                lastSQLCommand = 
+                                    "insert into MMS_EncodingProfile ("
+                                    "encodingProfileKey, workspaceKey, label, contentType, technology, jsonProfile) values ("
+                                    "NULL, NULL, ?, ?, ?, ?)";
+
+                                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                                int queryParameterIndex = 1;
+                                    preparedStatement->setString(queryParameterIndex++, label);
+                                preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
+                                preparedStatement->setInt(queryParameterIndex++, static_cast<int>(encodingTechnology));
+                                preparedStatement->setString(queryParameterIndex++, jsonProfile);
+
+                                preparedStatement->executeUpdate();
+
+                                // encodingProfileKey = getLastInsertId(conn);
+                            }
+                        }
+                    }
+                    catch(DirectoryListFinished e)
+                    {
+                        scanDirectoryFinished = true;
+                    }
+                    catch(runtime_error e)
+                    {
+                        string errorMessage = __FILEREF__ + "listing directory failed"
+                               + ", e.what(): " + e.what()
                         ;
                         _logger->error(errorMessage);
 
-                        continue;
+                        throw e;
                     }
+                    catch(exception e)
+                    {
+                        string errorMessage = __FILEREF__ + "listing directory failed"
+                               + ", e.what(): " + e.what()
+                        ;
+                        _logger->error(errorMessage);
 
-                    string jsonProfile;
-                    {        
-                        ifstream profileFile(_predefinedVideoProfilesDirectoryPath + "/" + directoryEntry);
-                        stringstream buffer;
-                        buffer << profileFile.rdbuf();
-
-                        jsonProfile = buffer.str();
-                    }
-
-                    string label = directoryEntry.substr(0, extensionIndex);
-                    {                               
-                        lastSQLCommand = 
-                            "select encodingProfileKey from MMS_EncodingProfile where workspaceKey is null and contentType = ? and label = ?";
-                        shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                        int queryParameterIndex = 1;
-                        preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
-                        preparedStatement->setString(queryParameterIndex++, label);
-                        shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
-                        if (resultSet->next())
-                        {
-                            int64_t encodingProfileKey     = resultSet->getInt64("encodingProfileKey");
-
-                            lastSQLCommand = 
-                                "update MMS_EncodingProfile set technology = ?, jsonProfile = ? where encodingProfileKey = ?";
-
-                            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                            int queryParameterIndex = 1;
-                            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(encodingTechnology));
-                            preparedStatement->setString(queryParameterIndex++, jsonProfile);
-                            preparedStatement->setInt64(queryParameterIndex++, encodingProfileKey);
-
-                            preparedStatement->executeUpdate();
-                        }
-                        else
-                        {
-                            lastSQLCommand = 
-                                "insert into MMS_EncodingProfile ("
-                                "encodingProfileKey, workspaceKey, label, contentType, technology, jsonProfile) values ("
-                                "NULL, NULL, ?, ?, ?, ?)";
-
-                            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                            int queryParameterIndex = 1;
-                                preparedStatement->setString(queryParameterIndex++, label);
-                            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(contentType));
-                            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(encodingTechnology));
-                            preparedStatement->setString(queryParameterIndex++, jsonProfile);
-
-                            preparedStatement->executeUpdate();
-
-                            // encodingProfileKey = getLastInsertId(conn);
-                        }
+                        throw e;
                     }
                 }
-                catch(DirectoryListFinished e)
-                {
-                    scanDirectoryFinished = true;
-                }
-                catch(runtime_error e)
-                {
-                    string errorMessage = __FILEREF__ + "listing directory failed"
-                           + ", e.what(): " + e.what()
-                    ;
-                    _logger->error(errorMessage);
 
-                    throw e;
-                }
-                catch(exception e)
-                {
-                    string errorMessage = __FILEREF__ + "listing directory failed"
-                           + ", e.what(): " + e.what()
-                    ;
-                    _logger->error(errorMessage);
-
-                    throw e;
-                }
+                FileIO::closeDirectory (directory);
             }
-
-            FileIO::closeDirectory (directory);
         }
         catch(sql::SQLException se)
         {
