@@ -1,0 +1,10 @@
+{
+	"Label" : "MMS_AAC_160",
+	"FileFormat" : "mp4",
+	"Audio" : 
+	{
+		"Codec" : "aac",
+		"KBitRate" : 160,
+		"ChannelsNumber": 2
+	}
+}

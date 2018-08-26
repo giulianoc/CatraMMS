@@ -1,0 +1,10 @@
+{
+	"Label": "Logo",
+	"FileFormat": "JPG",
+	"Image": {
+		"Width": 40,
+		"Height": 50,
+		"AspectRatio": false,
+		"InterlaceType": "NoInterlace"
+	}
+}
