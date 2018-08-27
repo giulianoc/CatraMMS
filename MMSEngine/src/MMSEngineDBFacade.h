@@ -424,7 +424,7 @@ public:
             case IngestionType::OverlayTextOnVideo:
                 return "Overlay-Text-On-Video";
             case IngestionType::FTPDelivery:
-                return "FTPDelivery";
+                return "FTP-Delivery";
                 
             case IngestionType::EmailNotification:
                 return "Email-Notification";
@@ -468,7 +468,7 @@ public:
             return IngestionType::OverlayImageOnVideo;
         else if (lowerCase == "overlay-text-on-video")
             return IngestionType::OverlayTextOnVideo;
-        else if (lowerCase == "ftpdelivery")
+        else if (lowerCase == "ftp-delivery")
             return IngestionType::FTPDelivery;
 
         else if (lowerCase == "email-notification")

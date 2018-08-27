@@ -87,6 +87,9 @@ public:
     void validateEmailNotificationMetadata(
         Json::Value parametersRoot, vector<pair<int64_t,DependencyType>>& dependencies);
 
+    void validateFTPDeliveryMetadata(int64_t workspaceKey,
+        Json::Value parametersRoot, vector<pair<int64_t,DependencyType>>& dependencies);
+
     void validateEncodingProfilesSetRootMetadata(
         MMSEngineDBFacade::ContentType contentType, 
         Json::Value encodingProfilesSetRoot);
@@ -109,6 +112,9 @@ private:
     
     void validateEncodingProfileRootImageMetadata(
         Json::Value encodingProfileRoot);
+    
+    void fillDependencies(int64_t workspaceKey,
+        Json::Value parametersRoot, vector<pair<int64_t,DependencyType>>& dependencies);
 };
 
 #endif /* VALIDATOR_H */
