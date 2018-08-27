@@ -212,12 +212,14 @@
                 <p:toolbar >
                     <p:toolbarGroup align="left">
                         <p:commandButton global="false" icon="fa fa-minus" onclick="seekFrames(-1)" />
+                        <p:hotkey bind="left"  handler="seekFrames(-1);" />
 
                         <span class="ui-separator">
                             <span class="ui-icon ui-icon-grip-dotted-vertical" />
                         </span>
 
                         <p:commandButton global="false" icon="fa fa-plus" onclick="seekFrames(1)" />
+                        <p:hotkey bind="right"  handler="seekFrames(1);" />
 
                         <span class="ui-separator">
                             <span class="ui-icon ui-icon-grip-dotted-vertical" />
