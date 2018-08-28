@@ -4258,17 +4258,74 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
                 dependOnSuccess = 1;
             }
 
-            lastSQLCommand = 
-                "update MMS_IngestionJob set status = ?, endProcessing = NOW() where ingestionJobKey in "
-                "(select ingestionJobKey from MMS_IngestionJobDependency where dependOnIngestionJobKey = ? and dependOnSuccess = ?)";
+            // found all the ingestionJobKeys to be set as End_NotToBeExecuted
+            string hierarchicalIngestionJobKeysDependencies;
+            string ingestionJobKeysToFindDependencies = to_string(ingestionJobKey);
+            {
+                // all dependencies from ingestionJobKey and
+                // all dependencies from the keys dependent from ingestionJobKey
+                // and so on recursively
+                int maxHierarchicalLevelsManaged = 10;
+                for (int hierarchicalLevelIndex = 0; hierarchicalLevelIndex < maxHierarchicalLevelsManaged; hierarchicalLevelIndex++)
+                {
+                    lastSQLCommand = 
+                            "select ingestionJobKey from MMS_IngestionJobDependency where dependOnIngestionJobKey in ("
+                            + ingestionJobKeysToFindDependencies
+                            + ") and dependOnSuccess = ?";
+                    shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                    int queryParameterIndex = 1;
+                    preparedStatement->setInt(queryParameterIndex++, dependOnSuccess);
 
-            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-            int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(MMSEngineDBFacade::IngestionStatus::End_NotToBeExecuted));
-            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
-            preparedStatement->setInt(queryParameterIndex++, dependOnSuccess);
+                    shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+                    bool dependenciesFound = false;
+                    ingestionJobKeysToFindDependencies = "";
+                    while (resultSet->next())
+                    {
+                        dependenciesFound = true;
 
-            int rowsUpdated = preparedStatement->executeUpdate();
+                        if (hierarchicalIngestionJobKeysDependencies == "")
+                            hierarchicalIngestionJobKeysDependencies = to_string(resultSet->getInt64("ingestionJobKey"));
+                        else
+                            hierarchicalIngestionJobKeysDependencies += (", " + to_string(resultSet->getInt64("ingestionJobKey")));
+                        
+                        if (ingestionJobKeysToFindDependencies == "")
+                            ingestionJobKeysToFindDependencies = to_string(resultSet->getInt64("ingestionJobKey"));
+                        else
+                            ingestionJobKeysToFindDependencies += (", " + to_string(resultSet->getInt64("ingestionJobKey")));
+                    }
+                    
+                    if (!dependenciesFound)
+                    {
+                        _logger->info(__FILEREF__ + "Finished to find dependencies"
+                            + ", hierarchicalLevelIndex: " + to_string(hierarchicalLevelIndex)
+                            + ", maxHierarchicalLevelsManaged: " + to_string(maxHierarchicalLevelsManaged)
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        );
+
+                        break;
+                    }
+                    else if (dependenciesFound && hierarchicalLevelIndex + 1 >= maxHierarchicalLevelsManaged)
+                    {
+                        string errorMessage = __FILEREF__ + "after maxHierarchicalLevelsManaged we still found dependencies, so maxHierarchicalLevelsManaged has to be increased"
+                            + ", maxHierarchicalLevelsManaged: " + to_string(maxHierarchicalLevelsManaged)
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", lastSQLCommand: " + lastSQLCommand
+                        ;
+                        _logger->warn(errorMessage);
+                    }            
+                }
+            }
+            
+            {
+                lastSQLCommand = 
+                    "update MMS_IngestionJob set status = ?, endProcessing = NOW() where ingestionJobKey in (" + hierarchicalIngestionJobKeysDependencies + ")";
+
+                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                int queryParameterIndex = 1;
+                preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(MMSEngineDBFacade::IngestionStatus::End_NotToBeExecuted));
+
+                int rowsUpdated = preparedStatement->executeUpdate();
+            }
         }            
 
         if (MMSEngineDBFacade::isIngestionStatusFinalState(newIngestionStatus))
