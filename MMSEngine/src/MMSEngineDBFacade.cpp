@@ -4265,7 +4265,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
                 // all dependencies from ingestionJobKey and
                 // all dependencies from the keys dependent from ingestionJobKey
                 // and so on recursively
-                int maxHierarchicalLevelsManaged = 10;
+                int maxHierarchicalLevelsManaged = 50;
                 for (int hierarchicalLevelIndex = 0; hierarchicalLevelIndex < maxHierarchicalLevelsManaged; hierarchicalLevelIndex++)
                 {
                     lastSQLCommand = 
