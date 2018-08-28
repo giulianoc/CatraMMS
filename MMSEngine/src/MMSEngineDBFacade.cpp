@@ -2388,19 +2388,28 @@ void MMSEngineDBFacade::getExpiredMediaItemKeys(
             statement->execute(lastSQLCommand);
         }
         
+        int start = 0;
+        bool noMoreRowsReturned = false;
+        while (mediaItemKeyToBeRemoved.size() < maxMediaItemKeysNumber &&
+                !noMoreRowsReturned)
         {
             lastSQLCommand = 
                 "select workspaceKey, mediaItemKey, ingestionJobKey from MMS_MediaItem where "
                 "DATE_ADD(ingestionDate, INTERVAL retentionInMinutes MINUTE) < NOW() "
                 "and processorMMS is null "
-                "limit ? for update";
+                "limit ? offset ? for update";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt(queryParameterIndex++, maxMediaItemKeysNumber);
+            preparedStatement->setInt(queryParameterIndex++, start);
             
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            noMoreRowsReturned = true;
+            start += maxMediaItemKeysNumber;
             while (resultSet->next())
             {
+                noMoreRowsReturned = false;
+                
                 int64_t ingestionJobKey = resultSet->getInt64("ingestionJobKey");
                 int64_t workspaceKey = resultSet->getInt64("workspaceKey");
                 int64_t mediaItemKey = resultSet->getInt64("mediaItemKey");
@@ -2469,7 +2478,8 @@ void MMSEngineDBFacade::getExpiredMediaItemKeys(
                 }
                 else
                 {
-                    _logger->info(__FILEREF__ + "Content expired but not removed because there are still ingestion jobs depending on him"
+                    _logger->info(__FILEREF__ + "Content expired but not removed because there are still ingestion jobs depending on him. Content details: "
+                        + "ingestionJobKey: " + to_string(ingestionJobKey)
                         + ", workspaceKey: " + to_string(workspaceKey)
                         + ", mediaItemKey: " + to_string(mediaItemKey)
                     );
