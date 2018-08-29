@@ -1353,7 +1353,11 @@ public class CatraMMS {
             encodingJob.setEncodingJobKey(encodingJobInfo.getLong("encodingJobKey"));
             encodingJob.setType(encodingJobInfo.getString("type"));
             encodingJob.setStatus(encodingJobInfo.getString("status"));
+
             encodingJob.setEncodingPriority(encodingJobInfo.getString("encodingPriority"));
+            encodingJob.setEncodingPriorityCode(encodingJobInfo.getInt("encodingPriorityCode"));
+            encodingJob.setMaxEncodingPriorityCode(encodingJobInfo.getInt("maxEncodingPriorityCode"));
+
             if (encodingJobInfo.isNull("start"))
                 encodingJob.setStart(null);
             else

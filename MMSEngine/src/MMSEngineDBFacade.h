@@ -805,20 +805,20 @@ public:
         bool sourceBinaryTransferred);
 
     Json::Value getIngestionRootsStatus (
-        int64_t workspaceKey, int64_t ingestionRootKey,
+        shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
         int start, int rows,
         bool startAndEndIngestionDatePresent, 
         string startIngestionDate, string endIngestionDate,
         bool asc);
 
     Json::Value getIngestionJobsStatus (
-        int64_t workspaceKey, int64_t ingestionJobKey,
+        shared_ptr<Workspace> workspace, int64_t ingestionJobKey,
         int start, int rows,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
         bool asc, string status);
 
     Json::Value getEncodingJobsStatus (
-        int64_t workspaceKey, int64_t encodingJobKey,
+        shared_ptr<Workspace> workspace, int64_t encodingJobKey,
         int start, int rows,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
         bool asc, string status);
@@ -968,6 +968,11 @@ public:
         int64_t encodedPhysicalPathKey,
         int64_t ingestionJobKey);
 
+    void updateEncodingJobPriority (
+        shared_ptr<Workspace> workspace,
+        int64_t encodingJobKey,
+        EncodingPriority newEncodingPriority);
+
     void updateEncodingJobProgress (
         int64_t encodingJobKey,
         int encodingPercentage);
@@ -1094,6 +1099,7 @@ private:
     );
     
     Json::Value getIngestionJobRoot(
+        shared_ptr<Workspace> workspace,
         shared_ptr<sql::ResultSet> resultSet,
         int64_t ingestionRootKey,
         shared_ptr<MySQLConnection> conn);

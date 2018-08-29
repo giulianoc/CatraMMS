@@ -542,6 +542,10 @@ void API::manageRequestAndResponse(
     {
         encodingJobsStatus(request, workspace, queryParameters, requestBody);
     }
+    else if (method == "encodingJobPriority")
+    {
+        encodingJobPriority(request, workspace, queryParameters, requestBody);
+    }
     else if (method == "mediaItemsList")
     {
         mediaItemsList(request, workspace, queryParameters, requestBody);
@@ -2176,7 +2180,7 @@ void API::ingestionRootsStatus(
 
         {
             Json::Value ingestionStatusRoot = _mmsEngineDBFacade->getIngestionRootsStatus(
-                    workspace->_workspaceKey, ingestionRootKey,
+                    workspace, ingestionRootKey,
                     start, rows,
                     startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
                     asc
@@ -2287,7 +2291,7 @@ void API::ingestionJobsStatus(
 
         {
             Json::Value ingestionStatusRoot = _mmsEngineDBFacade->getIngestionJobsStatus(
-                    workspace->_workspaceKey, ingestionJobKey,
+                    workspace, ingestionJobKey,
                     start, rows,
                     startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
                     asc, status
@@ -2398,7 +2402,7 @@ void API::encodingJobsStatus(
 
         {
             Json::Value encodingStatusRoot = _mmsEngineDBFacade->getEncodingJobsStatus(
-                    workspace->_workspaceKey, encodingJobKey,
+                    workspace, encodingJobKey,
                     start, rows,
                     startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
                     asc, status
@@ -2406,6 +2410,75 @@ void API::encodingJobsStatus(
 
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, encodingStatusRoot);
+            
+            sendSuccess(request, 200, responseBody);
+        }
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error: ") + e.what();
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::encodingJobPriority(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody)
+{
+    string api = "encodingJobPriority";
+
+    _logger->info(__FILEREF__ + "Received " + api
+        + ", requestBody: " + requestBody
+    );
+
+    try
+    {
+        int64_t encodingJobKey = -1;
+        auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
+        if (encodingJobKeyIt != queryParameters.end() && encodingJobKeyIt->second != "")
+        {
+            encodingJobKey = stoll(encodingJobKeyIt->second);
+        }
+
+        MMSEngineDBFacade::EncodingPriority newEncodingJobPriority;
+        auto newEncodingJobPriorityIt = queryParameters.find("newEncodingJobPriority");
+        if (newEncodingJobPriorityIt != queryParameters.end() && newEncodingJobPriorityIt->second != "")
+        {
+            newEncodingJobPriority = static_cast<MMSEngineDBFacade::EncodingPriority>(stoll(newEncodingJobPriorityIt->second));
+        }
+
+        {
+            _mmsEngineDBFacade->updateEncodingJobPriority(
+                    workspace, encodingJobKey, newEncodingJobPriority);
+
+            string responseBody;
             
             sendSuccess(request, 200, responseBody);
         }

@@ -4797,7 +4797,7 @@ void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred (
 }
 
 Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
-        int64_t workspaceKey, int64_t ingestionRootKey,
+        shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
         int start, int rows,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
         bool asc
@@ -4859,7 +4859,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
             if (ingestionRootKey != -1)
                 preparedStatement->setInt64(queryParameterIndex++, ingestionRootKey);
             if (startAndEndIngestionDatePresent)
@@ -4896,7 +4896,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
             if (ingestionRootKey != -1)
                 preparedStatement->setInt64(queryParameterIndex++, ingestionRootKey);
             if (startAndEndIngestionDatePresent)
@@ -4943,7 +4943,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
                     while (resultSetIngestionJob->next())
                     {
                         Json::Value ingestionJobRoot = getIngestionJobRoot(
-                                resultSetIngestionJob, currentIngestionRootKey, conn);
+                                workspace, resultSetIngestionJob, currentIngestionRootKey, conn);
 
                         ingestionJobsRoot.append(ingestionJobRoot);
                     }
@@ -5015,7 +5015,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
 }
 
 Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
-        int64_t workspaceKey, int64_t ingestionJobKey,
+        shared_ptr<Workspace> workspace, int64_t ingestionJobKey,
         int start, int rows,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
         bool asc, string status
@@ -5082,7 +5082,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
             if (ingestionJobKey != -1)
                 preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
             if (startAndEndIngestionDatePresent)
@@ -5121,7 +5121,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
             if (ingestionJobKey != -1)
                 preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
             if (startAndEndIngestionDatePresent)
@@ -5135,7 +5135,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
             while (resultSet->next())
             {
                 Json::Value ingestionJobRoot = getIngestionJobRoot(
-                        resultSet, resultSet->getInt64("ingestionRootKey"), conn);
+                        workspace, resultSet, resultSet->getInt64("ingestionRootKey"), conn);
 
                 ingestionJobsRoot.append(ingestionJobRoot);
             }
@@ -5200,7 +5200,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
 }
 
 Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
-        int64_t workspaceKey, int64_t encodingJobKey,
+        shared_ptr<Workspace> workspace, int64_t encodingJobKey,
         int start, int rows,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
         bool asc, string status
@@ -5267,7 +5267,7 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
             if (encodingJobKey != -1)
                 preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
             if (startAndEndIngestionDatePresent)
@@ -5305,7 +5305,7 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
                 + "limit ? offset ?";
             shared_ptr<sql::PreparedStatement> preparedStatementEncodingJob (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatementEncodingJob->setInt64(queryParameterIndex++, workspaceKey);
+            preparedStatementEncodingJob->setInt64(queryParameterIndex++, workspace->_workspaceKey);
             if (encodingJobKey != -1)
                 preparedStatementEncodingJob->setInt64(queryParameterIndex++, encodingJobKey);
             if (startAndEndIngestionDatePresent)
@@ -5393,6 +5393,12 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
                 field = "encodingPriority";
                 encodingJobRoot[field] = toString(static_cast<EncodingPriority>(resultSetEncodingJob->getInt("encodingPriority")));
 
+                field = "encodingPriorityCode";
+                encodingJobRoot[field] = resultSetEncodingJob->getInt("encodingPriority");
+
+                field = "maxEncodingPriorityCode";
+                encodingJobRoot[field] = workspace->_maxEncodingPriority;
+
                 encodingJobsRoot.append(encodingJobRoot);
             }
         }
@@ -5456,6 +5462,7 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
 }
 
 Json::Value MMSEngineDBFacade::getIngestionJobRoot(
+        shared_ptr<Workspace> workspace,
         shared_ptr<sql::ResultSet> resultSet,
         int64_t ingestionRootKey,
         shared_ptr<MySQLConnection> conn
@@ -5621,6 +5628,12 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
 
                 field = "encodingPriority";
                 encodingJobRoot[field] = toString(static_cast<EncodingPriority>(resultSetEncodingJob->getInt("encodingPriority")));
+
+                field = "encodingPriorityCode";
+                encodingJobRoot[field] = resultSetEncodingJob->getInt("encodingPriority");
+
+                field = "maxEncodingPriorityCode";
+                encodingJobRoot[field] = workspace->_maxEncodingPriority;
 
                 field = "progress";
                 if (resultSetEncodingJob->isNull("encodingProgress"))
@@ -11125,6 +11138,282 @@ int MMSEngineDBFacade::updateEncodingJob (
     }
     
     return encodingFailureNumber;
+}
+
+void MMSEngineDBFacade::updateEncodingJobPriority (
+    shared_ptr<Workspace> workspace,
+    int64_t encodingJobKey,
+    EncodingPriority newEncodingPriority)
+{
+    
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn;
+    bool autoCommit = true;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        autoCommit = false;
+        // conn->_sqlConnection->setAutoCommit(autoCommit); OR execute the statement START TRANSACTION
+        {
+            lastSQLCommand = 
+                "START TRANSACTION";
+
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute(lastSQLCommand);
+        }
+        
+        EncodingStatus currentEncodingStatus;
+        EncodingPriority currentEncodingPriority;
+        {
+            lastSQLCommand = 
+                "select status, encodingPriority from MMS_EncodingJob where encodingJobKey = ? for update";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                currentEncodingStatus = MMSEngineDBFacade::toEncodingStatus(resultSet->getString("status"));
+                currentEncodingPriority = static_cast<EncodingPriority>(resultSet->getInt("encodingPriority"));
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "EncodingJob not found"
+                        + ", EncodingJobKey: " + to_string(encodingJobKey)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }
+        }
+            
+        if (currentEncodingStatus != EncodingStatus::ToBeProcessed)
+        {
+            string errorMessage = __FILEREF__ + "EncodingJob cannot change EncodingPriority because of his status"
+                    + ", currentEncodingStatus: " + toString(currentEncodingStatus)
+                    + ", EncodingJobKey: " + to_string(encodingJobKey)
+                    + ", lastSQLCommand: " + lastSQLCommand
+            ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);                    
+        }
+
+        if (currentEncodingPriority == newEncodingPriority)
+        {
+            string errorMessage = __FILEREF__ + "EncodingJob has already the same status"
+                    + ", currentEncodingStatus: " + toString(currentEncodingStatus)
+                    + ", EncodingJobKey: " + to_string(encodingJobKey)
+                    + ", lastSQLCommand: " + lastSQLCommand
+            ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);                    
+        }
+
+        if (static_cast<int>(currentEncodingPriority) >= workspace->_maxEncodingPriority)
+        {
+            string errorMessage = __FILEREF__ + "EncodingJob cannot be changed to an higher priority"
+                    + ", currentEncodingPriority: " + toString(currentEncodingPriority)
+                    + ", maxEncodingPriority: " + toString(static_cast<EncodingPriority>(workspace->_maxEncodingPriority))
+                    + ", EncodingJobKey: " + to_string(encodingJobKey)
+                    + ", lastSQLCommand: " + lastSQLCommand
+            ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);                    
+        }
+
+        {
+            lastSQLCommand = 
+                "update MMS_EncodingJob set encodingPriority = ? where encodingJobKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(newEncodingPriority));
+            preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
+
+            int rowsUpdated = preparedStatement->executeUpdate();
+            if (rowsUpdated != 1)
+            {
+                string errorMessage = __FILEREF__ + "no update was done"
+                        + ", newEncodingPriority: " + toString(newEncodingPriority)
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", rowsUpdated: " + to_string(rowsUpdated)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }
+        }
+            
+        _logger->info(__FILEREF__ + "EncodingJob updated successful"
+            + ", newEncodingPriority: " + toString(newEncodingPriority)
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+        );
+        
+        // conn->_sqlConnection->commit(); OR execute COMMIT
+        {
+            lastSQLCommand = 
+                "COMMIT";
+
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute(lastSQLCommand);
+        }
+        autoCommit = true;
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+        );
+
+        try
+        {
+            // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+            if (!autoCommit)
+            {
+                shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                statement->execute("ROLLBACK");
+            }
+
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(sql::SQLException se)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + se.what()
+            );
+        
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + e.what()
+            );
+        
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        try
+        {
+            // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+            if (!autoCommit)
+            {
+                shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                statement->execute("ROLLBACK");
+            }
+
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(sql::SQLException se)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + se.what()
+            );
+        
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + e.what()
+            );
+        
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+        );
+
+        try
+        {
+            // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+            if (!autoCommit)
+            {
+                shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                statement->execute("ROLLBACK");
+            }
+
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(sql::SQLException se)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + se.what()
+            );
+        
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                + ", exceptionMessage: " + e.what()
+            );
+        
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        
+        throw e;
+    }    
 }
 
 void MMSEngineDBFacade::updateEncodingJobProgress (

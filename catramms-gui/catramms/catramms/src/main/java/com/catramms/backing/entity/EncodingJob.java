@@ -14,6 +14,8 @@ public class EncodingJob implements Serializable {
     private Long progress;
     private Long failuresNumber;
     private String encodingPriority;
+    private int encodingPriorityCode;
+    private int maxEncodingPriorityCode;
     private String type;
     private String parameters;  // the content of this field depend on the 'type' field
 
@@ -131,5 +133,21 @@ public class EncodingJob implements Serializable {
 
     public void setEncodingPriority(String encodingPriority) {
         this.encodingPriority = encodingPriority;
+    }
+
+    public int getEncodingPriorityCode() {
+        return encodingPriorityCode;
+    }
+
+    public void setEncodingPriorityCode(int encodingPriorityCode) {
+        this.encodingPriorityCode = encodingPriorityCode;
+    }
+
+    public int getMaxEncodingPriorityCode() {
+        return maxEncodingPriorityCode;
+    }
+
+    public void setMaxEncodingPriorityCode(int maxEncodingPriorityCode) {
+        this.maxEncodingPriorityCode = maxEncodingPriorityCode;
     }
 }

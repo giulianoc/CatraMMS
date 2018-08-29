@@ -124,6 +124,12 @@ private:
         unordered_map<string, string> queryParameters,
         string requestBody);
 
+    void encodingJobPriority(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody);
+
     void mediaItemsList(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
