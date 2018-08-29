@@ -4316,6 +4316,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
                 }
             }
             
+            if (hierarchicalIngestionJobKeysDependencies != "")
             {
                 lastSQLCommand = 
                     "update MMS_IngestionJob set status = ?, endProcessing = NOW() where ingestionJobKey in (" + hierarchicalIngestionJobKeysDependencies + ")";
