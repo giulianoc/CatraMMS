@@ -492,6 +492,34 @@ public class CatraMMS {
         }
     }
 
+    public void updateEncodingJobPriority(String username, String password,
+                                          Long encodingJobKey, int newEncodingJobPriorityCode)
+            throws Exception
+    {
+        try
+        {
+            String mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort
+                    + "/catramms/v1/encodingJobs/" + encodingJobKey + "/" + newEncodingJobPriorityCode;
+
+            mLogger.info("updateEncodingJobPriority"
+                            + ", mmsURL: " + mmsURL
+            );
+
+            String putBodyRequest = "";
+            Date now = new Date();
+            HttpFeedFetcher.fetchPutHttpsJson(mmsURL, timeoutInSeconds, maxRetriesNumber,
+                    username, password, putBodyRequest);
+            mLogger.info("Elapsed time updateEncodingJobPriority (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "updateEncodingJobPriority MMS failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+    }
+
     public Vector<Long> getMediaItems(String username, String password,
                           Long maxMediaItemsNumber, String contentType,
                           Date start, Date end, String title,

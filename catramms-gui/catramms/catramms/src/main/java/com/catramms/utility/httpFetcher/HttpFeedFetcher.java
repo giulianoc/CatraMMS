@@ -161,10 +161,10 @@ public class HttpFeedFetcher {
     }
 
     static public String fetchPutHttpsJson(String url, int timeoutInSeconds, int maxRetriesNumber,
-                                            String user, String password, String postBodyRequest)
+                                            String user, String password, String putBodyRequest)
             throws Exception
     {
-        return fetchBodyHttpsJson("PUT", url, timeoutInSeconds, maxRetriesNumber, user, password, postBodyRequest);
+        return fetchBodyHttpsJson("PUT", url, timeoutInSeconds, maxRetriesNumber, user, password, putBodyRequest);
     }
 
     static public String fetchDeleteHttpsJson(String url, int timeoutInSeconds, int maxRetriesNumber,
@@ -253,7 +253,7 @@ public class HttpFeedFetcher {
                     {
                         int clength;
                         byte[] bytes = null;
-                        if (postBodyRequest != null)
+                        if (postBodyRequest != null && postBodyRequest.length() > 0)
                         {
                             bytes = postBodyRequest.getBytes("UTF-8");
                             clength = bytes.length;

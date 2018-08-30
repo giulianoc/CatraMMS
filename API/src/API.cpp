@@ -2468,10 +2468,10 @@ void API::encodingJobPriority(
         }
 
         MMSEngineDBFacade::EncodingPriority newEncodingJobPriority;
-        auto newEncodingJobPriorityIt = queryParameters.find("newEncodingJobPriority");
-        if (newEncodingJobPriorityIt != queryParameters.end() && newEncodingJobPriorityIt->second != "")
+        auto newEncodingJobPriorityCodeIt = queryParameters.find("newEncodingJobPriorityCode");
+        if (newEncodingJobPriorityCodeIt != queryParameters.end() && newEncodingJobPriorityCodeIt->second != "")
         {
-            newEncodingJobPriority = static_cast<MMSEngineDBFacade::EncodingPriority>(stoll(newEncodingJobPriorityIt->second));
+            newEncodingJobPriority = static_cast<MMSEngineDBFacade::EncodingPriority>(stoll(newEncodingJobPriorityCodeIt->second));
         }
 
         {

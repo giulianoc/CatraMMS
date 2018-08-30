@@ -65,7 +65,7 @@ server {
 			rewrite ^/catramms/(v[0-9]+)/encodingJobs/?([0-9]*)/?$ /api?version=$1&method=encodingJobsStatus&encodingJobKey=$2 last;
 		}
 		if ($request_method = PUT) {
-			rewrite ^/catramms/(v[0-9]+)/encodingJobs/?([0-9]*)/([0-9]+)?$ /api?version=$1&method=encodingJobPriority&encodingJobKey=$2&newEncodingJobPriority=$3 last;
+			rewrite ^/catramms/(v[0-9]+)/encodingJobs/?([0-9]*)/([0-9]+)?$ /api?version=$1&method=encodingJobPriority&encodingJobKey=$2&newEncodingJobPriorityCode=$3 last;
 		}
 		if ($request_method = POST) {
 			rewrite ^/catramms/(v[0-9]+)/ingestion/?$ /api?version=$1&method=ingestion last;

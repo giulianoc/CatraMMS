@@ -9,7 +9,9 @@ import org.apache.log4j.Logger;
 
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
+import javax.faces.context.FacesContext;
 import java.io.Serializable;
+import java.text.SimpleDateFormat;
 
 /**
  * Created with IntelliJ IDEA.
@@ -66,6 +68,52 @@ public class EncodingJobDetails extends Workspace implements Serializable {
             mLogger.error(errorMessage);
 
             encodingJob = null;
+        }
+    }
+
+    public void increaseDecreasePriority(boolean increase)
+    {
+        try {
+            Long userKey = SessionUtils.getUserKey();
+            String apiKey = SessionUtils.getAPIKey();
+
+            if (userKey == null || apiKey == null || apiKey.equalsIgnoreCase(""))
+            {
+                mLogger.warn("no input to require ingestionRoot"
+                                + ", userKey: " + userKey
+                                + ", apiKey: " + apiKey
+                );
+            }
+            else
+            {
+                String username = userKey.toString();
+                String password = apiKey;
+
+                CatraMMS catraMMS = new CatraMMS();
+                catraMMS.updateEncodingJobPriority(username, password,
+                        encodingJobKey,
+                        increase ? encodingJob.getEncodingPriorityCode() + 1 : encodingJob.getEncodingPriorityCode() - 1);
+            }
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "Exception: " + e;
+            mLogger.error(errorMessage);
+
+            return;
+        }
+
+        try
+        {
+            String url = "encodingJobDetails.xhtml?encodingJobKey=" + encodingJobKey
+                    ;
+            mLogger.info("Redirect to " + url);
+            FacesContext.getCurrentInstance().getExternalContext().redirect(url);
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "Exception: " + e;
+            mLogger.error(errorMessage);
         }
     }
 

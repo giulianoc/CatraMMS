@@ -109,7 +109,27 @@
                     <p:outputLabel value="#{encodingJobDetails.encodingJob.failuresNumber}" />
 
                     <p:outputLabel value="Encoding Priority: " />
-                    <p:outputLabel value="#{encodingJobDetails.encodingJob.encodingPriority}" />
+                    <p:panel>
+                        <p:outputLabel value="#{encodingJobDetails.encodingJob.encodingPriority}" />
+
+                        <p:commandLink rendered="#{encodingJobDetails.encodingJob.status == 'ToBeProcessed' and encodingJobDetails.encodingJob.encodingPriorityCode > 0}"
+                                       value="Decrease Priority"
+                                       actionListener="#{encodingJobDetails.increaseDecreasePriority(false)}"
+                                >
+                            <p:confirm header="Confirmation" message="Are you sure?" icon="ui-icon-alert" />
+                        </p:commandLink>
+                        <p:outputLabel rendered="#{encodingJobDetails.encodingJob.status != 'ToBeProcessed' or encodingJobDetails.encodingJob.encodingPriorityCode == 0}"
+                                       styleClass="gray" value="Decrease Priority" />
+
+                        <p:commandLink rendered="#{encodingJobDetails.encodingJob.status = 'ToBeProcessed' and encodingJobDetails.encodingJob.encodingPriorityCode < encodingJobDetails.encodingJob.maxEncodingPriorityCode}"
+                                       value="Increase Priority"
+                                       actionListener="#{encodingJobDetails.increaseDecreasePriority(true)}"
+                                >
+                            <p:confirm header="Confirmation" message="Are you sure?" icon="ui-icon-alert" />
+                        </p:commandLink>
+                        <p:outputLabel rendered="#{encodingJobDetails.encodingJob.status != 'ToBeProcessed' or encodingJobDetails.encodingJob.encodingPriorityCode >= encodingJobDetails.encodingJob.maxEncodingPriorityCode}"
+                                       styleClass="gray" value="Increase Priority" />
+                    </p:panel>
 
                     <p:outputLabel value="Type: " />
                     <p:outputLabel value="#{encodingJobDetails.encodingJob.type}" />
