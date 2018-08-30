@@ -71,8 +71,10 @@ public class EncodingJobDetails extends Workspace implements Serializable {
         }
     }
 
-    public void increaseDecreasePriority(boolean increase)
+    public void increaseDecreasePriority(String increase)
     {
+        mLogger.info("Received increaseDecreasePriority. increase: " + increase);
+
         try {
             Long userKey = SessionUtils.getUserKey();
             String apiKey = SessionUtils.getAPIKey();
@@ -90,9 +92,9 @@ public class EncodingJobDetails extends Workspace implements Serializable {
                 String password = apiKey;
 
                 CatraMMS catraMMS = new CatraMMS();
-                catraMMS.updateEncodingJobPriority(username, password,
-                        encodingJobKey,
-                        increase ? encodingJob.getEncodingPriorityCode() + 1 : encodingJob.getEncodingPriorityCode() - 1);
+                catraMMS.updateEncodingJobPriority(username, password, encodingJobKey,
+                        increase.equalsIgnoreCase("true") ? encodingJob.getEncodingPriorityCode() + 1
+                                : encodingJob.getEncodingPriorityCode() - 1);
             }
         }
         catch (Exception e)

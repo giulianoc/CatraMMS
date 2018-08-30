@@ -161,7 +161,7 @@
 
             <p:column style="width:50px;" headerText="Enc&lt;br&gt;progr" >
                 <p:outputLabel value="#{ingestionJob.encodingJob.progress}" />
-                <p:outputLabel rendered="#{ingestionJob.encodingJob != null}" value="%"/>
+                <p:outputLabel rendered="#{ingestionJob.encodingJob.progress != null}" value="%"/>
             </p:column>
 
             <p:column style="width:40px;" headerText="">

@@ -741,6 +741,14 @@ public class CatraMMS {
         String mmsInfo;
         try
         {
+            if (ingestionRootKey == null)
+            {
+                String errorMessage = "getIngestionWorkflow. ingestionRootKey is null";
+                mLogger.error(errorMessage);
+
+                throw new Exception(errorMessage);
+            }
+
             String mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort + "/catramms/v1/ingestionRoots/" + ingestionRootKey;
 
             mLogger.info("mmsURL: " + mmsURL);

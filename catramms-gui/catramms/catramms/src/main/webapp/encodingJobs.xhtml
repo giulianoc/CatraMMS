@@ -228,6 +228,7 @@
 
             <p:column style="width:90px;" headerText="Progress" >
                 <p:outputLabel value="#{encodingJob.progress}" />
+                <p:outputLabel rendered="#{encodingJob.progress != null}" value="%"/>
             </p:column>
 
             <p:column style="width:80px;" headerText="Failures" >
