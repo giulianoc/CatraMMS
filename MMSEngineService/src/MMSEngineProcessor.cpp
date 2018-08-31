@@ -471,7 +471,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         throw runtime_error(errorMessage);
                     }
 
-                    vector<pair<int64_t,Validator::DependencyType>> dependencies;
+                    vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> dependencies;
                     try
                     {
                         Validator validator(_logger, _mmsEngineDBFacade);
@@ -1409,7 +1409,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             ;
     
     string      metadataFileContent;
-    vector<pair<int64_t,Validator::DependencyType>> dependencies;
+    vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> dependencies;
     Json::Value parametersRoot;
     Validator validator(_logger, _mmsEngineDBFacade);
     try
@@ -2170,7 +2170,7 @@ void MMSEngineProcessor::removeContent(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<pair<int64_t,Validator::DependencyType>>& dependencies
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies
 )
 {
     try
@@ -2186,23 +2186,29 @@ void MMSEngineProcessor::removeContent(
             throw runtime_error(errorMessage);
         }
 
-        for (pair<int64_t,Validator::DependencyType>& keyAndDependencyType: dependencies)
+        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
         {
-            if (keyAndDependencyType.second == Validator::DependencyType::MediaItemKey)
+            int64_t key;
+            MMSEngineDBFacade::ContentType referenceContentType;
+            Validator::DependencyType dependencyType;
+            
+            tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+            
+            if (dependencyType == Validator::DependencyType::MediaItemKey)
             {
                 _logger->info(__FILEREF__ + "removeMediaItem"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    + ", mediaItemKey: " + to_string(keyAndDependencyType.first)
+                    + ", mediaItemKey: " + to_string(key)
                 );
-                _mmsStorage->removeMediaItem(keyAndDependencyType.first);
+                _mmsStorage->removeMediaItem(key);
             }
             else
             {
                 _logger->info(__FILEREF__ + "removePhysicalPath"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    + ", physicalPathKey: " + to_string(keyAndDependencyType.first)
+                    + ", physicalPathKey: " + to_string(key)
                 );
-                _mmsStorage->removePhysicalPath(keyAndDependencyType.first);
+                _mmsStorage->removePhysicalPath(key);
             }
         }
 
@@ -2266,7 +2272,7 @@ void MMSEngineProcessor::ftpDeliveryContent(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<pair<int64_t,Validator::DependencyType>>& dependencies
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies
 )
 {
     try
@@ -2336,20 +2342,26 @@ void MMSEngineProcessor::ftpDeliveryContent(
             remoteDir = parametersRoot.get(field, "XXX").asString();
         }
         
-        for (pair<int64_t,Validator::DependencyType>& keyAndDependencyType: dependencies)
+        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
         {
             int mmsPartitionNumber;
             string workspaceDirectoryName;
             string relativePath;
             string fileName;
             
-            if (keyAndDependencyType.second == Validator::DependencyType::MediaItemKey)
+            int64_t key;
+            MMSEngineDBFacade::ContentType referenceContentType;
+            Validator::DependencyType dependencyType;
+            
+            tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+
+            if (dependencyType == Validator::DependencyType::MediaItemKey)
             {
                 int64_t encodingProfileKey = -1;
                 
                 tuple<int64_t,int,shared_ptr<Workspace>,string,string,string> storageDetails 
                     = _mmsEngineDBFacade->getStorageDetails(
-                        keyAndDependencyType.first, encodingProfileKey);
+                        key, encodingProfileKey);
 
                 int64_t physicalPathKey;
                 shared_ptr<Workspace> workspace;
@@ -2362,7 +2374,7 @@ void MMSEngineProcessor::ftpDeliveryContent(
             else
             {
                 tuple<int,shared_ptr<Workspace>,string,string,string> storageDetails 
-                    = _mmsEngineDBFacade->getStorageDetails(keyAndDependencyType.first);
+                    = _mmsEngineDBFacade->getStorageDetails(key);
 
                 shared_ptr<Workspace> workspace;
                 string deliveryFileName;
@@ -2756,7 +2768,7 @@ void MMSEngineProcessor::generateAndIngestFrames(
         shared_ptr<Workspace> workspace,
         MMSEngineDBFacade::IngestionType ingestionType,
         Json::Value parametersRoot,
-        vector<pair<int64_t,Validator::DependencyType>>& dependencies
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies
 )
 {
     try
@@ -3221,7 +3233,7 @@ void MMSEngineProcessor::manageGenerateFramesTask(
         shared_ptr<Workspace> workspace,
         MMSEngineDBFacade::IngestionType ingestionType,
         Json::Value parametersRoot,
-        vector<pair<int64_t,Validator::DependencyType>>& dependencies
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies
 )
 {
     try
@@ -3312,7 +3324,7 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
     int64_t ingestionJobKey,
     MMSEngineDBFacade::IngestionType ingestionType,
     Json::Value parametersRoot,
-    vector<pair<int64_t,Validator::DependencyType>>& dependencies,
+    vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies,
         
     int& periodInSeconds, double& startTimeInSeconds,
     int& maxFramesNumber, string& videoFilter,
@@ -3426,10 +3438,17 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
         int64_t sourceMediaItemKey;
         // int64_t sourcePhysicalPathKey;
         // string sourcePhysicalPath;
-        pair<int64_t,Validator::DependencyType>& keyAndDependencyType = dependencies.back();
-        if (keyAndDependencyType.second == Validator::DependencyType::MediaItemKey)
+        tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType = dependencies.back();
+
+        int64_t key;
+        MMSEngineDBFacade::ContentType referenceContentType;
+        Validator::DependencyType dependencyType;
+
+        tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+
+        if (dependencyType == Validator::DependencyType::MediaItemKey)
         {
-            sourceMediaItemKey = keyAndDependencyType.first;
+            sourceMediaItemKey = key;
 
             sourcePhysicalPathKey = -1;
             int64_t encodingProfileKey = -1;
@@ -3441,7 +3460,7 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
         }
         else
         {
-            sourcePhysicalPathKey = keyAndDependencyType.first;
+            sourcePhysicalPathKey = key;
             
             bool warningIfMissing = false;
             pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyContentTypeAndAvgFrameRate =
@@ -3559,7 +3578,7 @@ void MMSEngineProcessor::manageSlideShowTask(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<pair<int64_t,Validator::DependencyType>>& dependencies
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies
 )
 {
     try
@@ -3592,7 +3611,7 @@ void MMSEngineProcessor::manageSlideShowTask(
         bool slideshowContentTypeInitialized = false;
         vector<string> sourcePhysicalPaths;
         
-        for (pair<int64_t,Validator::DependencyType>& keyAndDependencyType: dependencies)
+        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
         {
             // int64_t encodingProfileKey = -1;
             // string sourcePhysicalPath = _mmsStorage->getPhysicalPath(keyAndDependencyType.first, encodingProfileKey);
@@ -3600,9 +3619,16 @@ void MMSEngineProcessor::manageSlideShowTask(
             int64_t sourceMediaItemKey;
             int64_t sourcePhysicalPathKey;
             string sourcePhysicalPath;
-            if (keyAndDependencyType.second == Validator::DependencyType::MediaItemKey)
+
+            int64_t key;
+            MMSEngineDBFacade::ContentType referenceContentType;
+            Validator::DependencyType dependencyType;
+
+            tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+        
+            if (dependencyType == Validator::DependencyType::MediaItemKey)
             {
-                sourceMediaItemKey = keyAndDependencyType.first;
+                sourceMediaItemKey = key;
 
                 sourcePhysicalPathKey = -1;
                 int64_t encodingProfileKey = -1;
@@ -3614,7 +3640,7 @@ void MMSEngineProcessor::manageSlideShowTask(
             }
             else
             {
-                sourcePhysicalPathKey = keyAndDependencyType.first;
+                sourcePhysicalPathKey = key;
 
                 bool warningIfMissing = false;
                 pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyContentTypeAndAvgFrameRate =
@@ -3910,7 +3936,7 @@ void MMSEngineProcessor::generateAndIngestConcatenation(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<pair<int64_t,Validator::DependencyType>>& dependencies
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies
 )
 {
     try
@@ -3931,17 +3957,23 @@ void MMSEngineProcessor::generateAndIngestConcatenation(
         vector<string> sourcePhysicalPaths;
         string forcedAvgFrameRate;
         
-        for (pair<int64_t,Validator::DependencyType>& keyAndDependencyType: dependencies)
+        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
         {
             // int64_t encodingProfileKey = -1;
             // string sourcePhysicalPath = _mmsStorage->getPhysicalPath(keyAndDependencyType.first, encodingProfileKey);
 
+            int64_t key;
+            MMSEngineDBFacade::ContentType referenceContentType;
+            Validator::DependencyType dependencyType;
+
+            tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+
             int64_t sourceMediaItemKey;
             int64_t sourcePhysicalPathKey;
             string sourcePhysicalPath;
-            if (keyAndDependencyType.second == Validator::DependencyType::MediaItemKey)
+            if (dependencyType == Validator::DependencyType::MediaItemKey)
             {
-                sourceMediaItemKey = keyAndDependencyType.first;
+                sourceMediaItemKey = key;
 
                 sourcePhysicalPathKey = -1;
                 int64_t encodingProfileKey = -1;
@@ -3951,7 +3983,7 @@ void MMSEngineProcessor::generateAndIngestConcatenation(
             }
             else
             {
-                sourcePhysicalPathKey = keyAndDependencyType.first;
+                sourcePhysicalPathKey = key;
 
                 bool warningIfMissing = false;
                 pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyContentTypeAndAvgFrameRate =
@@ -4141,7 +4173,7 @@ void MMSEngineProcessor::generateAndIngestCutMedia(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<pair<int64_t,Validator::DependencyType>>& dependencies
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies
 )
 {
     try
@@ -4160,10 +4192,17 @@ void MMSEngineProcessor::generateAndIngestCutMedia(
         int64_t sourceMediaItemKey;
         int64_t sourcePhysicalPathKey;
         string sourcePhysicalPath;
-        pair<int64_t,Validator::DependencyType>& keyAndDependencyType = dependencies.back();
-        if (keyAndDependencyType.second == Validator::DependencyType::MediaItemKey)
+        tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType = dependencies.back();
+
+        int64_t key;
+        MMSEngineDBFacade::ContentType referenceContentType;
+        Validator::DependencyType dependencyType;
+
+        tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+
+        if (dependencyType == Validator::DependencyType::MediaItemKey)
         {
-            sourceMediaItemKey = keyAndDependencyType.first;
+            sourceMediaItemKey = key;
 
             sourcePhysicalPathKey = -1;
             int64_t encodingProfileKey = -1;
@@ -4173,7 +4212,7 @@ void MMSEngineProcessor::generateAndIngestCutMedia(
         }
         else
         {
-            sourcePhysicalPathKey = keyAndDependencyType.first;
+            sourcePhysicalPathKey = key;
             
             bool warningIfMissing = false;
             pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyContentTypeAndAvgFrameRate =
@@ -4426,7 +4465,7 @@ void MMSEngineProcessor::manageEncodeTask(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<pair<int64_t,Validator::DependencyType>>& dependencies
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies
 )
 {
     try
@@ -4485,16 +4524,23 @@ void MMSEngineProcessor::manageEncodeTask(
 
         int64_t sourceMediaItemKey;
         int64_t sourcePhysicalPathKey;
-        pair<int64_t,Validator::DependencyType>& keyAndDependencyType = dependencies.back();
-        if (keyAndDependencyType.second == Validator::DependencyType::MediaItemKey)
+        tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType = dependencies.back();
+
+        int64_t key;
+        MMSEngineDBFacade::ContentType referenceContentType;
+        Validator::DependencyType dependencyType;
+
+        tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+
+        if (dependencyType == Validator::DependencyType::MediaItemKey)
         {
-            sourceMediaItemKey = keyAndDependencyType.first;
+            sourceMediaItemKey = key;
 
             sourcePhysicalPathKey = -1;
         }
         else
         {
-            sourcePhysicalPathKey = keyAndDependencyType.first;
+            sourcePhysicalPathKey = key;
             
             bool warningIfMissing = false;
             pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyContentTypeAndAvgFrameRate =
@@ -4538,7 +4584,7 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<pair<int64_t,Validator::DependencyType>>& dependencies
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies
 )
 {
     try
@@ -4593,16 +4639,23 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 
         int64_t sourceMediaItemKey_1;
         int64_t sourcePhysicalPathKey_1;
-        pair<int64_t,Validator::DependencyType>& keyAndDependencyType_1 = dependencies[0];
-        if (keyAndDependencyType_1.second == Validator::DependencyType::MediaItemKey)
+        tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType_1 = dependencies[0];
+
+        int64_t key_1;
+        MMSEngineDBFacade::ContentType referenceContentType_1;
+        Validator::DependencyType dependencyType_1;
+
+        tie(key_1, referenceContentType_1, dependencyType_1) = keyAndDependencyType_1;
+
+        if (dependencyType_1 == Validator::DependencyType::MediaItemKey)
         {
-            sourceMediaItemKey_1 = keyAndDependencyType_1.first;
+            sourceMediaItemKey_1 = key_1;
 
             sourcePhysicalPathKey_1 = -1;
         }
         else
         {
-            sourcePhysicalPathKey_1 = keyAndDependencyType_1.first;
+            sourcePhysicalPathKey_1 = key_1;
             
             bool warningIfMissing = false;
             pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyContentTypeAndAvgFrameRate =
@@ -4616,16 +4669,23 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 
         int64_t sourceMediaItemKey_2;
         int64_t sourcePhysicalPathKey_2;
-        pair<int64_t,Validator::DependencyType>& keyAndDependencyType_2 = dependencies[1];
-        if (keyAndDependencyType_2.second == Validator::DependencyType::MediaItemKey)
+        tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType_2 = dependencies[1];
+
+        int64_t key_2;
+        MMSEngineDBFacade::ContentType referenceContentType_2;
+        Validator::DependencyType dependencyType_2;
+
+        tie(key_2, referenceContentType_2, dependencyType_2) = keyAndDependencyType_1;
+
+        if (dependencyType_2 == Validator::DependencyType::MediaItemKey)
         {
-            sourceMediaItemKey_2 = keyAndDependencyType_2.first;
+            sourceMediaItemKey_2 = key_2;
 
             sourcePhysicalPathKey_2 = -1;
         }
         else
         {
-            sourcePhysicalPathKey_2 = keyAndDependencyType_2.first;
+            sourcePhysicalPathKey_2 = key_2;
             
             bool warningIfMissing = false;
             pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyContentTypeAndAvgFrameRate =
@@ -4668,7 +4728,7 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<pair<int64_t,Validator::DependencyType>>& dependencies
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies
 )
 {
     try
@@ -4774,16 +4834,23 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
 
         int64_t sourceMediaItemKey;
         int64_t sourcePhysicalPathKey;
-        pair<int64_t,Validator::DependencyType>& keyAndDependencyType = dependencies[0];
-        if (keyAndDependencyType.second == Validator::DependencyType::MediaItemKey)
+        tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType = dependencies[0];
+
+        int64_t key;
+        MMSEngineDBFacade::ContentType referenceContentType;
+        Validator::DependencyType dependencyType;
+
+        tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+
+        if (dependencyType == Validator::DependencyType::MediaItemKey)
         {
-            sourceMediaItemKey = keyAndDependencyType.first;
+            sourceMediaItemKey = key;
 
             sourcePhysicalPathKey = -1;
         }
         else
         {
-            sourcePhysicalPathKey = keyAndDependencyType.first;
+            sourcePhysicalPathKey = key;
             
             bool warningIfMissing = false;
             pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyContentTypeAndAvgFrameRate =
@@ -4830,7 +4897,7 @@ void MMSEngineProcessor::manageEmailNotification(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<pair<int64_t,Validator::DependencyType>>& dependencies
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies
 )
 {
     try
@@ -4847,12 +4914,18 @@ void MMSEngineProcessor::manageEmailNotification(
         }
         
         string sIngestionJobJeyDependency;
-        for (pair<int64_t,Validator::DependencyType>& keyAndDependencyType: dependencies)
+        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
         {
+            int64_t key;
+            MMSEngineDBFacade::ContentType referenceContentType;
+            Validator::DependencyType dependencyType;
+
+            tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+        
             if (sIngestionJobJeyDependency == "")
-                sIngestionJobJeyDependency = to_string(keyAndDependencyType.first);
+                sIngestionJobJeyDependency = to_string(key);
             else
-                sIngestionJobJeyDependency += (", " + to_string(keyAndDependencyType.first));
+                sIngestionJobJeyDependency += (", " + to_string(key));
         }
         
         string field = "EmailAddress";

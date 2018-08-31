@@ -90,13 +90,13 @@ private:
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<pair<int64_t,Validator::DependencyType>>& dependencies);
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
     
     void ftpDeliveryContent(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<pair<int64_t,Validator::DependencyType>>& dependencies);
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
 
     /*
     string generateImageMetadataToIngest(
@@ -117,40 +117,40 @@ private:
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<pair<int64_t,Validator::DependencyType>>& dependencies);
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
 
     void manageOverlayImageOnVideoTask(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<pair<int64_t,Validator::DependencyType>>& dependencies);
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
     
     void manageOverlayTextOnVideoTask(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<pair<int64_t,Validator::DependencyType>>& dependencies);
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
 
     void generateAndIngestFrames(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         MMSEngineDBFacade::IngestionType ingestionType,
         Json::Value parametersRoot,
-        vector<pair<int64_t,Validator::DependencyType>>& dependencies);
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
 
     void manageGenerateFramesTask(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         MMSEngineDBFacade::IngestionType ingestionType,
         Json::Value parametersRoot,
-        vector<pair<int64_t,Validator::DependencyType>>& dependencies);
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
 
     void fillGenerateFramesParameters(
         shared_ptr<Workspace> workspace,
         int64_t ingestionJobKey,
         MMSEngineDBFacade::IngestionType ingestionType,
         Json::Value parametersRoot,
-        vector<pair<int64_t,Validator::DependencyType>>& dependencies,
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies,
         
         int& periodInSeconds, double& startTimeInSeconds,
         int& maxFramesNumber, string& videoFilter,
@@ -162,7 +162,7 @@ private:
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<pair<int64_t,Validator::DependencyType>>& dependencies);
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
 
     /*
     void generateAndIngestSlideshow(
@@ -175,19 +175,19 @@ private:
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<pair<int64_t,Validator::DependencyType>>& dependencies);
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
 
     void generateAndIngestCutMedia(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<pair<int64_t,Validator::DependencyType>>& dependencies);
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
 
     void manageEmailNotification(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<pair<int64_t,Validator::DependencyType>>& dependencies);
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
 
     tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int> getMediaSourceDetails(
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
