@@ -63,6 +63,11 @@ public class Task implements Serializable
     private Long frameMaxFramesNumber;
     private Float frameDurationOfEachSlideInSeconds;
     private Long frameOutputFrameRate;
+    private String ftpDeliveryServer;
+    private Long ftpDeliveryPort;
+    private String ftpDeliveryUserName;
+    private String ftpDeliveryPassword;
+    private String ftpDeliveryRemoteDir;
 
     private boolean childTaskCreated;
     private boolean childEventOnSuccessCreated;
@@ -492,5 +497,45 @@ public class Task implements Serializable
 
     public void setReferences(String references) {
         this.references = references;
+    }
+
+    public String getFtpDeliveryServer() {
+        return ftpDeliveryServer;
+    }
+
+    public void setFtpDeliveryServer(String ftpDeliveryServer) {
+        this.ftpDeliveryServer = ftpDeliveryServer;
+    }
+
+    public Long getFtpDeliveryPort() {
+        return ftpDeliveryPort;
+    }
+
+    public void setFtpDeliveryPort(Long ftpDeliveryPort) {
+        this.ftpDeliveryPort = ftpDeliveryPort;
+    }
+
+    public String getFtpDeliveryUserName() {
+        return ftpDeliveryUserName;
+    }
+
+    public void setFtpDeliveryUserName(String ftpDeliveryUserName) {
+        this.ftpDeliveryUserName = ftpDeliveryUserName;
+    }
+
+    public String getFtpDeliveryPassword() {
+        return ftpDeliveryPassword;
+    }
+
+    public void setFtpDeliveryPassword(String ftpDeliveryPassword) {
+        this.ftpDeliveryPassword = ftpDeliveryPassword;
+    }
+
+    public String getFtpDeliveryRemoteDir() {
+        return ftpDeliveryRemoteDir;
+    }
+
+    public void setFtpDeliveryRemoteDir(String ftpDeliveryRemoteDir) {
+        this.ftpDeliveryRemoteDir = ftpDeliveryRemoteDir;
     }
 }

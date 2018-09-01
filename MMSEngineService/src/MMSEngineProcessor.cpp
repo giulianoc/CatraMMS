@@ -2288,36 +2288,13 @@ void MMSEngineProcessor::ftpDeliveryContent(
             throw runtime_error(errorMessage);
         }
 
-        string userName;
-        string password;
         string ftpServer;
-        string remoteDir;
+        int ftpPort;
+        string ftpUserName;
+        string ftpPassword;
+        string ftpRemoteDir;
         {
-            string field = "userName";
-            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", Field: " + field;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-            userName = parametersRoot.get(field, "XXX").asString();
-
-            field = "password";
-            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", Field: " + field;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-            password = parametersRoot.get(field, "XXX").asString();
-
-            field = "ftpServer";
+            string field = "Server";
             if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -2329,7 +2306,15 @@ void MMSEngineProcessor::ftpDeliveryContent(
             }
             ftpServer = parametersRoot.get(field, "XXX").asString();
 
-            field = "remoteDir";
+            field = "Port";
+            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            {
+                ftpPort = 21;
+            }
+            else
+                ftpPort = parametersRoot.get(field, "XXX").asInt();
+
+            field = "UserName";
             if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -2339,7 +2324,31 @@ void MMSEngineProcessor::ftpDeliveryContent(
 
                 throw runtime_error(errorMessage);
             }
-            remoteDir = parametersRoot.get(field, "XXX").asString();
+            ftpUserName = parametersRoot.get(field, "XXX").asString();
+
+            field = "Password";
+            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            ftpPassword = parametersRoot.get(field, "XXX").asString();
+
+            field = "RemoteDir";
+            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            ftpRemoteDir = parametersRoot.get(field, "XXX").asString();
         }
         
         for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
@@ -2398,7 +2407,7 @@ void MMSEngineProcessor::ftpDeliveryContent(
             
             thread ftpUploadMediaSource(&MMSEngineProcessor::ftpUploadMediaSource, this, 
                 mmsAssetPathName, ingestionJobKey, workspace,
-                    userName, password, ftpServer, remoteDir);
+                    ftpServer, ftpPort, ftpUserName, ftpPassword, ftpRemoteDir);
             ftpUploadMediaSource.detach();
         }
     }
@@ -5033,240 +5042,13 @@ void MMSEngineProcessor::manageEmailNotification(
     }
 }
 
-/*
-void MMSEngineProcessor:: sendEmail(string to, string subject, vector<string>& emailBody)
-{
-    // curl --url 'smtps://smtp.gmail.com:465' --ssl-reqd   
-    //      --mail-from 'giulianocatrambone@gmail.com' 
-    //      --mail-rcpt 'giulianoc@catrasoftware.it'   
-    //      --upload-file ~/tmp/1.txt 
-    //      --user 'giulianocatrambone@gmail.com:XXXXXXXXXXXXX' 
-    //      --insecure
-    
-    
-    string emailServerURL = _emailProtocol + "://" + _emailServer + ":" + to_string(_emailPort);
-    
-
-    CURL *curl;
-    CURLcode res = CURLE_OK;
-    struct curl_slist *recipients = NULL;
-    deque<string> emailLines;
-  
-    emailLines.push_back(string("From: <") + _emailFrom + ">" + "\r\n");
-    emailLines.push_back(string("To: <") + to + ">" + "\r\n");
-    emailLines.push_back(string("Subject: ") + subject + "\r\n");
-    emailLines.push_back(string("Content-Type: text/html; charset=\"UTF-8\"") + "\r\n");
-    emailLines.push_back("\r\n");   // empty line to divide headers from body, see RFC5322
-    emailLines.insert(emailLines.end(), emailBody.begin(), emailBody.end());
-    
-    curl = curl_easy_init();
-
-    if(curl) 
-    {
-        curl_easy_setopt(curl, CURLOPT_URL, emailServerURL.c_str());
-        curl_easy_setopt(curl, CURLOPT_USERNAME, _emailUserName.c_str());
-        curl_easy_setopt(curl, CURLOPT_PASSWORD, _emailPassword.c_str());
-        
-//        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
-//        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
-
-//        * Note that this option isn't strictly required, omitting it will result
-//         * in libcurl sending the MAIL FROM command with empty sender data. All
-//         * autoresponses should have an empty reverse-path, and should be directed
-//         * to the address in the reverse-path which triggered them. Otherwise,
-//         * they could cause an endless loop. See RFC 5321 Section 4.5.5 for more
-//         * details.
-        curl_easy_setopt(curl, CURLOPT_MAIL_FROM, _emailFrom.c_str());
-
-//        * Add two recipients, in this particular case they correspond to the
-//         * To: and Cc: addressees in the header, but they could be any kind of
-//         * recipient. 
-        recipients = curl_slist_append(recipients, to.c_str());
-        curl_easy_setopt(curl, CURLOPT_MAIL_RCPT, recipients);
-
-//        * We're using a callback function to specify the payload (the headers and
-//         * body of the message). You could just use the CURLOPT_READDATA option to
-//         * specify a FILE pointer to read from.
-        curl_easy_setopt(curl, CURLOPT_READFUNCTION, MMSEngineProcessor::emailPayloadFeed);
-        curl_easy_setopt(curl, CURLOPT_READDATA, &emailLines);
-        curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
-        // curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
-
-        // Send the message
-        _logger->info(__FILEREF__ + "Sending email..."
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-        );
-        res = curl_easy_perform(curl);
-
-        // Check for errors
-        if(res != CURLE_OK)
-            _logger->error(__FILEREF__ + "curl_easy_perform() failed"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", curl_easy_strerror(res): " + curl_easy_strerror(res)
-            );
-        else
-            _logger->info(__FILEREF__ + "Email sent successful"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            );
-
-        // Free the list of recipients
-        curl_slist_free_all(recipients);
-
-//        * curl won't send the QUIT command until you call cleanup, so you should
-//         * be able to re-use this connection for additional messages (setting
-//         * CURLOPT_MAIL_FROM and CURLOPT_MAIL_RCPT as required, and calling
-//         * curl_easy_perform() again. It may not be a good idea to keep the
-//         * connection open for a very long time though (more than a few minutes
-//         * may result in the server timing out the connection), and you do want to
-//         * clean up in the end.
-        curl_easy_cleanup(curl);
-    }    
-}
-
-size_t MMSEngineProcessor:: emailPayloadFeed(void *ptr, size_t size, size_t nmemb, void *userp)
-{
-    deque<string>* pEmailLines = (deque<string>*) userp;
- 
-    if((size == 0) || (nmemb == 0) || ((size*nmemb) < 1)) 
-    {
-        return 0;
-    }
- 
-    if (pEmailLines->size() == 0)
-        return 0; // no more lines
-  
-    string emailLine = pEmailLines->front();
-    // cout << "emailLine: " << emailLine << endl;
- 
-    memcpy(ptr, emailLine.c_str(), emailLine.length());
-    pEmailLines->pop_front();
- 
-    return emailLine.length();
-}
-*/
-
-/*
-string MMSEngineProcessor::generateImageMetadataToIngest(
-        int64_t ingestionJobKey,
-        bool mjpeg,
-        string fileFormat,
-        Json::Value frameRoot
-)
-{
-    string title;
-    string field = "title";
-    if (_mmsEngineDBFacade->isMetadataPresent(frameRoot, field))
-        title = frameRoot.get(field, "XXX").asString();
-    
-    string subTitle;
-    field = "SubTitle";
-    if (_mmsEngineDBFacade->isMetadataPresent(frameRoot, field))
-        subTitle = frameRoot.get(field, "XXX").asString();
-
-    string ingester;
-    field = "Ingester";
-    if (_mmsEngineDBFacade->isMetadataPresent(frameRoot, field))
-        ingester = frameRoot.get(field, "XXX").asString();
-
-    string keywords;
-    field = "Keywords";
-    if (_mmsEngineDBFacade->isMetadataPresent(frameRoot, field))
-        keywords = frameRoot.get(field, "XXX").asString();
-
-    string description;
-    field = "Description";
-    if (_mmsEngineDBFacade->isMetadataPresent(frameRoot, field))
-        description = frameRoot.get(field, "XXX").asString();
-
-    string logicalType;
-    field = "LogicalType";
-    if (_mmsEngineDBFacade->isMetadataPresent(frameRoot, field))
-        logicalType = frameRoot.get(field, "XXX").asString();
-
-    string contentProviderName;
-    field = "ContentProviderName";
-    if (_mmsEngineDBFacade->isMetadataPresent(frameRoot, field))
-        contentProviderName = frameRoot.get(field, "XXX").asString();
-    
-    string territories;
-    field = "Territories";
-    if (_mmsEngineDBFacade->isMetadataPresent(frameRoot, field))
-    {
-        {
-            Json::StreamWriterBuilder wbuilder;
-            
-            territories = Json::writeString(wbuilder, frameRoot[field]);
-        }
-    }
-    
-    string imageMetadata = string("")
-        + "{"
-            + "\"ContentType\": \"" + (mjpeg ? "video" : "image") + "\""
-            + ", \"FileFormat\": \"" + fileFormat + "\""
-            ;
-    if (title != "")
-        imageMetadata += ", \"Title\": \"" + title + "\"";
-    if (subTitle != "")
-        imageMetadata += ", \"SubTitle\": \"" + subTitle + "\"";
-    if (ingester != "")
-        imageMetadata += ", \"Ingester\": \"" + ingester + "\"";
-    if (keywords != "")
-        imageMetadata += ", \"Keywords\": \"" + keywords + "\"";
-    if (description != "")
-        imageMetadata += ", \"Description\": \"" + description + "\"";
-    if (logicalType != "")
-        imageMetadata += ", \"LogicalType\": \"" + logicalType + "\"";
-    if (contentProviderName != "")
-        imageMetadata += ", \"ContentProviderName\": \"" + contentProviderName + "\"";
-    if (territories != "")
-        imageMetadata += ", \"Territories\": \"" + territories + "\"";
-                            
-    imageMetadata +=
-        string("}")
-    ;
-    
-    _logger->info(__FILEREF__ + "Image metadata generated"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-        + ", imageMetadata: " + imageMetadata
-            );
-
-    return imageMetadata;
-}
-*/
-
 string MMSEngineProcessor::generateMediaMetadataToIngest(
         int64_t ingestionJobKey,
         string fileFormat,
         string title,
         Json::Value parametersRoot
 )
-{
-    /*
-    string expectedContentType = (video ? "video" : "audio");
-    string field = "ContentType";
-    if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-    {
-        string contentType = parametersRoot.get(field, "XXX").asString();
-        if (contentType != expectedContentType)
-        {
-            string errorMessage = string("Wrong contentType")
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", contentType: " + contentType
-                + ", expectedContentType: " + expectedContentType
-            ;
-            _logger->error(__FILEREF__ + errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-    }
-    else
-    {
-        parametersRoot[field] = expectedContentType;
-    }
-    */
-    
+{    
     string field = "FileFormat";
     if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
     {
@@ -6213,7 +5995,7 @@ RESUMING FILE TRANSFERS
 
 void MMSEngineProcessor::ftpUploadMediaSource(string mmsAssetPathName,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
-        string userName, string password, string ftpServer, string remoteDir)
+        string ftpServer, int ftpPort, string ftpUserName, string ftpPassword, string ftpRemoteDir)
 {
 
     // curl -T localfile.ext ftp://username:password@ftp.server.com/remotedir/remotefile.zip
@@ -6229,7 +6011,10 @@ void MMSEngineProcessor::ftpUploadMediaSource(string mmsAssetPathName,
             + ", mmsAssetPathName: " + mmsAssetPathName
         );
 
-        string ftpUrl = string("ftp://") + userName + ":" + password + "@" + ftpServer + remoteDir;
+        string ftpUrl = string("ftp://") + ftpUserName + ":" + ftpPassword + "@" 
+                + ftpServer 
+                + ":" + to_string(ftpPort) 
+                + ftpRemoteDir;
 
         ifstream mmsAssetStream(mmsAssetPathName, ifstream::binary);
 

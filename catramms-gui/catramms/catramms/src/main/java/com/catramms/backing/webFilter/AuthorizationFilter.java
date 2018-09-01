@@ -49,6 +49,9 @@ public class AuthorizationFilter implements Filter {
             {
                 String originURI = reqt.getRequestURI() + (reqt.getQueryString() != null ? ("?" + reqt.getQueryString()) : "");
                 mLogger.info("originURI: " + originURI);
+                mLogger.info("reqt.getContextPath: " + reqt.getContextPath());
+                mLogger.info("resp.getStatus: " + resp.getStatus());
+                mLogger.info("resp.isCommitted: " + resp.isCommitted());
                 resp.sendRedirect(reqt.getContextPath() + "/login.xhtml"
                         + "?originURI=" + java.net.URLEncoder.encode(originURI, "UTF-8"));
             }

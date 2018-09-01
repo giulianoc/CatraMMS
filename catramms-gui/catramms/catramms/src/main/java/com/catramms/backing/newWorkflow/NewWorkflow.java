@@ -129,6 +129,11 @@ public class NewWorkflow extends Workspace implements Serializable {
     private Long taskFramePeriodInSeconds;
     private Long taskFrameMaxFramesNumber;
     private Float taskFrameDurationOfEachSlideInSeconds;
+    private String taskFtpDeliveryServer;
+    private Long taskFtpDeliveryPort;
+    private String taskFtpDeliveryUserName;
+    private String taskFtpDeliveryPassword;
+    private String taskFtpDeliveryRemoteDir;
 
     private String taskContentType;
     List<String> taskContentTypesList = new ArrayList<>();
@@ -512,7 +517,8 @@ public class NewWorkflow extends Workspace implements Serializable {
             {
                 if (task.getLabel() != null && !task.getLabel().equalsIgnoreCase(""))
                     jsonObject.put("Label", task.getLabel());
-                else {
+                else
+                {
                     WorkflowIssue workflowIssue = new WorkflowIssue();
                     workflowIssue.setLabel("");
                     workflowIssue.setFieldName("Label");
@@ -1423,6 +1429,91 @@ public class NewWorkflow extends Workspace implements Serializable {
                     workflowIssue.setIssue("The field is not initialized");
 
                     workflowIssueList.add(workflowIssue);
+                }
+            }
+            else if (task.getType().equalsIgnoreCase("FTP-Delivery"))
+            {
+                if (task.getLabel() != null && !task.getLabel().equalsIgnoreCase(""))
+                    jsonObject.put("Label", task.getLabel());
+                else
+                {
+                    WorkflowIssue workflowIssue = new WorkflowIssue();
+                    workflowIssue.setLabel("");
+                    workflowIssue.setFieldName("Label");
+                    workflowIssue.setTaskType(task.getType());
+                    workflowIssue.setIssue("The field is not initialized");
+
+                    workflowIssueList.add(workflowIssue);
+                }
+
+                if (task.getFtpDeliveryServer() != null && !task.getFtpDeliveryServer().equalsIgnoreCase(""))
+                    joParameters.put("Server", task.getFtpDeliveryServer());
+                else
+                {
+                    WorkflowIssue workflowIssue = new WorkflowIssue();
+                    workflowIssue.setLabel(task.getLabel());
+                    workflowIssue.setFieldName("Server");
+                    workflowIssue.setTaskType(task.getType());
+                    workflowIssue.setIssue("The field is not initialized");
+
+                    workflowIssueList.add(workflowIssue);
+                }
+
+                if (task.getFtpDeliveryPort() != null)
+                    joParameters.put("Port", task.getFtpDeliveryPort());
+
+                if (task.getFtpDeliveryUserName() != null && !task.getFtpDeliveryUserName().equalsIgnoreCase(""))
+                    joParameters.put("UserName", task.getFtpDeliveryUserName());
+                else
+                {
+                    WorkflowIssue workflowIssue = new WorkflowIssue();
+                    workflowIssue.setLabel(task.getLabel());
+                    workflowIssue.setFieldName("UserName");
+                    workflowIssue.setTaskType(task.getType());
+                    workflowIssue.setIssue("The field is not initialized");
+
+                    workflowIssueList.add(workflowIssue);
+                }
+
+                if (task.getFtpDeliveryPassword() != null && !task.getFtpDeliveryPassword().equalsIgnoreCase(""))
+                    joParameters.put("Password", task.getFtpDeliveryPassword());
+                else
+                {
+                    WorkflowIssue workflowIssue = new WorkflowIssue();
+                    workflowIssue.setLabel(task.getLabel());
+                    workflowIssue.setFieldName("Password");
+                    workflowIssue.setTaskType(task.getType());
+                    workflowIssue.setIssue("The field is not initialized");
+
+                    workflowIssueList.add(workflowIssue);
+                }
+
+                if (task.getFtpDeliveryRemoteDir() != null && !task.getFtpDeliveryRemoteDir().equalsIgnoreCase(""))
+                    joParameters.put("RemoteDir", task.getFtpDeliveryRemoteDir());
+                else
+                {
+                    WorkflowIssue workflowIssue = new WorkflowIssue();
+                    workflowIssue.setLabel(task.getLabel());
+                    workflowIssue.setFieldName("RemoteDir");
+                    workflowIssue.setTaskType(task.getType());
+                    workflowIssue.setIssue("The field is not initialized");
+
+                    workflowIssueList.add(workflowIssue);
+                }
+
+                if (task.getReferences() != null && !task.getReferences().equalsIgnoreCase(""))
+                {
+                    JSONArray jaReferences = new JSONArray();
+                    joParameters.put("References", jaReferences);
+
+                    String [] physicalPathKeyReferences = task.getReferences().split(",");
+                    for (String physicalPathKeyReference: physicalPathKeyReferences)
+                    {
+                        JSONObject joReference = new JSONObject();
+                        joReference.put("ReferencePhysicalPathKey", Long.parseLong(physicalPathKeyReference.trim()));
+
+                        jaReferences.put(joReference);
+                    }
                 }
             }
             else
@@ -2517,6 +2608,36 @@ public class NewWorkflow extends Workspace implements Serializable {
                     taskSubject = task.getSubject();
                     taskMessage = task.getMessage();
                 }
+                else if (task.getType().equalsIgnoreCase("FTP-Delivery"))
+                {
+                    taskReferences = task.getReferences() == null ? "" : task.getReferences();
+                    taskLabel = task.getLabel();
+                    taskFtpDeliveryServer = task.getFtpDeliveryServer();
+                    if (task.getFtpDeliveryPort() != null)
+                        taskFtpDeliveryPort = task.getFtpDeliveryPort();
+                    taskFtpDeliveryUserName = task.getFtpDeliveryUserName();
+                    taskFtpDeliveryPassword = task.getFtpDeliveryPassword();
+                    taskFtpDeliveryRemoteDir = task.getFtpDeliveryRemoteDir();
+
+                    {
+                        mLogger.info("Initializing mediaItems...");
+
+                        mediaItemsList.clear();
+                        mediaItemsSelectedList.clear();
+                        mediaItemsSelectionMode = "multiple";
+                        mediaItemsMaxMediaItemsNumber = new Long(100);
+                        {
+                            mediaItemsContentTypesList.clear();
+                            mediaItemsContentTypesList.add("video");
+                            mediaItemsContentTypesList.add("audio");
+                            mediaItemsContentTypesList.add("image");
+
+                            mediaItemsContentType = mediaItemsContentTypesList.get(0);
+                        }
+
+                        fillMediaItems();
+                    }
+                }
                 else
                 {
                     mLogger.error("Unknown task.getType(): " + task.getType());
@@ -2792,6 +2913,15 @@ public class NewWorkflow extends Workspace implements Serializable {
                 task.setEmailAddress(taskEmailAddress);
                 task.setSubject(taskSubject);
                 task.setMessage(taskMessage);
+            }
+            else if (task.getType().equalsIgnoreCase("FTP-Delivery"))
+            {
+                task.setLabel(taskLabel);
+                task.setFtpDeliveryServer(taskFtpDeliveryServer);
+                task.setFtpDeliveryPort(taskFtpDeliveryPort);
+                task.setFtpDeliveryUserName(taskFtpDeliveryUserName);
+                task.setFtpDeliveryPassword(taskFtpDeliveryPassword);
+                task.setFtpDeliveryRemoteDir(taskFtpDeliveryRemoteDir);
             }
             else
             {
@@ -3792,5 +3922,45 @@ public class NewWorkflow extends Workspace implements Serializable {
 
     public void setIngestWorkflowErrorMessage(String ingestWorkflowErrorMessage) {
         this.ingestWorkflowErrorMessage = ingestWorkflowErrorMessage;
+    }
+
+    public String getTaskFtpDeliveryServer() {
+        return taskFtpDeliveryServer;
+    }
+
+    public void setTaskFtpDeliveryServer(String taskFtpDeliveryServer) {
+        this.taskFtpDeliveryServer = taskFtpDeliveryServer;
+    }
+
+    public Long getTaskFtpDeliveryPort() {
+        return taskFtpDeliveryPort;
+    }
+
+    public void setTaskFtpDeliveryPort(Long taskFtpDeliveryPort) {
+        this.taskFtpDeliveryPort = taskFtpDeliveryPort;
+    }
+
+    public String getTaskFtpDeliveryUserName() {
+        return taskFtpDeliveryUserName;
+    }
+
+    public void setTaskFtpDeliveryUserName(String taskFtpDeliveryUserName) {
+        this.taskFtpDeliveryUserName = taskFtpDeliveryUserName;
+    }
+
+    public String getTaskFtpDeliveryPassword() {
+        return taskFtpDeliveryPassword;
+    }
+
+    public void setTaskFtpDeliveryPassword(String taskFtpDeliveryPassword) {
+        this.taskFtpDeliveryPassword = taskFtpDeliveryPassword;
+    }
+
+    public String getTaskFtpDeliveryRemoteDir() {
+        return taskFtpDeliveryRemoteDir;
+    }
+
+    public void setTaskFtpDeliveryRemoteDir(String taskFtpDeliveryRemoteDir) {
+        this.taskFtpDeliveryRemoteDir = taskFtpDeliveryRemoteDir;
     }
 }

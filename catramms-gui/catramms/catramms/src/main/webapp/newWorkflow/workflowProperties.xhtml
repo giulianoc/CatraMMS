@@ -3295,6 +3295,118 @@
 
     </h:panelGroup>
 
+    <h:panelGroup rendered="#{newWorkflow.nodeType == 'FTP-Delivery'}">
+        <p:toolbar>
+            <f:facet name="left">
+                <p:outputLabel value="FTP-Delivery"/>
+            </f:facet>
+            <f:facet name="right">
+                <p:defaultCommand target="saveFTPDeliveryProperties"/>
+
+                <p:commandButton id="saveFTPDeliveryProperties" value="Save Properties"
+                                 action="#{newWorkflow.saveTaskProperties}"
+                                 update="viewForm:workflowTree,viewForm:ingestWorkflowButton,viewForm:workflowIssuesWarning,jsonWorkflowForm:jsonWorkflow"
+                        />
+            </f:facet>
+        </p:toolbar>
+
+        <p:panelGrid cellpadding="10" style="width: 100%">
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Label" style="font-weight: bold"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskLabel_FTP_Delivery"
+                                 value="#{newWorkflow.taskLabel}"
+                                 autocomplete="true"
+                                 placeholder="label"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Server:"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskServer_FTP_Delivery"
+                                 value="#{newWorkflow.taskFtpDeliveryServer}"
+                                 autocomplete="true"
+                                 placeholder="ftp server"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Port"/>
+                </p:column>
+                <p:column>
+                    <p:inputNumber id="taskPort_FTP_Delivery"
+                                   required="false"
+                                   decimalPlaces="0"
+                                   value="#{newWorkflow.taskFtpDeliveryPort}"
+                                   autocomplete="true"
+                                   placeholder="ftp port"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="User name:"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskUserName_FTP_Delivery"
+                                 value="#{newWorkflow.taskFtpDeliveryUserName}"
+                                 autocomplete="true"
+                                 placeholder="ftp user name"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Password:"/>
+                </p:column>
+                <p:column>
+                    <p:password id="taskPassword_FTP_Delivery"
+                                 value="#{newWorkflow.taskFtpDeliveryPassword}" />
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Remote dir:"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskRemoteDir_FTP_Delivery"
+                                 value="#{newWorkflow.taskFtpDeliveryRemoteDir}"
+                                 autocomplete="true"
+                                 placeholder="ftp remote dir"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="References"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskReferences_FTP_Delivery" style="width: 100%"
+                                 required="false"
+                                 value="#{newWorkflow.taskReferences}"
+                                 autocomplete="true"
+                                 placeholder="if left blank, references are retrieved from Workflow"/>
+                    <br/>
+                    <p:commandButton id="taskSelectReferences_FTP_Delivery"
+                                     icon="ui-icon-search"
+                                     value="Select Media"
+                                     update=":selectMediaItemsForm"
+                                     oncomplete="PF('selectMediaItems').show()"
+                            />
+                </p:column>
+            </p:row>
+
+        </p:panelGrid>
+    </h:panelGroup>
+
 </h:panelGroup>
 
 

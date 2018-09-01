@@ -223,7 +223,7 @@ private:
 
     void ftpUploadMediaSource(string mmsAssetPathName,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
-        string userName, string password, string ftpServer, string remoteDir);
+        string ftpServer, int ftpPort, string ftpUserName, string ftpPassword, string ftpRemoteDir);
 } ;
 
 #endif

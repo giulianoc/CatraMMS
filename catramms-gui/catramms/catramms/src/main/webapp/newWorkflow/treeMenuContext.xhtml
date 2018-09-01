@@ -306,6 +306,13 @@
                         actionListener="#{newWorkflow.addTask('Slideshow')}"
                     />
         </p:submenu>
+        <p:submenu label="Delivery">
+            <p:menuitem value="FTP"
+                        icon="fa fa-upload"
+                        update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                        actionListener="#{newWorkflow.addTask('FTP-Delivery')}"
+                    />
+        </p:submenu>
         <p:submenu label="Utilities">
             <p:menuitem value="Email-Notification"
                         icon="ui-icon-close"
