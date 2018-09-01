@@ -1,0 +1,17 @@
+"Task": {
+	Label="My FTP Delivery",
+
+	"Type": "FTP-Delivery",
+
+	"Parameters": {
+		"References": [
+			{ "ReferenceMediaItemKey": 11 }
+		],
+
+		"Server": "ftp server name or IP address",
+		"UserName": "ftp user name",
+		"Password": "ftp password",
+		"RemoteDir": "ftp remote dir"
+
+	}
+}
