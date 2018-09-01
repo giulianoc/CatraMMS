@@ -2225,7 +2225,7 @@ void MMSEngineProcessor::removeContent(
     }
     catch(runtime_error e)
     {
-        _logger->error(__FILEREF__ + "generateAndIngestCutMedia failed"
+        _logger->error(__FILEREF__ + "removeContent failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", e.what(): " + e.what()
@@ -2247,7 +2247,7 @@ void MMSEngineProcessor::removeContent(
     }
     catch(exception e)
     {
-        _logger->error(__FILEREF__ + "generateAndIngestCutMedia failed"
+        _logger->error(__FILEREF__ + "removeContent failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );
@@ -2407,7 +2407,7 @@ void MMSEngineProcessor::ftpDeliveryContent(
     }
     catch(runtime_error e)
     {
-        _logger->error(__FILEREF__ + "generateAndIngestCutMedia failed"
+        _logger->error(__FILEREF__ + "ftpDeliveryContent failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", e.what(): " + e.what()
@@ -2429,7 +2429,7 @@ void MMSEngineProcessor::ftpDeliveryContent(
     }
     catch(exception e)
     {
-        _logger->error(__FILEREF__ + "generateAndIngestCutMedia failed"
+        _logger->error(__FILEREF__ + "ftpDeliveryContent failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );
