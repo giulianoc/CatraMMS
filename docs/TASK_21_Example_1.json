@@ -1,5 +1,5 @@
 "Task": {
-	Label="My FTP Delivery",
+	"Label"="My FTP Delivery",
 
 	"Type": "FTP-Delivery",
 
@@ -10,8 +10,7 @@
 
 		"Server": "ftp server name or IP address",
 		"UserName": "ftp user name",
-		"Password": "ftp password",
-		"RemoteDir": "ftp remote dir"
+		"Password": "ftp password"
 
 	}
 }

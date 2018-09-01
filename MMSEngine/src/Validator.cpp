@@ -1976,10 +1976,9 @@ void Validator::validateFTPDeliveryMetadata(int64_t workspaceKey,
     // see sample in directory samples
         
     vector<string> mandatoryFields = {
-        "UserName",
-        "Password",
         "Server",
-        "RemoteDir"
+        "UserName",
+        "Password"
     };
     for (string mandatoryField: mandatoryFields)
     {

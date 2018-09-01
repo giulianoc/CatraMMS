@@ -1,6 +1,6 @@
 "Task": {
 	// optional
-	Label="My FTP Delivery",
+	"Label"="My FTP Delivery",
 
 	// mandatory
 	"Type": "FTP-Delivery",
@@ -36,7 +36,7 @@
 		// mandatory
 		"Password": "ftp password",
 
-		// mandatory
+		// optional, default is "/"
 		"RemoteDir": "ftp remote dir"
 
 	}

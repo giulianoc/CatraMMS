@@ -2279,7 +2279,7 @@ void MMSEngineProcessor::ftpDeliveryContent(
     {
         if (dependencies.size() == 0)
         {
-            string errorMessage = __FILEREF__ + "No configured any media to be removed"
+            string errorMessage = __FILEREF__ + "No configured any media to be uploaded (FTP)"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", dependencies.size: " + to_string(dependencies.size());
@@ -2340,15 +2340,9 @@ void MMSEngineProcessor::ftpDeliveryContent(
 
             field = "RemoteDir";
             if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", Field: " + field;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-            ftpRemoteDir = parametersRoot.get(field, "XXX").asString();
+                ftpRemoteDir = "/";
+            else
+                ftpRemoteDir = parametersRoot.get(field, "XXX").asString();
         }
         
         for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)

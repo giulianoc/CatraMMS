@@ -1490,16 +1490,6 @@ public class NewWorkflow extends Workspace implements Serializable {
 
                 if (task.getFtpDeliveryRemoteDir() != null && !task.getFtpDeliveryRemoteDir().equalsIgnoreCase(""))
                     joParameters.put("RemoteDir", task.getFtpDeliveryRemoteDir());
-                else
-                {
-                    WorkflowIssue workflowIssue = new WorkflowIssue();
-                    workflowIssue.setLabel(task.getLabel());
-                    workflowIssue.setFieldName("RemoteDir");
-                    workflowIssue.setTaskType(task.getType());
-                    workflowIssue.setIssue("The field is not initialized");
-
-                    workflowIssueList.add(workflowIssue);
-                }
 
                 if (task.getReferences() != null && !task.getReferences().equalsIgnoreCase(""))
                 {
