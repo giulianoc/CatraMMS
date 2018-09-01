@@ -1,0 +1,17 @@
+"Task": {
+	Label="My FTP Delivery",
+
+	"Type": "FTP-Delivery",
+
+	"Parameters": {
+		"References": [
+			{ "ReferenceMediaItemKey": 11 }
+		],
+
+		"Server": "ftp.catrambonelucia.altervista.org",
+		"UserName": "catrambonelucia",
+		"Password": "minpupivvi61",
+		"RemoteDir": "/"
+
+	}
+}
