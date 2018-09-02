@@ -6421,11 +6421,11 @@ int MMSEngineProcessor::progressUploadCallback(
 
     chrono::system_clock::time_point now = chrono::system_clock::now();
             
-    if (dltotal != 0 &&
-            (dltotal == dlnow 
+    if (ultotal != 0 &&
+            (ultotal == ulnow 
             || now - lastTimeProgressUpdate >= chrono::seconds(_progressUpdatePeriodInSeconds)))
     {
-        double progress = (dlnow / dltotal) * 100;
+        double progress = (ulnow / ultotal) * 100;
         // int uploadingPercentage = floorf(progress * 100) / 100;
         // this is to have one decimal in the percentage
         double uploadingPercentage = ((double) ((int) (progress * 10))) / 10;
@@ -6458,13 +6458,6 @@ int MMSEngineProcessor::progressUploadCallback(
         if (uploadingStoppedByUser)
             return 1;   // stop downloading
     }
-
-    _logger->info(__FILEREF__ + "Upload still running"
-        + ", dltotal: " + to_string(dltotal)
-        + ", dlnow: " + to_string(dlnow)
-        + ", ultotal: " + to_string(ultotal)
-        + ", ulnow: " + to_string(ulnow)
-    );
         
     return 0;
 }
