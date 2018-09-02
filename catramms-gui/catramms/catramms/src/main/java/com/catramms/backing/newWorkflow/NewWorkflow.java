@@ -2906,6 +2906,7 @@ public class NewWorkflow extends Workspace implements Serializable {
             }
             else if (task.getType().equalsIgnoreCase("FTP-Delivery"))
             {
+                task.setReferences(taskReferences);
                 task.setLabel(taskLabel);
                 task.setFtpDeliveryServer(taskFtpDeliveryServer);
                 task.setFtpDeliveryPort(taskFtpDeliveryPort);

@@ -221,7 +221,8 @@ private:
         double dltotal, double dlnow,
         double ultotal, double ulnow);
 
-    void ftpUploadMediaSource(string mmsAssetPathName,
+    void ftpUploadMediaSource(
+        string mmsAssetPathName, string fileName, int64_t sizeInBytes,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
         string ftpServer, int ftpPort, string ftpUserName, string ftpPassword, string ftpRemoteDir);
 } ;

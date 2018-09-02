@@ -2351,6 +2351,7 @@ void MMSEngineProcessor::ftpDeliveryContent(
             string workspaceDirectoryName;
             string relativePath;
             string fileName;
+            int64_t sizeInBytes;
             
             int64_t key;
             MMSEngineDBFacade::ContentType referenceContentType;
@@ -2362,7 +2363,7 @@ void MMSEngineProcessor::ftpDeliveryContent(
             {
                 int64_t encodingProfileKey = -1;
                 
-                tuple<int64_t,int,shared_ptr<Workspace>,string,string,string> storageDetails 
+                tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,int64_t> storageDetails 
                     = _mmsEngineDBFacade->getStorageDetails(
                         key, encodingProfileKey);
 
@@ -2370,19 +2371,19 @@ void MMSEngineProcessor::ftpDeliveryContent(
                 shared_ptr<Workspace> workspace;
                 string deliveryFileName;
                 
-                tie(physicalPathKey, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName) 
+                tie(physicalPathKey, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, sizeInBytes) 
                         = storageDetails;
                 workspaceDirectoryName = workspace->_directoryName;
             }
             else
             {
-                tuple<int,shared_ptr<Workspace>,string,string,string> storageDetails 
+                tuple<int,shared_ptr<Workspace>,string,string,string,int64_t> storageDetails 
                     = _mmsEngineDBFacade->getStorageDetails(key);
 
                 shared_ptr<Workspace> workspace;
                 string deliveryFileName;
                 
-                tie(mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName) 
+                tie(mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, sizeInBytes) 
                         = storageDetails;
                 workspaceDirectoryName = workspace->_directoryName;
             }
@@ -2400,7 +2401,7 @@ void MMSEngineProcessor::ftpDeliveryContent(
                 fileName);
             
             thread ftpUploadMediaSource(&MMSEngineProcessor::ftpUploadMediaSource, this, 
-                mmsAssetPathName, ingestionJobKey, workspace,
+                mmsAssetPathName, fileName, sizeInBytes, ingestionJobKey, workspace,
                     ftpServer, ftpPort, ftpUserName, ftpPassword, ftpRemoteDir);
             ftpUploadMediaSource.detach();
         }
@@ -5987,7 +5988,8 @@ RESUMING FILE TRANSFERS
     }
 }
 
-void MMSEngineProcessor::ftpUploadMediaSource(string mmsAssetPathName,
+void MMSEngineProcessor::ftpUploadMediaSource(
+        string mmsAssetPathName, string fileName, int64_t sizeInBytes,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
         string ftpServer, int ftpPort, string ftpUserName, string ftpPassword, string ftpRemoteDir)
 {
@@ -5999,18 +6001,25 @@ void MMSEngineProcessor::ftpUploadMediaSource(string mmsAssetPathName,
     {
         bool uploadingStoppedByUser = false;
 
-        _logger->info(__FILEREF__ + "FTP Uploading"
-            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", mmsAssetPathName: " + mmsAssetPathName
-        );
-
         string ftpUrl = string("ftp://") + ftpUserName + ":" + ftpPassword + "@" 
                 + ftpServer 
                 + ":" + to_string(ftpPort) 
                 + ftpRemoteDir;
+        
+        if (ftpRemoteDir.back() == '/')
+            ftpUrl  += fileName;
+        else
+            ftpUrl  += ("/" + fileName);
+
+        _logger->info(__FILEREF__ + "FTP Uploading"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", mmsAssetPathName: " + mmsAssetPathName
+            + ", ftpUrl: " + ftpUrl
+        );
 
         ifstream mmsAssetStream(mmsAssetPathName, ifstream::binary);
+        // FILE *mediaSourceFileStream = fopen(workspaceIngestionBinaryPathName.c_str(), "wb");
 
         // https://curl.haxx.se/libcurl/c/libcurl-tutorial.html
         // https://curl.haxx.se/libcurl/c/ftpupload.html
@@ -6018,12 +6027,21 @@ void MMSEngineProcessor::ftpUploadMediaSource(string mmsAssetPathName,
         curlpp::Easy request;
 
         request.setOpt(new curlpp::options::Url(ftpUrl));
+        request.setOpt(new curlpp::options::Verbose(true)); 
+        request.setOpt(new curlpp::options::Upload(true)); 
+        
         request.setOpt(new curlpp::options::ReadStream(&mmsAssetStream));
+        request.setOpt(new curlpp::options::InfileSizeLarge(sizeInBytes));
+        
+        
+        // bin
+        // progress non funziona
+        // timeout
         
         bool bCreatingMissingDir = true;
         curlpp::OptionTrait<bool, CURLOPT_FTP_CREATE_MISSING_DIRS> creatingMissingDir(bCreatingMissingDir);
         request.setOpt(creatingMissingDir);
-        
+
         string ftpsPrefix("ftps");
         if (ftpUrl.size() >= ftpsPrefix.size() && 0 == ftpUrl.compare(0, ftpsPrefix.size(), ftpsPrefix))
         {
@@ -6415,5 +6433,7 @@ int MMSEngineProcessor::progressUploadCallback(
             return 1;   // stop downloading
     }
 
+    _logger->info(__FILEREF__ + "Upload still running");
+        
     return 0;
 }

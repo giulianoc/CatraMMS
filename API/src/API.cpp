@@ -1989,7 +1989,7 @@ void API::createDeliveryAuthorization(
         
         try
         {
-            tuple<int,shared_ptr<Workspace>,string,string,string> storageDetails =
+            tuple<int,shared_ptr<Workspace>,string,string,string,int64_t> storageDetails =
                 _mmsEngineDBFacade->getStorageDetails(physicalPathKey);
 
             int mmsPartitionNumber;
@@ -1997,8 +1997,9 @@ void API::createDeliveryAuthorization(
             string relativePath;
             string fileName;
             string deliveryFileName;
-            tie(mmsPartitionNumber, contentWorkspace, relativePath, fileName, deliveryFileName)
-                    = storageDetails;
+            int64_t sizeInBytes;
+            tie(mmsPartitionNumber, contentWorkspace, relativePath, fileName, 
+                    deliveryFileName, sizeInBytes) = storageDetails;
 
             if (deliveryFileName != "")
             {
