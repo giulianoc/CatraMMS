@@ -6083,7 +6083,7 @@ void MMSEngineProcessor::ftpUploadMediaSource(
              */
         }
 
-        // it seems curl FTP does not support progress...
+        // FTP progress works only in case of FTP Passive
         chrono::system_clock::time_point lastProgressUpdate = chrono::system_clock::now();
         double lastPercentageUpdated = -1.0;
         bool uploadingStoppedByUser = false;
