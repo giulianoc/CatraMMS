@@ -5528,7 +5528,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
         else
             ingestionJobRoot[field] = static_cast<string>(resultSet->getString("endProcessing"));
 
-        if (ingestionType == IngestionType::AddContent)
+        // if (ingestionType == IngestionType::AddContent)
         {
             field = "downloadingProgress";
             if (resultSet->isNull("downloadingProgress"))
@@ -5537,7 +5537,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
                 ingestionJobRoot[field] = resultSet->getInt64("downloadingProgress");
         }
 
-        if (ingestionType == IngestionType::AddContent)
+        // if (ingestionType == IngestionType::AddContent)
         {
             field = "uploadingProgress";
             if (resultSet->isNull("uploadingProgress"))
