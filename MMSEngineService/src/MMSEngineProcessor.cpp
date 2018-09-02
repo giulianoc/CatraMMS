@@ -6460,10 +6460,10 @@ int MMSEngineProcessor::progressUploadCallback(
     }
 
     _logger->info(__FILEREF__ + "Upload still running"
-        ", dltotal: " + to_string(dltotal)
-        ", dlnow: " + to_string(dlnow)
-        ", ultotal: " + to_string(ultotal)
-        ", ulnow: " + to_string(ulnow)
+        + ", dltotal: " + to_string(dltotal)
+        + ", dlnow: " + to_string(dlnow)
+        + ", ultotal: " + to_string(ultotal)
+        + ", ulnow: " + to_string(ulnow)
     );
         
     return 0;
