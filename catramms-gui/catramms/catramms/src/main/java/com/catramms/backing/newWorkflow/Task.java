@@ -67,7 +67,7 @@ public class Task implements Serializable
     private Long ftpDeliveryPort;
     private String ftpDeliveryUserName;
     private String ftpDeliveryPassword;
-    private String ftpDeliveryRemoteDir;
+    private String ftpDeliveryRemoteDirectory;
 
     private boolean childTaskCreated;
     private boolean childEventOnSuccessCreated;
@@ -531,11 +531,11 @@ public class Task implements Serializable
         this.ftpDeliveryPassword = ftpDeliveryPassword;
     }
 
-    public String getFtpDeliveryRemoteDir() {
-        return ftpDeliveryRemoteDir;
+    public String getFtpDeliveryRemoteDirectory() {
+        return ftpDeliveryRemoteDirectory;
     }
 
-    public void setFtpDeliveryRemoteDir(String ftpDeliveryRemoteDir) {
-        this.ftpDeliveryRemoteDir = ftpDeliveryRemoteDir;
+    public void setFtpDeliveryRemoteDirectory(String ftpDeliveryRemoteDirectory) {
+        this.ftpDeliveryRemoteDirectory = ftpDeliveryRemoteDirectory;
     }
 }

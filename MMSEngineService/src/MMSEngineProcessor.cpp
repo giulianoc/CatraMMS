@@ -2292,7 +2292,7 @@ void MMSEngineProcessor::ftpDeliveryContent(
         int ftpPort;
         string ftpUserName;
         string ftpPassword;
-        string ftpRemoteDir;
+        string ftpRemoteDirectory;
         {
             string field = "Server";
             if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
@@ -2338,11 +2338,9 @@ void MMSEngineProcessor::ftpDeliveryContent(
             }
             ftpPassword = parametersRoot.get(field, "XXX").asString();
 
-            field = "RemoteDir";
-            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-                ftpRemoteDir = "/";
-            else
-                ftpRemoteDir = parametersRoot.get(field, "XXX").asString();
+            field = "RemoteDirectory";
+            if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+                ftpRemoteDirectory = parametersRoot.get(field, "XXX").asString();
         }
         
         for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
@@ -2352,6 +2350,7 @@ void MMSEngineProcessor::ftpDeliveryContent(
             string relativePath;
             string fileName;
             int64_t sizeInBytes;
+            string deliveryFileName;
             
             int64_t key;
             MMSEngineDBFacade::ContentType referenceContentType;
@@ -2369,7 +2368,6 @@ void MMSEngineProcessor::ftpDeliveryContent(
 
                 int64_t physicalPathKey;
                 shared_ptr<Workspace> workspace;
-                string deliveryFileName;
                 
                 tie(physicalPathKey, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, sizeInBytes) 
                         = storageDetails;
@@ -2381,7 +2379,6 @@ void MMSEngineProcessor::ftpDeliveryContent(
                     = _mmsEngineDBFacade->getStorageDetails(key);
 
                 shared_ptr<Workspace> workspace;
-                string deliveryFileName;
                 
                 tie(mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, sizeInBytes) 
                         = storageDetails;
@@ -2402,7 +2399,8 @@ void MMSEngineProcessor::ftpDeliveryContent(
             
             thread ftpUploadMediaSource(&MMSEngineProcessor::ftpUploadMediaSource, this, 
                 mmsAssetPathName, fileName, sizeInBytes, ingestionJobKey, workspace,
-                    ftpServer, ftpPort, ftpUserName, ftpPassword, ftpRemoteDir);
+                    ftpServer, ftpPort, ftpUserName, ftpPassword,
+                    ftpRemoteDirectory, deliveryFileName);
             ftpUploadMediaSource.detach();
         }
     }
@@ -5991,7 +5989,8 @@ RESUMING FILE TRANSFERS
 void MMSEngineProcessor::ftpUploadMediaSource(
         string mmsAssetPathName, string fileName, int64_t sizeInBytes,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
-        string ftpServer, int ftpPort, string ftpUserName, string ftpPassword, string ftpRemoteDir)
+        string ftpServer, int ftpPort, string ftpUserName, string ftpPassword, 
+        string ftpRemoteDirectory, string ftpRemoteFileName)
 {
 
     // curl -T localfile.ext ftp://username:password@ftp.server.com/remotedir/remotefile.zip
@@ -6004,39 +6003,47 @@ void MMSEngineProcessor::ftpUploadMediaSource(
         string ftpUrl = string("ftp://") + ftpUserName + ":" + ftpPassword + "@" 
                 + ftpServer 
                 + ":" + to_string(ftpPort) 
-                + ftpRemoteDir;
+                + ftpRemoteDirectory;
         
-        if (ftpRemoteDir.back() == '/')
+        if (ftpRemoteDirectory.size() == 0 || ftpRemoteDirectory.back() != '/')
+            ftpUrl  += "/";
+
+        if (ftpRemoteFileName == "")
             ftpUrl  += fileName;
         else
-            ftpUrl  += ("/" + fileName);
+            ftpUrl += ftpRemoteFileName;
 
         _logger->info(__FILEREF__ + "FTP Uploading"
             + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", mmsAssetPathName: " + mmsAssetPathName
+            + ", sizeInBytes: " + to_string(sizeInBytes)
             + ", ftpUrl: " + ftpUrl
         );
 
         ifstream mmsAssetStream(mmsAssetPathName, ifstream::binary);
         // FILE *mediaSourceFileStream = fopen(workspaceIngestionBinaryPathName.c_str(), "wb");
 
+        // Active/Passive... see the next URL, section 'FTP Peculiarities We Need'
         // https://curl.haxx.se/libcurl/c/libcurl-tutorial.html
+
         // https://curl.haxx.se/libcurl/c/ftpupload.html
         curlpp::Cleanup cleaner;
         curlpp::Easy request;
 
         request.setOpt(new curlpp::options::Url(ftpUrl));
-        request.setOpt(new curlpp::options::Verbose(true)); 
+        request.setOpt(new curlpp::options::Verbose(false)); 
         request.setOpt(new curlpp::options::Upload(true)); 
         
         request.setOpt(new curlpp::options::ReadStream(&mmsAssetStream));
-        request.setOpt(new curlpp::options::InfileSizeLarge(sizeInBytes));
+        request.setOpt(new curlpp::options::InfileSizeLarge((curl_off_t) sizeInBytes));
         
         
-        // bin
-        // progress non funziona
-        // timeout
+        // curl will default to binary transfer mode for FTP, 
+        // and you ask for ascii mode instead with -B, --use-ascii or 
+        // by making sure the URL ends with ;type=A.
+        
+        // timeout (CURLOPT_FTP_RESPONSE_TIMEOUT)
         
         bool bCreatingMissingDir = true;
         curlpp::OptionTrait<bool, CURLOPT_FTP_CREATE_MISSING_DIRS> creatingMissingDir(bCreatingMissingDir);
@@ -6045,21 +6052,23 @@ void MMSEngineProcessor::ftpUploadMediaSource(
         string ftpsPrefix("ftps");
         if (ftpUrl.size() >= ftpsPrefix.size() && 0 == ftpUrl.compare(0, ftpsPrefix.size(), ftpsPrefix))
         {
-            // this ia not implemented yet
-            // CURLOPT_FTP_SSL
-            // CURLOPT_FTPSSLAUTH
+            /* Next statements is in case we want ftp protocol to use SSL or TLS
+             * google CURLOPT_FTPSSLAUTH and CURLOPT_FTP_SSL
 
-            /*            
             // disconnect if we can't validate server's cert
             bool bSslVerifyPeer = false;
             curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
             request.setOpt(sslVerifyPeer);
 
-            curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
-            request.setOpt(sslVerifyHost);
-            */
+            curlpp::OptionTrait<curl_ftpssl, CURLOPT_FTP_SSL> ftpSsl(CURLFTPSSL_TRY);
+            request.setOpt(ftpSsl);
+
+            curlpp::OptionTrait<curl_ftpauth, CURLOPT_FTPSSLAUTH> ftpSslAuth(CURLFTPAUTH_TLS);
+            request.setOpt(ftpSslAuth);
+             */
         }
 
+        // it seems curl FTP does not support progress...
         chrono::system_clock::time_point lastProgressUpdate = chrono::system_clock::now();
         double lastPercentageUpdated = -1.0;
         curlpp::types::ProgressFunctionFunctor functor = bind(&MMSEngineProcessor::progressUploadCallback, this,
@@ -6072,6 +6081,7 @@ void MMSEngineProcessor::ftpUploadMediaSource(
             + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", mmsAssetPathName: " + mmsAssetPathName
+            + ", sizeInBytes: " + to_string(sizeInBytes)
         );
         request.perform();
 

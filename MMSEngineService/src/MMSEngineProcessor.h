@@ -224,7 +224,8 @@ private:
     void ftpUploadMediaSource(
         string mmsAssetPathName, string fileName, int64_t sizeInBytes,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
-        string ftpServer, int ftpPort, string ftpUserName, string ftpPassword, string ftpRemoteDir);
+        string ftpServer, int ftpPort, string ftpUserName, string ftpPassword, 
+        string ftpRemoteDirectory, string ftpRemoteFileName);
 } ;
 
 #endif

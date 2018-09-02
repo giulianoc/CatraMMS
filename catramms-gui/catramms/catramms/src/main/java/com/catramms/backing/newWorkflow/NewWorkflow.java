@@ -133,7 +133,7 @@ public class NewWorkflow extends Workspace implements Serializable {
     private Long taskFtpDeliveryPort;
     private String taskFtpDeliveryUserName;
     private String taskFtpDeliveryPassword;
-    private String taskFtpDeliveryRemoteDir;
+    private String taskFtpDeliveryRemoteDirectory;
 
     private String taskContentType;
     List<String> taskContentTypesList = new ArrayList<>();
@@ -1488,8 +1488,8 @@ public class NewWorkflow extends Workspace implements Serializable {
                     workflowIssueList.add(workflowIssue);
                 }
 
-                if (task.getFtpDeliveryRemoteDir() != null && !task.getFtpDeliveryRemoteDir().equalsIgnoreCase(""))
-                    joParameters.put("RemoteDir", task.getFtpDeliveryRemoteDir());
+                if (task.getFtpDeliveryRemoteDirectory() != null && !task.getFtpDeliveryRemoteDirectory().equalsIgnoreCase(""))
+                    joParameters.put("RemoteDirectory", task.getFtpDeliveryRemoteDirectory());
 
                 if (task.getReferences() != null && !task.getReferences().equalsIgnoreCase(""))
                 {
@@ -2607,7 +2607,7 @@ public class NewWorkflow extends Workspace implements Serializable {
                         taskFtpDeliveryPort = task.getFtpDeliveryPort();
                     taskFtpDeliveryUserName = task.getFtpDeliveryUserName();
                     taskFtpDeliveryPassword = task.getFtpDeliveryPassword();
-                    taskFtpDeliveryRemoteDir = task.getFtpDeliveryRemoteDir();
+                    taskFtpDeliveryRemoteDirectory = task.getFtpDeliveryRemoteDirectory();
 
                     {
                         mLogger.info("Initializing mediaItems...");
@@ -2906,13 +2906,12 @@ public class NewWorkflow extends Workspace implements Serializable {
             }
             else if (task.getType().equalsIgnoreCase("FTP-Delivery"))
             {
-                task.setReferences(taskReferences);
                 task.setLabel(taskLabel);
                 task.setFtpDeliveryServer(taskFtpDeliveryServer);
                 task.setFtpDeliveryPort(taskFtpDeliveryPort);
                 task.setFtpDeliveryUserName(taskFtpDeliveryUserName);
                 task.setFtpDeliveryPassword(taskFtpDeliveryPassword);
-                task.setFtpDeliveryRemoteDir(taskFtpDeliveryRemoteDir);
+                task.setFtpDeliveryRemoteDirectory(taskFtpDeliveryRemoteDirectory);
             }
             else
             {
@@ -3947,11 +3946,11 @@ public class NewWorkflow extends Workspace implements Serializable {
         this.taskFtpDeliveryPassword = taskFtpDeliveryPassword;
     }
 
-    public String getTaskFtpDeliveryRemoteDir() {
-        return taskFtpDeliveryRemoteDir;
+    public String getTaskFtpDeliveryRemoteDirectory() {
+        return taskFtpDeliveryRemoteDirectory;
     }
 
-    public void setTaskFtpDeliveryRemoteDir(String taskFtpDeliveryRemoteDir) {
-        this.taskFtpDeliveryRemoteDir = taskFtpDeliveryRemoteDir;
+    public void setTaskFtpDeliveryRemoteDirectory(String taskFtpDeliveryRemoteDirectory) {
+        this.taskFtpDeliveryRemoteDirectory = taskFtpDeliveryRemoteDirectory;
     }
 }

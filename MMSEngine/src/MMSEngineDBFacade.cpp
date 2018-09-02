@@ -5883,7 +5883,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
         Json::Value mediaItemsRoot(Json::arrayValue);
         {
             lastSQLCommand = 
-                string("select mediaItemKey, title, ingester, keywords, userData, contentProviderKey, "
+                string("select mediaItemKey, title, deliveryFileName, ingester, keywords, userData, contentProviderKey, "
                     "DATE_FORMAT(convert_tz(ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate, "
                     "DATE_FORMAT(convert_tz(startPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as startPublishing, "
                     "DATE_FORMAT(convert_tz(endPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endPublishing, "
@@ -5919,6 +5919,12 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 
                 field = "title";
                 mediaItemRoot[field] = static_cast<string>(resultSet->getString("title"));
+
+                field = "deliveryFileName";
+                if (resultSet->isNull("deliveryFileName"))
+                    mediaItemRoot[field] = Json::nullValue;
+                else
+                    mediaItemRoot[field] = static_cast<string>(resultSet->getString("deliveryFileName"));
 
                 field = "ingester";
                 if (resultSet->isNull("ingester"))
