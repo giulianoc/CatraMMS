@@ -6024,6 +6024,19 @@ void MMSEngineProcessor::ftpUploadMediaSource(
         ifstream mmsAssetStream(mmsAssetPathName, ifstream::binary);
         // FILE *mediaSourceFileStream = fopen(workspaceIngestionBinaryPathName.c_str(), "wb");
 
+        // 1. PORT-mode FTP (Active) - NO Firewall friendly
+        //  - FTP client: Sends a request to open a command channel from its TCP port (i.e.: 6000) to the FTP server’s TCP port 21
+        //  - FTP client: Sends a data request (PORT command) to the FTP server. The FTP client includes in the PORT command the data port number 
+        //      it opened to receive data. In this example, the FTP client has opened TCP port 6001 to receive the data.
+        //  - FTP server opens a new inbound connection to the FTP client on the port indicated by the FTP client in the PORT command. 
+        //      The FTP server source port is TCP port 20. In this example, the FTP server sends data from its own TCP port 20 to the FTP client’s TCP port 6001.
+        //  In this conversation, two connections were established: an outbound connection initiated by the FTP client and an inbound connection established by the FTP server.
+        // 2. PASV-mode FTP (Passive) - Firewall friendly
+        //  - FTP client sends a request to open a command channel from its TCP port (i.e.: 6000) to the FTP server’s TCP port 21
+        //  - FTP client sends a PASV command requesting that the FTP server open a port number that the FTP client can connect to establish the data channel.
+        //      FTP serve sends over the command channel the TCP port number that the FTP client can initiate a connection to establish the data channel (i.e.: 7000)
+        //  - FTP client opens a new connection from its own response port TCP 6001 to the FTP server’s data channel 7000. Data transfer takes place through this channel.
+        
         // Active/Passive... see the next URL, section 'FTP Peculiarities We Need'
         // https://curl.haxx.se/libcurl/c/libcurl-tutorial.html
 
@@ -6039,6 +6052,10 @@ void MMSEngineProcessor::ftpUploadMediaSource(
         request.setOpt(new curlpp::options::InfileSizeLarge((curl_off_t) sizeInBytes));
         
         
+        bool bFtpUseEpsv = false;
+        curlpp::OptionTrait<bool, CURLOPT_FTP_USE_EPSV> ftpUseEpsv(bFtpUseEpsv);
+        request.setOpt(ftpUseEpsv);
+
         // curl will default to binary transfer mode for FTP, 
         // and you ask for ascii mode instead with -B, --use-ascii or 
         // by making sure the URL ends with ;type=A.
