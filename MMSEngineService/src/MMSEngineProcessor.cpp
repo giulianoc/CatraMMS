@@ -5998,8 +5998,6 @@ void MMSEngineProcessor::ftpUploadMediaSource(
 
     try 
     {
-        bool uploadingStoppedByUser = false;
-
         string ftpUrl = string("ftp://") + ftpUserName + ":" + ftpPassword + "@" 
                 + ftpServer 
                 + ":" + to_string(ftpPort) 
@@ -6088,6 +6086,7 @@ void MMSEngineProcessor::ftpUploadMediaSource(
         // it seems curl FTP does not support progress...
         chrono::system_clock::time_point lastProgressUpdate = chrono::system_clock::now();
         double lastPercentageUpdated = -1.0;
+        bool uploadingStoppedByUser = false;
         curlpp::types::ProgressFunctionFunctor functor = bind(&MMSEngineProcessor::progressUploadCallback, this,
                 ingestionJobKey, lastProgressUpdate, lastPercentageUpdated, uploadingStoppedByUser,
                 placeholders::_1, placeholders::_2, placeholders::_3, placeholders::_4);
@@ -6460,7 +6459,12 @@ int MMSEngineProcessor::progressUploadCallback(
             return 1;   // stop downloading
     }
 
-    _logger->info(__FILEREF__ + "Upload still running");
+    _logger->info(__FILEREF__ + "Upload still running"
+        ", dltotal: " + to_string(dltotal)
+        ", dlnow: " + to_string(dlnow)
+        ", ultotal: " + to_string(ultotal)
+        ", ulnow: " + to_string(ulnow)
+    );
         
     return 0;
 }
