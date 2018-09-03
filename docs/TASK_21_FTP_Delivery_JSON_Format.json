@@ -1,3 +1,4 @@
+```javascript
 "Task": {
 	// optional
 	"Label"="My FTP Delivery",
@@ -41,3 +42,4 @@
 
 	}
 }
+```
