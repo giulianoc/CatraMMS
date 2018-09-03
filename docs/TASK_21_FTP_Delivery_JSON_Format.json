@@ -1,8 +1,8 @@
 "Task": {
-	/* optional */
+	// optional
 	"Label"="My FTP Delivery",
 
-	/* mandatory */
+	// mandatory
 	"Type": "FTP-Delivery",
 
 	"Parameters": {
