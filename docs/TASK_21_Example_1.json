@@ -11,6 +11,5 @@
 		"Server": "ftp server name or IP address",
 		"UserName": "ftp user name",
 		"Password": "ftp password"
-
 	}
 }

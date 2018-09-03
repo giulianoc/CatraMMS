@@ -1461,10 +1461,13 @@ public class CatraMMS {
             mediaItem.setMediaItemKey(mediaItemInfo.getLong("mediaItemKey"));
             mediaItem.setContentType(mediaItemInfo.getString("contentType"));
             mediaItem.setTitle(mediaItemInfo.getString("title"));
+            if (!mediaItemInfo.isNull("deliveryFileName"))
+                mediaItem.setDeliveryFileName(mediaItemInfo.getString("deliveryFileName"));
             mediaItem.setIngestionDate(simpleDateFormat.parse(mediaItemInfo.getString("ingestionDate")));
             mediaItem.setStartPublishing(simpleDateFormat.parse(mediaItemInfo.getString("startPublishing")));
             mediaItem.setEndPublishing(simpleDateFormat.parse(mediaItemInfo.getString("endPublishing")));
-            mediaItem.setIngester(mediaItemInfo.getString("ingester"));
+            if (!mediaItemInfo.isNull("ingester"))
+                mediaItem.setIngester(mediaItemInfo.getString("ingester"));
             if (!mediaItemInfo.isNull("keywords"))
                 mediaItem.setKeywords(mediaItemInfo.getString("keywords"));
             if (!mediaItemInfo.isNull("userData"))

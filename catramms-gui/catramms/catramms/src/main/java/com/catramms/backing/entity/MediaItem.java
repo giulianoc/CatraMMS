@@ -12,6 +12,7 @@ public class MediaItem implements Serializable{
     private Long mediaItemKey;
     private String title;
     private String contentType;
+    private String deliveryFileName;
     private Date ingestionDate;
     private Date startPublishing;
     private Date endPublishing;
@@ -56,6 +57,14 @@ public class MediaItem implements Serializable{
 
     public void setContentType(String contentType) {
         this.contentType = contentType;
+    }
+
+    public String getDeliveryFileName() {
+        return deliveryFileName;
+    }
+
+    public void setDeliveryFileName(String deliveryFileName) {
+        this.deliveryFileName = deliveryFileName;
     }
 
     public Date getIngestionDate() {

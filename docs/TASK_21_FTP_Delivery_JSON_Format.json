@@ -38,8 +38,7 @@
 		"Password": "ftp password",
 
 		// optional, default is "/"
-		"RemoteDir": "ftp remote dir"
-
+		"RemoteDirectory": "ftp remote dir"
 	}
 }
 ```
