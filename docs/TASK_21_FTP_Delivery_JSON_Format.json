@@ -1,9 +1,8 @@
-```javascript
 "Task": {
-	// optional
+	/* optional */
 	"Label"="My FTP Delivery",
 
-	// mandatory
+	/* mandatory */
 	"Type": "FTP-Delivery",
 
 	"Parameters": {
@@ -41,4 +40,3 @@
 		"RemoteDirectory": "ftp remote dir"
 	}
 }
-```
