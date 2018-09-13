@@ -98,14 +98,11 @@ private:
         Json::Value parametersRoot,
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
 
-    /*
-    string generateImageMetadataToIngest(
+    void httpCallback(
         int64_t ingestionJobKey,
-        bool mjpeg,
-        string fileFormat,
-        Json::Value parametersRoot
-    );
-    */
+        shared_ptr<Workspace> workspace,
+        Json::Value parametersRoot,
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
 
     string generateMediaMetadataToIngest(
         int64_t ingestionJobKey,

@@ -387,6 +387,7 @@ public:
         OverlayImageOnVideo     = 12,
         OverlayTextOnVideo      = 13,
         FTPDelivery             = 14,
+        HTTPCallback            = 15,
         EmailNotification       = 30,
         ContentUpdate           = 50,
         ContentRemove           = 60
@@ -425,6 +426,8 @@ public:
                 return "Overlay-Text-On-Video";
             case IngestionType::FTPDelivery:
                 return "FTP-Delivery";
+            case IngestionType::HTTPCallback:
+                return "HTTP-Callback";
                 
             case IngestionType::EmailNotification:
                 return "Email-Notification";
@@ -470,6 +473,8 @@ public:
             return IngestionType::OverlayTextOnVideo;
         else if (lowerCase == "ftp-delivery")
             return IngestionType::FTPDelivery;
+        else if (lowerCase == "http-callback")
+            return IngestionType::HTTPCallback;
 
         else if (lowerCase == "email-notification")
             return IngestionType::EmailNotification;
