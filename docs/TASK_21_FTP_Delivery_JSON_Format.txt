@@ -1,0 +1,42 @@
+"Task": {
+	// optional
+	"Label"="My FTP Delivery",
+
+	// mandatory
+	"Type": "FTP-Delivery",
+
+	"Parameters": {
+		// mandatory
+		"References": [
+			// mandatory. One or more Reference needed to identify the videos (mediaItemKeys) or
+			// the profiles (physicalPathKey) to be uploaded through FTP.
+			// In case this task is placed inside an onSuccess event, 
+			// the Reference... item can be omitted.
+			// In such a case, the System will automatically add the Reference... item using the key
+			// of the video or the profile by which this task depend on.
+			// As reference can be used "ReferenceMediaItemKey", "ReferenceUniqueName" or 
+			// "ReferencePhysicalPathKey".
+			// In case this task depend on one or more tasks generating videos, the videos will be 
+			// uploaded.
+			// In case this task depend on one or more tasks generating profiles (i.e. Encode Task),
+			// the profiles will be uploaded.
+
+			{ "ReferenceMediaItemKey": 11 }
+		],
+
+		// mandatory
+		"Server": "ftp server name or IP address",
+
+		// optional
+		"Port": 21,
+
+		// mandatory
+		"UserName": "ftp user name",
+
+		// mandatory
+		"Password": "ftp password",
+
+		// optional, default is "/"
+		"RemoteDirectory": "ftp remote dir"
+	}
+}

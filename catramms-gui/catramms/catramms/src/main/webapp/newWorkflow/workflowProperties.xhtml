@@ -3378,11 +3378,7 @@
                 </p:column>
                 <p:column>
                     <p:inputText id="taskRemoteDir_FTP_Delivery" style="width: 100%"
-<<<<<<< HEAD
-                                 value="#{newWorkflow.taskFtpDeliveryRemoteDir}"
-=======
                                  value="#{newWorkflow.taskFtpDeliveryRemoteDirectory}"
->>>>>>> 76833fbeea6613bd0c261951c9bbc822710b3e32
                                  autocomplete="true"
                                  placeholder="ftp remote dir"/>
                 </p:column>
@@ -3405,6 +3401,146 @@
                                      update=":selectMediaItemsForm"
                                      oncomplete="PF('selectMediaItems').show()"
                             />
+                </p:column>
+            </p:row>
+
+        </p:panelGrid>
+    </h:panelGroup>
+
+    <h:panelGroup rendered="#{newWorkflow.nodeType == 'HTTP-Callback'}">
+        <p:toolbar>
+            <f:facet name="left">
+                <p:outputLabel value="HTTP-Callback"/>
+            </f:facet>
+            <f:facet name="right">
+                <p:defaultCommand target="saveHTTPCallbackProperties"/>
+
+                <p:commandButton id="saveHTTPCallbackProperties" value="Save Properties"
+                                 action="#{newWorkflow.saveTaskProperties}"
+                                 update="viewForm:workflowTree,viewForm:ingestWorkflowButton,viewForm:workflowIssuesWarning,jsonWorkflowForm:jsonWorkflow"
+                />
+            </f:facet>
+        </p:toolbar>
+
+        <p:panelGrid cellpadding="10" style="width: 100%">
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Label" style="font-weight: bold"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskLabel_HTTP_Callback" style="width: 100%"
+                                 value="#{newWorkflow.taskLabel}"
+                                 autocomplete="true"
+                                 placeholder="label"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Protocol"/>
+                </p:column>
+                <p:column>
+                    <p:selectOneMenu id="taskProtocol_HTTP_Callback"
+                                     value="#{newWorkflow.taskHttpProtocol}"
+                                     autoWidth="false">
+                        <f:selectItems value="#{newWorkflow.taskHttpProtocolsList}"/>
+                    </p:selectOneMenu>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Host Name"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskHostName_HTTP_Callback" style="width: 100%"
+                                 value="#{newWorkflow.taskHttpCallbackHostName}"
+                                 autocomplete="true"
+                                 placeholder="Host name"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Port"/>
+                </p:column>
+                <p:column>
+                    <p:inputNumber id="taskPort_HTTP_Callback"
+                                   required="false"
+                                   decimalPlaces="0"
+                                   value="#{newWorkflow.taskHttpCallbackPort}"
+                                   autocomplete="true"
+                                   placeholder="HTTP port"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="URI"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskURI_HTTP_Callback" style="width: 100%"
+                                 value="#{newWorkflow.taskHttpCallbackURI}"
+                                 autocomplete="true"
+                                 placeholder="uri"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Parameters"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskParameters_HTTP_Callback" style="width: 100%"
+                                 value="#{newWorkflow.taskHttpCallbackParameters}"
+                                 autocomplete="true"
+                                 placeholder="parameters"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Method"/>
+                </p:column>
+                <p:column>
+                    <p:selectOneMenu id="taskMethod_HTTP_Callback"
+                                     value="#{newWorkflow.taskHttpMethod}"
+                                     autoWidth="false">
+                        <f:selectItems value="#{newWorkflow.taskHttpMethodsList}"/>
+                    </p:selectOneMenu>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Headers"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskHeaders_HTTP_Callback" style="width: 100%"
+                                 value="#{newWorkflow.taskHttpCallbackHeaders}"
+                                 autocomplete="true"
+                                 placeholder="headers"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="References (Media Item Key)"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskReferences_HTTP_Callback" style="width: 100%"
+                                 required="false"
+                                 value="#{newWorkflow.taskReferences}"
+                                 autocomplete="true"
+                                 placeholder="if left blank, references are retrieved from Workflow"/>
+                    <br/>
+                    <p:commandButton id="taskSelectReferences_HTTP_Callback"
+                                     icon="ui-icon-search"
+                                     value="Select Media"
+                                     update=":selectMediaItemsForm"
+                                     oncomplete="PF('selectMediaItems').show()"
+                    />
                 </p:column>
             </p:row>
 

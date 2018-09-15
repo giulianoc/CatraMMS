@@ -90,6 +90,9 @@ public:
     void validateFTPDeliveryMetadata(int64_t workspaceKey,
         Json::Value parametersRoot, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
 
+    void validateHTTPCallbackMetadata(int64_t workspaceKey,
+        Json::Value parametersRoot, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
+
     void validateEncodingProfilesSetRootMetadata(
         MMSEngineDBFacade::ContentType contentType, 
         Json::Value encodingProfilesSetRoot);

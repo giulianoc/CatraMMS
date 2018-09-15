@@ -68,6 +68,13 @@ public class Task implements Serializable
     private String ftpDeliveryUserName;
     private String ftpDeliveryPassword;
     private String ftpDeliveryRemoteDirectory;
+    private String httpCallbackProtocol;
+    private String httpCallbackHostName;
+    private Long httpCallbackPort;
+    private String httpCallbackURI;
+    private String httpCallbackParameters;
+    private String httpCallbackMethod;
+    private String httpCallbackHeaders;
 
     private boolean childTaskCreated;
     private boolean childEventOnSuccessCreated;
@@ -537,5 +544,61 @@ public class Task implements Serializable
 
     public void setFtpDeliveryRemoteDirectory(String ftpDeliveryRemoteDirectory) {
         this.ftpDeliveryRemoteDirectory = ftpDeliveryRemoteDirectory;
+    }
+
+    public String getHttpCallbackProtocol() {
+        return httpCallbackProtocol;
+    }
+
+    public void setHttpCallbackProtocol(String httpCallbackProtocol) {
+        this.httpCallbackProtocol = httpCallbackProtocol;
+    }
+
+    public String getHttpCallbackHostName() {
+        return httpCallbackHostName;
+    }
+
+    public void setHttpCallbackHostName(String httpCallbackHostName) {
+        this.httpCallbackHostName = httpCallbackHostName;
+    }
+
+    public Long getHttpCallbackPort() {
+        return httpCallbackPort;
+    }
+
+    public void setHttpCallbackPort(Long httpCallbackPort) {
+        this.httpCallbackPort = httpCallbackPort;
+    }
+
+    public String getHttpCallbackURI() {
+        return httpCallbackURI;
+    }
+
+    public void setHttpCallbackURI(String httpCallbackURI) {
+        this.httpCallbackURI = httpCallbackURI;
+    }
+
+    public String getHttpCallbackParameters() {
+        return httpCallbackParameters;
+    }
+
+    public void setHttpCallbackParameters(String httpCallbackParameters) {
+        this.httpCallbackParameters = httpCallbackParameters;
+    }
+
+    public String getHttpCallbackMethod() {
+        return httpCallbackMethod;
+    }
+
+    public void setHttpCallbackMethod(String httpCallbackMethod) {
+        this.httpCallbackMethod = httpCallbackMethod;
+    }
+
+    public String getHttpCallbackHeaders() {
+        return httpCallbackHeaders;
+    }
+
+    public void setHttpCallbackHeaders(String httpCallbackHeaders) {
+        this.httpCallbackHeaders = httpCallbackHeaders;
     }
 }

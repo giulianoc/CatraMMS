@@ -851,10 +851,10 @@ public:
         int64_t mediaItemKey, ContentType contentType,
         string encodingProfileLabel);
 
-    MMSEngineDBFacade::ContentType getMediaItemKeyDetails(
+    pair<MMSEngineDBFacade::ContentType,string> getMediaItemKeyDetails(
         int64_t mediaItemKey, bool warningIfMissing);
 
-    pair<int64_t,MMSEngineDBFacade::ContentType> getMediaItemKeyDetailsByPhysicalPathKey(
+    tuple<int64_t,MMSEngineDBFacade::ContentType,string> getMediaItemKeyDetailsByPhysicalPathKey(
         int64_t physicalPathKey, bool warningIfMissing);
     
     void getMediaItemDetailsByIngestionJobKey(

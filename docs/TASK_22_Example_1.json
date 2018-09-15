@@ -1,0 +1,17 @@
+"Task": {
+	"Label"="My HTTP Callback",
+
+	"Type": "HTTP-Callback",
+
+	"Parameters": {
+		"Protocol": "https",
+
+		"HostName": "www.rsi.ch",
+
+		"URI": "/api/epg/la1",
+
+		"Parameters": "?Period=nowAndNext&OutputType=6",
+
+		"Method": "GET"
+	}
+}

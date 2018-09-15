@@ -134,9 +134,20 @@ public class NewWorkflow extends Workspace implements Serializable {
     private String taskFtpDeliveryUserName;
     private String taskFtpDeliveryPassword;
     private String taskFtpDeliveryRemoteDirectory;
+    private String taskHttpCallbackHostName;
+    private Long taskHttpCallbackPort;
+    private String taskHttpCallbackURI;
+    private String taskHttpCallbackParameters;
+    private String taskHttpCallbackHeaders;
 
     private String taskContentType;
     List<String> taskContentTypesList = new ArrayList<>();
+
+    private String taskHttpProtocol;
+    List<String> taskHttpProtocolsList = new ArrayList<>();
+
+    private String taskHttpMethod;
+    List<String> taskHttpMethodsList = new ArrayList<>();
 
     List<String> taskEncodingProfilesLabelSetList = new ArrayList<>();
     List<EncodingProfilesSet> taskVideoEncodingProfilesSetList = new ArrayList<>();
@@ -197,12 +208,26 @@ public class NewWorkflow extends Workspace implements Serializable {
         }
 
         {
+            taskEncodingPrioritiesList.clear();
             taskEncodingPrioritiesList.add("Low");
             taskEncodingPrioritiesList.add("Medium");
             taskEncodingPrioritiesList.add("High");
         }
 
         {
+            taskHttpProtocolsList.clear();
+            taskHttpProtocolsList.add("http");
+            taskHttpProtocolsList.add("https");
+        }
+
+        {
+            taskHttpMethodsList.clear();
+            taskHttpMethodsList.add("POST");
+            taskHttpMethodsList.add("GET");
+        }
+
+        {
+            taskContentTypesList.clear();
             taskContentTypesList.add("video");
             taskContentTypesList.add("audio");
             taskContentTypesList.add("image");
@@ -1506,6 +1531,82 @@ public class NewWorkflow extends Workspace implements Serializable {
                     }
                 }
             }
+            else if (task.getType().equalsIgnoreCase("HTTP-Callback"))
+            {
+                if (task.getLabel() != null && !task.getLabel().equalsIgnoreCase(""))
+                    jsonObject.put("Label", task.getLabel());
+                else
+                {
+                    WorkflowIssue workflowIssue = new WorkflowIssue();
+                    workflowIssue.setLabel("");
+                    workflowIssue.setFieldName("Label");
+                    workflowIssue.setTaskType(task.getType());
+                    workflowIssue.setIssue("The field is not initialized");
+
+                    workflowIssueList.add(workflowIssue);
+                }
+
+                if (task.getHttpCallbackProtocol() != null && !task.getHttpCallbackProtocol().equalsIgnoreCase(""))
+                    joParameters.put("Protocol", task.getHttpCallbackProtocol());
+
+                if (task.getHttpCallbackHostName() != null && !task.getHttpCallbackHostName().equalsIgnoreCase(""))
+                    joParameters.put("HostName", task.getHttpCallbackHostName());
+                else
+                {
+                    WorkflowIssue workflowIssue = new WorkflowIssue();
+                    workflowIssue.setLabel(task.getLabel());
+                    workflowIssue.setFieldName("HostName");
+                    workflowIssue.setTaskType(task.getType());
+                    workflowIssue.setIssue("The field is not initialized");
+
+                    workflowIssueList.add(workflowIssue);
+                }
+
+                if (task.getHttpCallbackPort() != null)
+                    joParameters.put("Port", task.getHttpCallbackPort());
+
+                if (task.getHttpCallbackURI() != null && !task.getHttpCallbackURI().equalsIgnoreCase(""))
+                    joParameters.put("URI", task.getHttpCallbackURI());
+                else
+                {
+                    WorkflowIssue workflowIssue = new WorkflowIssue();
+                    workflowIssue.setLabel(task.getLabel());
+                    workflowIssue.setFieldName("URI");
+                    workflowIssue.setTaskType(task.getType());
+                    workflowIssue.setIssue("The field is not initialized");
+
+                    workflowIssueList.add(workflowIssue);
+                }
+
+                if (task.getHttpCallbackParameters() != null && !task.getHttpCallbackParameters().equalsIgnoreCase(""))
+                    joParameters.put("Parameters", task.getHttpCallbackParameters());
+
+                if (task.getHttpCallbackMethod() != null && !task.getHttpCallbackMethod().equalsIgnoreCase(""))
+                    joParameters.put("Method", task.getHttpCallbackMethod());
+
+                {
+                    JSONArray jaHeaders = new JSONArray();
+                    joParameters.put("Headers", jaHeaders);
+
+                    if (task.getHttpCallbackHeaders() != null && !task.getHttpCallbackHeaders().equalsIgnoreCase(""))
+                        jaHeaders.put(task.getHttpCallbackMethod());
+                }
+
+                if (task.getReferences() != null && !task.getReferences().equalsIgnoreCase(""))
+                {
+                    JSONArray jaReferences = new JSONArray();
+                    joParameters.put("References", jaReferences);
+
+                    String [] mediaItemKeyReferences = task.getReferences().split(",");
+                    for (String mediaItemKeyReference: mediaItemKeyReferences)
+                    {
+                        JSONObject joReference = new JSONObject();
+                        joReference.put("ReferenceMediaItemKey", Long.parseLong(mediaItemKeyReference.trim()));
+
+                        jaReferences.put(joReference);
+                    }
+                }
+            }
             else
             {
                 mLogger.error("Unknonw task.getType(): " + task.getType());
@@ -2628,6 +2729,38 @@ public class NewWorkflow extends Workspace implements Serializable {
                         fillMediaItems();
                     }
                 }
+                else if (task.getType().equalsIgnoreCase("HTTP-Callback"))
+                {
+                    taskReferences = task.getReferences() == null ? "" : task.getReferences();
+                    taskLabel = task.getLabel();
+                    taskHttpProtocol = task.getHttpCallbackProtocol();
+                    taskHttpCallbackHostName = task.getHttpCallbackHostName();
+                    if (task.getHttpCallbackPort() != null)
+                        taskHttpCallbackPort = task.getHttpCallbackPort();
+                    taskHttpCallbackURI = task.getHttpCallbackURI();
+                    taskHttpCallbackParameters = task.getHttpCallbackParameters();
+                    taskHttpMethod = task.getHttpCallbackMethod();
+                    taskHttpCallbackHeaders = task.getHttpCallbackHeaders();
+
+                    {
+                        mLogger.info("Initializing mediaItems...");
+
+                        mediaItemsList.clear();
+                        mediaItemsSelectedList.clear();
+                        mediaItemsSelectionMode = "multiple";
+                        mediaItemsMaxMediaItemsNumber = new Long(100);
+                        {
+                            mediaItemsContentTypesList.clear();
+                            mediaItemsContentTypesList.add("video");
+                            mediaItemsContentTypesList.add("audio");
+                            mediaItemsContentTypesList.add("image");
+
+                            mediaItemsContentType = mediaItemsContentTypesList.get(0);
+                        }
+
+                        fillMediaItems();
+                    }
+                }
                 else
                 {
                     mLogger.error("Unknown task.getType(): " + task.getType());
@@ -2913,6 +3046,18 @@ public class NewWorkflow extends Workspace implements Serializable {
                 task.setFtpDeliveryUserName(taskFtpDeliveryUserName);
                 task.setFtpDeliveryPassword(taskFtpDeliveryPassword);
                 task.setFtpDeliveryRemoteDirectory(taskFtpDeliveryRemoteDirectory);
+            }
+            else if (task.getType().equalsIgnoreCase("HTTP-Callback"))
+            {
+                task.setReferences(taskReferences);
+                task.setLabel(taskLabel);
+                task.setHttpCallbackProtocol(taskHttpProtocol);
+                task.setHttpCallbackHostName(taskHttpCallbackHostName);
+                task.setHttpCallbackPort(taskHttpCallbackPort);
+                task.setHttpCallbackURI(taskHttpCallbackURI);
+                task.setHttpCallbackParameters(taskHttpCallbackParameters);
+                task.setHttpCallbackMethod(taskHttpMethod);
+                task.setHttpCallbackHeaders(taskHttpCallbackHeaders);
             }
             else
             {
@@ -3214,7 +3359,8 @@ public class NewWorkflow extends Workspace implements Serializable {
 
         for (MediaItem mediaItem: mediaItemsSelectedList)
         {
-            if (nodeType.equalsIgnoreCase("Remove-Content"))
+            if (nodeType.equalsIgnoreCase("Remove-Content") ||
+                    nodeType.equalsIgnoreCase("HTTP-Callback"))
             {
                 if (taskReferences == "")
                     taskReferences = mediaItem.getMediaItemKey().toString();
@@ -3953,5 +4099,77 @@ public class NewWorkflow extends Workspace implements Serializable {
 
     public void setTaskFtpDeliveryRemoteDirectory(String taskFtpDeliveryRemoteDirectory) {
         this.taskFtpDeliveryRemoteDirectory = taskFtpDeliveryRemoteDirectory;
+    }
+
+    public String getTaskHttpCallbackHostName() {
+        return taskHttpCallbackHostName;
+    }
+
+    public void setTaskHttpCallbackHostName(String taskHttpCallbackHostName) {
+        this.taskHttpCallbackHostName = taskHttpCallbackHostName;
+    }
+
+    public Long getTaskHttpCallbackPort() {
+        return taskHttpCallbackPort;
+    }
+
+    public void setTaskHttpCallbackPort(Long taskHttpCallbackPort) {
+        this.taskHttpCallbackPort = taskHttpCallbackPort;
+    }
+
+    public String getTaskHttpCallbackURI() {
+        return taskHttpCallbackURI;
+    }
+
+    public void setTaskHttpCallbackURI(String taskHttpCallbackURI) {
+        this.taskHttpCallbackURI = taskHttpCallbackURI;
+    }
+
+    public String getTaskHttpCallbackParameters() {
+        return taskHttpCallbackParameters;
+    }
+
+    public void setTaskHttpCallbackParameters(String taskHttpCallbackParameters) {
+        this.taskHttpCallbackParameters = taskHttpCallbackParameters;
+    }
+
+    public String getTaskHttpCallbackHeaders() {
+        return taskHttpCallbackHeaders;
+    }
+
+    public void setTaskHttpCallbackHeaders(String taskHttpCallbackHeaders) {
+        this.taskHttpCallbackHeaders = taskHttpCallbackHeaders;
+    }
+
+    public String getTaskHttpProtocol() {
+        return taskHttpProtocol;
+    }
+
+    public void setTaskHttpProtocol(String taskHttpProtocol) {
+        this.taskHttpProtocol = taskHttpProtocol;
+    }
+
+    public List<String> getTaskHttpProtocolsList() {
+        return taskHttpProtocolsList;
+    }
+
+    public void setTaskHttpProtocolsList(List<String> taskHttpProtocolsList) {
+        this.taskHttpProtocolsList = taskHttpProtocolsList;
+    }
+
+    public String getTaskHttpMethod() {
+        return taskHttpMethod;
+    }
+
+    public void setTaskHttpMethod(String taskHttpMethod) {
+        this.taskHttpMethod = taskHttpMethod;
+    }
+
+    public List<String> getTaskHttpMethodsList() {
+        return taskHttpMethodsList;
+    }
+
+    public void setTaskHttpMethodsList(List<String> taskHttpMethodsList) {
+        this.taskHttpMethodsList = taskHttpMethodsList;
     }
 }

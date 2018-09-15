@@ -826,7 +826,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
                             try
                             {
-                                httpCallback(
+                                httpCallbackTask(
                                         ingestionJobKey, 
                                         workspace, 
                                         parametersRoot, 
@@ -834,7 +834,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             }
                             catch(runtime_error e)
                             {
-                                _logger->error(__FILEREF__ + "httpCallback failed"
+                                _logger->error(__FILEREF__ + "httpCallbackTask failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", exception: " + e.what()
@@ -858,7 +858,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             }
                             catch(exception e)
                             {
-                                _logger->error(__FILEREF__ + "httpCallback failed"
+                                _logger->error(__FILEREF__ + "httpCallbackTask failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", exception: " + e.what()
@@ -2510,7 +2510,7 @@ void MMSEngineProcessor::ftpDeliveryContent(
     }
 }
 
-void MMSEngineProcessor::httpCallback(
+void MMSEngineProcessor::httpCallbackTask(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
@@ -2519,6 +2519,8 @@ void MMSEngineProcessor::httpCallback(
 {
     try
     {
+        /*
+         * dependencies could be even empty
         if (dependencies.size() == 0)
         {
             string errorMessage = __FILEREF__ + "No configured any media to be notified (HTTP Callback)"
@@ -2529,11 +2531,29 @@ void MMSEngineProcessor::httpCallback(
 
             throw runtime_error(errorMessage);
         }
+         */
 
-        string httpCallbackURL;
-        string httpCallbackMethod;
+        string httpProtocol;
+        string httpHostName;
+        int httpPort;
+        string httpURI;
+        string httpURLParameters;
+        string httpMethod;
+        Json::Value httpHeadersRoot(Json::arrayValue);
         {
-            string field = "URL";
+            string field = "Protocol";
+            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            {
+                httpProtocol = "http";
+            }
+            else
+            {
+                httpProtocol = parametersRoot.get(field, "XXX").asString();
+                if (httpProtocol == "")
+                    httpProtocol = "http";
+            }
+
+            field = "HostName";
             if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -2543,47 +2563,168 @@ void MMSEngineProcessor::httpCallback(
 
                 throw runtime_error(errorMessage);
             }
-            httpCallbackURL = parametersRoot.get(field, "XXX").asString();
+            httpHostName = parametersRoot.get(field, "XXX").asString();
+
+            field = "Port";
+            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            {
+                if (httpProtocol == "http")
+                    httpPort = 80;
+                else
+                    httpPort = 443;
+            }
+            else
+                httpPort = parametersRoot.get(field, "XXX").asInt();
+
+            field = "URI";
+            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            httpURI = parametersRoot.get(field, "XXX").asString();
+
+            field = "Parameters";
+            if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            {
+                httpURLParameters = parametersRoot.get(field, "XXX").asString();
+            }
 
             field = "Method";
             if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
             {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", Field: " + field;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-            httpCallbackMethod = parametersRoot.get(field, "XXX").asString();
-        }
-        
-        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
-        {
-            
-            int64_t key;
-            MMSEngineDBFacade::ContentType referenceContentType;
-            Validator::DependencyType dependencyType;
-            
-            tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
-
-            if (dependencyType == Validator::DependencyType::MediaItemKey)
-            {
+                httpMethod = "POST";
             }
             else
             {
+                httpMethod = parametersRoot.get(field, "XXX").asString();
+                if (httpMethod == "")
+                    httpMethod = "POST";
+            }
+            
+            field = "Headers";
+            if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            {
+                httpHeadersRoot = parametersRoot[field];
             }
         }
-            
-        /*
-        thread httpCallbackThread(&MMSEngineProcessor::httpCallback, this, 
-            httpCallbackURL, httpCallbackMethod, dependencies);
-        httpCallback.detach();
-         */
+
+        Json::Value callbackMedatada;
+        {
+            for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
+            {
+                int64_t key;
+                MMSEngineDBFacade::ContentType referenceContentType;
+                Validator::DependencyType dependencyType;
+
+                tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+
+                if (dependencyType == Validator::DependencyType::MediaItemKey)
+                {
+                    callbackMedatada["mediaItemKey"] = key;
+
+                    bool warningIfMissing = false;
+                    tuple<MMSEngineDBFacade::ContentType,string> contentTypeAndUserData =
+                        _mmsEngineDBFacade->getMediaItemKeyDetails(
+                            key, warningIfMissing);
+
+                    MMSEngineDBFacade::ContentType contentType;
+                    string userData;
+                    tie(contentType, userData) = contentTypeAndUserData;
+
+                    if (userData == "")
+                        callbackMedatada["userData"] = Json::nullValue;
+                    else
+                    {
+                        Json::Value userDataRoot;
+                        {
+                            Json::CharReaderBuilder builder;
+                            Json::CharReader* reader = builder.newCharReader();
+                            string errors;
+
+                            bool parsingSuccessful = reader->parse(userData.c_str(),
+                                    userData.c_str() + userData.size(), 
+                                    &userDataRoot, &errors);
+                            delete reader;
+
+                            if (!parsingSuccessful)
+                            {
+                                string errorMessage = __FILEREF__ + "failed to parse the userData"
+                                        + ", errors: " + errors
+                                        + ", userData: " + userData
+                                        ;
+                                _logger->error(errorMessage);
+
+                                throw runtime_error(errors);
+                            }
+                        }
+
+                        callbackMedatada["userData"] = userDataRoot;
+                    }
+                }
+                else
+                {
+                    callbackMedatada["physicalPathKey"] = key;
+
+                    bool warningIfMissing = false;
+                    tuple<int64_t,MMSEngineDBFacade::ContentType,string> mediaItemKeyContentTypeAndUserData =
+                        _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+                            key, warningIfMissing);
+
+                    int64_t mediaItemKey;
+                    MMSEngineDBFacade::ContentType contentType;
+                    string userData;
+                    tie(mediaItemKey, contentType, userData)
+                            = mediaItemKeyContentTypeAndUserData;
+
+                    callbackMedatada["mediaItemKey"] = mediaItemKey;
+
+                    if (userData == "")
+                        callbackMedatada["userData"] = Json::nullValue;
+                    else
+                    {
+                        Json::Value userDataRoot;
+                        {
+                            Json::CharReaderBuilder builder;
+                            Json::CharReader* reader = builder.newCharReader();
+                            string errors;
+
+                            bool parsingSuccessful = reader->parse(userData.c_str(),
+                                    userData.c_str() + userData.size(), 
+                                    &userDataRoot, &errors);
+                            delete reader;
+
+                            if (!parsingSuccessful)
+                            {
+                                string errorMessage = __FILEREF__ + "failed to parse the userData"
+                                        + ", errors: " + errors
+                                        + ", userData: " + userData
+                                        ;
+                                _logger->error(errorMessage);
+
+                                throw runtime_error(errors);
+                            }
+                        }
+
+                        callbackMedatada["userData"] = userDataRoot;
+                    }
+                }
+            }
+        }
+        
+        thread httpCallbackThread(&MMSEngineProcessor::userHttpCallback, this, 
+            ingestionJobKey, httpProtocol, httpHostName, 
+            httpPort, httpURI, httpURLParameters, httpMethod,
+            httpHeadersRoot, callbackMedatada);
+        httpCallbackThread.detach();
     }
     catch(runtime_error e)
     {
-        _logger->error(__FILEREF__ + "httpCallback failed"
+        _logger->error(__FILEREF__ + "httpCallbackTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", e.what(): " + e.what()
@@ -2605,7 +2746,7 @@ void MMSEngineProcessor::httpCallback(
     }
     catch(exception e)
     {
-        _logger->error(__FILEREF__ + "httpCallback failed"
+        _logger->error(__FILEREF__ + "httpCallbackTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );
@@ -3642,13 +3783,14 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
             sourcePhysicalPathKey = key;
             
             bool warningIfMissing = false;
-            pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyContentTypeAndAvgFrameRate =
+            tuple<int64_t,MMSEngineDBFacade::ContentType,string> mediaItemKeyContentTypeAndUserData =
                 _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                     sourcePhysicalPathKey, warningIfMissing);
     
             MMSEngineDBFacade::ContentType localContentType;
-            tie(sourceMediaItemKey,localContentType)
-                    = mediaItemKeyContentTypeAndAvgFrameRate;
+            string userData;
+            tie(sourceMediaItemKey,localContentType, userData)
+                    = mediaItemKeyContentTypeAndUserData;
             
             sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourcePhysicalPathKey);
        }
@@ -3822,13 +3964,14 @@ void MMSEngineProcessor::manageSlideShowTask(
                 sourcePhysicalPathKey = key;
 
                 bool warningIfMissing = false;
-                pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyContentTypeAndAvgFrameRate =
+                tuple<int64_t,MMSEngineDBFacade::ContentType,string> mediaItemKeyContentTypeAndUserData =
                     _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                         sourcePhysicalPathKey, warningIfMissing);
 
                 MMSEngineDBFacade::ContentType localContentType;
-                tie(sourceMediaItemKey,localContentType)
-                        = mediaItemKeyContentTypeAndAvgFrameRate;
+                string userData;
+                tie(sourceMediaItemKey,localContentType, userData)
+                        = mediaItemKeyContentTypeAndUserData;
 
                 sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourcePhysicalPathKey);
             }
@@ -3837,8 +3980,12 @@ void MMSEngineProcessor::manageSlideShowTask(
             
             bool warningIfMissing = false;
             
-            MMSEngineDBFacade::ContentType contentType = _mmsEngineDBFacade->getMediaItemKeyDetails(
-                sourceMediaItemKey, warningIfMissing);
+            pair<MMSEngineDBFacade::ContentType,string> contentTypeAndUserData 
+                    = _mmsEngineDBFacade->getMediaItemKeyDetails(sourceMediaItemKey, warningIfMissing);
+           
+            MMSEngineDBFacade::ContentType contentType;
+            string userData;
+            tie(contentType, userData) = contentTypeAndUserData;
             
             if (!slideshowContentTypeInitialized)
             {
@@ -4165,13 +4312,14 @@ void MMSEngineProcessor::generateAndIngestConcatenation(
                 sourcePhysicalPathKey = key;
 
                 bool warningIfMissing = false;
-                pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyContentTypeAndAvgFrameRate =
+                tuple<int64_t,MMSEngineDBFacade::ContentType,string> mediaItemKeyContentTypeAndUserData =
                     _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                         sourcePhysicalPathKey, warningIfMissing);
 
                 MMSEngineDBFacade::ContentType localContentType;
-                tie(sourceMediaItemKey,localContentType)
-                        = mediaItemKeyContentTypeAndAvgFrameRate;
+                string userData;
+                tie(sourceMediaItemKey,localContentType,userData)
+                        = mediaItemKeyContentTypeAndUserData;
 
                 sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourcePhysicalPathKey);
             }
@@ -4179,14 +4327,15 @@ void MMSEngineProcessor::generateAndIngestConcatenation(
             sourcePhysicalPaths.push_back(sourcePhysicalPath);
             
             bool warningIfMissing = false;
-            pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyContentTypeAndAvgFrameRate 
+            tuple<int64_t,MMSEngineDBFacade::ContentType,string> mediaItemKeyContentTypeAndUserData 
                     = _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                         sourcePhysicalPathKey, warningIfMissing);
             
             MMSEngineDBFacade::ContentType contentType;
             {
                 int64_t localMediaItemKey;
-                tie(localMediaItemKey, contentType) = mediaItemKeyContentTypeAndAvgFrameRate;                
+                string userData;
+                tie(localMediaItemKey, contentType, userData) = mediaItemKeyContentTypeAndUserData;                
             }
             
             if (!concatContentTypeInitialized)
@@ -4394,22 +4543,27 @@ void MMSEngineProcessor::generateAndIngestCutMedia(
             sourcePhysicalPathKey = key;
             
             bool warningIfMissing = false;
-            pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyContentTypeAndAvgFrameRate =
+            tuple<int64_t,MMSEngineDBFacade::ContentType,string> mediaItemKeyContentTypeAndUserData =
                 _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                     sourcePhysicalPathKey, warningIfMissing);
 
             MMSEngineDBFacade::ContentType localContentType;
-            tie(sourceMediaItemKey,localContentType)
-                    = mediaItemKeyContentTypeAndAvgFrameRate;
+            string userData;
+            tie(sourceMediaItemKey,localContentType,userData)
+                    = mediaItemKeyContentTypeAndUserData;
 
             sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourcePhysicalPathKey);
         }
 
         bool warningIfMissing = false;
 
-        MMSEngineDBFacade::ContentType contentType = _mmsEngineDBFacade->getMediaItemKeyDetails(
-            sourceMediaItemKey, warningIfMissing);
-
+        pair<MMSEngineDBFacade::ContentType,string> contentTypeAndUserData 
+                = _mmsEngineDBFacade->getMediaItemKeyDetails(sourceMediaItemKey, warningIfMissing);
+        
+        MMSEngineDBFacade::ContentType contentType;
+        string userData;
+        tie(contentType, userData) = contentTypeAndUserData;
+        
         if (contentType != MMSEngineDBFacade::ContentType::Video
                 && contentType != MMSEngineDBFacade::ContentType::Audio)
         {
@@ -4722,13 +4876,14 @@ void MMSEngineProcessor::manageEncodeTask(
             sourcePhysicalPathKey = key;
             
             bool warningIfMissing = false;
-            pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyContentTypeAndAvgFrameRate =
+            tuple<int64_t,MMSEngineDBFacade::ContentType,string> mediaItemKeyContentTypeAndUserData =
                 _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                     sourcePhysicalPathKey, warningIfMissing);
 
             MMSEngineDBFacade::ContentType localContentType;
-            tie(sourceMediaItemKey,localContentType)
-                    = mediaItemKeyContentTypeAndAvgFrameRate;
+            string userData;
+            tie(sourceMediaItemKey,localContentType, userData)
+                    = mediaItemKeyContentTypeAndUserData;
         }
     
         if (encodingProfileKey == -1)
@@ -4837,13 +4992,14 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
             sourcePhysicalPathKey_1 = key_1;
             
             bool warningIfMissing = false;
-            pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyContentTypeAndAvgFrameRate =
+            tuple<int64_t,MMSEngineDBFacade::ContentType,string> mediaItemKeyContentTypeAndUserData =
                 _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                     sourcePhysicalPathKey_1, warningIfMissing);
 
             MMSEngineDBFacade::ContentType localContentType;
-            tie(sourceMediaItemKey_1,localContentType)
-                    = mediaItemKeyContentTypeAndAvgFrameRate;
+            string userData;
+            tie(sourceMediaItemKey_1,localContentType, userData)
+                    = mediaItemKeyContentTypeAndUserData;
         }
 
         int64_t sourceMediaItemKey_2;
@@ -4867,13 +5023,14 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
             sourcePhysicalPathKey_2 = key_2;
             
             bool warningIfMissing = false;
-            pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyContentTypeAndAvgFrameRate =
+            tuple<int64_t,MMSEngineDBFacade::ContentType,string> mediaItemKeyContentTypeAndUserData =
                 _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                     sourcePhysicalPathKey_2, warningIfMissing);
 
             MMSEngineDBFacade::ContentType localContentType;
-            tie(sourceMediaItemKey_2,localContentType)
-                    = mediaItemKeyContentTypeAndAvgFrameRate;
+            string userData;
+            tie(sourceMediaItemKey_2,localContentType, userData)
+                    = mediaItemKeyContentTypeAndUserData;
         }
 
         _mmsEngineDBFacade->addEncoding_OverlayImageOnVideoJob (ingestionJobKey,
@@ -5032,13 +5189,14 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
             sourcePhysicalPathKey = key;
             
             bool warningIfMissing = false;
-            pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyContentTypeAndAvgFrameRate =
+            tuple<int64_t,MMSEngineDBFacade::ContentType,string> mediaItemKeyContentTypeAndUserData =
                 _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                     sourcePhysicalPathKey, warningIfMissing);
 
             MMSEngineDBFacade::ContentType localContentType;
-            tie(sourceMediaItemKey,localContentType)
-                    = mediaItemKeyContentTypeAndAvgFrameRate;
+            string userData;
+            tie(sourceMediaItemKey,localContentType, userData)
+                    = mediaItemKeyContentTypeAndUserData;
         }
 
         _mmsEngineDBFacade->addEncoding_OverlayTextOnVideoJob (
@@ -6356,6 +6514,248 @@ void MMSEngineProcessor::ftpUploadMediaSource(
         return;
     }
 }
+
+void MMSEngineProcessor::userHttpCallback(
+        int64_t ingestionJobKey, string httpProtocol, string httpHostName,
+        int httpPort, string httpURI, string httpURLParameters,
+        string httpMethod, Json::Value userHeadersRoot, 
+        Json::Value callbackMedatada
+        )
+{
+    string userURL;
+    ostringstream response;
+    try
+    {
+        userURL = httpProtocol
+                + "://"
+                + httpHostName
+                + ":"
+                + to_string(httpPort)
+                + httpURI
+                + httpURLParameters;
+
+        string data;
+        if (callbackMedatada.type() != Json::nullValue)
+        {
+            Json::StreamWriterBuilder wbuilder;
+
+            data = Json::writeString(wbuilder, callbackMedatada);
+        }
+
+        list<string> header;
+
+        header.push_back("Content-Type: application/json");
+
+        for (int userHeaderIndex = 0; userHeaderIndex < userHeadersRoot.size(); ++userHeaderIndex)
+        {
+            string userHeader = userHeadersRoot[userHeaderIndex].asString();
+
+            header.push_back(userHeader);
+        }
+
+        curlpp::Cleanup cleaner;
+        curlpp::Easy request;
+
+        if (data != "")
+        {
+            if (httpMethod == "GET")
+            {
+                if (httpURLParameters == "")
+                    userURL += "?";
+                else
+                    userURL += "&";
+                userURL += ("data=" + curlpp::escape(data));
+            }
+            else    // POST
+            {
+                request.setOpt(new curlpp::options::PostFields(data));
+                request.setOpt(new curlpp::options::PostFieldSize(data.length()));
+            }
+        }
+
+        request.setOpt(new curlpp::options::Url(userURL));
+
+        if (httpProtocol == "https")
+        {
+//                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
+//                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;                                          
+//                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;                                  
+//                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;                              
+//                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;                                    
+//                typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;                           
+//                typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;                                         
+//                typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;                                          
+//                typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;                                          
+//                typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;                                 
+//                typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;                                    
+//                typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;                          
+//                typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;                                    
+
+
+            // cert is stored PEM coded in file... 
+            // since PEM is default, we needn't set it for PEM 
+            // curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
+            // curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
+            // equest.setOpt(sslCertType);
+
+            // set the cert for client authentication
+            // "testcert.pem"
+            // curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
+            // curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
+            // request.setOpt(sslCert);
+
+            // sorry, for engine we must set the passphrase
+            //   (if the key has one...)
+            // const char *pPassphrase = NULL;
+            // if(pPassphrase)
+            //  curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
+
+            // if we use a key stored in a crypto engine,
+            //   we must set the key type to "ENG"
+            // pKeyType  = "PEM";
+            // curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
+
+            // set the private key (file or ID in engine)
+            // pKeyName  = "testkey.pem";
+            // curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
+
+            // set the file with the certs vaildating the server
+            // *pCACertFile = "cacert.pem";
+            // curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
+
+            // disconnect if we can't validate server's cert
+            bool bSslVerifyPeer = false;
+            curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
+            request.setOpt(sslVerifyPeer);
+
+            curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
+            request.setOpt(sslVerifyHost);
+
+            // request.setOpt(new curlpp::options::SslEngineDefault());                                              
+
+        }
+        request.setOpt(new curlpp::options::HttpHeader(header));
+
+        request.setOpt(new curlpp::options::WriteStream(&response));
+
+        chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
+
+        _logger->info(__FILEREF__ + "Calling user callback"
+                + ", userURL: " + userURL
+                + ", httpProtocol: " + httpProtocol
+                + ", httpHostName: " + httpHostName
+                + ", httpPort: " + to_string(httpPort)
+                + ", httpURI: " + httpURI
+                + ", httpURLParameters: " + httpURLParameters
+                + ", httpProtocol: " + httpProtocol
+                + ", data: " + data
+        );
+        request.perform();
+
+        string sResponse = response.str();
+        _logger->info(__FILEREF__ + "Called user callback"
+                + ", userURL: " + userURL
+                + ", data: " + data
+                + ", response.str(): " + response.str()
+        );        
+
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_TaskSuccess"
+            + ", errorMessage: " + ""
+        );                            
+        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
+                MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
+                "", // errorMessage
+                "" // ProcessorMMS
+        );
+    }
+    catch (curlpp::LogicError & e) 
+    {
+        _logger->error(__FILEREF__ + "User Callback URL failed (LogicError)"
+            + ", userURL: " + userURL
+            + ", exception: " + e.what()
+            + ", response.str(): " + response.str()
+        );
+
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what(), 
+                "");    // processorMMS
+
+        return;
+    }
+    catch (curlpp::RuntimeError & e) 
+    {
+        _logger->error(__FILEREF__ + "User Callback URL failed (RuntimeError)"
+            + ", userURL: " + userURL
+            + ", exception: " + e.what()
+            + ", response.str(): " + response.str()
+        );
+
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what(), 
+                "");    // processorMMS
+
+        return;
+    }
+    catch (runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "User Callback URL failed (runtime_error)"
+            + ", userURL: " + userURL
+            + ", exception: " + e.what()
+            + ", response.str(): " + response.str()
+        );
+
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what(), 
+                "");    // processorMMS
+
+        return;
+    }
+    catch (exception e)
+    {
+        _logger->error(__FILEREF__ + "User Callback URL failed (exception)"
+            + ", userURL: " + userURL
+            + ", exception: " + e.what()
+            + ", response.str(): " + response.str()
+        );
+
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what(), 
+                "");    // processorMMS
+
+        return;
+    }
+}
+
 
 void MMSEngineProcessor::moveMediaSourceFile(string sourceReferenceURL,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace)

@@ -1046,6 +1046,27 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
         Json::Value parametersRoot = taskRoot[field]; 
         validateFTPDeliveryMetadata(workspaceKey, parametersRoot, dependencies);
     }
+    else if (type == "HTTP-Callback")
+    {
+        ingestionType = MMSEngineDBFacade::IngestionType::HTTPCallback;
+        
+        field = "Parameters";
+        if (!isMetadataPresent(taskRoot, field))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field
+                    + ", sTaskRoot: " + sTaskRoot;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        Json::Value parametersRoot = taskRoot[field]; 
+        validateHTTPCallbackMetadata(workspaceKey, parametersRoot, dependencies);
+    }
     else
     {
         string errorMessage = __FILEREF__ + "Field 'Type' is wrong"
@@ -1118,6 +1139,10 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
     else if (ingestionType == MMSEngineDBFacade::IngestionType::FTPDelivery)
     {
         validateFTPDeliveryMetadata(workspaceKey, parametersRoot, dependencies);        
+    }
+    else if (ingestionType == MMSEngineDBFacade::IngestionType::HTTPCallback)
+    {
+        validateHTTPCallbackMetadata(workspaceKey, parametersRoot, dependencies);        
     }
     else
     {
@@ -1751,7 +1776,7 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey,
         }
     }
 
-    string field = "fontType";
+    string field = "FontType";
     if (isMetadataPresent(parametersRoot, field))
     {
         string fontType = parametersRoot.get(field, "XXX").asString();
@@ -1767,7 +1792,7 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey,
         }
     }
 
-    field = "fontColor";
+    field = "FontColor";
     if (isMetadataPresent(parametersRoot, field))
     {
         string fontColor = parametersRoot.get(field, "XXX").asString();
@@ -1783,7 +1808,7 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey,
         }
     }
 
-    field = "textPercentageOpacity";
+    field = "TextPercentageOpacity";
     if (isMetadataPresent(parametersRoot, field))
     {
         int textPercentageOpacity = parametersRoot.get(field, 200).asInt();
@@ -1799,13 +1824,13 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey,
         }
     }
 
-    field = "boxEnable";
+    field = "BoxEnable";
     if (isMetadataPresent(parametersRoot, field))
     {
         bool boxEnable = parametersRoot.get(field, true).asBool();                        
     }
 
-    field = "boxPercentageOpacity";
+    field = "BoxPercentageOpacity";
     if (isMetadataPresent(parametersRoot, field))
     {
         int boxPercentageOpacity = parametersRoot.get(field, 200).asInt();
@@ -2022,6 +2047,102 @@ void Validator::validateFTPDeliveryMetadata(int64_t workspaceKey,
     }        
 }
 
+void Validator::validateHTTPCallbackMetadata(int64_t workspaceKey,
+    Json::Value parametersRoot, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+{
+    // see sample in directory samples
+        
+    vector<string> mandatoryFields = {
+        "HostName",
+        "URI"
+    };
+    for (string mandatoryField: mandatoryFields)
+    {
+        if (!isMetadataPresent(parametersRoot, mandatoryField))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + mandatoryField
+                    + ", sParametersRoot: " + sParametersRoot
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+    
+    string field = "Method";
+    if (isMetadataPresent(parametersRoot, field))
+    {
+        string method = parametersRoot.get(field, "XXX").asString();
+                        
+        if (method != "GET" && method != "POST")
+        {
+            string errorMessage = string("Unknown Method")
+                + ", method: " + method
+            ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+
+    field = "Headers";
+    if (isMetadataPresent(parametersRoot, field))
+    {
+        Json::Value headersRoot = parametersRoot[field];
+        
+        if (headersRoot.type() != Json::arrayValue)
+        {
+            string errorMessage = __FILEREF__ + "Field is present but it is not an array of strings"
+                    + ", Field: " + field
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        
+        for (int userHeaderIndex = 0; userHeaderIndex < headersRoot.size(); ++userHeaderIndex)
+        {
+            if (headersRoot[userHeaderIndex].type() != Json::stringValue)
+            {
+                string errorMessage = __FILEREF__ + "Field is present but it does not contain strings"
+                        + ", Field: " + field
+                        ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+    }   
+        
+    // References is optional because in case of dependency managed automatically
+    // by MMS (i.e.: onSuccess)
+    field = "References";
+    if (isMetadataPresent(parametersRoot, field))
+    {
+        Json::Value referencesRoot = parametersRoot[field];
+        if (referencesRoot.size() < 1)
+        {
+            string errorMessage = __FILEREF__ + "Field is present but it does not have enough elements"
+                    + ", Field: " + field
+                    + ", referencesRoot.size(): " + to_string(referencesRoot.size())
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        
+        bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = true;
+        bool encodingProfileFieldsToBeManaged = false;
+        fillDependencies(workspaceKey, parametersRoot, dependencies,
+                priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
+                encodingProfileFieldsToBeManaged);
+    }        
+}
+
 bool Validator::isMetadataPresent(Json::Value root, string field)
 {
     if (root.isObject() && root.isMember(field) && !root[field].isNull())
@@ -2105,17 +2226,22 @@ void Validator::fillDependencies(int64_t workspaceKey, Json::Value parametersRoo
             bool warningIfMissing = true;
             if (referenceMediaItemKey != -1)
             {
-                referenceContentType = _mmsEngineDBFacade->getMediaItemKeyDetails(
-                    referenceMediaItemKey, warningIfMissing); 
+                string userData;
+                
+                pair<MMSEngineDBFacade::ContentType,string> contentTypeAndUserData = 
+                        _mmsEngineDBFacade->getMediaItemKeyDetails(referenceMediaItemKey, warningIfMissing); 
+                tie(referenceContentType, userData) = contentTypeAndUserData;
             }
             else if (referencePhysicalPathKey != -1)
             {
-                pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyContentTypeAndFrameRate = 
+                string userData;
+
+                tuple<int64_t,MMSEngineDBFacade::ContentType,string> mediaItemKeyContentTypeAndUserData = 
                         _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                         referencePhysicalPathKey, warningIfMissing);  
 
-                tie(referenceMediaItemKey,referenceContentType) 
-                        = mediaItemKeyContentTypeAndFrameRate;
+                tie(referenceMediaItemKey,referenceContentType, userData) 
+                        = mediaItemKeyContentTypeAndUserData;
             }
             else if (referenceIngestionJobKey != -1)
             {

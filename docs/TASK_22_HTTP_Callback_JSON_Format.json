@@ -1,0 +1,48 @@
+"Task": {
+	// optional
+	"Label"="My HTTP Callback",
+
+	// mandatory
+	"Type": "HTTP-Callback",
+
+	"Parameters": {
+		// mandatory
+		"References": [
+			// mandatory. One or more Reference needed to identify the videos (mediaItemKeys) or
+			// the profiles (physicalPathKey) to be notified through the HTTP Callback.
+			// In case this task is placed inside an onSuccess event, 
+			// the Reference... item can be omitted.
+			// In such a case, the System will automatically add the Reference... item using the key
+			// of the video or the profile by which this task depend on.
+			// As reference can be used "ReferenceMediaItemKey", "ReferenceUniqueName" or 
+			// "ReferencePhysicalPathKey".
+			// In case this task depend on one or more tasks generating videos, the videos will be 
+			// uploaded.
+			// In case this task depend on one or more tasks generating profiles (i.e. Encode Task),
+			// the profiles will be uploaded.
+
+			{ "ReferenceMediaItemKey": 11 }
+		],
+
+		// optional. Default: http, it could be http or https
+		"Protocol": "http",
+
+		// mandatory
+		"HostName": "hostname",
+
+		// optional. Default: 80 for http and 443 for https
+		"Port": 80,
+
+		// mandatory
+		"URI": "/path/.../name",
+
+		// optional
+		"Parameters": "?name1=value&name2=value",
+
+		// optional. Default is POST. It could be GET or POST
+		"Method": "POST",
+
+		// optional, json array of strings
+		"Headers": []
+	}
+}

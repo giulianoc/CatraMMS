@@ -98,11 +98,17 @@ private:
         Json::Value parametersRoot,
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
 
-    void httpCallback(
+    void httpCallbackTask(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
+
+    void userHttpCallback(
+        int64_t ingestionJobKey, string httpProtocol, string httpHostName,
+        int httpPort, string httpURI, string httpURLParameters,
+        string httpMethod, Json::Value userHeadersRoot, 
+        Json::Value callbackMedatada);
 
     string generateMediaMetadataToIngest(
         int64_t ingestionJobKey,

@@ -6944,14 +6944,14 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
     return physicalPathKey;
 }
 
-MMSEngineDBFacade::ContentType MMSEngineDBFacade::getMediaItemKeyDetails(
+pair<MMSEngineDBFacade::ContentType,string> MMSEngineDBFacade::getMediaItemKeyDetails(
     int64_t mediaItemKey, bool warningIfMissing)
 {
     string      lastSQLCommand;
         
     shared_ptr<MySQLConnection> conn;
     
-    MMSEngineDBFacade::ContentType contentType;
+    pair<MMSEngineDBFacade::ContentType,string> contentTypeAndUserData;
 
     try
     {
@@ -6962,7 +6962,7 @@ MMSEngineDBFacade::ContentType MMSEngineDBFacade::getMediaItemKeyDetails(
 
         {
             lastSQLCommand = 
-                "select contentType from MMS_MediaItem where mediaItemKey = ?";
+                "select contentType, userData from MMS_MediaItem where mediaItemKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
@@ -6970,7 +6970,10 @@ MMSEngineDBFacade::ContentType MMSEngineDBFacade::getMediaItemKeyDetails(
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
-                contentType = MMSEngineDBFacade::toContentType(resultSet->getString("contentType"));
+                MMSEngineDBFacade::ContentType contentType = MMSEngineDBFacade::toContentType(resultSet->getString("contentType"));
+                string userData = resultSet->getString("userData");
+                
+                contentTypeAndUserData = make_pair(contentType, userData);
             }
             else
             {
@@ -6984,13 +6987,15 @@ MMSEngineDBFacade::ContentType MMSEngineDBFacade::getMediaItemKeyDetails(
                     _logger->error(errorMessage);
 
                 throw runtime_error(errorMessage);                    
-            }            
+            }             
         }
                         
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
+
+        return contentTypeAndUserData;
     }
     catch(sql::SQLException se)
     {
@@ -7052,20 +7057,17 @@ MMSEngineDBFacade::ContentType MMSEngineDBFacade::getMediaItemKeyDetails(
         _connectionPool->unborrow(conn);
         
         throw e;
-    }
-    
-    return contentType;
+    }    
 }
 
-pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyDetailsByPhysicalPathKey(
+tuple<int64_t,MMSEngineDBFacade::ContentType,string> MMSEngineDBFacade::getMediaItemKeyDetailsByPhysicalPathKey(
     int64_t physicalPathKey, bool warningIfMissing)
 {
     string      lastSQLCommand;
         
     shared_ptr<MySQLConnection> conn;
     
-    int64_t mediaItemKey;
-    MMSEngineDBFacade::ContentType contentType;
+    tuple<int64_t,MMSEngineDBFacade::ContentType,string> mediaItemKeyContentTypeAndUserData;
 
     try
     {
@@ -7076,7 +7078,7 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
 
         {
             lastSQLCommand = 
-                "select mi.mediaItemKey, mi.contentType from MMS_MediaItem mi, MMS_PhysicalPath p "
+                "select mi.mediaItemKey, mi.contentType, mi.userData from MMS_MediaItem mi, MMS_PhysicalPath p "
                 "where mi.mediaItemKey = p.mediaItemKey and p.physicalPathKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -7085,8 +7087,11 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
-                mediaItemKey = resultSet->getInt64("mediaItemKey");
-                contentType = MMSEngineDBFacade::toContentType(resultSet->getString("contentType"));
+                int64_t mediaItemKey = resultSet->getInt64("mediaItemKey");
+                MMSEngineDBFacade::ContentType contentType = MMSEngineDBFacade::toContentType(resultSet->getString("contentType"));
+                string userData = resultSet->getString("userData");
+                
+                mediaItemKeyContentTypeAndUserData = make_tuple(mediaItemKey, contentType, userData);                
             }
             else
             {
@@ -7108,7 +7113,7 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
         );
         _connectionPool->unborrow(conn);
         
-        return make_pair(mediaItemKey, contentType);
+        return mediaItemKeyContentTypeAndUserData;
     }
     catch(sql::SQLException se)
     {
