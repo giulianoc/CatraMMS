@@ -1764,13 +1764,15 @@ public class NewWorkflow extends Workspace implements Serializable {
                     continue;
                 }
 
-                File binaryPathName = new File(pushContent.getBinaryPathName());
+                File mediaFile = new File(pushContent.getBinaryPathName());
+                InputStream binaryFileInputStream = new DataInputStream(new FileInputStream(mediaFile));
 
                 CatraMMS catraMMS = new CatraMMS();
                 catraMMS.ingestBinaryContent(username, password,
-                        binaryPathName, pushContentIngestionTask.getKey());
+                        binaryFileInputStream, mediaFile.length(),
+                        pushContentIngestionTask.getKey());
 
-                binaryPathName.delete();
+                mediaFile.delete();
             }
             catch (Exception e)
             {

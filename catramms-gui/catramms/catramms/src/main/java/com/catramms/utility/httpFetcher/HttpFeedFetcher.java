@@ -370,7 +370,8 @@ public class HttpFeedFetcher {
     }
 
     static public void fetchPostHttpBinary(String url, int timeoutInSeconds, int maxRetriesNumber,
-                                            String user, String password, File binaryPathName)
+                                            String user, String password,
+                                           InputStream inputStreamBinary, long contentLength)
             throws Exception
     {
         // fetchWebPage
@@ -418,28 +419,28 @@ public class HttpFeedFetcher {
                     conn.setDoOutput(true); // false because I do not need to append any data to this request
                     conn.setRequestMethod("POST");
                     {
-                        long clength = binaryPathName.length();
+                        // long clength = binaryPathName.length();
 
-                        conn.setRequestProperty("Content-Length", String.valueOf(clength));
-                        mLogger.info("Header. " + "Content-Length: " + String.valueOf(clength));
+                        conn.setRequestProperty("Content-Length", String.valueOf(contentLength));
+                        mLogger.info("Header. " + "Content-Length: " + String.valueOf(contentLength));
 
                         conn.setDoInput(true); // false means the response is ignored
 
                         OutputStream outputStream = null;
-                        InputStream inputStream = null;
+                        // InputStream inputStream = null;
                         try {
                             outputStream = conn.getOutputStream();
-                            inputStream = new FileInputStream(binaryPathName);
+                            // inputStream = new FileInputStream(binaryPathName);
 
-                            IOUtils.copy(inputStream, outputStream);
+                            IOUtils.copy(inputStreamBinary, outputStream);
                         }
                         catch (Exception ex)
                         {
                             mLogger.error("Exception: " + ex);
                         }
                         finally {
-                            if (inputStream != null)
-                                IOUtils.closeQuietly(inputStream);
+                            // if (inputStream != null)
+                            //    IOUtils.closeQuietly(inputStream);
                             if (outputStream != null)
                                 IOUtils.closeQuietly(outputStream);
                         }

@@ -9,6 +9,7 @@ import org.json.JSONObject;
 import org.primefaces.model.UploadedFile;
 
 import java.io.File;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -1157,9 +1158,9 @@ public class CatraMMS {
             JSONObject joResponse = joMMSInfo.getJSONObject("response");
             JSONArray jaEncodingProfiles = joResponse.getJSONArray("encodingProfiles");
 
-            encodingProfileList.clear();
-
             mLogger.info("jaEncodingProfiles.length(): " + jaEncodingProfiles.length());
+
+            encodingProfileList.clear();
 
             for (int encodingProfileIndex = 0;
                  encodingProfileIndex < jaEncodingProfiles.length();
@@ -1355,6 +1356,7 @@ public class CatraMMS {
         return deliveryURL;
     }
 
+    /*
     public void ingestBinaryContent(String username, String password,
                                     File binaryPathName, Long ingestionJobKey)
             throws Exception
@@ -1373,6 +1375,37 @@ public class CatraMMS {
             HttpFeedFetcher.fetchPostHttpBinary(mmsURL, timeoutInSeconds, maxRetriesNumber,
                     username, password, binaryPathName);
             mLogger.info("Elapsed time ingestBinaryContent (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "ingestWorkflow MMS failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+    }
+    */
+
+    public void ingestBinaryContent(String username, String password,
+                                    InputStream fileInputStream, long contentSize,
+                                    Long ingestionJobKey)
+            throws Exception
+    {
+        try
+        {
+            String mmsURL = mmsBinaryProtocol + "://" + mmsBinaryHostName + ":" + mmsBinaryPort
+                    + "/catramms/v1/binary/" + ingestionJobKey;
+
+            mLogger.info("ingestBinaryContentAndRemoveLocalFile"
+                            + ", mmsURL: " + mmsURL
+                            + ", contentSize: " + contentSize
+                            + ", ingestionJobKey: " + ingestionJobKey
+            );
+
+            Date now = new Date();
+            HttpFeedFetcher.fetchPostHttpBinary(mmsURL, timeoutInSeconds, maxRetriesNumber,
+                    username, password, fileInputStream, contentSize);
+            mLogger.info("Elapsed time login (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
         }
         catch (Exception e)
         {
