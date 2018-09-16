@@ -8,10 +8,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -26,10 +23,20 @@ import java.util.TreeMap;
 /**
  * Created by multi on 16.09.18.
  */
-@Path("/veda")
+@Path("/catramms")
 public class CatraMMSServices {
 
     private static final Logger mLogger = Logger.getLogger(CatraMMSServices.class);
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("status")
+    public Response getStatus()
+    {
+        mLogger.info("Received getStatus");
+
+        return Response.ok("{ \"status\": \"REST CatraMMS webservice running\" }").build();
+    }
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON + ";charset=utf-8")
