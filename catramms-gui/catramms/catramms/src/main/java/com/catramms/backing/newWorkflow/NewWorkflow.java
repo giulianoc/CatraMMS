@@ -134,6 +134,8 @@ public class NewWorkflow extends Workspace implements Serializable {
     private String taskFtpDeliveryUserName;
     private String taskFtpDeliveryPassword;
     private String taskFtpDeliveryRemoteDirectory;
+    private String taskLocalCopyLocalPath;
+    private String taskLocalCopyLocalFileName;
     private String taskHttpCallbackHostName;
     private Long taskHttpCallbackPort;
     private String taskHttpCallbackURI;
@@ -1531,6 +1533,52 @@ public class NewWorkflow extends Workspace implements Serializable {
                     }
                 }
             }
+            else if (task.getType().equalsIgnoreCase("Local-Copy"))
+            {
+                if (task.getLabel() != null && !task.getLabel().equalsIgnoreCase(""))
+                    jsonObject.put("Label", task.getLabel());
+                else
+                {
+                    WorkflowIssue workflowIssue = new WorkflowIssue();
+                    workflowIssue.setLabel("");
+                    workflowIssue.setFieldName("Label");
+                    workflowIssue.setTaskType(task.getType());
+                    workflowIssue.setIssue("The field is not initialized");
+
+                    workflowIssueList.add(workflowIssue);
+                }
+
+                if (task.getLocalCopyLocalPath() != null && !task.getLocalCopyLocalPath().equalsIgnoreCase(""))
+                    joParameters.put("LocalPath", task.getLocalCopyLocalPath());
+                else
+                {
+                    WorkflowIssue workflowIssue = new WorkflowIssue();
+                    workflowIssue.setLabel(task.getLabel());
+                    workflowIssue.setFieldName("LocalPath");
+                    workflowIssue.setTaskType(task.getType());
+                    workflowIssue.setIssue("The field is not initialized");
+
+                    workflowIssueList.add(workflowIssue);
+                }
+
+                if (task.getLocalCopyLocalFileName() != null && !task.getLocalCopyLocalFileName().equalsIgnoreCase(""))
+                    joParameters.put("LocalFileName", task.getLocalCopyLocalFileName());
+
+                if (task.getReferences() != null && !task.getReferences().equalsIgnoreCase(""))
+                {
+                    JSONArray jaReferences = new JSONArray();
+                    joParameters.put("References", jaReferences);
+
+                    String [] physicalPathKeyReferences = task.getReferences().split(",");
+                    for (String physicalPathKeyReference: physicalPathKeyReferences)
+                    {
+                        JSONObject joReference = new JSONObject();
+                        joReference.put("ReferencePhysicalPathKey", Long.parseLong(physicalPathKeyReference.trim()));
+
+                        jaReferences.put(joReference);
+                    }
+                }
+            }
             else if (task.getType().equalsIgnoreCase("HTTP-Callback"))
             {
                 if (task.getLabel() != null && !task.getLabel().equalsIgnoreCase(""))
@@ -2685,6 +2733,7 @@ public class NewWorkflow extends Workspace implements Serializable {
                             mediaItemsContentTypesList.clear();
                             mediaItemsContentTypesList.add("video");
                             mediaItemsContentTypesList.add("audio");
+                            mediaItemsContentTypesList.add("image");
 
                             mediaItemsContentType = mediaItemsContentTypesList.get(0);
                         }
@@ -2709,6 +2758,32 @@ public class NewWorkflow extends Workspace implements Serializable {
                     taskFtpDeliveryUserName = task.getFtpDeliveryUserName();
                     taskFtpDeliveryPassword = task.getFtpDeliveryPassword();
                     taskFtpDeliveryRemoteDirectory = task.getFtpDeliveryRemoteDirectory();
+
+                    {
+                        mLogger.info("Initializing mediaItems...");
+
+                        mediaItemsList.clear();
+                        mediaItemsSelectedList.clear();
+                        mediaItemsSelectionMode = "multiple";
+                        mediaItemsMaxMediaItemsNumber = new Long(100);
+                        {
+                            mediaItemsContentTypesList.clear();
+                            mediaItemsContentTypesList.add("video");
+                            mediaItemsContentTypesList.add("audio");
+                            mediaItemsContentTypesList.add("image");
+
+                            mediaItemsContentType = mediaItemsContentTypesList.get(0);
+                        }
+
+                        fillMediaItems();
+                    }
+                }
+                else if (task.getType().equalsIgnoreCase("Local-Copy"))
+                {
+                    taskReferences = task.getReferences() == null ? "" : task.getReferences();
+                    taskLabel = task.getLabel();
+                    taskLocalCopyLocalPath = task.getLocalCopyLocalPath();
+                    taskLocalCopyLocalFileName = task.getLocalCopyLocalFileName();
 
                     {
                         mLogger.info("Initializing mediaItems...");
@@ -3046,6 +3121,13 @@ public class NewWorkflow extends Workspace implements Serializable {
                 task.setFtpDeliveryUserName(taskFtpDeliveryUserName);
                 task.setFtpDeliveryPassword(taskFtpDeliveryPassword);
                 task.setFtpDeliveryRemoteDirectory(taskFtpDeliveryRemoteDirectory);
+            }
+            else if (task.getType().equalsIgnoreCase("Local-Copy"))
+            {
+                task.setReferences(taskReferences);
+                task.setLabel(taskLabel);
+                task.setLocalCopyLocalPath(taskLocalCopyLocalPath);
+                task.setLocalCopyLocalFileName(taskLocalCopyLocalFileName);
             }
             else if (task.getType().equalsIgnoreCase("HTTP-Callback"))
             {
@@ -4171,5 +4253,21 @@ public class NewWorkflow extends Workspace implements Serializable {
 
     public void setTaskHttpMethodsList(List<String> taskHttpMethodsList) {
         this.taskHttpMethodsList = taskHttpMethodsList;
+    }
+
+    public String getTaskLocalCopyLocalPath() {
+        return taskLocalCopyLocalPath;
+    }
+
+    public void setTaskLocalCopyLocalPath(String taskLocalCopyLocalPath) {
+        this.taskLocalCopyLocalPath = taskLocalCopyLocalPath;
+    }
+
+    public String getTaskLocalCopyLocalFileName() {
+        return taskLocalCopyLocalFileName;
+    }
+
+    public void setTaskLocalCopyLocalFileName(String taskLocalCopyLocalFileName) {
+        this.taskLocalCopyLocalFileName = taskLocalCopyLocalFileName;
     }
 }

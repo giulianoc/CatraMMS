@@ -68,6 +68,8 @@ public class Task implements Serializable
     private String ftpDeliveryUserName;
     private String ftpDeliveryPassword;
     private String ftpDeliveryRemoteDirectory;
+    private String localCopyLocalPath;
+    private String localCopyLocalFileName;
     private String httpCallbackProtocol;
     private String httpCallbackHostName;
     private Long httpCallbackPort;
@@ -600,5 +602,21 @@ public class Task implements Serializable
 
     public void setHttpCallbackHeaders(String httpCallbackHeaders) {
         this.httpCallbackHeaders = httpCallbackHeaders;
+    }
+
+    public String getLocalCopyLocalPath() {
+        return localCopyLocalPath;
+    }
+
+    public void setLocalCopyLocalPath(String localCopyLocalPath) {
+        this.localCopyLocalPath = localCopyLocalPath;
+    }
+
+    public String getLocalCopyLocalFileName() {
+        return localCopyLocalFileName;
+    }
+
+    public void setLocalCopyLocalFileName(String localCopyLocalFileName) {
+        this.localCopyLocalFileName = localCopyLocalFileName;
     }
 }

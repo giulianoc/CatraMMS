@@ -53,17 +53,17 @@ public class EncodingProfilesSets extends Workspace implements Serializable {
             contentTypesList.add("audio");
             contentTypesList.add("image");
 
-            contentType = contentTypesList.get(0);
+            // contentType = contentTypesList.get(0);
         }
 
-        updateEncodingProfileList();
+        // updateEncodingProfileList();
     }
 
     public void contentTypeChanged()
     {
 
         fillList(true);
-        updateEncodingProfileList();
+        // updateEncodingProfileList();
     }
 
     public void updateEncodingProfileList()
@@ -84,6 +84,13 @@ public class EncodingProfilesSets extends Workspace implements Serializable {
             {
                 String username = userKey.toString();
                 String password = apiKey;
+
+                mLogger.info("updateEncodingProfileList"
+                        + ", contentType: " + contentType
+                );
+
+                if (contentType == null || contentType.equalsIgnoreCase(""))
+                    contentType = contentTypesList.get(0);
 
                 addProfilesSetEncodingProfileList.clear();
 
@@ -250,6 +257,8 @@ public class EncodingProfilesSets extends Workspace implements Serializable {
             {
                 try
                 {
+                    updateEncodingProfileList();
+
                     Long userKey = SessionUtils.getUserKey();
                     String apiKey = SessionUtils.getAPIKey();
 
@@ -264,6 +273,13 @@ public class EncodingProfilesSets extends Workspace implements Serializable {
                     {
                         String username = userKey.toString();
                         String password = apiKey;
+
+                        mLogger.info("fillList"
+                                + ", contentType: " + contentType
+                        );
+
+                        if (contentType == null || contentType.equalsIgnoreCase(""))
+                            contentType = contentTypesList.get(0);
 
                         encodingProfilesSetList.clear();
 

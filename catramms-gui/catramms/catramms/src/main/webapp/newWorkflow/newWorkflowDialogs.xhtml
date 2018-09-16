@@ -40,6 +40,8 @@
                 <p:selectOneMenu id="contentType" value="#{newWorkflow.mediaItemsContentType}"
                                  autoWidth="false">
                     <f:selectItems value="#{newWorkflow.mediaItemsContentTypesList}" />
+                    <p:ajax global="true" event="change" listener="#{newWorkflow.fillMediaItems()}"
+                            update=":selectMediaItemsForm" />
                 </p:selectOneMenu>
 
                 <span class="ui-separator">
@@ -135,8 +137,9 @@
                 </p:column>
                 <p:column>
                     <p:commandButton process="mediaItemDataTable"
-                                     update="viewForm:taskReferences_Remove_Content,viewForm:taskReferences_Concat_Demuxer,viewForm:taskReferences_Cut,viewForm:taskReferences_Overlay_Image_On_Video,viewForm:taskReferences_Overlay_Text_On_Video,viewForm:taskReferences_Frame,viewForm:taskReferences_Periodical_Frames,viewForm:taskReferences_I_Frames,viewForm:taskReferences_Motion_JPEG_by_Periodical_Frames,viewForm:taskReferences_Motion_JPEG_by_I_Frames,viewForm:taskReferences_Slideshow,viewForm:taskReferences_Encode,viewForm:taskReferences_FTP_Delivery"
-                                     icon="ui-icon-search" value="Save"
+                                     update="viewForm:taskReferences_Remove_Content,viewForm:taskReferences_Concat_Demuxer,viewForm:taskReferences_Cut,viewForm:taskReferences_Overlay_Image_On_Video,viewForm:taskReferences_Overlay_Text_On_Video,viewForm:taskReferences_Frame,viewForm:taskReferences_Periodical_Frames,viewForm:taskReferences_I_Frames,viewForm:taskReferences_Motion_JPEG_by_Periodical_Frames,viewForm:taskReferences_Motion_JPEG_by_I_Frames,viewForm:taskReferences_Slideshow,viewForm:taskReferences_Encode,viewForm:taskReferences_FTP_Delivery,viewForm:taskReferences_Local_Copy,viewForm:taskReferences_HTTP_Callback"
+                                     icon="ui-icon-search"
+                                     value="Save"
                                      onclick="PF('selectMediaItems').hide()"
                             />
                 </p:column>

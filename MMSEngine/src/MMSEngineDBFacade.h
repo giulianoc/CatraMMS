@@ -388,6 +388,7 @@ public:
         OverlayTextOnVideo      = 13,
         FTPDelivery             = 14,
         HTTPCallback            = 15,
+        LocalCopy               = 16,
         EmailNotification       = 30,
         ContentUpdate           = 50,
         ContentRemove           = 60
@@ -428,6 +429,8 @@ public:
                 return "FTP-Delivery";
             case IngestionType::HTTPCallback:
                 return "HTTP-Callback";
+            case IngestionType::LocalCopy:
+                return "Local-Copy";
                 
             case IngestionType::EmailNotification:
                 return "Email-Notification";
@@ -475,6 +478,8 @@ public:
             return IngestionType::FTPDelivery;
         else if (lowerCase == "http-callback")
             return IngestionType::HTTPCallback;
+        else if (lowerCase == "local-copy")
+            return IngestionType::LocalCopy;
 
         else if (lowerCase == "email-notification")
             return IngestionType::EmailNotification;

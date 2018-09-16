@@ -27,7 +27,8 @@ public:
 public:
     Validator(            
             shared_ptr<spdlog::logger> logger, 
-            shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade
+            shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
+            Json::Value configuration
     );
     
     Validator(const Validator& orig);
@@ -93,6 +94,9 @@ public:
     void validateHTTPCallbackMetadata(int64_t workspaceKey,
         Json::Value parametersRoot, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
 
+    void validateLocalCopyMetadata(int64_t workspaceKey,
+        Json::Value parametersRoot, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
+
     void validateEncodingProfilesSetRootMetadata(
         MMSEngineDBFacade::ContentType contentType, 
         Json::Value encodingProfilesSetRoot);
@@ -106,6 +110,7 @@ public:
 private:
     shared_ptr<spdlog::logger>          _logger;
     shared_ptr<MMSEngineDBFacade>       _mmsEngineDBFacade;
+    string                              _storagePath;
 
     void validateEncodingProfileRootVideoMetadata(
         Json::Value encodingProfileRoot);

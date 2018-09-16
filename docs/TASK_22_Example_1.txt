@@ -4,13 +4,13 @@
 	"Type": "HTTP-Callback",
 
 	"Parameters": {
-		"Protocol": "https",
+		"Protocol": "http",
 
-		"HostName": "www.rsi.ch",
+		"HostName": "ip.jsontest.com",
 
-		"URI": "/api/epg/la1",
+		"URI": "/",
 
-		"Parameters": "?Period=nowAndNext&OutputType=6",
+		"Parameters": "",
 
 		"Method": "GET"
 	}

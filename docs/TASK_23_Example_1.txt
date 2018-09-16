@@ -1,0 +1,13 @@
+"Task": {
+	"Label"="My Local Copy",
+
+	"Type": "Local-Copy",
+
+	"Parameters": {
+		"References": [
+			{ "ReferenceMediaItemKey": 11 }
+		],
+
+		"LocalPath": "/tmp"
+	}
+}

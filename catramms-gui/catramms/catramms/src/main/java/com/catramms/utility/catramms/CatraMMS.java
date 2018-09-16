@@ -1157,6 +1157,8 @@ public class CatraMMS {
             JSONObject joResponse = joMMSInfo.getJSONObject("response");
             JSONArray jaEncodingProfiles = joResponse.getJSONArray("encodingProfiles");
 
+            encodingProfileList.clear();
+
             mLogger.info("jaEncodingProfiles.length(): " + jaEncodingProfiles.length());
 
             for (int encodingProfileIndex = 0;
@@ -1276,6 +1278,8 @@ public class CatraMMS {
             JSONObject joMMSInfo = new JSONObject(mmsInfo);
             JSONObject joResponse = joMMSInfo.getJSONObject("response");
             JSONArray jaEncodingProfilesSets = joResponse.getJSONArray("encodingProfilesSets");
+
+            encodingProfilesSetList.clear();
 
             for (int encodingProfilesSetIndex = 0;
                  encodingProfilesSetIndex < jaEncodingProfilesSets.length();

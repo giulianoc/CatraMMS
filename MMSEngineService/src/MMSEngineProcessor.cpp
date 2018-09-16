@@ -42,27 +42,68 @@ MMSEngineProcessor::MMSEngineProcessor(
     
 // cout << "processorIdentifier: " << processorIdentifier << endl;
     _maxDownloadAttemptNumber       = configuration["download"].get("maxDownloadAttemptNumber", 5).asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", download->maxDownloadAttemptNumber: " + to_string(_maxDownloadAttemptNumber)
+    );
     _progressUpdatePeriodInSeconds  = configuration["download"].get("progressUpdatePeriodInSeconds", 5).asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", download->progressUpdatePeriodInSeconds: " + to_string(_progressUpdatePeriodInSeconds)
+    );
     _secondsWaitingAmongDownloadingAttempt  = configuration["download"].get("secondsWaitingAmongDownloadingAttempt", 5).asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", download->secondsWaitingAmongDownloadingAttempt: " + to_string(_secondsWaitingAmongDownloadingAttempt)
+    );
     
     _maxIngestionJobsPerEvent       = configuration["mms"].get("maxIngestionJobsPerEvent", 5).asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", mms->maxIngestionJobsPerEvent: " + to_string(_maxIngestionJobsPerEvent)
+    );
     // _maxIngestionJobsWithDependencyToCheckPerEvent = configuration["mms"].get("maxIngestionJobsWithDependencyToCheckPerEvent", 5).asInt();
 
     _dependencyExpirationInHours        = configuration["mms"].get("dependencyExpirationInHours", 5).asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", mms->dependencyExpirationInHours: " + to_string(_dependencyExpirationInHours)
+    );
     _stagingRetentionInDays             = configuration["mms"].get("stagingRetentionInDays", 5).asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", mms->stagingRetentionInDays: " + to_string(_stagingRetentionInDays)
+    );
     _downloadChunkSizeInMegaBytes       = configuration["download"].get("downloadChunkSizeInMegaBytes", 5).asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", download->downloadChunkSizeInMegaBytes: " + to_string(_downloadChunkSizeInMegaBytes)
+    );
     
     _emailProtocol                      = _configuration["EmailNotification"].get("protocol", "XXX").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", EmailNotification->protocol: " + _emailProtocol
+    );
     _emailServer                        = _configuration["EmailNotification"].get("server", "XXX").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", EmailNotification->server: " + _emailServer
+    );
     _emailPort                          = _configuration["EmailNotification"].get("port", "XXX").asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", EmailNotification->port: " + to_string(_emailPort)
+    );
     _emailUserName                      = _configuration["EmailNotification"].get("userName", "XXX").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", EmailNotification->userName: " + _emailUserName
+    );
     string _emailPassword;
     {
         string encryptedPassword = _configuration["EmailNotification"].get("password", "XXX").asString();
         _emailPassword = Encrypt::decrypt(encryptedPassword);        
     }
     _emailFrom                          = _configuration["EmailNotification"].get("from", "XXX").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", EmailNotification->from: " + _emailFrom
+    );
     
+    _localCopyTaskEnabled               =  _configuration["mms"].get("localCopyTaskEnabled", "XXX").asBool();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", mms->localCopyTaskEnabled: " + to_string(_localCopyTaskEnabled)
+    );
+
     if (_processorIdentifier == 0)
     {
         try
@@ -211,12 +252,12 @@ void MMSEngineProcessor::operator ()()
                 try
                 {
                     
-                    thread contentRetention(&MMSEngineProcessor::handleContentRetentionEvent, this);
+                    thread contentRetention(&MMSEngineProcessor::handleContentRetentionEventThread, this);
                     contentRetention.detach();
                 }
                 catch(exception e)
                 {
-                    _logger->error(__FILEREF__ + "handleContentRetentionEvent failed"
+                    _logger->error(__FILEREF__ + "handleContentRetentionEventThread failed"
                         + ", _processorIdentifier: " + to_string(_processorIdentifier)
                         + ", exception: " + e.what()
                     );
@@ -474,7 +515,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                     vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> dependencies;
                     try
                     {
-                        Validator validator(_logger, _mmsEngineDBFacade);
+                        Validator validator(_logger, _mmsEngineDBFacade, _configuration);
                         
                         dependencies = validator.validateSingleTaskMetadata(
                                 workspace->_workspaceKey, ingestionType, parametersRoot);                        
@@ -620,7 +661,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                             processorMMS
                                             );
 
-                                    thread downloadMediaSource(&MMSEngineProcessor::downloadMediaSourceFile, this, 
+                                    thread downloadMediaSource(&MMSEngineProcessor::downloadMediaSourceFileThread, this, 
                                         mediaSourceURL, ingestionJobKey, workspace);
                                     downloadMediaSource.detach();
                                 }
@@ -642,7 +683,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                             processorMMS
                                             );
 
-                                    thread moveMediaSource(&MMSEngineProcessor::moveMediaSourceFile, this, 
+                                    thread moveMediaSource(&MMSEngineProcessor::moveMediaSourceFileThread, this, 
                                         mediaSourceURL, ingestionJobKey, workspace);
                                     moveMediaSource.detach();
                                 }
@@ -664,7 +705,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                             processorMMS
                                             );
 
-                                    thread copyMediaSource(&MMSEngineProcessor::copyMediaSourceFile, this, 
+                                    thread copyMediaSource(&MMSEngineProcessor::copyMediaSourceFileThread, this, 
                                         mediaSourceURL, ingestionJobKey, workspace);
                                     copyMediaSource.detach();
                                 }
@@ -704,7 +745,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
                             try
                             {
-                                removeContent(
+                                removeContentTask(
                                         ingestionJobKey, 
                                         workspace, 
                                         parametersRoot, 
@@ -712,7 +753,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             }
                             catch(runtime_error e)
                             {
-                                _logger->error(__FILEREF__ + "removeContent failed"
+                                _logger->error(__FILEREF__ + "removeContentTask failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", exception: " + e.what()
@@ -736,7 +777,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             }
                             catch(exception e)
                             {
-                                _logger->error(__FILEREF__ + "removeContent failed"
+                                _logger->error(__FILEREF__ + "removeContentTask failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", exception: " + e.what()
@@ -765,7 +806,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
                             try
                             {
-                                ftpDeliveryContent(
+                                ftpDeliveryContentTask(
                                         ingestionJobKey, 
                                         workspace, 
                                         parametersRoot, 
@@ -773,7 +814,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             }
                             catch(runtime_error e)
                             {
-                                _logger->error(__FILEREF__ + "ftpDeliveryContent failed"
+                                _logger->error(__FILEREF__ + "ftpDeliveryContentTask failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", exception: " + e.what()
@@ -797,7 +838,79 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             }
                             catch(exception e)
                             {
-                                _logger->error(__FILEREF__ + "ftpDeliveryContent failed"
+                                _logger->error(__FILEREF__ + "ftpDeliveryContentTask failed"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                                        errorMessage,
+                                        "" // processorMMS
+                                        );
+
+                                throw runtime_error(errorMessage);
+                            }
+                        }
+                        else if (ingestionType == MMSEngineDBFacade::IngestionType::LocalCopy)
+                        {
+                            // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
+                            try
+                            {
+                                if (!_localCopyTaskEnabled)
+                                {
+                                    string errorMessage = string("Local-Copy Task is not enabled in this MMS deploy")
+                                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    ;
+                                    _logger->error(__FILEREF__ + errorMessage);
+
+                                    throw runtime_error(errorMessage);
+                                }
+                                
+                                localCopyContentTask(
+                                        ingestionJobKey, 
+                                        workspace, 
+                                        parametersRoot, 
+                                        dependencies);
+                            }
+                            catch(runtime_error e)
+                            {
+                                _logger->error(__FILEREF__ + "localCopyContentTask failed"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                                        errorMessage,
+                                        "" // processorMMS
+                                        );
+
+                                throw runtime_error(errorMessage);
+                            }
+                            catch(exception e)
+                            {
+                                _logger->error(__FILEREF__ + "localCopyContentTask failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", exception: " + e.what()
@@ -967,7 +1080,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 }
                                 else
                                 {
-                                    generateAndIngestFrames(
+                                    generateAndIngestFramesTask(
                                         ingestionJobKey, 
                                         workspace, 
                                         ingestionType,
@@ -977,7 +1090,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             }
                             catch(runtime_error e)
                             {
-                                _logger->error(__FILEREF__ + "generateAndIngestFrames failed"
+                                _logger->error(__FILEREF__ + "generateAndIngestFramesTask failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", exception: " + e.what()
@@ -1002,7 +1115,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             }
                             catch(exception e)
                             {
-                                _logger->error(__FILEREF__ + "generateAndIngestFrames failed"
+                                _logger->error(__FILEREF__ + "generateAndIngestFramesTask failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", exception: " + e.what()
@@ -1100,7 +1213,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
                             try
                             {
-                                generateAndIngestConcatenation(
+                                generateAndIngestConcatenationTask(
                                         ingestionJobKey, 
                                         workspace, 
                                         parametersRoot, 
@@ -1108,7 +1221,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             }
                             catch(runtime_error e)
                             {
-                                _logger->error(__FILEREF__ + "generateAndIngestConcatenation failed"
+                                _logger->error(__FILEREF__ + "generateAndIngestConcatenationTask failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", exception: " + e.what()
@@ -1133,7 +1246,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             }
                             catch(exception e)
                             {
-                                _logger->error(__FILEREF__ + "generateAndIngestConcatenation failed"
+                                _logger->error(__FILEREF__ + "generateAndIngestConcatenationTask failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", exception: " + e.what()
@@ -1162,7 +1275,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
                             try
                             {
-                                generateAndIngestCutMedia(
+                                generateAndIngestCutMediaTask(
                                         ingestionJobKey, 
                                         workspace, 
                                         parametersRoot, 
@@ -1170,7 +1283,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             }
                             catch(runtime_error e)
                             {
-                                _logger->error(__FILEREF__ + "generateAndIngestCutMedia failed"
+                                _logger->error(__FILEREF__ + "generateAndIngestCutMediaTask failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", exception: " + e.what()
@@ -1195,7 +1308,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             }
                             catch(exception e)
                             {
-                                _logger->error(__FILEREF__ + "generateAndIngestCutMedia failed"
+                                _logger->error(__FILEREF__ + "generateAndIngestCutMediaTask failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", exception: " + e.what()
@@ -1348,7 +1461,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
                             try
                             {
-                                manageEmailNotification(
+                                manageEmailNotificationTask(
                                         ingestionJobKey, 
                                         workspace, 
                                         parametersRoot, 
@@ -1356,7 +1469,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             }
                             catch(runtime_error e)
                             {
-                                _logger->error(__FILEREF__ + "manageEmailNotification failed"
+                                _logger->error(__FILEREF__ + "manageEmailNotificationTask failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", exception: " + e.what()
@@ -1381,7 +1494,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             }
                             catch(exception e)
                             {
-                                _logger->error(__FILEREF__ + "manageEmailNotification failed"
+                                _logger->error(__FILEREF__ + "manageEmailNotificationTask failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", exception: " + e.what()
@@ -1472,7 +1585,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
     string      metadataFileContent;
     vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> dependencies;
     Json::Value parametersRoot;
-    Validator validator(_logger, _mmsEngineDBFacade);
+    Validator validator(_logger, _mmsEngineDBFacade, _configuration);
     try
     {
         Json::CharReaderBuilder builder;
@@ -2227,7 +2340,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
     }    
 }
 
-void MMSEngineProcessor::removeContent(
+void MMSEngineProcessor::removeContentTask(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
@@ -2286,7 +2399,7 @@ void MMSEngineProcessor::removeContent(
     }
     catch(runtime_error e)
     {
-        _logger->error(__FILEREF__ + "removeContent failed"
+        _logger->error(__FILEREF__ + "removeContentTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", e.what(): " + e.what()
@@ -2308,7 +2421,7 @@ void MMSEngineProcessor::removeContent(
     }
     catch(exception e)
     {
-        _logger->error(__FILEREF__ + "removeContent failed"
+        _logger->error(__FILEREF__ + "removeContentTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );
@@ -2329,7 +2442,7 @@ void MMSEngineProcessor::removeContent(
     }
 }
 
-void MMSEngineProcessor::ftpDeliveryContent(
+void MMSEngineProcessor::ftpDeliveryContentTask(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
@@ -2458,7 +2571,7 @@ void MMSEngineProcessor::ftpDeliveryContent(
                 relativePath,
                 fileName);
             
-            thread ftpUploadMediaSource(&MMSEngineProcessor::ftpUploadMediaSource, this, 
+            thread ftpUploadMediaSource(&MMSEngineProcessor::ftpUploadMediaSourceThread, this, 
                 mmsAssetPathName, fileName, sizeInBytes, ingestionJobKey, workspace,
                     ftpServer, ftpPort, ftpUserName, ftpPassword,
                     ftpRemoteDirectory, deliveryFileName);
@@ -2467,7 +2580,7 @@ void MMSEngineProcessor::ftpDeliveryContent(
     }
     catch(runtime_error e)
     {
-        _logger->error(__FILEREF__ + "ftpDeliveryContent failed"
+        _logger->error(__FILEREF__ + "ftpDeliveryContentTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", e.what(): " + e.what()
@@ -2489,7 +2602,7 @@ void MMSEngineProcessor::ftpDeliveryContent(
     }
     catch(exception e)
     {
-        _logger->error(__FILEREF__ + "ftpDeliveryContent failed"
+        _logger->error(__FILEREF__ + "ftpDeliveryContentTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );
@@ -2716,7 +2829,7 @@ void MMSEngineProcessor::httpCallbackTask(
             }
         }
         
-        thread httpCallbackThread(&MMSEngineProcessor::userHttpCallback, this, 
+        thread httpCallbackThread(&MMSEngineProcessor::userHttpCallbackThread, this, 
             ingestionJobKey, httpProtocol, httpHostName, 
             httpPort, httpURI, httpURLParameters, httpMethod,
             httpHeadersRoot, callbackMedatada);
@@ -2764,6 +2877,237 @@ void MMSEngineProcessor::httpCallbackTask(
         );
 
         throw e;
+    }
+}
+
+void MMSEngineProcessor::localCopyContentTask(
+        int64_t ingestionJobKey,
+        shared_ptr<Workspace> workspace,
+        Json::Value parametersRoot,
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies
+)
+{
+    try
+    {
+        if (dependencies.size() == 0)
+        {
+            string errorMessage = __FILEREF__ + "No configured any media to be copied"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", dependencies.size: " + to_string(dependencies.size());
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        string localPath;
+        string localFileName;
+        {
+            string field = "LocalPath";
+            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            localPath = parametersRoot.get(field, "XXX").asString();
+
+            field = "LocalFileName";
+            if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            {
+                localFileName = parametersRoot.get(field, "XXX").asString();
+            }
+        }
+        
+        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
+        {
+            int mmsPartitionNumber;
+            string workspaceDirectoryName;
+            string relativePath;
+            string fileName;
+            int64_t sizeInBytes;
+            string deliveryFileName;
+            
+            int64_t key;
+            MMSEngineDBFacade::ContentType referenceContentType;
+            Validator::DependencyType dependencyType;
+            
+            tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+
+            if (dependencyType == Validator::DependencyType::MediaItemKey)
+            {
+                int64_t encodingProfileKey = -1;
+                
+                tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,int64_t> storageDetails 
+                    = _mmsEngineDBFacade->getStorageDetails(
+                        key, encodingProfileKey);
+
+                int64_t physicalPathKey;
+                shared_ptr<Workspace> workspace;
+                
+                tie(physicalPathKey, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, sizeInBytes) 
+                        = storageDetails;
+                workspaceDirectoryName = workspace->_directoryName;
+            }
+            else
+            {
+                tuple<int,shared_ptr<Workspace>,string,string,string,int64_t> storageDetails 
+                    = _mmsEngineDBFacade->getStorageDetails(key);
+
+                shared_ptr<Workspace> workspace;
+                
+                tie(mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, sizeInBytes) 
+                        = storageDetails;
+                workspaceDirectoryName = workspace->_directoryName;
+            }
+
+            _logger->info(__FILEREF__ + "getMMSAssetPathName ..."
+                + ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
+                + ", workspaceDirectoryName: " + workspaceDirectoryName
+                + ", relativePath: " + relativePath
+                + ", fileName: " + fileName
+            );
+            string mmsAssetPathName = _mmsStorage->getMMSAssetPathName(
+                mmsPartitionNumber,
+                workspaceDirectoryName,
+                relativePath,
+                fileName);
+            
+            thread copyContentThread(&MMSEngineProcessor::copyContentThread, this, 
+                ingestionJobKey, mmsAssetPathName, localPath, localFileName);
+            copyContentThread.detach();
+        }
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "localCopyContentTask failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
+        );
+        
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what(), 
+                "" // ProcessorMMS
+        );
+        
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "localCopyContentTask failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+        );
+        
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what(), 
+                "" // ProcessorMMS
+        );
+
+        throw e;
+    }
+}
+
+void MMSEngineProcessor::copyContentThread(
+        int64_t ingestionJobKey, string mmsAssetPathName, 
+        string localPath, string localFileName)
+{
+
+    try 
+    {
+        _logger->info(__FILEREF__ + "Coping"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", mmsAssetPathName: " + mmsAssetPathName
+            + ", localPath: " + localPath
+            + ", localFileName: " + localFileName
+        );
+        
+        string localPathName = localPath;
+        if (localFileName != "")
+        {
+            if (localPathName.back() != '/')
+                localPathName += "/";
+            localPathName += localFileName;
+        }            
+        
+        FileIO::copyFile(mmsAssetPathName, localPathName);
+            
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_TaskSuccess"
+            + ", errorMessage: " + ""
+        );                            
+        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
+                MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
+                "", // errorMessage
+                "" // ProcessorMMS
+        );
+    }
+    catch (runtime_error& e) 
+    {
+        _logger->error(__FILEREF__ + "Coping failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey) 
+            + ", mmsAssetPathName: " + mmsAssetPathName 
+            + ", localPath: " + localPath
+            + ", localFileName: " + localFileName
+            + ", exception: " + e.what()
+        );
+
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what(), "" /* processorMMS */);
+        
+        return;
+    }
+    catch (exception e)
+    {
+        _logger->error(__FILEREF__ + "Coping failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey) 
+            + ", mmsAssetPathName: " + mmsAssetPathName 
+            + ", localPath: " + localPath
+            + ", localFileName: " + localFileName
+            + ", exception: " + e.what()
+        );
+
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what(), 
+                "" /* processorMMS */);
+
+        return;
     }
 }
 
@@ -3083,7 +3427,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEvent (
     
 }
 
-void MMSEngineProcessor::generateAndIngestFrames(
+void MMSEngineProcessor::generateAndIngestFramesTask(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         MMSEngineDBFacade::IngestionType ingestionType,
@@ -4258,7 +4602,7 @@ void MMSEngineProcessor::generateAndIngestSlideshow(
 }
 */
 
-void MMSEngineProcessor::generateAndIngestConcatenation(
+void MMSEngineProcessor::generateAndIngestConcatenationTask(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
@@ -4478,7 +4822,7 @@ void MMSEngineProcessor::generateAndIngestConcatenation(
     }
     catch(runtime_error e)
     {
-        _logger->error(__FILEREF__ + "generateAndIngestConcatenation failed"
+        _logger->error(__FILEREF__ + "generateAndIngestConcatenationTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", e.what(): " + e.what()
@@ -4488,7 +4832,7 @@ void MMSEngineProcessor::generateAndIngestConcatenation(
     }
     catch(exception e)
     {
-        _logger->error(__FILEREF__ + "generateAndIngestConcatenation failed"
+        _logger->error(__FILEREF__ + "generateAndIngestConcatenationTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );
@@ -4497,7 +4841,7 @@ void MMSEngineProcessor::generateAndIngestConcatenation(
     }
 }
 
-void MMSEngineProcessor::generateAndIngestCutMedia(
+void MMSEngineProcessor::generateAndIngestCutMediaTask(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
@@ -4775,7 +5119,7 @@ void MMSEngineProcessor::generateAndIngestCutMedia(
     }
     catch(runtime_error e)
     {
-        _logger->error(__FILEREF__ + "generateAndIngestCutMedia failed"
+        _logger->error(__FILEREF__ + "generateAndIngestCutMediaTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", e.what(): " + e.what()
@@ -4785,7 +5129,7 @@ void MMSEngineProcessor::generateAndIngestCutMedia(
     }
     catch(exception e)
     {
-        _logger->error(__FILEREF__ + "generateAndIngestCutMedia failed"
+        _logger->error(__FILEREF__ + "generateAndIngestCutMediaTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );
@@ -5230,7 +5574,7 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
     }
 }
 
-void MMSEngineProcessor::manageEmailNotification(
+void MMSEngineProcessor::manageEmailNotificationTask(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
@@ -5435,7 +5779,7 @@ void MMSEngineProcessor::handleCheckEncodingEvent ()
     _pActiveEncodingsManager->addEncodingItems(encodingItems);
 }
 
-void MMSEngineProcessor::handleContentRetentionEvent ()
+void MMSEngineProcessor::handleContentRetentionEventThread ()
 {
     
     {
@@ -5901,7 +6245,7 @@ size_t curlDownloadCallback(char* ptr, size_t size, size_t nmemb, void *f)
     return size * nmemb;        
 };
 
-void MMSEngineProcessor::downloadMediaSourceFile(string sourceReferenceURL,
+void MMSEngineProcessor::downloadMediaSourceFileThread(string sourceReferenceURL,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace)
 {
     bool downloadingCompleted = false;
@@ -6321,7 +6665,7 @@ RESUMING FILE TRANSFERS
     }
 }
 
-void MMSEngineProcessor::ftpUploadMediaSource(
+void MMSEngineProcessor::ftpUploadMediaSourceThread(
         string mmsAssetPathName, string fileName, int64_t sizeInBytes,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
         string ftpServer, int ftpPort, string ftpUserName, string ftpPassword, 
@@ -6515,7 +6859,7 @@ void MMSEngineProcessor::ftpUploadMediaSource(
     }
 }
 
-void MMSEngineProcessor::userHttpCallback(
+void MMSEngineProcessor::userHttpCallbackThread(
         int64_t ingestionJobKey, string httpProtocol, string httpHostName,
         int httpPort, string httpURI, string httpURLParameters,
         string httpMethod, Json::Value userHeadersRoot, 
@@ -6757,7 +7101,7 @@ void MMSEngineProcessor::userHttpCallback(
 }
 
 
-void MMSEngineProcessor::moveMediaSourceFile(string sourceReferenceURL,
+void MMSEngineProcessor::moveMediaSourceFileThread(string sourceReferenceURL,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace)
 {
 
@@ -6846,7 +7190,7 @@ void MMSEngineProcessor::moveMediaSourceFile(string sourceReferenceURL,
     }
 }
 
-void MMSEngineProcessor::copyMediaSourceFile(string sourceReferenceURL,
+void MMSEngineProcessor::copyMediaSourceFileThread(string sourceReferenceURL,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace)
 {
 

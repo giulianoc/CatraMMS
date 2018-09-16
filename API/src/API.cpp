@@ -2924,7 +2924,7 @@ void API::ingestion(
             
             conn = _mmsEngineDBFacade->beginIngestionJobs();
 
-            Validator validator(_logger, _mmsEngineDBFacade);
+            Validator validator(_logger, _mmsEngineDBFacade, _configuration);
             // it starts from the root and validate recursively the entire body
             validator.validateRootMetadata(workspace->_workspaceKey, requestBodyRoot);
         
@@ -4272,7 +4272,7 @@ void API::addEncodingProfilesSet(
         {            
             conn = _mmsEngineDBFacade->beginIngestionJobs();
 
-            Validator validator(_logger, _mmsEngineDBFacade);
+            Validator validator(_logger, _mmsEngineDBFacade, _configuration);
             validator.validateEncodingProfilesSetRootMetadata(contentType, encodingProfilesSetRoot);
         
             string field = "Label";
@@ -4506,7 +4506,7 @@ void API::addEncodingProfile(
 
         try
         {
-            Validator validator(_logger, _mmsEngineDBFacade);
+            Validator validator(_logger, _mmsEngineDBFacade, _configuration);
             validator.validateEncodingProfileRootMetadata(contentType, encodingProfileRoot);
 
             string field = "Label";

@@ -71,6 +71,8 @@ private:
     string                  _emailPassword;
     string                  _emailFrom;
     
+    bool                    _localCopyTaskEnabled;
+    
     
     // void sendEmail(string to, string subject, vector<string>& emailBody);
 
@@ -84,15 +86,15 @@ private:
 
     void handleCheckEncodingEvent ();
 
-    void handleContentRetentionEvent ();
+    void handleContentRetentionEventThread ();
 
-    void removeContent(
+    void removeContentTask(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
     
-    void ftpDeliveryContent(
+    void ftpDeliveryContentTask(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
@@ -104,11 +106,21 @@ private:
         Json::Value parametersRoot,
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
 
-    void userHttpCallback(
+    void userHttpCallbackThread(
         int64_t ingestionJobKey, string httpProtocol, string httpHostName,
         int httpPort, string httpURI, string httpURLParameters,
         string httpMethod, Json::Value userHeadersRoot, 
         Json::Value callbackMedatada);
+
+    void localCopyContentTask(
+        int64_t ingestionJobKey,
+        shared_ptr<Workspace> workspace,
+        Json::Value parametersRoot,
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
+
+    void copyContentThread(
+        int64_t ingestionJobKey, string mmsAssetPathName, 
+        string localPath, string localFileName);
 
     string generateMediaMetadataToIngest(
         int64_t ingestionJobKey,
@@ -134,7 +146,7 @@ private:
         Json::Value parametersRoot,
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
 
-    void generateAndIngestFrames(
+    void generateAndIngestFramesTask(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         MMSEngineDBFacade::IngestionType ingestionType,
@@ -174,19 +186,19 @@ private:
         Json::Value parametersRoot,
         vector<pair<int64_t,Validator::DependencyType>>& dependencies);
     */
-    void generateAndIngestConcatenation(
+    void generateAndIngestConcatenationTask(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
 
-    void generateAndIngestCutMedia(
+    void generateAndIngestCutMediaTask(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
 
-    void manageEmailNotification(
+    void manageEmailNotificationTask(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
@@ -203,11 +215,11 @@ private:
 
     bool isMetadataPresent(Json::Value root, string field);
 
-    void downloadMediaSourceFile(string sourceReferenceURL,
+    void downloadMediaSourceFileThread(string sourceReferenceURL,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace);
-    void moveMediaSourceFile(string sourceReferenceURL,
+    void moveMediaSourceFileThread(string sourceReferenceURL,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace);
-    void copyMediaSourceFile(string sourceReferenceURL,
+    void copyMediaSourceFileThread(string sourceReferenceURL,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace);
 
     int progressDownloadCallback(
@@ -224,7 +236,7 @@ private:
         double dltotal, double dlnow,
         double ultotal, double ulnow);
 
-    void ftpUploadMediaSource(
+    void ftpUploadMediaSourceThread(
         string mmsAssetPathName, string fileName, int64_t sizeInBytes,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
         string ftpServer, int ftpPort, string ftpUserName, string ftpPassword, 

@@ -15,11 +15,17 @@
 
 Validator::Validator(
         shared_ptr<spdlog::logger> logger, 
-        shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade
+        shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
+        Json::Value configuration
 ) 
 {
     _logger             = logger;
     _mmsEngineDBFacade  = mmsEngineDBFacade;
+
+    _storagePath = configuration["storage"].get("path", "XXX").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", storage->path: " + _storagePath
+    );
 }
 
 Validator::Validator(const Validator& orig) {
@@ -1067,6 +1073,27 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
         Json::Value parametersRoot = taskRoot[field]; 
         validateHTTPCallbackMetadata(workspaceKey, parametersRoot, dependencies);
     }
+    else if (type == "Local-Copy")
+    {
+        ingestionType = MMSEngineDBFacade::IngestionType::LocalCopy;
+        
+        field = "Parameters";
+        if (!isMetadataPresent(taskRoot, field))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field
+                    + ", sTaskRoot: " + sTaskRoot;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        Json::Value parametersRoot = taskRoot[field]; 
+        validateLocalCopyMetadata(workspaceKey, parametersRoot, dependencies);
+    }
     else
     {
         string errorMessage = __FILEREF__ + "Field 'Type' is wrong"
@@ -1143,6 +1170,10 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
     else if (ingestionType == MMSEngineDBFacade::IngestionType::HTTPCallback)
     {
         validateHTTPCallbackMetadata(workspaceKey, parametersRoot, dependencies);        
+    }
+    else if (ingestionType == MMSEngineDBFacade::IngestionType::LocalCopy)
+    {
+        validateLocalCopyMetadata(workspaceKey, parametersRoot, dependencies);        
     }
     else
     {
@@ -2118,6 +2149,69 @@ void Validator::validateHTTPCallbackMetadata(int64_t workspaceKey,
         }
     }   
         
+    // References is optional because in case of dependency managed automatically
+    // by MMS (i.e.: onSuccess)
+    field = "References";
+    if (isMetadataPresent(parametersRoot, field))
+    {
+        Json::Value referencesRoot = parametersRoot[field];
+        if (referencesRoot.size() < 1)
+        {
+            string errorMessage = __FILEREF__ + "Field is present but it does not have enough elements"
+                    + ", Field: " + field
+                    + ", referencesRoot.size(): " + to_string(referencesRoot.size())
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        
+        bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = true;
+        bool encodingProfileFieldsToBeManaged = false;
+        fillDependencies(workspaceKey, parametersRoot, dependencies,
+                priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
+                encodingProfileFieldsToBeManaged);
+    }        
+}
+
+void Validator::validateLocalCopyMetadata(int64_t workspaceKey,
+    Json::Value parametersRoot, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+{
+    // see sample in directory samples
+        
+    vector<string> mandatoryFields = {
+        "LocalPath"
+    };
+    for (string mandatoryField: mandatoryFields)
+    {
+        if (!isMetadataPresent(parametersRoot, mandatoryField))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + mandatoryField
+                    + ", sParametersRoot: " + sParametersRoot
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+    
+    string field = "LocalPath";
+    string localPath = parametersRoot.get(field, "XXX").asString();
+    if (localPath.size() >= _storagePath.size() && 0 == localPath.compare(0, _storagePath.size(), _storagePath))
+    {
+        string errorMessage = __FILEREF__ + "'LocalPath' cannot be within the dedicated storage managed by MMS"
+                + ", Field: " + field
+                + ", localPath: " + localPath
+                ;
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+
     // References is optional because in case of dependency managed automatically
     // by MMS (i.e.: onSuccess)
     field = "References";
