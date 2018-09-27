@@ -1,3 +1,3 @@
 
 #at 5am
-0 5 * * * /home/mms/catramms/CatraMMS/etc/crontab.sh
+0 5 * * * /opt/catramms/CatraMMS/etc/crontab.sh

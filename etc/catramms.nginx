@@ -347,7 +347,7 @@ server {
 	access_log   /var/CatraMMSData/logs/nginx/mms-gui.access.log main;
 	error_log    /var/CatraMMSData/logs/nginx/mms-gui.error.log notice;
 
-	root /home/mms/catramms/tomcat/webapps;
+	root /opt/catramms/tomcat/webapps;
 
 	#proxy_cache one;
 

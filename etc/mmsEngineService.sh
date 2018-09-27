@@ -33,7 +33,7 @@ else
 	OPTIONS="--pidfile $PIDFILE"
 fi
 
-CatraMMS_PATH=/home/mms/catramms
+CatraMMS_PATH=/opt/catramms
 
 #used by ImageMagick to look for the configuration files
 export MAGICK_CONFIGURE_PATH=$CatraMMS_PATH/ImageMagick-7.0.8-10/etc/ImageMagick-7

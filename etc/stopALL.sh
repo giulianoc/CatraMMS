@@ -1,10 +1,10 @@
 #!/bin/bash
 
 echo "chmod .sh"
-chmod u+x /home/mms/catramms/CatraMMS/etc/*.sh
+chmod u+x /opt/catramms/CatraMMS/etc/*.sh
 
-./api.sh stop
-./encoder.sh stop
-./mmsEngineService.sh stop
-./tomcat.sh stop
+/opt/catramms/CatraMMS/etc/api.sh stop
+/opt/catramms/CatraMMS/etc/encoder.sh stop
+/opt/catramms/CatraMMS/etc/mmsEngineService.sh stop
+/opt/catramms/CatraMMS/etc/tomcat.sh stop
 
