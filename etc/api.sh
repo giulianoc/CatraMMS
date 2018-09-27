@@ -36,7 +36,7 @@ CatraMMS_PATH=/home/mms/catramms
 export LD_LIBRARY_PATH=$CatraMMS_PATH/CatraLibraries/lib:$CatraMMS_PATH/CatraMMS/lib:$CatraMMS_PATH/ImageMagick-7.0.8-10/lib:$CatraMMS_PATH/curlpp//lib:$CatraMMS_PATH/ffmpeg-4.0.2/lib:$CatraMMS_PATH/jsoncpp/lib:$CatraMMS_PATH/mysql-connector-c++-1.1.9-linux-ubuntu16.10-x86-64bit/lib
 export MMS_CONFIGPATHNAME=$CatraMMS_PATH/CatraMMS/etc/mms.cfg
 
-PIDFILE=/usr/local/CatraMMS/pids/api.pid
+PIDFILE=/var/CatraMMSData/pids/api.pid
 PORT=8010
 
 if [ "$command" == "start" ]
