@@ -21,7 +21,7 @@ echo "mmsEngineService"
 /opt/catramms/CatraMMS/etc/mmsEngineService.sh status
 /opt/catramms/CatraMMS/etc/mmsEngineService.sh start
 
-echo "api"
+echo "encoder"
 /opt/catramms/CatraMMS/etc/encoder.sh stop
 /opt/catramms/CatraMMS/etc/encoder.sh status
 /opt/catramms/CatraMMS/etc/encoder.sh start
