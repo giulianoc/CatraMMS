@@ -24,7 +24,7 @@ then
 fi
 
 
-PIDFILE=/var/CatraMMSData/pids/mmsEngineService.pid
+PIDFILE=/var/catramms/pids/mmsEngineService.pid
 
 if [ "$2" == "nodaemon" ]
 then

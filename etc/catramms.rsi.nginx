@@ -35,8 +35,8 @@ server {
 	ssl_trusted_certificate /etc/letsencrypt/live/rsi.ch/fullchain.pem;
 	include /usr/local/nginx/conf/snippets/ssl-params.conf;
 
-	access_log   /var/CatraMMSData/logs/nginx/mms-api.access.log main;
-	error_log    /var/CatraMMSData/logs/nginx/mms-api.error.log notice;
+	access_log   /var/catramms/logs/nginx/mms-api.access.log main;
+	error_log    /var/catramms/logs/nginx/mms-api.error.log notice;
 
 	location /catramms {
 		if ($request_method = GET) {
@@ -128,8 +128,8 @@ server {
 	#we should call the encoder machine as encoder-1, encoder-2, ...
 	server_name mmsengine-1;
 
-	access_log   /var/CatraMMSData/logs/nginx/mms-encoder.access.log main;
-	error_log    /var/CatraMMSData/logs/nginx/mms-encoder.error.log notice;
+	access_log   /var/catramms/logs/nginx/mms-encoder.access.log main;
+	error_log    /var/catramms/logs/nginx/mms-encoder.error.log notice;
 
 	location /catramms {
 		if ($request_method = POST) {
@@ -185,10 +185,10 @@ server {
 	ssl_trusted_certificate /etc/letsencrypt/live/rsi.ch/fullchain.pem;
 	include /usr/local/nginx/conf/snippets/ssl-params.conf;
 
-	access_log   /var/CatraMMSData/logs/nginx/mms-delivery.access.log main;
-	error_log    /var/CatraMMSData/logs/nginx/mms-delivery.error.log notice;
+	access_log   /var/catramms/logs/nginx/mms-delivery.access.log main;
+	error_log    /var/catramms/logs/nginx/mms-delivery.error.log notice;
 
-	root /var/CatraMMSData/storage/MMSRepository/;
+	root /var/catramms/storage/MMSRepository/;
 
 	location ~ /MMS {
 		if ($arg_token) {
@@ -239,8 +239,8 @@ server {
 
 	server_name mms-binary.rsi.ch localhost;
 
-	access_log   /var/CatraMMSData/logs/nginx/mms-binary.access.log main;
-	error_log    /var/CatraMMSData/logs/nginx/mms-binary.error.log notice;
+	access_log   /var/catramms/logs/nginx/mms-binary.access.log main;
+	error_log    /var/catramms/logs/nginx/mms-binary.error.log notice;
 
 	client_max_body_size 1G;
 
@@ -265,7 +265,7 @@ server {
 		auth_request /catramms/binary/checkAuthorization;
 		#auth_request_set $auth_status $upstream_status;
 
-		client_body_temp_path /var/CatraMMSData/storage/MMSWorkingAreaRepository/nginx;
+		client_body_temp_path /var/catramms/storage/MMSWorkingAreaRepository/nginx;
 
 		# When set to the value on, temporary files are not removed after request processing
 		#The value clean does it.
@@ -344,8 +344,8 @@ server {
 	ssl_trusted_certificate /etc/letsencrypt/live/rsi.ch/fullchain.pem;
 	include /usr/local/nginx/conf/snippets/ssl-params.conf;
 
-	access_log   /var/CatraMMSData/logs/nginx/mms-gui.access.log main;
-	error_log    /var/CatraMMSData/logs/nginx/mms-gui.error.log notice;
+	access_log   /var/catramms/logs/nginx/mms-gui.access.log main;
+	error_log    /var/catramms/logs/nginx/mms-gui.error.log notice;
 
 	root /opt/catramms/tomcat/webapps;
 

@@ -18,13 +18,13 @@ fi
 
 if [ "$command" == "start" ]
 then
-	sudo /usr/local/nginx/sbin/nginx 
+	sudo /opt/catramms/nginx/sbin/nginx 
 elif [ "$command" == "status" ]
 then
 	ps -ef | grep nginx | grep -v grep | grep -v status
 elif [ "$command" == "stop" ]
 then
-	PID=$(cat /usr/local/nginx/conf/nginx.conf | grep -Ev '^\s*#' | awk 'BEGIN { RS="[;{}]" } { if ($1 == "pid") print $2 }' | head -n1)
+	PID=$(cat /opt/catramms/nginx/conf/nginx.conf | grep -Ev '^\s*#' | awk 'BEGIN { RS="[;{}]" } { if ($1 == "pid") print $2 }' | head -n1)
 	#echo $PID
 	sudo start-stop-daemon --stop --quiet  --retry=TERM/30/KILL/5 --pidfile $PID --name nginx
 fi
