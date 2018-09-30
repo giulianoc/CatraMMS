@@ -13,7 +13,7 @@ server {
 	ssl_certificate /etc/letsencrypt/live/rsi.ch/fullchain.pem;
 	ssl_certificate_key /etc/letsencrypt/live/rsi.ch/privkey.pem;
 	ssl_trusted_certificate /etc/letsencrypt/live/rsi.ch/fullchain.pem;
-	include /usr/local/nginx/conf/snippets/ssl-params.conf;
+	include /opt/catramms/nginx/conf/snippets/ssl-params.conf;
 
 	root /opt/catramms/CatraMMS/www;
 	#return 301 https://github.com/giulianoc/CatraMMS/wiki;
@@ -33,7 +33,7 @@ server {
 	ssl_certificate /etc/letsencrypt/live/rsi.ch/fullchain.pem;
 	ssl_certificate_key /etc/letsencrypt/live/rsi.ch/privkey.pem;
 	ssl_trusted_certificate /etc/letsencrypt/live/rsi.ch/fullchain.pem;
-	include /usr/local/nginx/conf/snippets/ssl-params.conf;
+	include /opt/catramms/nginx/conf/snippets/ssl-params.conf;
 
 	access_log   /var/catramms/logs/nginx/mms-api.access.log main;
 	error_log    /var/catramms/logs/nginx/mms-api.error.log notice;
@@ -117,7 +117,7 @@ server {
 		internal;
 
 		fastcgi_pass   localhost:8010;
-		include /usr/local/nginx/conf/fastcgi_params;
+		include /opt/catramms/nginx/conf/fastcgi_params;
 	}
 }
 
@@ -159,7 +159,7 @@ server {
 		internal;
 
 		fastcgi_pass   localhost:8020;
-		include /usr/local/nginx/conf/fastcgi_params;
+		include /opt/catramms/nginx/conf/fastcgi_params;
 	}
 }
 
@@ -170,7 +170,7 @@ server {
 	ssl_certificate /etc/letsencrypt/live/rsi.ch/fullchain.pem;
 	ssl_certificate_key /etc/letsencrypt/live/rsi.ch/privkey.pem;
 	ssl_trusted_certificate /etc/letsencrypt/live/rsi.ch/fullchain.pem;
-	include /usr/local/nginx/conf/snippets/ssl-params.conf;
+	include /opt/catramms/nginx/conf/snippets/ssl-params.conf;
 
 	return 301 http://mms-binary.rsi.ch$request_uri;
 }
@@ -183,7 +183,7 @@ server {
 	ssl_certificate /etc/letsencrypt/live/rsi.ch/fullchain.pem;
 	ssl_certificate_key /etc/letsencrypt/live/rsi.ch/privkey.pem;
 	ssl_trusted_certificate /etc/letsencrypt/live/rsi.ch/fullchain.pem;
-	include /usr/local/nginx/conf/snippets/ssl-params.conf;
+	include /opt/catramms/nginx/conf/snippets/ssl-params.conf;
 
 	access_log   /var/catramms/logs/nginx/mms-delivery.access.log main;
 	error_log    /var/catramms/logs/nginx/mms-delivery.error.log notice;
@@ -225,7 +225,7 @@ server {
 		internal;
 
 		fastcgi_pass   localhost:8010;
-		include /usr/local/nginx/conf/fastcgi_params;
+		include /opt/catramms/nginx/conf/fastcgi_params;
 	}
 
 	location / {
@@ -322,7 +322,7 @@ server {
 		internal;
 
 		fastcgi_pass   localhost:8010;
-		include /usr/local/nginx/conf/fastcgi_params;
+		include /opt/catramms/nginx/conf/fastcgi_params;
 	}
 }
 
@@ -342,7 +342,7 @@ server {
 	ssl_certificate /etc/letsencrypt/live/rsi.ch/fullchain.pem;
 	ssl_certificate_key /etc/letsencrypt/live/rsi.ch/privkey.pem;
 	ssl_trusted_certificate /etc/letsencrypt/live/rsi.ch/fullchain.pem;
-	include /usr/local/nginx/conf/snippets/ssl-params.conf;
+	include /opt/catramms/nginx/conf/snippets/ssl-params.conf;
 
 	access_log   /var/catramms/logs/nginx/mms-gui.access.log main;
 	error_log    /var/catramms/logs/nginx/mms-gui.error.log notice;
