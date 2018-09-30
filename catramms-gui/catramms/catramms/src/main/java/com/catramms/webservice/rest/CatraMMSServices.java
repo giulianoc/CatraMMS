@@ -484,8 +484,9 @@ public class CatraMMSServices {
                 throw new Exception(errorMessage);
             }
 
-            response = "{\"ok\": true, "
-                    + "\"errMsg\": \"Success\" }";
+            response = "{\"status\": \"Success\", "
+                    + "\"cutIngestionJobKey\": " + cutIngestionJobKey + ", "
+                    + "\"errMsg\": null }";
             mLogger.info("cutVideo response: " + response);
 
             return Response.ok(response).build();
@@ -495,7 +496,7 @@ public class CatraMMSServices {
             String errorMessage = "cutVideo failed. Exception: " + e;
             mLogger.error(errorMessage);
 
-            response = "{\"ok\": false, "
+            response = "{\"status\": \"Failed\", "
                     + "\"errMsg\": \"" + errorMessage + "\" "
                     + "}";
 
