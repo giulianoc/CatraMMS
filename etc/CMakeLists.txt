@@ -25,8 +25,11 @@ SET (ETCs
 	catramms.nginx
 	catramms.rsi.nginx
 	api.sh
+	api.rsi.sh
 	encoder.sh
+	encoder.rsi.sh
 	mmsEngineService.sh
+	mmsEngineService.rsi.sh
 	ffmpegHelper.sh
 	imageMagickHelper.sh
 	nginx.sh
