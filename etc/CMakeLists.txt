@@ -35,10 +35,14 @@ SET (ETCs
 	nginx.sh
 	tomcat.sh
 	setupALL.sh
+	setupALL.rsi.sh
 	statusALL.sh
+	statusALL.rsi.sh
 	stopALL.sh
+	stopALL.rsi.sh
 	tailALL.sh
 	mms.cfg
+	mms.rsi.cfg
 	crontab.txt
 	crontab.sh
 )
