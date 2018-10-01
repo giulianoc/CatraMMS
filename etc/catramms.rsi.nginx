@@ -12,10 +12,10 @@ server {
 	server_name mms.rsi.ch rsi.ch;
 	listen 80;
 
-	ssl_certificate /etc/letsencrypt/live/rsi.ch/fullchain.pem;
-	ssl_certificate_key /etc/letsencrypt/live/rsi.ch/privkey.pem;
-	ssl_trusted_certificate /etc/letsencrypt/live/rsi.ch/fullchain.pem;
-	include /opt/catramms/nginx/conf/snippets/ssl-params.conf;
+#	ssl_certificate /etc/letsencrypt/live/rsi.ch/fullchain.pem;
+#	ssl_certificate_key /etc/letsencrypt/live/rsi.ch/privkey.pem;
+#	ssl_trusted_certificate /etc/letsencrypt/live/rsi.ch/fullchain.pem;
+#	include /opt/catramms/nginx/conf/snippets/ssl-params.conf;
 
 	root /opt/catramms/CatraMMS/www;
 	#return 301 https://github.com/giulianoc/CatraMMS/wiki;
