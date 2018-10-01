@@ -23,6 +23,7 @@
 SET (ETCs
 	nginx.conf
 	catramms.nginx
+	catramms.rsi.nginx
 	api.sh
 	encoder.sh
 	mmsEngineService.sh
