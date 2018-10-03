@@ -14649,7 +14649,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "workspaceKey               BIGINT UNSIGNED NOT NULL,"
                     "type                       VARCHAR (64) NOT NULL,"
                     "label                      VARCHAR (256) NULL,"
-                    "ingestionDate              TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+                    "ingestionDate              DATETIME NOT NULL,"
                     "lastUpdate                 TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "status           			VARCHAR (64) NOT NULL,"
                     "constraint MMS_IngestionRoot_PK PRIMARY KEY (ingestionRootKey), "
