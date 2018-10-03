@@ -106,7 +106,14 @@ void EMailSender:: sendEmail(string to, string subject, vector<string>& emailBod
         // curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
 
         /* Send the message */
-        _logger->info(__FILEREF__ + "Sending email...");
+        _logger->info(__FILEREF__ + "Sending email"
+            + ", emailServerURL: " + emailServerURL
+            + ", userName: " + userName
+            + ", from: " + from
+            + ", to: " + to
+            + ", cc: " + cc
+            + ", subject: " + subject
+        );
         res = curl_easy_perform(curl);
 
         /* Check for errors */
