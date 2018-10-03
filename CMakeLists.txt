@@ -52,7 +52,8 @@ add_subdirectory(MMSEngineService/src)
 
 add_subdirectory(API/src)
 
-add_subdirectory(etc)
+add_subdirectory(conf)
+add_subdirectory(scripts)
 add_subdirectory(generateHtmlDoc)
 add_subdirectory(jsonSamples)
 add_subdirectory(predefinedEncodingProfiles/video)

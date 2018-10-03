@@ -20,10 +20,7 @@
 # License is allowed only after express negotiation of conditions
 # with the authors.
 
-SET (ETCs
-	nginx.conf
-	catramms.nginx
-	catramms.rsi.nginx
+SET (SCRIPTs
 	api.sh
 	api.rsi.sh
 	encoder.sh
@@ -41,11 +38,8 @@ SET (ETCs
 	stopALL.sh
 	stopALL.rsi.sh
 	tailALL.sh
-	mms.cfg
-	mms.rsi.cfg
-	crontab.txt
 	crontab.sh
 )
 
-install (FILES ${ETCs} DESTINATION etc)
+install (FILES ${SCRIPTs} DESTINATION scripts)
 

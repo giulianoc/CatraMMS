@@ -72,8 +72,10 @@ void EMailSender:: sendEmail(string to, string subject, vector<string>& emailBod
     if(curl) 
     {
         curl_easy_setopt(curl, CURLOPT_URL, emailServerURL.c_str());
-        curl_easy_setopt(curl, CURLOPT_USERNAME, userName.c_str());
-        curl_easy_setopt(curl, CURLOPT_PASSWORD, password.c_str());
+        if (userName != "")
+            curl_easy_setopt(curl, CURLOPT_USERNAME, userName.c_str());
+        if (password != "")
+            curl_easy_setopt(curl, CURLOPT_PASSWORD, password.c_str());
         
 //        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
 //        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
