@@ -6971,7 +6971,9 @@ pair<MMSEngineDBFacade::ContentType,string> MMSEngineDBFacade::getMediaItemKeyDe
             if (resultSet->next())
             {
                 MMSEngineDBFacade::ContentType contentType = MMSEngineDBFacade::toContentType(resultSet->getString("contentType"));
-                string userData = resultSet->getString("userData");
+                string userData;
+                if (!resultSet->isNull("userData"))
+                    userData = resultSet->getString("userData");
                 
                 contentTypeAndUserData = make_pair(contentType, userData);
             }
@@ -7089,7 +7091,9 @@ tuple<int64_t,MMSEngineDBFacade::ContentType,string> MMSEngineDBFacade::getMedia
             {
                 int64_t mediaItemKey = resultSet->getInt64("mediaItemKey");
                 MMSEngineDBFacade::ContentType contentType = MMSEngineDBFacade::toContentType(resultSet->getString("contentType"));
-                string userData = resultSet->getString("userData");
+                string userData;
+                if (!resultSet->isNull("userData"))
+                    userData = resultSet->getString("userData");
                 
                 mediaItemKeyContentTypeAndUserData = make_tuple(mediaItemKey, contentType, userData);                
             }
@@ -14820,6 +14824,15 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
         try
         {
+            bool jsonTypeSupported = isJsonTypeSupported(statement);
+            
+            string userDataDefinition;
+            if (jsonTypeSupported)
+                userDataDefinition = "JSON";
+            else
+                userDataDefinition = "VARCHAR (512) CHARACTER SET utf8 COLLATE utf8_bin NULL";
+                
+            
             // workspaceKey is the owner of the content
             // IngestedRelativePath MUST start always with '/' and ends always with '/'
             // IngestedFileName and IngestedRelativePath refer the ingested content independently
@@ -14834,7 +14847,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "title                  VARCHAR (256) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
                     "ingester               VARCHAR (128) NULL,"
                     "keywords               VARCHAR (128) CHARACTER SET utf8 COLLATE utf8_bin NULL,"
-                    "userData               JSON,"
+                    "userData               " + userDataDefinition + ","
                     "deliveryFileName       VARCHAR (128) NULL,"
                     "ingestionJobKey        BIGINT UNSIGNED NOT NULL,"
                     "ingestionDate          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
@@ -16117,4 +16130,28 @@ bool MMSEngineDBFacade::isRealDBError(string exceptionMessage)
     {
         return false;
     }
+}
+
+bool MMSEngineDBFacade::isJsonTypeSupported(shared_ptr<sql::Statement> statement)
+{        
+    bool jsonTypeSupported = true;
+
+    try
+    {
+        string lastSQLCommand = 
+            "create table if not exists MMS_JsonTest ("
+                "userData               JSON) "
+                "ENGINE=InnoDB";
+        statement->execute(lastSQLCommand);
+        
+        lastSQLCommand = 
+            "drop table MMS_JsonTest";
+        statement->execute(lastSQLCommand);
+    }
+    catch(sql::SQLException se)
+    {
+        jsonTypeSupported = false;
+    }
+    
+    return jsonTypeSupported;
 }

@@ -1127,6 +1127,8 @@ private:
 
     bool isRealDBError(string exceptionMessage);
 
+    bool isJsonTypeSupported(shared_ptr<sql::Statement> statement);
+    
     int64_t getLastInsertId(shared_ptr<MySQLConnection> conn);
 
     /*
