@@ -9,6 +9,7 @@ import org.json.JSONObject;
 import org.primefaces.model.UploadedFile;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -20,15 +21,29 @@ public class CatraMMS {
 
     private final Logger mLogger = Logger.getLogger(this.getClass());
 
-    private int timeoutInSeconds = 30;
-    private int maxRetriesNumber = 1;
-    private String mmsAPIProtocol = "https";
-    private String mmsAPIHostName = "mms-api.catrasoft.cloud";
-    private int mmsAPIPort = 443;
-    private String mmsBinaryProtocol = "http";
-    private String mmsBinaryHostName = "mms-binary.catrasoft.cloud";
-    private int mmsBinaryPort = 80;
+    static public final String configFileName = "catramms.properties";
 
+    private int timeoutInSeconds;
+    private int maxRetriesNumber;
+    private String mmsAPIProtocol;
+    private String mmsAPIHostName;
+    private int mmsAPIPort;
+    private String mmsBinaryProtocol;
+    private String mmsBinaryHostName;
+    private int mmsBinaryPort;
+
+    public CatraMMS()
+    {
+        try {
+            mLogger.info("loadConfigurationParameters...");
+            loadConfigurationParameters();
+        } catch (Exception e) {
+            String errorMessage = "Problems to load the configuration file. Exception: " + e + ", ConfigurationFileName: " + configFileName;
+            mLogger.error(errorMessage);
+
+            return;
+        }
+    }
 
     public Long shareWorkspace(String username, String password,
                                String userNameToShare, String emailAddressToShare,
@@ -1850,4 +1865,153 @@ public class CatraMMS {
             throw new Exception(errorMessage);
         }
     }
+
+    private void loadConfigurationParameters()
+    {
+        try
+        {
+            Properties properties = getConfigurationParameters();
+
+            {
+                {
+                    String tmpTimeoutInSeconds = properties.getProperty("catramms.mms.timeoutInSeconds");
+                    if (tmpTimeoutInSeconds == null)
+                    {
+                        String errorMessage = "No catramms.mms.timeoutInSeconds found. ConfigurationFileName: " + configFileName;
+                        mLogger.error(errorMessage);
+
+                        return;
+                    }
+                    timeoutInSeconds = Integer.parseInt(tmpTimeoutInSeconds);
+
+                    String tmpMaxRetriesNumber = properties.getProperty("catramms.mms.maxRetriesNumber");
+                    if (tmpMaxRetriesNumber == null)
+                    {
+                        String errorMessage = "No catramms.mms.maxRetriesNumber found. ConfigurationFileName: " + configFileName;
+                        mLogger.error(errorMessage);
+
+                        return;
+                    }
+                    maxRetriesNumber = Integer.parseInt(tmpMaxRetriesNumber);
+
+                    mmsAPIProtocol = properties.getProperty("catramms.mms.api.protocol");
+                    if (mmsAPIProtocol == null)
+                    {
+                        String errorMessage = "No catramms.mms.api.protocol found. ConfigurationFileName: " + configFileName;
+                        mLogger.error(errorMessage);
+
+                        return;
+                    }
+
+                    mmsAPIHostName = properties.getProperty("catramms.mms.api.hostname");
+                    if (mmsAPIHostName == null)
+                    {
+                        String errorMessage = "No catramms.mms.api.hostname found. ConfigurationFileName: " + configFileName;
+                        mLogger.error(errorMessage);
+
+                        return;
+                    }
+
+                    String tmpMmsAPIPort = properties.getProperty("catramms.mms.api.port");
+                    if (tmpMmsAPIPort == null)
+                    {
+                        String errorMessage = "No catramms.mms.api.port found. ConfigurationFileName: " + configFileName;
+                        mLogger.error(errorMessage);
+
+                        return;
+                    }
+                    mmsAPIPort = Integer.parseInt(tmpMmsAPIPort);
+
+                    mmsBinaryProtocol = properties.getProperty("catramms.mms.binary.protocol");
+                    if (mmsBinaryProtocol == null)
+                    {
+                        String errorMessage = "No catramms.mms.binary.protocol found. ConfigurationFileName: " + configFileName;
+                        mLogger.error(errorMessage);
+
+                        return;
+                    }
+
+                    mmsBinaryHostName = properties.getProperty("catramms.mms.binary.hostname");
+                    if (mmsBinaryHostName == null)
+                    {
+                        String errorMessage = "No catramms.mms.binary.hostname found. ConfigurationFileName: " + configFileName;
+                        mLogger.error(errorMessage);
+
+                        return;
+                    }
+
+                    String tmpMmsBinaryPort = properties.getProperty("catramms.mms.binary.port");
+                    if (tmpMmsBinaryPort == null)
+                    {
+                        String errorMessage = "No catramms.mms.binary.port found. ConfigurationFileName: " + configFileName;
+                        mLogger.error(errorMessage);
+
+                        return;
+                    }
+                    mmsBinaryPort = Integer.parseInt(tmpMmsBinaryPort);
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "Problems to load the configuration file. Exception: " + e + ", ConfigurationFileName: " + configFileName;
+            mLogger.error(errorMessage);
+
+            return;
+        }
+    }
+
+    public Properties getConfigurationParameters()
+    {
+        Properties properties = new Properties();
+
+        try
+        {
+            {
+                InputStream inputStream;
+                String commonPath = "/mnt/common/mp";
+                String tomcatPath = System.getProperty("catalina.base");
+
+                File configFile = new File(commonPath + "/conf/" + configFileName);
+                if (configFile.exists())
+                {
+                    mLogger.info("Configuration file: " + configFile.getAbsolutePath());
+                    inputStream = new FileInputStream(configFile);
+                }
+                else
+                {
+                    configFile = new File(tomcatPath + "/conf/" + configFileName);
+                    if (configFile.exists())
+                    {
+                        mLogger.info("Configuration file: " + configFile.getAbsolutePath());
+                        inputStream = new FileInputStream(configFile);
+                    }
+                    else
+                    {
+                        mLogger.info("Using the internal configuration file");
+                        inputStream = CatraMMS.class.getClassLoader().getResourceAsStream(configFileName);
+                    }
+                }
+
+                if (inputStream == null)
+                {
+                    String errorMessage = "Login configuration file not found. ConfigurationFileName: " + configFileName;
+                    mLogger.error(errorMessage);
+
+                    return properties;
+                }
+                properties.load(inputStream);
+            }
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "Problems to load the configuration file. Exception: " + e + ", ConfigurationFileName: " + configFileName;
+            mLogger.error(errorMessage);
+
+            return properties;
+        }
+
+        return properties;
+    }
+
 }

@@ -10,6 +10,7 @@ import javax.net.ssl.*;
 import javax.xml.bind.DatatypeConverter;
 import java.io.*;
 import java.net.URL;
+import java.net.URLConnection;
 import java.security.SecureRandom;
 
 
@@ -29,6 +30,7 @@ public class HttpFeedFetcher {
         // Date startTimestamp = new Date();
         if (StringUtils.isNotEmpty(url))
         {
+            if (url.startsWith("https"))
             {
                 SSLContext ctx = SSLContext.getInstance("SSL");
                 ctx.init(new KeyManager[0], new TrustManager[] {new DefaultTrustManager()}, new SecureRandom());
@@ -57,7 +59,22 @@ public class HttpFeedFetcher {
                 {
                     mLogger.info("url: " + url);
                     URL uUrl = new URL(url);
-                    HttpsURLConnection conn = (HttpsURLConnection) uUrl.openConnection();
+                    // HttpsURLConnection conn = (HttpsURLConnection) uUrl.openConnection();
+                    URLConnection conn;
+                    if (url.startsWith("https"))
+                    {
+                        conn = (HttpsURLConnection) uUrl.openConnection();
+                        /*
+                        conn.setHostnameVerifier(new HostnameVerifier() {
+                            @Override
+                            public boolean verify(String arg0, SSLSession arg1) {
+                                return true;
+                            }
+                        });
+                        */
+                    }
+                    else
+                        conn = uUrl.openConnection();
                     conn.setConnectTimeout(timeoutInSeconds * 1000);
                     conn.setReadTimeout(timeoutInSeconds * 1000);
 
@@ -69,16 +86,26 @@ public class HttpFeedFetcher {
                     }
 
                     mLogger.info("conn.getResponseCode...");
-                    int statusCode = conn.getResponseCode();
+                    int statusCode;
+                    if (url.startsWith("https"))
+                        statusCode = ((HttpsURLConnection) conn).getResponseCode();
+                    else
+                        statusCode = ((HttpURLConnection) conn).getResponseCode();
 
                     mLogger.info("conn.getResponseCode. statusCode: " + statusCode);
                     if (statusCode != HttpStatus.SC_OK && statusCode != HttpStatus.SC_CREATED)
                     {
-                        mLogger.debug("Method failed: " + conn.getResponseMessage());
+                        String responseMessage;
+                        if (url.startsWith("https"))
+                            responseMessage = ((HttpsURLConnection) conn).getResponseMessage();
+                        else
+                            responseMessage = ((HttpURLConnection) conn).getResponseMessage();
+
+                        mLogger.debug("Method failed: " + responseMessage);
 
                         result = null;
 
-                        throw new Exception("Method failed: " + conn.getResponseMessage());
+                        throw new Exception("Method failed: " + responseMessage);
                     }
                     else
                     {
@@ -185,6 +212,7 @@ public class HttpFeedFetcher {
         // Date startTimestamp = new Date();
         if (StringUtils.isNotEmpty(url))
         {
+            if (url.startsWith("https"))
             {
                 SSLContext ctx = SSLContext.getInstance("SSL");
                 ctx.init(new KeyManager[0], new TrustManager[] {new DefaultTrustManager()}, new SecureRandom());
@@ -228,17 +256,24 @@ public class HttpFeedFetcher {
 
                     mLogger.info("url: " + url);
                     URL uUrl = new URL(url);
-                    HttpsURLConnection conn = (HttpsURLConnection) uUrl.openConnection();
+                    // HttpsURLConnection conn = (HttpsURLConnection) uUrl.openConnection();
+                    URLConnection conn;
+                    if (url.startsWith("https"))
+                    {
+                        conn = (HttpsURLConnection) uUrl.openConnection();
+                        /*
+                        conn.setHostnameVerifier(new HostnameVerifier() {
+                            @Override
+                            public boolean verify(String arg0, SSLSession arg1) {
+                                return true;
+                            }
+                        });
+                        */
+                    }
+                    else
+                        conn = uUrl.openConnection();
                     conn.setConnectTimeout(timeoutInSeconds * 1000);
                     conn.setReadTimeout(timeoutInSeconds * 1000);
-                    /*
-                    conn.setHostnameVerifier(new HostnameVerifier() {
-                        @Override
-                        public boolean verify(String arg0, SSLSession arg1) {
-                            return true;
-                        }
-                    });
-                    */
 
                     if (user != null && password != null)
                     {
@@ -249,7 +284,10 @@ public class HttpFeedFetcher {
                     }
 
                     conn.setDoOutput(true); // false because I do not need to append any data to this request
-                    conn.setRequestMethod(httpMethod);
+                    if (url.startsWith("https"))
+                        ((HttpsURLConnection) conn).setRequestMethod(httpMethod);
+                    else
+                        ((HttpURLConnection) conn).setRequestMethod(httpMethod);
                     {
                         int clength;
                         byte[] bytes = null;
@@ -285,16 +323,26 @@ public class HttpFeedFetcher {
                     }
 
                     mLogger.info("conn.getResponseCode...");
-                    int statusCode = conn.getResponseCode();
+                    int statusCode;
+                    if (url.startsWith("https"))
+                        statusCode = ((HttpsURLConnection) conn).getResponseCode();
+                    else
+                        statusCode = ((HttpURLConnection) conn).getResponseCode();
 
                     mLogger.info("conn.getResponseCode. statusCode: " + statusCode);
                     if (statusCode != HttpStatus.SC_OK && statusCode != HttpStatus.SC_CREATED)
                     {
-                        mLogger.debug("Method failed: " + conn.getResponseMessage());
+                        String responseMessage;
+                        if (url.startsWith("https"))
+                            responseMessage = ((HttpsURLConnection) conn).getResponseMessage();
+                        else
+                            responseMessage = ((HttpURLConnection) conn).getResponseMessage();
+
+                        mLogger.debug("Method failed: " + responseMessage);
 
                         result = null;
 
-                        throw new Exception("Method failed: " + conn.getResponseMessage());
+                        throw new Exception("Method failed: " + responseMessage);
                     }
                     else
                     {

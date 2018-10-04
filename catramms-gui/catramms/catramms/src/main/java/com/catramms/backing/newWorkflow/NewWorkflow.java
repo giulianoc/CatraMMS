@@ -3504,6 +3504,10 @@ public class NewWorkflow extends Workspace implements Serializable {
 
                         return;
                     }
+
+                    File temporaryPushBinariesFile = new File(temporaryPushBinariesPathName);
+                    if (!temporaryPushBinariesFile.exists())
+                        temporaryPushBinariesFile.mkdirs();
                 }
             }
         }
