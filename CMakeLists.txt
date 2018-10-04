@@ -63,4 +63,5 @@ add_subdirectory(predefinedEncodingProfiles/image)
 add_subdirectory(utilities/registerAdministratorCustomer/src)
 add_subdirectory(utilities/registerCustomer/src)
 add_subdirectory(utilities/addEncodingProfile/src)
+add_subdirectory(utilities/sendEmail/src)
 
