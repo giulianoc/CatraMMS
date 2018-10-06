@@ -5,9 +5,13 @@ import com.catramms.backing.entity.WorkspaceDetails;
 import com.catramms.utility.catramms.CatraMMS;
 import org.apache.log4j.Logger;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import javax.annotation.PostConstruct;
 import javax.faces.application.FacesMessage;
@@ -22,6 +26,7 @@ import javax.servlet.http.HttpSession;
 public class Login implements Serializable {
 
     private static final Logger mLogger = Logger.getLogger(Login.class);
+    static public final String configFileName = "catramms.properties";
 
     private static final long serialVersionUID = 1094801825228386363L;
 
@@ -39,10 +44,25 @@ public class Login implements Serializable {
     private String registrationConfirmationCode;
     private String registrationWorkspaceName;
 
+    private boolean registrationEnabled;
+
     @PostConstruct
     public void init()
     {
         mLogger.debug("init");
+
+        try
+        {
+            mLogger.info("loadConfigurationParameters...");
+            loadConfigurationParameters();
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "Problems to load the configuration file. Exception: " + e + ", ConfigurationFileName: " + configFileName;
+            mLogger.error(errorMessage);
+
+            return;
+        }
 
         originURI = "";
         pwd = "";
@@ -191,6 +211,88 @@ public class Login implements Serializable {
         }
     }
 
+    private void loadConfigurationParameters()
+    {
+        try
+        {
+            Properties properties = getConfigurationParameters();
+
+            {
+                {
+                    String tmpRegistrationEnabled = properties.getProperty("catramms.registration.enabled");
+                    if (tmpRegistrationEnabled == null)
+                    {
+                        String errorMessage = "No catramms.registration.enabled found. ConfigurationFileName: " + configFileName;
+                        mLogger.error(errorMessage);
+
+                        return;
+                    }
+                    registrationEnabled = Boolean.valueOf(tmpRegistrationEnabled).booleanValue();
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "Problems to load the configuration file. Exception: " + e + ", ConfigurationFileName: " + configFileName;
+            mLogger.error(errorMessage);
+
+            return;
+        }
+    }
+
+    public Properties getConfigurationParameters()
+    {
+        Properties properties = new Properties();
+
+        try
+        {
+            {
+                InputStream inputStream;
+                String commonPath = "/mnt/common/mp";
+                String tomcatPath = System.getProperty("catalina.base");
+
+                File configFile = new File(commonPath + "/conf/" + configFileName);
+                if (configFile.exists())
+                {
+                    mLogger.info("Configuration file: " + configFile.getAbsolutePath());
+                    inputStream = new FileInputStream(configFile);
+                }
+                else
+                {
+                    configFile = new File(tomcatPath + "/conf/" + configFileName);
+                    if (configFile.exists())
+                    {
+                        mLogger.info("Configuration file: " + configFile.getAbsolutePath());
+                        inputStream = new FileInputStream(configFile);
+                    }
+                    else
+                    {
+                        mLogger.info("Using the internal configuration file");
+                        inputStream = Login.class.getClassLoader().getResourceAsStream(configFileName);
+                    }
+                }
+
+                if (inputStream == null)
+                {
+                    String errorMessage = "Login configuration file not found. ConfigurationFileName: " + configFileName;
+                    mLogger.error(errorMessage);
+
+                    return properties;
+                }
+                properties.load(inputStream);
+            }
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "Problems to load the configuration file. Exception: " + e + ", ConfigurationFileName: " + configFileName;
+            mLogger.error(errorMessage);
+
+            return properties;
+        }
+
+        return properties;
+    }
+
     public String getOriginURI() {
         return originURI;
     }
@@ -285,5 +387,13 @@ public class Login implements Serializable {
 
     public void setRegistrationWorkspaceName(String registrationWorkspaceName) {
         this.registrationWorkspaceName = registrationWorkspaceName;
+    }
+
+    public boolean isRegistrationEnabled() {
+        return registrationEnabled;
+    }
+
+    public void setRegistrationEnabled(boolean registrationEnabled) {
+        this.registrationEnabled = registrationEnabled;
     }
 }

@@ -293,7 +293,7 @@ public class CatraMMSServices {
 
                     if (!firstChunkFound || !lastChunkFound)
                     {
-                        String errorMessage = "First and/or Last chunk were not generated yet"
+                        String errorMessage = "First and/or Last chunk were not generated yet. No media files found"
                                 + ", cutVideoId: " + cutVideoId
                                 + ", cutVideoTitle: " + cutVideoTitle
                                 + ", cutVideoChannel: " + cutVideoChannel
@@ -312,7 +312,7 @@ public class CatraMMSServices {
 
                     if (fileTreeMap.size() == 0)
                     {
-                        String errorMessage = "No Media files found"
+                        String errorMessage = "No media files found"
                                 + ", cutVideoId: " + cutVideoId
                                 + ", cutVideoTitle: " + cutVideoTitle
                                 + ", cutVideoChannel: " + cutVideoChannel
@@ -326,7 +326,7 @@ public class CatraMMSServices {
 
                     if (cutStartTimeInSeconds == -1 || cutEndTimeInSeconds == -1)
                     {
-                        String errorMessage = "No All Media files are present"
+                        String errorMessage = "No media files found"
                                 + ", cutVideoId: " + cutVideoId
                                 + ", cutVideoTitle: " + cutVideoTitle
                                 + ", cutVideoChannel: " + cutVideoChannel
