@@ -20,7 +20,7 @@ import java.util.*;
 /**
  * Created by multi on 16.09.18.
  */
-@Path("/catramms")
+@Path("/api")
 public class CatraMMSServices {
 
     private static final Logger mLogger = Logger.getLogger(CatraMMSServices.class);
@@ -451,12 +451,41 @@ public class CatraMMSServices {
                             }
                         }
 
+                        JSONObject joCallback = new JSONObject();
                         {
                             JSONObject joCutOnSuccess = new JSONObject();
                             joCut.put("OnSuccess", joCutOnSuccess);
 
+                            joCutOnSuccess.put("Task", joCallback);
+
+                            joCallback.put("Label", "Callback: " + cutVideoTitle);
+                            joCallback.put("Type", "Encode");
+
+                            JSONObject joCallbackParameters = new JSONObject();
+                            joCallback.put("Parameters", joCallbackParameters);
+
+                            joCallbackParameters.put("Protocol", "http");
+                            joCallbackParameters.put("HostName", "mp-backend.rsi.ch");
+                            joCallbackParameters.put("Port", "80");
+                            joCallbackParameters.put("URI",
+                                    "/metadataProcessorService/rest/veda/playoutMedia/" + cutVideoId + "/mmsFinished");
+                            joCallbackParameters.put("Parameters", "");
+                            joCallbackParameters.put("Method", "POST");
+
+                            /*
+                            JSONArray jaHeaders = new JSONArray();
+                            joCallbackParameters.put("Headers", jaHeaders);
+
+                            jaHeaders.put("");
+                            */
+                        }
+
+                        {
+                            JSONObject joCallbackOnSuccess = new JSONObject();
+                            joCallback.put("OnSuccess", joCallbackOnSuccess);
+
                             JSONObject joEncode = new JSONObject();
-                            joCutOnSuccess.put("Task", joEncode);
+                            joCallbackOnSuccess.put("Task", joEncode);
 
                             joEncode.put("Label", "Encode: " + cutVideoTitle);
                             joEncode.put("Type", "Encode");
