@@ -43,6 +43,9 @@
 		"Method": "POST",
 
 		// optional, json array of strings
-		"Headers": []
+		"Headers": [],
+		
+		// optional. Timeout in seconds, default is 120 seconds
+		"Timeout": 120
 	}
 }
