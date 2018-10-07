@@ -2652,6 +2652,7 @@ void MMSEngineProcessor::httpCallbackTask(
         string httpURI;
         string httpURLParameters;
         string httpMethod;
+        long callbackTimeout;
         Json::Value httpHeadersRoot(Json::arrayValue);
         {
             string field = "Protocol";
@@ -2689,6 +2690,12 @@ void MMSEngineProcessor::httpCallbackTask(
             else
                 httpPort = parametersRoot.get(field, "XXX").asInt();
 
+            field = "Timeout";
+            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+                callbackTimeout = 120;
+            else
+                callbackTimeout = parametersRoot.get(field, "XXX").asInt();
+            
             field = "URI";
             if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
             {
@@ -2831,7 +2838,7 @@ void MMSEngineProcessor::httpCallbackTask(
         
         thread httpCallbackThread(&MMSEngineProcessor::userHttpCallbackThread, this, 
             ingestionJobKey, httpProtocol, httpHostName, 
-            httpPort, httpURI, httpURLParameters, httpMethod,
+            httpPort, httpURI, httpURLParameters, httpMethod, callbackTimeout,
             httpHeadersRoot, callbackMedatada);
         httpCallbackThread.detach();
     }
@@ -6862,7 +6869,8 @@ void MMSEngineProcessor::ftpUploadMediaSourceThread(
 void MMSEngineProcessor::userHttpCallbackThread(
         int64_t ingestionJobKey, string httpProtocol, string httpHostName,
         int httpPort, string httpURI, string httpURLParameters,
-        string httpMethod, Json::Value userHeadersRoot, 
+        string httpMethod, long callbackTimeout,
+        Json::Value userHeadersRoot, 
         Json::Value callbackMedatada
         )
 {
@@ -6888,7 +6896,8 @@ void MMSEngineProcessor::userHttpCallbackThread(
 
         list<string> header;
 
-        header.push_back("Content-Type: application/json");
+        if (httpMethod == "POST" && data != "")
+            header.push_back("Content-Type: application/json");
 
         for (int userHeaderIndex = 0; userHeaderIndex < userHeadersRoot.size(); ++userHeaderIndex)
         {
@@ -6918,6 +6927,7 @@ void MMSEngineProcessor::userHttpCallbackThread(
         }
 
         request.setOpt(new curlpp::options::Url(userURL));
+        request.setOpt(new curlpp::options::Timeout(callbackTimeout));
 
         if (httpProtocol == "https")
         {

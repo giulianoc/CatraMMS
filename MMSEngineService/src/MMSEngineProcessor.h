@@ -109,7 +109,8 @@ private:
     void userHttpCallbackThread(
         int64_t ingestionJobKey, string httpProtocol, string httpHostName,
         int httpPort, string httpURI, string httpURLParameters,
-        string httpMethod, Json::Value userHeadersRoot, 
+        string httpMethod, long callbackTimeout,
+        Json::Value userHeadersRoot, 
         Json::Value callbackMedatada);
 
     void localCopyContentTask(

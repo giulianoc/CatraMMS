@@ -74,6 +74,7 @@ public class CatraMMSServices {
                 String apiKey = "SU1.8ZO1O2zTg_5SvI12rfN9oQdjRru90XbMRSvACIxfqBXMYGj8k1P9lV4ZcvMRJL";
                 String la1MediaDirectoryPathName = "/mnt/stream_recording/makitoRecording/La1/";
                 String la2MediaDirectoryPathName = "/mnt/stream_recording/makitoRecording/La2/";
+                String cutVideoRetention = "14d";
 
                 // int secondsToWaitBeforeStartProcessingAFile = 30;
 
@@ -436,7 +437,7 @@ public class CatraMMSServices {
                             joCut.put("Parameters", joCutParameters);
 
                             joCutParameters.put("Ingester", ingester);
-                            joCutParameters.put("Retention", "2d");
+                            joCutParameters.put("Retention", cutVideoRetention);
                             joCutParameters.put("Title", cutVideoTitle);
                             joCutParameters.put("StartTimeInSeconds", cutStartTimeInSeconds);
                             joCutParameters.put("EndTimeInSeconds", cutEndTimeInSeconds);
@@ -451,52 +452,64 @@ public class CatraMMSServices {
                             }
                         }
 
-                        JSONObject joCallback = new JSONObject();
                         {
                             JSONObject joCutOnSuccess = new JSONObject();
                             joCut.put("OnSuccess", joCutOnSuccess);
 
-                            joCutOnSuccess.put("Task", joCallback);
+                            JSONObject joGroupOfTasks = new JSONObject();
+                            joCutOnSuccess.put("Task", joGroupOfTasks);
 
-                            joCallback.put("Label", "Callback: " + cutVideoTitle);
-                            joCallback.put("Type", "Encode");
+                            joGroupOfTasks.put("Type", "GroupOfTasks");
 
-                            JSONObject joCallbackParameters = new JSONObject();
-                            joCallback.put("Parameters", joCallbackParameters);
+                            JSONObject joParameters = new JSONObject();
+                            joGroupOfTasks.put("Parameters", joParameters);
 
-                            joCallbackParameters.put("Protocol", "http");
-                            joCallbackParameters.put("HostName", "mp-backend.rsi.ch");
-                            joCallbackParameters.put("Port", "80");
-                            joCallbackParameters.put("URI",
-                                    "/metadataProcessorService/rest/veda/playoutMedia/" + cutVideoId + "/mmsFinished");
-                            joCallbackParameters.put("Parameters", "");
-                            joCallbackParameters.put("Method", "POST");
+                            joParameters.put("ExecutionType", "parallel");
 
-                            /*
-                            JSONArray jaHeaders = new JSONArray();
-                            joCallbackParameters.put("Headers", jaHeaders);
+                            JSONArray jaTasks = new JSONArray();
+                            joParameters.put("Tasks", jaTasks);
 
-                            jaHeaders.put("");
-                            */
+                            {
+                                JSONObject joCallback = new JSONObject();
+                                jaTasks.put(joCallback);
+
+                                joCallback.put("Label", "Callback: " + cutVideoTitle);
+                                joCallback.put("Type", "HTTP-Callback");
+
+                                JSONObject joCallbackParameters = new JSONObject();
+                                joCallback.put("Parameters", joCallbackParameters);
+
+                                joCallbackParameters.put("Protocol", "http");
+                                joCallbackParameters.put("HostName", "mp-backend.rsi.ch");
+                                joCallbackParameters.put("Port", "80");
+                                joCallbackParameters.put("URI",
+                                        "/metadataProcessorService/rest/veda/playoutMedia/" + cutVideoId + "/mmsFinished");
+                                joCallbackParameters.put("Parameters", "");
+                                joCallbackParameters.put("Method", "GET");
+                                joCallbackParameters.put("Timeout", 60);
+
+                                /*
+                                JSONArray jaHeaders = new JSONArray();
+                                joCallbackParameters.put("Headers", jaHeaders);
+
+                                jaHeaders.put("");
+                                */
+                            }
+
+                            {
+                                JSONObject joEncode = new JSONObject();
+                                jaTasks.put(joEncode);
+
+                                joEncode.put("Label", "Encode: " + cutVideoTitle);
+                                joEncode.put("Type", "Encode");
+
+                                JSONObject joEncodeParameters = new JSONObject();
+                                joEncode.put("Parameters", joEncodeParameters);
+
+                                joEncodeParameters.put("EncodingPriority", "Low");
+                                joEncodeParameters.put("EncodingProfileLabel", "MMS_H264_veryslow_360p25_aac_92");
+                            }
                         }
-
-                        {
-                            JSONObject joCallbackOnSuccess = new JSONObject();
-                            joCallback.put("OnSuccess", joCallbackOnSuccess);
-
-                            JSONObject joEncode = new JSONObject();
-                            joCallbackOnSuccess.put("Task", joEncode);
-
-                            joEncode.put("Label", "Encode: " + cutVideoTitle);
-                            joEncode.put("Type", "Encode");
-
-                            JSONObject joEncodeParameters = new JSONObject();
-                            joEncode.put("Parameters", joEncodeParameters);
-
-                            joEncodeParameters.put("EncodingPriority", "Low");
-                            joEncodeParameters.put("EncodingProfileLabel", "MMS_H264_veryslow_360p25_aac_92");
-                        }
-
                         mLogger.info("Ready for the ingest"
                                 + ", sCutVideoStartTime: " + sCutVideoStartTime
                                 + ", sCutVideoEndTime: " + sCutVideoEndTime
