@@ -45,7 +45,7 @@
 		// optional, json array of strings
 		"Headers": [],
 		
-		// optional. Timeout in seconds, default is 120 seconds
+		// optional, set maximum time in seconds the request is allowed to take, default is 120 seconds
 		"Timeout": 120
 	}
 }
