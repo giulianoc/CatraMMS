@@ -2666,6 +2666,9 @@ void MMSEngineProcessor::httpCallbackTask(
                 if (httpProtocol == "")
                     httpProtocol = "http";
             }
+            _logger->info(__FILEREF__ + "Retrieved configuration parameter"
+                    + ", httpProtocol: " + httpProtocol
+            );
 
             field = "HostName";
             if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
@@ -2678,6 +2681,9 @@ void MMSEngineProcessor::httpCallbackTask(
                 throw runtime_error(errorMessage);
             }
             httpHostName = parametersRoot.get(field, "XXX").asString();
+            _logger->info(__FILEREF__ + "Retrieved configuration parameter"
+                    + ", httpHostName: " + httpHostName
+            );
 
             field = "Port";
             if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
@@ -2689,12 +2695,18 @@ void MMSEngineProcessor::httpCallbackTask(
             }
             else
                 httpPort = parametersRoot.get(field, "XXX").asInt();
+            _logger->info(__FILEREF__ + "Retrieved configuration parameter"
+                    + ", httpPort: " + to_string(httpPort)
+            );
 
             field = "Timeout";
             if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
                 callbackTimeout = 120;
             else
                 callbackTimeout = parametersRoot.get(field, "XXX").asInt();
+            _logger->info(__FILEREF__ + "Retrieved configuration parameter"
+                    + ", callbackTimeout: " + to_string(callbackTimeout)
+            );
             
             field = "URI";
             if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
@@ -2707,12 +2719,18 @@ void MMSEngineProcessor::httpCallbackTask(
                 throw runtime_error(errorMessage);
             }
             httpURI = parametersRoot.get(field, "XXX").asString();
+            _logger->info(__FILEREF__ + "Retrieved configuration parameter"
+                    + ", httpURI: " + httpURI
+            );
 
             field = "Parameters";
             if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
             {
                 httpURLParameters = parametersRoot.get(field, "XXX").asString();
             }
+            _logger->info(__FILEREF__ + "Retrieved configuration parameter"
+                    + ", httpURLParameters: " + httpURLParameters
+            );
 
             field = "Method";
             if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
@@ -2725,6 +2743,9 @@ void MMSEngineProcessor::httpCallbackTask(
                 if (httpMethod == "")
                     httpMethod = "POST";
             }
+            _logger->info(__FILEREF__ + "Retrieved configuration parameter"
+                    + ", httpMethod: " + httpMethod
+            );
             
             field = "Headers";
             if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
@@ -6878,6 +6899,7 @@ void MMSEngineProcessor::userHttpCallbackThread(
     ostringstream response;
     try
     {
+        _logger->info(__FILEREF__ + "1");
         userURL = httpProtocol
                 + "://"
                 + httpHostName
@@ -6886,6 +6908,7 @@ void MMSEngineProcessor::userHttpCallbackThread(
                 + httpURI
                 + httpURLParameters;
 
+        _logger->info(__FILEREF__ + "2");
         string data;
         if (callbackMedatada.type() != Json::nullValue)
         {
@@ -6894,6 +6917,7 @@ void MMSEngineProcessor::userHttpCallbackThread(
             data = Json::writeString(wbuilder, callbackMedatada);
         }
 
+        _logger->info(__FILEREF__ + "3");
         list<string> header;
 
         if (httpMethod == "POST" && data != "")
@@ -6906,6 +6930,7 @@ void MMSEngineProcessor::userHttpCallbackThread(
             header.push_back(userHeader);
         }
 
+        _logger->info(__FILEREF__ + "4");
         curlpp::Cleanup cleaner;
         curlpp::Easy request;
 
