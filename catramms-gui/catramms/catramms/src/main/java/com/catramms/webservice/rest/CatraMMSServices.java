@@ -481,7 +481,7 @@ public class CatraMMSServices {
 
                                 joCallbackParameters.put("Protocol", "http");
                                 joCallbackParameters.put("HostName", "mp-backend.rsi.ch");
-                                joCallbackParameters.put("Port", "80");
+                                joCallbackParameters.put("Port", 80);
                                 joCallbackParameters.put("URI",
                                         "/metadataProcessorService/rest/veda/playoutMedia/" + cutVideoId + "/mmsFinished");
                                 joCallbackParameters.put("Parameters", "");

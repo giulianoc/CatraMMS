@@ -2405,17 +2405,7 @@ void MMSEngineProcessor::removeContentTask(
             + ", e.what(): " + e.what()
         );
         
-        _logger->info(__FILEREF__ + "Update IngestionJob"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", IngestionStatus: " + "End_IngestionFailure"
-            + ", errorMessage: " + e.what()
-        );                            
-        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
-                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what(), 
-                "" // ProcessorMMS
-        );
+        // Update IngestionJob done in the calling method
         
         throw e;
     }
@@ -2426,17 +2416,7 @@ void MMSEngineProcessor::removeContentTask(
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );
         
-        _logger->info(__FILEREF__ + "Update IngestionJob"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", IngestionStatus: " + "End_IngestionFailure"
-            + ", errorMessage: " + e.what()
-        );                            
-        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
-                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what(), 
-                "" // ProcessorMMS
-        );
+        // Update IngestionJob done in the calling method
 
         throw e;
     }
@@ -2585,18 +2565,8 @@ void MMSEngineProcessor::ftpDeliveryContentTask(
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", e.what(): " + e.what()
         );
-        
-        _logger->info(__FILEREF__ + "Update IngestionJob"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", IngestionStatus: " + "End_IngestionFailure"
-            + ", errorMessage: " + e.what()
-        );                            
-        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
-                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what(), 
-                "" // ProcessorMMS
-        );
+ 
+        // Update IngestionJob done in the calling method
         
         throw e;
     }
@@ -2607,17 +2577,7 @@ void MMSEngineProcessor::ftpDeliveryContentTask(
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );
         
-        _logger->info(__FILEREF__ + "Update IngestionJob"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", IngestionStatus: " + "End_IngestionFailure"
-            + ", errorMessage: " + e.what()
-        );                            
-        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
-                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what(), 
-                "" // ProcessorMMS
-        );
+        // Update IngestionJob done in the calling method
 
         throw e;
     }
@@ -2871,18 +2831,8 @@ void MMSEngineProcessor::httpCallbackTask(
             + ", e.what(): " + e.what()
         );
         
-        _logger->info(__FILEREF__ + "Update IngestionJob"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", IngestionStatus: " + "End_IngestionFailure"
-            + ", errorMessage: " + e.what()
-        );                            
-        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
-                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what(), 
-                "" // ProcessorMMS
-        );
-        
+        // Update IngestionJob done in the calling method
+
         throw e;
     }
     catch(exception e)
@@ -2892,17 +2842,7 @@ void MMSEngineProcessor::httpCallbackTask(
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );
         
-        _logger->info(__FILEREF__ + "Update IngestionJob"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", IngestionStatus: " + "End_IngestionFailure"
-            + ", errorMessage: " + e.what()
-        );                            
-        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
-                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what(), 
-                "" // ProcessorMMS
-        );
+        // Update IngestionJob done in the calling method
 
         throw e;
     }
@@ -3016,19 +2956,9 @@ void MMSEngineProcessor::localCopyContentTask(
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", e.what(): " + e.what()
         );
-        
-        _logger->info(__FILEREF__ + "Update IngestionJob"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", IngestionStatus: " + "End_IngestionFailure"
-            + ", errorMessage: " + e.what()
-        );                            
-        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
-                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what(), 
-                "" // ProcessorMMS
-        );
-        
+                
+        // Update IngestionJob done in the calling method
+
         throw e;
     }
     catch(exception e)
@@ -3038,17 +2968,7 @@ void MMSEngineProcessor::localCopyContentTask(
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );
         
-        _logger->info(__FILEREF__ + "Update IngestionJob"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", IngestionStatus: " + "End_IngestionFailure"
-            + ", errorMessage: " + e.what()
-        );                            
-        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
-                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what(), 
-                "" // ProcessorMMS
-        );
+        // Update IngestionJob done in the calling method
 
         throw e;
     }
@@ -3907,6 +3827,8 @@ void MMSEngineProcessor::generateAndIngestFramesTask(
             + ", e.what(): " + e.what()
         );
         
+        // Update IngestionJob done in the calling method
+
         throw e;
     }
     catch(exception e)
@@ -3916,6 +3838,8 @@ void MMSEngineProcessor::generateAndIngestFramesTask(
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );
         
+        // Update IngestionJob done in the calling method
+
         throw e;
     }
 }
@@ -3992,21 +3916,25 @@ void MMSEngineProcessor::manageGenerateFramesTask(
     }
     catch(runtime_error e)
     {
-        _logger->error(__FILEREF__ + "manageOverlayTextOnVideoTask failed"
+        _logger->error(__FILEREF__ + "manageGenerateFramesTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", e.what(): " + e.what()
         );
         
+        // Update IngestionJob done in the calling method
+
         throw e;
     }
     catch(exception e)
     {
-        _logger->error(__FILEREF__ + "manageOverlayTextOnVideoTask failed"
+        _logger->error(__FILEREF__ + "manageGenerateFramesTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );
         
+        // Update IngestionJob done in the calling method
+
         throw e;
     }
 }
@@ -4412,6 +4340,8 @@ void MMSEngineProcessor::manageSlideShowTask(
             + ", e.what(): " + e.what()
         );
         
+        // Update IngestionJob done in the calling method
+
         throw e;
     }
     catch(exception e)
@@ -4421,6 +4351,8 @@ void MMSEngineProcessor::manageSlideShowTask(
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );
         
+        // Update IngestionJob done in the calling method
+
         throw e;
     }
 }
@@ -4856,6 +4788,8 @@ void MMSEngineProcessor::generateAndIngestConcatenationTask(
             + ", e.what(): " + e.what()
         );
         
+        // Update IngestionJob done in the calling method
+
         throw e;
     }
     catch(exception e)
@@ -4865,6 +4799,8 @@ void MMSEngineProcessor::generateAndIngestConcatenationTask(
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );
         
+        // Update IngestionJob done in the calling method
+
         throw e;
     }
 }
@@ -5153,6 +5089,8 @@ void MMSEngineProcessor::generateAndIngestCutMediaTask(
             + ", e.what(): " + e.what()
         );
         
+        // Update IngestionJob done in the calling method
+
         throw e;
     }
     catch(exception e)
@@ -5162,6 +5100,8 @@ void MMSEngineProcessor::generateAndIngestCutMediaTask(
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );
         
+        // Update IngestionJob done in the calling method
+
         throw e;
     }
 }
@@ -5273,6 +5213,8 @@ void MMSEngineProcessor::manageEncodeTask(
             + ", e.what(): " + e.what()
         );
         
+        // Update IngestionJob done in the calling method
+
         throw e;
     }
     catch(exception e)
@@ -5282,6 +5224,8 @@ void MMSEngineProcessor::manageEncodeTask(
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );
         
+        // Update IngestionJob done in the calling method
+
         throw e;
     }
 }
@@ -5419,6 +5363,8 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
             + ", e.what(): " + e.what()
         );
         
+        // Update IngestionJob done in the calling method
+
         throw e;
     }
     catch(exception e)
@@ -5428,6 +5374,8 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );
         
+        // Update IngestionJob done in the calling method
+
         throw e;
     }
 }
@@ -5589,6 +5537,8 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
             + ", e.what(): " + e.what()
         );
         
+        // Update IngestionJob done in the calling method
+
         throw e;
     }
     catch(exception e)
@@ -5598,6 +5548,8 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );
         
+        // Update IngestionJob done in the calling method
+
         throw e;
     }
 }
@@ -5705,17 +5657,7 @@ void MMSEngineProcessor::manageEmailNotificationTask(
             + ", e.what(): " + e.what()
         );
         
-        _logger->info(__FILEREF__ + "Update IngestionJob"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", IngestionStatus: " + "End_IngestionFailure"
-            + ", errorMessage: " + e.what()
-        );                            
-        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
-                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what(), 
-                "" // ProcessorMMS
-        );
+        // Update IngestionJob done in the calling method
         
         throw e;
     }
@@ -5726,17 +5668,7 @@ void MMSEngineProcessor::manageEmailNotificationTask(
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );
         
-        _logger->info(__FILEREF__ + "Update IngestionJob"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", IngestionStatus: " + "End_IngestionFailure"
-            + ", errorMessage: " + e.what()
-        );                            
-        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
-                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what(), 
-                "" // ProcessorMMS
-        );
+        // Update IngestionJob done in the calling method
         
         throw e;
     }
@@ -6899,7 +6831,6 @@ void MMSEngineProcessor::userHttpCallbackThread(
     ostringstream response;
     try
     {
-        _logger->info(__FILEREF__ + "1");
         userURL = httpProtocol
                 + "://"
                 + httpHostName
@@ -6908,7 +6839,6 @@ void MMSEngineProcessor::userHttpCallbackThread(
                 + httpURI
                 + httpURLParameters;
 
-        _logger->info(__FILEREF__ + "2");
         string data;
         if (callbackMedatada.type() != Json::nullValue)
         {
@@ -6917,7 +6847,6 @@ void MMSEngineProcessor::userHttpCallbackThread(
             data = Json::writeString(wbuilder, callbackMedatada);
         }
 
-        _logger->info(__FILEREF__ + "3");
         list<string> header;
 
         if (httpMethod == "POST" && data != "")
@@ -6930,7 +6859,6 @@ void MMSEngineProcessor::userHttpCallbackThread(
             header.push_back(userHeader);
         }
 
-        _logger->info(__FILEREF__ + "4");
         curlpp::Cleanup cleaner;
         curlpp::Easy request;
 
