@@ -130,7 +130,7 @@ server {
 
 	# mmsengine-1 is for the calls directly to the encoder server (progress and status(isFinished))
 	#we should call the encoder machine as encoder-1, encoder-2, ...
-	server_name mmsengine-1;
+	server_name rsis-lab-mmst.media.int;
 
 	access_log   /var/catramms/logs/nginx/mms-encoder.access.log main;
 	error_log    /var/catramms/logs/nginx/mms-encoder.error.log notice;
@@ -270,7 +270,7 @@ server {
 		auth_request /catramms/binary/checkAuthorization;
 		#auth_request_set $auth_status $upstream_status;
 
-		client_body_temp_path /var/catramms/storage/MMSWorkingAreaRepository/nginx;
+		client_body_temp_path /var/catramms/storage/nginxWorkingAreaRepository;
 
 		# When set to the value on, temporary files are not removed after request processing
 		#The value clean does it.

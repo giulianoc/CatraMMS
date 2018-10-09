@@ -177,7 +177,9 @@
 
                 <p:row>
                     <p:column>
-                        <p:commandLink value="Registration and Confirmation"
+                        <p:commandLink
+                                disabled="#{!login.registrationEnabled}"
+                                value="Registration and Confirmation"
                                        update="registrationForm"
                                        oncomplete="PF('registration').show()" />
                     </p:column>

@@ -15,15 +15,12 @@ import javax.ws.rs.core.Response;
 import java.io.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * Created by multi on 16.09.18.
  */
-@Path("/catramms")
+@Path("/api")
 public class CatraMMSServices {
 
     private static final Logger mLogger = Logger.getLogger(CatraMMSServices.class);
@@ -74,10 +71,12 @@ public class CatraMMSServices {
             {
                 String ingester = "MP";
                 Long userKey = new Long(1);
-                String apiKey = "SU1.8ZO1O2zTg_5SvI12rfN9oQdjRru90XbMRSvACIxf6iNunYz7nzLF0ZVfaeCChP";
-                String mediaDirectoryPathName = "/aaaa/bbbb";
+                String apiKey = "SU1.8ZO1O2zTg_5SvI12rfN9oQdjRru90XbMRSvACIxfqBXMYGj8k1P9lV4ZcvMRJL";
+                String la1MediaDirectoryPathName = "/mnt/stream_recording/makitoRecording/La1/";
+                String la2MediaDirectoryPathName = "/mnt/stream_recording/makitoRecording/La2/";
+                String cutVideoRetention = "14d";
 
-                int secondsToWaitBeforeStartProcessingAFile = 30;
+                // int secondsToWaitBeforeStartProcessingAFile = 30;
 
                 try
                 {
@@ -91,10 +90,42 @@ public class CatraMMSServices {
 
                     DateFormat fileNameSimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd-H'h'mm'm'ss's'");
 
-                    File mediaDirectory = new File(mediaDirectoryPathName);
+                    List<File> mediaFilesToBeManaged = new ArrayList<>();
+                    {
+                        Calendar calendarStart = Calendar.getInstance();
+                        calendarStart.setTime(new Date(cutVideoStartTime));
+                        // there is one case where we have to consider the previous dir:
+                        //  i.e.: video start: 08:00:15 and chunk start: 08:00:32
+                        // in this case we need the last chunk of the previous dir
+                        calendarStart.add(Calendar.HOUR_OF_DAY, -1);
 
-                    File[] mediaFiles = mediaDirectory.listFiles();
-                    mLogger.info("Found " + mediaFiles.length + " media files (" + "/" + cutVideoChannel + ")");
+                        Calendar calendarEnd = Calendar.getInstance();
+                        calendarEnd.setTime(new Date(cutVideoEndTime));
+
+                        DateFormat fileDateFormat = new SimpleDateFormat("yyyy/MM/dd/HH");
+
+                        while (fileDateFormat.format(calendarStart.getTime()).compareTo(
+                                fileDateFormat.format(calendarEnd.getTime())) <= 0)
+                        {
+                            String mediaDirectoryPathName;
+
+                            if (cutVideoChannel.toLowerCase().contains("la1"))
+                                mediaDirectoryPathName = la1MediaDirectoryPathName;
+                            else
+                                mediaDirectoryPathName = la2MediaDirectoryPathName;
+
+                            mediaDirectoryPathName += fileDateFormat.format(calendarStart.getTime());
+                            mLogger.info("Reading directory: " + mediaDirectoryPathName);
+                            File mediaDirectoryFile = new File(mediaDirectoryPathName);
+                            File[] mediaFiles = mediaDirectoryFile.listFiles();
+
+                            mediaFilesToBeManaged.addAll(Arrays.asList(mediaFiles));
+
+                            calendarStart.add(Calendar.HOUR_OF_DAY, 1);
+                        }
+                    }
+
+                    mLogger.info("Found " + mediaFilesToBeManaged.size() + " media files (" + "/" + cutVideoChannel + ")");
 
                     long videoChunkPeriodInSeconds = 60;
                     double cutStartTimeInSeconds = -1;
@@ -103,7 +134,7 @@ public class CatraMMSServices {
                     boolean lastChunkFound = false;
 
                     // fill fileTreeMap
-                    for (File mediaFile : mediaFiles)
+                    for (File mediaFile : mediaFilesToBeManaged)
                     {
                         try
                         {
@@ -117,6 +148,7 @@ public class CatraMMSServices {
 
                                 continue;
                             }
+                            /*
                             else if (new Date().getTime() - mediaFile.lastModified()
                                     < secondsToWaitBeforeStartProcessingAFile * 1000)
                             {
@@ -124,6 +156,7 @@ public class CatraMMSServices {
 
                                 continue;
                             }
+                            */
                             else if (mediaFile.length() == 0)
                             {
                                 mLogger.info("Waiting mediaFile size is greater than 0"
@@ -261,7 +294,7 @@ public class CatraMMSServices {
 
                     if (!firstChunkFound || !lastChunkFound)
                     {
-                        String errorMessage = "First and/or Last chunk were not generated yet"
+                        String errorMessage = "First and/or Last chunk were not generated yet. No media files found"
                                 + ", cutVideoId: " + cutVideoId
                                 + ", cutVideoTitle: " + cutVideoTitle
                                 + ", cutVideoChannel: " + cutVideoChannel
@@ -280,7 +313,7 @@ public class CatraMMSServices {
 
                     if (fileTreeMap.size() == 0)
                     {
-                        String errorMessage = "No Media files found"
+                        String errorMessage = "No media files found"
                                 + ", cutVideoId: " + cutVideoId
                                 + ", cutVideoTitle: " + cutVideoTitle
                                 + ", cutVideoChannel: " + cutVideoChannel
@@ -294,7 +327,7 @@ public class CatraMMSServices {
 
                     if (cutStartTimeInSeconds == -1 || cutEndTimeInSeconds == -1)
                     {
-                        String errorMessage = "No All Media files are present"
+                        String errorMessage = "No media files found"
                                 + ", cutVideoId: " + cutVideoId
                                 + ", cutVideoTitle: " + cutVideoTitle
                                 + ", cutVideoChannel: " + cutVideoChannel
@@ -404,7 +437,7 @@ public class CatraMMSServices {
                             joCut.put("Parameters", joCutParameters);
 
                             joCutParameters.put("Ingester", ingester);
-                            joCutParameters.put("Retention", "2d");
+                            joCutParameters.put("Retention", cutVideoRetention);
                             joCutParameters.put("Title", cutVideoTitle);
                             joCutParameters.put("StartTimeInSeconds", cutStartTimeInSeconds);
                             joCutParameters.put("EndTimeInSeconds", cutEndTimeInSeconds);
@@ -423,19 +456,60 @@ public class CatraMMSServices {
                             JSONObject joCutOnSuccess = new JSONObject();
                             joCut.put("OnSuccess", joCutOnSuccess);
 
-                            JSONObject joEncode = new JSONObject();
-                            joCutOnSuccess.put("Task", joEncode);
+                            JSONObject joGroupOfTasks = new JSONObject();
+                            joCutOnSuccess.put("Task", joGroupOfTasks);
 
-                            joEncode.put("Label", "Encode: " + cutVideoTitle);
-                            joEncode.put("Type", "Encode");
+                            joGroupOfTasks.put("Type", "GroupOfTasks");
 
-                            JSONObject joEncodeParameters = new JSONObject();
-                            joEncode.put("Parameters", joEncodeParameters);
+                            JSONObject joParameters = new JSONObject();
+                            joGroupOfTasks.put("Parameters", joParameters);
 
-                            joEncodeParameters.put("EncodingPriority", "Low");
-                            joEncodeParameters.put("EncodingProfileLabel", "MMS_H264_veryslow_360p25_aac_92");
+                            joParameters.put("ExecutionType", "parallel");
+
+                            JSONArray jaTasks = new JSONArray();
+                            joParameters.put("Tasks", jaTasks);
+
+                            {
+                                JSONObject joCallback = new JSONObject();
+                                jaTasks.put(joCallback);
+
+                                joCallback.put("Label", "Callback: " + cutVideoTitle);
+                                joCallback.put("Type", "HTTP-Callback");
+
+                                JSONObject joCallbackParameters = new JSONObject();
+                                joCallback.put("Parameters", joCallbackParameters);
+
+                                joCallbackParameters.put("Protocol", "http");
+                                joCallbackParameters.put("HostName", "mp-backend.rsi.ch");
+                                joCallbackParameters.put("Port", 80);
+                                joCallbackParameters.put("URI",
+                                        "/metadataProcessorService/rest/veda/playoutMedia/" + cutVideoId + "/mmsFinished");
+                                joCallbackParameters.put("Parameters", "");
+                                joCallbackParameters.put("Method", "GET");
+                                joCallbackParameters.put("Timeout", 60);
+
+                                /*
+                                JSONArray jaHeaders = new JSONArray();
+                                joCallbackParameters.put("Headers", jaHeaders);
+
+                                jaHeaders.put("");
+                                */
+                            }
+
+                            {
+                                JSONObject joEncode = new JSONObject();
+                                jaTasks.put(joEncode);
+
+                                joEncode.put("Label", "Encode: " + cutVideoTitle);
+                                joEncode.put("Type", "Encode");
+
+                                JSONObject joEncodeParameters = new JSONObject();
+                                joEncode.put("Parameters", joEncodeParameters);
+
+                                joEncodeParameters.put("EncodingPriority", "Low");
+                                joEncodeParameters.put("EncodingProfileLabel", "MMS_H264_veryslow_360p25_aac_92");
+                            }
                         }
-
                         mLogger.info("Ready for the ingest"
                                 + ", sCutVideoStartTime: " + sCutVideoStartTime
                                 + ", sCutVideoEndTime: " + sCutVideoEndTime
