@@ -404,7 +404,7 @@
             </p:column>
             -->
 
-            <p:column style="width:160px;" headerText="Ingestion Date" >
+            <p:column style="width:160px;" headerText="Ingestion Date" sortBy="#{mediaItem.ingestionDate}" >
                 <p:outputLabel id="ingestionDate" value="#{mediaItem.ingestionDate}">
                     <f:convertDateTime type="date" pattern="dd-MM-yyyy HH:mm:ss" timeZone="CET"/>
                 </p:outputLabel>

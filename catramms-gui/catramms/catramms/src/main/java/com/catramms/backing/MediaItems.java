@@ -78,7 +78,7 @@ public class MediaItems extends Workspace implements Serializable {
         {
             Calendar calendar = Calendar.getInstance();
 
-            calendar.add(Calendar.DAY_OF_MONTH, -1);
+            calendar.add(Calendar.DAY_OF_MONTH, -7);
 
             calendar.set(Calendar.HOUR_OF_DAY, 0);
             calendar.set(Calendar.MINUTE, 0);

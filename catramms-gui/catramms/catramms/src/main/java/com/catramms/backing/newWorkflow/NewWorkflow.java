@@ -3253,10 +3253,12 @@ public class NewWorkflow extends Workspace implements Serializable {
                                 + ", mediaItemsTitle: " + mediaItemsTitle
                 );
 
+                String ingestionDateOrder = "desc";
                 CatraMMS catraMMS = new CatraMMS();
                 Vector<Long> mediaItemsData = catraMMS.getMediaItems(
                         username, password, mediaItemsMaxMediaItemsNumber,
-                        mediaItemsContentType, mediaItemsBegin, mediaItemsEnd, mediaItemsTitle, mediaItemsList);
+                        mediaItemsContentType, mediaItemsBegin, mediaItemsEnd, mediaItemsTitle,
+                        ingestionDateOrder, mediaItemsList);
                 mediaItemsNumber = mediaItemsData.get(0);
             }
         }
