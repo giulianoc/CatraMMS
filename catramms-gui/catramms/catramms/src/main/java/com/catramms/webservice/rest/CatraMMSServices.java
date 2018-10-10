@@ -117,9 +117,12 @@ public class CatraMMSServices {
                             mediaDirectoryPathName += fileDateFormat.format(calendarStart.getTime());
                             mLogger.info("Reading directory: " + mediaDirectoryPathName);
                             File mediaDirectoryFile = new File(mediaDirectoryPathName);
-                            File[] mediaFiles = mediaDirectoryFile.listFiles();
+                            if (mediaDirectoryFile.exists())
+                            {
+                                File[] mediaFiles = mediaDirectoryFile.listFiles();
 
-                            mediaFilesToBeManaged.addAll(Arrays.asList(mediaFiles));
+                                mediaFilesToBeManaged.addAll(Arrays.asList(mediaFiles));
+                            }
 
                             calendarStart.add(Calendar.HOUR_OF_DAY, 1);
                         }
@@ -574,7 +577,10 @@ public class CatraMMSServices {
 
             mLogger.info("cutVideo response: " + response);
 
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(response).build();
+            if (e.getMessage().toLowerCase().contains("no media files found"))
+                return Response.status(510).entity(response).build();
+            else
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(response).build();
         }
     }
 
