@@ -259,10 +259,12 @@ public class MediaItems extends Workspace implements Serializable {
 
                         mediaItemsList.clear();
 
+                        String ingestionDateOrder = "desc";
                         CatraMMS catraMMS = new CatraMMS();
                         Vector<Long> mediaItemsData = catraMMS.getMediaItems(
                                 username, password, maxMediaItemsNumber,
-                                contentType, begin, end, title, mediaItemsList);
+                                contentType, begin, end, title, ingestionDateOrder,
+                                mediaItemsList);
 
                         mediaItemsNumber = mediaItemsData.get(0);
                         workSpaceUsageInMB = mediaItemsData.get(1);

@@ -538,7 +538,7 @@ public class CatraMMS {
 
     public Vector<Long> getMediaItems(String username, String password,
                           Long maxMediaItemsNumber, String contentType,
-                          Date start, Date end, String title,
+                          Date start, Date end, String title, String ingestionDateOrder,
                           List<MediaItem> mediaItemsList)
             throws Exception
     {
@@ -558,7 +558,9 @@ public class CatraMMS {
                     + "&contentType=" + contentType
                     + "&title=" + (title == null ? "" : java.net.URLEncoder.encode(title, "UTF-8"))
                     + "&startIngestionDate=" + simpleDateFormat.format(start)
-                    + "&endIngestionDate=" + simpleDateFormat.format(end);
+                    + "&endIngestionDate=" + simpleDateFormat.format(end)
+                    + "&ingestionDateOrder=" + (ingestionDateOrder == null ? "" : ingestionDateOrder)
+                    ;
 
             mLogger.info("mmsURL: " + mmsURL);
 
