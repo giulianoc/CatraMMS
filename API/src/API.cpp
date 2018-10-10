@@ -1981,10 +1981,10 @@ void API::createDeliveryAuthorization(
         auto redirectIt = queryParameters.find("redirect");
         if (redirectIt != queryParameters.end())
         {
-            if (redirectIt->second == "false")
-                redirect = false;
-            else if (redirectIt->second == "true")
+            if (redirectIt->second == "true")
                 redirect = true;
+            else
+                redirect = false;
         }
         
         try
@@ -2592,6 +2592,17 @@ void API::mediaItemsList(
             title = titleIt->second;
         }
 
+        string ingestionDateOrder;
+        auto ingestionDateOrderIt = queryParameters.find("ingestionDateOrder");
+        if (ingestionDateOrderIt != queryParameters.end() && ingestionDateOrderIt->second != "")
+        {
+            if (ingestionDateOrderIt->second == "asc" || ingestionDateOrderIt->second == "desc")
+                ingestionDateOrder = ingestionDateOrderIt->second;
+            else
+                _logger->warn(__FILEREF__ + "mediaItemsList: 'ingestionDateOrder' parameter is unknown"
+                    + ", ingestionDateOrder: " + ingestionDateOrderIt->second);
+        }
+
         {
             
             Json::Value ingestionStatusRoot = _mmsEngineDBFacade->getMediaItemsList(
@@ -2599,7 +2610,7 @@ void API::mediaItemsList(
                     start, rows,
                     contentTypePresent, contentType,
                     startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
-                    title);
+                    title, ingestionDateOrder);
 
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, ingestionStatusRoot);

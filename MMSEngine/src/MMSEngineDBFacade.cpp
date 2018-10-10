@@ -5718,7 +5718,8 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
         int start, int rows,
         bool contentTypePresent, ContentType contentType,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
-        string title
+        string title, 
+        string ingestionDateOrder   // "" or "asc" or "desc"
 )
 {    
     string      lastSQLCommand;
@@ -5742,6 +5743,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
             + ", startIngestionDate: " + (startAndEndIngestionDatePresent ? startIngestionDate : "")
             + ", endIngestionDate: " + (startAndEndIngestionDatePresent ? endIngestionDate : "")
             + ", title: " + title
+            + ", ingestionDateOrder: " + ingestionDateOrder
         );
         
         conn = _connectionPool->borrow();	
@@ -5789,6 +5791,12 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
             {
                 field = "title";
                 requestParametersRoot[field] = title;
+            }
+
+            if (ingestionDateOrder != "")
+            {
+                field = "ingestionDateOrder";
+                requestParametersRoot[field] = ingestionDateOrder;
             }
 
             field = "requestParameters";
@@ -5889,6 +5897,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                     "DATE_FORMAT(convert_tz(endPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endPublishing, "
                     "contentType, retentionInMinutes from MMS_MediaItem ")
                     + sqlWhere
+                    + (ingestionDateOrder != "" ? ("order by ingestionDate " + ingestionDateOrder + " ") : "")
                     + "limit ? offset ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
