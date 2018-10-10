@@ -76,7 +76,7 @@ public class CatraMMSServices {
                 String la2MediaDirectoryPathName = "/mnt/stream_recording/makitoRecording/La2/";
                 String cutVideoRetention = "14d";
 
-                // int secondsToWaitBeforeStartProcessingAFile = 30;
+                int secondsToWaitBeforeStartProcessingAFile = 5;
 
                 try
                 {
@@ -148,7 +148,6 @@ public class CatraMMSServices {
 
                                 continue;
                             }
-                            /*
                             else if (new Date().getTime() - mediaFile.lastModified()
                                     < secondsToWaitBeforeStartProcessingAFile * 1000)
                             {
@@ -156,7 +155,6 @@ public class CatraMMSServices {
 
                                 continue;
                             }
-                            */
                             else if (mediaFile.length() == 0)
                             {
                                 mLogger.info("Waiting mediaFile size is greater than 0"
