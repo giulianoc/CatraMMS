@@ -5301,7 +5301,7 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
                 "IF(ij.endProcessing is null, NOW(), ij.endProcessing) as newEndProcessing "
                 "from MMS_IngestionRoot ir, MMS_IngestionJob ij, MMS_EncodingJob ej "
                 + sqlWhere
-                + "order by newStartProcessing, newEndProcessing " + (asc ? " asc " : " desc ")
+                + "order by newStartProcessing " + (asc ? "asc" : "desc") + ", newEndProcessing " + (asc ? "asc " : "desc ")
                 + "limit ? offset ?";
             shared_ptr<sql::PreparedStatement> preparedStatementEncodingJob (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
