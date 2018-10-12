@@ -74,7 +74,7 @@ public class CatraMMSServices {
                 String apiKey = "SU1.8ZO1O2zTg_5SvI12rfN9oQdjRru90XbMRSvACIxfqBXMYGj8k1P9lV4ZcvMRJL";
                 String la1MediaDirectoryPathName = "/mnt/stream_recording/makitoRecording/La1/";
                 String la2MediaDirectoryPathName = "/mnt/stream_recording/makitoRecording/La2/";
-                String cutVideoRetention = "14d";
+                String cutVideoRetention = "4d";
 
                 int secondsToWaitBeforeStartProcessingAFile = 5;
 
