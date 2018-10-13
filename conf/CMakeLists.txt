@@ -27,6 +27,7 @@ SET (CONFs
 	mms.cfg
 	mms.rsi.cfg
 	crontab.txt
+	crontab.rsi.txt
 )
 
 install (FILES ${CONFs} DESTINATION conf)

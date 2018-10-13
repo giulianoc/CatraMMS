@@ -1239,6 +1239,27 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                 string field = "error";
                 if (Validator::isMetadataPresent(encodeContentResponse, field))
                 {
+                    // remove the staging directory created just for this encoding
+                    {
+                        size_t directoryEndIndex = stagingEncodedAssetPathName.find_last_of("/");
+                        if (directoryEndIndex == string::npos)
+                        {
+                            string errorMessage = __FILEREF__ + "No directory found in the staging asset path name"
+                                    + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
+                            _logger->error(errorMessage);
+
+                            // throw runtime_error(errorMessage);
+                        }
+                        else
+                        {
+                            string stagingDirectory = stagingEncodedAssetPathName.substr(0, directoryEndIndex);
+                            
+                            Boolean_t bRemoveRecursively = true;
+                            FileIO::removeDirectory(stagingDirectory, bRemoveRecursively);
+                        }
+                    }
+                    
                     string error = encodeContentResponse.get(field, "XXX").asString();
                     
                     if (error.find(noEncodingAvailableMessage) != string::npos)

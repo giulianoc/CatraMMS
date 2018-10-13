@@ -39,6 +39,7 @@ SET (SCRIPTs
 	stopALL.rsi.sh
 	tailALL.sh
 	crontab.sh
+	crontab.rsi.sh
 )
 
 install (FILES ${SCRIPTs} DESTINATION scripts)
