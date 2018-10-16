@@ -729,6 +729,15 @@ string MMSStorage::moveAssetInMMSRepository(
             string errorMessage = string("No more space in MMS Partitions")
                     + ", ullFSEntrySizeInBytes: " + to_string(ullFSEntrySizeInBytes)
                     ;
+            for (ulMMSPartitionIndex = 0;
+                ulMMSPartitionIndex < _mmsPartitionsFreeSizeInMB.size();
+                ulMMSPartitionIndex++) 
+            {
+                errorMessage =
+                    + ", _mmsPartitionsFreeSizeInMB [" + to_string(ulMMSPartitionIndex) + "]: " + to_string(_mmsPartitionsFreeSizeInMB [ulMMSPartitionIndex])
+                    ;
+            }
+
             _logger->error(__FILEREF__ + errorMessage);
             
             throw runtime_error(errorMessage);
@@ -800,7 +809,7 @@ string MMSStorage::moveAssetInMMSRepository(
 
         _logger->info(__FILEREF__ + "Available space"
             + ", mmsAssetPathName: " + mmsAssetPathName
-            + ", _mmsPartitionsFreeSizeInMB[_ulCurrentMMSPartitionIndex]: " + to_string(_mmsPartitionsFreeSizeInMB[_ulCurrentMMSPartitionIndex])
+            + ", _mmsPartitionsFreeSizeInMB[" + to_string(_ulCurrentMMSPartitionIndex) + "]: " + to_string(_mmsPartitionsFreeSizeInMB[_ulCurrentMMSPartitionIndex])
         );
     }
 
