@@ -74,7 +74,8 @@ public class CatraMMSServices {
                 String apiKey = "SU1.8ZO1O2zTg_5SvI12rfN9oQdjRru90XbMRSvACIxfqBXMYGj8k1P9lV4ZcvMRJL";
                 String la1MediaDirectoryPathName = "/mnt/stream_recording/makitoRecording/La1/";
                 String la2MediaDirectoryPathName = "/mnt/stream_recording/makitoRecording/La2/";
-                String cutVideoRetention = "4d";
+                String radioMediaDirectoryPathName = "/mnt/stream_recording/makitoRecording/Radio/";
+                String cutVideoRetention = "3d";
 
                 int secondsToWaitBeforeStartProcessingAFile = 5;
 
@@ -111,8 +112,10 @@ public class CatraMMSServices {
 
                             if (cutVideoChannel.toLowerCase().contains("la1"))
                                 mediaDirectoryPathName = la1MediaDirectoryPathName;
-                            else
+                            else if (cutVideoChannel.toLowerCase().contains("la2"))
                                 mediaDirectoryPathName = la2MediaDirectoryPathName;
+                            else
+                                mediaDirectoryPathName = radioMediaDirectoryPathName;
 
                             mediaDirectoryPathName += fileDateFormat.format(calendarStart.getTime());
                             mLogger.info("Reading directory: " + mediaDirectoryPathName);
@@ -132,9 +135,11 @@ public class CatraMMSServices {
 
                     long videoChunkPeriodInSeconds = 60;
                     double cutStartTimeInSeconds = -1;
-                    double cutEndTimeInSeconds = -1;
+                    double cutEndTimeInSeconds = 0;
                     boolean firstChunkFound = false;
                     boolean lastChunkFound = false;
+
+                    String fileExtension = null;
 
                     // fill fileTreeMap
                     for (File mediaFile : mediaFilesToBeManaged)
@@ -142,6 +147,7 @@ public class CatraMMSServices {
                         try
                         {
                             mLogger.info("Processing mediaFile"
+                                            + ", cutVideoId: " + cutVideoId
                                             + ", mediaFile.getName: " + mediaFile.getName()
                             );
 
@@ -167,7 +173,8 @@ public class CatraMMSServices {
 
                                 continue;
                             }
-                            else if (!mediaFile.getName().endsWith(".mp4"))
+                            else if (!mediaFile.getName().endsWith(".mp4")
+                                    && !mediaFile.getName().endsWith(".ts"))
                             {
                                 // mLogger.info("Found a NON mp4 file, ignored. File name: " + ftpFile.getName());
 
@@ -178,15 +185,18 @@ public class CatraMMSServices {
                                 // Channel_1-2018-06-26-10h00m39s.mp4
                                 // mLogger.info("###Processing of the " + ftpFile.getName() + " ftp file");
 
-                                int videoChunkStartIndex = mediaFile.getName().length() - ("2018-06-26-10h00m39s.mp4".length());
+                                if (fileExtension == null)
+                                    fileExtension = mediaFile.getName().substring(mediaFile.getName().lastIndexOf('.') + 1);
+
+                                int videoChunkStartIndex = mediaFile.getName().length() - ("2018-06-26-10h00m39s.".length() + fileExtension.length());
                                 if (!Character.isDigit(mediaFile.getName().charAt(videoChunkStartIndex)))
                                     videoChunkStartIndex++; // case when hour is just one digit
-                                int videoChunkEndIndex = mediaFile.getName().length() - (".mp4".length());
+                                int videoChunkEndIndex = mediaFile.getName().length() - (fileExtension.length() + 1);
                                 String sVideoChunkStartTime = mediaFile.getName().substring(videoChunkStartIndex, videoChunkEndIndex);
 
                                 Date videoChunkStartTime = fileNameSimpleDateFormat.parse(sVideoChunkStartTime);
 
-                                // ST: Start Chunk
+                                // SC: Start Chunk
                                 // PS: Playout Start, PE: Playout End
                                 // --------------SC--------------SC--------------SC--------------SC--------------
                                 //                        PS-------------------------------PE
@@ -216,14 +226,15 @@ public class CatraMMSServices {
 
                                         double playoutMediaEndTimeInSeconds = ((double) cutVideoEndTime) / 1000;
 
-                                        cutEndTimeInSeconds = playoutMediaEndTimeInSeconds - videoChunkStartTimeInSeconds;
+                                        cutEndTimeInSeconds += (playoutMediaEndTimeInSeconds - videoChunkStartTimeInSeconds);
                                     }
                                     else
                                     {
-                                        cutEndTimeInSeconds = videoChunkPeriodInSeconds;
+                                        cutEndTimeInSeconds += videoChunkPeriodInSeconds;
                                     }
 
                                     mLogger.info("Found first video chunk"
+                                                    + ", cutVideoId: " + cutVideoId
                                                     + ", ftpFile.getName: " + mediaFile.getName()
                                                     + ", videoChunkStartTime: " + videoChunkStartTime
                                                     + ", sCutVideoStartTime: " + sCutVideoStartTime
@@ -241,6 +252,7 @@ public class CatraMMSServices {
                                     cutEndTimeInSeconds += videoChunkPeriodInSeconds;
 
                                     mLogger.info("Found internal video chunk"
+                                                    + ", cutVideoId: " + cutVideoId
                                                     + ", mediaFile.getName: " + mediaFile.getName()
                                                     + ", videoChunkStartTime: " + videoChunkStartTime
                                                     + ", sCutVideoStartTime: " + sCutVideoStartTime
@@ -262,6 +274,7 @@ public class CatraMMSServices {
                                     cutEndTimeInSeconds += (playoutMediaEndTimeInSeconds - videoChunkStartTimeInSeconds);
 
                                     mLogger.info("Found last video chunk"
+                                                    + ", cutVideoId: " + cutVideoId
                                                     + ", mediaFile.getName: " + mediaFile.getName()
                                                     + ", videoChunkStartTime: " + videoChunkStartTime
                                                     + ", sCutVideoStartTime: " + sCutVideoStartTime
@@ -286,7 +299,9 @@ public class CatraMMSServices {
                         }
                         catch (Exception ex)
                         {
-                            String errorMessage = "exception processing the " + mediaFile.getName() + " file. Exception: " + ex;
+                            String errorMessage = "exception processing the " + mediaFile.getName() + " file. Exception: " + ex
+                                    + ", cutVideoId: " + cutVideoId
+                                    ;
                             mLogger.warn(errorMessage);
 
                             continue;
@@ -326,7 +341,7 @@ public class CatraMMSServices {
                         throw new Exception(errorMessage);
                     }
 
-                    if (cutStartTimeInSeconds == -1 || cutEndTimeInSeconds == -1)
+                    if (cutStartTimeInSeconds == -1 || cutEndTimeInSeconds == 0)
                     {
                         String errorMessage = "No media files found"
                                 + ", cutVideoId: " + cutVideoId
@@ -378,7 +393,7 @@ public class CatraMMSServices {
                                 joAddContent.put("Parameters", joAddContentParameters);
 
                                 joAddContentParameters.put("Ingester", ingester);
-                                joAddContentParameters.put("FileFormat", "mp4");
+                                joAddContentParameters.put("FileFormat", fileExtension);
                                 joAddContentParameters.put("Retention", "0");
                                 joAddContentParameters.put("Title", mediaFile.getName());
                                 joAddContentParameters.put("FileSizeInBytes", mediaFile.length());

@@ -1,0 +1,36 @@
+"Task": {
+	// optional
+	"Label"="My Extract Track",
+
+	// mandatory
+	"Type": "Extract-Track",
+
+	"Parameters": {
+		// mandatory
+		"References": [
+			// mandatory. One Reference needed to identify the media file (mediaItemKeys) or
+			// the profile (physicalPathKey) used to extract the track.
+			// In case this task is placed inside an onSuccess event, 
+			// the Reference... item can be omitted.
+			// In such a case, the System will automatically add the Reference... item using the key
+			// of the video or the profile by which this task depend on.
+			// As reference can be used "ReferenceMediaItemKey", "ReferenceUniqueName" or 
+			// "ReferencePhysicalPathKey".
+			// In case this task depend on one task generating a media, the media will be 
+			// used.
+			// In case this task depend on one task generating a profile (i.e. Encode Task),
+			// the profile will be used.
+
+			{ "ReferenceMediaItemKey": 11 }
+		],
+
+		// mandatory: track type to be extracted (video or audio)
+		"trackType": "audio",
+
+		// optional, if not provided 0 (the first track of type 'trackType' will be used
+		"TrackNumber": 0,
+
+		// mandatory: format of the output where the extracted track will be placed
+		"OutputFileFormat": "mp4"
+	}
+}

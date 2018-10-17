@@ -1,0 +1,15 @@
+"Task": {
+	"Label"="My Local Copy",
+
+	"Type": "Extract-Track",
+
+	"Parameters": {
+		"References": [
+			{ "ReferenceMediaItemKey": 11 }
+		],
+
+		"trackType": "audio",
+
+		"OutputFileFormat": "mp4"
+	}
+}
