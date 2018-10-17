@@ -125,6 +125,13 @@ public:
         int framesNumber,
         string cutMediaPathName);
 
+    void extractTrackMediaToIngest(
+        int64_t ingestionJobKey,
+        string sourcePhysicalPath,
+        string trackType,
+        int trackNumber,
+        string extractTrackMediaPathName);
+
     static void encodingFileFormatValidation(string fileFormat,
         shared_ptr<spdlog::logger> logger);
 

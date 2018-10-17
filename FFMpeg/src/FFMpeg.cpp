@@ -2418,6 +2418,91 @@ void FFMpeg::generateCutMediaToIngest(
     FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
 }
 
+void FFMpeg::extractTrackMediaToIngest(
+        int64_t ingestionJobKey,
+        string sourcePhysicalPath,
+        string trackType,
+        int trackNumber,
+        string extractTrackMediaPathName)
+{
+
+    _outputFfmpegPathFileName =
+            _ffmpegTempDir + "/"
+            + to_string(ingestionJobKey)
+            + ".extractTrack.log"
+            ;
+
+    /*
+        -map option: http://ffmpeg.org/ffmpeg.html#Advanced-options
+        -c:a copy:      codec option for audio streams has been set to copy, so no decoding-filtering-encoding operations will occur
+        -an:            disables audio stream selection for the output
+    */
+    string ffmpegExecuteCommand = 
+            _ffmpegPath + "/ffmpeg "
+            + "-i " + sourcePhysicalPath + " "
+            + "-map 0:" + (trackType == "video" ? "v" : "a") + ":" + to_string(trackNumber) + " "
+            + "-c:" + (trackType == "video" ? "v" : "a") + " copy "
+            + (trackType == "video" ? "-an " : "-vn ")
+            + extractTrackMediaPathName + " "
+            + "> " + _outputFfmpegPathFileName + " "
+            + "2>&1"
+            ;
+
+    #ifdef __APPLE__
+        ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");
+    #endif
+
+    try
+    {
+        _logger->info(__FILEREF__ + "extractTrackMediaToIngest: Executing ffmpeg command"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+        );
+
+        chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
+
+        int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
+        if (executeCommandStatus != 0)
+        {
+            string errorMessage = __FILEREF__ + "extractTrackMediaToIngest: ffmpeg command failed"
+                    + ", executeCommandStatus: " + to_string(executeCommandStatus)
+                    + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+            ;
+
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        
+        chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
+
+        _logger->info(__FILEREF__ + "extractTrackMediaToIngest: Executed ffmpeg command"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+            + ", ffmpegCommandDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
+        );
+    }
+    catch(runtime_error e)
+    {
+        string lastPartOfFfmpegOutputFile = getLastPartOfFile(
+                _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
+        string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+                + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+                + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+                + ", e.what(): " + e.what()
+        ;
+        _logger->error(errorMessage);
+
+        bool exceptionInCaseOfError = false;
+        FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+
+        throw e;
+    }
+
+    bool exceptionInCaseOfError = false;
+    FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
+}
+
 void FFMpeg::settingFfmpegParameters(
         string stagingEncodedAssetPathName,
         

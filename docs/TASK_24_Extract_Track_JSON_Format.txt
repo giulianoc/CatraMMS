@@ -30,7 +30,46 @@
 		// optional, if not provided 0 (the first track of type 'trackType' will be used
 		"TrackNumber": 0,
 
-		// mandatory: format of the output where the extracted track will be placed
-		"OutputFileFormat": "mp4"
+		// mandatory: format of the output where the extracted track will be placed.
+		"OutputFileFormat": "mp4",
+
+		// optional: it might contain any kind of user data (json format).
+		// The platform stores them and returns this data to the Customer 
+		// every time is requested.
+		// The UserData are involved in searches as well
+		"UserData": { },
+
+		// optional: it specifies the retention of the content.
+		//     Format: number + s (seconds) or m (minutes) or h (hours) or d (days) or M (month) or Y (year)
+		//     Examples: 10s, 45m, 4h, 7d, 3M, 1y
+		// By default it is 60m
+		"Retention": "60m",
+
+		// optional
+		"Title": "My title",
+
+		// optional
+		"Ingester": "my ingester",
+
+		// optional
+		"Keywords": "my keywords",
+
+		// optional
+		"ContentProviderName": "default",
+
+		// optional: it specifies the filename without extension when the content will be delivered
+		"DeliveryFileName": "myFileName",
+
+		// optional: by default the content is published.
+		//    It specifies if and when the content is published.
+		//    In case the content is not published, the delivery of the content will fail
+		//    Possible values can be:
+		//       - NOW
+		//       - FOREVER
+		//       - Zulu/UTC Date-time having the following format: YYYY-MM-DDTHH:MI:SSZ
+		"Publishing": {
+			"StartPublishing": "NOW",
+			"EndPublishing": "FOREVER"
+		}
 	}
 }

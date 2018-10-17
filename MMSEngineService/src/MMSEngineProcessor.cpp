@@ -1332,6 +1332,66 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 throw runtime_error(errorMessage);
                             }
                         }
+                        else if (ingestionType == MMSEngineDBFacade::IngestionType::ExtractTrack)
+                        {
+                            try
+                            {
+                                extractTrackContentTask(
+                                        ingestionJobKey, 
+                                        workspace, 
+                                        parametersRoot, 
+                                        dependencies);
+                            }
+                            catch(runtime_error e)
+                            {
+                                _logger->error(__FILEREF__ + "extractTrackContentTask failed"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                                        errorMessage,
+                                        "" // processorMMS
+                                        );
+
+                                throw runtime_error(errorMessage);
+                            }
+                            catch(exception e)
+                            {
+                                _logger->error(__FILEREF__ + "extractTrackContentTask failed"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                                        errorMessage,
+                                        "" // processorMMS
+                                        );
+
+                                throw runtime_error(errorMessage);
+                            }
+                        }
                         else if (ingestionType == MMSEngineDBFacade::IngestionType::OverlayImageOnVideo)
                         {
                             // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
@@ -3041,6 +3101,283 @@ void MMSEngineProcessor::copyContentThread(
             + ", mmsAssetPathName: " + mmsAssetPathName 
             + ", localPath: " + localPath
             + ", localFileName: " + localFileName
+            + ", exception: " + e.what()
+        );
+
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what(), 
+                "" /* processorMMS */);
+
+        return;
+    }
+}
+
+void MMSEngineProcessor::extractTrackContentTask(
+        int64_t ingestionJobKey,
+        shared_ptr<Workspace> workspace,
+        Json::Value parametersRoot,
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies
+)
+{
+    try
+    {
+        if (dependencies.size() != 1)
+        {
+            string errorMessage = __FILEREF__ + "No configured media to be used to extract a track"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", dependencies.size: " + to_string(dependencies.size());
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        string trackType;
+        int trackNumber = 0;
+        string outputFileFormat;
+        {
+            string field = "TrackType";
+            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            trackType = parametersRoot.get(field, "XXX").asString();
+
+            field = "TrackNumber";
+            if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            {
+                trackNumber = parametersRoot.get(field, "XXX").asInt();
+            }
+
+            field = "OutputFileFormat";
+            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            outputFileFormat = parametersRoot.get(field, "XXX").asString();
+        }
+        
+        {
+            int mmsPartitionNumber;
+            string workspaceDirectoryName;
+            string relativePath;
+            string fileName;
+            
+            tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType = dependencies.back();
+
+            int64_t key;
+            MMSEngineDBFacade::ContentType referenceContentType;
+            Validator::DependencyType dependencyType;
+
+            tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+
+            if (dependencyType == Validator::DependencyType::MediaItemKey)
+            {
+                int64_t encodingProfileKey = -1;
+                
+                tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,int64_t> storageDetails 
+                    = _mmsEngineDBFacade->getStorageDetails(
+                        key, encodingProfileKey);
+
+                int64_t physicalPathKey;
+                shared_ptr<Workspace> workspace;
+                string deliveryFileName;
+                int64_t sizeInBytes;
+                
+                tie(physicalPathKey, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, sizeInBytes) 
+                        = storageDetails;
+                workspaceDirectoryName = workspace->_directoryName;
+            }
+            else
+            {
+                tuple<int,shared_ptr<Workspace>,string,string,string,int64_t> storageDetails 
+                    = _mmsEngineDBFacade->getStorageDetails(key);
+
+                shared_ptr<Workspace> workspace;
+                string deliveryFileName;
+                int64_t sizeInBytes;
+                
+                tie(mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, sizeInBytes) 
+                        = storageDetails;
+                workspaceDirectoryName = workspace->_directoryName;
+            }
+
+            _logger->info(__FILEREF__ + "getMMSAssetPathName ..."
+                + ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
+                + ", workspaceDirectoryName: " + workspaceDirectoryName
+                + ", relativePath: " + relativePath
+                + ", fileName: " + fileName
+            );
+            string mmsAssetPathName = _mmsStorage->getMMSAssetPathName(
+                mmsPartitionNumber,
+                workspaceDirectoryName,
+                relativePath,
+                fileName);
+            
+            thread extractTrackContentThread(&MMSEngineProcessor::extractTrackContentThread, this, 
+                ingestionJobKey, mmsAssetPathName, localPath, localFileName);
+            copyContentThread.detach();
+        }
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "localCopyContentTask failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
+        );
+                
+        // Update IngestionJob done in the calling method
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "localCopyContentTask failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+        );
+        
+        // Update IngestionJob done in the calling method
+
+        throw e;
+    }
+}
+
+void MMSEngineProcessor::extractTrackContentThread(
+        shared_ptr<Workspace> workspace,
+        int64_t ingestionJobKey, string mmsAssetPathName, 
+        string trackType, int trackNumber, string outputFileFormat)
+{
+
+    try 
+    {
+        _logger->info(__FILEREF__ + "Extracting Track"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", mmsAssetPathName: " + mmsAssetPathName
+            + ", trackType: " + trackType
+            + ", trackNumber: " + to_string(trackNumber)
+            + ", outputFileFormat: " + outputFileFormat
+        );
+                
+        string localSourceFileName = to_string(ingestionJobKey)
+                + "_extractTrack"
+                + "." + outputFileFormat
+                ;
+        
+        string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
+            workspace);
+        string extractTrackMediaPathName = workspaceIngestionRepository + "/" 
+                + localSourceFileName;
+
+        FFMpeg ffmpeg (_configuration, _logger);
+
+        ffmpeg.extractTrackMediaToIngest(
+            ingestionJobKey,
+            mmsAssetPathName,
+            trackType,
+            trackNumber,
+            extractTrackMediaPathName)
+
+        _logger->info(__FILEREF__ + "extractTrackMediaToIngest done"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", extractTrackMediaPathName: " + extractTrackMediaPathName
+        );
+                
+        perchè generateMediaMetadataToIngest cerca FileFormat????
+        string title;
+        string mediaMetaDataContent = generateMediaMetadataToIngest(
+                ingestionJobKey,
+                outputFileFormat,
+                title,
+                parametersRoot
+        );
+
+        {
+            shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
+                    ->getFreeEvent<LocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
+
+            localAssetIngestionEvent->setSource(MMSENGINEPROCESSORNAME);
+            localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
+            localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
+
+            localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
+            localAssetIngestionEvent->setIngestionSourceFileName(localSourceFileName);
+            localAssetIngestionEvent->setMMSSourceFileName(localSourceFileName);
+            localAssetIngestionEvent->setWorkspace(workspace);
+            localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::AddContent);            
+            localAssetIngestionEvent->setIngestionRowToBeUpdatedAsSuccess(true);
+
+            // to manage a ffmpeg bug generating a corrupted/wrong avgFrameRate, we will
+            // force the concat file to have the same avgFrameRate of the source media
+            // if (forcedAvgFrameRate != "" && concatContentType == MMSEngineDBFacade::ContentType::Video)
+            //    localAssetIngestionEvent->setForcedAvgFrameRate(forcedAvgFrameRate);            
+
+
+            localAssetIngestionEvent->setMetadataContent(mediaMetaDataContent);
+
+            shared_ptr<Event2>    event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
+            _multiEventsSet->addEvent(event);
+
+            _logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", getEventKey().first: " + to_string(event->getEventKey().first)
+                + ", getEventKey().second: " + to_string(event->getEventKey().second));
+        }
+    }
+    catch (runtime_error& e) 
+    {
+        _logger->error(__FILEREF__ + "Extracting track failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey) 
+            + ", mmsAssetPathName: " + mmsAssetPathName 
+            + ", trackType: " + trackType
+            + ", trackNumber: " + to_string(trackNumber)
+            + ", outputFileFormat: " + outputFileFormat
+            + ", exception: " + e.what()
+        );
+
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what(), "" /* processorMMS */);
+        
+        return;
+    }
+    catch (exception e)
+    {
+        _logger->error(__FILEREF__ + "Coping failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey) 
+            + ", mmsAssetPathName: " + mmsAssetPathName 
+            + ", trackType: " + trackType
+            + ", trackNumber: " + to_string(trackNumber)
+            + ", outputFileFormat: " + outputFileFormat
             + ", exception: " + e.what()
         );
 
