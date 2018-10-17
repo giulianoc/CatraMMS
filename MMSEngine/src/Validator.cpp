@@ -57,7 +57,8 @@ bool Validator::isVideoAudioFileFormat(string fileFormat)
         "m4v",
         "3gp",
         "3g2",
-        "mxf"
+        "mxf",
+        "ts"
     };
 
     string lowerCaseFileFormat;
@@ -1094,6 +1095,27 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
         Json::Value parametersRoot = taskRoot[field]; 
         validateLocalCopyMetadata(workspaceKey, parametersRoot, dependencies);
     }
+    else if (type == "Extract-Track")
+    {
+        ingestionType = MMSEngineDBFacade::IngestionType::ExtractTrack;
+        
+        field = "Parameters";
+        if (!isMetadataPresent(taskRoot, field))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field
+                    + ", sTaskRoot: " + sTaskRoot;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        Json::Value parametersRoot = taskRoot[field]; 
+        validateExtractTrackMetadata(workspaceKey, parametersRoot, dependencies);
+    }
     else
     {
         string errorMessage = __FILEREF__ + "Field 'Type' is wrong"
@@ -1174,6 +1196,10 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
     else if (ingestionType == MMSEngineDBFacade::IngestionType::LocalCopy)
     {
         validateLocalCopyMetadata(workspaceKey, parametersRoot, dependencies);        
+    }
+    else if (ingestionType == MMSEngineDBFacade::IngestionType::ExtractTrack)
+    {
+        validateExtractTrackMetadata(workspaceKey, parametersRoot, dependencies);        
     }
     else
     {
@@ -2234,6 +2260,103 @@ void Validator::validateLocalCopyMetadata(int64_t workspaceKey,
         fillDependencies(workspaceKey, parametersRoot, dependencies,
                 priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
                 encodingProfileFieldsToBeManaged);
+    }        
+}
+
+void Validator::validateExtractTrackMetadata(int64_t workspaceKey,
+    Json::Value parametersRoot, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+{
+
+    
+    vector<string> mandatoryFields = {
+        "TrackType",
+        "OutputFileFormat"
+    };
+    for (string mandatoryField: mandatoryFields)
+    {
+        if (!isMetadataPresent(parametersRoot, mandatoryField))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + mandatoryField
+                    + ", sParametersRoot: " + sParametersRoot
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+
+    string field = "TrackType";
+    string trackType = parametersRoot.get(field, "XXX").asString();
+    if (trackType != "video" && trackType != "audio")
+    {
+        string errorMessage = __FILEREF__ + field + " is wrong (it could be only 'video' or 'audio'"
+                + ", Field: " + field
+                + ", trackType: " + trackType
+                ;
+        _logger->error(errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+
+    field = "FileFormat";
+    string fileFormat = parametersRoot.get(field, "XXX").asString();
+    if (!isVideoAudioFileFormat(fileFormat))
+    {
+        string errorMessage = __FILEREF__ + field + " is wrong (it could be only 'video' or 'audio'"
+                + ", Field: " + field
+                + ", fileFormat: " + fileFormat
+                ;
+        _logger->error(__FILEREF__ + errorMessage);
+        
+        throw runtime_error(errorMessage);
+    }
+
+    // References is optional because in case of dependency managed automatically
+    // by MMS (i.e.: onSuccess)
+    field = "References";
+    if (isMetadataPresent(parametersRoot, field))
+    {
+        Json::Value referencesRoot = parametersRoot[field];
+        if (referencesRoot.size() != 1)
+        {
+            string errorMessage = __FILEREF__ + "No correct number of References"
+                    + ", referencesRoot.size: " + to_string(referencesRoot.size());
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
+        bool encodingProfileFieldsToBeManaged = false;
+        fillDependencies(workspaceKey, parametersRoot, dependencies,
+                priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
+                encodingProfileFieldsToBeManaged);
+
+        if (dependencies.size() == 1)
+        {
+            int64_t key;
+            MMSEngineDBFacade::ContentType referenceContentType;
+            Validator::DependencyType dependencyType;
+            
+            tie(key, referenceContentType, dependencyType) = dependencies[0];
+
+            if (referenceContentType != MMSEngineDBFacade::ContentType::Video
+                    && referenceContentType != MMSEngineDBFacade::ContentType::Audio)
+            {
+                string errorMessage = __FILEREF__ + "Reference... does not refer a video or audio content"
+                        + ", dependencyType: " + to_string(static_cast<int>(dependencyType))
+                    + ", referenceMediaItemKey: " + to_string(key)
+                    + ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
+                        ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
     }        
 }
 

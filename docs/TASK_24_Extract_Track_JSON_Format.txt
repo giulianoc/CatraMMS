@@ -25,7 +25,7 @@
 		],
 
 		// mandatory: track type to be extracted (video or audio)
-		"trackType": "audio",
+		"TrackType": "audio",
 
 		// optional, if not provided 0 (the first track of type 'trackType' will be used
 		"TrackNumber": 0,

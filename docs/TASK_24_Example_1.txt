@@ -8,7 +8,7 @@
 			{ "ReferenceMediaItemKey": 11 }
 		],
 
-		"trackType": "audio",
+		"TrackType": "audio",
 
 		"OutputFileFormat": "mp4"
 	}
