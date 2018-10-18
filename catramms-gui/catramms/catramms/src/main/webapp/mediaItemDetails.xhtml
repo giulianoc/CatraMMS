@@ -113,7 +113,7 @@
 
                     <p:panelGrid columns="2" cellpadding="10">
                         <p:outputLabel value="Duration: " />
-                        <p:outputLabel value="#{mediaItemDetails.getDurationAsString(mediaItemDetails.currentPhysicalPath.audioDetails.durationInMilliseconds)} (#{mediaItemDetails.mediaItem.audioDetails.durationInMilliseconds})" />
+                        <p:outputLabel value="#{mediaItemDetails.getDurationAsString(mediaItemDetails.currentPhysicalPath.audioDetails.durationInMilliseconds)} (#{mediaItemDetails.currentPhysicalPath.audioDetails.durationInMilliseconds})" />
 
                         <p:outputLabel value="Codec Name: " />
                         <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.audioDetails.codecName}" />
