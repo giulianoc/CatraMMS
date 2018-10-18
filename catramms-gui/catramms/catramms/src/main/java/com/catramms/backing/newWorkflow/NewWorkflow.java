@@ -141,6 +141,8 @@ public class NewWorkflow extends Workspace implements Serializable {
     private String taskHttpCallbackURI;
     private String taskHttpCallbackParameters;
     private String taskHttpCallbackHeaders;
+    private Long taskExtractTracksVideoTrackNumber;
+    private Long taskExtractTracksAudioTrackNumber;
 
     private String taskContentType;
     List<String> taskContentTypesList = new ArrayList<>();
@@ -199,6 +201,7 @@ public class NewWorkflow extends Workspace implements Serializable {
         {
             taskFileFormatsList.clear();
             taskFileFormatsList.add("mp4");
+            taskFileFormatsList.add("ts");
             taskFileFormatsList.add("wmv");
             taskFileFormatsList.add("mpeg");
             taskFileFormatsList.add("avi");
@@ -585,6 +588,88 @@ public class NewWorkflow extends Workspace implements Serializable {
                     workflowIssueList.add(workflowIssue);
                 }
 
+                if (task.getUserData() != null && !task.getUserData().equalsIgnoreCase(""))
+                    joParameters.put("UserData", task.getUserData());
+                if (task.getRetention() != null && !task.getRetention().equalsIgnoreCase(""))
+                    joParameters.put("Retention", task.getRetention());
+                if (task.getTitle() != null && !task.getTitle().equalsIgnoreCase(""))
+                    joParameters.put("Title", task.getTitle());
+                if (task.getUniqueName() != null && !task.getUniqueName().equalsIgnoreCase(""))
+                    joParameters.put("UniqueName", task.getUniqueName());
+                if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
+                    joParameters.put("Ingester", task.getIngester());
+                if (task.getKeywords() != null && !task.getKeywords().equalsIgnoreCase(""))
+                    joParameters.put("Keywords", task.getKeywords());
+                if (task.getContentProviderName() != null && !task.getContentProviderName().equalsIgnoreCase(""))
+                    joParameters.put("ContentProviderName", task.getContentProviderName());
+                if (task.getDeliveryFileName() != null && !task.getDeliveryFileName().equalsIgnoreCase(""))
+                    joParameters.put("DeliveryFileName", task.getDeliveryFileName());
+                if (task.getStartPublishing() != null || task.getEndPublishing() != null)
+                {
+                    JSONObject joPublishing = new JSONObject();
+                    joParameters.put("Publishing", joPublishing);
+
+                    if (task.getStartPublishing() != null)
+                        joPublishing.put("StartPublishing", dateFormat.format(task.getStartPublishing()));
+                    else
+                        joPublishing.put("StartPublishing", "NOW");
+                    if (task.getEndPublishing() != null)
+                        joPublishing.put("EndPublishing", dateFormat.format(task.getEndPublishing()));
+                    else
+                        joPublishing.put("EndPublishing", "FOREVER");
+                }
+
+                if (task.getReferences() != null && !task.getReferences().equalsIgnoreCase(""))
+                {
+                    JSONArray jaReferences = new JSONArray();
+                    joParameters.put("References", jaReferences);
+
+                    String [] physicalPathKeyReferences = task.getReferences().split(",");
+                    for (String physicalPathKeyReference: physicalPathKeyReferences)
+                    {
+                        JSONObject joReference = new JSONObject();
+                        joReference.put("ReferencePhysicalPathKey", Long.parseLong(physicalPathKeyReference.trim()));
+
+                        jaReferences.put(joReference);
+                    }
+                }
+            }
+            else if (task.getType().equalsIgnoreCase("Extract-Tracks"))
+            {
+                if (task.getLabel() != null && !task.getLabel().equalsIgnoreCase(""))
+                    jsonObject.put("Label", task.getLabel());
+                else
+                {
+                    WorkflowIssue workflowIssue = new WorkflowIssue();
+                    workflowIssue.setLabel("");
+                    workflowIssue.setFieldName("Label");
+                    workflowIssue.setTaskType(task.getType());
+                    workflowIssue.setIssue("The field is not initialized");
+
+                    workflowIssueList.add(workflowIssue);
+                }
+
+                joParameters.put("OutputFileFormat", task.getFileFormat());
+                {
+                    JSONArray jaTracks = new JSONArray();
+                    joParameters.put("Tracks", jaTracks);
+
+                    if (taskExtractTracksVideoTrackNumber != null)
+                    {
+                        JSONObject joTrack = new JSONObject();
+                        jaTracks.put(joTrack);
+                        joTrack.put("TrackType", "video");
+                        joTrack.put("TrackNumber", taskExtractTracksVideoTrackNumber);
+                    }
+
+                    if (taskExtractTracksAudioTrackNumber != null)
+                    {
+                        JSONObject joTrack = new JSONObject();
+                        jaTracks.put(joTrack);
+                        joTrack.put("TrackType", "audio");
+                        joTrack.put("TrackNumber", taskExtractTracksAudioTrackNumber);
+                    }
+                }
                 if (task.getUserData() != null && !task.getUserData().equalsIgnoreCase(""))
                     joParameters.put("UserData", task.getUserData());
                 if (task.getRetention() != null && !task.getRetention().equalsIgnoreCase(""))
@@ -2344,6 +2429,45 @@ public class NewWorkflow extends Workspace implements Serializable {
                         fillMediaItems();
                     }
                 }
+                else if (task.getType().equalsIgnoreCase("Extract-Tracks"))
+                {
+                    taskReferences = task.getReferences() == null ? "" : task.getReferences();
+                    taskLabel = task.getLabel();
+                    taskFileFormat = task.getFileFormat();
+                    taskExtractTracksVideoTrackNumber = task.getExtractTracksVideoTrackNumber();
+                    taskExtractTracksAudioTrackNumber = task.getExtractTracksAudioTrackNumber();
+                    taskUserData = task.getUserData();
+                    taskRetention = task.getRetention();
+                    taskTitle = task.getTitle();
+                    taskUniqueName = task.getUniqueName();
+                    if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
+                        taskIngester = task.getIngester();
+                    else
+                        taskIngester = userName;
+                    taskKeywords = task.getKeywords();
+                    taskContentProviderName= task.getContentProviderName();
+                    taskDeliveryFileName= task.getDeliveryFileName();
+                    taskStartPublishing= task.getStartPublishing();
+                    taskEndPublishing= task.getEndPublishing();
+
+                    {
+                        mLogger.info("Initializing mediaItems...");
+
+                        mediaItemsList.clear();
+                        mediaItemsSelectedList.clear();
+                        mediaItemsSelectionMode = "multiple";
+                        mediaItemsMaxMediaItemsNumber = new Long(100);
+                        {
+                            mediaItemsContentTypesList.clear();
+                            mediaItemsContentTypesList.add("video");
+                            mediaItemsContentTypesList.add("audio");
+
+                            mediaItemsContentType = mediaItemsContentTypesList.get(0);
+                        }
+
+                        fillMediaItems();
+                    }
+                }
                 else if (task.getType().equalsIgnoreCase("Cut"))
                 {
                     taskReferences = task.getReferences() == null ? "" : task.getReferences();
@@ -2918,6 +3042,24 @@ public class NewWorkflow extends Workspace implements Serializable {
                 task.setStartPublishing(taskStartPublishing);
                 task.setEndPublishing(taskEndPublishing);
             }
+            else if (task.getType().equalsIgnoreCase("Extract-Tracks"))
+            {
+                task.setReferences(taskReferences);
+                task.setLabel(taskLabel);
+                task.setFileFormat(taskFileFormat); // OutputFileFormat
+                task.setExtractTracksVideoTrackNumber(taskExtractTracksVideoTrackNumber);
+                task.setExtractTracksAudioTrackNumber(taskExtractTracksAudioTrackNumber);
+                task.setUserData(taskUserData);
+                task.setRetention(taskRetention);
+                task.setTitle(taskTitle);
+                task.setUniqueName(taskUniqueName);
+                task.setIngester(taskIngester);
+                task.setKeywords(taskKeywords);
+                task.setContentProviderName(taskContentProviderName);
+                task.setDeliveryFileName(taskDeliveryFileName);
+                task.setStartPublishing(taskStartPublishing);
+                task.setEndPublishing(taskEndPublishing);
+            }
             else if (task.getType().equalsIgnoreCase("Cut"))
             {
                 task.setReferences(taskReferences);
@@ -3107,8 +3249,7 @@ public class NewWorkflow extends Workspace implements Serializable {
                 task.setEncodingProfilesSetLabel(taskEncodingProfilesSetLabel);
                 task.setEncodingProfileLabel(taskEncodingProfileLabel);
             }
-            else if (task.getType().equalsIgnoreCase("Email-Notification"))
-            {
+            else if (task.getType().equalsIgnoreCase("Email-Notification")) {
                 task.setLabel(taskLabel);
                 task.setEmailAddress(taskEmailAddress);
                 task.setSubject(taskSubject);
@@ -3202,7 +3343,7 @@ public class NewWorkflow extends Workspace implements Serializable {
 
     public String getVideoAudioAllowTypes()
     {
-        String fileExtension = "wmv|mp4|mpeg|avi|webm|mp3|aac|png|jpg";
+        String fileExtension = "wmv|mp4|ts|mpeg|avi|webm|mp3|aac|png|jpg";
 
         return ("/(\\.|\\/)(" + fileExtension + ")$/");
     }
@@ -4277,5 +4418,21 @@ public class NewWorkflow extends Workspace implements Serializable {
 
     public void setTaskLocalCopyLocalFileName(String taskLocalCopyLocalFileName) {
         this.taskLocalCopyLocalFileName = taskLocalCopyLocalFileName;
+    }
+
+    public Long getTaskExtractTracksVideoTrackNumber() {
+        return taskExtractTracksVideoTrackNumber;
+    }
+
+    public void setTaskExtractTracksVideoTrackNumber(Long taskExtractTracksVideoTrackNumber) {
+        this.taskExtractTracksVideoTrackNumber = taskExtractTracksVideoTrackNumber;
+    }
+
+    public Long getTaskExtractTracksAudioTrackNumber() {
+        return taskExtractTracksAudioTrackNumber;
+    }
+
+    public void setTaskExtractTracksAudioTrackNumber(Long taskExtractTracksAudioTrackNumber) {
+        this.taskExtractTracksAudioTrackNumber = taskExtractTracksAudioTrackNumber;
     }
 }

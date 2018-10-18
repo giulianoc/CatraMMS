@@ -1,0 +1,17 @@
+{
+	"Type": "Workflow",
+	"Label": "My Workflow",
+	"Variables": {
+		"Title": "My Title of the content"
+	},
+	"Task": {
+		"Label": "My Task",
+		"Type": "Add-Content",
+		"Parameters": {
+			"FileFormat": "mpg",
+			"ContentType": "video",
+			"UserData": { "MyData": "this is my data" },
+			"Title": "${Title}"
+		}
+	}
+}

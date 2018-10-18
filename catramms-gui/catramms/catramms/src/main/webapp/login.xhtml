@@ -154,7 +154,10 @@
                         <p:outputLabel value="Username" />
                     </p:column>
                     <p:column>
-                        <p:inputText style="width: 100%" value="#{login.emailAddress}" placeholder="e-mail" />
+                        <p:inputText style="width: 100%"
+                                     autocomplete="true"
+                                     value="#{login.emailAddress}"
+                                     placeholder="e-mail" />
                     </p:column>
                 </p:row>
 
@@ -163,7 +166,10 @@
                         <p:outputLabel value="Password" />
                     </p:column>
                     <p:column>
-                        <p:password style="width: 100%" value="#{login.pwd}" placeholder="password"/>
+                        <p:password style="width: 100%"
+                                    autocomplete="true"
+                                    value="#{login.pwd}"
+                                    placeholder="password"/>
                     </p:column>
                 </p:row>
 

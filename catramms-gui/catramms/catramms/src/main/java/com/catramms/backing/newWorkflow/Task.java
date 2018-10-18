@@ -77,6 +77,8 @@ public class Task implements Serializable
     private String httpCallbackParameters;
     private String httpCallbackMethod;
     private String httpCallbackHeaders;
+    private Long extractTracksVideoTrackNumber;
+    private Long extractTracksAudioTrackNumber;
 
     private boolean childTaskCreated;
     private boolean childEventOnSuccessCreated;
@@ -618,5 +620,21 @@ public class Task implements Serializable
 
     public void setLocalCopyLocalFileName(String localCopyLocalFileName) {
         this.localCopyLocalFileName = localCopyLocalFileName;
+    }
+
+    public Long getExtractTracksVideoTrackNumber() {
+        return extractTracksVideoTrackNumber;
+    }
+
+    public void setExtractTracksVideoTrackNumber(Long extractTracksVideoTrackNumber) {
+        this.extractTracksVideoTrackNumber = extractTracksVideoTrackNumber;
+    }
+
+    public Long getExtractTracksAudioTrackNumber() {
+        return extractTracksAudioTrackNumber;
+    }
+
+    public void setExtractTracksAudioTrackNumber(Long extractTracksAudioTrackNumber) {
+        this.extractTracksAudioTrackNumber = extractTracksAudioTrackNumber;
     }
 }
