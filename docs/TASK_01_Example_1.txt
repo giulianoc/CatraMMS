@@ -8,10 +8,10 @@
 		"Label": "My Task",
 		"Type": "Add-Content",
 		"Parameters": {
-			"FileFormat": "mpg",
-			"ContentType": "video",
+			"FileFormat": "ts",
 			"UserData": { "MyData": "this is my data" },
-			"Title": "${Title}"
+			"Title": "${Title}",
+			"Retention": "1h"
 		}
 	}
 }

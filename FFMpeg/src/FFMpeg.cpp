@@ -1713,12 +1713,14 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
                 {
                     if (videoCodecName != "mjpeg")
                     {
+                        // I didn't find bit_rate also in a ts file, let's set it as a warning
+                        
                         string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
                                 + ", mmsAssetPathName: " + mmsAssetPathName
                                 + ", Field: " + field;
-                        _logger->error(errorMessage);
+                        _logger->warn(errorMessage);
 
-                        throw runtime_error(errorMessage);
+                        // throw runtime_error(errorMessage);
                     }
                 }
                 else
