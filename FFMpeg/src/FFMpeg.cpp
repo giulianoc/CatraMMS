@@ -2421,8 +2421,7 @@ void FFMpeg::generateCutMediaToIngest(
 void FFMpeg::extractTrackMediaToIngest(
         int64_t ingestionJobKey,
         string sourcePhysicalPath,
-        string trackType,
-        int trackNumber,
+        vector<pair<string,int>>& tracksToBeExtracted,
         string extractTrackMediaPathName)
 {
 
@@ -2432,21 +2431,49 @@ void FFMpeg::extractTrackMediaToIngest(
             + ".extractTrack.log"
             ;
 
+    string mapParameters;
+    bool videoTrackIsPresent = false;
+    bool audioTrackIsPresent = false;
+    for (pair<string,int>& trackToBeExtracted: tracksToBeExtracted)
+    {
+        string trackType;
+        int trackNumber;
+        
+        tie(trackType,trackNumber) = trackToBeExtracted;
+        
+        mapParameters += (string("-map 0:") + (trackType == "video" ? "v" : "a") + ":" + to_string(trackNumber) + " ");
+        
+        if (trackType == "video")
+            videoTrackIsPresent = true;
+        else
+            audioTrackIsPresent = true;
+    }
     /*
         -map option: http://ffmpeg.org/ffmpeg.html#Advanced-options
         -c:a copy:      codec option for audio streams has been set to copy, so no decoding-filtering-encoding operations will occur
         -an:            disables audio stream selection for the output
     */
-    string ffmpegExecuteCommand = 
-            _ffmpegPath + "/ffmpeg "
-            + "-i " + sourcePhysicalPath + " "
-            + "-map 0:" + (trackType == "video" ? "v" : "a") + ":" + to_string(trackNumber) + " "
-            + "-c:" + (trackType == "video" ? "v" : "a") + " copy "
-            + (trackType == "video" ? "-an " : "-vn ")
-            + extractTrackMediaPathName + " "
-            + "> " + _outputFfmpegPathFileName + " "
-            + "2>&1"
+    // ffmpeg <global-options> <input-options> -i <input> <output-options> <output>
+    string globalOptions = "-y ";
+    string inputOptions = "";
+    string outputOptions =
+            mapParameters
+            + (videoTrackIsPresent ? (string("-c:v") + " copy ") : "")
+            + (audioTrackIsPresent ? (string("-c:a") + " copy ") : "")
+            + (videoTrackIsPresent && !audioTrackIsPresent ? "-an " : "")
+            + (!videoTrackIsPresent && audioTrackIsPresent ? "-vn " : "")
             ;
+
+    string ffmpegExecuteCommand =
+            _ffmpegPath + "/ffmpeg "
+            + globalOptions
+            + inputOptions
+            + "-i " + sourcePhysicalPath + " "
+            + outputOptions
+            + extractTrackMediaPathName + " "
+            + "> " + _outputFfmpegPathFileName 
+            + " 2>&1"
+    ;
 
     #ifdef __APPLE__
         ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=") + getenv("DYLD_LIBRARY_PATH") + "; ");

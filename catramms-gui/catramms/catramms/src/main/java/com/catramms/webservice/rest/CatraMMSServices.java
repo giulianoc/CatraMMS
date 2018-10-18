@@ -75,7 +75,7 @@ public class CatraMMSServices {
                 String la1MediaDirectoryPathName = "/mnt/stream_recording/makitoRecording/La1/";
                 String la2MediaDirectoryPathName = "/mnt/stream_recording/makitoRecording/La2/";
                 String radioMediaDirectoryPathName = "/mnt/stream_recording/makitoRecording/Radio/";
-                String cutVideoRetention = "3d";
+                String cutVideoRetention = "2d";
 
                 int secondsToWaitBeforeStartProcessingAFile = 5;
 

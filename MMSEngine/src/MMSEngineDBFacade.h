@@ -389,7 +389,7 @@ public:
         FTPDelivery             = 14,
         HTTPCallback            = 15,
         LocalCopy               = 16,
-        ExtractTrack            = 17,
+        ExtractTracks           = 17,
         EmailNotification       = 30,
         ContentUpdate           = 50,
         ContentRemove           = 60
@@ -432,8 +432,8 @@ public:
                 return "HTTP-Callback";
             case IngestionType::LocalCopy:
                 return "Local-Copy";
-            case IngestionType::ExtractTrack:
-                return "Extract-Track";
+            case IngestionType::ExtractTracks:
+                return "Extract-Tracks";
                 
             case IngestionType::EmailNotification:
                 return "Email-Notification";
@@ -483,8 +483,8 @@ public:
             return IngestionType::HTTPCallback;
         else if (lowerCase == "local-copy")
             return IngestionType::LocalCopy;
-        else if (lowerCase == "extract-track")
-            return IngestionType::ExtractTrack;
+        else if (lowerCase == "extract-tracks")
+            return IngestionType::ExtractTracks;
 
         else if (lowerCase == "email-notification")
             return IngestionType::EmailNotification;

@@ -1095,9 +1095,9 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
         Json::Value parametersRoot = taskRoot[field]; 
         validateLocalCopyMetadata(workspaceKey, parametersRoot, dependencies);
     }
-    else if (type == "Extract-Track")
+    else if (type == "Extract-Tracks")
     {
-        ingestionType = MMSEngineDBFacade::IngestionType::ExtractTrack;
+        ingestionType = MMSEngineDBFacade::IngestionType::ExtractTracks;
         
         field = "Parameters";
         if (!isMetadataPresent(taskRoot, field))
@@ -1114,7 +1114,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validateExtractTrackMetadata(workspaceKey, parametersRoot, dependencies);
+        validateExtractTracksMetadata(workspaceKey, parametersRoot, dependencies);
     }
     else
     {
@@ -1197,9 +1197,9 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
     {
         validateLocalCopyMetadata(workspaceKey, parametersRoot, dependencies);        
     }
-    else if (ingestionType == MMSEngineDBFacade::IngestionType::ExtractTrack)
+    else if (ingestionType == MMSEngineDBFacade::IngestionType::ExtractTracks)
     {
-        validateExtractTrackMetadata(workspaceKey, parametersRoot, dependencies);        
+        validateExtractTracksMetadata(workspaceKey, parametersRoot, dependencies);        
     }
     else
     {
@@ -2263,13 +2263,13 @@ void Validator::validateLocalCopyMetadata(int64_t workspaceKey,
     }        
 }
 
-void Validator::validateExtractTrackMetadata(int64_t workspaceKey,
+void Validator::validateExtractTracksMetadata(int64_t workspaceKey,
     Json::Value parametersRoot, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
 {
 
     
     vector<string> mandatoryFields = {
-        "TrackType",
+        "Tracks",
         "OutputFileFormat"
     };
     for (string mandatoryField: mandatoryFields)
@@ -2289,26 +2289,54 @@ void Validator::validateExtractTrackMetadata(int64_t workspaceKey,
         }
     }
 
-    string field = "TrackType";
-    string trackType = parametersRoot.get(field, "XXX").asString();
-    if (trackType != "video" && trackType != "audio")
+    string field = "Tracks";
+    Json::Value tracksToot = parametersRoot[field];
+    if (tracksToot.size() == 0)
     {
-        string errorMessage = __FILEREF__ + field + " is wrong (it could be only 'video' or 'audio'"
-                + ", Field: " + field
-                + ", trackType: " + trackType
-                ;
+        string errorMessage = __FILEREF__ + "No correct number of Tracks"
+                + ", tracksToot.size: " + to_string(tracksToot.size());
         _logger->error(errorMessage);
 
         throw runtime_error(errorMessage);
     }
+    for (int trackIndex = 0; trackIndex < tracksToot.size(); trackIndex++)
+    {
+        Json::Value trackRoot = tracksToot[trackIndex];
+        
+        field = "TrackType";
+        if (!isMetadataPresent(trackRoot, field))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sTrackRoot = Json::writeString(wbuilder, trackRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field
+                    + ", sTrackRoot: " + sTrackRoot
+                    ;
+            _logger->error(errorMessage);
 
-    field = "FileFormat";
-    string fileFormat = parametersRoot.get(field, "XXX").asString();
-    if (!isVideoAudioFileFormat(fileFormat))
+            throw runtime_error(errorMessage);
+        }
+        string trackType = trackRoot.get(field, "XXX").asString();
+        if (trackType != "video" && trackType != "audio")
+        {
+            string errorMessage = __FILEREF__ + field + " is wrong (it could be only 'video' or 'audio'"
+                    + ", Field: " + field
+                    + ", trackType: " + trackType
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+
+    field = "OutputFileFormat";
+    string outputFileFormat = parametersRoot.get(field, "XXX").asString();
+    if (!isVideoAudioFileFormat(outputFileFormat))
     {
         string errorMessage = __FILEREF__ + field + " is wrong (it could be only 'video' or 'audio'"
                 + ", Field: " + field
-                + ", fileFormat: " + fileFormat
+                + ", outputFileFormat: " + outputFileFormat
                 ;
         _logger->error(__FILEREF__ + errorMessage);
         

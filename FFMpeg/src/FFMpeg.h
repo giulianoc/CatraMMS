@@ -128,8 +128,7 @@ public:
     void extractTrackMediaToIngest(
         int64_t ingestionJobKey,
         string sourcePhysicalPath,
-        string trackType,
-        int trackNumber,
+        vector<pair<string,int>>& tracksToBeExtracted,
         string extractTrackMediaPathName);
 
     static void encodingFileFormatValidation(string fileFormat,

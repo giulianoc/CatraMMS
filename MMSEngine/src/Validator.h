@@ -97,7 +97,7 @@ public:
     void validateLocalCopyMetadata(int64_t workspaceKey,
         Json::Value parametersRoot, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
 
-    void validateExtractTrackMetadata(int64_t workspaceKey,
+    void validateExtractTracksMetadata(int64_t workspaceKey,
         Json::Value parametersRoot, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
 
     void validateEncodingProfilesSetRootMetadata(

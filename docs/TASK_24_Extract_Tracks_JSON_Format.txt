@@ -1,9 +1,9 @@
 "Task": {
 	// optional
-	"Label"="My Extract Track",
+	"Label"="My Extract Tracks",
 
 	// mandatory
-	"Type": "Extract-Track",
+	"Type": "Extract-Tracks",
 
 	"Parameters": {
 		// mandatory
@@ -24,11 +24,16 @@
 			{ "ReferenceMediaItemKey": 11 }
 		],
 
-		// mandatory: track type to be extracted (video or audio)
-		"TrackType": "audio",
+		// mandatory. At least one entry inside the array has to be present
+		"Tracks": [
+			{
+				// mandatory: track type to be extracted (video or audio)
+				"TrackType": "audio",
 
-		// optional, if not provided 0 (the first track of type 'trackType' will be used
-		"TrackNumber": 0,
+				// optional, if not provided 0 (the first track of type 'trackType' will be used
+				"TrackNumber": 0
+			}
+		],
 
 		// mandatory: format of the output where the extracted track will be placed.
 		"OutputFileFormat": "mp4",
