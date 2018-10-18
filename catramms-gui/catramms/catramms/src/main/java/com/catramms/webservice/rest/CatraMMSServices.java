@@ -381,11 +381,13 @@ public class CatraMMSServices {
 
                     // build json
                     JSONObject joWorkflow = null;
-                    String cutLabel = "Cut: " + cutMediaTitle;
+                    String keyContentLabel;
                     if (cutMediaChannel.equalsIgnoreCase("la1")
                             || cutMediaChannel.equalsIgnoreCase("la2"))
                     {
-                        joWorkflow = buildTVJson(cutMediaTitle, cutLabel, ingester, fileExtension,
+                        keyContentLabel = "Cut: " + cutMediaTitle;
+
+                        joWorkflow = buildTVJson(cutMediaTitle, keyContentLabel, ingester, fileExtension,
                             addContentPull, cutMediaRetention,
                             cutStartTimeInMilliSeconds, cutMediaEndTimeInMilliseconds - cutMediaStartTimeInMilliseconds,
                             cutMediaId, cutMediaChannel, sCutMediaStartTime, sCutMediaEndTime,
@@ -403,7 +405,9 @@ public class CatraMMSServices {
                         else if (cutMediaChannel.equalsIgnoreCase("RETE TRE"))
                             audioTrackNumber = reteTreTrackNumber;
 
-                        joWorkflow = buildRadioJson(cutMediaTitle, cutLabel, ingester, fileExtension,
+                        keyContentLabel = "CutAndExtract: " + cutMediaTitle;
+
+                        joWorkflow = buildRadioJson(cutMediaTitle, keyContentLabel, ingester, fileExtension,
                                 addContentPull, cutMediaRetention,
                                 cutStartTimeInMilliSeconds, cutMediaEndTimeInMilliseconds - cutMediaStartTimeInMilliseconds,
                                 cutMediaId, cutMediaChannel, sCutMediaStartTime, sCutMediaEndTime,
@@ -889,7 +893,7 @@ public class CatraMMSServices {
         }
     }
 
-    private JSONObject buildRadioJson(String cutMediaTitle, String cutLabel, String ingester, String fileExtension,
+    private JSONObject buildRadioJson(String cutMediaTitle, String cutAndExtractLabel, String ingester, String fileExtension,
                                    boolean addContentPull, String cutMediaRetention,
                                    Long cutStartTimeInMilliSeconds, Long cutMediaDurationInMilliSeconds,
                                    String cutMediaId, String cutMediaChannel, String sCutMediaStartTime, String sCutMediaEndTime,
@@ -989,7 +993,7 @@ public class CatraMMSServices {
 
                 joConcatDemuxOnSuccess.put("Task", joCut);
 
-                joCut.put("Label", cutLabel);
+                joCut.put("Label", "Cut: " + cutMediaTitle);
                 joCut.put("Type", "Cut");
 
                 JSONObject joCutParameters = new JSONObject();
@@ -1009,23 +1013,51 @@ public class CatraMMSServices {
                     double cutEndTimeInSeconds = ((double) calendar.getTime().getTime()) / 1000;
                     joCutParameters.put("EndTimeInSeconds", cutEndTimeInSeconds);
                 }
-
-                {
-                    JSONObject joCutUserData = new JSONObject();
-                    joCutParameters.put("UserData", joCutUserData);
-
-                    joCutUserData.put("Channel", cutMediaChannel);
-                    joCutUserData.put("StartTime", sCutMediaStartTime);
-                    joCutUserData.put("EndTime", sCutMediaEndTime);
-                }
             }
 
+            JSONObject joCutAndExtract = new JSONObject();
             {
                 JSONObject joCutOnSuccess = new JSONObject();
                 joCut.put("OnSuccess", joCutOnSuccess);
 
+                joCutOnSuccess.put("Task", joCutAndExtract);
+
+                joCutAndExtract.put("Label", cutAndExtractLabel);
+                joCutAndExtract.put("Type", "Extract-Tracks");
+
+                JSONObject joCutAndExtractParameters = new JSONObject();
+                joCutAndExtract.put("Parameters", joCutAndExtractParameters);
+
+                joCutAndExtractParameters.put("Ingester", ingester);
+                joCutAndExtractParameters.put("Retention", cutMediaRetention);
+                joCutAndExtractParameters.put("Title", cutMediaTitle);
+                {
+                    JSONArray jaTracks = new JSONArray();
+                    joCutAndExtractParameters.put("Tracks", jaTracks);
+
+                    JSONObject joTrack = new JSONObject();
+                    jaTracks.put(joTrack);
+
+                    joTrack.put("TrackType", "audio");
+                    joTrack.put("TrackNumber", audioTrackNumber);
+                }
+
+                {
+                    JSONObject joCutAndExtractUserData = new JSONObject();
+                    joCutAndExtractParameters.put("UserData", joCutAndExtractUserData);
+
+                    joCutAndExtractUserData.put("Channel", cutMediaChannel);
+                    joCutAndExtractUserData.put("StartTime", sCutMediaStartTime);
+                    joCutAndExtractUserData.put("EndTime", sCutMediaEndTime);
+                }
+            }
+
+            {
+                JSONObject joCutAndExtractOnSuccess = new JSONObject();
+                joCutAndExtract.put("OnSuccess", joCutAndExtractOnSuccess);
+
                 JSONObject joGroupOfTasks = new JSONObject();
-                joCutOnSuccess.put("Task", joGroupOfTasks);
+                joCutAndExtractOnSuccess.put("Task", joGroupOfTasks);
 
                 joGroupOfTasks.put("Type", "GroupOfTasks");
 
@@ -1075,7 +1107,7 @@ public class CatraMMSServices {
                     joEncode.put("Parameters", joEncodeParameters);
 
                     joEncodeParameters.put("EncodingPriority", "Low");
-                    joEncodeParameters.put("EncodingProfileLabel", "MMS_H264_veryslow_360p25_aac_92");
+                    joEncodeParameters.put("EncodingProfileLabel", "MMS_aac_92");
                 }
             }
             mLogger.info("Ready for the ingest"
