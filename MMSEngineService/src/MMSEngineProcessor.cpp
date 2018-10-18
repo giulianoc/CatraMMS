@@ -3257,7 +3257,7 @@ void MMSEngineProcessor::extractTracksContentThread(
                 Json::Value trackRoot = tracksToot[trackIndex];
 
                 field = "TrackType";
-                if (!isMetadataPresent(trackRoot, field))
+                if (!_mmsEngineDBFacade->isMetadataPresent(trackRoot, field))
                 {
                     Json::StreamWriterBuilder wbuilder;
                     string sTrackRoot = Json::writeString(wbuilder, trackRoot);
@@ -3274,7 +3274,7 @@ void MMSEngineProcessor::extractTracksContentThread(
 
                 int trackNumber = 0;
                 field = "TrackNumber";
-                if (isMetadataPresent(trackRoot, field))
+                if (_mmsEngineDBFacade->isMetadataPresent(trackRoot, field))
                     trackNumber = trackRoot.get(field, "XXX").asInt();
 
                 tracksToBeExtracted.push_back(make_pair(trackType, trackNumber));
