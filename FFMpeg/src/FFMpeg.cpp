@@ -88,6 +88,10 @@ void FFMpeg::encodeContent(
         
         _currentlyAtSecondPass = false;
 
+        // we will set by default _twoPasses to false otherwise, since the ffmpeg class is reused
+        // it could remain set to true from a previous call
+        _twoPasses = false;
+        
         settingFfmpegParameters(
             stagingEncodedAssetPathName,
 
@@ -581,9 +585,7 @@ void FFMpeg::encodeContent(
 
                 throw runtime_error(errorMessage);
             }
-        }
-        
-        // _twoPasses = false;
+        }        
     }
     catch(runtime_error e)
     {
@@ -803,9 +805,7 @@ void FFMpeg::overlayImageOnVideo(
 
                 throw runtime_error(errorMessage);
             }
-        }
-        
-        // _twoPasses = false;
+        }        
     }
     catch(runtime_error e)
     {
@@ -1078,9 +1078,7 @@ void FFMpeg::overlayTextOnVideo(
 
                 throw runtime_error(errorMessage);
             }
-        }
-        
-        // _twoPasses = false;
+        }        
     }
     catch(runtime_error e)
     {
