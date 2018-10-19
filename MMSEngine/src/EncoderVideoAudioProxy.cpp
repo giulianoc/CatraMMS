@@ -1246,6 +1246,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                         {
                             string errorMessage = __FILEREF__ + "No directory found in the staging asset path name"
                                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                                    + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                                     + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
                             _logger->error(errorMessage);
 
@@ -1255,8 +1256,21 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                         {
                             string stagingDirectory = stagingEncodedAssetPathName.substr(0, directoryEndIndex);
                             
-                            Boolean_t bRemoveRecursively = true;
-                            FileIO::removeDirectory(stagingDirectory, bRemoveRecursively);
+                            try
+                            {
+                                Boolean_t bRemoveRecursively = true;
+                                FileIO::removeDirectory(stagingDirectory, bRemoveRecursively);
+                            }
+                            catch (runtime_error e)
+                            {
+                                _logger->warn(__FILEREF__ + "FileIO::removeDirectory failed (runtime_error)"
+                                    + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                                    + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                                    + ", stagingDirectory: " + stagingDirectory
+                                    + ", exception: " + e.what()
+                                    + ", response.str(): " + response.str()
+                                );
+                            }
                         }
                     }
                     
