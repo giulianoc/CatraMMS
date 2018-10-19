@@ -510,8 +510,7 @@ public class CatraMMSServices {
             joWorkflow.put("Type", "Workflow");
             joWorkflow.put("Label", keyTitle);
 
-            JSONObject joOnSuccess = new JSONObject();
-
+            JSONObject joCut = null;
 
             if (fileTreeMap.size() > 1)
             {
@@ -550,7 +549,61 @@ public class CatraMMSServices {
                         joAddContentParameters.put("SourceURL", "copy://" + mediaFile.getAbsolutePath());
                 }
 
-                joGroupOfTasks.put("OnSuccess", joOnSuccess);
+                JSONObject joConcatDemux = new JSONObject();
+                {
+                    JSONObject joGroupOfTasksOnSuccess = new JSONObject();
+                    joGroupOfTasks.put("OnSuccess", joGroupOfTasksOnSuccess);
+
+                    joGroupOfTasksOnSuccess.put("Task", joConcatDemux);
+
+                    joConcatDemux.put("Label", "Concat: " + keyTitle);
+                    joConcatDemux.put("Type", "Concat-Demuxer");
+
+                    JSONObject joConcatDemuxParameters = new JSONObject();
+                    joConcatDemux.put("Parameters", joConcatDemuxParameters);
+
+                    joConcatDemuxParameters.put("Ingester", ingester);
+                    joConcatDemuxParameters.put("Retention", "0");
+                    joConcatDemuxParameters.put("Title", "Concat: " + keyTitle);
+                }
+
+                joCut = new JSONObject();
+                {
+                    JSONObject joConcatDemuxOnSuccess = new JSONObject();
+                    joConcatDemux.put("OnSuccess", joConcatDemuxOnSuccess);
+
+                    joConcatDemuxOnSuccess.put("Task", joCut);
+
+                    joCut.put("Label", keyLabel);
+                    joCut.put("Type", "Cut");
+
+                    JSONObject joCutParameters = new JSONObject();
+                    joCut.put("Parameters", joCutParameters);
+
+                    joCutParameters.put("Ingester", ingester);
+                    joCutParameters.put("Retention", cutMediaRetention);
+                    joCutParameters.put("Title", keyTitle);
+                    {
+                        double cutStartTimeInSeconds = ((double) cutStartTimeInMilliSeconds) / 1000;
+                        joCutParameters.put("StartTimeInSeconds", cutStartTimeInSeconds);
+
+                        Calendar calendar = Calendar.getInstance();
+                        calendar.setTime(new Date(cutStartTimeInMilliSeconds));
+                        calendar.add(Calendar.MILLISECOND, (int) (cutMediaDurationInMilliSeconds.longValue()));
+
+                        double cutEndTimeInSeconds = ((double) calendar.getTime().getTime()) / 1000;
+                        joCutParameters.put("EndTimeInSeconds", cutEndTimeInSeconds);
+                    }
+
+                    {
+                        JSONObject joCutUserData = new JSONObject();
+                        joCutParameters.put("UserData", joCutUserData);
+
+                        joCutUserData.put("Channel", cutMediaChannel);
+                        joCutUserData.put("StartTime", sCutMediaStartTime);
+                        joCutUserData.put("EndTime", sCutMediaEndTime);
+                    }
+                }
             }
             else
             {
@@ -573,59 +626,42 @@ public class CatraMMSServices {
                 if (addContentPull)
                     joAddContentParameters.put("SourceURL", "copy://" + mediaFile.getAbsolutePath());
 
-                joAddContent.put("OnSuccess", joOnSuccess);
-            }
-
-            JSONObject joConcatDemux = new JSONObject();
-            {
-                joOnSuccess.put("Task", joConcatDemux);
-
-                joConcatDemux.put("Label", "Concat: " + keyTitle);
-                joConcatDemux.put("Type", "Concat-Demuxer");
-
-                JSONObject joConcatDemuxParameters = new JSONObject();
-                joConcatDemux.put("Parameters", joConcatDemuxParameters);
-
-                joConcatDemuxParameters.put("Ingester", ingester);
-                joConcatDemuxParameters.put("Retention", "0");
-                joConcatDemuxParameters.put("Title", "Concat: " + keyTitle);
-            }
-
-            JSONObject joCut = new JSONObject();
-            {
-                JSONObject joConcatDemuxOnSuccess = new JSONObject();
-                joConcatDemux.put("OnSuccess", joConcatDemuxOnSuccess);
-
-                joConcatDemuxOnSuccess.put("Task", joCut);
-
-                joCut.put("Label", keyLabel);
-                joCut.put("Type", "Cut");
-
-                JSONObject joCutParameters = new JSONObject();
-                joCut.put("Parameters", joCutParameters);
-
-                joCutParameters.put("Ingester", ingester);
-                joCutParameters.put("Retention", cutMediaRetention);
-                joCutParameters.put("Title", keyTitle);
+                joCut = new JSONObject();
                 {
-                    double cutStartTimeInSeconds = ((double) cutStartTimeInMilliSeconds) / 1000;
-                    joCutParameters.put("StartTimeInSeconds", cutStartTimeInSeconds);
+                    JSONObject joAddContentOnSuccess = new JSONObject();
+                    joAddContent.put("OnSuccess", joAddContentOnSuccess);
 
-                    Calendar calendar = Calendar.getInstance();
-                    calendar.setTime(new Date(cutStartTimeInMilliSeconds));
-                    calendar.add(Calendar.MILLISECOND, (int) (cutMediaDurationInMilliSeconds.longValue()));
+                    joAddContentOnSuccess.put("Task", joCut);
 
-                    double cutEndTimeInSeconds = ((double) calendar.getTime().getTime()) / 1000;
-                    joCutParameters.put("EndTimeInSeconds", cutEndTimeInSeconds);
-                }
+                    joCut.put("Label", keyLabel);
+                    joCut.put("Type", "Cut");
 
-                {
-                    JSONObject joCutUserData = new JSONObject();
-                    joCutParameters.put("UserData", joCutUserData);
+                    JSONObject joCutParameters = new JSONObject();
+                    joCut.put("Parameters", joCutParameters);
 
-                    joCutUserData.put("Channel", cutMediaChannel);
-                    joCutUserData.put("StartTime", sCutMediaStartTime);
-                    joCutUserData.put("EndTime", sCutMediaEndTime);
+                    joCutParameters.put("Ingester", ingester);
+                    joCutParameters.put("Retention", cutMediaRetention);
+                    joCutParameters.put("Title", keyTitle);
+                    {
+                        double cutStartTimeInSeconds = ((double) cutStartTimeInMilliSeconds) / 1000;
+                        joCutParameters.put("StartTimeInSeconds", cutStartTimeInSeconds);
+
+                        Calendar calendar = Calendar.getInstance();
+                        calendar.setTime(new Date(cutStartTimeInMilliSeconds));
+                        calendar.add(Calendar.MILLISECOND, (int) (cutMediaDurationInMilliSeconds.longValue()));
+
+                        double cutEndTimeInSeconds = ((double) calendar.getTime().getTime()) / 1000;
+                        joCutParameters.put("EndTimeInSeconds", cutEndTimeInSeconds);
+                    }
+
+                    {
+                        JSONObject joCutUserData = new JSONObject();
+                        joCutParameters.put("UserData", joCutUserData);
+
+                        joCutUserData.put("Channel", cutMediaChannel);
+                        joCutUserData.put("StartTime", sCutMediaStartTime);
+                        joCutUserData.put("EndTime", sCutMediaEndTime);
+                    }
                 }
             }
 
@@ -718,8 +754,7 @@ public class CatraMMSServices {
             joWorkflow.put("Type", "Workflow");
             joWorkflow.put("Label", keyTitle);
 
-            JSONObject joOnSuccess = new JSONObject();
-
+            JSONObject joCut = null;
 
             if (fileTreeMap.size() > 1)
             {
@@ -756,9 +791,110 @@ public class CatraMMSServices {
                     joAddContentParameters.put("FileSizeInBytes", mediaFile.length());
                     if (addContentPull)
                         joAddContentParameters.put("SourceURL", "copy://" + mediaFile.getAbsolutePath());
+
+                    JSONObject joExtract = new JSONObject();
+                    {
+                        JSONObject joAddContentOnSuccess = new JSONObject();
+                        joAddContent.put("OnSuccess", joAddContentOnSuccess);
+
+                        joAddContentOnSuccess.put("Task", joExtract);
+
+                        String labelForExtract = "Extract from " + mediaFile.getName();
+                        joExtract.put("Label", labelForExtract);
+                        joExtract.put("Type", "Extract-Tracks");
+
+                        JSONObject joExtractParameters = new JSONObject();
+                        joExtract.put("Parameters", joExtractParameters);
+
+                        joExtractParameters.put("Ingester", ingester);
+                        joExtractParameters.put("Retention", "0");
+                        joExtractParameters.put("Title", "Extract from " + mediaFile.getName());
+                        {
+                            joExtractParameters.put("OutputFileFormat", "mp4");
+
+                            JSONArray jaTracks = new JSONArray();
+                            joExtractParameters.put("Tracks", jaTracks);
+
+                            JSONObject joTrack = new JSONObject();
+                            jaTracks.put(joTrack);
+
+                            joTrack.put("TrackType", "audio");
+                            joTrack.put("TrackNumber", audioTrackNumber);
+                        }
+                    }
                 }
 
-                joGroupOfTasks.put("OnSuccess", joOnSuccess);
+                JSONObject joConcatDemux = new JSONObject();
+                {
+                    JSONObject joGroupOfTasksOnSuccess = new JSONObject();
+                    joGroupOfTasks.put("OnSuccess", joGroupOfTasksOnSuccess);
+
+                    joGroupOfTasksOnSuccess.put("Task", joConcatDemux);
+
+                    joConcatDemux.put("Label", "Concat: " + keyTitle);
+                    joConcatDemux.put("Type", "Concat-Demuxer");
+
+                    JSONObject joConcatDemuxParameters = new JSONObject();
+                    joConcatDemux.put("Parameters", joConcatDemuxParameters);
+
+                    joConcatDemuxParameters.put("Ingester", ingester);
+                    joConcatDemuxParameters.put("Retention", "0");
+                    joConcatDemuxParameters.put("Title", "Concat: " + keyTitle);
+
+                    {
+                        JSONArray jaReferences = new JSONArray();
+                        joConcatDemuxParameters.put("References", jaReferences);
+
+                        for (Date fileDate : fileTreeMap.keySet())
+                        {
+                            File mediaFile = fileTreeMap.get(fileDate);
+
+                            JSONObject joReference = new JSONObject();
+                            jaReferences.put(joReference);
+
+                            String labelForExtract = "Extract from " + mediaFile.getName();
+                            joReference.put("ReferenceLabel", labelForExtract);
+                        }
+                    }
+                }
+
+                joCut = new JSONObject();
+                {
+                    JSONObject joConcatDemuxOnSuccess = new JSONObject();
+                    joConcatDemux.put("OnSuccess", joConcatDemuxOnSuccess);
+
+                    joConcatDemuxOnSuccess.put("Task", joCut);
+
+                    joCut.put("Label", keyLabel);
+                    joCut.put("Type", "Cut");
+
+                    JSONObject joCutParameters = new JSONObject();
+                    joCut.put("Parameters", joCutParameters);
+
+                    joCutParameters.put("Ingester", ingester);
+                    joCutParameters.put("Retention", cutMediaRetention);
+                    joCutParameters.put("Title", keyTitle);
+                    {
+                        double cutStartTimeInSeconds = ((double) cutStartTimeInMilliSeconds) / 1000;
+                        joCutParameters.put("StartTimeInSeconds", cutStartTimeInSeconds);
+
+                        Calendar calendar = Calendar.getInstance();
+                        calendar.setTime(new Date(cutStartTimeInMilliSeconds));
+                        calendar.add(Calendar.MILLISECOND, (int) (cutMediaDurationInMilliSeconds.longValue()));
+
+                        double cutEndTimeInSeconds = ((double) calendar.getTime().getTime()) / 1000;
+                        joCutParameters.put("EndTimeInSeconds", cutEndTimeInSeconds);
+                    }
+
+                    {
+                        JSONObject joCutUserData = new JSONObject();
+                        joCutParameters.put("UserData", joCutUserData);
+
+                        joCutUserData.put("Channel", cutMediaChannel);
+                        joCutUserData.put("StartTime", sCutMediaStartTime);
+                        joCutUserData.put("EndTime", sCutMediaEndTime);
+                    }
+                }
             }
             else
             {
@@ -781,98 +917,81 @@ public class CatraMMSServices {
                 if (addContentPull)
                     joAddContentParameters.put("SourceURL", "copy://" + mediaFile.getAbsolutePath());
 
-                joAddContent.put("OnSuccess", joOnSuccess);
-            }
-
-            JSONObject joConcatDemux = new JSONObject();
-            {
-                joOnSuccess.put("Task", joConcatDemux);
-
-                joConcatDemux.put("Label", "Concat: " + keyTitle);
-                joConcatDemux.put("Type", "Concat-Demuxer");
-
-                JSONObject joConcatDemuxParameters = new JSONObject();
-                joConcatDemux.put("Parameters", joConcatDemuxParameters);
-
-                joConcatDemuxParameters.put("Ingester", ingester);
-                joConcatDemuxParameters.put("Retention", "0");
-                joConcatDemuxParameters.put("Title", "Concat: " + keyTitle);
-            }
-
-            JSONObject joCut = new JSONObject();
-            {
-                JSONObject joConcatDemuxOnSuccess = new JSONObject();
-                joConcatDemux.put("OnSuccess", joConcatDemuxOnSuccess);
-
-                joConcatDemuxOnSuccess.put("Task", joCut);
-
-                joCut.put("Label", "Cut: " + keyTitle);
-                joCut.put("Type", "Cut");
-
-                JSONObject joCutParameters = new JSONObject();
-                joCut.put("Parameters", joCutParameters);
-
-                joCutParameters.put("Ingester", ingester);
-                joCutParameters.put("Retention", "0");
-                joCutParameters.put("Title", "Cut: " + keyTitle);
+                JSONObject joExtract = new JSONObject();
                 {
-                    double cutStartTimeInSeconds = ((double) cutStartTimeInMilliSeconds) / 1000;
-                    joCutParameters.put("StartTimeInSeconds", cutStartTimeInSeconds);
+                    JSONObject joAddContentOnSuccess = new JSONObject();
+                    joAddContent.put("OnSuccess", joAddContentOnSuccess);
 
-                    Calendar calendar = Calendar.getInstance();
-                    calendar.setTime(new Date(cutStartTimeInMilliSeconds));
-                    calendar.add(Calendar.MILLISECOND, (int) (cutMediaDurationInMilliSeconds.longValue()));
+                    joAddContentOnSuccess.put("Task", joExtract);
 
-                    double cutEndTimeInSeconds = ((double) calendar.getTime().getTime()) / 1000;
-                    joCutParameters.put("EndTimeInSeconds", cutEndTimeInSeconds);
+                    joExtract.put("Label", "Extract from " + mediaFile.getName());
+                    joExtract.put("Type", "Extract-Tracks");
+
+                    JSONObject joExtractParameters = new JSONObject();
+                    joExtract.put("Parameters", joExtractParameters);
+
+                    joExtractParameters.put("Ingester", ingester);
+                    joExtractParameters.put("Retention", "0");
+                    joExtractParameters.put("Title", "Extract from " + mediaFile.getName());
+                    {
+                        joExtractParameters.put("OutputFileFormat", "mp4");
+
+                        JSONArray jaTracks = new JSONArray();
+                        joExtractParameters.put("Tracks", jaTracks);
+
+                        JSONObject joTrack = new JSONObject();
+                        jaTracks.put(joTrack);
+
+                        joTrack.put("TrackType", "audio");
+                        joTrack.put("TrackNumber", audioTrackNumber);
+                    }
+                }
+
+                joCut = new JSONObject();
+                {
+                    JSONObject joExtractOnSuccess = new JSONObject();
+                    joExtract.put("OnSuccess", joExtractOnSuccess);
+
+                    joExtractOnSuccess.put("Task", joCut);
+
+                    joCut.put("Label", keyLabel);
+                    joCut.put("Type", "Cut");
+
+                    JSONObject joCutParameters = new JSONObject();
+                    joCut.put("Parameters", joCutParameters);
+
+                    joCutParameters.put("Ingester", ingester);
+                    joCutParameters.put("Retention", cutMediaRetention);
+                    joCutParameters.put("Title", keyTitle);
+                    {
+                        double cutStartTimeInSeconds = ((double) cutStartTimeInMilliSeconds) / 1000;
+                        joCutParameters.put("StartTimeInSeconds", cutStartTimeInSeconds);
+
+                        Calendar calendar = Calendar.getInstance();
+                        calendar.setTime(new Date(cutStartTimeInMilliSeconds));
+                        calendar.add(Calendar.MILLISECOND, (int) (cutMediaDurationInMilliSeconds.longValue()));
+
+                        double cutEndTimeInSeconds = ((double) calendar.getTime().getTime()) / 1000;
+                        joCutParameters.put("EndTimeInSeconds", cutEndTimeInSeconds);
+                    }
+
+                    {
+                        JSONObject joCutUserData = new JSONObject();
+                        joCutParameters.put("UserData", joCutUserData);
+
+                        joCutUserData.put("Channel", cutMediaChannel);
+                        joCutUserData.put("StartTime", sCutMediaStartTime);
+                        joCutUserData.put("EndTime", sCutMediaEndTime);
+                    }
                 }
             }
 
-            JSONObject joExtract = new JSONObject();
             {
                 JSONObject joCutOnSuccess = new JSONObject();
                 joCut.put("OnSuccess", joCutOnSuccess);
 
-                joCutOnSuccess.put("Task", joExtract);
-
-                joExtract.put("Label", keyLabel);
-                joExtract.put("Type", "Extract-Tracks");
-
-                JSONObject joExtractParameters = new JSONObject();
-                joExtract.put("Parameters", joExtractParameters);
-
-                joExtractParameters.put("Ingester", ingester);
-                joExtractParameters.put("Retention", cutMediaRetention);
-                joExtractParameters.put("Title", keyTitle);
-                {
-                    joExtractParameters.put("OutputFileFormat", "mp4");
-
-                    JSONArray jaTracks = new JSONArray();
-                    joExtractParameters.put("Tracks", jaTracks);
-
-                    JSONObject joTrack = new JSONObject();
-                    jaTracks.put(joTrack);
-
-                    joTrack.put("TrackType", "audio");
-                    joTrack.put("TrackNumber", audioTrackNumber);
-                }
-
-                {
-                    JSONObject joCutAndExtractUserData = new JSONObject();
-                    joExtractParameters.put("UserData", joCutAndExtractUserData);
-
-                    joCutAndExtractUserData.put("Channel", cutMediaChannel);
-                    joCutAndExtractUserData.put("StartTime", sCutMediaStartTime);
-                    joCutAndExtractUserData.put("EndTime", sCutMediaEndTime);
-                }
-            }
-
-            {
-                JSONObject joExtractOnSuccess = new JSONObject();
-                joExtract.put("OnSuccess", joExtractOnSuccess);
-
                 JSONObject joGroupOfTasks = new JSONObject();
-                joExtractOnSuccess.put("Task", joGroupOfTasks);
+                joCutOnSuccess.put("Task", joGroupOfTasks);
 
                 joGroupOfTasks.put("Type", "GroupOfTasks");
 

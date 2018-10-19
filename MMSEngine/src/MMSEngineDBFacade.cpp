@@ -4935,7 +4935,9 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
                         "DATE_FORMAT(convert_tz(endProcessing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endProcessing, "
                         "IF(startProcessing is null, NOW(), startProcessing) as newStartProcessing, "
                         "IF(endProcessing is null, NOW(), endProcessing) as newEndProcessing, downloadingProgress, uploadingProgress, "
-                        "status, errorMessage from MMS_IngestionJob where ingestionRootKey = ? order by newStartProcessing, newEndProcessing asc";
+                        "status, errorMessage from MMS_IngestionJob where ingestionRootKey = ? "
+                        "order by ingestionJobKey asc";
+                        // "order by newStartProcessing asc, newEndProcessing asc";
                     shared_ptr<sql::PreparedStatement> preparedStatementIngestionJob (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
                     preparedStatementIngestionJob->setInt64(queryParameterIndex++, currentIngestionRootKey);
