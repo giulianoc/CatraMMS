@@ -1707,9 +1707,10 @@ void Validator::validateCutMetadata(int64_t workspaceKey,
             
             tie(key, referenceContentType, dependencyType) = dependencies[0];
 
-            if (referenceContentType != MMSEngineDBFacade::ContentType::Video)
+            if (referenceContentType != MMSEngineDBFacade::ContentType::Video
+                    && referenceContentType != MMSEngineDBFacade::ContentType::Audio)
             {
-                string errorMessage = __FILEREF__ + "Reference... does not refer a video content"
+                string errorMessage = __FILEREF__ + "Reference... does not refer a video-audio content"
                         + ", dependencyType: " + to_string(static_cast<int>(dependencyType))
                     + ", referenceMediaItemKey: " + to_string(key)
                     + ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
