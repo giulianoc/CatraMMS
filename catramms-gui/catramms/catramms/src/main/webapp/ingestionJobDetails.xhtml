@@ -108,7 +108,10 @@
                     <p:outputLabel value="#{ingestionJobDetails.ingestionJob.status}" />
 
                     <p:outputLabel value="Error Message: " />
-                    <p:outputLabel value="#{ingestionJobDetails.ingestionJob.errorMessage}" />
+                    <p:outputLabel id="errorMessage" value="#{ingestionJobDetails.ingestionJob.errorMessage}"
+                                   title="#{ingestionJobDetails.ingestionJob.errorMessage}" />
+                    <p:tooltip for="errorMessage"
+                               showEffect="clip" hideEffect="explode" position="left"/>
 
                     <p:outputLabel value="Downloading Progress: " />
                     <p:outputLabel value="#{ingestionJobDetails.ingestionJob.downloadingProgress}" />

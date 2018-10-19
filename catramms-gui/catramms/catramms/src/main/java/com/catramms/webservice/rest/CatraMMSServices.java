@@ -405,7 +405,7 @@ public class CatraMMSServices {
                         else if (cutMediaChannel.equalsIgnoreCase("RETE TRE"))
                             audioTrackNumber = reteTreTrackNumber;
 
-                        keyContentLabel = "CutAndExtract: " + cutMediaTitle;
+                        keyContentLabel = "Extract: " + cutMediaTitle;
 
                         joWorkflow = buildRadioJson(cutMediaTitle, keyContentLabel, ingester, fileExtension,
                                 addContentPull, cutMediaRetention,
@@ -413,193 +413,6 @@ public class CatraMMSServices {
                                 cutMediaId, cutMediaChannel, sCutMediaStartTime, sCutMediaEndTime,
                                 audioTrackNumber, fileTreeMap);
                     }
-
-                    /*
-                    {
-                        JSONObject joWorkflow = new JSONObject();
-                        joWorkflow.put("Type", "Workflow");
-                        joWorkflow.put("Label", cutMediaTitle);
-
-                        JSONObject joOnSuccess = new JSONObject();
-
-
-                        if (fileTreeMap.size() > 1)
-                        {
-                            JSONObject joGroupOfTasks = new JSONObject();
-                            joWorkflow.put("Task", joGroupOfTasks);
-
-                            joGroupOfTasks.put("Type", "GroupOfTasks");
-
-                            JSONObject joParameters = new JSONObject();
-                            joGroupOfTasks.put("Parameters", joParameters);
-
-                            joParameters.put("ExecutionType", "parallel");
-
-                            JSONArray jaTasks = new JSONArray();
-                            joParameters.put("Tasks", jaTasks);
-
-                            for (Date fileDate : fileTreeMap.keySet())
-                            {
-                                File mediaFile = fileTreeMap.get(fileDate);
-
-                                JSONObject joAddContent = new JSONObject();
-                                jaTasks.put(joAddContent);
-
-                                joAddContent.put("Label", mediaFile.getName());
-                                joAddContent.put("Type", "Add-Content");
-
-                                JSONObject joAddContentParameters = new JSONObject();
-                                joAddContent.put("Parameters", joAddContentParameters);
-
-                                joAddContentParameters.put("Ingester", ingester);
-                                joAddContentParameters.put("FileFormat", fileExtension);
-                                joAddContentParameters.put("Retention", "0");
-                                joAddContentParameters.put("Title", mediaFile.getName());
-                                joAddContentParameters.put("FileSizeInBytes", mediaFile.length());
-                                if (addContentPull)
-                                    joAddContentParameters.put("SourceURL", "copy://" + mediaFile.getAbsolutePath());
-                            }
-
-                            joGroupOfTasks.put("OnSuccess", joOnSuccess);
-                        }
-                        else
-                        {
-                            File mediaFile = fileTreeMap.firstEntry().getValue();
-
-                            JSONObject joAddContent = new JSONObject();
-                            joWorkflow.put("Task", joAddContent);
-
-                            joAddContent.put("Label", mediaFile.getName());
-                            joAddContent.put("Type", "Add-Content");
-
-                            JSONObject joAddContentParameters = new JSONObject();
-                            joAddContent.put("Parameters", joAddContentParameters);
-
-                            joAddContentParameters.put("Ingester", ingester);
-                            joAddContentParameters.put("FileFormat", "mp4");
-                            joAddContentParameters.put("Retention", "0");
-                            joAddContentParameters.put("Title", mediaFile.getName());
-                            joAddContentParameters.put("FileSizeInBytes", mediaFile.length());
-                            if (addContentPull)
-                                joAddContentParameters.put("SourceURL", "copy://" + mediaFile.getAbsolutePath());
-
-                            joAddContent.put("OnSuccess", joOnSuccess);
-                        }
-
-                        JSONObject joConcatDemux = new JSONObject();
-                        {
-                            joOnSuccess.put("Task", joConcatDemux);
-
-                            joConcatDemux.put("Label", "Concat: " + cutMediaTitle);
-                            joConcatDemux.put("Type", "Concat-Demuxer");
-
-                            JSONObject joConcatDemuxParameters = new JSONObject();
-                            joConcatDemux.put("Parameters", joConcatDemuxParameters);
-
-                            joConcatDemuxParameters.put("Ingester", ingester);
-                            joConcatDemuxParameters.put("Retention", "0");
-                            joConcatDemuxParameters.put("Title", "Concat: " + cutMediaTitle);
-                        }
-
-                        JSONObject joCut = new JSONObject();
-                        String cutLabel = "Cut: " + cutMediaTitle;
-                        {
-                            JSONObject joConcatDemuxOnSuccess = new JSONObject();
-                            joConcatDemux.put("OnSuccess", joConcatDemuxOnSuccess);
-
-                            joConcatDemuxOnSuccess.put("Task", joCut);
-
-                            joCut.put("Label", cutLabel);
-                            joCut.put("Type", "Cut");
-
-                            JSONObject joCutParameters = new JSONObject();
-                            joCut.put("Parameters", joCutParameters);
-
-                            joCutParameters.put("Ingester", ingester);
-                            joCutParameters.put("Retention", cutMediaRetention);
-                            joCutParameters.put("Title", cutMediaTitle);
-                            {
-                                double cutStartTimeInSeconds = ((double) cutStartTimeInMilliSeconds) / 1000;
-                                joCutParameters.put("StartTimeInSeconds", cutStartTimeInSeconds);
-
-                                Calendar calendar = Calendar.getInstance();
-                                calendar.setTime(new Date(cutStartTimeInMilliSeconds));
-                                calendar.add(Calendar.MILLISECOND, (int) (cutMediaEndTimeInMilliseconds - cutMediaStartTimeInMilliseconds));
-
-                                double cutEndTimeInSeconds = ((double) calendar.getTime().getTime()) / 1000;
-                                joCutParameters.put("EndTimeInSeconds", cutEndTimeInSeconds);
-                            }
-
-                            {
-                                JSONObject joCutUserData = new JSONObject();
-                                joCutParameters.put("UserData", joCutUserData);
-
-                                joCutUserData.put("Channel", cutMediaChannel);
-                                joCutUserData.put("StartTime", sCutMediaStartTime);
-                                joCutUserData.put("EndTime", sCutMediaEndTime);
-                            }
-                        }
-
-                        {
-                            JSONObject joCutOnSuccess = new JSONObject();
-                            joCut.put("OnSuccess", joCutOnSuccess);
-
-                            JSONObject joGroupOfTasks = new JSONObject();
-                            joCutOnSuccess.put("Task", joGroupOfTasks);
-
-                            joGroupOfTasks.put("Type", "GroupOfTasks");
-
-                            JSONObject joParameters = new JSONObject();
-                            joGroupOfTasks.put("Parameters", joParameters);
-
-                            joParameters.put("ExecutionType", "parallel");
-
-                            JSONArray jaTasks = new JSONArray();
-                            joParameters.put("Tasks", jaTasks);
-
-                            {
-                                JSONObject joCallback = new JSONObject();
-                                jaTasks.put(joCallback);
-
-                                joCallback.put("Label", "Callback: " + cutMediaTitle);
-                                joCallback.put("Type", "HTTP-Callback");
-
-                                JSONObject joCallbackParameters = new JSONObject();
-                                joCallback.put("Parameters", joCallbackParameters);
-
-                                joCallbackParameters.put("Protocol", "http");
-                                joCallbackParameters.put("HostName", "mp-backend.rsi.ch");
-                                joCallbackParameters.put("Port", 80);
-                                joCallbackParameters.put("URI",
-                                        "/metadataProcessorService/rest/veda/playoutMedia/" + cutMediaId + "/mmsFinished");
-                                joCallbackParameters.put("Parameters", "");
-                                joCallbackParameters.put("Method", "GET");
-                                joCallbackParameters.put("Timeout", 60);
-                            }
-
-                            {
-                                JSONObject joEncode = new JSONObject();
-                                jaTasks.put(joEncode);
-
-                                joEncode.put("Label", "Encode: " + cutMediaTitle);
-                                joEncode.put("Type", "Encode");
-
-                                JSONObject joEncodeParameters = new JSONObject();
-                                joEncode.put("Parameters", joEncodeParameters);
-
-                                joEncodeParameters.put("EncodingPriority", "Low");
-                                joEncodeParameters.put("EncodingProfileLabel", "MMS_H264_veryslow_360p25_aac_92");
-                            }
-                        }
-                        mLogger.info("Ready for the ingest"
-                                + ", sCutMediaStartTime: " + sCutMediaStartTime
-                                + ", sCutMediaEndTime: " + sCutMediaEndTime
-                                // + ", cutStartTimeInSeconds: " + cutStartTimeInSeconds
-                                // + ", cutEndTimeInSeconds: " + cutEndTimeInSeconds
-                                + ", fileTreeMap.size: " + fileTreeMap.size()
-                                + ", json Workflow: " + joWorkflow.toString(4));
-                    }
-                    */
 
                     {
                         List<IngestionResult> ingestionJobList = new ArrayList<>();
@@ -614,7 +427,7 @@ public class CatraMMSServices {
 
                         for (IngestionResult ingestionResult: ingestionJobList)
                         {
-                            if (ingestionResult.getLabel().equals(cutLabel))
+                            if (ingestionResult.getLabel().equals(keyContentLabel))
                             {
                                 cutIngestionJobKey = ingestionResult.getKey();
 
@@ -685,7 +498,7 @@ public class CatraMMSServices {
         return fileNameSimpleDateFormat.parse(sMediaChunkStartTime);
     }
 
-    private JSONObject buildTVJson(String cutMediaTitle, String cutLabel, String ingester, String fileExtension,
+    private JSONObject buildTVJson(String keyTitle, String keyLabel, String ingester, String fileExtension,
                                    boolean addContentPull, String cutMediaRetention,
                                    Long cutStartTimeInMilliSeconds, Long cutMediaDurationInMilliSeconds,
                                    String cutMediaId, String cutMediaChannel, String sCutMediaStartTime, String sCutMediaEndTime,
@@ -695,7 +508,7 @@ public class CatraMMSServices {
         try {
             JSONObject joWorkflow = new JSONObject();
             joWorkflow.put("Type", "Workflow");
-            joWorkflow.put("Label", cutMediaTitle);
+            joWorkflow.put("Label", keyTitle);
 
             JSONObject joOnSuccess = new JSONObject();
 
@@ -767,7 +580,7 @@ public class CatraMMSServices {
             {
                 joOnSuccess.put("Task", joConcatDemux);
 
-                joConcatDemux.put("Label", "Concat: " + cutMediaTitle);
+                joConcatDemux.put("Label", "Concat: " + keyTitle);
                 joConcatDemux.put("Type", "Concat-Demuxer");
 
                 JSONObject joConcatDemuxParameters = new JSONObject();
@@ -775,7 +588,7 @@ public class CatraMMSServices {
 
                 joConcatDemuxParameters.put("Ingester", ingester);
                 joConcatDemuxParameters.put("Retention", "0");
-                joConcatDemuxParameters.put("Title", "Concat: " + cutMediaTitle);
+                joConcatDemuxParameters.put("Title", "Concat: " + keyTitle);
             }
 
             JSONObject joCut = new JSONObject();
@@ -785,7 +598,7 @@ public class CatraMMSServices {
 
                 joConcatDemuxOnSuccess.put("Task", joCut);
 
-                joCut.put("Label", cutLabel);
+                joCut.put("Label", keyLabel);
                 joCut.put("Type", "Cut");
 
                 JSONObject joCutParameters = new JSONObject();
@@ -793,7 +606,7 @@ public class CatraMMSServices {
 
                 joCutParameters.put("Ingester", ingester);
                 joCutParameters.put("Retention", cutMediaRetention);
-                joCutParameters.put("Title", cutMediaTitle);
+                joCutParameters.put("Title", keyTitle);
                 {
                     double cutStartTimeInSeconds = ((double) cutStartTimeInMilliSeconds) / 1000;
                     joCutParameters.put("StartTimeInSeconds", cutStartTimeInSeconds);
@@ -837,7 +650,7 @@ public class CatraMMSServices {
                     JSONObject joCallback = new JSONObject();
                     jaTasks.put(joCallback);
 
-                    joCallback.put("Label", "Callback: " + cutMediaTitle);
+                    joCallback.put("Label", "Callback: " + keyTitle);
                     joCallback.put("Type", "HTTP-Callback");
 
                     JSONObject joCallbackParameters = new JSONObject();
@@ -864,7 +677,7 @@ public class CatraMMSServices {
                     JSONObject joEncode = new JSONObject();
                     jaTasks.put(joEncode);
 
-                    joEncode.put("Label", "Encode: " + cutMediaTitle);
+                    joEncode.put("Label", "Encode: " + keyTitle);
                     joEncode.put("Type", "Encode");
 
                     JSONObject joEncodeParameters = new JSONObject();
@@ -893,7 +706,7 @@ public class CatraMMSServices {
         }
     }
 
-    private JSONObject buildRadioJson(String cutMediaTitle, String cutAndExtractLabel, String ingester, String fileExtension,
+    private JSONObject buildRadioJson(String keyTitle, String keyLabel, String ingester, String fileExtension,
                                    boolean addContentPull, String cutMediaRetention,
                                    Long cutStartTimeInMilliSeconds, Long cutMediaDurationInMilliSeconds,
                                    String cutMediaId, String cutMediaChannel, String sCutMediaStartTime, String sCutMediaEndTime,
@@ -903,7 +716,7 @@ public class CatraMMSServices {
         try {
             JSONObject joWorkflow = new JSONObject();
             joWorkflow.put("Type", "Workflow");
-            joWorkflow.put("Label", cutMediaTitle);
+            joWorkflow.put("Label", keyTitle);
 
             JSONObject joOnSuccess = new JSONObject();
 
@@ -975,7 +788,7 @@ public class CatraMMSServices {
             {
                 joOnSuccess.put("Task", joConcatDemux);
 
-                joConcatDemux.put("Label", "Concat: " + cutMediaTitle);
+                joConcatDemux.put("Label", "Concat: " + keyTitle);
                 joConcatDemux.put("Type", "Concat-Demuxer");
 
                 JSONObject joConcatDemuxParameters = new JSONObject();
@@ -983,7 +796,7 @@ public class CatraMMSServices {
 
                 joConcatDemuxParameters.put("Ingester", ingester);
                 joConcatDemuxParameters.put("Retention", "0");
-                joConcatDemuxParameters.put("Title", "Concat: " + cutMediaTitle);
+                joConcatDemuxParameters.put("Title", "Concat: " + keyTitle);
             }
 
             JSONObject joCut = new JSONObject();
@@ -993,15 +806,15 @@ public class CatraMMSServices {
 
                 joConcatDemuxOnSuccess.put("Task", joCut);
 
-                joCut.put("Label", "Cut: " + cutMediaTitle);
+                joCut.put("Label", "Cut: " + keyTitle);
                 joCut.put("Type", "Cut");
 
                 JSONObject joCutParameters = new JSONObject();
                 joCut.put("Parameters", joCutParameters);
 
                 joCutParameters.put("Ingester", ingester);
-                joCutParameters.put("Retention", cutMediaRetention);
-                joCutParameters.put("Title", cutMediaTitle);
+                joCutParameters.put("Retention", "0");
+                joCutParameters.put("Title", "Cut: " + keyTitle);
                 {
                     double cutStartTimeInSeconds = ((double) cutStartTimeInMilliSeconds) / 1000;
                     joCutParameters.put("StartTimeInSeconds", cutStartTimeInSeconds);
@@ -1015,25 +828,27 @@ public class CatraMMSServices {
                 }
             }
 
-            JSONObject joCutAndExtract = new JSONObject();
+            JSONObject joExtract = new JSONObject();
             {
                 JSONObject joCutOnSuccess = new JSONObject();
                 joCut.put("OnSuccess", joCutOnSuccess);
 
-                joCutOnSuccess.put("Task", joCutAndExtract);
+                joCutOnSuccess.put("Task", joExtract);
 
-                joCutAndExtract.put("Label", cutAndExtractLabel);
-                joCutAndExtract.put("Type", "Extract-Tracks");
+                joExtract.put("Label", keyLabel);
+                joExtract.put("Type", "Extract-Tracks");
 
-                JSONObject joCutAndExtractParameters = new JSONObject();
-                joCutAndExtract.put("Parameters", joCutAndExtractParameters);
+                JSONObject joExtractParameters = new JSONObject();
+                joExtract.put("Parameters", joExtractParameters);
 
-                joCutAndExtractParameters.put("Ingester", ingester);
-                joCutAndExtractParameters.put("Retention", cutMediaRetention);
-                joCutAndExtractParameters.put("Title", cutMediaTitle);
+                joExtractParameters.put("Ingester", ingester);
+                joExtractParameters.put("Retention", cutMediaRetention);
+                joExtractParameters.put("Title", keyTitle);
                 {
+                    joExtractParameters.put("OutputFileFormat", "mp4");
+
                     JSONArray jaTracks = new JSONArray();
-                    joCutAndExtractParameters.put("Tracks", jaTracks);
+                    joExtractParameters.put("Tracks", jaTracks);
 
                     JSONObject joTrack = new JSONObject();
                     jaTracks.put(joTrack);
@@ -1044,7 +859,7 @@ public class CatraMMSServices {
 
                 {
                     JSONObject joCutAndExtractUserData = new JSONObject();
-                    joCutAndExtractParameters.put("UserData", joCutAndExtractUserData);
+                    joExtractParameters.put("UserData", joCutAndExtractUserData);
 
                     joCutAndExtractUserData.put("Channel", cutMediaChannel);
                     joCutAndExtractUserData.put("StartTime", sCutMediaStartTime);
@@ -1053,11 +868,11 @@ public class CatraMMSServices {
             }
 
             {
-                JSONObject joCutAndExtractOnSuccess = new JSONObject();
-                joCutAndExtract.put("OnSuccess", joCutAndExtractOnSuccess);
+                JSONObject joExtractOnSuccess = new JSONObject();
+                joExtract.put("OnSuccess", joExtractOnSuccess);
 
                 JSONObject joGroupOfTasks = new JSONObject();
-                joCutAndExtractOnSuccess.put("Task", joGroupOfTasks);
+                joExtractOnSuccess.put("Task", joGroupOfTasks);
 
                 joGroupOfTasks.put("Type", "GroupOfTasks");
 
@@ -1073,7 +888,7 @@ public class CatraMMSServices {
                     JSONObject joCallback = new JSONObject();
                     jaTasks.put(joCallback);
 
-                    joCallback.put("Label", "Callback: " + cutMediaTitle);
+                    joCallback.put("Label", "Callback: " + keyTitle);
                     joCallback.put("Type", "HTTP-Callback");
 
                     JSONObject joCallbackParameters = new JSONObject();
@@ -1100,7 +915,7 @@ public class CatraMMSServices {
                     JSONObject joEncode = new JSONObject();
                     jaTasks.put(joEncode);
 
-                    joEncode.put("Label", "Encode: " + cutMediaTitle);
+                    joEncode.put("Label", "Encode: " + keyTitle);
                     joEncode.put("Type", "Encode");
 
                     JSONObject joEncodeParameters = new JSONObject();

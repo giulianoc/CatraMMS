@@ -733,8 +733,8 @@ string MMSStorage::moveAssetInMMSRepository(
                 ulMMSPartitionIndex < _mmsPartitionsFreeSizeInMB.size();
                 ulMMSPartitionIndex++) 
             {
-                errorMessage =
-                    + ", _mmsPartitionsFreeSizeInMB [" + to_string(ulMMSPartitionIndex) + "]: " + to_string(_mmsPartitionsFreeSizeInMB [ulMMSPartitionIndex])
+                errorMessage +=
+                    (", _mmsPartitionsFreeSizeInMB [" + to_string(ulMMSPartitionIndex) + "]: " + to_string(_mmsPartitionsFreeSizeInMB [ulMMSPartitionIndex]))
                     ;
             }
 

@@ -1919,6 +1919,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
     {
         _logger->error(__FILEREF__ + "_mmsStorage->moveAssetInMMSRepository failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                + ", errorMessage: " + e.what()
         );
         
         _logger->info(__FILEREF__ + "Update IngestionJob"
