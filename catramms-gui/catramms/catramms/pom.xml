@@ -75,6 +75,15 @@
             <version>6.2</version>
         </dependency>
 
+        <!-- solve the following error:
+            com.sun.faces.application.view.ViewScopeManager.<init> CDI @ViewScoped bean functionality unavailable
+        -->
+        <dependency>
+            <groupId>javax.enterprise</groupId>
+            <artifactId>cdi-api</artifactId>
+            <version>1.2</version>
+        </dependency>
+
         <dependency>
             <groupId>org.primefaces.themes</groupId>
             <artifactId>all-themes</artifactId>
@@ -141,6 +150,7 @@
             <artifactId>commons-fileupload</artifactId>
             <version>1.3.3</version>
         </dependency>
+
 
         <dependency>
             <groupId>com.catra</groupId>

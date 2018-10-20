@@ -7,13 +7,16 @@
 
     <!-- JSF configuration -->
     <servlet>
-        <servlet-name>faces</servlet-name>
+        <servlet-name>Faces Servlet</servlet-name>
         <servlet-class>javax.faces.webapp.FacesServlet</servlet-class>
         <load-on-startup>1</load-on-startup>
     </servlet>
-
     <servlet-mapping>
-        <servlet-name>faces</servlet-name>
+        <servlet-name>Faces Servlet</servlet-name>
+        <url-pattern>/faces/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>Faces Servlet</servlet-name>
         <url-pattern>*.xhtml</url-pattern>
     </servlet-mapping>
 
@@ -36,6 +39,7 @@
         <param-value>auto</param-value>
     </context-param>
 
+    <!--
     <filter>
         <filter-name>PrimeFaces FileUpload Filter</filter-name>
         <filter-class>
@@ -44,11 +48,12 @@
     </filter>
     <filter-mapping>
         <filter-name>PrimeFaces FileUpload Filter</filter-name>
-        <servlet-name>faces</servlet-name>
+        <servlet-name>Faces Servlet</servlet-name>
     </filter-mapping>
+    -->
 
     <context-param>
-        <param-name>facelets.SKIP_COMMENTS</param-name>
+        <param-name>javax.faces.FACELETS_SKIP_COMMENTS</param-name>
         <param-value>true</param-value>  <!-- removes anything in the page that is contained in <!– –> -->
     </context-param>
 
@@ -65,6 +70,12 @@
         <param-name>javax.faces.STATE_SAVING_METHOD</param-name>
         <param-value>client</param-value>
     </context-param>
+
+    <!--
+    <listener>
+        <listener-class>com.sun.faces.config.ConfigureListener</listener-class>
+    </listener>
+    -->
 
     <env-entry>
         <env-entry-name>jsf/ClientSideSecretKey</env-entry-name>

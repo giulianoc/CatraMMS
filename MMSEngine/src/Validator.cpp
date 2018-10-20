@@ -1582,15 +1582,19 @@ void Validator::validateConcatDemuxerMetadata(int64_t workspaceKey,
     string field = "References";
     if (isMetadataPresent(parametersRoot, field))
     {
+        /*
         Json::Value referencesRoot = parametersRoot[field];
         if (referencesRoot.size() < 2)
         {
             string errorMessage = __FILEREF__ + "Field is present but it does not have enough elements (2)"
-                    + ", Field: " + field;
+                    + ", Field: " + field
+                    + ", referencesRoot.size: " + to_string(referencesRoot.size())
+                    ;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
         }
+        */
 
         bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
         bool encodingProfileFieldsToBeManaged = false;
@@ -1598,6 +1602,20 @@ void Validator::validateConcatDemuxerMetadata(int64_t workspaceKey,
                 priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
                 encodingProfileFieldsToBeManaged);
         
+        // It is not important the number of References but how many media items it refers.
+        // For example ReferenceIngestionJobKey is just one Reference but it could reference
+        // a log of media items in case the IngestionJob generates a log of media contents
+        if (dependencies.size() < 2)
+        {
+            string errorMessage = __FILEREF__ + "Field is present but it does not refer enough elements (2)"
+                    + ", Field: " + field
+                    + ", dependencies.size: " + to_string(dependencies.size())
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
         MMSEngineDBFacade::ContentType firstContentType;
         bool firstContentTypeInitialized = false;
         for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
@@ -2350,9 +2368,9 @@ void Validator::validateExtractTracksMetadata(int64_t workspaceKey,
     if (isMetadataPresent(parametersRoot, field))
     {
         Json::Value referencesRoot = parametersRoot[field];
-        if (referencesRoot.size() != 1)
+        if (referencesRoot.size() == 0)
         {
-            string errorMessage = __FILEREF__ + "No correct number of References"
+            string errorMessage = __FILEREF__ + "No References"
                     + ", referencesRoot.size: " + to_string(referencesRoot.size());
             _logger->error(errorMessage);
 
@@ -2365,19 +2383,19 @@ void Validator::validateExtractTracksMetadata(int64_t workspaceKey,
                 priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
                 encodingProfileFieldsToBeManaged);
 
-        if (dependencies.size() == 1)
+        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
         {
             int64_t key;
             MMSEngineDBFacade::ContentType referenceContentType;
             Validator::DependencyType dependencyType;
             
-            tie(key, referenceContentType, dependencyType) = dependencies[0];
+            tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
 
             if (referenceContentType != MMSEngineDBFacade::ContentType::Video
                     && referenceContentType != MMSEngineDBFacade::ContentType::Audio)
             {
                 string errorMessage = __FILEREF__ + "Reference... does not refer a video or audio content"
-                        + ", dependencyType: " + to_string(static_cast<int>(dependencyType))
+                    + ", dependencyType: " + to_string(static_cast<int>(dependencyType))
                     + ", referenceMediaItemKey: " + to_string(key)
                     + ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
                         ;

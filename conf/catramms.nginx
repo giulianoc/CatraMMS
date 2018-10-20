@@ -347,6 +347,9 @@ server {
 	access_log   /var/catramms/logs/nginx/mms-gui.access.log main;
 	error_log    /var/catramms/logs/nginx/mms-gui.error.log notice;
 
+	#used when from mms-gui it is 'Add-Content' using the Push method
+	client_max_body_size 1G;
+
 	root /opt/catramms/tomcat/webapps;
 
 	#proxy_cache one;
