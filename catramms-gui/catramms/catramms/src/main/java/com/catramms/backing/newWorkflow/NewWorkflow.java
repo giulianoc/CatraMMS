@@ -117,8 +117,11 @@ public class NewWorkflow extends Workspace implements Serializable {
     private String taskOverlayPositionYInPixel;
     private String taskOverlayText;
     private String taskOverlayFontType;
-    private Long taskOverlayFontSize;
+    List<String> taskOverlayFontTypesList = new ArrayList<>();
+    private String taskOverlayFontSize; //it's String because I need taskFontSizesList as String
+    List<String> taskFontSizesList = new ArrayList<>(); // it's String because it is required by p:selectOneMenu
     private String taskOverlayFontColor;
+    List<String> taskColorsList = new ArrayList<>();
     private Long taskOverlayTextPercentageOpacity;
     private Boolean taskOverlayBoxEnable;
     private String taskOverlayBoxColor;
@@ -210,6 +213,52 @@ public class NewWorkflow extends Workspace implements Serializable {
             taskFileFormatsList.add("aac");
             taskFileFormatsList.add("png");
             taskFileFormatsList.add("jpg");
+        }
+
+        {
+            taskOverlayFontTypesList.clear();
+            taskOverlayFontTypesList.add("cac_champagne.ttf");
+            taskOverlayFontTypesList.add("DancingScript-Regular.otf");
+            taskOverlayFontTypesList.add("OpenSans-BoldItalic.ttf");
+            taskOverlayFontTypesList.add("OpenSans-Bold.ttf");
+            taskOverlayFontTypesList.add("OpenSans-ExtraBoldItalic.ttf");
+            taskOverlayFontTypesList.add("OpenSans-ExtraBold.ttf");
+            taskOverlayFontTypesList.add("OpenSans-Italic.ttf");
+            taskOverlayFontTypesList.add("OpenSans-LightItalic.ttf");
+            taskOverlayFontTypesList.add("OpenSans-Light.ttf");
+            taskOverlayFontTypesList.add("OpenSans-Regular.ttf");
+            taskOverlayFontTypesList.add("OpenSans-SemiboldItalic.ttf");
+            taskOverlayFontTypesList.add("OpenSans-Semibold.ttf");
+            taskOverlayFontTypesList.add("Pacifico.ttf");
+            taskOverlayFontTypesList.add("Sofia-Regular.otf");
+            taskOverlayFontTypesList.add("Windsong.ttf");
+        }
+
+        {
+            taskFontSizesList.clear();
+            taskFontSizesList.add("10");
+            taskFontSizesList.add("12");
+            taskFontSizesList.add("14");
+            taskFontSizesList.add("18");
+            taskFontSizesList.add("24");
+            taskFontSizesList.add("30");
+            taskFontSizesList.add("36");
+            taskFontSizesList.add("48");
+            taskFontSizesList.add("60");
+        }
+
+        {
+            taskColorsList.clear();
+            taskColorsList.add("black");
+            taskColorsList.add("blue");
+            taskColorsList.add("gray");
+            taskColorsList.add("green");
+            taskColorsList.add("orange");
+            taskColorsList.add("purple");
+            taskColorsList.add("red");
+            taskColorsList.add("violet");
+            taskColorsList.add("white");
+            taskColorsList.add("yellow");
         }
 
         {
@@ -777,6 +826,8 @@ public class NewWorkflow extends Workspace implements Serializable {
                         workflowIssueList.add(workflowIssue);
                     }
                 }
+                if (task.getFileFormat() != null && !task.getFileFormat().equalsIgnoreCase(""))
+                    joParameters.put("OutputFileFormat", task.getFileFormat());
                 if (task.getUserData() != null && !task.getUserData().equalsIgnoreCase(""))
                     joParameters.put("UserData", task.getUserData());
                 if (task.getRetention() != null && !task.getRetention().equalsIgnoreCase(""))
@@ -2480,6 +2531,7 @@ public class NewWorkflow extends Workspace implements Serializable {
                     taskStartTimeInSeconds = task.getStartTimeInSeconds();
                     taskEndTimeInSeconds = task.getEndTimeInSeconds();
                     taskFramesNumber = task.getFramesNumber();
+                    taskFileFormat = task.getFileFormat();
                     taskUserData = task.getUserData();
                     taskRetention = task.getRetention();
                     taskTitle = task.getTitle();
@@ -2559,7 +2611,7 @@ public class NewWorkflow extends Workspace implements Serializable {
                     taskOverlayPositionXInPixel = task.getOverlayPositionXInPixel();
                     taskOverlayPositionYInPixel = task.getOverlayPositionYInPixel();
                     taskOverlayFontType = task.getOverlayFontType();
-                    taskOverlayFontSize = task.getOverlayFontSize();
+                    taskOverlayFontSize = task.getOverlayFontSize() == null ? null : task.getOverlayFontSize().toString();
                     taskOverlayFontColor = task.getOverlayFontColor();
                     taskOverlayTextPercentageOpacity = task.getOverlayTextPercentageOpacity();
                     taskOverlayBoxEnable = task.getOverlayBoxEnable();
@@ -3068,6 +3120,7 @@ public class NewWorkflow extends Workspace implements Serializable {
                 task.setStartTimeInSeconds(taskStartTimeInSeconds);
                 task.setEndTimeInSeconds(taskEndTimeInSeconds);
                 task.setFramesNumber(taskFramesNumber);
+                task.setFileFormat(taskFileFormat); // OutputFileFormat
                 task.setUserData(taskUserData);
                 task.setRetention(taskRetention);
                 task.setTitle(taskTitle);
@@ -3105,7 +3158,7 @@ public class NewWorkflow extends Workspace implements Serializable {
                 task.setOverlayPositionXInPixel(taskOverlayPositionXInPixel);
                 task.setOverlayPositionYInPixel(taskOverlayPositionYInPixel);
                 task.setOverlayFontType(taskOverlayFontType);
-                task.setOverlayFontSize(taskOverlayFontSize);
+                task.setOverlayFontSize(taskOverlayFontSize == null ? null : new Long(taskOverlayFontSize));
                 task.setOverlayFontColor(taskOverlayFontColor);
                 task.setOverlayTextPercentageOpacity(taskOverlayTextPercentageOpacity);
                 task.setOverlayBoxEnable(taskOverlayBoxEnable);
@@ -4076,11 +4129,11 @@ public class NewWorkflow extends Workspace implements Serializable {
         this.taskOverlayFontType = taskOverlayFontType;
     }
 
-    public Long getTaskOverlayFontSize() {
+    public String getTaskOverlayFontSize() {
         return taskOverlayFontSize;
     }
 
-    public void setTaskOverlayFontSize(Long taskOverlayFontSize) {
+    public void setTaskOverlayFontSize(String taskOverlayFontSize) {
         this.taskOverlayFontSize = taskOverlayFontSize;
     }
 
@@ -4434,5 +4487,29 @@ public class NewWorkflow extends Workspace implements Serializable {
 
     public void setTaskExtractTracksAudioTrackNumber(Long taskExtractTracksAudioTrackNumber) {
         this.taskExtractTracksAudioTrackNumber = taskExtractTracksAudioTrackNumber;
+    }
+
+    public List<String> getTaskOverlayFontTypesList() {
+        return taskOverlayFontTypesList;
+    }
+
+    public void setTaskOverlayFontTypesList(List<String> taskOverlayFontTypesList) {
+        this.taskOverlayFontTypesList = taskOverlayFontTypesList;
+    }
+
+    public List<String> getTaskColorsList() {
+        return taskColorsList;
+    }
+
+    public void setTaskColorsList(List<String> taskColorsList) {
+        this.taskColorsList = taskColorsList;
+    }
+
+    public List<String> getTaskFontSizesList() {
+        return taskFontSizesList;
+    }
+
+    public void setTaskFontSizesList(List<String> taskFontSizesList) {
+        this.taskFontSizesList = taskFontSizesList;
     }
 }

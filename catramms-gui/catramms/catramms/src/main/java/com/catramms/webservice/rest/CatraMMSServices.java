@@ -78,7 +78,7 @@ public class CatraMMSServices {
                 int reteUnoTrackNumber = 0;
                 int reteDueTrackNumber = 1;
                 int reteTreTrackNumber = 2;
-                String cutMediaRetention = "2d";
+                String cutMediaRetention = "4d";
                 boolean addContentPull = true;
 
                 int secondsToWaitBeforeStartProcessingAFile = 5;
@@ -104,6 +104,9 @@ public class CatraMMSServices {
 
                         Calendar calendarEnd = Calendar.getInstance();
                         calendarEnd.setTime(new Date(cutMediaEndTimeInMilliseconds));
+                        // In case the video to cut finishes at the end of the hour, we need
+                        // the next hour to get the next file
+                        calendarEnd.add(Calendar.HOUR_OF_DAY, 1);
 
                         DateFormat fileDateFormat = new SimpleDateFormat("yyyy/MM/dd/HH");
 
@@ -133,7 +136,7 @@ public class CatraMMSServices {
                                     try {
                                         // File mediaFile = mediaFilesToBeManaged.get(mediaFileIndex);
 
-                                        mLogger.info("Processing mediaFile"
+                                        mLogger.debug("Processing mediaFile"
                                                         + ", cutMediaId: " + cutMediaId
                                                         + ", mediaFile.getName: " + mediaFile.getName()
                                         );
@@ -148,7 +151,7 @@ public class CatraMMSServices {
 
                                             continue;
                                         } else if (mediaFile.length() == 0) {
-                                            mLogger.info("Waiting mediaFile size is greater than 0"
+                                            mLogger.debug("Waiting mediaFile size is greater than 0"
                                                             + ", File name: " + mediaFile.getName()
                                                             + ", File lastModified: " + simpleDateFormat.format(mediaFile.lastModified())
                                             );
@@ -218,7 +221,7 @@ public class CatraMMSServices {
 
 
                                 if (mediaChunkStartTime.getTime() <= cutMediaStartTimeInMilliseconds
-                                        && (nextMediaChunkStart == null || cutMediaStartTimeInMilliseconds <= nextMediaChunkStart.getTime()))
+                                        && (nextMediaChunkStart != null && cutMediaStartTimeInMilliseconds <= nextMediaChunkStart.getTime()))
                                 {
                                     // first chunk
 
@@ -235,7 +238,7 @@ public class CatraMMSServices {
                                     cutStartTimeInMilliSeconds = cutMediaStartTimeInMilliseconds - mediaChunkStartTime.getTime();
 
                                     if (mediaChunkStartTime.getTime() <= cutMediaEndTimeInMilliseconds
-                                            && (nextMediaChunkStart == null || cutMediaEndTimeInMilliseconds <= nextMediaChunkStart.getTime()))
+                                            && (nextMediaChunkStart != null && cutMediaEndTimeInMilliseconds <= nextMediaChunkStart.getTime()))
                                     {
                                         // playout start-end is within just one chunk
 
@@ -258,11 +261,11 @@ public class CatraMMSServices {
                                                     + ", mediaChunkStartTime: " + mediaChunkStartTime
                                                     + ", sCutMediaStartTime: " + sCutMediaStartTime
                                                     + ", cutStartTimeInMilliSeconds: " + cutStartTimeInMilliSeconds
-                                                    // + ", cutEndTimeInSeconds: " + cutEndTimeInSeconds
+                                                    + ", lastChunkFound: " + lastChunkFound
                                     );
                                 }
                                 else if (cutMediaStartTimeInMilliseconds <= mediaChunkStartTime.getTime()
-                                        && (nextMediaChunkStart == null || nextMediaChunkStart.getTime() <= cutMediaEndTimeInMilliseconds))
+                                        && (nextMediaChunkStart != null && nextMediaChunkStart.getTime() <= cutMediaEndTimeInMilliseconds))
                                 {
                                     // internal chunk
 
@@ -279,7 +282,7 @@ public class CatraMMSServices {
                                     );
                                 }
                                 else if (mediaChunkStartTime.getTime() <= cutMediaEndTimeInMilliseconds
-                                        && (nextMediaChunkStart == null || cutMediaEndTimeInMilliseconds <= nextMediaChunkStart.getTime()))
+                                        && (nextMediaChunkStart != null && cutMediaEndTimeInMilliseconds <= nextMediaChunkStart.getTime()))
                                 {
                                     // last chunk
 

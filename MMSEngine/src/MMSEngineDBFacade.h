@@ -922,7 +922,7 @@ public:
         vector<shared_ptr<MMSEngineDBFacade::EncodingItem>>& encodingItems);
     
     int addEncodingJob (
-        int64_t workspaceKey,
+        shared_ptr<Workspace> workspace,
         int64_t ingestionJobKey,
         string destEncodingProfileLabel,
         int64_t sourceMediaItemKey,
@@ -930,6 +930,7 @@ public:
         EncodingPriority encodingPriority);
 
     int addEncodingJob (
+        shared_ptr<Workspace> workspace,
         int64_t ingestionJobKey,
         int64_t destEncodingProfileKey,
         int64_t sourceMediaItemKey,
@@ -937,6 +938,7 @@ public:
         EncodingPriority encodingPriority);
 
     int addEncoding_OverlayImageOnVideoJob (
+        shared_ptr<Workspace> workspace,
         int64_t ingestionJobKey,
         int64_t mediaItemKey_1, int64_t physicalPathKey_1,
         int64_t mediaItemKey_2, int64_t physicalPathKey_2,
@@ -944,6 +946,7 @@ public:
         EncodingPriority encodingPriority);
 
     int addEncoding_OverlayTextOnVideoJob (
+        shared_ptr<Workspace> workspace,
         int64_t ingestionJobKey,
         EncodingPriority encodingPriority,
 
@@ -960,6 +963,7 @@ public:
         int boxPercentageOpacity);
 
     int addEncoding_GenerateFramesJob (
+        shared_ptr<Workspace> workspace,
         int64_t ingestionJobKey,
         EncodingPriority encodingPriority,
         string imageDirectory, 
@@ -970,6 +974,7 @@ public:
         int64_t videoDurationInMilliSeconds);
 
     int addEncoding_SlideShowJob (
+        shared_ptr<Workspace> workspace,
         int64_t ingestionJobKey,
         vector<string>& sourcePhysicalPaths,
         double durationOfEachSlideInSeconds,

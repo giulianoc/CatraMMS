@@ -155,10 +155,18 @@ API::API(Json::Value configuration,
     _logger->info(__FILEREF__ + "Configuration item"
         + ", api->encodingPriorityWorkspaceDefaultValue: " + encodingPriority
     );
-    if (encodingPriority == "low")
+    try
+    {
+        _encodingPriorityWorkspaceDefaultValue = MMSEngineDBFacade::toEncodingPriority(encodingPriority);    // it generate an exception in case of wrong string
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "Configuration item is wrong. 'low' encoding priority is set"
+            + ", api->encodingPriorityWorkspaceDefaultValue: " + encodingPriority
+        );
+
         _encodingPriorityWorkspaceDefaultValue = MMSEngineDBFacade::EncodingPriority::Low;
-    else
-        _encodingPriorityWorkspaceDefaultValue = MMSEngineDBFacade::EncodingPriority::Low;
+    }
 
     string encodingPeriod =  _configuration["api"].get("encodingPeriodWorkspaceDefaultValue", "XXX").asString();
     _logger->info(__FILEREF__ + "Configuration item"
@@ -3147,21 +3155,22 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
         field = "EncodingPriority";
         if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
         {
+            encodingPriority = parametersRoot.get(field, "XXX").asString();
+            /*
             string sRequestedEncodingPriority = parametersRoot.get(field, "XXX").asString();
             MMSEngineDBFacade::EncodingPriority requestedEncodingPriority = 
                     MMSEngineDBFacade::toEncodingPriority(sRequestedEncodingPriority);
             
-            if (static_cast<int>(requestedEncodingPriority) > workspace->_maxEncodingPriority)
-                encodingPriority = MMSEngineDBFacade::toString(
-                        static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority));
-            else
-                encodingPriority = MMSEngineDBFacade::toString(requestedEncodingPriority);
+            encodingPriority = MMSEngineDBFacade::toString(requestedEncodingPriority);
+            */
         }
+        /*
         else
         {
             encodingPriority = MMSEngineDBFacade::toString(
                     static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority));
         }
+        */
         
             
         Json::Value newTasksRoot(Json::arrayValue);
@@ -3188,8 +3197,11 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
             field = "EncodingProfileKey";
             newParametersRoot[field] = encodingProfileKey;
             
-            field = "EncodingPriority";
-            newParametersRoot[field] = encodingPriority;
+            if (encodingPriority != "")
+            {
+                field = "EncodingPriority";
+                newParametersRoot[field] = encodingPriority;
+            }
             
             field = "Parameters";
             newTaskRoot[field] = newParametersRoot;

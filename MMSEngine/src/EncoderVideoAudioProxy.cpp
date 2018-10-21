@@ -2240,6 +2240,18 @@ void EncoderVideoAudioProxy::processOverlayedImageOnVideo(string stagingEncodedA
 {
     try
     {
+        size_t extensionIndex = stagingEncodedAssetPathName.find_last_of(".");
+        if (extensionIndex == string::npos)
+        {
+            string errorMessage = __FILEREF__ + "No extention find in the asset file name"
+                    + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        string fileFormat = stagingEncodedAssetPathName.substr(extensionIndex + 1);
+
         size_t fileNameIndex = stagingEncodedAssetPathName.find_last_of("/");
         if (fileNameIndex == string::npos)
         {
@@ -2250,19 +2262,7 @@ void EncoderVideoAudioProxy::processOverlayedImageOnVideo(string stagingEncodedA
 
             throw runtime_error(errorMessage);
         }
-        string sourceFileName = stagingEncodedAssetPathName.substr(fileNameIndex + 1);
-
-        size_t extensionIndex = sourceFileName.find_last_of(".");
-        if (extensionIndex == string::npos)
-        {
-            string errorMessage = __FILEREF__ + "No extention find in the asset file name"
-                    + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                    + ", sourceFileName: " + sourceFileName;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        string fileFormat = sourceFileName.substr(extensionIndex + 1);
+        string sourceFileName = stagingEncodedAssetPathName.substr(fileNameIndex + 1, extensionIndex);
 
         
         string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
@@ -2290,6 +2290,7 @@ void EncoderVideoAudioProxy::processOverlayedImageOnVideo(string stagingEncodedA
         _logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", sourceFileName: " + sourceFileName
             + ", getEventKey().first: " + to_string(event->getEventKey().first)
             + ", getEventKey().second: " + to_string(event->getEventKey().second));
     }
@@ -2657,6 +2658,7 @@ string EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
         stagingEncodedAssetPathName = 
                 workspaceIngestionRepository + "/" 
                 + to_string(_encodingItem->_ingestionJobKey)
+                + "_overlaytext"
                 + _encodingItem->_overlayTextOnVideoData->_videoFileName.substr(extensionIndex)
                 ;
         /*
@@ -3055,6 +3057,18 @@ void EncoderVideoAudioProxy::processOverlayedTextOnVideo(string stagingEncodedAs
 {
     try
     {
+        size_t extensionIndex = stagingEncodedAssetPathName.find_last_of(".");
+        if (extensionIndex == string::npos)
+        {
+            string errorMessage = __FILEREF__ + "No extention find in the asset file name"
+                    + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        string fileFormat = stagingEncodedAssetPathName.substr(extensionIndex + 1);
+
         size_t fileNameIndex = stagingEncodedAssetPathName.find_last_of("/");
         if (fileNameIndex == string::npos)
         {
@@ -3065,19 +3079,7 @@ void EncoderVideoAudioProxy::processOverlayedTextOnVideo(string stagingEncodedAs
 
             throw runtime_error(errorMessage);
         }
-        string sourceFileName = stagingEncodedAssetPathName.substr(fileNameIndex + 1);
-
-        size_t extensionIndex = sourceFileName.find_last_of(".");
-        if (extensionIndex == string::npos)
-        {
-            string errorMessage = __FILEREF__ + "No extention find in the asset file name"
-                    + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                    + ", sourceFileName: " + sourceFileName;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        string fileFormat = sourceFileName.substr(extensionIndex + 1);
+        string sourceFileName = stagingEncodedAssetPathName.substr(fileNameIndex + 1, extensionIndex);
 
         
         string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
@@ -3105,6 +3107,7 @@ void EncoderVideoAudioProxy::processOverlayedTextOnVideo(string stagingEncodedAs
         _logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", sourceFileName: " + sourceFileName
             + ", getEventKey().first: " + to_string(event->getEventKey().first)
             + ", getEventKey().second: " + to_string(event->getEventKey().second));
     }
@@ -4310,6 +4313,18 @@ void EncoderVideoAudioProxy::processSlideShow(string stagingEncodedAssetPathName
         string field = "outputFrameRate";
         outputFrameRate = _encodingItem->_parametersRoot.get(field, 0).asInt();
     
+        size_t extensionIndex = stagingEncodedAssetPathName.find_last_of(".");
+        if (extensionIndex == string::npos)
+        {
+            string errorMessage = __FILEREF__ + "No extention find in the asset file name"
+                    + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        string fileFormat = stagingEncodedAssetPathName.substr(extensionIndex + 1);
+
         size_t fileNameIndex = stagingEncodedAssetPathName.find_last_of("/");
         if (fileNameIndex == string::npos)
         {
@@ -4320,19 +4335,8 @@ void EncoderVideoAudioProxy::processSlideShow(string stagingEncodedAssetPathName
 
             throw runtime_error(errorMessage);
         }
-        string sourceFileName = stagingEncodedAssetPathName.substr(fileNameIndex + 1);
+        string sourceFileName = stagingEncodedAssetPathName.substr(fileNameIndex + 1, extensionIndex);
 
-        size_t extensionIndex = sourceFileName.find_last_of(".");
-        if (extensionIndex == string::npos)
-        {
-            string errorMessage = __FILEREF__ + "No extention find in the asset file name"
-                    + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                    + ", sourceFileName: " + sourceFileName;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        string fileFormat = sourceFileName.substr(extensionIndex + 1);
 
         
         string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
@@ -4361,6 +4365,7 @@ void EncoderVideoAudioProxy::processSlideShow(string stagingEncodedAssetPathName
         _logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", sourceFileName: " + sourceFileName
             + ", getEventKey().first: " + to_string(event->getEventKey().first)
             + ", getEventKey().second: " + to_string(event->getEventKey().second));
     }
@@ -4692,7 +4697,7 @@ int EncoderVideoAudioProxy::getEncodingProgress(int64_t encodingJobKey)
         }
         catch (NoEncodingJobKeyFound e)
         {
-            _logger->warn(__FILEREF__ + "Progress URL failed (exception)"
+            _logger->warn(__FILEREF__ + "Progress URL failed (NoEncodingJobKeyFound)"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", encodingJobKey: " + to_string(encodingJobKey) 
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
@@ -4704,7 +4709,7 @@ int EncoderVideoAudioProxy::getEncodingProgress(int64_t encodingJobKey)
         }
         catch (runtime_error e)
         {
-            _logger->error(__FILEREF__ + "Progress URL failed (exception)"
+            _logger->error(__FILEREF__ + "Progress URL failed (runtime_error)"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                 + ", encodingJobKey: " + to_string(encodingJobKey) 
                 + ", ffmpegEncoderURL: " + ffmpegEncoderURL 

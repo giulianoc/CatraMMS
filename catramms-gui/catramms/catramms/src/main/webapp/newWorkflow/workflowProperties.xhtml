@@ -32,9 +32,6 @@
                     <p:outputLabel value="Label" style="font-weight: bold"/>
                 </p:column>
                 <p:column>
-                    <!--
-                                 required="true"
-                    -->
                     <p:inputText id="workflowLabel"
                                  autocomplete="true"
                                  value="#{newWorkflow.workflowLabel}"
@@ -100,10 +97,7 @@
                     <p:outputLabel value="Label" style="font-weight: bold"/>
                 </p:column>
                 <p:column>
-                    <!--
-                                 required="#{newWorkflow.nodeType == 'Add-Content'}"
-                    -->
-                    <p:inputText id="taskLabel_Add_Content"
+                    <p:inputText id="taskLabel_Add_Content" style="width: 100%"
                                  value="#{newWorkflow.taskLabel}"
                                  autocomplete="true"
                                  placeholder="label"/>
@@ -115,9 +109,6 @@
                     <p:outputLabel value="File Format:" style="font-weight: bold"/>
                 </p:column>
                 <p:column>
-                    <!--
-                                     required="#{newWorkflow.nodeType == 'Add-Content'}"
-                    -->
                     <p:selectOneMenu id="taskFileFormat_Add_Content"
                                      value="#{newWorkflow.taskFileFormat}"
                                      autoWidth="false">
@@ -147,14 +138,13 @@
                                    style="#{(newWorkflow.taskSourceDownloadType == 'pull') ? 'font-weight: bold' : ''}"/>
                 </p:column>
                 <p:column>
-                    <!--
-                                 required="#{newWorkflow.nodeType == 'Add-Content' and newWorkflow.taskSourceDownloadType == 'pull'}"
-                    -->
                     <p:inputText id="taskSourceURL_Add_Content" style="width: 100%"
                                  disabled="#{newWorkflow.taskSourceDownloadType == 'push'}"
                                  value="#{newWorkflow.taskPullSourceURL}"
+                                 title="Supported protocols: http, https, ftp, ftps, copy, move. Example: http://techslides.com/demos/sample-videos/small.mp4"
                                  autocomplete="true"
                                  placeholder="source url"/>
+                    <p:tooltip for="taskSourceURL_Add_Content" showEffect="clip" hideEffect="explode" position="left"/>
                 </p:column>
             </p:row>
 
@@ -370,10 +360,7 @@
                     <p:outputLabel value="Label" style="font-weight: bold"/>
                 </p:column>
                 <p:column>
-                    <!--
-                                 required="#{newWorkflow.nodeType == 'Remove-Content'}"
-                    -->
-                    <p:inputText id="taskLabel_Remove_Content"
+                    <p:inputText id="taskLabel_Remove_Content" style="width: 100%"
                                  value="#{newWorkflow.taskLabel}"
                                  autocomplete="true"
                                  placeholder="label"/>
@@ -425,10 +412,7 @@
                     <p:outputLabel value="Label" style="font-weight: bold"/>
                 </p:column>
                 <p:column>
-                    <!--
-                                 required="#{newWorkflow.nodeType == 'Concat-Demuxer'}"
-                    -->
-                    <p:inputText id="taskLabel_Concat_Demuxer"
+                    <p:inputText id="taskLabel_Concat_Demuxer" style="width: 100%"
                                  value="#{newWorkflow.taskLabel}"
                                  autocomplete="true"
                                  placeholder="label"/>
@@ -616,10 +600,7 @@
                     <p:outputLabel value="Label" style="font-weight: bold"/>
                 </p:column>
                 <p:column>
-                    <!--
-                                 required="#{newWorkflow.nodeType == 'Cut'}"
-                    -->
-                    <p:inputText id="taskLabel_Cut"
+                    <p:inputText id="taskLabel_Cut" style="width: 100%"
                                  value="#{newWorkflow.taskLabel}"
                                  autocomplete="true"
                                  placeholder="label"/>
@@ -635,9 +616,6 @@
                         with the media selected by the 'selectMediaItems' dialog
                 -->
                 <p:column>
-                    <!--
-                                   required="#{newWorkflow.nodeType == 'Cut'}"
-                    -->
                     <p:inputNumber id="taskStartTimeInSeconds_Cut"
                                    decimalPlaces="#{newWorkflow.timeInSecondsDecimalsPrecision}"
                                    value="#{newWorkflow.taskStartTimeInSeconds}"
@@ -676,9 +654,6 @@
                         with the media selected by the 'selectMediaItems' dialog
                 -->
                 <p:column>
-                    <!--
-                                   required="#{newWorkflow.taskCutEndType == 'endTime' and newWorkflow.nodeType == 'Cut'}"
-                    -->
                     <p:inputNumber id="taskEndTimeInSeconds_Cut"
                                    decimalPlaces="#{newWorkflow.timeInSecondsDecimalsPrecision}"
                                    value="#{newWorkflow.taskEndTimeInSeconds}"
@@ -702,9 +677,6 @@
                         with the media selected by the 'selectMediaItems' dialog
                 -->
                 <p:column>
-                    <!--
-                                   required="#{newWorkflow.taskCutEndType == 'framesNumber' and newWorkflow.nodeType == 'Cut'}"
-                    -->
                     <p:inputNumber id="taskFramesNumber_Cut"
                                    decimalPlaces="0"
                                    value="#{newWorkflow.taskFramesNumber}"
@@ -713,6 +685,19 @@
                                    placeholder="frames number"/>
                     <p:tooltip for="taskFramesNumber_Cut" showEffect="clip"
                                hideEffect="explode" position="left"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Output File Format:" />
+                </p:column>
+                <p:column>
+                    <p:selectOneMenu id="taskFileFormat_Cut"
+                                     value="#{newWorkflow.taskFileFormat}"
+                                     autoWidth="false">
+                        <f:selectItems value="#{newWorkflow.taskFileFormatsList}"/>
+                    </p:selectOneMenu>
                 </p:column>
             </p:row>
 
@@ -898,9 +883,6 @@
                     <p:outputLabel value="Label" style="font-weight: bold"/>
                 </p:column>
                 <p:column>
-                    <!--
-                                 required="#{newWorkflow.nodeType == 'Overlay-Image-On-Video'}"
-                    -->
                     <p:inputText id="taskLabel_Overlay_Image_On_Video" style="width: 100%"
                                  value="#{newWorkflow.taskLabel}"
                                  autocomplete="true"
@@ -913,9 +895,6 @@
                     <p:outputLabel value="Image Position X InPixel" style="font-weight: bold"/>
                 </p:column>
                 <p:column>
-                    <!--
-                                 required="#{newWorkflow.nodeType == 'Overlay-Image-On-Video'}"
-                    -->
                     <p:inputText id="taskOverlayPositionXInPixel_Overlay_Image_On_Video" style="width: 100%"
                                  value="#{newWorkflow.taskOverlayPositionXInPixel}"
                                  title="Samples: 50 or (video_width-image_width)-20"
@@ -931,9 +910,6 @@
                     <p:outputLabel value="Image Position Y InPixel" style="font-weight: bold"/>
                 </p:column>
                 <p:column>
-                    <!--
-                                 required="#{newWorkflow.nodeType == 'Overlay-Image-On-Video'}"
-                    -->
                     <p:inputText id="taskOverlayPositionYInPixel_Overlay_Image_On_Video" style="width: 100%"
                                  value="#{newWorkflow.taskOverlayPositionYInPixel}"
                                  title="Samples: 30 or (video_height-image_height)-10"
@@ -1138,10 +1114,7 @@
                     <p:outputLabel value="Label" style="font-weight: bold"/>
                 </p:column>
                 <p:column>
-                    <!--
-                                 required="#{newWorkflow.nodeType == 'Overlay-Text-On-Video'}"
-                    -->
-                    <p:inputText id="taskLabel_Overlay_Text_On_Video"
+                    <p:inputText id="taskLabel_Overlay_Text_On_Video" style="width: 100%"
                                  value="#{newWorkflow.taskLabel}"
                                  autocomplete="true"
                                  placeholder="label"/>
@@ -1154,9 +1127,6 @@
                 </p:column>
                 <p:column>
                     <p:scrollPanel>
-                        <!--
-                                         required="#{newWorkflow.nodeType == 'Overlay-Text-On-Video'}"
-                        -->
                         <p:inputTextarea id="taskOverlayText_Overlay_Text_On_Video" style="width: 100%"
                                          value="#{newWorkflow.taskOverlayText}"
                                          autocomplete="true"
@@ -1202,14 +1172,11 @@
                     <p:outputLabel value="Font Type"/>
                 </p:column>
                 <p:column>
-                    <p:inputText id="taskOverlayFontType_Overlay_Text_On_Video"
-                                 required="false"
-                                 value="#{newWorkflow.taskOverlayFontType}"
-                                 title="ttf file name. Sample: FreeSerif.ttf or FreeSans.ttf or ..."
-                                 autocomplete="true"
-                                 placeholder="font type"/>
-                    <p:tooltip for="taskOverlayFontType_Overlay_Text_On_Video"
-                               showEffect="clip" hideEffect="explode" position="left"/>
+                    <p:selectOneMenu id="taskOverlayFontType_Overlay_Text_On_Video"
+                                     value="#{newWorkflow.taskOverlayFontType}"
+                                     autoWidth="false">
+                        <f:selectItems value="#{newWorkflow.taskOverlayFontTypesList}"/>
+                    </p:selectOneMenu>
                 </p:column>
             </p:row>
 
@@ -1218,15 +1185,11 @@
                     <p:outputLabel value="Font Size"/>
                 </p:column>
                 <p:column>
-                    <p:inputNumber id="taskOverlayFontSize_Overlay_Text_On_Video"
-                                   decimalPlaces="0"
-                                   required="false"
-                                   value="#{newWorkflow.taskOverlayFontSize}"
-                                   title="Samples: 16 or 24 or ..."
-                                   autocomplete="true"
-                                   placeholder="font size"/>
-                    <p:tooltip for="taskOverlayFontSize_Overlay_Text_On_Video"
-                               showEffect="clip" hideEffect="explode" position="left"/>
+                    <p:selectOneMenu id="taskOverlayFontSize_Overlay_Text_On_Video"
+                                     value="#{newWorkflow.taskOverlayFontSize}"
+                                     autoWidth="false">
+                        <f:selectItems value="#{newWorkflow.taskFontSizesList}"/>
+                    </p:selectOneMenu>
                 </p:column>
             </p:row>
 
@@ -1235,14 +1198,11 @@
                     <p:outputLabel value="Font Color"/>
                 </p:column>
                 <p:column>
-                    <p:inputText id="taskOverlayFontColor_Overlay_Text_On_Video"
-                                 required="false"
-                                 value="#{newWorkflow.taskOverlayFontColor}"
-                                 title="Samples: yellow or ..."
-                                 autocomplete="true"
-                                 placeholder="font color"/>
-                    <p:tooltip for="taskOverlayFontColor_Overlay_Text_On_Video"
-                               showEffect="clip" hideEffect="explode" position="left"/>
+                    <p:selectOneMenu id="taskOverlayFontColor_Overlay_Text_On_Video"
+                                     value="#{newWorkflow.taskOverlayFontColor}"
+                                     autoWidth="false">
+                        <f:selectItems value="#{newWorkflow.taskColorsList}"/>
+                    </p:selectOneMenu>
                 </p:column>
             </p:row>
 
@@ -1251,15 +1211,10 @@
                     <p:outputLabel value="Text Percentage Opacity"/>
                 </p:column>
                 <p:column>
-                    <p:inputNumber id="taskOverlayTextPercentageOpacity_Overlay_Text_On_Video"
-                                   decimalPlaces="0"
-                                   required="false"
-                                   value="#{newWorkflow.taskOverlayTextPercentageOpacity}"
-                                   title="Samples: 20 or ..."
-                                   autocomplete="true"
-                                   placeholder="text percentage opacity"/>
-                    <p:tooltip for="taskOverlayTextPercentageOpacity_Overlay_Text_On_Video"
-                               showEffect="clip" hideEffect="explode" position="left"/>
+                    <p:spinner id="taskOverlayTextPercentageOpacity_Overlay_Text_On_Video"
+                               value="#{newWorkflow.taskOverlayTextPercentageOpacity}"
+                               min="0" max="100"
+                    />
                 </p:column>
             </p:row>
 
@@ -1280,14 +1235,11 @@
                     <p:outputLabel value="Box Color"/>
                 </p:column>
                 <p:column>
-                    <p:inputText id="taskOverlayBoxColor_Overlay_Text_On_Video"
-                                 required="false"
-                                 value="#{newWorkflow.taskOverlayBoxColor}"
-                                 title="Samples: red or ..."
-                                 autocomplete="true"
-                                 placeholder="box color"/>
-                    <p:tooltip for="taskOverlayBoxColor_Overlay_Text_On_Video"
-                               showEffect="clip" hideEffect="explode" position="left"/>
+                    <p:selectOneMenu id="taskOverlayBoxColor_Overlay_Text_On_Video"
+                                     value="#{newWorkflow.taskOverlayBoxColor}"
+                                     autoWidth="false">
+                        <f:selectItems value="#{newWorkflow.taskColorsList}"/>
+                    </p:selectOneMenu>
                 </p:column>
             </p:row>
 
@@ -1296,15 +1248,10 @@
                     <p:outputLabel value="Box Percentage Opacity"/>
                 </p:column>
                 <p:column>
-                    <p:inputNumber id="taskOverlayBoxPercentageOpacity_Overlay_Text_On_Video"
-                                   decimalPlaces="0"
-                                   required="false"
-                                   value="#{newWorkflow.taskOverlayBoxPercentageOpacity}"
-                                   title="Samples: 13 or ..."
-                                   autocomplete="true"
-                                   placeholder="box percentage opacity"/>
-                    <p:tooltip for="taskOverlayBoxPercentageOpacity_Overlay_Text_On_Video"
-                               showEffect="clip" hideEffect="explode" position="left"/>
+                    <p:spinner id="taskOverlayBoxPercentageOpacity_Overlay_Text_On_Video"
+                               value="#{newWorkflow.taskOverlayBoxPercentageOpacity}"
+                               min="0" max="100"
+                    />
                 </p:column>
             </p:row>
 
@@ -1502,10 +1449,7 @@
                     <p:outputLabel value="Label" style="font-weight: bold"/>
                 </p:column>
                 <p:column>
-                    <!--
-                                 required="#{newWorkflow.nodeType == 'Frame'}"
-                    -->
-                    <p:inputText id="taskLabel_Frame"
+                    <p:inputText id="taskLabel_Frame" style="width: 100%"
                                  value="#{newWorkflow.taskLabel}"
                                  autocomplete="true"
                                  placeholder="label"/>
@@ -1747,10 +1691,7 @@
                     <p:outputLabel value="Label" style="font-weight: bold"/>
                 </p:column>
                 <p:column>
-                    <!--
-                                 required="#{newWorkflow.nodeType == 'Periodical-Frames'}"
-                    -->
-                    <p:inputText id="taskLabel_Periodical_Frames"
+                    <p:inputText id="taskLabel_Periodical_Frames" style="width: 100%"
                                  value="#{newWorkflow.taskLabel}"
                                  autocomplete="true"
                                  placeholder="label"/>
@@ -1762,9 +1703,6 @@
                     <p:outputLabel value="Period In Seconds" style="font-weight: bold"/>
                 </p:column>
                 <p:column>
-                    <!--
-                                   required="#{newWorkflow.nodeType == 'Periodical-Frames'}"
-                    -->
                     <p:inputNumber id="taskFramePeriodInSeconds_Periodical_Frames"
                                    decimalPlaces="0"
                                    value="#{newWorkflow.taskFramePeriodInSeconds}"
@@ -2039,10 +1977,7 @@
                     <p:outputLabel value="Label" style="font-weight: bold"/>
                 </p:column>
                 <p:column>
-                    <!--
-                                 required="#{newWorkflow.nodeType == 'I-Frames'}"
-                    -->
-                    <p:inputText id="taskLabel_I_Frames"
+                    <p:inputText id="taskLabel_I_Frames" style="width: 100%"
                                  value="#{newWorkflow.taskLabel}"
                                  autocomplete="true"
                                  placeholder="label"/>
@@ -2310,10 +2245,7 @@
                     <p:outputLabel value="Label" style="font-weight: bold"/>
                 </p:column>
                 <p:column>
-                    <!--
-                                 required="#{newWorkflow.nodeType == 'Motion-JPEG-by-Periodical-Frames'}"
-                    -->
-                    <p:inputText id="taskLabel_Motion_JPEG_by_Periodical_Frames"
+                    <p:inputText id="taskLabel_Motion_JPEG_by_Periodical_Frames" style="width: 100%"
                                  value="#{newWorkflow.taskLabel}"
                                  autocomplete="true"
                                  placeholder="label"/>
@@ -2325,9 +2257,6 @@
                     <p:outputLabel value="Period In Seconds" style="font-weight: bold"/>
                 </p:column>
                 <p:column>
-                    <!--
-                                   required="#{newWorkflow.nodeType == 'Motion-JPEG-by-Periodical-Frames'}"
-                    -->
                     <p:inputNumber id="taskFramePeriodInSeconds_Motion_JPEG_by_Periodical_Frames"
                                    decimalPlaces="0"
                                    value="#{newWorkflow.taskFramePeriodInSeconds}"
@@ -2603,10 +2532,7 @@
                     <p:outputLabel value="Label" style="font-weight: bold"/>
                 </p:column>
                 <p:column>
-                    <!--
-                                 required="#{newWorkflow.nodeType == 'Motion-JPEG-by-I-Frames'}"
-                    -->
-                    <p:inputText id="taskLabel_Motion_JPEG_by_I_Frames"
+                    <p:inputText id="taskLabel_Motion_JPEG_by_I_Frames" style="width: 100%"
                                  value="#{newWorkflow.taskLabel}"
                                  autocomplete="true"
                                  placeholder="label"/>
@@ -2877,10 +2803,7 @@
                     <p:outputLabel value="Label" style="font-weight: bold"/>
                 </p:column>
                 <p:column>
-                    <!--
-                                 required="#{newWorkflow.nodeType == 'Slideshow'}"
-                    -->
-                    <p:inputText id="taskLabel_Slideshow"
+                    <p:inputText id="taskLabel_Slideshow" style="width: 100%"
                                  value="#{newWorkflow.taskLabel}"
                                  autocomplete="true"
                                  placeholder="label"/>
@@ -3099,10 +3022,7 @@
                     <p:outputLabel value="Label" style="font-weight: bold"/>
                 </p:column>
                 <p:column>
-                    <!--
-                                 required="#{newWorkflow.nodeType == 'Encode'}"
-                    -->
-                    <p:inputText id="taskLabel_Encode"
+                    <p:inputText id="taskLabel_Encode" style="width: 100%"
                                  value="#{newWorkflow.taskLabel}"
                                  autocomplete="true"
                                  placeholder="label"/>
@@ -3233,10 +3153,7 @@
                     <p:outputLabel value="Label" style="font-weight: bold"/>
                 </p:column>
                 <p:column>
-                    <!--
-                                 required="#{newWorkflow.nodeType == 'Email-Notification'}"
-                    -->
-                    <p:inputText id="taskLabel_Email_Notification"
+                    <p:inputText id="taskLabel_Email_Notification" style="width: 100%"
                                  value="#{newWorkflow.taskLabel}"
                                  autocomplete="true"
                                  placeholder="label"/>
@@ -3248,9 +3165,6 @@
                     <p:outputLabel value="Email address:"/>
                 </p:column>
                 <p:column>
-                    <!--
-                                 required="#{newWorkflow.nodeType == 'Email-Notification'}"
-                    -->
                     <p:inputText id="taskEmailAddress_Email_Notification"
                                  value="#{newWorkflow.taskEmailAddress}"
                                  autocomplete="true"
@@ -3263,9 +3177,6 @@
                     <p:outputLabel value="Subject" style="font-weight: bold"/>
                 </p:column>
                 <p:column colspan="3">
-                    <!--
-                                 required="#{newWorkflow.nodeType == 'Email-Notification'}"
-                    -->
                     <p:inputText id="taskSubject_Email_Notification" style="width: 100%"
                                  value="#{newWorkflow.taskSubject}"
                                  autocomplete="true"
@@ -3280,9 +3191,6 @@
                 </p:column>
                 <p:column colspan="3">
                     <p:scrollPanel>
-                        <!--
-                                         required="#{newWorkflow.nodeType == 'Email-Notification'}"
-                        -->
                         <p:inputTextarea id="taskMessage_Email_Notification" style="width: 100%"
                                          value="#{newWorkflow.taskMessage}"
                                          autocomplete="true"
@@ -3657,9 +3565,6 @@
                     <p:outputLabel value="Output File Format:" style="font-weight: bold"/>
                 </p:column>
                 <p:column>
-                    <!--
-                                     required="#{newWorkflow.nodeType == 'Add-Content'}"
-                    -->
                     <p:selectOneMenu id="taskFileFormat_Extract_Tracks"
                                      value="#{newWorkflow.taskFileFormat}"
                                      autoWidth="false">

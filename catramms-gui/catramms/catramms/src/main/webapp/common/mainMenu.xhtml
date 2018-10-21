@@ -7,6 +7,11 @@
     <p:commandButton id="dynaButtonIngestion" type="button" icon="fa fa-navicon"/>
     <p:tieredMenu styleClass="tieredMenuClass" overlay="true" trigger="dynaButtonIngestion"
                   my="left top" at="left bottom" style="width:200px">
+
+        <p:submenu label="Contents">
+            <p:menuitem value="Media Items" outcome="/mediaItems.xhtml" icon="ui-icon-search"/>
+        </p:submenu>
+
         <p:submenu label="Ingestion">
             <!-- disabled="#{!sessionScope.currentWorkspaceDetails.ingestWorkflow}" -->
             <p:menuitem
@@ -15,14 +20,10 @@
                     icon="ui-icon-search"/>
             <p:menuitem value="Workflows" outcome="/ingestionWorkflows.xhtml" icon="ui-icon-search"/>
             <p:menuitem value="Ingestion Jobs" outcome="/ingestionJobs.xhtml" icon="ui-icon-search"/>
+        </p:submenu>
+
+        <p:submenu label="Encoding">
             <p:menuitem value="Encoding Jobs" outcome="/encodingJobs.xhtml" icon="ui-icon-search"/>
-        </p:submenu>
-
-        <p:submenu label="Contents">
-            <p:menuitem value="Media Items" outcome="/mediaItems.xhtml" icon="ui-icon-search"/>
-        </p:submenu>
-
-        <p:submenu label="Encoding Profiles">
             <p:menuitem value="Profiles" outcome="/encodingProfiles.xhtml" icon="ui-icon-search"/>
             <p:menuitem value="Profiles Sets" outcome="/encodingProfilesSets.xhtml" icon="ui-icon-search"/>
         </p:submenu>

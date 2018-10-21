@@ -101,7 +101,21 @@ bool Validator::isImageFileFormat(string fileFormat)
 bool Validator::isFontTypeValid(string fontType)
 {
     vector<string> validFontTypes = {
-        "..."
+        "cac_champagne.ttf",
+        "OpenSans-BoldItalic.ttf",
+        "OpenSans-ExtraBoldItalic.ttf",
+        "OpenSans-Italic.ttf",
+        "OpenSans-Light.ttf",
+        "OpenSans-SemiboldItalic.ttf",
+        "Pacifico.ttf",
+        "Windsong.ttf",
+        "DancingScript-Regular.otf",
+        "OpenSans-Bold.ttf",
+        "OpenSans-ExtraBold.ttf",
+        "OpenSans-LightItalic.ttf",
+        "OpenSans-Regular.ttf",
+        "OpenSans-Semibold.ttf",
+        "Sofia-Regular.otf"
     };
 
     for (string validFontType: validFontTypes)
@@ -113,9 +127,9 @@ bool Validator::isFontTypeValid(string fontType)
     return false;
 }
 
-bool Validator::isFontColorValid(string fontColor)
+bool Validator::isColorValid(string color)
 {
-    vector<string> validFontColors = {
+    vector<string> validColors = {
         "black",
         "blue",
         "gray",
@@ -128,9 +142,9 @@ bool Validator::isFontColorValid(string fontColor)
         "yellow"
     };
 
-    for (string validFontColor: validFontColors)
+    for (string validColor: validColors)
     {
-        if (fontColor == validFontColor) 
+        if (color == validColor) 
             return true;
     }
     
@@ -1883,7 +1897,7 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey,
     {
         string fontColor = parametersRoot.get(field, "XXX").asString();
                         
-        if (!isFontColorValid(fontColor))
+        if (!isColorValid(fontColor))
         {
             string errorMessage = string("Unknown fontColor")
                 + ", fontColor: " + fontColor
@@ -1945,6 +1959,22 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey,
             string errorMessage = __FILEREF__ + "Field 'EncodingPriority' is wrong"
                     + ", EncodingPriority: " + encodingPriority;
             _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+
+    field = "BoxColor";
+    if (isMetadataPresent(parametersRoot, field))
+    {
+        string boxColor = parametersRoot.get(field, "XXX").asString();
+                        
+        if (!isColorValid(boxColor))
+        {
+            string errorMessage = string("Unknown boxColor")
+                + ", boxColor: " + boxColor
+            ;
+            _logger->error(__FILEREF__ + errorMessage);
 
             throw runtime_error(errorMessage);
         }

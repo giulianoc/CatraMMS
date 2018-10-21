@@ -9258,7 +9258,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(
 }
 
 int MMSEngineDBFacade::addEncodingJob (
-    int64_t workspaceKey,
+    shared_ptr<Workspace> workspace,
     int64_t ingestionJobKey,
     string destEncodingProfileLabel,
     int64_t sourceMediaItemKey,
@@ -9309,7 +9309,7 @@ int MMSEngineDBFacade::addEncodingJob (
                 "select encodingProfileKey from MMS_EncodingProfile where (workspaceKey = ? or workspaceKey is null) and contentType = ? and label = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
             preparedStatement->setString(queryParameterIndex++, contentType);
             preparedStatement->setString(queryParameterIndex++, destEncodingProfileLabel);
 
@@ -9321,7 +9321,7 @@ int MMSEngineDBFacade::addEncodingJob (
             else
             {
                 string errorMessage = __FILEREF__ + "encodingProfileKey not found "
-                        + ", workspaceKey: " + to_string(workspaceKey)
+                        + ", workspaceKey: " + to_string(workspace->_workspaceKey)
                         + ", contentType: " + contentType
                         + ", destEncodingProfileLabel: " + destEncodingProfileLabel
                         + ", lastSQLCommand: " + lastSQLCommand
@@ -9333,6 +9333,7 @@ int MMSEngineDBFacade::addEncodingJob (
         }
 
         addEncodingJob (
+            workspace,
             ingestionJobKey,
             destEncodingProfileKey,
             sourceMediaItemKey,
@@ -9390,6 +9391,7 @@ int MMSEngineDBFacade::addEncodingJob (
 }
 
 int MMSEngineDBFacade::addEncodingJob (
+    shared_ptr<Workspace> workspace,
     int64_t ingestionJobKey,
     int64_t destEncodingProfileKey,
     int64_t sourceMediaItemKey,
@@ -9483,7 +9485,18 @@ int MMSEngineDBFacade::addEncodingJob (
                 + "\"encodingProfileKey\": " + to_string(destEncodingProfileKey)
                 + ", \"sourcePhysicalPathKey\": " + to_string(localSourcePhysicalPathKey)
                 + "} ";        
-       {
+        {
+            int savedEncodingPriority = static_cast<int>(encodingPriority);
+            if (savedEncodingPriority > workspace->_maxEncodingPriority)
+            {
+                _logger->warn(__FILEREF__ + "EncodingPriority was decreased because overcome the max allowed by this customer"
+                    + ", workspace->_maxEncodingPriority: " + to_string(workspace->_maxEncodingPriority)
+                    + ", requested encoding profile key: " + to_string(static_cast<int>(encodingPriority))
+                );
+
+                savedEncodingPriority = workspace->_maxEncodingPriority;
+            }
+
             lastSQLCommand = 
                 "insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, parameters, encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, failuresNumber) values ("
                                             "NULL,           ?,               ?,    ?,          ?,                NULL,             NULL,           NULL,             ?,      NULL,         0)";
@@ -9493,7 +9506,7 @@ int MMSEngineDBFacade::addEncodingJob (
             preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
             preparedStatement->setString(queryParameterIndex++, toString(encodingType));
             preparedStatement->setString(queryParameterIndex++, parameters);
-            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(encodingPriority));
+            preparedStatement->setInt(queryParameterIndex++, savedEncodingPriority);
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
 
             preparedStatement->executeUpdate();
@@ -9670,6 +9683,7 @@ int MMSEngineDBFacade::addEncodingJob (
 }
 
 int MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
+    shared_ptr<Workspace> workspace,
     int64_t ingestionJobKey,
     int64_t mediaItemKey_1, int64_t physicalPathKey_1,
     int64_t mediaItemKey_2, int64_t physicalPathKey_2,
@@ -9703,7 +9717,7 @@ int MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
         ContentType contentType_1;
         {
             lastSQLCommand =
-                "select contentType from MMS_MediaItem where mediaItemKey = ?";
+                "select workspaceKey, contentType from MMS_MediaItem where mediaItemKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, mediaItemKey_1);
@@ -9836,7 +9850,18 @@ int MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
                 + ", \"imagePosition_X_InPixel\": \"" + imagePosition_X_InPixel + "\""
                 + ", \"imagePosition_Y_InPixel\": \"" + imagePosition_Y_InPixel + "\""
                 + "} ";
-       {
+        {
+            int savedEncodingPriority = static_cast<int>(encodingPriority);
+            if (savedEncodingPriority > workspace->_maxEncodingPriority)
+            {
+                _logger->warn(__FILEREF__ + "EncodingPriority was decreased because overcome the max allowed by this customer"
+                    + ", workspace->_maxEncodingPriority: " + to_string(workspace->_maxEncodingPriority)
+                    + ", requested encoding profile key: " + to_string(static_cast<int>(encodingPriority))
+                );
+
+                savedEncodingPriority = workspace->_maxEncodingPriority;
+            }
+
             lastSQLCommand = 
                 "insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, parameters, encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, failuresNumber) values ("
                                             "NULL,           ?,               ?,    ?,          ?,                NULL,             NULL,           NULL,             ?,      NULL,         0)";
@@ -9846,7 +9871,7 @@ int MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
             preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
             preparedStatement->setString(queryParameterIndex++, toString(encodingType));
             preparedStatement->setString(queryParameterIndex++, parameters);
-            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(encodingPriority));
+            preparedStatement->setInt(queryParameterIndex++, savedEncodingPriority);
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
 
             preparedStatement->executeUpdate();
@@ -10023,6 +10048,7 @@ int MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
 }
 
 int MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob (
+    shared_ptr<Workspace> workspace,
     int64_t ingestionJobKey,
     EncodingPriority encodingPriority,
         
@@ -10132,7 +10158,18 @@ int MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob (
                 + ", \"boxPercentageOpacity\": " + to_string(boxPercentageOpacity)
 
                 + "} ";
-       {
+        {
+            int savedEncodingPriority = static_cast<int>(encodingPriority);
+            if (savedEncodingPriority > workspace->_maxEncodingPriority)
+            {
+                _logger->warn(__FILEREF__ + "EncodingPriority was decreased because overcome the max allowed by this customer"
+                    + ", workspace->_maxEncodingPriority: " + to_string(workspace->_maxEncodingPriority)
+                    + ", requested encoding profile key: " + to_string(static_cast<int>(encodingPriority))
+                );
+
+                savedEncodingPriority = workspace->_maxEncodingPriority;
+            }
+
             lastSQLCommand = 
                 "insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, parameters, encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, failuresNumber) values ("
                                             "NULL,           ?,               ?,    ?,          ?,                NULL,             NULL,           NULL,             ?,      NULL,         0)";
@@ -10142,7 +10179,7 @@ int MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob (
             preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
             preparedStatement->setString(queryParameterIndex++, toString(encodingType));
             preparedStatement->setString(queryParameterIndex++, parameters);
-            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(encodingPriority));
+            preparedStatement->setInt(queryParameterIndex++, savedEncodingPriority);
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
 
             preparedStatement->executeUpdate();
@@ -10319,6 +10356,7 @@ int MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob (
 }
 
 int MMSEngineDBFacade::addEncoding_GenerateFramesJob (
+    shared_ptr<Workspace> workspace,
     int64_t ingestionJobKey,
     EncodingPriority encodingPriority,
         
@@ -10372,6 +10410,17 @@ int MMSEngineDBFacade::addEncoding_GenerateFramesJob (
 
                 + "} ";
         {
+            int savedEncodingPriority = static_cast<int>(encodingPriority);
+            if (savedEncodingPriority > workspace->_maxEncodingPriority)
+            {
+                _logger->warn(__FILEREF__ + "EncodingPriority was decreased because overcome the max allowed by this customer"
+                    + ", workspace->_maxEncodingPriority: " + to_string(workspace->_maxEncodingPriority)
+                    + ", requested encoding profile key: " + to_string(static_cast<int>(encodingPriority))
+                );
+
+                savedEncodingPriority = workspace->_maxEncodingPriority;
+            }
+
             lastSQLCommand = 
                 "insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, parameters, encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, failuresNumber) values ("
                                             "NULL,           ?,               ?,    ?,          ?,                NULL,             NULL,           NULL,             ?,      NULL,         0)";
@@ -10381,7 +10430,7 @@ int MMSEngineDBFacade::addEncoding_GenerateFramesJob (
             preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
             preparedStatement->setString(queryParameterIndex++, toString(encodingType));
             preparedStatement->setString(queryParameterIndex++, parameters);
-            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(encodingPriority));
+            preparedStatement->setInt(queryParameterIndex++, savedEncodingPriority);
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
 
             preparedStatement->executeUpdate();
@@ -10558,6 +10607,7 @@ int MMSEngineDBFacade::addEncoding_GenerateFramesJob (
 }
 
 int MMSEngineDBFacade::addEncoding_SlideShowJob (
+    shared_ptr<Workspace> workspace,
     int64_t ingestionJobKey,
     vector<string>& sourcePhysicalPaths,
     double durationOfEachSlideInSeconds,
@@ -10614,6 +10664,17 @@ int MMSEngineDBFacade::addEncoding_SlideShowJob (
             + ", parameters.length: " + to_string(parameters.length()));
         
         {
+            int savedEncodingPriority = static_cast<int>(encodingPriority);
+            if (savedEncodingPriority > workspace->_maxEncodingPriority)
+            {
+                _logger->warn(__FILEREF__ + "EncodingPriority was decreased because overcome the max allowed by this customer"
+                    + ", workspace->_maxEncodingPriority: " + to_string(workspace->_maxEncodingPriority)
+                    + ", requested encoding profile key: " + to_string(static_cast<int>(encodingPriority))
+                );
+
+                savedEncodingPriority = workspace->_maxEncodingPriority;
+            }
+
             lastSQLCommand = 
                 "insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, parameters, encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, failuresNumber) values ("
                                             "NULL,           ?,               ?,    ?,          ?,                NULL,             NULL,           NULL,             ?,      NULL,         0)";
@@ -10623,7 +10684,7 @@ int MMSEngineDBFacade::addEncoding_SlideShowJob (
             preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
             preparedStatement->setString(queryParameterIndex++, toString(encodingType));
             preparedStatement->setString(queryParameterIndex++, parameters);
-            preparedStatement->setInt(queryParameterIndex++, static_cast<int>(encodingPriority));
+            preparedStatement->setInt(queryParameterIndex++, savedEncodingPriority);
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
 
             preparedStatement->executeUpdate();
@@ -11245,7 +11306,7 @@ void MMSEngineDBFacade::updateEncodingJobPriority (
             throw runtime_error(errorMessage);                    
         }
 
-        if (static_cast<int>(currentEncodingPriority) >= workspace->_maxEncodingPriority)
+        if (static_cast<int>(currentEncodingPriority) > workspace->_maxEncodingPriority)
         {
             string errorMessage = __FILEREF__ + "EncodingJob cannot be changed to an higher priority"
                     + ", currentEncodingPriority: " + toString(currentEncodingPriority)

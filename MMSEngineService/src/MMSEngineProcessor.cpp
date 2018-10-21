@@ -4225,6 +4225,7 @@ void MMSEngineProcessor::manageGenerateFramesTask(
                 workspace);
 
         _mmsEngineDBFacade->addEncoding_GenerateFramesJob (
+                workspace,
                 ingestionJobKey, encodingPriority,
                 workspaceIngestionRepository, 
                 startTimeInSeconds, maxFramesNumber, 
@@ -4648,7 +4649,7 @@ void MMSEngineProcessor::manageSlideShowTask(
 
         int outputFrameRate = 25;
         
-        _mmsEngineDBFacade->addEncoding_SlideShowJob(ingestionJobKey,
+        _mmsEngineDBFacade->addEncoding_SlideShowJob(workspace, ingestionJobKey,
                 sourcePhysicalPaths, durationOfEachSlideInSeconds, 
                 outputFrameRate, encodingPriority);
     }
@@ -5488,18 +5489,18 @@ void MMSEngineProcessor::manageEncodeTask(
             throw runtime_error(errorMessage);
         }
 
+        MMSEngineDBFacade::EncodingPriority encodingPriority;
         string field = "EncodingPriority";
         if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
         {
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    + ", Field: " + field;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
+            encodingPriority = 
+                    static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority);
         }
-        MMSEngineDBFacade::EncodingPriority encodingPriority =
+        else
+        {
+            encodingPriority =
                 MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
+        }
 
         int64_t sourceMediaItemKey;
         int64_t sourcePhysicalPathKey;
@@ -5533,10 +5534,10 @@ void MMSEngineProcessor::manageEncodeTask(
         }
     
         if (encodingProfileKey == -1)
-            _mmsEngineDBFacade->addEncodingJob (workspace->_workspaceKey, ingestionJobKey,
+            _mmsEngineDBFacade->addEncodingJob (workspace, ingestionJobKey,
                 encodingProfileLabel, sourceMediaItemKey, sourcePhysicalPathKey, encodingPriority);
         else
-            _mmsEngineDBFacade->addEncodingJob (ingestionJobKey,
+            _mmsEngineDBFacade->addEncodingJob (workspace, ingestionJobKey,
                 encodingProfileKey, sourceMediaItemKey, sourcePhysicalPathKey, encodingPriority);
     }
     catch(runtime_error e)
@@ -5683,7 +5684,7 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
                     = mediaItemKeyContentTypeAndUserData;
         }
 
-        _mmsEngineDBFacade->addEncoding_OverlayImageOnVideoJob (ingestionJobKey,
+        _mmsEngineDBFacade->addEncoding_OverlayImageOnVideoJob (workspace, ingestionJobKey,
                 sourceMediaItemKey_1, sourcePhysicalPathKey_1,
                 sourceMediaItemKey_2, sourcePhysicalPathKey_2,
                 imagePosition_X_InPixel, imagePosition_Y_InPixel,
@@ -5854,7 +5855,7 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
         }
 
         _mmsEngineDBFacade->addEncoding_OverlayTextOnVideoJob (
-                ingestionJobKey, encodingPriority,
+                workspace, ingestionJobKey, encodingPriority,
                 
                 sourceMediaItemKey, sourcePhysicalPathKey,
                 text,

@@ -40,7 +40,7 @@ public:
 
     bool isFontTypeValid(string fontType);
     
-    bool isFontColorValid(string fontColor);
+    bool isColorValid(string fontColor);
 
     void validateRootMetadata(int64_t workspaceKey, Json::Value root);
 
