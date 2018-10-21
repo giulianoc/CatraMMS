@@ -92,7 +92,6 @@ public class CatraMMSServices {
                     );
 
                     TreeMap<Date, File> fileTreeMap = new TreeMap<>();
-                    String fileExtension = null;
 
                     // List<File> mediaFilesToBeManaged = new ArrayList<>();
                     {
@@ -161,9 +160,6 @@ public class CatraMMSServices {
 
                                             continue;
                                         }
-
-                                        if (fileExtension == null)
-                                            fileExtension = mediaFile.getName().substring(mediaFile.getName().lastIndexOf('.') + 1);
 
                                         fileTreeMap.put(getMediaChunkStartTime(mediaFile.getName()), mediaFile);
                                     }
@@ -379,6 +375,9 @@ public class CatraMMSServices {
                         throw new Exception(errorMessage);
                     }
 
+                    String firstFileName = fileTreeMap.firstEntry().getValue().getName();
+                    String fileExtension = firstFileName.substring(firstFileName.lastIndexOf('.') + 1);
+
                     // build json
                     JSONObject joWorkflow = null;
                     String keyContentLabel;
@@ -584,6 +583,8 @@ public class CatraMMSServices {
                     joCutParameters.put("Retention", cutMediaRetention);
                     joCutParameters.put("Title", keyTitle);
                     {
+                        joCutParameters.put("OutputFileFormat", "mp4");
+
                         double cutStartTimeInSeconds = ((double) cutStartTimeInMilliSeconds) / 1000;
                         joCutParameters.put("StartTimeInSeconds", cutStartTimeInSeconds);
 
@@ -619,7 +620,7 @@ public class CatraMMSServices {
                 joAddContent.put("Parameters", joAddContentParameters);
 
                 joAddContentParameters.put("Ingester", ingester);
-                joAddContentParameters.put("FileFormat", "mp4");
+                joAddContentParameters.put("FileFormat", fileExtension);
                 joAddContentParameters.put("Retention", "0");
                 joAddContentParameters.put("Title", mediaFile.getName());
                 joAddContentParameters.put("FileSizeInBytes", mediaFile.length());
@@ -643,6 +644,8 @@ public class CatraMMSServices {
                     joCutParameters.put("Retention", cutMediaRetention);
                     joCutParameters.put("Title", keyTitle);
                     {
+                        joCutParameters.put("OutputFileFormat", "mp4");
+
                         double cutStartTimeInSeconds = ((double) cutStartTimeInMilliSeconds) / 1000;
                         joCutParameters.put("StartTimeInSeconds", cutStartTimeInSeconds);
 
@@ -912,7 +915,7 @@ public class CatraMMSServices {
                 joAddContent.put("Parameters", joAddContentParameters);
 
                 joAddContentParameters.put("Ingester", ingester);
-                joAddContentParameters.put("FileFormat", "mp4");
+                joAddContentParameters.put("FileFormat", fileExtension);
                 joAddContentParameters.put("Retention", "0");
                 joAddContentParameters.put("Title", mediaFile.getName());
                 joAddContentParameters.put("FileSizeInBytes", mediaFile.length());
@@ -1217,7 +1220,7 @@ public class CatraMMSServices {
                 joAddContent.put("Parameters", joAddContentParameters);
 
                 joAddContentParameters.put("Ingester", ingester);
-                joAddContentParameters.put("FileFormat", "mp4");
+                joAddContentParameters.put("FileFormat", fileExtension);
                 joAddContentParameters.put("Retention", "0");
                 joAddContentParameters.put("Title", mediaFile.getName());
                 joAddContentParameters.put("FileSizeInBytes", mediaFile.length());

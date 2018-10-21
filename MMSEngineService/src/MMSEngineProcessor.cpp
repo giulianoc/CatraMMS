@@ -5134,9 +5134,9 @@ void MMSEngineProcessor::generateAndIngestCutMediaTask(
 {
     try
     {
-        if (dependencies.size() == 0)
+        if (dependencies.size() != 1)
         {
-            string errorMessage = __FILEREF__ + "No configured any media to be cut"
+            string errorMessage = __FILEREF__ + "Wrong number of media to be cut"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
                     + ", dependencies.size: " + to_string(dependencies.size());
@@ -5243,6 +5243,13 @@ void MMSEngineProcessor::generateAndIngestCutMediaTask(
             throw runtime_error(errorMessage);
         }
 
+        string outputFileFormat;
+        field = "OutputFileFormat";
+        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+        {
+            outputFileFormat = parametersRoot.get(field, "XXX").asString();
+        }
+
         // to manage a ffmpeg bug generating a corrupted/wrong avgFrameRate, we will
         // force the cut file to have the same avgFrameRate of the source media
         string forcedAvgFrameRate;
@@ -5327,19 +5334,26 @@ void MMSEngineProcessor::generateAndIngestCutMediaTask(
         // this is a cut so destination file name shall have the same
         // extension as the source file name
         string fileFormat;
-        size_t extensionIndex = sourcePhysicalPath.find_last_of(".");
-        if (extensionIndex == string::npos)
+        if (outputFileFormat == "")
         {
-            string errorMessage = __FILEREF__ + "No fileFormat (extension of the file) found in sourcePhysicalPath"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", sourcePhysicalPath: " + sourcePhysicalPath
-            ;
-            _logger->error(errorMessage);
+            size_t extensionIndex = sourcePhysicalPath.find_last_of(".");
+            if (extensionIndex == string::npos)
+            {
+                string errorMessage = __FILEREF__ + "No fileFormat (extension of the file) found in sourcePhysicalPath"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", sourcePhysicalPath: " + sourcePhysicalPath
+                ;
+                _logger->error(errorMessage);
 
-            throw runtime_error(errorMessage);
+                throw runtime_error(errorMessage);
+            }
+            fileFormat = sourcePhysicalPath.substr(extensionIndex + 1);
         }
-        fileFormat = sourcePhysicalPath.substr(extensionIndex + 1);
+        else
+        {
+            fileFormat = outputFileFormat;
+        }
 
         string localSourceFileName = to_string(ingestionJobKey)
                 + "_cut"

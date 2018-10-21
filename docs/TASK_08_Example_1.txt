@@ -1,0 +1,20 @@
+{
+	"Type": "Workflow",
+	"Label": "1",
+	"Variables": {
+		"Title": "My Title of the content"
+	},
+	"Task": {
+		"Label": "my label",
+		"Type": "Cut",
+		"Parameters": {
+			"References": [
+				{ "ReferenceMediaItemKey": 11 }
+			],
+			"StartTimeInSeconds": 1.0,
+			"EndTimeInSeconds": 5.0,
+			"UserData": { "MyData": "this is my data" },
+			"Title": "${Title}"
+		}
+	}
+}

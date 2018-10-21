@@ -1,0 +1,29 @@
+{
+	"Type": "Workflow",
+	"Label": "1",
+	"Variables": {
+		"TitleOfVideo": "My Title of the video content",
+		"TitleOfCut": "My Title of the cut content"
+	},
+	"Task": {
+		"Label": "...",
+		"Type": "Add-Content",
+		"Parameters": {
+			"SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
+			"FileFormat": "mp4",
+			"UserData": { "MyData": "this is my video data" },
+			"Title": "${TitleOfVideo}"
+		},
+		"OnSuccess": {
+			"Task": {
+				"Type": "Cut",
+				"Parameters": {
+					"StartTimeInSeconds": 1.0,
+					"EndTimeInSeconds": 5.0,
+					"UserData": { "MyData": "this is my frame data" },
+					"Title": "${TitleOfCut}"
+				}
+			}
+		}
+	}
+}

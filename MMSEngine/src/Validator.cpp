@@ -1701,6 +1701,7 @@ void Validator::validateCutMetadata(int64_t workspaceKey,
     field = "References";
     if (isMetadataPresent(parametersRoot, field))
     {
+        /*
         Json::Value referencesRoot = parametersRoot[field];
         if (referencesRoot.size() != 1)
         {
@@ -1710,6 +1711,7 @@ void Validator::validateCutMetadata(int64_t workspaceKey,
 
             throw runtime_error(errorMessage);
         }
+        */
 
         bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
         bool encodingProfileFieldsToBeManaged = false;
@@ -1717,7 +1719,15 @@ void Validator::validateCutMetadata(int64_t workspaceKey,
                 priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
                 encodingProfileFieldsToBeManaged);
 
-        if (dependencies.size() == 1)
+        if (dependencies.size() != 1)
+        {
+            string errorMessage = __FILEREF__ + "No correct number of Media to be cut"
+                    + ", dependencies.size: " + to_string(dependencies.size());
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
         {
             int64_t key;
             MMSEngineDBFacade::ContentType referenceContentType;

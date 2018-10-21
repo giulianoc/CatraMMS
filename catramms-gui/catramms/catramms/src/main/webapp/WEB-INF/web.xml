@@ -71,12 +71,6 @@
         <param-value>client</param-value>
     </context-param>
 
-    <!--
-    <listener>
-        <listener-class>com.sun.faces.config.ConfigureListener</listener-class>
-    </listener>
-    -->
-
     <env-entry>
         <env-entry-name>jsf/ClientSideSecretKey</env-entry-name>
         <env-entry-type>java.lang.String</env-entry-type>

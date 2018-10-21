@@ -1,0 +1,76 @@
+"Task": {
+	// optional
+	Label="...",
+
+	// mandatory
+	"Type": "Cut",
+
+	"Parameters": {
+
+		// mandatory
+		"References": [
+			// mandatory. Just one Reference needed to identify the video to be cut.
+			// In case this task is placed inside an onSuccess event, the Reference... item can be omitted.
+			// In such a case, the System will automatically add the Reference... item using the key
+			// of the video by which this Cut depend on.
+			// As reference can be used:
+			//    "ReferenceMediaItemKey" or
+			//    "ReferencePhysicalPathKey"
+			//    "ReferenceUniqueName"
+
+			{ "ReferenceMediaItemKey": 11 }
+		],
+
+		// mandatory 
+		"StartTimeInSeconds": 0.5,
+
+		// optional: EndTimeInSeconds or MaxFramesNumber have to be present
+		"EndTimeInSeconds": 3.5,
+
+		// optional: EndTimeInSeconds or MaxFramesNumber have to be present
+		"FramesNumber": 10,
+
+		// optional: by default the file format of the output is the same of the source media to be cut.
+		//	This parameter is needed only in case the default output file format has to be changed
+		"OutputFileFormat": "mp4",
+
+		// optional: it might contain any kind of user data (json format).
+		// The platform stores them and returns this data to the Customer 
+		// every time is requested.
+		// The UserData are involved in searches as well
+		"UserData": { },
+
+		// optional: it specifies the retention of the content.
+		//     Format: number + s (seconds) or m (minutes) or h (hours) or d (days) or M (month) or Y (year)
+		//     Examples: 10s, 45m, 4h, 7d, 3M, 1y
+		// By default it is 60m
+		"Retention": "60m",
+
+		// optional
+		"Title": "My title",
+
+		// optional
+		"Ingester": "my ingester",
+
+		// optional
+		"Keywords": "my keywords",
+
+		// optional
+		"ContentProviderName": "default",
+
+		// optional: it specifies the filename without extension when the content will be delivered
+		"DeliveryFileName": "myFileName",
+
+		// optional: by default the content is published.
+		//    It specifies if and when the content is published.
+		//    In case the content is not published, the delivery of the content will fail
+		//    Possible values can be:
+		//       - NOW
+		//       - FOREVER
+		//       - Zulu/UTC Date-time having the following format: YYYY-MM-DDTHH:MI:SSZ
+		"Publishing": {
+			"StartPublishing": "NOW",
+			"EndPublishing": "FOREVER"
+		}
+	}
+}
