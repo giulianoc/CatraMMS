@@ -3958,6 +3958,10 @@ void MMSEngineProcessor::generateAndIngestFramesTask(
         }
         */
         
+        _logger->info(__FILEREF__ + "generateFramesToIngest to be doneeeeee"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+        );
         string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
                 workspace);
 
@@ -4422,6 +4426,7 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
             + ", dependencyType: " + to_string(static_cast<int>(dependencyType))
             + ", key: " + to_string(key)
             + ", sourceMediaItemKey: " + to_string(sourceMediaItemKey)
+            + ", sourcePhysicalPathKey: " + to_string(sourcePhysicalPathKey)
             + ", sourcePhysicalPath: " + sourcePhysicalPath
         );
 
@@ -4470,6 +4475,18 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
 
             throw runtime_error(errorMessage);
         }
+
+        _logger->info(__FILEREF__ + "fillGenerateFramesParameters. Looking for the media key"
+            + ", key: " + to_string(key)
+            + ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
+            + ", dependencyType: " + to_string(static_cast<int>(dependencyType))
+            + ", key: " + to_string(key)
+            + ", sourceMediaItemKey: " + to_string(sourceMediaItemKey)
+            + ", sourcePhysicalPathKey: " + to_string(sourcePhysicalPathKey)
+            + ", sourcePhysicalPath: " + sourcePhysicalPath
+            + ", videoWidth: " + to_string(videoWidth)
+            + ", videoHeight: " + to_string(videoHeight)
+        );
 
         imageWidth = width == -1 ? videoWidth : width;
         imageHeight = height == -1 ? videoHeight : height;
