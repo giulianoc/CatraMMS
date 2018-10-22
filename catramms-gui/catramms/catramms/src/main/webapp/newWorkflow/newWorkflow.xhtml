@@ -116,7 +116,7 @@
         </p:toolbar>
 
         <p:layout id="newWorkflowLayout" style="width:100%;height: 600px">
-            <p:layoutUnit position="west" resizable="true" size="650" minSize="200" maxSize="800">
+            <p:layoutUnit position="west" resizable="true" size="680" minSize="200" maxSize="800">
                 <p:toolbar id="workflowTreeToolbar">
                     <f:facet name="left">
                         <p:commandButton id="onSuccessTooltip" icon="fa fa-check"
@@ -194,6 +194,14 @@
                                          action="#{newWorkflow.addTask('Cut')}"
                                 />
                         <p:tooltip for="cutTooltip" showEffect="clip" hideEffect="explode" position="left"/>
+
+                        <p:commandButton id="extractTracksTooltip" icon="fas fa-arrow-alt-from-bottom"
+                                         title="Extract-Tracks"
+                                         disabled="#{!(newWorkflow.tnSelectedNode != null and (newWorkflow.tnSelectedNode.type == 'Workflow' or newWorkflow.tnSelectedNode.type == 'GroupOfTasks' or newWorkflow.tnSelectedNode.type == 'Event'))}"
+                                         update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                                         action="#{newWorkflow.addTask('Extract-Tracks')}"
+                                />
+                        <p:tooltip for="extractTracksTooltip" showEffect="clip" hideEffect="explode" position="left"/>
 
                         <span class="ui-separator">
                             <span class="ui-icon ui-icon-grip-dotted-vertical" />
