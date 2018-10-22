@@ -921,7 +921,7 @@ void FFMPEGEncoder::encodeContent(
 
         string mmsSourceAssetPathName = encodingMedatada.get("mmsSourceAssetPathName", "XXX").asString();
         int64_t durationInMilliSeconds = encodingMedatada.get("durationInMilliSeconds", -1).asInt64();
-        string encodedFileName = encodingMedatada.get("encodedFileName", "XXX").asString();
+        // string encodedFileName = encodingMedatada.get("encodedFileName", "XXX").asString();
         string stagingEncodedAssetPathName = encodingMedatada.get("stagingEncodedAssetPathName", "XXX").asString();
         string encodingProfileDetails;
         {
@@ -940,7 +940,7 @@ void FFMPEGEncoder::encodeContent(
         encoding->_ffmpeg->encodeContent(
                 mmsSourceAssetPathName,
                 durationInMilliSeconds,
-                encodedFileName,
+                // encodedFileName,
                 stagingEncodedAssetPathName,
                 encodingProfileDetails,
                 contentType == MMSEngineDBFacade::ContentType::Video,
@@ -1074,7 +1074,7 @@ void FFMPEGEncoder::overlayImageOnVideo(
         string imagePosition_X_InPixel = overlayMedatada.get("imagePosition_X_InPixel", "XXX").asString();
         string imagePosition_Y_InPixel = overlayMedatada.get("imagePosition_Y_InPixel", "XXX").asString();
 
-        string encodedFileName = overlayMedatada.get("encodedFileName", "XXX").asString();
+        // string encodedFileName = overlayMedatada.get("encodedFileName", "XXX").asString();
         string stagingEncodedAssetPathName = overlayMedatada.get("stagingEncodedAssetPathName", "XXX").asString();
         int64_t encodingJobKey = overlayMedatada.get("encodingJobKey", -1).asInt64();
         int64_t ingestionJobKey = overlayMedatada.get("ingestionJobKey", -1).asInt64();
@@ -1086,7 +1086,7 @@ void FFMPEGEncoder::overlayImageOnVideo(
             mmsSourceImageAssetPathName,
             imagePosition_X_InPixel,
             imagePosition_Y_InPixel,
-            encodedFileName,
+            // encodedFileName,
             stagingEncodedAssetPathName,
             encodingJobKey,
             ingestionJobKey);
@@ -1259,7 +1259,7 @@ void FFMPEGEncoder::overlayTextOnVideo(
         if (_mmsEngineDBFacade->isMetadataPresent(overlayTextMedatada, field))
             boxPercentageOpacity = overlayTextMedatada.get("boxPercentageOpacity", -1).asInt();
 
-        string encodedFileName = overlayTextMedatada.get("encodedFileName", "XXX").asString();
+        // string encodedFileName = overlayTextMedatada.get("encodedFileName", "XXX").asString();
         string stagingEncodedAssetPathName = overlayTextMedatada.get("stagingEncodedAssetPathName", "XXX").asString();
         int64_t encodingJobKey = overlayTextMedatada.get("encodingJobKey", -1).asInt64();
         int64_t ingestionJobKey = overlayTextMedatada.get("ingestionJobKey", -1).asInt64();
@@ -1280,7 +1280,7 @@ void FFMPEGEncoder::overlayTextOnVideo(
                 boxColor,
                 boxPercentageOpacity,
 
-                encodedFileName,
+                // encodedFileName,
                 stagingEncodedAssetPathName,
                 encodingJobKey,
                 ingestionJobKey);

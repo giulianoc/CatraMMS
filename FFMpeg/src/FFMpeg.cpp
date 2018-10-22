@@ -48,7 +48,7 @@ FFMpeg::~FFMpeg()
 void FFMpeg::encodeContent(
         string mmsSourceAssetPathName,
         int64_t durationInMilliSeconds,
-        string encodedFileName,
+        // string encodedFileName,
         string stagingEncodedAssetPathName,
         string encodingProfileDetails,
         bool isVideo,   // if false it means is audio
@@ -666,7 +666,7 @@ void FFMpeg::overlayImageOnVideo(
         string mmsSourceImageAssetPathName,
         string imagePosition_X_InPixel,
         string imagePosition_Y_InPixel,
-        string encodedFileName,
+        // string encodedFileName,
         string stagingEncodedAssetPathName,
         int64_t encodingJobKey,
         int64_t ingestionJobKey)
@@ -895,7 +895,7 @@ void FFMpeg::overlayTextOnVideo(
         string boxColor,
         int boxPercentageOpacity,
 
-        string encodedFileName,
+        // string encodedFileName,
         string stagingEncodedAssetPathName,
         int64_t encodingJobKey,
         int64_t ingestionJobKey)

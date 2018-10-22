@@ -1026,7 +1026,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                 
                 encodingMedatada["mmsSourceAssetPathName"] = mmsSourceAssetPathName;
                 encodingMedatada["durationInMilliSeconds"] = (Json::LargestUInt) (_encodingItem->_encodeData->_durationInMilliSeconds);
-                encodingMedatada["encodedFileName"] = encodedFileName;
+                // encodingMedatada["encodedFileName"] = encodedFileName;
                 encodingMedatada["stagingEncodedAssetPathName"] = stagingEncodedAssetPathName;
                 Json::Value encodingDetails;
                 {
@@ -1762,7 +1762,7 @@ string EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
     }
     
     string stagingEncodedAssetPathName;
-    string encodedFileName;
+    // string encodedFileName;
     string mmsSourceVideoAssetPathName;
     string mmsSourceImageAssetPathName;
 
@@ -1804,18 +1804,21 @@ string EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
             throw runtime_error(errorMessage);
         }
 
+        /*
         encodedFileName =
                 to_string(_encodingItem->_ingestionJobKey)
                 + "_"
                 + to_string(_encodingItem->_encodingJobKey)
                 + _encodingItem->_overlayImageOnVideoData->_videoFileName.substr(extensionIndex)
                 ;
+        */
 
         string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
                 _encodingItem->_workspace);
         stagingEncodedAssetPathName = 
                 workspaceIngestionRepository + "/" 
                 + to_string(_encodingItem->_ingestionJobKey)
+                + "_overlayedimage"
                 + _encodingItem->_overlayImageOnVideoData->_videoFileName.substr(extensionIndex)
                 ;
         /*
@@ -1915,7 +1918,7 @@ string EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
                 overlayMedatada["mmsSourceImageAssetPathName"] = mmsSourceImageAssetPathName;
                 overlayMedatada["imagePosition_X_InPixel"] = imagePosition_X_InPixel;
                 overlayMedatada["imagePosition_Y_InPixel"] = imagePosition_Y_InPixel;
-                overlayMedatada["encodedFileName"] = encodedFileName;
+                // overlayMedatada["encodedFileName"] = encodedFileName;
                 overlayMedatada["stagingEncodedAssetPathName"] = stagingEncodedAssetPathName;
                 overlayMedatada["encodingJobKey"] = (Json::LargestUInt) (_encodingItem->_encodingJobKey);
                 overlayMedatada["ingestionJobKey"] = (Json::LargestUInt) (_encodingItem->_ingestionJobKey);
@@ -2262,7 +2265,7 @@ void EncoderVideoAudioProxy::processOverlayedImageOnVideo(string stagingEncodedA
 
             throw runtime_error(errorMessage);
         }
-        string sourceFileName = stagingEncodedAssetPathName.substr(fileNameIndex + 1, extensionIndex);
+        string sourceFileName = stagingEncodedAssetPathName.substr(fileNameIndex + 1, extensionIndex - (fileNameIndex + 1));
 
         
         string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
@@ -2611,7 +2614,7 @@ string EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
     }
     
     string stagingEncodedAssetPathName;
-    string encodedFileName;
+    // string encodedFileName;
     string mmsSourceVideoAssetPathName;
 
     
@@ -2646,19 +2649,20 @@ string EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
             throw runtime_error(errorMessage);
         }
 
+        /*
         encodedFileName =
                 to_string(_encodingItem->_ingestionJobKey)
                 + "_"
                 + to_string(_encodingItem->_encodingJobKey)
                 + _encodingItem->_overlayTextOnVideoData->_videoFileName.substr(extensionIndex)
                 ;
-
+        */
         string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
                 _encodingItem->_workspace);
         stagingEncodedAssetPathName = 
                 workspaceIngestionRepository + "/" 
                 + to_string(_encodingItem->_ingestionJobKey)
-                + "_overlaytext"
+                + "_overlayedtext"
                 + _encodingItem->_overlayTextOnVideoData->_videoFileName.substr(extensionIndex)
                 ;
         /*
@@ -2712,7 +2716,7 @@ string EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
                 overlayTextMedatada["boxColor"] = boxColor;
                 overlayTextMedatada["boxPercentageOpacity"] = boxPercentageOpacity;
                 
-                overlayTextMedatada["encodedFileName"] = encodedFileName;
+                // overlayTextMedatada["encodedFileName"] = encodedFileName;
                 overlayTextMedatada["stagingEncodedAssetPathName"] = stagingEncodedAssetPathName;
                 overlayTextMedatada["encodingJobKey"] = (Json::LargestUInt) (_encodingItem->_encodingJobKey);
                 overlayTextMedatada["ingestionJobKey"] = (Json::LargestUInt) (_encodingItem->_ingestionJobKey);
@@ -3079,7 +3083,7 @@ void EncoderVideoAudioProxy::processOverlayedTextOnVideo(string stagingEncodedAs
 
             throw runtime_error(errorMessage);
         }
-        string sourceFileName = stagingEncodedAssetPathName.substr(fileNameIndex + 1, extensionIndex);
+        string sourceFileName = stagingEncodedAssetPathName.substr(fileNameIndex + 1, extensionIndex - (fileNameIndex + 1));
 
         
         string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
@@ -3926,7 +3930,7 @@ string EncoderVideoAudioProxy::slideShow_through_ffmpeg()
     }
     
     string slideShowMediaPathName;
-    string encodedFileName;
+    // string encodedFileName;
 
     
     #ifdef __LOCALENCODER__
@@ -3943,12 +3947,14 @@ string EncoderVideoAudioProxy::slideShow_through_ffmpeg()
     {        
         string fileFormat = "mp4";
 
+        /*
         encodedFileName =
                 to_string(_encodingItem->_ingestionJobKey)
                 + "_"
                 + to_string(_encodingItem->_encodingJobKey)
                 + "." + fileFormat
                 ;
+        */
 
         string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
                 _encodingItem->_workspace);
@@ -4335,7 +4341,7 @@ void EncoderVideoAudioProxy::processSlideShow(string stagingEncodedAssetPathName
 
             throw runtime_error(errorMessage);
         }
-        string sourceFileName = stagingEncodedAssetPathName.substr(fileNameIndex + 1, extensionIndex);
+        string sourceFileName = stagingEncodedAssetPathName.substr(fileNameIndex + 1, extensionIndex - (fileNameIndex + 1));
 
 
         

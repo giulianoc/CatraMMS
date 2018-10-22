@@ -1078,7 +1078,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                         parametersRoot,
                                         dependencies);
                                 }
-                                else
+                                else // Frame
                                 {
                                     generateAndIngestFramesTask(
                                         ingestionJobKey, 
@@ -4414,7 +4414,16 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
                     = mediaItemKeyContentTypeAndUserData;
             
             sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourcePhysicalPathKey);
-       }
+        }
+        
+        _logger->info(__FILEREF__ + "fillGenerateFramesParameters. Looking for the media key"
+            + ", key: " + to_string(key)
+            + ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
+            + ", dependencyType: " + to_string(static_cast<int>(dependencyType))
+            + ", key: " + to_string(key)
+            + ", sourceMediaItemKey: " + to_string(sourceMediaItemKey)
+            + ", sourcePhysicalPath: " + sourcePhysicalPath
+        );
 
         int videoWidth;
         int videoHeight;
