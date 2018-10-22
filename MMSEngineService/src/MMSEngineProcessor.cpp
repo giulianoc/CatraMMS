@@ -4228,6 +4228,7 @@ void MMSEngineProcessor::manageGenerateFramesTask(
         string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
                 workspace);
 
+        _logger->error(__FILEREF__ + "aaaaa");
         _mmsEngineDBFacade->addEncoding_GenerateFramesJob (
                 workspace,
                 ingestionJobKey, encodingPriority,

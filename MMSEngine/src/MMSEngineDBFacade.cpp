@@ -10376,6 +10376,21 @@ int MMSEngineDBFacade::addEncoding_GenerateFramesJob (
 
     try
     {
+        _logger->info(__FILEREF__ + "addEncoding_GenerateFramesJob"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", encodingPriority: " + toString(encodingPriority)
+            + ", imageDirectory: " + imageDirectory
+            + ", startTimeInSeconds: " + to_string(startTimeInSeconds)
+            + ", maxFramesNumber: " + to_string(maxFramesNumber)
+            + ", videoFilter: " + videoFilter
+            + ", periodInSeconds: " + to_string(periodInSeconds)
+            + ", mjpeg: " + to_string(mjpeg)
+            + ", imageWidth: " + to_string(imageWidth)
+            + ", imageHeight: " + to_string(imageHeight)
+            + ", sourceVideoPhysicalPathKey: " + to_string(sourceVideoPhysicalPathKey)
+            + ", videoDurationInMilliSeconds: " + to_string(videoDurationInMilliSeconds)
+        );
+        
         conn = _connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
