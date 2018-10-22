@@ -2265,7 +2265,7 @@ void EncoderVideoAudioProxy::processOverlayedImageOnVideo(string stagingEncodedA
 
             throw runtime_error(errorMessage);
         }
-        string sourceFileName = stagingEncodedAssetPathName.substr(fileNameIndex + 1, extensionIndex - (fileNameIndex + 1));
+        string sourceFileName = stagingEncodedAssetPathName.substr(fileNameIndex + 1);
 
         
         string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
@@ -2280,7 +2280,7 @@ void EncoderVideoAudioProxy::processOverlayedImageOnVideo(string stagingEncodedA
 
         localAssetIngestionEvent->setIngestionJobKey(_encodingItem->_ingestionJobKey);
         localAssetIngestionEvent->setIngestionSourceFileName(sourceFileName);
-        localAssetIngestionEvent->setMMSSourceFileName("");
+        localAssetIngestionEvent->setMMSSourceFileName(sourceFileName);
         localAssetIngestionEvent->setWorkspace(_encodingItem->_workspace);
         localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::AddContent);
         localAssetIngestionEvent->setIngestionRowToBeUpdatedAsSuccess(true);
@@ -3083,7 +3083,7 @@ void EncoderVideoAudioProxy::processOverlayedTextOnVideo(string stagingEncodedAs
 
             throw runtime_error(errorMessage);
         }
-        string sourceFileName = stagingEncodedAssetPathName.substr(fileNameIndex + 1, extensionIndex - (fileNameIndex + 1));
+        string sourceFileName = stagingEncodedAssetPathName.substr(fileNameIndex + 1);
 
         
         string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
@@ -3098,7 +3098,7 @@ void EncoderVideoAudioProxy::processOverlayedTextOnVideo(string stagingEncodedAs
 
         localAssetIngestionEvent->setIngestionJobKey(_encodingItem->_ingestionJobKey);
         localAssetIngestionEvent->setIngestionSourceFileName(sourceFileName);
-        localAssetIngestionEvent->setMMSSourceFileName("");
+        localAssetIngestionEvent->setMMSSourceFileName(sourceFileName);
         localAssetIngestionEvent->setWorkspace(_encodingItem->_workspace);
         localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::AddContent);
         localAssetIngestionEvent->setIngestionRowToBeUpdatedAsSuccess(true);
@@ -4341,7 +4341,7 @@ void EncoderVideoAudioProxy::processSlideShow(string stagingEncodedAssetPathName
 
             throw runtime_error(errorMessage);
         }
-        string sourceFileName = stagingEncodedAssetPathName.substr(fileNameIndex + 1, extensionIndex - (fileNameIndex + 1));
+        string sourceFileName = stagingEncodedAssetPathName.substr(fileNameIndex + 1);
 
 
         
@@ -4357,7 +4357,7 @@ void EncoderVideoAudioProxy::processSlideShow(string stagingEncodedAssetPathName
 
         localAssetIngestionEvent->setIngestionJobKey(_encodingItem->_ingestionJobKey);
         localAssetIngestionEvent->setIngestionSourceFileName(sourceFileName);
-        localAssetIngestionEvent->setMMSSourceFileName("");
+        localAssetIngestionEvent->setMMSSourceFileName(sourceFileName);
         localAssetIngestionEvent->setWorkspace(_encodingItem->_workspace);
         localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::AddContent);
         localAssetIngestionEvent->setIngestionRowToBeUpdatedAsSuccess(true);
