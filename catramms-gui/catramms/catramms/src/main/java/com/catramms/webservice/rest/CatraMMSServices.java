@@ -78,7 +78,7 @@ public class CatraMMSServices {
                 int reteUnoTrackNumber = 0;
                 int reteDueTrackNumber = 1;
                 int reteTreTrackNumber = 2;
-                String cutMediaRetention = "4d";
+                String cutMediaRetention = "3d";
                 boolean addContentPull = true;
 
                 int secondsToWaitBeforeStartProcessingAFile = 5;
