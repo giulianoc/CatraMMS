@@ -374,6 +374,28 @@ public class MediaItems extends Workspace implements Serializable {
         }
     }
 
+    public String getDurationAsString(Long durationInMilliseconds)
+    {
+        if (durationInMilliseconds == null)
+            return "";
+
+        String duration;
+
+        int hours = (int) (durationInMilliseconds / 3600000);
+        String sHours = String.format("%02d", hours);
+
+        int minutes = (int) ((durationInMilliseconds - (hours * 3600000)) / 60000);
+        String sMinutes = String.format("%02d", minutes);
+
+        int seconds = (int) ((durationInMilliseconds - ((hours * 3600000) + (minutes * 60000))) / 1000);
+        String sSeconds = String.format("%02d", seconds);
+
+        int milliSeconds = (int) (durationInMilliseconds - ((hours * 3600000) + (minutes * 60000) + (seconds * 1000)));
+        String sMilliSeconds = String.format("%03d", milliSeconds);
+
+        return sHours.concat(":").concat(sMinutes).concat(":").concat(sSeconds).concat(".").concat(sMilliSeconds);
+    }
+
     public void workspaceNameChanged()
     {
         HttpSession session = SessionUtils.getSession();
