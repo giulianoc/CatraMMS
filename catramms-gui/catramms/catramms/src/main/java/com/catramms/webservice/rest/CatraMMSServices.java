@@ -2,6 +2,7 @@ package com.catramms.webservice.rest;
 
 import com.catramms.backing.newWorkflow.IngestionResult;
 import com.catramms.utility.catramms.CatraMMS;
+import com.catramms.webservice.rest.utility.CutMediaInfo;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
@@ -481,6 +482,417 @@ public class CatraMMSServices {
         }
     }
 
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON + ";charset=utf-8")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("cutMedia2")
+    public Response cutMedia2(InputStream json, @Context HttpServletRequest pRequest
+    )
+    {
+        String response = null;
+        Long cutIngestionJobKey = null;
+
+        mLogger.info("Received cutMedia");
+
+        try
+        {
+            mLogger.info("InputStream to String..." );
+            StringWriter writer = new StringWriter();
+            IOUtils.copy(json, writer, "UTF-8");
+            String sMediaCuts = writer.toString();
+            mLogger.info("sMediaCuts (string): " + sMediaCuts);
+
+            JSONArray jaMediaCuts = new JSONArray(sMediaCuts);
+            mLogger.info("jaMediaCuts (json): " + jaMediaCuts);
+
+            DateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+
+            JSONObject joFirstMediaCut = jaMediaCuts.getJSONObject(0);
+            JSONObject joLastMediaCut = jaMediaCuts.getJSONObject(jaMediaCuts.length() - 1);
+
+            String cutMediaTitle = joFirstMediaCut.getString("title");
+            String cutMediaChannel = joFirstMediaCut.getString("channel");
+            String ingester = joFirstMediaCut.getString("userName");
+            /*
+            String cutMediaId = joCutMedia.getString("id");
+            Long cutMediaStartTimeInMilliseconds = joCutMedia.getLong("startTime");   // millisecs
+            Long cutMediaEndTimeInMilliseconds = joCutMedia.getLong("endTime");
+            String sCutMediaStartTime = simpleDateFormat.format(cutMediaStartTimeInMilliseconds);
+            String sCutMediaEndTime = simpleDateFormat.format(cutMediaEndTimeInMilliseconds);
+            */
+
+            {
+                Long userKey = new Long(1);
+                String apiKey = "SU1.8ZO1O2zTg_5SvI12rfN9oQdjRru90XbMRSvACIxfqBXMYGj8k1P9lV4ZcvMRJL";
+                String la1MediaDirectoryPathName = "/mnt/stream_recording/makitoRecording/La1/";
+                String la2MediaDirectoryPathName = "/mnt/stream_recording/makitoRecording/La2/";
+                String radioMediaDirectoryPathName = "/mnt/stream_recording/makitoRecording/Radio/";
+                int reteUnoTrackNumber = 0;
+                int reteDueTrackNumber = 1;
+                int reteTreTrackNumber = 2;
+                String cutMediaRetention = "3d";
+                boolean addContentPull = true;
+
+                int secondsToWaitBeforeStartProcessingAFile = 5;
+
+                try
+                {
+                    boolean firstOrLastChunkNotFound = false;
+
+                    mLogger.info("cutMedia"
+                            + ", cutMediaTitle: " + cutMediaTitle
+                    );
+
+                    // fill fileTreeMap with all the files within the directories
+                    TreeMap<Date, File> fileTreeMap = new TreeMap<>();
+                    {
+                        Calendar calendarStart = Calendar.getInstance();
+                        calendarStart.setTime(new Date(joFirstMediaCut.getLong("startTime")));
+                        // there is one case where we have to consider the previous dir:
+                        //  i.e.: Media start: 08:00:15 and chunk start: 08:00:32
+                        // in this case we need the last chunk of the previous dir
+                        calendarStart.add(Calendar.HOUR_OF_DAY, -1);
+
+                        Calendar calendarEnd = Calendar.getInstance();
+                        calendarEnd.setTime(new Date(joLastMediaCut.getLong("endTime")));
+                        // In case the video to cut finishes at the end of the hour, we need
+                        // the next hour to get the next file
+                        calendarEnd.add(Calendar.HOUR_OF_DAY, 1);
+
+                        DateFormat fileDateFormat = new SimpleDateFormat("yyyy/MM/dd/HH");
+
+                        while (fileDateFormat.format(calendarStart.getTime()).compareTo(
+                                fileDateFormat.format(calendarEnd.getTime())) <= 0)
+                        {
+                            String mediaDirectoryPathName;
+
+                            if (cutMediaChannel.toLowerCase().contains("la1"))
+                                mediaDirectoryPathName = la1MediaDirectoryPathName;
+                            else if (cutMediaChannel.toLowerCase().contains("la2"))
+                                mediaDirectoryPathName = la2MediaDirectoryPathName;
+                            else
+                                mediaDirectoryPathName = radioMediaDirectoryPathName;
+
+                            mediaDirectoryPathName += fileDateFormat.format(calendarStart.getTime());
+                            mLogger.info("Reading directory: " + mediaDirectoryPathName);
+                            File mediaDirectoryFile = new File(mediaDirectoryPathName);
+                            if (mediaDirectoryFile.exists())
+                            {
+                                File[] mediaFiles = mediaDirectoryFile.listFiles();
+
+                                // mediaFilesToBeManaged.addAll(Arrays.asList(mediaFiles));
+                                // fill fileTreeMap
+                                for (File mediaFile : mediaFiles)
+                                {
+                                    try {
+                                        // File mediaFile = mediaFilesToBeManaged.get(mediaFileIndex);
+
+                                        mLogger.debug("Processing mediaFile"
+                                                + ", cutMediaTitle: " + cutMediaTitle
+                                                + ", mediaFile.getName: " + mediaFile.getName()
+                                        );
+
+                                        if (mediaFile.isDirectory()) {
+                                            // mLogger.info("Found a directory, ignored. Directory name: " + mediaFile.getName());
+
+                                            continue;
+                                        } else if (new Date().getTime() - mediaFile.lastModified()
+                                                < secondsToWaitBeforeStartProcessingAFile * 1000) {
+                                            mLogger.info("Waiting at least " + secondsToWaitBeforeStartProcessingAFile + " seconds before start processing the file. File name: " + mediaFile.getName());
+
+                                            continue;
+                                        } else if (mediaFile.length() == 0) {
+                                            mLogger.debug("Waiting mediaFile size is greater than 0"
+                                                    + ", File name: " + mediaFile.getName()
+                                                    + ", File lastModified: " + simpleDateFormat.format(mediaFile.lastModified())
+                                            );
+
+                                            continue;
+                                        } else if (!mediaFile.getName().endsWith(".mp4")
+                                                && !mediaFile.getName().endsWith(".ts")) {
+                                            // mLogger.info("Found a NON mp4 file, ignored. File name: " + ftpFile.getName());
+
+                                            continue;
+                                        }
+
+                                        fileTreeMap.put(getMediaChunkStartTime(mediaFile.getName()), mediaFile);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        String errorMessage = "exception processing the " + mediaFile.getName() + " file. Exception: " + ex
+                                                + ", cutMediaTitle: " + cutMediaTitle;
+                                        mLogger.warn(errorMessage);
+
+                                        continue;
+                                    }
+                                }
+                            }
+
+                            calendarStart.add(Calendar.HOUR_OF_DAY, 1);
+                        }
+                    }
+
+                    mLogger.info("Found " + fileTreeMap.size() + " media files (" + "/" + cutMediaChannel + ")");
+
+                    // fill cutMediaInfoList
+                    List<CutMediaInfo> cutMediaInfoList = new ArrayList<>();
+                    {
+                        for (int mediaCutIndex = 0; mediaCutIndex < jaMediaCuts.length(); mediaCutIndex++)
+                        {
+                            CutMediaInfo cutMediaInfo = new CutMediaInfo();
+
+                            cutMediaInfo.setJoMediaCut(jaMediaCuts.getJSONObject(mediaCutIndex));
+                            cutMediaInfoList.add(cutMediaInfo);
+                        }
+
+                        ArrayList<Map.Entry<Date, File>> filesArray = new ArrayList(fileTreeMap.entrySet());
+
+                        for (int mediaFileIndex = 0; mediaFileIndex < filesArray.size(); mediaFileIndex++)
+                        {
+                            try
+                            {
+                                Map.Entry<Date, File> dateFileEntry = filesArray.get(mediaFileIndex);
+
+                                File mediaFile = dateFileEntry.getValue();
+                                Date mediaChunkStartTime = dateFileEntry.getKey();
+
+                                Date nextMediaChunkStart = null;
+                                if (mediaFileIndex + 1 < filesArray.size())
+                                    nextMediaChunkStart = filesArray.get(mediaFileIndex + 1).getKey();
+
+                                mLogger.info("Processing mediaFile"
+                                        + ", cutMediaTitle: " + cutMediaTitle
+                                        + ", mediaFile.getName: " + mediaFile.getName()
+                                );
+
+                                for (int mediaCutIndex = 0; mediaCutIndex < jaMediaCuts.length(); mediaCutIndex++)
+                                {
+                                    CutMediaInfo cutMediaInfo = cutMediaInfoList.get(mediaCutIndex);
+
+                                    // Channel_1-2018-06-26-10h00m39s.mp4
+                                    // mLogger.info("###Processing of the " + ftpFile.getName() + " ftp file");
+
+                                    // Date mediaChunkStartTime = getMediaChunkStartTime(mediaFile.getName());
+
+                                    // SC: Start Chunk
+                                    // PS: Playout Start, PE: Playout End
+                                    // --------------SC--------------SC--------------SC--------------SC--------------
+                                    //                        PS-------------------------------PE
+
+
+                                    if (mediaChunkStartTime.getTime() <= cutMediaInfo.getJoMediaCut().getLong("startTime")
+                                            && (nextMediaChunkStart != null && cutMediaInfo.getJoMediaCut().getLong("startTime") <= nextMediaChunkStart.getTime()))
+                                    {
+                                        // first chunk
+
+                                        cutMediaInfo.setFirstChunkFound(true);
+                                        cutMediaInfo.getFileTreeMap().put(mediaChunkStartTime, mediaFile);
+                                        cutMediaInfo.setCutStartTimeInMilliSeconds(
+                                                cutMediaInfo.getJoMediaCut().getLong("startTime") - mediaChunkStartTime.getTime());
+
+                                        if (mediaChunkStartTime.getTime() <= cutMediaInfo.getJoMediaCut().getLong("endTime")
+                                                && (nextMediaChunkStart != null && cutMediaInfo.getJoMediaCut().getLong("endTime") <= nextMediaChunkStart.getTime()))
+                                        {
+                                            // playout start-end is within just one chunk
+
+                                            cutMediaInfo.setLastChunkFound(true);
+                                        }
+
+                                        mLogger.info("Found first media chunk"
+                                                + ", cutMediaTitle: " + cutMediaTitle
+                                                + ", ftpFile.getName: " + mediaFile.getName()
+                                                + ", mediaChunkStartTime: " + mediaChunkStartTime
+                                                + ", sCutMediaStartTime: " + cutMediaInfo.getJoMediaCut().getLong("startTime")
+                                                + ", cutStartTimeInMilliSeconds: " + cutMediaInfo.getCutStartTimeInMilliSeconds()
+                                                + ", lastChunkFound: " + cutMediaInfo.isLastChunkFound()
+                                        );
+                                    }
+                                    da qui...
+                                    else if (cutMediaInfo.getJoMediaCut().getLong("startTime") <= mediaChunkStartTime.getTime()
+                                            && (nextMediaChunkStart != null && nextMediaChunkStart.getTime() <= joLastMediaCut.getLong("endTime")))
+                                    {
+                                        // internal chunk
+
+                                        mLogger.info("Found internal media chunk"
+                                                        + ", cutMediaTitle: " + cutMediaTitle
+                                                        + ", mediaFile.getName: " + mediaFile.getName()
+                                                        + ", mediaChunkStartTime: " + mediaChunkStartTime
+                                                        + ", sCutMediaStartTime: " + joFirstMediaCut.getLong("startTime")
+                                        );
+                                    }
+                                    else if (mediaChunkStartTime.getTime() <= joLastMediaCut.getLong("endTime")
+                                            && (nextMediaChunkStart != null && joLastMediaCut.getLong("endTime") <= nextMediaChunkStart.getTime()))
+                                    {
+                                        // last chunk
+
+                                        lastChunkFound = true;
+
+                                        mLogger.info("Found last media chunk"
+                                                        + ", cutMediaTitle: " + cutMediaTitle
+                                                        + ", mediaFile.getName: " + mediaFile.getName()
+                                                        + ", mediaChunkStartTime: " + mediaChunkStartTime
+                                                        + ", sCutMediaStartTime: " + joFirstMediaCut.getLong("startTime")
+                                        );
+                                    }
+                                    else
+                                    {
+                                        // external chunk
+
+                                        fileTreeMap.remove(mediaChunkStartTime);
+                                    }
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                String errorMessage = "exception processing the " + filesArray.get(mediaFileIndex).getValue().getName() + " file. Exception: " + ex
+                                        + ", cutMediaTitle: " + cutMediaTitle;
+                                mLogger.warn(errorMessage);
+
+                                continue;
+                            }
+                        }
+
+                        if (!firstChunkFound || !lastChunkFound) {
+                            String errorMessage = "First and/or Last chunk were not generated yet. No media files found"
+                                    + ", cutMediaTitle: " + cutMediaTitle
+                                    + ", cutMediaChannel: " + cutMediaChannel
+                                    + ", sCutMediaStartTime: " + joFirstMediaCut.getLong("startTime")
+                                    + ", sCutMediaEndTime: " + joLastMediaCut.getLong("endTime")
+                                    + ", firstChunkFound: " + firstChunkFound
+                                    + ", lastChunkFound: " + lastChunkFound;
+                            mLogger.warn(errorMessage);
+
+                            firstOrLastChunkNotFound = true;
+
+                            // return firstOrLastChunkNotFound;
+                            throw new Exception(errorMessage);
+                        }
+
+                        if (fileTreeMap.size() == 0) {
+                            String errorMessage = "No media files found"
+                                    + ", cutMediaTitle: " + cutMediaTitle
+                                    + ", cutMediaChannel: " + cutMediaChannel
+                                    + ", sCutMediaStartTime: " + joFirstMediaCut.getLong("startTime")
+                                    + ", sCutMediaEndTime: " + joLastMediaCut.getLong("endTime");
+                            mLogger.error(errorMessage);
+
+                            throw new Exception(errorMessage);
+                        }
+
+                        if (cutStartTimeInMilliSeconds == -1) // || cutEndTimeInSeconds == 0)
+                        {
+                            String errorMessage = "No media files found"
+                                    + ", cutMediaTitle: " + cutMediaTitle
+                                    + ", cutMediaChannel: " + cutMediaChannel
+                                    + ", sCutMediaStartTime: " + joFirstMediaCut.getLong("startTime")
+                                    + ", sCutMediaEndTime: " + joLastMediaCut.getLong("endTime");
+                            mLogger.error(errorMessage);
+
+                            throw new Exception(errorMessage);
+                        }
+                    }
+
+                    String firstFileName = fileTreeMap.firstEntry().getValue().getName();
+                    String fileExtension = firstFileName.substring(firstFileName.lastIndexOf('.') + 1);
+
+                    // build json
+                    JSONObject joWorkflow = null;
+                    String keyContentLabel;
+                    if (cutMediaChannel.equalsIgnoreCase("la1")
+                            || cutMediaChannel.equalsIgnoreCase("la2"))
+                    {
+                        keyContentLabel = "Cut: " + cutMediaTitle;
+
+                        joWorkflow = buildTVJson2(cutMediaTitle, keyContentLabel, ingester, fileExtension,
+                                addContentPull, cutMediaRetention, cutStartTimeInMilliSeconds, jaMediaCuts, cutMediaChannel,
+                                fileTreeMap);
+                    }
+                    else
+                    {
+                        // radio
+
+                        int audioTrackNumber = 0;
+                        if (cutMediaChannel.equalsIgnoreCase("RETE UNO"))
+                            audioTrackNumber = reteUnoTrackNumber;
+                        else if (cutMediaChannel.equalsIgnoreCase("RETE DUE"))
+                            audioTrackNumber = reteDueTrackNumber;
+                        else if (cutMediaChannel.equalsIgnoreCase("RETE TRE"))
+                            audioTrackNumber = reteTreTrackNumber;
+
+                        keyContentLabel = "Extract: " + cutMediaTitle;
+
+                        joWorkflow = buildRadioJson_2(cutMediaTitle, keyContentLabel, ingester, fileExtension,
+                                addContentPull, cutMediaRetention,
+                                cutStartTimeInMilliSeconds, cutMediaEndTimeInMilliseconds - cutMediaStartTimeInMilliseconds,
+                                cutMediaId, cutMediaChannel, sCutMediaStartTime, sCutMediaEndTime,
+                                audioTrackNumber, fileTreeMap);
+                    }
+
+                    {
+                        List<IngestionResult> ingestionJobList = new ArrayList<>();
+
+                        CatraMMS catraMMS = new CatraMMS();
+
+                        IngestionResult workflowRoot = catraMMS.ingestWorkflow(userKey.toString(), apiKey,
+                                joWorkflow.toString(4), ingestionJobList);
+
+                        if (!addContentPull)
+                            ingestBinaries(userKey, apiKey, cutMediaChannel, fileTreeMap, ingestionJobList);
+
+                        for (IngestionResult ingestionResult: ingestionJobList)
+                        {
+                            if (ingestionResult.getLabel().equals(keyContentLabel))
+                            {
+                                cutIngestionJobKey = ingestionResult.getKey();
+
+                                break;
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    String errorMessage = "Exception: " + ex;
+                    mLogger.error(errorMessage);
+
+                    throw ex;
+                }
+            }
+
+            // here cutIngestionJobKey should be != null, anyway we will do the check
+            if (cutIngestionJobKey == null)
+            {
+                String errorMessage = "cutIngestionJobKey is null!!!";
+                mLogger.error(errorMessage);
+
+                throw new Exception(errorMessage);
+            }
+
+            response = "{\"status\": \"Success\", "
+                    + "\"cutIngestionJobKey\": " + cutIngestionJobKey + ", "
+                    + "\"errMsg\": null }";
+            mLogger.info("cutMedia response: " + response);
+
+            return Response.ok(response).build();
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "cutMedia failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            response = "{\"status\": \"Failed\", "
+                    + "\"errMsg\": \"" + errorMessage + "\" "
+                    + "}";
+
+            mLogger.info("cutMedia response: " + response);
+
+            if (e.getMessage().toLowerCase().contains("no media files found"))
+                return Response.status(510).entity(response).build();
+            else
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(response).build();
+        }
+    }
+
     private Date getMediaChunkStartTime(String mediaFileName)
             throws Exception
     {
@@ -606,6 +1018,257 @@ public class CatraMMSServices {
                         joCutUserData.put("Channel", cutMediaChannel);
                         joCutUserData.put("StartTime", sCutMediaStartTime);
                         joCutUserData.put("EndTime", sCutMediaEndTime);
+                    }
+                }
+            }
+            else
+            {
+                File mediaFile = fileTreeMap.firstEntry().getValue();
+
+                JSONObject joAddContent = new JSONObject();
+                joWorkflow.put("Task", joAddContent);
+
+                joAddContent.put("Label", mediaFile.getName());
+                joAddContent.put("Type", "Add-Content");
+
+                JSONObject joAddContentParameters = new JSONObject();
+                joAddContent.put("Parameters", joAddContentParameters);
+
+                joAddContentParameters.put("Ingester", ingester);
+                joAddContentParameters.put("FileFormat", fileExtension);
+                joAddContentParameters.put("Retention", "0");
+                joAddContentParameters.put("Title", mediaFile.getName());
+                joAddContentParameters.put("FileSizeInBytes", mediaFile.length());
+                if (addContentPull)
+                    joAddContentParameters.put("SourceURL", "copy://" + mediaFile.getAbsolutePath());
+
+                joCut = new JSONObject();
+                {
+                    JSONObject joAddContentOnSuccess = new JSONObject();
+                    joAddContent.put("OnSuccess", joAddContentOnSuccess);
+
+                    joAddContentOnSuccess.put("Task", joCut);
+
+                    joCut.put("Label", keyLabel);
+                    joCut.put("Type", "Cut");
+
+                    JSONObject joCutParameters = new JSONObject();
+                    joCut.put("Parameters", joCutParameters);
+
+                    joCutParameters.put("Ingester", ingester);
+                    joCutParameters.put("Retention", cutMediaRetention);
+                    joCutParameters.put("Title", keyTitle);
+                    {
+                        joCutParameters.put("OutputFileFormat", "mp4");
+
+                        double cutStartTimeInSeconds = ((double) cutStartTimeInMilliSeconds) / 1000;
+                        joCutParameters.put("StartTimeInSeconds", cutStartTimeInSeconds);
+
+                        Calendar calendar = Calendar.getInstance();
+                        calendar.setTime(new Date(cutStartTimeInMilliSeconds));
+                        calendar.add(Calendar.MILLISECOND, (int) (cutMediaDurationInMilliSeconds.longValue()));
+
+                        double cutEndTimeInSeconds = ((double) calendar.getTime().getTime()) / 1000;
+                        joCutParameters.put("EndTimeInSeconds", cutEndTimeInSeconds);
+                    }
+
+                    {
+                        JSONObject joCutUserData = new JSONObject();
+                        joCutParameters.put("UserData", joCutUserData);
+
+                        joCutUserData.put("Channel", cutMediaChannel);
+                        joCutUserData.put("StartTime", sCutMediaStartTime);
+                        joCutUserData.put("EndTime", sCutMediaEndTime);
+                    }
+                }
+            }
+
+            {
+                JSONObject joCutOnSuccess = new JSONObject();
+                joCut.put("OnSuccess", joCutOnSuccess);
+
+                JSONObject joGroupOfTasks = new JSONObject();
+                joCutOnSuccess.put("Task", joGroupOfTasks);
+
+                joGroupOfTasks.put("Type", "GroupOfTasks");
+
+                JSONObject joParameters = new JSONObject();
+                joGroupOfTasks.put("Parameters", joParameters);
+
+                joParameters.put("ExecutionType", "parallel");
+
+                JSONArray jaTasks = new JSONArray();
+                joParameters.put("Tasks", jaTasks);
+
+                {
+                    JSONObject joCallback = new JSONObject();
+                    jaTasks.put(joCallback);
+
+                    joCallback.put("Label", "Callback: " + keyTitle);
+                    joCallback.put("Type", "HTTP-Callback");
+
+                    JSONObject joCallbackParameters = new JSONObject();
+                    joCallback.put("Parameters", joCallbackParameters);
+
+                    joCallbackParameters.put("Protocol", "http");
+                    joCallbackParameters.put("HostName", "mp-backend.rsi.ch");
+                    joCallbackParameters.put("Port", 80);
+                    joCallbackParameters.put("URI",
+                            "/metadataProcessorService/rest/veda/playoutMedia/" + cutMediaId + "/mmsFinished");
+                    joCallbackParameters.put("Parameters", "");
+                    joCallbackParameters.put("Method", "GET");
+                    joCallbackParameters.put("Timeout", 60);
+
+                                /*
+                                JSONArray jaHeaders = new JSONArray();
+                                joCallbackParameters.put("Headers", jaHeaders);
+
+                                jaHeaders.put("");
+                                */
+                }
+
+                {
+                    JSONObject joEncode = new JSONObject();
+                    jaTasks.put(joEncode);
+
+                    joEncode.put("Label", "Encode: " + keyTitle);
+                    joEncode.put("Type", "Encode");
+
+                    JSONObject joEncodeParameters = new JSONObject();
+                    joEncode.put("Parameters", joEncodeParameters);
+
+                    joEncodeParameters.put("EncodingPriority", "Low");
+                    joEncodeParameters.put("EncodingProfileLabel", "MMS_H264_veryslow_360p25_aac_92");
+                }
+            }
+            mLogger.info("Ready for the ingest"
+                    + ", sCutMediaStartTime: " + sCutMediaStartTime
+                    + ", sCutMediaEndTime: " + sCutMediaEndTime
+                    // + ", cutStartTimeInSeconds: " + cutStartTimeInSeconds
+                    // + ", cutEndTimeInSeconds: " + cutEndTimeInSeconds
+                    + ", fileTreeMap.size: " + fileTreeMap.size()
+                    + ", json Workflow: " + joWorkflow.toString(4));
+
+            return joWorkflow;
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "buildTVJson failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw e;
+        }
+    }
+
+    private JSONObject buildTVJson2(String keyTitle, String keyLabel, String ingester, String fileExtension,
+                                   boolean addContentPull, String cutMediaRetention,
+                                   Long cutStartTimeInMilliSeconds, JSONArray jaMediaCuts,
+                                    String cutMediaChannel, String sCutMediaStartTime, String sCutMediaEndTime,
+                                   TreeMap<Date, File> fileTreeMap)
+            throws Exception
+    {
+        try {
+            JSONObject joWorkflow = new JSONObject();
+            joWorkflow.put("Type", "Workflow");
+            joWorkflow.put("Label", keyTitle);
+
+            JSONObject joCut = null;
+
+            if (fileTreeMap.size() > 1)
+            {
+                JSONObject joGroupOfTasks = new JSONObject();
+                joWorkflow.put("Task", joGroupOfTasks);
+
+                joGroupOfTasks.put("Type", "GroupOfTasks");
+
+                JSONObject joParameters = new JSONObject();
+                joGroupOfTasks.put("Parameters", joParameters);
+
+                joParameters.put("ExecutionType", "parallel");
+
+                JSONArray jaTasks = new JSONArray();
+                joParameters.put("Tasks", jaTasks);
+
+                for (Date fileDate : fileTreeMap.keySet())
+                {
+                    File mediaFile = fileTreeMap.get(fileDate);
+
+                    JSONObject joAddContent = new JSONObject();
+                    jaTasks.put(joAddContent);
+
+                    joAddContent.put("Label", mediaFile.getName());
+                    joAddContent.put("Type", "Add-Content");
+
+                    JSONObject joAddContentParameters = new JSONObject();
+                    joAddContent.put("Parameters", joAddContentParameters);
+
+                    joAddContentParameters.put("Ingester", ingester);
+                    joAddContentParameters.put("FileFormat", fileExtension);
+                    joAddContentParameters.put("Retention", "0");
+                    joAddContentParameters.put("Title", mediaFile.getName());
+                    joAddContentParameters.put("FileSizeInBytes", mediaFile.length());
+                    if (addContentPull)
+                        joAddContentParameters.put("SourceURL", "copy://" + mediaFile.getAbsolutePath());
+                }
+
+                for (int mediaCutIndex = 0; mediaCutIndex < jaMediaCuts.length(); mediaCutIndex++)
+                {
+                    JSONObject joConcatDemux = new JSONObject();
+                    {
+                        JSONObject joGroupOfTasksOnSuccess = new JSONObject();
+                        joGroupOfTasks.put("OnSuccess", joGroupOfTasksOnSuccess);
+
+                        joGroupOfTasksOnSuccess.put("Task", joConcatDemux);
+
+                        joConcatDemux.put("Label", "Concat: " + keyTitle);
+                        joConcatDemux.put("Type", "Concat-Demuxer");
+
+                        JSONObject joConcatDemuxParameters = new JSONObject();
+                        joConcatDemux.put("Parameters", joConcatDemuxParameters);
+
+                        joConcatDemuxParameters.put("Ingester", ingester);
+                        joConcatDemuxParameters.put("Retention", "0");
+                        joConcatDemuxParameters.put("Title", "Concat: " + keyTitle);
+                    }
+
+                    joCut = new JSONObject();
+                    {
+                        JSONObject joConcatDemuxOnSuccess = new JSONObject();
+                        joConcatDemux.put("OnSuccess", joConcatDemuxOnSuccess);
+
+                        joConcatDemuxOnSuccess.put("Task", joCut);
+
+                        joCut.put("Label", keyLabel);
+                        joCut.put("Type", "Cut");
+
+                        JSONObject joCutParameters = new JSONObject();
+                        joCut.put("Parameters", joCutParameters);
+
+                        joCutParameters.put("Ingester", ingester);
+                        joCutParameters.put("Retention", cutMediaRetention);
+                        joCutParameters.put("Title", keyTitle);
+                        {
+                            joCutParameters.put("OutputFileFormat", "mp4");
+
+                            double cutStartTimeInSeconds = ((double) cutStartTimeInMilliSeconds) / 1000;
+                            joCutParameters.put("StartTimeInSeconds", cutStartTimeInSeconds);
+
+                            Calendar calendar = Calendar.getInstance();
+                            calendar.setTime(new Date(cutStartTimeInMilliSeconds));
+                            calendar.add(Calendar.MILLISECOND, (int) (cutMediaDurationInMilliSeconds.longValue()));
+
+                            double cutEndTimeInSeconds = ((double) calendar.getTime().getTime()) / 1000;
+                            joCutParameters.put("EndTimeInSeconds", cutEndTimeInSeconds);
+                        }
+
+                        {
+                            JSONObject joCutUserData = new JSONObject();
+                            joCutParameters.put("UserData", joCutUserData);
+
+                            joCutUserData.put("Channel", cutMediaChannel);
+                            joCutUserData.put("StartTime", sCutMediaStartTime);
+                            joCutUserData.put("EndTime", sCutMediaEndTime);
+                        }
                     }
                 }
             }
