@@ -53,51 +53,51 @@ public:
     vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> validateSingleTaskMetadata(int64_t workspaceKey,
         MMSEngineDBFacade::IngestionType ingestionType, Json::Value parametersRoot);
 
-    void validateAddContentMetadata(Json::Value parametersRoot);
+    void validateAddContentMetadata(string label, Json::Value parametersRoot);
 
-    void validateRemoveContentMetadata(int64_t workspaceKey,
+    void validateRemoveContentMetadata(int64_t workspaceKey, string label,
         Json::Value parametersRoot, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
     
-    void validateEncodeMetadata(int64_t workspaceKey,
+    void validateEncodeMetadata(int64_t workspaceKey, string label,
         Json::Value parametersRoot, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
 
-    void validateFrameMetadata(int64_t workspaceKey,
+    void validateFrameMetadata(int64_t workspaceKey, string label,
         Json::Value parametersRoot, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
 
-    void validatePeriodicalFramesMetadata(int64_t workspaceKey,
+    void validatePeriodicalFramesMetadata(int64_t workspaceKey, string label,
         Json::Value parametersRoot, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
     
-    void validateIFramesMetadata(int64_t workspaceKey,
+    void validateIFramesMetadata(int64_t workspaceKey, string label,
         Json::Value parametersRoot, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
 
-    void validateSlideshowMetadata(int64_t workspaceKey,
+    void validateSlideshowMetadata(int64_t workspaceKey, string label,
         Json::Value parametersRoot, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
     
-    void validateConcatDemuxerMetadata(int64_t workspaceKey,
+    void validateConcatDemuxerMetadata(int64_t workspaceKey, string label,
         Json::Value parametersRoot, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
 
-    void validateCutMetadata(int64_t workspaceKey,
+    void validateCutMetadata(int64_t workspaceKey, string label,
         Json::Value parametersRoot, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
 
-    void validateOverlayImageOnVideoMetadata(int64_t workspaceKey,
+    void validateOverlayImageOnVideoMetadata(int64_t workspaceKey, string label,
         Json::Value parametersRoot, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
 
-    void validateOverlayTextOnVideoMetadata(int64_t workspaceKey,
+    void validateOverlayTextOnVideoMetadata(int64_t workspaceKey, string label,
         Json::Value parametersRoot, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
 
-    void validateEmailNotificationMetadata(
+    void validateEmailNotificationMetadata(string label,
         Json::Value parametersRoot, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
 
-    void validateFTPDeliveryMetadata(int64_t workspaceKey,
+    void validateFTPDeliveryMetadata(int64_t workspaceKey, string label,
         Json::Value parametersRoot, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
 
-    void validateHTTPCallbackMetadata(int64_t workspaceKey,
+    void validateHTTPCallbackMetadata(int64_t workspaceKey, string label,
         Json::Value parametersRoot, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
 
-    void validateLocalCopyMetadata(int64_t workspaceKey,
+    void validateLocalCopyMetadata(int64_t workspaceKey, string label,
         Json::Value parametersRoot, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
 
-    void validateExtractTracksMetadata(int64_t workspaceKey,
+    void validateExtractTracksMetadata(int64_t workspaceKey, string label,
         Json::Value parametersRoot, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
 
     void validateEncodingProfilesSetRootMetadata(

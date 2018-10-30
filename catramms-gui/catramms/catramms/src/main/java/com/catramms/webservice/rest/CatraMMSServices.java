@@ -1286,6 +1286,11 @@ public class CatraMMSServices {
                             {
                                 joCutParameters.put("OutputFileFormat", "mp4");
 
+                                // SC: Start Chunk
+                                // PS: Playout Start, PE: Playout End
+                                // --------------SC--------------SC--------------SC--------------SC--------------
+                                //                        PS-------------------------------PE
+
                                 double cutStartTimeInSeconds;
                                 {
                                     Date mediaChunkStartTime = cutMediaInfo.getFileTreeMap().firstEntry().getKey();
@@ -1297,9 +1302,10 @@ public class CatraMMSServices {
 
                                 double cutEndTimeInSeconds;
                                 {
+                                    Date mediaChunkStartTime = cutMediaInfo.getFileTreeMap().firstEntry().getKey();
                                     Long mediaCutEndTimeInMilliSecs = cutMediaInfo.getJoMediaCut().getLong("endTime");
 
-                                    cutEndTimeInSeconds = ((double) (cutMediaInfo.getChunksDurationInMilliSeconds() - mediaCutEndTimeInMilliSecs)) / 1000;
+                                    cutEndTimeInSeconds = ((double) (mediaCutEndTimeInMilliSecs - mediaChunkStartTime.getTime())) / 1000;
                                 }
                                 joCutParameters.put("EndTimeInSeconds", cutEndTimeInSeconds);
                             }

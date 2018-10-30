@@ -751,6 +751,11 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
         throw runtime_error(errorMessage);
     }
 
+    string label;
+    field = "Label";
+    if (isMetadataPresent(taskRoot, field))
+        label = taskRoot.get(field, "").asString();
+
     string type = taskRoot.get("Type", "XXX").asString();
     if (type == "Add-Content")
     {
@@ -771,7 +776,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validateAddContentMetadata(parametersRoot);
+        validateAddContentMetadata(label, parametersRoot);
     }
     else if (type == "Remove-Content")
     {
@@ -792,7 +797,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validateRemoveContentMetadata(workspaceKey, parametersRoot, dependencies);
+        validateRemoveContentMetadata(workspaceKey, label, parametersRoot, dependencies);
     }
     else if (type == "Encode")
     {
@@ -813,7 +818,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validateEncodeMetadata(workspaceKey, parametersRoot, dependencies);
+        validateEncodeMetadata(workspaceKey, label, parametersRoot, dependencies);
     }
     else if (type == "Frame")
     {
@@ -834,7 +839,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validateFrameMetadata(workspaceKey, parametersRoot, dependencies);        
+        validateFrameMetadata(workspaceKey, label, parametersRoot, dependencies);        
     }
     else if (type == "Periodical-Frames")
     {
@@ -855,7 +860,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validatePeriodicalFramesMetadata(workspaceKey, parametersRoot, dependencies);        
+        validatePeriodicalFramesMetadata(workspaceKey, label, parametersRoot, dependencies);        
     }
     else if (type == "Motion-JPEG-by-Periodical-Frames")
     {
@@ -876,7 +881,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validatePeriodicalFramesMetadata(workspaceKey, parametersRoot, dependencies);        
+        validatePeriodicalFramesMetadata(workspaceKey, label, parametersRoot, dependencies);        
     }
     else if (type == "I-Frames")
     {
@@ -897,7 +902,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validateIFramesMetadata(workspaceKey, parametersRoot, dependencies);        
+        validateIFramesMetadata(workspaceKey, label, parametersRoot, dependencies);        
     }
     else if (type == "Motion-JPEG-by-I-Frames")
     {
@@ -918,7 +923,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validateIFramesMetadata(workspaceKey, parametersRoot, dependencies);        
+        validateIFramesMetadata(workspaceKey, label, parametersRoot, dependencies);        
     }
     else if (type == "Slideshow")
     {
@@ -939,7 +944,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validateSlideshowMetadata(workspaceKey, parametersRoot, dependencies);        
+        validateSlideshowMetadata(workspaceKey, label, parametersRoot, dependencies);        
     }
     else if (type == "Concat-Demuxer")
     {
@@ -960,7 +965,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validateConcatDemuxerMetadata(workspaceKey, parametersRoot, dependencies);        
+        validateConcatDemuxerMetadata(workspaceKey, label, parametersRoot, dependencies);        
     }
     else if (type == "Cut")
     {
@@ -981,7 +986,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validateCutMetadata(workspaceKey, parametersRoot, dependencies);        
+        validateCutMetadata(workspaceKey, label, parametersRoot, dependencies);        
     }
     else if (type == "Overlay-Image-On-Video")
     {
@@ -1002,7 +1007,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validateOverlayImageOnVideoMetadata(workspaceKey, parametersRoot, dependencies);        
+        validateOverlayImageOnVideoMetadata(workspaceKey, label, parametersRoot, dependencies);        
     }
     else if (type == "Overlay-Text-On-Video")
     {
@@ -1023,7 +1028,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validateOverlayTextOnVideoMetadata(workspaceKey, parametersRoot, dependencies);        
+        validateOverlayTextOnVideoMetadata(workspaceKey, label, parametersRoot, dependencies);        
     }
     else if (type == "Email-Notification")
     {
@@ -1044,7 +1049,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validateEmailNotificationMetadata(parametersRoot, dependencies);        
+        validateEmailNotificationMetadata(label, parametersRoot, dependencies);        
     }
     else if (type == "FTP-Delivery")
     {
@@ -1065,7 +1070,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validateFTPDeliveryMetadata(workspaceKey, parametersRoot, dependencies);
+        validateFTPDeliveryMetadata(workspaceKey, label, parametersRoot, dependencies);
     }
     else if (type == "HTTP-Callback")
     {
@@ -1086,7 +1091,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validateHTTPCallbackMetadata(workspaceKey, parametersRoot, dependencies);
+        validateHTTPCallbackMetadata(workspaceKey, label, parametersRoot, dependencies);
     }
     else if (type == "Local-Copy")
     {
@@ -1107,7 +1112,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validateLocalCopyMetadata(workspaceKey, parametersRoot, dependencies);
+        validateLocalCopyMetadata(workspaceKey, label, parametersRoot, dependencies);
     }
     else if (type == "Extract-Tracks")
     {
@@ -1128,7 +1133,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validateExtractTracksMetadata(workspaceKey, parametersRoot, dependencies);
+        validateExtractTracksMetadata(workspaceKey, label, parametersRoot, dependencies);
     }
     else
     {
@@ -1149,71 +1154,73 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
 {
     vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>                     dependencies;
 
+    string label;
+    
     if (ingestionType == MMSEngineDBFacade::IngestionType::AddContent)
     {
-        validateAddContentMetadata(parametersRoot);
+        validateAddContentMetadata(label, parametersRoot);
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::RemoveContent)
     {
-        validateRemoveContentMetadata(workspaceKey, parametersRoot, dependencies);
+        validateRemoveContentMetadata(workspaceKey, label, parametersRoot, dependencies);
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::Encode)
     {
-        validateEncodeMetadata(workspaceKey, parametersRoot, dependencies);
+        validateEncodeMetadata(workspaceKey, label, parametersRoot, dependencies);
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::Frame)
     {
-        validateFrameMetadata(workspaceKey, parametersRoot, dependencies);        
+        validateFrameMetadata(workspaceKey, label, parametersRoot, dependencies);        
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::PeriodicalFrames
             || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByPeriodicalFrames)
     {
-        validatePeriodicalFramesMetadata(workspaceKey, parametersRoot, dependencies);        
+        validatePeriodicalFramesMetadata(workspaceKey, label, parametersRoot, dependencies);        
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::IFrames
             || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByIFrames)
     {
-        validateIFramesMetadata(workspaceKey, parametersRoot, dependencies);        
+        validateIFramesMetadata(workspaceKey, label, parametersRoot, dependencies);        
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::Slideshow)
     {
-        validateSlideshowMetadata(workspaceKey, parametersRoot, dependencies);        
+        validateSlideshowMetadata(workspaceKey, label, parametersRoot, dependencies);        
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::ConcatDemuxer)
     {
-        validateConcatDemuxerMetadata(workspaceKey, parametersRoot, dependencies);        
+        validateConcatDemuxerMetadata(workspaceKey, label, parametersRoot, dependencies);        
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::Cut)
     {
-        validateCutMetadata(workspaceKey, parametersRoot, dependencies);        
+        validateCutMetadata(workspaceKey, label, parametersRoot, dependencies);        
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::OverlayImageOnVideo)
     {
-        validateOverlayImageOnVideoMetadata(workspaceKey, parametersRoot, dependencies);        
+        validateOverlayImageOnVideoMetadata(workspaceKey, label, parametersRoot, dependencies);        
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::OverlayTextOnVideo)
     {
-        validateOverlayTextOnVideoMetadata(workspaceKey, parametersRoot, dependencies);        
+        validateOverlayTextOnVideoMetadata(workspaceKey, label, parametersRoot, dependencies);        
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::EmailNotification)
     {
-        validateEmailNotificationMetadata(parametersRoot, dependencies);        
+        validateEmailNotificationMetadata(label, parametersRoot, dependencies);        
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::FTPDelivery)
     {
-        validateFTPDeliveryMetadata(workspaceKey, parametersRoot, dependencies);        
+        validateFTPDeliveryMetadata(workspaceKey, label, parametersRoot, dependencies);        
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::HTTPCallback)
     {
-        validateHTTPCallbackMetadata(workspaceKey, parametersRoot, dependencies);        
+        validateHTTPCallbackMetadata(workspaceKey, label, parametersRoot, dependencies);        
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::LocalCopy)
     {
-        validateLocalCopyMetadata(workspaceKey, parametersRoot, dependencies);        
+        validateLocalCopyMetadata(workspaceKey, label, parametersRoot, dependencies);        
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::ExtractTracks)
     {
-        validateExtractTracksMetadata(workspaceKey, parametersRoot, dependencies);        
+        validateExtractTracksMetadata(workspaceKey, label, parametersRoot, dependencies);        
     }
     else
     {
@@ -1229,7 +1236,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
 }
 
 void Validator::validateAddContentMetadata(
-    Json::Value parametersRoot)
+    string label, Json::Value parametersRoot)
 {
     vector<string> mandatoryFields = {
         // "SourceURL",     it is optional in case of push
@@ -1245,6 +1252,7 @@ void Validator::validateAddContentMetadata(
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + mandatoryField
                     + ", sParametersRoot: " + sParametersRoot
+                    + ", label: " + label
                     ;
             _logger->error(errorMessage);
 
@@ -1259,6 +1267,7 @@ void Validator::validateAddContentMetadata(
     {
         string errorMessage = string("Unknown fileFormat")
             + ", fileFormat: " + fileFormat
+            + ", label: " + label
         ;
         _logger->error(__FILEREF__ + errorMessage);
         
@@ -1282,7 +1291,7 @@ void Validator::validateAddContentMetadata(
     */            
 }
 
-void Validator::validateRemoveContentMetadata(int64_t workspaceKey,
+void Validator::validateRemoveContentMetadata(int64_t workspaceKey, string label,
     Json::Value parametersRoot, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
 {     
     // References is optional because in case of dependency managed automatically
@@ -1294,7 +1303,9 @@ void Validator::validateRemoveContentMetadata(int64_t workspaceKey,
         if (referencesRoot.size() < 1)
         {
             string errorMessage = __FILEREF__ + "No correct number of References"
-                    + ", referencesRoot.size: " + to_string(referencesRoot.size());
+                    + ", referencesRoot.size: " + to_string(referencesRoot.size())
+                    + ", label: " + label
+                    ;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -1308,7 +1319,7 @@ void Validator::validateRemoveContentMetadata(int64_t workspaceKey,
     }    
 }
 
-void Validator::validateEncodeMetadata(int64_t workspaceKey,
+void Validator::validateEncodeMetadata(int64_t workspaceKey, string label,
     Json::Value parametersRoot, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
 {
     string field = "EncodingPriority";
@@ -1322,7 +1333,9 @@ void Validator::validateEncodeMetadata(int64_t workspaceKey,
         catch(exception e)
         {
             string errorMessage = __FILEREF__ + "Field 'EncodingPriority' is wrong"
-                    + ", EncodingPriority: " + encodingPriority;
+                    + ", EncodingPriority: " + encodingPriority
+                    + ", label: " + label
+                    ;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -1343,6 +1356,7 @@ void Validator::validateEncodeMetadata(int64_t workspaceKey,
                 + ", Field: " + encodingProfilesSetLabelField
                 + ", Field: " + encodingProfileLabelField
                 + ", Field: " + encodingProfileKeyField
+                + ", label: " + label
                 ;
         _logger->error(errorMessage);
 
@@ -1358,7 +1372,9 @@ void Validator::validateEncodeMetadata(int64_t workspaceKey,
         if (referencesRoot.size() != 1)
         {
             string errorMessage = __FILEREF__ + "No correct number of References"
-                    + ", referencesRoot.size: " + to_string(referencesRoot.size());
+                    + ", referencesRoot.size: " + to_string(referencesRoot.size())
+                    + ", label: " + label
+                    ;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -1374,7 +1390,7 @@ void Validator::validateEncodeMetadata(int64_t workspaceKey,
     }    
 }
 
-void Validator::validateFrameMetadata(int64_t workspaceKey,
+void Validator::validateFrameMetadata(int64_t workspaceKey, string label,
     Json::Value parametersRoot, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
 {
     // see sample in directory samples
@@ -1388,7 +1404,9 @@ void Validator::validateFrameMetadata(int64_t workspaceKey,
         if (referencesRoot.size() != 1)
         {
             string errorMessage = __FILEREF__ + "No correct number of References"
-                    + ", referencesRoot.size: " + to_string(referencesRoot.size());
+                    + ", referencesRoot.size: " + to_string(referencesRoot.size())
+                    + ", label: " + label
+                    ;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -1414,6 +1432,7 @@ void Validator::validateFrameMetadata(int64_t workspaceKey,
                         + ", dependencyType: " + to_string(static_cast<int>(dependencyType))
                     + ", referenceMediaItemKey: " + to_string(key)
                     + ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
+                    + ", label: " + label
                         ;
                 _logger->error(errorMessage);
 
@@ -1423,7 +1442,7 @@ void Validator::validateFrameMetadata(int64_t workspaceKey,
     }    
 }
 
-void Validator::validatePeriodicalFramesMetadata(int64_t workspaceKey,
+void Validator::validatePeriodicalFramesMetadata(int64_t workspaceKey, string label,
     Json::Value parametersRoot, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
 {
     vector<string> mandatoryFields = {
@@ -1440,6 +1459,7 @@ void Validator::validatePeriodicalFramesMetadata(int64_t workspaceKey,
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + mandatoryField
                     + ", sParametersRoot: " + sParametersRoot
+                    + ", label: " + label
                     ;
             _logger->error(errorMessage);
 
@@ -1456,7 +1476,9 @@ void Validator::validatePeriodicalFramesMetadata(int64_t workspaceKey,
         if (referencesRoot.size() != 1)
         {
             string errorMessage = __FILEREF__ + "No correct number of References"
-                    + ", referencesRoot.size: " + to_string(referencesRoot.size());
+                    + ", referencesRoot.size: " + to_string(referencesRoot.size())
+                    + ", label: " + label
+                    ;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -1482,6 +1504,7 @@ void Validator::validatePeriodicalFramesMetadata(int64_t workspaceKey,
                         + ", dependencyType: " + to_string(static_cast<int>(dependencyType))
                     + ", referenceMediaItemKey: " + to_string(key)
                     + ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
+                    + ", label: " + label
                         ;
                 _logger->error(errorMessage);
 
@@ -1491,7 +1514,7 @@ void Validator::validatePeriodicalFramesMetadata(int64_t workspaceKey,
     }        
 }
 
-void Validator::validateIFramesMetadata(int64_t workspaceKey,
+void Validator::validateIFramesMetadata(int64_t workspaceKey, string label,
     Json::Value parametersRoot, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
 {
     // see sample in directory samples
@@ -1505,7 +1528,9 @@ void Validator::validateIFramesMetadata(int64_t workspaceKey,
         if (referencesRoot.size() != 1)
         {
             string errorMessage = __FILEREF__ + "No correct number of References"
-                    + ", referencesRoot.size: " + to_string(referencesRoot.size());
+                    + ", referencesRoot.size: " + to_string(referencesRoot.size())
+                    + ", label: " + label
+                    ;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -1530,6 +1555,7 @@ void Validator::validateIFramesMetadata(int64_t workspaceKey,
                         + ", dependencyType: " + to_string(static_cast<int>(dependencyType))
                     + ", referenceMediaItemKey: " + to_string(key)
                     + ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
+                    + ", label: " + label
                         ;
                 _logger->error(errorMessage);
 
@@ -1539,7 +1565,7 @@ void Validator::validateIFramesMetadata(int64_t workspaceKey,
     }    
 }
 
-void Validator::validateSlideshowMetadata(int64_t workspaceKey,
+void Validator::validateSlideshowMetadata(int64_t workspaceKey, string label,
     Json::Value parametersRoot, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
 {    
     // References is optional because in case of dependency managed automatically
@@ -1551,7 +1577,9 @@ void Validator::validateSlideshowMetadata(int64_t workspaceKey,
         if (referencesRoot.size() < 1)
         {
             string errorMessage = __FILEREF__ + "Field is present but it does not have enough elements"
-                    + ", Field: " + field;
+                    + ", Field: " + field
+                    + ", label: " + label
+                    ;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -1577,6 +1605,7 @@ void Validator::validateSlideshowMetadata(int64_t workspaceKey,
                     + ", dependencyType: " + to_string(static_cast<int>(dependencyType))
                     + ", referenceMediaItemKey: " + to_string(key)
                     + ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
+                    + ", label: " + label
                         ;
                 _logger->error(errorMessage);
 
@@ -1586,7 +1615,7 @@ void Validator::validateSlideshowMetadata(int64_t workspaceKey,
     }
 }
 
-void Validator::validateConcatDemuxerMetadata(int64_t workspaceKey,
+void Validator::validateConcatDemuxerMetadata(int64_t workspaceKey, string label,
     Json::Value parametersRoot, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
 {
     // see sample in directory samples
@@ -1624,6 +1653,7 @@ void Validator::validateConcatDemuxerMetadata(int64_t workspaceKey,
             string errorMessage = __FILEREF__ + "Field is present but it does not refer enough elements (1)"
                     + ", Field: " + field
                     + ", dependencies.size: " + to_string(dependencies.size())
+                    + ", label: " + label
                     ;
             _logger->error(errorMessage);
 
@@ -1648,6 +1678,7 @@ void Validator::validateConcatDemuxerMetadata(int64_t workspaceKey,
                             + ", dependencyType: " + to_string(static_cast<int>(dependencyType))
                         + ", referenceMediaItemKey: " + to_string(key)
                         + ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
+                        + ", label: " + label
                             ;
                     _logger->error(errorMessage);
 
@@ -1663,6 +1694,7 @@ void Validator::validateConcatDemuxerMetadata(int64_t workspaceKey,
                         + ", dependencyType: " + to_string(static_cast<int>(dependencyType))
                         + ", referenceMediaItemKey: " + to_string(key)
                         + ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
+                        + ", label: " + label
                             ;
                     _logger->error(errorMessage);
 
@@ -1676,7 +1708,7 @@ void Validator::validateConcatDemuxerMetadata(int64_t workspaceKey,
     }
 }
 
-void Validator::validateCutMetadata(int64_t workspaceKey,
+void Validator::validateCutMetadata(int64_t workspaceKey, string label,
     Json::Value parametersRoot, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
 {
     // see sample in directory samples
@@ -1690,6 +1722,7 @@ void Validator::validateCutMetadata(int64_t workspaceKey,
         string errorMessage = __FILEREF__ + "Field is not present or it is null"
                 + ", Field: " + field
                 + ", sParametersRoot: " + sParametersRoot
+                + ", label: " + label
                 ;
         _logger->error(errorMessage);
 
@@ -1704,6 +1737,7 @@ void Validator::validateCutMetadata(int64_t workspaceKey,
         string errorMessage = __FILEREF__ + "Both fields are not present or it is null"
                 + ", Field: " + endTimeInSecondsField
                 + ", Field: " + framesNumberField
+                + ", label: " + label
                 ;
         _logger->error(errorMessage);
 
@@ -1736,7 +1770,9 @@ void Validator::validateCutMetadata(int64_t workspaceKey,
         if (dependencies.size() != 1)
         {
             string errorMessage = __FILEREF__ + "No correct number of Media to be cut"
-                    + ", dependencies.size: " + to_string(dependencies.size());
+                    + ", dependencies.size: " + to_string(dependencies.size())
+                    + ", label: " + label
+                    ;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -1756,6 +1792,7 @@ void Validator::validateCutMetadata(int64_t workspaceKey,
                         + ", dependencyType: " + to_string(static_cast<int>(dependencyType))
                     + ", referenceMediaItemKey: " + to_string(key)
                     + ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
+                    + ", label: " + label
                         ;
                 _logger->error(errorMessage);
 
@@ -1765,7 +1802,7 @@ void Validator::validateCutMetadata(int64_t workspaceKey,
     }        
 }
 
-void Validator::validateOverlayImageOnVideoMetadata(int64_t workspaceKey,
+void Validator::validateOverlayImageOnVideoMetadata(int64_t workspaceKey, string label,
     Json::Value parametersRoot, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
 {
     
@@ -1783,6 +1820,7 @@ void Validator::validateOverlayImageOnVideoMetadata(int64_t workspaceKey,
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + mandatoryField
                     + ", sParametersRoot: " + sParametersRoot
+                    + ", label: " + label
                     ;
             _logger->error(errorMessage);
 
@@ -1799,7 +1837,9 @@ void Validator::validateOverlayImageOnVideoMetadata(int64_t workspaceKey,
         if (referencesRoot.size() != 2)
         {
             string errorMessage = __FILEREF__ + "Field is present but it does not have two elements"
-                    + ", Field: " + field;
+                    + ", Field: " + field
+                    + ", label: " + label
+                    ;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -1842,6 +1882,7 @@ void Validator::validateOverlayImageOnVideoMetadata(int64_t workspaceKey,
                         + ", dependencyType_2: " + to_string(static_cast<int>(dependencyType_2))
                     + ", referenceMediaItemKey_2: " + to_string(key_2)
                     + ", referenceContentType_2: " + MMSEngineDBFacade::toString(referenceContentType_2)
+                    + ", label: " + label
                         ;
                 _logger->error(errorMessage);
 
@@ -1851,7 +1892,7 @@ void Validator::validateOverlayImageOnVideoMetadata(int64_t workspaceKey,
     }
 }
 
-void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey,
+void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey, string label,
     Json::Value parametersRoot, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
 {
     // see sample in directory samples
@@ -1869,6 +1910,7 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey,
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + mandatoryField
                     + ", sParametersRoot: " + sParametersRoot
+                    + ", label: " + label
                     ;
             _logger->error(errorMessage);
 
@@ -1885,6 +1927,7 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey,
         {
             string errorMessage = string("Unknown fontType")
                 + ", fontType: " + fontType
+                + ", label: " + label
             ;
             _logger->error(__FILEREF__ + errorMessage);
 
@@ -1901,6 +1944,7 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey,
         {
             string errorMessage = string("Unknown fontColor")
                 + ", fontColor: " + fontColor
+                + ", label: " + label
             ;
             _logger->error(__FILEREF__ + errorMessage);
 
@@ -1917,6 +1961,7 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey,
         {
             string errorMessage = string("Wrong textPercentageOpacity")
                 + ", textPercentageOpacity: " + to_string(textPercentageOpacity)
+                + ", label: " + label
             ;
             _logger->error(__FILEREF__ + errorMessage);
 
@@ -1939,6 +1984,7 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey,
         {
             string errorMessage = string("Wrong boxPercentageOpacity")
                 + ", boxPercentageOpacity: " + to_string(boxPercentageOpacity)
+                + ", label: " + label
             ;
             _logger->error(__FILEREF__ + errorMessage);
 
@@ -1957,7 +2003,9 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey,
         catch(exception e)
         {
             string errorMessage = __FILEREF__ + "Field 'EncodingPriority' is wrong"
-                    + ", EncodingPriority: " + encodingPriority;
+                    + ", EncodingPriority: " + encodingPriority
+                    + ", label: " + label
+                    ;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -1973,6 +2021,7 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey,
         {
             string errorMessage = string("Unknown boxColor")
                 + ", boxColor: " + boxColor
+                + ", label: " + label
             ;
             _logger->error(__FILEREF__ + errorMessage);
 
@@ -1989,7 +2038,9 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey,
         if (referencesRoot.size() != 1)
         {
             string errorMessage = __FILEREF__ + "No correct number of References"
-                    + ", referencesRoot.size: " + to_string(referencesRoot.size());
+                    + ", referencesRoot.size: " + to_string(referencesRoot.size())
+                    + ", label: " + label
+                    ;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -2015,6 +2066,7 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey,
                         + ", dependencyType: " + to_string(static_cast<int>(dependencyType))
                     + ", referenceMediaItemKey: " + to_string(key)
                     + ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
+                    + ", label: " + label
                         ;
                 _logger->error(errorMessage);
 
@@ -2024,7 +2076,7 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey,
     }        
 }
 
-void Validator::validateEmailNotificationMetadata(
+void Validator::validateEmailNotificationMetadata(string label,
     Json::Value parametersRoot, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
 {
     // see sample in directory samples
@@ -2044,6 +2096,7 @@ void Validator::validateEmailNotificationMetadata(
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + mandatoryField
                     + ", sParametersRoot: " + sParametersRoot
+                    + ", label: " + label
                     ;
             _logger->error(errorMessage);
 
@@ -2062,6 +2115,7 @@ void Validator::validateEmailNotificationMetadata(
             string errorMessage = __FILEREF__ + "Field is present but it does not have enough elements"
                     + ", Field: " + field
                     + ", referencesRoot.size(): " + to_string(referencesRoot.size())
+                    + ", label: " + label
                     ;
             _logger->error(errorMessage);
 
@@ -2086,6 +2140,7 @@ void Validator::validateEmailNotificationMetadata(
                     string errorMessage = __FILEREF__ + "Field is not present or it is null"
                             + ", Field: " + "Reference..."
                             + ", sParametersRoot: " + sParametersRoot
+                            + ", label: " + label
                             ;
                     _logger->error(errorMessage);
 
@@ -2111,7 +2166,7 @@ void Validator::validateEmailNotificationMetadata(
     }        
 }
 
-void Validator::validateFTPDeliveryMetadata(int64_t workspaceKey,
+void Validator::validateFTPDeliveryMetadata(int64_t workspaceKey, string label,
     Json::Value parametersRoot, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
 {
     // see sample in directory samples
@@ -2131,6 +2186,7 @@ void Validator::validateFTPDeliveryMetadata(int64_t workspaceKey,
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + mandatoryField
                     + ", sParametersRoot: " + sParametersRoot
+                    + ", label: " + label
                     ;
             _logger->error(errorMessage);
 
@@ -2149,6 +2205,7 @@ void Validator::validateFTPDeliveryMetadata(int64_t workspaceKey,
             string errorMessage = __FILEREF__ + "Field is present but it does not have enough elements"
                     + ", Field: " + field
                     + ", referencesRoot.size(): " + to_string(referencesRoot.size())
+                    + ", label: " + label
                     ;
             _logger->error(errorMessage);
 
@@ -2163,7 +2220,7 @@ void Validator::validateFTPDeliveryMetadata(int64_t workspaceKey,
     }        
 }
 
-void Validator::validateHTTPCallbackMetadata(int64_t workspaceKey,
+void Validator::validateHTTPCallbackMetadata(int64_t workspaceKey, string label,
     Json::Value parametersRoot, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
 {
     // see sample in directory samples
@@ -2182,6 +2239,7 @@ void Validator::validateHTTPCallbackMetadata(int64_t workspaceKey,
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + mandatoryField
                     + ", sParametersRoot: " + sParametersRoot
+                    + ", label: " + label
                     ;
             _logger->error(errorMessage);
 
@@ -2198,6 +2256,7 @@ void Validator::validateHTTPCallbackMetadata(int64_t workspaceKey,
         {
             string errorMessage = string("Unknown Method")
                 + ", method: " + method
+                + ", label: " + label
             ;
             _logger->error(__FILEREF__ + errorMessage);
 
@@ -2214,6 +2273,7 @@ void Validator::validateHTTPCallbackMetadata(int64_t workspaceKey,
         {
             string errorMessage = __FILEREF__ + "Field is present but it is not an array of strings"
                     + ", Field: " + field
+                    + ", label: " + label
                     ;
             _logger->error(errorMessage);
 
@@ -2226,6 +2286,7 @@ void Validator::validateHTTPCallbackMetadata(int64_t workspaceKey,
             {
                 string errorMessage = __FILEREF__ + "Field is present but it does not contain strings"
                         + ", Field: " + field
+                    + ", label: " + label
                         ;
                 _logger->error(errorMessage);
 
@@ -2245,6 +2306,7 @@ void Validator::validateHTTPCallbackMetadata(int64_t workspaceKey,
             string errorMessage = __FILEREF__ + "Field is present but it does not have enough elements"
                     + ", Field: " + field
                     + ", referencesRoot.size(): " + to_string(referencesRoot.size())
+                    + ", label: " + label
                     ;
             _logger->error(errorMessage);
 
@@ -2259,7 +2321,7 @@ void Validator::validateHTTPCallbackMetadata(int64_t workspaceKey,
     }        
 }
 
-void Validator::validateLocalCopyMetadata(int64_t workspaceKey,
+void Validator::validateLocalCopyMetadata(int64_t workspaceKey, string label,
     Json::Value parametersRoot, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
 {
     // see sample in directory samples
@@ -2277,6 +2339,7 @@ void Validator::validateLocalCopyMetadata(int64_t workspaceKey,
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + mandatoryField
                     + ", sParametersRoot: " + sParametersRoot
+                    + ", label: " + label
                     ;
             _logger->error(errorMessage);
 
@@ -2291,6 +2354,7 @@ void Validator::validateLocalCopyMetadata(int64_t workspaceKey,
         string errorMessage = __FILEREF__ + "'LocalPath' cannot be within the dedicated storage managed by MMS"
                 + ", Field: " + field
                 + ", localPath: " + localPath
+                    + ", label: " + label
                 ;
         _logger->error(errorMessage);
 
@@ -2308,6 +2372,7 @@ void Validator::validateLocalCopyMetadata(int64_t workspaceKey,
             string errorMessage = __FILEREF__ + "Field is present but it does not have enough elements"
                     + ", Field: " + field
                     + ", referencesRoot.size(): " + to_string(referencesRoot.size())
+                    + ", label: " + label
                     ;
             _logger->error(errorMessage);
 
@@ -2322,7 +2387,7 @@ void Validator::validateLocalCopyMetadata(int64_t workspaceKey,
     }        
 }
 
-void Validator::validateExtractTracksMetadata(int64_t workspaceKey,
+void Validator::validateExtractTracksMetadata(int64_t workspaceKey, string label,
     Json::Value parametersRoot, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
 {
 
@@ -2341,6 +2406,7 @@ void Validator::validateExtractTracksMetadata(int64_t workspaceKey,
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + mandatoryField
                     + ", sParametersRoot: " + sParametersRoot
+                    + ", label: " + label
                     ;
             _logger->error(errorMessage);
 
@@ -2353,7 +2419,9 @@ void Validator::validateExtractTracksMetadata(int64_t workspaceKey,
     if (tracksToot.size() == 0)
     {
         string errorMessage = __FILEREF__ + "No correct number of Tracks"
-                + ", tracksToot.size: " + to_string(tracksToot.size());
+                + ", tracksToot.size: " + to_string(tracksToot.size())
+                    + ", label: " + label
+                ;
         _logger->error(errorMessage);
 
         throw runtime_error(errorMessage);
@@ -2371,6 +2439,7 @@ void Validator::validateExtractTracksMetadata(int64_t workspaceKey,
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
                     + ", Field: " + field
                     + ", sTrackRoot: " + sTrackRoot
+                    + ", label: " + label
                     ;
             _logger->error(errorMessage);
 
@@ -2382,6 +2451,7 @@ void Validator::validateExtractTracksMetadata(int64_t workspaceKey,
             string errorMessage = __FILEREF__ + field + " is wrong (it could be only 'video' or 'audio'"
                     + ", Field: " + field
                     + ", trackType: " + trackType
+                    + ", label: " + label
                     ;
             _logger->error(errorMessage);
 
@@ -2396,6 +2466,7 @@ void Validator::validateExtractTracksMetadata(int64_t workspaceKey,
         string errorMessage = __FILEREF__ + field + " is wrong (it could be only 'video' or 'audio'"
                 + ", Field: " + field
                 + ", outputFileFormat: " + outputFileFormat
+                + ", label: " + label
                 ;
         _logger->error(__FILEREF__ + errorMessage);
         
@@ -2411,7 +2482,9 @@ void Validator::validateExtractTracksMetadata(int64_t workspaceKey,
         if (referencesRoot.size() == 0)
         {
             string errorMessage = __FILEREF__ + "No References"
-                    + ", referencesRoot.size: " + to_string(referencesRoot.size());
+                    + ", referencesRoot.size: " + to_string(referencesRoot.size())
+                    + ", label: " + label
+                    ;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -2438,6 +2511,7 @@ void Validator::validateExtractTracksMetadata(int64_t workspaceKey,
                     + ", dependencyType: " + to_string(static_cast<int>(dependencyType))
                     + ", referenceMediaItemKey: " + to_string(key)
                     + ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
+                    + ", label: " + label
                         ;
                 _logger->error(errorMessage);
 
