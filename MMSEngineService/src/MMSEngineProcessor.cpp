@@ -4907,7 +4907,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationTask(
 {
     try
     {
-        if (dependencies.size() < 2)
+        if (dependencies.size() < 1)
         {
             string errorMessage = __FILEREF__ + "No enough media to be concatenated"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -5065,8 +5065,23 @@ void MMSEngineProcessor::generateAndIngestConcatenationTask(
         string concatenatedMediaPathName = workspaceIngestionRepository + "/" 
                 + localSourceFileName;
         
-        FFMpeg ffmpeg (_configuration, _logger);
-        ffmpeg.generateConcatMediaToIngest(ingestionJobKey, sourcePhysicalPaths, concatenatedMediaPathName);
+        if (sourcePhysicalPaths.size() == 1)
+        {
+            string sourcePhysicalPath = sourcePhysicalPaths.at(0);
+            _logger->info(__FILEREF__ + "Coping"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", sourcePhysicalPath: " + sourcePhysicalPath
+                + ", concatenatedMediaPathName: " + concatenatedMediaPathName
+            );
+
+            FileIO::copyFile(sourcePhysicalPath, concatenatedMediaPathName);
+        }
+        else
+        {
+            FFMpeg ffmpeg (_configuration, _logger);
+            ffmpeg.generateConcatMediaToIngest(ingestionJobKey, sourcePhysicalPaths, concatenatedMediaPathName);
+        }
 
         _logger->info(__FILEREF__ + "generateConcatMediaToIngest done"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)

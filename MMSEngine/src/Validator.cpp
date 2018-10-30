@@ -1619,9 +1619,9 @@ void Validator::validateConcatDemuxerMetadata(int64_t workspaceKey,
         // It is not important the number of References but how many media items it refers.
         // For example ReferenceIngestionJobKey is just one Reference but it could reference
         // a log of media items in case the IngestionJob generates a log of media contents
-        if (dependencies.size() < 2)
+        if (dependencies.size() < 1)
         {
-            string errorMessage = __FILEREF__ + "Field is present but it does not refer enough elements (2)"
+            string errorMessage = __FILEREF__ + "Field is present but it does not refer enough elements (1)"
                     + ", Field: " + field
                     + ", dependencies.size: " + to_string(dependencies.size())
                     ;

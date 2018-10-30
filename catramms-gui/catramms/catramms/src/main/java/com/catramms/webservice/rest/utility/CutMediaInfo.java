@@ -11,14 +11,15 @@ public class CutMediaInfo {
     private JSONObject joMediaCut;
     private boolean firstChunkFound;
     private boolean lastChunkFound;
-    private long cutStartTimeInMilliSeconds;
+    private long chunksDurationInMilliSeconds;
 
     public CutMediaInfo()
     {
         fileTreeMap = new TreeMap<>();
+
         firstChunkFound = false;
         lastChunkFound = false;
-        cutStartTimeInMilliSeconds = -1;
+        chunksDurationInMilliSeconds = 0;
     }
 
     public TreeMap<Date, File> getFileTreeMap() {
@@ -53,11 +54,11 @@ public class CutMediaInfo {
         this.lastChunkFound = lastChunkFound;
     }
 
-    public long getCutStartTimeInMilliSeconds() {
-        return cutStartTimeInMilliSeconds;
+    public long getChunksDurationInMilliSeconds() {
+        return chunksDurationInMilliSeconds;
     }
 
-    public void setCutStartTimeInMilliSeconds(long cutStartTimeInMilliSeconds) {
-        this.cutStartTimeInMilliSeconds = cutStartTimeInMilliSeconds;
+    public void setChunksDurationInMilliSeconds(long chunksDurationInMilliSeconds) {
+        this.chunksDurationInMilliSeconds = chunksDurationInMilliSeconds;
     }
 }
