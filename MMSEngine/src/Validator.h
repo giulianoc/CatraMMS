@@ -127,6 +127,7 @@ private:
     void fillDependencies(int64_t workspaceKey,
         Json::Value parametersRoot,         
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies,
+        bool& referenceLabel,
         bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
         bool encodingProfileFieldsToBeManaged);
 };
