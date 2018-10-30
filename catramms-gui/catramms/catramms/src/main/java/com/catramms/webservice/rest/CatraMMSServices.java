@@ -515,9 +515,7 @@ public class CatraMMSServices {
             String ingester = jaMediaCuts.getJSONObject(0).getString("userName");
             String sCutMediaStartTime = simpleDateFormat.format(jaMediaCuts.getJSONObject(0).getLong("startTime"));
             String sCutMediaEndTime = simpleDateFormat.format(jaMediaCuts.getJSONObject(0).getLong("endTime"));
-            /*
-            String cutMediaId = joCutMedia.getString("id");
-            */
+            String cutMediaId = jaMediaCuts.getJSONObject(0).getString("id");
 
             {
                 Long userKey = new Long(1);
@@ -797,7 +795,7 @@ public class CatraMMSServices {
                     {
                         keyContentLabel = "Cut: " + cutMediaTitle;
 
-                        joWorkflow = buildTVJson2(cutMediaChannel, sCutMediaStartTime, sCutMediaEndTime,
+                        joWorkflow = buildTVJson2(cutMediaId, cutMediaChannel, sCutMediaStartTime, sCutMediaEndTime,
                                 cutMediaInfoList, cutMediaTitle, keyContentLabel, ingester, fileExtension,
                                 addContentPull, cutMediaRetention);
                     }
@@ -815,7 +813,7 @@ public class CatraMMSServices {
 
                         keyContentLabel = "Extract: " + cutMediaTitle;
 
-                        joWorkflow = buildRadioJson_2(cutMediaChannel, sCutMediaStartTime, sCutMediaEndTime,
+                        joWorkflow = buildRadioJson_2(cutMediaId, cutMediaChannel, sCutMediaStartTime, sCutMediaEndTime,
                                 cutMediaInfoList, cutMediaTitle, keyContentLabel, ingester, fileExtension,
                                 addContentPull, cutMediaRetention, audioTrackNumber);
                     }
@@ -1152,7 +1150,7 @@ public class CatraMMSServices {
         }
     }
 
-    private JSONObject buildTVJson2(String cutMediaChannel, String sCutMediaStartTime, String sCutMediaEndTime,
+    private JSONObject buildTVJson2(String cutMediaId, String cutMediaChannel, String sCutMediaStartTime, String sCutMediaEndTime,
                                     List<CutMediaInfo> cutMediaInfoList,
                                     String keyTitle, String keyLabel,
                                     String ingester, String fileExtension,
@@ -1315,11 +1313,12 @@ public class CatraMMSServices {
             }
 
             // on partial concat/cut success: final concat
+            JSONObject joFinalConcatDemux;
             {
                 JSONObject joPartialConcatAndCutOnSuccess = new JSONObject();
                 joPartialConcatAndCutGroupOfTasks.put("OnSuccess", joPartialConcatAndCutOnSuccess);
 
-                JSONObject joFinalConcatDemux = new JSONObject();
+                joFinalConcatDemux = new JSONObject();
                 {
                     joPartialConcatAndCutOnSuccess.put("Task", joFinalConcatDemux);
 
@@ -1357,6 +1356,65 @@ public class CatraMMSServices {
                             joReference.put("ReferenceLabel", cutLabel);
                         }
                     }
+                }
+            }
+
+            {
+                JSONObject joFinalConcatOnSuccess = new JSONObject();
+                joFinalConcatDemux.put("OnSuccess", joFinalConcatOnSuccess);
+
+                JSONObject joCallbackAndEncodeGroupOfTasks = new JSONObject();
+                joFinalConcatOnSuccess.put("Task", joCallbackAndEncodeGroupOfTasks);
+
+                joCallbackAndEncodeGroupOfTasks.put("Type", "GroupOfTasks");
+
+                JSONObject joParameters = new JSONObject();
+                joCallbackAndEncodeGroupOfTasks.put("Parameters", joParameters);
+
+                joParameters.put("ExecutionType", "parallel");
+
+                JSONArray jaTasks = new JSONArray();
+                joParameters.put("Tasks", jaTasks);
+
+                {
+                    JSONObject joCallback = new JSONObject();
+                    jaTasks.put(joCallback);
+
+                    joCallback.put("Label", "Callback: " + keyTitle);
+                    joCallback.put("Type", "HTTP-Callback");
+
+                    JSONObject joCallbackParameters = new JSONObject();
+                    joCallback.put("Parameters", joCallbackParameters);
+
+                    joCallbackParameters.put("Protocol", "http");
+                    joCallbackParameters.put("HostName", "mp-backend.rsi.ch");
+                    joCallbackParameters.put("Port", 80);
+                    joCallbackParameters.put("URI",
+                            "/metadataProcessorService/rest/veda/playoutMedia/" + cutMediaId + "/mmsFinished");
+                    joCallbackParameters.put("Parameters", "");
+                    joCallbackParameters.put("Method", "GET");
+                    joCallbackParameters.put("Timeout", 60);
+
+                                /*
+                                JSONArray jaHeaders = new JSONArray();
+                                joCallbackParameters.put("Headers", jaHeaders);
+
+                                jaHeaders.put("");
+                                */
+                }
+
+                {
+                    JSONObject joEncode = new JSONObject();
+                    jaTasks.put(joEncode);
+
+                    joEncode.put("Label", "Encode: " + keyTitle);
+                    joEncode.put("Type", "Encode");
+
+                    JSONObject joEncodeParameters = new JSONObject();
+                    joEncode.put("Parameters", joEncodeParameters);
+
+                    joEncodeParameters.put("EncodingPriority", "Low");
+                    joEncodeParameters.put("EncodingProfileLabel", "MMS_H264_veryslow_360p25_aac_92");
                 }
             }
 
@@ -1682,7 +1740,7 @@ public class CatraMMSServices {
         }
     }
 
-    private JSONObject buildRadioJson_2(String cutMediaChannel, String sCutMediaStartTime, String sCutMediaEndTime,
+    private JSONObject buildRadioJson_2(String cutMediaId, String cutMediaChannel, String sCutMediaStartTime, String sCutMediaEndTime,
                                     List<CutMediaInfo> cutMediaInfoList,
                                     String keyTitle, String keyLabel,
                                     String ingester, String fileExtension,
@@ -1873,11 +1931,12 @@ public class CatraMMSServices {
             }
 
             // on partial concat/cut success: final concat
+            JSONObject joFinalConcatDemux;
             {
                 JSONObject joPartialConcatAndCutOnSuccess = new JSONObject();
                 joPartialConcatAndCutGroupOfTasks.put("OnSuccess", joPartialConcatAndCutOnSuccess);
 
-                JSONObject joFinalConcatDemux = new JSONObject();
+                joFinalConcatDemux = new JSONObject();
                 {
                     joPartialConcatAndCutOnSuccess.put("Task", joFinalConcatDemux);
 
@@ -1915,6 +1974,65 @@ public class CatraMMSServices {
                             joReference.put("ReferenceLabel", cutLabel);
                         }
                     }
+                }
+            }
+
+            {
+                JSONObject joFinalConcatOnSuccess = new JSONObject();
+                joFinalConcatDemux.put("OnSuccess", joFinalConcatOnSuccess);
+
+                JSONObject joCallbackAndEncodeGroupOfTasks = new JSONObject();
+                joFinalConcatOnSuccess.put("Task", joCallbackAndEncodeGroupOfTasks);
+
+                joCallbackAndEncodeGroupOfTasks.put("Type", "GroupOfTasks");
+
+                JSONObject joParameters = new JSONObject();
+                joCallbackAndEncodeGroupOfTasks.put("Parameters", joParameters);
+
+                joParameters.put("ExecutionType", "parallel");
+
+                JSONArray jaTasks = new JSONArray();
+                joParameters.put("Tasks", jaTasks);
+
+                {
+                    JSONObject joCallback = new JSONObject();
+                    jaTasks.put(joCallback);
+
+                    joCallback.put("Label", "Callback: " + keyTitle);
+                    joCallback.put("Type", "HTTP-Callback");
+
+                    JSONObject joCallbackParameters = new JSONObject();
+                    joCallback.put("Parameters", joCallbackParameters);
+
+                    joCallbackParameters.put("Protocol", "http");
+                    joCallbackParameters.put("HostName", "mp-backend.rsi.ch");
+                    joCallbackParameters.put("Port", 80);
+                    joCallbackParameters.put("URI",
+                            "/metadataProcessorService/rest/veda/playoutMedia/" + cutMediaId + "/mmsFinished");
+                    joCallbackParameters.put("Parameters", "");
+                    joCallbackParameters.put("Method", "GET");
+                    joCallbackParameters.put("Timeout", 60);
+
+                                /*
+                                JSONArray jaHeaders = new JSONArray();
+                                joCallbackParameters.put("Headers", jaHeaders);
+
+                                jaHeaders.put("");
+                                */
+                }
+
+                {
+                    JSONObject joEncode = new JSONObject();
+                    jaTasks.put(joEncode);
+
+                    joEncode.put("Label", "Encode: " + keyTitle);
+                    joEncode.put("Type", "Encode");
+
+                    JSONObject joEncodeParameters = new JSONObject();
+                    joEncode.put("Parameters", joEncodeParameters);
+
+                    joEncodeParameters.put("EncodingPriority", "Low");
+                    joEncodeParameters.put("EncodingProfileLabel", "MMS_AAC_92");
                 }
             }
 
