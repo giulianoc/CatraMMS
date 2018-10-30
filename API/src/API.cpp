@@ -2945,7 +2945,8 @@ void API::ingestion(
 
             Validator validator(_logger, _mmsEngineDBFacade, _configuration);
             // it starts from the root and validate recursively the entire body
-            validator.validateRootMetadata(workspace->_workspaceKey, requestBodyRoot);
+            validator.validateIngestedRootMetadata(workspace->_workspaceKey, 
+                    requestBodyRoot);
         
             string field = "Type";
             if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))

@@ -516,7 +516,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                     try
                     {
                         Validator validator(_logger, _mmsEngineDBFacade, _configuration);
-                        
                         dependencies = validator.validateSingleTaskMetadata(
                                 workspace->_workspaceKey, ingestionType, parametersRoot);                        
                     }
