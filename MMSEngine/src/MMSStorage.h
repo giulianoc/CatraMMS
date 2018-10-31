@@ -115,6 +115,7 @@ public:
     // to give to the encoder a clean place where to write
     string getStagingAssetPathName (
 	string workspaceDirectoryName,
+        string directoryNamePrefix,
 	string relativePath,
 	string fileName,                // may be empty ("")
 	long long llMediaItemKey,       // used only if fileName is ""

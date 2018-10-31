@@ -905,6 +905,12 @@ string MMSStorage::getStreamingLinkPathName(
 
 string MMSStorage::getStagingAssetPathName(
         string workspaceDirectoryName,
+        
+        // it is a prefix of the directory name because I saw two different threads got the same dir name,
+        // even if the directory name generated here contains the datetime including millisecs. 
+        // Same dir name created a problem when the directory was removed by one thread because 
+        // it was still used by the other thread
+        string directoryNamePrefix,
         string relativePath,
         string fileName,                // may be empty ("")
         long long llMediaItemKey,       // used only if fileName is ""
@@ -960,6 +966,8 @@ string MMSStorage::getStagingAssetPathName(
         assetPathName
             .append(workspaceDirectoryName)
             .append("_")    // .append("/")
+            .append(directoryNamePrefix)
+            .append("_")
             .append(pDateTime)
             .append(relativePath);
 

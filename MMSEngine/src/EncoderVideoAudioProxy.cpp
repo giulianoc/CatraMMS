@@ -928,6 +928,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
         bool removeLinuxPathIfExist = true;
         stagingEncodedAssetPathName = _mmsStorage->getStagingAssetPathName(
             _encodingItem->_workspace->_directoryName,
+            to_string(_encodingItem->_encodingJobKey),
             "/",    // _encodingItem->_relativePath,
             encodedFileName,
             -1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""

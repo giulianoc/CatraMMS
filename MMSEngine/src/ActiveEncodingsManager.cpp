@@ -496,6 +496,7 @@ string ActiveEncodingsManager::encodeContentImage(
             bool removeLinuxPathIfExist = true;
             stagingEncodedAssetPathName = _mmsStorage->getStagingAssetPathName(
                 encodingItem->_workspace->_directoryName,
+                to_string(encodingItem->_encodingJobKey),
                 encodingItem->_encodeData->_relativePath,
                 encodedFileName,
                 -1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
@@ -526,6 +527,7 @@ string ActiveEncodingsManager::encodeContentImage(
             bool removeLinuxPathIfExist = true;
             stagingEncodedAssetPathName = _mmsStorage->getStagingAssetPathName(
                 encodingItem->_workspace->_directoryName,
+                to_string(encodingItem->_encodingJobKey),
                 "/",    // encodingItem->_encodeData->_relativePath,
                 encodedFileName,
                 -1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
