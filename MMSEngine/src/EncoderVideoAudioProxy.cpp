@@ -590,10 +590,16 @@ void EncoderVideoAudioProxy::operator()()
             if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
             {
                 Boolean_t bRemoveRecursively = true;
+                _logger->info(__FILEREF__ + "removeDirectory"
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+                );
                 FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
             }
             else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
             {
+                _logger->info(__FILEREF__ + "remove"
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+                );
                 FileIO::remove(stagingEncodedAssetPathName);
             }
         }
@@ -687,11 +693,17 @@ void EncoderVideoAudioProxy::operator()()
             // file in case of .3gp content OR directory in case of IPhone content
             if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
             {
+                _logger->info(__FILEREF__ + "removeDirectory"
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+                );
                 Boolean_t bRemoveRecursively = true;
                 FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
             }
             else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
             {
+                _logger->info(__FILEREF__ + "remove"
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+                );
                 FileIO::remove(stagingEncodedAssetPathName);
             }
         }
@@ -1258,6 +1270,9 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                             
                             try
                             {
+                                _logger->info(__FILEREF__ + "removeDirectory"
+                                    + ", stagingDirectory: " + stagingDirectory
+                                );
                                 Boolean_t bRemoveRecursively = true;
                                 FileIO::removeDirectory(stagingDirectory, bRemoveRecursively);
                             }
@@ -1675,11 +1690,17 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEn
             // file in case of .3gp content OR directory in case of IPhone content
             if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
             {
+                _logger->info(__FILEREF__ + "removeDirectory"
+                    + ", mmsAssetPathName: " + mmsAssetPathName
+                );
                 Boolean_t bRemoveRecursively = true;
                 FileIO::removeDirectory(mmsAssetPathName, bRemoveRecursively);
             }
             else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
             {
+                _logger->info(__FILEREF__ + "remove"
+                    + ", mmsAssetPathName: " + mmsAssetPathName
+                );
                 FileIO::remove(mmsAssetPathName);
             }
         }

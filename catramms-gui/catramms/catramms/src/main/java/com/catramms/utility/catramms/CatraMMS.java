@@ -898,7 +898,8 @@ public class CatraMMS {
         String mmsInfo;
         try
         {
-            String mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort + "/catramms/v1/ingestionJobs/" + ingestionJobKey;
+            String mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort
+                    + "/catramms/v1/ingestionJobs/" + ingestionJobKey;
 
             mLogger.info("mmsURL: " + mmsURL);
 
@@ -1657,6 +1658,7 @@ public class CatraMMS {
             ingestionJob.setIngestionJobKey(ingestionJobInfo.getLong("ingestionJobKey"));
             ingestionJob.setLabel(ingestionJobInfo.getString("label"));
             ingestionJob.setIngestionType(ingestionJobInfo.getString("ingestionType"));
+            ingestionJob.setMetaDataContent(ingestionJobInfo.getString("metaDataContent"));
             if (ingestionJobInfo.isNull("startProcessing"))
                 ingestionJob.setStartProcessing(null);
             else

@@ -266,7 +266,6 @@ void MMSStorage::removePhysicalPath(int64_t physicalPathKey)
                 _logger->info(__FILEREF__ + "Remove directory"
                     + ", mmsAssetPathName: " + mmsAssetPathName
                 );
-
                 bool removeRecursively = true;
                 FileIO::removeDirectory(mmsAssetPathName, removeRecursively);
             } 
@@ -275,7 +274,6 @@ void MMSStorage::removePhysicalPath(int64_t physicalPathKey)
                 _logger->info(__FILEREF__ + "Remove file"
                     + ", mmsAssetPathName: " + mmsAssetPathName
                 );
-
                 FileIO::remove(mmsAssetPathName);
             } 
             else 
@@ -359,7 +357,6 @@ void MMSStorage::removeMediaItem(int64_t mediaItemKey)
                     _logger->info(__FILEREF__ + "Remove directory"
                         + ", mmsAssetPathName: " + mmsAssetPathName
                     );
-
                     bool removeRecursively = true;
                     FileIO::removeDirectory(mmsAssetPathName, removeRecursively);
                 } 
@@ -368,7 +365,6 @@ void MMSStorage::removeMediaItem(int64_t mediaItemKey)
                     _logger->info(__FILEREF__ + "Remove file"
                         + ", mmsAssetPathName: " + mmsAssetPathName
                     );
-
                     FileIO::remove(mmsAssetPathName);
                 } 
                 else 
@@ -999,7 +995,6 @@ string MMSStorage::getStagingAssetPathName(
                     _logger->info(__FILEREF__ + "Remove directory"
                         + ", assetPathName: " + assetPathName
                     );
-
                     bool removeRecursively = true;
                     FileIO::removeDirectory(assetPathName, removeRecursively);
                 } 
@@ -1008,7 +1003,6 @@ string MMSStorage::getStagingAssetPathName(
                     _logger->info(__FILEREF__ + "Remove file"
                         + ", assetPathName: " + assetPathName
                     );
-
                     FileIO::remove(assetPathName);
                 } 
                 else 

@@ -325,7 +325,6 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
             _logger->error(__FILEREF__ + "Remove"
                 + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
             );
-
             FileIO::remove(stagingEncodedAssetPathName);
 
             _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
@@ -787,7 +786,6 @@ int64_t ActiveEncodingsManager::processEncodedImage(
         _logger->info(__FILEREF__ + "Remove"
             + ", mmsAssetPathName: " + mmsAssetPathName
         );
-
         FileIO::remove(mmsAssetPathName);
 
         throw e;

@@ -249,12 +249,16 @@ void FFMpeg::encodeContent(
                 ;
                 _logger->error(errorMessage);
 
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
                 bool exceptionInCaseOfError = false;
                 FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
 
                 throw e;
             }
 
+            _logger->info(__FILEREF__ + "Remove"
+                + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
             bool exceptionInCaseOfError = false;
             FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
 
@@ -363,6 +367,8 @@ void FFMpeg::encodeContent(
 
                     bool exceptionInCaseOfError = false;
                     removeHavingPrefixFileName(_ffmpegTempDir /* stagingEncodedAssetPath */, passlogFileName);
+                    _logger->info(__FILEREF__ + "Remove"
+                        + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
                     FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
 
                     throw e;
@@ -457,6 +463,8 @@ void FFMpeg::encodeContent(
 
                     bool exceptionInCaseOfError = false;
                     removeHavingPrefixFileName(_ffmpegTempDir /* stagingEncodedAssetPath */, passlogFileName);
+                    _logger->info(__FILEREF__ + "Remove"
+                        + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
                     FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
 
                     throw e;
@@ -464,6 +472,8 @@ void FFMpeg::encodeContent(
 
                 bool exceptionInCaseOfError = false;
                 removeHavingPrefixFileName(_ffmpegTempDir /* stagingEncodedAssetPath */, passlogFileName);
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
                 FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
             }
             else
@@ -553,12 +563,16 @@ void FFMpeg::encodeContent(
                     ;
                     _logger->error(errorMessage);
 
+                    _logger->info(__FILEREF__ + "Remove"
+                        + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
                     bool exceptionInCaseOfError = false;
                     FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
 
                     throw e;
                 }
 
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
                 bool exceptionInCaseOfError = false;
                 FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
             }
@@ -612,11 +626,15 @@ void FFMpeg::encodeContent(
             // file in case of .3gp content OR directory in case of IPhone content
             if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
             {
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
                 Boolean_t bRemoveRecursively = true;
                 FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
             }
             else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
             {
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
                 FileIO::remove(stagingEncodedAssetPathName);
             }
         }
@@ -647,11 +665,15 @@ void FFMpeg::encodeContent(
             // file in case of .3gp content OR directory in case of IPhone content
             if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
             {
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
                 Boolean_t bRemoveRecursively = true;
                 FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
             }
             else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
             {
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
                 FileIO::remove(stagingEncodedAssetPathName);
             }
         }
@@ -773,12 +795,16 @@ void FFMpeg::overlayImageOnVideo(
                     ;
                     _logger->error(errorMessage);
 
+                    _logger->info(__FILEREF__ + "Remove"
+                        + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
                     bool exceptionInCaseOfError = false;
                     FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
 
                     throw e;
                 }
 
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
                 bool exceptionInCaseOfError = false;
                 FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
             }
@@ -832,11 +858,15 @@ void FFMpeg::overlayImageOnVideo(
             // file in case of .3gp content OR directory in case of IPhone content
             if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
             {
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
                 Boolean_t bRemoveRecursively = true;
                 FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
             }
             else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
             {
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
                 FileIO::remove(stagingEncodedAssetPathName);
             }
         }
@@ -867,11 +897,15 @@ void FFMpeg::overlayImageOnVideo(
             // file in case of .3gp content OR directory in case of IPhone content
             if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
             {
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
                 Boolean_t bRemoveRecursively = true;
                 FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
             }
             else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
             {
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
                 FileIO::remove(stagingEncodedAssetPathName);
             }
         }
@@ -1046,12 +1080,16 @@ void FFMpeg::overlayTextOnVideo(
                     ;
                     _logger->error(errorMessage);
 
+                    _logger->info(__FILEREF__ + "Remove"
+                        + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
                     bool exceptionInCaseOfError = false;
                     FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
 
                     throw e;
                 }
 
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
                 bool exceptionInCaseOfError = false;
                 FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
             }
@@ -1104,11 +1142,15 @@ void FFMpeg::overlayTextOnVideo(
             // file in case of .3gp content OR directory in case of IPhone content
             if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
             {
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
                 Boolean_t bRemoveRecursively = true;
                 FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
             }
             else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
             {
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
                 FileIO::remove(stagingEncodedAssetPathName);
             }
         }
@@ -1138,11 +1180,15 @@ void FFMpeg::overlayTextOnVideo(
             // file in case of .3gp content OR directory in case of IPhone content
             if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
             {
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
                 Boolean_t bRemoveRecursively = true;
                 FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
             }
             else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
             {
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
                 FileIO::remove(stagingEncodedAssetPathName);
             }
         }
@@ -1174,6 +1220,8 @@ void FFMpeg::removeHavingPrefixFileName(string directoryName, string prefixFileN
                 {
                     bool exceptionInCaseOfError = false;
                     string pathFileName = directoryName + "/" + directoryEntry;
+                    _logger->info(__FILEREF__ + "Remove"
+                        + ", pathFileName: " + pathFileName);
                     FileIO::remove(pathFileName, exceptionInCaseOfError);
                 }
             }
@@ -1432,6 +1480,8 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
         ;
         _logger->error(errorMessage);
 
+        _logger->info(__FILEREF__ + "Remove"
+            + ", detailsPathFileName: " + detailsPathFileName);
         bool exceptionInCaseOfError = false;
         FileIO::remove(detailsPathFileName, exceptionInCaseOfError);
 
@@ -1828,6 +1878,8 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
             bitRate = atoll(bit_rate.c_str());
         }
 
+        _logger->info(__FILEREF__ + "Remove"
+            + ", detailsPathFileName: " + detailsPathFileName);
         bool exceptionInCaseOfError = false;
         FileIO::remove(detailsPathFileName, exceptionInCaseOfError);
     }
@@ -1838,6 +1890,8 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
         ;
         _logger->error(errorMessage);
 
+        _logger->info(__FILEREF__ + "Remove"
+            + ", detailsPathFileName: " + detailsPathFileName);
         bool exceptionInCaseOfError = false;
         FileIO::remove(detailsPathFileName, exceptionInCaseOfError);
 
@@ -1850,6 +1904,8 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
         ;
         _logger->error(errorMessage);
 
+        _logger->info(__FILEREF__ + "Remove"
+            + ", detailsPathFileName: " + detailsPathFileName);
         bool exceptionInCaseOfError = false;
         FileIO::remove(detailsPathFileName, exceptionInCaseOfError);
 
@@ -2050,12 +2106,16 @@ vector<string> FFMpeg::generateFramesToIngest(
         ;
         _logger->error(errorMessage);
 
+        _logger->info(__FILEREF__ + "Remove"
+            + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
         bool exceptionInCaseOfError = false;
         FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
 
         throw e;
     }
 
+    _logger->info(__FILEREF__ + "Remove"
+        + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
     bool exceptionInCaseOfError = false;
     FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
      
@@ -2215,14 +2275,22 @@ void FFMpeg::generateConcatMediaToIngest(
         _logger->error(errorMessage);
 
         bool exceptionInCaseOfError = false;
+        _logger->info(__FILEREF__ + "Remove"
+            + ", concatenationListPathName: " + concatenationListPathName);
         FileIO::remove(concatenationListPathName, exceptionInCaseOfError);
+        _logger->info(__FILEREF__ + "Remove"
+            + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
         FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
 
         throw e;
     }
 
     bool exceptionInCaseOfError = false;
+    _logger->info(__FILEREF__ + "Remove"
+        + ", concatenationListPathName: " + concatenationListPathName);
     FileIO::remove(concatenationListPathName, exceptionInCaseOfError);
+    _logger->info(__FILEREF__ + "Remove"
+        + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
     FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
 }
 
@@ -2319,17 +2387,25 @@ void FFMpeg::generateSlideshowMediaToIngest(
         ;
         _logger->error(errorMessage);
 
+        _logger->info(__FILEREF__ + "Remove"
+            + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
         bool exceptionInCaseOfError = false;
         FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
 
+        _logger->info(__FILEREF__ + "Remove"
+            + ", slideshowListPathName: " + slideshowListPathName);
         FileIO::remove(slideshowListPathName, exceptionInCaseOfError);
 
         throw e;
     }
 
+    _logger->info(__FILEREF__ + "Remove"
+        + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
     bool exceptionInCaseOfError = false;
     FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
     
+    _logger->info(__FILEREF__ + "Remove"
+        + ", slideshowListPathName: " + slideshowListPathName);
     FileIO::remove(slideshowListPathName, exceptionInCaseOfError);
 }
 
@@ -2408,12 +2484,16 @@ void FFMpeg::generateCutMediaToIngest(
         ;
         _logger->error(errorMessage);
 
+        _logger->info(__FILEREF__ + "Remove"
+            + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
         bool exceptionInCaseOfError = false;
         FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
 
         throw e;
     }
 
+    _logger->info(__FILEREF__ + "Remove"
+        + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
     bool exceptionInCaseOfError = false;
     FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
 }
@@ -2520,12 +2600,16 @@ void FFMpeg::extractTrackMediaToIngest(
         ;
         _logger->error(errorMessage);
 
+        _logger->info(__FILEREF__ + "Remove"
+            + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
         bool exceptionInCaseOfError = false;
         FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
 
         throw e;
     }
 
+    _logger->info(__FILEREF__ + "Remove"
+        + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
     bool exceptionInCaseOfError = false;
     FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
 }

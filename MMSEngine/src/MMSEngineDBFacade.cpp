@@ -4930,7 +4930,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
                 Json::Value ingestionJobsRoot(Json::arrayValue);
                 {            
                     lastSQLCommand = 
-                        "select ingestionJobKey, label, ingestionType, "
+                        "select ingestionJobKey, label, ingestionType, metaDataContent, "
                         "DATE_FORMAT(convert_tz(startProcessing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as startProcessing, "
                         "DATE_FORMAT(convert_tz(endProcessing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endProcessing, "
                         "IF(startProcessing is null, NOW(), startProcessing) as newStartProcessing, "
@@ -5111,7 +5111,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
         Json::Value ingestionJobsRoot(Json::arrayValue);
         {            
             lastSQLCommand = 
-                "select ir.ingestionRootKey, ij.ingestionJobKey, ij.label, ij.ingestionType, "
+                "select ir.ingestionRootKey, ij.ingestionJobKey, ij.label, ij.ingestionType, ij.metaDataContent, "
                 "DATE_FORMAT(convert_tz(ij.startProcessing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as startProcessing, "
                 "DATE_FORMAT(convert_tz(ij.endProcessing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endProcessing, "
                 "IF(ij.startProcessing is null, NOW(), ij.startProcessing) as newStartProcessing, "
@@ -5484,6 +5484,9 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
 
         field = "ingestionJobKey";
         ingestionJobRoot[field] = ingestionJobKey;
+
+        field = "metaDataContent";
+        ingestionJobRoot[field] = static_cast<string>(resultSet->getString("metaDataContent"));
 
         field = "label";
         if (resultSet->isNull("label"))

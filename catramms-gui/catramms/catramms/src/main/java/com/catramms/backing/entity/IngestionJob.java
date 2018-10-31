@@ -12,6 +12,7 @@ public class IngestionJob implements Serializable {
     private Long ingestionJobKey;
     private String label;
     private String ingestionType;
+    private String metaDataContent;
     private Date startProcessing;
     private Date endProcessing;
     private String status;
@@ -116,5 +117,13 @@ public class IngestionJob implements Serializable {
 
     public void setEncodingJob(EncodingJob encodingJob) {
         this.encodingJob = encodingJob;
+    }
+
+    public String getMetaDataContent() {
+        return metaDataContent;
+    }
+
+    public void setMetaDataContent(String metaDataContent) {
+        this.metaDataContent = metaDataContent;
     }
 }
