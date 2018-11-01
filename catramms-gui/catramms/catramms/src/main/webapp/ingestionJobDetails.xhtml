@@ -94,8 +94,10 @@
                     <p:outputLabel value="Type: " />
                     <p:outputLabel value="#{ingestionJobDetails.ingestionJob.ingestionType}" />
 
-                    <p:outputLabel value="Parameters: " />
-                    <p:outputLabel value="#{ingestionJobDetails.ingestionJob.metaDataContent}" />
+                    <p:outputLabel rendered="#{sessionScope.currentWorkspaceDetails.admin}"
+                                   value="Parameters: " />
+                    <p:outputLabel rendered="#{sessionScope.currentWorkspaceDetails.admin}"
+                                   value="#{ingestionJobDetails.ingestionJob.metaDataContent}" />
 
                     <p:outputLabel value="Start Processing: " />
                     <p:outputLabel value="#{ingestionJobDetails.ingestionJob.startProcessing}">

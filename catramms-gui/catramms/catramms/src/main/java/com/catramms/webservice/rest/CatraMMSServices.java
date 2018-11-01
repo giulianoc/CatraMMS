@@ -388,7 +388,7 @@ public class CatraMMSServices {
                     if (cutMediaChannel.equalsIgnoreCase("la1")
                             || cutMediaChannel.equalsIgnoreCase("la2"))
                     {
-                        keyContentLabel = "Cut: " + cutMediaTitle;
+                        keyContentLabel = cutMediaTitle;
 
                         joWorkflow = buildTVJson(cutMediaTitle, keyContentLabel, ingester, fileExtension,
                             addContentPull, cutMediaRetention,
@@ -408,7 +408,7 @@ public class CatraMMSServices {
                         else if (cutMediaChannel.equalsIgnoreCase("RETE TRE"))
                             audioTrackNumber = reteTreTrackNumber;
 
-                        keyContentLabel = "Extract: " + cutMediaTitle;
+                        keyContentLabel = cutMediaTitle;
 
                         joWorkflow = buildRadioJson(cutMediaTitle, keyContentLabel, ingester, fileExtension,
                                 addContentPull, cutMediaRetention,
@@ -684,8 +684,8 @@ public class CatraMMSServices {
 
                                         cutMediaInfo.setFirstChunkFound(true);
                                         cutMediaInfo.getFileTreeMap().put(mediaChunkStartTime, mediaFile);
-                                        cutMediaInfo.setChunksDurationInMilliSeconds(cutMediaInfo.getChunksDurationInMilliSeconds()
-                                                + (nextMediaChunkStart.getTime() - mediaChunkStartTime.getTime()));
+                                        // cutMediaInfo.setChunksDurationInMilliSeconds(cutMediaInfo.getChunksDurationInMilliSeconds()
+                                        //        + (nextMediaChunkStart.getTime() - mediaChunkStartTime.getTime()));
 
                                         if (mediaChunkStartTime.getTime() <= cutMediaInfo.getJoMediaCut().getLong("endTime")
                                                 && (nextMediaChunkStart != null && cutMediaInfo.getJoMediaCut().getLong("endTime") <= nextMediaChunkStart.getTime()))
@@ -710,8 +710,8 @@ public class CatraMMSServices {
                                         // internal chunk
 
                                         cutMediaInfo.getFileTreeMap().put(mediaChunkStartTime, mediaFile);
-                                        cutMediaInfo.setChunksDurationInMilliSeconds(cutMediaInfo.getChunksDurationInMilliSeconds()
-                                                + (nextMediaChunkStart.getTime() - mediaChunkStartTime.getTime()));
+                                        // cutMediaInfo.setChunksDurationInMilliSeconds(cutMediaInfo.getChunksDurationInMilliSeconds()
+                                        //        + (nextMediaChunkStart.getTime() - mediaChunkStartTime.getTime()));
 
                                         mLogger.info("Found internal media chunk"
                                                         + ", cutMediaTitle: " + cutMediaTitle
@@ -726,8 +726,8 @@ public class CatraMMSServices {
                                         // last chunk
 
                                         cutMediaInfo.getFileTreeMap().put(mediaChunkStartTime, mediaFile);
-                                        cutMediaInfo.setChunksDurationInMilliSeconds(cutMediaInfo.getChunksDurationInMilliSeconds()
-                                                + (nextMediaChunkStart.getTime() - mediaChunkStartTime.getTime()));
+                                        // cutMediaInfo.setChunksDurationInMilliSeconds(cutMediaInfo.getChunksDurationInMilliSeconds()
+                                        //        + (nextMediaChunkStart.getTime() - mediaChunkStartTime.getTime()));
                                         cutMediaInfo.setLastChunkFound(true);
 
                                         mLogger.info("Found last media chunk"
@@ -1919,9 +1919,10 @@ public class CatraMMSServices {
 
                                 double cutEndTimeInSeconds;
                                 {
+                                    Date mediaChunkStartTime = cutMediaInfo.getFileTreeMap().firstEntry().getKey();
                                     Long mediaCutEndTimeInMilliSecs = cutMediaInfo.getJoMediaCut().getLong("endTime");
 
-                                    cutEndTimeInSeconds = ((double) (cutMediaInfo.getChunksDurationInMilliSeconds() - mediaCutEndTimeInMilliSecs)) / 1000;
+                                    cutEndTimeInSeconds = ((double) (mediaCutEndTimeInMilliSecs - mediaChunkStartTime.getTime())) / 1000;
                                 }
                                 joCutParameters.put("EndTimeInSeconds", cutEndTimeInSeconds);
                             }
