@@ -11,16 +11,19 @@
  * Created on January 27, 2018, 9:38 AM
  */
 
-// #include <iostream>
-// #define DB_DEBUG_LOGGER(x) std::cout << x << std::endl;
-// #define DB_ERROR_LOGGER(x) std::cerr << x << std::endl;
-
 #include <random>
 #include "catralibraries/Encrypt.h"
 #include "catralibraries/FileIO.h"
 #include "MMSEngineDBFacade.h"
 #include <fstream>
 #include <sstream>
+
+shared_ptr<spdlog::logger> _globalLogger = nullptr;
+#define DB_BORROW_DEBUG_LOGGER(x) if (_globalLogger != nullptr) _globalLogger->info(x);
+#define DB_BORROW_ERROR_LOGGER(x) if (_globalLogger != nullptr) _globalLogger->info(x);
+// #include <iostream>
+// #define DB_DEBUG_LOGGER(x) std::cout << x << std::endl;
+// #define DB_ERROR_LOGGER(x) std::cerr << x << std::endl;
 
 // http://download.nust.na/pub6/mysql/tech-resources/articles/mysql-connector-cpp.html#trx
 
@@ -29,6 +32,7 @@ MMSEngineDBFacade::MMSEngineDBFacade(
         shared_ptr<spdlog::logger> logger) 
 {
     _logger     = logger;
+    _globalLogger = logger;
 
     _defaultContentProviderName     = "default";
     // _defaultTerritoryName           = "default";
