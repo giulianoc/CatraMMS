@@ -110,7 +110,7 @@
 
                     <p:outputLabel value="Encoding Priority: " />
                     <p:panel>
-                        <p:outputLabel value="#{encodingJobDetails.encodingJob.encodingPriority} (" />
+                        <p:outputLabel value="#{encodingJobDetails.encodingJob.encodingPriorityCode}: #{encodingJobDetails.encodingJob.encodingPriority} (" />
 
                         <p:commandLink rendered="#{encodingJobDetails.encodingJob.status == 'ToBeProcessed' and encodingJobDetails.encodingJob.encodingPriorityCode != 0}"
                                        value="Decrease Priority"
@@ -131,8 +131,10 @@
                         <p:outputLabel value=")" />
                     </p:panel>
 
+                    <!--
                     <p:outputLabel value="Encoding Priority code: " />
                     <p:outputLabel value="#{encodingJobDetails.encodingJob.encodingPriorityCode}" />
+                    -->
 
                     <p:outputLabel value="Max Encoding Priority code: " />
                     <p:outputLabel value="#{encodingJobDetails.encodingJob.maxEncodingPriorityCode}" />
