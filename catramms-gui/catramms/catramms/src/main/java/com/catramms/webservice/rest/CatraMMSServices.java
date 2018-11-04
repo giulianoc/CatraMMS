@@ -558,6 +558,8 @@ public class CatraMMSServices {
 
                         DateFormat fileDateFormat = new SimpleDateFormat("yyyy/MM/dd/HH");
 
+                        Date mediaFileLastModifiedTooEarly = null;
+
                         while (fileDateFormat.format(calendarStart.getTime()).compareTo(
                                 fileDateFormat.format(calendarEnd.getTime())) <= 0)
                         {
@@ -589,24 +591,47 @@ public class CatraMMSServices {
                                                 + ", mediaFile.getName: " + mediaFile.getName()
                                         );
 
-                                        if (mediaFile.isDirectory()) {
+                                        if (mediaFile.isDirectory())
+                                        {
                                             // mLogger.info("Found a directory, ignored. Directory name: " + mediaFile.getName());
 
                                             continue;
-                                        } else if (new Date().getTime() - mediaFile.lastModified()
-                                                < secondsToWaitBeforeStartProcessingAFile * 1000) {
+                                        }
+                                        else if (new Date().getTime() - mediaFile.lastModified()
+                                                < secondsToWaitBeforeStartProcessingAFile * 1000)
+                                        {
                                             mLogger.info("Waiting at least " + secondsToWaitBeforeStartProcessingAFile + " seconds before start processing the file. File name: " + mediaFile.getName());
 
+                                            // since we are skipping the media file that does not have at least secondsToWaitBeforeStartProcessingAFile,
+                                            // we have to skip also all the media files next to this one.
+                                            // This because, in case we will accept the next one we may have problems since we expect to have
+                                            // all the minutes available but this is not the case
+                                            // This scenario should not happen since we the current files does not have secondsToWaitBeforeStartProcessingAFile
+                                            // the next one should not have secondsToWaitBeforeStartProcessingAFile as well but it seems happen once.
+
+                                            mediaFileLastModifiedTooEarly = new Date(mediaFile.lastModified());
+
                                             continue;
-                                        } else if (mediaFile.length() == 0) {
+                                        }
+                                        else if (mediaFileLastModifiedTooEarly != null
+                                                && mediaFileLastModifiedTooEarly.getTime() <= mediaFile.lastModified())
+                                        {
+                                            // see above comment
+
+                                            continue;
+                                        }
+                                        else if (mediaFile.length() == 0)
+                                        {
                                             mLogger.debug("Waiting mediaFile size is greater than 0"
                                                     + ", File name: " + mediaFile.getName()
                                                     + ", File lastModified: " + simpleDateFormat.format(mediaFile.lastModified())
                                             );
 
                                             continue;
-                                        } else if (!mediaFile.getName().endsWith(".mp4")
-                                                && !mediaFile.getName().endsWith(".ts")) {
+                                        }
+                                        else if (!mediaFile.getName().endsWith(".mp4")
+                                                && !mediaFile.getName().endsWith(".ts"))
+                                        {
                                             // mLogger.info("Found a NON mp4 file, ignored. File name: " + ftpFile.getName());
 
                                             continue;
@@ -673,7 +698,7 @@ public class CatraMMSServices {
 
                                     // SC: Start Chunk
                                     // PS: Playout Start, PE: Playout End
-                                    // --------------SC--------------SC--------------SC--------------SC--------------
+                                    // --------------SC--------------SC--------------SC--------------SC (chunk not included in cutMediaInfo.getFileTreeMap()
                                     //                        PS-------------------------------PE
 
 
@@ -725,16 +750,21 @@ public class CatraMMSServices {
                                     {
                                         // last chunk
 
+                                        // SC: Start Chunk
+                                        // PS: Playout Start, PE: Playout End
+                                        // --------------SC--------------SC--------------SC--------------SC (chunk not included in cutMediaInfo.getFileTreeMap()
+                                        //                        PS-------------------------------PE
                                         cutMediaInfo.getFileTreeMap().put(mediaChunkStartTime, mediaFile);
                                         // cutMediaInfo.setChunksDurationInMilliSeconds(cutMediaInfo.getChunksDurationInMilliSeconds()
                                         //        + (nextMediaChunkStart.getTime() - mediaChunkStartTime.getTime()));
                                         cutMediaInfo.setLastChunkFound(true);
 
                                         mLogger.info("Found last media chunk"
-                                                        + ", cutMediaTitle: " + cutMediaTitle
-                                                        + ", mediaFile.getName: " + mediaFile.getName()
-                                                        + ", mediaChunkStartTime: " + mediaChunkStartTime
-                                                        + ", sCutMediaStartTime: " + cutMediaInfo.getJoMediaCut().getLong("startTime")
+                                                + ", cutMediaTitle: " + cutMediaTitle
+                                                + ", mediaFile.getName: " + mediaFile.getName()
+                                                + ", mediaChunkStartTime: " + mediaChunkStartTime
+                                                + ", sCutMediaEndTime: " + new Date(cutMediaInfo.getJoMediaCut().getLong("endTime"))
+                                                + ", nextMediaChunkStart: " + nextMediaChunkStart
                                         );
                                     }
                                 }
@@ -1286,7 +1316,7 @@ public class CatraMMSServices {
 
                                 // SC: Start Chunk
                                 // PS: Playout Start, PE: Playout End
-                                // --------------SC--------------SC--------------SC--------------SC--------------
+                                // --------------SC--------------SC--------------SC--------------SC (chunk not included in cutMediaInfo.getFileTreeMap()
                                 //                        PS-------------------------------PE
 
                                 double cutStartTimeInSeconds;
