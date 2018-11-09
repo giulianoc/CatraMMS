@@ -516,6 +516,7 @@ public class CatraMMSServices {
             String sCutMediaStartTime = simpleDateFormat.format(jaMediaCuts.getJSONObject(0).getLong("startTime"));
             String sCutMediaEndTime = simpleDateFormat.format(jaMediaCuts.getJSONObject(0).getLong("endTime"));
             String cutMediaId = jaMediaCuts.getJSONObject(0).getString("id");
+            String encodingPriority = jaMediaCuts.getJSONObject(0).getString("encodingPriority");
 
             {
                 Long userKey = new Long(1);
@@ -533,10 +534,13 @@ public class CatraMMSServices {
                 {
                     mLogger.info("cutMedia"
                             + ", cutMediaTitle: " + cutMediaTitle
+                                    + ", sCutMediaStartTime: " + sCutMediaStartTime
+                                    + ", sCutMediaEndTime: " + sCutMediaEndTime
                     );
 
                     // fill fileTreeMap with all the files within the directories
                     TreeMap<Date, File> fileTreeMap = new TreeMap<>();
+                    Date mediaFileLastModifiedTooEarly = null;
                     {
                         int secondsToWaitBeforeStartProcessingAFile = 5;
 
@@ -557,8 +561,6 @@ public class CatraMMSServices {
                         calendarEnd.add(Calendar.HOUR_OF_DAY, 1);
 
                         DateFormat fileDateFormat = new SimpleDateFormat("yyyy/MM/dd/HH");
-
-                        Date mediaFileLastModifiedTooEarly = null;
 
                         while (fileDateFormat.format(calendarStart.getTime()).compareTo(
                                 fileDateFormat.format(calendarEnd.getTime())) <= 0)
@@ -609,14 +611,9 @@ public class CatraMMSServices {
                                             // This scenario should not happen since we the current files does not have secondsToWaitBeforeStartProcessingAFile
                                             // the next one should not have secondsToWaitBeforeStartProcessingAFile as well but it seems happen once.
 
-                                            mediaFileLastModifiedTooEarly = new Date(mediaFile.lastModified());
-
-                                            continue;
-                                        }
-                                        else if (mediaFileLastModifiedTooEarly != null
-                                                && mediaFileLastModifiedTooEarly.getTime() <= mediaFile.lastModified())
-                                        {
-                                            // see above comment
+                                            if (mediaFileLastModifiedTooEarly != null
+                                                    && mediaFile.lastModified() < mediaFileLastModifiedTooEarly.getTime())
+                                                mediaFileLastModifiedTooEarly = new Date(mediaFile.lastModified());
 
                                             continue;
                                         }
@@ -678,6 +675,14 @@ public class CatraMMSServices {
                                 File mediaFile = dateFileEntry.getValue();
                                 Date mediaChunkStartTime = dateFileEntry.getKey();
 
+                                if (mediaFileLastModifiedTooEarly != null
+                                        && mediaFile.lastModified() >= mediaFileLastModifiedTooEarly.getTime())
+                                {
+                                    // see the comment where mediaFileLastModifiedTooEarly is set
+
+                                    continue;
+                                }
+
                                 Date nextMediaChunkStart = null;
                                 if (mediaFileIndex + 1 < filesArray.size())
                                     nextMediaChunkStart = filesArray.get(mediaFileIndex + 1).getKey();
@@ -715,7 +720,7 @@ public class CatraMMSServices {
                                         if (mediaChunkStartTime.getTime() <= cutMediaInfo.getJoMediaCut().getLong("endTime")
                                                 && (nextMediaChunkStart != null && cutMediaInfo.getJoMediaCut().getLong("endTime") <= nextMediaChunkStart.getTime()))
                                         {
-                                            // playout start-end is within just one chunk
+                                            mLogger.info("playout start-end is within just one chunk");
 
                                             cutMediaInfo.setLastChunkFound(true);
                                         }
@@ -823,10 +828,11 @@ public class CatraMMSServices {
                     if (cutMediaChannel.equalsIgnoreCase("la1")
                             || cutMediaChannel.equalsIgnoreCase("la2"))
                     {
-                        keyContentLabel = "Cut: " + cutMediaTitle;
+                        keyContentLabel = cutMediaTitle;
 
-                        joWorkflow = buildTVJson2(cutMediaId, cutMediaChannel, sCutMediaStartTime, sCutMediaEndTime,
-                                cutMediaInfoList, cutMediaTitle, keyContentLabel, ingester, fileExtension,
+                        joWorkflow = buildTVJson_2(cutMediaId, cutMediaChannel, sCutMediaStartTime, sCutMediaEndTime,
+                                cutMediaInfoList, cutMediaTitle, keyContentLabel, encodingPriority,
+                                ingester, fileExtension,
                                 addContentPull, cutMediaRetention);
                     }
                     else
@@ -841,10 +847,11 @@ public class CatraMMSServices {
                         else if (cutMediaChannel.equalsIgnoreCase("RETE TRE"))
                             audioTrackNumber = reteTreTrackNumber;
 
-                        keyContentLabel = "Extract: " + cutMediaTitle;
+                        keyContentLabel = cutMediaTitle;
 
                         joWorkflow = buildRadioJson_2(cutMediaId, cutMediaChannel, sCutMediaStartTime, sCutMediaEndTime,
-                                cutMediaInfoList, cutMediaTitle, keyContentLabel, ingester, fileExtension,
+                                cutMediaInfoList, cutMediaTitle, keyContentLabel, encodingPriority,
+                                ingester, fileExtension,
                                 addContentPull, cutMediaRetention, audioTrackNumber);
                     }
 
@@ -1180,9 +1187,9 @@ public class CatraMMSServices {
         }
     }
 
-    private JSONObject buildTVJson2(String cutMediaId, String cutMediaChannel, String sCutMediaStartTime, String sCutMediaEndTime,
+    private JSONObject buildTVJson_2(String cutMediaId, String cutMediaChannel, String sCutMediaStartTime, String sCutMediaEndTime,
                                     List<CutMediaInfo> cutMediaInfoList,
-                                    String keyTitle, String keyLabel,
+                                    String keyTitle, String keyLabel, String encodingPriority,
                                     String ingester, String fileExtension,
                                     boolean addContentPull, String mediaRetention
     )
@@ -1443,7 +1450,7 @@ public class CatraMMSServices {
                     JSONObject joEncodeParameters = new JSONObject();
                     joEncode.put("Parameters", joEncodeParameters);
 
-                    joEncodeParameters.put("EncodingPriority", "Low");
+                    joEncodeParameters.put("EncodingPriority", encodingPriority);
                     joEncodeParameters.put("EncodingProfileLabel", "MMS_H264_veryslow_360p25_aac_92");
                 }
             }
@@ -1457,7 +1464,7 @@ public class CatraMMSServices {
         }
         catch (Exception e)
         {
-            String errorMessage = "buildTVJson2 failed. Exception: " + e;
+            String errorMessage = "buildTVJson_2 failed. Exception: " + e;
             mLogger.error(errorMessage);
 
             throw e;
@@ -1772,7 +1779,7 @@ public class CatraMMSServices {
 
     private JSONObject buildRadioJson_2(String cutMediaId, String cutMediaChannel, String sCutMediaStartTime, String sCutMediaEndTime,
                                     List<CutMediaInfo> cutMediaInfoList,
-                                    String keyTitle, String keyLabel,
+                                    String keyTitle, String keyLabel, String encodingPriority,
                                     String ingester, String fileExtension,
                                     boolean addContentPull, String mediaRetention,
                                         int audioTrackNumber
@@ -2062,7 +2069,7 @@ public class CatraMMSServices {
                     JSONObject joEncodeParameters = new JSONObject();
                     joEncode.put("Parameters", joEncodeParameters);
 
-                    joEncodeParameters.put("EncodingPriority", "Low");
+                    joEncodeParameters.put("EncodingPriority", encodingPriority);
                     joEncodeParameters.put("EncodingProfileLabel", "MMS_AAC_92");
                 }
             }
@@ -2076,7 +2083,7 @@ public class CatraMMSServices {
         }
         catch (Exception e)
         {
-            String errorMessage = "buildTVJson2 failed. Exception: " + e;
+            String errorMessage = "buildTVJson_2 failed. Exception: " + e;
             mLogger.error(errorMessage);
 
             throw e;
