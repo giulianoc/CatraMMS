@@ -16,6 +16,7 @@ public class CutMediaInfo {
     {
         fileTreeMap = new TreeMap<>();
 
+        joMediaCut = null;
         firstChunkFound = false;
         lastChunkFound = false;
     }

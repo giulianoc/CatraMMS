@@ -680,7 +680,13 @@ public class CatraMMSServices {
                                 {
                                     // see the comment where mediaFileLastModifiedTooEarly is set
 
-                                    continue;
+                                    mLogger.info("Found a file that cannot be used yet, so also the next files cannot be used as well. The scanning (sorted) of files is then interrupted"
+                                            + ", mediaFile.getName: " + mediaFile.getName()
+                                            + ", mediaFile.lastModified: " + simpleDateFormat.format(mediaFile.lastModified())
+                                            + ", mediaFileLastModifiedTooEarly: " + simpleDateFormat.format(mediaFileLastModifiedTooEarly)
+                                    );
+
+                                    break;
                                 }
 
                                 Date nextMediaChunkStart = null;

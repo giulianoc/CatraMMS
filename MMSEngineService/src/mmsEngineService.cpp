@@ -138,16 +138,18 @@ int main (int iArgc, char *pArgv [])
 //            mmsEngineDBFacade, mmsStorage, &activeEncodingsManager, configuration);
     vector<shared_ptr<MMSEngineProcessor>>      mmsEngineProcessors;
     {
-        int mmsProcessorsNumber =  configuration["mms"].get("MMSProcessors", 1).asInt();
+        int processorThreads =  configuration["mms"].get("processorThreads", 1).asInt();
+        shared_ptr<long> processorsThreadsNumber = make_shared<long>(0);
 
-        for (int mmsProcessorIndex = 0; mmsProcessorIndex < mmsProcessorsNumber; mmsProcessorIndex++)
+        for (int processorThreadIndex = 0; processorThreadIndex < processorThreads; processorThreadIndex++)
         {
             logger->info(__FILEREF__ + "Creating MMSEngineProcessor"
-                + ", mmsProcessorIndex: " + to_string(mmsProcessorIndex)
+                + ", processorThreadIndex: " + to_string(processorThreadIndex)
                     );
             shared_ptr<MMSEngineProcessor>      mmsEngineProcessor = 
-                    make_shared<MMSEngineProcessor>(mmsProcessorIndex, logger, multiEventsSet, 
-                        mmsEngineDBFacade, mmsStorage, &activeEncodingsManager, configuration);
+                    make_shared<MMSEngineProcessor>(processorThreadIndex, logger, multiEventsSet, 
+                        mmsEngineDBFacade, mmsStorage, processorsThreadsNumber,
+                    &activeEncodingsManager, configuration);
             mmsEngineProcessors.push_back(mmsEngineProcessor);
         }
     }    

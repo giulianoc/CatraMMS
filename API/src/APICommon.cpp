@@ -988,9 +988,14 @@ void APICommon::fillEnvironmentDetails(
         
         requestDetails[key] = value;
 
-        _logger->info(__FILEREF__ + "Environment variable"
-            + ", key/Name: " + key + "=" + value
-        );
+        if (key == "REQUEST_URI")
+            _logger->info(__FILEREF__ + "Environment variable"
+                + ", key/Name: " + key + "=" + value
+            );
+        else
+            _logger->debug(__FILEREF__ + "Environment variable"
+                + ", key/Name: " + key + "=" + value
+            );
     }
 }
 

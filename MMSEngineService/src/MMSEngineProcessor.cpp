@@ -26,6 +26,7 @@ MMSEngineProcessor::MMSEngineProcessor(
         shared_ptr<MultiEventsSet> multiEventsSet,
         shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
         shared_ptr<MMSStorage> mmsStorage,
+        shared_ptr<long> processorsThreadsNumber,
         ActiveEncodingsManager* pActiveEncodingsManager,
         Json::Value configuration
 )
@@ -36,11 +37,14 @@ MMSEngineProcessor::MMSEngineProcessor(
     _multiEventsSet     = multiEventsSet;
     _mmsEngineDBFacade  = mmsEngineDBFacade;
     _mmsStorage         = mmsStorage;
+    _processorsThreadsNumber = processorsThreadsNumber;
     _pActiveEncodingsManager = pActiveEncodingsManager;
 
     _processorMMS                   = System::getHostName();
     
-// cout << "processorIdentifier: " << processorIdentifier << endl;
+    _processorThreads =  configuration["mms"].get("processorThreads", 1).asInt();
+    _maxAdditionalProcessorThreads =  configuration["mms"].get("maxAdditionalProcessorThreads", 1).asInt();
+
     _maxDownloadAttemptNumber       = configuration["download"].get("maxDownloadAttemptNumber", 5).asInt();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", download->maxDownloadAttemptNumber: " + to_string(_maxDownloadAttemptNumber)
@@ -251,9 +255,22 @@ void MMSEngineProcessor::operator ()()
 
                 try
                 {
-                    
-                    thread contentRetention(&MMSEngineProcessor::handleContentRetentionEventThread, this);
-                    contentRetention.detach();
+                    if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
+                    {
+                        // content retention is a periodical event, we will wait the next one
+                        
+                        _logger->info(__FILEREF__ + "Not enough available threads to manage handleContentRetentionEventThread, activity is postponed"
+                            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                            + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+                            + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
+                        );
+                    }
+                    else
+                    {
+                        thread contentRetention(&MMSEngineProcessor::handleContentRetentionEventThread, this,
+                            _processorsThreadsNumber);
+                        contentRetention.detach();
+                    }
                 }
                 catch(exception e)
                 {
@@ -644,69 +661,153 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             {
                                 if (nextIngestionStatus == MMSEngineDBFacade::IngestionStatus::SourceDownloadingInProgress)
                                 {
-                                    string errorMessage = "";
-                                    string processorMMS = "";
+                                    if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
+                                    {
+                                        _logger->info(__FILEREF__ + "Not enough available threads to manage downloadMediaSourceFileThread, activity is postponed"
+                                            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                            + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+                                            + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
+                                        );
 
-                                    _logger->info(__FILEREF__ + "Update IngestionJob"
-                                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                        + ", IngestionStatus: " + MMSEngineDBFacade::toString(nextIngestionStatus)
-                                        + ", errorMessage: " + errorMessage
-                                        + ", processorMMS: " + processorMMS
-                                    );                            
-                                    _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                                            nextIngestionStatus,
-                                            errorMessage,
-                                            processorMMS
-                                            );
+                                        string errorMessage = "";
+                                        string processorMMS = "";
 
-                                    thread downloadMediaSource(&MMSEngineProcessor::downloadMediaSourceFileThread, this, 
-                                        mediaSourceURL, ingestionJobKey, workspace);
-                                    downloadMediaSource.detach();
+                                        _logger->info(__FILEREF__ + "Update IngestionJob"
+                                            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                            + ", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
+                                            + ", errorMessage: " + errorMessage
+                                            + ", processorMMS: " + processorMMS
+                                        );                            
+                                        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                                ingestionStatus,
+                                                errorMessage,
+                                                processorMMS
+                                                );
+                                    }
+                                    else
+                                    {
+                                        string errorMessage = "";
+                                        string processorMMS = "";
+
+                                        _logger->info(__FILEREF__ + "Update IngestionJob"
+                                            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                            + ", IngestionStatus: " + MMSEngineDBFacade::toString(nextIngestionStatus)
+                                            + ", errorMessage: " + errorMessage
+                                            + ", processorMMS: " + processorMMS
+                                        );                            
+                                        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                                nextIngestionStatus,
+                                                errorMessage,
+                                                processorMMS
+                                                );
+
+                                        thread downloadMediaSource(&MMSEngineProcessor::downloadMediaSourceFileThread, this, 
+                                            _processorsThreadsNumber, mediaSourceURL, ingestionJobKey, workspace);
+                                        downloadMediaSource.detach();
+                                    }                                    
                                 }
                                 else if (nextIngestionStatus == MMSEngineDBFacade::IngestionStatus::SourceMovingInProgress)
                                 {
-                                    string errorMessage = "";
-                                    string processorMMS = "";
+                                    if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
+                                    {
+                                        _logger->info(__FILEREF__ + "Not enough available threads to manage moveMediaSourceFileThread, activity is postponed"
+                                            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                            + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+                                            + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
+                                        );
 
-                                    _logger->info(__FILEREF__ + "Update IngestionJob"
-                                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                        + ", IngestionStatus: " + MMSEngineDBFacade::toString(nextIngestionStatus)
-                                        + ", errorMessage: " + errorMessage
-                                        + ", processorMMS: " + processorMMS
-                                    );                            
-                                    _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                                            nextIngestionStatus,
-                                            errorMessage,
-                                            processorMMS
-                                            );
+                                        string errorMessage = "";
+                                        string processorMMS = "";
 
-                                    thread moveMediaSource(&MMSEngineProcessor::moveMediaSourceFileThread, this, 
-                                        mediaSourceURL, ingestionJobKey, workspace);
-                                    moveMediaSource.detach();
+                                        _logger->info(__FILEREF__ + "Update IngestionJob"
+                                            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                            + ", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
+                                            + ", errorMessage: " + errorMessage
+                                            + ", processorMMS: " + processorMMS
+                                        );                            
+                                        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                                ingestionStatus,
+                                                errorMessage,
+                                                processorMMS
+                                                );
+                                    }
+                                    else
+                                    {
+                                        string errorMessage = "";
+                                        string processorMMS = "";
+
+                                        _logger->info(__FILEREF__ + "Update IngestionJob"
+                                            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                            + ", IngestionStatus: " + MMSEngineDBFacade::toString(nextIngestionStatus)
+                                            + ", errorMessage: " + errorMessage
+                                            + ", processorMMS: " + processorMMS
+                                        );                            
+                                        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                                nextIngestionStatus,
+                                                errorMessage,
+                                                processorMMS
+                                                );
+                                        
+                                        thread moveMediaSource(&MMSEngineProcessor::moveMediaSourceFileThread, this, 
+                                            _processorsThreadsNumber, mediaSourceURL, ingestionJobKey, workspace);
+                                        moveMediaSource.detach();
+                                    }
                                 }
                                 else if (nextIngestionStatus == MMSEngineDBFacade::IngestionStatus::SourceCopingInProgress)
                                 {
-                                    string errorMessage = "";
-                                    string processorMMS = "";
+                                    if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
+                                    {
+                                        _logger->info(__FILEREF__ + "Not enough available threads to manage copyMediaSourceFileThread, activity is postponed"
+                                            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                            + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+                                            + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
+                                        );
 
-                                    _logger->info(__FILEREF__ + "Update IngestionJob"
-                                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                        + ", IngestionStatus: " + MMSEngineDBFacade::toString(nextIngestionStatus)
-                                        + ", errorMessage: " + errorMessage
-                                        + ", processorMMS: " + processorMMS
-                                    );                            
-                                    _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
-                                            nextIngestionStatus, 
-                                            errorMessage,
-                                            processorMMS
-                                            );
+                                        string errorMessage = "";
+                                        string processorMMS = "";
 
-                                    thread copyMediaSource(&MMSEngineProcessor::copyMediaSourceFileThread, this, 
-                                        mediaSourceURL, ingestionJobKey, workspace);
-                                    copyMediaSource.detach();
+                                        _logger->info(__FILEREF__ + "Update IngestionJob"
+                                            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                            + ", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
+                                            + ", errorMessage: " + errorMessage
+                                            + ", processorMMS: " + processorMMS
+                                        );                            
+                                        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                                ingestionStatus, 
+                                                errorMessage,
+                                                processorMMS
+                                                );
+                                    }
+                                    else
+                                    {
+                                        string errorMessage = "";
+                                        string processorMMS = "";
+
+                                        _logger->info(__FILEREF__ + "Update IngestionJob"
+                                            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                            + ", IngestionStatus: " + MMSEngineDBFacade::toString(nextIngestionStatus)
+                                            + ", errorMessage: " + errorMessage
+                                            + ", processorMMS: " + processorMMS
+                                        );                            
+                                        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                                nextIngestionStatus, 
+                                                errorMessage,
+                                                processorMMS
+                                                );
+
+                                        thread copyMediaSource(&MMSEngineProcessor::copyMediaSourceFileThread, this, 
+                                            _processorsThreadsNumber, mediaSourceURL, ingestionJobKey, workspace);
+                                        copyMediaSource.detach();
+                                    }
                                 }
                                 else // if (nextIngestionStatus == MMSEngineDBFacade::IngestionStatus::SourceUploadingInProgress)
                                 {
@@ -807,6 +908,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             {
                                 ftpDeliveryContentTask(
                                         ingestionJobKey, 
+                                        ingestionStatus,
                                         workspace, 
                                         parametersRoot, 
                                         dependencies);
@@ -878,7 +980,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 }
                                 
                                 localCopyContentTask(
-                                        ingestionJobKey, 
+                                        ingestionJobKey,
+                                        ingestionStatus,
                                         workspace, 
                                         parametersRoot, 
                                         dependencies);
@@ -939,7 +1042,8 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             try
                             {
                                 httpCallbackTask(
-                                        ingestionJobKey, 
+                                        ingestionJobKey,
+                                        ingestionStatus,
                                         workspace, 
                                         parametersRoot, 
                                         dependencies);
@@ -1143,13 +1247,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
                             try
                             {
-                                /*
-                                generateAndIngestSlideshow(
-                                        ingestionJobKey, 
-                                        workspace, 
-                                        parametersRoot, 
-                                        dependencies);
-                                */
                                 manageSlideShowTask(
                                         ingestionJobKey,
                                         workspace,
@@ -1335,13 +1432,41 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         {
                             try
                             {
-                                thread extractTracksContentThread(&MMSEngineProcessor::extractTracksContentThread, this, 
-                                    ingestionJobKey, 
-                                        workspace, 
-                                        parametersRoot,
-                                        dependencies    // it cannot be passed as reference because it will change soon by the parent thread
-                                        );
-                                extractTracksContentThread.detach();
+                                if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
+                                {
+                                    _logger->info(__FILEREF__ + "Not enough available threads to manage extractTracksContentThread, activity is postponed"
+                                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+                                        + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
+                                    );
+
+                                    string errorMessage = "";
+                                    string processorMMS = "";
+
+                                    _logger->info(__FILEREF__ + "Update IngestionJob"
+                                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
+                                        + ", errorMessage: " + errorMessage
+                                        + ", processorMMS: " + processorMMS
+                                    );                            
+                                    _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                            ingestionStatus, 
+                                            errorMessage,
+                                            processorMMS
+                                            );
+                                }
+                                else
+                                {
+                                    thread extractTracksContentThread(&MMSEngineProcessor::extractTracksContentThread, this, 
+                                        _processorsThreadsNumber, ingestionJobKey, 
+                                            workspace, 
+                                            parametersRoot,
+                                            dependencies    // it cannot be passed as reference because it will change soon by the parent thread
+                                            );
+                                    extractTracksContentThread.detach();
+                                }
                             }
                             catch(runtime_error e)
                             {
@@ -2486,6 +2611,7 @@ void MMSEngineProcessor::removeContentTask(
 
 void MMSEngineProcessor::ftpDeliveryContentTask(
         int64_t ingestionJobKey,
+        MMSEngineDBFacade::IngestionStatus ingestionStatus,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies
@@ -2502,6 +2628,34 @@ void MMSEngineProcessor::ftpDeliveryContentTask(
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
+        }
+
+        if (_processorsThreadsNumber.use_count() + dependencies.size() > _processorThreads + _maxAdditionalProcessorThreads)
+        {
+            _logger->info(__FILEREF__ + "Not enough available threads to manage ftpUploadMediaSourceThread, activity is postponed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+                + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
+            );
+
+            string errorMessage = "";
+            string processorMMS = "";
+
+            _logger->info(__FILEREF__ + "Update IngestionJob"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
+                + ", errorMessage: " + errorMessage
+                + ", processorMMS: " + processorMMS
+            );                            
+            _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                    ingestionStatus, 
+                    errorMessage,
+                    processorMMS
+                    );
+            
+            return;
         }
 
         string ftpServer;
@@ -2613,8 +2767,9 @@ void MMSEngineProcessor::ftpDeliveryContentTask(
                 relativePath,
                 fileName);
             
+            // check on thread availability was done at the beginning in this method
             thread ftpUploadMediaSource(&MMSEngineProcessor::ftpUploadMediaSourceThread, this, 
-                mmsAssetPathName, fileName, sizeInBytes, ingestionJobKey, workspace,
+                _processorsThreadsNumber, mmsAssetPathName, fileName, sizeInBytes, ingestionJobKey, workspace,
                     ftpServer, ftpPort, ftpUserName, ftpPassword,
                     ftpRemoteDirectory, deliveryFileName);
             ftpUploadMediaSource.detach();
@@ -2647,6 +2802,7 @@ void MMSEngineProcessor::ftpDeliveryContentTask(
 
 void MMSEngineProcessor::httpCallbackTask(
         int64_t ingestionJobKey,
+        MMSEngineDBFacade::IngestionStatus ingestionStatus,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies
@@ -2667,6 +2823,34 @@ void MMSEngineProcessor::httpCallbackTask(
             throw runtime_error(errorMessage);
         }
          */
+
+        if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
+        {
+            _logger->info(__FILEREF__ + "Not enough available threads to manage userHttpCallbackThread, activity is postponed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+                + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
+            );
+
+            string errorMessage = "";
+            string processorMMS = "";
+
+            _logger->info(__FILEREF__ + "Update IngestionJob"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
+                + ", errorMessage: " + errorMessage
+                + ", processorMMS: " + processorMMS
+            );                            
+            _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                    ingestionStatus, 
+                    errorMessage,
+                    processorMMS
+                    );
+            
+            return;
+        }
 
         string httpProtocol;
         string httpHostName;
@@ -2879,8 +3063,9 @@ void MMSEngineProcessor::httpCallbackTask(
             }
         }
         
+        // check on thread availability was done at the beginning in this method
         thread httpCallbackThread(&MMSEngineProcessor::userHttpCallbackThread, this, 
-            ingestionJobKey, httpProtocol, httpHostName, 
+            _processorsThreadsNumber, ingestionJobKey, httpProtocol, httpHostName, 
             httpPort, httpURI, httpURLParameters, httpMethod, callbackTimeout,
             httpHeadersRoot, callbackMedatada);
         httpCallbackThread.detach();
@@ -2912,6 +3097,7 @@ void MMSEngineProcessor::httpCallbackTask(
 
 void MMSEngineProcessor::localCopyContentTask(
         int64_t ingestionJobKey,
+        MMSEngineDBFacade::IngestionStatus ingestionStatus,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies
@@ -2928,6 +3114,34 @@ void MMSEngineProcessor::localCopyContentTask(
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
+        }
+
+        if (_processorsThreadsNumber.use_count() + dependencies.size() > _processorThreads + _maxAdditionalProcessorThreads)
+        {
+            _logger->info(__FILEREF__ + "Not enough available threads to manage copyContentThread, activity is postponed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+                + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
+            );
+
+            string errorMessage = "";
+            string processorMMS = "";
+
+            _logger->info(__FILEREF__ + "Update IngestionJob"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
+                + ", errorMessage: " + errorMessage
+                + ", processorMMS: " + processorMMS
+            );                            
+            _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                    ingestionStatus, 
+                    errorMessage,
+                    processorMMS
+                    );
+            
+            return;
         }
 
         string localPath;
@@ -3006,8 +3220,9 @@ void MMSEngineProcessor::localCopyContentTask(
                 relativePath,
                 fileName);
             
+            // check on thread availability was done at the beginning in this method
             thread copyContentThread(&MMSEngineProcessor::copyContentThread, this, 
-                ingestionJobKey, mmsAssetPathName, localPath, localFileName);
+                _processorsThreadsNumber, ingestionJobKey, mmsAssetPathName, localPath, localFileName);
             copyContentThread.detach();
         }
     }
@@ -3037,14 +3252,15 @@ void MMSEngineProcessor::localCopyContentTask(
 }
 
 void MMSEngineProcessor::copyContentThread(
-        int64_t ingestionJobKey, string mmsAssetPathName, 
+        shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, string mmsAssetPathName, 
         string localPath, string localFileName)
 {
 
     try 
     {
         _logger->info(__FILEREF__ + "Coping"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", processors threads number: " + to_string(processorsThreadsNumber.use_count())
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", mmsAssetPathName: " + mmsAssetPathName
             + ", localPath: " + localPath
@@ -3122,7 +3338,7 @@ void MMSEngineProcessor::copyContentThread(
 }
 
 void MMSEngineProcessor::extractTracksContentThread(
-        int64_t ingestionJobKey,
+        shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> dependencies)
@@ -3131,7 +3347,8 @@ void MMSEngineProcessor::extractTracksContentThread(
     try 
     {
         _logger->info(__FILEREF__ + "Extracting Tracks"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", processors threads number: " + to_string(processorsThreadsNumber.use_count())
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );
                 
@@ -6103,12 +6320,14 @@ void MMSEngineProcessor::handleCheckEncodingEvent ()
     _pActiveEncodingsManager->addEncodingItems(encodingItems);
 }
 
-void MMSEngineProcessor::handleContentRetentionEventThread ()
+void MMSEngineProcessor::handleContentRetentionEventThread (
+        shared_ptr<long> processorsThreadsNumber)
 {
     
     {
         _logger->info(__FILEREF__ + "Content Retention started"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", processors threads number: " + to_string(processorsThreadsNumber.use_count())
         );
 
         vector<pair<shared_ptr<Workspace>,int64_t>> mediaItemKeyToBeRemoved;
@@ -6569,7 +6788,8 @@ size_t curlDownloadCallback(char* ptr, size_t size, size_t nmemb, void *f)
     return size * nmemb;        
 };
 
-void MMSEngineProcessor::downloadMediaSourceFileThread(string sourceReferenceURL,
+void MMSEngineProcessor::downloadMediaSourceFileThread(
+        shared_ptr<long> processorsThreadsNumber, string sourceReferenceURL,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace)
 {
     bool downloadingCompleted = false;
@@ -6621,6 +6841,7 @@ RESUMING FILE TRANSFERS
         {
             _logger->info(__FILEREF__ + "Downloading"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                + ", processors threads number: " + to_string(processorsThreadsNumber.use_count())
                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", sourceReferenceURL: " + sourceReferenceURL
                 + ", attempt: " + to_string(attemptIndex + 1)
@@ -6990,6 +7211,7 @@ RESUMING FILE TRANSFERS
 }
 
 void MMSEngineProcessor::ftpUploadMediaSourceThread(
+        shared_ptr<long> processorsThreadsNumber,
         string mmsAssetPathName, string fileName, int64_t sizeInBytes,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
         string ftpServer, int ftpPort, string ftpUserName, string ftpPassword, 
@@ -7016,6 +7238,7 @@ void MMSEngineProcessor::ftpUploadMediaSourceThread(
 
         _logger->info(__FILEREF__ + "FTP Uploading"
             + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", processors threads number: " + to_string(processorsThreadsNumber.use_count())
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", mmsAssetPathName: " + mmsAssetPathName
             + ", sizeInBytes: " + to_string(sizeInBytes)
@@ -7184,6 +7407,7 @@ void MMSEngineProcessor::ftpUploadMediaSourceThread(
 }
 
 void MMSEngineProcessor::userHttpCallbackThread(
+        shared_ptr<long> processorsThreadsNumber,
         int64_t ingestionJobKey, string httpProtocol, string httpHostName,
         int httpPort, string httpURI, string httpURLParameters,
         string httpMethod, long callbackTimeout,
@@ -7195,6 +7419,16 @@ void MMSEngineProcessor::userHttpCallbackThread(
     ostringstream response;
     try
     {
+        _logger->info(__FILEREF__ + "userHttpCallbackThread"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", processors threads number: " + to_string(processorsThreadsNumber.use_count())
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", httpProtocol: " + httpProtocol
+            + ", httpHostName: " + httpHostName
+            + ", httpPort: " + to_string(httpPort)
+            + ", httpURI: " + httpURI
+        );
+
         userURL = httpProtocol
                 + "://"
                 + httpHostName
@@ -7428,7 +7662,8 @@ void MMSEngineProcessor::userHttpCallbackThread(
 }
 
 
-void MMSEngineProcessor::moveMediaSourceFileThread(string sourceReferenceURL,
+void MMSEngineProcessor::moveMediaSourceFileThread(
+        shared_ptr<long> processorsThreadsNumber, string sourceReferenceURL,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace)
 {
 
@@ -7457,7 +7692,8 @@ void MMSEngineProcessor::moveMediaSourceFileThread(string sourceReferenceURL,
         string sourcePathName = sourceReferenceURL.substr(movePrefix.length());
                 
         _logger->info(__FILEREF__ + "Moving"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", processors threads number: " + to_string(processorsThreadsNumber.use_count())
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", sourcePathName: " + sourcePathName
             + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
@@ -7517,7 +7753,8 @@ void MMSEngineProcessor::moveMediaSourceFileThread(string sourceReferenceURL,
     }
 }
 
-void MMSEngineProcessor::copyMediaSourceFileThread(string sourceReferenceURL,
+void MMSEngineProcessor::copyMediaSourceFileThread(
+        shared_ptr<long> processorsThreadsNumber, string sourceReferenceURL,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace)
 {
 
@@ -7546,7 +7783,8 @@ void MMSEngineProcessor::copyMediaSourceFileThread(string sourceReferenceURL,
         string sourcePathName = sourceReferenceURL.substr(copyPrefix.length());
 
         _logger->info(__FILEREF__ + "Coping"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", processors threads number: " + to_string(processorsThreadsNumber.use_count())
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", sourcePathName: " + sourcePathName
             + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
