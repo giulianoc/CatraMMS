@@ -2986,13 +2986,16 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                     int queryParameterIndex = 1;
                     preparedStatementDependency->setInt64(queryParameterIndex++, ingestionJobKey);
 
+                    int64_t dependOnIngestionJobKey = -1;
+                    int dependOnSuccess = -1;
+                    IngestionStatus ingestionStatusDependency;
                     shared_ptr<sql::ResultSet> resultSetDependency (preparedStatementDependency->executeQuery());
                     while (resultSetDependency->next())
                     {
                         if (!resultSetDependency->isNull("dependOnIngestionJobKey"))
                         {
-                            int64_t dependOnIngestionJobKey     = resultSetDependency->getInt64("dependOnIngestionJobKey");
-                            int dependOnSuccess                 = resultSetDependency->getInt("dependOnSuccess");
+                            dependOnIngestionJobKey     = resultSetDependency->getInt64("dependOnIngestionJobKey");
+                            dependOnSuccess                 = resultSetDependency->getInt("dependOnSuccess");
 
                             lastSQLCommand = 
                                 "select status from MMS_IngestionJob where ingestionJobKey = ?";
@@ -3012,7 +3015,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 //                                    + ", status (dependOnIngestionJobKey): " + sStatus
 //                                );
                                 
-                                IngestionStatus ingestionStatusDependency     = MMSEngineDBFacade::toIngestionStatus(sStatus);
+                                ingestionStatusDependency     = MMSEngineDBFacade::toIngestionStatus(sStatus);
 
                                 if (MMSEngineDBFacade::isIngestionStatusFinalState(ingestionStatusDependency))
                                 {
@@ -3070,6 +3073,16 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                                 = make_tuple(ingestionJobKey, workspace, metaDataContent, ingestionType, ingestionStatus);
 
                         ingestionsToBeManaged.push_back(ingestionToBeManaged);
+                    }
+                    else
+                    {
+                        _logger->info(__FILEREF__ + "Ingestion job cannot be processed"
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", ingestionStatus: " + toString(ingestionStatus)
+                            + ", dependOnIngestionJobKey: " + to_string(dependOnIngestionJobKey)
+                            + ", dependOnSuccess: " + to_string(dependOnSuccess)
+                            + ", ingestionStatusDependency: " + toString(ingestionStatusDependency)
+                        );
                     }
                 }
             }

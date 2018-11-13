@@ -2697,37 +2697,51 @@ void Validator::fillDependencies(int64_t workspaceKey, Json::Value parametersRoo
                 _mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey(
                         referenceIngestionJobKey, mediaItemsDetails, warningIfMissing);  
 
-                for (tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> 
-                        mediaItemKeyPhysicalPathKeyAndContentType: mediaItemsDetails)
+                if (mediaItemsDetails.size() == 0)
                 {
-                    if (priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey)
-                    {
-                        tie(referenceMediaItemKey, referencePhysicalPathKey, referenceContentType) =
-                            mediaItemKeyPhysicalPathKeyAndContentType;
-                        
-                        if (referencePhysicalPathKey != -1)
-                            dependencies.push_back(make_tuple(referencePhysicalPathKey, referenceContentType, DependencyType::PhysicalPathKey));
-                        else if (referenceMediaItemKey != -1)
-                            dependencies.push_back(make_tuple(referenceMediaItemKey, referenceContentType, DependencyType::MediaItemKey));
-                        else    // referenceLabel
-                            ;
-                    }
-                    else
-                    {
-                        int64_t localReferencePhysicalPathKey;
+                    Json::StreamWriterBuilder wbuilder;
+                    string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
 
-                        tie(referenceMediaItemKey, localReferencePhysicalPathKey, referenceContentType) =
-                            mediaItemKeyPhysicalPathKeyAndContentType;
-
-                        /*
-                        if (referencePhysicalPathKey != -1)
-                            dependencies.push_back(make_pair(referencePhysicalPathKey,DependencyType::PhysicalPathKey));
-                        else 
-                        */
-                        if (referenceMediaItemKey != -1)
-                            dependencies.push_back(make_tuple(referenceMediaItemKey, referenceContentType, DependencyType::MediaItemKey));
-                        else    // referenceLabel
+                    string errorMessage = __FILEREF__ + "No media items found"
+                            + ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey)
+                            + ", sParametersRoot: " + sParametersRoot
                             ;
+                    _logger->warn(errorMessage);
+                }
+                else
+                {
+                    for (tuple<int64_t,int64_t,MMSEngineDBFacade::ContentType> 
+                            mediaItemKeyPhysicalPathKeyAndContentType: mediaItemsDetails)
+                    {
+                        if (priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey)
+                        {
+                            tie(referenceMediaItemKey, referencePhysicalPathKey, referenceContentType) =
+                                mediaItemKeyPhysicalPathKeyAndContentType;
+
+                            if (referencePhysicalPathKey != -1)
+                                dependencies.push_back(make_tuple(referencePhysicalPathKey, referenceContentType, DependencyType::PhysicalPathKey));
+                            else if (referenceMediaItemKey != -1)
+                                dependencies.push_back(make_tuple(referenceMediaItemKey, referenceContentType, DependencyType::MediaItemKey));
+                            else    // referenceLabel
+                                ;
+                        }
+                        else
+                        {
+                            int64_t localReferencePhysicalPathKey;
+
+                            tie(referenceMediaItemKey, localReferencePhysicalPathKey, referenceContentType) =
+                                mediaItemKeyPhysicalPathKeyAndContentType;
+
+                            /*
+                            if (referencePhysicalPathKey != -1)
+                                dependencies.push_back(make_pair(referencePhysicalPathKey,DependencyType::PhysicalPathKey));
+                            else 
+                            */
+                            if (referenceMediaItemKey != -1)
+                                dependencies.push_back(make_tuple(referenceMediaItemKey, referenceContentType, DependencyType::MediaItemKey));
+                            else    // referenceLabel
+                                ;
+                        }
                     }
                 }
             }
