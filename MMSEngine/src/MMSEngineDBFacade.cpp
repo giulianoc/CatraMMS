@@ -2979,6 +2979,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 //                    );
                     
                     bool ingestionJobToBeManaged = true;
+                    bool atLeastOneDependencyFound = false;
 
                     lastSQLCommand = 
                         "select dependOnIngestionJobKey, dependOnSuccess from MMS_IngestionJobDependency where ingestionJobKey = ? order by orderNumber asc";
@@ -2992,6 +2993,9 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                     shared_ptr<sql::ResultSet> resultSetDependency (preparedStatementDependency->executeQuery());
                     while (resultSetDependency->next())
                     {
+                        if (!atLeastOneDependencyFound)
+                            atLeastOneDependencyFound = true;
+
                         if (!resultSetDependency->isNull("dependOnIngestionJobKey"))
                         {
                             dependOnIngestionJobKey     = resultSetDependency->getInt64("dependOnIngestionJobKey");
@@ -3007,14 +3011,14 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                             if (resultSetIngestionJob->next())
                             {
                                 string sStatus = resultSetIngestionJob->getString("status");
-                                
+
 //                                _logger->info(__FILEREF__ + "Dependency for the IngestionJob"
 //                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
 //                                    + ", dependOnIngestionJobKey: " + to_string(dependOnIngestionJobKey)
 //                                    + ", dependOnSuccess: " + to_string(dependOnSuccess)
 //                                    + ", status (dependOnIngestionJobKey): " + sStatus
 //                                );
-                                
+
                                 ingestionStatusDependency     = MMSEngineDBFacade::toIngestionStatus(sStatus);
 
                                 if (MMSEngineDBFacade::isIngestionStatusFinalState(ingestionStatusDependency))
@@ -3060,6 +3064,13 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                         }
                     }
                     
+                    if (!atLeastOneDependencyFound)
+                    {
+                        _logger->info(__FILEREF__ + "No dependency for the IngestionJob"
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        );
+                    }
+
                     if (ingestionJobToBeManaged)
                     {
                         _logger->info(__FILEREF__ + "Adding jobs to be processed"
@@ -3076,7 +3087,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                     }
                     else
                     {
-                        _logger->info(__FILEREF__ + "Ingestion job cannot be processed"
+                        _logger->debug(__FILEREF__ + "Ingestion job cannot be processed"
                             + ", ingestionJobKey: " + to_string(ingestionJobKey)
                             + ", ingestionStatus: " + toString(ingestionStatus)
                             + ", dependOnIngestionJobKey: " + to_string(dependOnIngestionJobKey)
