@@ -190,11 +190,29 @@
 
             </f:facet>
 
-            <p:column style="width:80px;" headerText="Enc. Job&lt;br&gt;Key" >
+            <p:column style="width:90px;" headerText="Enc. Job&lt;br&gt;Key" >
                 <p:outputLabel value="#{encodingJob.encodingJobKey}" />
             </p:column>
 
-            <p:column style="width:120px;" headerText="Type" >
+            <p:column headerText="Media Title" >
+                <p:outputLabel id="title"
+                               value="#{encodingJobs.encodingJobsTitlesList.get(rowId)}"
+                               title="#{encodingJobs.encodingJobsTitlesList.get(rowId)}"
+                        />
+                <p:tooltip for="title"
+                           showEffect="clip" hideEffect="explode" position="left"/>
+            </p:column>
+
+            <p:column style="width:100px;" headerText="Duration" >
+                <p:outputLabel id="duration"
+                               value="#{encodingJobs.encodingJobsDurationsList.get(rowId)}"
+                               title="#{encodingJobs.encodingJobsDurationsList.get(rowId)}"
+                        />
+                <p:tooltip for="duration"
+                           showEffect="clip" hideEffect="explode" position="left"/>
+            </p:column>
+
+            <p:column style="width:190px;" headerText="Type" >
                 <p:outputLabel
                         id="encodingJobType"
                         value="#{encodingJob.type}"
@@ -216,7 +234,11 @@
                 </p:outputLabel>
             </p:column>
 
-            <p:column style="width:180px;" headerText="Status" >
+            <p:column style="width:80px;" headerText="Priority" >
+                <p:outputLabel value="#{encodingJob.encodingPriority}" />
+            </p:column>
+
+            <p:column style="width:210px;" headerText="Status" >
                 <p:outputLabel
                         id="encodingJobStatus"
                         value="#{encodingJob.status}"
@@ -226,12 +248,12 @@
                            showEffect="clip" hideEffect="explode" position="left"/>
             </p:column>
 
-            <p:column style="width:90px;" headerText="Progress" >
+            <p:column style="width:70px;" headerText="Progress" >
                 <p:outputLabel value="#{encodingJob.progress}" />
                 <p:outputLabel rendered="#{encodingJob.progress != null}" value="%"/>
             </p:column>
 
-            <p:column style="width:80px;" headerText="Failures" >
+            <p:column style="width:50px;" headerText="Failures" >
                 <p:outputLabel value="#{encodingJob.failuresNumber}" />
             </p:column>
 

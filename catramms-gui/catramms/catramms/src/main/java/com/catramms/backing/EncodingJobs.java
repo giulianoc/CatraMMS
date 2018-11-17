@@ -4,6 +4,8 @@ import com.catramms.backing.common.SessionUtils;
 import com.catramms.backing.common.Workspace;
 import com.catramms.backing.entity.EncodingJob;
 import com.catramms.backing.entity.IngestionJob;
+import com.catramms.backing.entity.MediaItem;
+import com.catramms.backing.entity.PhysicalPath;
 import com.catramms.utility.catramms.CatraMMS;
 import org.apache.log4j.Logger;
 
@@ -46,6 +48,8 @@ public class EncodingJobs extends Workspace implements Serializable {
 
     private Long encodingJobsNumber = new Long(0);
     private List<EncodingJob> encodingJobsList = new ArrayList<>();
+    private List<String> encodingJobsTitlesList = new ArrayList<>();
+    private List<String> encodingJobsDurationsList = new ArrayList<>();
 
     @PostConstruct
     public void init()
@@ -237,11 +241,19 @@ public class EncodingJobs extends Workspace implements Serializable {
                         String password = apiKey;
 
                         encodingJobsList.clear();
+                        encodingJobsTitlesList.clear();
 
                         CatraMMS catraMMS = new CatraMMS();
                         encodingJobsNumber = catraMMS.getEncodingJobs(
                                 username, password, maxEncodingJobsNumber,
                                 begin, end, status, ascending, encodingJobsList);
+
+                        mLogger.info("Retrieved " + encodingJobsList.size() + " encoding jobs");
+                        for (EncodingJob encodingJob: encodingJobsList)
+                        {
+                            mLogger.info("getTitle for " + encodingJob.getEncodingJobKey() + " encoding job key ...");
+                            addTitleAndDuration(catraMMS, username, password, encodingJob);
+                        }
                     }
                 }
                 catch (Exception e)
@@ -251,6 +263,105 @@ public class EncodingJobs extends Workspace implements Serializable {
                 }
             }
         }
+    }
+
+    private void addTitleAndDuration(CatraMMS catraMMS, String username, String password, EncodingJob encodingJob)
+    {
+        String title = "";
+        String duration = "";
+
+        try
+        {
+            Long physicalPathKey = null;
+
+            if (encodingJob.getType().equalsIgnoreCase("EncodeVideoAudio")
+                    || encodingJob.getType().equalsIgnoreCase("EncodeImage"))
+            {
+                physicalPathKey = encodingJob.getSourcePhysicalPathKey();
+            }
+            else if (encodingJob.getType().equalsIgnoreCase("OverlayImageOnVideo"))
+            {
+                physicalPathKey = encodingJob.getSourceVideoPhysicalPathKey();
+            }
+            else if (encodingJob.getType().equalsIgnoreCase("OverlayTextOnVideo"))
+            {
+                physicalPathKey = encodingJob.getSourceVideoPhysicalPathKey();
+            }
+            else if (encodingJob.getType().equalsIgnoreCase("GenerateFrames"))
+            {
+                physicalPathKey = encodingJob.getSourceVideoPhysicalPathKey();
+            }
+
+            if (physicalPathKey != null)
+            {
+                Long mediaItemKey = null;
+
+                mLogger.info("catraMMS.getMediaItem"
+                                + ", mediaItemKey: " + mediaItemKey
+                                + ", physicalPathKey: " + physicalPathKey
+                );
+                MediaItem mediaItem = catraMMS.getMediaItem(
+                        username, password, mediaItemKey, physicalPathKey);
+                if (mediaItem != null)
+                {
+                    title = mediaItem.getTitle();
+
+                    String contentType = mediaItem.getContentType();
+
+                    for (PhysicalPath physicalPath: mediaItem.getPhysicalPathList())
+                    {
+                        if (physicalPath.getPhysicalPathKey().longValue() == physicalPathKey.longValue())
+                        {
+                            if (contentType.equalsIgnoreCase("video"))
+                                duration = getDurationAsString(
+                                        physicalPath.getVideoDetails().getDurationInMilliseconds());
+                            else if (contentType.equalsIgnoreCase("audio"))
+                                duration = getDurationAsString(
+                                        physicalPath.getAudioDetails().getDurationInMilliseconds());
+
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            mLogger.error("Exception: " + e);
+        }
+
+        encodingJobsTitlesList.add(title);
+        encodingJobsDurationsList.add(duration);
+    }
+
+    public String getDurationAsString(Long durationInMilliseconds)
+    {
+        if (durationInMilliseconds == null)
+            return "";
+
+        String duration;
+
+        int hours = (int) (durationInMilliseconds / 3600000);
+        String sHours = String.format("%02d", hours);
+
+        int minutes = (int) ((durationInMilliseconds - (hours * 3600000)) / 60000);
+        String sMinutes = String.format("%02d", minutes);
+
+        int seconds = (int) ((durationInMilliseconds - ((hours * 3600000) + (minutes * 60000))) / 1000);
+        String sSeconds = String.format("%02d", seconds);
+
+        int milliSeconds = (int) (durationInMilliseconds - ((hours * 3600000) + (minutes * 60000) + (seconds * 1000)));
+        String sMilliSeconds = String.format("%03d", milliSeconds);
+
+        return sHours.concat(":").concat(sMinutes).concat(":").concat(sSeconds).concat(".").concat(sMilliSeconds);
+    }
+
+    public List<String> getEncodingJobsTitlesList() {
+        return encodingJobsTitlesList;
+    }
+
+    public void setEncodingJobsTitlesList(List<String> encodingJobsTitlesList) {
+        this.encodingJobsTitlesList = encodingJobsTitlesList;
     }
 
     public Date getBegin() {
@@ -331,5 +442,13 @@ public class EncodingJobs extends Workspace implements Serializable {
 
     public void setAscending(boolean ascending) {
         this.ascending = ascending;
+    }
+
+    public List<String> getEncodingJobsDurationsList() {
+        return encodingJobsDurationsList;
+    }
+
+    public void setEncodingJobsDurationsList(List<String> encodingJobsDurationsList) {
+        this.encodingJobsDurationsList = encodingJobsDurationsList;
     }
 }

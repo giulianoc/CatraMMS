@@ -154,6 +154,7 @@
                         <p:outputLabel value=")" />
                     </p:panel>
 
+
                     <p:outputLabel rendered="#{encodingJobDetails.encodingJob.type == 'EncodeVideoAudio' or encodingJobDetails.encodingJob.type == 'EncodeImage'}"
                                    value="Encoding Profile Key: " />
                     <p:panel rendered="#{encodingJobDetails.encodingJob.type == 'EncodeVideoAudio' or encodingJobDetails.encodingJob.type == 'EncodeImage'}">
@@ -176,6 +177,7 @@
                         </h:link>
                         <p:outputLabel value=")" />
                     </p:panel>
+
 
                     <p:outputLabel rendered="#{encodingJobDetails.encodingJob.type == 'OverlayImageOnVideo'}"
                                    value="Image Physical Path Key: " />
