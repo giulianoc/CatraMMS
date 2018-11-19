@@ -540,7 +540,7 @@ public class CatraMMSServices {
 
                     // fill fileTreeMap with all the files within the directories
                     TreeMap<Date, File> fileTreeMap = new TreeMap<>();
-                    Date mediaFileLastModifiedTooEarly = null;
+                    Date mediaChunkStartTimeTooEarly = null;
                     {
                         int secondsToWaitBeforeStartProcessingAFile = 5;
 
@@ -593,6 +593,8 @@ public class CatraMMSServices {
                                                 + ", mediaFile.getName: " + mediaFile.getName()
                                         );
 
+                                        Date mediaChunkStartTime = getMediaChunkStartTime(mediaFile.getName());
+
                                         if (mediaFile.isDirectory())
                                         {
                                             // mLogger.info("Found a directory, ignored. Directory name: " + mediaFile.getName());
@@ -611,9 +613,9 @@ public class CatraMMSServices {
                                             // This scenario should not happen since we the current files does not have secondsToWaitBeforeStartProcessingAFile
                                             // the next one should not have secondsToWaitBeforeStartProcessingAFile as well but it seems happen once.
 
-                                            if (mediaFileLastModifiedTooEarly != null
-                                                    && mediaFile.lastModified() < mediaFileLastModifiedTooEarly.getTime())
-                                                mediaFileLastModifiedTooEarly = new Date(mediaFile.lastModified());
+                                            if (mediaChunkStartTimeTooEarly != null
+                                                    && mediaChunkStartTime.getTime() < mediaChunkStartTimeTooEarly.getTime())
+                                                mediaChunkStartTimeTooEarly = mediaChunkStartTime;
 
                                             continue;
                                         }
@@ -634,7 +636,7 @@ public class CatraMMSServices {
                                             continue;
                                         }
 
-                                        fileTreeMap.put(getMediaChunkStartTime(mediaFile.getName()), mediaFile);
+                                        fileTreeMap.put(mediaChunkStartTime, mediaFile);
                                     }
                                     catch (Exception ex)
                                     {
@@ -651,7 +653,9 @@ public class CatraMMSServices {
                         }
                     }
 
-                    mLogger.info("Found " + fileTreeMap.size() + " media files (" + "/" + cutMediaChannel + ")");
+                    mLogger.info("Found " + fileTreeMap.size() + " media files (" + "/" + cutMediaChannel + ")"
+                            + ", mediaChunkStartTimeTooEarly: " + mediaChunkStartTimeTooEarly == null ? "null" : simpleDateFormat.format(mediaChunkStartTimeTooEarly)
+                    );
 
                     // fill cutMediaInfoList
                     List<CutMediaInfo> cutMediaInfoList = new ArrayList<>();
@@ -675,15 +679,17 @@ public class CatraMMSServices {
                                 File mediaFile = dateFileEntry.getValue();
                                 Date mediaChunkStartTime = dateFileEntry.getKey();
 
-                                if (mediaFileLastModifiedTooEarly != null
-                                        && mediaFile.lastModified() >= mediaFileLastModifiedTooEarly.getTime())
+                                if (mediaChunkStartTimeTooEarly != null
+                                        // && mediaFile.lastModified() >= mediaFileLastModifiedTooEarly.getTime())
+                                        && mediaChunkStartTime.getTime() >= mediaChunkStartTimeTooEarly.getTime())
                                 {
                                     // see the comment where mediaFileLastModifiedTooEarly is set
 
                                     mLogger.info("Found a file that cannot be used yet, so also the next files cannot be used as well. The scanning (sorted) of files is then interrupted"
                                             + ", mediaFile.getName: " + mediaFile.getName()
                                             + ", mediaFile.lastModified: " + simpleDateFormat.format(mediaFile.lastModified())
-                                            + ", mediaFileLastModifiedTooEarly: " + simpleDateFormat.format(mediaFileLastModifiedTooEarly)
+                                            + ", mediaChunkStartTime: " + simpleDateFormat.format(mediaChunkStartTime)
+                                            + ", mediaChunkStartTimeTooEarly: " + simpleDateFormat.format(mediaChunkStartTimeTooEarly)
                                     );
 
                                     break;
@@ -696,6 +702,8 @@ public class CatraMMSServices {
                                 mLogger.info("Processing mediaFile"
                                         + ", cutMediaTitle: " + cutMediaTitle
                                         + ", mediaFile.getName: " + mediaFile.getName()
+                                        + ", mediaChunkStartTime: " + simpleDateFormat.format(mediaChunkStartTime)
+                                        + ", nextMediaChunkStart: " + nextMediaChunkStart == null ? "null" : simpleDateFormat.format(nextMediaChunkStart)
                                 );
 
                                 for (int mediaCutIndex = 0; mediaCutIndex < cutMediaInfoList.size(); mediaCutIndex++)
