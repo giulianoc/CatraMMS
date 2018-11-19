@@ -576,8 +576,9 @@ public class CatraMMSServices {
 
                             mediaDirectoryPathName += fileDateFormat.format(calendarStart.getTime());
                             mLogger.info("Reading directory: " + mediaDirectoryPathName);
+
                             File mediaDirectoryFile = new File(mediaDirectoryPathName);
-                            if (mediaDirectoryFile.exists())
+                            if (mediaDirectoryFile != null && mediaDirectoryFile.exists())
                             {
                                 File[] mediaFiles = mediaDirectoryFile.listFiles();
 
@@ -589,8 +590,8 @@ public class CatraMMSServices {
                                         // File mediaFile = mediaFilesToBeManaged.get(mediaFileIndex);
 
                                         mLogger.debug("Processing mediaFile"
-                                                + ", cutMediaTitle: " + cutMediaTitle
-                                                + ", mediaFile.getName: " + mediaFile.getName()
+                                                        + ", cutMediaTitle: " + cutMediaTitle
+                                                        + ", mediaFile.getName: " + mediaFile.getName()
                                         );
 
                                         Date mediaChunkStartTime = getMediaChunkStartTime(mediaFile.getName());
@@ -604,7 +605,10 @@ public class CatraMMSServices {
                                         else if (new Date().getTime() - mediaFile.lastModified()
                                                 < secondsToWaitBeforeStartProcessingAFile * 1000)
                                         {
-                                            mLogger.info("Waiting at least " + secondsToWaitBeforeStartProcessingAFile + " seconds before start processing the file. File name: " + mediaFile.getName());
+                                            mLogger.info("Waiting at least " + secondsToWaitBeforeStartProcessingAFile + " seconds before start processing the file"
+                                                    + ", File name: " + mediaFile.getName()
+                                                    + ", mediaChunkStartTimeTooEarly: " + mediaChunkStartTimeTooEarly
+                                            );
 
                                             // since we are skipping the media file that does not have at least secondsToWaitBeforeStartProcessingAFile,
                                             // we have to skip also all the media files next to this one.
@@ -654,7 +658,7 @@ public class CatraMMSServices {
                     }
 
                     mLogger.info("Found " + fileTreeMap.size() + " media files (" + "/" + cutMediaChannel + ")"
-                            + ", mediaChunkStartTimeTooEarly: " + mediaChunkStartTimeTooEarly == null ? "null" : simpleDateFormat.format(mediaChunkStartTimeTooEarly)
+                            + ", mediaChunkStartTimeTooEarly: " + (mediaChunkStartTimeTooEarly == null ? "null" : simpleDateFormat.format(mediaChunkStartTimeTooEarly))
                     );
 
                     // fill cutMediaInfoList
