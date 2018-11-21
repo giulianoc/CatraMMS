@@ -3324,6 +3324,10 @@ shared_ptr<MySQLConnection> MMSEngineDBFacade::beginIngestionJobs ()
 
     try
     {
+        _logger->info(__FILEREF__ + "beginIngestionJobs"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
         conn = _connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
@@ -3403,6 +3407,11 @@ shared_ptr<MySQLConnection> MMSEngineDBFacade::endIngestionJobs (
 
     try
     {
+        _logger->info(__FILEREF__ + "endIngestionJobs"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+            + ", commit: " + to_string(commit)
+        );
+
         if (commit)
         {
             lastSQLCommand = 
@@ -3640,7 +3649,15 @@ int64_t MMSEngineDBFacade::addIngestionJob (
                     preparedStatement->setNull(queryParameterIndex++, sql::DataType::BIGINT);
                     preparedStatement->setInt(queryParameterIndex++, orderNumber);
 
-                    preparedStatement->executeUpdate();
+                    int rowsInserted = preparedStatement->executeUpdate();
+                    
+                    _logger->info(__FILEREF__ + "insert into MMS_IngestionJobDependency"
+                        + ", getConnectionId: " + to_string(conn->getConnectionId())
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", dependOnSuccess: " + to_string(dependOnSuccess)
+                        + ", orderNumber: " + to_string(orderNumber)
+                        + ", rowsInserted: " + to_string(rowsInserted)
+                    );
                 }
                 else
                 {
@@ -3658,7 +3675,15 @@ int64_t MMSEngineDBFacade::addIngestionJob (
                         preparedStatement->setInt64(queryParameterIndex++, dependOnIngestionJobKey);
                         preparedStatement->setInt(queryParameterIndex++, orderNumber);
 
-                        preparedStatement->executeUpdate();
+                        int rowsInserted = preparedStatement->executeUpdate();
+                        
+                        _logger->info(__FILEREF__ + "insert into MMS_IngestionJobDependency"
+                            + ", getConnectionId: " + to_string(conn->getConnectionId())
+                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", dependOnSuccess: " + to_string(dependOnSuccess)
+                            + ", orderNumber: " + to_string(orderNumber)
+                            + ", rowsInserted: " + to_string(rowsInserted)
+                        );
                         
                         orderNumber++;
                     }
