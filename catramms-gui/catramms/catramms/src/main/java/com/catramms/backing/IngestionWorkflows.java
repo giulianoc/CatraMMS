@@ -2,6 +2,7 @@ package com.catramms.backing;
 
 import com.catramms.backing.common.SessionUtils;
 import com.catramms.backing.common.Workspace;
+import com.catramms.backing.entity.IngestionJob;
 import com.catramms.backing.entity.IngestionWorkflow;
 import com.catramms.backing.entity.MediaItem;
 import com.catramms.backing.entity.WorkspaceDetails;
@@ -239,6 +240,27 @@ public class IngestionWorkflows extends Workspace implements Serializable {
                 }
             }
         }
+    }
+
+    public String getStatus(IngestionWorkflow ingestionWorkflow)
+    {
+        String status = ingestionWorkflow.getStatus();
+
+        // NotCompleted, CompletedSuccessful, CompletedWithFailures
+        if (ingestionWorkflow.getStatus().equalsIgnoreCase("NotCompleted"))
+        {
+            for (IngestionJob ingestionJob: ingestionWorkflow.getIngestionJobList())
+            {
+                if (!ingestionJob.getStatus().startsWith("End_"))
+                {
+                    status = ingestionJob.getIngestionType() + " ...";
+
+                    break;
+                }
+            }
+        }
+
+        return status;
     }
 
     public Date getBegin() {

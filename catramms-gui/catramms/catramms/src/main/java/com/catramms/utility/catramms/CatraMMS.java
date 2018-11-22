@@ -735,7 +735,7 @@ public class CatraMMS {
 
                 IngestionWorkflow ingestionWorkflow = new IngestionWorkflow();
 
-                boolean deep = false;
+                boolean deep = true;
                 fillIngestionWorkflow(ingestionWorkflow, ingestionWorkflowInfo, deep);
 
                 ingestionWorkflowsList.add(ingestionWorkflow);

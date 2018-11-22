@@ -192,14 +192,11 @@
                            hideEffect="explode" position="left"/>
             </p:column>
 
-            <p:column style="width:170px;" headerText="Status" >
+            <p:column style="width:180px;" headerText="Status" >
                 <p:outputLabel
                         id="ingestionWorkflowStatus"
-                        value="#{ingestionWorkflow.status}"
-                        title="#{ingestionWorkflow.status}"
+                        value="#{ingestionWorkflows.getStatus(ingestionWorkflow)}"
                         />
-                <p:tooltip for="ingestionWorkflowStatus" showEffect="clip"
-                           hideEffect="explode" position="left"/>
             </p:column>
 
             <p:column style="width:160px;" headerText="Ingestion Date" >
