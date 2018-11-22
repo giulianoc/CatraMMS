@@ -3324,10 +3324,6 @@ shared_ptr<MySQLConnection> MMSEngineDBFacade::beginIngestionJobs ()
 
     try
     {
-        _logger->info(__FILEREF__ + "beginIngestionJobs"
-            + ", getConnectionId: " + to_string(conn->getConnectionId())
-        );
-
         conn = _connectionPool->borrow();	
         _logger->debug(__FILEREF__ + "DB connection borrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())

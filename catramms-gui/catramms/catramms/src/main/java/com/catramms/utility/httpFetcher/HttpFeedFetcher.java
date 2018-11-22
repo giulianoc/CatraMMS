@@ -279,8 +279,7 @@ public class HttpFeedFetcher {
                     {
                         String encoded = DatatypeConverter.printBase64Binary((user + ":" + password).getBytes("utf-8"));
                         conn.setRequestProperty("Authorization", "Basic " + encoded);
-                        mLogger.info("Add Header (user " + user + "). " + "Authorization: " + "Basic " + encoded);
-                        mLogger.info("Add Header (password " + password + "). " + "Authorization: " + "Basic " + encoded);
+                        mLogger.info("Add Header (user " + user + ", password " + "..." + "). " + "Authorization: " + "Basic " + encoded);
                     }
 
                     conn.setDoOutput(true); // false because I do not need to append any data to this request

@@ -297,9 +297,10 @@ public class CatraMMS {
             throws Exception
     {
         String mmsInfo;
+        String mmsURL = null;
         try
         {
-            String mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort + "/catramms/v1/ingestion";
+            mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort + "/catramms/v1/ingestion";
 
             mLogger.info("ingestWorkflow"
                     + ", mmsURL: " + mmsURL
@@ -313,7 +314,9 @@ public class CatraMMS {
         }
         catch (Exception e)
         {
-            String errorMessage = "ingestWorkflow MMS failed. Exception: " + e;
+            String errorMessage = "ingestWorkflow MMS failed"
+                    + ", mmsURL: " + mmsURL
+                    + ", Exception: " + e;
             mLogger.error(errorMessage);
 
             throw new Exception(errorMessage);
