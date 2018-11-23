@@ -483,6 +483,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -532,6 +533,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -580,6 +582,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -804,6 +807,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerUserIfNotPresentAndShareWorkspac
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -853,6 +857,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerUserIfNotPresentAndShareWorkspac
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -901,6 +906,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerUserIfNotPresentAndShareWorkspac
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -1132,6 +1138,7 @@ tuple<string,string,string> MMSEngineDBFacade::confirmUser(
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -1181,6 +1188,7 @@ tuple<string,string,string> MMSEngineDBFacade::confirmUser(
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -1229,6 +1237,7 @@ tuple<string,string,string> MMSEngineDBFacade::confirmUser(
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -1334,6 +1343,7 @@ tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool,bool> MMSEngineDBFa
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -1353,6 +1363,7 @@ tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool,bool> MMSEngineDBFa
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -1370,6 +1381,7 @@ tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool,bool> MMSEngineDBFa
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -1386,6 +1398,7 @@ tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool,bool> MMSEngineDBFa
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -1509,6 +1522,7 @@ pair<int64_t,string> MMSEngineDBFacade::login (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -1528,6 +1542,7 @@ pair<int64_t,string> MMSEngineDBFacade::login (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -1545,6 +1560,7 @@ pair<int64_t,string> MMSEngineDBFacade::login (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -1561,6 +1577,7 @@ pair<int64_t,string> MMSEngineDBFacade::login (
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -1942,6 +1959,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -1959,6 +1977,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -1975,6 +1994,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -2185,6 +2205,7 @@ void MMSEngineDBFacade::removeEncodingProfile(
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -2202,6 +2223,7 @@ void MMSEngineDBFacade::removeEncodingProfile(
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -2218,6 +2240,7 @@ void MMSEngineDBFacade::removeEncodingProfile(
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -2404,6 +2427,7 @@ void MMSEngineDBFacade::removeEncodingProfilesSet(
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -2421,6 +2445,7 @@ void MMSEngineDBFacade::removeEncodingProfilesSet(
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -2437,6 +2462,7 @@ void MMSEngineDBFacade::removeEncodingProfilesSet(
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -2599,6 +2625,7 @@ void MMSEngineDBFacade::getExpiredMediaItemKeys(
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -2648,6 +2675,7 @@ void MMSEngineDBFacade::getExpiredMediaItemKeys(
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -2696,6 +2724,7 @@ void MMSEngineDBFacade::getExpiredMediaItemKeys(
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -2845,6 +2874,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -2862,6 +2892,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -2878,6 +2909,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -3173,6 +3205,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -3222,6 +3255,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -3270,6 +3304,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -3345,6 +3380,7 @@ shared_ptr<MySQLConnection> MMSEngineDBFacade::beginIngestionJobs ()
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -3362,6 +3398,7 @@ shared_ptr<MySQLConnection> MMSEngineDBFacade::beginIngestionJobs ()
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -3378,6 +3415,7 @@ shared_ptr<MySQLConnection> MMSEngineDBFacade::beginIngestionJobs ()
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -3436,6 +3474,7 @@ shared_ptr<MySQLConnection> MMSEngineDBFacade::endIngestionJobs (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -3453,6 +3492,7 @@ shared_ptr<MySQLConnection> MMSEngineDBFacade::endIngestionJobs (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -3469,6 +3509,7 @@ shared_ptr<MySQLConnection> MMSEngineDBFacade::endIngestionJobs (
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -3920,6 +3961,7 @@ void MMSEngineDBFacade::updateIngestionJob (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -3937,6 +3979,7 @@ void MMSEngineDBFacade::updateIngestionJob (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -3953,6 +3996,7 @@ void MMSEngineDBFacade::updateIngestionJob (
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -4733,6 +4777,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -4750,6 +4795,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -4766,6 +4812,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress (
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -4863,6 +4910,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -4880,6 +4928,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -4896,6 +4945,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress (
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -4965,6 +5015,7 @@ void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -4982,6 +5033,7 @@ void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -4998,6 +5050,7 @@ void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred (
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -5192,6 +5245,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -5209,6 +5263,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -5225,6 +5280,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -5386,6 +5442,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -5403,6 +5460,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -5419,6 +5477,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -5657,6 +5716,7 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -5674,6 +5734,7 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -5690,6 +5751,7 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -5921,6 +5983,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -5938,6 +6001,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -5954,6 +6018,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -6466,6 +6531,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -6483,6 +6549,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -6499,6 +6566,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -6722,6 +6790,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfilesSetList (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -6739,6 +6808,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfilesSetList (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -6755,6 +6825,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfilesSetList (
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -6943,6 +7014,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfileList (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -6960,6 +7032,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfileList (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -6976,6 +7049,7 @@ Json::Value MMSEngineDBFacade::getEncodingProfileList (
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -7046,6 +7120,7 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -7062,6 +7137,7 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -7079,6 +7155,7 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -7095,6 +7172,7 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -7196,6 +7274,7 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -7212,6 +7291,7 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -7229,6 +7309,7 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -7245,6 +7326,7 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -7323,6 +7405,7 @@ pair<MMSEngineDBFacade::ContentType,string> MMSEngineDBFacade::getMediaItemKeyDe
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -7340,10 +7423,12 @@ pair<MMSEngineDBFacade::ContentType,string> MMSEngineDBFacade::getMediaItemKeyDe
         if (warningIfMissing)
             _logger->warn(__FILEREF__ + "SQL exception"
                 + ", lastSQLCommand: " + lastSQLCommand
+                + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
             );
         else
             _logger->error(__FILEREF__ + "SQL exception"
                 + ", lastSQLCommand: " + lastSQLCommand
+                + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
             );
 
         if (conn != nullptr)
@@ -7361,6 +7446,7 @@ pair<MMSEngineDBFacade::ContentType,string> MMSEngineDBFacade::getMediaItemKeyDe
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -7377,6 +7463,7 @@ pair<MMSEngineDBFacade::ContentType,string> MMSEngineDBFacade::getMediaItemKeyDe
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -7455,6 +7542,7 @@ tuple<int64_t,MMSEngineDBFacade::ContentType,string> MMSEngineDBFacade::getMedia
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -7472,10 +7560,12 @@ tuple<int64_t,MMSEngineDBFacade::ContentType,string> MMSEngineDBFacade::getMedia
         if (warningIfMissing)
             _logger->warn(__FILEREF__ + "SQL exception"
                 + ", lastSQLCommand: " + lastSQLCommand
+                + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
             );
         else
             _logger->error(__FILEREF__ + "SQL exception"
                 + ", lastSQLCommand: " + lastSQLCommand
+                + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
             );
 
         if (conn != nullptr)
@@ -7493,6 +7583,7 @@ tuple<int64_t,MMSEngineDBFacade::ContentType,string> MMSEngineDBFacade::getMedia
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -7509,6 +7600,7 @@ tuple<int64_t,MMSEngineDBFacade::ContentType,string> MMSEngineDBFacade::getMedia
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -7600,6 +7692,7 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -7617,10 +7710,12 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
         if (warningIfMissing)
             _logger->warn(__FILEREF__ + "MediaItemKeyNotFound SQL exception"
                 + ", lastSQLCommand: " + lastSQLCommand
+                + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
             );
         else
             _logger->error(__FILEREF__ + "MediaItemKeyNotFound SQL exception"
                 + ", lastSQLCommand: " + lastSQLCommand
+                + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
             );
 
         if (conn != nullptr)
@@ -7638,6 +7733,7 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -7654,6 +7750,7 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -7727,6 +7824,7 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -7744,10 +7842,12 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
         if (warningIfMissing)
             _logger->warn(__FILEREF__ + "SQL exception"
                 + ", lastSQLCommand: " + lastSQLCommand
+                + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
             );
         else
             _logger->error(__FILEREF__ + "SQL exception"
                 + ", lastSQLCommand: " + lastSQLCommand
+                + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
             );
 
         if (conn != nullptr)
@@ -7765,6 +7865,7 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -7781,6 +7882,7 @@ pair<int64_t,MMSEngineDBFacade::ContentType> MMSEngineDBFacade::getMediaItemKeyD
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -7909,6 +8011,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> MMSEn
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -7926,6 +8029,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> MMSEn
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -7942,6 +8046,7 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> MMSEn
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -8050,6 +8155,7 @@ tuple<int64_t,string,long,long,int> MMSEngineDBFacade::getAudioDetails(
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -8067,6 +8173,7 @@ tuple<int64_t,string,long,long,int> MMSEngineDBFacade::getAudioDetails(
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -8083,6 +8190,7 @@ tuple<int64_t,string,long,long,int> MMSEngineDBFacade::getAudioDetails(
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -8189,6 +8297,7 @@ tuple<int,int,string,int> MMSEngineDBFacade::getImageDetails(
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -8206,6 +8315,7 @@ tuple<int,int,string,int> MMSEngineDBFacade::getImageDetails(
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -8222,6 +8332,7 @@ tuple<int,int,string,int> MMSEngineDBFacade::getImageDetails(
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -9277,6 +9388,7 @@ void MMSEngineDBFacade::getEncodingJobs(
             + ", lastSQLCommand: " + lastSQLCommand
             + ", processorMMS: " + processorMMS
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -9326,6 +9438,7 @@ void MMSEngineDBFacade::getEncodingJobs(
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -9374,6 +9487,7 @@ void MMSEngineDBFacade::getEncodingJobs(
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -9498,6 +9612,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetKey(
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -9515,6 +9630,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetKey(
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -9531,6 +9647,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetKey(
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -9616,6 +9733,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -9633,6 +9751,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -9649,6 +9768,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -9760,6 +9880,7 @@ int MMSEngineDBFacade::addEncodingJob (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -9777,6 +9898,7 @@ int MMSEngineDBFacade::addEncodingJob (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -9793,6 +9915,7 @@ int MMSEngineDBFacade::addEncodingJob (
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -9965,6 +10088,7 @@ int MMSEngineDBFacade::addEncodingJob (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -10014,6 +10138,7 @@ int MMSEngineDBFacade::addEncodingJob (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -10062,6 +10187,7 @@ int MMSEngineDBFacade::addEncodingJob (
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -10339,6 +10465,7 @@ int MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -10388,6 +10515,7 @@ int MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -10436,6 +10564,7 @@ int MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -10656,6 +10785,7 @@ int MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -10705,6 +10835,7 @@ int MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -10753,6 +10884,7 @@ int MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob (
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -10931,6 +11063,7 @@ int MMSEngineDBFacade::addEncoding_GenerateFramesJob (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -10980,6 +11113,7 @@ int MMSEngineDBFacade::addEncoding_GenerateFramesJob (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -11028,6 +11162,7 @@ int MMSEngineDBFacade::addEncoding_GenerateFramesJob (
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -11194,6 +11329,7 @@ int MMSEngineDBFacade::addEncoding_SlideShowJob (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -11243,6 +11379,7 @@ int MMSEngineDBFacade::addEncoding_SlideShowJob (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -11291,6 +11428,7 @@ int MMSEngineDBFacade::addEncoding_SlideShowJob (
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -11568,6 +11706,7 @@ int MMSEngineDBFacade::updateEncodingJob (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -11617,6 +11756,7 @@ int MMSEngineDBFacade::updateEncodingJob (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -11665,6 +11805,7 @@ int MMSEngineDBFacade::updateEncodingJob (
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -11855,6 +11996,7 @@ void MMSEngineDBFacade::updateEncodingJobPriority (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -11904,6 +12046,7 @@ void MMSEngineDBFacade::updateEncodingJobPriority (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -11952,6 +12095,7 @@ void MMSEngineDBFacade::updateEncodingJobPriority (
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -12050,6 +12194,7 @@ void MMSEngineDBFacade::updateEncodingJobProgress (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -12067,6 +12212,7 @@ void MMSEngineDBFacade::updateEncodingJobProgress (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -12083,6 +12229,7 @@ void MMSEngineDBFacade::updateEncodingJobProgress (
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -12424,6 +12571,7 @@ void MMSEngineDBFacade::checkWorkspaceMaxIngestionNumber (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -12440,6 +12588,7 @@ void MMSEngineDBFacade::checkWorkspaceMaxIngestionNumber (
     {
         _logger->error(__FILEREF__ + "exception"
             + ", e.what: " + e.what()
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -12456,6 +12605,7 @@ void MMSEngineDBFacade::checkWorkspaceMaxIngestionNumber (
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -12622,6 +12772,7 @@ string MMSEngineDBFacade::nextRelativePathToBeUsed (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -12639,6 +12790,7 @@ string MMSEngineDBFacade::nextRelativePathToBeUsed (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -12655,6 +12807,7 @@ string MMSEngineDBFacade::nextRelativePathToBeUsed (
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -13240,6 +13393,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -13289,6 +13443,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -13337,6 +13492,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -13492,6 +13648,7 @@ int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -13541,6 +13698,7 @@ int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -13589,6 +13747,7 @@ int64_t MMSEngineDBFacade::saveEncodedContentMetadata(
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -13926,6 +14085,7 @@ void MMSEngineDBFacade::removePhysicalPath (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -13943,6 +14103,7 @@ void MMSEngineDBFacade::removePhysicalPath (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -13959,6 +14120,7 @@ void MMSEngineDBFacade::removePhysicalPath (
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -14021,6 +14183,7 @@ void MMSEngineDBFacade::removeMediaItem (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -14038,6 +14201,7 @@ void MMSEngineDBFacade::removeMediaItem (
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -14054,6 +14218,7 @@ void MMSEngineDBFacade::removeMediaItem (
     {
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -14139,6 +14304,7 @@ tuple<int,shared_ptr<Workspace>,string,string,string,int64_t> MMSEngineDBFacade:
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -14156,6 +14322,7 @@ tuple<int,shared_ptr<Workspace>,string,string,string,int64_t> MMSEngineDBFacade:
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -14172,6 +14339,7 @@ tuple<int,shared_ptr<Workspace>,string,string,string,int64_t> MMSEngineDBFacade:
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -14264,6 +14432,7 @@ tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,int64_t> MMSEngineD
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -14281,6 +14450,7 @@ tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,int64_t> MMSEngineD
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -14297,6 +14467,7 @@ tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,int64_t> MMSEngineD
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -14371,6 +14542,7 @@ void MMSEngineDBFacade::getAllStorageDetails(
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -14388,6 +14560,7 @@ void MMSEngineDBFacade::getAllStorageDetails(
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -14404,6 +14577,7 @@ void MMSEngineDBFacade::getAllStorageDetails(
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -14472,6 +14646,7 @@ int64_t MMSEngineDBFacade::createDeliveryAuthorization(
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -14489,6 +14664,7 @@ int64_t MMSEngineDBFacade::createDeliveryAuthorization(
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -14505,6 +14681,7 @@ int64_t MMSEngineDBFacade::createDeliveryAuthorization(
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -14628,6 +14805,7 @@ bool MMSEngineDBFacade::checkDeliveryAuthorization(
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -14645,6 +14823,7 @@ bool MMSEngineDBFacade::checkDeliveryAuthorization(
         _logger->error(__FILEREF__ + "SQL exception"
             + ", e.what(): " + e.what()
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -14661,6 +14840,7 @@ bool MMSEngineDBFacade::checkDeliveryAuthorization(
     {        
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
@@ -16778,6 +16958,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         _logger->error(__FILEREF__ + "SQL exception"
             + ", lastSQLCommand: " + lastSQLCommand
             + ", se.what(): " + se.what()
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
         );
 
         if (conn != nullptr)
