@@ -13,7 +13,9 @@ import javax.faces.application.FacesMessage;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ManagedProperty;
 import javax.faces.bean.ViewScoped;
+import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
+import javax.servlet.http.HttpServletResponse;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -422,6 +424,44 @@ public class MediaItemDetails extends Workspace implements Serializable {
             }
 
             mLogger.info("framesPerSecond: " + framesPerSecond);
+        }
+    }
+
+    public void downloadCurrentMediaURL(PhysicalPath physicalPath)
+    {
+        long ttlInSeconds = 60 * 60;
+        int maxRetries = 20;
+
+        try
+        {
+            Long userKey = SessionUtils.getUserKey();
+            String apiKey = SessionUtils.getAPIKey();
+
+            if (userKey == null || apiKey == null || apiKey.equalsIgnoreCase(""))
+            {
+                mLogger.warn("no input to require mediaItemsKey"
+                                + ", userKey: " + userKey
+                                + ", apiKey: " + apiKey
+                );
+            }
+            else
+            {
+                String username = userKey.toString();
+                String password = apiKey;
+
+                CatraMMS catraMMS = new CatraMMS();
+                currentMediaURL = catraMMS.getDeliveryURL(
+                        username, password, physicalPath.getPhysicalPathKey(),
+                        ttlInSeconds, maxRetries);
+
+                mLogger.info("Redirect to " + currentMediaURL);
+                FacesContext.getCurrentInstance().getExternalContext().redirect(currentMediaURL);
+            }
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "Exception: " + e;
+            mLogger.error(errorMessage);
         }
     }
 

@@ -431,7 +431,7 @@
 
             </p:tab>
 
-            <p:tab title="Physical Paths (#{mediaItemDetails.mediaItem.physicalPathList.size()})">
+            <p:tab title="Files (#{mediaItemDetails.mediaItem.physicalPathList.size()})">
 
                 <p:dataTable rendered="#{mediaItemDetails.mediaItem != null}"
                              resizableColumns="true" id="physicalPathTable" var="physicalPath" rowIndexVar="rowId"
@@ -443,13 +443,15 @@
                     </p:column>
 
                     <p:column style="width:100px;" headerText="Encoding&lt;br&gt;Profile Key" >
-                        <p:outputLabel rendered="#{physicalPath.encodingProfileKey != null}"
-                                       value="#{physicalPath.encodingProfileKey}" />
+                        <h:link rendered="#{physicalPath.encodingProfileKey != null}"
+                                outcome="/encodingProfileDetails.xhtml?faces-redirect=true"
+                                value="#{physicalPath.encodingProfileKey}">
+                            <f:param name="encodingProfileKey" value="#{physicalPath.encodingProfileKey}" />
+                        </h:link>
+
                         <p:outputLabel rendered="#{physicalPath.encodingProfileKey == null}"
                                        value="&lt;source file&gt;" />
                     </p:column>
-
-
 
                     <p:column headerText="Video codec" rendered="#{mediaItemDetails.mediaItem.contentType == 'Video'}">
                         <p:outputLabel value="#{physicalPath.videoDetails.videoCodecName}" />
@@ -518,7 +520,7 @@
                         <p:commandButton id="dynaButtonOptions" type="button" icon="fa fa-navicon"/>
                         <p:menu toggleable="true" collapsed="true" overlay="true" trigger="dynaButtonOptions"
                                 my="left top" at="left bottom">
-                            <p:menuitem value="Physical Path Details"
+                            <p:menuitem value="File Details"
                                         actionListener="#{mediaItemDetails.setCurrentPhysicalPath(physicalPath)}"
                                         update="showPhysicalPathDetailsForm"
                                         oncomplete="PF('showPhysicalPathDetails').show()">
@@ -538,7 +540,7 @@
                                         oncomplete="PF('showImage').show()">
                             </p:menuitem>
 
-                            <p:menuitem value="Play Video"
+                            <p:menuitem value="Play"
                                         rendered="#{mediaItemDetails.mediaItem.contentType == 'Video' or mediaItemDetails.mediaItem.contentType == 'Audio'}"
                                         disabled="#{!sessionScope.currentWorkspaceDetails.deliveryAuthorization}"
                                         actionListener="#{mediaItemDetails.prepareCurrentMediaURL(physicalPath, mediaItemDetails.mediaItem.contentType, false)}"
@@ -546,12 +548,18 @@
                                         oncomplete="PF('showVideo').show()">
                             </p:menuitem>
 
-                            <p:menuitem value="Edit Video"
+                            <p:menuitem value="Edit"
                                         rendered="#{mediaItemDetails.mediaItem.contentType == 'Video' or mediaItemDetails.mediaItem.contentType == 'Audio'}"
                                         disabled="#{!sessionScope.currentWorkspaceDetails.deliveryAuthorization or !sessionScope.currentWorkspaceDetails.editMedia}"
                                         actionListener="#{mediaItemDetails.prepareCurrentMediaURL(physicalPath, mediaItemDetails.mediaItem.contentType, true)}"
                                         update="showVideoForm"
                                         oncomplete="PF('showVideo').show()">
+                            </p:menuitem>
+
+                            <p:menuitem value="Download File"
+                                        disabled="#{!sessionScope.currentWorkspaceDetails.deliveryAuthorization}"
+                                        actionListener="#{mediaItemDetails.downloadCurrentMediaURL(physicalPath)}"
+                                        >
                             </p:menuitem>
                         </p:menu>
 

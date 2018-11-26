@@ -226,6 +226,7 @@ public class MediaItems extends Workspace implements Serializable {
                         + "&autoRefresh=" + autoRefresh
                         + "&begin=" + simpleDateFormat_1.format(begin)
                         + "&end=" + simpleDateFormat_1.format(end)
+                        + "&title=" + java.net.URLEncoder.encode(title, "UTF-8")
                         + "&contentType=" + contentType
                         ;
                 mLogger.info("Redirect to " + url);
