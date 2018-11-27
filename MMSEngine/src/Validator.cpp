@@ -2615,30 +2615,34 @@ void Validator::validateExtractTracksMetadata(int64_t workspaceKey, string label
 }
 
 void Validator::validatePostOnFacebookMetadata(int64_t workspaceKey, string label,
-    Json::Value parametersRoot, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+    Json::Value parametersRoot, 
+        bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
 {     
-    // References is optional because in case of dependency managed automatically
-    // by MMS (i.e.: onSuccess)
-    string field = "References";
-    if (isMetadataPresent(parametersRoot, field))
+    if (validateDependenciesToo)
     {
-        Json::Value referencesRoot = parametersRoot[field];
-        if (referencesRoot.size() < 1)
+        // References is optional because in case of dependency managed automatically
+        // by MMS (i.e.: onSuccess)
+        string field = "References";
+        if (isMetadataPresent(parametersRoot, field))
         {
-            string errorMessage = __FILEREF__ + "No correct number of References"
-                    + ", referencesRoot.size: " + to_string(referencesRoot.size())
-                    + ", label: " + label
-                    ;
-            _logger->error(errorMessage);
+            Json::Value referencesRoot = parametersRoot[field];
+            if (referencesRoot.size() < 1)
+            {
+                string errorMessage = __FILEREF__ + "No correct number of References"
+                        + ", referencesRoot.size: " + to_string(referencesRoot.size())
+                        + ", label: " + label
+                        ;
+                _logger->error(errorMessage);
 
-            throw runtime_error(errorMessage);
-        }
+                throw runtime_error(errorMessage);
+            }
 
-        bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = true;
-        bool encodingProfileFieldsToBeManaged = false;
-        fillDependencies(workspaceKey, parametersRoot, dependencies,
-                priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
-                encodingProfileFieldsToBeManaged);
+            bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = true;
+            bool encodingProfileFieldsToBeManaged = false;
+            fillDependencies(workspaceKey, parametersRoot, dependencies,
+                    priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
+                    encodingProfileFieldsToBeManaged);
+        }    
     }    
 }
 
