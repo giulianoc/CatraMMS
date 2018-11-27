@@ -174,7 +174,7 @@ string MMSStorage::getIngestionRootRepository(void) {
 pair<int64_t,string> MMSStorage::getPhysicalPath(int64_t mediaItemKey,
         int64_t encodingProfileKey)
 {    
-    tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,int64_t> storageDetails =
+    tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails =
         _mmsEngineDBFacade->getStorageDetails(mediaItemKey, encodingProfileKey);
 
     int64_t physicalPathKey;
@@ -184,8 +184,9 @@ pair<int64_t,string> MMSStorage::getPhysicalPath(int64_t mediaItemKey,
     string fileName;
     int64_t sizeInBytes;
     string deliveryFileName;
+    string title;
     tie(physicalPathKey, mmsPartitionNumber, workspace, relativePath, 
-            fileName, deliveryFileName, sizeInBytes) = storageDetails;
+            fileName, deliveryFileName, title, sizeInBytes) = storageDetails;
 
     string physicalPath = getMMSAssetPathName(
         mmsPartitionNumber,
@@ -198,7 +199,7 @@ pair<int64_t,string> MMSStorage::getPhysicalPath(int64_t mediaItemKey,
 
 string MMSStorage::getPhysicalPath(int64_t physicalPathKey)
 {    
-    tuple<int,shared_ptr<Workspace>,string,string,string,int64_t> storageDetails =
+    tuple<int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails =
         _mmsEngineDBFacade->getStorageDetails(physicalPathKey);
 
     int mmsPartitionNumber;
@@ -206,9 +207,10 @@ string MMSStorage::getPhysicalPath(int64_t physicalPathKey)
     string relativePath;
     string fileName;
     string deliveryFileName;
+    string title;
     int64_t sizeInBytes;
     tie(mmsPartitionNumber, workspace, relativePath, fileName, 
-            deliveryFileName, sizeInBytes) = storageDetails;
+            deliveryFileName, title, sizeInBytes) = storageDetails;
 
     return getMMSAssetPathName(
         mmsPartitionNumber,
@@ -226,7 +228,7 @@ void MMSStorage::removePhysicalPath(int64_t physicalPathKey)
             + ", physicalPathKey: " + to_string(physicalPathKey)
         );
         
-        tuple<int,shared_ptr<Workspace>,string,string,string,int64_t> storageDetails =
+        tuple<int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails =
             _mmsEngineDBFacade->getStorageDetails(physicalPathKey);
 
         int mmsPartitionNumber;
@@ -234,9 +236,10 @@ void MMSStorage::removePhysicalPath(int64_t physicalPathKey)
         string relativePath;
         string fileName;
         string deliveryFileName;
+        string title;
         int64_t sizeInBytes;
         tie(mmsPartitionNumber, workspace, relativePath, fileName, 
-                deliveryFileName, sizeInBytes) = storageDetails;
+                deliveryFileName, title, sizeInBytes) = storageDetails;
 
         _logger->info(__FILEREF__ + "getMMSAssetPathName ..."
             + ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)

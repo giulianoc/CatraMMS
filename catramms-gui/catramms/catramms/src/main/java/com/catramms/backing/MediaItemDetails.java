@@ -378,10 +378,11 @@ public class MediaItemDetails extends Workspace implements Serializable {
                 String username = userKey.toString();
                 String password = apiKey;
 
+                boolean save = false;
                 CatraMMS catraMMS = new CatraMMS();
                 currentMediaURL = catraMMS.getDeliveryURL(
                         username, password, physicalPath.getPhysicalPathKey(),
-                        ttlInSeconds, maxRetries);
+                        ttlInSeconds, maxRetries, save);
 
                 setCurrentPhysicalPath(physicalPath);
             }
@@ -449,10 +450,11 @@ public class MediaItemDetails extends Workspace implements Serializable {
                 String username = userKey.toString();
                 String password = apiKey;
 
+                boolean save = true;
                 CatraMMS catraMMS = new CatraMMS();
                 currentMediaURL = catraMMS.getDeliveryURL(
                         username, password, physicalPath.getPhysicalPathKey(),
-                        ttlInSeconds, maxRetries);
+                        ttlInSeconds, maxRetries, save);
 
                 mLogger.info("Redirect to " + currentMediaURL);
                 FacesContext.getCurrentInstance().getExternalContext().redirect(currentMediaURL);

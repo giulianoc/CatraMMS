@@ -2732,25 +2732,27 @@ void MMSEngineProcessor::ftpDeliveryContentTask(
             {
                 int64_t encodingProfileKey = -1;
                 
-                tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,int64_t> storageDetails 
+                tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
                     = _mmsEngineDBFacade->getStorageDetails(
                         key, encodingProfileKey);
 
                 int64_t physicalPathKey;
                 shared_ptr<Workspace> workspace;
+                string title;
                 
-                tie(physicalPathKey, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, sizeInBytes) 
+                tie(physicalPathKey, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
                         = storageDetails;
                 workspaceDirectoryName = workspace->_directoryName;
             }
             else
             {
-                tuple<int,shared_ptr<Workspace>,string,string,string,int64_t> storageDetails 
+                tuple<int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
                     = _mmsEngineDBFacade->getStorageDetails(key);
 
                 shared_ptr<Workspace> workspace;
+                string title;
                 
-                tie(mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, sizeInBytes) 
+                tie(mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
                         = storageDetails;
                 workspaceDirectoryName = workspace->_directoryName;
             }
@@ -3185,25 +3187,27 @@ void MMSEngineProcessor::localCopyContentTask(
             {
                 int64_t encodingProfileKey = -1;
                 
-                tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,int64_t> storageDetails 
+                tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
                     = _mmsEngineDBFacade->getStorageDetails(
                         key, encodingProfileKey);
 
                 int64_t physicalPathKey;
                 shared_ptr<Workspace> workspace;
+                string title;
                 
-                tie(physicalPathKey, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, sizeInBytes) 
+                tie(physicalPathKey, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
                         = storageDetails;
                 workspaceDirectoryName = workspace->_directoryName;
             }
             else
             {
-                tuple<int,shared_ptr<Workspace>,string,string,string,int64_t> storageDetails 
+                tuple<int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
                     = _mmsEngineDBFacade->getStorageDetails(key);
 
                 shared_ptr<Workspace> workspace;
+                string title;
                 
-                tie(mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, sizeInBytes) 
+                tie(mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
                         = storageDetails;
                 workspaceDirectoryName = workspace->_directoryName;
             }
@@ -3441,27 +3445,29 @@ void MMSEngineProcessor::extractTracksContentThread(
 
                 int64_t encodingProfileKey = -1;
                 
-                tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,int64_t> storageDetails 
+                tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
                     = _mmsEngineDBFacade->getStorageDetails(
                         key, encodingProfileKey);
 
                 int64_t physicalPathKey;
                 string deliveryFileName;
+                string title;
                 int64_t sizeInBytes;
                 
-                tie(physicalPathKey, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, sizeInBytes) 
+                tie(physicalPathKey, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
                         = storageDetails;
                 workspaceDirectoryName = workspace->_directoryName;
             }
             else
             {
-                tuple<int,shared_ptr<Workspace>,string,string,string,int64_t> storageDetails 
+                tuple<int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
                     = _mmsEngineDBFacade->getStorageDetails(key);
 
                 string deliveryFileName;
+                string title;
                 int64_t sizeInBytes;
                 
-                tie(mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, sizeInBytes) 
+                tie(mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
                         = storageDetails;
                 workspaceDirectoryName = workspace->_directoryName;
             }

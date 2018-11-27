@@ -1995,9 +1995,19 @@ void API::createDeliveryAuthorization(
                 redirect = false;
         }
         
+        bool save = false;
+        auto saveIt = queryParameters.find("save");
+        if (saveIt != queryParameters.end())
+        {
+            if (saveIt->second == "true")
+                save = true;
+            else
+                save = false;
+        }
+
         try
         {
-            tuple<int,shared_ptr<Workspace>,string,string,string,int64_t> storageDetails =
+            tuple<int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails =
                 _mmsEngineDBFacade->getStorageDetails(physicalPathKey);
 
             int mmsPartitionNumber;
@@ -2005,15 +2015,23 @@ void API::createDeliveryAuthorization(
             string relativePath;
             string fileName;
             string deliveryFileName;
+            string title;
             int64_t sizeInBytes;
             tie(mmsPartitionNumber, contentWorkspace, relativePath, fileName, 
-                    deliveryFileName, sizeInBytes) = storageDetails;
+                    deliveryFileName, title, sizeInBytes) = storageDetails;
 
-            if (deliveryFileName != "")
+            if (save)
             {
-                size_t extensionIndex = fileName.find_last_of(".");
-                if (extensionIndex != string::npos)
-                    deliveryFileName.append(fileName.substr(extensionIndex));
+                if (deliveryFileName == "")
+                    deliveryFileName = title;
+
+                if (deliveryFileName != "")
+                {
+                    // use the extension of fileName
+                    size_t extensionIndex = fileName.find_last_of(".");
+                    if (extensionIndex != string::npos)
+                        deliveryFileName.append(fileName.substr(extensionIndex));
+                }
             }
             
             if (contentWorkspace->_workspaceKey != requestWorkspace->_workspaceKey)
@@ -2058,7 +2076,7 @@ void API::createDeliveryAuthorization(
                     + deliveryURI
                     + "?token=" + to_string(authorizationKey)
             ;
-            if (deliveryFileName != "")
+            if (save && deliveryFileName != "")
                 deliveryURL.append("&deliveryFileName=").append(deliveryFileName);
             
             if (redirect)

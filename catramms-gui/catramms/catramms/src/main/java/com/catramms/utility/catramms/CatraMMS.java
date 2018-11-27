@@ -1328,7 +1328,7 @@ public class CatraMMS {
 
     public String getDeliveryURL(String username, String password,
                                  Long physicalPathKey,
-                                 long ttlInSeconds, int maxRetries)
+                                 long ttlInSeconds, int maxRetries, Boolean save)
             throws Exception
     {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
@@ -1341,6 +1341,7 @@ public class CatraMMS {
                     + "/catramms/v1/delivery/" + physicalPathKey
                     + "?ttlInSeconds=" + ttlInSeconds
                     + "&maxRetries=" + maxRetries
+                    + "&save=" + save.toString()
                     + "&redirect=false"
                     ;
 
