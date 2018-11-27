@@ -1,0 +1,27 @@
+"Task": {
+	// optional
+	"Label"="My Facebook POST",
+
+	// mandatory
+	"Type": "Post-on-Facebook",
+
+	"Parameters": {
+		// mandatory
+		"References": [
+			// mandatory. One Reference needed to identify the media file (mediaItemKeys) or
+			// the profile (physicalPathKey) to be POST on Facebook.
+			// In case this task is placed inside an onSuccess event, 
+			// the Reference... item can be omitted.
+			// In such a case, the System will automatically add the Reference... item using the key
+			// of the video or the profile by which this task depend on.
+			// As reference can be used "ReferenceMediaItemKey", "ReferenceUniqueName" or 
+			// "ReferencePhysicalPathKey".
+			// In case this task depend on one task generating a media, the media will be 
+			// used.
+			// In case this task depend on one task generating a profile (i.e. Encode Task),
+			// the profile will be used.
+
+			{ "ReferenceMediaItemKey": 11 }
+		]
+	}
+}

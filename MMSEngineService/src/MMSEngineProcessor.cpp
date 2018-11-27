@@ -1704,6 +1704,68 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 throw runtime_error(errorMessage);
                             }
                         }
+                        else if (ingestionType == MMSEngineDBFacade::IngestionType::PostOnFacebook)
+                        {
+                            // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
+                            try
+                            {
+                                postOnFacebookTask(
+                                        ingestionJobKey, 
+                                        ingestionStatus,
+                                        workspace, 
+                                        parametersRoot, 
+                                        dependencies);
+                            }
+                            catch(runtime_error e)
+                            {
+                                _logger->error(__FILEREF__ + "postOnFacebookTask failed"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                                        errorMessage,
+                                        "" // processorMMS
+                                        );
+
+                                throw runtime_error(errorMessage);
+                            }
+                            catch(exception e)
+                            {
+                                _logger->error(__FILEREF__ + "postOnFacebookTask failed"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                                        errorMessage,
+                                        "" // processorMMS
+                                        );
+
+                                throw runtime_error(errorMessage);
+                            }
+                        }
                         else
                         {
                             string errorMessage = string("Unknown IngestionType")
@@ -2792,6 +2854,142 @@ void MMSEngineProcessor::ftpDeliveryContentTask(
     catch(exception e)
     {
         _logger->error(__FILEREF__ + "ftpDeliveryContentTask failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+        );
+        
+        // Update IngestionJob done in the calling method
+
+        throw e;
+    }
+}
+
+void MMSEngineProcessor::postOnFacebookTask(
+        int64_t ingestionJobKey,
+        MMSEngineDBFacade::IngestionStatus ingestionStatus,
+        shared_ptr<Workspace> workspace,
+        Json::Value parametersRoot,
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies
+)
+{
+    try
+    {
+        if (dependencies.size() == 0)
+        {
+            string errorMessage = __FILEREF__ + "No configured any media to be posted on Facebook"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", dependencies.size: " + to_string(dependencies.size());
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        if (_processorsThreadsNumber.use_count() + dependencies.size() > _processorThreads + _maxAdditionalProcessorThreads)
+        {
+            _logger->info(__FILEREF__ + "Not enough available threads to manage postOnFacebookTask, activity is postponed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+                + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
+            );
+
+            string errorMessage = "";
+            string processorMMS = "";
+
+            _logger->info(__FILEREF__ + "Update IngestionJob"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
+                + ", errorMessage: " + errorMessage
+                + ", processorMMS: " + processorMMS
+            );                            
+            _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                    ingestionStatus, 
+                    errorMessage,
+                    processorMMS
+                    );
+            
+            return;
+        }
+
+        for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
+        {
+            int mmsPartitionNumber;
+            string workspaceDirectoryName;
+            string relativePath;
+            string fileName;
+            int64_t sizeInBytes;
+            string deliveryFileName;
+            
+            int64_t key;
+            MMSEngineDBFacade::ContentType referenceContentType;
+            Validator::DependencyType dependencyType;
+            
+            tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+
+            if (dependencyType == Validator::DependencyType::MediaItemKey)
+            {
+                int64_t encodingProfileKey = -1;
+                
+                tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
+                    = _mmsEngineDBFacade->getStorageDetails(
+                        key, encodingProfileKey);
+
+                int64_t physicalPathKey;
+                shared_ptr<Workspace> workspace;
+                string title;
+                
+                tie(physicalPathKey, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
+                        = storageDetails;
+                workspaceDirectoryName = workspace->_directoryName;
+            }
+            else
+            {
+                tuple<int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
+                    = _mmsEngineDBFacade->getStorageDetails(key);
+
+                shared_ptr<Workspace> workspace;
+                string title;
+                
+                tie(mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
+                        = storageDetails;
+                workspaceDirectoryName = workspace->_directoryName;
+            }
+
+            _logger->info(__FILEREF__ + "getMMSAssetPathName ..."
+                + ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
+                + ", workspaceDirectoryName: " + workspaceDirectoryName
+                + ", relativePath: " + relativePath
+                + ", fileName: " + fileName
+            );
+            string mmsAssetPathName = _mmsStorage->getMMSAssetPathName(
+                mmsPartitionNumber,
+                workspaceDirectoryName,
+                relativePath,
+                fileName);
+            
+            // check on thread availability was done at the beginning in this method
+            thread postOnFacebook(&MMSEngineProcessor::postOnFacebookThread, this, 
+                _processorsThreadsNumber, mmsAssetPathName, fileName, sizeInBytes, ingestionJobKey, workspace);
+            postOnFacebook.detach();
+        }
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "postOnFacebookTask failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
+        );
+ 
+        // Update IngestionJob done in the calling method
+        
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "postOnFacebookTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );
@@ -7407,6 +7605,261 @@ void MMSEngineProcessor::ftpUploadMediaSourceThread(
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
                 e.what(), 
                 ""); // processorMMS
+
+        return;
+    }
+}
+
+void MMSEngineProcessor::postOnFacebookThread(
+        shared_ptr<long> processorsThreadsNumber,
+        string mmsAssetPathName, string fileName, int64_t sizeInBytes,
+        int64_t ingestionJobKey, shared_ptr<Workspace> workspace
+        )
+{
+    string facebookURL;
+    ostringstream response;
+    try
+    {
+        /*
+        facebookURL = httpProtocol
+                + "://"
+                + httpHostName
+                + ":"
+                + to_string(httpPort)
+                + httpURI
+                + httpURLParameters;
+         */
+
+        _logger->info(__FILEREF__ + "postOnFacebookThread"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", processors threads number: " + to_string(processorsThreadsNumber.use_count())
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", mmsAssetPathName: " + mmsAssetPathName
+            + ", sizeInBytes: " + to_string(sizeInBytes)
+            + ", facebookURL: " + facebookURL
+        );
+
+        /*
+        string data;
+        if (callbackMedatada.type() != Json::nullValue)
+        {
+            Json::StreamWriterBuilder wbuilder;
+
+            data = Json::writeString(wbuilder, callbackMedatada);
+        }
+
+        list<string> header;
+
+        if (httpMethod == "POST" && data != "")
+            header.push_back("Content-Type: application/json");
+
+        for (int userHeaderIndex = 0; userHeaderIndex < userHeadersRoot.size(); ++userHeaderIndex)
+        {
+            string userHeader = userHeadersRoot[userHeaderIndex].asString();
+
+            header.push_back(userHeader);
+        }
+
+        curlpp::Cleanup cleaner;
+        curlpp::Easy request;
+
+        if (data != "")
+        {
+            if (httpMethod == "GET")
+            {
+                if (httpURLParameters == "")
+                    userURL += "?";
+                else
+                    userURL += "&";
+                userURL += ("data=" + curlpp::escape(data));
+            }
+            else    // POST
+            {
+                request.setOpt(new curlpp::options::PostFields(data));
+                request.setOpt(new curlpp::options::PostFieldSize(data.length()));
+            }
+        }
+
+        request.setOpt(new curlpp::options::Url(userURL));
+        request.setOpt(new curlpp::options::Timeout(callbackTimeout));
+
+        if (httpProtocol == "https")
+        {
+//                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
+//                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;                                          
+//                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;                                  
+//                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;                              
+//                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;                                    
+//                typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;                           
+//                typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;                                         
+//                typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;                                          
+//                typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;                                          
+//                typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;                                 
+//                typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;                                    
+//                typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;                          
+//                typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;                                    
+
+
+            // cert is stored PEM coded in file... 
+            // since PEM is default, we needn't set it for PEM 
+            // curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
+            // curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
+            // equest.setOpt(sslCertType);
+
+            // set the cert for client authentication
+            // "testcert.pem"
+            // curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
+            // curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
+            // request.setOpt(sslCert);
+
+            // sorry, for engine we must set the passphrase
+            //   (if the key has one...)
+            // const char *pPassphrase = NULL;
+            // if(pPassphrase)
+            //  curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
+
+            // if we use a key stored in a crypto engine,
+            //   we must set the key type to "ENG"
+            // pKeyType  = "PEM";
+            // curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
+
+            // set the private key (file or ID in engine)
+            // pKeyName  = "testkey.pem";
+            // curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
+
+            // set the file with the certs vaildating the server
+            // *pCACertFile = "cacert.pem";
+            // curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
+
+            // disconnect if we can't validate server's cert
+            bool bSslVerifyPeer = false;
+            curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
+            request.setOpt(sslVerifyPeer);
+
+            curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
+            request.setOpt(sslVerifyHost);
+
+            // request.setOpt(new curlpp::options::SslEngineDefault());                                              
+
+        }
+        request.setOpt(new curlpp::options::HttpHeader(header));
+
+        request.setOpt(new curlpp::options::WriteStream(&response));
+
+        chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
+
+        _logger->info(__FILEREF__ + "Calling user callback"
+                + ", userURL: " + userURL
+                + ", httpProtocol: " + httpProtocol
+                + ", httpHostName: " + httpHostName
+                + ", httpPort: " + to_string(httpPort)
+                + ", httpURI: " + httpURI
+                + ", httpURLParameters: " + httpURLParameters
+                + ", httpProtocol: " + httpProtocol
+                + ", data: " + data
+        );
+        request.perform();
+
+        string sResponse = response.str();
+        _logger->info(__FILEREF__ + "Called user callback"
+                + ", userURL: " + userURL
+                + ", data: " + data
+                + ", response.str(): " + response.str()
+        );        
+
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_TaskSuccess"
+            + ", errorMessage: " + ""
+        );                            
+        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
+                MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
+                "", // errorMessage
+                "" // ProcessorMMS
+        );
+        */
+    }
+    catch (curlpp::LogicError & e) 
+    {
+        _logger->error(__FILEREF__ + "Facebook URL failed (LogicError)"
+            + ", facebookURL: " + facebookURL
+            + ", exception: " + e.what()
+            + ", response.str(): " + response.str()
+        );
+
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what(), 
+                "");    // processorMMS
+
+        return;
+    }
+    catch (curlpp::RuntimeError & e) 
+    {
+        _logger->error(__FILEREF__ + "Facebook URL failed (RuntimeError)"
+            + ", facebookURL: " + facebookURL
+            + ", exception: " + e.what()
+            + ", response.str(): " + response.str()
+        );
+
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what(), 
+                "");    // processorMMS
+
+        return;
+    }
+    catch (runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "Facebook URL failed (runtime_error)"
+            + ", facebookURL: " + facebookURL
+            + ", exception: " + e.what()
+            + ", response.str(): " + response.str()
+        );
+
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what(), 
+                "");    // processorMMS
+
+        return;
+    }
+    catch (exception e)
+    {
+        _logger->error(__FILEREF__ + "Facebook URL failed (exception)"
+            + ", facebookURL: " + facebookURL
+            + ", exception: " + e.what()
+            + ", response.str(): " + response.str()
+        );
+
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what(), 
+                "");    // processorMMS
 
         return;
     }

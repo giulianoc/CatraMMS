@@ -390,6 +390,7 @@ public:
         HTTPCallback            = 15,
         LocalCopy               = 16,
         ExtractTracks           = 17,
+        PostOnFacebook          = 18,
         EmailNotification       = 30,
         ContentUpdate           = 50,
         ContentRemove           = 60
@@ -434,6 +435,8 @@ public:
                 return "Local-Copy";
             case IngestionType::ExtractTracks:
                 return "Extract-Tracks";
+            case IngestionType::PostOnFacebook:
+                return "Post-on-Facebook";
                 
             case IngestionType::EmailNotification:
                 return "Email-Notification";
@@ -485,6 +488,8 @@ public:
             return IngestionType::LocalCopy;
         else if (lowerCase == "extract-tracks")
             return IngestionType::ExtractTracks;
+        else if (lowerCase == "post-on-facebook")
+            return IngestionType::PostOnFacebook;
 
         else if (lowerCase == "email-notification")
             return IngestionType::EmailNotification;

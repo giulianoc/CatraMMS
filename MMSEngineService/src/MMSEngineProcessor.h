@@ -105,6 +105,13 @@ private:
         Json::Value parametersRoot,
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
 
+    void postOnFacebookTask(
+        int64_t ingestionJobKey,
+        MMSEngineDBFacade::IngestionStatus ingestionStatus,
+        shared_ptr<Workspace> workspace,
+        Json::Value parametersRoot,
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
+
     void httpCallbackTask(
         int64_t ingestionJobKey,
         MMSEngineDBFacade::IngestionStatus ingestionStatus,
@@ -263,6 +270,12 @@ private:
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
         string ftpServer, int ftpPort, string ftpUserName, string ftpPassword, 
         string ftpRemoteDirectory, string ftpRemoteFileName);
+
+    void postOnFacebookThread(
+        shared_ptr<long> processorsThreadsNumber,
+        string mmsAssetPathName, string fileName, int64_t sizeInBytes,
+        int64_t ingestionJobKey, shared_ptr<Workspace> workspace
+        );
 } ;
 
 #endif

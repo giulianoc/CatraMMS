@@ -1,0 +1,11 @@
+"Task": {
+	"Label"="My Facebook POST",
+
+	"Type": "Post-on-Facebook",
+
+	"Parameters": {
+		"References": [
+			{ "ReferenceMediaItemKey": 11 }
+		]
+	}
+}
