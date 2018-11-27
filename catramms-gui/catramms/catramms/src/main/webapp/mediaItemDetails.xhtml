@@ -25,14 +25,14 @@
     <h:outputScript library="js" name="smpte.js" target="head" />
 
     <p:dialog widgetVar="showPhysicalPathDetails" modal="true"
-              header="Physical Path Details" appendTo="@(body)" width="900" height="400"
+              header="Media File Details" appendTo="@(body)" width="900" height="400"
               showEffect="fade" hideEffect="fade" resizable="true" draggable="true">
 
         <h:form id="showPhysicalPathDetailsForm">
 
             <p:tabView id="physicalPathDetailsTabView" dynamic="false" cache="true">
 
-                <p:tab title="Physical Path Info">
+                <p:tab title="Media File Info">
 
                     <p:panelGrid columns="2" cellpadding="10">
                         <p:outputLabel value="Physical Path Key: " />
@@ -431,7 +431,7 @@
 
             </p:tab>
 
-            <p:tab title="Files (#{mediaItemDetails.mediaItem.physicalPathList.size()})">
+            <p:tab title="Media Files (#{mediaItemDetails.mediaItem.physicalPathList.size()})">
 
                 <p:dataTable rendered="#{mediaItemDetails.mediaItem != null}"
                              resizableColumns="true" id="physicalPathTable" var="physicalPath" rowIndexVar="rowId"
@@ -520,7 +520,7 @@
                         <p:commandButton id="dynaButtonOptions" type="button" icon="fa fa-navicon"/>
                         <p:menu toggleable="true" collapsed="true" overlay="true" trigger="dynaButtonOptions"
                                 my="left top" at="left bottom">
-                            <p:menuitem value="File Details"
+                            <p:menuitem value="Media File Details"
                                         actionListener="#{mediaItemDetails.setCurrentPhysicalPath(physicalPath)}"
                                         update="showPhysicalPathDetailsForm"
                                         oncomplete="PF('showPhysicalPathDetails').show()">
