@@ -1140,7 +1140,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
         Json::Value parametersRoot = taskRoot[field]; 
         validateExtractTracksMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
     }
-    else if (type == "Post-on-Facebook")
+    else if (type == "Post-On-Facebook")
     {
         ingestionType = MMSEngineDBFacade::IngestionType::PostOnFacebook;
         
@@ -2618,6 +2618,28 @@ void Validator::validatePostOnFacebookMetadata(int64_t workspaceKey, string labe
     Json::Value parametersRoot, 
         bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
 {     
+    vector<string> mandatoryFields = {
+        "NodeId",   // page_id || user_id || event_id || group_id
+        "AccessToken"
+    };
+    for (string mandatoryField: mandatoryFields)
+    {
+        if (!isMetadataPresent(parametersRoot, mandatoryField))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + mandatoryField
+                    + ", sParametersRoot: " + sParametersRoot
+                    + ", label: " + label
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+
     if (validateDependenciesToo)
     {
         // References is optional because in case of dependency managed automatically
@@ -2642,6 +2664,29 @@ void Validator::validatePostOnFacebookMetadata(int64_t workspaceKey, string labe
             fillDependencies(workspaceKey, parametersRoot, dependencies,
                     priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
                     encodingProfileFieldsToBeManaged);
+
+            for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
+            {
+                int64_t key;
+                MMSEngineDBFacade::ContentType referenceContentType;
+                Validator::DependencyType dependencyType;
+
+                tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+
+                if (referenceContentType != MMSEngineDBFacade::ContentType::Video
+                        && referenceContentType != MMSEngineDBFacade::ContentType::Image)
+                {
+                    string errorMessage = __FILEREF__ + "Reference... does not refer a video or image content"
+                        + ", dependencyType: " + to_string(static_cast<int>(dependencyType))
+                        + ", referenceMediaItemKey: " + to_string(key)
+                        + ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
+                        + ", label: " + label
+                            ;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+            }
         }    
     }    
 }

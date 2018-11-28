@@ -16,16 +16,16 @@ logInWithFacebook = function() {
             var uid = response.authResponse.userID;
             var accessToken = response.authResponse.accessToken;
 
-            FB.api('/oauth/access_token', 'get',
-                { grant_type : 'fb_exchange_token', client_id : '1862418063793547', client_secret : '04a76f8e11e9dc70ea5975649a91574c', access_token : accessToken },
-                function(response)
-            {
-                console.log('Good to see you, ' + response.name + '.');
-            });
+            // FB.api('/oauth/access_token', 'get',
+            //    { grant_type : 'fb_exchange_token', client_id : '1862418063793547', client_secret : '04a76f8e11e9dc70ea5975649a91574c', access_token : accessToken },
+            //    function(response)
+            // {
+            //    console.log('Good to see you, ' + response.name + '.');
+            // });
 
             console.log('Already connected (updateAccessToken)! accessToken: ' + accessToken);
 
-            updateAccessToken([
+            taskUpdateAccessToken_Post_On_Facebook([
                 {name:'newAccessToken',value:accessToken}
             ]);
 
@@ -62,12 +62,13 @@ logInWithFacebook = function() {
     if (loginToBeDone)
     {
         FB.login(function(response) {
-            if (response.authResponse) {
+            if (response.authResponse)
+            {
                 console.log('Welcome!  Fetching your information.... ');
-                FB.api('/me', function(response)
-                {
-                    console.log('Good to see you, ' + response.name + '.');
-                });
+                // FB.api('/me', function(response)
+                // {
+                //    console.log('Good to see you, ' + response.name + '.');
+                // });
             } else {
                 console.log('User cancelled login or did not fully authorize.');
             }

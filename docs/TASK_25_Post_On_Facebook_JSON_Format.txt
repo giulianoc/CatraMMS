@@ -3,7 +3,7 @@
 	"Label"="My Facebook POST",
 
 	// mandatory
-	"Type": "Post-on-Facebook",
+	"Type": "Post-On-Facebook",
 
 	"Parameters": {
 		// mandatory
@@ -22,6 +22,12 @@
 			// the profile will be used.
 
 			{ "ReferenceMediaItemKey": 11 }
-		]
+		],
+
+		// a valid access token
+		"AccessToken": "XXXXX",
+
+		// page_id || user_id || event_id || group_id
+		"NodeId": "YYYY"
 	}
 }

@@ -146,6 +146,8 @@ public class NewWorkflow extends Workspace implements Serializable {
     private String taskHttpCallbackHeaders;
     private Long taskExtractTracksVideoTrackNumber;
     private Long taskExtractTracksAudioTrackNumber;
+    private String taskPostOnFacebookAccessToken;
+    private String taskPostOnFacebookNodeId;
 
     private String taskContentType;
     List<String> taskContentTypesList = new ArrayList<>();
@@ -1669,6 +1671,62 @@ public class NewWorkflow extends Workspace implements Serializable {
                     }
                 }
             }
+            else if (task.getType().equalsIgnoreCase("Post-On-Facebook"))
+            {
+                if (task.getLabel() != null && !task.getLabel().equalsIgnoreCase(""))
+                    jsonObject.put("Label", task.getLabel());
+                else
+                {
+                    WorkflowIssue workflowIssue = new WorkflowIssue();
+                    workflowIssue.setLabel("");
+                    workflowIssue.setFieldName("Label");
+                    workflowIssue.setTaskType(task.getType());
+                    workflowIssue.setIssue("The field is not initialized");
+
+                    workflowIssueList.add(workflowIssue);
+                }
+
+                if (task.getPostOnFacebookAccessToken() != null && !task.getPostOnFacebookAccessToken().equalsIgnoreCase(""))
+                    joParameters.put("AccessToken", task.getPostOnFacebookAccessToken());
+                else
+                {
+                    WorkflowIssue workflowIssue = new WorkflowIssue();
+                    workflowIssue.setLabel(task.getLabel());
+                    workflowIssue.setFieldName("AccessToken");
+                    workflowIssue.setTaskType(task.getType());
+                    workflowIssue.setIssue("The field is not initialized");
+
+                    workflowIssueList.add(workflowIssue);
+                }
+
+                if (task.getPostOnFacebookNodeId() != null && !task.getPostOnFacebookNodeId().equalsIgnoreCase(""))
+                    joParameters.put("NodeId", task.getPostOnFacebookNodeId());
+                else
+                {
+                    WorkflowIssue workflowIssue = new WorkflowIssue();
+                    workflowIssue.setLabel(task.getLabel());
+                    workflowIssue.setFieldName("NodeId");
+                    workflowIssue.setTaskType(task.getType());
+                    workflowIssue.setIssue("The field is not initialized");
+
+                    workflowIssueList.add(workflowIssue);
+                }
+
+                if (task.getReferences() != null && !task.getReferences().equalsIgnoreCase(""))
+                {
+                    JSONArray jaReferences = new JSONArray();
+                    joParameters.put("References", jaReferences);
+
+                    String [] physicalPathKeyReferences = task.getReferences().split(",");
+                    for (String physicalPathKeyReference: physicalPathKeyReferences)
+                    {
+                        JSONObject joReference = new JSONObject();
+                        joReference.put("ReferencePhysicalPathKey", Long.parseLong(physicalPathKeyReference.trim()));
+
+                        jaReferences.put(joReference);
+                    }
+                }
+            }
             else if (task.getType().equalsIgnoreCase("Local-Copy"))
             {
                 if (task.getLabel() != null && !task.getLabel().equalsIgnoreCase(""))
@@ -2956,6 +3014,31 @@ public class NewWorkflow extends Workspace implements Serializable {
                         fillMediaItems();
                     }
                 }
+                else if (task.getType().equalsIgnoreCase("Post-On-Facebook"))
+                {
+                    taskReferences = task.getReferences() == null ? "" : task.getReferences();
+                    taskLabel = task.getLabel();
+                    taskPostOnFacebookAccessToken = task.getPostOnFacebookAccessToken();
+                    taskPostOnFacebookNodeId = task.getPostOnFacebookNodeId();
+
+                    {
+                        mLogger.info("Initializing mediaItems...");
+
+                        mediaItemsList.clear();
+                        mediaItemsSelectedList.clear();
+                        mediaItemsSelectionMode = "multiple";
+                        mediaItemsMaxMediaItemsNumber = new Long(100);
+                        {
+                            mediaItemsContentTypesList.clear();
+                            mediaItemsContentTypesList.add("video");
+                            mediaItemsContentTypesList.add("image");
+
+                            mediaItemsContentType = mediaItemsContentTypesList.get(0);
+                        }
+
+                        fillMediaItems();
+                    }
+                }
                 else if (task.getType().equalsIgnoreCase("Local-Copy"))
                 {
                     taskReferences = task.getReferences() == null ? "" : task.getReferences();
@@ -3318,6 +3401,13 @@ public class NewWorkflow extends Workspace implements Serializable {
                 task.setFtpDeliveryPassword(taskFtpDeliveryPassword);
                 task.setFtpDeliveryRemoteDirectory(taskFtpDeliveryRemoteDirectory);
             }
+            else if (task.getType().equalsIgnoreCase("Post-On-Facebook"))
+            {
+                task.setReferences(taskReferences);
+                task.setLabel(taskLabel);
+                task.setPostOnFacebookAccessToken(taskPostOnFacebookAccessToken);
+                task.setPostOnFacebookNodeId(taskPostOnFacebookNodeId);
+            }
             else if (task.getType().equalsIgnoreCase("Local-Copy"))
             {
                 task.setReferences(taskReferences);
@@ -3553,6 +3643,18 @@ public class NewWorkflow extends Workspace implements Serializable {
             FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_INFO, "Workflow",
                     "No node selected to be removed");
             FacesContext.getCurrentInstance().addMessage(null, message);
+        }
+    }
+
+    public void taskPostOnFacebookUpdateAccessToken()
+    {
+        mLogger.info("taskPostOnFacebookUpdateAccessToken is called");
+        Map<String, String> requestParamMap = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap();
+        if (requestParamMap.containsKey("newAccessToken"))
+        {
+            taskPostOnFacebookAccessToken = requestParamMap.get("newAccessToken");
+
+            mLogger.info("taskPostOnFacebookAccessToken: " + taskPostOnFacebookAccessToken);
         }
     }
 
@@ -4511,5 +4613,21 @@ public class NewWorkflow extends Workspace implements Serializable {
 
     public void setTaskFontSizesList(List<String> taskFontSizesList) {
         this.taskFontSizesList = taskFontSizesList;
+    }
+
+    public String getTaskPostOnFacebookAccessToken() {
+        return taskPostOnFacebookAccessToken;
+    }
+
+    public void setTaskPostOnFacebookAccessToken(String taskPostOnFacebookAccessToken) {
+        this.taskPostOnFacebookAccessToken = taskPostOnFacebookAccessToken;
+    }
+
+    public String getTaskPostOnFacebookNodeId() {
+        return taskPostOnFacebookNodeId;
+    }
+
+    public void setTaskPostOnFacebookNodeId(String taskPostOnFacebookNodeId) {
+        this.taskPostOnFacebookNodeId = taskPostOnFacebookNodeId;
     }
 }

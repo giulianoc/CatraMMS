@@ -436,7 +436,7 @@ public:
             case IngestionType::ExtractTracks:
                 return "Extract-Tracks";
             case IngestionType::PostOnFacebook:
-                return "Post-on-Facebook";
+                return "Post-On-Facebook";
                 
             case IngestionType::EmailNotification:
                 return "Email-Notification";

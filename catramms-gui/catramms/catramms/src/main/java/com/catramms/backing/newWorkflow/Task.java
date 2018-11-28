@@ -79,6 +79,8 @@ public class Task implements Serializable
     private String httpCallbackHeaders;
     private Long extractTracksVideoTrackNumber;
     private Long extractTracksAudioTrackNumber;
+    private String postOnFacebookAccessToken;
+    private String postOnFacebookNodeId;
 
     private boolean childTaskCreated;
     private boolean childEventOnSuccessCreated;
@@ -636,5 +638,21 @@ public class Task implements Serializable
 
     public void setExtractTracksAudioTrackNumber(Long extractTracksAudioTrackNumber) {
         this.extractTracksAudioTrackNumber = extractTracksAudioTrackNumber;
+    }
+
+    public String getPostOnFacebookAccessToken() {
+        return postOnFacebookAccessToken;
+    }
+
+    public void setPostOnFacebookAccessToken(String postOnFacebookAccessToken) {
+        this.postOnFacebookAccessToken = postOnFacebookAccessToken;
+    }
+
+    public String getPostOnFacebookNodeId() {
+        return postOnFacebookNodeId;
+    }
+
+    public void setPostOnFacebookNodeId(String postOnFacebookNodeId) {
+        this.postOnFacebookNodeId = postOnFacebookNodeId;
     }
 }

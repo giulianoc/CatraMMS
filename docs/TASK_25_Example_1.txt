@@ -1,11 +1,13 @@
 "Task": {
 	"Label"="My Facebook POST",
 
-	"Type": "Post-on-Facebook",
+	"Type": "Post-On-Facebook",
 
 	"Parameters": {
 		"References": [
 			{ "ReferenceMediaItemKey": 11 }
-		]
+		],
+		"AccessToken": "XXXXX",
+		"NodeId": "YYYY"
 	}
 }

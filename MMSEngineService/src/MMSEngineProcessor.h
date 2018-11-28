@@ -30,6 +30,21 @@ public:
         size_t      maxChunkFileSize;
     };
     
+    struct CurlUploadData {
+        ifstream    mediaSourceFileStream;
+        
+        bool        bodyFirstPartSent;
+        string      bodyFirstPart;
+
+        bool        bodyLastPartSent;
+        string      bodyLastPart;
+        
+        int64_t     startOffset;
+        int64_t     endOffset;
+        
+        int64_t     currentOffset;
+    };
+
     MMSEngineProcessor(
             int processorIdentifier,
             shared_ptr<spdlog::logger> logger, 
@@ -75,6 +90,12 @@ private:
     string                  _emailPassword;
     string                  _emailFrom;
     
+    string                  _facebookGraphAPIProtocol;
+    string                  _facebookGraphAPIHostName;
+    int                     _facebookGraphAPIPort;
+    string                  _facebookGraphAPIVersion;
+    long                    _facebookGraphAPITimeoutInSeconds;
+
     bool                    _localCopyTaskEnabled;
     
     
@@ -123,7 +144,7 @@ private:
         shared_ptr<long> processorsThreadsNumber,
         int64_t ingestionJobKey, string httpProtocol, string httpHostName,
         int httpPort, string httpURI, string httpURLParameters,
-        string httpMethod, long callbackTimeout,
+        string httpMethod, long callbackTimeoutInSeconds,
         Json::Value userHeadersRoot, 
         Json::Value callbackMedatada);
 
@@ -271,10 +292,11 @@ private:
         string ftpServer, int ftpPort, string ftpUserName, string ftpPassword, 
         string ftpRemoteDirectory, string ftpRemoteFileName);
 
-    void postOnFacebookThread(
+    void postVideoOnFacebookThread(
         shared_ptr<long> processorsThreadsNumber,
-        string mmsAssetPathName, string fileName, int64_t sizeInBytes,
-        int64_t ingestionJobKey, shared_ptr<Workspace> workspace
+        string mmsAssetPathName, int64_t sizeInBytes,
+        int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
+        string facebookNodeId, string facebookAccessToken
         );
 } ;
 
