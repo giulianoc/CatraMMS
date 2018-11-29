@@ -89,6 +89,8 @@ window.fbAsyncInit = function() {
 };
 
 (function(d, s, id){
+
+    console.log('FB pre-init.');
     var js, fjs = d.getElementsByTagName(s)[0];
     if (d.getElementById(id))
     {
@@ -98,4 +100,5 @@ window.fbAsyncInit = function() {
     js.id = id;
     js.src = "https://connect.facebook.net/en_US/sdk.js";
     fjs.parentNode.insertBefore(js, fjs);
+
 }(document, 'script', 'facebook-jssdk'));

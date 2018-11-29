@@ -21,11 +21,11 @@
 
 <h:body>
 
-    <h:outputScript library="js" name="facebook_sdk.js" target="body" />
-
     <ui:include src="/common/loadingDialog.xhtml"/>
     <ui:include src="/common/globalConfirm.xhtml"/>
     <ui:include src="newWorkflowDialogs.xhtml"/>
+
+    <h:outputScript library="js" name="facebook_sdk.js" target="body" />
 
     <h:form id="viewForm" enctype="multipart/form-data">
 
