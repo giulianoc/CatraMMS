@@ -7871,14 +7871,15 @@ void MMSEngineProcessor::postVideoOnFacebookThread(
             string boundary = to_string(chrono::system_clock::to_time_t(chrono::system_clock::now()));
             string endOfLine = "\r\n";
             string body =
-                    "--" + boundary + endOfLine
-                    
+                    "--" + boundary + endOfLine                    
                     + "Content-Disposition: form-data; name=\"access_token\"" + endOfLine + endOfLine
                     + facebookAccessToken + endOfLine
                     
+                    "--" + boundary + endOfLine
                     + "Content-Disposition: form-data; name=\"upload_phase\"" + endOfLine + endOfLine
                     + "start" + endOfLine
                     
+                    "--" + boundary + endOfLine
                     + "Content-Disposition: form-data; name=\"file_size\"" + endOfLine + endOfLine
                     + to_string(sizeInBytes) + endOfLine
 
@@ -7970,6 +7971,7 @@ void MMSEngineProcessor::postVideoOnFacebookThread(
                     + ", _facebookGraphAPIHostName: " + _facebookGraphAPIHostName
                     + ", _facebookGraphAPIPort: " + to_string(_facebookGraphAPIPort)
                     + ", facebookURI: " + facebookURI
+                    + ", contentTypeHeader: " + contentTypeHeader
                     + ", body: " + body
             );
             request.perform();
@@ -7977,6 +7979,7 @@ void MMSEngineProcessor::postVideoOnFacebookThread(
             sResponse = response.str();
             _logger->info(__FILEREF__ + "Called facebook"
                     + ", facebookURL: " + facebookURL
+                    + ", contentTypeHeader: " + contentTypeHeader
                     + ", body: " + body
                     + ", sResponse: " + sResponse
             );
@@ -8021,7 +8024,7 @@ void MMSEngineProcessor::postVideoOnFacebookThread(
             string field = "upload_session_id";
             if (!_mmsEngineDBFacade->isMetadataPresent(facebookResponseRoot, field))
             {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                string errorMessage = __FILEREF__ + "Field into the response is not present or it is null"
                         + ", Field: " + field
                         + ", sResponse: " + sResponse
                         ;
@@ -8034,7 +8037,7 @@ void MMSEngineProcessor::postVideoOnFacebookThread(
             field = "video_id";
             if (!_mmsEngineDBFacade->isMetadataPresent(facebookResponseRoot, field))
             {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                string errorMessage = __FILEREF__ + "Field into the response is not present or it is null"
                         + ", Field: " + field
                         + ", sResponse: " + sResponse
                         ;
@@ -8047,7 +8050,7 @@ void MMSEngineProcessor::postVideoOnFacebookThread(
             field = "start_offset";
             if (!_mmsEngineDBFacade->isMetadataPresent(facebookResponseRoot, field))
             {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                string errorMessage = __FILEREF__ + "Field into the response is not present or it is null"
                         + ", Field: " + field
                         + ", sResponse: " + sResponse
                         ;
@@ -8061,7 +8064,7 @@ void MMSEngineProcessor::postVideoOnFacebookThread(
             field = "end_offset";
             if (!_mmsEngineDBFacade->isMetadataPresent(facebookResponseRoot, field))
             {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                string errorMessage = __FILEREF__ + "Field into the response is not present or it is null"
                         + ", Field: " + field
                         + ", sResponse: " + sResponse
                         ;
@@ -8101,19 +8104,22 @@ void MMSEngineProcessor::postVideoOnFacebookThread(
                 string endOfLine = "\r\n";
                 string bodyFirstPart =
                         "--" + boundary + endOfLine
-
                         + "Content-Disposition: form-data; name=\"access_token\"" + endOfLine + endOfLine
                         + facebookAccessToken + endOfLine
 
+                        "--" + boundary + endOfLine
                         + "Content-Disposition: form-data; name=\"upload_phase\"" + endOfLine + endOfLine
                         + "transfer" + endOfLine
 
+                        "--" + boundary + endOfLine
                         + "Content-Disposition: form-data; name=\"start_offset\"" + endOfLine + endOfLine
                         + to_string(startOffset) + endOfLine
 
+                        "--" + boundary + endOfLine
                         + "Content-Disposition: form-data; name=\"upload_session_id\"" + endOfLine + endOfLine
                         + uploadSessionId + endOfLine
 
+                        "--" + boundary + endOfLine
                         + "Content-Disposition: form-data; name=\"video_file_chunk\"" + endOfLine
                         + "Content-Type: " + mediaContentType
                         + "Content-Length: " + (to_string(endOffset - startOffset)) + endOfLine + endOfLine
@@ -8328,14 +8334,15 @@ void MMSEngineProcessor::postVideoOnFacebookThread(
             string boundary = to_string(chrono::system_clock::to_time_t(chrono::system_clock::now()));
             string endOfLine = "\r\n";
             string body =
-                    "--" + boundary + endOfLine
-                    
+                    "--" + boundary + endOfLine                    
                     + "Content-Disposition: form-data; name=\"access_token\"" + endOfLine + endOfLine
                     + facebookAccessToken + endOfLine
                     
+                    "--" + boundary + endOfLine                    
                     + "Content-Disposition: form-data; name=\"upload_phase\"" + endOfLine + endOfLine
                     + "finish" + endOfLine
                     
+                    "--" + boundary + endOfLine                    
                     + "Content-Disposition: form-data; name=\"upload_session_id\"" + endOfLine + endOfLine
                     + uploadSessionId + endOfLine
 
