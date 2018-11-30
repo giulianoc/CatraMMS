@@ -7875,11 +7875,11 @@ void MMSEngineProcessor::postVideoOnFacebookThread(
                     + "Content-Disposition: form-data; name=\"access_token\"" + endOfLine + endOfLine
                     + facebookAccessToken + endOfLine
                     
-                    "--" + boundary + endOfLine
+                    + "--" + boundary + endOfLine
                     + "Content-Disposition: form-data; name=\"upload_phase\"" + endOfLine + endOfLine
                     + "start" + endOfLine
                     
-                    "--" + boundary + endOfLine
+                    + "--" + boundary + endOfLine
                     + "Content-Disposition: form-data; name=\"file_size\"" + endOfLine + endOfLine
                     + to_string(sizeInBytes) + endOfLine
 
@@ -8107,19 +8107,19 @@ void MMSEngineProcessor::postVideoOnFacebookThread(
                         + "Content-Disposition: form-data; name=\"access_token\"" + endOfLine + endOfLine
                         + facebookAccessToken + endOfLine
 
-                        "--" + boundary + endOfLine
+                        + "--" + boundary + endOfLine
                         + "Content-Disposition: form-data; name=\"upload_phase\"" + endOfLine + endOfLine
                         + "transfer" + endOfLine
 
-                        "--" + boundary + endOfLine
+                        + "--" + boundary + endOfLine
                         + "Content-Disposition: form-data; name=\"start_offset\"" + endOfLine + endOfLine
                         + to_string(startOffset) + endOfLine
 
-                        "--" + boundary + endOfLine
+                        + "--" + boundary + endOfLine
                         + "Content-Disposition: form-data; name=\"upload_session_id\"" + endOfLine + endOfLine
                         + uploadSessionId + endOfLine
 
-                        "--" + boundary + endOfLine
+                        + "--" + boundary + endOfLine
                         + "Content-Disposition: form-data; name=\"video_file_chunk\"" + endOfLine
                         + "Content-Type: " + mediaContentType
                         + "Content-Length: " + (to_string(endOffset - startOffset)) + endOfLine + endOfLine
@@ -8338,11 +8338,11 @@ void MMSEngineProcessor::postVideoOnFacebookThread(
                     + "Content-Disposition: form-data; name=\"access_token\"" + endOfLine + endOfLine
                     + facebookAccessToken + endOfLine
                     
-                    "--" + boundary + endOfLine                    
+                    + "--" + boundary + endOfLine                    
                     + "Content-Disposition: form-data; name=\"upload_phase\"" + endOfLine + endOfLine
                     + "finish" + endOfLine
                     
-                    "--" + boundary + endOfLine                    
+                    + "--" + boundary + endOfLine                    
                     + "Content-Disposition: form-data; name=\"upload_session_id\"" + endOfLine + endOfLine
                     + uploadSessionId + endOfLine
 
