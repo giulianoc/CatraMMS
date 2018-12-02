@@ -391,6 +391,7 @@ public:
         LocalCopy               = 16,
         ExtractTracks           = 17,
         PostOnFacebook          = 18,
+        PostOnYouTube           = 19,
         EmailNotification       = 30,
         ContentUpdate           = 50,
         ContentRemove           = 60
@@ -437,6 +438,8 @@ public:
                 return "Extract-Tracks";
             case IngestionType::PostOnFacebook:
                 return "Post-On-Facebook";
+            case IngestionType::PostOnYouTube:
+                return "Post-On-YouTube";
                 
             case IngestionType::EmailNotification:
                 return "Email-Notification";
@@ -490,6 +493,8 @@ public:
             return IngestionType::ExtractTracks;
         else if (lowerCase == "post-on-facebook")
             return IngestionType::PostOnFacebook;
+        else if (lowerCase == "post-on-youtube")
+            return IngestionType::PostOnYouTube;
 
         else if (lowerCase == "email-notification")
             return IngestionType::EmailNotification;

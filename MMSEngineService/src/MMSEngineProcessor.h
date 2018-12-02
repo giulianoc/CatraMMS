@@ -96,6 +96,12 @@ private:
     string                  _facebookGraphAPIVersion;
     long                    _facebookGraphAPITimeoutInSeconds;
 
+    string                  _youTubeDataAPIProtocol;
+    string                  _youTubeDataAPIHostName;
+    int                     _youTubeDataAPIPort;
+    string                  _youTubeDataAPIVersion;
+    long                    _youTubeDataAPITimeoutInSeconds;
+
     bool                    _localCopyTaskEnabled;
     
     
@@ -127,6 +133,13 @@ private:
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
 
     void postOnFacebookTask(
+        int64_t ingestionJobKey,
+        MMSEngineDBFacade::IngestionStatus ingestionStatus,
+        shared_ptr<Workspace> workspace,
+        Json::Value parametersRoot,
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
+
+    void postOnYouTubeTask(
         int64_t ingestionJobKey,
         MMSEngineDBFacade::IngestionStatus ingestionStatus,
         shared_ptr<Workspace> workspace,
@@ -298,6 +311,14 @@ private:
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
         string facebookNodeId, string facebookAccessToken
         );
+
+    void postVideoOnYouTubeThread(
+        shared_ptr<long> processorsThreadsNumber,
+        string mmsAssetPathName, int64_t sizeInBytes,
+        int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
+        string youTubeAuthorizationToken, string youTubeTitle,
+        string youTubeDescription, Json::Value youTubeTags,
+        int youTubeCategoryId);
 } ;
 
 #endif

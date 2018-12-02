@@ -1,0 +1,44 @@
+"Task": {
+	// optional
+	"Label"="My YouTube POST",
+
+	// mandatory
+	"Type": "Post-On-YouTube",
+
+	"Parameters": {
+		// mandatory
+		"References": [
+			// mandatory. One Reference needed to identify the media file (mediaItemKeys) or
+			// the profile (physicalPathKey) to be POST on YouTube.
+			// In case this task is placed inside an onSuccess event, 
+			// the Reference... item can be omitted.
+			// In such a case, the System will automatically add the Reference... item using the key
+			// of the video or the profile by which this task depend on.
+			// As reference can be used "ReferenceMediaItemKey", "ReferenceUniqueName" or 
+			// "ReferencePhysicalPathKey".
+			// In case this task depend on one task generating a media, the media will be 
+			// used.
+			// In case this task depend on one task generating a profile (i.e. Encode Task),
+			// the profile will be used.
+
+			{ "ReferenceMediaItemKey": 11 }
+		],
+
+		// mandatory, a valid authorization token
+		"AuthorizationToken": "XXXXX",
+
+		// Optional, Title of the video, if not present the MMS title of the video is used
+		"Title": "YYYY",
+
+		// Optional, Description of the video
+		"Description": "ZZZZZ",
+
+		// Optional, tags of the video
+		"Tags": [
+			"cool"
+		],
+
+		// Optional, category id of the video
+		"CategoryId": 22
+	}
+}

@@ -1,0 +1,12 @@
+"Task": {
+	"Label"="My YouTube POST",
+
+	"Type": "Post-On-YouTube",
+
+	"Parameters": {
+		"References": [
+			{ "ReferenceMediaItemKey": 11 }
+		],
+		"AuthorizationToken": "XXXXX"
+	}
+}
