@@ -30,7 +30,22 @@ public:
         size_t      maxChunkFileSize;
     };
     
-    struct CurlUploadData {
+    struct CurlUploadFacebookData {
+        ifstream    mediaSourceFileStream;
+        
+        bool        bodyFirstPartSent;
+        string      bodyFirstPart;
+
+        bool        bodyLastPartSent;
+        string      bodyLastPart;
+        
+        int64_t     startOffset;
+        int64_t     endOffset;
+        
+        int64_t     currentOffset;
+    };
+
+    struct CurlUploadYouTubeData {
         ifstream    mediaSourceFileStream;
         
         bool        bodyFirstPartSent;

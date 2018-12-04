@@ -7982,7 +7982,7 @@ void MMSEngineProcessor::ftpUploadMediaSourceThread(
 
 size_t curlUploadVideoOnFacebookCallback(char* ptr, size_t size, size_t nmemb, void *f)
 {
-    MMSEngineProcessor::CurlUploadData* curlUploadData = (MMSEngineProcessor::CurlUploadData*) f;
+    MMSEngineProcessor::CurlUploadFacebookData* curlUploadData = (MMSEngineProcessor::CurlUploadFacebookData*) f;
     
     auto logger = spdlog::get("mmsEngineService");
 
@@ -8419,7 +8419,7 @@ void MMSEngineProcessor::postVideoOnFacebookThread(
                 curlpp::Cleanup cleaner;
                 curlpp::Easy request;
 
-                CurlUploadData curlUploadData;
+                CurlUploadFacebookData curlUploadData;
                 {
                     curlUploadData.mediaSourceFileStream.open(mmsAssetPathName);
 
@@ -8890,7 +8890,7 @@ void MMSEngineProcessor::postVideoOnFacebookThread(
 
 size_t curlUploadVideoOnYouTubeCallback(char* ptr, size_t size, size_t nmemb, void *f)
 {
-    MMSEngineProcessor::CurlUploadData* curlUploadData = (MMSEngineProcessor::CurlUploadData*) f;
+    MMSEngineProcessor::CurlUploadYouTubeData* curlUploadData = (MMSEngineProcessor::CurlUploadYouTubeData*) f;
     
     auto logger = spdlog::get("mmsEngineService");
 
@@ -9065,11 +9065,12 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
             Location: https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&upload_id=xa298sd_f&part=snippet,status,contentDetails
             Content-Length: 0
         */
-        string uploadURL;
+        string videoContentType = "video/*";
+        string youTubeUploadURL;
         {
             string youTubeURI = string("/upload/youtube/") + _youTubeDataAPIVersion + "/videos?uploadType=resumable&part=snippet,status,contentDetails";
             
-            facebookURL = _youTubeDataAPIProtocol
+            youTubeURL = _youTubeDataAPIProtocol
                 + "://"
                 + _youTubeDataAPIHostName
                 + ":" + to_string(_youTubeDataAPIPort)
@@ -9130,19 +9131,19 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
 
             {
                 string header = "Authorization: Bearer " + youTubeAuthorizationToken;
-                header.push_back(header);
+                headerList.push_back(header);
 
                 header = "Content-Length: " + to_string(body.length());
-                header.push_back(header);
+                headerList.push_back(header);
                 
                 header = "Content-Type: application/json; charset=UTF-8";
-                header.push_back(header);
+                headerList.push_back(header);
 
                 header = "X-Upload-Content-Length: " + to_string(sizeInBytes);
-                header.push_back(header);
+                headerList.push_back(header);
                 
-                header = "X-Upload-Content-Type: video/*";
-                header.push_back(header);
+                header = string("X-Upload-Content-Type: ") + videoContentType;
+                headerList.push_back(header);
             }                    
 
             curlpp::Cleanup cleaner;
@@ -9215,6 +9216,9 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
             }
             request.setOpt(new curlpp::options::HttpHeader(headerList));
 
+            // store response headers in the response
+            request.setOpt(new curlpp::options::Header(1));
+
             ostringstream response;
             request.setOpt(new curlpp::options::WriteStream(&response));
 
@@ -9240,94 +9244,52 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
                     + ", sResponse: " + sResponse
             );
             
-            
+            // youTubeUploadURL = 
         }
         
-        while (startOffset < endOffset)
+        bool contentCompletelyUploaded = false;
+        while (!contentCompletelyUploaded)
         {
             /*
-                curl \
-                    -X POST "https://graph-video.facebook.com/v2.3/1533641336884006/videos"  \
-                    -F "access_token=XXXXXXX" \
-                    -F "upload_phase=transfer" \
-                    -F “start_offset=0" \
-                    -F "upload_session_id=1564747013773438" \
-                    -F "video_file_chunk=@chunk1.mp4"
+                PUT UPLOAD_URL HTTP/1.1
+                Authorization: Bearer AUTH_TOKEN
+                Content-Length: CONTENT_LENGTH
+                Content-Type: CONTENT_TYPE
+
+                BINARY_FILE_DATA
             */
-            // transfer
-            {
-                string facebookURI = string("/") + _facebookGraphAPIVersion + "/" + facebookNodeId + "/videos";
 
-                facebookURL = _facebookGraphAPIProtocol
-                    + "://"
-                    + _facebookGraphAPIHostName
-                    + ":" + to_string(_facebookGraphAPIPort)
-                    + facebookURI;
-
-                string mediaContentType = string("video") + "/" + fileFormat;                    
-                
-                // we could apply md5 to utc time
-                string boundary = to_string(chrono::system_clock::to_time_t(chrono::system_clock::now()));
-                string endOfLine = "\r\n";
-                string bodyFirstPart =
-                        "--" + boundary + endOfLine
-                        + "Content-Disposition: form-data; name=\"access_token\"" + endOfLine + endOfLine
-                        + facebookAccessToken + endOfLine
-
-                        + "--" + boundary + endOfLine
-                        + "Content-Disposition: form-data; name=\"upload_phase\"" + endOfLine + endOfLine
-                        + "transfer" + endOfLine
-
-                        + "--" + boundary + endOfLine
-                        + "Content-Disposition: form-data; name=\"start_offset\"" + endOfLine + endOfLine
-                        + to_string(startOffset) + endOfLine
-
-                        + "--" + boundary + endOfLine
-                        + "Content-Disposition: form-data; name=\"upload_session_id\"" + endOfLine + endOfLine
-                        + uploadSessionId + endOfLine
-
-                        + "--" + boundary + endOfLine
-                        + "Content-Disposition: form-data; name=\"video_file_chunk\"" + endOfLine
-                        + "Content-Type: " + mediaContentType
-                        + "Content-Length: " + (to_string(endOffset - startOffset)) + endOfLine + endOfLine
-                        ;
-
-                string bodyLastPart =
-                        endOfLine + "--" + boundary + "--" + endOfLine + endOfLine
-                        ;
-
-                list<string> header;
-                string contentTypeHeader = "Content-Type: multipart/form-data; boundary=\"" + boundary + "\"";
-                header.push_back(contentTypeHeader);
+            {                
+                list<string> headerList;
+                headerList.push_back(string("Authorization: Bearer ") + youTubeAuthorizationToken);
+                headerList.push_back(string("Content-Length: ") + to_string(sizeInBytes));
+                headerList.push_back(string("Content-Type: ") + videoContentType);
 
                 curlpp::Cleanup cleaner;
                 curlpp::Easy request;
 
-                CurlUploadData curlUploadData;
+                CurlUploadYouTubeData curlUploadData;
                 {
                     curlUploadData.mediaSourceFileStream.open(mmsAssetPathName);
 
-                    curlUploadData.bodyFirstPartSent    = false;
-                    curlUploadData.bodyFirstPart        = bodyFirstPart;
-                    
-                    curlUploadData.bodyLastPartSent     = false;
-                    curlUploadData.bodyLastPart         = bodyLastPart;
-
+                    /*
                     curlUploadData.currentOffset        = startOffset;
 
                     curlUploadData.startOffset          = startOffset;
                     curlUploadData.endOffset            = endOffset;
+                    */
 
-                    curlpp::options::ReadFunctionCurlFunction curlUploadCallbackFunction(curlUploadVideoOnFacebookCallback);
+                    curlpp::options::ReadFunctionCurlFunction curlUploadCallbackFunction(curlUploadVideoOnYouTubeCallback);
                     curlpp::OptionTrait<void *, CURLOPT_READDATA> curlUploadDataData(&curlUploadData);
                     request.setOpt(curlUploadCallbackFunction);
                     request.setOpt(curlUploadDataData);
                 }
 
-                request.setOpt(new curlpp::options::Url(facebookURL));
-                request.setOpt(new curlpp::options::Timeout(_facebookGraphAPITimeoutInSeconds));
+                request.setOpt(new curlpp::options::CustomRequest{"PUT"});
+                request.setOpt(new curlpp::options::Url(youTubeURL));
+                request.setOpt(new curlpp::options::Timeout(_youTubeDataAPITimeoutInSeconds));
 
-                if (_facebookGraphAPIProtocol == "https")
+                if (_youTubeDataAPIProtocol == "https")
                 {
         //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
         //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;                                          
@@ -9386,94 +9348,30 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
                     // request.setOpt(new curlpp::options::SslEngineDefault());                                              
 
                 }
-                request.setOpt(new curlpp::options::HttpHeader(header));
-
-                ostringstream response;
-                request.setOpt(new curlpp::options::WriteStream(&response));
+                request.setOpt(new curlpp::options::HttpHeader(headerList));
 
                 chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
 
-                _logger->info(__FILEREF__ + "Calling facebook"
-                        + ", facebookURL: " + facebookURL
-                        + ", _facebookGraphAPIProtocol: " + _facebookGraphAPIProtocol
-                        + ", _facebookGraphAPIHostName: " + _facebookGraphAPIHostName
-                        + ", _facebookGraphAPIPort: " + to_string(_facebookGraphAPIPort)
-                        + ", facebookURI: " + facebookURI
-                        + ", bodyFirstPart: " + bodyFirstPart
+                _logger->info(__FILEREF__ + "Calling youTube"
+                        + ", youTubeURL: " + youTubeURL
+                        + ", _youTubeDataAPIProtocol: " + _youTubeDataAPIProtocol
+                        + ", _youTubeDataAPIHostName: " + _youTubeDataAPIHostName
+                        + ", _youTubeDataAPIPort: " + to_string(_youTubeDataAPIPort)
                 );
                 request.perform();
 
-                sResponse = response.str();
-                _logger->info(__FILEREF__ + "Called facebook"
-                        + ", facebookURL: " + facebookURL
-                        + ", bodyFirstPart: " + bodyFirstPart
-                        + ", sResponse: " + sResponse
+                long responseCode = curlpp::infos::ResponseCode::get(request);
+                
+                _logger->info(__FILEREF__ + "Called youTube"
+                        + ", youTubeURL: " + youTubeURL
+                        + ", responseCode: " + to_string(responseCode)
                 );
-
-                Json::Value facebookResponseRoot;
-                try
+                
+                if (responseCode == 201)
                 {
-                    Json::CharReaderBuilder builder;
-                    Json::CharReader* reader = builder.newCharReader();
-                    string errors;
-
-                    bool parsingSuccessful = reader->parse(sResponse.c_str(),
-                            sResponse.c_str() + sResponse.size(), 
-                            &facebookResponseRoot, &errors);
-                    delete reader;
-
-                    if (!parsingSuccessful)
-                    {
-                        string errorMessage = __FILEREF__ + "failed to parse the facebook response"
-                            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                + ", errors: " + errors
-                                + ", sResponse: " + sResponse
-                                ;
-                        _logger->error(errorMessage);
-
-                        throw runtime_error(errorMessage);
-                    }
+                    
                 }
-                catch(...)
-                {
-                    string errorMessage = string("facebook json response is not well format")
-                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                            + ", sResponse: " + sResponse
-                            ;
-                    _logger->error(__FILEREF__ + errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }
-
-                string field = "start_offset";
-                if (!_mmsEngineDBFacade->isMetadataPresent(facebookResponseRoot, field))
-                {
-                    string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                            + ", Field: " + field
-                            + ", sResponse: " + sResponse
-                            ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }
-                string sStartOffset = facebookResponseRoot.get(field, "XXX").asString();
-                startOffset = stoll(sStartOffset);
-
-                field = "end_offset";
-                if (!_mmsEngineDBFacade->isMetadataPresent(facebookResponseRoot, field))
-                {
-                    string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                            + ", Field: " + field
-                            + ", sResponse: " + sResponse
-                            ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }
-                string sEndOffset = facebookResponseRoot.get(field, "XXX").asString();
-                endOffset = stoll(sEndOffset);
+                
             }
         }
                 
@@ -9493,7 +9391,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
     catch (curlpp::LogicError & e) 
     {
         _logger->error(__FILEREF__ + "Post video on Facebook failed (LogicError)"
-            + ", facebookURL: " + facebookURL
+            + ", youTubeURL: " + youTubeURL
             + ", exception: " + e.what()
             + ", sResponse: " + sResponse
         );
@@ -9514,7 +9412,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
     catch (curlpp::RuntimeError & e) 
     {
         _logger->error(__FILEREF__ + "Post video on Facebook failed (RuntimeError)"
-            + ", facebookURL: " + facebookURL
+            + ", youTubeURL: " + youTubeURL
             + ", exception: " + e.what()
             + ", sResponse: " + sResponse
         );
