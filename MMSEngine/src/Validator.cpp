@@ -1161,7 +1161,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
         Json::Value parametersRoot = taskRoot[field]; 
         validatePostOnFacebookMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
     }
-    else if (type == "Post-On-Youtube")
+    else if (type == "Post-On-YouTube")
     {
         ingestionType = MMSEngineDBFacade::IngestionType::PostOnYouTube;
         

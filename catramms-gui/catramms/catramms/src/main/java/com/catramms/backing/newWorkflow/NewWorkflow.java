@@ -148,6 +148,11 @@ public class NewWorkflow extends Workspace implements Serializable {
     private Long taskExtractTracksAudioTrackNumber;
     private String taskPostOnFacebookAccessToken;
     private String taskPostOnFacebookNodeId;
+    private String taskPostOnYouTubeAuthorizationToken;
+    private String taskPostOnYouTubeTitle;
+    private String taskPostOnYouTubeDescription;
+    private String taskPostOnYouTubeTags;
+    private Long taskPostOnYouTubeCategoryId;
 
     private String taskContentType;
     List<String> taskContentTypesList = new ArrayList<>();
@@ -1727,6 +1732,69 @@ public class NewWorkflow extends Workspace implements Serializable {
                     }
                 }
             }
+            else if (task.getType().equalsIgnoreCase("Post-On-YouTube"))
+            {
+                if (task.getLabel() != null && !task.getLabel().equalsIgnoreCase(""))
+                    jsonObject.put("Label", task.getLabel());
+                else
+                {
+                    WorkflowIssue workflowIssue = new WorkflowIssue();
+                    workflowIssue.setLabel("");
+                    workflowIssue.setFieldName("Label");
+                    workflowIssue.setTaskType(task.getType());
+                    workflowIssue.setIssue("The field is not initialized");
+
+                    workflowIssueList.add(workflowIssue);
+                }
+
+                if (task.getPostOnYouTubeAuthorizationToken() != null && !task.getPostOnYouTubeAuthorizationToken().equalsIgnoreCase(""))
+                    joParameters.put("AuthorizationToken", task.getPostOnYouTubeAuthorizationToken());
+                else
+                {
+                    WorkflowIssue workflowIssue = new WorkflowIssue();
+                    workflowIssue.setLabel(task.getLabel());
+                    workflowIssue.setFieldName("AuthorizationToken");
+                    workflowIssue.setTaskType(task.getType());
+                    workflowIssue.setIssue("The field is not initialized");
+
+                    workflowIssueList.add(workflowIssue);
+                }
+
+                if (task.getPostOnYouTubeTitle() != null && !task.getPostOnYouTubeTitle().equalsIgnoreCase(""))
+                    joParameters.put("Title", task.getPostOnYouTubeTitle());
+
+                if (task.getPostOnYouTubeDescription() != null && !task.getPostOnYouTubeDescription().equalsIgnoreCase(""))
+                    joParameters.put("Description", task.getPostOnYouTubeDescription());
+
+                if (task.getPostOnYouTubeTags() != null && !task.getPostOnYouTubeTags().equalsIgnoreCase(""))
+                {
+                    String[] tags = task.getPostOnYouTubeTags().split(",");
+
+                    JSONArray jaTags = new JSONArray();
+                    for (String tag: tags)
+                        jaTags.put(tag);
+
+                    joParameters.put("Tags", jaTags);
+                }
+
+                if (task.getPostOnYouTubeCategoryId() != null)
+                    joParameters.put("CategoryId", task.getPostOnYouTubeCategoryId());
+
+                if (task.getReferences() != null && !task.getReferences().equalsIgnoreCase(""))
+                {
+                    JSONArray jaReferences = new JSONArray();
+                    joParameters.put("References", jaReferences);
+
+                    String [] physicalPathKeyReferences = task.getReferences().split(",");
+                    for (String physicalPathKeyReference: physicalPathKeyReferences)
+                    {
+                        JSONObject joReference = new JSONObject();
+                        joReference.put("ReferencePhysicalPathKey", Long.parseLong(physicalPathKeyReference.trim()));
+
+                        jaReferences.put(joReference);
+                    }
+                }
+            }
             else if (task.getType().equalsIgnoreCase("Local-Copy"))
             {
                 if (task.getLabel() != null && !task.getLabel().equalsIgnoreCase(""))
@@ -3039,6 +3107,33 @@ public class NewWorkflow extends Workspace implements Serializable {
                         fillMediaItems();
                     }
                 }
+                else if (task.getType().equalsIgnoreCase("Post-On-YouTube"))
+                {
+                    taskReferences = task.getReferences() == null ? "" : task.getReferences();
+                    taskLabel = task.getLabel();
+                    taskPostOnYouTubeAuthorizationToken = task.getPostOnYouTubeAuthorizationToken();
+                    taskPostOnYouTubeTitle = task.getPostOnYouTubeTitle();
+                    taskPostOnYouTubeDescription = task.getPostOnYouTubeDescription();
+                    taskPostOnYouTubeTags = task.getPostOnYouTubeTags();
+                    taskPostOnYouTubeCategoryId = task.getPostOnYouTubeCategoryId();
+
+                    {
+                        mLogger.info("Initializing mediaItems...");
+
+                        mediaItemsList.clear();
+                        mediaItemsSelectedList.clear();
+                        mediaItemsSelectionMode = "multiple";
+                        mediaItemsMaxMediaItemsNumber = new Long(100);
+                        {
+                            mediaItemsContentTypesList.clear();
+                            mediaItemsContentTypesList.add("video");
+
+                            mediaItemsContentType = mediaItemsContentTypesList.get(0);
+                        }
+
+                        fillMediaItems();
+                    }
+                }
                 else if (task.getType().equalsIgnoreCase("Local-Copy"))
                 {
                     taskReferences = task.getReferences() == null ? "" : task.getReferences();
@@ -3408,6 +3503,16 @@ public class NewWorkflow extends Workspace implements Serializable {
                 task.setPostOnFacebookAccessToken(taskPostOnFacebookAccessToken);
                 task.setPostOnFacebookNodeId(taskPostOnFacebookNodeId);
             }
+            else if (task.getType().equalsIgnoreCase("Post-On-YouTube"))
+            {
+                task.setReferences(taskReferences);
+                task.setLabel(taskLabel);
+                task.setPostOnYouTubeAuthorizationToken(taskPostOnYouTubeAuthorizationToken);
+                task.setPostOnYouTubeTitle(taskPostOnYouTubeTitle);
+                task.setPostOnYouTubeDescription(taskPostOnYouTubeDescription);
+                task.setPostOnYouTubeTags(taskPostOnYouTubeTags);
+                task.setPostOnYouTubeCategoryId(taskPostOnYouTubeCategoryId);
+            }
             else if (task.getType().equalsIgnoreCase("Local-Copy"))
             {
                 task.setReferences(taskReferences);
@@ -3655,6 +3760,18 @@ public class NewWorkflow extends Workspace implements Serializable {
             taskPostOnFacebookAccessToken = requestParamMap.get("newAccessToken");
 
             mLogger.info("taskPostOnFacebookAccessToken: " + taskPostOnFacebookAccessToken);
+        }
+    }
+
+    public void taskPostOnYouTubeUpdateAuthorizationToken()
+    {
+        mLogger.info("taskPostOnYouTubeUpdateAuthorizationToken is called");
+        Map<String, String> requestParamMap = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap();
+        if (requestParamMap.containsKey("newAuthorizationToken"))
+        {
+            taskPostOnYouTubeAuthorizationToken = requestParamMap.get("newAuthorizationToken");
+
+            mLogger.info("taskPostOnYouTubeAuthorizationToken: " + taskPostOnYouTubeAuthorizationToken);
         }
     }
 
@@ -4629,5 +4746,45 @@ public class NewWorkflow extends Workspace implements Serializable {
 
     public void setTaskPostOnFacebookNodeId(String taskPostOnFacebookNodeId) {
         this.taskPostOnFacebookNodeId = taskPostOnFacebookNodeId;
+    }
+
+    public String getTaskPostOnYouTubeAuthorizationToken() {
+        return taskPostOnYouTubeAuthorizationToken;
+    }
+
+    public void setTaskPostOnYouTubeAuthorizationToken(String taskPostOnYouTubeAuthorizationToken) {
+        this.taskPostOnYouTubeAuthorizationToken = taskPostOnYouTubeAuthorizationToken;
+    }
+
+    public String getTaskPostOnYouTubeTitle() {
+        return taskPostOnYouTubeTitle;
+    }
+
+    public void setTaskPostOnYouTubeTitle(String taskPostOnYouTubeTitle) {
+        this.taskPostOnYouTubeTitle = taskPostOnYouTubeTitle;
+    }
+
+    public String getTaskPostOnYouTubeDescription() {
+        return taskPostOnYouTubeDescription;
+    }
+
+    public void setTaskPostOnYouTubeDescription(String taskPostOnYouTubeDescription) {
+        this.taskPostOnYouTubeDescription = taskPostOnYouTubeDescription;
+    }
+
+    public Long getTaskPostOnYouTubeCategoryId() {
+        return taskPostOnYouTubeCategoryId;
+    }
+
+    public void setTaskPostOnYouTubeCategoryId(Long taskPostOnYouTubeCategoryId) {
+        this.taskPostOnYouTubeCategoryId = taskPostOnYouTubeCategoryId;
+    }
+
+    public String getTaskPostOnYouTubeTags() {
+        return taskPostOnYouTubeTags;
+    }
+
+    public void setTaskPostOnYouTubeTags(String taskPostOnYouTubeTags) {
+        this.taskPostOnYouTubeTags = taskPostOnYouTubeTags;
     }
 }

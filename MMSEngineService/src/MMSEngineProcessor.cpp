@@ -9216,12 +9216,10 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
             }
             request.setOpt(new curlpp::options::HttpHeader(headerList));
 
-            // store response headers in the response
-            request.setOpt(new curlpp::options::Header(1));
-
             ostringstream response;
             request.setOpt(new curlpp::options::WriteStream(&response));
 
+            // store response headers in the response
             // You simply have to set next option to prefix the header to the normal body output. 
             request.setOpt(new curlpp::options::Header(true)); 
             
@@ -9248,22 +9246,38 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
         }
         
         bool contentCompletelyUploaded = false;
+        int64_t lastByteSent = -1;
         while (!contentCompletelyUploaded)
         {
             /*
+                // In case of the first request
                 PUT UPLOAD_URL HTTP/1.1
                 Authorization: Bearer AUTH_TOKEN
                 Content-Length: CONTENT_LENGTH
                 Content-Type: CONTENT_TYPE
 
                 BINARY_FILE_DATA
+
+                // in case of resuming
+                PUT UPLOAD_URL HTTP/1.1
+                Authorization: Bearer AUTH_TOKEN
+                Content-Length: REMAINING_CONTENT_LENGTH
+                Content-Range: bytes FIRST_BYTE-LAST_BYTE/TOTAL_CONTENT_LENGTH
+
+                PARTIAL_BINARY_FILE_DATA            
             */
 
             {                
                 list<string> headerList;
                 headerList.push_back(string("Authorization: Bearer ") + youTubeAuthorizationToken);
-                headerList.push_back(string("Content-Length: ") + to_string(sizeInBytes));
-                headerList.push_back(string("Content-Type: ") + videoContentType);
+                if (lastByteSent == -1)
+                    headerList.push_back(string("Content-Length: ") + to_string(sizeInBytes));
+                else
+                    headerList.push_back(string("Content-Length: ") + to_string(sizeInBytes - lastByteSent + 1));
+                if (lastByteSent == -1)
+                    headerList.push_back(string("Content-Type: ") + videoContentType);
+                else
+                    headerList.push_back(string("Content-Range: bytes ") + to_string(lastByteSent) + "-" + to_string(sizeInBytes - 1) + "/" + to_string(sizeInBytes));
 
                 curlpp::Cleanup cleaner;
                 curlpp::Easy request;
@@ -9352,7 +9366,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
 
                 chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
 
-                _logger->info(__FILEREF__ + "Calling youTube"
+                _logger->info(__FILEREF__ + "Calling youTube upload"
                         + ", youTubeURL: " + youTubeURL
                         + ", _youTubeDataAPIProtocol: " + _youTubeDataAPIProtocol
                         + ", _youTubeDataAPIHostName: " + _youTubeDataAPIHostName
@@ -9362,16 +9376,175 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
 
                 long responseCode = curlpp::infos::ResponseCode::get(request);
                 
-                _logger->info(__FILEREF__ + "Called youTube"
+                _logger->info(__FILEREF__ + "Called youTube upload"
                         + ", youTubeURL: " + youTubeURL
                         + ", responseCode: " + to_string(responseCode)
                 );
                 
                 if (responseCode == 201)
                 {
-                    
+                    _logger->info(__FILEREF__ + "youTube upload successful"
+                            + ", youTubeURL: " + youTubeURL
+                            + ", responseCode: " + to_string(responseCode)
+                    );
+
+                    contentCompletelyUploaded = true;
                 }
-                
+                else if (responseCode == 500 
+                        || responseCode == 502
+                        || responseCode == 503
+                        || responseCode == 504
+                        )
+                {                    
+                    _logger->warn(__FILEREF__ + "youTube upload failed, trying to resume"
+                            + ", youTubeURL: " + youTubeURL
+                            + ", responseCode: " + to_string(responseCode)
+                    );
+                    
+                    /*
+                        PUT UPLOAD_URL HTTP/1.1
+                        Authorization: Bearer AUTH_TOKEN
+                        Content-Length: 0
+                        Content-Range: bytes *\/CONTENT_LENGTH
+
+                        308 Resume Incomplete
+                        Content-Length: 0
+                        Range: bytes=0-999999
+                    */
+                    {                
+                        list<string> headerList;
+                        headerList.push_back(string("Authorization: Bearer ") + youTubeAuthorizationToken);
+                        headerList.push_back(string("Content-Length: 0"));
+                        headerList.push_back(string("Content-Range: bytes */") + to_string(sizeInBytes));
+
+                        curlpp::Cleanup cleaner;
+                        curlpp::Easy request;
+
+                        request.setOpt(new curlpp::options::CustomRequest{"PUT"});
+                        request.setOpt(new curlpp::options::Url(youTubeURL));
+                        request.setOpt(new curlpp::options::Timeout(_youTubeDataAPITimeoutInSeconds));
+
+                        if (_youTubeDataAPIProtocol == "https")
+                        {
+                //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
+                //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;                                          
+                //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;                                  
+                //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;                              
+                //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;                                    
+                //                typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;                           
+                //                typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;                                         
+                //                typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;                                          
+                //                typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;                                          
+                //                typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;                                 
+                //                typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;                                    
+                //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;                          
+                //                typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;                                    
+
+
+                            // cert is stored PEM coded in file... 
+                            // since PEM is default, we needn't set it for PEM 
+                            // curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
+                            // curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
+                            // equest.setOpt(sslCertType);
+
+                            // set the cert for client authentication
+                            // "testcert.pem"
+                            // curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
+                            // curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
+                            // request.setOpt(sslCert);
+
+                            // sorry, for engine we must set the passphrase
+                            //   (if the key has one...)
+                            // const char *pPassphrase = NULL;
+                            // if(pPassphrase)
+                            //  curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
+
+                            // if we use a key stored in a crypto engine,
+                            //   we must set the key type to "ENG"
+                            // pKeyType  = "PEM";
+                            // curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
+
+                            // set the private key (file or ID in engine)
+                            // pKeyName  = "testkey.pem";
+                            // curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
+
+                            // set the file with the certs vaildating the server
+                            // *pCACertFile = "cacert.pem";
+                            // curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
+
+                            // disconnect if we can't validate server's cert
+                            bool bSslVerifyPeer = false;
+                            curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
+                            request.setOpt(sslVerifyPeer);
+
+                            curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
+                            request.setOpt(sslVerifyHost);
+
+                            // request.setOpt(new curlpp::options::SslEngineDefault());                                              
+
+                        }
+                        request.setOpt(new curlpp::options::HttpHeader(headerList));
+
+                        ostringstream response;
+                        request.setOpt(new curlpp::options::WriteStream(&response));
+
+                        // store response headers in the response
+                        // You simply have to set next option to prefix the header to the normal body output. 
+                        request.setOpt(new curlpp::options::Header(true));
+            
+                        chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
+
+                        _logger->info(__FILEREF__ + "Calling youTube check status"
+                                + ", youTubeURL: " + youTubeURL
+                                + ", _youTubeDataAPIProtocol: " + _youTubeDataAPIProtocol
+                                + ", _youTubeDataAPIHostName: " + _youTubeDataAPIHostName
+                                + ", _youTubeDataAPIPort: " + to_string(_youTubeDataAPIPort)
+                        );
+                        request.perform();
+
+                        sResponse = response.str();
+                        long responseCode = curlpp::infos::ResponseCode::get(request);
+
+                        _logger->info(__FILEREF__ + "Called youTube check status"
+                                + ", youTubeURL: " + youTubeURL
+                                + ", responseCode: " + to_string(responseCode)
+                                + ", sResponse: " + sResponse
+                        );
+
+                        if (responseCode == 308)
+                        {
+                            _logger->info(__FILEREF__ + "youTube check status successful"
+                                + ", youTubeURL: " + youTubeURL
+                                + ", responseCode: " + to_string(responseCode)
+                                + ", sResponse: " + sResponse
+                            );
+
+                            // lastByteSent = ;
+                        }
+                        else
+                        {   
+                            // error
+                            string errorMessage (__FILEREF__ + "youTube check status failed"
+                                    + ", youTubeURL: " + youTubeURL
+                                    + ", responseCode: " + to_string(responseCode)
+                            );
+                            _logger->error(errorMessage);
+
+                            throw runtime_error(errorMessage);
+                        }
+                    }
+                }
+                else
+                {   
+                    // error
+                    string errorMessage (__FILEREF__ + "youTube upload failed"
+                            + ", youTubeURL: " + youTubeURL
+                            + ", responseCode: " + to_string(responseCode)
+                    );
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
             }
         }
                 

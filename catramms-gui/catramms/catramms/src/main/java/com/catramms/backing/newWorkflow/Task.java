@@ -81,6 +81,11 @@ public class Task implements Serializable
     private Long extractTracksAudioTrackNumber;
     private String postOnFacebookAccessToken;
     private String postOnFacebookNodeId;
+    private String postOnYouTubeAuthorizationToken;
+    private String postOnYouTubeTitle;
+    private String postOnYouTubeDescription;
+    private String postOnYouTubeTags;
+    private Long postOnYouTubeCategoryId;
 
     private boolean childTaskCreated;
     private boolean childEventOnSuccessCreated;
@@ -654,5 +659,45 @@ public class Task implements Serializable
 
     public void setPostOnFacebookNodeId(String postOnFacebookNodeId) {
         this.postOnFacebookNodeId = postOnFacebookNodeId;
+    }
+
+    public String getPostOnYouTubeAuthorizationToken() {
+        return postOnYouTubeAuthorizationToken;
+    }
+
+    public void setPostOnYouTubeAuthorizationToken(String postOnYouTubeAuthorizationToken) {
+        this.postOnYouTubeAuthorizationToken = postOnYouTubeAuthorizationToken;
+    }
+
+    public String getPostOnYouTubeTitle() {
+        return postOnYouTubeTitle;
+    }
+
+    public void setPostOnYouTubeTitle(String postOnYouTubeTitle) {
+        this.postOnYouTubeTitle = postOnYouTubeTitle;
+    }
+
+    public String getPostOnYouTubeDescription() {
+        return postOnYouTubeDescription;
+    }
+
+    public void setPostOnYouTubeDescription(String postOnYouTubeDescription) {
+        this.postOnYouTubeDescription = postOnYouTubeDescription;
+    }
+
+    public String getPostOnYouTubeTags() {
+        return postOnYouTubeTags;
+    }
+
+    public void setPostOnYouTubeTags(String postOnYouTubeTags) {
+        this.postOnYouTubeTags = postOnYouTubeTags;
+    }
+
+    public Long getPostOnYouTubeCategoryId() {
+        return postOnYouTubeCategoryId;
+    }
+
+    public void setPostOnYouTubeCategoryId(Long postOnYouTubeCategoryId) {
+        this.postOnYouTubeCategoryId = postOnYouTubeCategoryId;
     }
 }

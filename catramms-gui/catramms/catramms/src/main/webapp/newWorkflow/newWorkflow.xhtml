@@ -27,6 +27,13 @@
 
     <h:outputScript library="js" name="facebook_sdk.js" target="body" />
 
+    <!-- ho dovuto eliminare target="body" dal prossimo tag altrimenti, essendo eseguito alla fine, non riconosceva handleClientLoad() -->
+    <h:outputScript library="js" name="youTube_sdk.js" />
+    <script async="async" defer="defer" src="https://apis.google.com/js/api.js"
+            onload="this.onload=function(){};handleClientLoad()"
+            onreadystatechange="if (this.readyState === 'complete') this.onload()">
+    </script>
+
     <h:form id="viewForm" enctype="multipart/form-data">
 
         <p:growl id="growl" showDetail="true" sticky="false" escape="false" life="2000">
