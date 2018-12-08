@@ -4024,15 +4024,10 @@ void MMSEngineDBFacade::updateIngestionJob (
     try
     {
         string errorMessageForSQL;
-        if (errorMessage == "")
-            errorMessageForSQL = errorMessage;
+        if (errorMessage.length() >= 1024)
+            errorMessageForSQL = errorMessage.substr(0, 1024);
         else
-        {
-            if (errorMessageForSQL.length() >= 1024)
-                errorMessageForSQL.substr(0, 1024);
-            else
-                errorMessageForSQL = errorMessage;
-        }
+            errorMessageForSQL = errorMessage;
         
         if (MMSEngineDBFacade::isIngestionStatusFinalState(newIngestionStatus))
         {

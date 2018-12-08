@@ -9216,7 +9216,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
             }
             
             for (string headerMessage: headerList)
-                _logger->info(__FILEREF__ + "Added header message" + headerMessage);
+                _logger->info(__FILEREF__ + "Adding header message: " + headerMessage);
             request.setOpt(new curlpp::options::HttpHeader(headerList));
 
             ostringstream response;
@@ -9383,7 +9383,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
                 }
 
                 for (string headerMessage: headerList)
-                    _logger->info(__FILEREF__ + "Added header message" + headerMessage);
+                    _logger->info(__FILEREF__ + "Adding header message: " + headerMessage);
                 request.setOpt(new curlpp::options::HttpHeader(headerList));
 
                 chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
@@ -9507,7 +9507,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
                         }
                         
                         for (string headerMessage: headerList)
-                            _logger->info(__FILEREF__ + "Added header message" + headerMessage);
+                            _logger->info(__FILEREF__ + "Adding header message: " + headerMessage);
                         request.setOpt(new curlpp::options::HttpHeader(headerList));
 
                         ostringstream response;
@@ -9588,7 +9588,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
     }
     catch (curlpp::LogicError & e) 
     {
-        _logger->error(__FILEREF__ + "Post video on Facebook failed (LogicError)"
+        _logger->error(__FILEREF__ + "Post video on YouTube failed (LogicError)"
             + ", youTubeURL: " + youTubeURL
             + ", exception: " + e.what()
             + ", sResponse: " + sResponse
@@ -9609,7 +9609,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
     }
     catch (curlpp::RuntimeError & e) 
     {
-        _logger->error(__FILEREF__ + "Post video on Facebook failed (RuntimeError)"
+        _logger->error(__FILEREF__ + "Post video on YouTube failed (RuntimeError)"
             + ", youTubeURL: " + youTubeURL
             + ", exception: " + e.what()
             + ", sResponse: " + sResponse
@@ -9630,7 +9630,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
     }
     catch (runtime_error e)
     {
-        _logger->error(__FILEREF__ + "Post Video on Facebook failed (runtime_error)"
+        _logger->error(__FILEREF__ + "Post Video on YouTube failed (runtime_error)"
             + ", exception: " + e.what()
             + ", sResponse: " + sResponse
         );
@@ -9650,7 +9650,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
     }
     catch (exception e)
     {
-        _logger->error(__FILEREF__ + "Post Video on Facebook failed (exception)"
+        _logger->error(__FILEREF__ + "Post Video on YouTube failed (exception)"
             + ", exception: " + e.what()
             + ", sResponse: " + sResponse
         );

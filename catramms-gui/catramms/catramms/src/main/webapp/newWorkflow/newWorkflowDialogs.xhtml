@@ -50,6 +50,10 @@
 
                 <p:outputLabel value="Begin:" />
                 <p:calendar id="begin" value="#{newWorkflow.mediaItemsBegin}" pattern="dd-MM-yyyy HH:mm:ss" locale="my" >
+                    <!--
+                    <p:ajax global="true" event="dateSelect" listener="#{newWorkflow.fillMediaItems}"
+                            update=":selectMediaItemsForm" />
+                            -->
                 </p:calendar>
 
                 <span class="ui-separator">
@@ -58,6 +62,8 @@
 
                 <p:outputLabel value="End:" />
                 <p:calendar id="end" value="#{newWorkflow.mediaItemsEnd}" pattern="dd-MM-yyyy HH:mm:ss" locale="my" >
+                    <p:ajax global="true" event="dateSelect" listener="#{newWorkflow.fillMediaItems}"
+                            update=":selectMediaItemsForm" />
                 </p:calendar>
 
                 <span class="ui-separator">

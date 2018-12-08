@@ -25,7 +25,7 @@ function initClient()
 
     // Authorization scopes required by the API. If using multiple scopes,
     // separated them with spaces.
-    var SCOPES = 'https://www.googleapis.com/auth/youtube.upload';
+    var SCOPES = 'https://www.googleapis.com/auth/youtube https://www.googleapis.com/auth/youtube.upload';
 
     gapi.client.init({
         discoveryDocs: DISCOVERY_DOCS,
