@@ -9214,6 +9214,9 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
                 // request.setOpt(new curlpp::options::SslEngineDefault());                                              
 
             }
+            
+            for (string headerMessage: headerList)
+                _logger->info(__FILEREF__ + "Added header message" + headerMessage);
             request.setOpt(new curlpp::options::HttpHeader(headerList));
 
             ostringstream response;
@@ -9225,7 +9228,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
             
             chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
 
-            _logger->info(__FILEREF__ + "Calling youTube"
+            _logger->info(__FILEREF__ + "Calling youTube (first call)"
                     + ", youTubeURL: " + youTubeURL
                     + ", _youTubeDataAPIProtocol: " + _youTubeDataAPIProtocol
                     + ", _youTubeDataAPIHostName: " + _youTubeDataAPIHostName
@@ -9235,16 +9238,32 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
             );
             request.perform();
 
+            long responseCode = curlpp::infos::ResponseCode::get(request);
+
             sResponse = response.str();
-            _logger->info(__FILEREF__ + "Called youTube"
+            _logger->info(__FILEREF__ + "Called youTube (first call)"
                     + ", youTubeURL: " + youTubeURL
                     + ", body: " + body
+                    + ", responseCode: " + to_string(responseCode)
                     + ", sResponse: " + sResponse
             );
             
+            if (responseCode != 200)
+            {
+                string errorMessage = __FILEREF__ + "youTube (first call) failed"
+                        + ", youTubeURL: " + youTubeURL
+                        + ", body: " + body
+                        + ", responseCode: " + to_string(responseCode)
+                        + ", sResponse: " + sResponse
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+
             // youTubeUploadURL = 
         }
-        
+
         bool contentCompletelyUploaded = false;
         int64_t lastByteSent = -1;
         while (!contentCompletelyUploaded)
@@ -9362,11 +9381,14 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
                     // request.setOpt(new curlpp::options::SslEngineDefault());                                              
 
                 }
+
+                for (string headerMessage: headerList)
+                    _logger->info(__FILEREF__ + "Added header message" + headerMessage);
                 request.setOpt(new curlpp::options::HttpHeader(headerList));
 
                 chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
 
-                _logger->info(__FILEREF__ + "Calling youTube upload"
+                _logger->info(__FILEREF__ + "Calling youTube (upload)"
                         + ", youTubeURL: " + youTubeURL
                         + ", _youTubeDataAPIProtocol: " + _youTubeDataAPIProtocol
                         + ", _youTubeDataAPIHostName: " + _youTubeDataAPIHostName
@@ -9376,7 +9398,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
 
                 long responseCode = curlpp::infos::ResponseCode::get(request);
                 
-                _logger->info(__FILEREF__ + "Called youTube upload"
+                _logger->info(__FILEREF__ + "Called youTube (upload)"
                         + ", youTubeURL: " + youTubeURL
                         + ", responseCode: " + to_string(responseCode)
                 );
@@ -9483,6 +9505,9 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
                             // request.setOpt(new curlpp::options::SslEngineDefault());                                              
 
                         }
+                        
+                        for (string headerMessage: headerList)
+                            _logger->info(__FILEREF__ + "Added header message" + headerMessage);
                         request.setOpt(new curlpp::options::HttpHeader(headerList));
 
                         ostringstream response;
