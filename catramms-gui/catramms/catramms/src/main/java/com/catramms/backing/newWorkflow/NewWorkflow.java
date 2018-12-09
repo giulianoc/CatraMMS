@@ -3794,20 +3794,6 @@ public class NewWorkflow extends Workspace implements Serializable {
         }
     }
 
-    /*
-    public void taskPostOnYouTubeUpdateAuthorizationToken()
-    {
-        mLogger.info("taskPostOnYouTubeUpdateAuthorizationToken is called");
-        Map<String, String> requestParamMap = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap();
-        if (requestParamMap.containsKey("newAuthorizationToken"))
-        {
-            taskPostOnYouTubeAuthorizationToken = requestParamMap.get("newAuthorizationToken");
-
-            mLogger.info("taskPostOnYouTubeAuthorizationToken: " + taskPostOnYouTubeAuthorizationToken);
-        }
-    }
-    */
-
     public List<String> getTaskEncodingProfilesLabelList()
     {
         taskEncodingProfilesLabelList.clear();
