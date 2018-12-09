@@ -78,6 +78,7 @@ public class HttpFeedFetcher {
                     conn.setConnectTimeout(timeoutInSeconds * 1000);
                     conn.setReadTimeout(timeoutInSeconds * 1000);
 
+                    if (user != null && password != null)
                     {
                         String encoded = DatatypeConverter.printBase64Binary((user + ":" + password).getBytes("utf-8"));
                         conn.setRequestProperty("Authorization", "Basic " + encoded);
@@ -180,18 +181,19 @@ public class HttpFeedFetcher {
         return result;
     }
 
-    static public String fetchPostHttpsJson(String url, int timeoutInSeconds, int maxRetriesNumber,
+    static public String fetchPostHttpsJson(String url, String contentType, int timeoutInSeconds, int maxRetriesNumber,
                                             String user, String password, String postBodyRequest)
             throws Exception
     {
-        return fetchBodyHttpsJson("POST", url, timeoutInSeconds, maxRetriesNumber, user, password, postBodyRequest);
+        return fetchBodyHttpsJson("POST", url, contentType, timeoutInSeconds, maxRetriesNumber, user, password, postBodyRequest);
     }
 
     static public String fetchPutHttpsJson(String url, int timeoutInSeconds, int maxRetriesNumber,
                                             String user, String password, String putBodyRequest)
             throws Exception
     {
-        return fetchBodyHttpsJson("PUT", url, timeoutInSeconds, maxRetriesNumber, user, password, putBodyRequest);
+        String contentType = null;
+        return fetchBodyHttpsJson("PUT", url, contentType, timeoutInSeconds, maxRetriesNumber, user, password, putBodyRequest);
     }
 
     static public String fetchDeleteHttpsJson(String url, int timeoutInSeconds, int maxRetriesNumber,
@@ -199,11 +201,13 @@ public class HttpFeedFetcher {
             throws Exception
     {
         String postBodyRequest = null;
-        return fetchBodyHttpsJson("DELETE", url, timeoutInSeconds, maxRetriesNumber, user, password, postBodyRequest);
+        String contentType = null;
+        return fetchBodyHttpsJson("DELETE", url, contentType, timeoutInSeconds, maxRetriesNumber, user, password, postBodyRequest);
     }
 
-    static private String fetchBodyHttpsJson(String httpMethod, String url, int timeoutInSeconds, int maxRetriesNumber,
-                                        String user, String password, String postBodyRequest)
+    static private String fetchBodyHttpsJson(String httpMethod, String url, String contentType,
+                                             int timeoutInSeconds, int maxRetriesNumber,
+                                             String user, String password, String postBodyRequest)
             throws Exception
     {
         // fetchWebPage
@@ -302,8 +306,16 @@ public class HttpFeedFetcher {
 
                         if (clength > 0)
                         {
-                            conn.setRequestProperty("Content-Type", "application/json");
-                            mLogger.info("Header. " + "Content-Type: " + "application/json");
+                            if (contentType != null)
+                            {
+                                conn.setRequestProperty("Content-Type", contentType);
+                                mLogger.info("Header. " + "Content-Type: " + contentType);
+                            }
+                            else
+                            {
+                                conn.setRequestProperty("Content-Type", "application/json");
+                                mLogger.info("Header. " + "Content-Type: " + "application/json");
+                            }
                         }
 
                         conn.setRequestProperty("Content-Length", String.valueOf(clength));

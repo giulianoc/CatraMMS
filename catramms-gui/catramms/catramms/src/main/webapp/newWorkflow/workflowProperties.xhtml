@@ -3509,27 +3509,44 @@
 
             <p:row>
                 <p:column>
-                    <p:outputLabel value="Authorization Token" style="font-weight: bold"/>
+                    <p:outputLabel value="Access Token" style="font-weight: bold"/>
                 </p:column>
                 <p:column>
-                    <p:inputText id="taskAuthorizationToken_Post_On_YouTube" style="width: 100%"
-                                 value="#{newWorkflow.taskPostOnYouTubeAuthorizationToken}"
+                    <p:inputText id="taskAccessToken_Post_On_YouTube" style="width: 100%"
+                                 value="#{newWorkflow.taskPostOnYouTubeAccessToken}"
                                  autocomplete="true"
-                                 placeholder="authorization token"/>
-
-                    <p:remoteCommand name="taskUpdateAuthorizationToken_Post_On_YouTube"
-                                     update="taskAuthorizationToken_Post_On_YouTube"
-                                     global="false"
-                                     actionListener="#{newWorkflow.taskPostOnYouTubeUpdateAuthorizationToken}"
-                    />
-                    <p:commandLink value="Authorize"
-                                   onclick="handleAuthClick()"
-                    />
+                                 placeholder="access token"/>
+                    <h:outputLink value="#{newWorkflow.youTubeAccessTokenURL}" target="_blank">
+                        <h:outputText value="Get Access Token" />
+                    </h:outputLink>
                     <!--
-                    <p:commandLink value="Sign Out"
-                                   onclick="handleSignoutClick()"
+                    <p:commandButton id="taskGetAccessToken_Post_On_YouTube"
+                                     icon="ui-icon-search"
+                                     value="Get Access Token"
+                                     oncomplete="PF('getYouTubeAccessToken').show()"
+                            />
+                            -->
+
+                    <!--
+                        <p:remoteCommand name="taskUpdateAuthorizationToken_Post_On_YouTube"
+                               update="taskAuthorizationToken_Post_On_YouTube"
+                               global="false"
+                               actionListener="#{newWorkflow.taskPostOnYouTubeUpdateAuthorizationToken}"
                     />
                     -->
+                    <!--
+                            onclick="handleAuthClick()"
+                            -->
+                    <!--
+                  <p:commandLink value="Authorize"
+                                  actionListener="#{newWorkflow.activateYouTube}"
+                   />
+                                       -->
+                    <!--
+                               <p:commandLink value="Sign Out"
+                                              onclick="handleSignoutClick()"
+                               />
+                               -->
                 </p:column>
             </p:row>
 

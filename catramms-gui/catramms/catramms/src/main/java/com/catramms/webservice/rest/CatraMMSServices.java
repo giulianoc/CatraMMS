@@ -2,6 +2,7 @@ package com.catramms.webservice.rest;
 
 import com.catramms.backing.newWorkflow.IngestionResult;
 import com.catramms.utility.catramms.CatraMMS;
+import com.catramms.utility.httpFetcher.HttpFeedFetcher;
 import com.catramms.webservice.rest.utility.CutMediaInfo;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
@@ -29,11 +30,83 @@ public class CatraMMSServices {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("status")
-    public Response getStatus()
+    public Response getStatus(@Context HttpServletRequest pRequest)
     {
         mLogger.info("Received getStatus");
 
+        for (String s: pRequest.getParameterMap().keySet())
+        {
+            for (String v: pRequest.getParameterMap().get(s))
+                mLogger.info("key: " + s
+                                + ", value: " + v
+                );
+        }
+
         return Response.ok("{ \"status\": \"REST CatraMMS webservice running\" }").build();
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("youTubeCallback")
+    public Response youTubeCallback(@Context HttpServletRequest pRequest)
+    {
+        try {
+            mLogger.info("Received youTubeCallback");
+
+            for (String s: pRequest.getParameterMap().keySet())
+            {
+                for (String v: pRequest.getParameterMap().get(s))
+                    mLogger.info("key: " + s
+                                    + ", value: " + v
+                    );
+            }
+
+            String[] code = pRequest.getParameterMap().get("code");
+            if (code == null || code.length == 0)
+            {
+                mLogger.error("'code' is not present");
+
+                String[] error = pRequest.getParameterMap().get("error");
+                if (error == null || error.length == 0)
+                {
+                    mLogger.error("'code/error' are not present");
+
+                    return Response.ok("{ \"error\": \"<access token not available>\" }").build();
+                }
+
+                return Response.ok("{ \"error\": \"" + error + "\" }").build();
+            }
+
+            String authorizationToken = code[0];
+
+            String url = "https://www.googleapis.com/oauth2/v4/token";
+            String body = "code=" + java.net.URLEncoder.encode(authorizationToken, "UTF-8")
+                    + "&client_id=700586767360-96om12ccsf16m41qijrdagkk0oqf2o7m.apps.googleusercontent.com"
+                    + "&client_secret=Uabf92wFTF80vOL3z_zzRUtT"
+                    + "&redirect_uri=" + java.net.URLEncoder.encode("https://mms-gui.catrasoft.cloud/rest/api/youTubeCallback", "UTF-8")
+                    + "&grant_type=authorization_code"
+                    ;
+
+            mLogger.info("url: " + url);
+
+            Date now = new Date();
+            int timeoutInSeconds = 120;
+            int maxRetriesNumber = 1;
+            String username = null;
+            String password = null;
+            String contentType = "application/x-www-form-urlencoded";
+            String youTubeResponse = HttpFeedFetcher.fetchPostHttpsJson(url, contentType, timeoutInSeconds, maxRetriesNumber,
+                    username, password, body);
+            mLogger.info("Elapsed time login (@" + url + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
+
+            return Response.ok(youTubeResponse).build();
+        }
+        catch (Exception e)
+        {
+            mLogger.error("Exception: " + e);
+
+            return Response.ok("{ \"error\": \"" + e + "\" }").build();
+        }
     }
 
     @POST

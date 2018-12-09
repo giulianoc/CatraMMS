@@ -331,7 +331,7 @@ private:
         shared_ptr<long> processorsThreadsNumber,
         string mmsAssetPathName, int64_t sizeInBytes,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
-        string youTubeAuthorizationToken, string youTubeTitle,
+        string youTubeAccessToken, string youTubeTitle,
         string youTubeDescription, Json::Value youTubeTags,
         int youTubeCategoryId);
 } ;

@@ -3219,13 +3219,13 @@ void MMSEngineProcessor::postOnYouTubeTask(
             return;
         }
 
-        string youTubeAuthorizationToken;
+        string youTubeAccessToken;
         string youTubeTitle;
         string youTubeDescription;
         Json::Value youTubeTags = Json::nullValue;
         int youTubeCategoryId = -1;
         {
-            string field = "AuthorizationToken";
+            string field = "AccessToken";
             if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -3235,7 +3235,7 @@ void MMSEngineProcessor::postOnYouTubeTask(
 
                 throw runtime_error(errorMessage);
             }
-            youTubeAuthorizationToken = parametersRoot.get(field, "XXX").asString();
+            youTubeAccessToken = parametersRoot.get(field, "XXX").asString();
 
             field = "Title";
             if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
@@ -3339,7 +3339,7 @@ void MMSEngineProcessor::postOnYouTubeTask(
             thread postOnYouTube(&MMSEngineProcessor::postVideoOnYouTubeThread, this,
                 _processorsThreadsNumber, mmsAssetPathName, 
                 sizeInBytes, ingestionJobKey, workspace,
-                youTubeAuthorizationToken, youTubeTitle,
+                youTubeAccessToken, youTubeTitle,
                 youTubeDescription, youTubeTags,
                 youTubeCategoryId);
             postOnYouTube.detach();
@@ -8999,7 +8999,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
         shared_ptr<long> processorsThreadsNumber,
         string mmsAssetPathName, int64_t sizeInBytes,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
-        string youTubeAuthorizationToken, string youTubeTitle,
+        string youTubeAccessToken, string youTubeTitle,
         string youTubeDescription, Json::Value youTubeTags,
         int youTubeCategoryId)
 {
@@ -9015,7 +9015,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", mmsAssetPathName: " + mmsAssetPathName
             + ", sizeInBytes: " + to_string(sizeInBytes)
-            + ", youTubeAuthorizationToken: " + youTubeAuthorizationToken
+            + ", youTubeAccessToken: " + youTubeAccessToken
             + ", youTubeTitle: " + youTubeTitle
             + ", youTubeDescription: " + youTubeDescription
             + ", youTubeCategoryId: " + to_string(youTubeCategoryId)
@@ -9130,7 +9130,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
             list<string> headerList;
 
             {
-                string header = "Authorization: Bearer " + youTubeAuthorizationToken;
+                string header = "Authorization: Bearer " + youTubeAccessToken;
                 headerList.push_back(header);
 
                 header = "Content-Length: " + to_string(body.length());
@@ -9261,6 +9261,24 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
                 throw runtime_error(errorMessage);
             }
 
+            /*
+                HTTP/1.1 200 OK
+                X-GUploader-UploadID: AEnB2UqO5ml7GRPs5AjsOSPzSGwudclcEFbyXtEK_TLWRhggwxh9gTWBdusefTgmX2ul9axk4ztG_YBWQXGtm1M42Fz9QVE4xA
+                Location: https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status,contentDetails&upload_id=AEnB2UqO5ml7GRPs5AjsOSPzSGwudclcEFbyXtEK_TLWRhggwxh9gTWBdusefTgmX2ul9axk4ztG_YBWQXGtm1M42Fz9QVE4xA
+                ETag: "XI7nbFXulYBIpL0ayR_gDh3eu1k/bpNRC6h7Ng2_S5XJ6YzbSMF0qXE"
+                Vary: Origin
+                Vary: X-Origin
+                X-Goog-Correlation-Id: FGN7H2Vxp5I
+                Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+                Pragma: no-cache
+                Expires: Mon, 01 Jan 1990 00:00:00 GMT
+                Date: Sun, 09 Dec 2018 09:15:41 GMT
+                Content-Length: 0
+                Server: UploadServer
+                Content-Type: text/html; charset=UTF-8
+                Alt-Svc: quic=":443"; ma=2592000; v="44,43,39,35"
+             */
+            
             // youTubeUploadURL = 
         }
 
@@ -9288,7 +9306,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
 
             {                
                 list<string> headerList;
-                headerList.push_back(string("Authorization: Bearer ") + youTubeAuthorizationToken);
+                headerList.push_back(string("Authorization: Bearer ") + youTubeAccessToken);
                 if (lastByteSent == -1)
                     headerList.push_back(string("Content-Length: ") + to_string(sizeInBytes));
                 else
@@ -9435,7 +9453,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
                     */
                     {                
                         list<string> headerList;
-                        headerList.push_back(string("Authorization: Bearer ") + youTubeAuthorizationToken);
+                        headerList.push_back(string("Authorization: Bearer ") + youTubeAccessToken);
                         headerList.push_back(string("Content-Length: 0"));
                         headerList.push_back(string("Content-Range: bytes */") + to_string(sizeInBytes));
 

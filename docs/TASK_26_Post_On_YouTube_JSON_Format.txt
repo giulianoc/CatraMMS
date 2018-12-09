@@ -25,7 +25,7 @@
 		],
 
 		// mandatory, a valid authorization token
-		"AuthorizationToken": "XXXXX",
+		"AccessToken": "XXXXX",
 
 		// Optional, Title of the video, if not present the MMS title of the video is used
 		"Title": "YYYY",

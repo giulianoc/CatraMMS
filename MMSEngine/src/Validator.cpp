@@ -2722,7 +2722,7 @@ void Validator::validatePostOnYouTubeMetadata(int64_t workspaceKey, string label
         bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
 {     
     vector<string> mandatoryFields = {
-        "AuthorizationToken"
+        "AccessToken"
     };
     for (string mandatoryField: mandatoryFields)
     {

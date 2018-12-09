@@ -7,6 +7,7 @@ import com.catramms.backing.entity.EncodingProfilesSet;
 import com.catramms.backing.entity.MediaItem;
 import com.catramms.backing.entity.PhysicalPath;
 import com.catramms.utility.catramms.CatraMMS;
+import com.catramms.utility.httpFetcher.HttpFeedFetcher;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
@@ -74,6 +75,7 @@ public class NewWorkflow extends Workspace implements Serializable {
     private String mediaItemsToBeAddedOrReplaced;
     private String taskReferences;
 
+    private String youTubeAccessTokenURL;
 
     // Workflow properties
     private String workflowLabel;
@@ -148,7 +150,7 @@ public class NewWorkflow extends Workspace implements Serializable {
     private Long taskExtractTracksAudioTrackNumber;
     private String taskPostOnFacebookAccessToken;
     private String taskPostOnFacebookNodeId;
-    private String taskPostOnYouTubeAuthorizationToken;
+    private String taskPostOnYouTubeAccessToken;
     private String taskPostOnYouTubeTitle;
     private String taskPostOnYouTubeDescription;
     private String taskPostOnYouTubeTags;
@@ -172,6 +174,7 @@ public class NewWorkflow extends Workspace implements Serializable {
     List<EncodingProfile> taskVideoEncodingProfilesList = new ArrayList<>();
     List<EncodingProfile> taskAudioEncodingProfilesList = new ArrayList<>();
     List<EncodingProfile> taskImageEncodingProfilesList = new ArrayList<>();
+
 
     @PostConstruct
     public void init()
@@ -292,6 +295,34 @@ public class NewWorkflow extends Workspace implements Serializable {
             taskContentTypesList.add("video");
             taskContentTypesList.add("audio");
             taskContentTypesList.add("image");
+        }
+
+        try
+        {
+            // this URL is configured inside the YouTube credentials
+            String mmsYouTubeCallbak = "https://mms-gui.catrasoft.cloud/rest/api/youTubeCallback";
+
+            // clientId is retrieved by the credentials
+            String clientId = "700586767360-96om12ccsf16m41qijrdagkk0oqf2o7m.apps.googleusercontent.com";
+
+            // this is the you tube scope to upload a video
+            String scope = "https://www.googleapis.com/auth/youtube https://www.googleapis.com/auth/youtube.upload";
+
+            youTubeAccessTokenURL = "https://accounts.google.com/o/oauth2/v2/auth"
+                    + "?redirect_uri=" + java.net.URLEncoder.encode(mmsYouTubeCallbak, "UTF-8")
+                    + "&prompt=consent"
+                    + "&response_type=code"
+                    + "&client_id=" + clientId
+                    + "&scope=" + java.net.URLEncoder.encode(scope, "UTF-8")
+                    + "&access_type=offline"
+            ;
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "Problems to set youTubeAccessTokenURL. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            return;
         }
 
         mediaItemsToBeAddedOrReplaced = "toBeReplaced";
@@ -1747,13 +1778,13 @@ public class NewWorkflow extends Workspace implements Serializable {
                     workflowIssueList.add(workflowIssue);
                 }
 
-                if (task.getPostOnYouTubeAuthorizationToken() != null && !task.getPostOnYouTubeAuthorizationToken().equalsIgnoreCase(""))
-                    joParameters.put("AuthorizationToken", task.getPostOnYouTubeAuthorizationToken());
+                if (task.getPostOnYouTubeAccessToken() != null && !task.getPostOnYouTubeAccessToken().equalsIgnoreCase(""))
+                    joParameters.put("AccessToken", task.getPostOnYouTubeAccessToken());
                 else
                 {
                     WorkflowIssue workflowIssue = new WorkflowIssue();
                     workflowIssue.setLabel(task.getLabel());
-                    workflowIssue.setFieldName("AuthorizationToken");
+                    workflowIssue.setFieldName("AccessToken");
                     workflowIssue.setTaskType(task.getType());
                     workflowIssue.setIssue("The field is not initialized");
 
@@ -3111,7 +3142,7 @@ public class NewWorkflow extends Workspace implements Serializable {
                 {
                     taskReferences = task.getReferences() == null ? "" : task.getReferences();
                     taskLabel = task.getLabel();
-                    taskPostOnYouTubeAuthorizationToken = task.getPostOnYouTubeAuthorizationToken();
+                    taskPostOnYouTubeAccessToken = task.getPostOnYouTubeAccessToken();
                     taskPostOnYouTubeTitle = task.getPostOnYouTubeTitle();
                     taskPostOnYouTubeDescription = task.getPostOnYouTubeDescription();
                     taskPostOnYouTubeTags = task.getPostOnYouTubeTags();
@@ -3507,7 +3538,7 @@ public class NewWorkflow extends Workspace implements Serializable {
             {
                 task.setReferences(taskReferences);
                 task.setLabel(taskLabel);
-                task.setPostOnYouTubeAuthorizationToken(taskPostOnYouTubeAuthorizationToken);
+                task.setPostOnYouTubeAccessToken(taskPostOnYouTubeAccessToken);
                 task.setPostOnYouTubeTitle(taskPostOnYouTubeTitle);
                 task.setPostOnYouTubeDescription(taskPostOnYouTubeDescription);
                 task.setPostOnYouTubeTags(taskPostOnYouTubeTags);
@@ -3763,6 +3794,7 @@ public class NewWorkflow extends Workspace implements Serializable {
         }
     }
 
+    /*
     public void taskPostOnYouTubeUpdateAuthorizationToken()
     {
         mLogger.info("taskPostOnYouTubeUpdateAuthorizationToken is called");
@@ -3774,6 +3806,7 @@ public class NewWorkflow extends Workspace implements Serializable {
             mLogger.info("taskPostOnYouTubeAuthorizationToken: " + taskPostOnYouTubeAuthorizationToken);
         }
     }
+    */
 
     public List<String> getTaskEncodingProfilesLabelList()
     {
@@ -4748,12 +4781,12 @@ public class NewWorkflow extends Workspace implements Serializable {
         this.taskPostOnFacebookNodeId = taskPostOnFacebookNodeId;
     }
 
-    public String getTaskPostOnYouTubeAuthorizationToken() {
-        return taskPostOnYouTubeAuthorizationToken;
+    public String getTaskPostOnYouTubeAccessToken() {
+        return taskPostOnYouTubeAccessToken;
     }
 
-    public void setTaskPostOnYouTubeAuthorizationToken(String taskPostOnYouTubeAuthorizationToken) {
-        this.taskPostOnYouTubeAuthorizationToken = taskPostOnYouTubeAuthorizationToken;
+    public void setTaskPostOnYouTubeAccessToken(String taskPostOnYouTubeAccessToken) {
+        this.taskPostOnYouTubeAccessToken = taskPostOnYouTubeAccessToken;
     }
 
     public String getTaskPostOnYouTubeTitle() {
@@ -4786,5 +4819,13 @@ public class NewWorkflow extends Workspace implements Serializable {
 
     public void setTaskPostOnYouTubeTags(String taskPostOnYouTubeTags) {
         this.taskPostOnYouTubeTags = taskPostOnYouTubeTags;
+    }
+
+    public String getYouTubeAccessTokenURL() {
+        return youTubeAccessTokenURL;
+    }
+
+    public void setYouTubeAccessTokenURL(String youTubeAccessTokenURL) {
+        this.youTubeAccessTokenURL = youTubeAccessTokenURL;
     }
 }

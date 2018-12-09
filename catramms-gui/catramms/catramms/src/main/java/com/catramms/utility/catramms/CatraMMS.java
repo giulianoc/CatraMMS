@@ -137,7 +137,8 @@ public class CatraMMS {
             String password = null;
 
             Date now = new Date();
-            mmsInfo = HttpFeedFetcher.fetchPostHttpsJson(mmsURL, timeoutInSeconds, maxRetriesNumber,
+            String contentType = null;
+            mmsInfo = HttpFeedFetcher.fetchPostHttpsJson(mmsURL, contentType, timeoutInSeconds, maxRetriesNumber,
                     username, password, postBodyRequest);
             mLogger.info("Elapsed time register (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
         }
@@ -235,7 +236,8 @@ public class CatraMMS {
             );
 
             Date now = new Date();
-            mmsInfo = HttpFeedFetcher.fetchPostHttpsJson(mmsURL, timeoutInSeconds, maxRetriesNumber,
+            String contentType = null;
+            mmsInfo = HttpFeedFetcher.fetchPostHttpsJson(mmsURL, contentType, timeoutInSeconds, maxRetriesNumber,
                     username, password, postBodyRequest);
             mLogger.info("Elapsed time login (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
         }
@@ -308,7 +310,8 @@ public class CatraMMS {
             );
 
             Date now = new Date();
-            mmsInfo = HttpFeedFetcher.fetchPostHttpsJson(mmsURL, timeoutInSeconds, maxRetriesNumber,
+            String contentType = null;
+            mmsInfo = HttpFeedFetcher.fetchPostHttpsJson(mmsURL, contentType, timeoutInSeconds, maxRetriesNumber,
                     username, password, jsonWorkflow);
             mLogger.info("Elapsed time login (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
         }
