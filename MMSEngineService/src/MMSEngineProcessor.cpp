@@ -9005,6 +9005,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
 {
 
     string youTubeURL;
+    string youTubeUploadURL;
     string sResponse;
     
     try
@@ -9066,7 +9067,6 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
             Content-Length: 0
         */
         string videoContentType = "video/*";
-        string youTubeUploadURL;
         {
             string youTubeURI = string("/upload/youtube/") + _youTubeDataAPIVersion + "/videos?uploadType=resumable&part=snippet,status,contentDetails";
             
@@ -9248,7 +9248,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
                     + ", sResponse: " + sResponse
             );
             
-            if (responseCode != 200)
+            if (responseCode != 200 || sResponse.find("Location: ") == string::npos)
             {
                 string errorMessage = __FILEREF__ + "youTube (first call) failed"
                         + ", youTubeURL: " + youTubeURL
@@ -9260,8 +9260,8 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
 
                 throw runtime_error(errorMessage);
             }
-
-            /*
+            
+            /* sResponse:
                 HTTP/1.1 200 OK
                 X-GUploader-UploadID: AEnB2UqO5ml7GRPs5AjsOSPzSGwudclcEFbyXtEK_TLWRhggwxh9gTWBdusefTgmX2ul9axk4ztG_YBWQXGtm1M42Fz9QVE4xA
                 Location: https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status,contentDetails&upload_id=AEnB2UqO5ml7GRPs5AjsOSPzSGwudclcEFbyXtEK_TLWRhggwxh9gTWBdusefTgmX2ul9axk4ztG_YBWQXGtm1M42Fz9QVE4xA
@@ -9279,7 +9279,15 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
                 Alt-Svc: quic=":443"; ma=2592000; v="44,43,39,35"
              */
             
-            // youTubeUploadURL = 
+            int locationStartIndex = sResponse.find("Location: ");
+            locationStartIndex += string("Location: ").length();
+            int locationEndIndex = sResponse.find("\r", locationStartIndex);
+            if (locationEndIndex == string::npos)
+                locationEndIndex = sResponse.find("\n", locationStartIndex);
+            if (locationEndIndex == string::npos)
+                youTubeUploadURL = sResponse.substr(locationStartIndex);
+            else
+                youTubeUploadURL = sResponse.substr(locationStartIndex, locationEndIndex - locationStartIndex);
         }
 
         bool contentCompletelyUploaded = false;
@@ -9337,7 +9345,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
                 }
 
                 request.setOpt(new curlpp::options::CustomRequest{"PUT"});
-                request.setOpt(new curlpp::options::Url(youTubeURL));
+                request.setOpt(new curlpp::options::Url(youTubeUploadURL));
                 request.setOpt(new curlpp::options::Timeout(_youTubeDataAPITimeoutInSeconds));
 
                 if (_youTubeDataAPIProtocol == "https")
@@ -9407,7 +9415,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
                 chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
 
                 _logger->info(__FILEREF__ + "Calling youTube (upload)"
-                        + ", youTubeURL: " + youTubeURL
+                        + ", youTubeUploadURL: " + youTubeUploadURL
                         + ", _youTubeDataAPIProtocol: " + _youTubeDataAPIProtocol
                         + ", _youTubeDataAPIHostName: " + _youTubeDataAPIHostName
                         + ", _youTubeDataAPIPort: " + to_string(_youTubeDataAPIPort)
@@ -9417,14 +9425,14 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
                 long responseCode = curlpp::infos::ResponseCode::get(request);
                 
                 _logger->info(__FILEREF__ + "Called youTube (upload)"
-                        + ", youTubeURL: " + youTubeURL
+                        + ", youTubeUploadURL: " + youTubeUploadURL
                         + ", responseCode: " + to_string(responseCode)
                 );
                 
                 if (responseCode == 201)
                 {
                     _logger->info(__FILEREF__ + "youTube upload successful"
-                            + ", youTubeURL: " + youTubeURL
+                            + ", youTubeUploadURL: " + youTubeUploadURL
                             + ", responseCode: " + to_string(responseCode)
                     );
 
@@ -9437,7 +9445,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
                         )
                 {                    
                     _logger->warn(__FILEREF__ + "youTube upload failed, trying to resume"
-                            + ", youTubeURL: " + youTubeURL
+                            + ", youTubeUploadURL: " + youTubeUploadURL
                             + ", responseCode: " + to_string(responseCode)
                     );
                     
@@ -9461,7 +9469,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
                         curlpp::Easy request;
 
                         request.setOpt(new curlpp::options::CustomRequest{"PUT"});
-                        request.setOpt(new curlpp::options::Url(youTubeURL));
+                        request.setOpt(new curlpp::options::Url(youTubeUploadURL));
                         request.setOpt(new curlpp::options::Timeout(_youTubeDataAPITimeoutInSeconds));
 
                         if (_youTubeDataAPIProtocol == "https")
@@ -9538,7 +9546,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
                         chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
 
                         _logger->info(__FILEREF__ + "Calling youTube check status"
-                                + ", youTubeURL: " + youTubeURL
+                                + ", youTubeUploadURL: " + youTubeUploadURL
                                 + ", _youTubeDataAPIProtocol: " + _youTubeDataAPIProtocol
                                 + ", _youTubeDataAPIHostName: " + _youTubeDataAPIHostName
                                 + ", _youTubeDataAPIPort: " + to_string(_youTubeDataAPIPort)
@@ -9549,7 +9557,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
                         long responseCode = curlpp::infos::ResponseCode::get(request);
 
                         _logger->info(__FILEREF__ + "Called youTube check status"
-                                + ", youTubeURL: " + youTubeURL
+                                + ", youTubeUploadURL: " + youTubeUploadURL
                                 + ", responseCode: " + to_string(responseCode)
                                 + ", sResponse: " + sResponse
                         );
@@ -9557,7 +9565,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
                         if (responseCode == 308)
                         {
                             _logger->info(__FILEREF__ + "youTube check status successful"
-                                + ", youTubeURL: " + youTubeURL
+                                + ", youTubeUploadURL: " + youTubeUploadURL
                                 + ", responseCode: " + to_string(responseCode)
                                 + ", sResponse: " + sResponse
                             );
@@ -9568,7 +9576,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
                         {   
                             // error
                             string errorMessage (__FILEREF__ + "youTube check status failed"
-                                    + ", youTubeURL: " + youTubeURL
+                                    + ", youTubeUploadURL: " + youTubeUploadURL
                                     + ", responseCode: " + to_string(responseCode)
                             );
                             _logger->error(errorMessage);
@@ -9581,7 +9589,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
                 {   
                     // error
                     string errorMessage (__FILEREF__ + "youTube upload failed"
-                            + ", youTubeURL: " + youTubeURL
+                            + ", youTubeUploadURL: " + youTubeUploadURL
                             + ", responseCode: " + to_string(responseCode)
                     );
                     _logger->error(errorMessage);
@@ -9608,6 +9616,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
     {
         _logger->error(__FILEREF__ + "Post video on YouTube failed (LogicError)"
             + ", youTubeURL: " + youTubeURL
+            + ", youTubeUploadURL: " + youTubeUploadURL
             + ", exception: " + e.what()
             + ", sResponse: " + sResponse
         );
@@ -9629,6 +9638,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
     {
         _logger->error(__FILEREF__ + "Post video on YouTube failed (RuntimeError)"
             + ", youTubeURL: " + youTubeURL
+            + ", youTubeUploadURL: " + youTubeUploadURL
             + ", exception: " + e.what()
             + ", sResponse: " + sResponse
         );
