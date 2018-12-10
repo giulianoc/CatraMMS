@@ -9027,7 +9027,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
                 Json::Value statusRoot;
 
                 field = "privacyStatus";
-                statusRoot[field] = "public";
+                statusRoot[field] = "private";
 
                 field = "embeddable";
                 statusRoot[field] = true;
