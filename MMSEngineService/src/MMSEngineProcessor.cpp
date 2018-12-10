@@ -9519,7 +9519,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
                         else
                             rangeHeader = sResponse.substr(rangeStartIndex, rangeEndIndex - rangeStartIndex);
 
-                        rangeStartOffsetIndex = rangeHeader.find("-");
+                        int rangeStartOffsetIndex = rangeHeader.find("-");
                         if (rangeStartOffsetIndex == string::npos)
                         {   
                             // error
