@@ -8894,7 +8894,7 @@ size_t curlUploadVideoOnYouTubeCallback(char* ptr, size_t size, size_t nmemb, vo
     
     auto logger = spdlog::get("mmsEngineService");
 
-    streampos currentFilePosition = curlUploadData->mediaSourceFileStream.tellg();
+    int64_t currentFilePosition = curlUploadData->mediaSourceFileStream.tellg();
     
     logger->info(__FILEREF__ + "curlUploadVideoOnYouTubeCallback"
         + ", currentFilePosition: " + to_string(currentFilePosition)
@@ -9210,7 +9210,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
 
         bool contentCompletelyUploaded = false;
         CurlUploadYouTubeData curlUploadData;
-        curlUploadData.mediaSourceFileStream.open(mmsAssetPathName);
+        curlUploadData.mediaSourceFileStream.open(mmsAssetPathName, ios::binary);
         curlUploadData.lastByteSent = -1;
         curlUploadData.fileSizeInBytes = sizeInBytes;
         while (!contentCompletelyUploaded)
