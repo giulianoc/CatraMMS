@@ -9485,18 +9485,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
                                 + ", sResponse: " + sResponse
                         );
 
-                        if (responseCode == 308)
-                        {
-                            _logger->info(__FILEREF__ + "youTube check status successful"
-                                + ", youTubeUploadURL: " + youTubeUploadURL
-                                + ", responseCode: " + to_string(responseCode)
-                                + ", sResponse: " + sResponse
-                            );
-
-                            // curlUploadData.lastByteSent = ;
-                            // curlUploadData.mediaSourceFileStream.seek
-                        }
-                        else
+                        if (responseCode != 308 || sResponse.find("Range: bytes=") == string::npos)
                         {   
                             // error
                             string errorMessage (__FILEREF__ + "youTube check status failed"
@@ -9507,6 +9496,44 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
 
                             throw runtime_error(errorMessage);
                         }
+                        
+                        /* sResponse: 
+                            HTTP/1.1 308 Resume Incomplete
+                            X-GUploader-UploadID: AEnB2Ur8jQ5DSbXieg8krXWg0f7Bmawvf6XTacURJ7wbITyXdTv8ZeHpepaUwh6F9DB5TvBCzoS4quZMKegyo2x7H9EJOc6ozQ
+                            Range: bytes=0-1572863
+                            X-Range-MD5: d50bc8fc7ecc41926f841085db3909b3
+                            Content-Length: 0
+                            Date: Mon, 10 Dec 2018 13:09:51 GMT
+                            Server: UploadServer
+                            Content-Type: text/html; charset=UTF-8
+                            Alt-Svc: quic=":443"; ma=2592000; v="44,43,39,35"
+                        */
+                        int rangeStartIndex = sResponse.find("Range: bytes=");
+                        rangeStartIndex += string("Range: bytes=").length();
+                        int rangeEndIndex = sResponse.find("\r", rangeStartIndex);
+                        if (rangeEndIndex == string::npos)
+                            rangeEndIndex = sResponse.find("\n", rangeStartIndex);
+                        string rangeHeader;
+                        if (rangeEndIndex == string::npos)
+                            rangeHeader = sResponse.substr(rangeStartIndex);
+                        else
+                            rangeHeader = sResponse.substr(rangeStartIndex, rangeEndIndex - rangeStartIndex);
+
+                        rangeStartOffsetIndex = rangeHeader.find("-");
+                        if (rangeStartOffsetIndex == string::npos)
+                        {   
+                            // error
+                            string errorMessage (__FILEREF__ + "youTube check status failed"
+                                    + ", youTubeUploadURL: " + youTubeUploadURL
+                                    + ", rangeHeader: " + rangeHeader
+                            );
+                            _logger->error(errorMessage);
+
+                            throw runtime_error(errorMessage);
+                        }
+
+                        curlUploadData.lastByteSent = stoll(rangeHeader.substr(rangeStartOffsetIndex + 1)) + 1;
+                        curlUploadData.mediaSourceFileStream.seekp(curlUploadData.lastByteSent, ios::beg)
                     }
                 }
                 else
