@@ -8438,6 +8438,9 @@ void MMSEngineProcessor::postVideoOnFacebookThread(
                     curlpp::OptionTrait<void *, CURLOPT_READDATA> curlUploadDataData(&curlUploadData);
                     request.setOpt(curlUploadCallbackFunction);
                     request.setOpt(curlUploadDataData);
+
+                    bool upload = true;
+                    request.setOpt(new curlpp::options::Upload(upload));
                 }
 
                 request.setOpt(new curlpp::options::Url(facebookURL));
@@ -9253,6 +9256,9 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
                     curlpp::OptionTrait<void *, CURLOPT_READDATA> curlUploadDataData(&curlUploadData);
                     request.setOpt(curlUploadCallbackFunction);
                     request.setOpt(curlUploadDataData);
+           
+                    bool upload = true;
+                    request.setOpt(new curlpp::options::Upload(upload));
                 }
 
                 request.setOpt(new curlpp::options::CustomRequest{"PUT"});
@@ -9327,9 +9333,6 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
 
                 _logger->info(__FILEREF__ + "Calling youTube (upload)"
                         + ", youTubeUploadURL: " + youTubeUploadURL
-                        + ", _youTubeDataAPIProtocol: " + _youTubeDataAPIProtocol
-                        + ", _youTubeDataAPIHostName: " + _youTubeDataAPIHostName
-                        + ", _youTubeDataAPIPort: " + to_string(_youTubeDataAPIPort)
                 );
                 request.perform();
 
