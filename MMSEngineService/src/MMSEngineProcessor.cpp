@@ -9532,8 +9532,13 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
                             throw runtime_error(errorMessage);
                         }
 
+                        _logger->info(__FILEREF__ + "Resuming"
+                                + ", youTubeUploadURL: " + youTubeUploadURL
+                                + ", rangeHeader: " + rangeHeader
+                                + ", rangeHeader.substr(rangeStartOffsetIndex + 1): " + rangeHeader.substr(rangeStartOffsetIndex + 1)
+                        );
                         curlUploadData.lastByteSent = stoll(rangeHeader.substr(rangeStartOffsetIndex + 1)) + 1;
-                        curlUploadData.mediaSourceFileStream.seekp(curlUploadData.lastByteSent, ios::beg)
+                        curlUploadData.mediaSourceFileStream.seekg(curlUploadData.lastByteSent, ios::beg)
                     }
                 }
                 else
