@@ -8896,6 +8896,13 @@ size_t curlUploadVideoOnYouTubeCallback(char* ptr, size_t size, size_t nmemb, vo
 
     streampos currentFilePosition = curlUploadData->mediaSourceFileStream.tellg();
     
+    logger->info(__FILEREF__ + "curlUploadVideoOnYouTubeCallback"
+        + ", currentFilePosition: " + to_string(currentFilePosition)
+        + ", size: " + to_string(size)
+        + ", nmemb: " + to_string(nmemb)
+        + ", curlUploadData->fileSizeInBytes: " + to_string(curlUploadData->fileSizeInBytes)
+    );
+        
     if(currentFilePosition + (size * nmemb) <= curlUploadData->fileSizeInBytes)
         curlUploadData->mediaSourceFileStream.read(ptr, size * nmemb);
     else
