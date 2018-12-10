@@ -9538,7 +9538,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
                                 + ", rangeHeader.substr(rangeStartOffsetIndex + 1): " + rangeHeader.substr(rangeStartOffsetIndex + 1)
                         );
                         curlUploadData.lastByteSent = stoll(rangeHeader.substr(rangeStartOffsetIndex + 1)) + 1;
-                        curlUploadData.mediaSourceFileStream.seekg(curlUploadData.lastByteSent, ios::beg)
+                        curlUploadData.mediaSourceFileStream.seekg(curlUploadData.lastByteSent, ios::beg);
                     }
                 }
                 else
