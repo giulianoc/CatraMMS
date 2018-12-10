@@ -9343,7 +9343,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
                         + ", responseCode: " + to_string(responseCode)
                 );
                 
-                if (responseCode == 201)
+                if (responseCode == 200 || responseCode == 201)
                 {
                     _logger->info(__FILEREF__ + "youTube upload successful"
                             + ", youTubeUploadURL: " + youTubeUploadURL
