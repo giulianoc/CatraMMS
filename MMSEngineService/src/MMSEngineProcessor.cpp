@@ -8894,104 +8894,15 @@ size_t curlUploadVideoOnYouTubeCallback(char* ptr, size_t size, size_t nmemb, vo
     
     auto logger = spdlog::get("mmsEngineService");
 
-
-    if (!curlUploadData->bodyFirstPartSent)
-    {
-        if (curlUploadData->bodyFirstPart.size() > size * nmemb)
-        {
-            logger->error(__FILEREF__ + "Not enougth memory!!!"
-                + ", curlUploadData->bodyFirstPartSent: " + to_string(curlUploadData->bodyFirstPartSent)
-                + ", curlUploadData->bodyFirstPart: " + curlUploadData->bodyFirstPart
-                + ", curlUploadData->bodyLastPartSent: " + to_string(curlUploadData->bodyLastPartSent)
-                + ", curlUploadData->bodyLastPart: " + curlUploadData->bodyLastPart
-                + ", curlUploadData->startOffset: " + to_string(curlUploadData->startOffset)
-                + ", curlUploadData->endOffset: " + to_string(curlUploadData->endOffset)
-                + ", curlUploadData->currentOffset: " + to_string(curlUploadData->currentOffset)
-                + ", curlUploadData->bodyFirstPart.size(): " + to_string(curlUploadData->bodyFirstPart.size())
-                + ", size * nmemb: " + to_string(size * nmemb)
-            );
-
-            return CURL_READFUNC_ABORT;
-        }
-        
-        strcpy(ptr, curlUploadData->bodyFirstPart.c_str());
-        
-        curlUploadData->bodyFirstPartSent = true;
-
-        logger->info(__FILEREF__ + "First read"
-             + ", curlUploadData->bodyFirstPartSent: " + to_string(curlUploadData->bodyFirstPartSent)
-             + ", curlUploadData->bodyFirstPart: " + curlUploadData->bodyFirstPart
-             + ", curlUploadData->bodyLastPartSent: " + to_string(curlUploadData->bodyLastPartSent)
-             + ", curlUploadData->bodyLastPart: " + curlUploadData->bodyLastPart
-             + ", curlUploadData->startOffset: " + to_string(curlUploadData->startOffset)
-             + ", curlUploadData->endOffset: " + to_string(curlUploadData->endOffset)
-             + ", curlUploadData->currentOffset: " + to_string(curlUploadData->currentOffset)
-        );
-        
-        return curlUploadData->bodyFirstPart.size();
-    }
-    else if (curlUploadData->currentOffset == curlUploadData->endOffset)
-    {
-        if (!curlUploadData->bodyLastPartSent)
-        {
-            if (curlUploadData->bodyLastPart.size() > size * nmemb)
-            {
-                logger->error(__FILEREF__ + "Not enougth memory!!!"
-                    + ", curlUploadData->bodyFirstPartSent: " + to_string(curlUploadData->bodyFirstPartSent)
-                    + ", curlUploadData->bodyFirstPart: " + curlUploadData->bodyFirstPart
-                    + ", curlUploadData->bodyLastPartSent: " + to_string(curlUploadData->bodyLastPartSent)
-                    + ", curlUploadData->bodyLastPart: " + curlUploadData->bodyLastPart
-                    + ", curlUploadData->startOffset: " + to_string(curlUploadData->startOffset)
-                    + ", curlUploadData->endOffset: " + to_string(curlUploadData->endOffset)
-                    + ", curlUploadData->currentOffset: " + to_string(curlUploadData->currentOffset)
-                    + ", curlUploadData->bodyLastPart.size(): " + to_string(curlUploadData->bodyLastPart.size())
-                    + ", size * nmemb: " + to_string(size * nmemb)
-                );
-
-                return CURL_READFUNC_ABORT;
-            }
-
-            strcpy(ptr, curlUploadData->bodyLastPart.c_str());
-
-            curlUploadData->bodyLastPartSent = true;
-
-            logger->info(__FILEREF__ + "Last read"
-                + ", curlUploadData->bodyFirstPartSent: " + to_string(curlUploadData->bodyFirstPartSent)
-                + ", curlUploadData->bodyFirstPart: " + curlUploadData->bodyFirstPart
-                + ", curlUploadData->bodyLastPartSent: " + to_string(curlUploadData->bodyLastPartSent)
-                + ", curlUploadData->bodyLastPart: " + curlUploadData->bodyLastPart
-                + ", curlUploadData->startOffset: " + to_string(curlUploadData->startOffset)
-                + ", curlUploadData->endOffset: " + to_string(curlUploadData->endOffset)
-                + ", curlUploadData->currentOffset: " + to_string(curlUploadData->currentOffset)
-            );
-
-            return curlUploadData->bodyLastPart.size();
-        }
-        else
-        {
-            logger->error(__FILEREF__ + "This scenario should never happen because Content-Length was set"
-                + ", curlUploadData->bodyFirstPartSent: " + to_string(curlUploadData->bodyFirstPartSent)
-                + ", curlUploadData->bodyFirstPart: " + curlUploadData->bodyFirstPart
-                + ", curlUploadData->bodyLastPartSent: " + to_string(curlUploadData->bodyLastPartSent)
-                + ", curlUploadData->bodyLastPart: " + curlUploadData->bodyLastPart
-                + ", curlUploadData->startOffset: " + to_string(curlUploadData->startOffset)
-                + ", curlUploadData->endOffset: " + to_string(curlUploadData->endOffset)
-                + ", curlUploadData->currentOffset: " + to_string(curlUploadData->currentOffset)
-            );
-
-            return CURL_READFUNC_ABORT;
-        }
-    }
-
-    if(curlUploadData->currentOffset + (size * nmemb) <= curlUploadData->endOffset)
+    streampos currentFilePosition = curlUploadData->mediaSourceFileStream.tellg();
+    
+    if(currentFilePosition + (size * nmemb) <= curlUploadData->fileSizeInBytes)
         curlUploadData->mediaSourceFileStream.read(ptr, size * nmemb);
     else
-        curlUploadData->mediaSourceFileStream.read(ptr, curlUploadData->endOffset - curlUploadData->currentOffset);
+        curlUploadData->mediaSourceFileStream.read(ptr, curlUploadData->fileSizeInBytes - currentFilePosition);
 
     int64_t charsRead = curlUploadData->mediaSourceFileStream.gcount();
     
-    curlUploadData->currentOffset += charsRead;
-
     return charsRead;        
 };
 
@@ -9291,7 +9202,10 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
         }
 
         bool contentCompletelyUploaded = false;
-        int64_t lastByteSent = -1;
+        CurlUploadYouTubeData curlUploadData;
+        curlUploadData.mediaSourceFileStream.open(mmsAssetPathName);
+        curlUploadData.lastByteSent = -1;
+        curlUploadData.fileSizeInBytes = sizeInBytes;
         while (!contentCompletelyUploaded)
         {
             /*
@@ -9315,29 +9229,19 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
             {                
                 list<string> headerList;
                 headerList.push_back(string("Authorization: Bearer ") + youTubeAccessToken);
-                if (lastByteSent == -1)
+                if (curlUploadData.lastByteSent == -1)
                     headerList.push_back(string("Content-Length: ") + to_string(sizeInBytes));
                 else
-                    headerList.push_back(string("Content-Length: ") + to_string(sizeInBytes - lastByteSent + 1));
-                if (lastByteSent == -1)
+                    headerList.push_back(string("Content-Length: ") + to_string(sizeInBytes - curlUploadData.lastByteSent + 1));
+                if (curlUploadData.lastByteSent == -1)
                     headerList.push_back(string("Content-Type: ") + videoContentType);
                 else
-                    headerList.push_back(string("Content-Range: bytes ") + to_string(lastByteSent) + "-" + to_string(sizeInBytes - 1) + "/" + to_string(sizeInBytes));
+                    headerList.push_back(string("Content-Range: bytes ") + to_string(curlUploadData.lastByteSent) + "-" + to_string(sizeInBytes - 1) + "/" + to_string(sizeInBytes));
 
                 curlpp::Cleanup cleaner;
                 curlpp::Easy request;
 
-                CurlUploadYouTubeData curlUploadData;
                 {
-                    curlUploadData.mediaSourceFileStream.open(mmsAssetPathName);
-
-                    /*
-                    curlUploadData.currentOffset        = startOffset;
-
-                    curlUploadData.startOffset          = startOffset;
-                    curlUploadData.endOffset            = endOffset;
-                    */
-
                     curlpp::options::ReadFunctionCurlFunction curlUploadCallbackFunction(curlUploadVideoOnYouTubeCallback);
                     curlpp::OptionTrait<void *, CURLOPT_READDATA> curlUploadDataData(&curlUploadData);
                     request.setOpt(curlUploadCallbackFunction);
@@ -9570,7 +9474,8 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
                                 + ", sResponse: " + sResponse
                             );
 
-                            // lastByteSent = ;
+                            // curlUploadData.lastByteSent = ;
+                            // curlUploadData.mediaSourceFileStream.seek
                         }
                         else
                         {   
