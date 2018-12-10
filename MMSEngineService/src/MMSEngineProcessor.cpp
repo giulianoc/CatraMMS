@@ -8900,7 +8900,7 @@ size_t curlUploadVideoOnYouTubeCallback(char* ptr, size_t size, size_t nmemb, vo
     int64_t currentFilePosition = curlUploadData->mediaSourceFileStream.tellg();
 
     if (curlUploadData->debug && currentFilePosition > 1800920)
-        return -1;
+        return 0;
     /*    
     logger->info(__FILEREF__ + "curlUploadVideoOnYouTubeCallback"
         + ", currentFilePosition: " + to_string(currentFilePosition)
@@ -9352,7 +9352,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
                         + ", responseCode: " + to_string(responseCode)
                 );
                 
-                if (responseCode == 200 || responseCode == 201)
+                if (!curlUploadData.debug && (responseCode == 200 || responseCode == 201))
                 {
                     _logger->info(__FILEREF__ + "youTube upload successful"
                             + ", youTubeUploadURL: " + youTubeUploadURL
@@ -9361,7 +9361,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
 
                     contentCompletelyUploaded = true;
                 }
-                else if (responseCode == 500 
+                else if (curlUploadData.debug || responseCode == 500 
                         || responseCode == 502
                         || responseCode == 503
                         || responseCode == 504
