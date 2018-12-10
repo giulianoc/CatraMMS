@@ -8898,14 +8898,18 @@ size_t curlUploadVideoOnYouTubeCallback(char* ptr, size_t size, size_t nmemb, vo
     auto logger = spdlog::get("mmsEngineService");
 
     int64_t currentFilePosition = curlUploadData->mediaSourceFileStream.tellg();
-    
+
+    if (curlUploadData->debug && currentFilePosition > 1800920)
+        return -1;
+    /*    
     logger->info(__FILEREF__ + "curlUploadVideoOnYouTubeCallback"
         + ", currentFilePosition: " + to_string(currentFilePosition)
         + ", size: " + to_string(size)
         + ", nmemb: " + to_string(nmemb)
         + ", curlUploadData->fileSizeInBytes: " + to_string(curlUploadData->fileSizeInBytes)
     );
-        
+    */
+
     if(currentFilePosition + (size * nmemb) <= curlUploadData->fileSizeInBytes)
         curlUploadData->mediaSourceFileStream.read(ptr, size * nmemb);
     else
@@ -9252,6 +9256,11 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
                 curlpp::Easy request;
 
                 {
+                    if (curlUploadData.lastByteSent == -1)
+                        curlUploadData.debug = true;
+                    else
+                        curlUploadData.debug = false;
+                        
                     curlpp::options::ReadFunctionCurlFunction curlUploadCallbackFunction(curlUploadVideoOnYouTubeCallback);
                     curlpp::OptionTrait<void *, CURLOPT_READDATA> curlUploadDataData(&curlUploadData);
                     request.setOpt(curlUploadCallbackFunction);

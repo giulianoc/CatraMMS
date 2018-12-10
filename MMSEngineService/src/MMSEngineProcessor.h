@@ -50,6 +50,8 @@ public:
         
         int64_t     lastByteSent;
         int64_t     fileSizeInBytes;
+        
+        bool        debug;
     };
 
     MMSEngineProcessor(
