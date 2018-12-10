@@ -2742,6 +2742,24 @@ void Validator::validatePostOnYouTubeMetadata(int64_t workspaceKey, string label
         }
     }
 
+    string field = "YouTubePrivacy";
+    if (isMetadataPresent(parametersRoot, field))
+    {
+        string youTubePrivacy = parametersRoot.get(field, "XXX").asString();
+
+        if (youTubePrivacy != "private" && youTubePrivacy != "public")
+        {
+            string errorMessage = __FILEREF__ + field + " is wrong (it could be only 'private' or 'public'"
+                    + ", Field: " + field
+                    + ", youTubePrivacy: " + youTubePrivacy
+                    + ", label: " + label
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+
     if (validateDependenciesToo)
     {
         // References is optional because in case of dependency managed automatically

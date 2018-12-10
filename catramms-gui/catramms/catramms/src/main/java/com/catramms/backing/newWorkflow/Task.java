@@ -86,6 +86,7 @@ public class Task implements Serializable
     private String postOnYouTubeDescription;
     private String postOnYouTubeTags;
     private Long postOnYouTubeCategoryId;
+    private String postOnYouTubePrivacy;
 
     private boolean childTaskCreated;
     private boolean childEventOnSuccessCreated;
@@ -699,5 +700,13 @@ public class Task implements Serializable
 
     public void setPostOnYouTubeCategoryId(Long postOnYouTubeCategoryId) {
         this.postOnYouTubeCategoryId = postOnYouTubeCategoryId;
+    }
+
+    public String getPostOnYouTubePrivacy() {
+        return postOnYouTubePrivacy;
+    }
+
+    public void setPostOnYouTubePrivacy(String postOnYouTubePrivacy) {
+        this.postOnYouTubePrivacy = postOnYouTubePrivacy;
     }
 }

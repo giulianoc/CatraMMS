@@ -39,6 +39,9 @@
 		],
 
 		// Optional, category id of the video
-		"CategoryId": 22
+		"CategoryId": 22,
+
+		// optional, it could be: private or public, default is private
+		"Privacy": "private"
 	}
 }

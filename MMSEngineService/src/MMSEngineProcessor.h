@@ -49,9 +49,7 @@ public:
         ifstream    mediaSourceFileStream;
         
         int64_t     lastByteSent;
-        int64_t     fileSizeInBytes;
-        
-        bool        debug;
+        int64_t     fileSizeInBytes;        
     };
 
     MMSEngineProcessor(
@@ -327,7 +325,7 @@ private:
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
         string youTubeAccessToken, string youTubeTitle,
         string youTubeDescription, Json::Value youTubeTags,
-        int youTubeCategoryId);
+        int youTubeCategoryId, string youTubePrivacy);
 } ;
 
 #endif

@@ -3224,6 +3224,7 @@ void MMSEngineProcessor::postOnYouTubeTask(
         string youTubeDescription;
         Json::Value youTubeTags = Json::nullValue;
         int youTubeCategoryId = -1;
+        string youTubePrivacy;
         {
             string field = "AccessToken";
             if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
@@ -3252,6 +3253,12 @@ void MMSEngineProcessor::postOnYouTubeTask(
             field = "CategoryId";
             if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
                 youTubeCategoryId = parametersRoot.get(field, "XXX").asInt();
+
+            field = "YouTubePrivacy";
+            if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+                youTubePrivacy = parametersRoot.get(field, "XXX").asString();
+            else
+                youTubePrivacy = "private";
         }
         
         for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
@@ -3341,7 +3348,7 @@ void MMSEngineProcessor::postOnYouTubeTask(
                 sizeInBytes, ingestionJobKey, workspace,
                 youTubeAccessToken, youTubeTitle,
                 youTubeDescription, youTubeTags,
-                youTubeCategoryId);
+                youTubeCategoryId, youTubePrivacy);
             postOnYouTube.detach();
         }
     }
@@ -8899,8 +8906,6 @@ size_t curlUploadVideoOnYouTubeCallback(char* ptr, size_t size, size_t nmemb, vo
 
     int64_t currentFilePosition = curlUploadData->mediaSourceFileStream.tellg();
 
-    if (curlUploadData->debug && currentFilePosition > 1800920)
-        return 0;
     /*    
     logger->info(__FILEREF__ + "curlUploadVideoOnYouTubeCallback"
         + ", currentFilePosition: " + to_string(currentFilePosition)
@@ -8926,7 +8931,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
         string youTubeAccessToken, string youTubeTitle,
         string youTubeDescription, Json::Value youTubeTags,
-        int youTubeCategoryId)
+        int youTubeCategoryId, string youTubePrivacy)
 {
 
     string youTubeURL;
@@ -9034,7 +9039,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
                 Json::Value statusRoot;
 
                 field = "privacyStatus";
-                statusRoot[field] = "private";
+                statusRoot[field] = youTubePrivacy;
 
                 field = "embeddable";
                 statusRoot[field] = true;
@@ -9256,11 +9261,6 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
                 curlpp::Easy request;
 
                 {
-                    if (curlUploadData.lastByteSent == -1)
-                        curlUploadData.debug = true;
-                    else
-                        curlUploadData.debug = false;
-                        
                     curlpp::options::ReadFunctionCurlFunction curlUploadCallbackFunction(curlUploadVideoOnYouTubeCallback);
                     curlpp::OptionTrait<void *, CURLOPT_READDATA> curlUploadDataData(&curlUploadData);
                     request.setOpt(curlUploadCallbackFunction);
@@ -9352,7 +9352,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
                         + ", responseCode: " + to_string(responseCode)
                 );
                 
-                if (!curlUploadData.debug && (responseCode == 200 || responseCode == 201))
+                if (responseCode == 200 || responseCode == 201)
                 {
                     _logger->info(__FILEREF__ + "youTube upload successful"
                             + ", youTubeUploadURL: " + youTubeUploadURL
@@ -9361,7 +9361,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
 
                     contentCompletelyUploaded = true;
                 }
-                else if (curlUploadData.debug || responseCode == 500 
+                else if (responseCode == 500 
                         || responseCode == 502
                         || responseCode == 503
                         || responseCode == 504

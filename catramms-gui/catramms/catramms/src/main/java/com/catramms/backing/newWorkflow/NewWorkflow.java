@@ -155,6 +155,7 @@ public class NewWorkflow extends Workspace implements Serializable {
     private String taskPostOnYouTubeDescription;
     private String taskPostOnYouTubeTags;
     private Long taskPostOnYouTubeCategoryId;
+    private String taskPostOnYouTubePrivacy;
 
     private String taskContentType;
     List<String> taskContentTypesList = new ArrayList<>();
@@ -1811,6 +1812,9 @@ public class NewWorkflow extends Workspace implements Serializable {
                 if (task.getPostOnYouTubeCategoryId() != null)
                     joParameters.put("CategoryId", task.getPostOnYouTubeCategoryId());
 
+                if (task.getPostOnYouTubePrivacy() != null && !task.getPostOnYouTubePrivacy().equalsIgnoreCase(""))
+                    joParameters.put("Privacy", task.getPostOnYouTubePrivacy());
+
                 if (task.getReferences() != null && !task.getReferences().equalsIgnoreCase(""))
                 {
                     JSONArray jaReferences = new JSONArray();
@@ -3147,6 +3151,7 @@ public class NewWorkflow extends Workspace implements Serializable {
                     taskPostOnYouTubeDescription = task.getPostOnYouTubeDescription();
                     taskPostOnYouTubeTags = task.getPostOnYouTubeTags();
                     taskPostOnYouTubeCategoryId = task.getPostOnYouTubeCategoryId();
+                    taskPostOnYouTubePrivacy = task.getPostOnYouTubePrivacy();
 
                     {
                         mLogger.info("Initializing mediaItems...");
@@ -3543,6 +3548,7 @@ public class NewWorkflow extends Workspace implements Serializable {
                 task.setPostOnYouTubeDescription(taskPostOnYouTubeDescription);
                 task.setPostOnYouTubeTags(taskPostOnYouTubeTags);
                 task.setPostOnYouTubeCategoryId(taskPostOnYouTubeCategoryId);
+                task.setPostOnYouTubePrivacy(taskPostOnYouTubePrivacy);
             }
             else if (task.getType().equalsIgnoreCase("Local-Copy"))
             {
@@ -4813,5 +4819,13 @@ public class NewWorkflow extends Workspace implements Serializable {
 
     public void setYouTubeAccessTokenURL(String youTubeAccessTokenURL) {
         this.youTubeAccessTokenURL = youTubeAccessTokenURL;
+    }
+
+    public String getTaskPostOnYouTubePrivacy() {
+        return taskPostOnYouTubePrivacy;
+    }
+
+    public void setTaskPostOnYouTubePrivacy(String taskPostOnYouTubePrivacy) {
+        this.taskPostOnYouTubePrivacy = taskPostOnYouTubePrivacy;
     }
 }

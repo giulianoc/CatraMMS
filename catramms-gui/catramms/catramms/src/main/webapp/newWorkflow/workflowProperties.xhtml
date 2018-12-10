@@ -3583,6 +3583,20 @@
 
             <p:row>
                 <p:column>
+                    <p:outputLabel value="Privacy" style="font-weight: bold" />
+                </p:column>
+                <p:column>
+                    <p:selectOneMenu id="taskPrivacy_Post_On_YouTube"
+                                     value="#{newWorkflow.taskPostOnYouTubePrivacy}"
+                                     autoWidth="false">
+                        <f:selectItem itemLabel="private" itemValue="private" />
+                        <f:selectItem itemLabel="public" itemValue="public" />
+                    </p:selectOneMenu>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
                     <p:outputLabel value="References (Source Physical Path Key)"/>
                 </p:column>
                 <p:column>
