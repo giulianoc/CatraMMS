@@ -169,7 +169,9 @@
         <p:dataTable resizableColumns="true" id="encodingJobDataTable" var="encodingJob" rowIndexVar="rowId"
                      value="#{encodingJobs.encodingJobsList}" rowKey="#{encodingJob.encodingJobKey}"
                      selectionMode="single" stickyHeader="true"
-                     widgetVar="encodingJobDataTable" >
+                     widgetVar="encodingJobDataTable"
+                     rowStyleClass="#{encodingJobs.getStyleClass(encodingJob)}"
+        >
 
             <f:facet name="header">
 

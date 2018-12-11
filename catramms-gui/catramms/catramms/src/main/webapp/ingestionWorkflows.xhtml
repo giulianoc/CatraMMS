@@ -154,24 +154,6 @@
                          oncomplete="initUpdaterTimer(updateView, #{ingestionWorkflows.autoRefreshPeriodInSeconds});"
                          autoRun="true"/>
 
-        <style type="text/css">
-            .green {
-                background-color: #00ff00 !important;
-                background-image: none !important;
-                color: #000000 !important;
-            }
-            .red {
-                background-color: #ff0000 !important;
-                background-image: none !important;
-                color: #000000 !important;
-            }
-            .yellow {
-                background-color: #ffff00 !important;
-                background-image: none !important;
-                color: #000000 !important;
-            }
-        </style>
-
         <p:dataTable resizableColumns="true" id="ingestionWorkflowDataTable" var="ingestionWorkflow" rowIndexVar="rowId"
                      value="#{ingestionWorkflows.ingestionWorkflowsList}" rowKey="#{ingestionWorkflow.ingestionRootKey}"
                      selectionMode="single" stickyHeader="true"

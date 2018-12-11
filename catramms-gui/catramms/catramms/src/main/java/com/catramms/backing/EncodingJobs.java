@@ -356,6 +356,25 @@ public class EncodingJobs extends Workspace implements Serializable {
         return sHours.concat(":").concat(sMinutes).concat(":").concat(sSeconds).concat(".").concat(sMilliSeconds);
     }
 
+    public String getStyleClass(EncodingJob encodingJob)
+    {
+        String styleClass = null;
+
+        String status = encodingJob.getStatus();
+
+        // NotCompleted, CompletedSuccessful, CompletedWithFailures
+        if (status.equalsIgnoreCase("End_ProcessedSuccessful"))
+            styleClass = "green";
+        else if (status.equalsIgnoreCase("End_Failed"))
+            styleClass = "red";
+        else if (status.equalsIgnoreCase("Processing"))
+            styleClass = "yellow";
+        else if (status.equalsIgnoreCase("ToBeProcessed"))
+            styleClass = "lightyellow";
+
+        return styleClass;
+    }
+
     public List<String> getEncodingJobsTitlesList() {
         return encodingJobsTitlesList;
     }

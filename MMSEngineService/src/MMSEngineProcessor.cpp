@@ -9158,10 +9158,6 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
 
             _logger->info(__FILEREF__ + "Calling youTube (first call)"
                     + ", youTubeURL: " + youTubeURL
-                    + ", _youTubeDataAPIProtocol: " + _youTubeDataAPIProtocol
-                    + ", _youTubeDataAPIHostName: " + _youTubeDataAPIHostName
-                    + ", _youTubeDataAPIPort: " + to_string(_youTubeDataAPIPort)
-                    + ", youTubeURI: " + youTubeURI
                     + ", body: " + body
             );
             request.perform();

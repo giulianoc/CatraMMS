@@ -265,7 +265,7 @@ public class IngestionWorkflows extends Workspace implements Serializable {
 
     public String getStyleClass(IngestionWorkflow ingestionWorkflow)
     {
-        String styleClass;
+        String styleClass = null;
 
         String status = getStatus(ingestionWorkflow);
 

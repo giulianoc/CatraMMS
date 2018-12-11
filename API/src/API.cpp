@@ -3845,7 +3845,7 @@ void API::youTubeRefreshToken(
 
                 throw runtime_error(errorMessage);
             }    
-            refreshToken = taskRoot.get(field, "XXX").asString();            
+            refreshToken = requestBodyRoot.get(field, "XXX").asString();            
         }
         catch(runtime_error e)
         {
@@ -3892,7 +3892,7 @@ void API::youTubeRefreshToken(
                     headerList.push_back(header);
                     */
 
-                    header = "Content-Type: application/x-www-form-urlencoded";
+                    string header = "Content-Type: application/x-www-form-urlencoded";
                     headerList.push_back(header);
                 }
                 
@@ -3905,7 +3905,7 @@ void API::youTubeRefreshToken(
                 request.setOpt(new curlpp::options::Url(youTubeURL));
                 request.setOpt(new curlpp::options::Timeout(_youTubeDataAPITimeoutInSeconds));
 
-                if (_facebookGraphAPIProtocol == "https")
+                if (_youTubeDataAPIProtocol == "https")
                 {
         //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
         //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;                                          

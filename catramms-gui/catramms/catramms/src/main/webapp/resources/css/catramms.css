@@ -7,13 +7,36 @@
     50% { opacity: 0.0; }
 }
 
-.red {
-    color: red;
-}
 
 .gray {
     color: gray;
 }
+
+.green {
+    /* background-color: #00ff00 !important; */
+    /* background-image: none !important; */
+    /* color: #000000 !important; */
+    color: #43a380 !important;
+}
+.red {
+    /* background-color: #ff0000 !important; */
+    /* background-image: none !important; */
+    /* color: #000000 !important; */
+    color: #ae001e !important;
+}
+.yellow {
+    /* background-color: #ffff00 !important; */
+    /* background-image: none !important; */
+    /* color: #000000 !important; */
+    color: #e9c8a4 !important;
+}
+.lightyellow {
+    /* background-color: #ffff00 !important; */
+    /* background-image: none !important; */
+    /* color: #000000 !important; */
+    color: #f5ecce !important;
+}
+
 
 .linkSeeMore {
     color: blue !important;
