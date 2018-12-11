@@ -86,6 +86,14 @@ private:
     string              _deliveryProtocol;
     string              _deliveryHost;
 
+    string              _youTubeDataAPIProtocol;
+    string              _youTubeDataAPIHostName;
+    int                 _youTubeDataAPIPort;
+    string              _youTubeDataAPIRefreshTokenURI;
+    long                _youTubeDataAPITimeoutInSeconds;
+    string              _youTubeDataAPIClientId;
+    string              _youTubeDataAPIClientSecret;
+    
     FileUploadProgressData*     _fileUploadProgressData;
     
 
@@ -175,6 +183,12 @@ private:
             vector<int64_t> dependOnIngestionJobKeysReferences,
             unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey,
             string& responseBody);
+
+    void youTubeRefreshToken(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody);
 
     void uploadedBinary(
         FCGX_Request& request,

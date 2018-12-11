@@ -2742,7 +2742,7 @@ void Validator::validatePostOnYouTubeMetadata(int64_t workspaceKey, string label
         }
     }
 
-    string field = "YouTubePrivacy";
+    string field = "Privacy";
     if (isMetadataPresent(parametersRoot, field))
     {
         string youTubePrivacy = parametersRoot.get(field, "XXX").asString();

@@ -106,7 +106,7 @@ private:
     string                  _youTubeDataAPIProtocol;
     string                  _youTubeDataAPIHostName;
     int                     _youTubeDataAPIPort;
-    string                  _youTubeDataAPIVersion;
+    string                  _youTubeDataAPIUploadVideoURI;
     long                    _youTubeDataAPITimeoutInSeconds;
 
     bool                    _localCopyTaskEnabled;

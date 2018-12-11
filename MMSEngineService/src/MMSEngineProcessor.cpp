@@ -136,9 +136,9 @@ MMSEngineProcessor::MMSEngineProcessor(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", YouTubeDataAPI->port: " + to_string(_youTubeDataAPIPort)
     );
-    _youTubeDataAPIVersion           = _configuration["YouTubeDataAPI"].get("version", "XXX").asString();
+    _youTubeDataAPIUploadVideoURI       = _configuration["YouTubeDataAPI"].get("uploadVideoURI", "XXX").asString();
     _logger->info(__FILEREF__ + "Configuration item"
-        + ", YouTubeDataAPI->version: " + _youTubeDataAPIVersion
+        + ", YouTubeDataAPI->uploadVideoURI: " + _youTubeDataAPIUploadVideoURI
     );
     _youTubeDataAPITimeoutInSeconds   = _configuration["YouTubeDataAPI"].get("timeout", 0).asInt();
     _logger->info(__FILEREF__ + "Configuration item"
@@ -3254,7 +3254,7 @@ void MMSEngineProcessor::postOnYouTubeTask(
             if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
                 youTubeCategoryId = parametersRoot.get(field, "XXX").asInt();
 
-            field = "YouTubePrivacy";
+            field = "Privacy";
             if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
                 youTubePrivacy = parametersRoot.get(field, "XXX").asString();
             else
@@ -8998,13 +8998,11 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
         */
         string videoContentType = "video/*";
         {
-            string youTubeURI = string("/upload/youtube/") + _youTubeDataAPIVersion + "/videos?uploadType=resumable&part=snippet,status,contentDetails";
-            
             youTubeURL = _youTubeDataAPIProtocol
                 + "://"
                 + _youTubeDataAPIHostName
                 + ":" + to_string(_youTubeDataAPIPort)
-                + youTubeURI;
+                + _youTubeDataAPIUploadVideoURI;
     
             string body;
             {
