@@ -694,9 +694,17 @@ void API::manageRequestAndResponse(
         EMailSender emailSender(_logger, _configuration);
         emailSender.sendEmail(to, subject, emailBody);
     }
-    else if (method == "youTubeRefreshToken")
+    else if (method == "addYouTubeDetails")
     {
-        youTubeRefreshToken(request, workspace, queryParameters, requestBody);
+        addYouTubeDetails(request, userKey, queryParameters, requestBody);
+    }
+    else if (method == "modifyYouTubeDetails")
+    {
+        modifyYouTubeDetails(request, userKey, queryParameters, requestBody);
+    }
+    else if (method == "removeYouTubeDetails")
+    {
+        removeYouTubeDetails(request, userKey, queryParameters, requestBody);
     }
     else
     {
@@ -3794,20 +3802,22 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
     }    
 }
 
-void API::youTubeRefreshToken(
+void API::addYouTubeDetails(
         FCGX_Request& request,
-        shared_ptr<Workspace> workspace,
+        int64_t userKey,
         unordered_map<string, string> queryParameters,
         string requestBody)
 {
-    string api = "youTubeRefreshToken";
+    string api = "addYouTubeDetails";
 
     _logger->info(__FILEREF__ + "Received " + api
+        + ", userKey: " + userKey
         + ", requestBody: " + requestBody
     );
 
     try
     {
+        string label;
         string refreshToken;
         
         try
@@ -3836,7 +3846,18 @@ void API::youTubeRefreshToken(
                 }
             }
 
-            string field = "RefreshToken";
+            string field = "Label";
+            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }    
+            label = requestBodyRoot.get(field, "XXX").asString();            
+
+            field = "RefreshToken";
             if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -3867,180 +3888,139 @@ void API::youTubeRefreshToken(
             throw runtime_error(errorMessage);
         }
         
-        string youTubeURL;
         string sResponse;
         try
         {
-            {
-                youTubeURL = _youTubeDataAPIProtocol
-                    + "://"
-                    + _youTubeDataAPIHostName
-                    + ":" + to_string(_youTubeDataAPIPort)
-                    + _youTubeDataAPIRefreshTokenURI;
+            int64_t encodingProfileKey = _mmsEngineDBFacade->addModifyConf_YouTubeDetails(
+                userKey, label, refreshToken);
 
-                string body =
-                        string("client_id=") + _youTubeDataAPIClientId
-                        + "&client_secret=" + _youTubeDataAPIClientSecret
-                        + "&refresh_token=" + refreshToken
-                        + "&grant_type=refresh_token";
-
-                list<string> headerList;
-
-                {
-                    /*
-                    header = "Content-Length: " + to_string(body.length());
-                    headerList.push_back(header);
-                    */
-
-                    string header = "Content-Type: application/x-www-form-urlencoded";
-                    headerList.push_back(header);
-                }
-                
-                curlpp::Cleanup cleaner;
-                curlpp::Easy request;
-
-                request.setOpt(new curlpp::options::PostFields(body));
-                request.setOpt(new curlpp::options::PostFieldSize(body.length()));
-
-                request.setOpt(new curlpp::options::Url(youTubeURL));
-                request.setOpt(new curlpp::options::Timeout(_youTubeDataAPITimeoutInSeconds));
-
-                if (_youTubeDataAPIProtocol == "https")
-                {
-        //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
-        //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;                                          
-        //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;                                  
-        //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;                              
-        //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;                                    
-        //                typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;                           
-        //                typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;                                         
-        //                typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;                                          
-        //                typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;                                          
-        //                typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;                                 
-        //                typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;                                    
-        //                typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;                          
-        //                typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;                                    
-
-
-                    // cert is stored PEM coded in file... 
-                    // since PEM is default, we needn't set it for PEM 
-                    // curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
-                    // curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
-                    // equest.setOpt(sslCertType);
-
-                    // set the cert for client authentication
-                    // "testcert.pem"
-                    // curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
-                    // curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
-                    // request.setOpt(sslCert);
-
-                    // sorry, for engine we must set the passphrase
-                    //   (if the key has one...)
-                    // const char *pPassphrase = NULL;
-                    // if(pPassphrase)
-                    //  curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
-
-                    // if we use a key stored in a crypto engine,
-                    //   we must set the key type to "ENG"
-                    // pKeyType  = "PEM";
-                    // curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
-
-                    // set the private key (file or ID in engine)
-                    // pKeyName  = "testkey.pem";
-                    // curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
-
-                    // set the file with the certs vaildating the server
-                    // *pCACertFile = "cacert.pem";
-                    // curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
-
-                    // disconnect if we can't validate server's cert
-                    bool bSslVerifyPeer = false;
-                    curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
-                    request.setOpt(sslVerifyPeer);
-
-                    curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
-                    request.setOpt(sslVerifyHost);
-
-                    // request.setOpt(new curlpp::options::SslEngineDefault());                                              
-
-                }
-                request.setOpt(new curlpp::options::HttpHeader(headerList));
-
-                ostringstream response;
-                request.setOpt(new curlpp::options::WriteStream(&response));
-
-                // chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
-
-                _logger->info(__FILEREF__ + "Calling youTube refresh token"
-                        + ", youTubeURL: " + youTubeURL
-                        + ", body: " + body
-                );
-                request.perform();
-
-                long responseCode = curlpp::infos::ResponseCode::get(request);
-                
-                sResponse = response.str();
-                _logger->info(__FILEREF__ + "Called youTube refresh token"
-                        + ", youTubeURL: " + youTubeURL
-                        + ", body: " + body
-                        + ", responseCode: " + to_string(responseCode)
-                        + ", sResponse: " + sResponse
-                );
-
-                if (responseCode != 200)
-                {
-                    string errorMessage = __FILEREF__ + "YouTube refresh token failed"
-                            + ", responseCode: " + to_string(responseCode);
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }
-
-                /*
-                Json::Value youTubeResponseRoot;
-                try
-                {
-                    Json::CharReaderBuilder builder;
-                    Json::CharReader* reader = builder.newCharReader();
-                    string errors;
-
-                    bool parsingSuccessful = reader->parse(sResponse.c_str(),
-                            sResponse.c_str() + sResponse.size(), 
-                            &youTubeResponseRoot, &errors);
-                    delete reader;
-
-                    if (!parsingSuccessful)
-                    {
-                        string errorMessage = __FILEREF__ + "failed to parse the youTube response"
-                            + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                                + ", errors: " + errors
-                                + ", sResponse: " + sResponse
-                                ;
-                        _logger->error(errorMessage);
-
-                        throw runtime_error(errorMessage);
-                    }
-                }
-                catch(...)
-                {
-                    string errorMessage = string("youTube json response is not well format")
-                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                            + ", sResponse: " + sResponse
-                            ;
-                    _logger->error(__FILEREF__ + errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }
-                */
-            }
+            sResponse = (
+                    string("{ ") 
+                    + "\"label\": " + label
+                    + "}"
+                    );            
         }
         catch(runtime_error e)
         {
-            string errorMessage = string("youTube refresh token failed")
-                    + ", youTubeURL: " + youTubeURL
-                    + ", sResponse: " + sResponse
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addModifyConf_YouTubeDetails failed"
+                + ", e.what(): " + e.what()
+            );
+
+            throw e;
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addModifyConf_YouTubeDetails failed"
+                + ", e.what(): " + e.what()
+            );
+
+            throw e;
+        }
+
+        sendSuccess(request, 201, sResponse);
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error: ") + e.what();
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::modifyYouTubeDetails(
+        FCGX_Request& request,
+        int64_t userKey,
+        unordered_map<string, string> queryParameters,
+        string requestBody)
+{
+    string api = "modifyYouTubeDetails";
+
+    _logger->info(__FILEREF__ + "Received " + api
+        + ", userKey: " + userKey
+        + ", requestBody: " + requestBody
+    );
+
+    try
+    {
+        string label;
+        string refreshToken;
+        
+        try
+        {
+            Json::Value requestBodyRoot;
+            
+            {
+                Json::CharReaderBuilder builder;
+                Json::CharReader* reader = builder.newCharReader();
+                string errors;
+
+                bool parsingSuccessful = reader->parse(requestBody.c_str(),
+                        requestBody.c_str() + requestBody.size(), 
+                        &requestBodyRoot, &errors);
+                delete reader;
+
+                if (!parsingSuccessful)
+                {
+                    string errorMessage = __FILEREF__ + "failed to parse the requestBody"
+                            + ", errors: " + errors
+                            + ", requestBody: " + requestBody
+                            ;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errors);
+                }
+            }
+
+            string field = "Label";
+            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }    
+            label = requestBodyRoot.get(field, "XXX").asString();            
+
+            field = "RefreshToken";
+            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }    
+            refreshToken = requestBodyRoot.get(field, "XXX").asString();            
+        }
+        catch(runtime_error e)
+        {
+            string errorMessage = string("requestBody json is not well format")
+                    + ", requestBody: " + requestBody
                     + ", e.what(): " + e.what()
                     ;
             _logger->error(__FILEREF__ + errorMessage);
@@ -4049,13 +4029,178 @@ void API::youTubeRefreshToken(
         }
         catch(exception e)
         {
-            string errorMessage = string("youTube refresh token failed")
-                    + ", youTubeURL: " + youTubeURL
-                    + ", sResponse: " + sResponse
+            string errorMessage = string("requestBody json is not well format")
+                    + ", requestBody: " + requestBody
                     ;
             _logger->error(__FILEREF__ + errorMessage);
 
             throw runtime_error(errorMessage);
+        }
+        
+        string sResponse;
+        try
+        {
+            int64_t encodingProfileKey = _mmsEngineDBFacade->addModifyConf_YouTubeDetails(
+                userKey, label, refreshToken);
+
+            sResponse = (
+                    string("{ ") 
+                    + "\"label\": " + label
+                    + "}"
+                    );            
+        }
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addModifyConf_YouTubeDetails failed"
+                + ", e.what(): " + e.what()
+            );
+
+            throw e;
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addModifyConf_YouTubeDetails failed"
+                + ", e.what(): " + e.what()
+            );
+
+            throw e;
+        }
+
+        sendSuccess(request, 200, sResponse);
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error: ") + e.what();
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::removeYouTubeDetails(
+        FCGX_Request& request,
+        int64_t userKey,
+        unordered_map<string, string> queryParameters,
+        string requestBody)
+{
+    string api = "removeYouTubeDetails";
+
+    _logger->info(__FILEREF__ + "Received " + api
+        + ", userKey: " + userKey
+        + ", requestBody: " + requestBody
+    );
+
+    try
+    {
+        string label;
+        
+        try
+        {
+            Json::Value requestBodyRoot;
+            
+            {
+                Json::CharReaderBuilder builder;
+                Json::CharReader* reader = builder.newCharReader();
+                string errors;
+
+                bool parsingSuccessful = reader->parse(requestBody.c_str(),
+                        requestBody.c_str() + requestBody.size(), 
+                        &requestBodyRoot, &errors);
+                delete reader;
+
+                if (!parsingSuccessful)
+                {
+                    string errorMessage = __FILEREF__ + "failed to parse the requestBody"
+                            + ", errors: " + errors
+                            + ", requestBody: " + requestBody
+                            ;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errors);
+                }
+            }
+
+            string field = "Label";
+            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }    
+            label = requestBodyRoot.get(field, "XXX").asString();            
+        }
+        catch(runtime_error e)
+        {
+            string errorMessage = string("requestBody json is not well format")
+                    + ", requestBody: " + requestBody
+                    + ", e.what(): " + e.what()
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        catch(exception e)
+        {
+            string errorMessage = string("requestBody json is not well format")
+                    + ", requestBody: " + requestBody
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        
+        string sResponse;
+        try
+        {
+            int64_t encodingProfileKey = _mmsEngineDBFacade->removeConf_YouTubeDetails(
+                userKey, label);
+
+            sResponse = (
+                    string("{ ") 
+                    + "\"label\": " + label
+                    + "}"
+                    );            
+        }
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeConf_YouTubeDetails failed"
+                + ", e.what(): " + e.what()
+            );
+
+            throw e;
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeConf_YouTubeDetails failed"
+                + ", e.what(): " + e.what()
+            );
+
+            throw e;
         }
 
         sendSuccess(request, 200, sResponse);

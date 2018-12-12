@@ -14856,6 +14856,237 @@ bool MMSEngineDBFacade::checkDeliveryAuthorization(
     return authorizationOK;
 }
 
+void MMSEngineDBFacade::addModifyConf_YouTubeDetails(
+    int64_t userKey,
+    string label,
+    string refreshToken)
+{
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        
+        {
+            lastSQLCommand = 
+                "select youTubeRefreshToken from MMS_Conf_YouTube where userKey = ? and label = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, userKey);
+            preparedStatement->setString(queryParameterIndex++, label);
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                string savedRefreshToken     = resultSet->getString("youTubeRefreshToken");
+                
+                if (savedRefreshToken != refreshToken)
+                {
+                    lastSQLCommand = 
+                        "update MMS_Conf_YouTube set youTubeRefreshToken = ? where userKey = ? and label = ?";
+
+                    shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                    int queryParameterIndex = 1;
+                    preparedStatement->setInt64(queryParameterIndex++, userKey);
+                    preparedStatement->setString(queryParameterIndex++, label);
+
+                    int rowsUpdated = preparedStatement->executeUpdate();
+                    if (rowsUpdated != 1)
+                    {
+                        string errorMessage = __FILEREF__ + "no update was done"
+                                + ", userKey: " + to_string(userKey)
+                                + ", label: " + label
+                                + ", rowsUpdated: " + to_string(rowsUpdated)
+                                + ", lastSQLCommand: " + lastSQLCommand
+                        ;
+                        _logger->warn(errorMessage);
+
+                        throw runtime_error(errorMessage);                    
+                    }
+                }
+            }
+            else
+            {
+                lastSQLCommand = 
+                    "insert into MMS_Conf_YouTube(userKey, label, youTubeRefreshToken) values ("
+                    "?, ?, ?)";
+
+                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                int queryParameterIndex = 1;
+                preparedStatement->setInt64(queryParameterIndex++, userKey);
+                preparedStatement->setString(queryParameterIndex++, label);
+                preparedStatement->setString(queryParameterIndex++, refreshToken);
+
+                preparedStatement->executeUpdate();
+            }
+        }
+                            
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+
+        throw se;
+    }    
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+
+        throw e;
+    }        
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+
+        throw e;
+    }        
+}
+
+void MMSEngineDBFacade::removeConf_YouTubeDetails(
+    int64_t userKey,
+    string label)
+{
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        
+        {
+            lastSQLCommand = 
+                "delete from MMS_Conf_YouTube where userKey = ? and label = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, userKey);
+            preparedStatement->setString(queryParameterIndex++, label);
+
+            int rowsUpdated = preparedStatement->executeUpdate();
+            if (rowsUpdated != 1)
+            {
+                string errorMessage = __FILEREF__ + "no delete was done"
+                        + ", userKey: " + to_string(userKey)
+                        + ", label: " + label
+                        + ", rowsUpdated: " + to_string(rowsUpdated)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->warn(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }
+        }
+                            
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+
+        throw se;
+    }    
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+
+        throw e;
+    }        
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+
+        throw e;
+    }        
+}
+
 bool MMSEngineDBFacade::isMetadataPresent(Json::Value root, string field)
 {
     if (root.isObject() && root.isMember(field) && !root[field].isNull()
@@ -16002,6 +16233,32 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "constraint MMS_ImageItemProfile_PK PRIMARY KEY (physicalPathKey), "
                     "constraint MMS_ImageItemProfile_FK foreign key (physicalPathKey) "
                         "references MMS_PhysicalPath (physicalPathKey) on delete cascade) "
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+        
+        try
+        {
+            lastSQLCommand = 
+                "create table if not exists MMS_Conf_YouTube ("
+                    "userKey                    BIGINT UNSIGNED NOT NULL,"
+                    "label                      VARCHAR (128) NOT NULL,"
+                    "youTubeRefreshToken        VARCHAR (128) NOT NULL,"
+                    "constraint MMS_Conf_YouTube_PK PRIMARY KEY (userKey, label), "
+                    "constraint MMS_Conf_YouTube_FK foreign key (userKey) "
+                        "references MMS_User (userKey) on delete cascade) "
                     "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }

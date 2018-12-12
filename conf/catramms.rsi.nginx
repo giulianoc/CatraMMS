@@ -75,11 +75,6 @@ server {
 			rewrite ^/catramms/(v[0-9]+)/ingestion/?$ /api?version=$1&method=ingestion last;
 		}
 
-		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/youtube/refreshToken/?$ /api?version=$1&method=youTubeRefreshToken last;
-		}
-
-
 		if ($request_method = GET) {
 			rewrite ^/catramms/(v[0-9]+)/mediaItems/?([0-9]*)/?([0-9]*)/?$ /api?version=$1&method=mediaItemsList&mediaItemKey=$2&physicalPathKey=$3 last;
 		}
@@ -119,6 +114,16 @@ server {
 
 		if ($request_method = GET) {
 			rewrite ^/catramms/(v[0-9]+)/delivery/([0-9]+)/?$ /api?version=$1&method=createDeliveryAuthorization&physicalPathKey=$2 last;
+		}
+
+		if ($request_method = POST) {
+			rewrite ^/catramms/(v[0-9]+)/conf/youtube/?$ /api?version=$1&method=addYouTubeDetails last;
+		}
+		if ($request_method = PUT) {
+			rewrite ^/catramms/(v[0-9]+)/conf/youtube/?$ /api?version=$1&method=modifyYouTubeDetails last;
+		}
+		if ($request_method = DELETE) {
+			rewrite ^/catramms/(v[0-9]+)/conf/youtube/?$ /api?version=$1&method=removeYouTubeDetails last;
 		}
 	}
 

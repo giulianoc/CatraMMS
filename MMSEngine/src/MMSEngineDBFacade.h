@@ -1079,6 +1079,15 @@ public:
     void removeMediaItem (
         int64_t mediaItemKey);
 
+    void addModifyConf_YouTubeDetails(
+        int64_t userKey,
+        string label,
+        string refreshToken);
+
+    void removeConf_YouTubeDetails(
+        int64_t userKey,
+        string label);
+
 private:
     shared_ptr<spdlog::logger>                          _logger;
     shared_ptr<MySQLConnectionFactory>                  _mySQLConnectionFactory;

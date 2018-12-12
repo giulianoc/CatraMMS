@@ -253,6 +253,27 @@ public class IngestionJobs extends Workspace implements Serializable {
         }
     }
 
+    public String getIngestionJobStyleClass(IngestionJob ingestionJob)
+    {
+        String styleClass;
+
+        String status = ingestionJob.getStatus();
+
+        // NotCompleted, CompletedSuccessful, CompletedWithFailures
+        if (status.equalsIgnoreCase("End_TaskSuccess"))
+            styleClass = "successFullColor";
+        else if (status.equalsIgnoreCase("End_NotToBeExecuted"))
+            styleClass = "successFullColor";
+        else if (status.startsWith("End_"))
+            styleClass = "failureColor";
+        else if (status.equalsIgnoreCase("Start_TaskQueued"))
+            styleClass = "toBeProcessedColor";
+        else
+            styleClass = "processingColor";
+
+        return styleClass;
+    }
+
     public Date getBegin() {
         return begin;
     }

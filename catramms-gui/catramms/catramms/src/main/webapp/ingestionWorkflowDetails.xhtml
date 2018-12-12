@@ -110,7 +110,9 @@
         <p:dataTable resizableColumns="true" id="ingestionJobsTable" var="ingestionJob" rowIndexVar="rowId"
                      value="#{ingestionWorkflowDetails.ingestionWorkflow.ingestionJobList}"
                      rowKey="#{ingestionJob.ingestionJobKey}"
-                     selectionMode="single" >
+                     selectionMode="single"
+                     rowStyleClass="#{ingestionWorkflowDetails.getIngestionJobStyleClass(ingestionJob)}"
+                >
 
             <p:column style="width:70px;" headerText="Ing. Job&lt;br&gt;Key" >
                 <p:outputLabel value="#{ingestionJob.ingestionJobKey}" />

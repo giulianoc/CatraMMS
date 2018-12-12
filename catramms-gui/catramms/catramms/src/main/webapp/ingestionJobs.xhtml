@@ -169,7 +169,9 @@
         <p:dataTable resizableColumns="true" id="ingestionJobDataTable" var="ingestionJob" rowIndexVar="rowId"
                      value="#{ingestionJobs.ingestionJobsList}" rowKey="#{ingestionJob.ingestionJobKey}"
                      selectionMode="single" stickyHeader="true"
-                     widgetVar="ingestionJobDataTable" >
+                     widgetVar="ingestionJobDataTable"
+                     rowStyleClass="#{ingestionJobs.getIngestionJobStyleClass(ingestionJob)}"
+                >
 
             <f:facet name="header">
 

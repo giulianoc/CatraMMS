@@ -2,6 +2,7 @@ package com.catramms.backing;
 
 import com.catramms.backing.common.SessionUtils;
 import com.catramms.backing.common.Workspace;
+import com.catramms.backing.entity.IngestionJob;
 import com.catramms.backing.entity.IngestionWorkflow;
 import com.catramms.backing.entity.MediaItem;
 import com.catramms.utility.catramms.CatraMMS;
@@ -80,6 +81,27 @@ public class IngestionWorkflowDetails extends Workspace implements Serializable 
             String errorMessage = "Exception: " + e;
             mLogger.error(errorMessage);
         }
+    }
+
+    public String getIngestionJobStyleClass(IngestionJob ingestionJob)
+    {
+        String styleClass;
+
+        String status = ingestionJob.getStatus();
+
+        // NotCompleted, CompletedSuccessful, CompletedWithFailures
+        if (status.equalsIgnoreCase("End_TaskSuccess"))
+            styleClass = "successFullColor";
+        else if (status.equalsIgnoreCase("End_NotToBeExecuted"))
+            styleClass = "successFullColor";
+        else if (status.startsWith("End_"))
+            styleClass = "failureColor";
+        else if (status.equalsIgnoreCase("Start_TaskQueued"))
+            styleClass = "toBeProcessedColor";
+        else
+            styleClass = "processingColor";
+
+        return styleClass;
     }
 
     public IngestionWorkflow getIngestionWorkflow() {

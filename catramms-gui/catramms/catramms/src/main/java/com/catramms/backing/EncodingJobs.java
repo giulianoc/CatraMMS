@@ -356,7 +356,7 @@ public class EncodingJobs extends Workspace implements Serializable {
         return sHours.concat(":").concat(sMinutes).concat(":").concat(sSeconds).concat(".").concat(sMilliSeconds);
     }
 
-    public String getStyleClass(EncodingJob encodingJob)
+    public String getEncodingJobStyleClass(EncodingJob encodingJob)
     {
         String styleClass = null;
 
@@ -364,13 +364,13 @@ public class EncodingJobs extends Workspace implements Serializable {
 
         // NotCompleted, CompletedSuccessful, CompletedWithFailures
         if (status.equalsIgnoreCase("End_ProcessedSuccessful"))
-            styleClass = "green";
+            styleClass = "successFullColor";
         else if (status.equalsIgnoreCase("End_Failed"))
-            styleClass = "red";
+            styleClass = "failureColor";
         else if (status.equalsIgnoreCase("Processing"))
-            styleClass = "yellow";
+            styleClass = "processingColor";
         else if (status.equalsIgnoreCase("ToBeProcessed"))
-            styleClass = "lightyellow";
+            styleClass = "toBeProcessedColor";
 
         return styleClass;
     }

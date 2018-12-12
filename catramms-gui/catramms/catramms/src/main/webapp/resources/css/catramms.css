@@ -7,30 +7,33 @@
     50% { opacity: 0.0; }
 }
 
+.red {
+    color: red;
+}
 
 .gray {
     color: gray;
 }
 
-.green {
+.successFullColor {
     /* background-color: #00ff00 !important; */
     /* background-image: none !important; */
     /* color: #000000 !important; */
     color: #43a380 !important;
 }
-.red {
+.failureColor {
     /* background-color: #ff0000 !important; */
     /* background-image: none !important; */
     /* color: #000000 !important; */
     color: #ae001e !important;
 }
-.yellow {
+.processingColor {
     /* background-color: #ffff00 !important; */
     /* background-image: none !important; */
     /* color: #000000 !important; */
     color: #e9c8a4 !important;
 }
-.lightyellow {
+.toBeProcessedColor {
     /* background-color: #ffff00 !important; */
     /* background-image: none !important; */
     /* color: #000000 !important; */
