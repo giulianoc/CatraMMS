@@ -222,13 +222,7 @@ private:
         string clientIPAddress,
         unordered_map<string, string> queryParameters);
 
-    void addYouTubeDetails(
-        FCGX_Request& request,
-        int64_t userKey,
-        unordered_map<string, string> queryParameters,
-        string requestBody);
-
-    void modifyYouTubeDetails(
+    void addModifyYouTubeDetails(
         FCGX_Request& request,
         int64_t userKey,
         unordered_map<string, string> queryParameters,
@@ -239,6 +233,10 @@ private:
         int64_t userKey,
         unordered_map<string, string> queryParameters,
         string requestBody);
+
+    void youTubeDetailsList(
+        FCGX_Request& request,
+        int64_t userKey);
 
     void parseContentRange(string contentRange,
         long long& contentRangeStart,

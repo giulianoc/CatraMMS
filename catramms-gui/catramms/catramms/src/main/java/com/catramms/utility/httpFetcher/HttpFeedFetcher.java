@@ -197,12 +197,11 @@ public class HttpFeedFetcher {
     }
 
     static public String fetchDeleteHttpsJson(String url, int timeoutInSeconds, int maxRetriesNumber,
-                                           String user, String password)
+                                           String user, String password, String deleteBodyRequest)
             throws Exception
     {
-        String postBodyRequest = null;
         String contentType = null;
-        return fetchBodyHttpsJson("DELETE", url, contentType, timeoutInSeconds, maxRetriesNumber, user, password, postBodyRequest);
+        return fetchBodyHttpsJson("DELETE", url, contentType, timeoutInSeconds, maxRetriesNumber, user, password, deleteBodyRequest);
     }
 
     static private String fetchBodyHttpsJson(String httpMethod, String url, String contentType,

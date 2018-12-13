@@ -15087,6 +15087,161 @@ void MMSEngineDBFacade::removeConf_YouTubeDetails(
     }        
 }
 
+Json::Value MMSEngineDBFacade::getYouTubeDetailsList (
+        int64_t userKey
+)
+{    
+    string      lastSQLCommand;
+    Json::Value youTubeDetailsListRoot;
+    
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+    try
+    {
+        string field;
+        
+        _logger->info(__FILEREF__ + "getYouTubeDetailsList"
+            + ", userKey: " + to_string(userKey)
+        );
+        
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        {
+            Json::Value requestParametersRoot;
+            
+            {
+                field = "userKey";
+                requestParametersRoot[field] = userKey;
+            }
+            
+            field = "requestParameters";
+            youTubeDetailsListRoot[field] = requestParametersRoot;
+        }
+        
+        string sqlWhere = string ("where userKey = ? ");
+        
+        Json::Value responseRoot;
+        {
+            lastSQLCommand = 
+                string("select count(*) from MMS_Conf_YouTube ")
+                    + sqlWhere;
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, userKey);
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                field = "numFound";
+                responseRoot[field] = resultSet->getInt64(1);
+            }
+            else
+            {
+                string errorMessage ("select count(*) failed");
+
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+
+        Json::Value youTubeRoot(Json::arrayValue);
+        {                    
+            lastSQLCommand = 
+                string ("select label, youTubeRefreshToken from MMS_Conf_YouTube ") 
+                + sqlWhere;
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, userKey);
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            while (resultSet->next())
+            {
+                Json::Value youTubeDetailsRoot;
+
+                field = "label";
+                youTubeDetailsRoot[field] = static_cast<string>(resultSet->getString("label"));
+
+                field = "youTubeRefreshToken";
+                youTubeDetailsRoot[field] = static_cast<string>(resultSet->getString("youTubeRefreshToken"));
+
+                youTubeRoot.append(youTubeDetailsRoot);
+            }
+        }
+
+        field = "youTubeDetails";
+        responseRoot[field] = youTubeRoot;
+
+        field = "response";
+        youTubeDetailsListRoot[field] = responseRoot;
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+
+        throw se;
+    }    
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+
+        throw e;
+    } 
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+
+        throw e;
+    } 
+    
+    return youTubeDetailsListRoot;
+}
+
 bool MMSEngineDBFacade::isMetadataPresent(Json::Value root, string field)
 {
     if (root.isObject() && root.isMember(field) && !root[field].isNull()

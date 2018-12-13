@@ -694,17 +694,17 @@ void API::manageRequestAndResponse(
         EMailSender emailSender(_logger, _configuration);
         emailSender.sendEmail(to, subject, emailBody);
     }
-    else if (method == "addYouTubeDetails")
+    else if (method == "addModifyYouTubeDetails")
     {
-        addYouTubeDetails(request, userKey, queryParameters, requestBody);
-    }
-    else if (method == "modifyYouTubeDetails")
-    {
-        modifyYouTubeDetails(request, userKey, queryParameters, requestBody);
+        addModifyYouTubeDetails(request, userKey, queryParameters, requestBody);
     }
     else if (method == "removeYouTubeDetails")
     {
         removeYouTubeDetails(request, userKey, queryParameters, requestBody);
+    }
+    else if (method == "youTubeDetailsList")
+    {
+        youTubeDetailsList(request, userKey);
     }
     else
     {
@@ -3802,13 +3802,13 @@ void API::ingestionEvents(shared_ptr<MySQLConnection> conn,
     }    
 }
 
-void API::addYouTubeDetails(
+void API::addModifyYouTubeDetails(
         FCGX_Request& request,
         int64_t userKey,
         unordered_map<string, string> queryParameters,
         string requestBody)
 {
-    string api = "addYouTubeDetails";
+    string api = "addModifyYouTubeDetails";
 
     _logger->info(__FILEREF__ + "Received " + api
         + ", userKey: " + to_string(userKey)
@@ -3918,155 +3918,6 @@ void API::addYouTubeDetails(
         }
 
         sendSuccess(request, 201, sResponse);
-    }
-    catch(runtime_error e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
-        );
-
-        string errorMessage = string("Internal server error: ") + e.what();
-        _logger->error(__FILEREF__ + errorMessage);
-
-        sendError(request, 500, errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-    catch(exception e)
-    {
-        _logger->error(__FILEREF__ + "API failed"
-            + ", API: " + api
-            + ", requestBody: " + requestBody
-            + ", e.what(): " + e.what()
-        );
-
-        string errorMessage = string("Internal server error");
-        _logger->error(__FILEREF__ + errorMessage);
-
-        sendError(request, 500, errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-}
-
-void API::modifyYouTubeDetails(
-        FCGX_Request& request,
-        int64_t userKey,
-        unordered_map<string, string> queryParameters,
-        string requestBody)
-{
-    string api = "modifyYouTubeDetails";
-
-    _logger->info(__FILEREF__ + "Received " + api
-        + ", userKey: " + to_string(userKey)
-        + ", requestBody: " + requestBody
-    );
-
-    try
-    {
-        string label;
-        string refreshToken;
-        
-        try
-        {
-            Json::Value requestBodyRoot;
-            
-            {
-                Json::CharReaderBuilder builder;
-                Json::CharReader* reader = builder.newCharReader();
-                string errors;
-
-                bool parsingSuccessful = reader->parse(requestBody.c_str(),
-                        requestBody.c_str() + requestBody.size(), 
-                        &requestBodyRoot, &errors);
-                delete reader;
-
-                if (!parsingSuccessful)
-                {
-                    string errorMessage = __FILEREF__ + "failed to parse the requestBody"
-                            + ", errors: " + errors
-                            + ", requestBody: " + requestBody
-                            ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errors);
-                }
-            }
-
-            string field = "Label";
-            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                        + ", Field: " + field;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }    
-            label = requestBodyRoot.get(field, "XXX").asString();            
-
-            field = "RefreshToken";
-            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                        + ", Field: " + field;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }    
-            refreshToken = requestBodyRoot.get(field, "XXX").asString();            
-        }
-        catch(runtime_error e)
-        {
-            string errorMessage = string("requestBody json is not well format")
-                    + ", requestBody: " + requestBody
-                    + ", e.what(): " + e.what()
-                    ;
-            _logger->error(__FILEREF__ + errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        catch(exception e)
-        {
-            string errorMessage = string("requestBody json is not well format")
-                    + ", requestBody: " + requestBody
-                    ;
-            _logger->error(__FILEREF__ + errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        
-        string sResponse;
-        try
-        {
-            _mmsEngineDBFacade->addModifyConf_YouTubeDetails(
-                userKey, label, refreshToken);
-
-            sResponse = (
-                    string("{ ") 
-                    + "\"label\": " + label
-                    + "}"
-                    );            
-        }
-        catch(runtime_error e)
-        {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addModifyConf_YouTubeDetails failed"
-                + ", e.what(): " + e.what()
-            );
-
-            throw e;
-        }
-        catch(exception e)
-        {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addModifyConf_YouTubeDetails failed"
-                + ", e.what(): " + e.what()
-            );
-
-            throw e;
-        }
-
-        sendSuccess(request, 200, sResponse);
     }
     catch(runtime_error e)
     {
@@ -4225,6 +4076,58 @@ void API::removeYouTubeDetails(
         _logger->error(__FILEREF__ + "API failed"
             + ", API: " + api
             + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::youTubeDetailsList(
+        FCGX_Request& request,
+        int64_t userKey)
+{
+    string api = "youTubeDetailsList";
+
+    _logger->info(__FILEREF__ + "Received " + api
+    );
+
+    try
+    {
+        {
+            
+            Json::Value youTubeDetailsListRoot = _mmsEngineDBFacade->getYoTubeDetailsList(
+                    userKey);
+
+            Json::StreamWriterBuilder wbuilder;
+            string responseBody = Json::writeString(wbuilder, youTubeDetailsListRoot);
+            
+            sendSuccess(request, 200, responseBody);
+        }
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error: ") + e.what();
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
             + ", e.what(): " + e.what()
         );
 

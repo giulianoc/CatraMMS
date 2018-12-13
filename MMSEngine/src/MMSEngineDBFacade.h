@@ -1088,6 +1088,9 @@ public:
         int64_t userKey,
         string label);
 
+    Json::Value getYouTubeDetailsList (
+        int64_t userKey);
+
 private:
     shared_ptr<spdlog::logger>                          _logger;
     shared_ptr<MySQLConnectionFactory>                  _mySQLConnectionFactory;

@@ -6,7 +6,6 @@ import com.catramms.utility.httpFetcher.HttpFeedFetcher;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.primefaces.model.UploadedFile;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -421,8 +420,9 @@ public class CatraMMS {
             );
 
             Date now = new Date();
+            String deleteBodyRequest = null;
             mmsInfo = HttpFeedFetcher.fetchDeleteHttpsJson(mmsURL, timeoutInSeconds, maxRetriesNumber,
-                    username, password);
+                    username, password, deleteBodyRequest);
             mLogger.info("Elapsed time removeEncodingProfile (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
         }
         catch (Exception e)
@@ -501,8 +501,9 @@ public class CatraMMS {
             );
 
             Date now = new Date();
+            String deleteBodyRequest = null;
             mmsInfo = HttpFeedFetcher.fetchDeleteHttpsJson(mmsURL, timeoutInSeconds, maxRetriesNumber,
-                    username, password);
+                    username, password, deleteBodyRequest);
             mLogger.info("Elapsed time removeEncodingProfilesSet (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
         }
         catch (Exception e)
@@ -1435,6 +1436,84 @@ public class CatraMMS {
         catch (Exception e)
         {
             String errorMessage = "ingestWorkflow MMS failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+    }
+
+    public void addModifyYouTubeDetails(String username, String password,
+                                   String label, String refreshToken)
+            throws Exception
+    {
+
+        String mmsInfo;
+        try
+        {
+            String jsonYouTubeDetails;
+            {
+                JSONObject joYouTubeDetails = new JSONObject();
+
+                joYouTubeDetails.put("Label", label);
+                joYouTubeDetails.put("RefreshToken", refreshToken);
+
+                jsonYouTubeDetails = joYouTubeDetails.toString(4);
+            }
+
+            String mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort + "/catramms/v1/conf/youtube";
+
+            mLogger.info("addYouTubeDetails"
+                            + ", mmsURL: " + mmsURL
+                            + ", jsonYouTubeDetails: " + jsonYouTubeDetails
+            );
+
+            Date now = new Date();
+            String contentType = null;
+            mmsInfo = HttpFeedFetcher.fetchPostHttpsJson(mmsURL, contentType, timeoutInSeconds, maxRetriesNumber,
+                    username, password, jsonYouTubeDetails);
+            mLogger.info("Elapsed time login (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "addYouTubeDetails MMS failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+    }
+
+    public void removeYouTubeDetails(String username, String password,
+                                        String label)
+            throws Exception
+    {
+
+        String mmsInfo;
+        try
+        {
+            String jsonYouTubeDetails;
+            {
+                JSONObject joYouTubeDetails = new JSONObject();
+
+                joYouTubeDetails.put("Label", label);
+
+                jsonYouTubeDetails = joYouTubeDetails.toString(4);
+            }
+
+            String mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort + "/catramms/v1/conf/youtube";
+
+            mLogger.info("removeYouTubeDetails"
+                            + ", mmsURL: " + mmsURL
+                            + ", jsonYouTubeDetails: " + jsonYouTubeDetails
+            );
+
+            Date now = new Date();
+            mmsInfo = HttpFeedFetcher.fetchDeleteHttpsJson(mmsURL, timeoutInSeconds, maxRetriesNumber,
+                    username, password, jsonYouTubeDetails);
+            mLogger.info("Elapsed time login (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "addYouTubeDetails MMS failed. Exception: " + e;
             mLogger.error(errorMessage);
 
             throw new Exception(errorMessage);

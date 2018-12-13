@@ -43,19 +43,10 @@ public class YouTubeDetailsView extends Workspace implements Serializable {
         mLogger.debug("init");
     }
 
-    public void addYouTubeDetails()
+    public void addModifyYouTubeDetails()
     {
-        String jsonYouTubeDetails;
-
         try
         {
-            JSONObject joYouTubeDetails = new JSONObject();
-
-            joYouTubeDetails.put("Label", addYouTubeDetailsLabel);
-            joYouTubeDetails.put("RefreshToken", addYouTubeDetailsRefreshToken);
-
-            jsonYouTubeDetails = joYouTubeDetails.toString(4);
-
             Long userKey = SessionUtils.getUserKey();
             String apiKey = SessionUtils.getAPIKey();
 
@@ -72,9 +63,9 @@ public class YouTubeDetailsView extends Workspace implements Serializable {
                 String password = apiKey;
 
                 CatraMMS catraMMS = new CatraMMS();
-                catraMMS.addYouTubeDetails(
+                catraMMS.addModifyYouTubeDetails(
                         username, password,
-                        jsonYouTubeDetails);
+                        addYouTubeDetailsLabel, addYouTubeDetailsRefreshToken);
 
                 fillList(false);
 
@@ -114,7 +105,7 @@ public class YouTubeDetailsView extends Workspace implements Serializable {
                 String password = apiKey;
 
                 CatraMMS catraMMS = new CatraMMS();
-                catraMMS.removeEncodingProfile(
+                catraMMS.removeYouTubeDetails(
                         username, password, label);
 
                 fillList(false);
@@ -182,7 +173,7 @@ public class YouTubeDetailsView extends Workspace implements Serializable {
                         youTubeDetailsList.clear();
 
                         CatraMMS catraMMS = new CatraMMS();
-                        catraMMS.getYouTubeDetails(
+                        youTubeDetailsList = catraMMS.getYouTubeDetails(
                                 username, password);
                     }
                 }
