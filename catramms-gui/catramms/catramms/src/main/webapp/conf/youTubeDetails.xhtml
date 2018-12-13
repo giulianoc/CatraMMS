@@ -1,0 +1,184 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:media="http://xmlns.jcp.org/jsf/composite/media">
+
+<f:metadata>
+    <f:viewParam name="userKey" value="#{youTubeDetailsView.userKey}"/>
+    <f:viewAction action="#{youTubeDetailsView.fillList(false)}" />
+</f:metadata>
+
+<h:head>
+
+    <h:outputStylesheet library="css" name="catramms.css"  />
+
+</h:head>
+
+<h:body>
+
+    <ui:include src="/common/loadingDialog.xhtml"/>
+    <ui:include src="/common/globalConfirm.xhtml"/>
+
+    <p:dialog widgetVar="addYouTubeDetails" modal="true"
+              header="Add YouTube Details" appendTo="@(body)" width="600" height="500"
+              showEffect="fade" hideEffect="fade" resizable="false" draggable="true">
+
+        <h:form id="addYouTubeDetailsForm">
+
+            <p:panelGrid cellpadding="10" style="width: 100%" >
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Label" style="font-weight: bold" />
+                    </p:column>
+                    <p:column>
+                        <p:inputText style="width: 100%"
+                                     required="true"
+                                     autocomplete="true"
+                                     value="#{youTubeDetailsView.addYouTubeDetailsLabel}"
+                                     placeholder="label"/>
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Refresh Token" style="font-weight: bold" />
+                    </p:column>
+                    <p:column>
+                        <p:inputText style="width: 100%"
+                                     required="true"
+                                     autocomplete="true"
+                                     value="#{youTubeDetailsView.addYouTubeDetailsRefreshToken}"
+                                     placeholder="refresh token"/>
+                    </p:column>
+                </p:row>
+
+            </p:panelGrid>
+
+            <p:commandButton value="Add YouTube Details"
+                             actionListener="#{youTubeDetailsView.addYouTubeDetails}"
+                             update="viewForm:youTubeDetailsDataTable"
+                             oncomplete="PF('addYouTubeDetails').hide()" />
+
+        </h:form>
+    </p:dialog>
+
+    <h:form id="viewForm">
+
+        <p:growl id="growl" showDetail="true" sticky="false" escape="false" life="5000" >
+            <p:autoUpdate />
+        </p:growl>
+
+        <p:toolbar>
+            <p:toolbarGroup align="left">
+                <p:outputLabel styleClass="appTitle" value="Media Management System" />
+            </p:toolbarGroup>
+
+            <p:toolbarGroup align="right">
+
+                <p:outputLabel value="Welcome #{login.userName}" />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:outputLabel value="Workspace:" />
+                <p:selectOneMenu id="workspaceName" value="#{youTubeDetailsView.workspaceName}"
+                                 autoWidth="false">
+                    <f:selectItems value="#{youTubeDetailsView.workspaceNames}" />
+                    <p:ajax
+                            global="true"
+                            event="change"
+                            listener="#{youTubeDetailsView.fillList(false)}"
+                            update="encodingProfileDataTable" />
+                </p:selectOneMenu>
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:commandLink value="Logout" action="#{login.logout}" />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <ui:include src="/common/mainMenu.xhtml"/>
+
+            </p:toolbarGroup>
+        </p:toolbar>
+
+        <p:toolbar>
+            <p:toolbarGroup align="left">
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:outputLabel styleClass="viewTitle" value="Encoding Profiles" />
+
+            </p:toolbarGroup>
+
+            <p:toolbarGroup align="right">
+
+                <p:commandButton value="Add YouTube details"
+                               update="addYouTubeDetailsForm"
+                               oncomplete="PF('addYouTubeDetails').show()" />
+
+            </p:toolbarGroup>
+        </p:toolbar>
+
+        <p:dataTable resizableColumns="true" id="youTubeDetailsDataTable" var="youTubeDetails" rowIndexVar="rowId"
+                     value="#{youTubeDetailsView.youTubeDetailsList}" rowKey="#{youTubeDetails.userKey}-#{youTubeDetails.label}"
+                     selectionMode="single" stickyHeader="true"
+                     widgetVar="youTubeDetailsDataTable" >
+
+            <f:facet name="header">
+
+                <p:toolbar>
+                    <p:toolbarGroup align="left">
+                        <!-- panelGroup is to make 'rendered' working on update -->
+                        <h:panelGroup>
+                            <p:outputLabel styleClass="red" value="#{youTubeDetailsView.youTubeDetailsList.size()}" />
+                            <p:outputLabel value=" YouTube details" />
+                        </h:panelGroup>
+                    </p:toolbarGroup>
+
+                    <p:toolbarGroup align="right">
+
+                    </p:toolbarGroup>
+                </p:toolbar>
+
+            </f:facet>
+
+            <p:column style="width:100px;" headerText="User Key" >
+                <p:outputLabel value="#{youTubeDetails.userKey}" />
+            </p:column>
+
+            <p:column headerText="Label" >
+                <p:outputLabel value="#{youTubeDetails.label}" />
+            </p:column>
+
+            <p:column style="width:110px;" headerText="Refresh Token" >
+                <p:outputLabel value="#{youTubeDetails.refreshToken}" />
+            </p:column>
+
+            <p:column style="width:140px;" headerText="">
+
+                <p:commandLink value="Remove"
+                               action="#{youTubeDetailsView.removeYouTubeDetails(youTubeDetails.label)}"
+                               update="youTubeDetailsDataTable"
+                        >
+                    <p:confirm header="Confirmation" message="Are you sure?" icon="ui-icon-alert" />
+                </p:commandLink>
+            </p:column>
+
+        </p:dataTable>
+
+    </h:form>
+
+</h:body>
+</html>

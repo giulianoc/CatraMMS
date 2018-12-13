@@ -3811,7 +3811,7 @@ void API::addYouTubeDetails(
     string api = "addYouTubeDetails";
 
     _logger->info(__FILEREF__ + "Received " + api
-        + ", userKey: " + userKey
+        + ", userKey: " + to_string(userKey)
         + ", requestBody: " + requestBody
     );
 
@@ -3891,7 +3891,7 @@ void API::addYouTubeDetails(
         string sResponse;
         try
         {
-            int64_t encodingProfileKey = _mmsEngineDBFacade->addModifyConf_YouTubeDetails(
+            _mmsEngineDBFacade->addModifyConf_YouTubeDetails(
                 userKey, label, refreshToken);
 
             sResponse = (
@@ -3960,7 +3960,7 @@ void API::modifyYouTubeDetails(
     string api = "modifyYouTubeDetails";
 
     _logger->info(__FILEREF__ + "Received " + api
-        + ", userKey: " + userKey
+        + ", userKey: " + to_string(userKey)
         + ", requestBody: " + requestBody
     );
 
@@ -4040,7 +4040,7 @@ void API::modifyYouTubeDetails(
         string sResponse;
         try
         {
-            int64_t encodingProfileKey = _mmsEngineDBFacade->addModifyConf_YouTubeDetails(
+            _mmsEngineDBFacade->addModifyConf_YouTubeDetails(
                 userKey, label, refreshToken);
 
             sResponse = (
@@ -4109,7 +4109,7 @@ void API::removeYouTubeDetails(
     string api = "removeYouTubeDetails";
 
     _logger->info(__FILEREF__ + "Received " + api
-        + ", userKey: " + userKey
+        + ", userKey: " + to_string(userKey)
         + ", requestBody: " + requestBody
     );
 
@@ -4177,7 +4177,7 @@ void API::removeYouTubeDetails(
         string sResponse;
         try
         {
-            int64_t encodingProfileKey = _mmsEngineDBFacade->removeConf_YouTubeDetails(
+            _mmsEngineDBFacade->removeConf_YouTubeDetails(
                 userKey, label);
 
             sResponse = (

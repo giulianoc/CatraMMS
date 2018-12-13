@@ -184,12 +184,6 @@ private:
             unordered_map<string, vector<int64_t>>& mapLabelAndIngestionJobKey,
             string& responseBody);
 
-    void youTubeRefreshToken(
-        FCGX_Request& request,
-        shared_ptr<Workspace> workspace,
-        unordered_map<string, string> queryParameters,
-        string requestBody);
-
     void uploadedBinary(
         FCGX_Request& request,
         string requestMethod,
