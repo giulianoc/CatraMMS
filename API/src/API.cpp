@@ -4101,7 +4101,7 @@ void API::youTubeDetailsList(
     {
         {
             
-            Json::Value youTubeDetailsListRoot = _mmsEngineDBFacade->getYoTubeDetailsList(
+            Json::Value youTubeDetailsListRoot = _mmsEngineDBFacade->getYouTubeDetailsList(
                     userKey);
 
             Json::StreamWriterBuilder wbuilder;
