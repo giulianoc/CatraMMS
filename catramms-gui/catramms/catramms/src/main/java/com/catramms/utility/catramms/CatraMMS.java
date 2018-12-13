@@ -1520,6 +1520,65 @@ public class CatraMMS {
         }
     }
 
+    public List<YouTubeDetails> getYouTubeDetails(String username, String password)
+            throws Exception
+    {
+        List<YouTubeDetails> youTubeDetailsList = new ArrayList<>();
+
+        String mmsInfo;
+        try
+        {
+            String mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort + "/catramms/v1/conf/youtube";
+
+            mLogger.info("mmsURL: " + mmsURL);
+
+            Date now = new Date();
+            mmsInfo = HttpFeedFetcher.fetchGetHttpsJson(mmsURL, timeoutInSeconds, maxRetriesNumber,
+                    username, password);
+            mLogger.info("Elapsed time getYouTubeDetails (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "MMS API failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+
+        try
+        {
+            JSONObject joMMSInfo = new JSONObject(mmsInfo);
+            JSONObject joResponse = joMMSInfo.getJSONObject("response");
+            JSONArray jaYouTubeDetails = joResponse.getJSONArray("youTubeDetails");
+
+            mLogger.info("jaYouTubeDetails.length(): " + jaYouTubeDetails.length());
+
+            youTubeDetailsList.clear();
+
+            for (int youTubeDetailsIndex = 0;
+                 youTubeDetailsIndex < jaYouTubeDetails.length();
+                 youTubeDetailsIndex++)
+            {
+                YouTubeDetails youTubeDetails = new YouTubeDetails();
+
+                JSONObject youTubeDetailsInfo = jaYouTubeDetails.getJSONObject(youTubeDetailsIndex);
+
+                fillYouTubeDetails(youTubeDetails, youTubeDetailsInfo);
+
+                youTubeDetailsList.add(youTubeDetails);
+            }
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "Parsing youTubeDetails failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+
+        return youTubeDetailsList;
+    }
+
     private void fillEncodingJob(EncodingJob encodingJob, JSONObject encodingJobInfo)
             throws Exception
     {
@@ -1950,6 +2009,72 @@ public class CatraMMS {
         catch (Exception e)
         {
             String errorMessage = "fillEncodingProfilesSet failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+    }
+
+    private void fillYouTubeDetails(YouTubeDetails youTubeDetails, JSONObject youTubeDetailsInfo)
+            throws Exception
+    {
+        try {
+            youTubeDetails.setLabel(ingestionJobInfo.getLong("ingestionJobKey"));
+            ingestionJob.setLabel(ingestionJobInfo.getString("label"));
+            ingestionJob.setIngestionType(ingestionJobInfo.getString("ingestionType"));
+            ingestionJob.setMetaDataContent(ingestionJobInfo.getString("metaDataContent"));
+            if (ingestionJobInfo.isNull("startProcessing"))
+                ingestionJob.setStartProcessing(null);
+            else
+                ingestionJob.setStartProcessing(simpleDateFormat.parse(ingestionJobInfo.getString("startProcessing")));
+            if (ingestionJobInfo.isNull("endProcessing"))
+                ingestionJob.setEndProcessing(null);
+            else
+                ingestionJob.setEndProcessing(simpleDateFormat.parse(ingestionJobInfo.getString("endProcessing")));
+            ingestionJob.setStatus(ingestionJobInfo.getString("status"));
+            if (ingestionJobInfo.isNull("errorMessage"))
+                ingestionJob.setErrorMessage(null);
+            else
+                ingestionJob.setErrorMessage(ingestionJobInfo.getString("errorMessage"));
+            if (ingestionJobInfo.isNull("downloadingProgress"))
+                ingestionJob.setDownloadingProgress(null);
+            else
+                ingestionJob.setDownloadingProgress(ingestionJobInfo.getLong("downloadingProgress"));
+            if (ingestionJobInfo.isNull("uploadingProgress"))
+                ingestionJob.setUploadingProgress(null);
+            else
+                ingestionJob.setUploadingProgress(ingestionJobInfo.getLong("uploadingProgress"));
+
+            if (ingestionJobInfo.isNull("ingestionRootKey"))
+                ingestionJob.setIngestionRookKey(null);
+            else
+                ingestionJob.setIngestionRookKey(ingestionJobInfo.getLong("ingestionRootKey"));
+
+            JSONArray jaMediaItems = ingestionJobInfo.getJSONArray("mediaItems");
+            for (int mediaItemIndex = 0; mediaItemIndex < jaMediaItems.length(); mediaItemIndex++)
+            {
+                JSONObject joMediaItem = jaMediaItems.getJSONObject(mediaItemIndex);
+
+                IngestionJobMediaItem ingestionJobMediaItem = new IngestionJobMediaItem();
+                ingestionJobMediaItem.setMediaItemKey(joMediaItem.getLong("mediaItemKey"));
+                ingestionJobMediaItem.setPhysicalPathKey(joMediaItem.getLong("physicalPathKey"));
+
+                ingestionJob.getIngestionJobMediaItemList().add(ingestionJobMediaItem);
+            }
+
+            if (ingestionJobInfo.has("encodingJob")) {
+                JSONObject encodingJobInfo = ingestionJobInfo.getJSONObject("encodingJob");
+
+                EncodingJob encodingJob = new EncodingJob();
+
+                fillEncodingJob(encodingJob, encodingJobInfo);
+
+                ingestionJob.setEncodingJob(encodingJob);
+            }
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "fillIngestionJob failed. Exception: " + e;
             mLogger.error(errorMessage);
 
             throw new Exception(errorMessage);
