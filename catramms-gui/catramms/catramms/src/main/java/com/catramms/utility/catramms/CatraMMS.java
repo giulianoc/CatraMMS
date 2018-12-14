@@ -191,7 +191,7 @@ public class CatraMMS {
         }
         catch (Exception e)
         {
-            String errorMessage = "shareWorkspace failed. Exception: " + e;
+            String errorMessage = "confirmUser failed. Exception: " + e;
             mLogger.error(errorMessage);
 
             throw new Exception(errorMessage);
@@ -206,7 +206,7 @@ public class CatraMMS {
         }
         catch (Exception e)
         {
-            String errorMessage = "Parsing workspaceDetails failed. Exception: " + e;
+            String errorMessage = "confirmUser failed. Exception: " + e;
             mLogger.error(errorMessage);
 
             throw new Exception(errorMessage);
@@ -348,7 +348,7 @@ public class CatraMMS {
         }
         catch (Exception e)
         {
-            String errorMessage = "Parsing workspaceDetails failed. Exception: " + e;
+            String errorMessage = "ingestWorkflow failed. Exception: " + e;
             mLogger.error(errorMessage);
 
             throw new Exception(errorMessage);
@@ -396,7 +396,7 @@ public class CatraMMS {
         }
         catch (Exception e)
         {
-            String errorMessage = "Parsing workspaceDetails failed. Exception: " + e;
+            String errorMessage = "addEncodingProfile failed. Exception: " + e;
             mLogger.error(errorMessage);
 
             throw new Exception(errorMessage);
@@ -420,9 +420,8 @@ public class CatraMMS {
             );
 
             Date now = new Date();
-            String deleteBodyRequest = null;
             mmsInfo = HttpFeedFetcher.fetchDeleteHttpsJson(mmsURL, timeoutInSeconds, maxRetriesNumber,
-                    username, password, deleteBodyRequest);
+                    username, password);
             mLogger.info("Elapsed time removeEncodingProfile (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
         }
         catch (Exception e)
@@ -477,7 +476,7 @@ public class CatraMMS {
         }
         catch (Exception e)
         {
-            String errorMessage = "Parsing workspaceDetails failed. Exception: " + e;
+            String errorMessage = "addEncodingProfile failed. Exception: " + e;
             mLogger.error(errorMessage);
 
             throw new Exception(errorMessage);
@@ -501,9 +500,8 @@ public class CatraMMS {
             );
 
             Date now = new Date();
-            String deleteBodyRequest = null;
             mmsInfo = HttpFeedFetcher.fetchDeleteHttpsJson(mmsURL, timeoutInSeconds, maxRetriesNumber,
-                    username, password, deleteBodyRequest);
+                    username, password);
             mLogger.info("Elapsed time removeEncodingProfilesSet (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
         }
         catch (Exception e)
@@ -609,7 +607,7 @@ public class CatraMMS {
         }
         catch (Exception e)
         {
-            String errorMessage = "Parsing workspaceDetails failed. Exception: " + e;
+            String errorMessage = "getMediaItems failed. Exception: " + e;
             mLogger.error(errorMessage);
 
             throw new Exception(errorMessage);
@@ -679,7 +677,7 @@ public class CatraMMS {
         }
         catch (Exception e)
         {
-            String errorMessage = "Parsing workspaceDetails failed. Exception: " + e;
+            String errorMessage = "MMS API failed. Exception: " + e;
             mLogger.error(errorMessage);
 
             throw new Exception(errorMessage);
@@ -1140,7 +1138,7 @@ public class CatraMMS {
         }
         catch (Exception e)
         {
-            String errorMessage = "Parsing workspaceDetails failed. Exception: " + e;
+            String errorMessage = "MMS API failed. Exception: " + e;
             mLogger.error(errorMessage);
 
             throw new Exception(errorMessage);
@@ -1203,7 +1201,7 @@ public class CatraMMS {
         }
         catch (Exception e)
         {
-            String errorMessage = "Parsing workspaceDetails failed. Exception: " + e;
+            String errorMessage = "MMS API failed. Exception: " + e;
             mLogger.error(errorMessage);
 
             throw new Exception(errorMessage);
@@ -1262,7 +1260,7 @@ public class CatraMMS {
         }
         catch (Exception e)
         {
-            String errorMessage = "Parsing workspaceDetails failed. Exception: " + e;
+            String errorMessage = "MMS API failed. Exception: " + e;
             mLogger.error(errorMessage);
 
             throw new Exception(errorMessage);
@@ -1323,7 +1321,7 @@ public class CatraMMS {
         }
         catch (Exception e)
         {
-            String errorMessage = "Parsing workspaceDetails failed. Exception: " + e;
+            String errorMessage = "MMS API failed. Exception: " + e;
             mLogger.error(errorMessage);
 
             throw new Exception(errorMessage);
@@ -1373,7 +1371,7 @@ public class CatraMMS {
         }
         catch (Exception e)
         {
-            String errorMessage = "Parsing workspaceDetails failed. Exception: " + e;
+            String errorMessage = "getDeliveryURL failed. Exception: " + e;
             mLogger.error(errorMessage);
 
             throw new Exception(errorMessage);
@@ -1442,88 +1440,118 @@ public class CatraMMS {
         }
     }
 
-    public void addModifyYouTubeDetails(String username, String password,
-                                   String label, String refreshToken)
+    public void addYouTubeConf(String username, String password,
+                               String label, String refreshToken)
             throws Exception
     {
 
         String mmsInfo;
         try
         {
-            String jsonYouTubeDetails;
+            String jsonYouTubeConf;
             {
-                JSONObject joYouTubeDetails = new JSONObject();
+                JSONObject joYouTubeConf = new JSONObject();
 
-                joYouTubeDetails.put("Label", label);
-                joYouTubeDetails.put("RefreshToken", refreshToken);
+                joYouTubeConf.put("Label", label);
+                joYouTubeConf.put("RefreshToken", refreshToken);
 
-                jsonYouTubeDetails = joYouTubeDetails.toString(4);
+                jsonYouTubeConf = joYouTubeConf.toString(4);
             }
 
             String mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort + "/catramms/v1/conf/youtube";
 
-            mLogger.info("addYouTubeDetails"
+            mLogger.info("addYouTubeConf"
                             + ", mmsURL: " + mmsURL
-                            + ", jsonYouTubeDetails: " + jsonYouTubeDetails
+                            + ", jsonYouTubeConf: " + jsonYouTubeConf
             );
 
             Date now = new Date();
             String contentType = null;
             mmsInfo = HttpFeedFetcher.fetchPostHttpsJson(mmsURL, contentType, timeoutInSeconds, maxRetriesNumber,
-                    username, password, jsonYouTubeDetails);
+                    username, password, jsonYouTubeConf);
             mLogger.info("Elapsed time login (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
         }
         catch (Exception e)
         {
-            String errorMessage = "addYouTubeDetails MMS failed. Exception: " + e;
+            String errorMessage = "addYouTubeConf MMS failed. Exception: " + e;
             mLogger.error(errorMessage);
 
             throw new Exception(errorMessage);
         }
     }
 
-    public void removeYouTubeDetails(String username, String password,
-                                        String label)
+    public void modifyYouTubeConf(String username, String password,
+                               Long confKey, String label, String refreshToken)
             throws Exception
     {
 
         String mmsInfo;
         try
         {
-            String jsonYouTubeDetails;
+            String jsonYouTubeConf;
             {
-                JSONObject joYouTubeDetails = new JSONObject();
+                JSONObject joYouTubeConf = new JSONObject();
 
-                joYouTubeDetails.put("Label", label);
+                joYouTubeConf.put("Label", label);
+                joYouTubeConf.put("RefreshToken", refreshToken);
 
-                jsonYouTubeDetails = joYouTubeDetails.toString(4);
+                jsonYouTubeConf = joYouTubeConf.toString(4);
             }
 
-            String mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort + "/catramms/v1/conf/youtube";
+            String mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort + "/catramms/v1/conf/youtube/" + confKey;
 
-            mLogger.info("removeYouTubeDetails"
-                            + ", mmsURL: " + mmsURL
-                            + ", jsonYouTubeDetails: " + jsonYouTubeDetails
+            mLogger.info("modifyYouTubeConf"
+                    + ", mmsURL: " + mmsURL
+                    + ", jsonYouTubeConf: " + jsonYouTubeConf
             );
 
             Date now = new Date();
-            mmsInfo = HttpFeedFetcher.fetchDeleteHttpsJson(mmsURL, timeoutInSeconds, maxRetriesNumber,
-                    username, password, jsonYouTubeDetails);
+            mmsInfo = HttpFeedFetcher.fetchPutHttpsJson(mmsURL, timeoutInSeconds, maxRetriesNumber,
+                    username, password, jsonYouTubeConf);
             mLogger.info("Elapsed time login (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
         }
         catch (Exception e)
         {
-            String errorMessage = "addYouTubeDetails MMS failed. Exception: " + e;
+            String errorMessage = "modifyYouTubeConf MMS failed. Exception: " + e;
             mLogger.error(errorMessage);
 
             throw new Exception(errorMessage);
         }
     }
 
-    public List<YouTubeDetails> getYouTubeDetails(String username, String password)
+    public void removeYouTubeConf(String username, String password,
+                                        Long confKey)
             throws Exception
     {
-        List<YouTubeDetails> youTubeDetailsList = new ArrayList<>();
+
+        String mmsInfo;
+        try
+        {
+            String mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort + "/catramms/v1/conf/youtube/" + confKey;
+
+            mLogger.info("removeYouTubeConf"
+                            + ", mmsURL: " + mmsURL
+                            + ", confKey: " + confKey
+            );
+
+            Date now = new Date();
+            mmsInfo = HttpFeedFetcher.fetchDeleteHttpsJson(mmsURL, timeoutInSeconds, maxRetriesNumber,
+                    username, password);
+            mLogger.info("Elapsed time login (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "removeYouTubeConf MMS failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+    }
+
+    public List<YouTubeConf> getYouTubeConf(String username, String password)
+            throws Exception
+    {
+        List<YouTubeConf> youTubeConfList = new ArrayList<>();
 
         String mmsInfo;
         try
@@ -1535,7 +1563,7 @@ public class CatraMMS {
             Date now = new Date();
             mmsInfo = HttpFeedFetcher.fetchGetHttpsJson(mmsURL, timeoutInSeconds, maxRetriesNumber,
                     username, password);
-            mLogger.info("Elapsed time getYouTubeDetails (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
+            mLogger.info("Elapsed time getYouTubeConf (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
         }
         catch (Exception e)
         {
@@ -1549,34 +1577,34 @@ public class CatraMMS {
         {
             JSONObject joMMSInfo = new JSONObject(mmsInfo);
             JSONObject joResponse = joMMSInfo.getJSONObject("response");
-            JSONArray jaYouTubeDetails = joResponse.getJSONArray("youTubeDetails");
+            JSONArray jaYouTubeConf = joResponse.getJSONArray("youTubeConf");
 
-            mLogger.info("jaYouTubeDetails.length(): " + jaYouTubeDetails.length());
+            mLogger.info("jaYouTubeConf.length(): " + jaYouTubeConf.length());
 
-            youTubeDetailsList.clear();
+            youTubeConfList.clear();
 
-            for (int youTubeDetailsIndex = 0;
-                 youTubeDetailsIndex < jaYouTubeDetails.length();
-                 youTubeDetailsIndex++)
+            for (int youTubeConfIndex = 0;
+                 youTubeConfIndex < jaYouTubeConf.length();
+                 youTubeConfIndex++)
             {
-                YouTubeDetails youTubeDetails = new YouTubeDetails();
+                YouTubeConf youTubeConf = new YouTubeConf();
 
-                JSONObject youTubeDetailsInfo = jaYouTubeDetails.getJSONObject(youTubeDetailsIndex);
+                JSONObject youTubeConfInfo = jaYouTubeConf.getJSONObject(youTubeConfIndex);
 
-                fillYouTubeDetails(youTubeDetails, youTubeDetailsInfo);
+                fillYouTubeConf(youTubeConf, youTubeConfInfo);
 
-                youTubeDetailsList.add(youTubeDetails);
+                youTubeConfList.add(youTubeConf);
             }
         }
         catch (Exception e)
         {
-            String errorMessage = "Parsing youTubeDetails failed. Exception: " + e;
+            String errorMessage = "Parsing youTubeConf failed. Exception: " + e;
             mLogger.error(errorMessage);
 
             throw new Exception(errorMessage);
         }
 
-        return youTubeDetailsList;
+        return youTubeConfList;
     }
 
     private void fillEncodingJob(EncodingJob encodingJob, JSONObject encodingJobInfo)
@@ -2015,66 +2043,17 @@ public class CatraMMS {
         }
     }
 
-    private void fillYouTubeDetails(YouTubeDetails youTubeDetails, JSONObject youTubeDetailsInfo)
+    private void fillYouTubeConf(YouTubeConf youTubeConf, JSONObject youTubeConfInfo)
             throws Exception
     {
         try {
-            youTubeDetails.setLabel(ingestionJobInfo.getLong("ingestionJobKey"));
-            ingestionJob.setLabel(ingestionJobInfo.getString("label"));
-            ingestionJob.setIngestionType(ingestionJobInfo.getString("ingestionType"));
-            ingestionJob.setMetaDataContent(ingestionJobInfo.getString("metaDataContent"));
-            if (ingestionJobInfo.isNull("startProcessing"))
-                ingestionJob.setStartProcessing(null);
-            else
-                ingestionJob.setStartProcessing(simpleDateFormat.parse(ingestionJobInfo.getString("startProcessing")));
-            if (ingestionJobInfo.isNull("endProcessing"))
-                ingestionJob.setEndProcessing(null);
-            else
-                ingestionJob.setEndProcessing(simpleDateFormat.parse(ingestionJobInfo.getString("endProcessing")));
-            ingestionJob.setStatus(ingestionJobInfo.getString("status"));
-            if (ingestionJobInfo.isNull("errorMessage"))
-                ingestionJob.setErrorMessage(null);
-            else
-                ingestionJob.setErrorMessage(ingestionJobInfo.getString("errorMessage"));
-            if (ingestionJobInfo.isNull("downloadingProgress"))
-                ingestionJob.setDownloadingProgress(null);
-            else
-                ingestionJob.setDownloadingProgress(ingestionJobInfo.getLong("downloadingProgress"));
-            if (ingestionJobInfo.isNull("uploadingProgress"))
-                ingestionJob.setUploadingProgress(null);
-            else
-                ingestionJob.setUploadingProgress(ingestionJobInfo.getLong("uploadingProgress"));
-
-            if (ingestionJobInfo.isNull("ingestionRootKey"))
-                ingestionJob.setIngestionRookKey(null);
-            else
-                ingestionJob.setIngestionRookKey(ingestionJobInfo.getLong("ingestionRootKey"));
-
-            JSONArray jaMediaItems = ingestionJobInfo.getJSONArray("mediaItems");
-            for (int mediaItemIndex = 0; mediaItemIndex < jaMediaItems.length(); mediaItemIndex++)
-            {
-                JSONObject joMediaItem = jaMediaItems.getJSONObject(mediaItemIndex);
-
-                IngestionJobMediaItem ingestionJobMediaItem = new IngestionJobMediaItem();
-                ingestionJobMediaItem.setMediaItemKey(joMediaItem.getLong("mediaItemKey"));
-                ingestionJobMediaItem.setPhysicalPathKey(joMediaItem.getLong("physicalPathKey"));
-
-                ingestionJob.getIngestionJobMediaItemList().add(ingestionJobMediaItem);
-            }
-
-            if (ingestionJobInfo.has("encodingJob")) {
-                JSONObject encodingJobInfo = ingestionJobInfo.getJSONObject("encodingJob");
-
-                EncodingJob encodingJob = new EncodingJob();
-
-                fillEncodingJob(encodingJob, encodingJobInfo);
-
-                ingestionJob.setEncodingJob(encodingJob);
-            }
+            youTubeConf.setConfKey(youTubeConfInfo.getLong("confKey"));
+            youTubeConf.setLabel(youTubeConfInfo.getString("label"));
+            youTubeConf.setRefreshToken(youTubeConfInfo.getString("refreshToken"));
         }
         catch (Exception e)
         {
-            String errorMessage = "fillIngestionJob failed. Exception: " + e;
+            String errorMessage = "fillYouTubeConf failed. Exception: " + e;
             mLogger.error(errorMessage);
 
             throw new Exception(errorMessage);

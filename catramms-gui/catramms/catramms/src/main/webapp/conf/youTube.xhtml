@@ -8,8 +8,7 @@
       xmlns:media="http://xmlns.jcp.org/jsf/composite/media">
 
 <f:metadata>
-    <f:viewParam name="userKey" value="#{youTubeDetailsView.userKey}"/>
-    <f:viewAction action="#{youTubeDetailsView.fillList(false)}" />
+    <f:viewAction action="#{youTubeView.fillList(false)}" />
 </f:metadata>
 
 <h:head>
@@ -23,13 +22,22 @@
     <ui:include src="/common/loadingDialog.xhtml"/>
     <ui:include src="/common/globalConfirm.xhtml"/>
 
-    <p:dialog widgetVar="addYouTubeDetails" modal="true"
-              header="Add YouTube Details" appendTo="@(body)" width="600" height="500"
+    <p:dialog widgetVar="editYouTubeConf" modal="true"
+              header="Edit YouTube Conf" appendTo="@(body)" width="600" height="500"
               showEffect="fade" hideEffect="fade" resizable="false" draggable="true">
 
-        <h:form id="addYouTubeDetailsForm">
+        <h:form id="editYouTubeConfForm">
 
             <p:panelGrid cellpadding="10" style="width: 100%" >
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="ConfKey" style="font-weight: bold" />
+                    </p:column>
+                    <p:column>
+                        <p:outputLabel value="#{youTubeView.editYouTubeConfKey == -1 ? '' : youTubeView.editYouTubeConfKey}" />
+                    </p:column>
+                </p:row>
+
                 <p:row>
                     <p:column>
                         <p:outputLabel value="Label" style="font-weight: bold" />
@@ -38,8 +46,8 @@
                         <p:inputText style="width: 100%"
                                      required="true"
                                      autocomplete="true"
-                                     value="#{youTubeDetailsView.addYouTubeDetailsLabel}"
-                                     placeholder="label"/>
+                                     value="#{youTubeView.editYouTubeLabel}"
+                                     placeholder="label for this configuration"/>
                     </p:column>
                 </p:row>
 
@@ -51,17 +59,23 @@
                         <p:inputText style="width: 100%"
                                      required="true"
                                      autocomplete="true"
-                                     value="#{youTubeDetailsView.addYouTubeDetailsRefreshToken}"
+                                     value="#{youTubeView.editYouTubeRefreshToken}"
                                      placeholder="refresh token"/>
+
+                        <p:outputLabel value="Click " />
+                        <h:outputLink value="#{youTubeView.youTubeAccessTokenURL}" target="_blank">
+                            <h:outputText value="here" />
+                        </h:outputLink>
+                        <p:outputLabel value=" to retrieve a YouTube refresh token" />
                     </p:column>
                 </p:row>
 
             </p:panelGrid>
 
-            <p:commandButton value="Add YouTube Details"
-                             actionListener="#{youTubeDetailsView.addYouTubeDetails}"
-                             update="viewForm:youTubeDetailsDataTable"
-                             oncomplete="PF('addYouTubeDetails').hide()" />
+            <p:commandButton value="#{youTubeView.editYouTubeConfKey == -1 ? 'Add YouTube Conf' : 'Edit YouTube Conf'}"
+                             actionListener="#{youTubeView.addModifyYouTubeConf}"
+                             update="viewForm:youTubeDataTable"
+                             oncomplete="PF('editYouTubeConf').hide()" />
 
         </h:form>
     </p:dialog>
@@ -86,14 +100,14 @@
                 </span>
 
                 <p:outputLabel value="Workspace:" />
-                <p:selectOneMenu id="workspaceName" value="#{youTubeDetailsView.workspaceName}"
+                <p:selectOneMenu id="workspaceName" value="#{youTubeView.workspaceName}"
                                  autoWidth="false">
-                    <f:selectItems value="#{youTubeDetailsView.workspaceNames}" />
+                    <f:selectItems value="#{youTubeView.workspaceNames}" />
                     <p:ajax
                             global="true"
                             event="change"
-                            listener="#{youTubeDetailsView.fillList(false)}"
-                            update="encodingProfileDataTable" />
+                            listener="#{youTubeView.fillList(false)}"
+                            update="youTubeDataTable" />
                 </p:selectOneMenu>
 
                 <span class="ui-separator">
@@ -118,23 +132,24 @@
                     <span class="ui-icon ui-icon-grip-dotted-vertical" />
                 </span>
 
-                <p:outputLabel styleClass="viewTitle" value="Encoding Profiles" />
+                <p:outputLabel styleClass="viewTitle" value="YouTube Configuration" />
 
             </p:toolbarGroup>
 
             <p:toolbarGroup align="right">
 
-                <p:commandButton value="Add YouTube details"
-                               update="addYouTubeDetailsForm"
-                               oncomplete="PF('addYouTubeDetails').show()" />
+                <p:commandButton value="Add YouTube Conf"
+                                 actionListener="#{youTubeView.prepareEditYouTubeConf(-1)}"
+                                 update="editYouTubeConfForm"
+                               oncomplete="PF('editYouTubeConf').show()" />
 
             </p:toolbarGroup>
         </p:toolbar>
 
-        <p:dataTable resizableColumns="true" id="youTubeDetailsDataTable" var="youTubeDetails" rowIndexVar="rowId"
-                     value="#{youTubeDetailsView.youTubeDetailsList}" rowKey="#{youTubeDetails.userKey}-#{youTubeDetails.label}"
+        <p:dataTable resizableColumns="true" id="youTubeDataTable" var="youTubeConf" rowIndexVar="rowId"
+                     value="#{youTubeView.youTubeConfList}" rowKey="#{youTubeConf.label}"
                      selectionMode="single" stickyHeader="true"
-                     widgetVar="youTubeDetailsDataTable" >
+                     widgetVar="youTubeDataTable" >
 
             <f:facet name="header">
 
@@ -142,8 +157,8 @@
                     <p:toolbarGroup align="left">
                         <!-- panelGroup is to make 'rendered' working on update -->
                         <h:panelGroup>
-                            <p:outputLabel styleClass="red" value="#{youTubeDetailsView.youTubeDetailsList.size()}" />
-                            <p:outputLabel value=" YouTube details" />
+                            <p:outputLabel styleClass="red" value="#{youTubeView.youTubeConfList.size()}" />
+                            <p:outputLabel value=" YouTube conf" />
                         </h:panelGroup>
                     </p:toolbarGroup>
 
@@ -154,26 +169,33 @@
 
             </f:facet>
 
-            <p:column style="width:100px;" headerText="User Key" >
-                <p:outputLabel value="#{youTubeDetails.userKey}" />
+            <p:column style="width:70px;" headerText="ConfKey" >
+                <p:outputLabel value="#{youTubeConf.confKey}" />
             </p:column>
 
             <p:column headerText="Label" >
-                <p:outputLabel value="#{youTubeDetails.label}" />
+                <p:outputLabel value="#{youTubeConf.label}" />
             </p:column>
 
-            <p:column style="width:110px;" headerText="Refresh Token" >
-                <p:outputLabel value="#{youTubeDetails.refreshToken}" />
+            <p:column headerText="Refresh Token" >
+                <p:outputLabel value="#{youTubeConf.refreshToken}" />
             </p:column>
 
-            <p:column style="width:140px;" headerText="">
+            <p:column style="width:150px;" headerText="">
 
                 <p:commandLink value="Remove"
-                               action="#{youTubeDetailsView.removeYouTubeDetails(youTubeDetails.label)}"
-                               update="youTubeDetailsDataTable"
+                               action="#{youTubeView.removeYouTubeConf(youTubeConf.confKey)}"
+                               update="youTubeDataTable"
                         >
                     <p:confirm header="Confirmation" message="Are you sure?" icon="ui-icon-alert" />
                 </p:commandLink>
+
+                <p:outputLabel value=" - " />
+
+                <p:commandLink value="Edit"
+                                 actionListener="#{youTubeView.prepareEditYouTubeConf(rowId)}"
+                                 update="editYouTubeConfForm"
+                                 oncomplete="PF('editYouTubeConf').show()" />
             </p:column>
 
         </p:dataTable>

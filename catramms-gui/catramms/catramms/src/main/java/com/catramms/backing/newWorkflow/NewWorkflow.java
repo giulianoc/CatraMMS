@@ -2,10 +2,7 @@ package com.catramms.backing.newWorkflow;
 
 import com.catramms.backing.common.Workspace;
 import com.catramms.backing.common.SessionUtils;
-import com.catramms.backing.entity.EncodingProfile;
-import com.catramms.backing.entity.EncodingProfilesSet;
-import com.catramms.backing.entity.MediaItem;
-import com.catramms.backing.entity.PhysicalPath;
+import com.catramms.backing.entity.*;
 import com.catramms.utility.catramms.CatraMMS;
 import com.catramms.utility.httpFetcher.HttpFeedFetcher;
 import org.apache.commons.io.IOUtils;
@@ -74,8 +71,6 @@ public class NewWorkflow extends Workspace implements Serializable {
     private Long mediaItemsMaxMediaItemsNumber = new Long(100);
     private String mediaItemsToBeAddedOrReplaced;
     private String taskReferences;
-
-    private String youTubeAccessTokenURL;
 
     // Workflow properties
     private String workflowLabel;
@@ -150,7 +145,8 @@ public class NewWorkflow extends Workspace implements Serializable {
     private Long taskExtractTracksAudioTrackNumber;
     private String taskPostOnFacebookAccessToken;
     private String taskPostOnFacebookNodeId;
-    private String taskPostOnYouTubeAccessToken;
+    private String taskPostOnYouTubeConfigurationLabel;
+    private List<YouTubeConf> taskPostOnYouTubeConfList;
     private String taskPostOnYouTubeTitle;
     private String taskPostOnYouTubeDescription;
     private String taskPostOnYouTubeTags;
@@ -298,34 +294,6 @@ public class NewWorkflow extends Workspace implements Serializable {
             taskContentTypesList.add("image");
         }
 
-        try
-        {
-            // this URL is configured inside the YouTube credentials
-            String mmsYouTubeCallbak = "https://mms-gui.catrasoft.cloud/rest/api/youTubeCallback";
-
-            // clientId is retrieved by the credentials
-            String clientId = "700586767360-96om12ccsf16m41qijrdagkk0oqf2o7m.apps.googleusercontent.com";
-
-            // this is the you tube scope to upload a video
-            String scope = "https://www.googleapis.com/auth/youtube https://www.googleapis.com/auth/youtube.upload";
-
-            youTubeAccessTokenURL = "https://accounts.google.com/o/oauth2/v2/auth"
-                    + "?redirect_uri=" + java.net.URLEncoder.encode(mmsYouTubeCallbak, "UTF-8")
-                    + "&prompt=consent"
-                    + "&response_type=code"
-                    + "&client_id=" + clientId
-                    + "&scope=" + java.net.URLEncoder.encode(scope, "UTF-8")
-                    + "&access_type=offline"
-            ;
-        }
-        catch (Exception e)
-        {
-            String errorMessage = "Problems to set youTubeAccessTokenURL. Exception: " + e;
-            mLogger.error(errorMessage);
-
-            return;
-        }
-
         mediaItemsToBeAddedOrReplaced = "toBeReplaced";
 
         // needed otherwise when the ingestionWorkflowDetails is built at the beginning will generate
@@ -364,6 +332,8 @@ public class NewWorkflow extends Workspace implements Serializable {
                         "audio", taskAudioEncodingProfilesList);
                 catraMMS.getEncodingProfiles(username, password,
                         "image", taskImageEncodingProfilesList);
+
+                taskPostOnYouTubeConfList = catraMMS.getYouTubeConf(username, password);
             }
         }
         catch (Exception e)
@@ -1779,13 +1749,13 @@ public class NewWorkflow extends Workspace implements Serializable {
                     workflowIssueList.add(workflowIssue);
                 }
 
-                if (task.getPostOnYouTubeAccessToken() != null && !task.getPostOnYouTubeAccessToken().equalsIgnoreCase(""))
-                    joParameters.put("AccessToken", task.getPostOnYouTubeAccessToken());
+                if (task.getPostOnYouTubeConfigurationLabel() != null && !task.getPostOnYouTubeConfigurationLabel().equalsIgnoreCase(""))
+                    joParameters.put("ConfigurationLabel", task.getPostOnYouTubeConfigurationLabel());
                 else
                 {
                     WorkflowIssue workflowIssue = new WorkflowIssue();
                     workflowIssue.setLabel(task.getLabel());
-                    workflowIssue.setFieldName("AccessToken");
+                    workflowIssue.setFieldName("ConfigurationLabel");
                     workflowIssue.setTaskType(task.getType());
                     workflowIssue.setIssue("The field is not initialized");
 
@@ -3146,7 +3116,7 @@ public class NewWorkflow extends Workspace implements Serializable {
                 {
                     taskReferences = task.getReferences() == null ? "" : task.getReferences();
                     taskLabel = task.getLabel();
-                    taskPostOnYouTubeAccessToken = task.getPostOnYouTubeAccessToken();
+                    taskPostOnYouTubeConfigurationLabel = task.getPostOnYouTubeConfigurationLabel();
                     taskPostOnYouTubeTitle = task.getPostOnYouTubeTitle();
                     taskPostOnYouTubeDescription = task.getPostOnYouTubeDescription();
                     taskPostOnYouTubeTags = task.getPostOnYouTubeTags();
@@ -3543,7 +3513,7 @@ public class NewWorkflow extends Workspace implements Serializable {
             {
                 task.setReferences(taskReferences);
                 task.setLabel(taskLabel);
-                task.setPostOnYouTubeAccessToken(taskPostOnYouTubeAccessToken);
+                task.setPostOnYouTubeConfigurationLabel(taskPostOnYouTubeConfigurationLabel);
                 task.setPostOnYouTubeTitle(taskPostOnYouTubeTitle);
                 task.setPostOnYouTubeDescription(taskPostOnYouTubeDescription);
                 task.setPostOnYouTubeTags(taskPostOnYouTubeTags);
@@ -4012,6 +3982,17 @@ public class NewWorkflow extends Workspace implements Serializable {
 
         return properties;
     }
+
+    public List<String> getTaskPostOnYouTubeConfLabels()
+    {
+        List<String> youTubeConfigurationLables = new ArrayList<>();
+
+        for (YouTubeConf youTubeConf: taskPostOnYouTubeConfList)
+            youTubeConfigurationLables.add(youTubeConf.getLabel());
+
+        return youTubeConfigurationLables;
+    }
+
 
     public TreeNode getTnRoot() {
         return tnRoot;
@@ -4773,12 +4754,16 @@ public class NewWorkflow extends Workspace implements Serializable {
         this.taskPostOnFacebookNodeId = taskPostOnFacebookNodeId;
     }
 
-    public String getTaskPostOnYouTubeAccessToken() {
-        return taskPostOnYouTubeAccessToken;
+    public String getTaskPostOnYouTubeConfigurationLabel() {
+        return taskPostOnYouTubeConfigurationLabel;
     }
 
-    public void setTaskPostOnYouTubeAccessToken(String taskPostOnYouTubeAccessToken) {
-        this.taskPostOnYouTubeAccessToken = taskPostOnYouTubeAccessToken;
+    public void setTaskPostOnYouTubeConfigurationLabel(String taskPostOnYouTubeConfigurationLabel) {
+        this.taskPostOnYouTubeConfigurationLabel = taskPostOnYouTubeConfigurationLabel;
+    }
+
+    public List<YouTubeConf> getTaskPostOnYouTubeConfList() {
+        return taskPostOnYouTubeConfList;
     }
 
     public String getTaskPostOnYouTubeTitle() {
@@ -4811,14 +4796,6 @@ public class NewWorkflow extends Workspace implements Serializable {
 
     public void setTaskPostOnYouTubeTags(String taskPostOnYouTubeTags) {
         this.taskPostOnYouTubeTags = taskPostOnYouTubeTags;
-    }
-
-    public String getYouTubeAccessTokenURL() {
-        return youTubeAccessTokenURL;
-    }
-
-    public void setYouTubeAccessTokenURL(String youTubeAccessTokenURL) {
-        this.youTubeAccessTokenURL = youTubeAccessTokenURL;
     }
 
     public String getTaskPostOnYouTubePrivacy() {

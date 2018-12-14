@@ -79,11 +79,21 @@ public class CatraMMSServices {
 
             String authorizationToken = code[0];
 
+            // clientId is retrieved by the credentials
+            String clientId = "700586767360-96om12ccsf16m41qijrdagkk0oqf2o7m.apps.googleusercontent.com";
+
+            // clientSecret is retrieved by the credentials
+            String clientSecret = "Uabf92wFTF80vOL3z_zzRUtT";
+
+            // this URL is configured inside the YouTube credentials
+            String mmsYouTubeCallbak = "https://mms-gui.catrasoft.cloud/rest/api/youTubeCallback";
+
             String url = "https://www.googleapis.com/oauth2/v4/token";
+
             String body = "code=" + java.net.URLEncoder.encode(authorizationToken, "UTF-8")
-                    + "&client_id=700586767360-96om12ccsf16m41qijrdagkk0oqf2o7m.apps.googleusercontent.com"
-                    + "&client_secret=Uabf92wFTF80vOL3z_zzRUtT"
-                    + "&redirect_uri=" + java.net.URLEncoder.encode("https://mms-gui.catrasoft.cloud/rest/api/youTubeCallback", "UTF-8")
+                    + "&client_id=" + clientId
+                    + "&client_secret=" + clientSecret
+                    + "&redirect_uri=" + java.net.URLEncoder.encode(mmsYouTubeCallbak, "UTF-8")
                     + "&grant_type=authorization_code"
                     ;
 
@@ -97,9 +107,25 @@ public class CatraMMSServices {
             String contentType = "application/x-www-form-urlencoded";
             String youTubeResponse = HttpFeedFetcher.fetchPostHttpsJson(url, contentType, timeoutInSeconds, maxRetriesNumber,
                     username, password, body);
-            mLogger.info("Elapsed time login (@" + url + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
+            mLogger.info("Elapsed time login (@" + url + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs."
+                    + ", youTubeResponse: " + youTubeResponse
+            );
 
-            return Response.ok(youTubeResponse).build();
+            /*
+            {
+              "access_token": "ya29.GlxvBv2JUSUGmxHncG7KK118PHh4IY3ce6hbSRBoBjeXMiZjD53y3ZoeGchIkyJMb2rwQHlp-tQUZcIJ5zrt6CL2iWj-fV_2ArlAOCTy8y2B0_3KeZrbbJYgoFXCYA",
+              "expires_in": 3600,
+              "scope": "https://www.googleapis.com/auth/youtube https://www.googleapis.com/auth/youtube.upload",
+              "token_type": "Bearer"
+            }
+             */
+            JSONObject joYouTubeResponse = new JSONObject(youTubeResponse);
+
+            JSONObject joCallbackResponse = new JSONObject();
+            joCallbackResponse.put("comment", "Please, copy the 'refresh_token' value into the appropriate MMS configuration field");
+            joCallbackResponse.put("refresh_token", joYouTubeResponse.getString("refresh_token"));
+
+            return Response.ok(joCallbackResponse.toString(4)).build();
         }
         catch (Exception e)
         {

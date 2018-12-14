@@ -1079,18 +1079,27 @@ public:
     void removeMediaItem (
         int64_t mediaItemKey);
 
-    void addModifyConf_YouTubeDetails(
-        int64_t userKey,
+    int64_t addYouTubeConf(
+        int64_t workspaceKey,
         string label,
         string refreshToken);
 
-    void removeConf_YouTubeDetails(
-        int64_t userKey,
-        string label);
+    void modifyYouTubeConf(
+        int64_t confKey,
+        int64_t workspaceKey,
+        string label,
+        string refreshToken);
 
-    Json::Value getYouTubeDetailsList (
-        int64_t userKey);
+    void removeYouTubeConf(
+        int64_t workspaceKey,
+        int64_t confKey);
 
+    Json::Value getYouTubeConfList (
+        int64_t workspaceKey);
+
+    string getYouTubeRefreshTokenByConfigurationLabel(
+        int64_t workspaceKey, string youTubeConfigurationLabel);
+    
 private:
     shared_ptr<spdlog::logger>                          _logger;
     shared_ptr<MySQLConnectionFactory>                  _mySQLConnectionFactory;

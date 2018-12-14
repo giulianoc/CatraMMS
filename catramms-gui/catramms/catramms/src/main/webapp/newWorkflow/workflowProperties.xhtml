@@ -3509,16 +3509,35 @@
 
             <p:row>
                 <p:column>
-                    <p:outputLabel value="Access Token" style="font-weight: bold"/>
+                    <p:outputLabel value="YouTube Configuration" style="font-weight: bold"/>
                 </p:column>
                 <p:column>
-                    <p:inputText id="taskAccessToken_Post_On_YouTube" style="width: 100%"
-                                 value="#{newWorkflow.taskPostOnYouTubeAccessToken}"
-                                 autocomplete="true"
-                                 placeholder="access token"/>
-                    <h:outputLink value="#{newWorkflow.youTubeAccessTokenURL}" target="_blank">
-                        <h:outputText value="Get Access Token" />
+                    <p:selectOneMenu id="taskConfigurationLabel_Post_On_YouTube"
+                                     value="#{newWorkflow.taskPostOnYouTubeConfigurationLabel}"
+                                     title="'Menu: Configuration -> YouTube' for YouTube configurations"
+                                     autoWidth="false">
+                        <f:selectItems value="#{newWorkflow.taskPostOnYouTubeConfLabels}"/>
+                    </p:selectOneMenu>
+                    <p:tooltip for="taskConfigurationLabel_Post_On_YouTube" showEffect="clip" hideEffect="explode" position="left"/>
+                    <br />
+                    <h:outputText
+                            rendered="#{newWorkflow.taskPostOnYouTubeConfLabels.size() == 0}"
+                            value="No MMS YouTube Configurations are present, please click " />
+                    <h:outputLink
+                            rendered="#{newWorkflow.taskPostOnYouTubeConfLabels.size() == 0}"
+                                  value="/conf/youTube.xhtml" target="_blank">
+                        <h:outputText value="here" />
                     </h:outputLink>
+                    <h:outputText
+                            rendered="#{newWorkflow.taskPostOnYouTubeConfLabels.size() == 0}"
+                            value=" to configure one" />
+                    <!--
+                    <h:outputLink
+                            rendered="#{newWorkflow.taskPostOnYouTubeConfLabels.size() != 0}"
+                            value="/conf/youTube.xhtml" target="_blank">
+                        <h:outputText value="MMS YouTube Configurations" />
+                    </h:outputLink>
+                    -->
                 </p:column>
             </p:row>
 

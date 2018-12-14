@@ -263,13 +263,12 @@ public class IngestionWorkflows extends Workspace implements Serializable {
         return status;
     }
 
-    public String getIngestionWorkflowStyleClass(IngestionWorkflow ingestionWorkflow)
+    public String getIngestionWorkflowStyleClass(int rowId)
     {
-        String styleClass;
+        String styleClass = "";
 
-        String status = getStatus(ingestionWorkflow);
+        String status = getStatus(ingestionWorkflowsList.get(rowId));
 
-        // NotCompleted, CompletedSuccessful, CompletedWithFailures
         if (status.equalsIgnoreCase("CompletedSuccessful"))
             styleClass = "successFullColor";
         else if (status.equalsIgnoreCase("CompletedWithFailures"))

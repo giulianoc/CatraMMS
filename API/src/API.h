@@ -85,14 +85,6 @@ private:
     bool                _defaultRedirect;
     string              _deliveryProtocol;
     string              _deliveryHost;
-
-    string              _youTubeDataAPIProtocol;
-    string              _youTubeDataAPIHostName;
-    int                 _youTubeDataAPIPort;
-    string              _youTubeDataAPIRefreshTokenURI;
-    long                _youTubeDataAPITimeoutInSeconds;
-    string              _youTubeDataAPIClientId;
-    string              _youTubeDataAPIClientSecret;
     
     FileUploadProgressData*     _fileUploadProgressData;
     
@@ -222,21 +214,26 @@ private:
         string clientIPAddress,
         unordered_map<string, string> queryParameters);
 
-    void addModifyYouTubeDetails(
+    void addYouTubeConf(
         FCGX_Request& request,
-        int64_t userKey,
+        shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
 
-    void removeYouTubeDetails(
+    void modifyYouTubeConf(
         FCGX_Request& request,
-        int64_t userKey,
+        shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
 
-    void youTubeDetailsList(
+    void removeYouTubeConf(
         FCGX_Request& request,
-        int64_t userKey);
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters);
+
+    void youTubeConfList(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace);
 
     void parseContentRange(string contentRange,
         long long& contentRangeStart,

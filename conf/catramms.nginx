@@ -112,14 +112,17 @@ server {
 			rewrite ^/catramms/(v[0-9]+)/delivery/([0-9]+)/?$ /api?version=$1&method=createDeliveryAuthorization&physicalPathKey=$2 last;
 		}
 
+		if ($request_method = POST) {
+			rewrite ^/catramms/(v[0-9]+)/conf/youtube/?$ /api?version=$1&method=addYouTubeConf last;
+		}
 		if ($request_method = PUT) {
-			rewrite ^/catramms/(v[0-9]+)/conf/youtube/?$ /api?version=$1&method=addModifyYouTubeDetails last;
+			rewrite ^/catramms/(v[0-9]+)/conf/youtube/([0-9]+)/?$ /api?version=$1&method=modifyYouTubeConf&confKey=$2 last;
 		}
 		if ($request_method = DELETE) {
-			rewrite ^/catramms/(v[0-9]+)/conf/youtube/?$ /api?version=$1&method=removeYouTubeDetails last;
+			rewrite ^/catramms/(v[0-9]+)/conf/youtube/([0-9]+)/?$ /api?version=$1&method=removeYouTubeConf&confKey=$2 last;
 		}
 		if ($request_method = GET) {
-			rewrite ^/catramms/(v[0-9]+)/conf/youtube/?$ /api?version=$1&method=youTubeDetailsList last;
+			rewrite ^/catramms/(v[0-9]+)/conf/youtube/?$ /api?version=$1&method=youTubeConfList last;
 		}
 	}
 

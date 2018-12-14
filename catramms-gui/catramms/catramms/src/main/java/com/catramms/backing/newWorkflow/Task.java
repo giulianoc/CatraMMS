@@ -81,7 +81,7 @@ public class Task implements Serializable
     private Long extractTracksAudioTrackNumber;
     private String postOnFacebookAccessToken;
     private String postOnFacebookNodeId;
-    private String postOnYouTubeAccessToken;
+    private String postOnYouTubeConfigurationLabel;
     private String postOnYouTubeTitle;
     private String postOnYouTubeDescription;
     private String postOnYouTubeTags;
@@ -662,12 +662,12 @@ public class Task implements Serializable
         this.postOnFacebookNodeId = postOnFacebookNodeId;
     }
 
-    public String getPostOnYouTubeAccessToken() {
-        return postOnYouTubeAccessToken;
+    public String getPostOnYouTubeConfigurationLabel() {
+        return postOnYouTubeConfigurationLabel;
     }
 
-    public void setPostOnYouTubeAccessToken(String postOnYouTubeAccessToken) {
-        this.postOnYouTubeAccessToken = postOnYouTubeAccessToken;
+    public void setPostOnYouTubeConfigurationLabel(String postOnYouTubeConfigurationLabel) {
+        this.postOnYouTubeConfigurationLabel = postOnYouTubeConfigurationLabel;
     }
 
     public String getPostOnYouTubeTitle() {

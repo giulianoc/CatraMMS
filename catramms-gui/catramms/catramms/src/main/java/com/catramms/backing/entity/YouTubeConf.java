@@ -5,18 +5,18 @@ import java.io.Serializable;
 /**
  * Created by multi on 08.06.18.
  */
-public class YouTubeDetails implements Serializable{
+public class YouTubeConf implements Serializable{
 
-    private Long userKey;
+    private Long confKey;
     private String label;
     private String refreshToken;
 
-    public Long getUserKey() {
-        return userKey;
+    public Long getConfKey() {
+        return confKey;
     }
 
-    public void setUserKey(Long userKey) {
-        this.userKey = userKey;
+    public void setConfKey(Long confKey) {
+        this.confKey = confKey;
     }
 
     public String getLabel() {

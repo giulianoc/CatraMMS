@@ -16,28 +16,28 @@
 }
 
 .successFullColor {
-    /* background-color: #00ff00 !important; */
-    /* background-image: none !important; */
-    /* color: #000000 !important; */
-    color: #43a380 !important;
+    background-color: #28a745 !important;
+    background-image: none !important;
+    color: #ffffff !important;
+    /* color: #43a380 !important; */
 }
 .failureColor {
-    /* background-color: #ff0000 !important; */
-    /* background-image: none !important; */
-    /* color: #000000 !important; */
-    color: #ae001e !important;
+    background-color: #dc3545 !important;
+    background-image: none !important;
+    color: #ffffff !important;
+    /* color: #ae001e !important;  */
 }
 .processingColor {
-    /* background-color: #ffff00 !important; */
-    /* background-image: none !important; */
-    /* color: #000000 !important; */
-    color: #e9c8a4 !important;
+    background-color: #ffc107 !important;
+    background-image: none !important;
+    color: #343a40 !important;
+    /* color: #e9c8a4 !important;  */
 }
 .toBeProcessedColor {
-    /* background-color: #ffff00 !important; */
-    /* background-image: none !important; */
-    /* color: #000000 !important; */
-    color: #f5ecce !important;
+    background-color: #17a2b8 !important;
+    background-image: none !important;
+    color: #ffffff !important;
+    /* color: #f5ecce !important; */
 }
 
 

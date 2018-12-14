@@ -170,7 +170,6 @@
                      value="#{ingestionJobs.ingestionJobsList}" rowKey="#{ingestionJob.ingestionJobKey}"
                      selectionMode="single" stickyHeader="true"
                      widgetVar="ingestionJobDataTable"
-                     rowStyleClass="#{ingestionJobs.getIngestionJobStyleClass(ingestionJob)}"
                 >
 
             <f:facet name="header">
@@ -228,7 +227,7 @@
                 </p:outputLabel>
             </p:column>
 
-            <p:column style="width:150px;" headerText="Status" >
+            <p:column style="width:170px;" headerText="Status" styleClass="#{ingestionJobs.getIngestionJobStyleClass(rowId)}" >
                 <p:outputLabel
                         id="ingestionJobStatus"
                         value="#{ingestionJob.status}"

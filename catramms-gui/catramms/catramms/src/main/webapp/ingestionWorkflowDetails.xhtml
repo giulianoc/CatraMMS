@@ -111,7 +111,6 @@
                      value="#{ingestionWorkflowDetails.ingestionWorkflow.ingestionJobList}"
                      rowKey="#{ingestionJob.ingestionJobKey}"
                      selectionMode="single"
-                     rowStyleClass="#{ingestionWorkflowDetails.getIngestionJobStyleClass(ingestionJob)}"
                 >
 
             <p:column style="width:70px;" headerText="Ing. Job&lt;br&gt;Key" >
@@ -143,7 +142,7 @@
                 </p:outputLabel>
             </p:column>
 
-            <p:column style="width:150px;" headerText="Status" >
+            <p:column style="width:150px;" headerText="Status" styleClass="#{ingestionWorkflowDetails.getIngestionJobStyleClass(rowId)}" >
                 <p:outputLabel id="ingestionJobStatus"
                                value="#{ingestionJob.status}"
                                title="#{ingestionJob.status}"

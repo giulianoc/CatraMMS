@@ -7,6 +7,6 @@
 		"References": [
 			{ "ReferenceMediaItemKey": 11 }
 		],
-		"AccessToken": "XXXXX"
+		"ConfigurationLabel": "My YouTube Account"
 	}
 }

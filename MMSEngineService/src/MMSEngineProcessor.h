@@ -106,8 +106,11 @@ private:
     string                  _youTubeDataAPIProtocol;
     string                  _youTubeDataAPIHostName;
     int                     _youTubeDataAPIPort;
+    string                  _youTubeDataAPIRefreshTokenURI;
     string                  _youTubeDataAPIUploadVideoURI;
     long                    _youTubeDataAPITimeoutInSeconds;
+    string                  _youTubeDataAPIClientId;
+    string                  _youTubeDataAPIClientSecret;
 
     bool                    _localCopyTaskEnabled;
     
@@ -323,9 +326,13 @@ private:
         shared_ptr<long> processorsThreadsNumber,
         string mmsAssetPathName, int64_t sizeInBytes,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
-        string youTubeAccessToken, string youTubeTitle,
+        string youTubeConfigurationLabel, string youTubeTitle,
         string youTubeDescription, Json::Value youTubeTags,
         int youTubeCategoryId, string youTubePrivacy);
+
+    string getYouTubeAccessTokenByConfigurationLabel(
+        shared_ptr<Workspace> workspace, string youTubeConfigurationLabel);
+
 } ;
 
 #endif

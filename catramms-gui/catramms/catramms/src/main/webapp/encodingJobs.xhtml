@@ -170,7 +170,6 @@
                      value="#{encodingJobs.encodingJobsList}" rowKey="#{encodingJob.encodingJobKey}"
                      selectionMode="single" stickyHeader="true"
                      widgetVar="encodingJobDataTable"
-                     rowStyleClass="#{encodingJobs.getEncodingJobStyleClass(encodingJob)}"
                 >
 
             <f:facet name="header">
@@ -240,7 +239,7 @@
                 <p:outputLabel value="#{encodingJob.encodingPriority}" />
             </p:column>
 
-            <p:column style="width:210px;" headerText="Status" >
+            <p:column style="width:210px;" headerText="Status" styleClass="#{encodingJobs.getEncodingJobStyleClass(rowId)}" >
                 <p:outputLabel
                         id="encodingJobStatus"
                         value="#{encodingJob.status}"

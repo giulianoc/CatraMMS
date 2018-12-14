@@ -158,7 +158,6 @@
                      value="#{ingestionWorkflows.ingestionWorkflowsList}" rowKey="#{ingestionWorkflow.ingestionRootKey}"
                      selectionMode="single" stickyHeader="true"
                      widgetVar="ingestionWorkflowDataTable"
-                     rowStyleClass="#{ingestionWorkflows.getIngestionWorkflowStyleClass(ingestionWorkflow)}"
                 >
 
             <f:facet name="header">
@@ -194,7 +193,7 @@
                            hideEffect="explode" position="left"/>
             </p:column>
 
-            <p:column style="width:180px;" headerText="Status" >
+            <p:column style="width:180px;" headerText="Status" styleClass="#{ingestionWorkflows.getIngestionWorkflowStyleClass(rowId)}" >
                 <p:outputLabel
                         id="ingestionWorkflowStatus"
                         value="#{ingestionWorkflows.getStatus(ingestionWorkflow)}"
