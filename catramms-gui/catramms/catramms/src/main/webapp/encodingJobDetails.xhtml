@@ -90,7 +90,18 @@
                     <p:outputLabel value="#{encodingJobDetails.encodingJob.encodingJobKey}" />
 
                     <p:outputLabel value="Status: " />
-                    <p:outputLabel value="#{encodingJobDetails.encodingJob.status}" />
+                    <p:panel>
+                        <p:outputLabel value="#{encodingJobDetails.encodingJob.status} (" />
+
+                        <p:commandLink rendered="#{encodingJobDetails.encodingJob.status == 'End_Failed'}"
+                                       value="Try encoding again"
+                                       actionListener="#{encodingJobDetails.tryEncodingAgain}"
+                        />
+                        <p:outputLabel rendered="#{encodingJobDetails.encodingJob.status != 'End_Failed'}"
+                                       styleClass="gray" value="Try encoding again" />
+
+                        <p:outputLabel value=")" />
+                    </p:panel>
 
                     <p:outputLabel value="Start: " />
                     <p:outputLabel value="#{encodingJobDetails.encodingJob.start}" >

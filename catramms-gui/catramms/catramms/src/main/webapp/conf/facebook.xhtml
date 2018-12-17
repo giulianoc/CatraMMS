@@ -8,7 +8,7 @@
       xmlns:media="http://xmlns.jcp.org/jsf/composite/media">
 
 <f:metadata>
-    <f:viewAction action="#{youTubeView.fillList(false)}" />
+    <f:viewAction action="#{facebookView.fillList(false)}" />
 </f:metadata>
 
 <h:head>
@@ -22,11 +22,11 @@
     <ui:include src="/common/loadingDialog.xhtml"/>
     <ui:include src="/common/globalConfirm.xhtml"/>
 
-    <p:dialog widgetVar="editYouTubeConf" modal="true"
-              header="Edit YouTube Conf" appendTo="@(body)" width="600" height="500"
+    <p:dialog widgetVar="editFacebookConf" modal="true"
+              header="Edit Facebook Conf" appendTo="@(body)" width="600" height="500"
               showEffect="fade" hideEffect="fade" resizable="false" draggable="true">
 
-        <h:form id="editYouTubeConfForm">
+        <h:form id="editFacebookConfForm">
 
             <p:panelGrid cellpadding="10" style="width: 100%" >
                 <p:row>
@@ -34,7 +34,7 @@
                         <p:outputLabel value="ConfKey" style="font-weight: bold" />
                     </p:column>
                     <p:column>
-                        <p:outputLabel value="#{youTubeView.editYouTubeConfKey == -1 ? '' : youTubeView.editYouTubeConfKey}" />
+                        <p:outputLabel value="#{facebookView.editFacebookConfKey == -1 ? '' : facebookView.editFacebookConfKey}" />
                     </p:column>
                 </p:row>
 
@@ -46,36 +46,36 @@
                         <p:inputText style="width: 100%"
                                      required="true"
                                      autocomplete="true"
-                                     value="#{youTubeView.editYouTubeLabel}"
+                                     value="#{facebookView.editFacebookLabel}"
                                      placeholder="label for this configuration"/>
                     </p:column>
                 </p:row>
 
                 <p:row>
                     <p:column>
-                        <p:outputLabel value="Refresh Token" style="font-weight: bold" />
+                        <p:outputLabel value="Page Token" style="font-weight: bold" />
                     </p:column>
                     <p:column>
                         <p:inputText style="width: 100%"
                                      required="true"
                                      autocomplete="true"
-                                     value="#{youTubeView.editYouTubeRefreshToken}"
-                                     placeholder="refresh token"/>
+                                     value="#{facebookView.editFacebookPageToken}"
+                                     placeholder="page token"/>
 
                         <p:outputLabel value="Click " />
-                        <h:outputLink value="#{youTubeView.youTubeAccessTokenURL}" target="_blank">
+                        <h:outputLink value="#{facebookView.facebookAccessTokenURL}" target="_blank">
                             <h:outputText value="here" />
                         </h:outputLink>
-                        <p:outputLabel value=" to retrieve a YouTube refresh token" />
+                        <p:outputLabel value=" to retrieve a Facebook page token" />
                     </p:column>
                 </p:row>
 
             </p:panelGrid>
 
-            <p:commandButton value="#{youTubeView.editYouTubeConfKey == -1 ? 'Add YouTube Conf' : 'Edit YouTube Conf'}"
-                             actionListener="#{youTubeView.addModifyYouTubeConf}"
-                             update="viewForm:youTubeDataTable"
-                             oncomplete="PF('editYouTubeConf').hide()" />
+            <p:commandButton value="#{facebookView.editFacebookConfKey == -1 ? 'Add Facebook Conf' : 'Edit Facebook Conf'}"
+                             actionListener="#{facebookView.addModifyFacebookConf}"
+                             update="viewForm:facebookDataTable"
+                             oncomplete="PF('editFacebookConf').hide()" />
 
         </h:form>
     </p:dialog>
@@ -100,14 +100,14 @@
                 </span>
 
                 <p:outputLabel value="Workspace:" />
-                <p:selectOneMenu id="workspaceName" value="#{youTubeView.workspaceName}"
+                <p:selectOneMenu id="workspaceName" value="#{facebookView.workspaceName}"
                                  autoWidth="false">
-                    <f:selectItems value="#{youTubeView.workspaceNames}" />
+                    <f:selectItems value="#{facebookView.workspaceNames}" />
                     <p:ajax
                             global="true"
                             event="change"
-                            listener="#{youTubeView.fillList(false)}"
-                            update="youTubeDataTable" />
+                            listener="#{facebookView.fillList(false)}"
+                            update="facebookDataTable" />
                 </p:selectOneMenu>
 
                 <span class="ui-separator">
@@ -132,25 +132,25 @@
                     <span class="ui-icon ui-icon-grip-dotted-vertical" />
                 </span>
 
-                <p:outputLabel styleClass="viewTitle" value="YouTube Configuration" />
+                <p:outputLabel styleClass="viewTitle" value="Facebook Configuration" />
 
             </p:toolbarGroup>
 
             <p:toolbarGroup align="right">
 
-                <p:commandButton value="Add YouTube Conf"
+                <p:commandButton value="Add Facebook Conf"
                                  disabled="#{!sessionScope.currentWorkspaceDetails.owner}"
-                                 actionListener="#{youTubeView.prepareEditYouTubeConf(-1)}"
-                                 update="editYouTubeConfForm"
-                               oncomplete="PF('editYouTubeConf').show()" />
+                                 actionListener="#{facebookView.prepareEditFacebookConf(-1)}"
+                                 update="editFacebookConfForm"
+                               oncomplete="PF('editFacebookConf').show()" />
 
             </p:toolbarGroup>
         </p:toolbar>
 
-        <p:dataTable resizableColumns="true" id="youTubeDataTable" var="youTubeConf" rowIndexVar="rowId"
-                     value="#{youTubeView.youTubeConfList}" rowKey="#{youTubeConf.label}"
+        <p:dataTable resizableColumns="true" id="facebookDataTable" var="facebookConf" rowIndexVar="rowId"
+                     value="#{facebookView.facebookConfList}" rowKey="#{facebookConf.label}"
                      selectionMode="single" stickyHeader="true"
-                     widgetVar="youTubeDataTable" >
+                     widgetVar="facebookDataTable" >
 
             <f:facet name="header">
 
@@ -158,8 +158,8 @@
                     <p:toolbarGroup align="left">
                         <!-- panelGroup is to make 'rendered' working on update -->
                         <h:panelGroup>
-                            <p:outputLabel styleClass="red" value="#{youTubeView.youTubeConfList.size()}" />
-                            <p:outputLabel value=" YouTube conf" />
+                            <p:outputLabel styleClass="red" value="#{facebookView.facebookConfList.size()}" />
+                            <p:outputLabel value=" Facebook conf" />
                         </h:panelGroup>
                     </p:toolbarGroup>
 
@@ -171,23 +171,23 @@
             </f:facet>
 
             <p:column style="width:70px;" headerText="ConfKey" >
-                <p:outputLabel value="#{youTubeConf.confKey}" />
+                <p:outputLabel value="#{facebookConf.confKey}" />
             </p:column>
 
             <p:column headerText="Label" >
-                <p:outputLabel value="#{youTubeConf.label}" />
+                <p:outputLabel value="#{facebookConf.label}" />
             </p:column>
 
-            <p:column headerText="Refresh Token" >
-                <p:outputLabel value="#{youTubeConf.refreshToken}" />
+            <p:column headerText="Page Token" >
+                <p:outputLabel value="#{facebookConf.pageToken}" />
             </p:column>
 
             <p:column style="width:150px;" headerText="">
 
                 <p:commandLink value="Remove"
                                disabled="#{!sessionScope.currentWorkspaceDetails.owner}"
-                               action="#{youTubeView.removeYouTubeConf(youTubeConf.confKey)}"
-                               update="youTubeDataTable"
+                               action="#{facebookView.removeFacebookConf(facebookConf.confKey)}"
+                               update="facebookDataTable"
                         >
                     <p:confirm header="Confirmation" message="Are you sure?" icon="ui-icon-alert" />
                 </p:commandLink>
@@ -196,9 +196,9 @@
 
                 <p:commandLink value="Edit"
                                disabled="#{!sessionScope.currentWorkspaceDetails.owner}"
-                               actionListener="#{youTubeView.prepareEditYouTubeConf(rowId)}"
-                                 update="editYouTubeConfForm"
-                                 oncomplete="PF('editYouTubeConf').show()" />
+                               actionListener="#{facebookView.prepareEditFacebookConf(rowId)}"
+                                 update="editFacebookConfForm"
+                                 oncomplete="PF('editFacebookConf').show()" />
             </p:column>
 
         </p:dataTable>

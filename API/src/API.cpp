@@ -480,6 +480,10 @@ void API::manageRequestAndResponse(
     {
         registerUser(request, requestBody);
     }
+    else if (method == "createWorkspace")
+    {
+        createWorkspace(request, userKey, queryParameters, requestBody);
+    }
     else if (method == "shareWorkspace")
     {
         if (!shareWorkspace)
@@ -680,6 +684,22 @@ void API::manageRequestAndResponse(
     else if (method == "youTubeConfList")
     {
         youTubeConfList(request, workspace);
+    }
+    else if (method == "addFacebookConf")
+    {
+        addFacebookConf(request, workspace, queryParameters, requestBody);
+    }
+    else if (method == "modifyFacebookConf")
+    {
+        modifyFacebookConf(request, workspace, queryParameters, requestBody);
+    }
+    else if (method == "removeFacebookConf")
+    {
+        removeFacebookConf(request, workspace, queryParameters);
+    }
+    else if (method == "facebookConfList")
+    {
+        facebookConfList(request, workspace);
     }
     else
     {
@@ -1380,6 +1400,207 @@ void API::registerUser(
     }
 }
 
+void API::createWorkspace(
+        FCGX_Request& request,
+        int64_t userKey,
+        unordered_map<string, string> queryParameters,
+        string requestBody)
+{
+    string api = "createWorkspace";
+
+    _logger->info(__FILEREF__ + "Received " + api
+        + ", requestBody: " + requestBody
+    );
+
+    try
+    {
+        string workspaceName;
+        MMSEngineDBFacade::EncodingPriority encodingPriority;
+        MMSEngineDBFacade::EncodingPeriod encodingPeriod;
+        int maxIngestionsNumber;
+        int maxStorageInMB;
+
+        Json::Value metadataRoot;
+        try
+        {
+            Json::CharReaderBuilder builder;
+            Json::CharReader* reader = builder.newCharReader();
+            string errors;
+
+            bool parsingSuccessful = reader->parse(requestBody.c_str(),
+                    requestBody.c_str() + requestBody.size(), 
+                    &metadataRoot, &errors);
+            delete reader;
+
+            if (!parsingSuccessful)
+            {
+                string errorMessage = string("Json metadata failed during the parsing")
+                        + ", errors: " + errors
+                        + ", json data: " + requestBody
+                        ;
+                _logger->error(__FILEREF__ + errorMessage);
+
+                sendError(request, 400, errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+        catch(exception e)
+        {
+            string errorMessage = string("Json metadata failed during the parsing"
+                    ", json data: " + requestBody
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        {
+            vector<string> mandatoryFields = {
+                "WorkspaceName"
+            };
+            for (string field: mandatoryFields)
+            {
+                if (!_mmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
+                {
+                    string errorMessage = string("Json field is not present or it is null")
+                            + ", Json field: " + field;
+                    _logger->error(__FILEREF__ + errorMessage);
+
+                    sendError(request, 400, errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+            }
+
+            workspaceName = metadataRoot.get("WorkspaceName", "XXX").asString();
+        }
+
+        encodingPriority = _encodingPriorityWorkspaceDefaultValue;
+
+        encodingPeriod = _encodingPeriodWorkspaceDefaultValue;
+        maxIngestionsNumber = _maxIngestionsNumberWorkspaceDefaultValue;
+
+        maxStorageInMB = _maxStorageInMBWorkspaceDefaultValue;
+
+        try
+        {
+            string workspaceDirectoryName;
+
+            workspaceDirectoryName.resize(workspaceName.size());
+
+            transform(
+                workspaceName.begin(), 
+                workspaceName.end(), 
+                workspaceDirectoryName.begin(), 
+                [](unsigned char c){
+                    if (isalpha(c)) 
+                        return c; 
+                    else 
+                        return (unsigned char) '_'; } 
+            );
+
+            _logger->info(__FILEREF__ + "Creating Workspace"
+                + ", workspaceName: " + workspaceName
+            );
+            
+            pair<int64_t,string> workspaceKeyAndConfirmationCode =
+                    _mmsEngineDBFacade->createWorkspace(
+                        userKey,
+                        workspaceName,
+                        workspaceDirectoryName,
+                        MMSEngineDBFacade::WorkspaceType::IngestionAndDelivery,  // MMSEngineDBFacade::WorkspaceType workspaceType
+                        "",     // string deliveryURL,
+                        encodingPriority,               //  MMSEngineDBFacade::EncodingPriority maxEncodingPriority,
+                        encodingPeriod,                 //  MMSEngineDBFacade::EncodingPeriod encodingPeriod,
+                        maxIngestionsNumber,            // long maxIngestionsNumber,
+                        maxStorageInMB,                 // long maxStorageInMB,
+                        "",                             // string languageCode,
+                        chrono::system_clock::now() + chrono::hours(24 * 365 * 10)     // chrono::system_clock::time_point userExpirationDate
+                );
+
+            _logger->info(__FILEREF__ + "Created a new Workspace for the User"
+                + ", workspaceName: " + workspaceName
+                + ", userKey: " + to_string(userKey)
+                + ", confirmationCode: " + get<1>(workspaceKeyAndConfirmationCode)
+            );
+            
+            pair<string, string> emailAddressAndName = _mmsEngineDBFacade->getUserDetails (userKey);
+
+            string responseBody = string("{ ")
+                + "\"workspaceKey\": " + to_string(get<0>(workspaceKeyAndConfirmationCode)) + " "
+                + "}";
+            sendSuccess(request, 201, responseBody);
+            
+            string to = emailAddressAndName.first;
+            string subject = "Confirmation code";
+            
+            vector<string> emailBody;
+            emailBody.push_back(string("<p>Hi ") + emailAddressAndName.second + ",</p>");
+            emailBody.push_back(string("<p>the Workspace has been created successfully</p>"));
+            emailBody.push_back(string("<p>here follows the confirmation code ") + get<1>(workspaceKeyAndConfirmationCode) + " to be used to confirm the new Workspace</p>");
+            emailBody.push_back("<p>Have a nice day, best regards</p>");
+            emailBody.push_back("<p>MMS technical support</p>");
+
+            EMailSender emailSender(_logger, _configuration);
+            emailSender.sendEmail(to, subject, emailBody);
+        }
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + api + " failed"
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error: ") + e.what();
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + api + " failed"
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
 void API::shareWorkspace_(
         FCGX_Request& request,
         unordered_map<string, string> queryParameters,
@@ -1819,76 +2040,31 @@ void API::login(
             _logger->info(__FILEREF__ + "Login User"
                 + ", email: " + email
             );
-            
-            vector<tuple<int64_t,string,string,bool,bool,bool,bool,bool,bool,bool>> vWorkspaceNameAPIKeyIfOwnerAndFlags;
-            
+                        
             pair<int64_t,string> userKeyAndName = _mmsEngineDBFacade->login(
                     email, 
-                    password,
-                    vWorkspaceNameAPIKeyIfOwnerAndFlags
+                    password
                 );
 
             _logger->info(__FILEREF__ + "Login User"
                 + ", userKey: " + to_string(userKeyAndName.first)
                 + ", userName: " + userKeyAndName.second
-                + ", vWorkspaceNameAPIKeyIfOwnerAndFlags.size: " + to_string(vWorkspaceNameAPIKeyIfOwnerAndFlags.size())
                 + ", email: " + email
             );
+            
+            Json::Value workspaceDetailsRoot =
+                    _mmsEngineDBFacade->getWorkspaceDetails(userKeyAndName.first);
             
             string responseBody = string("{ ");
 
             responseBody += ("\"userKey\": " + to_string(userKeyAndName.first) + ", ");
             responseBody += ("\"userName\": \"" + userKeyAndName.second + "\", ");
             
-            responseBody += ("\"workspaces\": [ ");
+            responseBody += ("\"workspaces\": ");
 
-            bool firstEntry = true;
-            for (tuple<int64_t,string,string,bool,bool,bool,bool,bool,bool,bool> workspaceNameAPIKeyIfOwnerAndFlags: vWorkspaceNameAPIKeyIfOwnerAndFlags)
-            {
-                int64_t workspaceKey;
-                string workspaceName;
-                string apiKey;
-                bool ifOwner;
-                bool admin;
-                bool ingestWorkflow;
-                bool createProfiles;
-                bool deliveryAuthorization;
-                bool shareWorkspace;
-                bool editMedia;
-
-                tie(workspaceKey, workspaceName, apiKey, ifOwner, admin, ingestWorkflow, 
-                        createProfiles, deliveryAuthorization, shareWorkspace, editMedia) 
-                        = workspaceNameAPIKeyIfOwnerAndFlags;
-                
-                if (!firstEntry)
-                    responseBody += ", ";
-                
-                string sIfOwner = ifOwner ? "true" : "false";
-                string sAdmin = admin ? "true" : "false";
-                string sIngestWorkflow = ingestWorkflow ? "true" : "false";
-                string sCreateProfiles = createProfiles ? "true" : "false";
-                string sDeliveryAuthorization = deliveryAuthorization ? "true" : "false";
-                string sShareWorkspace = shareWorkspace ? "true" : "false";
-                string sEditMedia = editMedia ? "true" : "false";
-
-                responseBody += ("{ ");
-                responseBody += ("\"workspaceKey\": " + to_string(workspaceKey) + ", ");
-                responseBody += ("\"workspaceName\": \"" + workspaceName + "\", ");
-                responseBody += ("\"apiKey\": \"" + apiKey + "\", ");
-                responseBody += ("\"owner\": " + sIfOwner + ", ");
-                responseBody += ("\"admin\": " + sAdmin + ", ");
-                responseBody += ("\"ingestWorkflow\": " + sIngestWorkflow + ", ");
-                responseBody += ("\"createProfiles\": " + sCreateProfiles + ", ");
-                responseBody += ("\"deliveryAuthorization\": " + sDeliveryAuthorization + ", ");
-                responseBody += ("\"shareWorkspace\": " + sShareWorkspace + ", ");
-                responseBody += ("\"editMedia\": " + sEditMedia + " ");
-                responseBody += ("} ");
-
-                if (firstEntry)
-                    firstEntry = false;
-            }            
+            Json::StreamWriterBuilder wbuilder;
+            responseBody += Json::writeString(wbuilder, workspaceDetailsRoot);
             
-            responseBody += ("] ");
             responseBody += ("} ");
 
             sendSuccess(request, 200, responseBody);            
@@ -2211,6 +2387,13 @@ void API::ingestionRootsStatus(
             startAndEndIngestionDatePresent = true;
         }
 
+        string status = "all";
+        auto statusIt = queryParameters.find("status");
+        if (statusIt != queryParameters.end() && statusIt->second != "")
+        {
+            status = statusIt->second;
+        }
+        
         bool asc = true;
         auto ascIt = queryParameters.find("asc");
         if (ascIt != queryParameters.end() && ascIt->second != "")
@@ -2226,7 +2409,7 @@ void API::ingestionRootsStatus(
                     workspace, ingestionRootKey,
                     start, rows,
                     startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
-                    asc
+                    status, asc
                     );
 
             Json::StreamWriterBuilder wbuilder;
@@ -2511,15 +2694,44 @@ void API::encodingJobPriority(
         }
 
         MMSEngineDBFacade::EncodingPriority newEncodingJobPriority;
+        bool newEncodingJobPriorityPresent = false;
         auto newEncodingJobPriorityCodeIt = queryParameters.find("newEncodingJobPriorityCode");
         if (newEncodingJobPriorityCodeIt != queryParameters.end() && newEncodingJobPriorityCodeIt->second != "")
         {
             newEncodingJobPriority = static_cast<MMSEngineDBFacade::EncodingPriority>(stoll(newEncodingJobPriorityCodeIt->second));
+            newEncodingJobPriorityPresent = true;
+        }
+
+        bool tryEncodingAgain = false;
+        auto tryEncodingAgainIt = queryParameters.find("tryEncodingAgain");
+        if (tryEncodingAgainIt != queryParameters.end())
+        {
+            if (tryEncodingAgainIt->second == "false")
+                tryEncodingAgain = false;
+            else
+                tryEncodingAgain = true;
         }
 
         {
-            _mmsEngineDBFacade->updateEncodingJobPriority(
+            if (newEncodingJobPriorityPresent)
+            {
+                _mmsEngineDBFacade->updateEncodingJobPriority(
                     workspace, encodingJobKey, newEncodingJobPriority);
+            }
+            
+            if (tryEncodingAgain)
+            {
+                _mmsEngineDBFacade->updateEncodingJobTryAgain(
+                    workspace, encodingJobKey);
+            }
+            
+            if (!newEncodingJobPriorityPresent && !tryEncodingAgain)
+            {
+                _logger->warn(__FILEREF__ + "Useless API call, no encoding update was done"
+                    + ", newEncodingJobPriorityPresent: " + to_string(newEncodingJobPriorityPresent)
+                    + ", tryEncodingAgain: " + to_string(tryEncodingAgain)
+                );
+            }
 
             string responseBody;
             
@@ -3249,6 +3461,456 @@ void API::youTubeConfList(
 
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, youTubeConfListRoot);
+            
+            sendSuccess(request, 200, responseBody);
+        }
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error: ") + e.what();
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::addFacebookConf(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody)
+{
+    string api = "addFacebookConf";
+
+    _logger->info(__FILEREF__ + "Received " + api
+        + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
+        + ", requestBody: " + requestBody
+    );
+
+    try
+    {
+        string label;
+        string pageToken;
+        
+        try
+        {
+            Json::Value requestBodyRoot;
+            
+            {
+                Json::CharReaderBuilder builder;
+                Json::CharReader* reader = builder.newCharReader();
+                string errors;
+
+                bool parsingSuccessful = reader->parse(requestBody.c_str(),
+                        requestBody.c_str() + requestBody.size(), 
+                        &requestBodyRoot, &errors);
+                delete reader;
+
+                if (!parsingSuccessful)
+                {
+                    string errorMessage = __FILEREF__ + "failed to parse the requestBody"
+                            + ", errors: " + errors
+                            + ", requestBody: " + requestBody
+                            ;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errors);
+                }
+            }
+
+            string field = "Label";
+            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }    
+            label = requestBodyRoot.get(field, "XXX").asString();            
+
+            field = "PageToken";
+            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }    
+            pageToken = requestBodyRoot.get(field, "XXX").asString();            
+        }
+        catch(runtime_error e)
+        {
+            string errorMessage = string("requestBody json is not well format")
+                    + ", requestBody: " + requestBody
+                    + ", e.what(): " + e.what()
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        catch(exception e)
+        {
+            string errorMessage = string("requestBody json is not well format")
+                    + ", requestBody: " + requestBody
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        
+        string sResponse;
+        try
+        {
+            int64_t confKey = _mmsEngineDBFacade->addFacebookConf(
+                workspace->_workspaceKey, label, pageToken);
+
+            sResponse = (
+                    string("{ ") 
+                    + "\"confKey\": " + to_string(confKey)
+                    + "}"
+                    );            
+        }
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addFacebookConf failed"
+                + ", e.what(): " + e.what()
+            );
+
+            throw e;
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addFacebookConf failed"
+                + ", e.what(): " + e.what()
+            );
+
+            throw e;
+        }
+
+        sendSuccess(request, 201, sResponse);
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error: ") + e.what();
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::modifyFacebookConf(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody)
+{
+    string api = "modifyFacebookConf";
+
+    _logger->info(__FILEREF__ + "Received " + api
+        + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
+        + ", requestBody: " + requestBody
+    );
+
+    try
+    {
+        string label;
+        string pageToken;
+        
+        try
+        {
+            Json::Value requestBodyRoot;
+            
+            {
+                Json::CharReaderBuilder builder;
+                Json::CharReader* reader = builder.newCharReader();
+                string errors;
+
+                bool parsingSuccessful = reader->parse(requestBody.c_str(),
+                        requestBody.c_str() + requestBody.size(), 
+                        &requestBodyRoot, &errors);
+                delete reader;
+
+                if (!parsingSuccessful)
+                {
+                    string errorMessage = __FILEREF__ + "failed to parse the requestBody"
+                            + ", errors: " + errors
+                            + ", requestBody: " + requestBody
+                            ;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errors);
+                }
+            }
+
+            string field = "Label";
+            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }    
+            label = requestBodyRoot.get(field, "XXX").asString();            
+
+            field = "PageToken";
+            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }    
+            pageToken = requestBodyRoot.get(field, "XXX").asString();            
+        }
+        catch(runtime_error e)
+        {
+            string errorMessage = string("requestBody json is not well format")
+                    + ", requestBody: " + requestBody
+                    + ", e.what(): " + e.what()
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        catch(exception e)
+        {
+            string errorMessage = string("requestBody json is not well format")
+                    + ", requestBody: " + requestBody
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        
+        string sResponse;
+        try
+        {
+            int64_t confKey;
+            auto confKeyIt = queryParameters.find("confKey");
+            if (confKeyIt == queryParameters.end())
+            {
+                string errorMessage = string("The 'confKey' parameter is not found");
+                _logger->error(__FILEREF__ + errorMessage);
+
+                sendError(request, 400, errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            confKey = stoll(confKeyIt->second);
+
+            _mmsEngineDBFacade->modifyFacebookConf(
+                confKey, workspace->_workspaceKey, label, pageToken);
+
+            sResponse = (
+                    string("{ ") 
+                    + "\"confKey\": " + to_string(confKey)
+                    + "}"
+                    );            
+        }
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyFacebookConf failed"
+                + ", e.what(): " + e.what()
+            );
+
+            throw e;
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyFacebookConf failed"
+                + ", e.what(): " + e.what()
+            );
+
+            throw e;
+        }
+
+        sendSuccess(request, 200, sResponse);
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error: ") + e.what();
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::removeFacebookConf(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters)
+{
+    string api = "removeFacebookConf";
+
+    _logger->info(__FILEREF__ + "Received " + api
+        + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
+    );
+
+    try
+    {
+        string sResponse;
+        try
+        {
+            int64_t confKey;
+            auto confKeyIt = queryParameters.find("confKey");
+            if (confKeyIt == queryParameters.end())
+            {
+                string errorMessage = string("The 'confKey' parameter is not found");
+                _logger->error(__FILEREF__ + errorMessage);
+
+                sendError(request, 400, errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            confKey = stoll(confKeyIt->second);
+            
+            _mmsEngineDBFacade->removeFacebookConf(
+                workspace->_workspaceKey, confKey);
+
+            sResponse = (
+                    string("{ ") 
+                    + "\"confKey\": " + to_string(confKey)
+                    + "}"
+                    );            
+        }
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeFacebookConf failed"
+                + ", e.what(): " + e.what()
+            );
+
+            throw e;
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeFacebookConf failed"
+                + ", e.what(): " + e.what()
+            );
+
+            throw e;
+        }
+
+        sendSuccess(request, 200, sResponse);
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error: ") + e.what();
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::facebookConfList(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace)
+{
+    string api = "facebookConfList";
+
+    _logger->info(__FILEREF__ + "Received " + api
+    );
+
+    try
+    {
+        {
+            
+            Json::Value facebookConfListRoot = _mmsEngineDBFacade->getFacebookConfList(
+                    workspace->_workspaceKey);
+
+            Json::StreamWriterBuilder wbuilder;
+            string responseBody = Json::writeString(wbuilder, facebookConfListRoot);
             
             sendSuccess(request, 200, responseBody);
         }

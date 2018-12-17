@@ -41,6 +41,9 @@ public class IngestionWorkflows extends Workspace implements Serializable {
     private Date begin;
     private Date end;
 
+    private String status;
+    private List<String> statusOptions;
+
     private boolean ascending;
     private Long maxIngestionWorkflowsNumber = new Long(100);
 
@@ -56,6 +59,17 @@ public class IngestionWorkflows extends Workspace implements Serializable {
 
         autoRefresh = true;
         autoRefreshPeriodInSeconds = 30;
+
+        {
+            statusOptions = new ArrayList<>();
+
+            statusOptions.add("All");
+            statusOptions.add("NotCompleted");
+            statusOptions.add("CompletedSuccessful");
+            statusOptions.add("CompletedWithFailures");
+
+            status = statusOptions.get(0);
+        }
 
         {
             Calendar calendar = Calendar.getInstance();
@@ -193,6 +207,7 @@ public class IngestionWorkflows extends Workspace implements Serializable {
                 String url = "ingestionWorkflows.xhtml?maxIngestionWorkflowsNumber=" + maxIngestionWorkflowsNumber
                         + "&ascending=" + ascending
                         + "&autoRefresh=" + autoRefresh
+                        + "&status=" + status
                         + "&begin=" + simpleDateFormat_1.format(begin)
                         + "&end=" + simpleDateFormat_1.format(end)
                         ;
@@ -230,7 +245,7 @@ public class IngestionWorkflows extends Workspace implements Serializable {
                         CatraMMS catraMMS = new CatraMMS();
                         ingestionWorkflowsNumber = catraMMS.getIngestionWorkflows(
                                 username, password, maxIngestionWorkflowsNumber,
-                                begin, end, ascending, ingestionWorkflowsList);
+                                begin, end, status, ascending, ingestionWorkflowsList);
                     }
                 }
                 catch (Exception e)
@@ -341,5 +356,21 @@ public class IngestionWorkflows extends Workspace implements Serializable {
 
     public void setIngestionWorkflowsList(List<IngestionWorkflow> ingestionWorkflowsList) {
         this.ingestionWorkflowsList = ingestionWorkflowsList;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public List<String> getStatusOptions() {
+        return statusOptions;
+    }
+
+    public void setStatusOptions(List<String> statusOptions) {
+        this.statusOptions = statusOptions;
     }
 }

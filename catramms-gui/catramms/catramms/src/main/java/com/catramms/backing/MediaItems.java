@@ -309,9 +309,7 @@ public class MediaItems extends Workspace implements Serializable {
         try {
             Long userKey = SessionUtils.getUserKey();
             String apiKey = SessionUtils.getAPIKey();
-            HttpSession session = SessionUtils.getSession();
-
-            WorkspaceDetails currentWorkspaceDetails = (WorkspaceDetails) session.getAttribute("currentWorkspaceDetails");
+            WorkspaceDetails currentWorkspaceDetails = SessionUtils.getCurrentWorkspaceDetails();
 
             if (userKey == null || apiKey == null || apiKey.equalsIgnoreCase(""))
             {
@@ -399,9 +397,8 @@ public class MediaItems extends Workspace implements Serializable {
 
     public void workspaceNameChanged()
     {
-        HttpSession session = SessionUtils.getSession();
+        WorkspaceDetails currentWorkspaceDetails = SessionUtils.getCurrentWorkspaceDetails();
 
-        WorkspaceDetails currentWorkspaceDetails = (WorkspaceDetails) session.getAttribute("currentWorkspaceDetails");
         mLogger.info("workspaceNameChanged"
                         + ", workspaceName: " + currentWorkspaceDetails.getName()
         );
@@ -409,43 +406,11 @@ public class MediaItems extends Workspace implements Serializable {
         fillList(true);
     }
 
-    /*
-    public String getWorkspaceName()
-    {
-        HttpSession session = SessionUtils.getSession();
-
-        WorkspaceDetails currentWorkspaceDetails = (WorkspaceDetails) session.getAttribute("currentWorkspaceDetails");
-
-        return currentWorkspaceDetails.getName();
-    }
-
-    public void setWorkspaceName(String workspaceName)
-    {
-        HttpSession session = SessionUtils.getSession();
-
-        List<WorkspaceDetails> workspaceDetailsList =
-                (List<WorkspaceDetails>) session.getAttribute("workspaceDetailsList");
-
-        for (WorkspaceDetails workspaceDetails: workspaceDetailsList)
-        {
-            if (workspaceDetails.getName().equalsIgnoreCase(workspaceName))
-            {
-                session.setAttribute("currentWorkspaceDetails", workspaceDetails);
-
-                break;
-            }
-        }
-    }
-    */
-
     public List<String> getWorkspaceNames()
     {
         List<String> workspaceNames = new ArrayList<>();
 
-        HttpSession session = SessionUtils.getSession();
-
-        List<WorkspaceDetails> workspaceDetailsList =
-                (List<WorkspaceDetails>) session.getAttribute("workspaceDetailsList");
+        List<WorkspaceDetails> workspaceDetailsList = SessionUtils.getWorkspaceDetailsList();
 
         if (workspaceDetailsList != null)
         {

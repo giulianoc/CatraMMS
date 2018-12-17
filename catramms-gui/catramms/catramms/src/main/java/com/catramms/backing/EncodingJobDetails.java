@@ -119,6 +119,52 @@ public class EncodingJobDetails extends Workspace implements Serializable {
         }
     }
 
+    public void tryEncodingAgain()
+    {
+        mLogger.info("Received tryEncodingAgain");
+
+        try {
+            Long userKey = SessionUtils.getUserKey();
+            String apiKey = SessionUtils.getAPIKey();
+
+            if (userKey == null || apiKey == null || apiKey.equalsIgnoreCase(""))
+            {
+                mLogger.warn("no input to require ingestionRoot"
+                        + ", userKey: " + userKey
+                        + ", apiKey: " + apiKey
+                );
+            }
+            else
+            {
+                String username = userKey.toString();
+                String password = apiKey;
+
+                CatraMMS catraMMS = new CatraMMS();
+                catraMMS.updateEncodingJobTryAgain(username, password, encodingJobKey);
+            }
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "Exception: " + e;
+            mLogger.error(errorMessage);
+
+            return;
+        }
+
+        try
+        {
+            String url = "encodingJobDetails.xhtml?encodingJobKey=" + encodingJobKey
+                    ;
+            mLogger.info("Redirect to " + url);
+            FacesContext.getCurrentInstance().getExternalContext().redirect(url);
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "Exception: " + e;
+            mLogger.error(errorMessage);
+        }
+    }
+
     public EncodingJob getEncodingJob() {
         return encodingJob;
     }

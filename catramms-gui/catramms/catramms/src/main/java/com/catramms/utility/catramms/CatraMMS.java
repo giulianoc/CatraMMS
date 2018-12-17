@@ -260,24 +260,7 @@ public class CatraMMS {
             userName = joWMMSInfo.getString("userName");
             JSONArray jaWorkspacesInfo = joWMMSInfo.getJSONArray("workspaces");
 
-            for (int workspaceIndex = 0; workspaceIndex < jaWorkspacesInfo.length(); workspaceIndex++)
-            {
-                JSONObject workspaceInfo = jaWorkspacesInfo.getJSONObject(workspaceIndex);
-
-                WorkspaceDetails workspaceDetails = new WorkspaceDetails();
-                workspaceDetails.setWorkspaceKey(workspaceInfo.getLong("workspaceKey"));
-                workspaceDetails.setName(workspaceInfo.getString("workspaceName"));
-                workspaceDetails.setApiKey(workspaceInfo.getString("apiKey"));
-                workspaceDetails.setOwner(workspaceInfo.getBoolean("owner"));
-                workspaceDetails.setAdmin(workspaceInfo.getBoolean("admin"));
-                workspaceDetails.setIngestWorkflow(workspaceInfo.getBoolean("ingestWorkflow"));
-                workspaceDetails.setCreateProfiles(workspaceInfo.getBoolean("createProfiles"));
-                workspaceDetails.setDeliveryAuthorization(workspaceInfo.getBoolean("deliveryAuthorization"));
-                workspaceDetails.setShareWorkspace(workspaceInfo.getBoolean("shareWorkspace"));
-                workspaceDetails.setEditMedia(workspaceInfo.getBoolean("editMedia"));
-
-                workspaceDetailsList.add(workspaceDetails);
-            }
+            fillWorkspaceDetails(workspaceDetailsList, jaWorkspacesInfo);
         }
         catch (Exception e)
         {
@@ -291,6 +274,58 @@ public class CatraMMS {
         userKeyAndName.add(userName);
 
         return userKeyAndName;
+    }
+
+    public Long createWorkspace(String username, String password,
+                                String workspaceNameToRegister)
+            throws Exception
+    {
+        String mmsInfo;
+        String mmsURL = null;
+        try
+        {
+            mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort + "/catramms/v1/workspace";
+
+            String postBodyRequest = "{ "
+                    + "\"WorkspaceName\": \"" + workspaceNameToRegister + "\" "
+                    + "} "
+                    ;
+
+            mLogger.info("createWorkspace"
+                    + ", mmsURL: " + mmsURL
+                    + ", postBodyRequest: " + postBodyRequest
+            );
+
+            Date now = new Date();
+            String contentType = null;
+            mmsInfo = HttpFeedFetcher.fetchPostHttpsJson(mmsURL, contentType, timeoutInSeconds, maxRetriesNumber,
+                    username, password, postBodyRequest);
+            mLogger.info("Elapsed time register (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "createWorkspace failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+
+        Long workspaceKey;
+
+        try
+        {
+            JSONObject joWMMSInfo = new JSONObject(mmsInfo);
+            workspaceKey = joWMMSInfo.getLong("workspaceKey");
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "Parsing workspaceDetails failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+
+        return workspaceKey;
     }
 
     public IngestionResult ingestWorkflow(String username, String password,
@@ -520,7 +555,7 @@ public class CatraMMS {
         try
         {
             String mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort
-                    + "/catramms/v1/encodingJobs/" + encodingJobKey + "/" + newEncodingJobPriorityCode;
+                    + "/catramms/v1/encodingJobs/" + encodingJobKey + "?newEncodingJobPriorityCode=" + newEncodingJobPriorityCode;
 
             mLogger.info("updateEncodingJobPriority"
                             + ", mmsURL: " + mmsURL
@@ -535,6 +570,34 @@ public class CatraMMS {
         catch (Exception e)
         {
             String errorMessage = "updateEncodingJobPriority MMS failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+    }
+
+    public void updateEncodingJobTryAgain(String username, String password,
+                                          Long encodingJobKey)
+            throws Exception
+    {
+        try
+        {
+            String mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort
+                    + "/catramms/v1/encodingJobs/" + encodingJobKey + "?tryEncodingAgain=true";
+
+            mLogger.info("updateEncodingJobTryAgain"
+                    + ", mmsURL: " + mmsURL
+            );
+
+            String putBodyRequest = "";
+            Date now = new Date();
+            HttpFeedFetcher.fetchPutHttpsJson(mmsURL, timeoutInSeconds, maxRetriesNumber,
+                    username, password, putBodyRequest);
+            mLogger.info("Elapsed time updateEncodingJobPriority (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "updateEncodingJobTryAgain MMS failed. Exception: " + e;
             mLogger.error(errorMessage);
 
             throw new Exception(errorMessage);
@@ -688,7 +751,7 @@ public class CatraMMS {
 
     public Long getIngestionWorkflows(String username, String password,
                               Long maxIngestionWorkflowsNumber,
-                              Date start, Date end, boolean ascending,
+                              Date start, Date end, String status, boolean ascending,
                               List<IngestionWorkflow> ingestionWorkflowsList)
             throws Exception
     {
@@ -703,6 +766,7 @@ public class CatraMMS {
             String mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort + "/catramms/v1/ingestionRoots"
                     + "?start=0"
                     + "&rows=" + maxIngestionWorkflowsNumber
+                    + "&status=" + status
                     + "&asc=" + (ascending ? "true" : "false")
                     + "&startIngestionDate=" + simpleDateFormat.format(start)
                     + "&endIngestionDate=" + simpleDateFormat.format(end);
@@ -1607,6 +1671,216 @@ public class CatraMMS {
         return youTubeConfList;
     }
 
+    public void addFacebookConf(String username, String password,
+                               String label, String pageToken)
+            throws Exception
+    {
+
+        String mmsInfo;
+        try
+        {
+            String jsonFacebookConf;
+            {
+                JSONObject joFacebookConf = new JSONObject();
+
+                joFacebookConf.put("Label", label);
+                joFacebookConf.put("PageToken", pageToken);
+
+                jsonFacebookConf = joFacebookConf.toString(4);
+            }
+
+            String mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort + "/catramms/v1/conf/facebook";
+
+            mLogger.info("addFacebookConf"
+                    + ", mmsURL: " + mmsURL
+                    + ", jsonFacebookConf: " + jsonFacebookConf
+            );
+
+            Date now = new Date();
+            String contentType = null;
+            mmsInfo = HttpFeedFetcher.fetchPostHttpsJson(mmsURL, contentType, timeoutInSeconds, maxRetriesNumber,
+                    username, password, jsonFacebookConf);
+            mLogger.info("Elapsed time login (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "addFacebookConf MMS failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+    }
+
+    public void modifyFacebookConf(String username, String password,
+                                  Long confKey, String label, String pageToken)
+            throws Exception
+    {
+
+        String mmsInfo;
+        try
+        {
+            String jsonFacebookConf;
+            {
+                JSONObject joFacebookConf = new JSONObject();
+
+                joFacebookConf.put("Label", label);
+                joFacebookConf.put("PageToken", pageToken);
+
+                jsonFacebookConf = joFacebookConf.toString(4);
+            }
+
+            String mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort + "/catramms/v1/conf/facebook/" + confKey;
+
+            mLogger.info("modifyFacebookConf"
+                    + ", mmsURL: " + mmsURL
+                    + ", jsonFacebookConf: " + jsonFacebookConf
+            );
+
+            Date now = new Date();
+            mmsInfo = HttpFeedFetcher.fetchPutHttpsJson(mmsURL, timeoutInSeconds, maxRetriesNumber,
+                    username, password, jsonFacebookConf);
+            mLogger.info("Elapsed time login (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "modifyFacebookConf MMS failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+    }
+
+    public void removeFacebookConf(String username, String password,
+                                  Long confKey)
+            throws Exception
+    {
+
+        String mmsInfo;
+        try
+        {
+            String mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort + "/catramms/v1/conf/facebook/" + confKey;
+
+            mLogger.info("removeFacebookConf"
+                    + ", mmsURL: " + mmsURL
+                    + ", confKey: " + confKey
+            );
+
+            Date now = new Date();
+            mmsInfo = HttpFeedFetcher.fetchDeleteHttpsJson(mmsURL, timeoutInSeconds, maxRetriesNumber,
+                    username, password);
+            mLogger.info("Elapsed time login (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "removeFacebookConf MMS failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+    }
+
+    public List<FacebookConf> getFacebookConf(String username, String password)
+            throws Exception
+    {
+        List<FacebookConf> facebookConfList = new ArrayList<>();
+
+        String mmsInfo;
+        try
+        {
+            String mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort + "/catramms/v1/conf/facebook";
+
+            mLogger.info("mmsURL: " + mmsURL);
+
+            Date now = new Date();
+            mmsInfo = HttpFeedFetcher.fetchGetHttpsJson(mmsURL, timeoutInSeconds, maxRetriesNumber,
+                    username, password);
+            mLogger.info("Elapsed time getFacebookConf (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "MMS API failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+
+        try
+        {
+            JSONObject joMMSInfo = new JSONObject(mmsInfo);
+            JSONObject joResponse = joMMSInfo.getJSONObject("response");
+            JSONArray jaFacebookConf = joResponse.getJSONArray("facebookConf");
+
+            mLogger.info("jaFacebookConf.length(): " + jaFacebookConf.length());
+
+            facebookConfList.clear();
+
+            for (int facebookConfIndex = 0;
+                 facebookConfIndex < jaFacebookConf.length();
+                 facebookConfIndex++)
+            {
+                FacebookConf facebookConf = new FacebookConf();
+
+                JSONObject facebookConfInfo = jaFacebookConf.getJSONObject(facebookConfIndex);
+
+                fillFacebookConf(facebookConf, facebookConfInfo);
+
+                facebookConfList.add(facebookConf);
+            }
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "Parsing facebookConf failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+
+        return facebookConfList;
+    }
+
+    private void fillWorkspaceDetails(List<WorkspaceDetails> workspaceDetailsList, JSONArray jaWorkspacesInfo)
+            throws Exception
+    {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        simpleDateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+
+        try
+        {
+            for (int workspaceIndex = 0; workspaceIndex < jaWorkspacesInfo.length(); workspaceIndex++)
+            {
+                JSONObject workspaceInfo = jaWorkspacesInfo.getJSONObject(workspaceIndex);
+
+                WorkspaceDetails workspaceDetails = new WorkspaceDetails();
+                workspaceDetails.setWorkspaceKey(workspaceInfo.getLong("workspaceKey"));
+                workspaceDetails.setEnabled(workspaceInfo.getBoolean("isEnabled"));
+                workspaceDetails.setName(workspaceInfo.getString("workspaceName"));
+                workspaceDetails.setMaxEncodingPriority(workspaceInfo.getString("maxEncodingPriority"));
+                workspaceDetails.setEncodingPeriod(workspaceInfo.getString("encodingPeriod"));
+                workspaceDetails.setMaxIngestionsNumber(workspaceInfo.getLong("maxIngestionsNumber"));
+                workspaceDetails.setMaxStorageInMB(workspaceInfo.getLong("maxStorageInMB"));
+                workspaceDetails.setLanguageCode(workspaceInfo.getString("languageCode"));
+                workspaceDetails.setCreationDate(simpleDateFormat.parse(workspaceInfo.getString("creationDate")));
+                workspaceDetails.setApiKey(workspaceInfo.getString("apiKey"));
+                workspaceDetails.setOwner(workspaceInfo.getBoolean("owner"));
+                workspaceDetails.setAdmin(workspaceInfo.getBoolean("admin"));
+                workspaceDetails.setIngestWorkflow(workspaceInfo.getBoolean("ingestWorkflow"));
+                workspaceDetails.setCreateProfiles(workspaceInfo.getBoolean("createProfiles"));
+                workspaceDetails.setDeliveryAuthorization(workspaceInfo.getBoolean("deliveryAuthorization"));
+                workspaceDetails.setShareWorkspace(workspaceInfo.getBoolean("shareWorkspace"));
+                workspaceDetails.setEditMedia(workspaceInfo.getBoolean("editMedia"));
+
+                workspaceDetailsList.add(workspaceDetails);
+            }
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "fillWorkspaceDetails failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+    }
+
     private void fillEncodingJob(EncodingJob encodingJob, JSONObject encodingJobInfo)
             throws Exception
     {
@@ -2054,6 +2328,23 @@ public class CatraMMS {
         catch (Exception e)
         {
             String errorMessage = "fillYouTubeConf failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+    }
+
+    private void fillFacebookConf(FacebookConf facebookConf, JSONObject facebookConfInfo)
+            throws Exception
+    {
+        try {
+            facebookConf.setConfKey(facebookConfInfo.getLong("confKey"));
+            facebookConf.setLabel(facebookConfInfo.getString("label"));
+            facebookConf.setPageToken(facebookConfInfo.getString("pageToken"));
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "fillFacebookConf failed. Exception: " + e;
             mLogger.error(errorMessage);
 
             throw new Exception(errorMessage);

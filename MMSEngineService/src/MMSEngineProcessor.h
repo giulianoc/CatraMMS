@@ -319,8 +319,11 @@ private:
         shared_ptr<long> processorsThreadsNumber,
         string mmsAssetPathName, int64_t sizeInBytes,
         int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
-        string facebookNodeId, string facebookAccessToken
+        string facebookNodeId, string facebookConfigurationLabel
         );
+
+    string getFacebookPageTokenByConfigurationLabel(
+        shared_ptr<Workspace> workspace, string facebookConfigurationLabel);
 
     void postVideoOnYouTubeThread(
         shared_ptr<long> processorsThreadsNumber,

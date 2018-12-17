@@ -143,7 +143,8 @@ public class NewWorkflow extends Workspace implements Serializable {
     private String taskHttpCallbackHeaders;
     private Long taskExtractTracksVideoTrackNumber;
     private Long taskExtractTracksAudioTrackNumber;
-    private String taskPostOnFacebookAccessToken;
+    private String taskPostOnFacebookConfigurationLabel;
+    private List<FacebookConf> taskPostOnFacebookConfList;
     private String taskPostOnFacebookNodeId;
     private String taskPostOnYouTubeConfigurationLabel;
     private List<YouTubeConf> taskPostOnYouTubeConfList;
@@ -333,6 +334,7 @@ public class NewWorkflow extends Workspace implements Serializable {
                 catraMMS.getEncodingProfiles(username, password,
                         "image", taskImageEncodingProfilesList);
 
+                taskPostOnFacebookConfList = catraMMS.getFacebookConf(username, password);
                 taskPostOnYouTubeConfList = catraMMS.getYouTubeConf(username, password);
             }
         }
@@ -1693,13 +1695,13 @@ public class NewWorkflow extends Workspace implements Serializable {
                     workflowIssueList.add(workflowIssue);
                 }
 
-                if (task.getPostOnFacebookAccessToken() != null && !task.getPostOnFacebookAccessToken().equalsIgnoreCase(""))
-                    joParameters.put("AccessToken", task.getPostOnFacebookAccessToken());
+                if (task.getPostOnFacebookConfigurationLabel() != null && !task.getPostOnFacebookConfigurationLabel().equalsIgnoreCase(""))
+                    joParameters.put("ConfigurationLabel", task.getPostOnFacebookConfigurationLabel());
                 else
                 {
                     WorkflowIssue workflowIssue = new WorkflowIssue();
                     workflowIssue.setLabel(task.getLabel());
-                    workflowIssue.setFieldName("AccessToken");
+                    workflowIssue.setFieldName("ConfigurationLabel");
                     workflowIssue.setTaskType(task.getType());
                     workflowIssue.setIssue("The field is not initialized");
 
@@ -3091,7 +3093,7 @@ public class NewWorkflow extends Workspace implements Serializable {
                 {
                     taskReferences = task.getReferences() == null ? "" : task.getReferences();
                     taskLabel = task.getLabel();
-                    taskPostOnFacebookAccessToken = task.getPostOnFacebookAccessToken();
+                    taskPostOnFacebookConfigurationLabel = task.getPostOnFacebookConfigurationLabel();
                     taskPostOnFacebookNodeId = task.getPostOnFacebookNodeId();
 
                     {
@@ -3506,7 +3508,7 @@ public class NewWorkflow extends Workspace implements Serializable {
             {
                 task.setReferences(taskReferences);
                 task.setLabel(taskLabel);
-                task.setPostOnFacebookAccessToken(taskPostOnFacebookAccessToken);
+                task.setPostOnFacebookConfigurationLabel(taskPostOnFacebookConfigurationLabel);
                 task.setPostOnFacebookNodeId(taskPostOnFacebookNodeId);
             }
             else if (task.getType().equalsIgnoreCase("Post-On-YouTube"))
@@ -3758,18 +3760,6 @@ public class NewWorkflow extends Workspace implements Serializable {
         }
     }
 
-    public void taskPostOnFacebookUpdateAccessToken()
-    {
-        mLogger.info("taskPostOnFacebookUpdateAccessToken is called");
-        Map<String, String> requestParamMap = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap();
-        if (requestParamMap.containsKey("newAccessToken"))
-        {
-            taskPostOnFacebookAccessToken = requestParamMap.get("newAccessToken");
-
-            mLogger.info("taskPostOnFacebookAccessToken: " + taskPostOnFacebookAccessToken);
-        }
-    }
-
     public List<String> getTaskEncodingProfilesLabelList()
     {
         taskEncodingProfilesLabelList.clear();
@@ -3983,16 +3973,25 @@ public class NewWorkflow extends Workspace implements Serializable {
         return properties;
     }
 
-    public List<String> getTaskPostOnYouTubeConfLabels()
+    public List<String> getTaskPostOnFacebookConfLabels()
     {
-        List<String> youTubeConfigurationLables = new ArrayList<>();
+        List<String> facebookConfigurationLabels = new ArrayList<>();
 
-        for (YouTubeConf youTubeConf: taskPostOnYouTubeConfList)
-            youTubeConfigurationLables.add(youTubeConf.getLabel());
+        for (FacebookConf facebookConf: taskPostOnFacebookConfList)
+            facebookConfigurationLabels.add(facebookConf.getLabel());
 
-        return youTubeConfigurationLables;
+        return facebookConfigurationLabels;
     }
 
+    public List<String> getTaskPostOnYouTubeConfLabels()
+    {
+        List<String> youTubeConfigurationLabels = new ArrayList<>();
+
+        for (YouTubeConf youTubeConf: taskPostOnYouTubeConfList)
+            youTubeConfigurationLabels.add(youTubeConf.getLabel());
+
+        return youTubeConfigurationLabels;
+    }
 
     public TreeNode getTnRoot() {
         return tnRoot;
@@ -4738,12 +4737,20 @@ public class NewWorkflow extends Workspace implements Serializable {
         this.taskFontSizesList = taskFontSizesList;
     }
 
-    public String getTaskPostOnFacebookAccessToken() {
-        return taskPostOnFacebookAccessToken;
+    public String getTaskPostOnFacebookConfigurationLabel() {
+        return taskPostOnFacebookConfigurationLabel;
     }
 
-    public void setTaskPostOnFacebookAccessToken(String taskPostOnFacebookAccessToken) {
-        this.taskPostOnFacebookAccessToken = taskPostOnFacebookAccessToken;
+    public void setTaskPostOnFacebookConfigurationLabel(String taskPostOnFacebookConfigurationLabel) {
+        this.taskPostOnFacebookConfigurationLabel = taskPostOnFacebookConfigurationLabel;
+    }
+
+    public List<FacebookConf> getTaskPostOnFacebookConfList() {
+        return taskPostOnFacebookConfList;
+    }
+
+    public void setTaskPostOnFacebookConfList(List<FacebookConf> taskPostOnFacebookConfList) {
+        this.taskPostOnFacebookConfList = taskPostOnFacebookConfList;
     }
 
     public String getTaskPostOnFacebookNodeId() {

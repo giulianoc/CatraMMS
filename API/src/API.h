@@ -93,6 +93,12 @@ private:
         FCGX_Request& request,
         string requestBody);
     
+    void createWorkspace(
+        FCGX_Request& request,
+        int64_t userKey,
+        unordered_map<string, string> queryParameters,
+        string requestBody);
+
     void shareWorkspace_(
         FCGX_Request& request,
         unordered_map<string, string> queryParameters,
@@ -232,6 +238,27 @@ private:
         unordered_map<string, string> queryParameters);
 
     void youTubeConfList(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace);
+
+    void addFacebookConf(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody);
+
+    void modifyFacebookConf(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody);
+
+    void removeFacebookConf(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters);
+
+    void facebookConfList(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace);
 

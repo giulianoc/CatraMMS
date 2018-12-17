@@ -83,4 +83,26 @@ public class SessionUtils {
         else
             return null;
     }
+
+    public static List<WorkspaceDetails> getWorkspaceDetailsList()
+    {
+        HttpSession session = getSession();
+        if (session != null)
+        {
+            return (List<WorkspaceDetails>) session.getAttribute("workspaceDetailsList");
+        }
+        else
+            return null;
+    }
+
+    public static WorkspaceDetails getCurrentWorkspaceDetails()
+    {
+        HttpSession session = getSession();
+        if (session != null)
+        {
+            return (WorkspaceDetails) session.getAttribute("currentWorkspaceDetails");
+        }
+        else
+            return null;
+    }
 }

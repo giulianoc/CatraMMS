@@ -57,6 +57,9 @@ server {
 			rewrite ^/catramms/(v[0-9]+)/user/([0-9]+)/([0-9]+)/?$ /api?version=$1&method=confirmUser&userKey=$2&confirmationeCode=$3 last;
 		}
 
+		if ($request_method = POST) {
+			rewrite ^/catramms/(v[0-9]+)/workspace/?$ /api?version=$1&method=createWorkspace last;
+		}
 		if ($request_method = PUT) {
 			#Source User Key is retrieved from the request authorization
 			#Dest User details are in the body
@@ -69,7 +72,7 @@ server {
 			rewrite ^/catramms/(v[0-9]+)/encodingJobs/?([0-9]*)/?$ /api?version=$1&method=encodingJobsStatus&encodingJobKey=$2 last;
 		}
 		if ($request_method = PUT) {
-			rewrite ^/catramms/(v[0-9]+)/encodingJobs/?([0-9]*)/([0-9]+)?$ /api?version=$1&method=encodingJobPriority&encodingJobKey=$2&newEncodingJobPriorityCode=$3 last;
+			rewrite ^/catramms/(v[0-9]+)/encodingJobs/?([0-9]*)/?$ /api?version=$1&method=encodingJobPriority&encodingJobKey=$2 last;
 		}
 		if ($request_method = POST) {
 			rewrite ^/catramms/(v[0-9]+)/ingestion/?$ /api?version=$1&method=ingestion last;
@@ -127,6 +130,19 @@ server {
 		}
 		if ($request_method = GET) {
 			rewrite ^/catramms/(v[0-9]+)/conf/youtube/?$ /api?version=$1&method=youTubeConfList last;
+		}
+
+		if ($request_method = POST) {
+			rewrite ^/catramms/(v[0-9]+)/conf/facebook/?$ /api?version=$1&method=addModifyFacebookConf last;
+		}
+		if ($request_method = PUT) {
+			rewrite ^/catramms/(v[0-9]+)/conf/facebook/([0-9]+)/?$ /api?version=$1&method=addModifyFacebookConf&confKey=$2 last;
+		}
+		if ($request_method = DELETE) {
+			rewrite ^/catramms/(v[0-9]+)/conf/facebook/([0-9]+)/?$ /api?version=$1&method=removeFacebookConf&confKey=$2 last;
+		}
+		if ($request_method = GET) {
+			rewrite ^/catramms/(v[0-9]+)/conf/facebook/?$ /api?version=$1&method=facebookConfList last;
 		}
 	}
 

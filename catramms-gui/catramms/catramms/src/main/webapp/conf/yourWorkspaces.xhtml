@@ -1,0 +1,210 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:media="http://xmlns.jcp.org/jsf/composite/media">
+
+<f:metadata>
+</f:metadata>
+
+<h:head>
+
+    <h:outputStylesheet library="css" name="catramms.css"  />
+
+</h:head>
+
+<h:body>
+
+    <ui:include src="/common/loadingDialog.xhtml"/>
+    <ui:include src="/common/globalConfirm.xhtml"/>
+
+    <p:dialog widgetVar="createWorkspace" modal="true"
+              header="Create Workspace" appendTo="@(body)" width="600" height="500"
+              showEffect="fade" hideEffect="fade" resizable="false" draggable="true">
+
+        <h:form id="createWorkspaceForm">
+
+            <p:panelGrid cellpadding="10" style="width: 100%" >
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Name" style="font-weight: bold" />
+                    </p:column>
+                    <p:column>
+                        <p:inputText style="width: 100%"
+                                     required="true"
+                                     autocomplete="true"
+                                     value="#{yourWorkspaces.createWorkspaceName}"
+                                     placeholder="name"/>
+                    </p:column>
+                </p:row>
+
+            </p:panelGrid>
+
+            <br />
+
+            <p:commandButton value="Create Workspace"
+                             actionListener="#{yourWorkspaces.createWorkspace}"
+                             update="viewForm:yourWorkspacesDataTable"
+                             oncomplete="PF('createWorkspace').hide()" />
+
+        </h:form>
+    </p:dialog>
+
+    <h:form id="viewForm">
+
+        <p:growl id="growl" showDetail="true" sticky="false" escape="false" life="5000" >
+            <p:autoUpdate />
+        </p:growl>
+
+        <p:toolbar>
+            <p:toolbarGroup align="left">
+                <p:outputLabel styleClass="appTitle" value="Media Management System" />
+            </p:toolbarGroup>
+
+            <p:toolbarGroup align="right">
+
+                <p:outputLabel value="Welcome #{login.userName}" />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:commandLink value="Logout" action="#{login.logout}" />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <ui:include src="/common/mainMenu.xhtml"/>
+
+            </p:toolbarGroup>
+        </p:toolbar>
+
+        <p:toolbar>
+            <p:toolbarGroup align="left">
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:outputLabel styleClass="viewTitle" value="Your Workspaces" />
+
+            </p:toolbarGroup>
+
+            <p:toolbarGroup align="right">
+
+                <p:commandButton value="Create New Workspace"
+                               update="createWorkspaceForm"
+                               oncomplete="PF('createWorkspace').show()" />
+            </p:toolbarGroup>
+        </p:toolbar>
+
+        <p:dataTable resizableColumns="true" id="yourWorkspacesDataTable" var="workspaceDetails" rowIndexVar="rowId"
+                     value="#{sessionScope.workspaceDetailsList}" rowKey="#{workspaceDetails.workspaceKey}"
+                     selectionMode="single" stickyHeader="true"
+                     widgetVar="yourWorkspacesDataTable" >
+
+            <f:facet name="header">
+
+                <p:toolbar>
+                    <p:toolbarGroup align="left">
+                        <!-- panelGroup is to make 'rendered' working on update -->
+                        <h:panelGroup>
+                            <p:outputLabel styleClass="red" value="#{sessionScope.workspaceDetailsList.size()}" />
+                            <p:outputLabel value=" workspaces" />
+                        </h:panelGroup>
+                    </p:toolbarGroup>
+
+                    <p:toolbarGroup align="right">
+
+                    </p:toolbarGroup>
+                </p:toolbar>
+
+            </f:facet>
+
+            <p:column style="width:60px;" headerText="Key" >
+                <p:outputLabel value="#{workspaceDetails.workspaceKey}" />
+            </p:column>
+
+            <p:column headerText="Name" >
+                <p:outputLabel value="#{workspaceDetails.name}" />
+            </p:column>
+
+            <p:column style="width:50px;" headerText="Enabled" >
+                <p:outputLabel value="#{workspaceDetails.enabled}" />
+            </p:column>
+
+            <p:column style="width:100px;" headerText="MaxEncoding&lt;br&gt;Priority" >
+                <p:outputLabel value="#{workspaceDetails.maxEncodingPriority}" />
+            </p:column>
+
+            <p:column style="width:70px;" headerText="Encoding&lt;br&gt;Period" >
+                <p:outputLabel value="#{workspaceDetails.encodingPeriod}" />
+            </p:column>
+
+            <p:column style="width:110px;" headerText="MaxIngestions&lt;br&gt;Number" >
+                <p:outputLabel value="#{workspaceDetails.maxIngestionsNumber}" />
+            </p:column>
+
+            <p:column style="width:90px;" headerText="MaxStorage&lt;br&gt;InMB" >
+                <p:outputLabel value="#{workspaceDetails.maxStorageInMB}" />
+            </p:column>
+
+            <p:column style="width:70px;" headerText="Language&lt;br&gt;Code" >
+                <p:outputLabel value="#{workspaceDetails.languageCode}" />
+            </p:column>
+
+            <p:column style="width:160px;" headerText="creationDate" >
+                <p:outputLabel value="#{workspaceDetails.creationDate}" >
+                    <f:convertDateTime type="date" pattern="dd-MM-yyyy HH:mm:ss" timeZone="CET"/>
+                </p:outputLabel>
+            </p:column>
+
+            <p:column style="width:50px;" headerText="Owner" >
+                <p:outputLabel value="#{workspaceDetails.owner}" />
+            </p:column>
+
+            <p:column style="width:50px;" headerText="Admin" >
+                <p:outputLabel value="#{workspaceDetails.admin}" />
+            </p:column>
+
+            <p:column style="width:80px;" headerText="Ingest&lt;br&gt;Workflow" >
+                <p:outputLabel value="#{workspaceDetails.ingestWorkflow}" />
+            </p:column>
+
+            <p:column style="width:80px;" headerText="Create&lt;br&gt;Profiles" >
+                <p:outputLabel value="#{workspaceDetails.createProfiles}" />
+            </p:column>
+
+            <p:column style="width:110px;" headerText="Delivery&lt;br&gt;Authorization" >
+                <p:outputLabel value="#{workspaceDetails.deliveryAuthorization}" />
+            </p:column>
+
+            <p:column style="width:90px;" headerText="Share&lt;br&gt;Workspace" >
+                <p:outputLabel value="#{workspaceDetails.shareWorkspace}" />
+            </p:column>
+
+            <p:column style="width:60px;" headerText="Edit&lt;br&gt;Media" >
+                <p:outputLabel value="#{workspaceDetails.editMedia}" />
+            </p:column>
+
+            <p:column style="width:140px;" headerText="">
+                <!--
+                <p:commandLink value="Remove"
+                               action="#{encodingProfiles.removeEncodingProfile(encodingProfile.encodingProfileKey)}"
+                               update="encodingProfileDataTable"
+                        >
+                    <p:confirm header="Confirmation" message="Are you sure?" icon="ui-icon-alert" />
+                </p:commandLink>
+                -->
+            </p:column>
+
+        </p:dataTable>
+
+    </h:form>
+
+</h:body>
+</html>

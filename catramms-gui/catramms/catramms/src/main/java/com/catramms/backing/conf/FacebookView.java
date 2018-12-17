@@ -2,8 +2,8 @@ package com.catramms.backing.conf;
 
 import com.catramms.backing.common.SessionUtils;
 import com.catramms.backing.common.Workspace;
+import com.catramms.backing.entity.FacebookConf;
 import com.catramms.backing.entity.WorkspaceDetails;
-import com.catramms.backing.entity.YouTubeConf;
 import com.catramms.utility.catramms.CatraMMS;
 import org.apache.log4j.Logger;
 
@@ -27,18 +27,18 @@ import java.util.List;
  */
 @ManagedBean
 @ViewScoped
-public class YouTubeView extends Workspace implements Serializable {
+public class FacebookView extends Workspace implements Serializable {
 
     // static because the class is Serializable
-    private static final Logger mLogger = Logger.getLogger(YouTubeView.class);
+    private static final Logger mLogger = Logger.getLogger(FacebookView.class);
 
-    private Long editYouTubeConfKey;
-    private String editYouTubeLabel;
-    private String editYouTubeRefreshToken;
+    private Long editFacebookConfKey;
+    private String editFacebookLabel;
+    private String editFacebookPageToken;
 
-    private List<YouTubeConf> youTubeConfList = new ArrayList<>();
+    private List<FacebookConf> facebookConfList = new ArrayList<>();
 
-    private String youTubeAccessTokenURL;
+    private String facebookAccessTokenURL;
 
     @PostConstruct
     public void init()
@@ -47,50 +47,55 @@ public class YouTubeView extends Workspace implements Serializable {
 
         try
         {
-            // this URL is configured inside the YouTube credentials
-            String mmsYouTubeCallbak = "https://mms-gui.catrasoft.cloud/rest/api/youTubeCallback";
+            // this URL is configured inside the Facebook credentials
+            String mmsFacebookCallbak = "https://mms-gui.catrasoft.cloud/rest/api/facebookCallback";
 
-            // clientId is retrieved by the credentials
-            String clientId = "700586767360-96om12ccsf16m41qijrdagkk0oqf2o7m.apps.googleusercontent.com";
+            // clientId (appId) is retrieved by the facebook app
+            String clientId = "1862418063793547";
 
-            // this is the you tube scope to upload a video
-            String scope = "https://www.googleapis.com/auth/youtube https://www.googleapis.com/auth/youtube.upload";
+            // this is the you tube scope to upload a video in a page
+            String scope = "manage_pages,publish_pages";
 
-            youTubeAccessTokenURL = "https://accounts.google.com/o/oauth2/v2/auth"
-                    + "?redirect_uri=" + java.net.URLEncoder.encode(mmsYouTubeCallbak, "UTF-8")
-                    + "&prompt=consent"
+            String state = "{\"{st=state123abc,ds=123456789}\"}";
+
+            /*
+                https://www.facebook.com/v3.2/dialog/oauth?client_id=1862418063793547&redirect_uri=https://mms-gui.catrasoft.cloud/rest/api/youTubeCallback
+                &state={"{st=state123abc,ds=123456789}"}&response_type=code%20token&scope=manage_pages,publish_pages
+             */
+            facebookAccessTokenURL = "https://www.facebook.com/v3.2/dialog/oauth"
+                    + "?client_id=" + clientId
+                    + "&redirect_uri=" + java.net.URLEncoder.encode(mmsFacebookCallbak, "UTF-8")
+                    + "&state=" + java.net.URLEncoder.encode(state, "UTF-8")
                     + "&response_type=code"
-                    + "&client_id=" + clientId
                     + "&scope=" + java.net.URLEncoder.encode(scope, "UTF-8")
-                    + "&access_type=offline"
             ;
         }
         catch (Exception e)
         {
-            String errorMessage = "Problems to set youTubeAccessTokenURL. Exception: " + e;
+            String errorMessage = "Problems to set facebookAccessTokenURL. Exception: " + e;
             mLogger.error(errorMessage);
 
             return;
         }
     }
 
-    public void prepareEditYouTubeConf(int rowId)
+    public void prepareEditFacebookConf(int rowId)
     {
         if (rowId != -1)
         {
-            editYouTubeConfKey = youTubeConfList.get(rowId).getConfKey();
-            editYouTubeLabel = youTubeConfList.get(rowId).getLabel();
-            editYouTubeRefreshToken = youTubeConfList.get(rowId).getRefreshToken();
+            editFacebookConfKey = facebookConfList.get(rowId).getConfKey();
+            editFacebookLabel = facebookConfList.get(rowId).getLabel();
+            editFacebookPageToken = facebookConfList.get(rowId).getPageToken();
         }
         else
         {
-            editYouTubeConfKey = new Long(-1);
-            editYouTubeLabel = "";
-            editYouTubeRefreshToken = "";
+            editFacebookConfKey = new Long(-1);
+            editFacebookLabel = "";
+            editFacebookPageToken = "";
         }
     }
 
-    public void addModifyYouTubeConf()
+    public void addModifyFacebookConf()
     {
         try
         {
@@ -111,18 +116,18 @@ public class YouTubeView extends Workspace implements Serializable {
                 WorkspaceDetails currentWorkspaceDetails = SessionUtils.getCurrentWorkspaceDetails();
 
                 CatraMMS catraMMS = new CatraMMS();
-                if (editYouTubeConfKey == -1)
-                    catraMMS.addYouTubeConf(
+                if (editFacebookConfKey == -1)
+                    catraMMS.addFacebookConf(
                         username, password,
-                        editYouTubeLabel, editYouTubeRefreshToken);
+                        editFacebookLabel, editFacebookPageToken);
                 else
-                    catraMMS.modifyYouTubeConf(
+                    catraMMS.modifyFacebookConf(
                             username, password,
-                            editYouTubeConfKey, editYouTubeLabel, editYouTubeRefreshToken);
+                            editFacebookConfKey, editFacebookLabel, editFacebookPageToken);
 
                 fillList(false);
 
-                FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR, "YouTube",
+                FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Facebook",
                         "Add successful");
                 FacesContext.getCurrentInstance().addMessage(null, message);
             }
@@ -132,13 +137,13 @@ public class YouTubeView extends Workspace implements Serializable {
             String errorMessage = "Exception: " + e;
             mLogger.error(errorMessage);
 
-            FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR, "YouTube",
+            FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Facebook",
                     "Add failed");
             FacesContext.getCurrentInstance().addMessage(null, message);
         }
     }
 
-    public void removeYouTubeConf(Long confKey)
+    public void removeFacebookConf(Long confKey)
     {
         try
         {
@@ -158,12 +163,12 @@ public class YouTubeView extends Workspace implements Serializable {
                 String password = apiKey;
 
                 CatraMMS catraMMS = new CatraMMS();
-                catraMMS.removeYouTubeConf(
+                catraMMS.removeFacebookConf(
                         username, password, confKey);
 
                 fillList(false);
 
-                FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR, "YouTube",
+                FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Facebook",
                         "Remove successful");
                 FacesContext.getCurrentInstance().addMessage(null, message);
             }
@@ -173,7 +178,7 @@ public class YouTubeView extends Workspace implements Serializable {
             String errorMessage = "Exception: " + e;
             mLogger.error(errorMessage);
 
-            FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR, "YouTube",
+            FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Facebook",
                     "Remove failed");
             FacesContext.getCurrentInstance().addMessage(null, message);
         }
@@ -192,7 +197,7 @@ public class YouTubeView extends Workspace implements Serializable {
             {
                 // SimpleDateFormat simpleDateFormat_1 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 
-                String url = "youTube.xhtml"
+                String url = "facebook.xhtml"
                         ;
                 mLogger.info("Redirect to " + url);
                 FacesContext.getCurrentInstance().getExternalContext().redirect(url);
@@ -222,10 +227,10 @@ public class YouTubeView extends Workspace implements Serializable {
                     String username = userKey.toString();
                     String password = apiKey;
 
-                    youTubeConfList.clear();
+                    facebookConfList.clear();
 
                     CatraMMS catraMMS = new CatraMMS();
-                    youTubeConfList = catraMMS.getYouTubeConf(
+                    facebookConfList = catraMMS.getFacebookConf(
                             username, password);
                 }
             }
@@ -237,43 +242,43 @@ public class YouTubeView extends Workspace implements Serializable {
         }
     }
 
-    public Long getEditYouTubeConfKey() {
-        return editYouTubeConfKey;
+    public Long getEditFacebookConfKey() {
+        return editFacebookConfKey;
     }
 
-    public void setEditYouTubeConfKey(Long editYouTubeConfKey) {
-        this.editYouTubeConfKey = editYouTubeConfKey;
+    public void setEditFacebookConfKey(Long editFacebookConfKey) {
+        this.editFacebookConfKey = editFacebookConfKey;
     }
 
-    public String getEditYouTubeLabel() {
-        return editYouTubeLabel;
+    public String getEditFacebookLabel() {
+        return editFacebookLabel;
     }
 
-    public void setEditYouTubeLabel(String editYouTubeLabel) {
-        this.editYouTubeLabel = editYouTubeLabel;
+    public void setEditFacebookLabel(String editFacebookLabel) {
+        this.editFacebookLabel = editFacebookLabel;
     }
 
-    public String getEditYouTubeRefreshToken() {
-        return editYouTubeRefreshToken;
+    public String getEditFacebookPageToken() {
+        return editFacebookPageToken;
     }
 
-    public void setEditYouTubeRefreshToken(String editYouTubeRefreshToken) {
-        this.editYouTubeRefreshToken = editYouTubeRefreshToken;
+    public void setEditFacebookPageToken(String editFacebookPageToken) {
+        this.editFacebookPageToken = editFacebookPageToken;
     }
 
-    public List<YouTubeConf> getYouTubeConfList() {
-        return youTubeConfList;
+    public List<FacebookConf> getFacebookConfList() {
+        return facebookConfList;
     }
 
-    public void setYouTubeConfList(List<YouTubeConf> youTubeConfList) {
-        this.youTubeConfList = youTubeConfList;
+    public void setFacebookConfList(List<FacebookConf> facebookConfList) {
+        this.facebookConfList = facebookConfList;
     }
 
-    public String getYouTubeAccessTokenURL() {
-        return youTubeAccessTokenURL;
+    public String getFacebookAccessTokenURL() {
+        return facebookAccessTokenURL;
     }
 
-    public void setYouTubeAccessTokenURL(String youTubeAccessTokenURL) {
-        this.youTubeAccessTokenURL = youTubeAccessTokenURL;
+    public void setFacebookAccessTokenURL(String facebookAccessTokenURL) {
+        this.facebookAccessTokenURL = facebookAccessTokenURL;
     }
 }

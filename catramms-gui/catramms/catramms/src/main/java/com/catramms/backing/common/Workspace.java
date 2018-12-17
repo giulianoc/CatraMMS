@@ -25,25 +25,20 @@ public class Workspace implements Serializable {
 
     public String getWorkspaceName()
     {
-        HttpSession session = SessionUtils.getSession();
-
-        WorkspaceDetails currentWorkspaceDetails = (WorkspaceDetails) session.getAttribute("currentWorkspaceDetails");
+        WorkspaceDetails currentWorkspaceDetails = SessionUtils.getCurrentWorkspaceDetails();
 
         return currentWorkspaceDetails.getName();
     }
 
     public void setWorkspaceName(String workspaceName)
     {
-        HttpSession session = SessionUtils.getSession();
-
-        List<WorkspaceDetails> workspaceDetailsList =
-                (List<WorkspaceDetails>) session.getAttribute("workspaceDetailsList");
+        List<WorkspaceDetails> workspaceDetailsList = SessionUtils.getWorkspaceDetailsList();
 
         for (WorkspaceDetails workspaceDetails: workspaceDetailsList)
         {
             if (workspaceDetails.getName().equalsIgnoreCase(workspaceName))
             {
-                session.setAttribute("currentWorkspaceDetails", workspaceDetails);
+                SessionUtils.getSession().setAttribute("currentWorkspaceDetails", workspaceDetails);
 
                 break;
             }
@@ -54,10 +49,7 @@ public class Workspace implements Serializable {
     {
         List<String> workspaceNames = new ArrayList<>();
 
-        HttpSession session = SessionUtils.getSession();
-
-        List<WorkspaceDetails> workspaceDetailsList =
-                (List<WorkspaceDetails>) session.getAttribute("workspaceDetailsList");
+        List<WorkspaceDetails> workspaceDetailsList = SessionUtils.getWorkspaceDetailsList();
 
         if (workspaceDetailsList != null)
         {

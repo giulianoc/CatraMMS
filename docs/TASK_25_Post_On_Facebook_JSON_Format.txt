@@ -24,8 +24,8 @@
 			{ "ReferenceMediaItemKey": 11 }
 		],
 
-		// a valid access token
-		"AccessToken": "XXXXX",
+		// mandatory, one of the MMS Facebook Configuration label 
+		"ConfigurationLabel": "My Facebook Conf",
 
 		// page_id || user_id || event_id || group_id
 		"NodeId": "YYYY"

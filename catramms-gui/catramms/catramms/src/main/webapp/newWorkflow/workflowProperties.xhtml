@@ -3422,22 +3422,35 @@
 
             <p:row>
                 <p:column>
-                    <p:outputLabel value="Access Token" style="font-weight: bold"/>
+                    <p:outputLabel value="Facebook Configuration" style="font-weight: bold"/>
                 </p:column>
                 <p:column>
-                    <p:inputText id="taskAccessToken_Post_On_Facebook" style="width: 100%"
-                                 value="#{newWorkflow.taskPostOnFacebookAccessToken}"
-                                 autocomplete="true"
-                                 placeholder="access token"/>
-
-                    <p:remoteCommand name="taskUpdateAccessToken_Post_On_Facebook"
-                                     update="taskAccessToken_Post_On_Facebook"
-                                     global="false"
-                                     actionListener="#{newWorkflow.taskPostOnFacebookUpdateAccessToken}"
-                    />
-                    <p:commandLink value="Get access token"
-                                   onclick="logInWithFacebook()"
-                    />
+                    <p:selectOneMenu id="taskConfigurationLabel_Post_On_Facebook"
+                                     value="#{newWorkflow.taskPostOnFacebookConfigurationLabel}"
+                                     title="'Menu: Configuration -> Facebook' for Facebook configurations"
+                                     autoWidth="false">
+                        <f:selectItems value="#{newWorkflow.taskPostOnFacebookConfLabels}"/>
+                    </p:selectOneMenu>
+                    <p:tooltip for="taskConfigurationLabel_Post_On_Facebook" showEffect="clip" hideEffect="explode" position="left"/>
+                    <br />
+                    <h:outputText
+                            rendered="#{newWorkflow.taskPostOnFacebookConfLabels.size() == 0}"
+                            value="No MMS Facebook Configurations are present, please click " />
+                    <h:outputLink
+                            rendered="#{newWorkflow.taskPostOnFacebookConfLabels.size() == 0}"
+                            value="/conf/facebook.xhtml" target="_blank">
+                        <h:outputText value="here" />
+                    </h:outputLink>
+                    <h:outputText
+                            rendered="#{newWorkflow.taskPostOnFacebookConfLabels.size() == 0}"
+                            value=" to configure one" />
+                    <!--
+                    <h:outputLink
+                            rendered="#{newWorkflow.taskPostOnFacebookConfLabels.size() != 0}"
+                            value="/conf/facebook.xhtml" target="_blank">
+                        <h:outputText value="MMS Facebook Configurations" />
+                    </h:outputLink>
+                    -->
                 </p:column>
             </p:row>
 

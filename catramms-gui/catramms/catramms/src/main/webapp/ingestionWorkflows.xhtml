@@ -11,6 +11,7 @@
     <f:viewParam name="maxIngestionWorkflowsNumber" value="#{ingestionWorkflows.maxIngestionWorkflowsNumber}"/>
     <f:viewParam name="autoRefresh" value="#{ingestionWorkflows.autoRefresh}"/>
     <f:viewParam name="ascending" value="#{ingestionWorkflows.ascending}"/>
+    <f:viewParam name="status" value="#{ingestionWorkflows.status}"/>
     <f:viewParam name="begin" value="#{ingestionWorkflows.begin}" >
         <f:convertDateTime pattern="yyyy-MM-dd'T'HH:mm:ss" />
     </f:viewParam>
@@ -104,6 +105,17 @@
                     <p:ajax global="true" event="dateSelect" listener="#{ingestionWorkflows.endChanged()}"
                             update="begin" />
                 </p:calendar>
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:outputLabel for="status" value="Status: " />
+                <p:selectOneMenu style="width:75px;" id="status"
+                                 value="#{ingestionWorkflows.status}">
+                    <f:selectItems value="#{ingestionWorkflows.statusOptions}" />
+                    <p:ajax global="true" event="change" listener="#{ingestionWorkflows.fillList(true)}" />
+                </p:selectOneMenu>
 
                 <span class="ui-separator">
                     <span class="ui-icon ui-icon-grip-dotted-vertical" />

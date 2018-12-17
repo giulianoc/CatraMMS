@@ -1,13 +1,21 @@
 package com.catramms.backing.entity;
 
 import java.io.Serializable;
+import java.util.Date;
 
 /**
  * Created by multi on 08.06.18.
  */
 public class WorkspaceDetails implements Serializable {
     private Long workspaceKey;
+    private Boolean isEnabled;
     private String name;
+    private String maxEncodingPriority;
+    private String encodingPeriod;
+    private Long maxIngestionsNumber;
+    private Long maxStorageInMB;
+    private String languageCode;
+    private Date creationDate;
     private String apiKey;
     private Boolean owner;
     private Boolean admin;
@@ -95,5 +103,61 @@ public class WorkspaceDetails implements Serializable {
 
     public void setEditMedia(Boolean editMedia) {
         this.editMedia = editMedia;
+    }
+
+    public Boolean getEnabled() {
+        return isEnabled;
+    }
+
+    public void setEnabled(Boolean enabled) {
+        isEnabled = enabled;
+    }
+
+    public String getMaxEncodingPriority() {
+        return maxEncodingPriority;
+    }
+
+    public void setMaxEncodingPriority(String maxEncodingPriority) {
+        this.maxEncodingPriority = maxEncodingPriority;
+    }
+
+    public String getEncodingPeriod() {
+        return encodingPeriod;
+    }
+
+    public void setEncodingPeriod(String encodingPeriod) {
+        this.encodingPeriod = encodingPeriod;
+    }
+
+    public Long getMaxIngestionsNumber() {
+        return maxIngestionsNumber;
+    }
+
+    public void setMaxIngestionsNumber(Long maxIngestionsNumber) {
+        this.maxIngestionsNumber = maxIngestionsNumber;
+    }
+
+    public Long getMaxStorageInMB() {
+        return maxStorageInMB;
+    }
+
+    public void setMaxStorageInMB(Long maxStorageInMB) {
+        this.maxStorageInMB = maxStorageInMB;
+    }
+
+    public String getLanguageCode() {
+        return languageCode;
+    }
+
+    public void setLanguageCode(String languageCode) {
+        this.languageCode = languageCode;
+    }
+
+    public Date getCreationDate() {
+        return creationDate;
+    }
+
+    public void setCreationDate(Date creationDate) {
+        this.creationDate = creationDate;
     }
 }

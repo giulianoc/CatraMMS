@@ -79,7 +79,7 @@ public class Task implements Serializable
     private String httpCallbackHeaders;
     private Long extractTracksVideoTrackNumber;
     private Long extractTracksAudioTrackNumber;
-    private String postOnFacebookAccessToken;
+    private String postOnFacebookConfigurationLabel;
     private String postOnFacebookNodeId;
     private String postOnYouTubeConfigurationLabel;
     private String postOnYouTubeTitle;
@@ -646,12 +646,12 @@ public class Task implements Serializable
         this.extractTracksAudioTrackNumber = extractTracksAudioTrackNumber;
     }
 
-    public String getPostOnFacebookAccessToken() {
-        return postOnFacebookAccessToken;
+    public String getPostOnFacebookConfigurationLabel() {
+        return postOnFacebookConfigurationLabel;
     }
 
-    public void setPostOnFacebookAccessToken(String postOnFacebookAccessToken) {
-        this.postOnFacebookAccessToken = postOnFacebookAccessToken;
+    public void setPostOnFacebookConfigurationLabel(String postOnFacebookConfigurationLabel) {
+        this.postOnFacebookConfigurationLabel = postOnFacebookConfigurationLabel;
     }
 
     public String getPostOnFacebookNodeId() {

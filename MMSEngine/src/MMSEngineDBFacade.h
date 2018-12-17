@@ -687,6 +687,19 @@ public:
         string languageCode,
         chrono::system_clock::time_point userExpirationDate);
     
+    pair<int64_t,string> createWorkspace(
+        int64_t userKey,
+        string workspaceName,
+        string workspaceDirectoryName,
+        WorkspaceType workspaceType,
+        string deliveryURL,
+        EncodingPriority maxEncodingPriority,
+        EncodingPeriod encodingPeriod,
+        long maxIngestionsNumber,
+        long maxStorageInMB,
+        string languageCode,
+        chrono::system_clock::time_point userExpirationDate);
+
     pair<int64_t,string> registerUserIfNotPresentAndShareWorkspace(
         string userName,
         string userEmailAddress,
@@ -698,18 +711,13 @@ public:
 
     tuple<string,string,string> confirmUser(string confirmationCode);
 
-    /*
-    bool isLoginValid(
-        string emailAddress,
-        string password);
-    */
-    // string getPassword(string emailAddress);
+    pair<string,string> getUserDetails(int64_t userKey);
 
     tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool,bool> checkAPIKey (string apiKey);
 
-    pair<int64_t,string> login (
-        string eMailAddress, string password, 
-        vector<tuple<int64_t,string,string,bool,bool,bool,bool,bool,bool,bool>>& vWorkspaceNameAPIKeyIfOwnerAndFlags);
+    pair<int64_t,string> login (string eMailAddress, string password);
+
+    Json::Value getWorkspaceDetails (int64_t userKey);
 
     int64_t addEncodingProfilesSet (
         shared_ptr<MySQLConnection> conn, int64_t workspaceKey,
@@ -834,7 +842,7 @@ public:
         int start, int rows,
         bool startAndEndIngestionDatePresent, 
         string startIngestionDate, string endIngestionDate,
-        bool asc);
+        string status, bool asc);
 
     Json::Value getIngestionJobsStatus (
         shared_ptr<Workspace> workspace, int64_t ingestionJobKey,
@@ -1003,6 +1011,10 @@ public:
         int64_t encodingJobKey,
         EncodingPriority newEncodingPriority);
 
+    void updateEncodingJobTryAgain (
+        shared_ptr<Workspace> workspace,
+        int64_t encodingJobKey);
+    
     void updateEncodingJobProgress (
         int64_t encodingJobKey,
         int encodingPercentage);
@@ -1100,6 +1112,27 @@ public:
     string getYouTubeRefreshTokenByConfigurationLabel(
         int64_t workspaceKey, string youTubeConfigurationLabel);
     
+    int64_t addFacebookConf(
+        int64_t workspaceKey,
+        string label,
+        string pageToken);
+
+    void modifyFacebookConf(
+        int64_t confKey,
+        int64_t workspaceKey,
+        string label,
+        string pageToken);
+
+    void removeFacebookConf(
+        int64_t workspaceKey,
+        int64_t confKey);
+
+    Json::Value getFacebookConfList (
+        int64_t workspaceKey);
+
+    string getFacebookPageTokenByConfigurationLabel(
+        int64_t workspaceKey, string facebookConfigurationLabel);
+    
 private:
     shared_ptr<spdlog::logger>                          _logger;
     shared_ptr<MySQLConnectionFactory>                  _mySQLConnectionFactory;
@@ -1116,6 +1149,26 @@ private:
     string          _predefinedVideoProfilesDirectoryPath;
     string          _predefinedAudioProfilesDirectoryPath;
     string          _predefinedImageProfilesDirectoryPath;
+
+    tuple<int64_t,int64_t,string> addWorkspace(
+        shared_ptr<MySQLConnection> conn,
+        int64_t userKey,
+        bool admin,
+        bool ingestWorkflow,
+        bool createProfiles,
+        bool deliveryAuthorization,
+        bool shareWorkspace,
+        bool editMedia,
+        string workspaceName,
+        string workspaceDirectoryName,
+        WorkspaceType workspaceType,
+        string deliveryURL,
+        EncodingPriority maxEncodingPriority,
+        EncodingPeriod encodingPeriod,
+        long maxIngestionsNumber,
+        long maxStorageInMB,
+        string languageCode,
+        chrono::system_clock::time_point userExpirationDate);
 
     int64_t saveEncodedContentMetadata(
         shared_ptr<MySQLConnection> conn,

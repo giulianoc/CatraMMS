@@ -135,6 +135,109 @@ public class CatraMMSServices {
         }
     }
 
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("facebookCallback")
+    public Response facebookCallback(@Context HttpServletRequest pRequest)
+    {
+        try {
+            mLogger.info("Received facebookCallback");
+
+            /*
+            In case of error:
+                - error_code (i.e.: 100)
+                - error_message (i.e.: Invalid Scopes: manage_pages, publish_pages. This message is only shown to developers. Users of your app will ignore these permissions if present. Please read the documentation for valid permissions at: https://developers.facebook.com/docs/facebook-login/permissions)
+                - state (i.e: {"{st=state123abc,ds=123456789}"})
+
+             */
+            for (String s: pRequest.getParameterMap().keySet())
+            {
+                for (String v: pRequest.getParameterMap().get(s))
+                    mLogger.info("key: " + s
+                            + ", value: " + v
+                    );
+            }
+
+            String[] code = pRequest.getParameterMap().get("code");
+            if (code == null || code.length == 0)
+            {
+                mLogger.error("'code' is not present");
+
+                String[] error = pRequest.getParameterMap().get("error_message");
+                if (error == null || error.length == 0)
+                {
+                    mLogger.error("'code/error' are not present");
+
+                    return Response.ok("{ \"error\": \"<access token not available>\" }").build();
+                }
+
+                return Response.ok("{ \"error\": \"" + error + "\" }").build();
+            }
+
+            String authorizationToken = code[0];
+
+            // clientId is retrieved by the credentials
+            String clientId = "1862418063793547";
+
+            // clientSecret is retrieved by the credentials
+            String clientSecret = "04a76f8e11e9dc70ea5975649a91574c";
+
+            // this URL is configured inside the YouTube credentials
+            String mmsFacebookCallbak = "https://mms-gui.catrasoft.cloud/rest/api/facebookCallback";
+
+            String url = "https://graph.facebook.com/v3.2/oauth/access_token?";
+
+            url += "code=" + java.net.URLEncoder.encode(authorizationToken, "UTF-8")
+                    + "&client_id=" + clientId
+                    + "&client_secret=" + clientSecret
+                    + "&redirect_uri=" + java.net.URLEncoder.encode(mmsFacebookCallbak, "UTF-8")
+                    ;
+
+            mLogger.info("url: " + url);
+
+            Date now = new Date();
+            int timeoutInSeconds = 120;
+            int maxRetriesNumber = 1;
+            String username = null;
+            String password = null;
+            String facebookResponse = HttpFeedFetcher.fetchGetHttpsJson(url, timeoutInSeconds, maxRetriesNumber,
+                    username, password);
+            mLogger.info("Elapsed time login (@" + url + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs."
+                    + ", facebookResponse: " + facebookResponse
+            );
+
+            /*
+            {
+                "access_token":"EAAad2ZC8dnYsBAE0m0tfAcdNj6T7i6TdZAm5DeP81UNDNcHzp6z8z5W2n43DsQZBqMOyqwllkazwhdc2P1HsCDcWZBNXXmrX1GtgQOiL82MZACkoZAg3Q63pw6ZA72ZAxUD990sxjjIaRfiZAMJqonAdoVpv1ZAZAfzDy3GQG9xZCQF3jwZDZD",
+                "token_type":"bearer",
+                "expires_in":5099202
+            }
+
+            // expires_in: seconds-til-expiration
+
+            A questo punto hai l'access token, puoi:
+                1. verificare le proprietà del token (vedi https://developers.facebook.com/docs/facebook-login/manually-build-a-login-flow, sezione: Esame dei token d'accesso)
+                    E' possibile che l'utente non accetta lo scope 'publish_pages'? In questo caso cosa faccio?
+                2. Devo estendere la durata dell'access token dell'utente? (vedi https://developers.facebook.com/docs/facebook-login/access-tokens/refreshing)
+                    Considera che se si utilizza un token dell'utente di lunga durata anche il token della pagina sarà di lunga durata (nel caso del punto 3 sotto)
+                3. Devo ottenere un token d'accesso alla pagina? (in questo caso vedi: https://developers.facebook.com/docs/facebook-login/access-tokens#pagetokens, sezione: Token d'accesso della Pagina)
+             */
+            JSONObject joFacebookResponse = new JSONObject(facebookResponse);
+
+            JSONObject joCallbackResponse = new JSONObject();
+            joCallbackResponse.put("comment", "Please, copy the 'access_token' value into the appropriate MMS configuration field");
+            joCallbackResponse.put("access_token", joFacebookResponse.getString("access_token"));
+
+            return Response.ok(joCallbackResponse.toString(4)).build();
+        }
+        catch (Exception e)
+        {
+            mLogger.error("Exception: " + e);
+
+            return Response.ok("{ \"error\": \"" + e + "\" }").build();
+        }
+    }
+
     @POST
     @Consumes(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @Produces(MediaType.APPLICATION_JSON)
