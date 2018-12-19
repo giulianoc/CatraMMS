@@ -167,7 +167,7 @@ public class CatraMMS {
         return userKey;
     }
 
-    public String confirmUser(Long userKey, String confirmationCode)
+    public String confirmRegistration(Long userKey, String confirmationCode)
             throws Exception
     {
         String mmsInfo;
@@ -178,20 +178,19 @@ public class CatraMMS {
 
             String username = null;
             String password = null;
-            String postBodyRequest = null;
 
-            mLogger.info("confirmUser"
+            mLogger.info("confirmRegistration"
                             + ", mmsURL: " + mmsURL
             );
 
             Date now = new Date();
-            mmsInfo = HttpFeedFetcher.fetchPutHttpsJson(mmsURL, timeoutInSeconds, maxRetriesNumber,
-                    username, password, postBodyRequest);
-            mLogger.info("Elapsed time confirmUser (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
+            mmsInfo = HttpFeedFetcher.fetchGetHttpsJson(mmsURL, timeoutInSeconds, maxRetriesNumber,
+                    username, password);
+            mLogger.info("Elapsed time confirmRegistration (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
         }
         catch (Exception e)
         {
-            String errorMessage = "confirmUser failed. Exception: " + e;
+            String errorMessage = "confirmRegistration failed. Exception: " + e;
             mLogger.error(errorMessage);
 
             throw new Exception(errorMessage);
@@ -206,7 +205,7 @@ public class CatraMMS {
         }
         catch (Exception e)
         {
-            String errorMessage = "confirmUser failed. Exception: " + e;
+            String errorMessage = "confirmRegistration failed. Exception: " + e;
             mLogger.error(errorMessage);
 
             throw new Exception(errorMessage);

@@ -41,14 +41,51 @@
                     </p:column>
                 </p:row>
 
+                <p:row>
+                    <p:column>
+                    </p:column>
+                    <p:column>
+                        <p:commandButton action="#{yourWorkspaces.createWorkspace}"
+                                         value="1. Create Workspace"
+                        >
+                            <p:confirm header="Confirmation" message="Are you sure?" icon="ui-icon-alert" />
+                        </p:commandButton>
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column colspan="2">
+                        <ul>
+                            <li><p:outputLabel value="Once '1. Create Workspace' button is clicked, you will receive an email containing the Confirmation Code informatione" /></li>
+                            <li><p:outputLabel value="Fill in Confirmation Code below in the appropriate field and then Confirm (step no. 2)" /></li>
+                        </ul>
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Confirmation Code" />
+                    </p:column>
+                    <p:column>
+                        <p:inputText style="width: 100%"
+                                     value="#{yourWorkspaces.registrationConfirmationCode}"
+                                     placeholder="confirmation code"/>
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                    </p:column>
+                    <p:column>
+                        <p:commandButton action="#{yourWorkspaces.confirmRegistration}"
+                                         value="2. Confirm Registration"
+                                         oncomplete="PF('createWorkspace').hide()" >
+                            <p:confirm header="Confirmation" message="Are you sure?" icon="ui-icon-alert" />
+                        </p:commandButton>
+                    </p:column>
+                </p:row>
+
             </p:panelGrid>
-
-            <br />
-
-            <p:commandButton value="Create Workspace"
-                             actionListener="#{yourWorkspaces.createWorkspace}"
-                             update="viewForm:yourWorkspacesDataTable"
-                             oncomplete="PF('createWorkspace').hide()" />
 
         </h:form>
     </p:dialog>

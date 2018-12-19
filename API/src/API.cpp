@@ -186,6 +186,19 @@ API::API(Json::Value configuration,
         + ", api->maxStorageInMBWorkspaceDefaultValue: " + to_string(_maxStorageInMBWorkspaceDefaultValue)
     );
 
+    _apiProtocol =  _configuration["api"].get("protocol", "XXX").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->protocol: " + _apiProtocol
+    );
+    _apiHostname =  _configuration["api"].get("hostname", "XXX").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->hostname: " + _apiHostname
+    );
+    _apiPort = _configuration["api"].get("port", "XXX").asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->port: " + to_string(_apiPort)
+    );
+
     Json::Value api = _configuration["api"];
     // _binaryBufferLength             = api["binary"].get("binaryBufferLength", "XXX").asInt();
     // _logger->info(__FILEREF__ + "Configuration item"
@@ -500,9 +513,9 @@ void API::manageRequestAndResponse(
 
         shareWorkspace_(request, queryParameters, requestBody);
     }
-    else if (method == "confirmUser")
+    else if (method == "confirmRegistration")
     {
-        confirmUser(request, queryParameters);
+        confirmRegistration(request, queryParameters);
     }
     else if (method == "createDeliveryAuthorization")
     {
@@ -1290,7 +1303,7 @@ void API::registerUser(
                 workspaceName.end(), 
                 workspaceDirectoryName.begin(), 
                 [](unsigned char c){
-                    if (isalpha(c)) 
+                    if (isalnum(c)) 
                         return c; 
                     else 
                         return (unsigned char) '_'; } 
@@ -1340,6 +1353,9 @@ void API::registerUser(
             emailBody.push_back(string("<p>the registration has been done successfully, user and default Workspace have been created</p>"));
             emailBody.push_back(string("<p>here follows the user key ") + to_string(get<1>(workspaceKeyUserKeyAndConfirmationCode)) 
                 + " and the confirmation code " + get<2>(workspaceKeyUserKeyAndConfirmationCode) + " to be used to confirm the registration</p>");
+            string confirmURL = _apiProtocol + "://" + _apiHostname + ":" + to_string(_apiPort) + "/catramms/v1/user/" 
+                    + to_string(get<1>(workspaceKeyUserKeyAndConfirmationCode)) + "/" + get<2>(workspaceKeyUserKeyAndConfirmationCode);
+            emailBody.push_back(string("<p>Click <a href=\"") + confirmURL + "\">here</a> to confirm the registration</p>");
             emailBody.push_back("<p>Have a nice day, best regards</p>");
             emailBody.push_back("<p>MMS technical support</p>");
 
@@ -1496,7 +1512,7 @@ void API::createWorkspace(
                 workspaceName.end(), 
                 workspaceDirectoryName.begin(), 
                 [](unsigned char c){
-                    if (isalpha(c)) 
+                    if (isalnum(c)) 
                         return c; 
                     else 
                         return (unsigned char) '_'; } 
@@ -1540,7 +1556,10 @@ void API::createWorkspace(
             vector<string> emailBody;
             emailBody.push_back(string("<p>Hi ") + emailAddressAndName.second + ",</p>");
             emailBody.push_back(string("<p>the Workspace has been created successfully</p>"));
-            emailBody.push_back(string("<p>here follows the confirmation code ") + get<1>(workspaceKeyAndConfirmationCode) + " to be used to confirm the new Workspace</p>");
+            emailBody.push_back(string("<p>here follows the confirmation code ") + get<1>(workspaceKeyAndConfirmationCode) + " to be used to confirm the registration</p>");
+            string confirmURL = _apiProtocol + "://" + _apiHostname + ":" + to_string(_apiPort) + "/catramms/v1/user/" 
+                    + to_string(userKey) + "/" + get<1>(workspaceKeyAndConfirmationCode);
+            emailBody.push_back(string("<p>Click <a href=\"") + confirmURL + "\">here</a> to confirm the registration</p>");
             emailBody.push_back("<p>Have a nice day, best regards</p>");
             emailBody.push_back("<p>MMS technical support</p>");
 
@@ -1858,11 +1877,11 @@ void API::shareWorkspace_(
     }
 }
 
-void API::confirmUser(
+void API::confirmRegistration(
         FCGX_Request& request,
         unordered_map<string, string> queryParameters)
 {
-    string api = "confirmUser";
+    string api = "confirmRegistration";
 
     _logger->info(__FILEREF__ + "Received " + api
     );
@@ -1883,7 +1902,7 @@ void API::confirmUser(
         try
         {
             tuple<string,string,string> apiKeyNameAndEmailAddress
-                = _mmsEngineDBFacade->confirmUser(confirmationCodeIt->second);
+                = _mmsEngineDBFacade->confirmRegistration(confirmationCodeIt->second);
 
             string apiKey;
             string name;
@@ -1892,6 +1911,7 @@ void API::confirmUser(
             tie(apiKey, name, emailAddress) = apiKeyNameAndEmailAddress;
             
             string responseBody = string("{ ")
+                + "\"status\": \"Success\", "
                 + "\"apiKey\": \"" + apiKey + "\" "
                 + "}";
             sendSuccess(request, 201, responseBody);

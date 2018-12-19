@@ -172,7 +172,7 @@ int APICommon::operator()()
                         {
                             contentLength = 0;
                             /*
-                             * confirmUser, PUT, does not have any body
+                             * confirmRegistration, PUT (really it was changed to GET), does not have any body
                             string errorMessage("Content-Length header is empty");
 
                             _logger->error(__FILEREF__ + errorMessage);
@@ -452,7 +452,7 @@ bool APICommon::basicAuthenticationRequired(
     string method = methodIt->second;
 
     if (method == "registerUser"
-            || method == "confirmUser"
+            || method == "confirmRegistration"
             || method == "login"
             )
     {

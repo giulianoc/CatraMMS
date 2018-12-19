@@ -709,7 +709,7 @@ public:
         int64_t workspaceKeyToBeShared,
         chrono::system_clock::time_point userExpirationDate);
 
-    tuple<string,string,string> confirmUser(string confirmationCode);
+    tuple<string,string,string> confirmRegistration(string confirmationCode);
 
     pair<string,string> getUserDetails(int64_t userKey);
 
@@ -1150,7 +1150,7 @@ private:
     string          _predefinedAudioProfilesDirectoryPath;
     string          _predefinedImageProfilesDirectoryPath;
 
-    tuple<int64_t,int64_t,string> addWorkspace(
+    pair<int64_t,string> addWorkspace(
         shared_ptr<MySQLConnection> conn,
         int64_t userKey,
         bool admin,

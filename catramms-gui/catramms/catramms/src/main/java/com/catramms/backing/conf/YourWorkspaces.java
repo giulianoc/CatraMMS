@@ -32,6 +32,7 @@ public class YourWorkspaces extends Workspace implements Serializable {
     private static final Logger mLogger = Logger.getLogger(YourWorkspaces.class);
 
     private String createWorkspaceName;
+    private String registrationConfirmationCode;
 
     @PostConstruct
     public void init()
@@ -42,28 +43,6 @@ public class YourWorkspaces extends Workspace implements Serializable {
 
     public void createWorkspace()
     {
-        String jsonCreateWorkspace;
-
-        try
-        {
-            JSONObject joCreateWorkspace = new JSONObject();
-
-            joCreateWorkspace.put("WorkspaceName", createWorkspaceName);
-
-            jsonCreateWorkspace = joCreateWorkspace.toString(4);
-        }
-        catch (Exception e)
-        {
-            String errorMessage = "Exception: " + e;
-            mLogger.error(errorMessage);
-
-            FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Create Workspace",
-                    "Add failed");
-            FacesContext.getCurrentInstance().addMessage(null, message);
-
-            return;
-        }
-
         try
         {
             Long userKey = SessionUtils.getUserKey();
@@ -84,9 +63,9 @@ public class YourWorkspaces extends Workspace implements Serializable {
                 CatraMMS catraMMS = new CatraMMS();
                 catraMMS.createWorkspace(
                         username, password,
-                        jsonCreateWorkspace);
+                        createWorkspaceName);
 
-                FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Encoding Profile",
+                FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Create Workspace",
                         "Add successful");
                 FacesContext.getCurrentInstance().addMessage(null, message);
             }
@@ -96,9 +75,36 @@ public class YourWorkspaces extends Workspace implements Serializable {
             String errorMessage = "Exception: " + e;
             mLogger.error(errorMessage);
 
-            FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Encoding Profile",
+            FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Create Workspace",
                     "Add failed");
             FacesContext.getCurrentInstance().addMessage(null, message);
+        }
+    }
+
+    public void confirmRegistration()
+    {
+        try
+        {
+            Long userKey = SessionUtils.getUserKey();
+
+            CatraMMS catraMMS = new CatraMMS();
+            String apyKey = catraMMS.confirmRegistration(
+                    userKey, registrationConfirmationCode);
+
+            FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                    "Confirm", "Confirm Success");
+            FacesContext context = FacesContext.getCurrentInstance();
+            context.addMessage(null, message);
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "confirmRegistration failed: " + e;
+            mLogger.error(errorMessage);
+
+            FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                    "Confirm", errorMessage);
+            FacesContext context = FacesContext.getCurrentInstance();
+            context.addMessage(null, message);
         }
     }
 
@@ -108,5 +114,13 @@ public class YourWorkspaces extends Workspace implements Serializable {
 
     public void setCreateWorkspaceName(String createWorkspaceName) {
         this.createWorkspaceName = createWorkspaceName;
+    }
+
+    public String getRegistrationConfirmationCode() {
+        return registrationConfirmationCode;
+    }
+
+    public void setRegistrationConfirmationCode(String registrationConfirmationCode) {
+        this.registrationConfirmationCode = registrationConfirmationCode;
     }
 }

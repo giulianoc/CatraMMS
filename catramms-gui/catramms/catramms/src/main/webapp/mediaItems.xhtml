@@ -167,7 +167,7 @@
                 <p:row>
                     <p:column colspan="2">
                         <ul>
-                            <li><p:outputLabel value="Now you will receive an email containing both the information User Key and Confirmation Code" /></li>
+                            <li><p:outputLabel value="Once '1. Share Workspace' button is clicked, you will receive an email containing both the information User Key and Confirmation Code" /></li>
                             <li><p:outputLabel value="Fill in User Key and Confirmation Code below in the appropriate fields and then Confirm (step no. 2)" /></li>
                         </ul>
                     </p:column>
@@ -201,8 +201,8 @@
                     <p:column>
                     </p:column>
                     <p:column>
-                        <p:commandButton action="#{mediaItems.confirmUser}"
-                                         value="2. Confirm"
+                        <p:commandButton action="#{mediaItems.confirmRegistration}"
+                                         value="2. Confirm Registration"
                                          oncomplete="PF('shareWorkspace').hide()" >
                             <p:confirm header="Confirmation" message="Are you sure?" icon="ui-icon-alert" />
                         </p:commandButton>

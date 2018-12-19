@@ -186,12 +186,12 @@ public class Login implements Serializable {
         }
     }
 
-    public void confirmUser()
+    public void confirmRegistration()
     {
         try
         {
             CatraMMS catraMMS = new CatraMMS();
-            String apyKey = catraMMS.confirmUser(
+            String apyKey = catraMMS.confirmRegistration(
                     registrationUserKey, registrationConfirmationCode);
 
             FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
@@ -201,7 +201,7 @@ public class Login implements Serializable {
         }
         catch (Exception e)
         {
-            String errorMessage = "confirmUser failed: " + e;
+            String errorMessage = "confirmRegistration failed: " + e;
             mLogger.error(errorMessage);
 
             FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,

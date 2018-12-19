@@ -53,8 +53,8 @@ server {
 		if ($request_method = POST) {
 			rewrite ^/catramms/(v[0-9]+)/user/?$ /api?version=$1&method=registerUser last;
 		}
-		if ($request_method = PUT) {
-			rewrite ^/catramms/(v[0-9]+)/user/([0-9]+)/([0-9]+)/?$ /api?version=$1&method=confirmUser&userKey=$2&confirmationeCode=$3 last;
+		if ($request_method = GET) {
+			rewrite ^/catramms/(v[0-9]+)/user/([0-9]+)/([0-9]+)/?$ /api?version=$1&method=confirmRegistration&userKey=$2&confirmationeCode=$3 last;
 		}
 
 		if ($request_method = POST) {

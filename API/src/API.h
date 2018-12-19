@@ -80,6 +80,10 @@ private:
     int                 _maxProgressCallFailures;
     string              _progressURI;
     
+    string              _apiProtocol;
+    string              _apiHostname;
+    int                 _apiPort;
+    
     int                 _defaultTTLInSeconds;
     int                 _defaultMaxRetries;
     bool                _defaultRedirect;
@@ -104,7 +108,7 @@ private:
         unordered_map<string, string> queryParameters,
         string requestBody);
 
-    void confirmUser(
+    void confirmRegistration(
         FCGX_Request& request,
         unordered_map<string, string> queryParameters);
 

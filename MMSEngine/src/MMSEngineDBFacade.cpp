@@ -339,7 +339,7 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
             bool shareWorkspace = true;
             bool editMedia = true;
             
-            tuple<int64_t,int64_t,string> workspaceKeyUserKeyAndConfirmationCode =
+            pair<int64_t,string> workspaceKeyAndConfirmationCode =
                 addWorkspace(
                     conn,
                     userKey,
@@ -359,6 +359,9 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::registerUserAndAddWorkspace(
                     maxStorageInMB,
                     languageCode,
                     userExpirationDate);
+
+            workspaceKey = workspaceKeyAndConfirmationCode.first;
+            confirmationCode = workspaceKeyAndConfirmationCode.second;
         }
 
         /*
@@ -713,7 +716,7 @@ pair<int64_t,string> MMSEngineDBFacade::createWorkspace(
             bool shareWorkspace = true;
             bool editMedia = true;
             
-            tuple<int64_t,int64_t,string> workspaceKeyUserKeyAndConfirmationCode =
+            pair<int64_t,string> workspaceKeyAndConfirmationCode =
                 addWorkspace(
                     conn,
                     userKey,
@@ -733,6 +736,9 @@ pair<int64_t,string> MMSEngineDBFacade::createWorkspace(
                     maxStorageInMB,
                     languageCode,
                     userExpirationDate);
+            
+            workspaceKey = workspaceKeyAndConfirmationCode.first;
+            confirmationCode = workspaceKeyAndConfirmationCode.second;
         }
 
         // conn->_sqlConnection->commit(); OR execute COMMIT
@@ -1232,7 +1238,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerUserIfNotPresentAndShareWorkspac
     return userKeyAndConfirmationCode;
 }
 
-tuple<int64_t,int64_t,string> MMSEngineDBFacade::addWorkspace(
+pair<int64_t,string> MMSEngineDBFacade::addWorkspace(
         shared_ptr<MySQLConnection> conn,
         int64_t userKey,
         bool admin, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
@@ -1412,13 +1418,13 @@ tuple<int64_t,int64_t,string> MMSEngineDBFacade::addWorkspace(
         throw e;
     }
     
-    tuple<int64_t,int64_t,string> workspaceKeyUserKeyAndConfirmationCode = 
-            make_tuple(workspaceKey, userKey, confirmationCode);
+    pair<int64_t,string> workspaceKeyAndConfirmationCode = 
+            make_pair(workspaceKey, confirmationCode);
     
-    return workspaceKeyUserKeyAndConfirmationCode;
+    return workspaceKeyAndConfirmationCode;
 }
 
-tuple<string,string,string> MMSEngineDBFacade::confirmUser(
+tuple<string,string,string> MMSEngineDBFacade::confirmRegistration(
     string confirmationCode
 )
 {
@@ -1479,29 +1485,50 @@ tuple<string,string,string> MMSEngineDBFacade::confirmUser(
             }
         }
         
-        if (!isSharedWorkspace)
+        // check if the apiKey is already present (maybe this is the second time the confirmRegistration API is called
+        bool apiKeyAlreadyPresent = false;
         {
-            bool enabled = true;
-            
             lastSQLCommand = 
-                "update MMS_Workspace set isEnabled = ? where workspaceKey = ?";
+                "select apiKey from MMS_APIKey where userKey = ? and workspaceKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setInt(queryParameterIndex++, enabled);
+            preparedStatement->setInt64(queryParameterIndex++, userKey);
             preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 
-            int rowsUpdated = preparedStatement->executeUpdate();
-            if (rowsUpdated != 1)
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
             {
-                string errorMessage = __FILEREF__ + "no update was done"
-                        + ", enabled: " + to_string(enabled)
-                        + ", workspaceKey: " + to_string(workspaceKey)
-                        + ", rowsUpdated: " + to_string(rowsUpdated)
-                        + ", lastSQLCommand: " + lastSQLCommand
-                ;
-                _logger->error(errorMessage);
+                apiKey = resultSet->getString("apiKey");
+                apiKeyAlreadyPresent = true;
+            }
+        }
 
-                throw runtime_error(errorMessage);                    
+        if (!apiKeyAlreadyPresent)
+        {
+            if (!isSharedWorkspace)
+            {
+                bool enabled = true;
+
+                lastSQLCommand = 
+                    "update MMS_Workspace set isEnabled = ? where workspaceKey = ?";
+                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                int queryParameterIndex = 1;
+                preparedStatement->setInt(queryParameterIndex++, enabled);
+                preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+
+                int rowsUpdated = preparedStatement->executeUpdate();
+                if (rowsUpdated != 1)
+                {
+                    string errorMessage = __FILEREF__ + "no update was done"
+                            + ", enabled: " + to_string(enabled)
+                            + ", workspaceKey: " + to_string(workspaceKey)
+                            + ", rowsUpdated: " + to_string(rowsUpdated)
+                            + ", lastSQLCommand: " + lastSQLCommand
+                    ;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);                    
+                }
             }
         }
 
@@ -1532,6 +1559,7 @@ tuple<string,string,string> MMSEngineDBFacade::confirmUser(
             }
         }
 
+        if (!apiKeyAlreadyPresent)
         {
             unsigned seed = chrono::steady_clock::now().time_since_epoch().count();
             default_random_engine e(seed);
