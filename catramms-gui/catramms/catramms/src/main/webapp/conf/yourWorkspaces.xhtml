@@ -22,7 +22,7 @@
     <ui:include src="/common/globalConfirm.xhtml"/>
 
     <p:dialog widgetVar="createWorkspace" modal="true"
-              header="Create Workspace" appendTo="@(body)" width="600" height="500"
+              header="Create Workspace" appendTo="@(body)" width="600" height="400"
               showEffect="fade" hideEffect="fade" resizable="false" draggable="true">
 
         <h:form id="createWorkspaceForm">
@@ -86,6 +86,219 @@
                 </p:row>
 
             </p:panelGrid>
+
+        </h:form>
+    </p:dialog>
+
+    <p:dialog widgetVar="detailsWorkspace" modal="true"
+              header="Details Workspace" appendTo="@(body)" width="800" height="500"
+              showEffect="fade" hideEffect="fade" resizable="false" draggable="true">
+
+        <h:form id="detailsWorkspaceForm">
+
+            <p:panelGrid cellpadding="10" style="width: 100%" >
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Workspace Key" />
+                    </p:column>
+                    <p:column>
+                        <p:outputLabel value="#{yourWorkspaces.workspaceDetailsToBeShown.workspaceKey}" />
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Name" />
+                    </p:column>
+                    <p:column>
+                        <p:outputLabel value="#{yourWorkspaces.workspaceDetailsToBeShown.name}" />
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Creation Date" />
+                    </p:column>
+                    <p:column>
+                        <p:outputLabel value="#{yourWorkspaces.workspaceDetailsToBeShown.creationDate}">
+                            <f:convertDateTime type="date" pattern="dd-MM-yyyy HH:mm:ss" timeZone="CET"/>
+                        </p:outputLabel>
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="API Key" />
+                    </p:column>
+                    <p:column>
+                        <p:outputLabel value="#{yourWorkspaces.workspaceDetailsToBeShown.apiKey}" />
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Enabled" />
+                    </p:column>
+                    <p:column>
+                        <p:selectBooleanButton disabled="#{yourWorkspaces.workspaceDetailsReadOnly}" value="#{yourWorkspaces.workspaceDetailsToBeShown.enabled}"
+                                               onLabel="True" offLabel="False" onIcon="ui-icon-check" offIcon="ui-icon-check">
+                        </p:selectBooleanButton>
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Max Encoding Priority" />
+                    </p:column>
+                    <p:column>
+                        <p:selectOneMenu disabled="#{yourWorkspaces.workspaceDetailsReadOnly}"
+                                         value="#{yourWorkspaces.workspaceDetailsToBeShown.maxEncodingPriority}" >
+                            <f:selectItems value="#{yourWorkspaces.encodingPriorityList}" />
+                        </p:selectOneMenu>
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Encoding Period" />
+                    </p:column>
+                    <p:column>
+                        <p:selectOneMenu disabled="#{yourWorkspaces.workspaceDetailsReadOnly}"
+                                         value="#{yourWorkspaces.workspaceDetailsToBeShown.encodingPeriod}" >
+                            <f:selectItems value="#{yourWorkspaces.encodingPeriodList}" />
+                        </p:selectOneMenu>
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Max Ingestions Number" />
+                    </p:column>
+                    <p:column>
+                        <p:inputNumber disabled="#{yourWorkspaces.workspaceDetailsReadOnly}"
+                                       value="#{yourWorkspaces.workspaceDetailsToBeShown.maxIngestionsNumber}"
+                                       placeholder="max ingestion number"
+                                       maxlength="6" />
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Max Storage In MB" />
+                    </p:column>
+                    <p:column>
+                        <p:inputNumber disabled="#{yourWorkspaces.workspaceDetailsReadOnly}"
+                                       value="#{yourWorkspaces.workspaceDetailsToBeShown.maxStorageInMB}"
+                                       placeholder="max storage in MB"
+                                       maxlength="6" />
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Language Code" />
+                    </p:column>
+                    <p:column>
+                        <p:inputText disabled="#{yourWorkspaces.workspaceDetailsReadOnly}"
+                                     value="#{yourWorkspaces.workspaceDetailsToBeShown.languageCode}"
+                                     placeholder="language code" />
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Owner" />
+                    </p:column>
+                    <p:column>
+                        <p:selectBooleanButton disabled="#{yourWorkspaces.workspaceDetailsReadOnly}"
+                                               value="#{yourWorkspaces.workspaceDetailsToBeShown.owner}"
+                                               onLabel="True" offLabel="False" onIcon="ui-icon-check" offIcon="ui-icon-check">
+                        </p:selectBooleanButton>
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Admin" />
+                    </p:column>
+                    <p:column>
+                        <p:selectBooleanButton disabled="#{yourWorkspaces.workspaceDetailsReadOnly}"
+                                               value="#{yourWorkspaces.workspaceDetailsToBeShown.admin}"
+                                               onLabel="True" offLabel="False" onIcon="ui-icon-check" offIcon="ui-icon-check">
+                        </p:selectBooleanButton>
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Ingest Workflow" />
+                    </p:column>
+                    <p:column>
+                        <p:selectBooleanButton disabled="#{yourWorkspaces.workspaceDetailsReadOnly}"
+                                               value="#{yourWorkspaces.workspaceDetailsToBeShown.ingestWorkflow}"
+                                               onLabel="True" offLabel="False" onIcon="ui-icon-check" offIcon="ui-icon-check">
+                        </p:selectBooleanButton>
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Create Profiles" />
+                    </p:column>
+                    <p:column>
+                        <p:selectBooleanButton disabled="#{yourWorkspaces.workspaceDetailsReadOnly}"
+                                               value="#{yourWorkspaces.workspaceDetailsToBeShown.createProfiles}"
+                                               onLabel="True" offLabel="False" onIcon="ui-icon-check" offIcon="ui-icon-check">
+                        </p:selectBooleanButton>
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Delivery Authorization" />
+                    </p:column>
+                    <p:column>
+                        <p:selectBooleanButton disabled="#{yourWorkspaces.workspaceDetailsReadOnly}"
+                                               value="#{yourWorkspaces.workspaceDetailsToBeShown.deliveryAuthorization}"
+                                               onLabel="True" offLabel="False" onIcon="ui-icon-check" offIcon="ui-icon-check">
+                        </p:selectBooleanButton>
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Share Workspace" />
+                    </p:column>
+                    <p:column>
+                        <p:selectBooleanButton disabled="#{yourWorkspaces.workspaceDetailsReadOnly}"
+                                               value="#{yourWorkspaces.workspaceDetailsToBeShown.shareWorkspace}"
+                                               onLabel="True" offLabel="False" onIcon="ui-icon-check" offIcon="ui-icon-check">
+                        </p:selectBooleanButton>
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Edit Media" />
+                    </p:column>
+                    <p:column>
+                        <p:selectBooleanButton disabled="#{yourWorkspaces.workspaceDetailsReadOnly}"
+                                               value="#{yourWorkspaces.workspaceDetailsToBeShown.editMedia}"
+                                               onLabel="True" offLabel="False" onIcon="ui-icon-check" offIcon="ui-icon-check">
+                        </p:selectBooleanButton>
+                    </p:column>
+                </p:row>
+            </p:panelGrid>
+
+            <p:defaultCommand target="saveWorkspace" />
+
+            <p:commandButton id="saveWorkspace" value="Save Workspace"
+                             disabled="#{yourWorkspaces.workspaceDetailsReadOnly}"
+                             action="#{yourWorkspaces.saveWorkspace}"
+                             update="viewForm:yourWorkspacesDataTable"
+                             onclick="PF('detailsWorkspace').hide()">
+                <p:confirm header="Confirmation" message="Are you sure?" icon="ui-icon-alert" />
+            </p:commandButton>
 
         </h:form>
     </p:dialog>
@@ -166,6 +379,12 @@
                 <p:outputLabel value="#{workspaceDetails.workspaceKey}" />
             </p:column>
 
+            <p:column style="width:160px;" headerText="creationDate" >
+                <p:outputLabel value="#{workspaceDetails.creationDate}" >
+                    <f:convertDateTime type="date" pattern="dd-MM-yyyy HH:mm:ss" timeZone="CET"/>
+                </p:outputLabel>
+            </p:column>
+
             <p:column headerText="Name" >
                 <p:outputLabel value="#{workspaceDetails.name}" />
             </p:column>
@@ -190,53 +409,15 @@
                 <p:outputLabel value="#{workspaceDetails.maxStorageInMB}" />
             </p:column>
 
-            <p:column style="width:70px;" headerText="Language&lt;br&gt;Code" >
-                <p:outputLabel value="#{workspaceDetails.languageCode}" />
-            </p:column>
-
-            <p:column style="width:160px;" headerText="creationDate" >
-                <p:outputLabel value="#{workspaceDetails.creationDate}" >
-                    <f:convertDateTime type="date" pattern="dd-MM-yyyy HH:mm:ss" timeZone="CET"/>
-                </p:outputLabel>
-            </p:column>
-
             <p:column style="width:50px;" headerText="Owner" >
                 <p:outputLabel value="#{workspaceDetails.owner}" />
             </p:column>
 
-            <p:column style="width:50px;" headerText="Admin" >
-                <p:outputLabel value="#{workspaceDetails.admin}" />
-            </p:column>
-
-            <p:column style="width:80px;" headerText="Ingest&lt;br&gt;Workflow" >
-                <p:outputLabel value="#{workspaceDetails.ingestWorkflow}" />
-            </p:column>
-
-            <p:column style="width:80px;" headerText="Create&lt;br&gt;Profiles" >
-                <p:outputLabel value="#{workspaceDetails.createProfiles}" />
-            </p:column>
-
-            <p:column style="width:110px;" headerText="Delivery&lt;br&gt;Authorization" >
-                <p:outputLabel value="#{workspaceDetails.deliveryAuthorization}" />
-            </p:column>
-
-            <p:column style="width:90px;" headerText="Share&lt;br&gt;Workspace" >
-                <p:outputLabel value="#{workspaceDetails.shareWorkspace}" />
-            </p:column>
-
-            <p:column style="width:60px;" headerText="Edit&lt;br&gt;Media" >
-                <p:outputLabel value="#{workspaceDetails.editMedia}" />
-            </p:column>
-
             <p:column style="width:140px;" headerText="">
-                <!--
-                <p:commandLink value="Remove"
-                               action="#{encodingProfiles.removeEncodingProfile(encodingProfile.encodingProfileKey)}"
-                               update="encodingProfileDataTable"
-                        >
-                    <p:confirm header="Confirmation" message="Are you sure?" icon="ui-icon-alert" />
-                </p:commandLink>
-                -->
+                <p:commandLink value="Details"
+                               actionListener="#{yourWorkspaces.prepareWorkspaceDetailsToBeShown(workspaceDetails, true)}"
+                               update="detailsWorkspaceForm" oncomplete="PF('detailsWorkspace').show()"
+                        />
             </p:column>
 
         </p:dataTable>

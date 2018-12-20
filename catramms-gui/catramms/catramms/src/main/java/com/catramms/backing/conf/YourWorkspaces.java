@@ -3,6 +3,7 @@ package com.catramms.backing.conf;
 import com.catramms.backing.common.SessionUtils;
 import com.catramms.backing.common.Workspace;
 import com.catramms.backing.entity.EncodingProfile;
+import com.catramms.backing.entity.WorkspaceDetails;
 import com.catramms.utility.catramms.CatraMMS;
 import org.apache.log4j.Logger;
 import org.json.JSONObject;
@@ -34,11 +35,26 @@ public class YourWorkspaces extends Workspace implements Serializable {
     private String createWorkspaceName;
     private String registrationConfirmationCode;
 
+    private WorkspaceDetails workspaceDetailsToBeShown;
+    private boolean workspaceDetailsReadOnly;
+    private List<String> encodingPriorityList = new ArrayList<>();
+    private List<String> encodingPeriodList = new ArrayList<>();
+
     @PostConstruct
     public void init()
     {
         mLogger.debug("init");
 
+        encodingPriorityList.add("Low");
+        encodingPriorityList.add("Medium");
+        encodingPriorityList.add("High");
+
+        encodingPeriodList.add("Daily");
+        encodingPeriodList.add("Weekly");
+        encodingPeriodList.add("Monthly");
+        encodingPeriodList.add("Yearly");
+
+        workspaceDetailsReadOnly = true;
     }
 
     public void createWorkspace()
@@ -108,6 +124,19 @@ public class YourWorkspaces extends Workspace implements Serializable {
         }
     }
 
+    public void saveWorkspace(WorkspaceDetails workspaceDetails)
+    {
+        // è cambiato qualcosa?
+        // save e reload list in session
+    }
+
+    public void prepareWorkspaceDetailsToBeShown(WorkspaceDetails workspaceDetails, boolean isReadOnly)
+    {
+        workspaceDetailsReadOnly = isReadOnly;
+
+        this.workspaceDetailsToBeShown = workspaceDetails;
+    }
+
     public String getCreateWorkspaceName() {
         return createWorkspaceName;
     }
@@ -122,5 +151,37 @@ public class YourWorkspaces extends Workspace implements Serializable {
 
     public void setRegistrationConfirmationCode(String registrationConfirmationCode) {
         this.registrationConfirmationCode = registrationConfirmationCode;
+    }
+
+    public WorkspaceDetails getWorkspaceDetailsToBeShown() {
+        return workspaceDetailsToBeShown;
+    }
+
+    public void setWorkspaceDetailsToBeShown(WorkspaceDetails workspaceDetailsToBeShown) {
+        this.workspaceDetailsToBeShown = workspaceDetailsToBeShown;
+    }
+
+    public List<String> getEncodingPriorityList() {
+        return encodingPriorityList;
+    }
+
+    public void setEncodingPriorityList(List<String> encodingPriorityList) {
+        this.encodingPriorityList = encodingPriorityList;
+    }
+
+    public List<String> getEncodingPeriodList() {
+        return encodingPeriodList;
+    }
+
+    public void setEncodingPeriodList(List<String> encodingPeriodList) {
+        this.encodingPeriodList = encodingPeriodList;
+    }
+
+    public boolean isWorkspaceDetailsReadOnly() {
+        return workspaceDetailsReadOnly;
+    }
+
+    public void setWorkspaceDetailsReadOnly(boolean workspaceDetailsReadOnly) {
+        this.workspaceDetailsReadOnly = workspaceDetailsReadOnly;
     }
 }
