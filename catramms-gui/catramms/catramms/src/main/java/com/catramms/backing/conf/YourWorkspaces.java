@@ -36,6 +36,17 @@ public class YourWorkspaces extends Workspace implements Serializable {
     private String registrationConfirmationCode;
 
     private WorkspaceDetails workspaceDetailsToBeShown;
+    private boolean newEnabled;
+    private String newMaxEncodingPriority;
+    private String newEncodingPeriod;
+    private Long newMaxIngestionsNumber;
+    private Long newMaxStorageInMB;
+    private String newLanguageCode;
+    private boolean newIngestWorkflow;
+    private boolean newCreateProfiles;
+    private boolean newDeliveryAuthorization;
+    private boolean newShareWorkspace;
+    private boolean newEditMedia;
     private boolean workspaceDetailsReadOnly;
     private List<String> encodingPriorityList = new ArrayList<>();
     private List<String> encodingPeriodList = new ArrayList<>();
@@ -126,8 +137,21 @@ public class YourWorkspaces extends Workspace implements Serializable {
 
     public void saveWorkspace(WorkspaceDetails workspaceDetails)
     {
-        // è cambiato qualcosa?
-        // save e reload list in session
+        if (newEnabled != workspaceDetails.getEnabled()
+            || newMaxEncodingPriority != workspaceDetails.getMaxEncodingPriority()
+            || newEncodingPeriod != workspaceDetails.getEncodingPeriod()
+            || newMaxIngestionsNumber != workspaceDetails.getMaxIngestionsNumber()
+            || newMaxStorageInMB != workspaceDetails.getMaxStorageInMB()
+            || newLanguageCode != workspaceDetails.getLanguageCode()
+            || newIngestWorkflow != workspaceDetails.getIngestWorkflow()
+            || newCreateProfiles != workspaceDetails.getCreateProfiles()
+            || newDeliveryAuthorization != workspaceDetails.getDeliveryAuthorization()
+            || newShareWorkspace != workspaceDetails.getShareWorkspace()
+            || newEditMedia != workspaceDetails.getEditMedia()
+        )
+        {
+            // save e reload list in session
+        }
     }
 
     public void prepareWorkspaceDetailsToBeShown(WorkspaceDetails workspaceDetails, boolean isReadOnly)
@@ -135,6 +159,19 @@ public class YourWorkspaces extends Workspace implements Serializable {
         workspaceDetailsReadOnly = isReadOnly;
 
         this.workspaceDetailsToBeShown = workspaceDetails;
+
+        newEnabled = workspaceDetails.getEnabled();
+        newMaxEncodingPriority = workspaceDetails.getMaxEncodingPriority();
+        newEncodingPeriod = workspaceDetails.getEncodingPeriod();
+        newMaxIngestionsNumber = workspaceDetails.getMaxIngestionsNumber();
+        newMaxStorageInMB = workspaceDetails.getMaxStorageInMB();
+        newLanguageCode = workspaceDetails.getLanguageCode();
+        newIngestWorkflow = workspaceDetails.getIngestWorkflow();
+        newCreateProfiles = workspaceDetails.getCreateProfiles();
+        newDeliveryAuthorization = workspaceDetails.getDeliveryAuthorization();
+        newShareWorkspace = workspaceDetails.getShareWorkspace();
+        newEditMedia = workspaceDetails.getEditMedia();
+
     }
 
     public String getCreateWorkspaceName() {
@@ -183,5 +220,93 @@ public class YourWorkspaces extends Workspace implements Serializable {
 
     public void setWorkspaceDetailsReadOnly(boolean workspaceDetailsReadOnly) {
         this.workspaceDetailsReadOnly = workspaceDetailsReadOnly;
+    }
+
+    public boolean isNewEnabled() {
+        return newEnabled;
+    }
+
+    public void setNewEnabled(boolean newEnabled) {
+        this.newEnabled = newEnabled;
+    }
+
+    public String getNewMaxEncodingPriority() {
+        return newMaxEncodingPriority;
+    }
+
+    public void setNewMaxEncodingPriority(String newMaxEncodingPriority) {
+        this.newMaxEncodingPriority = newMaxEncodingPriority;
+    }
+
+    public String getNewEncodingPeriod() {
+        return newEncodingPeriod;
+    }
+
+    public void setNewEncodingPeriod(String newEncodingPeriod) {
+        this.newEncodingPeriod = newEncodingPeriod;
+    }
+
+    public Long getNewMaxIngestionsNumber() {
+        return newMaxIngestionsNumber;
+    }
+
+    public void setNewMaxIngestionsNumber(Long newMaxIngestionsNumber) {
+        this.newMaxIngestionsNumber = newMaxIngestionsNumber;
+    }
+
+    public Long getNewMaxStorageInMB() {
+        return newMaxStorageInMB;
+    }
+
+    public void setNewMaxStorageInMB(Long newMaxStorageInMB) {
+        this.newMaxStorageInMB = newMaxStorageInMB;
+    }
+
+    public String getNewLanguageCode() {
+        return newLanguageCode;
+    }
+
+    public void setNewLanguageCode(String newLanguageCode) {
+        this.newLanguageCode = newLanguageCode;
+    }
+
+    public boolean isNewIngestWorkflow() {
+        return newIngestWorkflow;
+    }
+
+    public void setNewIngestWorkflow(boolean newIngestWorkflow) {
+        this.newIngestWorkflow = newIngestWorkflow;
+    }
+
+    public boolean isNewCreateProfiles() {
+        return newCreateProfiles;
+    }
+
+    public void setNewCreateProfiles(boolean newCreateProfiles) {
+        this.newCreateProfiles = newCreateProfiles;
+    }
+
+    public boolean isNewDeliveryAuthorization() {
+        return newDeliveryAuthorization;
+    }
+
+    public void setNewDeliveryAuthorization(boolean newDeliveryAuthorization) {
+        this.newDeliveryAuthorization = newDeliveryAuthorization;
+    }
+
+    public boolean isNewShareWorkspace() {
+        return newShareWorkspace;
+    }
+
+    public void setNewShareWorkspace(boolean newShareWorkspace) {
+        this.newShareWorkspace = newShareWorkspace;
+    }
+
+    public boolean isNewEditMedia() {
+        return newEditMedia;
+    }
+
+    public void setNewEditMedia(boolean newEditMedia) {
+        this.newEditMedia = newEditMedia;
     }
 }

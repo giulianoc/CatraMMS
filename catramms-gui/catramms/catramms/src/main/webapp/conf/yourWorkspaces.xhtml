@@ -91,7 +91,7 @@
     </p:dialog>
 
     <p:dialog widgetVar="detailsWorkspace" modal="true"
-              header="Details Workspace" appendTo="@(body)" width="800" height="500"
+              header="Details Workspace" appendTo="@(body)" width="800" height="600"
               showEffect="fade" hideEffect="fade" resizable="false" draggable="true">
 
         <h:form id="detailsWorkspaceForm">
@@ -140,7 +140,10 @@
                         <p:outputLabel value="Enabled" />
                     </p:column>
                     <p:column>
-                        <p:selectBooleanButton disabled="#{yourWorkspaces.workspaceDetailsReadOnly}" value="#{yourWorkspaces.workspaceDetailsToBeShown.enabled}"
+                        <p:outputLabel rendered="#{!yourWorkspaces.workspaceDetailsToBeShown.admin}"
+                                       value="#{yourWorkspaces.workspaceDetailsToBeShown.enabled}" />
+                        <p:selectBooleanButton rendered="#{yourWorkspaces.workspaceDetailsToBeShown.admin}"
+                                               value="#{yourWorkspaces.newEnabled}"
                                                onLabel="True" offLabel="False" onIcon="ui-icon-check" offIcon="ui-icon-check">
                         </p:selectBooleanButton>
                     </p:column>
@@ -151,8 +154,10 @@
                         <p:outputLabel value="Max Encoding Priority" />
                     </p:column>
                     <p:column>
-                        <p:selectOneMenu disabled="#{yourWorkspaces.workspaceDetailsReadOnly}"
-                                         value="#{yourWorkspaces.workspaceDetailsToBeShown.maxEncodingPriority}" >
+                        <p:outputLabel rendered="#{!yourWorkspaces.workspaceDetailsToBeShown.admin}"
+                                       value="#{yourWorkspaces.workspaceDetailsToBeShown.maxEncodingPriority}" />
+                        <p:selectOneMenu rendered="#{yourWorkspaces.workspaceDetailsToBeShown.admin}"
+                                         value="#{yourWorkspaces.newMaxEncodingPriority}" >
                             <f:selectItems value="#{yourWorkspaces.encodingPriorityList}" />
                         </p:selectOneMenu>
                     </p:column>
@@ -163,8 +168,10 @@
                         <p:outputLabel value="Encoding Period" />
                     </p:column>
                     <p:column>
-                        <p:selectOneMenu disabled="#{yourWorkspaces.workspaceDetailsReadOnly}"
-                                         value="#{yourWorkspaces.workspaceDetailsToBeShown.encodingPeriod}" >
+                        <p:outputLabel rendered="#{!yourWorkspaces.workspaceDetailsToBeShown.admin}"
+                                       value="#{yourWorkspaces.workspaceDetailsToBeShown.encodingPeriod}" />
+                        <p:selectOneMenu rendered="#{yourWorkspaces.workspaceDetailsToBeShown.admin}"
+                                         value="#{yourWorkspaces.newEncodingPeriod}" >
                             <f:selectItems value="#{yourWorkspaces.encodingPeriodList}" />
                         </p:selectOneMenu>
                     </p:column>
@@ -175,8 +182,11 @@
                         <p:outputLabel value="Max Ingestions Number" />
                     </p:column>
                     <p:column>
-                        <p:inputNumber disabled="#{yourWorkspaces.workspaceDetailsReadOnly}"
-                                       value="#{yourWorkspaces.workspaceDetailsToBeShown.maxIngestionsNumber}"
+                        <p:outputLabel rendered="#{!yourWorkspaces.workspaceDetailsToBeShown.admin}"
+                                       value="#{yourWorkspaces.workspaceDetailsToBeShown.maxIngestionsNumber}" />
+                        <p:inputNumber rendered="#{yourWorkspaces.workspaceDetailsToBeShown.admin}"
+                                       value="#{yourWorkspaces.newMaxIngestionsNumber}"
+                                       decimalPlaces="0"
                                        placeholder="max ingestion number"
                                        maxlength="6" />
                     </p:column>
@@ -187,8 +197,11 @@
                         <p:outputLabel value="Max Storage In MB" />
                     </p:column>
                     <p:column>
-                        <p:inputNumber disabled="#{yourWorkspaces.workspaceDetailsReadOnly}"
-                                       value="#{yourWorkspaces.workspaceDetailsToBeShown.maxStorageInMB}"
+                        <p:outputLabel rendered="#{!yourWorkspaces.workspaceDetailsToBeShown.admin}"
+                                       value="#{yourWorkspaces.workspaceDetailsToBeShown.maxStorageInMB}" />
+                        <p:inputNumber rendered="#{yourWorkspaces.workspaceDetailsToBeShown.admin}"
+                                       value="#{yourWorkspaces.newMaxStorageInMB}"
+                                       decimalPlaces="0"
                                        placeholder="max storage in MB"
                                        maxlength="6" />
                     </p:column>
@@ -199,8 +212,10 @@
                         <p:outputLabel value="Language Code" />
                     </p:column>
                     <p:column>
-                        <p:inputText disabled="#{yourWorkspaces.workspaceDetailsReadOnly}"
-                                     value="#{yourWorkspaces.workspaceDetailsToBeShown.languageCode}"
+                        <p:outputLabel rendered="#{!yourWorkspaces.workspaceDetailsToBeShown.admin}"
+                                       value="#{yourWorkspaces.workspaceDetailsToBeShown.languageCode}" />
+                        <p:inputText rendered="#{yourWorkspaces.workspaceDetailsToBeShown.admin}"
+                                     value="#{yourWorkspaces.newLanguageCode}"
                                      placeholder="language code" />
                     </p:column>
                 </p:row>
@@ -210,10 +225,7 @@
                         <p:outputLabel value="Owner" />
                     </p:column>
                     <p:column>
-                        <p:selectBooleanButton disabled="#{yourWorkspaces.workspaceDetailsReadOnly}"
-                                               value="#{yourWorkspaces.workspaceDetailsToBeShown.owner}"
-                                               onLabel="True" offLabel="False" onIcon="ui-icon-check" offIcon="ui-icon-check">
-                        </p:selectBooleanButton>
+                        <p:outputLabel value="#{yourWorkspaces.workspaceDetailsToBeShown.owner}" />
                     </p:column>
                 </p:row>
 
@@ -222,10 +234,7 @@
                         <p:outputLabel value="Admin" />
                     </p:column>
                     <p:column>
-                        <p:selectBooleanButton disabled="#{yourWorkspaces.workspaceDetailsReadOnly}"
-                                               value="#{yourWorkspaces.workspaceDetailsToBeShown.admin}"
-                                               onLabel="True" offLabel="False" onIcon="ui-icon-check" offIcon="ui-icon-check">
-                        </p:selectBooleanButton>
+                        <p:outputLabel value="#{yourWorkspaces.workspaceDetailsToBeShown.admin}" />
                     </p:column>
                 </p:row>
 
@@ -234,8 +243,10 @@
                         <p:outputLabel value="Ingest Workflow" />
                     </p:column>
                     <p:column>
-                        <p:selectBooleanButton disabled="#{yourWorkspaces.workspaceDetailsReadOnly}"
-                                               value="#{yourWorkspaces.workspaceDetailsToBeShown.ingestWorkflow}"
+                        <p:outputLabel rendered="#{!yourWorkspaces.workspaceDetailsToBeShown.admin}"
+                                       value="#{yourWorkspaces.workspaceDetailsToBeShown.ingestWorkflow}" />
+                        <p:selectBooleanButton rendered="#{yourWorkspaces.workspaceDetailsToBeShown.admin}"
+                                               value="#{yourWorkspaces.newIngestWorkflow}"
                                                onLabel="True" offLabel="False" onIcon="ui-icon-check" offIcon="ui-icon-check">
                         </p:selectBooleanButton>
                     </p:column>
@@ -246,8 +257,10 @@
                         <p:outputLabel value="Create Profiles" />
                     </p:column>
                     <p:column>
-                        <p:selectBooleanButton disabled="#{yourWorkspaces.workspaceDetailsReadOnly}"
-                                               value="#{yourWorkspaces.workspaceDetailsToBeShown.createProfiles}"
+                        <p:outputLabel rendered="#{!yourWorkspaces.workspaceDetailsToBeShown.admin}"
+                                       value="#{yourWorkspaces.workspaceDetailsToBeShown.createProfiles}" />
+                        <p:selectBooleanButton rendered="#{yourWorkspaces.workspaceDetailsToBeShown.admin}"
+                                               value="#{yourWorkspaces.newCreateProfiles}"
                                                onLabel="True" offLabel="False" onIcon="ui-icon-check" offIcon="ui-icon-check">
                         </p:selectBooleanButton>
                     </p:column>
@@ -258,8 +271,10 @@
                         <p:outputLabel value="Delivery Authorization" />
                     </p:column>
                     <p:column>
-                        <p:selectBooleanButton disabled="#{yourWorkspaces.workspaceDetailsReadOnly}"
-                                               value="#{yourWorkspaces.workspaceDetailsToBeShown.deliveryAuthorization}"
+                        <p:outputLabel rendered="#{!yourWorkspaces.workspaceDetailsToBeShown.admin}"
+                                       value="#{yourWorkspaces.workspaceDetailsToBeShown.deliveryAuthorization}" />
+                        <p:selectBooleanButton rendered="#{yourWorkspaces.workspaceDetailsToBeShown.admin}"
+                                               value="#{yourWorkspaces.newDeliveryAuthorization}"
                                                onLabel="True" offLabel="False" onIcon="ui-icon-check" offIcon="ui-icon-check">
                         </p:selectBooleanButton>
                     </p:column>
@@ -270,8 +285,10 @@
                         <p:outputLabel value="Share Workspace" />
                     </p:column>
                     <p:column>
-                        <p:selectBooleanButton disabled="#{yourWorkspaces.workspaceDetailsReadOnly}"
-                                               value="#{yourWorkspaces.workspaceDetailsToBeShown.shareWorkspace}"
+                        <p:outputLabel rendered="#{!yourWorkspaces.workspaceDetailsToBeShown.admin}"
+                                       value="#{yourWorkspaces.workspaceDetailsToBeShown.shareWorkspace}" />
+                        <p:selectBooleanButton rendered="#{yourWorkspaces.workspaceDetailsToBeShown.admin}"
+                                               value="#{yourWorkspaces.newShareWorkspace}"
                                                onLabel="True" offLabel="False" onIcon="ui-icon-check" offIcon="ui-icon-check">
                         </p:selectBooleanButton>
                     </p:column>
@@ -282,8 +299,10 @@
                         <p:outputLabel value="Edit Media" />
                     </p:column>
                     <p:column>
-                        <p:selectBooleanButton disabled="#{yourWorkspaces.workspaceDetailsReadOnly}"
-                                               value="#{yourWorkspaces.workspaceDetailsToBeShown.editMedia}"
+                        <p:outputLabel rendered="#{!yourWorkspaces.workspaceDetailsToBeShown.admin}"
+                                       value="#{yourWorkspaces.workspaceDetailsToBeShown.editMedia}" />
+                        <p:selectBooleanButton rendered="#{yourWorkspaces.workspaceDetailsToBeShown.admin}"
+                                               value="#{yourWorkspaces.newEditMedia}"
                                                onLabel="True" offLabel="False" onIcon="ui-icon-check" offIcon="ui-icon-check">
                         </p:selectBooleanButton>
                     </p:column>
@@ -389,23 +408,23 @@
                 <p:outputLabel value="#{workspaceDetails.name}" />
             </p:column>
 
-            <p:column style="width:50px;" headerText="Enabled" >
+            <p:column style="width:60px;" headerText="Enabled" >
                 <p:outputLabel value="#{workspaceDetails.enabled}" />
             </p:column>
 
-            <p:column style="width:100px;" headerText="MaxEncoding&lt;br&gt;Priority" >
+            <p:column style="width:120px;" headerText="Max Encoding&lt;br&gt;Priority" >
                 <p:outputLabel value="#{workspaceDetails.maxEncodingPriority}" />
             </p:column>
 
-            <p:column style="width:70px;" headerText="Encoding&lt;br&gt;Period" >
+            <p:column style="width:80px;" headerText="Encoding&lt;br&gt;Period" >
                 <p:outputLabel value="#{workspaceDetails.encodingPeriod}" />
             </p:column>
 
-            <p:column style="width:110px;" headerText="MaxIngestions&lt;br&gt;Number" >
+            <p:column style="width:120px;" headerText="Max Ingestions&lt;br&gt;Number" >
                 <p:outputLabel value="#{workspaceDetails.maxIngestionsNumber}" />
             </p:column>
 
-            <p:column style="width:90px;" headerText="MaxStorage&lt;br&gt;InMB" >
+            <p:column style="width:100px;" headerText="Max Storage&lt;br&gt;In MB" >
                 <p:outputLabel value="#{workspaceDetails.maxStorageInMB}" />
             </p:column>
 
@@ -418,6 +437,11 @@
                                actionListener="#{yourWorkspaces.prepareWorkspaceDetailsToBeShown(workspaceDetails, true)}"
                                update="detailsWorkspaceForm" oncomplete="PF('detailsWorkspace').show()"
                         />
+                <p:outputLabel value=" - " />
+                <p:commandLink value="Edit"
+                               actionListener="#{yourWorkspaces.prepareWorkspaceDetailsToBeShown(workspaceDetails, false)}"
+                               update="detailsWorkspaceForm" oncomplete="PF('detailsWorkspace').show()"
+                />
             </p:column>
 
         </p:dataTable>

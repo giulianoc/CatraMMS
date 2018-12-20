@@ -1,6 +1,7 @@
 package com.catramms.backing;
 
 import com.catramms.backing.common.SessionUtils;
+import com.catramms.backing.entity.UserProfile;
 import com.catramms.backing.entity.WorkspaceDetails;
 import com.catramms.utility.catramms.CatraMMS;
 import org.apache.log4j.Logger;
@@ -88,7 +89,7 @@ public class Login implements Serializable {
         try
         {
             CatraMMS catraMMS = new CatraMMS();
-            List<Object> userKeyAndPassword = catraMMS.login(emailAddress, pwd, workspaceDetailsList);
+            UserProfile userProfile = catraMMS.login(emailAddress, pwd, workspaceDetailsList);
 
             userKey = (Long) userKeyAndPassword.get(0);
             userName = (String) userKeyAndPassword.get(1);
