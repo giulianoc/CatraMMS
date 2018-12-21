@@ -1914,11 +1914,10 @@ tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool,bool> MMSEngineDBFa
     return userKeyWorkspaceAndFlags;
 }
 
-pair<int64_t,string> MMSEngineDBFacade::login (
+Json::Value MMSEngineDBFacade::login (
         string eMailAddress, string password)
 {
-    int64_t         userKey;
-    string          userName;
+    Json::Value     loginDetailsRoot;
     string          lastSQLCommand;
 
     shared_ptr<MySQLConnection> conn = nullptr;
@@ -1932,7 +1931,10 @@ pair<int64_t,string> MMSEngineDBFacade::login (
 
         {
             lastSQLCommand = 
-                "select userKey, name from MMS_User where eMailAddress = ? and password = ?";
+                "select userKey, name, country, "
+                "DATE_FORMAT(convert_tz(creationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as creationDate, "
+                "DATE_FORMAT(convert_tz(expirationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as expirationDate "
+                "from MMS_User where eMailAddress = ? and password = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, eMailAddress);
@@ -1941,8 +1943,23 @@ pair<int64_t,string> MMSEngineDBFacade::login (
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
-                userKey = resultSet->getInt64("userKey");
-                userName = resultSet->getString("name");
+                string field = "userKey";
+                loginDetailsRoot[field] = resultSet->getInt64("userKey");
+
+                field = "name";
+                loginDetailsRoot[field] = static_cast<string>(resultSet->getString("name"));
+
+                field = "eMailAddress";
+                loginDetailsRoot[field] = eMailAddress;
+
+                field = "country";
+                loginDetailsRoot[field] = static_cast<string>(resultSet->getString("country"));
+
+                field = "creationDate";
+                loginDetailsRoot[field] = static_cast<string>(resultSet->getString("creationDate"));
+
+                field = "expirationDate";
+                loginDetailsRoot[field] = static_cast<string>(resultSet->getString("expirationDate"));
             }
             else
             {
@@ -2037,7 +2054,7 @@ pair<int64_t,string> MMSEngineDBFacade::login (
         throw e;
     }
     
-    return make_pair(userKey, userName);
+    return loginDetailsRoot;
 }
 
 Json::Value MMSEngineDBFacade::getWorkspaceDetails (

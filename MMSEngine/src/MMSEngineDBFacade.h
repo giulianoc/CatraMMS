@@ -715,7 +715,7 @@ public:
 
     tuple<int64_t,shared_ptr<Workspace>,bool,bool,bool,bool,bool,bool> checkAPIKey (string apiKey);
 
-    pair<int64_t,string> login (string eMailAddress, string password);
+    Json::Value login (string eMailAddress, string password);
 
     Json::Value getWorkspaceDetails (int64_t userKey);
 

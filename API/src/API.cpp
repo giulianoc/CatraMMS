@@ -2061,32 +2061,28 @@ void API::login(
                 + ", email: " + email
             );
                         
-            pair<int64_t,string> userKeyAndName = _mmsEngineDBFacade->login(
+            Json::Value loginDetailsRoot = _mmsEngineDBFacade->login(
                     email, 
                     password
                 );
 
+            string field = "userKey";
+            int64_t userKey = loginDetailsRoot.get(field, 0).asInt64();
+            
             _logger->info(__FILEREF__ + "Login User"
-                + ", userKey: " + to_string(userKeyAndName.first)
-                + ", userName: " + userKeyAndName.second
+                + ", userKey: " + to_string(userKey)
                 + ", email: " + email
             );
             
             Json::Value workspaceDetailsRoot =
-                    _mmsEngineDBFacade->getWorkspaceDetails(userKeyAndName.first);
+                    _mmsEngineDBFacade->getWorkspaceDetails(userKey);
             
-            string responseBody = string("{ ");
-
-            responseBody += ("\"userKey\": " + to_string(userKeyAndName.first) + ", ");
-            responseBody += ("\"userName\": \"" + userKeyAndName.second + "\", ");
+            field = "workspaces";
+            loginDetailsRoot[field] = workspaceDetailsRoot;
             
-            responseBody += ("\"workspaces\": ");
-
             Json::StreamWriterBuilder wbuilder;
-            responseBody += Json::writeString(wbuilder, workspaceDetailsRoot);
+            string responseBody = Json::writeString(wbuilder, loginDetailsRoot);
             
-            responseBody += ("} ");
-
             sendSuccess(request, 200, responseBody);            
         }
         catch(LoginFailed e)
