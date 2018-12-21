@@ -2354,6 +2354,165 @@ pair<string, string> MMSEngineDBFacade::getUserDetails (int64_t userKey)
     return emailAddressAndName;
 }
 
+Json::Value MMSEngineDBFacade::updateUser (
+        int64_t userKey,
+        string name, 
+        string email, 
+        string password,
+        string country, 
+        string expirationDate)
+{
+    Json::Value     loginDetailsRoot;
+    string          lastSQLCommand;
+
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        {
+            lastSQLCommand = 
+                "update MMS_User set " 
+                "name = ?, country = ?, eMailAddress = ?, password = ?, "
+                "expirationDate = convert_tz(STR_TO_DATE(?,'%Y-%m-%dT%H:%i:%SZ'), '+00:00', @@session.time_zone) "
+                "where userKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, name);
+            preparedStatement->setString(queryParameterIndex++, country);
+            preparedStatement->setString(queryParameterIndex++, email);
+            preparedStatement->setString(queryParameterIndex++, password);
+            preparedStatement->setString(queryParameterIndex++, expirationDate);
+            preparedStatement->setInt64(queryParameterIndex++, userKey);
+
+            int rowsUpdated = preparedStatement->executeUpdate();
+            if (rowsUpdated != 1)
+            {
+                string errorMessage = __FILEREF__ + "no update was done"
+                        + ", userKey: " + to_string(userKey)
+                        + ", name: " + name
+                        + ", country: " + country
+                        + ", email: " + email
+                        + ", password: " + password
+                        + ", expirationDate: " + expirationDate
+                        + ", rowsUpdated: " + to_string(rowsUpdated)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->warn(errorMessage);
+
+                // throw runtime_error(errorMessage);
+            }
+        }
+        
+        {
+            lastSQLCommand = 
+                "select DATE_FORMAT(convert_tz(creationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as creationDate "
+                "from MMS_User where userKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, userKey);
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                string field = "creationDate";
+                loginDetailsRoot[field] = static_cast<string>(resultSet->getString("creationDate"));
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "userKey is wrong"
+                    + ", userKey: " + to_string(userKey)
+                    + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+
+        string field = "userKey";
+        loginDetailsRoot[field] = userKey;
+
+        field = "name";
+        loginDetailsRoot[field] = name;
+
+        field = "eMailAddress";
+        loginDetailsRoot[field] = email;
+
+        field = "country";
+        loginDetailsRoot[field] = country;
+
+        field = "expirationDate";
+        loginDetailsRoot[field] = expirationDate;
+                
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+
+        throw e;
+    }
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+
+        throw e;
+    }
+    
+    return loginDetailsRoot;
+}
+
 /*
 int64_t MMSEngineDBFacade::addTerritory (
 	shared_ptr<MySQLConnection> conn,

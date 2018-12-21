@@ -41,8 +41,8 @@ public class EncodingProfilesSetDetails extends Workspace implements Serializabl
 
         try
         {
-            Long userKey = SessionUtils.getUserKey();
-            String apiKey = SessionUtils.getAPIKey();
+            Long userKey = SessionUtils.getUserProfile().getUserKey();
+            String apiKey = SessionUtils.getCurrentWorkspaceDetails().getApiKey();
 
             if (userKey == null || apiKey == null || apiKey.equalsIgnoreCase(""))
             {

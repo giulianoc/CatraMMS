@@ -32,10 +32,8 @@ public class Login implements Serializable {
     private static final long serialVersionUID = 1094801825228386363L;
 
     private String originURI;
-    private String pwd;
-    private String msg;
+    private String password;
     private String emailAddress;
-    private String userName;
 
     private String registrationName;
     private String registrationEMail;
@@ -66,10 +64,8 @@ public class Login implements Serializable {
         }
 
         originURI = "";
-        pwd = "";
-        msg = "";
         emailAddress = "";
-        userName = "";
+        password = "";
 
         registrationName = "";
         registrationEMail = "";
@@ -83,16 +79,12 @@ public class Login implements Serializable {
     //validate login
     public void login()
     {
-        Long userKey = null;
         List<WorkspaceDetails> workspaceDetailsList = new ArrayList<>();
 
         try
         {
             CatraMMS catraMMS = new CatraMMS();
-            UserProfile userProfile = catraMMS.login(emailAddress, pwd, workspaceDetailsList);
-
-            userKey = (Long) userKeyAndPassword.get(0);
-            userName = (String) userKeyAndPassword.get(1);
+            UserProfile userProfile = catraMMS.login(emailAddress, password, workspaceDetailsList);
 
             if (workspaceDetailsList.size() == 0)
             {
@@ -108,8 +100,7 @@ public class Login implements Serializable {
 
             {
                 HttpSession session = SessionUtils.getSession();
-                session.setAttribute("username", userName);
-                session.setAttribute("userKey", userKey);
+                session.setAttribute("userProfile", userProfile);
                 session.setAttribute("workspaceDetailsList", workspaceDetailsList);
                 session.setAttribute("currentWorkspaceDetails", workspaceDetailsList.get(0));
 
@@ -302,20 +293,12 @@ public class Login implements Serializable {
         this.originURI = originURI;
     }
 
-    public String getPwd() {
-        return pwd;
+    public String getPassword() {
+        return password;
     }
 
-    public void setPwd(String pwd) {
-        this.pwd = pwd;
-    }
-
-    public String getMsg() {
-        return msg;
-    }
-
-    public void setMsg(String msg) {
-        this.msg = msg;
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public String getEmailAddress() {
@@ -324,14 +307,6 @@ public class Login implements Serializable {
 
     public void setEmailAddress(String emailAddress) {
         this.emailAddress = emailAddress;
-    }
-
-    public String getUserName() {
-        return userName;
-    }
-
-    public void setUserName(String userName) {
-        this.userName = userName;
     }
 
     public String getRegistrationName() {

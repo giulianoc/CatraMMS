@@ -243,8 +243,8 @@ public class MediaItems extends Workspace implements Serializable {
             {
                 try
                 {
-                    Long userKey = SessionUtils.getUserKey();
-                    String apiKey = SessionUtils.getAPIKey();
+                    Long userKey = SessionUtils.getUserProfile().getUserKey();
+                    String apiKey = SessionUtils.getCurrentWorkspaceDetails().getApiKey();
 
                     if (userKey == null || apiKey == null || apiKey.equalsIgnoreCase(""))
                     {
@@ -307,8 +307,8 @@ public class MediaItems extends Workspace implements Serializable {
     public void shareWorkspace()
     {
         try {
-            Long userKey = SessionUtils.getUserKey();
-            String apiKey = SessionUtils.getAPIKey();
+            Long userKey = SessionUtils.getUserProfile().getUserKey();
+            String apiKey = SessionUtils.getCurrentWorkspaceDetails().getApiKey();
             WorkspaceDetails currentWorkspaceDetails = SessionUtils.getCurrentWorkspaceDetails();
 
             if (userKey == null || apiKey == null || apiKey.equalsIgnoreCase(""))

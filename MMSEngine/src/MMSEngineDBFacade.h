@@ -719,6 +719,14 @@ public:
 
     Json::Value getWorkspaceDetails (int64_t userKey);
 
+    Json::Value updateUser (
+        int64_t userKey,
+        string name, 
+        string email, 
+        string password,
+        string country, 
+        string expirationDate);
+
     int64_t addEncodingProfilesSet (
         shared_ptr<MySQLConnection> conn, int64_t workspaceKey,
         MMSEngineDBFacade::ContentType contentType, 

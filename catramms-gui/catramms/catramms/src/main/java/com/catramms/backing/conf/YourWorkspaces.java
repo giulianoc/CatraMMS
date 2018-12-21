@@ -72,8 +72,8 @@ public class YourWorkspaces extends Workspace implements Serializable {
     {
         try
         {
-            Long userKey = SessionUtils.getUserKey();
-            String apiKey = SessionUtils.getAPIKey();
+            Long userKey = SessionUtils.getUserProfile().getUserKey();
+            String apiKey = SessionUtils.getCurrentWorkspaceDetails().getApiKey();
 
             if (userKey == null || apiKey == null || apiKey.equalsIgnoreCase(""))
             {
@@ -112,7 +112,7 @@ public class YourWorkspaces extends Workspace implements Serializable {
     {
         try
         {
-            Long userKey = SessionUtils.getUserKey();
+            Long userKey = SessionUtils.getUserProfile().getUserKey();
 
             CatraMMS catraMMS = new CatraMMS();
             String apyKey = catraMMS.confirmRegistration(
@@ -135,7 +135,7 @@ public class YourWorkspaces extends Workspace implements Serializable {
         }
     }
 
-    public void saveWorkspace(WorkspaceDetails workspaceDetails)
+    public void updateWorkspace(WorkspaceDetails workspaceDetails)
     {
         if (newEnabled != workspaceDetails.getEnabled()
             || newMaxEncodingPriority != workspaceDetails.getMaxEncodingPriority()

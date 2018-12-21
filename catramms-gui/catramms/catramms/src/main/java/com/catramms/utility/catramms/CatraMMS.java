@@ -214,7 +214,7 @@ public class CatraMMS {
         return apiKey;
     }
 
-    public List<Object> login(String username, String password, List<WorkspaceDetails> workspaceDetailsList)
+    public UserProfile login(String username, String password, List<WorkspaceDetails> workspaceDetailsList)
             throws Exception
     {
         String mmsInfo;
@@ -247,16 +247,16 @@ public class CatraMMS {
             throw new Exception(errorMessage);
         }
 
-        List<Object> userKeyAndName = new ArrayList<>();
-
-        Long userKey;
-        String userName;
+        UserProfile userProfile = new UserProfile();
 
         try
         {
             JSONObject joWMMSInfo = new JSONObject(mmsInfo);
-            userKey = joWMMSInfo.getLong("userKey");
-            userName = joWMMSInfo.getString("userName");
+
+            fillUserProfile(userProfile, joWMMSInfo);
+
+            userProfile.setPassword(password);
+
             JSONArray jaWorkspacesInfo = joWMMSInfo.getJSONArray("workspaces");
 
             fillWorkspaceDetails(workspaceDetailsList, jaWorkspacesInfo);
@@ -269,10 +269,7 @@ public class CatraMMS {
             throw new Exception(errorMessage);
         }
 
-        userKeyAndName.add(userKey);
-        userKeyAndName.add(userName);
-
-        return userKeyAndName;
+        return userProfile;
     }
 
     public Long createWorkspace(String username, String password,
@@ -325,6 +322,68 @@ public class CatraMMS {
         }
 
         return workspaceKey;
+    }
+
+    public UserProfile updateUserProfile(String username, String password,
+                           String newName,
+                           String newEmailAddress, String newPassword,
+                           String newCountry, Date newExpirationDate)
+            throws Exception
+    {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        simpleDateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+
+        String mmsInfo;
+        try
+        {
+            String mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort + "/catramms/v1/user";
+
+            String bodyRequest = "{ "
+                    + "\"Name\": \"" + newName + "\", "
+                    + "\"EMail\": \"" + newEmailAddress + "\", "
+                    + "\"Password\": \"" + newPassword + "\", "
+                    + "\"Country\": \"" + newCountry + "\", "
+                    + "\"ExpirationDate\": \"" + simpleDateFormat.format(newExpirationDate) + "\" "
+                    + "} "
+                    ;
+
+            mLogger.info("updateUser"
+                            + ", mmsURL: " + mmsURL
+                            + ", bodyRequest: " + bodyRequest
+            );
+
+            Date now = new Date();
+            mmsInfo = HttpFeedFetcher.fetchPutHttpsJson(mmsURL, timeoutInSeconds, maxRetriesNumber,
+                    username, password, bodyRequest);
+            mLogger.info("Elapsed time register (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "updateUser failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+
+        UserProfile userProfile = new UserProfile();
+
+        try
+        {
+            JSONObject joWMMSInfo = new JSONObject(mmsInfo);
+
+            fillUserProfile(userProfile, joWMMSInfo);
+
+            userProfile.setPassword(password);
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "Parsing userProfile failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+
+        return userProfile;
     }
 
     public IngestionResult ingestWorkflow(String username, String password,
@@ -1835,6 +1894,30 @@ public class CatraMMS {
         }
 
         return facebookConfList;
+    }
+
+    private void fillUserProfile(UserProfile userProfile, JSONObject joUserProfileInfo)
+            throws Exception
+    {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        simpleDateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+
+        try
+        {
+            userProfile.setUserKey(joUserProfileInfo.getLong("userKey"));
+            userProfile.setName(joUserProfileInfo.getString("name"));
+            userProfile.setCountry(joUserProfileInfo.getString("country"));
+            userProfile.setEmailAddress(joUserProfileInfo.getString("eMailAddress"));
+            userProfile.setCreationDate(simpleDateFormat.parse(joUserProfileInfo.getString("creationDate")));
+            userProfile.setExpirationDate(simpleDateFormat.parse(joUserProfileInfo.getString("expirationDate")));
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "fillUserProfile failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
     }
 
     private void fillWorkspaceDetails(List<WorkspaceDetails> workspaceDetailsList, JSONArray jaWorkspacesInfo)

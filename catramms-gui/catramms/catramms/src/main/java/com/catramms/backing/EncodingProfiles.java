@@ -263,8 +263,8 @@ public class EncodingProfiles extends Workspace implements Serializable {
 
         try
         {
-            Long userKey = SessionUtils.getUserKey();
-            String apiKey = SessionUtils.getAPIKey();
+            Long userKey = SessionUtils.getUserProfile().getUserKey();
+            String apiKey = SessionUtils.getCurrentWorkspaceDetails().getApiKey();
 
             if (userKey == null || apiKey == null || apiKey.equalsIgnoreCase(""))
             {
@@ -305,8 +305,8 @@ public class EncodingProfiles extends Workspace implements Serializable {
     {
         try
         {
-            Long userKey = SessionUtils.getUserKey();
-            String apiKey = SessionUtils.getAPIKey();
+            Long userKey = SessionUtils.getUserProfile().getUserKey();
+            String apiKey = SessionUtils.getCurrentWorkspaceDetails().getApiKey();
 
             if (userKey == null || apiKey == null || apiKey.equalsIgnoreCase(""))
             {
@@ -377,8 +377,8 @@ public class EncodingProfiles extends Workspace implements Serializable {
             {
                 try
                 {
-                    Long userKey = SessionUtils.getUserKey();
-                    String apiKey = SessionUtils.getAPIKey();
+                    Long userKey = SessionUtils.getUserProfile().getUserKey();
+                    String apiKey = SessionUtils.getCurrentWorkspaceDetails().getApiKey();
 
                     if (userKey == null || apiKey == null || apiKey.equalsIgnoreCase(""))
                     {

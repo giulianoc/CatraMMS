@@ -493,6 +493,10 @@ void API::manageRequestAndResponse(
     {
         registerUser(request, requestBody);
     }
+    else if (method == "updateUser")
+    {
+        updateUser(request, userKey, requestBody);
+    }
     else if (method == "createWorkspace")
     {
         createWorkspace(request, userKey, queryParameters, requestBody);
@@ -2097,6 +2101,172 @@ void API::login(
             sendError(request, 401, errorMessage);   // unauthorized
 
             throw runtime_error(errorMessage);
+        }
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + api + " failed"
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error: ") + e.what();
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + api + " failed"
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::updateUser(
+        FCGX_Request& request,
+        int64_t userKey,
+        string requestBody)
+{
+    string api = "updateUser";
+
+    _logger->info(__FILEREF__ + "Received " + api
+        + ", requestBody: " + requestBody
+    );
+
+    try
+    {
+        string name;
+        string email;
+        string password;
+        string country;
+        string expirationDate;
+
+        Json::Value metadataRoot;
+        try
+        {
+            Json::CharReaderBuilder builder;
+            Json::CharReader* reader = builder.newCharReader();
+            string errors;
+
+            bool parsingSuccessful = reader->parse(requestBody.c_str(),
+                    requestBody.c_str() + requestBody.size(), 
+                    &metadataRoot, &errors);
+            delete reader;
+
+            if (!parsingSuccessful)
+            {
+                string errorMessage = string("Json metadata failed during the parsing")
+                        + ", errors: " + errors
+                        + ", json data: " + requestBody
+                        ;
+                _logger->error(__FILEREF__ + errorMessage);
+
+                sendError(request, 400, errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+        catch(exception e)
+        {
+            string errorMessage = string("Json metadata failed during the parsing"
+                    ", json data: " + requestBody
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        {
+            vector<string> mandatoryFields = {
+                "Name",
+                "EMail",
+                "Password",
+                "Country",
+                "ExpirationDate"
+            };
+            for (string field: mandatoryFields)
+            {
+                if (!_mmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
+                {
+                    string errorMessage = string("Json field is not present or it is null")
+                            + ", Json field: " + field;
+                    _logger->error(__FILEREF__ + errorMessage);
+
+                    sendError(request, 400, errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+            }
+
+            name = metadataRoot.get("Name", "XXX").asString();
+            email = metadataRoot.get("EMail", "XXX").asString();
+            password = metadataRoot.get("Password", "XXX").asString();
+            country = metadataRoot.get("Country", "XXX").asString();
+            expirationDate = metadataRoot.get("ExpirationDate", "XXX").asString();
+        }
+
+        try
+        {
+            _logger->info(__FILEREF__ + "Updating User"
+                + ", userKey: " + to_string(userKey)
+                + ", name: " + name
+                + ", email: " + email
+            );
+            
+            Json::Value loginDetailsRoot = _mmsEngineDBFacade->updateUser(
+                    userKey,
+                    name, 
+                    email, 
+                    password,
+                    country, 
+                    expirationDate);
+
+            _logger->info(__FILEREF__ + "User updated"
+                + ", userKey: " + to_string(userKey)
+                + ", name: " + name
+                + ", email: " + email
+            );
+            
+            Json::StreamWriterBuilder wbuilder;
+            string responseBody = Json::writeString(wbuilder, loginDetailsRoot);
+            
+            sendSuccess(request, 200, responseBody);            
         }
         catch(runtime_error e)
         {

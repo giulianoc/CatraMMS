@@ -303,8 +303,8 @@ public class NewWorkflow extends Workspace implements Serializable {
 
         try
         {
-            Long userKey = SessionUtils.getUserKey();
-            String apiKey = SessionUtils.getAPIKey();
+            Long userKey = SessionUtils.getUserProfile().getUserKey();
+            String apiKey = SessionUtils.getCurrentWorkspaceDetails().getApiKey();
 
             if (userKey == null || apiKey == null || apiKey.equalsIgnoreCase(""))
             {
@@ -1977,8 +1977,8 @@ public class NewWorkflow extends Workspace implements Serializable {
 
         try
         {
-            Long userKey = SessionUtils.getUserKey();
-            String apiKey = SessionUtils.getAPIKey();
+            Long userKey = SessionUtils.getUserProfile().getUserKey();
+            String apiKey = SessionUtils.getCurrentWorkspaceDetails().getApiKey();
 
             username = userKey.toString();
             password = apiKey;
@@ -2514,7 +2514,7 @@ public class NewWorkflow extends Workspace implements Serializable {
             }
             else if (tnSelectedNode.getData() instanceof Task)
             {
-                String userName = SessionUtils.getUserName();
+                String userName = SessionUtils.getUserProfile().getName();
 
                 tnWorkingNode = tnSelectedNode;
 
@@ -3609,7 +3609,7 @@ public class NewWorkflow extends Workspace implements Serializable {
     {
         try
         {
-            Long userKey = SessionUtils.getUserKey();
+            Long userKey = SessionUtils.getUserProfile().getUserKey();
 
             String localBinaryPathName = temporaryPushBinariesPathName + "/" + userKey + "-" + fileName;
 
@@ -3628,8 +3628,8 @@ public class NewWorkflow extends Workspace implements Serializable {
     {
         try
         {
-            Long userKey = SessionUtils.getUserKey();
-            String apiKey = SessionUtils.getAPIKey();
+            Long userKey = SessionUtils.getUserProfile().getUserKey();
+            String apiKey = SessionUtils.getCurrentWorkspaceDetails().getApiKey();
 
             if (userKey == null || apiKey == null || apiKey.equalsIgnoreCase(""))
             {

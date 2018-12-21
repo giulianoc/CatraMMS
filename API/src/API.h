@@ -97,6 +97,11 @@ private:
         FCGX_Request& request,
         string requestBody);
     
+    void updateUser(
+        FCGX_Request& request,
+        int64_t userKey,
+        string requestBody);
+
     void createWorkspace(
         FCGX_Request& request,
         int64_t userKey,

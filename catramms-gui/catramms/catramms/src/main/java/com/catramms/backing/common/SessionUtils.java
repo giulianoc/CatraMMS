@@ -1,5 +1,6 @@
 package com.catramms.backing.common;
 
+import com.catramms.backing.entity.UserProfile;
 import com.catramms.backing.entity.WorkspaceDetails;
 import org.apache.log4j.Logger;
 
@@ -22,12 +23,13 @@ public class SessionUtils {
                 .getExternalContext().getRequest();
     }
 
-    public static String getUserName() {
+    public static UserProfile getUserProfile() {
         HttpSession session = (HttpSession) FacesContext.getCurrentInstance()
                 .getExternalContext().getSession(false);
-        return session.getAttribute("username").toString();
+        return (UserProfile) session.getAttribute("userProfile");
     }
 
+    /*
     public static String getUserId() {
         HttpSession session = getSession();
         if (session != null)
@@ -83,6 +85,7 @@ public class SessionUtils {
         else
             return null;
     }
+    */
 
     public static List<WorkspaceDetails> getWorkspaceDetailsList()
     {

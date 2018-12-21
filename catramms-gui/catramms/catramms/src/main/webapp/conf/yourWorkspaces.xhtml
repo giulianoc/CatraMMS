@@ -91,7 +91,7 @@
     </p:dialog>
 
     <p:dialog widgetVar="detailsWorkspace" modal="true"
-              header="Details Workspace" appendTo="@(body)" width="800" height="600"
+              header="Details Workspace" appendTo="@(body)" width="800" height="550"
               showEffect="fade" hideEffect="fade" resizable="false" draggable="true">
 
         <h:form id="detailsWorkspaceForm">
@@ -166,6 +166,8 @@
                 <p:row>
                     <p:column>
                         <p:outputLabel value="Encoding Period" />
+                        <br />
+                        <p:outputLabel value="Max Ingestions Number" />
                     </p:column>
                     <p:column>
                         <p:outputLabel rendered="#{!yourWorkspaces.workspaceDetailsToBeShown.admin}"
@@ -174,9 +176,20 @@
                                          value="#{yourWorkspaces.newEncodingPeriod}" >
                             <f:selectItems value="#{yourWorkspaces.encodingPeriodList}" />
                         </p:selectOneMenu>
+
+                        <br />
+
+                        <p:outputLabel rendered="#{!yourWorkspaces.workspaceDetailsToBeShown.admin}"
+                                       value="#{yourWorkspaces.workspaceDetailsToBeShown.maxIngestionsNumber}" />
+                        <p:inputNumber rendered="#{yourWorkspaces.workspaceDetailsToBeShown.admin}"
+                                       value="#{yourWorkspaces.newMaxIngestionsNumber}"
+                                       decimalPlaces="0"
+                                       placeholder="max ingestion number"
+                                       maxlength="6" />
                     </p:column>
                 </p:row>
 
+                <!--
                 <p:row>
                     <p:column>
                         <p:outputLabel value="Max Ingestions Number" />
@@ -191,7 +204,7 @@
                                        maxlength="6" />
                     </p:column>
                 </p:row>
-
+                -->
                 <p:row>
                     <p:column>
                         <p:outputLabel value="Max Storage In MB" />
@@ -212,9 +225,9 @@
                         <p:outputLabel value="Language Code" />
                     </p:column>
                     <p:column>
-                        <p:outputLabel rendered="#{!yourWorkspaces.workspaceDetailsToBeShown.admin}"
+                        <p:outputLabel rendered="#{!yourWorkspaces.workspaceDetailsToBeShown.owner}"
                                        value="#{yourWorkspaces.workspaceDetailsToBeShown.languageCode}" />
-                        <p:inputText rendered="#{yourWorkspaces.workspaceDetailsToBeShown.admin}"
+                        <p:inputText rendered="#{yourWorkspaces.workspaceDetailsToBeShown.owner}"
                                      value="#{yourWorkspaces.newLanguageCode}"
                                      placeholder="language code" />
                     </p:column>
@@ -243,9 +256,9 @@
                         <p:outputLabel value="Ingest Workflow" />
                     </p:column>
                     <p:column>
-                        <p:outputLabel rendered="#{!yourWorkspaces.workspaceDetailsToBeShown.admin}"
+                        <p:outputLabel rendered="#{!yourWorkspaces.workspaceDetailsToBeShown.owner}"
                                        value="#{yourWorkspaces.workspaceDetailsToBeShown.ingestWorkflow}" />
-                        <p:selectBooleanButton rendered="#{yourWorkspaces.workspaceDetailsToBeShown.admin}"
+                        <p:selectBooleanButton rendered="#{yourWorkspaces.workspaceDetailsToBeShown.owner}"
                                                value="#{yourWorkspaces.newIngestWorkflow}"
                                                onLabel="True" offLabel="False" onIcon="ui-icon-check" offIcon="ui-icon-check">
                         </p:selectBooleanButton>
@@ -257,9 +270,9 @@
                         <p:outputLabel value="Create Profiles" />
                     </p:column>
                     <p:column>
-                        <p:outputLabel rendered="#{!yourWorkspaces.workspaceDetailsToBeShown.admin}"
+                        <p:outputLabel rendered="#{!yourWorkspaces.workspaceDetailsToBeShown.owner}"
                                        value="#{yourWorkspaces.workspaceDetailsToBeShown.createProfiles}" />
-                        <p:selectBooleanButton rendered="#{yourWorkspaces.workspaceDetailsToBeShown.admin}"
+                        <p:selectBooleanButton rendered="#{yourWorkspaces.workspaceDetailsToBeShown.owner}"
                                                value="#{yourWorkspaces.newCreateProfiles}"
                                                onLabel="True" offLabel="False" onIcon="ui-icon-check" offIcon="ui-icon-check">
                         </p:selectBooleanButton>
@@ -271,9 +284,9 @@
                         <p:outputLabel value="Delivery Authorization" />
                     </p:column>
                     <p:column>
-                        <p:outputLabel rendered="#{!yourWorkspaces.workspaceDetailsToBeShown.admin}"
+                        <p:outputLabel rendered="#{!yourWorkspaces.workspaceDetailsToBeShown.owner}"
                                        value="#{yourWorkspaces.workspaceDetailsToBeShown.deliveryAuthorization}" />
-                        <p:selectBooleanButton rendered="#{yourWorkspaces.workspaceDetailsToBeShown.admin}"
+                        <p:selectBooleanButton rendered="#{yourWorkspaces.workspaceDetailsToBeShown.owner}"
                                                value="#{yourWorkspaces.newDeliveryAuthorization}"
                                                onLabel="True" offLabel="False" onIcon="ui-icon-check" offIcon="ui-icon-check">
                         </p:selectBooleanButton>
@@ -285,9 +298,9 @@
                         <p:outputLabel value="Share Workspace" />
                     </p:column>
                     <p:column>
-                        <p:outputLabel rendered="#{!yourWorkspaces.workspaceDetailsToBeShown.admin}"
+                        <p:outputLabel rendered="#{!yourWorkspaces.workspaceDetailsToBeShown.owner}"
                                        value="#{yourWorkspaces.workspaceDetailsToBeShown.shareWorkspace}" />
-                        <p:selectBooleanButton rendered="#{yourWorkspaces.workspaceDetailsToBeShown.admin}"
+                        <p:selectBooleanButton rendered="#{yourWorkspaces.workspaceDetailsToBeShown.owner}"
                                                value="#{yourWorkspaces.newShareWorkspace}"
                                                onLabel="True" offLabel="False" onIcon="ui-icon-check" offIcon="ui-icon-check">
                         </p:selectBooleanButton>
@@ -299,9 +312,9 @@
                         <p:outputLabel value="Edit Media" />
                     </p:column>
                     <p:column>
-                        <p:outputLabel rendered="#{!yourWorkspaces.workspaceDetailsToBeShown.admin}"
+                        <p:outputLabel rendered="#{!yourWorkspaces.workspaceDetailsToBeShown.owner}"
                                        value="#{yourWorkspaces.workspaceDetailsToBeShown.editMedia}" />
-                        <p:selectBooleanButton rendered="#{yourWorkspaces.workspaceDetailsToBeShown.admin}"
+                        <p:selectBooleanButton rendered="#{yourWorkspaces.workspaceDetailsToBeShown.owner}"
                                                value="#{yourWorkspaces.newEditMedia}"
                                                onLabel="True" offLabel="False" onIcon="ui-icon-check" offIcon="ui-icon-check">
                         </p:selectBooleanButton>
@@ -309,11 +322,11 @@
                 </p:row>
             </p:panelGrid>
 
-            <p:defaultCommand target="saveWorkspace" />
+            <p:defaultCommand target="updateWorkspace" />
 
-            <p:commandButton id="saveWorkspace" value="Save Workspace"
+            <p:commandButton id="updateWorkspace" value="Update Workspace"
                              disabled="#{yourWorkspaces.workspaceDetailsReadOnly}"
-                             action="#{yourWorkspaces.saveWorkspace}"
+                             action="#{yourWorkspaces.updateWorkspace}"
                              update="viewForm:yourWorkspacesDataTable"
                              onclick="PF('detailsWorkspace').hide()">
                 <p:confirm header="Confirmation" message="Are you sure?" icon="ui-icon-alert" />
@@ -335,7 +348,7 @@
 
             <p:toolbarGroup align="right">
 
-                <p:outputLabel value="Welcome #{login.userName}" />
+                <p:outputLabel value="Welcome #{sessionScope.userProfile.name}" />
 
                 <span class="ui-separator">
                     <span class="ui-icon ui-icon-grip-dotted-vertical" />
