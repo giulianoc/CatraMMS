@@ -2420,7 +2420,7 @@ Json::Value MMSEngineDBFacade::updateUser (
                 string field = "creationDate";
                 loginDetailsRoot[field] = static_cast<string>(resultSet->getString("creationDate"));
 
-                string field = "expirationDate";
+                field = "expirationDate";
                 loginDetailsRoot[field] = static_cast<string>(resultSet->getString("expirationDate"));
             }
             else
