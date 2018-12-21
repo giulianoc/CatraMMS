@@ -2359,8 +2359,7 @@ Json::Value MMSEngineDBFacade::updateUser (
         string name, 
         string email, 
         string password,
-        string country, 
-        string expirationDate)
+        string country)
 {
     Json::Value     loginDetailsRoot;
     string          lastSQLCommand;
@@ -2376,9 +2375,8 @@ Json::Value MMSEngineDBFacade::updateUser (
 
         {
             lastSQLCommand = 
-                "update MMS_User set " 
-                "name = ?, country = ?, eMailAddress = ?, password = ?, "
-                "expirationDate = convert_tz(STR_TO_DATE(?,'%Y-%m-%dT%H:%i:%SZ'), '+00:00', @@session.time_zone) "
+                "update MMS_User set name = ?, country = ?, eMailAddress = ?, password = ? "
+                // "expirationDate = convert_tz(STR_TO_DATE(?,'%Y-%m-%dT%H:%i:%SZ'), '+00:00', @@session.time_zone) "
                 "where userKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -2386,7 +2384,7 @@ Json::Value MMSEngineDBFacade::updateUser (
             preparedStatement->setString(queryParameterIndex++, country);
             preparedStatement->setString(queryParameterIndex++, email);
             preparedStatement->setString(queryParameterIndex++, password);
-            preparedStatement->setString(queryParameterIndex++, expirationDate);
+            // preparedStatement->setString(queryParameterIndex++, expirationDate);
             preparedStatement->setInt64(queryParameterIndex++, userKey);
 
             int rowsUpdated = preparedStatement->executeUpdate();
@@ -2398,7 +2396,6 @@ Json::Value MMSEngineDBFacade::updateUser (
                         + ", country: " + country
                         + ", email: " + email
                         + ", password: " + password
-                        + ", expirationDate: " + expirationDate
                         + ", rowsUpdated: " + to_string(rowsUpdated)
                         + ", lastSQLCommand: " + lastSQLCommand
                 ;
@@ -2410,7 +2407,8 @@ Json::Value MMSEngineDBFacade::updateUser (
         
         {
             lastSQLCommand = 
-                "select DATE_FORMAT(convert_tz(creationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as creationDate "
+                "select DATE_FORMAT(convert_tz(creationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as creationDate, "
+                "DATE_FORMAT(convert_tz(expirationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as expirationDate "
                 "from MMS_User where userKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -2421,6 +2419,9 @@ Json::Value MMSEngineDBFacade::updateUser (
             {
                 string field = "creationDate";
                 loginDetailsRoot[field] = static_cast<string>(resultSet->getString("creationDate"));
+
+                string field = "expirationDate";
+                loginDetailsRoot[field] = static_cast<string>(resultSet->getString("expirationDate"));
             }
             else
             {
@@ -2445,9 +2446,6 @@ Json::Value MMSEngineDBFacade::updateUser (
 
         field = "country";
         loginDetailsRoot[field] = country;
-
-        field = "expirationDate";
-        loginDetailsRoot[field] = expirationDate;
                 
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())

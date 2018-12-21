@@ -2173,7 +2173,6 @@ void API::updateUser(
         string email;
         string password;
         string country;
-        string expirationDate;
 
         Json::Value metadataRoot;
         try
@@ -2217,8 +2216,7 @@ void API::updateUser(
                 "Name",
                 "EMail",
                 "Password",
-                "Country",
-                "ExpirationDate"
+                "Country"
             };
             for (string field: mandatoryFields)
             {
@@ -2238,7 +2236,6 @@ void API::updateUser(
             email = metadataRoot.get("EMail", "XXX").asString();
             password = metadataRoot.get("Password", "XXX").asString();
             country = metadataRoot.get("Country", "XXX").asString();
-            expirationDate = metadataRoot.get("ExpirationDate", "XXX").asString();
         }
 
         try
@@ -2254,8 +2251,7 @@ void API::updateUser(
                     name, 
                     email, 
                     password,
-                    country, 
-                    expirationDate);
+                    country);
 
             _logger->info(__FILEREF__ + "User updated"
                 + ", userKey: " + to_string(userKey)

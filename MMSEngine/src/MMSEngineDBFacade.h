@@ -724,8 +724,7 @@ public:
         string name, 
         string email, 
         string password,
-        string country, 
-        string expirationDate);
+        string country);
 
     int64_t addEncodingProfilesSet (
         shared_ptr<MySQLConnection> conn, int64_t workspaceKey,
