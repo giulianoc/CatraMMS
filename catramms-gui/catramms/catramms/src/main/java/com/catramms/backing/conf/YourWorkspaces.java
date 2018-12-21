@@ -13,6 +13,7 @@ import javax.faces.application.FacesMessage;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
 import javax.faces.context.FacesContext;
+import javax.servlet.http.HttpSession;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -135,7 +136,7 @@ public class YourWorkspaces extends Workspace implements Serializable {
         }
     }
 
-    public void updateWorkspace(WorkspaceDetails workspaceDetails)
+    public void updateWorkspace(WorkspaceDetails workspaceDetails, int workspaceDetailsIndex)
     {
         if (newEnabled != workspaceDetails.getEnabled()
             || newMaxEncodingPriority != workspaceDetails.getMaxEncodingPriority()
@@ -150,7 +151,49 @@ public class YourWorkspaces extends Workspace implements Serializable {
             || newEditMedia != workspaceDetails.getEditMedia()
         )
         {
-            // save e reload list in session
+            try
+            {
+                Long userKey = SessionUtils.getUserProfile().getUserKey();
+                String apiKey = SessionUtils.getCurrentWorkspaceDetails().getApiKey();
+
+                if (userKey == null || apiKey == null || apiKey.equalsIgnoreCase(""))
+                {
+                    mLogger.warn("no input to require encodingJobs"
+                                    + ", userKey: " + userKey
+                                    + ", apiKey: " + apiKey
+                    );
+                }
+                else
+                {
+                    String username = userKey.toString();
+                    String password = apiKey;
+
+                    CatraMMS catraMMS = new CatraMMS();
+                    WorkspaceDetails updatedWorkspaceDetails = catraMMS.updateWorkspace(
+                            username, password,
+                            newEnabled, newMaxEncodingPriority,
+                            newEncodingPeriod, newMaxIngestionsNumber,
+                            newMaxStorageInMB, newLanguageCode,
+                            newIngestWorkflow, newCreateProfiles,
+                            newDeliveryAuthorization, newShareWorkspace,
+                            newEditMedia);
+
+                    HttpSession session = SessionUtils.getSession();
+                    session.setAttribute("currentWorkspaceDetails", updatedWorkspaceDetails);
+
+                    SessionUtils.getWorkspaceDetailsList().set(workspaceDetailsIndex, updatedWorkspaceDetails);
+                }
+            }
+            catch (Exception e)
+            {
+                String errorMessage = "Exception: " + e;
+                mLogger.error(errorMessage);
+
+                FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                        "Update User Profile", errorMessage);
+                FacesContext context = FacesContext.getCurrentInstance();
+                context.addMessage(null, message);
+            }
         }
     }
 

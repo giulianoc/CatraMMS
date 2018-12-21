@@ -259,7 +259,7 @@ public class CatraMMS {
 
             JSONArray jaWorkspacesInfo = joWMMSInfo.getJSONArray("workspaces");
 
-            fillWorkspaceDetails(workspaceDetailsList, jaWorkspacesInfo);
+            fillWorkspaceDetailsList(workspaceDetailsList, jaWorkspacesInfo);
         }
         catch (Exception e)
         {
@@ -324,10 +324,81 @@ public class CatraMMS {
         return workspaceKey;
     }
 
+    public WorkspaceDetails updateWorkspace(String username, String password,
+                                       boolean newEnabled, String newMaxEncodingPriority,
+                                       String newEncodingPeriod, Long newMaxIngestionsNumber,
+                                       Long newMaxStorageInMB, String newLanguageCode,
+                                       boolean newIngestWorkflow, boolean newCreateProfiles,
+                                       boolean newDeliveryAuthorization, boolean newShareWorkspace,
+                                       boolean newEditMedia)
+            throws Exception
+    {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        simpleDateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+
+        String mmsInfo;
+        try
+        {
+            String mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort + "/catramms/v1/workspace";
+
+            String bodyRequest = "{ "
+                    + "\"Enabled\": " + Boolean.toString(newEnabled) + ", "
+                    + "\"MaxEncodingPriority\": \"" + newMaxEncodingPriority + "\", "
+                    + "\"EncodingPeriod\": \"" + newEncodingPeriod + "\", "
+                    + "\"MaxIngestionsNumber\": " + newMaxIngestionsNumber + ", "
+                    + "\"MaxStorageInMB\": " + newMaxStorageInMB + ", "
+                    + "\"LanguageCode\": \"" + newLanguageCode + "\", "
+                    + "\"IngestWorkflow\": " + Boolean.toString(newIngestWorkflow) + ", "
+                    + "\"CreateProfiles\": " + Boolean.toString(newCreateProfiles) + ", "
+                    + "\"DeliveryAuthorization\": " + Boolean.toString(newDeliveryAuthorization) + ", "
+                    + "\"ShareWorkspace\": " + Boolean.toString(newShareWorkspace) + ", "
+                    + "\"EditMedia\": " + Boolean.toString(newEditMedia) + " "
+                    + "} "
+                    ;
+
+            mLogger.info("updateUser"
+                            + ", mmsURL: " + mmsURL
+                            + ", bodyRequest: " + bodyRequest
+            );
+
+            Date now = new Date();
+            mmsInfo = HttpFeedFetcher.fetchPutHttpsJson(mmsURL, timeoutInSeconds, maxRetriesNumber,
+                    username, password, bodyRequest);
+            mLogger.info("Elapsed time register (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "updateWorkspace failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+
+        WorkspaceDetails workspaceDetails = new WorkspaceDetails();
+
+        try
+        {
+            JSONObject joWMMSInfo = new JSONObject(mmsInfo);
+
+            JSONObject jaWorkspaceInfo = joWMMSInfo.getJSONObject("workspace");
+
+            fillWorkspaceDetails(workspaceDetails, jaWorkspaceInfo);
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "Parsing userProfile failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+
+        return workspaceDetails;
+    }
+
     public UserProfile updateUserProfile(String username, String password,
                            String newName,
                            String newEmailAddress, String newPassword,
-                           String newCountry, Date newExpirationDate)
+                           String newCountry)
             throws Exception
     {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
@@ -342,8 +413,7 @@ public class CatraMMS {
                     + "\"Name\": \"" + newName + "\", "
                     + "\"EMail\": \"" + newEmailAddress + "\", "
                     + "\"Password\": \"" + newPassword + "\", "
-                    + "\"Country\": \"" + newCountry + "\", "
-                    + "\"ExpirationDate\": \"" + simpleDateFormat.format(newExpirationDate) + "\" "
+                    + "\"Country\": \"" + newCountry + "\" "
                     + "} "
                     ;
 
@@ -1920,7 +1990,32 @@ public class CatraMMS {
         }
     }
 
-    private void fillWorkspaceDetails(List<WorkspaceDetails> workspaceDetailsList, JSONArray jaWorkspacesInfo)
+    private void fillWorkspaceDetailsList(List<WorkspaceDetails> workspaceDetailsList, JSONArray jaWorkspacesInfo)
+            throws Exception
+    {
+        try
+        {
+            for (int workspaceIndex = 0; workspaceIndex < jaWorkspacesInfo.length(); workspaceIndex++)
+            {
+                JSONObject joWorkspaceInfo = jaWorkspacesInfo.getJSONObject(workspaceIndex);
+
+                WorkspaceDetails workspaceDetails = new WorkspaceDetails();
+
+                fillWorkspaceDetails(workspaceDetails, joWorkspaceInfo);
+
+                workspaceDetailsList.add(workspaceDetails);
+            }
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "fillWorkspaceDetailsList failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+    }
+
+    private void fillWorkspaceDetails(WorkspaceDetails workspaceDetails, JSONObject jaWorkspaceInfo)
             throws Exception
     {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
@@ -1928,31 +2023,23 @@ public class CatraMMS {
 
         try
         {
-            for (int workspaceIndex = 0; workspaceIndex < jaWorkspacesInfo.length(); workspaceIndex++)
-            {
-                JSONObject workspaceInfo = jaWorkspacesInfo.getJSONObject(workspaceIndex);
-
-                WorkspaceDetails workspaceDetails = new WorkspaceDetails();
-                workspaceDetails.setWorkspaceKey(workspaceInfo.getLong("workspaceKey"));
-                workspaceDetails.setEnabled(workspaceInfo.getBoolean("isEnabled"));
-                workspaceDetails.setName(workspaceInfo.getString("workspaceName"));
-                workspaceDetails.setMaxEncodingPriority(workspaceInfo.getString("maxEncodingPriority"));
-                workspaceDetails.setEncodingPeriod(workspaceInfo.getString("encodingPeriod"));
-                workspaceDetails.setMaxIngestionsNumber(workspaceInfo.getLong("maxIngestionsNumber"));
-                workspaceDetails.setMaxStorageInMB(workspaceInfo.getLong("maxStorageInMB"));
-                workspaceDetails.setLanguageCode(workspaceInfo.getString("languageCode"));
-                workspaceDetails.setCreationDate(simpleDateFormat.parse(workspaceInfo.getString("creationDate")));
-                workspaceDetails.setApiKey(workspaceInfo.getString("apiKey"));
-                workspaceDetails.setOwner(workspaceInfo.getBoolean("owner"));
-                workspaceDetails.setAdmin(workspaceInfo.getBoolean("admin"));
-                workspaceDetails.setIngestWorkflow(workspaceInfo.getBoolean("ingestWorkflow"));
-                workspaceDetails.setCreateProfiles(workspaceInfo.getBoolean("createProfiles"));
-                workspaceDetails.setDeliveryAuthorization(workspaceInfo.getBoolean("deliveryAuthorization"));
-                workspaceDetails.setShareWorkspace(workspaceInfo.getBoolean("shareWorkspace"));
-                workspaceDetails.setEditMedia(workspaceInfo.getBoolean("editMedia"));
-
-                workspaceDetailsList.add(workspaceDetails);
-            }
+            workspaceDetails.setWorkspaceKey(jaWorkspaceInfo.getLong("workspaceKey"));
+            workspaceDetails.setEnabled(jaWorkspaceInfo.getBoolean("isEnabled"));
+            workspaceDetails.setName(jaWorkspaceInfo.getString("workspaceName"));
+            workspaceDetails.setMaxEncodingPriority(jaWorkspaceInfo.getString("maxEncodingPriority"));
+            workspaceDetails.setEncodingPeriod(jaWorkspaceInfo.getString("encodingPeriod"));
+            workspaceDetails.setMaxIngestionsNumber(jaWorkspaceInfo.getLong("maxIngestionsNumber"));
+            workspaceDetails.setMaxStorageInMB(jaWorkspaceInfo.getLong("maxStorageInMB"));
+            workspaceDetails.setLanguageCode(jaWorkspaceInfo.getString("languageCode"));
+            workspaceDetails.setCreationDate(simpleDateFormat.parse(jaWorkspaceInfo.getString("creationDate")));
+            workspaceDetails.setApiKey(jaWorkspaceInfo.getString("apiKey"));
+            workspaceDetails.setOwner(jaWorkspaceInfo.getBoolean("owner"));
+            workspaceDetails.setAdmin(jaWorkspaceInfo.getBoolean("admin"));
+            workspaceDetails.setIngestWorkflow(jaWorkspaceInfo.getBoolean("ingestWorkflow"));
+            workspaceDetails.setCreateProfiles(jaWorkspaceInfo.getBoolean("createProfiles"));
+            workspaceDetails.setDeliveryAuthorization(jaWorkspaceInfo.getBoolean("deliveryAuthorization"));
+            workspaceDetails.setShareWorkspace(jaWorkspaceInfo.getBoolean("shareWorkspace"));
+            workspaceDetails.setEditMedia(jaWorkspaceInfo.getBoolean("editMedia"));
         }
         catch (Exception e)
         {

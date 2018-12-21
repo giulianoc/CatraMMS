@@ -132,16 +132,9 @@
                     <p:outputLabel value="Expiration Date" />
                 </p:column>
                 <p:column>
-                    <p:outputLabel rendered="#{!sessionScope.currentWorkspaceDetails.admin}"
-                                   value="#{yourProfile.newExpirationDate}">
+                    <p:outputLabel value="#{yourProfile.userProfile.expirationDate}">
                         <f:convertDateTime type="date" pattern="dd-MM-yyyy HH:mm:ss" timeZone="CET"/>
                     </p:outputLabel>
-
-                    <p:calendar rendered="#{sessionScope.currentWorkspaceDetails.admin}"
-                                value="#{yourProfile.newExpirationDate}"
-                                autocomplete="true"
-                                pattern="dd-MM-yyyy HH:mm:ss" locale="my">
-                    </p:calendar>
                 </p:column>
             </p:row>
 

@@ -3,7 +3,6 @@ package com.catramms.backing.conf;
 import com.catramms.backing.common.SessionUtils;
 import com.catramms.backing.common.Workspace;
 import com.catramms.backing.entity.UserProfile;
-import com.catramms.backing.entity.WorkspaceDetails;
 import com.catramms.utility.catramms.CatraMMS;
 import org.apache.log4j.Logger;
 
@@ -14,9 +13,6 @@ import javax.faces.bean.ViewScoped;
 import javax.faces.context.FacesContext;
 import javax.servlet.http.HttpSession;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
@@ -38,7 +34,6 @@ public class YourProfile extends Workspace implements Serializable {
     private String newEmailAddress;
     private String newPassword;
     private String newCountry;
-    private Date newExpirationDate;
 
     @PostConstruct
     public void init()
@@ -51,7 +46,6 @@ public class YourProfile extends Workspace implements Serializable {
         newEmailAddress = userProfile.getEmailAddress();
         newPassword = userProfile.getPassword();
         newCountry = userProfile.getCountry();
-        newExpirationDate = userProfile.getExpirationDate();
     }
 
     public void updateUserProfile()
@@ -60,10 +54,8 @@ public class YourProfile extends Workspace implements Serializable {
             || newEmailAddress != userProfile.getEmailAddress()
             || newPassword != userProfile.getPassword()
             || newCountry != userProfile.getCountry()
-            || newExpirationDate.getTime() != userProfile.getExpirationDate().getTime()
         )
         {
-            // save e reload userProfile in session
             try
             {
                 Long userKey = SessionUtils.getUserProfile().getUserKey();
@@ -84,9 +76,7 @@ public class YourProfile extends Workspace implements Serializable {
                     CatraMMS catraMMS = new CatraMMS();
                     UserProfile userProfile = catraMMS.updateUserProfile(
                         username, password,
-                        userKey, newName,
-                        newEmailAddress, newPassword,
-                        newCountry, newExpirationDate);
+                        newName, newEmailAddress, newPassword, newCountry);
 
                     HttpSession session = SessionUtils.getSession();
                     session.setAttribute("userProfile", userProfile);
@@ -135,14 +125,6 @@ public class YourProfile extends Workspace implements Serializable {
 
     public void setNewCountry(String newCountry) {
         this.newCountry = newCountry;
-    }
-
-    public Date getNewExpirationDate() {
-        return newExpirationDate;
-    }
-
-    public void setNewExpirationDate(Date newExpirationDate) {
-        this.newExpirationDate = newExpirationDate;
     }
 
     public UserProfile getUserProfile() {

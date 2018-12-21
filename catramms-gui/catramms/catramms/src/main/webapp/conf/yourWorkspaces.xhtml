@@ -452,6 +452,7 @@
                         />
                 <p:outputLabel value=" - " />
                 <p:commandLink value="Edit"
+                               disabled="#{sessionScope.currentWorkspaceDetails.workspaceKey != workspaceDetails.workspaceKey}"
                                actionListener="#{yourWorkspaces.prepareWorkspaceDetailsToBeShown(workspaceDetails, false)}"
                                update="detailsWorkspaceForm" oncomplete="PF('detailsWorkspace').show()"
                 />
