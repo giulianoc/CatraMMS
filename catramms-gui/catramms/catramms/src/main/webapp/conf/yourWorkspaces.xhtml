@@ -21,6 +21,202 @@
     <ui:include src="/common/loadingDialog.xhtml"/>
     <ui:include src="/common/globalConfirm.xhtml"/>
 
+    <p:dialog widgetVar="shareWorkspace" modal="true"
+              header="Share Workspace With" appendTo="@(body)" width="800"
+              showEffect="fade" hideEffect="fade" resizable="false" draggable="true">
+
+        <h:form id="shareWorkspaceForm">
+
+            <p:toolbar>
+                <p:toolbarGroup align="left">
+                    <p:outputLabel value="Workspace to be shared: " />
+                    <p:outputLabel value="#{sessionScope.currentWorkspaceDetails.name}" style="font-weight: bold" />
+                </p:toolbarGroup>
+
+                <p:toolbarGroup align="right">
+                    <p:outputLabel value="Shared with " />
+                    <p:selectBooleanButton value="#{yourWorkspaces.shareWorkspaceOnExistingUser}"
+                                           onLabel="Existing User" offLabel="User to be created" onIcon="ui-icon-check" offIcon="ui-icon-check">
+                        <p:ajax update="sharedWorkspaceGrid" />
+                    </p:selectBooleanButton>
+                </p:toolbarGroup>
+            </p:toolbar>
+
+            <br />
+
+            <p:panelGrid id="sharedWorkspaceGrid" cellpadding="10" style="width: 100%" >
+                <p:row rendered="#{!yourWorkspaces.shareWorkspaceOnExistingUser}">
+                    <p:column>
+                        <p:outputLabel value="Name" />
+                    </p:column>
+                    <p:column>
+                        <p:inputText style="width: 100%"
+                                     autocomplete="true"
+                                     value="#{yourWorkspaces.shareWorkspaceUserName}"
+                                     placeholder="name"/>
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="EMail" />
+                    </p:column>
+                    <p:column>
+                        <p:inputText style="width: 100%"
+                                     autocomplete="true"
+                                     value="#{yourWorkspaces.shareWorkspaceEMail}"
+                                     placeholder="email"/>
+                    </p:column>
+                </p:row>
+
+                <p:row rendered="#{!yourWorkspaces.shareWorkspaceOnExistingUser}">
+                    <p:column>
+                        <p:outputLabel value="Password" />
+                    </p:column>
+                    <p:column>
+                        <p:password style="width: 100%" value="#{yourWorkspaces.shareWorkspacePassword}" />
+                    </p:column>
+                </p:row>
+
+                <p:row rendered="#{!yourWorkspaces.shareWorkspaceOnExistingUser}">
+                    <p:column>
+                        <p:outputLabel value="Country" />
+                    </p:column>
+                    <p:column>
+                        <p:inputText style="width: 100%"
+                                     autocomplete="true"
+                                     value="#{yourWorkspaces.shareWorkspaceCountry}"
+                                     placeholder="country"/>
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Ingest Workflow" />
+                    </p:column>
+                    <p:column>
+                        <!-- disabled="#{!sessionScope.currentWorkspaceDetails.ingestWorkflow}" -->
+                        <p:selectBooleanCheckbox
+                                value="#{yourWorkspaces.shareWorkspaceIngestWorkflow}"
+                                disabled="#{!sessionScope.currentWorkspaceDetails.owner}"
+                        />
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Create Profiles" />
+                    </p:column>
+                    <p:column>
+                        <!-- disabled="#{!sessionScope.currentWorkspaceDetails.createProfiles}" -->
+                        <p:selectBooleanCheckbox
+                                value="#{yourWorkspaces.shareWorkspaceCreateProfiles}"
+                                disabled="#{!sessionScope.currentWorkspaceDetails.owner}"
+                        />
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Delivery Authorization" />
+                    </p:column>
+                    <p:column>
+                        <!-- disabled="#{!sessionScope.currentWorkspaceDetails.deliveryAuthorization}" -->
+                        <p:selectBooleanCheckbox
+                                value="#{yourWorkspaces.shareWorkspaceDeliveryAuthorization}"
+                                disabled="#{!sessionScope.currentWorkspaceDetails.owner}"
+                        />
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Share Workspace" />
+                    </p:column>
+                    <p:column>
+                        <!-- disabled="#{!sessionScope.currentWorkspaceDetails.shareWorkspace}" -->
+                        <p:selectBooleanCheckbox
+                                value="#{yourWorkspaces.shareWorkspaceShareWorkspace}"
+                                disabled="#{!sessionScope.currentWorkspaceDetails.owner}"
+                        />
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Edit Media" />
+                    </p:column>
+                    <p:column>
+                        <!-- disabled="#{!sessionScope.currentWorkspaceDetails.shareWorkspace}" -->
+                        <p:selectBooleanCheckbox
+                                value="#{yourWorkspaces.shareWorkspaceEditMedia}"
+                                disabled="#{!sessionScope.currentWorkspaceDetails.owner}"
+                        />
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                    </p:column>
+                    <p:column>
+                        <p:commandButton action="#{yourWorkspaces.shareWorkspace}"
+                                         value="1. Share Workspace"
+                                         update="shareWorkspaceUserKey">
+                            <p:confirm header="Confirmation" message="Are you sure?" icon="ui-icon-alert" />
+                        </p:commandButton>
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column colspan="2">
+                        <ul>
+                            <li><p:outputLabel value="Once '1. Share Workspace' button is clicked, you will receive an email containing both the information User Key and Confirmation Code" /></li>
+                            <li><p:outputLabel value="Fill in User Key and Confirmation Code below in the appropriate fields and then Confirm (step no. 2)" /></li>
+                        </ul>
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="User Key" />
+                    </p:column>
+                    <p:column>
+                        <p:inputNumber id="shareWorkspaceUserKey" style="width: 100%"
+                                       decimalPlaces="0"
+                                       value="#{yourWorkspaces.shareWorkspaceUserKey}"
+                                       placeholder="user key"
+                        />
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Confirmation Code" />
+                    </p:column>
+                    <p:column>
+                        <p:inputText style="width: 100%"
+                                     value="#{yourWorkspaces.shareWorkspaceConfirmationCode}"
+                                     placeholder="confirmation code"/>
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                    </p:column>
+                    <p:column>
+                        <p:commandButton action="#{yourWorkspaces.shareWorkspaceConfirmRegistration}"
+                                         value="2. Confirm Registration"
+                                         oncomplete="PF('shareWorkspace').hide()" >
+                            <p:confirm header="Confirmation" message="Are you sure?" icon="ui-icon-alert" />
+                        </p:commandButton>
+                    </p:column>
+                </p:row>
+
+            </p:panelGrid>
+
+        </h:form>
+    </p:dialog>
+
     <p:dialog widgetVar="createWorkspace" modal="true"
               header="Create Workspace" appendTo="@(body)" width="600" height="400"
               showEffect="fade" hideEffect="fade" resizable="false" draggable="true">
@@ -354,6 +550,18 @@
                     <span class="ui-icon ui-icon-grip-dotted-vertical" />
                 </span>
 
+                <p:outputLabel value="Workspace:" />
+                <p:selectOneMenu id="workspaceName" value="#{yourWorkspaces.workspaceName}"
+                                 autoWidth="false">
+                    <f:selectItems value="#{yourWorkspaces.workspaceNames}" />
+                    <p:ajax global="true" event="change"
+                            update="yourWorkspacesDataTable" />
+                </p:selectOneMenu>
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
                 <p:commandLink value="Logout" action="#{login.logout}" />
 
                 <span class="ui-separator">
@@ -445,17 +653,28 @@
                 <p:outputLabel value="#{workspaceDetails.owner}" />
             </p:column>
 
-            <p:column style="width:140px;" headerText="">
+            <p:column style="width:180px;" headerText="">
                 <p:commandLink value="Details"
-                               actionListener="#{yourWorkspaces.prepareWorkspaceDetailsToBeShown(workspaceDetails, true)}"
+                               actionListener="#{yourWorkspaces.prepareWorkspaceDetailsToBeShown(workspaceDetails, rowId, true)}"
                                update="detailsWorkspaceForm" oncomplete="PF('detailsWorkspace').show()"
                         />
+
                 <p:outputLabel value=" - " />
+
                 <p:commandLink value="Edit"
                                disabled="#{sessionScope.currentWorkspaceDetails.workspaceKey != workspaceDetails.workspaceKey}"
-                               actionListener="#{yourWorkspaces.prepareWorkspaceDetailsToBeShown(workspaceDetails, false)}"
+                               actionListener="#{yourWorkspaces.prepareWorkspaceDetailsToBeShown(workspaceDetails, rowId, false)}"
                                update="detailsWorkspaceForm" oncomplete="PF('detailsWorkspace').show()"
                 />
+
+                <br />
+
+                <p:commandLink value="Share Workspace With"
+                               disabled="#{sessionScope.currentWorkspaceDetails.workspaceKey != workspaceDetails.workspaceKey}"
+                               actionListener="#{yourWorkspaces.prepareShareWorkspace}"
+                               update="shareWorkspaceForm"
+                               oncomplete="PF('shareWorkspace').show()" />
+
             </p:column>
 
         </p:dataTable>

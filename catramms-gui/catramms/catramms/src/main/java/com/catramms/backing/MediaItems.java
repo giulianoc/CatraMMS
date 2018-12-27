@@ -47,18 +47,6 @@ public class MediaItems extends Workspace implements Serializable {
     private Long maxStorageInMB = new Long(0);
     private List<MediaItem> mediaItemsList = new ArrayList<>();
 
-    private String shareWorkspaceUserName;
-    private String shareWorkspaceEMail;
-    private String shareWorkspacePassword;
-    private String shareWorkspaceCountry;
-    private boolean shareWorkspaceIngestWorkflow;
-    private boolean shareWorkspaceCreateProfiles;
-    private boolean shareWorkspaceDeliveryAuthorization;
-    private boolean shareWorkspaceShareWorkspace;
-    private boolean shareWorkspaceEditMedia;
-    private Long shareWorkspaceUserKey;
-    private String shareWorkspaceConfirmationCode;
-
     @PostConstruct
     public void init()
     {
@@ -291,88 +279,6 @@ public class MediaItems extends Workspace implements Serializable {
         return calendar.getTime();
     }
 
-    public void prepareWhareWorkspace()
-    {
-        shareWorkspaceUserName = "";
-        shareWorkspaceEMail = "";
-        shareWorkspacePassword = "";
-        shareWorkspaceCountry = "";
-        shareWorkspaceIngestWorkflow = false;
-        shareWorkspaceCreateProfiles = false;
-        shareWorkspaceDeliveryAuthorization = false;
-        shareWorkspaceShareWorkspace = false;
-        shareWorkspaceEditMedia = false;
-    }
-
-    public void shareWorkspace()
-    {
-        try {
-            Long userKey = SessionUtils.getUserProfile().getUserKey();
-            String apiKey = SessionUtils.getCurrentWorkspaceDetails().getApiKey();
-            WorkspaceDetails currentWorkspaceDetails = SessionUtils.getCurrentWorkspaceDetails();
-
-            if (userKey == null || apiKey == null || apiKey.equalsIgnoreCase(""))
-            {
-                mLogger.warn("no input to require mediaItemsKey"
-                                + ", userKey: " + userKey
-                                + ", apiKey: " + apiKey
-                );
-            }
-            else
-            {
-                String username = userKey.toString();
-                String password = apiKey;
-
-                CatraMMS catraMMS = new CatraMMS();
-                shareWorkspaceUserKey = catraMMS.shareWorkspace(
-                        username, password, shareWorkspaceUserName, shareWorkspaceEMail, shareWorkspacePassword,
-                        shareWorkspaceCountry, shareWorkspaceIngestWorkflow, shareWorkspaceCreateProfiles,
-                        shareWorkspaceDeliveryAuthorization, shareWorkspaceShareWorkspace, shareWorkspaceEditMedia,
-                        currentWorkspaceDetails.getWorkspaceKey());
-
-                FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
-                        "Share Workspace", "Success");
-                FacesContext context = FacesContext.getCurrentInstance();
-                context.addMessage(null, message);
-            }
-        }
-        catch (Exception e)
-        {
-            String errorMessage = "shareWorkspace failed: " + e;
-            mLogger.error(errorMessage);
-
-            FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
-                    "Share Workspace", errorMessage);
-            FacesContext context = FacesContext.getCurrentInstance();
-            context.addMessage(null, message);
-        }
-    }
-
-    public void confirmRegistration()
-    {
-        try
-        {
-            CatraMMS catraMMS = new CatraMMS();
-            String apyKey = catraMMS.confirmRegistration(
-                    shareWorkspaceUserKey, shareWorkspaceConfirmationCode);
-
-            FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
-                    "Confirm", "Success");
-            FacesContext context = FacesContext.getCurrentInstance();
-            context.addMessage(null, message);
-        }
-        catch (Exception e)
-        {
-            String errorMessage = "confirmRegistration failed: " + e;
-            mLogger.error(errorMessage);
-
-            FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
-                    "Confirm", errorMessage);
-            FacesContext context = FacesContext.getCurrentInstance();
-            context.addMessage(null, message);
-        }
-    }
-
     public String getDurationAsString(Long durationInMilliseconds)
     {
         if (durationInMilliseconds == null)
@@ -503,94 +409,6 @@ public class MediaItems extends Workspace implements Serializable {
 
     public void setMaxStorageInMB(Long maxStorageInMB) {
         this.maxStorageInMB = maxStorageInMB;
-    }
-
-    public String getShareWorkspaceUserName() {
-        return shareWorkspaceUserName;
-    }
-
-    public void setShareWorkspaceUserName(String shareWorkspaceUserName) {
-        this.shareWorkspaceUserName = shareWorkspaceUserName;
-    }
-
-    public String getShareWorkspaceEMail() {
-        return shareWorkspaceEMail;
-    }
-
-    public void setShareWorkspaceEMail(String shareWorkspaceEMail) {
-        this.shareWorkspaceEMail = shareWorkspaceEMail;
-    }
-
-    public String getShareWorkspacePassword() {
-        return shareWorkspacePassword;
-    }
-
-    public void setShareWorkspacePassword(String shareWorkspacePassword) {
-        this.shareWorkspacePassword = shareWorkspacePassword;
-    }
-
-    public String getShareWorkspaceCountry() {
-        return shareWorkspaceCountry;
-    }
-
-    public void setShareWorkspaceCountry(String shareWorkspaceCountry) {
-        this.shareWorkspaceCountry = shareWorkspaceCountry;
-    }
-
-    public boolean isShareWorkspaceIngestWorkflow() {
-        return shareWorkspaceIngestWorkflow;
-    }
-
-    public void setShareWorkspaceIngestWorkflow(boolean shareWorkspaceIngestWorkflow) {
-        this.shareWorkspaceIngestWorkflow = shareWorkspaceIngestWorkflow;
-    }
-
-    public boolean isShareWorkspaceEditMedia() {
-        return shareWorkspaceEditMedia;
-    }
-
-    public void setShareWorkspaceEditMedia(boolean shareWorkspaceEditMedia) {
-        this.shareWorkspaceEditMedia = shareWorkspaceEditMedia;
-    }
-
-    public boolean isShareWorkspaceCreateProfiles() {
-        return shareWorkspaceCreateProfiles;
-    }
-
-    public void setShareWorkspaceCreateProfiles(boolean shareWorkspaceCreateProfiles) {
-        this.shareWorkspaceCreateProfiles = shareWorkspaceCreateProfiles;
-    }
-
-    public boolean isShareWorkspaceDeliveryAuthorization() {
-        return shareWorkspaceDeliveryAuthorization;
-    }
-
-    public void setShareWorkspaceDeliveryAuthorization(boolean shareWorkspaceDeliveryAuthorization) {
-        this.shareWorkspaceDeliveryAuthorization = shareWorkspaceDeliveryAuthorization;
-    }
-
-    public boolean isShareWorkspaceShareWorkspace() {
-        return shareWorkspaceShareWorkspace;
-    }
-
-    public void setShareWorkspaceShareWorkspace(boolean shareWorkspaceShareWorkspace) {
-        this.shareWorkspaceShareWorkspace = shareWorkspaceShareWorkspace;
-    }
-
-    public Long getShareWorkspaceUserKey() {
-        return shareWorkspaceUserKey;
-    }
-
-    public void setShareWorkspaceUserKey(Long shareWorkspaceUserKey) {
-        this.shareWorkspaceUserKey = shareWorkspaceUserKey;
-    }
-
-    public String getShareWorkspaceConfirmationCode() {
-        return shareWorkspaceConfirmationCode;
-    }
-
-    public void setShareWorkspaceConfirmationCode(String shareWorkspaceConfirmationCode) {
-        this.shareWorkspaceConfirmationCode = shareWorkspaceConfirmationCode;
     }
 
     public String getTitle() {

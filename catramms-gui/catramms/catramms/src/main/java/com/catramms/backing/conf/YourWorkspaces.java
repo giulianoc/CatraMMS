@@ -37,6 +37,8 @@ public class YourWorkspaces extends Workspace implements Serializable {
     private String registrationConfirmationCode;
 
     private WorkspaceDetails workspaceDetailsToBeShown;
+    private int workspaceDetailsToBeShownIndex;
+
     private boolean newEnabled;
     private String newMaxEncodingPriority;
     private String newEncodingPeriod;
@@ -51,6 +53,19 @@ public class YourWorkspaces extends Workspace implements Serializable {
     private boolean workspaceDetailsReadOnly;
     private List<String> encodingPriorityList = new ArrayList<>();
     private List<String> encodingPeriodList = new ArrayList<>();
+
+    private boolean shareWorkspaceOnExistingUser;
+    private String shareWorkspaceUserName;
+    private String shareWorkspaceEMail;
+    private String shareWorkspacePassword;
+    private String shareWorkspaceCountry;
+    private boolean shareWorkspaceIngestWorkflow;
+    private boolean shareWorkspaceCreateProfiles;
+    private boolean shareWorkspaceDeliveryAuthorization;
+    private boolean shareWorkspaceShareWorkspace;
+    private boolean shareWorkspaceEditMedia;
+    private Long shareWorkspaceUserKey;
+    private String shareWorkspaceConfirmationCode;
 
     @PostConstruct
     public void init()
@@ -67,6 +82,8 @@ public class YourWorkspaces extends Workspace implements Serializable {
         encodingPeriodList.add("Yearly");
 
         workspaceDetailsReadOnly = true;
+
+        shareWorkspaceOnExistingUser = true;
     }
 
     public void createWorkspace()
@@ -136,19 +153,21 @@ public class YourWorkspaces extends Workspace implements Serializable {
         }
     }
 
-    public void updateWorkspace(WorkspaceDetails workspaceDetails, int workspaceDetailsIndex)
+    public void updateWorkspace()
     {
-        if (newEnabled != workspaceDetails.getEnabled()
-            || newMaxEncodingPriority != workspaceDetails.getMaxEncodingPriority()
-            || newEncodingPeriod != workspaceDetails.getEncodingPeriod()
-            || newMaxIngestionsNumber != workspaceDetails.getMaxIngestionsNumber()
-            || newMaxStorageInMB != workspaceDetails.getMaxStorageInMB()
-            || newLanguageCode != workspaceDetails.getLanguageCode()
-            || newIngestWorkflow != workspaceDetails.getIngestWorkflow()
-            || newCreateProfiles != workspaceDetails.getCreateProfiles()
-            || newDeliveryAuthorization != workspaceDetails.getDeliveryAuthorization()
-            || newShareWorkspace != workspaceDetails.getShareWorkspace()
-            || newEditMedia != workspaceDetails.getEditMedia()
+        mLogger.info("Received updateWorkspace");
+
+        if (newEnabled != workspaceDetailsToBeShown.getEnabled()
+            || newMaxEncodingPriority != workspaceDetailsToBeShown.getMaxEncodingPriority()
+            || newEncodingPeriod != workspaceDetailsToBeShown.getEncodingPeriod()
+            || newMaxIngestionsNumber != workspaceDetailsToBeShown.getMaxIngestionsNumber()
+            || newMaxStorageInMB != workspaceDetailsToBeShown.getMaxStorageInMB()
+            || newLanguageCode != workspaceDetailsToBeShown.getLanguageCode()
+            || newIngestWorkflow != workspaceDetailsToBeShown.getIngestWorkflow()
+            || newCreateProfiles != workspaceDetailsToBeShown.getCreateProfiles()
+            || newDeliveryAuthorization != workspaceDetailsToBeShown.getDeliveryAuthorization()
+            || newShareWorkspace != workspaceDetailsToBeShown.getShareWorkspace()
+            || newEditMedia != workspaceDetailsToBeShown.getEditMedia()
         )
         {
             try
@@ -181,7 +200,7 @@ public class YourWorkspaces extends Workspace implements Serializable {
                     HttpSession session = SessionUtils.getSession();
                     session.setAttribute("currentWorkspaceDetails", updatedWorkspaceDetails);
 
-                    SessionUtils.getWorkspaceDetailsList().set(workspaceDetailsIndex, updatedWorkspaceDetails);
+                    SessionUtils.getWorkspaceDetailsList().set(workspaceDetailsToBeShownIndex, updatedWorkspaceDetails);
                 }
             }
             catch (Exception e)
@@ -197,11 +216,13 @@ public class YourWorkspaces extends Workspace implements Serializable {
         }
     }
 
-    public void prepareWorkspaceDetailsToBeShown(WorkspaceDetails workspaceDetails, boolean isReadOnly)
+    public void prepareWorkspaceDetailsToBeShown(WorkspaceDetails workspaceDetails, int workspaceDetailsIndex, boolean isReadOnly)
     {
+        mLogger.info("Received prepareWorkspaceDetailsToBeShown");
         workspaceDetailsReadOnly = isReadOnly;
 
         this.workspaceDetailsToBeShown = workspaceDetails;
+        this.workspaceDetailsToBeShownIndex = workspaceDetailsIndex;
 
         newEnabled = workspaceDetails.getEnabled();
         newMaxEncodingPriority = workspaceDetails.getMaxEncodingPriority();
@@ -215,6 +236,88 @@ public class YourWorkspaces extends Workspace implements Serializable {
         newShareWorkspace = workspaceDetails.getShareWorkspace();
         newEditMedia = workspaceDetails.getEditMedia();
 
+    }
+
+    public void prepareShareWorkspace()
+    {
+        shareWorkspaceUserName = "";
+        shareWorkspaceEMail = "";
+        shareWorkspacePassword = "";
+        shareWorkspaceCountry = "";
+        shareWorkspaceIngestWorkflow = false;
+        shareWorkspaceCreateProfiles = false;
+        shareWorkspaceDeliveryAuthorization = false;
+        shareWorkspaceShareWorkspace = false;
+        shareWorkspaceEditMedia = false;
+    }
+
+    public void shareWorkspace()
+    {
+        try {
+            Long userKey = SessionUtils.getUserProfile().getUserKey();
+            String apiKey = SessionUtils.getCurrentWorkspaceDetails().getApiKey();
+            WorkspaceDetails currentWorkspaceDetails = SessionUtils.getCurrentWorkspaceDetails();
+
+            if (userKey == null || apiKey == null || apiKey.equalsIgnoreCase(""))
+            {
+                mLogger.warn("no input to require mediaItemsKey"
+                        + ", userKey: " + userKey
+                        + ", apiKey: " + apiKey
+                );
+            }
+            else
+            {
+                String username = userKey.toString();
+                String password = apiKey;
+
+                CatraMMS catraMMS = new CatraMMS();
+                shareWorkspaceUserKey = catraMMS.shareWorkspace(
+                        username, password, shareWorkspaceOnExistingUser,
+                        shareWorkspaceUserName, shareWorkspaceEMail, shareWorkspacePassword,
+                        shareWorkspaceCountry, shareWorkspaceIngestWorkflow, shareWorkspaceCreateProfiles,
+                        shareWorkspaceDeliveryAuthorization, shareWorkspaceShareWorkspace, shareWorkspaceEditMedia);
+
+                FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                        "Share Workspace", "Success");
+                FacesContext context = FacesContext.getCurrentInstance();
+                context.addMessage(null, message);
+            }
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "shareWorkspace failed: " + e;
+            mLogger.error(errorMessage);
+
+            FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                    "Share Workspace", errorMessage);
+            FacesContext context = FacesContext.getCurrentInstance();
+            context.addMessage(null, message);
+        }
+    }
+
+    public void shareWorkspaceConfirmRegistration()
+    {
+        try
+        {
+            CatraMMS catraMMS = new CatraMMS();
+            String apyKey = catraMMS.confirmRegistration(
+                    shareWorkspaceUserKey, shareWorkspaceConfirmationCode);
+
+            FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                    "Confirm", "Success");
+            FacesContext context = FacesContext.getCurrentInstance();
+            context.addMessage(null, message);
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "confirmRegistration failed: " + e;
+            mLogger.error(errorMessage);
+
+            FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                    "Confirm", errorMessage);
+            FacesContext context = FacesContext.getCurrentInstance();
+            context.addMessage(null, message);
+        }
     }
 
     public String getCreateWorkspaceName() {
@@ -351,5 +454,101 @@ public class YourWorkspaces extends Workspace implements Serializable {
 
     public void setNewEditMedia(boolean newEditMedia) {
         this.newEditMedia = newEditMedia;
+    }
+
+    public String getShareWorkspaceUserName() {
+        return shareWorkspaceUserName;
+    }
+
+    public void setShareWorkspaceUserName(String shareWorkspaceUserName) {
+        this.shareWorkspaceUserName = shareWorkspaceUserName;
+    }
+
+    public String getShareWorkspaceEMail() {
+        return shareWorkspaceEMail;
+    }
+
+    public void setShareWorkspaceEMail(String shareWorkspaceEMail) {
+        this.shareWorkspaceEMail = shareWorkspaceEMail;
+    }
+
+    public String getShareWorkspacePassword() {
+        return shareWorkspacePassword;
+    }
+
+    public void setShareWorkspacePassword(String shareWorkspacePassword) {
+        this.shareWorkspacePassword = shareWorkspacePassword;
+    }
+
+    public String getShareWorkspaceCountry() {
+        return shareWorkspaceCountry;
+    }
+
+    public void setShareWorkspaceCountry(String shareWorkspaceCountry) {
+        this.shareWorkspaceCountry = shareWorkspaceCountry;
+    }
+
+    public boolean isShareWorkspaceIngestWorkflow() {
+        return shareWorkspaceIngestWorkflow;
+    }
+
+    public void setShareWorkspaceIngestWorkflow(boolean shareWorkspaceIngestWorkflow) {
+        this.shareWorkspaceIngestWorkflow = shareWorkspaceIngestWorkflow;
+    }
+
+    public boolean isShareWorkspaceCreateProfiles() {
+        return shareWorkspaceCreateProfiles;
+    }
+
+    public void setShareWorkspaceCreateProfiles(boolean shareWorkspaceCreateProfiles) {
+        this.shareWorkspaceCreateProfiles = shareWorkspaceCreateProfiles;
+    }
+
+    public boolean isShareWorkspaceDeliveryAuthorization() {
+        return shareWorkspaceDeliveryAuthorization;
+    }
+
+    public void setShareWorkspaceDeliveryAuthorization(boolean shareWorkspaceDeliveryAuthorization) {
+        this.shareWorkspaceDeliveryAuthorization = shareWorkspaceDeliveryAuthorization;
+    }
+
+    public boolean isShareWorkspaceShareWorkspace() {
+        return shareWorkspaceShareWorkspace;
+    }
+
+    public void setShareWorkspaceShareWorkspace(boolean shareWorkspaceShareWorkspace) {
+        this.shareWorkspaceShareWorkspace = shareWorkspaceShareWorkspace;
+    }
+
+    public boolean isShareWorkspaceEditMedia() {
+        return shareWorkspaceEditMedia;
+    }
+
+    public void setShareWorkspaceEditMedia(boolean shareWorkspaceEditMedia) {
+        this.shareWorkspaceEditMedia = shareWorkspaceEditMedia;
+    }
+
+    public Long getShareWorkspaceUserKey() {
+        return shareWorkspaceUserKey;
+    }
+
+    public void setShareWorkspaceUserKey(Long shareWorkspaceUserKey) {
+        this.shareWorkspaceUserKey = shareWorkspaceUserKey;
+    }
+
+    public String getShareWorkspaceConfirmationCode() {
+        return shareWorkspaceConfirmationCode;
+    }
+
+    public void setShareWorkspaceConfirmationCode(String shareWorkspaceConfirmationCode) {
+        this.shareWorkspaceConfirmationCode = shareWorkspaceConfirmationCode;
+    }
+
+    public boolean isShareWorkspaceOnExistingUser() {
+        return shareWorkspaceOnExistingUser;
+    }
+
+    public void setShareWorkspaceOnExistingUser(boolean shareWorkspaceOnExistingUser) {
+        this.shareWorkspaceOnExistingUser = shareWorkspaceOnExistingUser;
     }
 }

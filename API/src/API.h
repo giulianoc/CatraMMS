@@ -102,6 +102,12 @@ private:
         int64_t userKey,
         string requestBody);
 
+    void updateWorkspace(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        int64_t userKey,
+        string requestBody);
+
     void createWorkspace(
         FCGX_Request& request,
         int64_t userKey,
@@ -110,6 +116,7 @@ private:
 
     void shareWorkspace_(
         FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
 

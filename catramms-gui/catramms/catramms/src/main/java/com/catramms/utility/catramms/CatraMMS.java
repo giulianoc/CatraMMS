@@ -45,32 +45,41 @@ public class CatraMMS {
     }
 
     public Long shareWorkspace(String username, String password,
+                               Boolean userAlreadyPresent,
                                String userNameToShare, String emailAddressToShare,
                                String passwordToShare, String countryToShare,
+
                                Boolean ingestWorkflow, Boolean createProfiles,
                                Boolean deliveryAuthorization, Boolean shareWorkspace,
-                               Boolean editMedia, Long workspaceKeyToShare)
+                               Boolean editMedia)
             throws Exception
     {
         String mmsInfo;
         try
         {
-            String mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort + "/catramms/v1/workspace/"
-                    + workspaceKeyToShare + "/share"
-                    + "?ingestWorkflow=" + ingestWorkflow.toString()
+            String mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort + "/catramms/v1/workspace/share"
+                    + "?userAlreadyPresent=" + userAlreadyPresent.toString()
+                    + "&ingestWorkflow=" + ingestWorkflow.toString()
                     + "&createProfiles=" + createProfiles.toString()
                     + "&deliveryAuthorization=" + deliveryAuthorization.toString()
                     + "&shareWorkspace=" + shareWorkspace.toString()
                     + "&editMedia=" + editMedia.toString()
             ;
 
-            String postBodyRequest = "{ "
-                    + "\"Name\": \"" + userNameToShare + "\", "
-                    + "\"EMail\": \"" + emailAddressToShare + "\", "
-                    + "\"Password\": \"" + passwordToShare + "\", "
-                    + "\"Country\": \"" + countryToShare + "\" "
+            String postBodyRequest;
+            if (userAlreadyPresent)
+                postBodyRequest = "{ "
+                    + "\"EMail\": \"" + emailAddressToShare + "\" "
                     + "} "
                     ;
+            else
+                postBodyRequest = "{ "
+                        + "\"Name\": \"" + userNameToShare + "\", "
+                        + "\"EMail\": \"" + emailAddressToShare + "\", "
+                        + "\"Password\": \"" + passwordToShare + "\", "
+                        + "\"Country\": \"" + countryToShare + "\" "
+                        + "} "
+                        ;
 
             mLogger.info("shareWorkspace"
                             + ", mmsURL: " + mmsURL
@@ -380,9 +389,9 @@ public class CatraMMS {
         {
             JSONObject joWMMSInfo = new JSONObject(mmsInfo);
 
-            JSONObject jaWorkspaceInfo = joWMMSInfo.getJSONObject("workspace");
+            // JSONObject jaWorkspaceInfo = joWMMSInfo.getJSONObject("workspace");
 
-            fillWorkspaceDetails(workspaceDetails, jaWorkspaceInfo);
+            fillWorkspaceDetails(workspaceDetails, joWMMSInfo);
         }
         catch (Exception e)
         {

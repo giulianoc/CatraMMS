@@ -914,7 +914,8 @@ pair<int64_t,string> MMSEngineDBFacade::createWorkspace(
     return workspaceKeyAndConfirmationCode;
 }
 
-pair<int64_t,string> MMSEngineDBFacade::registerUserIfNotPresentAndShareWorkspace(
+pair<int64_t,string> MMSEngineDBFacade::registerUserAndShareWorkspace(
+    bool userAlreadyPresent,
     string userName,
     string userEmailAddress,
     string userPassword,
@@ -949,8 +950,7 @@ pair<int64_t,string> MMSEngineDBFacade::registerUserIfNotPresentAndShareWorkspac
             statement->execute(lastSQLCommand);
         }
         
-        // check if User is already present
-        userKey = -1;
+        if (userAlreadyPresent)
         {
             lastSQLCommand = 
                 "select userKey from MMS_User where eMailAddress = ?";
@@ -964,9 +964,18 @@ pair<int64_t,string> MMSEngineDBFacade::registerUserIfNotPresentAndShareWorkspac
             {
                 userKey = resultSet->getInt64("userKey");
             }
-        }
+            else
+            {
+                string errorMessage = __FILEREF__ + "User does not exist"
+                    + ", userEmailAddress: " + userEmailAddress
+                    + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
 
-        if (userKey == -1)
+                throw runtime_error(errorMessage);                    
+            }
+        }
+        else
         {
             lastSQLCommand = 
                 "insert into MMS_User (userKey, name, eMailAddress, password, country, creationDate, expirationDate) values ("
@@ -2230,7 +2239,7 @@ Json::Value MMSEngineDBFacade::getWorkspaceDetails (
 
 Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
         int64_t userKey,
-        shared_ptr<Workspace> workspace,
+        int64_t workspaceKey,
         bool newEnabled, string newMaxEncodingPriority,
         string newEncodingPeriod, int64_t newMaxIngestionsNumber,
         int64_t newMaxStorageInMB, string newLanguageCode,
@@ -2238,7 +2247,7 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
         bool newDeliveryAuthorization, bool newShareWorkspace,
         bool newEditMedia)
 {
-    Json::Value     workspaceDetailsRoot;
+    Json::Value workspaceDetailRoot;
     string          lastSQLCommand;
 
     shared_ptr<MySQLConnection> conn = nullptr;
@@ -2250,29 +2259,51 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
 
+        // check if ADMIN flag is already present
+        bool admin = false;
         {
             lastSQLCommand = 
-                "update MMS_User set name = ?, country = ?, eMailAddress = ?, password = ? "
-                // "expirationDate = convert_tz(STR_TO_DATE(?,'%Y-%m-%dT%H:%i:%SZ'), '+00:00', @@session.time_zone) "
-                "where userKey = ?";
+                "select flags from MMS_APIKey where workspaceKey = ? and userKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
-            preparedStatement->setString(queryParameterIndex++, name);
-            preparedStatement->setString(queryParameterIndex++, country);
-            preparedStatement->setString(queryParameterIndex++, email);
-            preparedStatement->setString(queryParameterIndex++, password);
-            // preparedStatement->setString(queryParameterIndex++, expirationDate);
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setInt64(queryParameterIndex++, userKey);
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                string flags = resultSet->getString("flags");
+                
+                admin = flags.find("ADMIN") == string::npos ? false : true;
+            }
+        }
+
+        {
+            lastSQLCommand = 
+                "update MMS_Workspace set isEnabled = ?, maxEncodingPriority = ?, encodingPeriod = ?, maxIngestionsNumber = ?, "
+                "maxStorageInMB = ?, languageCode = ? "
+                "where workspaceKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt(queryParameterIndex++, newEnabled);
+            preparedStatement->setString(queryParameterIndex++, newMaxEncodingPriority);
+            preparedStatement->setString(queryParameterIndex++, newEncodingPeriod);
+            preparedStatement->setInt64(queryParameterIndex++, newMaxIngestionsNumber);
+            preparedStatement->setInt64(queryParameterIndex++, newMaxStorageInMB);
+            preparedStatement->setString(queryParameterIndex++, newLanguageCode);
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
 
             int rowsUpdated = preparedStatement->executeUpdate();
             if (rowsUpdated != 1)
             {
                 string errorMessage = __FILEREF__ + "no update was done"
-                        + ", userKey: " + to_string(userKey)
-                        + ", name: " + name
-                        + ", country: " + country
-                        + ", email: " + email
-                        + ", password: " + password
+                        + ", workspaceKey: " + to_string(workspaceKey)
+                        + ", newEnabled: " + to_string(newEnabled)
+                        + ", newMaxEncodingPriority: " + newMaxEncodingPriority
+                        + ", newEncodingPeriod: " + newEncodingPeriod
+                        + ", newMaxIngestionsNumber: " + to_string(newMaxIngestionsNumber)
+                        + ", newMaxStorageInMB: " + to_string(newMaxStorageInMB)
+                        + ", newLanguageCode: " + newLanguageCode
                         + ", rowsUpdated: " + to_string(rowsUpdated)
                         + ", lastSQLCommand: " + lastSQLCommand
                 ;
@@ -2282,48 +2313,132 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
             }
         }
         
+        string flags;
         {
+            if (admin)
+                flags.append("ADMIN");
+            if (newIngestWorkflow)
+            {
+                if (flags != "")
+                    flags.append(",");
+                flags.append("INGEST_WORKFLOW");
+            }
+            if (newCreateProfiles)
+            {
+                if (flags != "")
+                    flags.append(",");
+                flags.append("CREATE_PROFILES");
+            }
+            if (newDeliveryAuthorization)
+            {
+                if (flags != "")
+                    flags.append(",");
+                flags.append("DELIVERY_AUTHORIZATION");
+            }
+            if (newShareWorkspace)
+            {
+                if (flags != "")
+                    flags.append(",");
+                flags.append("SHARE_WORKSPACE");
+            }
+            if (newEditMedia)
+            {
+                if (flags != "")
+                    flags.append(",");
+                flags.append("EDIT_MEDIA");
+            }
+
             lastSQLCommand = 
-                "select DATE_FORMAT(convert_tz(creationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as creationDate, "
-                "DATE_FORMAT(convert_tz(expirationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as expirationDate "
-                "from MMS_User where userKey = ?";
+                "update MMS_APIKey set flags = ? "
+                "where workspaceKey = ? and userKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, flags);
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            preparedStatement->setInt64(queryParameterIndex++, userKey);
+
+            int rowsUpdated = preparedStatement->executeUpdate();
+            if (rowsUpdated != 1)
+            {
+                string errorMessage = __FILEREF__ + "no update was done"
+                        + ", workspaceKey: " + to_string(workspaceKey)
+                        + ", userKey: " + to_string(userKey)
+                        + ", flags: " + flags
+                        + ", rowsUpdated: " + to_string(rowsUpdated)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->warn(errorMessage);
+
+                // throw runtime_error(errorMessage);
+            }
+        }
+                
+        string field = "workspaceKey";
+        workspaceDetailRoot[field] = workspaceKey;
+
+        field = "isEnabled";
+        workspaceDetailRoot[field] = (newEnabled ? "true" : "false");
+
+        field = "maxEncodingPriority";
+        workspaceDetailRoot[field] = newMaxEncodingPriority;
+
+        field = "encodingPeriod";
+        workspaceDetailRoot[field] = newEncodingPeriod;
+
+        field = "maxIngestionsNumber";
+        workspaceDetailRoot[field] = newMaxIngestionsNumber;
+
+        field = "maxStorageInMB";
+        workspaceDetailRoot[field] = newMaxStorageInMB;
+
+        field = "languageCode";
+        workspaceDetailRoot[field] = newLanguageCode;
+
+        field = "admin";
+        workspaceDetailRoot[field] = admin ? true : false;
+
+        field = "ingestWorkflow";
+        workspaceDetailRoot[field] = newIngestWorkflow ? true : false;
+
+        field = "createProfiles";
+        workspaceDetailRoot[field] = newCreateProfiles ? true : false;
+
+        field = "deliveryAuthorization";
+        workspaceDetailRoot[field] = newDeliveryAuthorization ? true : false;
+
+        field = "shareWorkspace";
+        workspaceDetailRoot[field] = newShareWorkspace ? true : false;
+
+        field = "editMedia";
+        workspaceDetailRoot[field] = newEditMedia ? true : false;
+        
+        {
+            lastSQLCommand = 
+                "select w.name, a.apiKey, a.isOwner, "
+                    "DATE_FORMAT(convert_tz(w.creationDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as creationDate "
+                    "from MMS_APIKey a, MMS_Workspace w where a.workspaceKey = w.workspaceKey and a.workspaceKey = ? and a.userKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
             preparedStatement->setInt64(queryParameterIndex++, userKey);
 
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
-                string field = "creationDate";
-                loginDetailsRoot[field] = static_cast<string>(resultSet->getString("creationDate"));
+                field = "workspaceName";
+                workspaceDetailRoot[field] = static_cast<string>(resultSet->getString("name"));
 
-                field = "expirationDate";
-                loginDetailsRoot[field] = static_cast<string>(resultSet->getString("expirationDate"));
-            }
-            else
-            {
-                string errorMessage = __FILEREF__ + "userKey is wrong"
-                    + ", userKey: " + to_string(userKey)
-                    + ", lastSQLCommand: " + lastSQLCommand
-                ;
-                _logger->error(errorMessage);
+                field = "creationDate";
+                workspaceDetailRoot[field] = static_cast<string>(resultSet->getString("creationDate"));
 
-                throw runtime_error(errorMessage);
+                field = "apiKey";
+                workspaceDetailRoot[field] = static_cast<string>(resultSet->getString("apiKey"));
+
+                field = "owner";
+                workspaceDetailRoot[field] = resultSet->getInt("isOwner") == 1 ? "true" : "false";
             }
         }
 
-        string field = "userKey";
-        loginDetailsRoot[field] = userKey;
-
-        field = "name";
-        loginDetailsRoot[field] = name;
-
-        field = "eMailAddress";
-        loginDetailsRoot[field] = email;
-
-        field = "country";
-        loginDetailsRoot[field] = country;
-                
         _logger->debug(__FILEREF__ + "DB connection unborrow"
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
@@ -2385,7 +2500,7 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails (
         throw e;
     }
     
-    return loginDetailsRoot;
+    return workspaceDetailRoot;
 }
 
 pair<string, string> MMSEngineDBFacade::getUserDetails (int64_t userKey)
@@ -18543,7 +18658,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "confKey                    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
                     "workspaceKey               BIGINT UNSIGNED NOT NULL,"
                     "label                      VARCHAR (128) NOT NULL,"
-                    "pageToken                  VARCHAR (128) NOT NULL,"
+                    "pageToken                  VARCHAR (256) NOT NULL,"
                     "constraint MMS_Conf_Facebook_PK PRIMARY KEY (confKey), "
                     "constraint MMS_Conf_Facebook_FK foreign key (workspaceKey) "
                         "references MMS_Workspace (workspaceKey) on delete cascade, "

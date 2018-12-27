@@ -497,6 +497,10 @@ void API::manageRequestAndResponse(
     {
         updateUser(request, userKey, requestBody);
     }
+    else if (method == "updateWorkspace")
+    {
+        updateWorkspace(request, workspace, userKey, requestBody);
+    }
     else if (method == "createWorkspace")
     {
         createWorkspace(request, userKey, queryParameters, requestBody);
@@ -515,7 +519,7 @@ void API::manageRequestAndResponse(
             throw runtime_error(errorMessage);
         }
 
-        shareWorkspace_(request, queryParameters, requestBody);
+        shareWorkspace_(request, workspace, queryParameters, requestBody);
     }
     else if (method == "confirmRegistration")
     {
@@ -1626,6 +1630,7 @@ void API::createWorkspace(
 
 void API::shareWorkspace_(
         FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody)
 {
@@ -1637,18 +1642,18 @@ void API::shareWorkspace_(
 
     try
     {
-        int64_t workspaceKeyToBeShared;
-        auto workspaceKeyIt = queryParameters.find("workspaceKey");
-        if (workspaceKeyIt == queryParameters.end())
+        bool userAlreadyPresent;
+        auto userAlreadyPresentIt = queryParameters.find("userAlreadyPresent");
+        if (userAlreadyPresentIt == queryParameters.end())
         {
-            string errorMessage = string("The 'workspaceKey' parameter is not found");
+            string errorMessage = string("The 'userAlreadyPresent' parameter is not found");
             _logger->error(__FILEREF__ + errorMessage);
 
             sendError(request, 400, errorMessage);
 
             throw runtime_error(errorMessage);
         }
-        workspaceKeyToBeShared = stoll(workspaceKeyIt->second);
+        userAlreadyPresent = (userAlreadyPresentIt->second == "true" ? true : false);
 
         bool ingestWorkflow;
         auto ingestWorkflowIt = queryParameters.find("ingestWorkflow");
@@ -1757,6 +1762,28 @@ void API::shareWorkspace_(
             throw runtime_error(errorMessage);
         }
 
+        if (userAlreadyPresent)
+        {
+            vector<string> mandatoryFields = {
+                "EMail"
+            };
+            for (string field: mandatoryFields)
+            {
+                if (!_mmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
+                {
+                    string errorMessage = string("Json field is not present or it is null")
+                            + ", Json field: " + field;
+                    _logger->error(__FILEREF__ + errorMessage);
+
+                    sendError(request, 400, errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+            }
+
+            email = metadataRoot.get("EMail", "XXX").asString();
+        }
+        else
         {
             vector<string> mandatoryFields = {
                 "Name",
@@ -1791,18 +1818,19 @@ void API::shareWorkspace_(
             );
             
             tuple<int64_t,string> userKeyAndConfirmationCode = 
-                _mmsEngineDBFacade->registerUserIfNotPresentAndShareWorkspace(
+                _mmsEngineDBFacade->registerUserAndShareWorkspace(
+                    userAlreadyPresent,
                     name, 
                     email, 
                     password,
                     country, 
                     ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace, editMedia,
-                    workspaceKeyToBeShared,
+                    workspace->_workspaceKey,
                     chrono::system_clock::now() + chrono::hours(24 * 365 * 10)     // chrono::system_clock::time_point userExpirationDate
                 );
 
             _logger->info(__FILEREF__ + "Registered User and shared Workspace"
-                + ", workspaceKeyToBeShared: " + to_string(workspaceKeyToBeShared)
+                + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
                 + ", email: " + email
                 + ", userKey: " + to_string(get<0>(userKeyAndConfirmationCode))
                 + ", confirmationCode: " + get<1>(userKeyAndConfirmationCode)
@@ -2261,6 +2289,191 @@ void API::updateUser(
             
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, loginDetailsRoot);
+            
+            sendSuccess(request, 200, responseBody);            
+        }
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + api + " failed"
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error: ") + e.what();
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + api + " failed"
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::updateWorkspace(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        int64_t userKey,
+        string requestBody)
+{
+    string api = "updateWorkspace";
+
+    _logger->info(__FILEREF__ + "Received " + api
+        + ", requestBody: " + requestBody
+    );
+
+    try
+    {
+        bool newEnabled;
+        string newMaxEncodingPriority;
+        string newEncodingPeriod;
+        int64_t newMaxIngestionsNumber;
+        int64_t newMaxStorageInMB;
+        string newLanguageCode;
+        bool newIngestWorkflow;
+        bool newCreateProfiles;
+        bool newDeliveryAuthorization;
+        bool newShareWorkspace;
+        bool newEditMedia;
+
+        Json::Value metadataRoot;
+        try
+        {
+            Json::CharReaderBuilder builder;
+            Json::CharReader* reader = builder.newCharReader();
+            string errors;
+
+            bool parsingSuccessful = reader->parse(requestBody.c_str(),
+                    requestBody.c_str() + requestBody.size(), 
+                    &metadataRoot, &errors);
+            delete reader;
+
+            if (!parsingSuccessful)
+            {
+                string errorMessage = string("Json metadata failed during the parsing")
+                        + ", errors: " + errors
+                        + ", json data: " + requestBody
+                        ;
+                _logger->error(__FILEREF__ + errorMessage);
+
+                sendError(request, 400, errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+        catch(exception e)
+        {
+            string errorMessage = string("Json metadata failed during the parsing"
+                    ", json data: " + requestBody
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        {
+            vector<string> mandatoryFields = {
+                "Enabled",
+                "MaxEncodingPriority",
+                "EncodingPeriod",
+                "MaxIngestionsNumber",
+                "MaxStorageInMB",
+                "LanguageCode",
+                "IngestWorkflow",
+                "CreateProfiles",
+                "DeliveryAuthorization",
+                "ShareWorkspace",
+                "EditMedia"
+            };
+            for (string field: mandatoryFields)
+            {
+                if (!_mmsEngineDBFacade->isMetadataPresent(metadataRoot, field))
+                {
+                    string errorMessage = string("Json field is not present or it is null")
+                            + ", Json field: " + field;
+                    _logger->error(__FILEREF__ + errorMessage);
+
+                    sendError(request, 400, errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+            }
+
+            newEnabled = metadataRoot.get("Enabled", "XXX").asBool();
+            newMaxEncodingPriority = metadataRoot.get("MaxEncodingPriority", "XXX").asString();
+            newEncodingPeriod = metadataRoot.get("EncodingPeriod", "XXX").asString();
+            newMaxIngestionsNumber = metadataRoot.get("MaxIngestionsNumber", "XXX").asInt64();
+            newMaxStorageInMB = metadataRoot.get("MaxStorageInMB", "XXX").asInt64();
+            newLanguageCode = metadataRoot.get("LanguageCode", "XXX").asString();
+            newIngestWorkflow = metadataRoot.get("IngestWorkflow", "XXX").asBool();
+            newCreateProfiles = metadataRoot.get("CreateProfiles", "XXX").asBool();
+            newDeliveryAuthorization = metadataRoot.get("DeliveryAuthorization", "XXX").asBool();
+            newShareWorkspace = metadataRoot.get("ShareWorkspace", "XXX").asBool();
+            newEditMedia = metadataRoot.get("EditMedia", "XXX").asBool();
+        }
+
+        try
+        {
+            _logger->info(__FILEREF__ + "Updating WorkspaceDetails"
+                + ", userKey: " + to_string(userKey)
+                + ", workspaceKey: " + to_string(workspace->_workspaceKey)
+            );
+            
+            Json::Value workspaceDetailRoot = _mmsEngineDBFacade->updateWorkspaceDetails (
+                    userKey,
+                    workspace->_workspaceKey,
+                    newEnabled, newMaxEncodingPriority,
+                    newEncodingPeriod, newMaxIngestionsNumber,
+                    newMaxStorageInMB, newLanguageCode,
+                    newIngestWorkflow, newCreateProfiles,
+                    newDeliveryAuthorization, newShareWorkspace,
+                    newEditMedia);
+
+            _logger->info(__FILEREF__ + "WorkspaceDetails updated"
+                + ", userKey: " + to_string(userKey)
+                + ", workspaceKey: " + to_string(workspace->_workspaceKey)
+            );
+            
+            Json::StreamWriterBuilder wbuilder;
+            string responseBody = Json::writeString(wbuilder, workspaceDetailRoot);
             
             sendSuccess(request, 200, responseBody);            
         }

@@ -700,7 +700,8 @@ public:
         string languageCode,
         chrono::system_clock::time_point userExpirationDate);
 
-    pair<int64_t,string> registerUserIfNotPresentAndShareWorkspace(
+    pair<int64_t,string> registerUserAndShareWorkspace(
+        bool userAlreadyPresent,
         string userName,
         string userEmailAddress,
         string userPassword,
@@ -718,6 +719,16 @@ public:
     Json::Value login (string eMailAddress, string password);
 
     Json::Value getWorkspaceDetails (int64_t userKey);
+
+    Json::Value updateWorkspaceDetails (
+        int64_t userKey,
+        int64_t workspaceKey,
+        bool newEnabled, string newMaxEncodingPriority,
+        string newEncodingPeriod, int64_t newMaxIngestionsNumber,
+        int64_t newMaxStorageInMB, string newLanguageCode,
+        bool newIngestWorkflow, bool newCreateProfiles,
+        bool newDeliveryAuthorization, bool newShareWorkspace,
+        bool newEditMedia);
 
     Json::Value updateUser (
         int64_t userKey,

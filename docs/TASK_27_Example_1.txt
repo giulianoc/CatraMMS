@@ -1,0 +1,12 @@
+"Task": {
+	"Label"="My Face Recognition",
+
+	"Type": "Face-Recognition",
+
+	"Parameters": {
+		"References": [
+			{ "ReferenceMediaItemKey": 11 }
+		],
+		"CascadeName": "haarcascade_frontalface_alt"
+	}
+}
