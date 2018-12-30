@@ -9,6 +9,9 @@ import java.util.Date;
 public class PhysicalPath implements Serializable{
     private Long physicalPathKey;
     private String fileFormat;
+    private Long partitionNumber;
+    private String relativePath;
+    private String fileName;
     private Date creationDate;
     private Long encodingProfileKey;
     private Long sizeInBytes;
@@ -91,5 +94,29 @@ public class PhysicalPath implements Serializable{
 
     public void setImageDetails(ImageDetails imageDetails) {
         this.imageDetails = imageDetails;
+    }
+
+    public Long getPartitionNumber() {
+        return partitionNumber;
+    }
+
+    public void setPartitionNumber(Long partitionNumber) {
+        this.partitionNumber = partitionNumber;
+    }
+
+    public String getRelativePath() {
+        return relativePath;
+    }
+
+    public void setRelativePath(String relativePath) {
+        this.relativePath = relativePath;
+    }
+
+    public String getFileName() {
+        return fileName;
+    }
+
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
     }
 }

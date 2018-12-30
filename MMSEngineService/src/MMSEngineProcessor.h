@@ -114,7 +114,6 @@ private:
 
     bool                    _localCopyTaskEnabled;
     
-    
     // void sendEmail(string to, string subject, vector<string>& emailBody);
 
     void handleCheckIngestionEvent();
@@ -182,6 +181,13 @@ private:
         shared_ptr<long> processorsThreadsNumber,
         int64_t ingestionJobKey, string mmsAssetPathName, 
         string localPath, string localFileName);
+
+	void manageFaceRecognitionMediaTask(
+        int64_t ingestionJobKey,
+        MMSEngineDBFacade::IngestionStatus ingestionStatus,
+        shared_ptr<Workspace> workspace,
+        Json::Value parametersRoot,
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
 
     void extractTracksContentThread(
         shared_ptr<long> processorsThreadsNumber,

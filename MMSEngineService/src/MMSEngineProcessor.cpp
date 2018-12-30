@@ -20,6 +20,7 @@
 #include "Magick++.h"
 
 
+
 MMSEngineProcessor::MMSEngineProcessor(
         int processorIdentifier,
         shared_ptr<spdlog::logger> logger, 
@@ -72,6 +73,7 @@ MMSEngineProcessor::MMSEngineProcessor(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", mms->stagingRetentionInDays: " + to_string(_stagingRetentionInDays)
     );
+
     _downloadChunkSizeInMegaBytes       = configuration["download"].get("downloadChunkSizeInMegaBytes", 5).asInt();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", download->downloadChunkSizeInMegaBytes: " + to_string(_downloadChunkSizeInMegaBytes)
@@ -1309,7 +1311,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             }
                             catch(runtime_error e)
                             {
-                                _logger->error(__FILEREF__ + "generateAndIngestSlideshow failed"
+                                _logger->error(__FILEREF__ + "manageSlideShowTask failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", exception: " + e.what()
@@ -1334,7 +1336,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             }
                             catch(exception e)
                             {
-                                _logger->error(__FILEREF__ + "generateAndIngestSlideshow failed"
+                                _logger->error(__FILEREF__ + "manageSlideShowTask failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", exception: " + e.what()
@@ -1859,6 +1861,69 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             catch(exception e)
                             {
                                 _logger->error(__FILEREF__ + "postOnYouTubeTask failed"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                                        errorMessage,
+                                        "" // processorMMS
+                                        );
+
+                                throw runtime_error(errorMessage);
+                            }
+                        }
+                        else if (ingestionType == MMSEngineDBFacade::IngestionType::FaceRecognition)
+                        {
+                            // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
+                            try
+                            {
+								manageFaceRecognitionMediaTask(
+									ingestionJobKey, 
+									ingestionStatus,
+									workspace, 
+									parametersRoot, 
+									dependencies);
+                            }
+                            catch(runtime_error e)
+                            {
+                                _logger->error(__FILEREF__ + "manageFaceRecognitionMediaTask failed"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                                        errorMessage,
+                                        "" // processorMMS
+                                        );
+
+                                throw runtime_error(errorMessage);
+                            }
+                            catch(exception e)
+                            {
+                                _logger->error(__FILEREF__ + "manageFaceRecognitionMediaTask failed"
                                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
                                         + ", exception: " + e.what()
@@ -3842,6 +3907,167 @@ void MMSEngineProcessor::localCopyContentTask(
     }
 }
 
+
+void MMSEngineProcessor::manageFaceRecognitionMediaTask(
+        int64_t ingestionJobKey,
+        MMSEngineDBFacade::IngestionStatus ingestionStatus,
+        shared_ptr<Workspace> workspace,
+        Json::Value parametersRoot,
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies
+)
+{
+    try
+    {
+        if (dependencies.size() != 1)
+        {
+            string errorMessage = __FILEREF__ + "Wrong medias number to be processed for Face Recognition"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", dependencies.size: " + to_string(dependencies.size());
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+		MMSEngineDBFacade::EncodingPriority encodingPriority;
+		string field = "EncodingPriority";
+		if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+		{
+			encodingPriority = 
+				static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority);
+		}
+		else
+		{
+			encodingPriority =
+				MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
+		}
+
+        string cascadeName;
+        {
+            string field = "CascadeName";
+            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            cascadeName = parametersRoot.get(field, "XXX").asString();
+        }
+        
+        // for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
+        {
+			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>&
+				keyAndDependencyType	= dependencies[0];
+
+            int mmsPartitionNumber;
+            string workspaceDirectoryName;
+            string relativePath;
+            string fileName;
+            int64_t sizeInBytes;
+            string deliveryFileName;
+            MMSEngineDBFacade::ContentType contentType;
+            string title;
+            
+            int64_t key;
+            MMSEngineDBFacade::ContentType referenceContentType;
+            Validator::DependencyType dependencyType;
+            
+            tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+
+            if (dependencyType == Validator::DependencyType::MediaItemKey)
+            {
+                int64_t encodingProfileKey = -1;
+                
+                tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
+                    = _mmsEngineDBFacade->getStorageDetails(
+                        key, encodingProfileKey);
+
+                int64_t physicalPathKey;
+                shared_ptr<Workspace> workspace;
+                
+                tie(physicalPathKey, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
+                        = storageDetails;
+                workspaceDirectoryName = workspace->_directoryName;
+
+                {
+                    bool warningIfMissing = false;
+                    pair<MMSEngineDBFacade::ContentType,string> contentTypeAndUserData =
+                        _mmsEngineDBFacade->getMediaItemKeyDetails(
+                            key, warningIfMissing);
+
+                    string userData;
+                    tie(contentType, userData) = contentTypeAndUserData;
+                }
+            }
+            else
+            {
+                tuple<int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
+                    = _mmsEngineDBFacade->getStorageDetails(key);
+
+                shared_ptr<Workspace> workspace;
+                
+                tie(mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
+                        = storageDetails;
+                workspaceDirectoryName = workspace->_directoryName;
+                
+                {
+                    bool warningIfMissing = false;
+                    tuple<int64_t,MMSEngineDBFacade::ContentType,string> mediaItemKeyContentTypeAndUserData =
+                        _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+                            key, warningIfMissing);
+
+                    int64_t mediaItemKey;
+                    string userData;
+                    tie(mediaItemKey, contentType, userData)
+                            = mediaItemKeyContentTypeAndUserData;
+                }
+            }
+            
+            _logger->info(__FILEREF__ + "getMMSAssetPathName ..."
+                + ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
+                + ", workspaceDirectoryName: " + workspaceDirectoryName
+                + ", relativePath: " + relativePath
+                + ", fileName: " + fileName
+            );
+            string mmsAssetPathName = _mmsStorage->getMMSAssetPathName(
+                mmsPartitionNumber,
+                workspaceDirectoryName,
+                relativePath,
+                fileName);
+
+			_mmsEngineDBFacade->addEncoding_FaceRecognitionJob(workspace, ingestionJobKey,
+                mmsAssetPathName, cascadeName, encodingPriority);
+        }
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "manageFaceRecognitionMediaTask failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
+        );
+ 
+        // Update IngestionJob done in the calling method
+        
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "manageFaceRecognitionMediaTask failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+        );
+        
+        // Update IngestionJob done in the calling method
+
+        throw e;
+    }
+}
+
+
 void MMSEngineProcessor::copyContentThread(
         shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, string mmsAssetPathName, 
         string localPath, string localFileName)
@@ -5502,210 +5728,6 @@ void MMSEngineProcessor::manageSlideShowTask(
     }
 }
 
-/*
-void MMSEngineProcessor::generateAndIngestSlideshow(
-        int64_t ingestionJobKey,
-        shared_ptr<Workspace> workspace,
-        Json::Value parametersRoot,
-        vector<pair<int64_t,Validator::DependencyType>>& dependencies
-)
-{
-    try
-    {
-        if (dependencies.size() == 0)
-        {
-            string errorMessage = __FILEREF__ + "No images found"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", dependencies.size: " + to_string(dependencies.size());
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        
-        MMSEngineDBFacade::ContentType slideshowContentType;
-        bool slideshowContentTypeInitialized = false;
-        vector<string> sourcePhysicalPaths;
-        
-        for (pair<int64_t,Validator::DependencyType>& keyAndDependencyType: dependencies)
-        {
-            // int64_t encodingProfileKey = -1;
-            // string sourcePhysicalPath = _mmsStorage->getPhysicalPath(keyAndDependencyType.first, encodingProfileKey);
-
-            int64_t sourceMediaItemKey;
-            int64_t sourcePhysicalPathKey;
-            string sourcePhysicalPath;
-            if (keyAndDependencyType.second == Validator::DependencyType::MediaItemKey)
-            {
-                sourceMediaItemKey = keyAndDependencyType.first;
-
-                sourcePhysicalPathKey = -1;
-                int64_t encodingProfileKey = -1;
-                pair<int64_t,string> physicalPathKeyAndPhysicalPath 
-                        = _mmsStorage->getPhysicalPath(sourceMediaItemKey, encodingProfileKey);
-
-                int64_t localPhysicalPathKey;
-                tie(localPhysicalPathKey,sourcePhysicalPath) = physicalPathKeyAndPhysicalPath;
-            }
-            else
-            {
-                sourcePhysicalPathKey = keyAndDependencyType.first;
-
-                bool warningIfMissing = false;
-                pair<int64_t,MMSEngineDBFacade::ContentType> mediaItemKeyContentTypeAndAvgFrameRate =
-                    _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-                        sourcePhysicalPathKey, warningIfMissing);
-
-                MMSEngineDBFacade::ContentType localContentType;
-                tie(sourceMediaItemKey,localContentType)
-                        = mediaItemKeyContentTypeAndAvgFrameRate;
-
-                sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourcePhysicalPathKey);
-            }
-            
-            sourcePhysicalPaths.push_back(sourcePhysicalPath);
-            
-            bool warningIfMissing = false;
-            
-            MMSEngineDBFacade::ContentType contentType = _mmsEngineDBFacade->getMediaItemKeyDetails(
-                sourceMediaItemKey, warningIfMissing);
-            
-            if (!slideshowContentTypeInitialized)
-            {
-                slideshowContentType = contentType;
-                if (slideshowContentType != MMSEngineDBFacade::ContentType::Image)
-                {
-                    string errorMessage = __FILEREF__ + "It is not possible to build a slideshow with a media that is not an Image"
-                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                            + ", slideshowContentType: " + MMSEngineDBFacade::toString(slideshowContentType)
-                            ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }
-            }
-            else
-            {
-                if (slideshowContentType != contentType)
-                {
-                    string errorMessage = __FILEREF__ + "Not all the References have the same ContentType"
-                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                            + ", contentType: " + MMSEngineDBFacade::toString(contentType)
-                            + ", slideshowContentType: " + MMSEngineDBFacade::toString(slideshowContentType)
-                            ;
-                    _logger->error(errorMessage);
-
-                    throw runtime_error(errorMessage);
-                }
-            }
-        }
-
-        double durationOfEachSlideInSeconds = 2;
-        string field = "DurationOfEachSlideInSeconds";
-        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-        {
-            durationOfEachSlideInSeconds = parametersRoot.get(field, "XXX").asDouble();
-        }
-
-        int outputFrameRate = 25;
-        
-        string sourceFileName;
-        field = "SourceFileName";
-        if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-        {
-            sourceFileName = parametersRoot.get(field, "XXX").asString();
-        }
-
-        string fileFormat = "mp4";
-        
-        string localSourceFileName = to_string(ingestionJobKey)
-                // + "_source"
-                + "." + fileFormat
-                ;
-
-//        size_t extensionIndex = sourceFileName.find_last_of(".");
-//        if (extensionIndex != string::npos)
-//            localSourceFileName.append(sourceFileName.substr(extensionIndex));
-        
-        string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
-            workspace);
-        string slideshowMediaPathName = workspaceIngestionRepository + "/" 
-                + localSourceFileName;
-        
-        FFMpeg ffmpeg (_configuration, _logger);
-        ffmpeg.generateSlideshowMediaToIngest(ingestionJobKey, 
-                sourcePhysicalPaths, durationOfEachSlideInSeconds,
-                outputFrameRate, slideshowMediaPathName);
-
-        _logger->info(__FILEREF__ + "generateSlideshowMediaToIngest done"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", slideshowMediaPathName: " + slideshowMediaPathName
-        );
-                            
-        string title;
-        string mediaMetaDataContent = generateMediaMetadataToIngest(
-                ingestionJobKey,
-                // true,
-                fileFormat,
-                title,
-                parametersRoot
-        );
-
-        {
-            shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
-                    ->getFreeEvent<LocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
-
-            localAssetIngestionEvent->setSource(MMSENGINEPROCESSORNAME);
-            localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
-            localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
-
-            localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
-            localAssetIngestionEvent->setIngestionSourceFileName(localSourceFileName);
-            localAssetIngestionEvent->setMMSSourceFileName(localSourceFileName);
-            localAssetIngestionEvent->setWorkspace(workspace);
-            localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::AddContent);
-            localAssetIngestionEvent->setIngestionRowToBeUpdatedAsSuccess(true);
-
-            // to manage a ffmpeg bug generating a corrupted/wrong avgFrameRate, we will
-            // force the slideshow file to have the avgFrameRate as specified in the parameter
-            localAssetIngestionEvent->setForcedAvgFrameRate(to_string(outputFrameRate) + "/1");            
-
-            localAssetIngestionEvent->setMetadataContent(mediaMetaDataContent);
-
-            shared_ptr<Event2>    event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
-            _multiEventsSet->addEvent(event);
-
-            _logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                + ", getEventKey().first: " + to_string(event->getEventKey().first)
-                + ", getEventKey().second: " + to_string(event->getEventKey().second));
-        }
-    }
-    catch(runtime_error e)
-    {
-        _logger->error(__FILEREF__ + "generateAndIngestSlideshow failed"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            + ", e.what(): " + e.what()
-        );
-        
-        throw e;
-    }
-    catch(exception e)
-    {
-        _logger->error(__FILEREF__ + "generateAndIngestSlideshow failed"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-            + ", ingestionJobKey: " + to_string(ingestionJobKey)
-        );
-        
-        throw e;
-    }
-}
-*/
 
 void MMSEngineProcessor::generateAndIngestConcatenationTask(
         int64_t ingestionJobKey,

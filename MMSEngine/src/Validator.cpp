@@ -34,123 +34,6 @@ Validator::Validator(const Validator& orig) {
 Validator::~Validator() {
 }
 
-bool Validator::isVideoAudioFileFormat(string fileFormat)
-{
-    // see https://en.wikipedia.org/wiki/Video_file_format
-    vector<string> suffixes = {
-        "webm",
-        "mkv",
-        "flv",
-        "vob",
-        "ogv",
-        "ogg",
-        "avi",
-        "mov",
-        "wmv",
-        "yuv",
-        "mp4",
-        "m4p ",
-        "mpg",
-        "mp2",
-        "mpeg",
-        "mjpeg",
-        "m4v",
-        "3gp",
-        "3g2",
-        "mxf",
-        "ts"
-    };
-
-    string lowerCaseFileFormat;
-    lowerCaseFileFormat.resize(fileFormat.size());
-    transform(fileFormat.begin(), fileFormat.end(), lowerCaseFileFormat.begin(), [](unsigned char c){return tolower(c); } );
-    for (string suffix: suffixes)
-    {
-        if (lowerCaseFileFormat == suffix) 
-            return true;
-    }
-    
-    return false;
-}
-
-bool Validator::isImageFileFormat(string fileFormat)
-{
-    // see https://en.wikipedia.org/wiki/Video_file_format
-    vector<string> suffixes = {
-        "jpg",
-        "jpeg",
-        "tif",
-        "tiff",
-        "bmp",
-        "gif",
-        "png"
-    };
-
-    string lowerCaseFileFormat;
-    lowerCaseFileFormat.resize(fileFormat.size());
-    transform(fileFormat.begin(), fileFormat.end(), lowerCaseFileFormat.begin(), [](unsigned char c){return tolower(c); } );
-    for (string suffix: suffixes)
-    {
-        if (lowerCaseFileFormat == suffix) 
-            return true;
-    }
-    
-    return false;
-}
-
-bool Validator::isFontTypeValid(string fontType)
-{
-    vector<string> validFontTypes = {
-        "cac_champagne.ttf",
-        "OpenSans-BoldItalic.ttf",
-        "OpenSans-ExtraBoldItalic.ttf",
-        "OpenSans-Italic.ttf",
-        "OpenSans-Light.ttf",
-        "OpenSans-SemiboldItalic.ttf",
-        "Pacifico.ttf",
-        "Windsong.ttf",
-        "DancingScript-Regular.otf",
-        "OpenSans-Bold.ttf",
-        "OpenSans-ExtraBold.ttf",
-        "OpenSans-LightItalic.ttf",
-        "OpenSans-Regular.ttf",
-        "OpenSans-Semibold.ttf",
-        "Sofia-Regular.otf"
-    };
-
-    for (string validFontType: validFontTypes)
-    {
-        if (fontType == validFontType) 
-            return true;
-    }
-    
-    return false;
-}
-
-bool Validator::isColorValid(string color)
-{
-    vector<string> validColors = {
-        "black",
-        "blue",
-        "gray",
-        "green",
-        "orange",
-        "purple",
-        "red",
-        "violet",
-        "white",
-        "yellow"
-    };
-
-    for (string validColor: validColors)
-    {
-        if (color == validColor) 
-            return true;
-    }
-    
-    return false;
-}
-
 void Validator::validateEncodingProfilesSetRootMetadata(
     MMSEngineDBFacade::ContentType contentType,
     Json::Value encodingProfilesSetRoot)
@@ -1182,6 +1065,27 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
         Json::Value parametersRoot = taskRoot[field]; 
         validatePostOnYouTubeMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
     }
+    else if (type == "Face-Recognition")
+    {
+        ingestionType = MMSEngineDBFacade::IngestionType::FaceRecognition;
+        
+        field = "Parameters";
+        if (!isMetadataPresent(taskRoot, field))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field
+                    + ", sTaskRoot: " + sTaskRoot;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        Json::Value parametersRoot = taskRoot[field]; 
+        validateFaceRecognitionMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+    }
     else
     {
         string errorMessage = __FILEREF__ + "Field 'Type' is wrong"
@@ -1294,6 +1198,11 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
     else if (ingestionType == MMSEngineDBFacade::IngestionType::PostOnYouTube)
     {
         validatePostOnYouTubeMetadata(workspaceKey, label, parametersRoot, 
+                validateDependenciesToo, dependencies);        
+    }
+    else if (ingestionType == MMSEngineDBFacade::IngestionType::FaceRecognition)
+    {
+        validateFaceRecognitionMetadata(workspaceKey, label, parametersRoot, 
                 validateDependenciesToo, dependencies);        
     }
     else
@@ -2810,6 +2719,101 @@ void Validator::validatePostOnYouTubeMetadata(int64_t workspaceKey, string label
     }    
 }
 
+void Validator::validateFaceRecognitionMetadata(int64_t workspaceKey, string label,
+    Json::Value parametersRoot, 
+        bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+{
+        
+    vector<string> mandatoryFields = {
+        "CascadeName"
+    };
+    for (string mandatoryField: mandatoryFields)
+    {
+        if (!isMetadataPresent(parametersRoot, mandatoryField))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + mandatoryField
+                    + ", sParametersRoot: " + sParametersRoot
+                    + ", label: " + label
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+
+    string field = "CascadeName";
+    string cascadeName = parametersRoot.get(field, "XXX").asString();
+    if (!isCascadeNameValid(cascadeName))
+    {
+        string errorMessage = __FILEREF__ + field + " is wrong (it could be only "
+                + "haarcascade_frontalface_alt, haarcascade_frontalface_alt2, "
+                + "haarcascade_frontalface_alt_tree or haarcascade_frontalface_default"
+                + ")"
+                + ", Field: " + field
+                + ", cascadeName: " + cascadeName
+                + ", label: " + label
+                ;
+        _logger->error(__FILEREF__ + errorMessage);
+        
+        throw runtime_error(errorMessage);
+    }
+
+    if (validateDependenciesToo)
+    {
+        // References is optional because in case of dependency managed automatically
+        // by MMS (i.e.: onSuccess)
+        string field = "References";
+        if (isMetadataPresent(parametersRoot, field))
+        {
+            Json::Value referencesRoot = parametersRoot[field];
+            if (referencesRoot.size() != 1)
+            {
+                string errorMessage = __FILEREF__ + "No correct number of References"
+                        + ", referencesRoot.size: " + to_string(referencesRoot.size())
+                        + ", label: " + label
+                        ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+
+            bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
+            bool encodingProfileFieldsToBeManaged = false;
+            fillDependencies(workspaceKey, parametersRoot, dependencies,
+                    priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
+                    encodingProfileFieldsToBeManaged);
+
+            // for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
+            tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>&
+					keyAndDependencyType	=  dependencies[0];
+            {
+                int64_t key;
+                MMSEngineDBFacade::ContentType referenceContentType;
+                Validator::DependencyType dependencyType;
+
+                tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+
+                if (referenceContentType != MMSEngineDBFacade::ContentType::Video)
+                {
+                    string errorMessage = __FILEREF__ + "Reference... does not refer a video content"
+                        + ", dependencyType: " + to_string(static_cast<int>(dependencyType))
+                        + ", referenceMediaItemKey: " + to_string(key)
+                        + ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
+                        + ", label: " + label
+                            ;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+            }
+        }    
+    }    
+}
+
 bool Validator::isMetadataPresent(Json::Value root, string field)
 {
     if (root.isObject() && root.isMember(field) && !root[field].isNull())
@@ -3041,3 +3045,139 @@ void Validator::fillDependencies(int64_t workspaceKey, Json::Value parametersRoo
         }
     }
 }
+
+bool Validator::isVideoAudioFileFormat(string fileFormat)
+{
+    // see https://en.wikipedia.org/wiki/Video_file_format
+    vector<string> suffixes = {
+        "webm",
+        "mkv",
+        "flv",
+        "vob",
+        "ogv",
+        "ogg",
+        "avi",
+        "mov",
+        "wmv",
+        "yuv",
+        "mp4",
+        "m4p ",
+        "mpg",
+        "mp2",
+        "mpeg",
+        "mjpeg",
+        "m4v",
+        "3gp",
+        "3g2",
+        "mxf",
+        "ts"
+    };
+
+    string lowerCaseFileFormat;
+    lowerCaseFileFormat.resize(fileFormat.size());
+    transform(fileFormat.begin(), fileFormat.end(), lowerCaseFileFormat.begin(), [](unsigned char c){return tolower(c); } );
+    for (string suffix: suffixes)
+    {
+        if (lowerCaseFileFormat == suffix) 
+            return true;
+    }
+    
+    return false;
+}
+
+bool Validator::isImageFileFormat(string fileFormat)
+{
+    // see https://en.wikipedia.org/wiki/Video_file_format
+    vector<string> suffixes = {
+        "jpg",
+        "jpeg",
+        "tif",
+        "tiff",
+        "bmp",
+        "gif",
+        "png"
+    };
+
+    string lowerCaseFileFormat;
+    lowerCaseFileFormat.resize(fileFormat.size());
+    transform(fileFormat.begin(), fileFormat.end(), lowerCaseFileFormat.begin(), [](unsigned char c){return tolower(c); } );
+    for (string suffix: suffixes)
+    {
+        if (lowerCaseFileFormat == suffix) 
+            return true;
+    }
+    
+    return false;
+}
+
+bool Validator::isFontTypeValid(string fontType)
+{
+    vector<string> validFontTypes = {
+        "cac_champagne.ttf",
+        "OpenSans-BoldItalic.ttf",
+        "OpenSans-ExtraBoldItalic.ttf",
+        "OpenSans-Italic.ttf",
+        "OpenSans-Light.ttf",
+        "OpenSans-SemiboldItalic.ttf",
+        "Pacifico.ttf",
+        "Windsong.ttf",
+        "DancingScript-Regular.otf",
+        "OpenSans-Bold.ttf",
+        "OpenSans-ExtraBold.ttf",
+        "OpenSans-LightItalic.ttf",
+        "OpenSans-Regular.ttf",
+        "OpenSans-Semibold.ttf",
+        "Sofia-Regular.otf"
+    };
+
+    for (string validFontType: validFontTypes)
+    {
+        if (fontType == validFontType) 
+            return true;
+    }
+    
+    return false;
+}
+
+bool Validator::isColorValid(string color)
+{
+    vector<string> validColors = {
+        "black",
+        "blue",
+        "gray",
+        "green",
+        "orange",
+        "purple",
+        "red",
+        "violet",
+        "white",
+        "yellow"
+    };
+
+    for (string validColor: validColors)
+    {
+        if (color == validColor) 
+            return true;
+    }
+    
+    return false;
+}
+
+bool Validator::isCascadeNameValid(string cascadeName)
+{
+    vector<string> validCascadeNames = {
+        "haarcascade_frontalface_alt",
+        "haarcascade_frontalface_alt2",
+        "haarcascade_frontalface_alt_tree",
+        "haarcascade_frontalface_default"
+    };
+
+    for (string validCascadeName: validCascadeNames)
+    {
+        if (cascadeName == validCascadeName) 
+            return true;
+    }
+    
+    return false;
+}
+

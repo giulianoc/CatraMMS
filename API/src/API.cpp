@@ -581,7 +581,7 @@ void API::manageRequestAndResponse(
     }
     else if (method == "mediaItemsList")
     {
-        mediaItemsList(request, workspace, queryParameters, requestBody);
+        mediaItemsList(request, workspace, queryParameters, requestBody, admin);
     }
     else if (method == "uploadedBinary")
     {
@@ -3169,7 +3169,8 @@ void API::mediaItemsList(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
-        string requestBody)
+        string requestBody,
+		bool admin)
 {
     string api = "mediaItemsList";
 
@@ -3259,7 +3260,7 @@ void API::mediaItemsList(
                     start, rows,
                     contentTypePresent, contentType,
                     startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
-                    title, ingestionDateOrder);
+                    title, ingestionDateOrder, admin);
 
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, ingestionStatusRoot);

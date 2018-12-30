@@ -2171,6 +2171,18 @@ public class CatraMMS {
                         physicalPath.setFileFormat(null);
                     else
                         physicalPath.setFileFormat(physicalPathInfo.getString("fileFormat"));
+
+                    // partitionNumber, relativePath and fileName are present only if the APIKey has the admin rights
+                    try {
+                        physicalPath.setPartitionNumber(physicalPathInfo.getLong("partitionNumber"));
+                        physicalPath.setRelativePath(physicalPathInfo.getString("relativePath"));
+                        physicalPath.setFileName(physicalPathInfo.getString("fileName"));
+                    }
+                    catch (Exception e)
+                    {
+
+                    }
+
                     physicalPath.setCreationDate(simpleDateFormat.parse(physicalPathInfo.getString("creationDate")));
                     if (physicalPathInfo.isNull("encodingProfileKey"))
                     {

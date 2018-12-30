@@ -146,8 +146,9 @@ void ActiveEncodingsManager::operator()()
                         {
                             try
                             {
-                                int encodingPercentage = encodingJob->_encoderVideoAudioProxy
-                                    .getEncodingProgress(encodingJob->_encodingItem->_encodingJobKey);
+                                int encodingPercentage = encodingPercentage =
+									encodingJob->_encoderVideoAudioProxy
+									.getEncodingProgress(/* encodingJob->_encodingItem */);
 
                                 _mmsEngineDBFacade->updateEncodingJobProgress (encodingJob->_encodingItem->_encodingJobKey, 
                                     encodingPercentage);
@@ -251,6 +252,7 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob* encodingJob)
             || encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::OverlayTextOnVideo
             || encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::GenerateFrames
             || encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::SlideShow
+            || encodingJob->_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceRecognition
             )
     {
         encodingJob->_encoderVideoAudioProxy.setEncodingData(

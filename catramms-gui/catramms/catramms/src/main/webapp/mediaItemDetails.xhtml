@@ -41,6 +41,21 @@
                         <p:outputLabel value="File Format: " />
                         <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.fileFormat}" />
 
+                        <p:outputLabel rendered="#{sessionScope.currentWorkspaceDetails.admin}"
+                                       value="Partition Number: " />
+                        <p:outputLabel rendered="#{sessionScope.currentWorkspaceDetails.admin}"
+                                value="#{mediaItemDetails.currentPhysicalPath.partitionNumber}" />
+
+                        <p:outputLabel rendered="#{sessionScope.currentWorkspaceDetails.admin}"
+                                       value="Relative Path: " />
+                        <p:outputLabel rendered="#{sessionScope.currentWorkspaceDetails.admin}"
+                                       value="#{mediaItemDetails.currentPhysicalPath.relativePath}" />
+
+                        <p:outputLabel rendered="#{sessionScope.currentWorkspaceDetails.admin}"
+                                       value="File Name: " />
+                        <p:outputLabel rendered="#{sessionScope.currentWorkspaceDetails.admin}"
+                                       value="#{mediaItemDetails.currentPhysicalPath.fileName}" />
+
                         <p:outputLabel value="Size In Bytes: " />
                         <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.sizeInBytes}" >
                             <f:convertNumber type="number" groupingUsed="true" locale="it" />
@@ -360,6 +375,12 @@
             </p:toolbarGroup>
 
             <p:toolbarGroup align="right">
+
+                <p:outputLabel value="Title: #{mediaItemDetails.mediaItem.title}" />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
 
                 <p:outputLabel value="Media Item Key: #{mediaItemDetails.mediaItemKey}" />
 

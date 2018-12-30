@@ -40,6 +40,11 @@
 		// optional
 		"Title": "My title",
 
+		// optional. Possible values: Low, Medium, High
+		// If not present or if it is specifying a priority bigger than the allowed for this Workspace,
+		//   the MaxEncodingPriority of the Workspace will be used.
+		"EncodingPriority": "Low",
+
 		// optional
 		"Ingester": "my ingester",
 

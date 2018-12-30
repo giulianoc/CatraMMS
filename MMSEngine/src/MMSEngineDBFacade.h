@@ -192,7 +192,8 @@ public:
         OverlayImageOnVideo = 2,
         OverlayTextOnVideo  = 3,
         GenerateFrames      = 4,
-        SlideShow           = 5
+        SlideShow           = 5,
+        FaceRecognition		= 6
     };
     static const char* toString(const EncodingType& encodingType)
     {
@@ -210,8 +211,10 @@ public:
                 return "GenerateFrames";
             case EncodingType::SlideShow:
                 return "SlideShow";
+            case EncodingType::FaceRecognition:
+                return "FaceRecognition";
             default:
-            throw runtime_error(string("Wrong EncodingType"));
+				throw runtime_error(string("Wrong EncodingType"));
         }
     }
     static EncodingType toEncodingType(const string& encodingType)
@@ -232,6 +235,8 @@ public:
             return EncodingType::GenerateFrames;
         else if (lowerCase == "slideshow")
             return EncodingType::SlideShow;
+        else if (lowerCase == "facerecognition")
+            return EncodingType::FaceRecognition;
         else
             throw runtime_error(string("Wrong EncodingType")
                     + ", encodingType: " + encodingType
@@ -358,11 +363,17 @@ public:
             Json::Value                             _slideShowParametersRoot;
         };
 
+        struct FaceRecognitionData {
+            // MMS_IngestionJob -> metaDataContent (you need it when the encoding generated a content to be ingested)
+            Json::Value                             _faceRecognitionParametersRoot;
+        };
+
         shared_ptr<EncodeData>                      _encodeData;
         shared_ptr<OverlayImageOnVideoData>         _overlayImageOnVideoData;
         shared_ptr<OverlayTextOnVideoData>          _overlayTextOnVideoData;
         shared_ptr<GenerateFramesData>              _generateFramesData;
         shared_ptr<SlideShowData>                   _slideShowData;
+        shared_ptr<FaceRecognitionData>				_faceRecognitionData;
     } ;
 
     enum class WorkspaceType {
@@ -392,6 +403,7 @@ public:
         ExtractTracks           = 17,
         PostOnFacebook          = 18,
         PostOnYouTube           = 19,
+        FaceRecognition         = 20,
         EmailNotification       = 30,
         ContentUpdate           = 50,
         ContentRemove           = 60
@@ -440,6 +452,8 @@ public:
                 return "Post-On-Facebook";
             case IngestionType::PostOnYouTube:
                 return "Post-On-YouTube";
+            case IngestionType::FaceRecognition:
+                return "Face-Recognition";
                 
             case IngestionType::EmailNotification:
                 return "Email-Notification";
@@ -495,6 +509,8 @@ public:
             return IngestionType::PostOnFacebook;
         else if (lowerCase == "post-on-youtube")
             return IngestionType::PostOnYouTube;
+        else if (lowerCase == "face-recognition")
+            return IngestionType::FaceRecognition;
 
         else if (lowerCase == "email-notification")
             return IngestionType::EmailNotification;
@@ -879,7 +895,7 @@ public:
         int start, int rows,
         bool contentTypePresent, ContentType contentType,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
-        string title, string ingestionDateOrder);
+        string title, string ingestionDateOrder, bool admin);
 
     Json::Value getEncodingProfilesSetList (
         int64_t workspaceKey, int64_t encodingProfilesSetKey,
@@ -1015,6 +1031,13 @@ public:
         vector<string>& sourcePhysicalPaths,
         double durationOfEachSlideInSeconds,
         int outputFrameRate,
+        EncodingPriority encodingPriority);
+
+    int addEncoding_FaceRecognitionJob (
+        shared_ptr<Workspace> workspace,
+        int64_t ingestionJobKey,
+        string sourcePhysicalPath,
+        string cascadeName,
         EncodingPriority encodingPriority);
 
     int updateEncodingJob (

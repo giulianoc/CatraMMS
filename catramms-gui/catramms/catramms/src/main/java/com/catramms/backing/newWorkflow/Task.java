@@ -87,6 +87,7 @@ public class Task implements Serializable
     private String postOnYouTubeTags;
     private Long postOnYouTubeCategoryId;
     private String postOnYouTubePrivacy;
+    private String faceRecognitionCascadeName;
 
     private boolean childTaskCreated;
     private boolean childEventOnSuccessCreated;
@@ -708,5 +709,13 @@ public class Task implements Serializable
 
     public void setPostOnYouTubePrivacy(String postOnYouTubePrivacy) {
         this.postOnYouTubePrivacy = postOnYouTubePrivacy;
+    }
+
+    public String getFaceRecognitionCascadeName() {
+        return faceRecognitionCascadeName;
+    }
+
+    public void setFaceRecognitionCascadeName(String faceRecognitionCascadeName) {
+        this.faceRecognitionCascadeName = faceRecognitionCascadeName;
     }
 }

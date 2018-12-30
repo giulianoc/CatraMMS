@@ -89,7 +89,7 @@ public:
 
     void operator ()();
 
-    int getEncodingProgress(int64_t encodingJobKey);
+	int getEncodingProgress();
 
 private:
     shared_ptr<spdlog::logger>          _logger;
@@ -127,6 +127,14 @@ private:
         string                          _currentUsedFFMpegEncoderHost;
     #endif
 
+	// used only in case of face recognition video generation
+	int						_localEncodingProgress;
+
+    string					_computerVisionCascadePath;
+    double					_computerVisionDefaultScale;
+    int						_computerVisionDefaultMinNeighbors;
+    bool					_computerVisionDefaultTryFlip;
+
     string encodeContentVideoAudio();
     string encodeContent_VideoAudio_through_ffmpeg();
 
@@ -148,7 +156,10 @@ private:
     string slideShow_through_ffmpeg();
     void processSlideShow(string stagingEncodedAssetPathName);    
 
-    bool getEncodingStatus(int64_t encodingJobKey);
+    string faceRecognition();
+    void processFaceRecognition(string stagingEncodedAssetPathName);    
+
+    bool getEncodingStatus();
 
     string generateMediaMetadataToIngest(
         int64_t ingestionJobKey,

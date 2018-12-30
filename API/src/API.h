@@ -156,7 +156,7 @@ private:
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
-        string requestBody);
+        string requestBody, bool admin);
 
     void encodingProfilesSetsList(
         FCGX_Request& request,

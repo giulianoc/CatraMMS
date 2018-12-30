@@ -1843,14 +1843,16 @@ tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long> FFMpe
         field = "duration";
         if (!isMetadataPresent(formatRoot, field))
         {
+			// I didn't find it in a .avi file generated using OpenCV::VideoWriter
+			// let's log it as a warning
             if (videoCodecName != "" && videoCodecName != "mjpeg")
             {
                 string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null"
                     + ", mmsAssetPathName: " + mmsAssetPathName
                     + ", Field: " + field;
-                _logger->error(errorMessage);
+                _logger->warn(errorMessage);
 
-                throw runtime_error(errorMessage);
+                // throw runtime_error(errorMessage);
             }            
         }
         else
