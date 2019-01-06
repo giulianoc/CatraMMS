@@ -1,0 +1,82 @@
+{
+	"Type": "Workflow",
+	"Label": "My workflow",
+	"Variables": {
+		"TitleOfVideo_1": "My Title of the video_1 content",
+		"TitleOfVideo_2": "My Title of the video_2 content",
+		"TitleOfConcatVideo": "My Title of the concat video content",
+		"TitleOfCutVideo": "My Title of the concat video content"
+	},
+	"Task": {
+		"Type": "GroupOfTasks",
+		"Parameters": {
+			"ExecutionType": "parallel",
+			"Tasks": [
+				{
+					"Label": "${TitleOfVideo_1}",
+					"Type": "Add-Content",
+					"Parameters": {
+						"SourceURL": "http://mediaww.rsi.ch/rsi/unrestricted/2018/04/16/2560539.mp4",
+						"FileFormat": "mp4",
+						"ContentType": "video",
+						"UserData": { "MyData": "this is my video data" },
+						"Title": "${TitleOfVideo_1}"
+					}
+				},
+				{
+					"Label": "${TitleOfVideo_2}",
+					"Type": "Add-Content",
+					"Parameters": {
+						"SourceURL": "http://mediaww.rsi.ch/rsi/unrestricted/2018/04/16/2560539.mp4",
+						"FileFormat": "mp4",
+						"ContentType": "video",
+						"UserData": { "MyData": "this is my video data" },
+						"Title": "${TitleOfVideo_2}"
+					}
+				}
+			]
+		},
+		"OnSuccess": {
+			"Task": {
+				"Label": "My concat",
+				"Type": "Concat-Demuxer",
+				"Parameters": {
+					"UserData": { "MyData": "this is my frame data" },
+					"Title": "${TitleOfConcatVideo}"
+				},
+				"OnSuccess": {
+					"Task": {
+						"Label": "My cut",
+						"Type": "Cut",
+						"Parameters": {
+							"StartTimeInSeconds": 1200.0,
+							"EndTimeInSeconds": 3000.0,
+							"UserData": { "MyData": "this is my frame data" },
+							"Title": "${TitleOfCutVideo}"
+						},
+						"OnSuccess": {
+							"Task": {
+								"Label": "my encode",
+								"Type": "Encode",
+								"Parameters": {
+									"EncodingPriority": "Low",
+									"EncodingProfilesSetLabel": "Sport"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"OnComplete": {
+			"Task": {
+				"Type": "Email-Notification",
+				"Parameters": {
+					"EmailAddress": "giulianoc@catrasoftware.it",
+					"Subject": "Task finished",
+					"Message": "Task __INGESTIONJOBKEY__ has finished"
+				}
+			}
+		}
+	}
+}

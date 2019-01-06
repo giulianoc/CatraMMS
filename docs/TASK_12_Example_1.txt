@@ -1,0 +1,15 @@
+{
+	"Type": "Workflow",
+	"Label": "1",
+	"Task": {
+		"Label": "my label",
+		"Type": "Encode",
+		"Parameters": {
+			"References": [
+				{ "ReferenceMediaItemKey": 11 }
+			],
+			"EncodingPriority": "Low",
+			"EncodingProfilesSetLabel": "Sport"
+		}
+	}
+}
