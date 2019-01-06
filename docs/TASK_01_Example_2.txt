@@ -1,0 +1,17 @@
+{
+	"Type": "Workflow",
+	"Label": "...",
+	"Variables": {
+		"Title": "My Title of the content"
+	},
+	"Task": {
+		"Label": "...",
+		"Type": "Add-Content",
+		"Parameters": {
+			"SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
+			"FileFormat": "mp4",
+			"UserData": { "MyData": "this is my data" },
+			"Title": "${Title}"
+		}
+	}
+}
