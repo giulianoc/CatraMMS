@@ -17,7 +17,7 @@ public class MediaItem implements Serializable{
     private Date startPublishing;
     private Date endPublishing;
     private String ingester;
-    private String keywords;
+    private String tags;
     private String userData;
     private String providerName;
     private Long retentionInMinutes;
@@ -99,12 +99,12 @@ public class MediaItem implements Serializable{
         this.ingester = ingester;
     }
 
-    public String getKeywords() {
-        return keywords;
+    public String getTags() {
+        return tags;
     }
 
-    public void setKeywords(String keywords) {
-        this.keywords = keywords;
+    public void setTags(String tags) {
+        this.tags = tags;
     }
 
     public String getProviderName() {

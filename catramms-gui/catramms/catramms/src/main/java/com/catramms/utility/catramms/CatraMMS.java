@@ -2148,8 +2148,8 @@ public class CatraMMS {
             mediaItem.setEndPublishing(simpleDateFormat.parse(mediaItemInfo.getString("endPublishing")));
             if (!mediaItemInfo.isNull("ingester"))
                 mediaItem.setIngester(mediaItemInfo.getString("ingester"));
-            if (!mediaItemInfo.isNull("keywords"))
-                mediaItem.setKeywords(mediaItemInfo.getString("keywords"));
+            if (!mediaItemInfo.isNull("tags"))
+                mediaItem.setTags(mediaItemInfo.getString("tags"));
             if (!mediaItemInfo.isNull("userData"))
                 mediaItem.setUserData(mediaItemInfo.getString("userData"));
             mediaItem.setProviderName(mediaItemInfo.getString("providerName"));

@@ -47,7 +47,7 @@
 		"Ingester": "aaaa",
 
 		// optional
-		"Keywords": "aaa",
+		"Tags": "aaa",
 
 		// optional
 		"MD5FileCheckSum": null,

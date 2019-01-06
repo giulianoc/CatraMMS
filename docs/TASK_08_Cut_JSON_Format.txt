@@ -53,7 +53,7 @@
 		"Ingester": "my ingester",
 
 		// optional
-		"Keywords": "my keywords",
+		"Tags": "my tags",
 
 		// optional
 		"ContentProviderName": "default",

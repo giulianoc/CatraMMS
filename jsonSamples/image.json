@@ -5,7 +5,7 @@
         "Title": "RiscaldamentoDiMaradona.jpg",            // mandatory
         "SubTitle": "aaaa",            // optional
         "Ingester": "aaaa",         // optional
-        "Keywords": "aaa",          // optional
+        "Tags": "aaa",          // optional
         "Description": "aaa",       // optional
 
         "FileFormat": "jpg", // mandatory

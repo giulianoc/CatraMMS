@@ -7420,7 +7420,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
         Json::Value mediaItemsRoot(Json::arrayValue);
         {
             lastSQLCommand = 
-                string("select mediaItemKey, title, deliveryFileName, ingester, keywords, userData, contentProviderKey, "
+                string("select mediaItemKey, title, deliveryFileName, ingester, tags, userData, contentProviderKey, "
                     "DATE_FORMAT(convert_tz(ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate, "
                     "DATE_FORMAT(convert_tz(startPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as startPublishing, "
                     "DATE_FORMAT(convert_tz(endPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endPublishing, "
@@ -7470,11 +7470,11 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                 else
                     mediaItemRoot[field] = static_cast<string>(resultSet->getString("ingester"));
 
-                field = "keywords";
-                if (resultSet->isNull("keywords"))
+                field = "tags";
+                if (resultSet->isNull("tags"))
                     mediaItemRoot[field] = Json::nullValue;
                 else
-                    mediaItemRoot[field] = static_cast<string>(resultSet->getString("keywords"));
+                    mediaItemRoot[field] = static_cast<string>(resultSet->getString("tags"));
 
                 field = "userData";
                 if (resultSet->isNull("userData"))
@@ -14731,7 +14731,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             string title = "";
             string ingester = "";
             string userData = "";
-            string keywords = "";
+            string tags = "";
             string deliveryFileName = "";
             string sContentType;
             int retentionInMinutes = _contentRetentionInMinutesDefaultValue;
@@ -14752,9 +14752,9 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                 userData = Json::writeString(wbuilder, parametersRoot[field]);                        
             }
 
-            field = "Keywords";
+            field = "Tags";
             if (isMetadataPresent(parametersRoot, field))
-                keywords = parametersRoot.get(field, "").asString();
+                tags = parametersRoot.get(field, "").asString();
 
             field = "DeliveryFileName";
             if (isMetadataPresent(parametersRoot, field))
@@ -14860,7 +14860,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             }
             
             lastSQLCommand = 
-                "insert into MMS_MediaItem (mediaItemKey, workspaceKey, contentProviderKey, title, ingester, keywords, userData, " 
+                "insert into MMS_MediaItem (mediaItemKey, workspaceKey, contentProviderKey, title, ingester, tags, userData, " 
                 "deliveryFileName, ingestionJobKey, ingestionDate, contentType, startPublishing, endPublishing, retentionInMinutes, processorMMS) values ("
                 "NULL, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, "
                 "convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone), "
@@ -14876,10 +14876,10 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
             else
                 preparedStatement->setString(queryParameterIndex++, ingester);
-            if (keywords == "")
+            if (tags == "")
                 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
             else
-                preparedStatement->setString(queryParameterIndex++, keywords);
+                preparedStatement->setString(queryParameterIndex++, tags);
             if (userData == "")
                 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
             else
@@ -18649,7 +18649,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "contentProviderKey     BIGINT UNSIGNED NOT NULL,"
                     "title                  VARCHAR (256) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
                     "ingester               VARCHAR (128) NULL,"
-                    "keywords               VARCHAR (128) CHARACTER SET utf8 COLLATE utf8_bin NULL,"
+                    "tags					VARCHAR (128) CHARACTER SET utf8 COLLATE utf8_bin NULL,"
                     "userData               " + userDataDefinition + ","
                     "deliveryFileName       VARCHAR (128) NULL,"
                     "ingestionJobKey        BIGINT UNSIGNED NOT NULL,"

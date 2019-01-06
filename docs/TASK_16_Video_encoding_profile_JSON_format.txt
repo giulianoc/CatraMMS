@@ -1,0 +1,63 @@
+{
+	// mandatory
+	"Label": "Sport",
+
+	// mandatory: 3gp, mp4, webm, segment, (avi, hls, mov, mpeg)
+	"FileFormat": "mp4",
+
+	// mandatory
+	"Video": {
+
+		// mandatory: libx264, libvpx, ...
+		"Codec": "libx264",
+
+		// optional: if libx264: high, baseline, main --- if libvpx: best, good
+		"Profile": "",
+
+		// mandatory: it could be even -1 or -2
+		"Width": 200,
+ 
+		// mandatory: it could be even -1 or -2
+		"Height": 500,
+
+		// mandatory only if fileformat is different from segment
+		"TwoPasses": true,
+
+		// optional (kbps)
+		"KBitRate": 500,
+
+		// optional
+		"OtherOutputParameters": "",
+
+		// optional (kbps)
+		"KMaxRate": 1984,
+
+		// optional (kbps)
+		"KBufSize": 3968,
+
+		// optional
+		"FrameRate": 30,
+
+		// optional
+		"KeyFrameIntervalInSeconds": 2
+	}
+
+	// mandatory
+	"Audio": {
+
+		// mandatory: aac, libfdk_aac, libvo_aacenc, libvorbis
+		"Codec": "aac",
+
+		// optional (kbps)
+		"KBitRate": 64,
+
+		// optional
+		"OtherOutputParameters": "",
+
+		// optional: 1: mono, 2: stereo
+		"ChannelsNumber": 2,
+
+		// optional (Hz)
+		"SampleRate": 44100
+	}
+}

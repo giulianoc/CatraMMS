@@ -1,42 +1,32 @@
 "Task": {
 	// optional
-	"Label"="My Extract Tracks",
+	Label="Overlay X",
 
 	// mandatory
-	"Type": "Extract-Tracks",
+	"Type": "Overlay-Image-On-Video",
 
 	"Parameters": {
 		// mandatory
 		"References": [
-			// mandatory. One Reference needed to identify the media file (mediaItemKeys) or
-			// the profile (physicalPathKey) used to extract the track.
-			// In case this task is placed inside an onSuccess event, 
-			// the Reference... item can be omitted.
+			// mandatory. Two References needed to identify the Image and the Video.
+			// In case this task is placed inside an onSuccess event, the Reference... item can be omitted.
 			// In such a case, the System will automatically add the Reference... item using the key
-			// of the video or the profile by which this task depend on.
-			// As reference can be used "ReferenceMediaItemKey", "ReferenceUniqueName" or 
-			// "ReferencePhysicalPathKey".
-			// In case this task depend on one task generating a media, the media will be 
-			// used.
-			// In case this task depend on one task generating a profile (i.e. Encode Task),
-			// the profile will be used.
+			// of the video and the key of the Image by which the Overlay has to depend on.
+			// As reference can be used "ReferenceMediaItemKey" or "ReferenceUniqueName"
 
-			{ "ReferenceMediaItemKey": 11 }
+			{ "ReferenceMediaItemKey": 11 },
+			{ "ReferenceMediaItemKey": 12 }
 		],
 
-		// mandatory. At least one entry inside the array has to be present
-		"Tracks": [
-			{
-				// mandatory: track type to be extracted (video or audio)
-				"TrackType": "audio",
-
-				// optional, if not provided 0 (the first track of type 'trackType' will be used
-				"TrackNumber": 0
-			}
-		],
-
-		// mandatory: format of the output where the extracted track will be placed.
-		"OutputFileFormat": "mp4",
+		// mandatory: the below parameters specify the X and Y in pixel where the image
+		//    has to be overlayed on the video.
+		//    It is possible to specify also a formula using the following variables:
+		//        video_width: width in pixel of the video
+		//        video_height: height in pixel of the video
+		//        image_width: width in pixel of the image
+		//        image_height: height in pixel of the image
+		"ImagePosition_X_InPixel": "video_width-image_width-10",                                  
+		"ImagePosition_Y_InPixel": "video_height-image_height-10",                                
 
 		// optional: it might contain any kind of user data (json format).
 		// The platform stores them and returns this data to the Customer 
@@ -53,11 +43,16 @@
 		// optional
 		"Title": "My title",
 
+		// optional. Possible values: Low, Medium, High
+		// If not present or if it is specifying a priority bigger than the allowed for this Workspace,
+		//   the MaxEncodingPriority of the Workspace will be used.
+		"EncodingPriority": "Low",
+
 		// optional
 		"Ingester": "my ingester",
 
 		// optional
-		"Tags": "my tags",
+		"Tags": "my Tags",
 
 		// optional
 		"ContentProviderName": "default",

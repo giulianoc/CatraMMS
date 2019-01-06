@@ -1,42 +1,33 @@
 "Task": {
 	// optional
-	"Label"="My Extract Tracks",
+	Label="...",
 
 	// mandatory
-	"Type": "Extract-Tracks",
+	"Type": "Frame",
 
 	"Parameters": {
 		// mandatory
 		"References": [
-			// mandatory. One Reference needed to identify the media file (mediaItemKeys) or
-			// the profile (physicalPathKey) used to extract the track.
-			// In case this task is placed inside an onSuccess event, 
-			// the Reference... item can be omitted.
+			// mandatory. Just one Reference needed to identify the video by which
+			// retrieve the Frame (screenshot).
+			// In case this task is placed inside an onSuccess event, the Reference... item can be omitted.
 			// In such a case, the System will automatically add the Reference... item using the key
-			// of the video or the profile by which this task depend on.
-			// As reference can be used "ReferenceMediaItemKey", "ReferenceUniqueName" or 
-			// "ReferencePhysicalPathKey".
-			// In case this task depend on one task generating a media, the media will be 
-			// used.
-			// In case this task depend on one task generating a profile (i.e. Encode Task),
-			// the profile will be used.
+			// of the video by which this frame depend on.
+			// As reference can be used "ReferenceMediaItemKey" or "ReferenceUniqueName"
 
 			{ "ReferenceMediaItemKey": 11 }
 		],
 
-		// mandatory. At least one entry inside the array has to be present
-		"Tracks": [
-			{
-				// mandatory: track type to be extracted (video or audio)
-				"TrackType": "audio",
+		// optional. default is 0 
+		"InstantInSeconds": 3.5,
 
-				// optional, if not provided 0 (the first track of type 'trackType' will be used
-				"TrackNumber": 0
-			}
-		],
+		// optional
+		// default is the width of the video
+		"Width": 320,
 
-		// mandatory: format of the output where the extracted track will be placed.
-		"OutputFileFormat": "mp4",
+		// optional
+		// default is the height of the video
+		"Height": 640,
 
 		// optional: it might contain any kind of user data (json format).
 		// The platform stores them and returns this data to the Customer 
@@ -57,7 +48,7 @@
 		"Ingester": "my ingester",
 
 		// optional
-		"Tags": "my tags",
+		"Tags": "my Tags",
 
 		// optional
 		"ContentProviderName": "default",

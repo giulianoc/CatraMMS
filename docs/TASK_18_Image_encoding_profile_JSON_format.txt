@@ -1,0 +1,25 @@
+{
+	// mandatory
+	"Label": "Sport",
+
+	// mandatory: JPG, GIF, PNG
+	"FileFormat": "JPG",
+
+	// mandatory
+	"Image": {
+
+		// mandatory
+		"Width": 200,
+
+		// mandatory
+		"Height": 300,
+
+		// mandatory
+		// if aspectRatio is true the proportion are not mantained
+		// if aspectRatio is false the proportion are mantained
+		"AspectRatio": false,
+
+		// mandatory: NoInterlace, LineInterlace, PlaneInterlace, PartitionInterlace
+		"InterlaceType": "NoInterlace"
+	}
+}

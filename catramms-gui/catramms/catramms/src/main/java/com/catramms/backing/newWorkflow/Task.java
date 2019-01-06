@@ -28,7 +28,7 @@ public class Task implements Serializable
     private String title;
     private String uniqueName;
     private String ingester;
-    private String keywords;
+    private String tags;
     private String md5FileCheckSum;
     private Long fileSizeInBytes;
     private String contentProviderName;
@@ -207,12 +207,12 @@ public class Task implements Serializable
         this.sourceDownloadType = sourceDownloadType;
     }
 
-    public String getKeywords() {
-        return keywords;
+    public String getTags() {
+        return tags;
     }
 
-    public void setKeywords(String keywords) {
-        this.keywords = keywords;
+    public void setTags(String tags) {
+        this.tags = tags;
     }
 
     public String getGroupOfTaskExecutionType() {

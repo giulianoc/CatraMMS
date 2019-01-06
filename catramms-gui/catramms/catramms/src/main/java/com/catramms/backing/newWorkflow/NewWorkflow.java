@@ -91,7 +91,7 @@ public class NewWorkflow extends Workspace implements Serializable {
     private String taskTitle;
     private String taskUniqueName;
     private String taskIngester;
-    private String taskKeywords;
+    private String taskTags;
     private String taskMD5FileChecksum;
     private Long taskFileSizeInBytes;
     private String taskContentProviderName;
@@ -588,8 +588,8 @@ public class NewWorkflow extends Workspace implements Serializable {
                     joParameters.put("UniqueName", task.getUniqueName());
                 if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
                     joParameters.put("Ingester", task.getIngester());
-                if (task.getKeywords() != null && !task.getKeywords().equalsIgnoreCase(""))
-                    joParameters.put("Keywords", task.getKeywords());
+                if (task.getTags() != null && !task.getTags().equalsIgnoreCase(""))
+                    joParameters.put("Tags", task.getTags());
                 if (task.getMd5FileCheckSum() != null && !task.getMd5FileCheckSum().equalsIgnoreCase(""))
                     joParameters.put("MD5FileChecksum", task.getMd5FileCheckSum());
                 if (task.getFileSizeInBytes() != null)
@@ -668,8 +668,8 @@ public class NewWorkflow extends Workspace implements Serializable {
                     joParameters.put("UniqueName", task.getUniqueName());
                 if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
                     joParameters.put("Ingester", task.getIngester());
-                if (task.getKeywords() != null && !task.getKeywords().equalsIgnoreCase(""))
-                    joParameters.put("Keywords", task.getKeywords());
+                if (task.getTags() != null && !task.getTags().equalsIgnoreCase(""))
+                    joParameters.put("Tags", task.getTags());
                 if (task.getContentProviderName() != null && !task.getContentProviderName().equalsIgnoreCase(""))
                     joParameters.put("ContentProviderName", task.getContentProviderName());
                 if (task.getDeliveryFileName() != null && !task.getDeliveryFileName().equalsIgnoreCase(""))
@@ -750,8 +750,8 @@ public class NewWorkflow extends Workspace implements Serializable {
                     joParameters.put("UniqueName", task.getUniqueName());
                 if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
                     joParameters.put("Ingester", task.getIngester());
-                if (task.getKeywords() != null && !task.getKeywords().equalsIgnoreCase(""))
-                    joParameters.put("Keywords", task.getKeywords());
+                if (task.getTags() != null && !task.getTags().equalsIgnoreCase(""))
+                    joParameters.put("Tags", task.getTags());
                 if (task.getContentProviderName() != null && !task.getContentProviderName().equalsIgnoreCase(""))
                     joParameters.put("ContentProviderName", task.getContentProviderName());
                 if (task.getDeliveryFileName() != null && !task.getDeliveryFileName().equalsIgnoreCase(""))
@@ -859,8 +859,8 @@ public class NewWorkflow extends Workspace implements Serializable {
                     joParameters.put("UniqueName", task.getUniqueName());
                 if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
                     joParameters.put("Ingester", task.getIngester());
-                if (task.getKeywords() != null && !task.getKeywords().equalsIgnoreCase(""))
-                    joParameters.put("Keywords", task.getKeywords());
+                if (task.getTags() != null && !task.getTags().equalsIgnoreCase(""))
+                    joParameters.put("Tags", task.getTags());
                 if (task.getContentProviderName() != null && !task.getContentProviderName().equalsIgnoreCase(""))
                     joParameters.put("ContentProviderName", task.getContentProviderName());
                 if (task.getDeliveryFileName() != null && !task.getDeliveryFileName().equalsIgnoreCase(""))
@@ -934,8 +934,8 @@ public class NewWorkflow extends Workspace implements Serializable {
                     joParameters.put("UniqueName", task.getUniqueName());
                 if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
                     joParameters.put("Ingester", task.getIngester());
-                if (task.getKeywords() != null && !task.getKeywords().equalsIgnoreCase(""))
-                    joParameters.put("Keywords", task.getKeywords());
+                if (task.getTags() != null && !task.getTags().equalsIgnoreCase(""))
+                    joParameters.put("Tags", task.getTags());
                 if (task.getContentProviderName() != null && !task.getContentProviderName().equalsIgnoreCase(""))
                     joParameters.put("ContentProviderName", task.getContentProviderName());
                 if (task.getDeliveryFileName() != null && !task.getDeliveryFileName().equalsIgnoreCase(""))
@@ -1021,8 +1021,8 @@ public class NewWorkflow extends Workspace implements Serializable {
                     joParameters.put("UniqueName", task.getUniqueName());
                 if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
                     joParameters.put("Ingester", task.getIngester());
-                if (task.getKeywords() != null && !task.getKeywords().equalsIgnoreCase(""))
-                    joParameters.put("Keywords", task.getKeywords());
+                if (task.getTags() != null && !task.getTags().equalsIgnoreCase(""))
+                    joParameters.put("Tags", task.getTags());
                 if (task.getContentProviderName() != null && !task.getContentProviderName().equalsIgnoreCase(""))
                     joParameters.put("ContentProviderName", task.getContentProviderName());
                 if (task.getDeliveryFileName() != null && !task.getDeliveryFileName().equalsIgnoreCase(""))
@@ -1115,8 +1115,8 @@ public class NewWorkflow extends Workspace implements Serializable {
                     joParameters.put("UniqueName", task.getUniqueName());
                 if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
                     joParameters.put("Ingester", task.getIngester());
-                if (task.getKeywords() != null && !task.getKeywords().equalsIgnoreCase(""))
-                    joParameters.put("Keywords", task.getKeywords());
+                if (task.getTags() != null && !task.getTags().equalsIgnoreCase(""))
+                    joParameters.put("Tags", task.getTags());
                 if (task.getContentProviderName() != null && !task.getContentProviderName().equalsIgnoreCase(""))
                     joParameters.put("ContentProviderName", task.getContentProviderName());
                 if (task.getDeliveryFileName() != null && !task.getDeliveryFileName().equalsIgnoreCase(""))
@@ -1182,8 +1182,8 @@ public class NewWorkflow extends Workspace implements Serializable {
                     joParameters.put("UniqueName", task.getUniqueName());
                 if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
                     joParameters.put("Ingester", task.getIngester());
-                if (task.getKeywords() != null && !task.getKeywords().equalsIgnoreCase(""))
-                    joParameters.put("Keywords", task.getKeywords());
+                if (task.getTags() != null && !task.getTags().equalsIgnoreCase(""))
+                    joParameters.put("Tags", task.getTags());
                 if (task.getContentProviderName() != null && !task.getContentProviderName().equalsIgnoreCase(""))
                     joParameters.put("ContentProviderName", task.getContentProviderName());
                 if (task.getDeliveryFileName() != null && !task.getDeliveryFileName().equalsIgnoreCase(""))
@@ -1265,8 +1265,8 @@ public class NewWorkflow extends Workspace implements Serializable {
                     joParameters.put("UniqueName", task.getUniqueName());
                 if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
                     joParameters.put("Ingester", task.getIngester());
-                if (task.getKeywords() != null && !task.getKeywords().equalsIgnoreCase(""))
-                    joParameters.put("Keywords", task.getKeywords());
+                if (task.getTags() != null && !task.getTags().equalsIgnoreCase(""))
+                    joParameters.put("Tags", task.getTags());
                 if (task.getContentProviderName() != null && !task.getContentProviderName().equalsIgnoreCase(""))
                     joParameters.put("ContentProviderName", task.getContentProviderName());
                 if (task.getDeliveryFileName() != null && !task.getDeliveryFileName().equalsIgnoreCase(""))
@@ -1336,8 +1336,8 @@ public class NewWorkflow extends Workspace implements Serializable {
                     joParameters.put("UniqueName", task.getUniqueName());
                 if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
                     joParameters.put("Ingester", task.getIngester());
-                if (task.getKeywords() != null && !task.getKeywords().equalsIgnoreCase(""))
-                    joParameters.put("Keywords", task.getKeywords());
+                if (task.getTags() != null && !task.getTags().equalsIgnoreCase(""))
+                    joParameters.put("Tags", task.getTags());
                 if (task.getContentProviderName() != null && !task.getContentProviderName().equalsIgnoreCase(""))
                     joParameters.put("ContentProviderName", task.getContentProviderName());
                 if (task.getDeliveryFileName() != null && !task.getDeliveryFileName().equalsIgnoreCase(""))
@@ -1419,8 +1419,8 @@ public class NewWorkflow extends Workspace implements Serializable {
                     joParameters.put("UniqueName", task.getUniqueName());
                 if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
                     joParameters.put("Ingester", task.getIngester());
-                if (task.getKeywords() != null && !task.getKeywords().equalsIgnoreCase(""))
-                    joParameters.put("Keywords", task.getKeywords());
+                if (task.getTags() != null && !task.getTags().equalsIgnoreCase(""))
+                    joParameters.put("Tags", task.getTags());
                 if (task.getContentProviderName() != null && !task.getContentProviderName().equalsIgnoreCase(""))
                     joParameters.put("ContentProviderName", task.getContentProviderName());
                 if (task.getDeliveryFileName() != null && !task.getDeliveryFileName().equalsIgnoreCase(""))
@@ -1490,8 +1490,8 @@ public class NewWorkflow extends Workspace implements Serializable {
                     joParameters.put("UniqueName", task.getUniqueName());
                 if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
                     joParameters.put("Ingester", task.getIngester());
-                if (task.getKeywords() != null && !task.getKeywords().equalsIgnoreCase(""))
-                    joParameters.put("Keywords", task.getKeywords());
+                if (task.getTags() != null && !task.getTags().equalsIgnoreCase(""))
+                    joParameters.put("Tags", task.getTags());
                 if (task.getContentProviderName() != null && !task.getContentProviderName().equalsIgnoreCase(""))
                     joParameters.put("ContentProviderName", task.getContentProviderName());
                 if (task.getDeliveryFileName() != null && !task.getDeliveryFileName().equalsIgnoreCase(""))
@@ -1557,8 +1557,8 @@ public class NewWorkflow extends Workspace implements Serializable {
                     joParameters.put("UniqueName", task.getUniqueName());
                 if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
                     joParameters.put("Ingester", task.getIngester());
-                if (task.getKeywords() != null && !task.getKeywords().equalsIgnoreCase(""))
-                    joParameters.put("Keywords", task.getKeywords());
+                if (task.getTags() != null && !task.getTags().equalsIgnoreCase(""))
+                    joParameters.put("Tags", task.getTags());
                 if (task.getContentProviderName() != null && !task.getContentProviderName().equalsIgnoreCase(""))
                     joParameters.put("ContentProviderName", task.getContentProviderName());
                 if (task.getDeliveryFileName() != null && !task.getDeliveryFileName().equalsIgnoreCase(""))
@@ -2630,7 +2630,7 @@ public class NewWorkflow extends Workspace implements Serializable {
                         taskIngester = task.getIngester();
                     else
                         taskIngester = userName;
-                    taskKeywords = task.getKeywords();
+                    taskTags = task.getTags();
                     taskMD5FileChecksum = task.getMd5FileCheckSum();
                     taskFileSizeInBytes = task.getFileSizeInBytes();
                     taskContentProviderName = task.getContentProviderName();
@@ -2674,7 +2674,7 @@ public class NewWorkflow extends Workspace implements Serializable {
                         taskIngester = task.getIngester();
                     else
                         taskIngester = userName;
-                    taskKeywords = task.getKeywords();
+                    taskTags = task.getTags();
                     taskContentProviderName= task.getContentProviderName();
                     taskDeliveryFileName= task.getDeliveryFileName();
                     taskStartPublishing= task.getStartPublishing();
@@ -2713,7 +2713,7 @@ public class NewWorkflow extends Workspace implements Serializable {
                         taskIngester = task.getIngester();
                     else
                         taskIngester = userName;
-                    taskKeywords = task.getKeywords();
+                    taskTags = task.getTags();
                     taskContentProviderName= task.getContentProviderName();
                     taskDeliveryFileName= task.getDeliveryFileName();
                     taskStartPublishing= task.getStartPublishing();
@@ -2758,7 +2758,7 @@ public class NewWorkflow extends Workspace implements Serializable {
                         taskIngester = task.getIngester();
                     else
                         taskIngester = userName;
-                    taskKeywords = task.getKeywords();
+                    taskTags = task.getTags();
                     taskContentProviderName= task.getContentProviderName();
                     taskDeliveryFileName= task.getDeliveryFileName();
                     taskStartPublishing= task.getStartPublishing();
@@ -2796,7 +2796,7 @@ public class NewWorkflow extends Workspace implements Serializable {
                         taskIngester = task.getIngester();
                     else
                         taskIngester = userName;
-                    taskKeywords = task.getKeywords();
+                    taskTags = task.getTags();
                     taskContentProviderName= task.getContentProviderName();
                     taskDeliveryFileName= task.getDeliveryFileName();
                     taskStartPublishing= task.getStartPublishing();
@@ -2834,7 +2834,7 @@ public class NewWorkflow extends Workspace implements Serializable {
                         taskIngester = task.getIngester();
                     else
                         taskIngester = userName;
-                    taskKeywords = task.getKeywords();
+                    taskTags = task.getTags();
                     taskContentProviderName= task.getContentProviderName();
                     taskDeliveryFileName= task.getDeliveryFileName();
                     taskStartPublishing= task.getStartPublishing();
@@ -2881,7 +2881,7 @@ public class NewWorkflow extends Workspace implements Serializable {
                         taskIngester = task.getIngester();
                     else
                         taskIngester = userName;
-                    taskKeywords = task.getKeywords();
+                    taskTags = task.getTags();
                     taskContentProviderName= task.getContentProviderName();
                     taskDeliveryFileName= task.getDeliveryFileName();
                     taskStartPublishing= task.getStartPublishing();
@@ -2919,7 +2919,7 @@ public class NewWorkflow extends Workspace implements Serializable {
                         taskIngester = task.getIngester();
                     else
                         taskIngester = userName;
-                    taskKeywords = task.getKeywords();
+                    taskTags = task.getTags();
                     taskContentProviderName= task.getContentProviderName();
                     taskDeliveryFileName= task.getDeliveryFileName();
                     taskStartPublishing= task.getStartPublishing();
@@ -2960,7 +2960,7 @@ public class NewWorkflow extends Workspace implements Serializable {
                         taskIngester = task.getIngester();
                     else
                         taskIngester = userName;
-                    taskKeywords = task.getKeywords();
+                    taskTags = task.getTags();
                     taskContentProviderName= task.getContentProviderName();
                     taskDeliveryFileName= task.getDeliveryFileName();
                     taskStartPublishing= task.getStartPublishing();
@@ -3000,7 +3000,7 @@ public class NewWorkflow extends Workspace implements Serializable {
                         taskIngester = task.getIngester();
                     else
                         taskIngester = userName;
-                    taskKeywords = task.getKeywords();
+                    taskTags = task.getTags();
                     taskContentProviderName= task.getContentProviderName();
                     taskDeliveryFileName= task.getDeliveryFileName();
                     taskStartPublishing= task.getStartPublishing();
@@ -3041,7 +3041,7 @@ public class NewWorkflow extends Workspace implements Serializable {
                         taskIngester = task.getIngester();
                     else
                         taskIngester = userName;
-                    taskKeywords = task.getKeywords();
+                    taskTags = task.getTags();
                     taskContentProviderName= task.getContentProviderName();
                     taskDeliveryFileName= task.getDeliveryFileName();
                     taskStartPublishing= task.getStartPublishing();
@@ -3081,7 +3081,7 @@ public class NewWorkflow extends Workspace implements Serializable {
                         taskIngester = task.getIngester();
                     else
                         taskIngester = userName;
-                    taskKeywords = task.getKeywords();
+                    taskTags = task.getTags();
                     taskContentProviderName= task.getContentProviderName();
                     taskDeliveryFileName= task.getDeliveryFileName();
                     taskStartPublishing= task.getStartPublishing();
@@ -3118,7 +3118,7 @@ public class NewWorkflow extends Workspace implements Serializable {
                         taskIngester = task.getIngester();
                     else
                         taskIngester = userName;
-                    taskKeywords = task.getKeywords();
+                    taskTags = task.getTags();
                     taskContentProviderName= task.getContentProviderName();
                     taskDeliveryFileName= task.getDeliveryFileName();
                     taskStartPublishing= task.getStartPublishing();
@@ -3374,7 +3374,7 @@ public class NewWorkflow extends Workspace implements Serializable {
                 task.setTitle(taskTitle);
                 task.setUniqueName(taskUniqueName);
                 task.setIngester(taskIngester);
-                task.setKeywords(taskKeywords);
+                task.setTags(taskTags);
                 task.setMd5FileCheckSum(taskMD5FileChecksum);
                 task.setFileSizeInBytes(taskFileSizeInBytes);
                 task.setContentProviderName(taskContentProviderName);
@@ -3396,7 +3396,7 @@ public class NewWorkflow extends Workspace implements Serializable {
                 task.setTitle(taskTitle);
                 task.setUniqueName(taskUniqueName);
                 task.setIngester(taskIngester);
-                task.setKeywords(taskKeywords);
+                task.setTags(taskTags);
                 task.setContentProviderName(taskContentProviderName);
                 task.setDeliveryFileName(taskDeliveryFileName);
                 task.setStartPublishing(taskStartPublishing);
@@ -3414,7 +3414,7 @@ public class NewWorkflow extends Workspace implements Serializable {
                 task.setTitle(taskTitle);
                 task.setUniqueName(taskUniqueName);
                 task.setIngester(taskIngester);
-                task.setKeywords(taskKeywords);
+                task.setTags(taskTags);
                 task.setContentProviderName(taskContentProviderName);
                 task.setDeliveryFileName(taskDeliveryFileName);
                 task.setStartPublishing(taskStartPublishing);
@@ -3434,7 +3434,7 @@ public class NewWorkflow extends Workspace implements Serializable {
                 task.setTitle(taskTitle);
                 task.setUniqueName(taskUniqueName);
                 task.setIngester(taskIngester);
-                task.setKeywords(taskKeywords);
+                task.setTags(taskTags);
                 task.setContentProviderName(taskContentProviderName);
                 task.setDeliveryFileName(taskDeliveryFileName);
                 task.setStartPublishing(taskStartPublishing);
@@ -3451,7 +3451,7 @@ public class NewWorkflow extends Workspace implements Serializable {
                 task.setEncodingPriority(taskEncodingPriority);
                 task.setUniqueName(taskUniqueName);
                 task.setIngester(taskIngester);
-                task.setKeywords(taskKeywords);
+                task.setTags(taskTags);
                 task.setContentProviderName(taskContentProviderName);
                 task.setDeliveryFileName(taskDeliveryFileName);
                 task.setStartPublishing(taskStartPublishing);
@@ -3469,7 +3469,7 @@ public class NewWorkflow extends Workspace implements Serializable {
                 task.setEncodingPriority(taskEncodingPriority);
                 task.setUniqueName(taskUniqueName);
                 task.setIngester(taskIngester);
-                task.setKeywords(taskKeywords);
+                task.setTags(taskTags);
                 task.setContentProviderName(taskContentProviderName);
                 task.setDeliveryFileName(taskDeliveryFileName);
                 task.setStartPublishing(taskStartPublishing);
@@ -3495,7 +3495,7 @@ public class NewWorkflow extends Workspace implements Serializable {
                 task.setEncodingPriority(taskEncodingPriority);
                 task.setUniqueName(taskUniqueName);
                 task.setIngester(taskIngester);
-                task.setKeywords(taskKeywords);
+                task.setTags(taskTags);
                 task.setContentProviderName(taskContentProviderName);
                 task.setDeliveryFileName(taskDeliveryFileName);
                 task.setStartPublishing(taskStartPublishing);
@@ -3513,7 +3513,7 @@ public class NewWorkflow extends Workspace implements Serializable {
                 task.setTitle(taskTitle);
                 task.setUniqueName(taskUniqueName);
                 task.setIngester(taskIngester);
-                task.setKeywords(taskKeywords);
+                task.setTags(taskTags);
                 task.setContentProviderName(taskContentProviderName);
                 task.setDeliveryFileName(taskDeliveryFileName);
                 task.setStartPublishing(taskStartPublishing);
@@ -3534,7 +3534,7 @@ public class NewWorkflow extends Workspace implements Serializable {
                 task.setEncodingPriority(taskEncodingPriority);
                 task.setUniqueName(taskUniqueName);
                 task.setIngester(taskIngester);
-                task.setKeywords(taskKeywords);
+                task.setTags(taskTags);
                 task.setContentProviderName(taskContentProviderName);
                 task.setDeliveryFileName(taskDeliveryFileName);
                 task.setStartPublishing(taskStartPublishing);
@@ -3554,7 +3554,7 @@ public class NewWorkflow extends Workspace implements Serializable {
                 task.setEncodingPriority(taskEncodingPriority);
                 task.setUniqueName(taskUniqueName);
                 task.setIngester(taskIngester);
-                task.setKeywords(taskKeywords);
+                task.setTags(taskTags);
                 task.setContentProviderName(taskContentProviderName);
                 task.setDeliveryFileName(taskDeliveryFileName);
                 task.setStartPublishing(taskStartPublishing);
@@ -3575,7 +3575,7 @@ public class NewWorkflow extends Workspace implements Serializable {
                 task.setEncodingPriority(taskEncodingPriority);
                 task.setUniqueName(taskUniqueName);
                 task.setIngester(taskIngester);
-                task.setKeywords(taskKeywords);
+                task.setTags(taskTags);
                 task.setContentProviderName(taskContentProviderName);
                 task.setDeliveryFileName(taskDeliveryFileName);
                 task.setStartPublishing(taskStartPublishing);
@@ -3595,7 +3595,7 @@ public class NewWorkflow extends Workspace implements Serializable {
                 task.setEncodingPriority(taskEncodingPriority);
                 task.setUniqueName(taskUniqueName);
                 task.setIngester(taskIngester);
-                task.setKeywords(taskKeywords);
+                task.setTags(taskTags);
                 task.setContentProviderName(taskContentProviderName);
                 task.setDeliveryFileName(taskDeliveryFileName);
                 task.setStartPublishing(taskStartPublishing);
@@ -3612,7 +3612,7 @@ public class NewWorkflow extends Workspace implements Serializable {
                 task.setEncodingPriority(taskEncodingPriority);
                 task.setUniqueName(taskUniqueName);
                 task.setIngester(taskIngester);
-                task.setKeywords(taskKeywords);
+                task.setTags(taskTags);
                 task.setContentProviderName(taskContentProviderName);
                 task.setDeliveryFileName(taskDeliveryFileName);
                 task.setStartPublishing(taskStartPublishing);
@@ -4172,12 +4172,12 @@ public class NewWorkflow extends Workspace implements Serializable {
         this.taskTitle = taskTitle;
     }
 
-    public String getTaskKeywords() {
-        return taskKeywords;
+    public String getTaskTags() {
+        return taskTags;
     }
 
-    public void setTaskKeywords(String taskKeywords) {
-        this.taskKeywords = taskKeywords;
+    public void setTaskTags(String taskTags) {
+        this.taskTags = taskTags;
     }
 
     public String getTaskMD5FileChecksum() {

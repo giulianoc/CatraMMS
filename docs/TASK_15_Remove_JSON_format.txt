@@ -1,0 +1,27 @@
+"Task": {
+	// optional
+	Label="...",
+
+	// mandatory
+	"Type": "Remove-Content",
+
+	"Parameters": {
+		// mandatory
+		"References": [
+			// mandatory. One or more Reference needed to identify the videos (mediaItemKeys) or
+			// the profiles (physicalPathKey) to be removed.
+			// In case this task is placed inside an onSuccess event, 
+			// the Reference... item can be omitted.
+			// In such a case, the System will automatically add the Reference... item using the key
+			// of the video or the profile by which this task depend on.
+			// As reference can be used "ReferenceMediaItemKey", "ReferenceUniqueName" or 
+			// "ReferencePhysicalPathKey".
+			// In case this task depend on one or more tasks generating videos, the videos will be 
+			// removed.
+			// In case this task depend on one or more tasks generating profiles (i.e. Encode Task),
+			// the profiles will be removed.
+
+			{ "ReferenceMediaItemKey": 11 }
+		]
+	}
+}

@@ -1,0 +1,29 @@
+"Task": {
+	// optional
+	Label="My task...",
+
+	// mandatory
+	"Type": "Email-Notification",
+
+	"Parameters": {
+		// mandatory
+		"References": [
+			// mandatory. Just one Reference needed.
+			// In case this task is placed inside an onSuccess event, the Reference... item can be omitted.
+			// In such a case, the System will automatically add the Reference... item using the key
+			// of the ingestion job by which this EMail depend on.
+			// As reference can be used "ReferenceIngestionJobKey"
+
+			{ "ReferenceIngestionJobKey": 11 }
+		],
+
+		// mandatory
+		"EmailAddress": "aaaa@bbbb.xxx",
+
+		// mandatory
+		"Subject": ".....",
+
+		// mandatory
+		"Message": "....."
+	}
+}

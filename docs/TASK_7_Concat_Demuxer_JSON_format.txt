@@ -1,42 +1,22 @@
 "Task": {
 	// optional
-	"Label"="My Extract Tracks",
+	Label="...",
 
 	// mandatory
-	"Type": "Extract-Tracks",
+	"Type": "Concat-Demuxer",
 
 	"Parameters": {
 		// mandatory
 		"References": [
-			// mandatory. One Reference needed to identify the media file (mediaItemKeys) or
-			// the profile (physicalPathKey) used to extract the track.
-			// In case this task is placed inside an onSuccess event, 
-			// the Reference... item can be omitted.
-			// In such a case, the System will automatically add the Reference... item using the key
-			// of the video or the profile by which this task depend on.
-			// As reference can be used "ReferenceMediaItemKey", "ReferenceUniqueName" or 
-			// "ReferencePhysicalPathKey".
-			// In case this task depend on one task generating a media, the media will be 
-			// used.
-			// In case this task depend on one task generating a profile (i.e. Encode Task),
-			// the profile will be used.
+			// mandatory. At least two References have to be present
+			// In case this task is placed inside an onSuccess event, the Reference... item can be omitted.
+			// In such a case, the System will automatically add the Reference items using the key
+			// of the video by which this video depend on.
+			// As references can be used "ReferenceMediaItemKey" or "ReferenceUniqueName"
 
-			{ "ReferenceMediaItemKey": 11 }
+			{ "ReferenceMediaItemKey": 11 },
+			{ "ReferenceMediaItemKey": 12 }
 		],
-
-		// mandatory. At least one entry inside the array has to be present
-		"Tracks": [
-			{
-				// mandatory: track type to be extracted (video or audio)
-				"TrackType": "audio",
-
-				// optional, if not provided 0 (the first track of type 'trackType' will be used
-				"TrackNumber": 0
-			}
-		],
-
-		// mandatory: format of the output where the extracted track will be placed.
-		"OutputFileFormat": "mp4",
 
 		// optional: it might contain any kind of user data (json format).
 		// The platform stores them and returns this data to the Customer 
@@ -57,7 +37,7 @@
 		"Ingester": "my ingester",
 
 		// optional
-		"Tags": "my tags",
+		"Tags": "my Tags",
 
 		// optional
 		"ContentProviderName": "default",

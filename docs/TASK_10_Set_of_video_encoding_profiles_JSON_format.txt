@@ -1,0 +1,10 @@
+{
+	// mandatory
+	"Label": "Sport",
+
+	"Profiles": [
+		"encoding profile label 1",
+		"encoding profile label 2",
+		...
+	]
+}

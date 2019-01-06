@@ -1,0 +1,26 @@
+{
+	// mandatory
+	"Label": "Sport",
+
+	// mandatory: 3gp, mp4, webm, segment, (avi, hls, mov, mpeg)
+	"FileFormat": "mp4",
+
+	// mandatory
+	"Audio": {
+
+		// mandatory: aac, libfdk_aac, libvo_aacenc, libvorbis
+		"Codec": "aac",
+
+		// optional (kbps)
+		"KBitRate": 64,
+
+		// optional
+		"OtherOutputParameters": "",
+
+		// optional: 1: mono, 2: stereo
+		"ChannelsNumber": 2,
+
+		// optional (Hz)
+		"SampleRate": 44100
+	}
+}
