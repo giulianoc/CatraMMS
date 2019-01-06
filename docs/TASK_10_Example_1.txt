@@ -1,0 +1,7 @@
+{
+	"Label": "Sport",
+	"Profiles": [
+		"Profile_1",
+		"Profile_2"
+	]
+}

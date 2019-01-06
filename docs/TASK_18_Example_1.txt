@@ -1,0 +1,10 @@
+{
+	"Label": "Profile_1",
+	"FileFormat": "JPG",
+	"Image": {
+		"Width": 200,
+		"Height": 300,
+		"AspectRatio": true,
+		"InterlaceType": "NoInterlace"
+	}
+}
