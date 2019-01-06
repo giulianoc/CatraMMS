@@ -1,0 +1,21 @@
+{
+	"Type": "Workflow",
+	"Label": "1",
+	"Variables": {
+		"Title": "My Title of the content"
+	},
+	"Task": {
+		"Label": "my label",
+		"Type": "Overlay-Image-On-Video",
+		"Parameters": {
+			"References": [
+				{ "ReferenceMediaItemKey": 11 },
+				{ "ReferenceMediaItemKey": 12 }
+			],
+			"ImagePosition_X_InPixel": "10",                                  
+			"ImagePosition_Y_InPixel": "10",                                
+			"UserData": { "MyData": "this is my data" },
+			"Title": "${Title}"
+		}
+	}
+}

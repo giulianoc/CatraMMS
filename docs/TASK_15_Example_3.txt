@@ -1,0 +1,35 @@
+{
+	"Type": "Workflow",
+	"Label": "1",
+	"Variables": {
+		"TitleOfVideo": "My Title of the video content"
+	},
+	"Task": {
+		"Label": "My video",
+		"Type": "Add-Content",
+		"Parameters": {
+			"SourceURL": "http://mediaww.rsi.ch/rsi/unrestricted/2018/04/16/2560539.mp4",
+			"FileFormat": "mp4",
+			"UserData": { "MyData": "this is my video data" },
+			"Title": "${TitleOfVideo}",
+			"FileSizeInBytes": 278341022
+		},
+		"OnSuccess": {
+			"Task": {
+				"Label": "my label",
+				"Type": "Encode",
+				"Parameters": {
+					"EncodingPriority": "Low",
+					"EncodingProfilesSetLabel": "Sport"
+				},
+				"OnSuccess": {
+					"Task": {
+						"Type": "Remove-Content",
+						"Parameters": {
+						}
+					}
+				}
+			}
+		}
+	}
+}

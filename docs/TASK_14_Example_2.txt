@@ -1,0 +1,28 @@
+{
+	"Type": "Workflow",
+	"Label": "My workflow",
+	"Variables": {
+		"Title": "My Title of the content"
+	},
+	"Task": {
+		"Label": "This is my video",
+		"Type": "Add-Content",
+		"Parameters": {
+			"SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
+			"FileFormat": "mp4",
+			"ContentType": "video",
+			"UserData": { "MyData": "this is my data" },
+			"Title": "${Title}"
+		},
+		"OnSuccess": {
+			"Task": {
+				"Type": "Email-Notification",
+				"Parameters": {
+					"EmailAddress": "xxxx@yyyy.zz",
+					"Subject": "Task finished",
+					"Message": "Task __INGESTIONJOBKEY__ has finished"
+				}
+			}
+		}
+	}
+}

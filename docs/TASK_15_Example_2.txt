@@ -1,0 +1,24 @@
+{
+	"Type": "Workflow",
+	"Label": "1",
+	"Variables": {
+		"TitleOfVideo": "My Title of the video content"
+	},
+	"Task": {
+		"Label": "My label ...",
+		"Type": "Add-Content",
+		"Parameters": {
+			"SourceURL": "http://techslides.com/demos/sample-videos/small.mp4",
+			"FileFormat": "mp4",
+			"UserData": { "MyData": "this is my video data" },
+			"Title": "${TitleOfVideo}"
+		},
+		"OnSuccess": {
+			"Task": {
+				"Type": "Remove-Content",
+				"Parameters": {
+				}
+			}
+		}
+	}
+}

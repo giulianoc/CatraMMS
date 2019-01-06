@@ -1,0 +1,16 @@
+{
+	"Type": "Workflow",
+	"Label": "1",
+	"Task": {
+		"Label": "my label",
+		"Type": "Email-Notification",
+		"Parameters": {
+			"References": [
+				{ "ReferenceIngestionJobKey": 11 }
+			],
+			"EmailAddress": "xxxxxx@yyyyyyyyy.zz",
+			"Subject": "Task finished",
+			"Message": "Task __INGESTIONJOBKEY__ has finished"
+		}
+	}
+}

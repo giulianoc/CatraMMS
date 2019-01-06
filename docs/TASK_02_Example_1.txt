@@ -1,0 +1,19 @@
+{
+	"Type": "Workflow",
+	"Label": "1",
+	"Variables": {
+		"Title": "My Title of the content"
+	},
+	"Task": {
+		"Label": "my label",
+		"Type": "Frame",
+		"Parameters": {
+			"References": [
+				{ "ReferenceMediaItemKey": 11 }
+			],
+			"InstantInSeconds": 2.5,
+			"UserData": { "MyData": "this is my data" },
+			"Title": "${Title}"
+		}
+	}
+}
