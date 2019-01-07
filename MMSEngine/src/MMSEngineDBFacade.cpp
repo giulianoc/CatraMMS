@@ -7082,6 +7082,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
                 || ingestionType == IngestionType::MotionJPEGByIFrames
                 || ingestionType == IngestionType::Slideshow
                 || ingestionType == IngestionType::FaceRecognition
+                || ingestionType == IngestionType::FaceIdentification
                 )
         {
             lastSQLCommand = 
@@ -7246,7 +7247,8 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
         int start, int rows,
         bool contentTypePresent, ContentType contentType,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
-        string title, 
+        string title,
+		vector<string> tags,
         string ingestionDateOrder,   // "" or "asc" or "desc"
 		bool admin
 )
@@ -7364,6 +7366,20 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
             sqlWhere += ("and ingestionDate >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) and ingestionDate <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
         if (title != "")
             sqlWhere += ("and title like ? ");
+		if (tags.size() > 0)
+		{
+			string tagsCondition;
+
+			for (int tagIndex = 0; tagIndex < tags.size(); tagIndex++)
+			{
+				if (tagsCondition == "")
+					tagsCondition = ("tags like ? ");
+				else
+					tagsCondition = ("or tags like ? ");
+			}
+
+            sqlWhere += ("and (" + tagsCondition + ") ");
+		}
         
         Json::Value responseRoot;
         {
@@ -7385,6 +7401,11 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
             }
             if (title != "")
                 preparedStatement->setString(queryParameterIndex++, string("%") + title + "%");
+			if (tags.size() > 0)
+			{
+				for (int tagIndex = 0; tagIndex < tags.size(); tagIndex++)
+					preparedStatement->setString(queryParameterIndex++, string("%") + tags[tagIndex] + "%");
+			}
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
@@ -7443,6 +7464,11 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
             }
             if (title != "")
                 preparedStatement->setString(queryParameterIndex++, string("%") + title + "%");
+			if (tags.size() > 0)
+			{
+				for (int tagIndex = 0; tagIndex < tags.size(); tagIndex++)
+					preparedStatement->setString(queryParameterIndex++, string("%") + tags[tagIndex] + "%");
+			}
             preparedStatement->setInt(queryParameterIndex++, rows);
             preparedStatement->setInt(queryParameterIndex++, start);
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
@@ -10610,6 +10636,84 @@ void MMSEngineDBFacade::getEncodingJobs(
                         }
                     }
                 }
+                else if (encodingItem->_encodingType == EncodingType::FaceIdentification)
+                {
+                    encodingItem->_faceIdentificationData = make_shared<EncodingItem::FaceIdentificationData>();
+                    
+                    {
+                        lastSQLCommand = 
+                            "select metaDataContent from MMS_IngestionJob where ingestionJobKey = ?";
+                        shared_ptr<sql::PreparedStatement> preparedStatementIngestion (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                        int queryParameterIndex = 1;
+                        preparedStatementIngestion->setInt64(queryParameterIndex++, encodingItem->_ingestionJobKey);
+
+                        shared_ptr<sql::ResultSet> imgestionResultSet (preparedStatementIngestion->executeQuery());
+                        if (imgestionResultSet->next())
+                        {
+                            string faceIdentificationParameters = imgestionResultSet->getString("metaDataContent");
+                            
+                            {
+                                Json::CharReaderBuilder builder;
+                                Json::CharReader* reader = builder.newCharReader();
+                                string errors;
+
+                                bool parsingSuccessful = reader->parse(faceIdentificationParameters.c_str(),
+                                        faceIdentificationParameters.c_str() + faceIdentificationParameters.size(), 
+                                        &(encodingItem->_faceIdentificationData->_faceIdentificationParametersRoot), &errors);
+                                delete reader;
+
+                                if (!parsingSuccessful)
+                                {
+                                    string errorMessage = __FILEREF__ + "failed to parse 'parameters'"
+                                            + ", errors: " + errors
+                                            + ", faceIdentificationParameters: " + faceIdentificationParameters
+                                            ;
+                                    _logger->error(errorMessage);
+
+                                    // in case an encoding job row generate an error, we have to make it to Failed
+                                    // otherwise we will indefinitely get this error
+                                    {
+                                        lastSQLCommand = 
+                                            "update MMS_EncodingJob set status = ? where encodingJobKey = ?";
+                                        shared_ptr<sql::PreparedStatement> preparedStatementUpdate (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                                        int queryParameterIndex = 1;
+                                        preparedStatementUpdate->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
+                                        preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
+
+                                        int rowsUpdated = preparedStatementUpdate->executeUpdate();
+                                    }
+
+                                    continue;
+                                    // throw runtime_error(errorMessage);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            string errorMessage = __FILEREF__ + "select failed, no row returned"
+                                    + ", encodingItem->_ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
+                                    + ", lastSQLCommand: " + lastSQLCommand
+                            ;
+                            _logger->error(errorMessage);
+
+                            // in case an encoding job row generate an error, we have to make it to Failed
+                            // otherwise we will indefinitely get this error
+                            {
+                                lastSQLCommand = 
+                                    "update MMS_EncodingJob set status = ? where encodingJobKey = ?";
+                                shared_ptr<sql::PreparedStatement> preparedStatementUpdate (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                                int queryParameterIndex = 1;
+                                preparedStatementUpdate->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::End_Failed));
+                                preparedStatementUpdate->setInt64(queryParameterIndex++, encodingItem->_encodingJobKey);
+
+                                int rowsUpdated = preparedStatementUpdate->executeUpdate();
+                            }
+
+                            continue;
+                            // throw runtime_error(errorMessage);
+                        }
+                    }
+                }
                 else
                 {
                     string errorMessage = __FILEREF__ + "EncodingType is wrong"
@@ -12776,7 +12880,8 @@ int MMSEngineDBFacade::addEncoding_FaceRecognitionJob (
 	shared_ptr<Workspace> workspace,
 	int64_t ingestionJobKey,
 	string sourcePhysicalPath,
-	string cascadeName,
+	string faceRecognitionCascadeName,
+	string faceRecognitionOutput,
 	EncodingPriority encodingPriority
 )
 {
@@ -12808,7 +12913,262 @@ int MMSEngineDBFacade::addEncoding_FaceRecognitionJob (
         string parameters = string()
                 + "{ "
                 + "\"sourcePhysicalPath\": \"" + sourcePhysicalPath + "\""
-                + ", \"cascadeName\": \"" + cascadeName + "\""
+                + ", \"faceRecognitionCascadeName\": \"" + faceRecognitionCascadeName + "\""
+                + ", \"faceRecognitionOutput\": \"" + faceRecognitionOutput + "\""
+                + "} "
+                ;
+
+        _logger->info(__FILEREF__ + "insert into MMS_EncodingJob"
+            + ", parameters.length: " + to_string(parameters.length()));
+        
+        {
+            int savedEncodingPriority = static_cast<int>(encodingPriority);
+            if (savedEncodingPriority > workspace->_maxEncodingPriority)
+            {
+                _logger->warn(__FILEREF__ + "EncodingPriority was decreased because overcome the max allowed by this customer"
+                    + ", workspace->_maxEncodingPriority: " + to_string(workspace->_maxEncodingPriority)
+                    + ", requested encoding priority: " + to_string(static_cast<int>(encodingPriority))
+                );
+
+                savedEncodingPriority = workspace->_maxEncodingPriority;
+            }
+
+            lastSQLCommand = 
+                "insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, parameters, encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, failuresNumber) values ("
+                                            "NULL,           ?,               ?,    ?,          ?,                NULL,             NULL,           NULL,             ?,      NULL,         0)";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+            preparedStatement->setString(queryParameterIndex++, toString(encodingType));
+            preparedStatement->setString(queryParameterIndex++, parameters);
+            preparedStatement->setInt(queryParameterIndex++, savedEncodingPriority);
+            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
+
+            preparedStatement->executeUpdate();
+        }
+        
+        {            
+            IngestionStatus newIngestionStatus = IngestionStatus::EncodingQueued;
+
+            string errorMessage;
+            string processorMMS;
+            _logger->info(__FILEREF__ + "Update IngestionJob"
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", IngestionStatus: " + toString(newIngestionStatus)
+                + ", errorMessage: " + errorMessage
+                + ", processorMMS: " + processorMMS
+            );                            
+            updateIngestionJob (conn, ingestionJobKey, newIngestionStatus, errorMessage, processorMMS);
+        }
+
+        // conn->_sqlConnection->commit(); OR execute COMMIT
+        {
+            lastSQLCommand = 
+                "COMMIT";
+
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute(lastSQLCommand);
+        }
+        autoCommit = true;
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            try
+            {
+                // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+                if (!autoCommit)
+                {
+                    shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                    statement->execute("ROLLBACK");
+                }
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+            }
+            catch(sql::SQLException se)
+            {
+                _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                    + ", exceptionMessage: " + se.what()
+                );
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+            }
+            catch(exception e)
+            {
+                _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                    + ", exceptionMessage: " + e.what()
+                );
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+            }
+        }
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            try
+            {
+                // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+                if (!autoCommit)
+                {
+                    shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                    statement->execute("ROLLBACK");
+                }
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+            }
+            catch(sql::SQLException se)
+            {
+                _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                    + ", exceptionMessage: " + se.what()
+                );
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+            }
+            catch(exception e)
+            {
+                _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                    + ", exceptionMessage: " + e.what()
+                );
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+            }
+        }
+        
+        throw e;
+    }        
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            try
+            {
+                // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+                if (!autoCommit)
+                {
+                    shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                    statement->execute("ROLLBACK");
+                }
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+            }
+            catch(sql::SQLException se)
+            {
+                _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                    + ", exceptionMessage: " + se.what()
+                );
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+            }
+            catch(exception e)
+            {
+                _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                    + ", exceptionMessage: " + e.what()
+                );
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+            }
+        }
+        
+        throw e;
+    }        
+}
+
+int MMSEngineDBFacade::addEncoding_FaceIdentificationJob (
+	shared_ptr<Workspace> workspace,
+	int64_t ingestionJobKey,
+	string sourcePhysicalPath,
+	string faceIdentificationCascadeName,
+	string jsonDeepLearnedModelTags,
+	EncodingPriority encodingPriority
+)
+{
+
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn = nullptr;
+    bool autoCommit = true;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        autoCommit = false;
+        // conn->_sqlConnection->setAutoCommit(autoCommit); OR execute the statement START TRANSACTION
+        {
+            lastSQLCommand = 
+                "START TRANSACTION";
+
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute(lastSQLCommand);
+        }
+
+        EncodingType encodingType = EncodingType::FaceIdentification;
+        
+        string parameters = string()
+                + "{ "
+                + "\"sourcePhysicalPath\": \"" + sourcePhysicalPath + "\""
+                + ", \"faceIdentificationCascadeName\": \"" + faceIdentificationCascadeName + "\""
+                + ", \"deepLearnedModelTags\": " + jsonDeepLearnedModelTags + ""
                 + "} "
                 ;
 
@@ -14754,7 +15114,16 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
 
             field = "Tags";
             if (isMetadataPresent(parametersRoot, field))
+			{
                 tags = parametersRoot.get(field, "").asString();
+				if (tags != "")
+				{
+					if (tags.front() != ',')
+						tags.insert(0, ",");
+					if (tags.back() != ',')
+						tags.append(",");
+				}
+			}
 
             field = "DeliveryFileName";
             if (isMetadataPresent(parametersRoot, field))

@@ -42,7 +42,9 @@ public:
     
     bool isColorValid(string fontColor);
 
-    bool isCascadeNameValid(string cascadeName);
+    bool isFaceRecognitionCascadeNameValid(string faceRecognitionCascadeName);
+
+    bool isFaceRecognitionOutputValid(string faceRecognitionOutput);
 
     void validateIngestedRootMetadata(int64_t workspaceKey, Json::Value root);
 
@@ -125,6 +127,10 @@ public:
         bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
 
     void validateFaceRecognitionMetadata(int64_t workspaceKey, string label,
+        Json::Value parametersRoot, 
+        bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
+    
+    void validateFaceIdentificationMetadata(int64_t workspaceKey, string label,
         Json::Value parametersRoot, 
         bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
     

@@ -127,7 +127,7 @@ private:
         string                          _currentUsedFFMpegEncoderHost;
     #endif
 
-	// used only in case of face recognition video generation
+	// used only in case of face recognition/identification video generation
 	int						_localEncodingProgress;
 
     string					_computerVisionCascadePath;
@@ -158,6 +158,9 @@ private:
 
     string faceRecognition();
     void processFaceRecognition(string stagingEncodedAssetPathName);    
+
+    string faceIdentification();
+    void processFaceIdentification(string stagingEncodedAssetPathName);    
 
     bool getEncodingStatus();
 

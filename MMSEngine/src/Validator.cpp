@@ -1086,6 +1086,27 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
         Json::Value parametersRoot = taskRoot[field]; 
         validateFaceRecognitionMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
     }
+    else if (type == "Face-Identification")
+    {
+        ingestionType = MMSEngineDBFacade::IngestionType::FaceIdentification;
+        
+        field = "Parameters";
+        if (!isMetadataPresent(taskRoot, field))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field
+                    + ", sTaskRoot: " + sTaskRoot;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        Json::Value parametersRoot = taskRoot[field]; 
+        validateFaceIdentificationMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+    }
     else
     {
         string errorMessage = __FILEREF__ + "Field 'Type' is wrong"
@@ -1203,6 +1224,11 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
     else if (ingestionType == MMSEngineDBFacade::IngestionType::FaceRecognition)
     {
         validateFaceRecognitionMetadata(workspaceKey, label, parametersRoot, 
+                validateDependenciesToo, dependencies);        
+    }
+    else if (ingestionType == MMSEngineDBFacade::IngestionType::FaceIdentification)
+    {
+        validateFaceIdentificationMetadata(workspaceKey, label, parametersRoot, 
                 validateDependenciesToo, dependencies);        
     }
     else
@@ -2725,7 +2751,8 @@ void Validator::validateFaceRecognitionMetadata(int64_t workspaceKey, string lab
 {
         
     vector<string> mandatoryFields = {
-        "CascadeName"
+        "CascadeName",
+        "Output"
     };
     for (string mandatoryField: mandatoryFields)
     {
@@ -2746,15 +2773,140 @@ void Validator::validateFaceRecognitionMetadata(int64_t workspaceKey, string lab
     }
 
     string field = "CascadeName";
-    string cascadeName = parametersRoot.get(field, "XXX").asString();
-    if (!isCascadeNameValid(cascadeName))
+    string faceRecognitionCascadeName = parametersRoot.get(field, "XXX").asString();
+    if (!isFaceRecognitionCascadeNameValid(faceRecognitionCascadeName))
     {
         string errorMessage = __FILEREF__ + field + " is wrong (it could be only "
                 + "haarcascade_frontalface_alt, haarcascade_frontalface_alt2, "
                 + "haarcascade_frontalface_alt_tree or haarcascade_frontalface_default"
                 + ")"
                 + ", Field: " + field
-                + ", cascadeName: " + cascadeName
+                + ", cascadeName: " + faceRecognitionCascadeName
+                + ", label: " + label
+                ;
+        _logger->error(__FILEREF__ + errorMessage);
+        
+        throw runtime_error(errorMessage);
+    }
+
+    field = "Output";
+    string faceRecognitionOutput = parametersRoot.get(field, "XXX").asString();
+    if (!isFaceRecognitionOutputValid(faceRecognitionOutput))
+    {
+        string errorMessage = __FILEREF__ + field + " is wrong (it could be only "
+                + "VideoWithHighlightedFaces or ImagesToBeUsedInDeepLearnedModel"
+                + ")"
+                + ", Field: " + field
+                + ", Output: " + faceRecognitionOutput
+                + ", label: " + label
+                ;
+        _logger->error(__FILEREF__ + errorMessage);
+        
+        throw runtime_error(errorMessage);
+    }
+
+    if (validateDependenciesToo)
+    {
+        // References is optional because in case of dependency managed automatically
+        // by MMS (i.e.: onSuccess)
+        string field = "References";
+        if (isMetadataPresent(parametersRoot, field))
+        {
+            Json::Value referencesRoot = parametersRoot[field];
+            if (referencesRoot.size() != 1)
+            {
+                string errorMessage = __FILEREF__ + "No correct number of References"
+                        + ", referencesRoot.size: " + to_string(referencesRoot.size())
+                        + ", label: " + label
+                        ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+
+            bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
+            bool encodingProfileFieldsToBeManaged = false;
+            fillDependencies(workspaceKey, parametersRoot, dependencies,
+                    priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
+                    encodingProfileFieldsToBeManaged);
+
+            // for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
+            tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>&
+					keyAndDependencyType	=  dependencies[0];
+            {
+                int64_t key;
+                MMSEngineDBFacade::ContentType referenceContentType;
+                Validator::DependencyType dependencyType;
+
+                tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+
+                if (referenceContentType != MMSEngineDBFacade::ContentType::Video)
+                {
+                    string errorMessage = __FILEREF__ + "Reference... does not refer a video content"
+                        + ", dependencyType: " + to_string(static_cast<int>(dependencyType))
+                        + ", referenceMediaItemKey: " + to_string(key)
+                        + ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
+                        + ", label: " + label
+                            ;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errorMessage);
+                }
+            }
+        }    
+    }    
+}
+
+void Validator::validateFaceIdentificationMetadata(int64_t workspaceKey, string label,
+    Json::Value parametersRoot, 
+        bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+{
+        
+    vector<string> mandatoryFields = {
+        "CascadeName",
+        "DeepLearnedModelTags"
+    };
+    for (string mandatoryField: mandatoryFields)
+    {
+        if (!isMetadataPresent(parametersRoot, mandatoryField))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + mandatoryField
+                    + ", sParametersRoot: " + sParametersRoot
+                    + ", label: " + label
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+
+    string field = "CascadeName";
+    string faceIdentificationCascadeName = parametersRoot.get(field, "XXX").asString();
+    if (!isFaceRecognitionCascadeNameValid(faceIdentificationCascadeName))
+    {
+        string errorMessage = __FILEREF__ + field + " is wrong (it could be only "
+                + "haarcascade_frontalface_alt, haarcascade_frontalface_alt2, "
+                + "haarcascade_frontalface_alt_tree or haarcascade_frontalface_default"
+                + ")"
+                + ", Field: " + field
+                + ", cascadeName: " + faceIdentificationCascadeName
+                + ", label: " + label
+                ;
+        _logger->error(__FILEREF__ + errorMessage);
+        
+        throw runtime_error(errorMessage);
+    }
+
+    field = "DeepLearnedModelTags";
+    if (!parametersRoot[field].isArray()
+			|| parametersRoot[field].size() == 0)
+    {
+        string errorMessage = __FILEREF__ + field + " is not an array or the array is empty"
+                + ", Field: " + field
                 + ", label: " + label
                 ;
         _logger->error(__FILEREF__ + errorMessage);
@@ -3163,7 +3315,7 @@ bool Validator::isColorValid(string color)
     return false;
 }
 
-bool Validator::isCascadeNameValid(string cascadeName)
+bool Validator::isFaceRecognitionCascadeNameValid(string faceRecognitionCascadeName)
 {
     vector<string> validCascadeNames = {
         "haarcascade_frontalface_alt",
@@ -3174,7 +3326,23 @@ bool Validator::isCascadeNameValid(string cascadeName)
 
     for (string validCascadeName: validCascadeNames)
     {
-        if (cascadeName == validCascadeName) 
+        if (faceRecognitionCascadeName == validCascadeName) 
+            return true;
+    }
+    
+    return false;
+}
+
+bool Validator::isFaceRecognitionOutputValid(string faceRecognitionOutput)
+{
+    vector<string> validOutputs = {
+        "VideoWithHighlightedFaces",
+        "ImagesToBeUsedInDeepLearnedModel"
+    };
+
+    for (string validOutput: validOutputs)
+    {
+        if (faceRecognitionOutput == validOutput) 
             return true;
     }
     

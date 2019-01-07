@@ -4,7 +4,6 @@ import com.catramms.backing.common.Workspace;
 import com.catramms.backing.common.SessionUtils;
 import com.catramms.backing.entity.*;
 import com.catramms.utility.catramms.CatraMMS;
-import com.catramms.utility.httpFetcher.HttpFeedFetcher;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
@@ -59,6 +58,8 @@ public class NewWorkflow extends Workspace implements Serializable {
     private int taskNumber;
     private String ingestWorkflowErrorMessage;
 
+    private String labelTemplatePrefix = "Task nr. ";
+
     private Long mediaItemsNumber = new Long(0);
     private List<MediaItem> mediaItemsList = new ArrayList<>();
     private List<MediaItem> mediaItemsSelectedList = new ArrayList<>();
@@ -83,7 +84,7 @@ public class NewWorkflow extends Workspace implements Serializable {
     private String taskLabel;
     private String taskSourceDownloadType;
     private String taskPullSourceURL;
-    private String taskPushBinaryPathName;
+    private String taskPushBinaryFileName;
     private String taskFileFormat;
     List<String> taskFileFormatsList = new ArrayList<>();
     private String taskUserData;
@@ -155,6 +156,9 @@ public class NewWorkflow extends Workspace implements Serializable {
     private String taskPostOnYouTubePrivacy;
     private String taskFaceRecognitionCascadeName;
     private List<String> taskFaceRecognitionCascadeNamesList;
+    private String taskFaceRecognitionOutput;
+    private List<String> taskFaceRecognitionOutputsList;
+    private String taskFaceIdentificationDeepLearnedModelTags;
 
     private String taskContentType;
     List<String> taskContentTypesList = new ArrayList<>();
@@ -303,6 +307,10 @@ public class NewWorkflow extends Workspace implements Serializable {
             taskFaceRecognitionCascadeNamesList.add("haarcascade_frontalface_alt2");
             taskFaceRecognitionCascadeNamesList.add("haarcascade_frontalface_alt_tree");
             taskFaceRecognitionCascadeNamesList.add("haarcascade_frontalface_default");
+
+            taskFaceRecognitionOutputsList = new ArrayList<>();
+            taskFaceRecognitionOutputsList.add("VideoWithHighlightedFaces");
+            taskFaceRecognitionOutputsList.add("ImagesToBeUsedInDeepLearnedModel");
         }
 
         mediaItemsToBeAddedOrReplaced = "toBeReplaced";
@@ -558,7 +566,7 @@ public class NewWorkflow extends Workspace implements Serializable {
                 }
                 else
                 {
-                    if (task.getPushBinaryPathName() == null || task.getPushBinaryPathName().equalsIgnoreCase(""))
+                    if (task.getPushBinaryFileName() == null || task.getPushBinaryFileName().equalsIgnoreCase(""))
                     {
                         WorkflowIssue workflowIssue = new WorkflowIssue();
                         workflowIssue.setLabel(task.getLabel());
@@ -572,7 +580,7 @@ public class NewWorkflow extends Workspace implements Serializable {
                     {
                         PushContent pushContent = new PushContent();
                         pushContent.setLabel(task.getLabel());
-                        pushContent.setBinaryPathName(task.getPushBinaryPathName());
+                        pushContent.setBinaryPathName(getLocalBinaryPathName(task.getPushBinaryFileName()));
 
                         pushContentList.add(pushContent);
                     }
@@ -917,6 +925,114 @@ public class NewWorkflow extends Workspace implements Serializable {
                     WorkflowIssue workflowIssue = new WorkflowIssue();
                     workflowIssue.setLabel(task.getLabel());
                     workflowIssue.setFieldName("CascadeName");
+                    workflowIssue.setTaskType(task.getType());
+                    workflowIssue.setIssue("The field is not initialized");
+
+                    workflowIssueList.add(workflowIssue);
+                }
+                if (task.getFaceRecognitionOutput() != null && !task.getFaceRecognitionOutput().equalsIgnoreCase(""))
+                    joParameters.put("Output", task.getFaceRecognitionOutput());
+                else
+                {
+                    WorkflowIssue workflowIssue = new WorkflowIssue();
+                    workflowIssue.setLabel(task.getLabel());
+                    workflowIssue.setFieldName("Output");
+                    workflowIssue.setTaskType(task.getType());
+                    workflowIssue.setIssue("The field is not initialized");
+
+                    workflowIssueList.add(workflowIssue);
+                }
+                if (task.getUserData() != null && !task.getUserData().equalsIgnoreCase(""))
+                    joParameters.put("UserData", task.getUserData());
+                if (task.getRetention() != null && !task.getRetention().equalsIgnoreCase(""))
+                    joParameters.put("Retention", task.getRetention());
+                if (task.getTitle() != null && !task.getTitle().equalsIgnoreCase(""))
+                    joParameters.put("Title", task.getTitle());
+                if (task.getEncodingPriority() != null && !task.getEncodingPriority().equalsIgnoreCase(""))
+                    joParameters.put("EncodingPriority", task.getEncodingPriority());
+                if (task.getUniqueName() != null && !task.getUniqueName().equalsIgnoreCase(""))
+                    joParameters.put("UniqueName", task.getUniqueName());
+                if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
+                    joParameters.put("Ingester", task.getIngester());
+                if (task.getTags() != null && !task.getTags().equalsIgnoreCase(""))
+                    joParameters.put("Tags", task.getTags());
+                if (task.getContentProviderName() != null && !task.getContentProviderName().equalsIgnoreCase(""))
+                    joParameters.put("ContentProviderName", task.getContentProviderName());
+                if (task.getDeliveryFileName() != null && !task.getDeliveryFileName().equalsIgnoreCase(""))
+                    joParameters.put("DeliveryFileName", task.getDeliveryFileName());
+                if (task.getStartPublishing() != null || task.getEndPublishing() != null)
+                {
+                    JSONObject joPublishing = new JSONObject();
+                    joParameters.put("Publishing", joPublishing);
+
+                    if (task.getStartPublishing() != null)
+                        joPublishing.put("StartPublishing", dateFormat.format(task.getStartPublishing()));
+                    else
+                        joPublishing.put("StartPublishing", "NOW");
+                    if (task.getEndPublishing() != null)
+                        joPublishing.put("EndPublishing", dateFormat.format(task.getEndPublishing()));
+                    else
+                        joPublishing.put("EndPublishing", "FOREVER");
+                }
+
+                if (task.getReferences() != null && !task.getReferences().equalsIgnoreCase(""))
+                {
+                    JSONArray jaReferences = new JSONArray();
+                    joParameters.put("References", jaReferences);
+
+                    String [] physicalPathKeyReferences = task.getReferences().split(",");
+                    for (String physicalPathKeyReference: physicalPathKeyReferences)
+                    {
+                        JSONObject joReference = new JSONObject();
+                        joReference.put("ReferencePhysicalPathKey", Long.parseLong(physicalPathKeyReference.trim()));
+
+                        jaReferences.put(joReference);
+                    }
+                }
+            }
+            else if (task.getType().equalsIgnoreCase("Face-Identification"))
+            {
+                if (task.getLabel() != null && !task.getLabel().equalsIgnoreCase(""))
+                    jsonObject.put("Label", task.getLabel());
+                else
+                {
+                    WorkflowIssue workflowIssue = new WorkflowIssue();
+                    workflowIssue.setLabel("");
+                    workflowIssue.setFieldName("Label");
+                    workflowIssue.setTaskType(task.getType());
+                    workflowIssue.setIssue("The field is not initialized");
+
+                    workflowIssueList.add(workflowIssue);
+                }
+
+                if (task.getFaceRecognitionCascadeName() != null && !task.getFaceRecognitionCascadeName().equalsIgnoreCase(""))
+                    joParameters.put("CascadeName", task.getFaceRecognitionCascadeName());
+                else
+                {
+                    WorkflowIssue workflowIssue = new WorkflowIssue();
+                    workflowIssue.setLabel(task.getLabel());
+                    workflowIssue.setFieldName("CascadeName");
+                    workflowIssue.setTaskType(task.getType());
+                    workflowIssue.setIssue("The field is not initialized");
+
+                    workflowIssueList.add(workflowIssue);
+                }
+                if (task.getFaceIdentificationDeepLearnedModelTags() != null && !task.getFaceIdentificationDeepLearnedModelTags().equalsIgnoreCase(""))
+                {
+                    JSONArray jaDeepLearnedModelTags = new JSONArray();
+                    joParameters.put("DeepLearnedModelTags", jaDeepLearnedModelTags);
+
+                    String [] deepLearnedModelTags = task.getFaceIdentificationDeepLearnedModelTags().split(",");
+                    for (String deepLearnedModelTag: deepLearnedModelTags)
+                    {
+                        jaDeepLearnedModelTags.put(deepLearnedModelTag);
+                    }
+                }
+                else
+                {
+                    WorkflowIssue workflowIssue = new WorkflowIssue();
+                    workflowIssue.setLabel(task.getLabel());
+                    workflowIssue.setFieldName("DeepLearnedModelTags");
                     workflowIssue.setTaskType(task.getType());
                     workflowIssue.setIssue("The field is not initialized");
 
@@ -2126,6 +2242,9 @@ public class NewWorkflow extends Workspace implements Serializable {
                         binaryFileInputStream, mediaFile.length(),
                         pushContentIngestionTask.getKey());
 
+                // this is the server (tomcat) copy of the file that has to be removed once
+                // it was uploaded into MMS
+                // His pathname will be somthing like /var/catramms/storage/MMSGUI/temporaryPushUploads/<userKey>-<filename>
                 mediaFile.delete();
             }
             catch (Exception e)
@@ -2335,7 +2454,7 @@ public class NewWorkflow extends Workspace implements Serializable {
             }
 
             Task task = new Task();
-            task.setLabel("Task nr. " + taskNumber++);
+            task.setLabel(labelTemplatePrefix + taskNumber++);
             task.setType(taskType);
 
             // some initialization here because otherwise the buildWorkflow (json), will fail
@@ -2620,7 +2739,7 @@ public class NewWorkflow extends Workspace implements Serializable {
                     else
                         taskSourceDownloadType = "pull";
                     taskPullSourceURL = task.getPullSourceURL();
-                    taskPushBinaryPathName = task.getPushBinaryPathName();
+                    taskPushBinaryFileName = task.getPushBinaryFileName();
                     taskFileFormat = task.getFileFormat();
                     taskUserData = task.getUserData();
                     taskRetention = task.getRetention();
@@ -2787,6 +2906,45 @@ public class NewWorkflow extends Workspace implements Serializable {
                     taskReferences = task.getReferences() == null ? "" : task.getReferences();
                     taskLabel = task.getLabel();
                     taskFaceRecognitionCascadeName = task.getFaceRecognitionCascadeName();
+                    taskFaceRecognitionOutput = task.getFaceRecognitionOutput();
+                    taskUserData = task.getUserData();
+                    taskRetention = task.getRetention();
+                    taskTitle = task.getTitle();
+                    taskEncodingPriority = task.getEncodingPriority();
+                    taskUniqueName = task.getUniqueName();
+                    if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
+                        taskIngester = task.getIngester();
+                    else
+                        taskIngester = userName;
+                    taskTags = task.getTags();
+                    taskContentProviderName= task.getContentProviderName();
+                    taskDeliveryFileName= task.getDeliveryFileName();
+                    taskStartPublishing= task.getStartPublishing();
+                    taskEndPublishing= task.getEndPublishing();
+
+                    {
+                        mLogger.info("Initializing mediaItems...");
+
+                        mediaItemsList.clear();
+                        mediaItemsSelectedList.clear();
+                        mediaItemsSelectionMode = "single";
+                        mediaItemsMaxMediaItemsNumber = new Long(100);
+                        {
+                            mediaItemsContentTypesList.clear();
+                            mediaItemsContentTypesList.add("video");
+
+                            mediaItemsContentType = mediaItemsContentTypesList.get(0);
+                        }
+
+                        fillMediaItems();
+                    }
+                }
+                else if (task.getType().equalsIgnoreCase("Face-Identification"))
+                {
+                    taskReferences = task.getReferences() == null ? "" : task.getReferences();
+                    taskLabel = task.getLabel();
+                    taskFaceRecognitionCascadeName = task.getFaceRecognitionCascadeName();
+                    taskFaceIdentificationDeepLearnedModelTags = task.getFaceIdentificationDeepLearnedModelTags();
                     taskUserData = task.getUserData();
                     taskRetention = task.getRetention();
                     taskTitle = task.getTitle();
@@ -3367,7 +3525,7 @@ public class NewWorkflow extends Workspace implements Serializable {
                 task.setLabel(taskLabel);
                 task.setSourceDownloadType(taskSourceDownloadType);
                 task.setPullSourceURL(taskPullSourceURL);
-                task.setPushBinaryPathName(taskPushBinaryPathName);
+                task.setPushBinaryFileName(taskPushBinaryFileName);
                 task.setFileFormat(taskFileFormat);
                 task.setUserData(taskUserData);
                 task.setRetention(taskRetention);
@@ -3445,6 +3603,25 @@ public class NewWorkflow extends Workspace implements Serializable {
                 task.setReferences(taskReferences);
                 task.setLabel(taskLabel);
                 task.setFaceRecognitionCascadeName(taskFaceRecognitionCascadeName);
+                task.setFaceRecognitionOutput(taskFaceRecognitionOutput);
+                task.setUserData(taskUserData);
+                task.setRetention(taskRetention);
+                task.setTitle(taskTitle);
+                task.setEncodingPriority(taskEncodingPriority);
+                task.setUniqueName(taskUniqueName);
+                task.setIngester(taskIngester);
+                task.setTags(taskTags);
+                task.setContentProviderName(taskContentProviderName);
+                task.setDeliveryFileName(taskDeliveryFileName);
+                task.setStartPublishing(taskStartPublishing);
+                task.setEndPublishing(taskEndPublishing);
+            }
+            else if (task.getType().equalsIgnoreCase("Face-Identification"))
+            {
+                task.setReferences(taskReferences);
+                task.setLabel(taskLabel);
+                task.setFaceRecognitionCascadeName(taskFaceRecognitionCascadeName);
+                task.setFaceIdentificationDeepLearnedModelTags(taskFaceIdentificationDeepLearnedModelTags);
                 task.setUserData(taskUserData);
                 task.setRetention(taskRetention);
                 task.setTitle(taskTitle);
@@ -3713,13 +3890,32 @@ public class NewWorkflow extends Workspace implements Serializable {
 
             try
             {
-                taskPushBinaryPathName = getLocalBinaryPathName(event.getFile().getFileName());
-                binaryFile = new File(taskPushBinaryPathName);
+                taskPushBinaryFileName = event.getFile().getFileName();
+                binaryFile = new File(getLocalBinaryPathName(taskPushBinaryFileName));
 
                 input = event.getFile().getInputstream();
                 output = new FileOutputStream(binaryFile);
 
                 IOUtils.copy(input, output);
+
+                String fileName;
+                String fileExtension = "";
+                int extensionIndex = event.getFile().getFileName().lastIndexOf('.');
+                if (extensionIndex == -1)
+                    fileName = event.getFile().getFileName();
+                else
+                {
+                    fileName = event.getFile().getFileName().substring(0, extensionIndex);
+                    fileExtension = event.getFile().getFileName().substring(extensionIndex + 1);
+                }
+
+                if (taskLabel.startsWith(labelTemplatePrefix))   // not set yet
+                    taskLabel = fileName;
+
+                taskFileFormat = fileExtension;
+
+                if (taskTitle == null || taskTitle.isEmpty())   // not set yet
+                    taskTitle = fileName;
             }
             catch (Exception e)
             {
@@ -4236,12 +4432,12 @@ public class NewWorkflow extends Workspace implements Serializable {
         this.taskPullSourceURL = taskPullSourceURL;
     }
 
-    public String getTaskPushBinaryPathName() {
-        return taskPushBinaryPathName;
+    public String getTaskPushBinaryFileName() {
+        return taskPushBinaryFileName;
     }
 
-    public void setTaskPushBinaryPathName(String taskPushBinaryPathName) {
-        this.taskPushBinaryPathName = taskPushBinaryPathName;
+    public void setTaskPushBinaryFileName(String taskPushBinaryFileName) {
+        this.taskPushBinaryFileName = taskPushBinaryFileName;
     }
 
     public String getTaskIngester() {
@@ -4966,5 +5162,29 @@ public class NewWorkflow extends Workspace implements Serializable {
 
     public void setTaskFaceRecognitionCascadeNamesList(List<String> taskFaceRecognitionCascadeNamesList) {
         this.taskFaceRecognitionCascadeNamesList = taskFaceRecognitionCascadeNamesList;
+    }
+
+    public String getTaskFaceRecognitionOutput() {
+        return taskFaceRecognitionOutput;
+    }
+
+    public void setTaskFaceRecognitionOutput(String taskFaceRecognitionOutput) {
+        this.taskFaceRecognitionOutput = taskFaceRecognitionOutput;
+    }
+
+    public List<String> getTaskFaceRecognitionOutputsList() {
+        return taskFaceRecognitionOutputsList;
+    }
+
+    public void setTaskFaceRecognitionOutputsList(List<String> taskFaceRecognitionOutputsList) {
+        this.taskFaceRecognitionOutputsList = taskFaceRecognitionOutputsList;
+    }
+
+    public String getTaskFaceIdentificationDeepLearnedModelTags() {
+        return taskFaceIdentificationDeepLearnedModelTags;
+    }
+
+    public void setTaskFaceIdentificationDeepLearnedModelTags(String taskFaceIdentificationDeepLearnedModelTags) {
+        this.taskFaceIdentificationDeepLearnedModelTags = taskFaceIdentificationDeepLearnedModelTags;
     }
 }

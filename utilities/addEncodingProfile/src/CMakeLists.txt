@@ -81,6 +81,7 @@ target_link_libraries (addEncodingProfile opencv_videoio)
 target_link_libraries (addEncodingProfile opencv_video)
 target_link_libraries (addEncodingProfile opencv_videostab)
 target_link_libraries (addEncodingProfile opencv_objdetect)
+target_link_libraries (addEncodingProfile opencv_face)
 
 install (TARGETS addEncodingProfile DESTINATION bin)
 

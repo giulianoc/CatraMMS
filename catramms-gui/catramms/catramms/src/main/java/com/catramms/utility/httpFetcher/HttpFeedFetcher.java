@@ -438,6 +438,24 @@ public class HttpFeedFetcher {
         // Date startTimestamp = new Date();
         if (StringUtils.isNotEmpty(url))
         {
+            if (url.startsWith("https"))
+            {
+                SSLContext ctx = SSLContext.getInstance("SSL");
+                ctx.init(new KeyManager[0], new TrustManager[] {new DefaultTrustManager()}, new SecureRandom());
+                SSLContext.setDefault(ctx);
+                HttpsURLConnection.setDefaultSSLSocketFactory(ctx.getSocketFactory());
+
+                // Create all-trusting host name verifier
+                HostnameVerifier allHostsValid = new HostnameVerifier() {
+                    public boolean verify(String hostname, SSLSession session) {
+                        return true;
+                    }
+                };
+
+                // Install the all-trusting host verifier
+                HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
+            }
+
             // GetMethod method = null;
             int retryIndex = 0;
 
@@ -464,7 +482,21 @@ public class HttpFeedFetcher {
 
                     mLogger.info("url: " + url);
                     URL uUrl = new URL(url);
-                    HttpURLConnection conn = (HttpURLConnection) uUrl.openConnection();
+                    URLConnection conn;
+                    if (url.startsWith("https"))
+                    {
+                        conn = (HttpsURLConnection) uUrl.openConnection();
+                        /*
+                        conn.setHostnameVerifier(new HostnameVerifier() {
+                            @Override
+                            public boolean verify(String arg0, SSLSession arg1) {
+                                return true;
+                            }
+                        });
+                        */
+                    }
+                    else
+                        conn = uUrl.openConnection();
                     conn.setConnectTimeout(timeoutInSeconds * 1000);
                     conn.setReadTimeout(timeoutInSeconds * 1000);
 
@@ -476,7 +508,10 @@ public class HttpFeedFetcher {
                     }
 
                     conn.setDoOutput(true); // false because I do not need to append any data to this request
-                    conn.setRequestMethod("POST");
+                    if (url.startsWith("https"))
+                        ((HttpsURLConnection) conn).setRequestMethod("POST");
+                    else
+                        ((HttpURLConnection) conn).setRequestMethod("POST");
                     {
                         // long clength = binaryPathName.length();
 
@@ -506,14 +541,24 @@ public class HttpFeedFetcher {
                     }
 
                     mLogger.info("conn.getResponseCode...");
-                    int statusCode = conn.getResponseCode();
+                    int statusCode;
+                    if (url.startsWith("https"))
+                        statusCode = ((HttpsURLConnection) conn).getResponseCode();
+                    else
+                        statusCode = ((HttpURLConnection) conn).getResponseCode();
 
                     mLogger.info("conn.getResponseCode. statusCode: " + statusCode);
                     if (statusCode != HttpStatus.SC_OK && statusCode != HttpStatus.SC_CREATED)
                     {
-                        mLogger.debug("Method failed: " + conn.getResponseMessage());
+                        String responseMessage;
+                        if (url.startsWith("https"))
+                            responseMessage = ((HttpsURLConnection) conn).getResponseMessage();
+                        else
+                            responseMessage = ((HttpURLConnection) conn).getResponseMessage();
 
-                        throw new Exception("Method failed: " + conn.getResponseMessage());
+                        mLogger.debug("Method failed: " + responseMessage);
+
+                        throw new Exception("Method failed: " + responseMessage);
                     }
 
                     mLogger.debug("POST successful. statusCode: " + statusCode);

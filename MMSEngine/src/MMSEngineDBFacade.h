@@ -193,7 +193,8 @@ public:
         OverlayTextOnVideo  = 3,
         GenerateFrames      = 4,
         SlideShow           = 5,
-        FaceRecognition		= 6
+        FaceRecognition		= 6,
+        FaceIdentification	= 7
     };
     static const char* toString(const EncodingType& encodingType)
     {
@@ -213,6 +214,8 @@ public:
                 return "SlideShow";
             case EncodingType::FaceRecognition:
                 return "FaceRecognition";
+            case EncodingType::FaceIdentification:
+                return "FaceIdentification";
             default:
 				throw runtime_error(string("Wrong EncodingType"));
         }
@@ -237,6 +240,8 @@ public:
             return EncodingType::SlideShow;
         else if (lowerCase == "facerecognition")
             return EncodingType::FaceRecognition;
+        else if (lowerCase == "faceidentification")
+            return EncodingType::FaceIdentification;
         else
             throw runtime_error(string("Wrong EncodingType")
                     + ", encodingType: " + encodingType
@@ -368,12 +373,18 @@ public:
             Json::Value                             _faceRecognitionParametersRoot;
         };
 
+        struct FaceIdentificationData {
+            // MMS_IngestionJob -> metaDataContent (you need it when the encoding generated a content to be ingested)
+            Json::Value                             _faceIdentificationParametersRoot;
+        };
+
         shared_ptr<EncodeData>                      _encodeData;
         shared_ptr<OverlayImageOnVideoData>         _overlayImageOnVideoData;
         shared_ptr<OverlayTextOnVideoData>          _overlayTextOnVideoData;
         shared_ptr<GenerateFramesData>              _generateFramesData;
         shared_ptr<SlideShowData>                   _slideShowData;
         shared_ptr<FaceRecognitionData>				_faceRecognitionData;
+        shared_ptr<FaceIdentificationData>			_faceIdentificationData;
     } ;
 
     enum class WorkspaceType {
@@ -404,6 +415,7 @@ public:
         PostOnFacebook          = 18,
         PostOnYouTube           = 19,
         FaceRecognition         = 20,
+        FaceIdentification		= 21,
         EmailNotification       = 30,
         ContentUpdate           = 50,
         ContentRemove           = 60
@@ -454,6 +466,8 @@ public:
                 return "Post-On-YouTube";
             case IngestionType::FaceRecognition:
                 return "Face-Recognition";
+            case IngestionType::FaceIdentification:
+                return "Face-Identification";
                 
             case IngestionType::EmailNotification:
                 return "Email-Notification";
@@ -511,6 +525,8 @@ public:
             return IngestionType::PostOnYouTube;
         else if (lowerCase == "face-recognition")
             return IngestionType::FaceRecognition;
+        else if (lowerCase == "face-identification")
+            return IngestionType::FaceIdentification;
 
         else if (lowerCase == "email-notification")
             return IngestionType::EmailNotification;
@@ -895,7 +911,8 @@ public:
         int start, int rows,
         bool contentTypePresent, ContentType contentType,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
-        string title, string ingestionDateOrder, bool admin);
+        string title, vector<string> tags,
+		string ingestionDateOrder, bool admin);
 
     Json::Value getEncodingProfilesSetList (
         int64_t workspaceKey, int64_t encodingProfilesSetKey,
@@ -1037,7 +1054,16 @@ public:
         shared_ptr<Workspace> workspace,
         int64_t ingestionJobKey,
         string sourcePhysicalPath,
-        string cascadeName,
+        string faceRecognitionCascadeName,
+		string faceRecognitionOutput,
+        EncodingPriority encodingPriority);
+
+    int addEncoding_FaceIdentificationJob (
+        shared_ptr<Workspace> workspace,
+        int64_t ingestionJobKey,
+        string sourcePhysicalPath,
+		string faceIdentificationCascadeName,
+		string jsonDeepLearnedModelTags,
         EncodingPriority encodingPriority);
 
     int updateEncodingJob (

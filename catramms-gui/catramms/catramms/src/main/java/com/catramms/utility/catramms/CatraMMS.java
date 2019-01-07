@@ -1621,7 +1621,7 @@ public class CatraMMS {
             String mmsURL = mmsBinaryProtocol + "://" + mmsBinaryHostName + ":" + mmsBinaryPort
                     + "/catramms/v1/binary/" + ingestionJobKey;
 
-            mLogger.info("ingestBinaryContentAndRemoveLocalFile"
+            mLogger.info("ingestBinaryContent"
                             + ", mmsURL: " + mmsURL
                             + ", contentSize: " + contentSize
                             + ", ingestionJobKey: " + ingestionJobKey

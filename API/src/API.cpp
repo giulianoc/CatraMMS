@@ -3254,13 +3254,14 @@ void API::mediaItemsList(
         }
 
         {
+			vector<string> tags;
             
             Json::Value ingestionStatusRoot = _mmsEngineDBFacade->getMediaItemsList(
                     workspace->_workspaceKey, mediaItemKey, physicalPathKey,
                     start, rows,
                     contentTypePresent, contentType,
                     startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
-                    title, ingestionDateOrder, admin);
+                    title, tags, ingestionDateOrder, admin);
 
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, ingestionStatusRoot);

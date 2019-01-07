@@ -95,6 +95,7 @@ endif()
 	target_link_libraries (api.fcgi opencv_video)
 	target_link_libraries (api.fcgi opencv_videostab)
 	target_link_libraries (api.fcgi opencv_objdetect)
+	target_link_libraries (api.fcgi opencv_face)
     list(APPEND TARGETS api.fcgi)
 
 #UploadBinary
@@ -161,6 +162,7 @@ endif()
 	target_link_libraries (ffmpegEncoder.fcgi opencv_video)
 	target_link_libraries (ffmpegEncoder.fcgi opencv_videostab)
 	target_link_libraries (ffmpegEncoder.fcgi opencv_objdetect)
+	target_link_libraries (ffmpegEncoder.fcgi opencv_face)
     list(APPEND TARGETS ffmpegEncoder.fcgi)
 
 

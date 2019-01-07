@@ -1947,6 +1947,69 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 throw runtime_error(errorMessage);
                             }
                         }
+                        else if (ingestionType == MMSEngineDBFacade::IngestionType::FaceIdentification)
+                        {
+                            // mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
+                            try
+                            {
+								manageFaceIdentificationMediaTask(
+									ingestionJobKey, 
+									ingestionStatus,
+									workspace, 
+									parametersRoot, 
+									dependencies);
+                            }
+                            catch(runtime_error e)
+                            {
+                                _logger->error(__FILEREF__ + "manageFaceIdentificationMediaTask failed"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                                        errorMessage,
+                                        "" // processorMMS
+                                        );
+
+                                throw runtime_error(errorMessage);
+                            }
+                            catch(exception e)
+                            {
+                                _logger->error(__FILEREF__ + "manageFaceIdentificationMediaTask failed"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                                        errorMessage,
+                                        "" // processorMMS
+                                        );
+
+                                throw runtime_error(errorMessage);
+                            }
+                        }
                         else
                         {
                             string errorMessage = string("Unknown IngestionType")
@@ -3942,7 +4005,8 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 				MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
 		}
 
-        string cascadeName;
+        string faceRecognitionCascadeName;
+        string faceRecognitionOutput;
         {
             string field = "CascadeName";
             if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
@@ -3954,7 +4018,19 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 
                 throw runtime_error(errorMessage);
             }
-            cascadeName = parametersRoot.get(field, "XXX").asString();
+            faceRecognitionCascadeName = parametersRoot.get(field, "XXX").asString();
+
+            field = "Output";
+            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            faceRecognitionOutput = parametersRoot.get(field, "XXX").asString();
         }
         
         // for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
@@ -4039,7 +4115,7 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
                 fileName);
 
 			_mmsEngineDBFacade->addEncoding_FaceRecognitionJob(workspace, ingestionJobKey,
-                mmsAssetPathName, cascadeName, encodingPriority);
+                mmsAssetPathName, faceRecognitionCascadeName, faceRecognitionOutput, encodingPriority);
         }
     }
     catch(runtime_error e)
@@ -4057,6 +4133,181 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
     catch(exception e)
     {
         _logger->error(__FILEREF__ + "manageFaceRecognitionMediaTask failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+        );
+        
+        // Update IngestionJob done in the calling method
+
+        throw e;
+    }
+}
+
+
+void MMSEngineProcessor::manageFaceIdentificationMediaTask(
+        int64_t ingestionJobKey,
+        MMSEngineDBFacade::IngestionStatus ingestionStatus,
+        shared_ptr<Workspace> workspace,
+        Json::Value parametersRoot,
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies
+)
+{
+    try
+    {
+        if (dependencies.size() != 1)
+        {
+            string errorMessage = __FILEREF__ + "Wrong medias number to be processed for Face Identification"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", dependencies.size: " + to_string(dependencies.size());
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+		MMSEngineDBFacade::EncodingPriority encodingPriority;
+		string field = "EncodingPriority";
+		if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+		{
+			encodingPriority = 
+				static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority);
+		}
+		else
+		{
+			encodingPriority =
+				MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
+		}
+
+		string faceIdentificationCascadeName;
+        string jsonDeepLearnedModelTags;
+        {
+            string field = "CascadeName";
+            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            faceIdentificationCascadeName = parametersRoot.get(field, "XXX").asString();
+
+            field = "DeepLearnedModelTags";
+            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+
+            Json::StreamWriterBuilder wbuilder;
+            jsonDeepLearnedModelTags = Json::writeString(wbuilder, parametersRoot[field]);
+        }
+        
+        // for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
+        {
+			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>&
+				keyAndDependencyType	= dependencies[0];
+
+            int mmsPartitionNumber;
+            string workspaceDirectoryName;
+            string relativePath;
+            string fileName;
+            int64_t sizeInBytes;
+            string deliveryFileName;
+            MMSEngineDBFacade::ContentType contentType;
+            string title;
+            
+            int64_t key;
+            MMSEngineDBFacade::ContentType referenceContentType;
+            Validator::DependencyType dependencyType;
+            
+            tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+
+            if (dependencyType == Validator::DependencyType::MediaItemKey)
+            {
+                int64_t encodingProfileKey = -1;
+                
+                tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
+                    = _mmsEngineDBFacade->getStorageDetails(
+                        key, encodingProfileKey);
+
+                int64_t physicalPathKey;
+                shared_ptr<Workspace> workspace;
+                
+                tie(physicalPathKey, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
+                        = storageDetails;
+                workspaceDirectoryName = workspace->_directoryName;
+
+                {
+                    bool warningIfMissing = false;
+                    pair<MMSEngineDBFacade::ContentType,string> contentTypeAndUserData =
+                        _mmsEngineDBFacade->getMediaItemKeyDetails(
+                            key, warningIfMissing);
+
+                    string userData;
+                    tie(contentType, userData) = contentTypeAndUserData;
+                }
+            }
+            else
+            {
+                tuple<int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
+                    = _mmsEngineDBFacade->getStorageDetails(key);
+
+                shared_ptr<Workspace> workspace;
+                
+                tie(mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
+                        = storageDetails;
+                workspaceDirectoryName = workspace->_directoryName;
+                
+                {
+                    bool warningIfMissing = false;
+                    tuple<int64_t,MMSEngineDBFacade::ContentType,string> mediaItemKeyContentTypeAndUserData =
+                        _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+                            key, warningIfMissing);
+
+                    int64_t mediaItemKey;
+                    string userData;
+                    tie(mediaItemKey, contentType, userData)
+                            = mediaItemKeyContentTypeAndUserData;
+                }
+            }
+            
+            _logger->info(__FILEREF__ + "getMMSAssetPathName ..."
+                + ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
+                + ", workspaceDirectoryName: " + workspaceDirectoryName
+                + ", relativePath: " + relativePath
+                + ", fileName: " + fileName
+            );
+            string mmsAssetPathName = _mmsStorage->getMMSAssetPathName(
+                mmsPartitionNumber,
+                workspaceDirectoryName,
+                relativePath,
+                fileName);
+
+			_mmsEngineDBFacade->addEncoding_FaceIdentificationJob(workspace, ingestionJobKey,
+                mmsAssetPathName, faceIdentificationCascadeName, jsonDeepLearnedModelTags, encodingPriority);
+        }
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "manageFaceIdendificationMediaTask failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
+        );
+ 
+        // Update IngestionJob done in the calling method
+        
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "manageFaceIdendificationMediaTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );

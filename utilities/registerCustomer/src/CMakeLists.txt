@@ -80,6 +80,7 @@ target_link_libraries (registerCustomer opencv_videoio)
 target_link_libraries (registerCustomer opencv_video)
 target_link_libraries (registerCustomer opencv_videostab)
 target_link_libraries (registerCustomer opencv_objdetect)
+target_link_libraries (registerCustomer opencv_face)
 
 install (TARGETS registerCustomer DESTINATION bin)
 

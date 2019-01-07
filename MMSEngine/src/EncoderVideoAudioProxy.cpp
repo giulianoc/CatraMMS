@@ -29,6 +29,7 @@
 #include "FFMpeg.h"
 #include "EncoderVideoAudioProxy.h"
 #include "opencv2/objdetect.hpp"
+#include "opencv2/face.hpp"
 #include "opencv2/highgui.hpp"
 #include "opencv2/imgproc.hpp"
 #include "opencv2/imgcodecs.hpp"
@@ -203,6 +204,10 @@ void EncoderVideoAudioProxy::operator()()
         {
             stagingEncodedAssetPathName = faceRecognition();
         }
+        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceIdentification)
+        {
+            stagingEncodedAssetPathName = faceIdentification();
+        }
         else
         {
             string errorMessage = string("Wrong EncodingType")
@@ -249,6 +254,12 @@ void EncoderVideoAudioProxy::operator()()
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceRecognition)
         {
             _logger->warn(__FILEREF__ + "faceRecognition: " + e.what()
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            );
+        }
+        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceIdentification)
+        {
+            _logger->warn(__FILEREF__ + "faceIdentification: " + e.what()
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             );
         }
@@ -320,6 +331,12 @@ void EncoderVideoAudioProxy::operator()()
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceRecognition)
         {
             _logger->error(__FILEREF__ + "faceRecognition: " + e.what()
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            );
+        }
+        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceIdentification)
+        {
+            _logger->warn(__FILEREF__ + "faceIdentification: " + e.what()
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             );
         }
@@ -403,6 +420,12 @@ void EncoderVideoAudioProxy::operator()()
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             );
         }
+        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceIdentification)
+        {
+            _logger->warn(__FILEREF__ + "faceIdentification: " + e.what()
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            );
+        }
 
         _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -482,6 +505,12 @@ void EncoderVideoAudioProxy::operator()()
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceRecognition)
         {
             _logger->error(__FILEREF__ + "faceRecognition: " + e.what()
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            );
+        }
+        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceIdentification)
+        {
+            _logger->warn(__FILEREF__ + "faceIdentification: " + e.what()
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             );
         }
@@ -590,6 +619,13 @@ void EncoderVideoAudioProxy::operator()()
             mediaItemKey = -1;
             encodedPhysicalPathKey = -1;            
         }
+        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceIdentification)
+        {
+            processFaceIdentification(stagingEncodedAssetPathName);
+            
+            mediaItemKey = -1;
+            encodedPhysicalPathKey = -1;            
+        }
         else
         {
             string errorMessage = string("Wrong EncodingType")
@@ -636,6 +672,12 @@ void EncoderVideoAudioProxy::operator()()
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceRecognition)
         {
             _logger->error(__FILEREF__ + "processFaceRecognition failed: " + e.what()
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            );
+        }
+        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceIdentification)
+        {
+            _logger->error(__FILEREF__ + "processFaceIdentification failed: " + e.what()
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             );
         }
@@ -746,6 +788,12 @@ void EncoderVideoAudioProxy::operator()()
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceRecognition)
         {
             _logger->error(__FILEREF__ + "processFaceRecognition failed: " + e.what()
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            );
+        }
+        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceIdentification)
+        {
+            _logger->error(__FILEREF__ + "processFaceIdentification failed: " + e.what()
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             );
         }
@@ -4499,42 +4547,22 @@ void EncoderVideoAudioProxy::processSlideShow(string stagingEncodedAssetPathName
 string EncoderVideoAudioProxy::faceRecognition()
 {
     
-	string cascadeName;
+	string faceRecognitionCascadeName;
 	string sourcePhysicalPath;
-
+	string faceRecognitionOutput;
 	{
-		string field = "cascadeName";
-		cascadeName = _encodingItem->_parametersRoot.get(field, 0).asString();
+		string field = "faceRecognitionCascadeName";
+		faceRecognitionCascadeName = _encodingItem->_parametersRoot.get(field, 0).asString();
 
 		field = "sourcePhysicalPath";
 		sourcePhysicalPath = _encodingItem->_parametersRoot.get(field, 0).asString();
+
+		// VideoWithHighlightedFaces or ImagesToBeUsedInDeepLearnedModel
+		field = "faceRecognitionOutput";
+		faceRecognitionOutput = _encodingItem->_parametersRoot.get(field, 0).asString();
 	}
     
-	string faceRecognitionMediaPathName;
-
-	{
-		string fileFormat = "avi";
-
-		string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
-			_encodingItem->_workspace);
-		faceRecognitionMediaPathName = 
-			workspaceIngestionRepository + "/" 
-			+ to_string(_encodingItem->_ingestionJobKey)
-			+ "." + fileFormat
-		;
-	}
-
-	_logger->info(__FILEREF__ + "faceRecognition started"
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
-			+ ", cascadeName: " + cascadeName
-			+ ", sourcePhysicalPath: " + sourcePhysicalPath
-            + ", faceRecognitionMediaPathName: " + faceRecognitionMediaPathName
-	);
-
-	string cascadePathName = _computerVisionCascadePath + "/" + cascadeName + ".xml";
+	string cascadePathName = _computerVisionCascadePath + "/" + faceRecognitionCascadeName + ".xml";
 
 	cv::CascadeClassifier cascade;
 	if (!cascade.load(cascadePathName))
@@ -4558,15 +4586,44 @@ string EncoderVideoAudioProxy::faceRecognition()
 		throw runtime_error(errorMessage);
 	}
 
-	cv::Mat bgrFrame;
-	cv::Mat grayFrame;
-	cv::Mat smallFrame;
+	string faceRecognitionMediaPathName;
+	string fileFormat;
+	{
+		string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
+			_encodingItem->_workspace);
+		if (faceRecognitionOutput == "ImagesToBeUsedInDeepLearnedModel")
+		{
+			fileFormat = "jpg";
+
+			faceRecognitionMediaPathName = 
+				workspaceIngestionRepository + "/"
+				; // sourceFileName is added later
+		}
+		else // if (faceRecognitionOutput == "VideoWithHighlightedFaces")
+		{
+			// opencv does not have issues with avi and mov (it seems has issues with mp4)
+			fileFormat = "avi";
+
+			faceRecognitionMediaPathName = 
+				workspaceIngestionRepository + "/" 
+				+ to_string(_encodingItem->_ingestionJobKey)
+				+ "." + fileFormat
+			;
+		}
+	}
+
+	_logger->info(__FILEREF__ + "faceRecognition started"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+			+ ", cascadeName: " + faceRecognitionCascadeName
+			+ ", sourcePhysicalPath: " + sourcePhysicalPath
+            + ", faceRecognitionMediaPathName: " + faceRecognitionMediaPathName
+	);
 
 	cv::VideoWriter writer;
 	long totalFramesNumber;
-
-	// opencv does not have issues with avi and mov (it seems has issues with mp4)
-	string fileFormat("avi");
 	{
 		totalFramesNumber = (long) capture.get(cv::CAP_PROP_FRAME_COUNT);
 		double fps = capture.get(cv::CAP_PROP_FPS);
@@ -4575,8 +4632,11 @@ string EncoderVideoAudioProxy::faceRecognition()
 			(int) capture.get(cv::CAP_PROP_FRAME_HEIGHT)
 		);
 
-		writer.open(faceRecognitionMediaPathName,
+		if (faceRecognitionOutput == "VideoWithHighlightedFaces")
+		{
+			writer.open(faceRecognitionMediaPathName,
 				cv::VideoWriter::fourcc('X', '2', '6', '4'), fps, size);
+		}
 	}
 
 	_logger->info(__FILEREF__ + "generating Face Recognition"
@@ -4584,10 +4644,20 @@ string EncoderVideoAudioProxy::faceRecognition()
             + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
-			+ ", cascadeName: " + cascadeName
+			+ ", cascadeName: " + faceRecognitionCascadeName
 			+ ", sourcePhysicalPath: " + sourcePhysicalPath
             + ", faceRecognitionMediaPathName: " + faceRecognitionMediaPathName
 	);
+
+	cv::Mat bgrFrame;
+	cv::Mat grayFrame;
+	cv::Mat smallFrame;
+
+	// this is used only in case of faceRecognitionOutput == "ImagesToBeUsedInDeepLearnedModel"
+	// Essentially the last image source file name will be ingested when we will go out of the
+	// loop (while(true)) in order to set the IngestionRowToBeUpdatedAsSuccess flag a true for this last
+	// ingestion
+	string lastImageSourceFileName;
 
 	long currentFrameIndex = 0;
 	while(true)
@@ -4602,7 +4672,7 @@ string EncoderVideoAudioProxy::faceRecognition()
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				+ ", cascadeName: " + cascadeName
+				+ ", cascadeName: " + faceRecognitionCascadeName
 				+ ", sourcePhysicalPath: " + sourcePhysicalPath
 				+ ", faceRecognitionMediaPathName: " + faceRecognitionMediaPathName
 				+ ", currentFrameIndex: " + to_string(currentFrameIndex)
@@ -4625,6 +4695,7 @@ string EncoderVideoAudioProxy::faceRecognition()
 		cv::resize(grayFrame, smallFrame, cv::Size(), xAndYScaleFactor, xAndYScaleFactor,
 				cv::INTER_LINEAR_EXACT);
 		cv::equalizeHist(smallFrame, smallFrame);
+
 		vector<cv::Rect> faces;
 		cascade.detectMultiScale(
 			smallFrame,
@@ -4657,37 +4728,166 @@ string EncoderVideoAudioProxy::faceRecognition()
 				));
 		}
 
-		cv::Scalar color = cv::Scalar(255,0,0);
 		for (size_t i = 0; i < faces.size(); i++)
 		{
-			cv::Rect r = faces[i];
-			cv::Mat smallROI;
-			cv::Point center;
-			int radius;
+			cv::Rect roiRectScaled = faces[i];
+			// cv::Mat smallROI;
 
-			double aspectRatio = (double) r.width / r.height;
-			int thickness = 3;
-			int lineType = 8;
-			int shift = 0;
-			if (0.75 < aspectRatio && aspectRatio < 1.3)
+			if (faceRecognitionOutput == "VideoWithHighlightedFaces")
 			{
-				center.x = cvRound((r.x + r.width*0.5)*_computerVisionDefaultScale);
-				center.y = cvRound((r.y + r.height*0.5)*_computerVisionDefaultScale);
-				radius = cvRound((r.width + r.height)*0.25*_computerVisionDefaultScale);
-				cv::circle(bgrFrame, center, radius, color, thickness, lineType, shift);
+				cv::Scalar color = cv::Scalar(255,0,0);
+				double aspectRatio = (double) roiRectScaled.width / roiRectScaled.height;
+				int thickness = 3;
+				int lineType = 8;
+				int shift = 0;
+				if (0.75 < aspectRatio && aspectRatio < 1.3)
+				{
+					cv::Point center;
+					int radius;
+
+					center.x = cvRound((roiRectScaled.x + roiRectScaled.width*0.5)*_computerVisionDefaultScale);
+					center.y = cvRound((roiRectScaled.y + roiRectScaled.height*0.5)*_computerVisionDefaultScale);
+					radius = cvRound((roiRectScaled.width + roiRectScaled.height)*0.25*_computerVisionDefaultScale);
+					cv::circle(bgrFrame, center, radius, color, thickness, lineType, shift);
+				}
+				else
+				{
+					cv::rectangle(bgrFrame,
+						cv::Point(cvRound(roiRectScaled.x*_computerVisionDefaultScale),
+							cvRound(roiRectScaled.y*_computerVisionDefaultScale)),
+						cv::Point(cvRound((roiRectScaled.x + roiRectScaled.width-1)*_computerVisionDefaultScale),
+							cvRound((roiRectScaled.y + roiRectScaled.height-1)*_computerVisionDefaultScale)),
+						color, thickness, lineType, shift);
+				}
 			}
 			else
 			{
-				cv::rectangle(bgrFrame,
-					cv::Point(cvRound(r.x*_computerVisionDefaultScale),
-						cvRound(r.y*_computerVisionDefaultScale)),
-					cv::Point(cvRound((r.x + r.width-1)*_computerVisionDefaultScale),
-						cvRound((r.y + r.height-1)*_computerVisionDefaultScale)),
-					color, thickness, lineType, shift);
+				// Crop the full image to that image contained by the rectangle myROI
+				// Note that this doesn't copy the data
+				cv::Rect roiRect(
+						roiRectScaled.x * _computerVisionDefaultScale,
+						roiRectScaled.y * _computerVisionDefaultScale,
+						roiRectScaled.width * _computerVisionDefaultScale,
+						roiRectScaled.height * _computerVisionDefaultScale
+				);
+				cv::Mat grayFrameCropped(grayFrame, roiRect);
+
+				/*
+				cv::Mat cropped;
+				// Copy the data into new matrix
+				grayFrameCropped.copyTo(cropped);
+				*/
+
+				string sourceFileName = to_string(_encodingItem->_ingestionJobKey)
+					+ "_"
+					+ to_string(currentFrameIndex)
+					+ "." + fileFormat
+				;
+
+				string faceRecognitionImagePathName = faceRecognitionMediaPathName + sourceFileName;
+
+				cv::imwrite(faceRecognitionImagePathName, grayFrameCropped);
+				// cv::imwrite(faceRecognitionImagePathName, cropped);
+
+				if (lastImageSourceFileName == "")
+					lastImageSourceFileName = sourceFileName;
+				else
+				{
+					// ingest the face
+					string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
+						fileFormat, _encodingItem->_faceRecognitionData->_faceRecognitionParametersRoot);
+    
+					shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
+						->getFreeEvent<LocalAssetIngestionEvent>(
+								MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
+
+					localAssetIngestionEvent->setSource(ENCODERVIDEOAUDIOPROXY);
+					localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
+					localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
+
+					localAssetIngestionEvent->setIngestionJobKey(_encodingItem->_ingestionJobKey);
+					localAssetIngestionEvent->setIngestionSourceFileName(lastImageSourceFileName);
+					localAssetIngestionEvent->setMMSSourceFileName(lastImageSourceFileName);
+					localAssetIngestionEvent->setWorkspace(_encodingItem->_workspace);
+					localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::AddContent);
+					localAssetIngestionEvent->setIngestionRowToBeUpdatedAsSuccess(false);
+					// localAssetIngestionEvent->setForcedAvgFrameRate(to_string(outputFrameRate) + "/1");
+
+					localAssetIngestionEvent->setMetadataContent(mediaMetaDataContent);
+
+					shared_ptr<Event2>    event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
+					_multiEventsSet->addEvent(event);
+
+					_logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
+						+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+						+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", sourceFileName: " + lastImageSourceFileName
+						+ ", getEventKey().first: " + to_string(event->getEventKey().first)
+						+ ", getEventKey().second: " + to_string(event->getEventKey().second));
+
+					lastImageSourceFileName = sourceFileName;
+				}
 			}
 		}
 
-		writer << bgrFrame;
+		if (faceRecognitionOutput == "VideoWithHighlightedFaces")
+		{
+			writer << bgrFrame;
+		}
+	}
+
+	if (faceRecognitionOutput == "ImagesToBeUsedInDeepLearnedModel")
+	{
+		if (lastImageSourceFileName != "")
+		{
+			// ingest the face
+			string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
+				fileFormat, _encodingItem->_faceRecognitionData->_faceRecognitionParametersRoot);
+  
+			shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
+				->getFreeEvent<LocalAssetIngestionEvent>(
+						MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
+
+			localAssetIngestionEvent->setSource(ENCODERVIDEOAUDIOPROXY);
+			localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
+			localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
+
+			localAssetIngestionEvent->setIngestionJobKey(_encodingItem->_ingestionJobKey);
+			localAssetIngestionEvent->setIngestionSourceFileName(lastImageSourceFileName);
+			localAssetIngestionEvent->setMMSSourceFileName(lastImageSourceFileName);
+			localAssetIngestionEvent->setWorkspace(_encodingItem->_workspace);
+			localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::AddContent);
+			localAssetIngestionEvent->setIngestionRowToBeUpdatedAsSuccess(true);
+			// localAssetIngestionEvent->setForcedAvgFrameRate(to_string(outputFrameRate) + "/1");
+
+			localAssetIngestionEvent->setMetadataContent(mediaMetaDataContent);
+
+			shared_ptr<Event2>    event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
+			_multiEventsSet->addEvent(event);
+
+			_logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", sourceFileName: " + lastImageSourceFileName
+				+ ", getEventKey().first: " + to_string(event->getEventKey().first)
+				+ ", getEventKey().second: " + to_string(event->getEventKey().second));
+		}
+		else
+		{
+			// no faces were met, let's update ingestion status
+			MMSEngineDBFacade::IngestionStatus newIngestionStatus = MMSEngineDBFacade::IngestionStatus::End_TaskSuccess;                        
+
+			string errorMessage;
+			string processorMMS;
+			_logger->info(__FILEREF__ + "Update IngestionJob"                                             
+				+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)                                      
+				+ ", IngestionStatus: " + MMSEngineDBFacade::toString(newIngestionStatus)
+				+ ", errorMessage: " + errorMessage
+				+ ", processorMMS: " + processorMMS
+			);                                                                                            
+			_mmsEngineDBFacade->updateIngestionJob (_encodingItem->_ingestionJobKey,
+					newIngestionStatus, errorMessage, processorMMS);
+		}
 	}
 
 	capture.release();
@@ -4697,7 +4897,7 @@ string EncoderVideoAudioProxy::faceRecognition()
             + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
-			+ ", cascadeName: " + cascadeName
+			+ ", cascadeName: " + faceRecognitionCascadeName
 			+ ", sourcePhysicalPath: " + sourcePhysicalPath
             + ", faceRecognitionMediaPathName: " + faceRecognitionMediaPathName
 	);
@@ -4711,6 +4911,22 @@ void EncoderVideoAudioProxy::processFaceRecognition(string stagingEncodedAssetPa
 {
     try
     {
+		string faceRecognitionOutput;
+		{
+			// VideoWithHighlightedFaces or ImagesToBeUsedInDeepLearnedModel
+			string field = "faceRecognitionOutput";
+			faceRecognitionOutput = _encodingItem->_parametersRoot.get(field, 0).asString();
+		}
+    
+		if (faceRecognitionOutput == "ImagesToBeUsedInDeepLearnedModel")
+		{
+			// nothing to do, all the faces (images) were already ingested
+
+			return;
+		}
+
+		// faceRecognitionOutput is "VideoWithHighlightedFaces"
+
         size_t extensionIndex = stagingEncodedAssetPathName.find_last_of(".");
         if (extensionIndex == string::npos)
         {
@@ -4798,6 +5014,497 @@ void EncoderVideoAudioProxy::processFaceRecognition(string stagingEncodedAssetPa
 }
 
 
+string EncoderVideoAudioProxy::faceIdentification()
+{
+	// build the deep learned model
+	vector<cv::Mat> images;
+	vector<int> idImages;
+	unordered_map<int, string> idTagMap;
+	{
+		vector<string> deepLearnedModelTags;
+
+		string field = "deepLearnedModelTags";
+		Json::Value deepLearnedModelTagsRoot = _encodingItem->_parametersRoot[field];
+		for (int deepLearnedModelTagsIndex = 0; deepLearnedModelTagsIndex < deepLearnedModelTagsRoot.size();
+				deepLearnedModelTagsIndex++)
+		{
+			deepLearnedModelTags.push_back(deepLearnedModelTagsRoot[deepLearnedModelTagsIndex].asString());
+		}
+
+		int64_t mediaItemKey = -1;
+		int64_t physicalPathKey = -1;
+		bool contentTypePresent = true;
+		MMSEngineDBFacade::ContentType contentType = MMSEngineDBFacade::ContentType::Image;
+		bool startAndEndIngestionDatePresent = false;
+		string startIngestionDate;
+		string endIngestionDate;
+		string title;
+		string ingestionDateOrder;
+		bool admin = true;
+
+		int start = 0;
+		int rows = 200;
+		int totalImagesNumber = -1;
+		bool imagesFinished = false;
+
+		int idImageCounter = 0;
+		unordered_map<string, int> tagIdMap;
+
+		while(imagesFinished)
+		{
+			Json::Value mediaItemsListRoot = _mmsEngineDBFacade->getMediaItemsList(
+					_encodingItem->_workspace->_workspaceKey, mediaItemKey, physicalPathKey,
+					start, rows, contentTypePresent, contentType,
+					startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
+					title, deepLearnedModelTags, ingestionDateOrder, admin);
+
+			field = "response";
+			Json::Value responseRoot = mediaItemsListRoot[field];
+
+			if (totalImagesNumber == -1)
+			{
+				field = "numFound";
+				totalImagesNumber = responseRoot.get(field, 0).asInt();
+			}
+			
+			field = "mediaItems";
+			Json::Value mediaItemsArrayRoot = responseRoot[field];
+			if (mediaItemsArrayRoot.size() < rows)
+				imagesFinished = true;
+			else
+				start += rows;
+
+			for (int imageIndex = 0; imageIndex < mediaItemsArrayRoot.size(); imageIndex++)
+			{
+				Json::Value mediaItemRoot = mediaItemsArrayRoot[imageIndex];
+
+				int currentIdImage;
+				unordered_map<string, int>::iterator tagIdIterator;
+
+				field = "tags";
+				string tags = mediaItemRoot.get(field, 0).asString();
+
+				tagIdIterator = tagIdMap.find(tags);
+				if (tagIdIterator == tagIdMap.end())
+				{
+					currentIdImage = idImageCounter++;
+					tagIdMap.insert(make_pair(tags, currentIdImage));
+				}
+				else
+					currentIdImage = (*tagIdIterator).second;
+
+				{
+					unordered_map<int, string>::iterator idTagIterator;
+
+				   	idTagIterator = idTagMap.find(currentIdImage);
+					if (idTagIterator == idTagMap.end())
+						idTagMap.insert(make_pair(currentIdImage, tags));
+				}
+
+				field = "physicalPaths";
+				Json::Value physicalPathsArrayRoot = mediaItemRoot[field];
+				if (physicalPathsArrayRoot.size() > 0)
+				{
+					Json::Value physicalPathRoot = physicalPathsArrayRoot[0];
+
+					field = "partitionNumber";
+					int partitionNumber = physicalPathRoot.get(field, 0).asInt();
+
+					field = "relativePath";
+					string relativePath = physicalPathRoot.get(field, 0).asString();
+
+					field = "fileName";
+					string fileName = physicalPathRoot.get(field, 0).asString();
+
+					_logger->info(__FILEREF__ + "getMMSAssetPathName ..."
+						+ ", partitionNumber: " + to_string(partitionNumber)
+						+ ", workspaceDirectoryName: " + _encodingItem->_workspace->_directoryName
+						+ ", relativePath: " + relativePath
+						+ ", fileName: " + fileName
+					);
+					string mmsImagePathName = _mmsStorage->getMMSAssetPathName(
+						partitionNumber,
+						_encodingItem->_workspace->_directoryName,
+						relativePath,
+						fileName);
+
+					images.push_back(cv::imread(mmsImagePathName, 0));
+					idImages.push_back(currentIdImage);
+				}
+			}
+		}
+	}
+
+	string faceIdentificationCascadeName;
+	string sourcePhysicalPath;
+	{
+		string field = "faceIdentificationCascadeName";
+		faceIdentificationCascadeName = _encodingItem->_parametersRoot.get(field, 0).asString();
+
+		field = "sourcePhysicalPath";
+		sourcePhysicalPath = _encodingItem->_parametersRoot.get(field, 0).asString();
+	}
+    
+	string cascadePathName = _computerVisionCascadePath + "/"
+		+ faceIdentificationCascadeName + ".xml";
+
+	cv::CascadeClassifier cascade;
+	if (!cascade.load(cascadePathName))
+	{
+		string errorMessage = __FILEREF__ + "CascadeName could not be loaded"
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+			+ ", cascadePathName: " + cascadePathName;
+		_logger->error(errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+
+	// The following lines create an LBPH model for
+	// face recognition and train it with the images and
+	// labels.
+	//
+	// The LBPHFaceRecognizer uses Extended Local Binary Patterns
+	// (it's probably configurable with other operators at a later
+	// point), and has the following default values
+	//
+	//      radius = 1
+	//      neighbors = 8
+	//      grid_x = 8
+	//      grid_y = 8
+	//
+	// So if you want a LBPH FaceRecognizer using a radius of
+	// 2 and 16 neighbors, call the factory method with:
+	//
+	//      cv::face::LBPHFaceRecognizer::create(2, 16);
+	//
+	// And if you want a threshold (e.g. 123.0) call it with its default values:
+	//
+	//      cv::face::LBPHFaceRecognizer::create(1,8,8,8,123.0)
+	//
+	cv::Ptr<cv::face::LBPHFaceRecognizer> recognizerModel = cv::face::LBPHFaceRecognizer::create();
+	recognizerModel->train(images, idImages);
+
+	cv::VideoCapture capture(sourcePhysicalPath);
+	if (!capture.isOpened())
+	{
+		string errorMessage = __FILEREF__ + "Capture could not be opened"
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+			+ ", sourcePhysicalPath: " + sourcePhysicalPath;
+		_logger->error(errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+
+	string faceIdentificationMediaPathName;
+	string fileFormat;
+	{
+		string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
+			_encodingItem->_workspace);
+
+		{
+			// opencv does not have issues with avi and mov (it seems has issues with mp4)
+			fileFormat = "avi";
+
+			faceIdentificationMediaPathName = 
+				workspaceIngestionRepository + "/" 
+				+ to_string(_encodingItem->_ingestionJobKey)
+				+ "." + fileFormat
+			;
+		}
+	}
+
+	_logger->info(__FILEREF__ + "faceIdentification started"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+			+ ", cascadeName: " + faceIdentificationCascadeName
+			+ ", sourcePhysicalPath: " + sourcePhysicalPath
+            + ", faceIdentificationMediaPathName: " + faceIdentificationMediaPathName
+	);
+
+	cv::VideoWriter writer;
+	long totalFramesNumber;
+	{
+		totalFramesNumber = (long) capture.get(cv::CAP_PROP_FRAME_COUNT);
+		double fps = capture.get(cv::CAP_PROP_FPS);
+		cv::Size size(
+			(int) capture.get(cv::CAP_PROP_FRAME_WIDTH),
+			(int) capture.get(cv::CAP_PROP_FRAME_HEIGHT)
+		);
+
+		{
+			writer.open(faceIdentificationMediaPathName,
+				cv::VideoWriter::fourcc('X', '2', '6', '4'), fps, size);
+		}
+	}
+
+	_logger->info(__FILEREF__ + "generating Face Identification"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+			+ ", cascadeName: " + faceIdentificationCascadeName
+			+ ", sourcePhysicalPath: " + sourcePhysicalPath
+            + ", faceIdentificationMediaPathName: " + faceIdentificationMediaPathName
+	);
+
+	cv::Mat bgrFrame;
+	cv::Mat grayFrame;
+	cv::Mat smallFrame;
+
+	long currentFrameIndex = 0;
+	while(true)
+	{
+		capture >> bgrFrame;
+		if (bgrFrame.empty())
+			break;
+
+		if (currentFrameIndex % 100 == 0)
+		{
+			_logger->info(__FILEREF__ + "generating Face Recognition"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", cascadeName: " + faceIdentificationCascadeName
+				+ ", sourcePhysicalPath: " + sourcePhysicalPath
+				+ ", faceIdentificationMediaPathName: " + faceIdentificationMediaPathName
+				+ ", currentFrameIndex: " + to_string(currentFrameIndex)
+				+ ", totalFramesNumber: " + to_string(totalFramesNumber)
+			);
+		}
+
+		{
+			/*
+			double progress = (currentFrameIndex / totalFramesNumber) * 100;
+			// this is to have one decimal in the percentage
+			double faceRecognitionPercentage = ((double) ((int) (progress * 10))) / 10;
+			*/
+			_localEncodingProgress = 100 * currentFrameIndex / totalFramesNumber;
+		}
+		currentFrameIndex++;
+
+		cv::cvtColor(bgrFrame, grayFrame, cv::COLOR_BGR2GRAY);
+		double xAndYScaleFactor = 1 / _computerVisionDefaultScale;
+		cv::resize(grayFrame, smallFrame, cv::Size(), xAndYScaleFactor, xAndYScaleFactor,
+				cv::INTER_LINEAR_EXACT);
+		cv::equalizeHist(smallFrame, smallFrame);
+
+		vector<cv::Rect> faces;
+		cascade.detectMultiScale(
+			smallFrame,
+			faces,
+			_computerVisionDefaultScale,
+			_computerVisionDefaultMinNeighbors,
+			0 | cv::CASCADE_SCALE_IMAGE,
+			cv::Size(30,30)
+		);
+
+		if (_computerVisionDefaultTryFlip)
+		{
+			// 1: flip (mirror) horizontally
+			cv::flip(smallFrame, smallFrame, 1);
+			vector<cv::Rect> faces2;
+			cascade.detectMultiScale(
+				smallFrame,
+				faces2,
+				_computerVisionDefaultScale,
+				_computerVisionDefaultMinNeighbors,
+				0 | cv::CASCADE_SCALE_IMAGE,
+				cv::Size(30,30)
+			);
+			for (vector<cv::Rect>::const_iterator r = faces2.begin(); r != faces2.end(); ++r)
+				faces.push_back(cv::Rect(
+					smallFrame.cols - r->x - r->width,
+					r->y,
+					r->width,
+					r->height
+				));
+		}
+
+		for (size_t i = 0; i < faces.size(); i++)
+		{
+			cv::Rect roiRectScaled = faces[i];
+
+			// Crop the full image to that image contained by the rectangle myROI
+			// Note that this doesn't copy the data
+			cv::Rect roiRect(
+					roiRectScaled.x * _computerVisionDefaultScale,
+					roiRectScaled.y * _computerVisionDefaultScale,
+					roiRectScaled.width * _computerVisionDefaultScale,
+					roiRectScaled.height * _computerVisionDefaultScale
+			);
+			cv::Mat grayFrameCropped(grayFrame, roiRect);
+
+			// int predictedLabel = recognizerModel->predict(grayFrameCropped);
+			// To get the confidence of a prediction call the model with:
+			int predictedIdImage = -1;
+			double confidence = 0.0;
+			recognizerModel->predict(grayFrameCropped, predictedIdImage, confidence);
+
+			string predictedTags;
+			{
+				unordered_map<int, string>::iterator idTagIterator;
+
+			   	idTagIterator = idTagMap.find(predictedIdImage);
+				if (idTagIterator != idTagMap.end())
+					predictedTags = (*idTagIterator).second;
+			}
+
+			{
+				cv::Scalar color = cv::Scalar(255,0,0);
+				double aspectRatio = (double) roiRectScaled.width / roiRectScaled.height;
+				int thickness = 3;
+				int lineType = 8;
+				int shift = 0;
+				if (0.75 < aspectRatio && aspectRatio < 1.3)
+				{
+					cv::Point center;
+					int radius;
+
+					center.x = cvRound((roiRectScaled.x + roiRectScaled.width*0.5)
+							*_computerVisionDefaultScale);
+					center.y = cvRound((roiRectScaled.y + roiRectScaled.height*0.5)
+							*_computerVisionDefaultScale);
+					radius = cvRound((roiRectScaled.width + roiRectScaled.height)*0.25
+							*_computerVisionDefaultScale);
+					cv::circle(bgrFrame, center, radius, color, thickness, lineType, shift);
+				}
+				else
+				{
+					cv::rectangle(bgrFrame,
+						cv::Point(cvRound(roiRectScaled.x*_computerVisionDefaultScale),
+							cvRound(roiRectScaled.y*_computerVisionDefaultScale)),
+						cv::Point(cvRound((roiRectScaled.x + roiRectScaled.width-1)
+								*_computerVisionDefaultScale),
+							cvRound((roiRectScaled.y + roiRectScaled.height-1)
+								*_computerVisionDefaultScale)),
+						color, thickness, lineType, shift);
+				}
+
+				double fontScale = 2;
+				cv::putText(
+						bgrFrame,
+					   	predictedTags,
+						cv::Point(cvRound(roiRectScaled.x*_computerVisionDefaultScale),
+							cvRound(roiRectScaled.y*_computerVisionDefaultScale)),
+					   	cv::FONT_HERSHEY_PLAIN,
+					   	fontScale,
+						color,
+						thickness);
+			}
+		}
+
+		writer << bgrFrame;
+	}
+
+	capture.release();
+
+	_logger->info(__FILEREF__ + "faceIdentification media done"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+			+ ", cascadeName: " + faceIdentificationCascadeName
+			+ ", sourcePhysicalPath: " + sourcePhysicalPath
+            + ", faceIdentificationMediaPathName: " + faceIdentificationMediaPathName
+	);
+
+
+	return faceIdentificationMediaPathName;
+}
+
+
+void EncoderVideoAudioProxy::processFaceIdentification(string stagingEncodedAssetPathName)
+{
+    try
+    {
+        size_t extensionIndex = stagingEncodedAssetPathName.find_last_of(".");
+        if (extensionIndex == string::npos)
+        {
+            string errorMessage = __FILEREF__ + "No extention find in the asset file name"
+                    + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        string fileFormat = stagingEncodedAssetPathName.substr(extensionIndex + 1);
+
+        size_t fileNameIndex = stagingEncodedAssetPathName.find_last_of("/");
+        if (fileNameIndex == string::npos)
+        {
+            string errorMessage = __FILEREF__ + "No fileName find in the asset path name"
+                    + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        string sourceFileName = stagingEncodedAssetPathName.substr(fileNameIndex + 1);
+
+
+        string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
+            fileFormat, _encodingItem->_faceIdentificationData->_faceIdentificationParametersRoot);
+    
+        shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent =
+			_multiEventsSet->getEventsFactory() ->getFreeEvent<LocalAssetIngestionEvent>(
+						MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
+
+        localAssetIngestionEvent->setSource(ENCODERVIDEOAUDIOPROXY);
+        localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
+        localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
+
+        localAssetIngestionEvent->setIngestionJobKey(_encodingItem->_ingestionJobKey);
+        localAssetIngestionEvent->setIngestionSourceFileName(sourceFileName);
+        localAssetIngestionEvent->setMMSSourceFileName(sourceFileName);
+        localAssetIngestionEvent->setWorkspace(_encodingItem->_workspace);
+        localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::AddContent);
+        localAssetIngestionEvent->setIngestionRowToBeUpdatedAsSuccess(true);
+        // localAssetIngestionEvent->setForcedAvgFrameRate(to_string(outputFrameRate) + "/1");
+
+        localAssetIngestionEvent->setMetadataContent(mediaMetaDataContent);
+
+        shared_ptr<Event2>    event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
+        _multiEventsSet->addEvent(event);
+
+        _logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", sourceFileName: " + sourceFileName
+            + ", getEventKey().first: " + to_string(event->getEventKey().first)
+            + ", getEventKey().second: " + to_string(event->getEventKey().second));
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "processFaceIdentification failed"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+            + ", e.what(): " + e.what()
+        );
+                
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "processFaceIdentification failed"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            + ", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+        );
+                
+        throw e;
+    }
+}
+
+
 int EncoderVideoAudioProxy::getEncodingProgress()
 {
     int encodingProgress = 0;
@@ -4826,7 +5533,8 @@ int EncoderVideoAudioProxy::getEncodingProgress()
             throw e;
         }
     #else
-		if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceRecognition)
+		if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceRecognition
+				|| _encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceIdentification)
 		{
 			_logger->info(__FILEREF__ + "encodingProgress"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -4877,7 +5585,7 @@ int EncoderVideoAudioProxy::getEncodingProgress()
 
 				// Setting the URL to retrive.
 				request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
-            if (_ffmpegEncoderProtocol == "https")
+				if (_ffmpegEncoderProtocol == "https")
 				{
 					/*
                     typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            

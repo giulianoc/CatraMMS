@@ -21,7 +21,7 @@ public class Task implements Serializable
     // type: "Add-Content"
     private String sourceDownloadType;  // pull or push
     private String pullSourceURL;
-    private String pushBinaryPathName;
+    private String pushBinaryFileName;
     private String fileFormat;
     private String userData;
     private String retention;
@@ -88,6 +88,8 @@ public class Task implements Serializable
     private Long postOnYouTubeCategoryId;
     private String postOnYouTubePrivacy;
     private String faceRecognitionCascadeName;
+    private String faceRecognitionOutput;
+    private String faceIdentificationDeepLearnedModelTags;
 
     private boolean childTaskCreated;
     private boolean childEventOnSuccessCreated;
@@ -135,12 +137,12 @@ public class Task implements Serializable
         this.pullSourceURL = pullSourceURL;
     }
 
-    public String getPushBinaryPathName() {
-        return pushBinaryPathName;
+    public String getPushBinaryFileName() {
+        return pushBinaryFileName;
     }
 
-    public void setPushBinaryPathName(String pushBinaryPathName) {
-        this.pushBinaryPathName = pushBinaryPathName;
+    public void setPushBinaryFileName(String pushBinaryFileName) {
+        this.pushBinaryFileName = pushBinaryFileName;
     }
 
     public String getUserData() {
@@ -717,5 +719,21 @@ public class Task implements Serializable
 
     public void setFaceRecognitionCascadeName(String faceRecognitionCascadeName) {
         this.faceRecognitionCascadeName = faceRecognitionCascadeName;
+    }
+
+    public String getFaceRecognitionOutput() {
+        return faceRecognitionOutput;
+    }
+
+    public void setFaceRecognitionOutput(String faceRecognitionOutput) {
+        this.faceRecognitionOutput = faceRecognitionOutput;
+    }
+
+    public String getFaceIdentificationDeepLearnedModelTags() {
+        return faceIdentificationDeepLearnedModelTags;
+    }
+
+    public void setFaceIdentificationDeepLearnedModelTags(String faceIdentificationDeepLearnedModelTags) {
+        this.faceIdentificationDeepLearnedModelTags = faceIdentificationDeepLearnedModelTags;
     }
 }

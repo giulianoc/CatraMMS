@@ -25,8 +25,11 @@
 		//		haarcascade_frontalface_alt_tree or haarcascade_frontalface_default
 		"CascadeName": "haarcascade_frontalface_alt",
 
-		// mandatory. It could be VideoWithHighlightedFaces or ImagesToBeUsedInDeepLearnedModel
-		"Output": "VideoWithHighlightedFaces",
+		// mandatory. It is a list of tags to select all the images that will be used to train
+		//	the deep learned model to identify the faces
+		"DeepLearnedModelTags": [
+			"GIULIANO"
+		],
 
 		// optional: it might contain any kind of user data (json format).
 		// The platform stores them and returns this data to the Customer 
