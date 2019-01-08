@@ -203,6 +203,16 @@
                            showEffect="clip" hideEffect="explode" position="left"/>
             </p:column>
 
+            <p:column style="width:200px;" headerText="Tags" >
+                <p:outputLabel
+                        id="mediaItemTags"
+                        value="#{mediaItem.tags}"
+                        title="#{mediaItem.tags}"
+                />
+                <p:tooltip for="mediaItemTags"
+                           showEffect="clip" hideEffect="explode" position="left"/>
+            </p:column>
+
             <!--
             <p:column style="width:160px;" headerText="Start Publishing" >
                 <p:outputLabel id="startPublishing" value="#{mediaItem.startPublishing}">

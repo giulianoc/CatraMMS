@@ -5025,10 +5025,12 @@ string EncoderVideoAudioProxy::faceIdentification()
 
 		string field = "deepLearnedModelTags";
 		Json::Value deepLearnedModelTagsRoot = _encodingItem->_parametersRoot[field];
-		for (int deepLearnedModelTagsIndex = 0; deepLearnedModelTagsIndex < deepLearnedModelTagsRoot.size();
+		for (int deepLearnedModelTagsIndex = 0;
+				deepLearnedModelTagsIndex < deepLearnedModelTagsRoot.size();
 				deepLearnedModelTagsIndex++)
 		{
-			deepLearnedModelTags.push_back(deepLearnedModelTagsRoot[deepLearnedModelTagsIndex].asString());
+			deepLearnedModelTags.push_back(
+					deepLearnedModelTagsRoot[deepLearnedModelTagsIndex].asString());
 		}
 
 		int64_t mediaItemKey = -1;
@@ -5050,7 +5052,7 @@ string EncoderVideoAudioProxy::faceIdentification()
 		int idImageCounter = 0;
 		unordered_map<string, int> tagIdMap;
 
-		while(imagesFinished)
+		while(!imagesFinished)
 		{
 			Json::Value mediaItemsListRoot = _mmsEngineDBFacade->getMediaItemsList(
 					_encodingItem->_workspace->_workspaceKey, mediaItemKey, physicalPathKey,
@@ -5074,6 +5076,13 @@ string EncoderVideoAudioProxy::faceIdentification()
 			else
 				start += rows;
 
+			_logger->info(__FILEREF__ + "Called getMediaItemsList"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", mediaItemsArrayRoot.size(): " + to_string(mediaItemsArrayRoot.size())
+			);
+
 			for (int imageIndex = 0; imageIndex < mediaItemsArrayRoot.size(); imageIndex++)
 			{
 				Json::Value mediaItemRoot = mediaItemsArrayRoot[imageIndex];
@@ -5083,6 +5092,10 @@ string EncoderVideoAudioProxy::faceIdentification()
 
 				field = "tags";
 				string tags = mediaItemRoot.get(field, 0).asString();
+				if (tags.front() == ',')
+					tags = tags.substr(1);
+				if (tags.back() == ',')
+					tags.pop_back();
 
 				tagIdIterator = tagIdMap.find(tags);
 				if (tagIdIterator == tagIdMap.end())
@@ -5116,12 +5129,6 @@ string EncoderVideoAudioProxy::faceIdentification()
 					field = "fileName";
 					string fileName = physicalPathRoot.get(field, 0).asString();
 
-					_logger->info(__FILEREF__ + "getMMSAssetPathName ..."
-						+ ", partitionNumber: " + to_string(partitionNumber)
-						+ ", workspaceDirectoryName: " + _encodingItem->_workspace->_directoryName
-						+ ", relativePath: " + relativePath
-						+ ", fileName: " + fileName
-					);
 					string mmsImagePathName = _mmsStorage->getMMSAssetPathName(
 						partitionNumber,
 						_encodingItem->_workspace->_directoryName,
@@ -5133,6 +5140,23 @@ string EncoderVideoAudioProxy::faceIdentification()
 				}
 			}
 		}
+	}
+
+	_logger->info(__FILEREF__ + "Deep learned model built"
+		+ ", images.size: " + to_string(images.size())
+		+ ", idImages.size: " + to_string(idImages.size())
+		+ ", idTagMap.size: " + to_string(idTagMap.size())
+	);
+
+	if (images.size() == 0)
+	{
+		string errorMessage = __FILEREF__
+			+ "The Deep Learned Model is empty, no deepLearnedModelTags found"
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+		;
+		_logger->error(errorMessage);
+
+		throw runtime_error(errorMessage);
 	}
 
 	string faceIdentificationCascadeName;
@@ -5336,19 +5360,30 @@ string EncoderVideoAudioProxy::faceIdentification()
 			);
 			cv::Mat grayFrameCropped(grayFrame, roiRect);
 
-			// int predictedLabel = recognizerModel->predict(grayFrameCropped);
-			// To get the confidence of a prediction call the model with:
-			int predictedIdImage = -1;
-			double confidence = 0.0;
-			recognizerModel->predict(grayFrameCropped, predictedIdImage, confidence);
-
 			string predictedTags;
 			{
-				unordered_map<int, string>::iterator idTagIterator;
+				// int predictedLabel = recognizerModel->predict(grayFrameCropped);
+				// To get the confidence of a prediction call the model with:
+				int predictedIdImage = -1;
+				double confidence = 0.0;
+				recognizerModel->predict(grayFrameCropped, predictedIdImage, confidence);
 
-			   	idTagIterator = idTagMap.find(predictedIdImage);
-				if (idTagIterator != idTagMap.end())
-					predictedTags = (*idTagIterator).second;
+				{
+					unordered_map<int, string>::iterator idTagIterator;
+
+					idTagIterator = idTagMap.find(predictedIdImage);
+					if (idTagIterator != idTagMap.end())
+						predictedTags = (*idTagIterator).second;
+				}
+
+				_logger->info(__FILEREF__ + "recognizerModel->predict"
+					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", predictedIdImage: " + to_string(predictedIdImage)
+					+ ", confidence: " + to_string(confidence)
+					+ ", predictedTags: " + predictedTags
+				);
 			}
 
 			{

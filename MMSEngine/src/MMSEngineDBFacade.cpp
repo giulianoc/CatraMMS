@@ -7248,7 +7248,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
         bool contentTypePresent, ContentType contentType,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
         string title,
-		vector<string> tags,
+		vector<string>& tags,
         string ingestionDateOrder,   // "" or "asc" or "desc"
 		bool admin
 )
@@ -7375,7 +7375,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 				if (tagsCondition == "")
 					tagsCondition = ("tags like ? ");
 				else
-					tagsCondition = ("or tags like ? ");
+					tagsCondition.append("or tags like ? ");
 			}
 
             sqlWhere += ("and (" + tagsCondition + ") ");
@@ -7404,7 +7404,17 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 			if (tags.size() > 0)
 			{
 				for (int tagIndex = 0; tagIndex < tags.size(); tagIndex++)
-					preparedStatement->setString(queryParameterIndex++, string("%") + tags[tagIndex] + "%");
+				{
+					string tag = tags[tagIndex];
+
+					if (tag.front() != ',')
+						tag.insert(0, ",");
+					if (tag.back() != ',')
+						tag.append(",");
+
+					preparedStatement->setString(queryParameterIndex++,
+							string("%") + tag + "%");
+				}
 			}
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
@@ -7467,7 +7477,16 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 			if (tags.size() > 0)
 			{
 				for (int tagIndex = 0; tagIndex < tags.size(); tagIndex++)
-					preparedStatement->setString(queryParameterIndex++, string("%") + tags[tagIndex] + "%");
+				{
+					string tag = tags[tagIndex];
+
+					if (tag.front() != ',')
+						tag.insert(0, ",");
+					if (tag.back() != ',')
+						tag.append(",");
+
+					preparedStatement->setString(queryParameterIndex++, string("%") + tag + "%");
+				}
 			}
             preparedStatement->setInt(queryParameterIndex++, rows);
             preparedStatement->setInt(queryParameterIndex++, start);

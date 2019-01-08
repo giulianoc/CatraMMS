@@ -911,7 +911,7 @@ public:
         int start, int rows,
         bool contentTypePresent, ContentType contentType,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
-        string title, vector<string> tags,
+        string title, vector<string>& tags,
 		string ingestionDateOrder, bool admin);
 
     Json::Value getEncodingProfilesSetList (
