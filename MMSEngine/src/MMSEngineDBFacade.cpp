@@ -15301,7 +15301,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
 
 	// tags
         {
-		field = "Tags";
+		string field = "Tags";
 		if (isMetadataPresent(parametersRoot, field))
 		{
 			for (int tagIndex = 0; tagIndex < parametersRoot[field].size(); tagIndex++)
@@ -15315,7 +15315,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                			shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                			int queryParameterIndex = 1;
                			preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
-               			preparedStatement->setString(queryParameterIndex++, name);
+               			preparedStatement->setString(queryParameterIndex++, tag);
 
                			preparedStatement->executeUpdate();
 			}
