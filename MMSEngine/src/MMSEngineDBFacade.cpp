@@ -7592,7 +7592,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                     shared_ptr<sql::ResultSet> resultSetTags (preparedStatementTags->executeQuery());
                     while (resultSetTags->next())
                     {
-                        mediaItemTagsRoot.append(resultSetTags->getString("name"));
+                        mediaItemTagsRoot.append(static_cast<string>(resultSetTags->getString("name")));
                     }
                     
                     field = "tags";
