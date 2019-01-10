@@ -15300,22 +15300,25 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
         int64_t mediaItemKey = getLastInsertId(conn);
 
 	// tags
-	if (tags.size() > 0)
         {
-		for (int tagIndex = 0; tagIndex < tags.size(); tagIndex++)
+		field = "Tags";
+		if (isMetadataPresent(parametersRoot, field))
 		{
-			string tag = tags[tagIndex];
+			for (int tagIndex = 0; tagIndex < parametersRoot[field].size(); tagIndex++)
+			{
+				string tag = parametersRoot[field][tagIndex].asString();
 
-               		lastSQLCommand = 
-                    		"insert into MMS_Tag (mediaItemKey, name) values ("
-                    		"?, ?)";
+               			lastSQLCommand = 
+                    			"insert into MMS_Tag (mediaItemKey, name) values ("
+                    			"?, ?)";
 
-               		shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-               		int queryParameterIndex = 1;
-               		preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
-               		preparedStatement->setString(queryParameterIndex++, name);
+               			shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+               			int queryParameterIndex = 1;
+               			preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+               			preparedStatement->setString(queryParameterIndex++, name);
 
-               		preparedStatement->executeUpdate();
+               			preparedStatement->executeUpdate();
+			}
 		}
         }
 

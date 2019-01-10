@@ -598,7 +598,15 @@ public class NewWorkflow extends Workspace implements Serializable {
                 if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
                     joParameters.put("Ingester", task.getIngester());
                 if (task.getTags() != null && !task.getTags().equalsIgnoreCase(""))
-                    joParameters.put("Tags", task.getTags());
+                {
+                    JSONArray jsonTagsArray = new JSONArray();
+                    joParameters.put("Tags", jsonTagsArray);
+
+                    for (String tag: task.getTags().split(","))
+                    {
+                        jsonTagsArray.put(tag);
+                    }
+                }
                 if (task.getMd5FileCheckSum() != null && !task.getMd5FileCheckSum().equalsIgnoreCase(""))
                     joParameters.put("MD5FileChecksum", task.getMd5FileCheckSum());
                 if (task.getFileSizeInBytes() != null)
