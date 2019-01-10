@@ -90,21 +90,23 @@
                         update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
                         actionListener="#{newWorkflow.addTask('FTP-Delivery')}"
                     />
-            <p:menuitem value="Post on Facebook"
-                        icon="fa fa-upload"
-                        update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
-                        actionListener="#{newWorkflow.addTask('Post-On-Facebook')}"
-            />
-            <p:menuitem value="Post on YouTube"
-                        icon="fa fa-upload"
-                        update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
-                        actionListener="#{newWorkflow.addTask('Post-On-YouTube')}"
-            />
             <p:menuitem value="Local-Copy"
                         icon="fa fa-copy"
                         update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
                         actionListener="#{newWorkflow.addTask('Local-Copy')}"
             />
+        </p:submenu>
+        <p:submenu label="Social Network Delivery">
+            <p:menuitem value="Post on Facebook"
+                        icon="fa fa-upload"
+                        update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                        actionListener="#{newWorkflow.addTask('Post-On-Facebook')}"
+                    />
+            <p:menuitem value="Post on YouTube"
+                        icon="fa fa-upload"
+                        update="workflowTree,ingestWorkflowButton,workflowIssuesWarning,taskDetailProperties,jsonWorkflowForm:jsonWorkflow"
+                        actionListener="#{newWorkflow.addTask('Post-On-YouTube')}"
+                    />
         </p:submenu>
         <p:submenu label="Communication">
             <p:menuitem value="Email-Notification"

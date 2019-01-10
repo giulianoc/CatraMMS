@@ -218,6 +218,7 @@ public class NewWorkflow extends Workspace implements Serializable {
         {
             taskFileFormatsList.clear();
             taskFileFormatsList.add("mp4");
+            taskFileFormatsList.add("mov");
             taskFileFormatsList.add("ts");
             taskFileFormatsList.add("wmv");
             taskFileFormatsList.add("mpeg");
@@ -3935,7 +3936,15 @@ public class NewWorkflow extends Workspace implements Serializable {
 
     public String getVideoAudioAllowTypes()
     {
-        String fileExtension = "wmv|mp4|ts|mpeg|avi|webm|mp3|aac|png|jpg";
+        String fileExtension = "";   // = "wmv|mp4|ts|mpeg|avi|webm|mp3|aac|png|jpg";
+
+        for (String fileFormat: taskFileFormatsList)
+        {
+            if (fileExtension.isEmpty())
+                fileExtension = fileFormat;
+            else
+                fileExtension += ("|" + fileFormat);
+        }
 
         return ("/(\\.|\\/)(" + fileExtension + ")$/");
     }

@@ -7252,7 +7252,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
         string ingestionDateOrder,   // "" or "asc" or "desc"
 		bool admin
 )
-{    
+{
     string      lastSQLCommand;
     Json::Value mediaItemsListRoot;
     
@@ -7357,15 +7357,19 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
             }
         }
         
-        string sqlWhere = string ("where workspaceKey = ? ");
+        string sqlWhere;
+	if (tags.size() > 0)
+		sqlWhere = string ("where mi.mediaItemKey = t.mediaItemKey and mi.workspaceKey = ? ");
+	else
+		sqlWhere = string ("where mi.workspaceKey = ? ");
         if (newMediaItemKey != -1)
-            sqlWhere += ("and mediaItemKey = ? ");
+            sqlWhere += ("and mi.mediaItemKey = ? ");
         if (contentTypePresent)
-            sqlWhere += ("and contentType = ? ");
+            sqlWhere += ("and mi.contentType = ? ");
         if (startAndEndIngestionDatePresent)
-            sqlWhere += ("and ingestionDate >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) and ingestionDate <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
+            sqlWhere += ("and mi.ingestionDate >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) and mi.ingestionDate <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
         if (title != "")
-            sqlWhere += ("and title like ? ");
+            sqlWhere += ("and mi.title like ? ");
 		if (tags.size() > 0)
 		{
 			string tagsCondition;
@@ -7378,14 +7382,23 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 					tagsCondition.append("or tags like ? ");
 			}
 
-            sqlWhere += ("and (" + tagsCondition + ") ");
+            sqlWhere += ("and t.name in (" + tagsCondition + ") ");
 		}
         
         Json::Value responseRoot;
         {
-            lastSQLCommand = 
-                string("select count(*) from MMS_MediaItem ")
-                    + sqlWhere;
+		if (tags.size() > 0)
+		{
+			lastSQLCommand = 
+				string("select count(*) from MMS_MediaItem mi, MMS_Tag t ")
+				+ sqlWhere;
+		}
+		else
+		{
+			lastSQLCommand = 
+				string("select count(*) from MMS_MediaItem mi ")
+				+ sqlWhere;
+		}
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -7407,13 +7420,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 				{
 					string tag = tags[tagIndex];
 
-					if (tag.front() != ',')
-						tag.insert(0, ",");
-					if (tag.back() != ',')
-						tag.append(",");
-
-					preparedStatement->setString(queryParameterIndex++,
-							string("%") + tag + "%");
+                			preparedStatement->setString(queryParameterIndex++, tag);
 				}
 			}
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
@@ -7450,15 +7457,30 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 
         Json::Value mediaItemsRoot(Json::arrayValue);
         {
-            lastSQLCommand = 
-                string("select mediaItemKey, title, deliveryFileName, ingester, tags, userData, contentProviderKey, "
-                    "DATE_FORMAT(convert_tz(ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate, "
-                    "DATE_FORMAT(convert_tz(startPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as startPublishing, "
-                    "DATE_FORMAT(convert_tz(endPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endPublishing, "
-                    "contentType, retentionInMinutes from MMS_MediaItem ")
-                    + sqlWhere
-                    + (ingestionDateOrder != "" ? ("order by ingestionDate " + ingestionDateOrder + " ") : "")
-                    + "limit ? offset ?";
+		if (tags.size() > 0)
+		{
+            		lastSQLCommand = 
+                		string("select mi.mediaItemKey, mi.title, mi.deliveryFileName, mi.ingester, mi.userData, mi.contentProviderKey, "
+                    			"DATE_FORMAT(convert_tz(mi.ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate, "
+                    			"DATE_FORMAT(convert_tz(mi.startPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as startPublishing, "
+                    			"DATE_FORMAT(convert_tz(mi.endPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endPublishing, "
+                    			"mi.contentType, mi.retentionInMinutes from MMS_MediaItem mi, MMS_Tag t ")
+                    			+ sqlWhere
+                    			+ (ingestionDateOrder != "" ? ("order by mi.ingestionDate " + ingestionDateOrder + " ") : "")
+                    			+ "limit ? offset ?";
+		}
+		else
+		{
+            		lastSQLCommand = 
+                		string("select mi.mediaItemKey, mi.title, mi.deliveryFileName, mi.ingester, mi.userData, mi.contentProviderKey, "
+                    			"DATE_FORMAT(convert_tz(mi.ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate, "
+                    			"DATE_FORMAT(convert_tz(mi.startPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as startPublishing, "
+                    			"DATE_FORMAT(convert_tz(mi.endPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endPublishing, "
+                    			"mi.contentType, mi.retentionInMinutes from MMS_MediaItem mi ")
+                    			+ sqlWhere
+                    			+ (ingestionDateOrder != "" ? ("order by mi.ingestionDate " + ingestionDateOrder + " ") : "")
+                    			+ "limit ? offset ?";
+		}
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -7480,12 +7502,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 				{
 					string tag = tags[tagIndex];
 
-					if (tag.front() != ',')
-						tag.insert(0, ",");
-					if (tag.back() != ',')
-						tag.append(",");
-
-					preparedStatement->setString(queryParameterIndex++, string("%") + tag + "%");
+					preparedStatement->setString(queryParameterIndex++, tag);
 				}
 			}
             preparedStatement->setInt(queryParameterIndex++, rows);
@@ -7514,12 +7531,6 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                     mediaItemRoot[field] = Json::nullValue;
                 else
                     mediaItemRoot[field] = static_cast<string>(resultSet->getString("ingester"));
-
-                field = "tags";
-                if (resultSet->isNull("tags"))
-                    mediaItemRoot[field] = Json::nullValue;
-                else
-                    mediaItemRoot[field] = static_cast<string>(resultSet->getString("tags"));
 
                 field = "userData";
                 if (resultSet->isNull("userData"))
@@ -7567,6 +7578,25 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 
                         throw runtime_error(errorMessage);
                     }
+                }
+
+                {
+                    Json::Value mediaItemTagsRoot(Json::arrayValue);
+                    
+                    lastSQLCommand = 
+                        "select name from from MMS_Tag where mediaItemKey = ?";
+
+                    shared_ptr<sql::PreparedStatement> preparedStatementTags (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                    int queryParameterIndex = 1;
+                    preparedStatementTags->setInt64(queryParameterIndex++, localMediaItemKey);
+                    shared_ptr<sql::ResultSet> resultSetTags (preparedStatementTags->executeQuery());
+                    while (resultSetTags->next())
+                    {
+                        mediaItemTagsRoot.append(resultSetTags->getString("name"));
+                    }
+                    
+                    field = "tags";
+                    mediaItemRoot[field] = mediaItemTagsRoot;
                 }
 
                 {
@@ -15110,7 +15140,6 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             string title = "";
             string ingester = "";
             string userData = "";
-            string tags = "";
             string deliveryFileName = "";
             string sContentType;
             int retentionInMinutes = _contentRetentionInMinutesDefaultValue;
@@ -15130,19 +15159,6 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
 
                 userData = Json::writeString(wbuilder, parametersRoot[field]);                        
             }
-
-            field = "Tags";
-            if (isMetadataPresent(parametersRoot, field))
-			{
-                tags = parametersRoot.get(field, "").asString();
-				if (tags != "")
-				{
-					if (tags.front() != ',')
-						tags.insert(0, ",");
-					if (tags.back() != ',')
-						tags.append(",");
-				}
-			}
 
             field = "DeliveryFileName";
             if (isMetadataPresent(parametersRoot, field))
@@ -15248,7 +15264,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             }
             
             lastSQLCommand = 
-                "insert into MMS_MediaItem (mediaItemKey, workspaceKey, contentProviderKey, title, ingester, tags, userData, " 
+                "insert into MMS_MediaItem (mediaItemKey, workspaceKey, contentProviderKey, title, ingester, userData, " 
                 "deliveryFileName, ingestionJobKey, ingestionDate, contentType, startPublishing, endPublishing, retentionInMinutes, processorMMS) values ("
                 "NULL, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, "
                 "convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone), "
@@ -15264,10 +15280,6 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
             else
                 preparedStatement->setString(queryParameterIndex++, ingester);
-            if (tags == "")
-                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-            else
-                preparedStatement->setString(queryParameterIndex++, tags);
             if (userData == "")
                 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
             else
@@ -15286,6 +15298,26 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
         }
         
         int64_t mediaItemKey = getLastInsertId(conn);
+
+	// tags
+	if (tags.size() > 0)
+        {
+		for (int tagIndex = 0; tagIndex < tags.size(); tagIndex++)
+		{
+			string tag = tags[tagIndex];
+
+               		lastSQLCommand = 
+                    		"insert into MMS_Tag (mediaItemKey, name) values ("
+                    		"?, ?)";
+
+               		shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+               		int queryParameterIndex = 1;
+               		preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+               		preparedStatement->setString(queryParameterIndex++, name);
+
+               		preparedStatement->executeUpdate();
+		}
+        }
 
         {
             string uniqueName;
@@ -19037,7 +19069,6 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "contentProviderKey     BIGINT UNSIGNED NOT NULL,"
                     "title                  VARCHAR (256) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
                     "ingester               VARCHAR (128) NULL,"
-                    "tags					VARCHAR (128) CHARACTER SET utf8 COLLATE utf8_bin NULL,"
                     "userData               " + userDataDefinition + ","
                     "deliveryFileName       VARCHAR (128) NULL,"
                     "ingestionJobKey        BIGINT UNSIGNED NOT NULL,"
@@ -19110,6 +19141,33 @@ void MMSEngineDBFacade::createTablesIfNeeded()
         {
             lastSQLCommand = 
                 "create index MMS_MediaItem_idx4 on MMS_MediaItem (contentType, title)";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+
+        try
+        {
+            lastSQLCommand = 
+                "create table if not exists MMS_Tag ("
+                    "tagKey			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "mediaItemKey		BIGINT UNSIGNED NOT NULL,"
+                    "name			VARCHAR (256) NOT NULL,"
+                    "constraint MMS_Tag_PK PRIMARY KEY (tagKey), "
+                    "constraint MMS_Tag_FK foreign key (mediaItemKey) "
+                        "references MMS_MediaItem (mediaItemKey) on delete cascade, "
+                    "UNIQUE (mediaItemKey, name)) "
+                    "ENGINE=InnoDB";
             statement->execute(lastSQLCommand);
         }
         catch(sql::SQLException se)
