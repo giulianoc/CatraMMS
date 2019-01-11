@@ -2148,8 +2148,12 @@ public class CatraMMS {
             mediaItem.setEndPublishing(simpleDateFormat.parse(mediaItemInfo.getString("endPublishing")));
             if (!mediaItemInfo.isNull("ingester"))
                 mediaItem.setIngester(mediaItemInfo.getString("ingester"));
-            if (!mediaItemInfo.isNull("tags"))
-                mediaItem.setTags(mediaItemInfo.getString("tags"));
+            {
+                JSONArray jaTags = mediaItemInfo.getJSONArray("tags");
+
+                for (int tagIndex = 0; tagIndex < jaTags.length(); tagIndex++)
+                    mediaItem.getTags().add(jaTags.getString(tagIndex));
+            }
             if (!mediaItemInfo.isNull("userData"))
                 mediaItem.setUserData(mediaItemInfo.getString("userData"));
             mediaItem.setProviderName(mediaItemInfo.getString("providerName"));

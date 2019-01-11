@@ -686,7 +686,15 @@ public class NewWorkflow extends Workspace implements Serializable {
                 if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
                     joParameters.put("Ingester", task.getIngester());
                 if (task.getTags() != null && !task.getTags().equalsIgnoreCase(""))
-                    joParameters.put("Tags", task.getTags());
+                {
+                    JSONArray jsonTagsArray = new JSONArray();
+                    joParameters.put("Tags", jsonTagsArray);
+
+                    for (String tag: task.getTags().split(","))
+                    {
+                        jsonTagsArray.put(tag);
+                    }
+                }
                 if (task.getContentProviderName() != null && !task.getContentProviderName().equalsIgnoreCase(""))
                     joParameters.put("ContentProviderName", task.getContentProviderName());
                 if (task.getDeliveryFileName() != null && !task.getDeliveryFileName().equalsIgnoreCase(""))
@@ -768,7 +776,15 @@ public class NewWorkflow extends Workspace implements Serializable {
                 if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
                     joParameters.put("Ingester", task.getIngester());
                 if (task.getTags() != null && !task.getTags().equalsIgnoreCase(""))
-                    joParameters.put("Tags", task.getTags());
+                {
+                    JSONArray jsonTagsArray = new JSONArray();
+                    joParameters.put("Tags", jsonTagsArray);
+
+                    for (String tag: task.getTags().split(","))
+                    {
+                        jsonTagsArray.put(tag);
+                    }
+                }
                 if (task.getContentProviderName() != null && !task.getContentProviderName().equalsIgnoreCase(""))
                     joParameters.put("ContentProviderName", task.getContentProviderName());
                 if (task.getDeliveryFileName() != null && !task.getDeliveryFileName().equalsIgnoreCase(""))
@@ -877,7 +893,15 @@ public class NewWorkflow extends Workspace implements Serializable {
                 if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
                     joParameters.put("Ingester", task.getIngester());
                 if (task.getTags() != null && !task.getTags().equalsIgnoreCase(""))
-                    joParameters.put("Tags", task.getTags());
+                {
+                    JSONArray jsonTagsArray = new JSONArray();
+                    joParameters.put("Tags", jsonTagsArray);
+
+                    for (String tag: task.getTags().split(","))
+                    {
+                        jsonTagsArray.put(tag);
+                    }
+                }
                 if (task.getContentProviderName() != null && !task.getContentProviderName().equalsIgnoreCase(""))
                     joParameters.put("ContentProviderName", task.getContentProviderName());
                 if (task.getDeliveryFileName() != null && !task.getDeliveryFileName().equalsIgnoreCase(""))
@@ -964,7 +988,15 @@ public class NewWorkflow extends Workspace implements Serializable {
                 if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
                     joParameters.put("Ingester", task.getIngester());
                 if (task.getTags() != null && !task.getTags().equalsIgnoreCase(""))
-                    joParameters.put("Tags", task.getTags());
+                {
+                    JSONArray jsonTagsArray = new JSONArray();
+                    joParameters.put("Tags", jsonTagsArray);
+
+                    for (String tag: task.getTags().split(","))
+                    {
+                        jsonTagsArray.put(tag);
+                    }
+                }
                 if (task.getContentProviderName() != null && !task.getContentProviderName().equalsIgnoreCase(""))
                     joParameters.put("ContentProviderName", task.getContentProviderName());
                 if (task.getDeliveryFileName() != null && !task.getDeliveryFileName().equalsIgnoreCase(""))
@@ -1060,7 +1092,15 @@ public class NewWorkflow extends Workspace implements Serializable {
                 if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
                     joParameters.put("Ingester", task.getIngester());
                 if (task.getTags() != null && !task.getTags().equalsIgnoreCase(""))
-                    joParameters.put("Tags", task.getTags());
+                {
+                    JSONArray jsonTagsArray = new JSONArray();
+                    joParameters.put("Tags", jsonTagsArray);
+
+                    for (String tag: task.getTags().split(","))
+                    {
+                        jsonTagsArray.put(tag);
+                    }
+                }
                 if (task.getContentProviderName() != null && !task.getContentProviderName().equalsIgnoreCase(""))
                     joParameters.put("ContentProviderName", task.getContentProviderName());
                 if (task.getDeliveryFileName() != null && !task.getDeliveryFileName().equalsIgnoreCase(""))
@@ -1147,7 +1187,15 @@ public class NewWorkflow extends Workspace implements Serializable {
                 if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
                     joParameters.put("Ingester", task.getIngester());
                 if (task.getTags() != null && !task.getTags().equalsIgnoreCase(""))
-                    joParameters.put("Tags", task.getTags());
+                {
+                    JSONArray jsonTagsArray = new JSONArray();
+                    joParameters.put("Tags", jsonTagsArray);
+
+                    for (String tag: task.getTags().split(","))
+                    {
+                        jsonTagsArray.put(tag);
+                    }
+                }
                 if (task.getContentProviderName() != null && !task.getContentProviderName().equalsIgnoreCase(""))
                     joParameters.put("ContentProviderName", task.getContentProviderName());
                 if (task.getDeliveryFileName() != null && !task.getDeliveryFileName().equalsIgnoreCase(""))
@@ -1241,7 +1289,15 @@ public class NewWorkflow extends Workspace implements Serializable {
                 if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
                     joParameters.put("Ingester", task.getIngester());
                 if (task.getTags() != null && !task.getTags().equalsIgnoreCase(""))
-                    joParameters.put("Tags", task.getTags());
+                {
+                    JSONArray jsonTagsArray = new JSONArray();
+                    joParameters.put("Tags", jsonTagsArray);
+
+                    for (String tag: task.getTags().split(","))
+                    {
+                        jsonTagsArray.put(tag);
+                    }
+                }
                 if (task.getContentProviderName() != null && !task.getContentProviderName().equalsIgnoreCase(""))
                     joParameters.put("ContentProviderName", task.getContentProviderName());
                 if (task.getDeliveryFileName() != null && !task.getDeliveryFileName().equalsIgnoreCase(""))
@@ -1308,7 +1364,15 @@ public class NewWorkflow extends Workspace implements Serializable {
                 if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
                     joParameters.put("Ingester", task.getIngester());
                 if (task.getTags() != null && !task.getTags().equalsIgnoreCase(""))
-                    joParameters.put("Tags", task.getTags());
+                {
+                    JSONArray jsonTagsArray = new JSONArray();
+                    joParameters.put("Tags", jsonTagsArray);
+
+                    for (String tag: task.getTags().split(","))
+                    {
+                        jsonTagsArray.put(tag);
+                    }
+                }
                 if (task.getContentProviderName() != null && !task.getContentProviderName().equalsIgnoreCase(""))
                     joParameters.put("ContentProviderName", task.getContentProviderName());
                 if (task.getDeliveryFileName() != null && !task.getDeliveryFileName().equalsIgnoreCase(""))
@@ -1391,7 +1455,15 @@ public class NewWorkflow extends Workspace implements Serializable {
                 if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
                     joParameters.put("Ingester", task.getIngester());
                 if (task.getTags() != null && !task.getTags().equalsIgnoreCase(""))
-                    joParameters.put("Tags", task.getTags());
+                {
+                    JSONArray jsonTagsArray = new JSONArray();
+                    joParameters.put("Tags", jsonTagsArray);
+
+                    for (String tag: task.getTags().split(","))
+                    {
+                        jsonTagsArray.put(tag);
+                    }
+                }
                 if (task.getContentProviderName() != null && !task.getContentProviderName().equalsIgnoreCase(""))
                     joParameters.put("ContentProviderName", task.getContentProviderName());
                 if (task.getDeliveryFileName() != null && !task.getDeliveryFileName().equalsIgnoreCase(""))
@@ -1462,7 +1534,15 @@ public class NewWorkflow extends Workspace implements Serializable {
                 if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
                     joParameters.put("Ingester", task.getIngester());
                 if (task.getTags() != null && !task.getTags().equalsIgnoreCase(""))
-                    joParameters.put("Tags", task.getTags());
+                {
+                    JSONArray jsonTagsArray = new JSONArray();
+                    joParameters.put("Tags", jsonTagsArray);
+
+                    for (String tag: task.getTags().split(","))
+                    {
+                        jsonTagsArray.put(tag);
+                    }
+                }
                 if (task.getContentProviderName() != null && !task.getContentProviderName().equalsIgnoreCase(""))
                     joParameters.put("ContentProviderName", task.getContentProviderName());
                 if (task.getDeliveryFileName() != null && !task.getDeliveryFileName().equalsIgnoreCase(""))
@@ -1545,7 +1625,15 @@ public class NewWorkflow extends Workspace implements Serializable {
                 if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
                     joParameters.put("Ingester", task.getIngester());
                 if (task.getTags() != null && !task.getTags().equalsIgnoreCase(""))
-                    joParameters.put("Tags", task.getTags());
+                {
+                    JSONArray jsonTagsArray = new JSONArray();
+                    joParameters.put("Tags", jsonTagsArray);
+
+                    for (String tag: task.getTags().split(","))
+                    {
+                        jsonTagsArray.put(tag);
+                    }
+                }
                 if (task.getContentProviderName() != null && !task.getContentProviderName().equalsIgnoreCase(""))
                     joParameters.put("ContentProviderName", task.getContentProviderName());
                 if (task.getDeliveryFileName() != null && !task.getDeliveryFileName().equalsIgnoreCase(""))
@@ -1616,7 +1704,15 @@ public class NewWorkflow extends Workspace implements Serializable {
                 if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
                     joParameters.put("Ingester", task.getIngester());
                 if (task.getTags() != null && !task.getTags().equalsIgnoreCase(""))
-                    joParameters.put("Tags", task.getTags());
+                {
+                    JSONArray jsonTagsArray = new JSONArray();
+                    joParameters.put("Tags", jsonTagsArray);
+
+                    for (String tag: task.getTags().split(","))
+                    {
+                        jsonTagsArray.put(tag);
+                    }
+                }
                 if (task.getContentProviderName() != null && !task.getContentProviderName().equalsIgnoreCase(""))
                     joParameters.put("ContentProviderName", task.getContentProviderName());
                 if (task.getDeliveryFileName() != null && !task.getDeliveryFileName().equalsIgnoreCase(""))
@@ -1683,7 +1779,15 @@ public class NewWorkflow extends Workspace implements Serializable {
                 if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
                     joParameters.put("Ingester", task.getIngester());
                 if (task.getTags() != null && !task.getTags().equalsIgnoreCase(""))
-                    joParameters.put("Tags", task.getTags());
+                {
+                    JSONArray jsonTagsArray = new JSONArray();
+                    joParameters.put("Tags", jsonTagsArray);
+
+                    for (String tag: task.getTags().split(","))
+                    {
+                        jsonTagsArray.put(tag);
+                    }
+                }
                 if (task.getContentProviderName() != null && !task.getContentProviderName().equalsIgnoreCase(""))
                     joParameters.put("ContentProviderName", task.getContentProviderName());
                 if (task.getDeliveryFileName() != null && !task.getDeliveryFileName().equalsIgnoreCase(""))

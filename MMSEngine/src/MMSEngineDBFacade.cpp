@@ -7584,7 +7584,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                     Json::Value mediaItemTagsRoot(Json::arrayValue);
                     
                     lastSQLCommand = 
-                        "select name from from MMS_Tag where mediaItemKey = ?";
+                        "select name from MMS_Tag where mediaItemKey = ?";
 
                     shared_ptr<sql::PreparedStatement> preparedStatementTags (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                     int queryParameterIndex = 1;
@@ -15266,7 +15266,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
             lastSQLCommand = 
                 "insert into MMS_MediaItem (mediaItemKey, workspaceKey, contentProviderKey, title, ingester, userData, " 
                 "deliveryFileName, ingestionJobKey, ingestionDate, contentType, startPublishing, endPublishing, retentionInMinutes, processorMMS) values ("
-                "NULL, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, "
+                "NULL, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, "
                 "convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone), "
                 "convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone), "
                 "?, NULL)";
