@@ -1,0 +1,142 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:h="http://xmlns.jcp.org/jsf/html">
+
+<p:commandButton id="dynaButtonMain" value="Workspace Library" type="button" icon="ui-icon-extlink"/>
+
+<p:tieredMenu styleClass="tieredMenuClass" overlay="true" trigger="dynaButtonMain"
+              my="left top" at="left bottom" style="width:200px">
+    <p:submenu label="Add Task">
+        <p:submenu label="Content">
+            <p:menuitem value="Add-Content"
+                        icon="fa fa-plus"
+                        actionListener="#{newWorkflow2.addTask('Add-Content')}"
+                        update="workspaceDiagram"
+                    />
+            <p:menuitem value="Remove-Content"
+                        icon="fa fa-eraser"
+                        actionListener="#{newWorkflow2.addTask('Remove-Content')}"
+                    />
+        </p:submenu>
+        <p:submenu label="Concat, Cut and Extract">
+            <p:menuitem value="Concat-Demuxer"
+                        icon="fa fa-forward"
+                        actionListener="#{newWorkflow2.addTask('Concat-Demuxer')}"
+                    />
+            <p:menuitem value="Cut"
+                        icon="fa fa-cut"
+                        actionListener="#{newWorkflow2.addTask('Cut')}"
+                    />
+            <p:menuitem value="Extract-Tracks"
+                        icon="fas fa-arrow-alt-from-bottom"
+                        actionListener="#{newWorkflow2.addTask('Extract-Tracks')}"
+                    />
+        </p:submenu>
+        <p:menuitem value="Encode"
+                    icon="fa fa-file-video-o"
+                    actionListener="#{newWorkflow2.addTask('Encode')}"
+                />
+        <p:submenu label="Overlay">
+            <p:menuitem value="Overlay-Image-On-Video"
+                        icon="fa fa-file-picture-o"
+                        actionListener="#{newWorkflow2.addTask('Overlay-Image-On-Video')}"
+                    />
+            <p:menuitem value="Overlay-Text-On-Video"
+                        icon="fa fa-file-powerpoint-o"
+                        actionListener="#{newWorkflow2.addTask('Overlay-Text-On-Video')}"
+                    />
+        </p:submenu>
+        <p:submenu label="Frame Processing">
+            <p:menuitem value="Frame"
+                        icon="ui-icon-close"
+                        actionListener="#{newWorkflow2.addTask('Frame')}"
+                    />
+            <p:menuitem value="Periodical-Frames"
+                        icon="ui-icon-close"
+                        actionListener="#{newWorkflow2.addTask('Periodical-Frames')}"
+                    />
+            <p:menuitem value="I-Frames"
+                        icon="ui-icon-close"
+                        actionListener="#{newWorkflow2.addTask('I-Frames')}"
+                    />
+            <p:menuitem value="Motion-JPEG-by-Periodical-Frames"
+                        icon="ui-icon-close"
+                        actionListener="#{newWorkflow2.addTask('Motion-JPEG-by-Periodical-Frames')}"
+                    />
+            <p:menuitem value="Motion-JPEG-by-I-Frames"
+                        icon="ui-icon-close"
+                        actionListener="#{newWorkflow2.addTask('Motion-JPEG-by-I-Frames')}"
+                    />
+            <p:menuitem value="Slideshow"
+                        icon="ui-icon-close"
+                        actionListener="#{newWorkflow2.addTask('Slideshow')}"
+                    />
+        </p:submenu>
+        <p:submenu label="Delivery">
+            <p:menuitem value="FTP"
+                        icon="fa fa-upload"
+                        actionListener="#{newWorkflow2.addTask('FTP-Delivery')}"
+                    />
+            <p:menuitem value="Local-Copy"
+                        icon="fa fa-copy"
+                        actionListener="#{newWorkflow2.addTask('Local-Copy')}"
+            />
+        </p:submenu>
+        <p:submenu label="Social Network Delivery">
+            <p:menuitem value="Post on Facebook"
+                        icon="fa fa-upload"
+                        actionListener="#{newWorkflow2.addTask('Post-On-Facebook')}"
+                    />
+            <p:menuitem value="Post on YouTube"
+                        icon="fa fa-upload"
+                        actionListener="#{newWorkflow2.addTask('Post-On-YouTube')}"
+                    />
+        </p:submenu>
+        <p:submenu label="Communication">
+            <p:menuitem value="Email-Notification"
+                        icon="ui-icon-close"
+                        actionListener="#{newWorkflow2.addTask('Email-Notification')}"
+                    />
+            <p:menuitem value="HTTP-Callback"
+                        icon="ui-icon-close"
+                        actionListener="#{newWorkflow2.addTask('HTTP-Callback')}"
+            />
+        </p:submenu>
+        <p:submenu label="Computer Vision">
+            <p:menuitem value="Face-Recognition"
+                        icon="ui-icon-close"
+                        actionListener="#{newWorkflow2.addTask('Face-Recognition')}"
+            />
+            <p:menuitem value="Face-Identification"
+                        icon="ui-icon-close"
+                        actionListener="#{newWorkflow2.addTask('Face-Identification')}"
+            />
+        </p:submenu>
+    </p:submenu>
+    <p:submenu label="Add Event">
+        <p:menuitem value="OnSuccess"
+                    icon="fa fa-check"
+                    actionListener="#{newWorkflow2.addOnSuccessEvent}"
+                />
+        <p:menuitem value="OnError"
+                    icon="fa fa-close"
+                    actionListener="#{newWorkflow2.addOnErrorEvent}"
+                />
+        <p:menuitem value="OnComplete"
+                    icon="fa fa-file-text-o"
+                    actionListener="#{newWorkflow2.addOnCompleteEvent}"
+                />
+    </p:submenu>
+    <p:menuitem value="Add Group of Task"
+                icon="fa fa-navicon"
+                actionListener="#{newWorkflow2.addGroupOfTasks}"
+            />
+    <p:menuitem value="Delete Task"
+                icon="ui-icon-close"
+                actionListener="#{newWorkflow2.deleteNode}"
+            />
+</p:tieredMenu>
+
+</html>

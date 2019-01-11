@@ -54,7 +54,7 @@
                             global="true"
                             event="change"
                             listener="#{newWorkflow2.init}"
-                            update="newWorkflowLayout" />
+                             />
                 </p:selectOneMenu>
 
                 <span class="ui-separator">
@@ -120,36 +120,41 @@
 
         <style type="text/css">
             .ui-diagram-element {
-                border:0.1em dotted #d4e06b;
-                width:14em;
-                height:4em;
-                line-height:4em;
+                border:0.1em dotted #E5E4E2;
+                background-color: #EFEEEC;
+                width:10em;
+                height:8em;
                 text-align: center;
+                box-shadow: 0 5px 10px rgba(0, 0, 0, 0.8);
+            }
+
+            .ui-diagram-element:hover {
+                background-color: #C7C6C4;
             }
         </style>
 
+        <ui:include src="/newWorkflow2/libraryMenu.xhtml"/>
 
-        <p:diagram value="#{newWorkflow2.model}" style="height:400px" styleClass="ui-widget-content" />
-        <p:remoteCommand name="elementClicked" actionListener="#{newWorkflow2.onElementClick()}"/>
-        <p:remoteCommand name="elementRightClicked" actionListener="#{newWorkflow2.onElementRightClick()}"/>
-        <script>
-            $(document).on('click', '.ui-diagram > .ui-diagram-element', function(info){
-                    elementClicked([ {
-                                name : 'elementId',
-                                value : info.target.id
-                    } ]);
-            });
+        <p:diagram id="workspaceDiagram" value="#{newWorkflow2.model}" style="height:600px" styleClass="ui-widget-content" var="el">
+            <f:facet name="element">
+                <h:outputText value="#{el.name}" style="display:block;margin-top:1em;"/>
+                <!-- <p:graphicImage name="demo/images/#{el.image}" /> -->
+            </f:facet>
+            <p:ajax event="connect" listener="#{newWorkflow2.onConnect}" />
+            <p:ajax event="disconnect" listener="#{newWorkflow2.onDisconnect}" />
+            <p:ajax event="connectionChange" listener="#{newWorkflow2.onConnectionChange}" />
+        </p:diagram>
 
-            $(document).on('rightClick', '.ui-diagram > .ui-diagram-element', function(info){
-
-                    elementRightClicked([ {
-                                name : 'elementId',
-                                value : info.target.id
-                    } ]);
-
-                    return false;
-            });
-        </script>
+        <p:dock position="bottom">
+            <p:menuitem value="Home" icon="#{newWorkflow2.addContentIcon}" url="#"/>
+            <p:menuitem value="Music" icon="#{newWorkflow2.addContentIcon}" url="#"/>
+            <p:menuitem value="Video" icon="#{newWorkflow2.addContentIcon}" url="#"/>
+            <p:menuitem value="Email" icon="#{newWorkflow2.addContentIcon}" url="#"/>
+            <p:menuitem value="Portfolio" icon="#{newWorkflow2.addContentIcon}" url="#"/>
+            <p:menuitem value="Link" icon="#{newWorkflow2.addContentIcon}" url="#"/>
+            <p:menuitem value="RSS" icon="#{newWorkflow2.addContentIcon}" url="#"/>
+            <p:menuitem value="History" icon="#{newWorkflow2.addContentIcon}" url="#"/>
+        </p:dock>
 
     </h:form>
 
