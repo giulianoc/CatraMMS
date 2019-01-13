@@ -1,0 +1,248 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:media="http://xmlns.jcp.org/jsf/composite/media">
+
+<f:metadata>
+    <!--
+    <f:viewParam name="predefined" value="#{newWorkflow.predefined}" />
+    <f:viewParam name="data" value="#{newWorkflow.data}" />
+    <f:viewAction action="#{newWorkflow.init}" />
+    -->
+</f:metadata>
+
+<h:head>
+
+    <h:outputStylesheet library="css" name="catramms.css"  />
+
+</h:head>
+
+<h:body>
+
+    <ui:include src="/common/loadingDialog.xhtml"/>
+    <ui:include src="/common/globalConfirm.xhtml"/>
+    <ui:include src="workflowEditorDialogs.xhtml"/>
+
+    <h:form id="viewForm" enctype="multipart/form-data">
+
+        <p:growl id="growl" showDetail="true" sticky="false" escape="false" life="2000">
+            <p:autoUpdate />
+        </p:growl>
+
+        <p:toolbar>
+            <p:toolbarGroup align="left">
+                <p:outputLabel styleClass="appTitle" value="Media Management System" />
+            </p:toolbarGroup>
+
+            <p:toolbarGroup align="right">
+
+                <p:outputLabel value="Welcome #{sessionScope.userProfile.name}" />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:outputLabel value="Workspace:" />
+                <p:selectOneMenu id="workspaceName" value="#{workflowEditor.workspaceName}"
+                                 autoWidth="false">
+                    <f:selectItems value="#{workflowEditor.workspaceNames}" />
+                    <p:ajax
+                            global="true"
+                            event="change"
+                            listener="#{workflowEditor.init}"
+                             />
+                </p:selectOneMenu>
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:commandLink value="Logout" action="#{login.logout}" />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <ui:include src="/common/mainMenu.xhtml"/>
+
+            </p:toolbarGroup>
+        </p:toolbar>
+
+        <p:toolbar>
+            <p:toolbarGroup align="left">
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:outputLabel styleClass="viewTitle" value="New Workflow" />
+
+            </p:toolbarGroup>
+
+            <p:toolbarGroup align="right">
+
+                <p:commandButton id="ingestWorkflowButton" global="true" value="Ingest Workflow"
+                                 actionListener="#{workflowEditor.ingestWorkflow}"
+                                 disabled="#{workflowEditor.ingestionData.workflowIssueList.size() > 0 || !sessionScope.currentWorkspaceDetails.ingestWorkflow}"
+                                 update="ingestionWorkflowResultsForm"
+                                 oncomplete="PF('ingestionWorkflowResults').show()">
+                    <p:confirm header="Confirmation" message="Are you sure?" icon="ui-icon-alert" />
+                </p:commandButton>
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:commandButton id="jsonWorkflowButton" global="true"
+                                 disabled="#{!sessionScope.currentWorkspaceDetails.admin}"
+                                 icon="fa fa-file-code-o"
+                                 oncomplete="PF('jsonWorkflowWidget').show()"
+                        />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:commandButton id="workflowIssuesWarning" global="true"
+                                 styleClass="#{(workflowEditor.ingestionData.workflowIssueList.size() > 0) ? 'blink' : ''}" icon="fa fa-warning"
+                                 disabled="#{workflowEditor.ingestionData.workflowIssueList.size() == 0}"
+                                 update="workflowIssuesForm"
+                                 oncomplete="PF('workflowIssues').show()"
+                        />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <ui:include src="/workflowEditor/libraryMenu.xhtml"/>
+            </p:toolbarGroup>
+        </p:toolbar>
+
+        <style type="text/css">
+            .ui-diagram-element {
+                border:0.1em dotted #E5E4E2;
+                background-color: #EFEEEC;
+                width:10em;
+                height:7em;
+                text-align: center;
+                box-shadow: 0 5px 10px rgba(0, 0, 0, 0.8);
+            }
+
+            .ui-diagram-element:hover {
+                background-color: #C7C6C4;
+            }
+
+            .connection-label {
+                font-size: 24px;
+                font-weight: bold;
+                color: #816A51;
+            }
+        </style>
+
+        <!-- <p:remoteCommand name="diagram_onElementClicked"
+                         actionListener="#{workflowEditor.onElementClicked}" /> -->
+        <p:remoteCommand name="diagram_onElementMove"
+                         actionListener="#{workflowEditor.onElementMove}" />
+        <script>
+            // $(document).on('click', '.ui-diagram > .ui-diagram-element', function(info)
+            /*
+            function onElementMouseClick(nodeElement)
+            {
+                // var currentId = info.target.id;
+                var currentId = nodeElement.id;
+                var parentCurrentId = document.getElementById(currentId).parentElement.id;
+
+                diagram_onElementClicked(
+                    [
+                        {
+                            name : 'currentId',
+                            value : currentId
+                        },
+                        {
+                            name : 'parentCurrentId',
+                            value : parentCurrentId
+                        }
+                    ]
+                );
+
+                return false;
+            };
+            */
+
+            function onElementMouseLeave(nodeElement)
+            {
+	            var parent = nodeElement.parentElement;
+	            diagram_onElementMove([
+                    {name : 'elementId', value : parent.id},
+                    {name : 'elementX', value : parent.style['left']},
+                    {name : 'elementY',value : parent.style['top']}
+                ]);
+            }
+        </script>
+
+        <p:diagram id="workspaceDiagram" value="#{workflowEditor.model}" style="height:1000px" styleClass="ui-widget-content" var="el">
+            <f:facet name="element" id="diagramElement" widgetVar="element">
+
+                <!-- onclick="onElementMouseClick(this)"  -->
+                <div onmouseleave="onElementMouseLeave(this)">
+                    <p:commandLink
+                            value="#{el.label}"
+                            actionListener="#{workflowEditor.onElementLinkClicked()}"
+                            update="#{el.type}Form"
+                            oncomplete="PF('#{el.type}').show()">
+                        <f:param name="elementId" value="#{el.elementId}" />
+                    </p:commandLink>
+
+                    <br />
+
+                    <h:outputText rendered="#{el.type != 'workflow'}"
+                                  value="(#{el.type})" />
+                </div>
+                <!--
+                <p:commandLink value="#{el.label} #{el.elementId}" style="display:block;margin-top:1em;"
+                               action="#{workflowEditor.onClicked(el.elementId)}"
+                               oncomplete="PF('ingestionWorkflowResults').show()"
+                />
+                <p:outputLabel value="#{el.type}" style="display:block;" />
+                -->
+
+                <p:graphicImage name="/img/workspaceElements/#{el.image}" />
+            </f:facet>
+            <p:ajax event="connect" listener="#{workflowEditor.onConnect}"
+                    update="workspaceDiagram,ingestWorkflowButton,workflowIssuesWarning,jsonWorkflowForm:jsonWorkflow"
+            />
+            <p:ajax event="disconnect" listener="#{workflowEditor.onDisconnect}"
+                    update="workspaceDiagram,ingestWorkflowButton,workflowIssuesWarning,jsonWorkflowForm:jsonWorkflow"
+            />
+            <p:ajax event="connectionChange" listener="#{workflowEditor.onConnectionChange}"
+                    update="workspaceDiagram,ingestWorkflowButton,workflowIssuesWarning,jsonWorkflowForm:jsonWorkflow"
+            />
+        </p:diagram>
+
+        <p:dock position="bottom">
+            <p:menuitem value="Add Group of Tasks" icon="/resources/img/workspaceElements/GroupOfTasks-icon.png"
+                        actionListener="#{workflowEditor.addTask('GroupOfTasks')}"
+                        update="workspaceDiagram"/>
+            <p:menuitem value="Add Content" icon="/resources/img/workspaceElements/Add-Content-icon.png"
+                        actionListener="#{workflowEditor.addTask('Add-Content')}"
+                        update="workspaceDiagram"/>
+            <p:menuitem value="Remove Content" icon="/resources/img/workspaceElements/Remove-Content-icon.png"
+                        actionListener="#{workflowEditor.addTask('Remove-Content')}"
+                        update="workspaceDiagram"/>
+            <p:menuitem value="Music" icon="/resources/img/workspaceElements/AddContent-icon.png" url="#"/>
+            <p:menuitem value="Video" icon="/resources/img/workspaceElements/addContent-icon.png" url="#"/>
+            <p:menuitem value="Email" icon="/resources/img/workspaceElements/addContent-icon.png" url="#"/>
+            <p:menuitem value="Portfolio" icon="/resources/img/workspaceElements/addContent-icon.png" url="#"/>
+            <p:menuitem value="Link" icon="/resources/img/workspaceElements/addContent-icon.png" url="#"/>
+            <p:menuitem value="RSS" icon="/resources/img/workspaceElements/addContent-icon.png" url="#"/>
+            <p:menuitem value="History" icon="/resources/img/workspaceElements/addContent-icon.png" url="#"/>
+        </p:dock>
+
+    </h:form>
+
+</h:body>
+</html>

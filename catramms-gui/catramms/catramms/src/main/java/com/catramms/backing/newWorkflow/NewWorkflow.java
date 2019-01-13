@@ -4182,8 +4182,7 @@ public class NewWorkflow extends Workspace implements Serializable {
                             else if (eventToBeRemoved.getType().equalsIgnoreCase("OnError"))
                                 task.setChildEventOnErrorCreated(false);
                             else if (eventToBeRemoved.getType().equalsIgnoreCase("OnComplete"))
-                                task.setChildEventOnCompleteCreated(false);
-                        }
+                                task.setChildEventOnCompleteCreated(false); }
                     }
                 }
 
