@@ -86,9 +86,9 @@ public class WorkflowEditor extends Workspace implements Serializable {
 
         elementId = 0;
 
-        currentX = 40;
+        currentX = 30;
         currentY = 2;
-        stepY = 13;
+        stepY = 11;
 
         {
             model = new DefaultDiagramModel();
