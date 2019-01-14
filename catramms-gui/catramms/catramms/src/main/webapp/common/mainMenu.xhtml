@@ -15,6 +15,10 @@
         <p:submenu label="Ingestion">
             <!-- disabled="#{!sessionScope.currentWorkspaceDetails.ingestWorkflow}" -->
             <p:menuitem
+                    value="Workflow editor"
+                    outcome="/workflowEditor/workflowEditor.xhtml"
+                    icon="ui-icon-search"/>
+            <p:menuitem
                     value="New Workflow"
                     outcome="/newWorkflow/newWorkflow.xhtml"
                     icon="ui-icon-search"/>

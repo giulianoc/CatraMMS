@@ -1,4 +1,4 @@
-package com.catramms.backing.workspaceEditor.utility;
+package com.catramms.backing.workflowEditor.utility;
 
 import java.io.Serializable;
 import java.util.ArrayList;

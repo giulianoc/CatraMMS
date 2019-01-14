@@ -1,4 +1,4 @@
-package com.catramms.backing.workspaceEditor.utility;
+package com.catramms.backing.workflowEditor.utility;
 
 import com.catramms.backing.newWorkflow.IngestionResult;
 import com.catramms.backing.newWorkflow.PushContent;

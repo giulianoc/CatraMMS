@@ -1,4 +1,4 @@
-package com.catramms.backing.workspaceEditor.utility;
+package com.catramms.backing.workflowEditor.utility;
 
 import com.catramms.backing.common.SessionUtils;
 import com.catramms.backing.entity.MediaItem;

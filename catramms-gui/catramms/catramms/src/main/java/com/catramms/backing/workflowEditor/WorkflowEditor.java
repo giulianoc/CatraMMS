@@ -1,10 +1,10 @@
-package com.catramms.backing.workspaceEditor;
+package com.catramms.backing.workflowEditor;
 
 import com.catramms.backing.common.SessionUtils;
 import com.catramms.backing.common.Workspace;
 import com.catramms.backing.newWorkflow.IngestionResult;
 import com.catramms.backing.newWorkflow.PushContent;
-import com.catramms.backing.workspaceEditor.utility.*;
+import com.catramms.backing.workflowEditor.utility.*;
 import com.catramms.utility.catramms.CatraMMS;
 import org.apache.log4j.Logger;
 import org.json.JSONObject;
