@@ -4,6 +4,10 @@ import com.catramms.backing.common.SessionUtils;
 import com.catramms.backing.common.Workspace;
 import com.catramms.backing.newWorkflow.IngestionResult;
 import com.catramms.backing.newWorkflow.PushContent;
+import com.catramms.backing.workflowEditor.Properties.AddContentProperties;
+import com.catramms.backing.workflowEditor.Properties.GroupOfTasksProperties;
+import com.catramms.backing.workflowEditor.Properties.RemoveContentProperties;
+import com.catramms.backing.workflowEditor.Properties.WorkflowProperties;
 import com.catramms.backing.workflowEditor.utility.*;
 import com.catramms.utility.catramms.CatraMMS;
 import org.apache.log4j.Logger;
@@ -67,6 +71,7 @@ public class WorkflowEditor extends Workspace implements Serializable {
     private WorkflowProperties currentWorkflowProperties;
     private AddContentProperties currentAddContentProperties;
     private GroupOfTasksProperties currentGroupOfTasksProperties;
+    private RemoveContentProperties currentRemoveContentProperties;
 
     @PostConstruct
     public void init()
@@ -174,14 +179,18 @@ public class WorkflowEditor extends Workspace implements Serializable {
 
             WorkflowProperties workflowProperties = (WorkflowProperties) element.getData();
 
-            mediaItemsReferences.setCurrentElementType(workflowProperties.getType());
-
             if (workflowProperties.getType().equalsIgnoreCase("Workflow"))
                 currentWorkflowProperties = ((WorkflowProperties) workflowProperties).clone();
             else if (workflowProperties.getType().equalsIgnoreCase("Add-Content"))
                 currentAddContentProperties = ((AddContentProperties) workflowProperties).clone();
             else if (workflowProperties.getType().equalsIgnoreCase("GroupOfTasks"))
                 currentGroupOfTasksProperties = ((GroupOfTasksProperties) workflowProperties).clone();
+            else if (workflowProperties.getType().equalsIgnoreCase("Remove-Content"))
+            {
+                mediaItemsReferences.setCurrentElementType(workflowProperties.getType());
+
+                currentRemoveContentProperties = ((RemoveContentProperties) workflowProperties).clone();
+            }
         }
         else
         {
@@ -202,6 +211,11 @@ public class WorkflowEditor extends Workspace implements Serializable {
                 element.setData(currentAddContentProperties);
             else if (workflowProperties.getType().equalsIgnoreCase("GroupOfTasks"))
                 element.setData(currentGroupOfTasksProperties);
+            else if (workflowProperties.getType().equalsIgnoreCase("Remove-Content"))
+            {
+                currentRemoveContentProperties.setTaskReferences(mediaItemsReferences.getTaskReferences());
+                element.setData(currentRemoveContentProperties);
+            }
 
             buildWorkflowElementJson();
         }
@@ -549,10 +563,9 @@ public class WorkflowEditor extends Workspace implements Serializable {
 
         if (taskType.equalsIgnoreCase("Add-Content"))
             workflowProperties = new AddContentProperties(elementId++, labelTemplatePrefix + (elementId - 1),
-                    labelTemplatePrefix, temporaryPushBinariesPathName);
+                    temporaryPushBinariesPathName);
         else if (taskType.equalsIgnoreCase("GroupOfTasks"))
-            workflowProperties = new GroupOfTasksProperties(elementId++, labelTemplatePrefix + (elementId - 1),
-                    labelTemplatePrefix, temporaryPushBinariesPathName);
+            workflowProperties = new GroupOfTasksProperties(elementId++, labelTemplatePrefix + (elementId - 1));
         else if (taskType.equalsIgnoreCase("Remove-Content"))
             workflowProperties = new RemoveContentProperties(elementId++, labelTemplatePrefix + (elementId - 1));
 
@@ -569,11 +582,6 @@ public class WorkflowEditor extends Workspace implements Serializable {
             }
         }
         */
-
-        for (Element element: model.getElements())
-            mLogger.info("elementX: " + element.getX()
-                + ", elementY: " + element.getY()
-                );
 
         currentY += stepY;
 
@@ -917,5 +925,13 @@ public class WorkflowEditor extends Workspace implements Serializable {
 
     public void setCurrentGroupOfTasksProperties(GroupOfTasksProperties currentGroupOfTasksProperties) {
         this.currentGroupOfTasksProperties = currentGroupOfTasksProperties;
+    }
+
+    public RemoveContentProperties getCurrentRemoveContentProperties() {
+        return currentRemoveContentProperties;
+    }
+
+    public void setCurrentRemoveContentProperties(RemoveContentProperties currentRemoveContentProperties) {
+        this.currentRemoveContentProperties = currentRemoveContentProperties;
     }
 }

@@ -302,7 +302,7 @@
 </p:dialog>
 
 <p:dialog widgetVar="GroupOfTasks" modal="true"
-          header="GroupOfTasks" appendTo="@(body)" width="1000" height="600"
+          header="GroupOfTasks" appendTo="@(body)" width="1000" height="300"
           showEffect="fade" hideEffect="fade" resizable="false" draggable="true">
 
     <h:form id="GroupOfTasksForm">
@@ -609,6 +609,65 @@
                                  placeholder="unique name"/>
                 </p:column>
             </p:row>
+        </p:panelGrid>
+
+    </h:form>
+</p:dialog>
+
+<p:dialog widgetVar="Remove-Content" modal="true"
+          header="Remove-Content" appendTo="@(body)" width="1000" height="300"
+          showEffect="fade" hideEffect="fade" resizable="false" draggable="true">
+
+<h:form id="Remove-ContentForm">
+
+        <p:toolbar>
+            <p:toolbarGroup align="left">
+            </p:toolbarGroup>
+
+            <p:toolbarGroup align="right">
+                <p:defaultCommand target="saveWorkflowProperties"/>
+
+                <p:commandButton id="saveWorkflowProperties" value="Save Properties"
+                                 action="#{workflowEditor.saveTaskProperties}"
+                                 update="viewForm:workspaceDiagram,viewForm:ingestWorkflowButton,viewForm:workflowIssuesWarning,jsonWorkflowForm:jsonWorkflow"
+                                 onclick="PF('Remove-Content').hide()" />
+            </p:toolbarGroup>
+        </p:toolbar>
+
+        <p:panelGrid cellpadding="10" style="width: 100%">
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Label" style="font-weight: bold"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskLabel_Remove_Content" style="width: 100%"
+                                 value="#{workflowEditor.currentRemoveContentProperties.label}"
+                                 autocomplete="true"
+                                 placeholder="label"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="References (Media Item Key)"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskReferences_Remove_Content" style="width: 100%"
+                                 required="false"
+                                 value="#{workflowEditor.mediaItemsReferences.taskReferences}"
+                                 autocomplete="true"
+                                 placeholder="if left blank, references are retrieved from Workflow"/>
+                    <br/>
+                    <p:commandButton id="taskSelectReferences_Remove_Content"
+                                     icon="ui-icon-search"
+                                     value="Select Media"
+                                     update=":selectMediaItemsForm"
+                                     oncomplete="PF('selectMediaItems').show()"
+                    />
+                </p:column>
+            </p:row>
+
         </p:panelGrid>
 
     </h:form>

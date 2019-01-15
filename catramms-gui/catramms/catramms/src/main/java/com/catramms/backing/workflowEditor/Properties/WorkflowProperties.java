@@ -1,6 +1,7 @@
-package com.catramms.backing.workflowEditor.utility;
+package com.catramms.backing.workflowEditor.Properties;
 
 import com.catramms.backing.newWorkflow.WorkflowIssue;
+import com.catramms.backing.workflowEditor.utility.IngestionData;
 import org.apache.log4j.Logger;
 import org.json.JSONObject;
 
@@ -18,6 +19,7 @@ public class WorkflowProperties implements Serializable
 
     private int elementId;
     private String label;
+    private boolean labelChanged;
     private String image;
     private String mainType;
     private String type;
@@ -36,13 +38,18 @@ public class WorkflowProperties implements Serializable
         this.image = image;
         this.mainType = mainType;
         this.type = type;
+        labelChanged = false;
     }
 
 
     public WorkflowProperties clone()
     {
+        boolean isLabelChanged = isLabelChanged();
+
         WorkflowProperties workflowProperties = new WorkflowProperties(
                 getElementId(), getLabel(), getImage(), getMainType(), getType());
+
+        workflowProperties.setLabelChanged(isLabelChanged);
 
         return workflowProperties;
     }
@@ -86,39 +93,6 @@ public class WorkflowProperties implements Serializable
                 );
             }
 
-            if (type.equalsIgnoreCase("workflow"))
-            {
-            }
-            else
-            {
-
-
-                /*
-                if (task.getType().equalsIgnoreCase("GroupOfTasks"))
-                {
-                    jsonObject.put("Type", task.getType());
-
-                    JSONObject joParameters = new JSONObject();
-                    jsonObject.put("Parameters", joParameters);
-
-                    mLogger.info("task.getType: " + task.getType());
-
-                    joParameters.put("ExecutionType", task.getGroupOfTaskExecutionType());
-
-                    JSONArray jsonArray = new JSONArray();
-                    joParameters.put("Tasks", jsonArray);
-
-                    for (TreeNode tnTaskOfGroup: tnTreeNode.getChildren())
-                    {
-                        if (!tnTaskOfGroup.getType().equalsIgnoreCase("Event"))
-                            jsonArray.put(buildTask(tnTaskOfGroup));
-                    }
-                }
-                else
-                */
-                if (type.equalsIgnoreCase("Add-Content"))
-                {
-                }
                 /*
                 else if (task.getType().equalsIgnoreCase("Remove-Content"))
                 {
@@ -1911,7 +1885,6 @@ public class WorkflowProperties implements Serializable
 
                 return jsonObject;
                 */
-            }
         }
         catch (Exception e)
         {
@@ -1929,6 +1902,15 @@ public class WorkflowProperties implements Serializable
 
     public void setLabel(String label) {
         this.label = label;
+        labelChanged = true;
+    }
+
+    public boolean isLabelChanged() {
+        return labelChanged;
+    }
+
+    public void setLabelChanged(boolean labelChanged) {
+        this.labelChanged = labelChanged;
     }
 
     public String getImage() {

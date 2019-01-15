@@ -1,8 +1,9 @@
-package com.catramms.backing.workflowEditor.utility;
+package com.catramms.backing.workflowEditor.Properties;
 
 import com.catramms.backing.common.SessionUtils;
 import com.catramms.backing.newWorkflow.PushContent;
 import com.catramms.backing.newWorkflow.WorkflowIssue;
+import com.catramms.backing.workflowEditor.utility.IngestionData;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
@@ -39,18 +40,15 @@ public class AddContentProperties extends WorkflowProperties implements Serializ
     private String deliveryFileName;
     private String uniqueName;
 
-    private String labelTemplatePrefix;
     private String temporaryPushBinariesPathName;
     private String videoAudioAllowTypes;
 
-    public AddContentProperties(int elementId, String label,
-                                String labelTemplatePrefix, String temporaryPushBinariesPathName)
+    public AddContentProperties(int elementId, String label, String temporaryPushBinariesPathName)
     {
         super(elementId, label, "Add-Content" + "-icon.png", "Task", "Add-Content");
 
         sourceDownloadType = "pull";
 
-        this.labelTemplatePrefix = labelTemplatePrefix;
         this.temporaryPushBinariesPathName = temporaryPushBinariesPathName;
 
         {
@@ -86,7 +84,7 @@ public class AddContentProperties extends WorkflowProperties implements Serializ
     public AddContentProperties clone()
     {
         AddContentProperties addContentProperties = new AddContentProperties(
-                super.getElementId(), super.getLabel(), super.getImage(), super.getType());
+                super.getElementId(), super.getLabel(), getTemporaryPushBinariesPathName());
 
         addContentProperties.setSourceDownloadType(sourceDownloadType);
         addContentProperties.setPullSourceURL(pullSourceURL);
@@ -106,8 +104,6 @@ public class AddContentProperties extends WorkflowProperties implements Serializ
         addContentProperties.setDeliveryFileName(deliveryFileName);
         addContentProperties.setUniqueName(uniqueName);
 
-        addContentProperties.setLabelTemplatePrefix(labelTemplatePrefix);
-        addContentProperties.setTemporaryPushBinariesPathName(temporaryPushBinariesPathName);
         addContentProperties.setVideoAudioAllowTypes(videoAudioAllowTypes);
 
         return addContentProperties;
@@ -330,7 +326,7 @@ public class AddContentProperties extends WorkflowProperties implements Serializ
                     fileExtension = event.getFile().getFileName().substring(extensionIndex + 1);
                 }
 
-                if (super.getLabel().startsWith(labelTemplatePrefix))   // not set yet
+                if (!super.isLabelChanged())
                     super.setLabel(fileName);
 
                 fileFormat = fileExtension;
@@ -515,14 +511,6 @@ public class AddContentProperties extends WorkflowProperties implements Serializ
 
     public void setVideoAudioAllowTypes(String videoAudioAllowTypes) {
         this.videoAudioAllowTypes = videoAudioAllowTypes;
-    }
-
-    public String getLabelTemplatePrefix() {
-        return labelTemplatePrefix;
-    }
-
-    public void setLabelTemplatePrefix(String labelTemplatePrefix) {
-        this.labelTemplatePrefix = labelTemplatePrefix;
     }
 
     public String getTemporaryPushBinariesPathName() {

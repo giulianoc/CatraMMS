@@ -1,34 +1,32 @@
-package com.catramms.backing.workflowEditor.utility;
+package com.catramms.backing.workflowEditor.Properties;
 
+import com.catramms.backing.newWorkflow.WorkflowIssue;
+import com.catramms.backing.workflowEditor.utility.IngestionData;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.Serializable;
 
-public class GroupOfTasksProperties extends WorkflowProperties implements Serializable {
+public class RemoveContentProperties extends WorkflowProperties implements Serializable {
 
-    private static final Logger mLogger = Logger.getLogger(GroupOfTasksProperties.class);
+    private static final Logger mLogger = Logger.getLogger(AddContentProperties.class);
 
-    private String groupOfTaskExecutionType;
-    private List<WorkflowProperties> tasks = new ArrayList<>();
+    private String taskReferences;
 
-    public GroupOfTasksProperties(int elementId, String label,
-                                  String labelTemplatePrefix, String temporaryPushBinariesPathName)
+    public RemoveContentProperties(int elementId, String label)
     {
-        super(elementId, label, "GroupOfTasks" + "-icon.png", "GroupOfTasks", "GroupOfTasks");
+        super(elementId, label, "Remove-Content" + "-icon.png", "Task", "Remove-Content");
     }
 
-    public GroupOfTasksProperties clone()
+    public RemoveContentProperties clone()
     {
-        GroupOfTasksProperties groupOfTasksProperties = new GroupOfTasksProperties(
-                super.getElementId(), super.getLabel(), super.getImage(), super.getType());
+        RemoveContentProperties removeContentProperties = new RemoveContentProperties(
+                super.getElementId(), super.getLabel());
 
-        groupOfTasksProperties.setGroupOfTaskExecutionType(groupOfTaskExecutionType);
+        removeContentProperties.setTaskReferences(taskReferences);
 
-        return groupOfTasksProperties;
+        return removeContentProperties;
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)
@@ -45,22 +43,31 @@ public class GroupOfTasksProperties extends WorkflowProperties implements Serial
 
             mLogger.info("task.getType: " + super.getType());
 
-            joParameters.put("ExecutionType", getGroupOfTaskExecutionType());
-
-            JSONArray jaTasks = new JSONArray();
-            joParameters.put("Tasks", jaTasks);
-
-            // tasks
+            if (super.getLabel() != null && !super.getLabel().equalsIgnoreCase(""))
+                jsonWorkflowElement.put("Label", super.getLabel());
+            else
             {
-                int tasksNumber = getTasks().size();
-                mLogger.info("GroupOfTasksProperties::buildWorkflowElementJson"
-                        + ", tasksNumber: " + tasksNumber
-                );
-                for (int taskIndex = 0; taskIndex < tasksNumber; taskIndex++)
-                {
-                    WorkflowProperties taskWorkflowProperties = getTasks().get(taskIndex);
+                WorkflowIssue workflowIssue = new WorkflowIssue();
+                workflowIssue.setLabel("");
+                workflowIssue.setFieldName("Label");
+                workflowIssue.setTaskType(super.getType());
+                workflowIssue.setIssue("The field is not initialized");
 
-                    jaTasks.put(taskWorkflowProperties.buildWorkflowElementJson(ingestionData));
+                ingestionData.getWorkflowIssueList().add(workflowIssue);
+            }
+
+            if (taskReferences != null && !taskReferences.equalsIgnoreCase(""))
+            {
+                JSONArray jaReferences = new JSONArray();
+                joParameters.put("References", jaReferences);
+
+                String [] mediaItemKeyReferences = taskReferences.split(",");
+                for (String mediaItemKeyReference: mediaItemKeyReferences)
+                {
+                    JSONObject joReference = new JSONObject();
+                    joReference.put("ReferenceMediaItemKey", Long.parseLong(mediaItemKeyReference.trim()));
+
+                    jaReferences.put(joReference);
                 }
             }
 
@@ -140,19 +147,11 @@ public class GroupOfTasksProperties extends WorkflowProperties implements Serial
         return jsonWorkflowElement;
     }
 
-    public String getGroupOfTaskExecutionType() {
-        return groupOfTaskExecutionType;
+    public String getTaskReferences() {
+        return taskReferences;
     }
 
-    public void setGroupOfTaskExecutionType(String groupOfTaskExecutionType) {
-        this.groupOfTaskExecutionType = groupOfTaskExecutionType;
-    }
-
-    public List<WorkflowProperties> getTasks() {
-        return tasks;
-    }
-
-    public void setTasks(List<WorkflowProperties> tasks) {
-        this.tasks = tasks;
+    public void setTaskReferences(String taskReferences) {
+        this.taskReferences = taskReferences;
     }
 }
