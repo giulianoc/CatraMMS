@@ -4,140 +4,171 @@
       xmlns:p="http://primefaces.org/ui"
       xmlns:h="http://xmlns.jcp.org/jsf/html">
 
+<!--
 <p:commandButton id="dynaButtonMain" value="Workspace Library" type="button" icon="ui-icon-extlink"/>
 
 <p:tieredMenu styleClass="tieredMenuClass" overlay="true" trigger="dynaButtonMain"
               my="left top" at="left bottom" style="width:200px">
+-->
+
+<p:remoteCommand name="diagram_addTask"
+                 actionListener="#{workflowEditor.addTask}" />
+
+<script type="application/javascript">
+    function addTask(menuItem, taskType)
+    {
+        var contextMenuId = document.getElementById("viewForm:workspaceDiagramMenuContext");
+        // console.log("contextMenuId", contextMenuId)
+        var contextMenuIdX = contextMenuId.style['left'];
+        var contextMenuIdY = contextMenuId.style['top'];
+        // console.log("addTask", contextMenuIdX, contextMenuIdY)
+
+        diagram_addTask([
+            {name : 'taskType', value : taskType},
+            {name : 'positionX', value : contextMenuIdX},
+            {name : 'positionY', value : contextMenuIdY}
+        ]);
+    }
+</script>
+
+<p:contextMenu id="workspaceDiagramMenuContext" for="workspaceDiagram">
     <p:submenu label="Add Task">
         <p:submenu label="Content">
-            <p:menuitem value="Add-Content"
+            <p:menuitem onclick="addTask(this, 'Add-Content')"
+                        value="Add-Content"
                         icon="/resources/img/workspaceElements/Add-Content-icon.png"
-                        actionListener="#{workflowEditor.addTask('Add-Content')}"
                         update="workspaceDiagram"
                     />
-            <p:menuitem value="Remove-Content"
+            <p:menuitem onclick="addTask(this, 'Remove-Content')"
+                        value="Remove-Content"
                         icon="fa fa-eraser"
-                        actionListener="#{workflowEditor.addTask('Remove-Content')}"
+                        update="workspaceDiagram"
                     />
         </p:submenu>
         <p:submenu label="Concat, Cut and Extract">
-            <p:menuitem value="Concat-Demuxer"
+            <p:menuitem onclick="addTask(this, 'Concat-Demuxer')"
+                        value="Concat-Demuxer"
                         icon="fa fa-forward"
-                        actionListener="#{workflowEditor.addTask('Concat-Demuxer')}"
+                        update="workspaceDiagram"
                     />
-            <p:menuitem value="Cut"
+            <p:menuitem onclick="addTask(this, 'Cut')"
+                        value="Cut"
                         icon="fa fa-cut"
-                        actionListener="#{workflowEditor.addTask('Cut')}"
+                        update="workspaceDiagram"
                     />
-            <p:menuitem value="Extract-Tracks"
+            <p:menuitem onclick="addTask(this, 'Extract-Tracks')"
+                        value="Extract-Tracks"
                         icon="fas fa-arrow-alt-from-bottom"
-                        actionListener="#{workflowEditor.addTask('Extract-Tracks')}"
+                        update="workspaceDiagram"
                     />
         </p:submenu>
-        <p:menuitem value="Encode"
+        <p:menuitem onclick="addTask(this, 'Encode')"
+                    value="Encode"
                     icon="fa fa-file-video-o"
-                    actionListener="#{workflowEditor.addTask('Encode')}"
+                    update="workspaceDiagram"
                 />
         <p:submenu label="Overlay">
-            <p:menuitem value="Overlay-Image-On-Video"
+            <p:menuitem onclick="addTask(this, 'Overlay-Image-On-Video')"
+                        value="Overlay-Image-On-Video"
                         icon="fa fa-file-picture-o"
-                        actionListener="#{workflowEditor.addTask('Overlay-Image-On-Video')}"
+                        update="workspaceDiagram"
                     />
-            <p:menuitem value="Overlay-Text-On-Video"
+            <p:menuitem onclick="addTask(this, 'Overlay-Text-On-Video')"
+                        value="Overlay-Text-On-Video"
                         icon="fa fa-file-powerpoint-o"
-                        actionListener="#{workflowEditor.addTask('Overlay-Text-On-Video')}"
+                        update="workspaceDiagram"
                     />
         </p:submenu>
         <p:submenu label="Frame Processing">
-            <p:menuitem value="Frame"
+            <p:menuitem onclick="addTask(this, 'Frame')"
+                        value="Frame"
                         icon="ui-icon-close"
-                        actionListener="#{workflowEditor.addTask('Frame')}"
+                        update="workspaceDiagram"
                     />
-            <p:menuitem value="Periodical-Frames"
+            <p:menuitem onclick="addTask(this, 'Periodical-Frames')"
+                        value="Periodical-Frames"
                         icon="ui-icon-close"
-                        actionListener="#{workflowEditor.addTask('Periodical-Frames')}"
+                        update="workspaceDiagram"
                     />
-            <p:menuitem value="I-Frames"
+            <p:menuitem onclick="addTask(this, 'I-Frames')"
+                        value="I-Frames"
                         icon="ui-icon-close"
-                        actionListener="#{workflowEditor.addTask('I-Frames')}"
+                        update="workspaceDiagram"
                     />
-            <p:menuitem value="Motion-JPEG-by-Periodical-Frames"
+            <p:menuitem onclick="addTask(this, 'Motion-JPEG-by-Periodical-Frames')"
+                        value="Motion-JPEG-by-Periodical-Frames"
                         icon="ui-icon-close"
-                        actionListener="#{workflowEditor.addTask('Motion-JPEG-by-Periodical-Frames')}"
+                        update="workspaceDiagram"
                     />
-            <p:menuitem value="Motion-JPEG-by-I-Frames"
+            <p:menuitem onclick="addTask(this, 'Motion-JPEG-by-I-Frames')"
+                        value="Motion-JPEG-by-I-Frames"
                         icon="ui-icon-close"
-                        actionListener="#{workflowEditor.addTask('Motion-JPEG-by-I-Frames')}"
+                        update="workspaceDiagram"
                     />
-            <p:menuitem value="Slideshow"
+            <p:menuitem onclick="addTask(this, 'Slideshow')"
+                        value="Slideshow"
                         icon="ui-icon-close"
-                        actionListener="#{workflowEditor.addTask('Slideshow')}"
+                        update="workspaceDiagram"
                     />
         </p:submenu>
         <p:submenu label="Delivery">
-            <p:menuitem value="FTP"
+            <p:menuitem onclick="addTask(this, 'FTP-Delivery')"
+                        value="FTP"
                         icon="fa fa-upload"
-                        actionListener="#{workflowEditor.addTask('FTP-Delivery')}"
+                        update="workspaceDiagram"
                     />
-            <p:menuitem value="Local-Copy"
+            <p:menuitem onclick="addTask(this, 'Local-Copy')"
+                        value="Local-Copy"
                         icon="fa fa-copy"
-                        actionListener="#{workflowEditor.addTask('Local-Copy')}"
+                        update="workspaceDiagram"
             />
         </p:submenu>
         <p:submenu label="Social Network Delivery">
-            <p:menuitem value="Post on Facebook"
+            <p:menuitem onclick="addTask(this, 'Post-On-Facebook')"
+                        value="Post on Facebook"
                         icon="fa fa-upload"
-                        actionListener="#{workflowEditor.addTask('Post-On-Facebook')}"
+                        update="workspaceDiagram"
                     />
-            <p:menuitem value="Post on YouTube"
+            <p:menuitem onclick="addTask(this, 'Post-On-YouTube')"
+                        value="Post on YouTube"
                         icon="fa fa-upload"
-                        actionListener="#{workflowEditor.addTask('Post-On-YouTube')}"
+                        update="workspaceDiagram"
                     />
         </p:submenu>
         <p:submenu label="Communication">
-            <p:menuitem value="Email-Notification"
+            <p:menuitem onclick="addTask(this, 'Email-Notification')"
+                        value="Email-Notification"
                         icon="ui-icon-close"
-                        actionListener="#{workflowEditor.addTask('Email-Notification')}"
+                        update="workspaceDiagram"
                     />
-            <p:menuitem value="HTTP-Callback"
+            <p:menuitem onclick="addTask(this, 'HTTP-Callback')"
+                        value="HTTP-Callback"
                         icon="ui-icon-close"
-                        actionListener="#{workflowEditor.addTask('HTTP-Callback')}"
+                        update="workspaceDiagram"
             />
         </p:submenu>
         <p:submenu label="Computer Vision">
-            <p:menuitem value="Face-Recognition"
+            <p:menuitem onclick="addTask(this, 'Face-Recognition')"
+                        value="Face-Recognition"
                         icon="ui-icon-close"
-                        actionListener="#{workflowEditor.addTask('Face-Recognition')}"
+                        update="workspaceDiagram"
             />
-            <p:menuitem value="Face-Identification"
+            <p:menuitem onclick="addTask(this, 'Face-Identification')"
+                        value="Face-Identification"
                         icon="ui-icon-close"
-                        actionListener="#{workflowEditor.addTask('Face-Identification')}"
+                        update="workspaceDiagram"
             />
         </p:submenu>
     </p:submenu>
-    <p:submenu label="Add Event">
-        <p:menuitem value="OnSuccess"
-                    icon="fa fa-check"
-                    actionListener="#{workflowEditor.addOnSuccessEvent}"
-                />
-        <p:menuitem value="OnError"
-                    icon="fa fa-close"
-                    actionListener="#{workflowEditor.addOnErrorEvent}"
-                />
-        <p:menuitem value="OnComplete"
-                    icon="fa fa-file-text-o"
-                    actionListener="#{workflowEditor.addOnCompleteEvent}"
-                />
-    </p:submenu>
-    <p:menuitem value="Add Group of Tasks"
+    <p:menuitem onclick="addTask(this, 'GroupOfTasks')"
+                value="Add Group of Tasks"
                 icon="/resources/img/workspaceElements/GroupOfTasks-icon.png"
-                actionListener="#{workflowEditor.addTask('GroupOfTasks')}"
                 update="workspaceDiagram"
             />
     <p:menuitem value="Delete Task"
                 icon="ui-icon-close"
                 actionListener="#{workflowEditor.deleteNode}"
             />
-</p:tieredMenu>
+</p:contextMenu>
 
 </html>

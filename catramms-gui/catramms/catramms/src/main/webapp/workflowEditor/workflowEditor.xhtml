@@ -72,14 +72,14 @@
             </p:toolbarGroup>
         </p:toolbar>
 
-        <p:toolbar>
+        <p:toolbar id="stickedToolbar">
             <p:toolbarGroup align="left">
 
                 <span class="ui-separator">
                     <span class="ui-icon ui-icon-grip-dotted-vertical" />
                 </span>
 
-                <p:outputLabel styleClass="viewTitle" value="New Workflow" />
+                <p:outputLabel styleClass="viewTitle" value="Workflow Editor" />
 
             </p:toolbarGroup>
 
@@ -130,6 +130,11 @@
                 height:5em;
                 text-align: center;
                 box-shadow: 0 5px 10px rgba(0, 0, 0, 0.8);
+            }
+
+            .workflowElementText {
+                color: #dc3545;
+                font-weight: bold;
             }
 
             .ui-diagram-element:hover {
@@ -219,7 +224,9 @@
             }
         </script>
 
-        <p:diagram id="workspaceDiagram" value="#{workflowEditor.model}" style="height:1000px" styleClass="ui-widget-content" var="el">
+        <p:sticky target="stickedToolbar" />
+
+        <p:diagram id="workspaceDiagram" value="#{workflowEditor.model}" style="height:2000px" styleClass="ui-widget-content" var="el">
             <f:facet name="element" id="diagramElement" widgetVar="element">
 
                 <!-- onclick="onElementMouseClick(this)"  -->
@@ -236,8 +243,9 @@
 
                         <br />
 
-                        <h:outputText rendered="#{el.type != 'workflow'}"
-                                      value="(#{el.type})" />
+                        <h:outputText value="id: #{el.elementId}, " />
+                        <h:outputText styleClass="#{(el.type == 'Workflow') ? 'workflowElementText' : ''}"
+                                      value="#{el.type}" />
                     </p>
 
                 </div>
@@ -262,6 +270,7 @@
             />
         </p:diagram>
 
+        <!--
         <p:dock position="bottom">
             <p:menuitem value="Add Group of Tasks" icon="/resources/img/workspaceElements/GroupOfTasks-icon.png"
                         actionListener="#{workflowEditor.addTask('GroupOfTasks')}"
@@ -280,6 +289,7 @@
             <p:menuitem value="RSS" icon="/resources/img/workspaceElements/Add-Content-icon.png" url="#"/>
             <p:menuitem value="History" icon="/resources/img/workspaceElements/Add-Content-icon.png" url="#"/>
         </p:dock>
+        -->
 
     </h:form>
 

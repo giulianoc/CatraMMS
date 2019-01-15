@@ -103,7 +103,7 @@ public class WorkflowEditor extends Workspace implements Serializable {
             WorkflowProperties workflowProperties = new WorkflowProperties(elementId++, "Workflow", "Workflow-icon.png", "Root", "Workflow");
             rootElement = new Element(workflowProperties, currentX + "em", currentY + "em");
             rootElement.setId(String.valueOf(workflowProperties.getElementId()));
-            rootElement.setDraggable(false);
+            rootElement.setDraggable(true);
             {
                 RectangleEndPoint endPoint = new RectangleEndPoint(EndPointAnchor.BOTTOM);
                 // endPoint.setScope("network");
@@ -218,11 +218,11 @@ public class WorkflowEditor extends Workspace implements Serializable {
         String elementX = params.get("elementX");
         String elementY = params.get("elementY");
 
-//        mLogger.info("onElementMove"
-//                + ", elementId: " + elementId
-//                + ", elementX: " + elementX
-//                + ", elementY: " + elementY
-//        );
+        mLogger.info("onElementMove"
+                + ", elementId: " + elementId
+                + ", elementX: " + elementX
+                + ", elementY: " + elementY
+        );
 
         int pos = elementId.lastIndexOf("-"); // Remove Client ID part
         if (pos != -1)
@@ -530,9 +530,20 @@ public class WorkflowEditor extends Workspace implements Serializable {
         return isConnectionNumberAllowed;
     }
 
-    public void addTask(String taskType)
+//    public void addTask(String taskType)
+//    {
+    public void addTask(ActionEvent param)
     {
-        mLogger.info("addTask: " + taskType);
+        Map<String, String> params = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap();
+        String taskType = params.get("taskType");
+        String positionX = params.get("positionX");
+        String positionY = params.get("positionY");
+
+        mLogger.info("addTask"
+                        + ", taskType: " + taskType
+                        + ", positionX: " + positionX
+                        + ", positionY: " + positionY
+        );
 
         WorkflowProperties workflowProperties = null;
 
@@ -559,9 +570,15 @@ public class WorkflowEditor extends Workspace implements Serializable {
         }
         */
 
+        for (Element element: model.getElements())
+            mLogger.info("elementX: " + element.getX()
+                + ", elementY: " + element.getY()
+                );
+
         currentY += stepY;
 
-        Element taskElement = new Element(workflowProperties, currentX + "em", currentY + "em");
+        // Element taskElement = new Element(workflowProperties, currentX + "em", currentY + "em");
+        Element taskElement = new Element(workflowProperties, positionX, positionY);
         taskElement.setId(String.valueOf(workflowProperties.getElementId()));
         taskElement.setDraggable(true);
         {
