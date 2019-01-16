@@ -187,6 +187,28 @@ public class WorkflowEditor extends Workspace implements Serializable {
                 currentGroupOfTasksProperties = ((GroupOfTasksProperties) workflowProperties).clone();
             else if (workflowProperties.getType().equalsIgnoreCase("Remove-Content"))
             {
+                /*
+                creare un methodo che inizializza mediaitemsreferences per le seguenti attività
+                                        mediaItemsList.clear();
+                        mediaItemsSelectedList.clear();
+                        mediaItemsSelectionMode = "multiple";
+                        mediaItemsMaxMediaItemsNumber = new Long(100);
+                        {
+                            mediaItemsContentTypesList.clear();
+                            mediaItemsContentTypesList.add("video");
+                            mediaItemsContentTypesList.add("audio");
+                            mediaItemsContentTypesList.add("image");
+
+                            mediaItemsContentType = mediaItemsContentTypesList.get(0);
+                        }
+                        mediaItemsReferences.setCurrentElementType(workflowProperties.getType());
+
+                        fillMediaItems();
+
+                        forse mediaitemsreferences dovrebbe mantenere private tanti attributi
+
+                        ---- per il context menu, la posizione del mouse, sottrarre top del toolbar
+                 */
                 mediaItemsReferences.setCurrentElementType(workflowProperties.getType());
 
                 currentRemoveContentProperties = ((RemoveContentProperties) workflowProperties).clone();
