@@ -12,7 +12,7 @@ public class RemoveContentProperties extends WorkflowProperties implements Seria
 
     private static final Logger mLogger = Logger.getLogger(AddContentProperties.class);
 
-    private String taskReferences;
+    private StringBuilder taskReferences = new StringBuilder();
 
     public RemoveContentProperties(int elementId, String label)
     {
@@ -24,7 +24,7 @@ public class RemoveContentProperties extends WorkflowProperties implements Seria
         RemoveContentProperties removeContentProperties = new RemoveContentProperties(
                 super.getElementId(), super.getLabel());
 
-        removeContentProperties.setTaskReferences(taskReferences);
+        removeContentProperties.setStringBuilderTaskReferences(taskReferences);
 
         return removeContentProperties;
     }
@@ -56,12 +56,12 @@ public class RemoveContentProperties extends WorkflowProperties implements Seria
                 ingestionData.getWorkflowIssueList().add(workflowIssue);
             }
 
-            if (taskReferences != null && !taskReferences.equalsIgnoreCase(""))
+            if (taskReferences != null && !taskReferences.toString().equalsIgnoreCase(""))
             {
                 JSONArray jaReferences = new JSONArray();
                 joParameters.put("References", jaReferences);
 
-                String [] mediaItemKeyReferences = taskReferences.split(",");
+                String [] mediaItemKeyReferences = taskReferences.toString().split(",");
                 for (String mediaItemKeyReference: mediaItemKeyReferences)
                 {
                     JSONObject joReference = new JSONObject();
@@ -147,11 +147,19 @@ public class RemoveContentProperties extends WorkflowProperties implements Seria
         return jsonWorkflowElement;
     }
 
-    public String getTaskReferences() {
+    public void setStringBuilderTaskReferences(StringBuilder taskReferences) {
+        this.taskReferences = taskReferences;
+    }
+
+    public StringBuilder getStringBuilderTaskReferences() {
         return taskReferences;
     }
 
+    public String getTaskReferences() {
+        return taskReferences.toString();
+    }
+
     public void setTaskReferences(String taskReferences) {
-        this.taskReferences = taskReferences;
+        this.taskReferences.replace(0, this.taskReferences.length(), taskReferences);
     }
 }

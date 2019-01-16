@@ -18,6 +18,7 @@ public class MediaItemsReferences implements Serializable {
 
     private List<MediaItem> mediaItemsList = new ArrayList<>();
     private List<MediaItem> mediaItemsSelectedList = new ArrayList<>();
+    private String mediaItemsSelectionMode;
     private Long mediaItemsNumber = new Long(0);
     private String mediaItemsContentType;
     private List<String> mediaItemsContentTypesList = new ArrayList<>();
@@ -26,7 +27,7 @@ public class MediaItemsReferences implements Serializable {
     private String mediaItemsTitle;
     private Long mediaItemsMaxMediaItemsNumber = new Long(100);
     private String mediaItemsToBeAddedOrReplaced;
-    private String taskReferences;
+    private StringBuilder taskReferences;
 
     private String currentElementType;
 
@@ -60,6 +61,44 @@ public class MediaItemsReferences implements Serializable {
         mediaItemsTitle = "";
 
         mediaItemsToBeAddedOrReplaced = "toBeReplaced";
+    }
+
+    public void prepareToSelectMediaItems(
+            String currentElementType, String mediaItemsSelectionMode,
+            boolean videoContentType, boolean audioContentType, boolean imageContentType,
+            StringBuilder taskReferences)
+    {
+        mLogger.info("prepareToSelectMediaItems...");
+
+        mediaItemsList.clear();
+        mediaItemsSelectedList.clear();
+
+        // it is used StringBuilder to pass it as references. This is because the same variable
+        // is initialized here (in MediaItemsReferences) and is used in MediaItemsReferences dialog
+        // refereed as workflowEditor.current....Properties.taskReferences
+        this.taskReferences = taskReferences;
+
+        // single or multiple
+        this.mediaItemsSelectionMode = mediaItemsSelectionMode;
+
+        mediaItemsMaxMediaItemsNumber = new Long(100);
+
+        {
+            mediaItemsContentTypesList.clear();
+            if (videoContentType)
+                mediaItemsContentTypesList.add("video");
+            if (audioContentType)
+                mediaItemsContentTypesList.add("audio");
+            if (imageContentType)
+                mediaItemsContentTypesList.add("image");
+
+            mediaItemsContentType = mediaItemsContentTypesList.get(0);
+        }
+
+        // i.e.: Remove-Content, Add-Content, ...
+        this.currentElementType = currentElementType;
+
+        fillMediaItems();
     }
 
     public void fillMediaItems()
@@ -118,17 +157,23 @@ public class MediaItemsReferences implements Serializable {
         );
 
         if (mediaItemsToBeAddedOrReplaced.equalsIgnoreCase("toBeReplaced"))
-            taskReferences = "";
+            taskReferences.delete(0, taskReferences.length());
+
+        mLogger.info("taskReferences initialization"
+                        + ", currentElementType: " + currentElementType
+                        + ", taskReferences: " + taskReferences
+                        + ", taskReferences.toString: " + taskReferences.toString()
+        );
 
         for (MediaItem mediaItem: mediaItemsSelectedList)
         {
             if (currentElementType.equalsIgnoreCase("Remove-Content") ||
                     currentElementType.equalsIgnoreCase("HTTP-Callback"))
             {
-                if (taskReferences == "")
-                    taskReferences = mediaItem.getMediaItemKey().toString();
+                if (taskReferences.length() == 0)
+                    taskReferences.append(mediaItem.getMediaItemKey().toString());
                 else
-                    taskReferences += ("," + mediaItem.getMediaItemKey().toString());
+                    taskReferences.append("," + mediaItem.getMediaItemKey().toString());
             }
             else
             {
@@ -137,10 +182,10 @@ public class MediaItemsReferences implements Serializable {
 
                 if (sourcePhysicalPath != null)
                 {
-                    if (taskReferences == "")
-                        taskReferences = sourcePhysicalPath.getPhysicalPathKey().toString();
+                    if (taskReferences.length() == 0)
+                        taskReferences.append(sourcePhysicalPath.getPhysicalPathKey().toString());
                     else
-                        taskReferences += ("," + sourcePhysicalPath.getPhysicalPathKey().toString());
+                        taskReferences.append("," + sourcePhysicalPath.getPhysicalPathKey().toString());
                 }
                 else
                 {
@@ -233,12 +278,8 @@ public class MediaItemsReferences implements Serializable {
         this.mediaItemsToBeAddedOrReplaced = mediaItemsToBeAddedOrReplaced;
     }
 
-    public String getTaskReferences() {
+    public StringBuilder getTaskReferences() {
         return taskReferences;
-    }
-
-    public void setTaskReferences(String taskReferences) {
-        this.taskReferences = taskReferences;
     }
 
     public String getCurrentElementType() {
@@ -247,5 +288,13 @@ public class MediaItemsReferences implements Serializable {
 
     public void setCurrentElementType(String currentElementType) {
         this.currentElementType = currentElementType;
+    }
+
+    public String getMediaItemsSelectionMode() {
+        return mediaItemsSelectionMode;
+    }
+
+    public void setMediaItemsSelectionMode(String mediaItemsSelectionMode) {
+        this.mediaItemsSelectionMode = mediaItemsSelectionMode;
     }
 }

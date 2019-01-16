@@ -18,7 +18,9 @@
     function addTask(menuItem, taskType)
     {
         var contextMenuId = document.getElementById("viewForm:workspaceDiagramMenuContext");
+
         // console.log("contextMenuId", contextMenuId)
+        // we know the div of contextMenu contains style/left/top
         var contextMenuIdX = contextMenuId.style['left'];
         var contextMenuIdY = contextMenuId.style['top'];
         // console.log("addTask", contextMenuIdX, contextMenuIdY)
