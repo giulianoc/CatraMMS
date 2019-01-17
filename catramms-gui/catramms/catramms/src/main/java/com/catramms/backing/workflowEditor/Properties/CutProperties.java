@@ -13,18 +13,21 @@ public class CutProperties extends CreateContentProperties implements Serializab
 
     private static final Logger mLogger = Logger.getLogger(CutProperties.class);
 
+    private Long timeInSecondsDecimalsPrecision;
     private Float startTimeInSeconds;
     private String endType;
     private Float endTimeInSeconds;
     private Long framesNumber;
     private String fileFormat;
-    private List<String> fileFormatsList;
 
     private StringBuilder taskReferences = new StringBuilder();
 
     public CutProperties(int elementId, String label)
     {
         super(elementId, label, "Cut" + "-icon.png", "Task", "Cut");
+
+        endType = "endTime";
+        timeInSecondsDecimalsPrecision = new Long(6);
     }
 
     public CutProperties clone()
@@ -199,14 +202,6 @@ public class CutProperties extends CreateContentProperties implements Serializab
         this.fileFormat = fileFormat;
     }
 
-    public List<String> getFileFormatsList() {
-        return fileFormatsList;
-    }
-
-    public void setFileFormatsList(List<String> fileFormatsList) {
-        this.fileFormatsList = fileFormatsList;
-    }
-
     public void setStringBuilderTaskReferences(StringBuilder taskReferences) {
         this.taskReferences = taskReferences;
     }
@@ -221,5 +216,13 @@ public class CutProperties extends CreateContentProperties implements Serializab
 
     public void setTaskReferences(String taskReferences) {
         this.taskReferences.replace(0, this.taskReferences.length(), taskReferences);
+    }
+
+    public Long getTimeInSecondsDecimalsPrecision() {
+        return timeInSecondsDecimalsPrecision;
+    }
+
+    public void setTimeInSecondsDecimalsPrecision(Long timeInSecondsDecimalsPrecision) {
+        this.timeInSecondsDecimalsPrecision = timeInSecondsDecimalsPrecision;
     }
 }

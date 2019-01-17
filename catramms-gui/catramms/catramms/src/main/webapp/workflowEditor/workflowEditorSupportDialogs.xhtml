@@ -92,36 +92,71 @@
             </p:toolbarGroup>
         </p:toolbar>
 
-        <p:dataTable resizableColumns="true" id="mediaItemDataTable" var="mediaItem" rowIndexVar="rowId"
-                     value="#{workflowEditor.mediaItemsReferences.mediaItemsList}"
-                     selection="#{workflowEditor.mediaItemsReferences.mediaItemsSelectedList}"
-                     rowKey="#{mediaItem.mediaItemKey}"
-                >
+        <p:panel rendered="#{workflowEditor.mediaItemsReferences.mediaItemsSelectionMode == 'single'}">
+            <p:dataTable resizableColumns="true" id="mediaItemDataTable_single" var="mediaItem" rowIndexVar="rowId"
+                         value="#{workflowEditor.mediaItemsReferences.mediaItemsList}"
+                         selection="#{workflowEditor.mediaItemsReferences.mediaItemSelected}"
+                         rowKey="#{mediaItem.mediaItemKey}"
+                    >
 
-            <f:facet name="header">
-                <p:outputLabel value="Media Items" />
-            </f:facet>
+                <f:facet name="header">
+                    <p:outputLabel value="Media Items" />
+                </f:facet>
 
-            <p:column selectionMode="#{workflowEditor.mediaItemsReferences.mediaItemsSelectionMode}" style="width:16px;text-align:center"/>
+                <p:column selectionMode="#{workflowEditor.mediaItemsReferences.mediaItemsSelectionMode}" style="width:16px;text-align:center"/>
 
-            <p:column style="width:90px;" headerText="Media Item&lt;br&gt;Key" >
-                <p:outputLabel value="#{mediaItem.mediaItemKey}" />
-            </p:column>
+                <p:column style="width:90px;" headerText="Media Item&lt;br&gt;Key" >
+                    <p:outputLabel value="#{mediaItem.mediaItemKey}" />
+                </p:column>
 
-            <p:column style="width:100px;" headerText="Source Physical&lt;br&gt;Path Key" >
-                <p:outputLabel value="#{mediaItem.sourcePhysicalPath.physicalPathKey}" />
-            </p:column>
+                <p:column style="width:100px;" headerText="Source Physical&lt;br&gt;Path Key" >
+                    <p:outputLabel value="#{mediaItem.sourcePhysicalPath.physicalPathKey}" />
+                </p:column>
 
-            <p:column headerText="Title" >
-                <p:outputLabel value="#{mediaItem.title}" />
-            </p:column>
+                <p:column headerText="Title" >
+                    <p:outputLabel value="#{mediaItem.title}" />
+                </p:column>
 
-            <p:column style="width:160px;" headerText="Ingestion Date" >
-                <p:outputLabel id="ingestionDate" value="#{mediaItem.ingestionDate}">
-                    <f:convertDateTime type="date" pattern="dd-MM-yyyy HH:mm:ss" timeZone="CET"/>
-                </p:outputLabel>
-            </p:column>
-        </p:dataTable>
+                <p:column style="width:160px;" headerText="Ingestion Date" >
+                    <p:outputLabel id="ingestionDate" value="#{mediaItem.ingestionDate}">
+                        <f:convertDateTime type="date" pattern="dd-MM-yyyy HH:mm:ss" timeZone="CET"/>
+                    </p:outputLabel>
+                </p:column>
+            </p:dataTable>
+        </p:panel>
+
+        <p:panel rendered="#{workflowEditor.mediaItemsReferences.mediaItemsSelectionMode == 'multiple'}">
+            <p:dataTable resizableColumns="true" id="mediaItemDataTable_multiple" var="mediaItem" rowIndexVar="rowId"
+                         value="#{workflowEditor.mediaItemsReferences.mediaItemsList}"
+                         selection="#{workflowEditor.mediaItemsReferences.mediaItemsSelectedList}"
+                         rowKey="#{mediaItem.mediaItemKey}"
+                    >
+
+                <f:facet name="header">
+                    <p:outputLabel value="Media Items" />
+                </f:facet>
+
+                <p:column selectionMode="#{workflowEditor.mediaItemsReferences.mediaItemsSelectionMode}" style="width:16px;text-align:center"/>
+
+                <p:column style="width:90px;" headerText="Media Item&lt;br&gt;Key" >
+                    <p:outputLabel value="#{mediaItem.mediaItemKey}" />
+                </p:column>
+
+                <p:column style="width:100px;" headerText="Source Physical&lt;br&gt;Path Key" >
+                    <p:outputLabel value="#{mediaItem.sourcePhysicalPath.physicalPathKey}" />
+                </p:column>
+
+                <p:column headerText="Title" >
+                    <p:outputLabel value="#{mediaItem.title}" />
+                </p:column>
+
+                <p:column style="width:160px;" headerText="Ingestion Date" >
+                    <p:outputLabel id="ingestionDate" value="#{mediaItem.ingestionDate}">
+                        <f:convertDateTime type="date" pattern="dd-MM-yyyy HH:mm:ss" timeZone="CET"/>
+                    </p:outputLabel>
+                </p:column>
+            </p:dataTable>
+        </p:panel>
 
         <br />
 
@@ -141,14 +176,24 @@
                 </p:column>
                 <p:column>
                     <!--
-                    update="viewForm:taskReferences_Concat_Demuxer,viewForm:taskReferences_Cut,viewForm:taskReferences_Overlay_Image_On_Video,viewForm:taskReferences_Overlay_Text_On_Video,viewForm:taskReferences_Frame,viewForm:taskReferences_Periodical_Frames,viewForm:taskReferences_I_Frames,viewForm:taskReferences_Motion_JPEG_by_Periodical_Frames,viewForm:taskReferences_Motion_JPEG_by_I_Frames,viewForm:taskReferences_Slideshow,viewForm:taskReferences_Encode,viewForm:taskReferences_FTP_Delivery,viewForm:taskReferences_Local_Copy,viewForm:taskReferences_HTTP_Callback,viewForm:taskReferences_Extract_Tracks,viewForm:taskReferences_Post_On_Facebook,viewForm:taskReferences_Post_On_YouTube,viewForm:taskReferences_Face_Recognition,viewForm:taskReferences_Face_Identification"
+                    update="viewForm:taskReferences_Overlay_Image_On_Video,viewForm:taskReferences_Overlay_Text_On_Video,viewForm:taskReferences_Frame,viewForm:taskReferences_Periodical_Frames,viewForm:taskReferences_I_Frames,viewForm:taskReferences_Motion_JPEG_by_Periodical_Frames,viewForm:taskReferences_Motion_JPEG_by_I_Frames,viewForm:taskReferences_Slideshow,viewForm:taskReferences_Encode,viewForm:taskReferences_FTP_Delivery,viewForm:taskReferences_Local_Copy,viewForm:taskReferences_HTTP_Callback,viewForm:taskReferences_Extract_Tracks,viewForm:taskReferences_Post_On_Facebook,viewForm:taskReferences_Post_On_YouTube,viewForm:taskReferences_Face_Recognition,viewForm:taskReferences_Face_Identification"
                     -->
-                    <p:commandButton process="mediaItemDataTable"
+                    <p:panel rendered="#{workflowEditor.mediaItemsReferences.mediaItemsSelectionMode == 'single'}">
+                        <p:commandButton process="mediaItemDataTable_single"
                                      icon="ui-icon-search"
                                      value="Save"
                                      onclick="PF('selectMediaItems').hide()"
-                                     update="Remove-ContentForm:taskReferences"
+                                     update="#{workflowEditor.mediaItemsReferences.propertyFieldToBeUpdated}"
                             />
+                    </p:panel>
+                    <p:panel rendered="#{workflowEditor.mediaItemsReferences.mediaItemsSelectionMode == 'multiple'}">
+                        <p:commandButton process="mediaItemDataTable_multiple"
+                                         icon="ui-icon-search"
+                                         value="Save"
+                                         onclick="PF('selectMediaItems').hide()"
+                                         update="#{workflowEditor.mediaItemsReferences.propertyFieldToBeUpdated}"
+                                />
+                    </p:panel>
                 </p:column>
             </p:row>
         </p:panelGrid>

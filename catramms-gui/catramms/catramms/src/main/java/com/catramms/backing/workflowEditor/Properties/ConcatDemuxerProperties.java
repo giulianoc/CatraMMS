@@ -1,22 +1,12 @@
 package com.catramms.backing.workflowEditor.Properties;
 
-import com.catramms.backing.common.SessionUtils;
-import com.catramms.backing.newWorkflow.PushContent;
 import com.catramms.backing.newWorkflow.WorkflowIssue;
 import com.catramms.backing.workflowEditor.utility.IngestionData;
-import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.primefaces.event.FileUploadEvent;
 
 import java.io.*;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.TimeZone;
 
 public class ConcatDemuxerProperties extends CreateContentProperties implements Serializable {
 

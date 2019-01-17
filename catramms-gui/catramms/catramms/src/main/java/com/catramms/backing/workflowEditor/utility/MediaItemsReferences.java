@@ -18,6 +18,8 @@ public class MediaItemsReferences implements Serializable {
 
     private List<MediaItem> mediaItemsList = new ArrayList<>();
     private List<MediaItem> mediaItemsSelectedList = new ArrayList<>();
+    private MediaItem mediaItemSelected = new MediaItem();
+    private String propertyFieldToBeUpdated;
     private String mediaItemsSelectionMode;
     private Long mediaItemsNumber = new Long(0);
     private String mediaItemsContentType;
@@ -98,6 +100,8 @@ public class MediaItemsReferences implements Serializable {
         // i.e.: Remove-Content, Add-Content, ...
         this.currentElementType = currentElementType;
 
+        propertyFieldToBeUpdated = currentElementType + "Form:taskReferences";
+
         fillMediaItems();
     }
 
@@ -136,6 +140,10 @@ public class MediaItemsReferences implements Serializable {
                         mediaItemsBegin, mediaItemsEnd,
                         mediaItemsTitle,
                         ingestionDateOrder, mediaItemsList);
+                mLogger.info("mediaItemsData: " + mediaItemsData.toString()
+                        + ", mediaItemsList.size: " + mediaItemsList.size()
+                                + ", mediaItemsSelectedList.size: " + mediaItemsSelectedList.size()
+                );
                 mediaItemsNumber = mediaItemsData.get(0);
             }
         }
@@ -173,7 +181,20 @@ public class MediaItemsReferences implements Serializable {
                 if (taskReferences.length() == 0)
                     taskReferences.append(mediaItem.getMediaItemKey().toString());
                 else
-                    taskReferences.append("," + mediaItem.getMediaItemKey().toString());
+                {
+                    int keyAlreadyAddedIndex = taskReferences.indexOf(mediaItem.getMediaItemKey().toString());
+                    mLogger.info("keyAlreadyAddedIndex: " + keyAlreadyAddedIndex
+                            + ", taskReferences: " + taskReferences
+                                    + ", mediaItem.getMediaItemKey().toString().length(): " + mediaItem.getMediaItemKey().toString().length()
+                                    + ", taskReferences.charAt(keyAlreadyAddedIndex + mediaItem.getMediaItemKey().toString().length()): " + taskReferences.charAt(keyAlreadyAddedIndex + mediaItem.getMediaItemKey().toString().length())
+                    );
+                    if (keyAlreadyAddedIndex != -1 &&
+                            (taskReferences.length() == keyAlreadyAddedIndex + mediaItem.getMediaItemKey().toString().length()
+                            || taskReferences.charAt(keyAlreadyAddedIndex + mediaItem.getMediaItemKey().toString().length()) == ','))
+                    ;
+                    else
+                        taskReferences.append("," + mediaItem.getMediaItemKey().toString());
+                }
             }
             else
             {
@@ -185,7 +206,15 @@ public class MediaItemsReferences implements Serializable {
                     if (taskReferences.length() == 0)
                         taskReferences.append(sourcePhysicalPath.getPhysicalPathKey().toString());
                     else
-                        taskReferences.append("," + sourcePhysicalPath.getPhysicalPathKey().toString());
+                    {
+                        int keyAlreadyAddedIndex = taskReferences.indexOf(sourcePhysicalPath.getPhysicalPathKey().toString());
+                        if (keyAlreadyAddedIndex != -1 &&
+                                (taskReferences.length() == keyAlreadyAddedIndex + sourcePhysicalPath.getPhysicalPathKey().toString().length()
+                                        || taskReferences.charAt(keyAlreadyAddedIndex + sourcePhysicalPath.getPhysicalPathKey().toString().length()) == ','))
+                            ;
+                        else
+                            taskReferences.append("," + sourcePhysicalPath.getPhysicalPathKey().toString());
+                    }
                 }
                 else
                 {
@@ -204,6 +233,63 @@ public class MediaItemsReferences implements Serializable {
 
     public List<MediaItem> getMediaItemsSelectedList() {
         return mediaItemsSelectedList;
+    }
+
+    public MediaItem getMediaItemSelected() {
+        return mediaItemSelected;
+    }
+
+    public void setMediaItemSelected(MediaItem mediaItemSelected) {
+        this.mediaItemSelected = mediaItemSelected;
+
+        mLogger.info("taskReferences initialization (single)"
+                        + ", mediaItemsToBeAddedOrReplaced: " + mediaItemsToBeAddedOrReplaced
+                        + ", taskReferences: " + taskReferences
+        );
+
+        if (mediaItemsToBeAddedOrReplaced.equalsIgnoreCase("toBeReplaced"))
+            taskReferences.delete(0, taskReferences.length());
+
+        mLogger.info("taskReferences initialization"
+                        + ", currentElementType: " + currentElementType
+                        + ", taskReferences: " + taskReferences
+                        + ", taskReferences.toString: " + taskReferences.toString()
+        );
+
+        {
+            if (currentElementType.equalsIgnoreCase("Remove-Content") ||
+                    currentElementType.equalsIgnoreCase("HTTP-Callback"))
+            {
+                if (taskReferences.length() == 0)
+                    taskReferences.append(mediaItemSelected.getMediaItemKey().toString());
+                else
+                    taskReferences.append("," + mediaItemSelected.getMediaItemKey().toString());
+            }
+            else
+            {
+                mLogger.info("Looking for the SourcePhysicalPath. MediaItemKey: " + mediaItemSelected.getMediaItemKey());
+                PhysicalPath sourcePhysicalPath = mediaItemSelected.getSourcePhysicalPath();
+
+                if (sourcePhysicalPath != null)
+                {
+                    if (taskReferences.length() == 0)
+                        taskReferences.append(sourcePhysicalPath.getPhysicalPathKey().toString());
+                    else
+                        taskReferences.append("," + sourcePhysicalPath.getPhysicalPathKey().toString());
+                }
+                else
+                {
+                    String errorMessage = "No sourcePhysicalPath found"
+                            + ", mediaItemKey: " + mediaItemSelected.getMediaItemKey();
+                    mLogger.error(errorMessage);
+
+                    FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_INFO, "Workflow",
+                            errorMessage);
+                    FacesContext.getCurrentInstance().addMessage(null, message);
+                }
+            }
+        }
+        mLogger.info("taskReferences: " + taskReferences);
     }
 
     public List<MediaItem> getMediaItemsList() {
@@ -296,5 +382,13 @@ public class MediaItemsReferences implements Serializable {
 
     public void setMediaItemsSelectionMode(String mediaItemsSelectionMode) {
         this.mediaItemsSelectionMode = mediaItemsSelectionMode;
+    }
+
+    public String getPropertyFieldToBeUpdated() {
+        return propertyFieldToBeUpdated;
+    }
+
+    public void setPropertyFieldToBeUpdated(String propertyFieldToBeUpdated) {
+        this.propertyFieldToBeUpdated = propertyFieldToBeUpdated;
     }
 }

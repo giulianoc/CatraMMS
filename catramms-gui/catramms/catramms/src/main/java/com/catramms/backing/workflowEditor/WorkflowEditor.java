@@ -70,6 +70,7 @@ public class WorkflowEditor extends Workspace implements Serializable {
     private GroupOfTasksProperties currentGroupOfTasksProperties;
     private RemoveContentProperties currentRemoveContentProperties;
     private ConcatDemuxerProperties currentConcatDemuxerProperties;
+    private CutProperties currentCutProperties;
 
     @PostConstruct
     public void init()
@@ -209,6 +210,19 @@ public class WorkflowEditor extends Workspace implements Serializable {
                 mediaItemsReferences.prepareToSelectMediaItems(currentElementType, mediaItemsSelectionMode,
                         videoContentType, audioContentType, imageContentType, taskReferences);
             }
+            else if (workflowProperties.getType().equalsIgnoreCase("Cut"))
+            {
+                currentCutProperties = ((CutProperties) workflowProperties).clone();
+
+                String currentElementType = workflowProperties.getType();
+                String mediaItemsSelectionMode = "single";
+                boolean videoContentType = true;
+                boolean audioContentType = true;
+                boolean imageContentType = false;
+                StringBuilder taskReferences = currentCutProperties.getStringBuilderTaskReferences();
+                mediaItemsReferences.prepareToSelectMediaItems(currentElementType, mediaItemsSelectionMode,
+                        videoContentType, audioContentType, imageContentType, taskReferences);
+            }
         }
         else
         {
@@ -233,6 +247,8 @@ public class WorkflowEditor extends Workspace implements Serializable {
                 element.setData(currentRemoveContentProperties);
             else if (workflowProperties.getType().equalsIgnoreCase("Concat-Demuxer"))
                 element.setData(currentConcatDemuxerProperties);
+            else if (workflowProperties.getType().equalsIgnoreCase("Cut"))
+                element.setData(currentCutProperties);
 
             buildWorkflowElementJson();
         }
@@ -587,6 +603,8 @@ public class WorkflowEditor extends Workspace implements Serializable {
             workflowProperties = new RemoveContentProperties(elementId++, labelTemplatePrefix + (elementId - 1));
         else if (taskType.equalsIgnoreCase("Concat-Demuxer"))
             workflowProperties = new ConcatDemuxerProperties(elementId++, labelTemplatePrefix + (elementId - 1));
+        else if (taskType.equalsIgnoreCase("Cut"))
+            workflowProperties = new CutProperties(elementId++, labelTemplatePrefix + (elementId - 1));
 
         /*
         // some initialization here because otherwise the buildWorkflow (json), will fail
@@ -594,10 +612,6 @@ public class WorkflowEditor extends Workspace implements Serializable {
             if (task.getType().equalsIgnoreCase("Encode"))
             {
                 task.setEncodingProfileType("profilesSet");
-            }
-            else if (task.getType().equalsIgnoreCase("Cut"))
-            {
-                task.setCutEndType("endTime");
             }
         }
         */
@@ -960,5 +974,13 @@ public class WorkflowEditor extends Workspace implements Serializable {
 
     public void setCurrentConcatDemuxerProperties(ConcatDemuxerProperties currentConcatDemuxerProperties) {
         this.currentConcatDemuxerProperties = currentConcatDemuxerProperties;
+    }
+
+    public CutProperties getCurrentCutProperties() {
+        return currentCutProperties;
+    }
+
+    public void setCurrentCutProperties(CutProperties currentCutProperties) {
+        this.currentCutProperties = currentCutProperties;
     }
 }
