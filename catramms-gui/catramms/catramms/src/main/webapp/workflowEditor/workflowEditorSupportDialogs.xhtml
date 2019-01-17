@@ -164,14 +164,16 @@
 
             <p:row>
                 <p:column>
-                    <p:outputLabel value="Selection " />
+                    <p:panel rendered="#{workflowEditor.mediaItemsReferences.mediaItemsSelectionMode == 'multiple'}">
+                        <p:outputLabel value="Selection " />
 
-                    <p:selectOneRadio id="mediaItemsToBeAddedOrReplaced"
-                                      value="#{workflowEditor.mediaItemsReferences.mediaItemsToBeAddedOrReplaced}">
-                        <f:selectItem itemLabel="To be added" itemValue="toBeAdded"/>
-                        <f:selectItem itemLabel="To be replaced" itemValue="toBeReplaced"/>
-                        <p:ajax process="@form" />
-                    </p:selectOneRadio>
+                        <p:selectOneRadio id="mediaItemsToBeAddedOrReplaced"
+                                          value="#{workflowEditor.mediaItemsReferences.mediaItemsToBeAddedOrReplaced}">
+                            <f:selectItem itemLabel="To be added" itemValue="toBeAdded"/>
+                            <f:selectItem itemLabel="To be replaced" itemValue="toBeReplaced"/>
+                            <p:ajax process="@form" />
+                        </p:selectOneRadio>
+                    </p:panel>
 
                 </p:column>
                 <p:column>

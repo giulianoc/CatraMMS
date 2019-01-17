@@ -183,11 +183,6 @@ public class MediaItemsReferences implements Serializable {
                 else
                 {
                     int keyAlreadyAddedIndex = taskReferences.indexOf(mediaItem.getMediaItemKey().toString());
-                    mLogger.info("keyAlreadyAddedIndex: " + keyAlreadyAddedIndex
-                            + ", taskReferences: " + taskReferences
-                                    + ", mediaItem.getMediaItemKey().toString().length(): " + mediaItem.getMediaItemKey().toString().length()
-                                    + ", taskReferences.charAt(keyAlreadyAddedIndex + mediaItem.getMediaItemKey().toString().length()): " + taskReferences.charAt(keyAlreadyAddedIndex + mediaItem.getMediaItemKey().toString().length())
-                    );
                     if (keyAlreadyAddedIndex != -1 &&
                             (taskReferences.length() == keyAlreadyAddedIndex + mediaItem.getMediaItemKey().toString().length()
                             || taskReferences.charAt(keyAlreadyAddedIndex + mediaItem.getMediaItemKey().toString().length()) == ','))
@@ -208,6 +203,11 @@ public class MediaItemsReferences implements Serializable {
                     else
                     {
                         int keyAlreadyAddedIndex = taskReferences.indexOf(sourcePhysicalPath.getPhysicalPathKey().toString());
+                        mLogger.info("keyAlreadyAddedIndex: " + keyAlreadyAddedIndex
+                                + ", taskReferences: " + taskReferences
+                                + ", sourcePhysicalPath.getPhysicalPathKey().toString().length(): " + sourcePhysicalPath.getPhysicalPathKey().toString().length()
+                                + ", taskReferences.charAt(keyAlreadyAddedIndex + sourcePhysicalPath.getPhysicalPathKey().toString().length()): " + taskReferences.charAt(keyAlreadyAddedIndex + sourcePhysicalPath.getPhysicalPathKey().toString().length())
+                        );
                         if (keyAlreadyAddedIndex != -1 &&
                                 (taskReferences.length() == keyAlreadyAddedIndex + sourcePhysicalPath.getPhysicalPathKey().toString().length()
                                         || taskReferences.charAt(keyAlreadyAddedIndex + sourcePhysicalPath.getPhysicalPathKey().toString().length()) == ','))
@@ -231,23 +231,15 @@ public class MediaItemsReferences implements Serializable {
         mLogger.info("taskReferences: " + taskReferences);
     }
 
-    public List<MediaItem> getMediaItemsSelectedList() {
-        return mediaItemsSelectedList;
-    }
-
-    public MediaItem getMediaItemSelected() {
-        return mediaItemSelected;
-    }
-
     public void setMediaItemSelected(MediaItem mediaItemSelected) {
         this.mediaItemSelected = mediaItemSelected;
 
         mLogger.info("taskReferences initialization (single)"
-                        + ", mediaItemsToBeAddedOrReplaced: " + mediaItemsToBeAddedOrReplaced
                         + ", taskReferences: " + taskReferences
         );
 
-        if (mediaItemsToBeAddedOrReplaced.equalsIgnoreCase("toBeReplaced"))
+        // mediaItemsSelectionMode == 'single' means "toBeReplaced" behaviour
+        // if (mediaItemsToBeAddedOrReplaced.equalsIgnoreCase("toBeReplaced"))
             taskReferences.delete(0, taskReferences.length());
 
         mLogger.info("taskReferences initialization"
@@ -260,10 +252,7 @@ public class MediaItemsReferences implements Serializable {
             if (currentElementType.equalsIgnoreCase("Remove-Content") ||
                     currentElementType.equalsIgnoreCase("HTTP-Callback"))
             {
-                if (taskReferences.length() == 0)
-                    taskReferences.append(mediaItemSelected.getMediaItemKey().toString());
-                else
-                    taskReferences.append("," + mediaItemSelected.getMediaItemKey().toString());
+                taskReferences.append(mediaItemSelected.getMediaItemKey().toString());
             }
             else
             {
@@ -272,10 +261,7 @@ public class MediaItemsReferences implements Serializable {
 
                 if (sourcePhysicalPath != null)
                 {
-                    if (taskReferences.length() == 0)
-                        taskReferences.append(sourcePhysicalPath.getPhysicalPathKey().toString());
-                    else
-                        taskReferences.append("," + sourcePhysicalPath.getPhysicalPathKey().toString());
+                    taskReferences.append(sourcePhysicalPath.getPhysicalPathKey().toString());
                 }
                 else
                 {
@@ -290,6 +276,14 @@ public class MediaItemsReferences implements Serializable {
             }
         }
         mLogger.info("taskReferences: " + taskReferences);
+    }
+
+    public List<MediaItem> getMediaItemsSelectedList() {
+        return mediaItemsSelectedList;
+    }
+
+    public MediaItem getMediaItemSelected() {
+        return mediaItemSelected;
     }
 
     public List<MediaItem> getMediaItemsList() {

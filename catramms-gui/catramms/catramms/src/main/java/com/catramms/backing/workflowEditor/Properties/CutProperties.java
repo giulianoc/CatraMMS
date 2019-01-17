@@ -140,11 +140,11 @@ public class CutProperties extends CreateContentProperties implements Serializab
                 JSONArray jaReferences = new JSONArray();
                 joParameters.put("References", jaReferences);
 
-                String [] mediaItemKeyReferences = taskReferences.toString().split(",");
-                for (String mediaItemKeyReference: mediaItemKeyReferences)
+                String [] physicalPathKeyReferences = taskReferences.toString().split(",");
+                for (String physicalPathKeyReference: physicalPathKeyReferences)
                 {
                     JSONObject joReference = new JSONObject();
-                    joReference.put("ReferenceMediaItemKey", Long.parseLong(mediaItemKeyReference.trim()));
+                    joReference.put("ReferencePhysicalPathKey", Long.parseLong(physicalPathKeyReference.trim()));
 
                     jaReferences.put(joReference);
                 }

@@ -71,6 +71,7 @@ public class WorkflowEditor extends Workspace implements Serializable {
     private RemoveContentProperties currentRemoveContentProperties;
     private ConcatDemuxerProperties currentConcatDemuxerProperties;
     private CutProperties currentCutProperties;
+    private ExtractTracksProperties currentExtractTracksProperties;
 
     @PostConstruct
     public void init()
@@ -223,6 +224,19 @@ public class WorkflowEditor extends Workspace implements Serializable {
                 mediaItemsReferences.prepareToSelectMediaItems(currentElementType, mediaItemsSelectionMode,
                         videoContentType, audioContentType, imageContentType, taskReferences);
             }
+            else if (workflowProperties.getType().equalsIgnoreCase("Extract-Tracks"))
+            {
+                currentExtractTracksProperties = ((ExtractTracksProperties) workflowProperties).clone();
+
+                String currentElementType = workflowProperties.getType();
+                String mediaItemsSelectionMode = "multiple";
+                boolean videoContentType = true;
+                boolean audioContentType = true;
+                boolean imageContentType = false;
+                StringBuilder taskReferences = currentExtractTracksProperties.getStringBuilderTaskReferences();
+                mediaItemsReferences.prepareToSelectMediaItems(currentElementType, mediaItemsSelectionMode,
+                        videoContentType, audioContentType, imageContentType, taskReferences);
+            }
         }
         else
         {
@@ -249,6 +263,8 @@ public class WorkflowEditor extends Workspace implements Serializable {
                 element.setData(currentConcatDemuxerProperties);
             else if (workflowProperties.getType().equalsIgnoreCase("Cut"))
                 element.setData(currentCutProperties);
+            else if (workflowProperties.getType().equalsIgnoreCase("Extract-Tracks"))
+                element.setData(currentExtractTracksProperties);
 
             buildWorkflowElementJson();
         }
@@ -605,6 +621,8 @@ public class WorkflowEditor extends Workspace implements Serializable {
             workflowProperties = new ConcatDemuxerProperties(elementId++, labelTemplatePrefix + (elementId - 1));
         else if (taskType.equalsIgnoreCase("Cut"))
             workflowProperties = new CutProperties(elementId++, labelTemplatePrefix + (elementId - 1));
+        else if (taskType.equalsIgnoreCase("Extract-Tracks"))
+            workflowProperties = new ExtractTracksProperties(elementId++, labelTemplatePrefix + (elementId - 1));
 
         /*
         // some initialization here because otherwise the buildWorkflow (json), will fail
@@ -982,5 +1000,13 @@ public class WorkflowEditor extends Workspace implements Serializable {
 
     public void setCurrentCutProperties(CutProperties currentCutProperties) {
         this.currentCutProperties = currentCutProperties;
+    }
+
+    public ExtractTracksProperties getCurrentExtractTracksProperties() {
+        return currentExtractTracksProperties;
+    }
+
+    public void setCurrentExtractTracksProperties(ExtractTracksProperties currentExtractTracksProperties) {
+        this.currentExtractTracksProperties = currentExtractTracksProperties;
     }
 }
