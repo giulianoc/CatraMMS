@@ -69,71 +69,7 @@ public class GroupOfTasksProperties extends WorkflowProperties implements Serial
                 }
             }
 
-            // OnSuccess
-            {
-                int onSuccessChildrenNumber = getOnSuccessChildren().size();
-                mLogger.info("AddContentProperties::buildWorkflowElementJson"
-                        + ", onSuccessChildrenNumber: " + onSuccessChildrenNumber
-                );
-                if (onSuccessChildrenNumber == 1)
-                {
-                    JSONObject joOnSuccess = new JSONObject();
-                    jsonWorkflowElement.put("OnSuccess", joOnSuccess);
-
-                    // Task
-                    joOnSuccess.put("Task", getOnSuccessChildren().get(0).buildWorkflowElementJson(ingestionData));
-                }
-                else if (onSuccessChildrenNumber > 1)
-                {
-                    mLogger.error("It is not possible to have more than one connection"
-                            + ", onSuccessChildrenNumber: " + onSuccessChildrenNumber
-                    );
-                }
-            }
-
-            // OnError
-            {
-                int onErrorChildrenNumber = getOnErrorChildren().size();
-                mLogger.info("AddContentProperties::buildWorkflowElementJson"
-                        + ", onErrorChildrenNumber: " + onErrorChildrenNumber
-                );
-                if (onErrorChildrenNumber == 1)
-                {
-                    JSONObject joOnError = new JSONObject();
-                    jsonWorkflowElement.put("OnError", joOnError);
-
-                    // Task
-                    joOnError.put("Task", getOnErrorChildren().get(0).buildWorkflowElementJson(ingestionData));
-                }
-                else if (onErrorChildrenNumber > 1)
-                {
-                    mLogger.error("It is not possible to have more than one connection"
-                            + ", onErrorChildrenNumber: " + onErrorChildrenNumber
-                    );
-                }
-            }
-
-            // OnComplete
-            {
-                int onCompleteChildrenNumber = getOnCompleteChildren().size();
-                mLogger.info("AddContentProperties::buildWorkflowElementJson"
-                        + ", onCompleteChildrenNumber: " + onCompleteChildrenNumber
-                );
-                if (onCompleteChildrenNumber == 1)
-                {
-                    JSONObject joOnComplete = new JSONObject();
-                    jsonWorkflowElement.put("OnComplete", joOnComplete);
-
-                    // Task
-                    joOnComplete.put("Task", getOnCompleteChildren().get(0).buildWorkflowElementJson(ingestionData));
-                }
-                else if (onCompleteChildrenNumber > 1)
-                {
-                    mLogger.error("It is not possible to have more than one connection"
-                            + ", onCompleteChildrenNumber: " + onCompleteChildrenNumber
-                    );
-                }
-            }
+            super.addEventsPropertiesToJson(jsonWorkflowElement, ingestionData);
         }
         catch (Exception e)
         {

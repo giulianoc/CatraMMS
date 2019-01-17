@@ -17,6 +17,8 @@ public class WorkflowProperties implements Serializable
 
     private static final Logger mLogger = Logger.getLogger(WorkflowProperties.class);
 
+    private List<String> fileFormatsList;
+
     private int elementId;
     private String label;
     private boolean labelChanged;
@@ -29,9 +31,6 @@ public class WorkflowProperties implements Serializable
     private List<WorkflowProperties> onCompleteChildren = new ArrayList<>();
 
 
-    public WorkflowProperties() {
-    }
-
     public WorkflowProperties(int elementId, String label, String image, String mainType, String type) {
         this.elementId = elementId;
         this.label = label;
@@ -39,6 +38,21 @@ public class WorkflowProperties implements Serializable
         this.mainType = mainType;
         this.type = type;
         labelChanged = false;
+
+        {
+            fileFormatsList = new ArrayList<>();
+            fileFormatsList.add("mp4");
+            fileFormatsList.add("mov");
+            fileFormatsList.add("ts");
+            fileFormatsList.add("wmv");
+            fileFormatsList.add("mpeg");
+            fileFormatsList.add("avi");
+            fileFormatsList.add("webm");
+            fileFormatsList.add("mp3");
+            fileFormatsList.add("aac");
+            fileFormatsList.add("png");
+            fileFormatsList.add("jpg");
+        }
     }
 
 
@@ -94,119 +108,6 @@ public class WorkflowProperties implements Serializable
             }
 
                 /*
-                else if (task.getType().equalsIgnoreCase("Remove-Content"))
-                {
-                    jsonObject.put("Type", task.getType());
-
-                    JSONObject joParameters = new JSONObject();
-                    jsonObject.put("Parameters", joParameters);
-
-                    mLogger.info("task.getType: " + task.getType());
-
-                    if (task.getLabel() != null && !task.getLabel().equalsIgnoreCase(""))
-                        jsonObject.put("Label", task.getLabel());
-                    else
-                    {
-                        WorkflowIssue workflowIssue = new WorkflowIssue();
-                        workflowIssue.setLabel("");
-                        workflowIssue.setFieldName("Label");
-                        workflowIssue.setTaskType(task.getType());
-                        workflowIssue.setIssue("The field is not initialized");
-
-                        workflowIssueList.add(workflowIssue);
-                    }
-
-                    if (task.getReferences() != null && !task.getReferences().equalsIgnoreCase(""))
-                    {
-                        JSONArray jaReferences = new JSONArray();
-                        joParameters.put("References", jaReferences);
-
-                        String [] mediaItemKeyReferences = task.getReferences().split(",");
-                        for (String mediaItemKeyReference: mediaItemKeyReferences)
-                        {
-                            JSONObject joReference = new JSONObject();
-                            joReference.put("ReferenceMediaItemKey", Long.parseLong(mediaItemKeyReference.trim()));
-
-                            jaReferences.put(joReference);
-                        }
-                    }
-                }
-                else if (task.getType().equalsIgnoreCase("Concat-Demuxer"))
-                {
-                    jsonObject.put("Type", task.getType());
-
-                    JSONObject joParameters = new JSONObject();
-                    jsonObject.put("Parameters", joParameters);
-
-                    mLogger.info("task.getType: " + task.getType());
-
-                    if (task.getLabel() != null && !task.getLabel().equalsIgnoreCase(""))
-                        jsonObject.put("Label", task.getLabel());
-                    else
-                    {
-                        WorkflowIssue workflowIssue = new WorkflowIssue();
-                        workflowIssue.setLabel("");
-                        workflowIssue.setFieldName("Label");
-                        workflowIssue.setTaskType(task.getType());
-                        workflowIssue.setIssue("The field is not initialized");
-
-                        workflowIssueList.add(workflowIssue);
-                    }
-
-                    if (task.getUserData() != null && !task.getUserData().equalsIgnoreCase(""))
-                        joParameters.put("UserData", task.getUserData());
-                    if (task.getRetention() != null && !task.getRetention().equalsIgnoreCase(""))
-                        joParameters.put("Retention", task.getRetention());
-                    if (task.getTitle() != null && !task.getTitle().equalsIgnoreCase(""))
-                        joParameters.put("Title", task.getTitle());
-                    if (task.getUniqueName() != null && !task.getUniqueName().equalsIgnoreCase(""))
-                        joParameters.put("UniqueName", task.getUniqueName());
-                    if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
-                        joParameters.put("Ingester", task.getIngester());
-                    if (task.getTags() != null && !task.getTags().equalsIgnoreCase(""))
-                    {
-                        JSONArray jsonTagsArray = new JSONArray();
-                        joParameters.put("Tags", jsonTagsArray);
-
-                        for (String tag: task.getTags().split(","))
-                        {
-                            jsonTagsArray.put(tag);
-                        }
-                    }
-                    if (task.getContentProviderName() != null && !task.getContentProviderName().equalsIgnoreCase(""))
-                        joParameters.put("ContentProviderName", task.getContentProviderName());
-                    if (task.getDeliveryFileName() != null && !task.getDeliveryFileName().equalsIgnoreCase(""))
-                        joParameters.put("DeliveryFileName", task.getDeliveryFileName());
-                    if (task.getStartPublishing() != null || task.getEndPublishing() != null)
-                    {
-                        JSONObject joPublishing = new JSONObject();
-                        joParameters.put("Publishing", joPublishing);
-
-                        if (task.getStartPublishing() != null)
-                            joPublishing.put("StartPublishing", dateFormat.format(task.getStartPublishing()));
-                        else
-                            joPublishing.put("StartPublishing", "NOW");
-                        if (task.getEndPublishing() != null)
-                            joPublishing.put("EndPublishing", dateFormat.format(task.getEndPublishing()));
-                        else
-                            joPublishing.put("EndPublishing", "FOREVER");
-                    }
-
-                    if (task.getReferences() != null && !task.getReferences().equalsIgnoreCase(""))
-                    {
-                        JSONArray jaReferences = new JSONArray();
-                        joParameters.put("References", jaReferences);
-
-                        String [] physicalPathKeyReferences = task.getReferences().split(",");
-                        for (String physicalPathKeyReference: physicalPathKeyReferences)
-                        {
-                            JSONObject joReference = new JSONObject();
-                            joReference.put("ReferencePhysicalPathKey", Long.parseLong(physicalPathKeyReference.trim()));
-
-                            jaReferences.put(joReference);
-                        }
-                    }
-                }
                 else if (task.getType().equalsIgnoreCase("Extract-Tracks"))
                 {
                     jsonObject.put("Type", task.getType());
@@ -250,130 +151,6 @@ public class WorkflowProperties implements Serializable
                             joTrack.put("TrackNumber", taskExtractTracksAudioTrackNumber);
                         }
                     }
-                    if (task.getUserData() != null && !task.getUserData().equalsIgnoreCase(""))
-                        joParameters.put("UserData", task.getUserData());
-                    if (task.getRetention() != null && !task.getRetention().equalsIgnoreCase(""))
-                        joParameters.put("Retention", task.getRetention());
-                    if (task.getTitle() != null && !task.getTitle().equalsIgnoreCase(""))
-                        joParameters.put("Title", task.getTitle());
-                    if (task.getUniqueName() != null && !task.getUniqueName().equalsIgnoreCase(""))
-                        joParameters.put("UniqueName", task.getUniqueName());
-                    if (task.getIngester() != null && !task.getIngester().equalsIgnoreCase(""))
-                        joParameters.put("Ingester", task.getIngester());
-                    if (task.getTags() != null && !task.getTags().equalsIgnoreCase(""))
-                    {
-                        JSONArray jsonTagsArray = new JSONArray();
-                        joParameters.put("Tags", jsonTagsArray);
-
-                        for (String tag: task.getTags().split(","))
-                        {
-                            jsonTagsArray.put(tag);
-                        }
-                    }
-                    if (task.getContentProviderName() != null && !task.getContentProviderName().equalsIgnoreCase(""))
-                        joParameters.put("ContentProviderName", task.getContentProviderName());
-                    if (task.getDeliveryFileName() != null && !task.getDeliveryFileName().equalsIgnoreCase(""))
-                        joParameters.put("DeliveryFileName", task.getDeliveryFileName());
-                    if (task.getStartPublishing() != null || task.getEndPublishing() != null)
-                    {
-                        JSONObject joPublishing = new JSONObject();
-                        joParameters.put("Publishing", joPublishing);
-
-                        if (task.getStartPublishing() != null)
-                            joPublishing.put("StartPublishing", dateFormat.format(task.getStartPublishing()));
-                        else
-                            joPublishing.put("StartPublishing", "NOW");
-                        if (task.getEndPublishing() != null)
-                            joPublishing.put("EndPublishing", dateFormat.format(task.getEndPublishing()));
-                        else
-                            joPublishing.put("EndPublishing", "FOREVER");
-                    }
-
-                    if (task.getReferences() != null && !task.getReferences().equalsIgnoreCase(""))
-                    {
-                        JSONArray jaReferences = new JSONArray();
-                        joParameters.put("References", jaReferences);
-
-                        String [] physicalPathKeyReferences = task.getReferences().split(",");
-                        for (String physicalPathKeyReference: physicalPathKeyReferences)
-                        {
-                            JSONObject joReference = new JSONObject();
-                            joReference.put("ReferencePhysicalPathKey", Long.parseLong(physicalPathKeyReference.trim()));
-
-                            jaReferences.put(joReference);
-                        }
-                    }
-                }
-                else if (task.getType().equalsIgnoreCase("Cut"))
-                {
-                    jsonObject.put("Type", task.getType());
-
-                    JSONObject joParameters = new JSONObject();
-                    jsonObject.put("Parameters", joParameters);
-
-                    mLogger.info("task.getType: " + task.getType());
-
-                    if (task.getLabel() != null && !task.getLabel().equalsIgnoreCase(""))
-                        jsonObject.put("Label", task.getLabel());
-                    else
-                    {
-                        WorkflowIssue workflowIssue = new WorkflowIssue();
-                        workflowIssue.setLabel("");
-                        workflowIssue.setFieldName("Label");
-                        workflowIssue.setTaskType(task.getType());
-                        workflowIssue.setIssue("The field is not initialized");
-
-                        workflowIssueList.add(workflowIssue);
-                    }
-
-                    if (task.getStartTimeInSeconds() != null)
-                        joParameters.put("StartTimeInSeconds", task.getStartTimeInSeconds());
-                        // String.format("%." + timeInSecondsDecimalsPrecision + "g",
-                        //        task.getStartTimeInSeconds().floatValue()));
-                    else
-                    {
-                        WorkflowIssue workflowIssue = new WorkflowIssue();
-                        workflowIssue.setLabel(task.getLabel());
-                        workflowIssue.setFieldName("StartTimeInSeconds");
-                        workflowIssue.setTaskType(task.getType());
-                        workflowIssue.setIssue("The field is not initialized");
-
-                        workflowIssueList.add(workflowIssue);
-                    }
-                    if (task.getCutEndType().equalsIgnoreCase("endTime"))
-                    {
-                        if (task.getEndTimeInSeconds() != null)
-                            joParameters.put("EndTimeInSeconds", task.getEndTimeInSeconds());
-                            // String.format("%." + timeInSecondsDecimalsPrecision + "g",
-                            //        task.getEndTimeInSeconds().floatValue()));
-                        else
-                        {
-                            WorkflowIssue workflowIssue = new WorkflowIssue();
-                            workflowIssue.setLabel(task.getLabel());
-                            workflowIssue.setFieldName("EndTimeInSeconds");
-                            workflowIssue.setTaskType(task.getType());
-                            workflowIssue.setIssue("The field is not initialized");
-
-                            workflowIssueList.add(workflowIssue);
-                        }
-                    }
-                    else
-                    {
-                        if (task.getFramesNumber() != null)
-                            joParameters.put("FramesNumber", task.getFramesNumber());
-                        else
-                        {
-                            WorkflowIssue workflowIssue = new WorkflowIssue();
-                            workflowIssue.setLabel(task.getLabel());
-                            workflowIssue.setFieldName("FramesNumber");
-                            workflowIssue.setTaskType(task.getType());
-                            workflowIssue.setIssue("The field is not initialized");
-
-                            workflowIssueList.add(workflowIssue);
-                        }
-                    }
-                    if (task.getFileFormat() != null && !task.getFileFormat().equalsIgnoreCase(""))
-                        joParameters.put("OutputFileFormat", task.getFileFormat());
                     if (task.getUserData() != null && !task.getUserData().equalsIgnoreCase(""))
                         joParameters.put("UserData", task.getUserData());
                     if (task.getRetention() != null && !task.getRetention().equalsIgnoreCase(""))
@@ -1896,6 +1673,80 @@ public class WorkflowProperties implements Serializable
         return jsonWorkflowElement;
     }
 
+    public void addEventsPropertiesToJson(JSONObject jsonWorkflowElement, IngestionData ingestionData)
+            throws Exception
+    {
+        try {
+            // OnSuccess
+            {
+                int onSuccessChildrenNumber = getOnSuccessChildren().size();
+                if (onSuccessChildrenNumber == 1)
+                {
+                    JSONObject joOnSuccess = new JSONObject();
+                    jsonWorkflowElement.put("OnSuccess", joOnSuccess);
+
+                    // Task
+                    joOnSuccess.put("Task", getOnSuccessChildren().get(0).buildWorkflowElementJson(ingestionData));
+                }
+                else if (onSuccessChildrenNumber > 1)
+                {
+                    mLogger.error("It is not possible to have more than one connection"
+                            + ", onSuccessChildrenNumber: " + onSuccessChildrenNumber
+                    );
+                }
+            }
+
+            // OnError
+            {
+                int onErrorChildrenNumber = getOnErrorChildren().size();
+                if (onErrorChildrenNumber == 1)
+                {
+                    JSONObject joOnError = new JSONObject();
+                    jsonWorkflowElement.put("OnError", joOnError);
+
+                    // Task
+                    joOnError.put("Task", getOnErrorChildren().get(0).buildWorkflowElementJson(ingestionData));
+                }
+                else if (onErrorChildrenNumber > 1)
+                {
+                    mLogger.error("It is not possible to have more than one connection"
+                            + ", onErrorChildrenNumber: " + onErrorChildrenNumber
+                    );
+                }
+            }
+
+            // OnComplete
+            {
+                int onCompleteChildrenNumber = getOnCompleteChildren().size();
+                if (onCompleteChildrenNumber == 1)
+                {
+                    JSONObject joOnComplete = new JSONObject();
+                    jsonWorkflowElement.put("OnComplete", joOnComplete);
+
+                    // Task
+                    joOnComplete.put("Task", getOnCompleteChildren().get(0).buildWorkflowElementJson(ingestionData));
+                }
+                else if (onCompleteChildrenNumber > 1)
+                {
+                    mLogger.error("It is not possible to have more than one connection"
+                            + ", onCompleteChildrenNumber: " + onCompleteChildrenNumber
+                    );
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            mLogger.error("addEventsPropertiesToJson failed: " + e);
+
+            throw e;
+        }
+    }
+
+    @Override
+    public String toString() {
+        return label;
+    }
+
     public String getLabel() {
         return label;
     }
@@ -1969,8 +1820,11 @@ public class WorkflowProperties implements Serializable
         this.mainType = mainType;
     }
 
-    @Override
-    public String toString() {
-        return label;
+    public List<String> getFileFormatsList() {
+        return fileFormatsList;
+    }
+
+    public void setFileFormatsList(List<String> fileFormatsList) {
+        this.fileFormatsList = fileFormatsList;
     }
 }

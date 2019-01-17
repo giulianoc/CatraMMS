@@ -4,10 +4,7 @@ import com.catramms.backing.common.SessionUtils;
 import com.catramms.backing.common.Workspace;
 import com.catramms.backing.newWorkflow.IngestionResult;
 import com.catramms.backing.newWorkflow.PushContent;
-import com.catramms.backing.workflowEditor.Properties.AddContentProperties;
-import com.catramms.backing.workflowEditor.Properties.GroupOfTasksProperties;
-import com.catramms.backing.workflowEditor.Properties.RemoveContentProperties;
-import com.catramms.backing.workflowEditor.Properties.WorkflowProperties;
+import com.catramms.backing.workflowEditor.Properties.*;
 import com.catramms.backing.workflowEditor.utility.*;
 import com.catramms.utility.catramms.CatraMMS;
 import org.apache.log4j.Logger;
@@ -72,6 +69,7 @@ public class WorkflowEditor extends Workspace implements Serializable {
     private AddContentProperties currentAddContentProperties;
     private GroupOfTasksProperties currentGroupOfTasksProperties;
     private RemoveContentProperties currentRemoveContentProperties;
+    private ConcatDemuxerProperties currentConcatDemuxerProperties;
 
     @PostConstruct
     public void init()
@@ -198,6 +196,19 @@ public class WorkflowEditor extends Workspace implements Serializable {
                 mediaItemsReferences.prepareToSelectMediaItems(currentElementType, mediaItemsSelectionMode,
                     videoContentType, audioContentType, imageContentType, taskReferences);
             }
+            else if (workflowProperties.getType().equalsIgnoreCase("Concat-Demuxer"))
+            {
+                currentConcatDemuxerProperties = ((ConcatDemuxerProperties) workflowProperties).clone();
+
+                String currentElementType = workflowProperties.getType();
+                String mediaItemsSelectionMode = "multiple";
+                boolean videoContentType = true;
+                boolean audioContentType = true;
+                boolean imageContentType = false;
+                StringBuilder taskReferences = currentConcatDemuxerProperties.getStringBuilderTaskReferences();
+                mediaItemsReferences.prepareToSelectMediaItems(currentElementType, mediaItemsSelectionMode,
+                        videoContentType, audioContentType, imageContentType, taskReferences);
+            }
         }
         else
         {
@@ -220,12 +231,14 @@ public class WorkflowEditor extends Workspace implements Serializable {
                 element.setData(currentGroupOfTasksProperties);
             else if (workflowProperties.getType().equalsIgnoreCase("Remove-Content"))
                 element.setData(currentRemoveContentProperties);
+            else if (workflowProperties.getType().equalsIgnoreCase("Concat-Demuxer"))
+                element.setData(currentConcatDemuxerProperties);
 
             buildWorkflowElementJson();
         }
         else
         {
-            mLogger.error("onElementLinkClicked. Didn't find element for elementId " + elementId);
+            mLogger.error("saveTaskProperties. Didn't find element for elementId " + elementId);
         }
     }
 
@@ -572,6 +585,8 @@ public class WorkflowEditor extends Workspace implements Serializable {
             workflowProperties = new GroupOfTasksProperties(elementId++, labelTemplatePrefix + (elementId - 1));
         else if (taskType.equalsIgnoreCase("Remove-Content"))
             workflowProperties = new RemoveContentProperties(elementId++, labelTemplatePrefix + (elementId - 1));
+        else if (taskType.equalsIgnoreCase("Concat-Demuxer"))
+            workflowProperties = new ConcatDemuxerProperties(elementId++, labelTemplatePrefix + (elementId - 1));
 
         /*
         // some initialization here because otherwise the buildWorkflow (json), will fail
@@ -937,5 +952,13 @@ public class WorkflowEditor extends Workspace implements Serializable {
 
     public void setCurrentRemoveContentProperties(RemoveContentProperties currentRemoveContentProperties) {
         this.currentRemoveContentProperties = currentRemoveContentProperties;
+    }
+
+    public ConcatDemuxerProperties getCurrentConcatDemuxerProperties() {
+        return currentConcatDemuxerProperties;
+    }
+
+    public void setCurrentConcatDemuxerProperties(ConcatDemuxerProperties currentConcatDemuxerProperties) {
+        this.currentConcatDemuxerProperties = currentConcatDemuxerProperties;
     }
 }

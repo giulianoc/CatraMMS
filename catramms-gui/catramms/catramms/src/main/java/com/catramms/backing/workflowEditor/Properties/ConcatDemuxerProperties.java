@@ -1,32 +1,53 @@
 package com.catramms.backing.workflowEditor.Properties;
 
+import com.catramms.backing.common.SessionUtils;
+import com.catramms.backing.newWorkflow.PushContent;
 import com.catramms.backing.newWorkflow.WorkflowIssue;
 import com.catramms.backing.workflowEditor.utility.IngestionData;
+import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.primefaces.event.FileUploadEvent;
 
-import java.io.Serializable;
+import java.io.*;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.TimeZone;
 
-public class RemoveContentProperties extends WorkflowProperties implements Serializable {
+public class ConcatDemuxerProperties extends CreateContentProperties implements Serializable {
 
-    private static final Logger mLogger = Logger.getLogger(AddContentProperties.class);
+    private static final Logger mLogger = Logger.getLogger(ConcatDemuxerProperties.class);
 
     private StringBuilder taskReferences = new StringBuilder();
 
-    public RemoveContentProperties(int elementId, String label)
+    public ConcatDemuxerProperties(int elementId, String label)
     {
-        super(elementId, label, "Remove-Content" + "-icon.png", "Task", "Remove-Content");
+        super(elementId, label, "Concat-Demuxer" + "-icon.png", "Task", "Concat-Demuxer");
     }
 
-    public RemoveContentProperties clone()
+    public ConcatDemuxerProperties clone()
     {
-        RemoveContentProperties removeContentProperties = new RemoveContentProperties(
+        ConcatDemuxerProperties concatDemuxerProperties = new ConcatDemuxerProperties(
                 super.getElementId(), super.getLabel());
 
-        removeContentProperties.setStringBuilderTaskReferences(taskReferences);
+        concatDemuxerProperties.setTitle(getTitle());
+        concatDemuxerProperties.setTags(getTags());
+        concatDemuxerProperties.setRetention(getRetention());
+        concatDemuxerProperties.setStartPublishing(getStartPublishing());
+        concatDemuxerProperties.setEndPublishing(getEndPublishing());
+        concatDemuxerProperties.setUserData(getUserData());
+        concatDemuxerProperties.setIngester(getIngester());
+        concatDemuxerProperties.setContentProviderName(getContentProviderName());
+        concatDemuxerProperties.setDeliveryFileName(getDeliveryFileName());
+        concatDemuxerProperties.setUniqueName(getUniqueName());
 
-        return removeContentProperties;
+        concatDemuxerProperties.setStringBuilderTaskReferences(taskReferences);
+
+        return concatDemuxerProperties;
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)
@@ -55,6 +76,8 @@ public class RemoveContentProperties extends WorkflowProperties implements Seria
 
                 ingestionData.getWorkflowIssueList().add(workflowIssue);
             }
+
+            super.addCreateContentPropertiesToJson(joParameters);
 
             if (taskReferences != null && !taskReferences.toString().equalsIgnoreCase(""))
             {
