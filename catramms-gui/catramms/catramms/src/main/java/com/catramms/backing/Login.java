@@ -109,7 +109,10 @@ public class Login implements Serializable {
                     mLogger.info("OriginURI: " + originURI);
                     if (originURI == null || originURI.equalsIgnoreCase("")
                             || originURI.equalsIgnoreCase("/catramms/login.xhtml"))
-                        originURI = "mediaItems.xhtml";
+                    {
+                        // originURI = "mediaItems.xhtml";
+                        originURI = "workflowEditor.xhtml";
+                    }
 
                     mLogger.info("Redirect to " + originURI);
                     FacesContext.getCurrentInstance().getExternalContext().redirect(originURI);

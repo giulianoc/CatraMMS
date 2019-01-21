@@ -4591,7 +4591,7 @@ string EncoderVideoAudioProxy::faceRecognition()
 	{
 		string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
 			_encodingItem->_workspace);
-		if (faceRecognitionOutput == "ImagesToBeUsedInDeepLearnedModel")
+		if (faceRecognitionOutput == "FacesImagesToBeUsedInDeepLearnedModel")
 		{
 			fileFormat = "jpg";
 
@@ -4653,7 +4653,7 @@ string EncoderVideoAudioProxy::faceRecognition()
 	cv::Mat grayFrame;
 	cv::Mat smallFrame;
 
-	// this is used only in case of faceRecognitionOutput == "ImagesToBeUsedInDeepLearnedModel"
+	// this is used only in case of faceRecognitionOutput == "FacesImagesToBeUsedInDeepLearnedModel"
 	// Essentially the last image source file name will be ingested when we will go out of the
 	// loop (while(true)) in order to set the IngestionRowToBeUpdatedAsSuccess flag a true for this last
 	// ingestion
@@ -4836,7 +4836,7 @@ string EncoderVideoAudioProxy::faceRecognition()
 		}
 	}
 
-	if (faceRecognitionOutput == "ImagesToBeUsedInDeepLearnedModel")
+	if (faceRecognitionOutput == "FacesImagesToBeUsedInDeepLearnedModel")
 	{
 		if (lastImageSourceFileName != "")
 		{
@@ -4918,7 +4918,7 @@ void EncoderVideoAudioProxy::processFaceRecognition(string stagingEncodedAssetPa
 			faceRecognitionOutput = _encodingItem->_parametersRoot.get(field, 0).asString();
 		}
     
-		if (faceRecognitionOutput == "ImagesToBeUsedInDeepLearnedModel")
+		if (faceRecognitionOutput == "FacesImagesToBeUsedInDeepLearnedModel")
 		{
 			// nothing to do, all the faces (images) were already ingested
 

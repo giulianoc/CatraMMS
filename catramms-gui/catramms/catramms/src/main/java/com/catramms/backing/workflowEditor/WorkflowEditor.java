@@ -2,6 +2,10 @@ package com.catramms.backing.workflowEditor;
 
 import com.catramms.backing.common.SessionUtils;
 import com.catramms.backing.common.Workspace;
+import com.catramms.backing.entity.EncodingProfile;
+import com.catramms.backing.entity.EncodingProfilesSet;
+import com.catramms.backing.entity.FacebookConf;
+import com.catramms.backing.entity.YouTubeConf;
 import com.catramms.backing.newWorkflow.IngestionResult;
 import com.catramms.backing.newWorkflow.PushContent;
 import com.catramms.backing.workflowEditor.Properties.*;
@@ -16,10 +20,7 @@ import org.primefaces.model.diagram.Connection;
 import org.primefaces.model.diagram.DefaultDiagramModel;
 import org.primefaces.model.diagram.Element;
 import org.primefaces.model.diagram.connector.StraightConnector;
-import org.primefaces.model.diagram.endpoint.DotEndPoint;
-import org.primefaces.model.diagram.endpoint.EndPoint;
-import org.primefaces.model.diagram.endpoint.EndPointAnchor;
-import org.primefaces.model.diagram.endpoint.RectangleEndPoint;
+import org.primefaces.model.diagram.endpoint.*;
 import org.primefaces.model.diagram.overlay.ArrowOverlay;
 import org.primefaces.model.diagram.overlay.LabelOverlay;
 
@@ -52,7 +53,9 @@ public class WorkflowEditor extends Workspace implements Serializable {
 
     private MediaItemsReferences mediaItemsReferences = new MediaItemsReferences();
 
-    private String labelTemplatePrefix = "Task id ";
+    private String workflowDefaultLabel = "<workflow label>";
+    private String groupOfTasksDefaultLabel = "Details";
+    private String taskDefaultLabel = "<task label>";
     private int elementId;
     private String temporaryPushBinariesPathName;
 
@@ -60,9 +63,6 @@ public class WorkflowEditor extends Workspace implements Serializable {
 
     private DefaultDiagramModel model;
     private Element rootElement;
-    private int currentX;
-    private int currentY;
-    private int stepY;
 
     private String currentElementId;
     private WorkflowProperties currentWorkflowProperties;
@@ -72,6 +72,24 @@ public class WorkflowEditor extends Workspace implements Serializable {
     private ConcatDemuxerProperties currentConcatDemuxerProperties;
     private CutProperties currentCutProperties;
     private ExtractTracksProperties currentExtractTracksProperties;
+    private EncodeProperties currentEncodeProperties;
+    private OverlayImageOnVideoProperties currentOverlayImageOnVideoProperties;
+    private OverlayTextOnVideoProperties currentOverlayTextOnVideoProperties;
+    private FrameProperties currentFrameProperties;
+    private PeriodicalFramesProperties currentPeriodicalFramesProperties;
+    private IFramesProperties currentIFramesProperties;
+    private MotionJPEGByPeriodicalFramesProperties currentMotionJPEGByPeriodicalFramesProperties;
+    private MotionJPEGByIFramesProperties currentMotionJPEGByIFramesProperties;
+    private SlideshowProperties currentSlideshowProperties;
+    private FTPDeliveryProperties currentFTPDeliveryProperties;
+    private LocalCopyProperties currentLocalCopyProperties;
+    private PostOnFacebookProperties currentPostOnFacebookProperties;
+    private PostOnYouTubeProperties currentPostOnYouTubeProperties;
+    private EmailNotificationProperties currentEmailNotificationProperties;
+    private HTTPCallbackProperties currentHttpCallbackProperties;
+    private FaceRecognitionProperties currentFaceRecognitionProperties;
+    private FaceIdentificationProperties currentFaceIdentificationProperties;
+
 
     @PostConstruct
     public void init()
@@ -91,10 +109,6 @@ public class WorkflowEditor extends Workspace implements Serializable {
 
         elementId = 0;
 
-        currentX = 30;
-        currentY = 2;
-        stepY = 11;
-
         {
             model = new DefaultDiagramModel();
             model.setMaxConnections(-1);
@@ -105,15 +119,19 @@ public class WorkflowEditor extends Workspace implements Serializable {
             connector.setHoverPaintStyle("{strokeStyle:'#5C738B'}");
             model.setDefaultConnector(connector);
 
-            WorkflowProperties workflowProperties = new WorkflowProperties(elementId++, "Workflow", "Workflow-icon.png", "Root", "Workflow");
-            rootElement = new Element(workflowProperties, currentX + "em", currentY + "em");
+            int workflowX = 20;
+            int workflowY = 1;
+
+            WorkflowProperties workflowProperties = new WorkflowProperties(elementId++, workflowDefaultLabel, "Workflow-icon.png", "Root", "Workflow");
+            rootElement = new Element(workflowProperties, workflowX + "em", workflowY + "em");
             rootElement.setId(String.valueOf(workflowProperties.getElementId()));
             rootElement.setDraggable(true);
             {
-                RectangleEndPoint endPoint = new RectangleEndPoint(EndPointAnchor.BOTTOM);
+                // RectangleEndPoint endPoint = new RectangleEndPoint(EndPointAnchor.BOTTOM);
+                ImageEndPoint endPoint = new ImageEndPoint(EndPointAnchor.BOTTOM, "/resources/img/onSuccess.png");
                 // endPoint.setScope("network");
                 endPoint.setSource(true);
-                endPoint.setStyle("{fillStyle:'#98AFC7'}");
+                endPoint.setStyle("{fillStyle:'#00FF00'}");
                 endPoint.setHoverStyle("{fillStyle:'#5C738B'}");
                 // endPoint.setMaxConnections(1); not working
 
@@ -124,6 +142,161 @@ public class WorkflowEditor extends Workspace implements Serializable {
         }
 
         buildWorkflowElementJson();
+    }
+
+    public void addTask(ActionEvent param)
+    {
+        Map<String, String> params = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap();
+        String taskType = params.get("taskType");
+        String positionX = params.get("positionX");
+        String positionY = params.get("positionY");
+
+        addTask(taskType, positionX, positionY);
+    }
+
+    public void addTask(String taskType, String positionX, String positionY)
+    {
+        mLogger.info("addTask"
+                + ", taskType: " + taskType
+                + ", positionX: " + positionX
+                + ", positionY: " + positionY
+        );
+
+        WorkflowProperties workflowProperties = null;
+
+        if (taskType.equalsIgnoreCase("GroupOfTasks"))
+            workflowProperties = new GroupOfTasksProperties(elementId++, groupOfTasksDefaultLabel);
+        else if (taskType.equalsIgnoreCase("Add-Content"))
+            workflowProperties = new AddContentProperties(elementId++, taskDefaultLabel,
+                    temporaryPushBinariesPathName);
+        else if (taskType.equalsIgnoreCase("Remove-Content"))
+            workflowProperties = new RemoveContentProperties(elementId++, taskDefaultLabel);
+        else if (taskType.equalsIgnoreCase("Concat-Demuxer"))
+            workflowProperties = new ConcatDemuxerProperties(elementId++, taskDefaultLabel);
+        else if (taskType.equalsIgnoreCase("Cut"))
+            workflowProperties = new CutProperties(elementId++, taskDefaultLabel);
+        else if (taskType.equalsIgnoreCase("Extract-Tracks"))
+            workflowProperties = new ExtractTracksProperties(elementId++, taskDefaultLabel);
+        else if (taskType.equalsIgnoreCase("Encode"))
+            workflowProperties = new EncodeProperties(elementId++, taskDefaultLabel);
+        else if (taskType.equalsIgnoreCase("Overlay-Image-On-Video"))
+            workflowProperties = new OverlayImageOnVideoProperties(elementId++, taskDefaultLabel);
+        else if (taskType.equalsIgnoreCase("Overlay-Text-On-Video"))
+            workflowProperties = new OverlayTextOnVideoProperties(elementId++, taskDefaultLabel);
+        else if (taskType.equalsIgnoreCase("Frame"))
+            workflowProperties = new FrameProperties(elementId++, taskDefaultLabel);
+        else if (taskType.equalsIgnoreCase("Periodical-Frames"))
+            workflowProperties = new PeriodicalFramesProperties(elementId++, taskDefaultLabel);
+        else if (taskType.equalsIgnoreCase("I-Frames"))
+            workflowProperties = new IFramesProperties(elementId++, taskDefaultLabel);
+        else if (taskType.equalsIgnoreCase("Motion-JPEG-by-Periodical-Frames"))
+            workflowProperties = new MotionJPEGByPeriodicalFramesProperties(elementId++, taskDefaultLabel);
+        else if (taskType.equalsIgnoreCase("Motion-JPEG-by-I-Frames"))
+            workflowProperties = new MotionJPEGByIFramesProperties(elementId++, taskDefaultLabel);
+        else if (taskType.equalsIgnoreCase("Slideshow"))
+            workflowProperties = new SlideshowProperties(elementId++, taskDefaultLabel);
+        else if (taskType.equalsIgnoreCase("FTP-Delivery"))
+            workflowProperties = new FTPDeliveryProperties(elementId++, taskDefaultLabel);
+        else if (taskType.equalsIgnoreCase("Local-Copy"))
+            workflowProperties = new LocalCopyProperties(elementId++, taskDefaultLabel);
+        else if (taskType.equalsIgnoreCase("Post-On-Facebook"))
+            workflowProperties = new PostOnFacebookProperties(elementId++, taskDefaultLabel);
+        else if (taskType.equalsIgnoreCase("Post-On-YouTube"))
+            workflowProperties = new PostOnYouTubeProperties(elementId++, taskDefaultLabel);
+        else if (taskType.equalsIgnoreCase("Email-Notification"))
+            workflowProperties = new EmailNotificationProperties(elementId++, taskDefaultLabel);
+        else if (taskType.equalsIgnoreCase("HTTP-Callback"))
+            workflowProperties = new HTTPCallbackProperties(elementId++, taskDefaultLabel);
+        else if (taskType.equalsIgnoreCase("Face-Recognition"))
+            workflowProperties = new FaceRecognitionProperties(elementId++, taskDefaultLabel);
+        else if (taskType.equalsIgnoreCase("Face-Identification"))
+            workflowProperties = new FaceIdentificationProperties(elementId++, taskDefaultLabel);
+        else
+            mLogger.error("Wrong taskType: " + taskType);
+
+        Element taskElement;
+        if (positionX == null || positionX.equalsIgnoreCase("")
+                || positionY == null || positionY.equalsIgnoreCase(""))
+            taskElement = new Element(workflowProperties, "5em", "5em");
+        else
+            taskElement = new Element(workflowProperties, positionX, positionY);
+        taskElement.setId(String.valueOf(workflowProperties.getElementId()));
+        taskElement.setDraggable(true);
+        {
+
+            DotEndPoint endPoint = new DotEndPoint(EndPointAnchor.TOP);
+            // endPoint.setScope("network");
+            endPoint.setTarget(true);
+            endPoint.setStyle("{fillStyle:'#98AFC7'}");
+            endPoint.setHoverStyle("{fillStyle:'#5C738B'}");
+            // endPoint.setMaxConnections(1); not working
+
+            taskElement.addEndPoint(endPoint);
+        }
+
+        {
+
+            DotEndPoint endPoint = new DotEndPoint(EndPointAnchor.LEFT);
+            // endPoint.setScope("network");
+            endPoint.setTarget(true);
+            endPoint.setStyle("{fillStyle:'#98AFC7'}");
+            endPoint.setHoverStyle("{fillStyle:'#5C738B'}");
+            // endPoint.setMaxConnections(1); not working
+
+            taskElement.addEndPoint(endPoint);
+        }
+
+        // onSuccess
+        {
+            // RectangleEndPoint endPoint = new RectangleEndPoint(EndPointAnchor.BOTTOM);
+            ImageEndPoint endPoint = new ImageEndPoint(EndPointAnchor.BOTTOM, "/resources/img/onSuccess.png");
+            // endPoint.setScope("network");
+            endPoint.setSource(true);
+            endPoint.setStyle("{fillStyle:'#00FF00'}");
+            endPoint.setHoverStyle("{fillStyle:'#5C738B'}");
+
+            taskElement.addEndPoint(endPoint);
+        }
+
+        // onError
+        {
+            // RectangleEndPoint endPoint = new RectangleEndPoint(EndPointAnchor.BOTTOM_LEFT);
+            ImageEndPoint endPoint = new ImageEndPoint(EndPointAnchor.BOTTOM_LEFT, "/resources/img/onError.png");
+            // endPoint.setScope("network");
+            endPoint.setSource(true);
+            endPoint.setStyle("{fillStyle:'#FF0000'}");
+            endPoint.setHoverStyle("{fillStyle:'#5C738B'}");
+
+            taskElement.addEndPoint(endPoint);
+        }
+
+        // onComplete
+        {
+            // RectangleEndPoint endPoint = new RectangleEndPoint(EndPointAnchor.BOTTOM_RIGHT);
+            ImageEndPoint endPoint = new ImageEndPoint(EndPointAnchor.BOTTOM_RIGHT, "/resources/img/onComplete.png");
+            // endPoint.setScope("network");
+            endPoint.setSource(true);
+            endPoint.setStyle("{fillStyle:'#98AFC7'}");
+            endPoint.setHoverStyle("{fillStyle:'#5C738B'}");
+
+            taskElement.addEndPoint(endPoint);
+        }
+
+        if (taskType.equalsIgnoreCase("GroupOfTasks"))
+        {
+            // to add the list of Tasks
+
+            // RectangleEndPoint endPoint = new RectangleEndPoint(EndPointAnchor.RIGHT);
+            ImageEndPoint endPoint = new ImageEndPoint(EndPointAnchor.RIGHT, "/resources/img/tasks.png");
+            // endPoint.setScope("network");
+            endPoint.setSource(true);
+            endPoint.setStyle("{fillStyle:'#98AFC7'}");
+            endPoint.setHoverStyle("{fillStyle:'#5C738B'}");
+
+            taskElement.addEndPoint(endPoint);
+        }
+
+        model.addElement(taskElement);
     }
 
     /*
@@ -237,6 +410,218 @@ public class WorkflowEditor extends Workspace implements Serializable {
                 mediaItemsReferences.prepareToSelectMediaItems(currentElementType, mediaItemsSelectionMode,
                         videoContentType, audioContentType, imageContentType, taskReferences);
             }
+            else if (workflowProperties.getType().equalsIgnoreCase("Encode"))
+            {
+                currentEncodeProperties = ((EncodeProperties) workflowProperties).clone();
+
+                String currentElementType = workflowProperties.getType();
+                String mediaItemsSelectionMode = "single";
+                boolean videoContentType = true;
+                boolean audioContentType = true;
+                boolean imageContentType = true;
+                StringBuilder taskReferences = currentEncodeProperties.getStringBuilderTaskReferences();
+                mediaItemsReferences.prepareToSelectMediaItems(currentElementType, mediaItemsSelectionMode,
+                        videoContentType, audioContentType, imageContentType, taskReferences);
+            }
+            else if (workflowProperties.getType().equalsIgnoreCase("Overlay-Image-On-Video"))
+            {
+                currentOverlayImageOnVideoProperties = ((OverlayImageOnVideoProperties) workflowProperties).clone();
+
+                String currentElementType = workflowProperties.getType();
+                String mediaItemsSelectionMode = "multiple";
+                boolean videoContentType = true;
+                boolean audioContentType = false;
+                boolean imageContentType = true;
+                StringBuilder taskReferences = currentOverlayImageOnVideoProperties.getStringBuilderTaskReferences();
+                mediaItemsReferences.prepareToSelectMediaItems(currentElementType, mediaItemsSelectionMode,
+                        videoContentType, audioContentType, imageContentType, taskReferences);
+            }
+            else if (workflowProperties.getType().equalsIgnoreCase("Overlay-Text-On-Video"))
+            {
+                currentOverlayTextOnVideoProperties = ((OverlayTextOnVideoProperties) workflowProperties).clone();
+
+                String currentElementType = workflowProperties.getType();
+                String mediaItemsSelectionMode = "single";
+                boolean videoContentType = true;
+                boolean audioContentType = false;
+                boolean imageContentType = false;
+                StringBuilder taskReferences = currentOverlayTextOnVideoProperties.getStringBuilderTaskReferences();
+                mediaItemsReferences.prepareToSelectMediaItems(currentElementType, mediaItemsSelectionMode,
+                        videoContentType, audioContentType, imageContentType, taskReferences);
+            }
+            else if (workflowProperties.getType().equalsIgnoreCase("Frame"))
+            {
+                currentFrameProperties = ((FrameProperties) workflowProperties).clone();
+
+                String currentElementType = workflowProperties.getType();
+                String mediaItemsSelectionMode = "single";
+                boolean videoContentType = true;
+                boolean audioContentType = false;
+                boolean imageContentType = false;
+                StringBuilder taskReferences = currentFrameProperties.getStringBuilderTaskReferences();
+                mediaItemsReferences.prepareToSelectMediaItems(currentElementType, mediaItemsSelectionMode,
+                        videoContentType, audioContentType, imageContentType, taskReferences);
+            }
+            else if (workflowProperties.getType().equalsIgnoreCase("Periodical-Frames"))
+            {
+                currentPeriodicalFramesProperties = ((PeriodicalFramesProperties) workflowProperties).clone();
+
+                String currentElementType = workflowProperties.getType();
+                String mediaItemsSelectionMode = "single";
+                boolean videoContentType = true;
+                boolean audioContentType = false;
+                boolean imageContentType = false;
+                StringBuilder taskReferences = currentPeriodicalFramesProperties.getStringBuilderTaskReferences();
+                mediaItemsReferences.prepareToSelectMediaItems(currentElementType, mediaItemsSelectionMode,
+                        videoContentType, audioContentType, imageContentType, taskReferences);
+            }
+            else if (workflowProperties.getType().equalsIgnoreCase("I-Frames"))
+            {
+                currentIFramesProperties = ((IFramesProperties) workflowProperties).clone();
+
+                String currentElementType = workflowProperties.getType();
+                String mediaItemsSelectionMode = "single";
+                boolean videoContentType = true;
+                boolean audioContentType = false;
+                boolean imageContentType = false;
+                StringBuilder taskReferences = currentIFramesProperties.getStringBuilderTaskReferences();
+                mediaItemsReferences.prepareToSelectMediaItems(currentElementType, mediaItemsSelectionMode,
+                        videoContentType, audioContentType, imageContentType, taskReferences);
+            }
+            else if (workflowProperties.getType().equalsIgnoreCase("Motion-JPEG-by-Periodical-Frames"))
+            {
+                currentMotionJPEGByPeriodicalFramesProperties = ((MotionJPEGByPeriodicalFramesProperties) workflowProperties).clone();
+
+                String currentElementType = workflowProperties.getType();
+                String mediaItemsSelectionMode = "single";
+                boolean videoContentType = true;
+                boolean audioContentType = false;
+                boolean imageContentType = false;
+                StringBuilder taskReferences = currentMotionJPEGByPeriodicalFramesProperties.getStringBuilderTaskReferences();
+                mediaItemsReferences.prepareToSelectMediaItems(currentElementType, mediaItemsSelectionMode,
+                        videoContentType, audioContentType, imageContentType, taskReferences);
+            }
+            else if (workflowProperties.getType().equalsIgnoreCase("Motion-JPEG-by-I-Frames"))
+            {
+                currentMotionJPEGByIFramesProperties = ((MotionJPEGByIFramesProperties) workflowProperties).clone();
+
+                String currentElementType = workflowProperties.getType();
+                String mediaItemsSelectionMode = "single";
+                boolean videoContentType = true;
+                boolean audioContentType = false;
+                boolean imageContentType = false;
+                StringBuilder taskReferences = currentMotionJPEGByIFramesProperties.getStringBuilderTaskReferences();
+                mediaItemsReferences.prepareToSelectMediaItems(currentElementType, mediaItemsSelectionMode,
+                        videoContentType, audioContentType, imageContentType, taskReferences);
+            }
+            else if (workflowProperties.getType().equalsIgnoreCase("Slideshow"))
+            {
+                currentSlideshowProperties = ((SlideshowProperties) workflowProperties).clone();
+
+                String currentElementType = workflowProperties.getType();
+                String mediaItemsSelectionMode = "multiple";
+                boolean videoContentType = false;
+                boolean audioContentType = false;
+                boolean imageContentType = true;
+                StringBuilder taskReferences = currentSlideshowProperties.getStringBuilderTaskReferences();
+                mediaItemsReferences.prepareToSelectMediaItems(currentElementType, mediaItemsSelectionMode,
+                        videoContentType, audioContentType, imageContentType, taskReferences);
+            }
+            else if (workflowProperties.getType().equalsIgnoreCase("FTP-Delivery"))
+            {
+                currentFTPDeliveryProperties = ((FTPDeliveryProperties) workflowProperties).clone();
+
+                String currentElementType = workflowProperties.getType();
+                String mediaItemsSelectionMode = "multiple";
+                boolean videoContentType = true;
+                boolean audioContentType = true;
+                boolean imageContentType = true;
+                StringBuilder taskReferences = currentFTPDeliveryProperties.getStringBuilderTaskReferences();
+                mediaItemsReferences.prepareToSelectMediaItems(currentElementType, mediaItemsSelectionMode,
+                        videoContentType, audioContentType, imageContentType, taskReferences);
+            }
+            else if (workflowProperties.getType().equalsIgnoreCase("Local-Copy"))
+            {
+                currentLocalCopyProperties = ((LocalCopyProperties) workflowProperties).clone();
+
+                String currentElementType = workflowProperties.getType();
+                String mediaItemsSelectionMode = "multiple";
+                boolean videoContentType = true;
+                boolean audioContentType = true;
+                boolean imageContentType = true;
+                StringBuilder taskReferences = currentLocalCopyProperties.getStringBuilderTaskReferences();
+                mediaItemsReferences.prepareToSelectMediaItems(currentElementType, mediaItemsSelectionMode,
+                        videoContentType, audioContentType, imageContentType, taskReferences);
+            }
+            else if (workflowProperties.getType().equalsIgnoreCase("Post-On-Facebook"))
+            {
+                currentPostOnFacebookProperties = ((PostOnFacebookProperties) workflowProperties).clone();
+
+                String currentElementType = workflowProperties.getType();
+                String mediaItemsSelectionMode = "multiple";
+                boolean videoContentType = true;
+                boolean audioContentType = false;
+                boolean imageContentType = true;
+                StringBuilder taskReferences = currentPostOnFacebookProperties.getStringBuilderTaskReferences();
+                mediaItemsReferences.prepareToSelectMediaItems(currentElementType, mediaItemsSelectionMode,
+                        videoContentType, audioContentType, imageContentType, taskReferences);
+            }
+            else if (workflowProperties.getType().equalsIgnoreCase("Post-On-YouTube"))
+            {
+                currentPostOnYouTubeProperties = ((PostOnYouTubeProperties) workflowProperties).clone();
+
+                String currentElementType = workflowProperties.getType();
+                String mediaItemsSelectionMode = "multiple";
+                boolean videoContentType = true;
+                boolean audioContentType = false;
+                boolean imageContentType = false;
+                StringBuilder taskReferences = currentPostOnYouTubeProperties.getStringBuilderTaskReferences();
+                mediaItemsReferences.prepareToSelectMediaItems(currentElementType, mediaItemsSelectionMode,
+                        videoContentType, audioContentType, imageContentType, taskReferences);
+            }
+            else if (workflowProperties.getType().equalsIgnoreCase("Email-Notification"))
+                currentEmailNotificationProperties = ((EmailNotificationProperties) workflowProperties).clone();
+            else if (workflowProperties.getType().equalsIgnoreCase("HTTP-Callback"))
+            {
+                currentHttpCallbackProperties = ((HTTPCallbackProperties) workflowProperties).clone();
+
+                String currentElementType = workflowProperties.getType();
+                String mediaItemsSelectionMode = "multiple";
+                boolean videoContentType = true;
+                boolean audioContentType = true;
+                boolean imageContentType = true;
+                StringBuilder taskReferences = currentHttpCallbackProperties.getStringBuilderTaskReferences();
+                mediaItemsReferences.prepareToSelectMediaItems(currentElementType, mediaItemsSelectionMode,
+                        videoContentType, audioContentType, imageContentType, taskReferences);
+            }
+            else if (workflowProperties.getType().equalsIgnoreCase("Face-Recognition"))
+            {
+                currentFaceRecognitionProperties = ((FaceRecognitionProperties) workflowProperties).clone();
+
+                String currentElementType = workflowProperties.getType();
+                String mediaItemsSelectionMode = "single";
+                boolean videoContentType = true;
+                boolean audioContentType = false;
+                boolean imageContentType = false;
+                StringBuilder taskReferences = currentFaceRecognitionProperties.getStringBuilderTaskReferences();
+                mediaItemsReferences.prepareToSelectMediaItems(currentElementType, mediaItemsSelectionMode,
+                        videoContentType, audioContentType, imageContentType, taskReferences);
+            }
+            else if (workflowProperties.getType().equalsIgnoreCase("Face-Identification"))
+            {
+                currentFaceIdentificationProperties = ((FaceIdentificationProperties) workflowProperties).clone();
+
+                String currentElementType = workflowProperties.getType();
+                String mediaItemsSelectionMode = "single";
+                boolean videoContentType = true;
+                boolean audioContentType = false;
+                boolean imageContentType = false;
+                StringBuilder taskReferences = currentFaceIdentificationProperties.getStringBuilderTaskReferences();
+                mediaItemsReferences.prepareToSelectMediaItems(currentElementType, mediaItemsSelectionMode,
+                        videoContentType, audioContentType, imageContentType, taskReferences);
+            }
+            else
+                mLogger.error("Wrong workflowProperties.getType(): " + workflowProperties.getType());
         }
         else
         {
@@ -265,6 +650,42 @@ public class WorkflowEditor extends Workspace implements Serializable {
                 element.setData(currentCutProperties);
             else if (workflowProperties.getType().equalsIgnoreCase("Extract-Tracks"))
                 element.setData(currentExtractTracksProperties);
+            else if (workflowProperties.getType().equalsIgnoreCase("Encode"))
+                element.setData(currentEncodeProperties);
+            else if (workflowProperties.getType().equalsIgnoreCase("Overlay-Image-On-Video"))
+                element.setData(currentOverlayImageOnVideoProperties);
+            else if (workflowProperties.getType().equalsIgnoreCase("Overlay-Text-On-Video"))
+                element.setData(currentOverlayTextOnVideoProperties);
+            else if (workflowProperties.getType().equalsIgnoreCase("Frame"))
+                element.setData(currentFrameProperties);
+            else if (workflowProperties.getType().equalsIgnoreCase("Periodical-Frames"))
+                element.setData(currentPeriodicalFramesProperties);
+            else if (workflowProperties.getType().equalsIgnoreCase("I-Frames"))
+                element.setData(currentIFramesProperties);
+            else if (workflowProperties.getType().equalsIgnoreCase("Motion-JPEG-by-Periodical-Frames"))
+                element.setData(currentMotionJPEGByPeriodicalFramesProperties);
+            else if (workflowProperties.getType().equalsIgnoreCase("Motion-JPEG-by-I-Frames"))
+                element.setData(currentMotionJPEGByIFramesProperties);
+            else if (workflowProperties.getType().equalsIgnoreCase("Slideshow"))
+                element.setData(currentSlideshowProperties);
+            else if (workflowProperties.getType().equalsIgnoreCase("FTP-Delivery"))
+                element.setData(currentFTPDeliveryProperties);
+            else if (workflowProperties.getType().equalsIgnoreCase("Local-Copy"))
+                element.setData(currentLocalCopyProperties);
+            else if (workflowProperties.getType().equalsIgnoreCase("Post-On-Facebook"))
+                element.setData(currentPostOnFacebookProperties);
+            else if (workflowProperties.getType().equalsIgnoreCase("Post-On-YouTube"))
+                element.setData(currentPostOnYouTubeProperties);
+            else if (workflowProperties.getType().equalsIgnoreCase("Email-Notification"))
+                element.setData(currentEmailNotificationProperties);
+            else if (workflowProperties.getType().equalsIgnoreCase("HTTP-Callback"))
+                element.setData(currentHttpCallbackProperties);
+            else if (workflowProperties.getType().equalsIgnoreCase("Face-Recognition"))
+                element.setData(currentFaceRecognitionProperties);
+            else if (workflowProperties.getType().equalsIgnoreCase("Face-Identification"))
+                element.setData(currentFaceIdentificationProperties);
+            else
+                mLogger.error("Wrong workflowProperties.getType(): " + workflowProperties.getType());
 
             buildWorkflowElementJson();
         }
@@ -375,9 +796,9 @@ public class WorkflowEditor extends Workspace implements Serializable {
                     {
                         if (sourceEndPont.getAnchor() == EndPointAnchor.BOTTOM)
                             connection.getOverlays().add(new LabelOverlay("onSuccess", "connection-label", 0.5));
-                        else if (sourceEndPont.getAnchor() == EndPointAnchor.BOTTOM_LEFT)
-                            connection.getOverlays().add(new LabelOverlay("onComplete", "connection-label", 0.5));
                         else if (sourceEndPont.getAnchor() == EndPointAnchor.BOTTOM_RIGHT)
+                            connection.getOverlays().add(new LabelOverlay("onComplete", "connection-label", 0.5));
+                        else if (sourceEndPont.getAnchor() == EndPointAnchor.BOTTOM_LEFT)
                             connection.getOverlays().add(new LabelOverlay("onError", "connection-label", 0.5));
                     }
                     else if (sourceWorkflowProperties.getMainType().equalsIgnoreCase("GroupOfTasks")
@@ -385,9 +806,9 @@ public class WorkflowEditor extends Workspace implements Serializable {
                     {
                         if (sourceEndPont.getAnchor() == EndPointAnchor.BOTTOM)
                             connection.getOverlays().add(new LabelOverlay("onSuccess", "connection-label", 0.5));
-                        else if (sourceEndPont.getAnchor() == EndPointAnchor.BOTTOM_LEFT)
-                            connection.getOverlays().add(new LabelOverlay("onComplete", "connection-label", 0.5));
                         else if (sourceEndPont.getAnchor() == EndPointAnchor.BOTTOM_RIGHT)
+                            connection.getOverlays().add(new LabelOverlay("onComplete", "connection-label", 0.5));
+                        else if (sourceEndPont.getAnchor() == EndPointAnchor.BOTTOM_LEFT)
                             connection.getOverlays().add(new LabelOverlay("onError", "connection-label", 0.5));
                         else if (sourceEndPont.getAnchor() == EndPointAnchor.RIGHT)
                             connection.getOverlays().add(new LabelOverlay("Task of Group", "connection-label", 0.5));
@@ -400,9 +821,9 @@ public class WorkflowEditor extends Workspace implements Serializable {
                 if (sourceEndPont.getAnchor() == EndPointAnchor.BOTTOM)
                     sourceWorkflowProperties.getOnSuccessChildren().add(targetWorkflowProperties);
                 else if (sourceEndPont.getAnchor() == EndPointAnchor.BOTTOM_LEFT)
-                    sourceWorkflowProperties.getOnCompleteChildren().add(targetWorkflowProperties);
-                else if (sourceEndPont.getAnchor() == EndPointAnchor.BOTTOM_RIGHT)
                     sourceWorkflowProperties.getOnErrorChildren().add(targetWorkflowProperties);
+                else if (sourceEndPont.getAnchor() == EndPointAnchor.BOTTOM_RIGHT)
+                    sourceWorkflowProperties.getOnCompleteChildren().add(targetWorkflowProperties);
                 else if (sourceEndPont.getAnchor() == EndPointAnchor.RIGHT)
                 {
                     GroupOfTasksProperties groupOfTasksProperties = (GroupOfTasksProperties) sourceWorkflowProperties;
@@ -443,9 +864,9 @@ public class WorkflowEditor extends Workspace implements Serializable {
             if (sourceEndPont.getAnchor() == EndPointAnchor.BOTTOM)
                 sourceWorkflowProperties.getOnSuccessChildren().remove(targetWorkflowProperties);
             else if (sourceEndPont.getAnchor() == EndPointAnchor.BOTTOM_LEFT)
-                sourceWorkflowProperties.getOnCompleteChildren().remove(targetWorkflowProperties);
-            else if (sourceEndPont.getAnchor() == EndPointAnchor.BOTTOM_RIGHT)
                 sourceWorkflowProperties.getOnErrorChildren().remove(targetWorkflowProperties);
+            else if (sourceEndPont.getAnchor() == EndPointAnchor.BOTTOM_RIGHT)
+                sourceWorkflowProperties.getOnCompleteChildren().remove(targetWorkflowProperties);
             else if (sourceEndPont.getAnchor() == EndPointAnchor.RIGHT)
             {
                 GroupOfTasksProperties groupOfTasksProperties = (GroupOfTasksProperties) sourceWorkflowProperties;
@@ -492,15 +913,15 @@ public class WorkflowEditor extends Workspace implements Serializable {
         }
         else if (sourceOriginalEndPont.getAnchor() == EndPointAnchor.BOTTOM_LEFT)
         {
-            sourceOriginalWorkflowProperties.getOnCompleteChildren().remove(targetOriginalWorkflowProperties);
-            // commented because the onConnect is generated too and the add is done there
-            // sourceOriginalWorkflowProperties.getOnCompleteChildren().add(targetNewWorkflowProperties);
-        }
-        else if (sourceOriginalEndPont.getAnchor() == EndPointAnchor.BOTTOM_RIGHT)
-        {
             sourceOriginalWorkflowProperties.getOnErrorChildren().remove(targetOriginalWorkflowProperties);
             // commented because the onConnect is generated too and the add is done there
             // sourceOriginalWorkflowProperties.getOnErrorChildren().add(targetNewWorkflowProperties);
+        }
+        else if (sourceOriginalEndPont.getAnchor() == EndPointAnchor.BOTTOM_RIGHT)
+        {
+            sourceOriginalWorkflowProperties.getOnCompleteChildren().remove(targetOriginalWorkflowProperties);
+            // commented because the onConnect is generated too and the add is done there
+            // sourceOriginalWorkflowProperties.getOnCompleteChildren().add(targetNewWorkflowProperties);
         }
         else if (sourceOriginalEndPont.getAnchor() == EndPointAnchor.RIGHT)
         {
@@ -568,10 +989,10 @@ public class WorkflowEditor extends Workspace implements Serializable {
                     && sourceWorkflowProperties.getOnSuccessChildren().size() == 0)
                 isConnectionNumberAllowed = true;
             else if (sourceEndPont.getAnchor() == EndPointAnchor.BOTTOM_LEFT
-                    && sourceWorkflowProperties.getOnCompleteChildren().size() == 0)
+                    && sourceWorkflowProperties.getOnErrorChildren().size() == 0)
                 isConnectionNumberAllowed = true;
             else if (sourceEndPont.getAnchor() == EndPointAnchor.BOTTOM_RIGHT
-                    && sourceWorkflowProperties.getOnErrorChildren().size() == 0)
+                    && sourceWorkflowProperties.getOnCompleteChildren().size() == 0)
                 isConnectionNumberAllowed = true;
         }
         else if (sourceWorkflowProperties.getMainType().equalsIgnoreCase("GroupOfTasks")
@@ -581,124 +1002,16 @@ public class WorkflowEditor extends Workspace implements Serializable {
                     && sourceWorkflowProperties.getOnSuccessChildren().size() == 0)
                 isConnectionNumberAllowed = true;
             else if (sourceEndPont.getAnchor() == EndPointAnchor.BOTTOM_LEFT
-                    && sourceWorkflowProperties.getOnCompleteChildren().size() == 0)
+                    && sourceWorkflowProperties.getOnErrorChildren().size() == 0)
                 isConnectionNumberAllowed = true;
             else if (sourceEndPont.getAnchor() == EndPointAnchor.BOTTOM_RIGHT
-                    && sourceWorkflowProperties.getOnErrorChildren().size() == 0)
+                    && sourceWorkflowProperties.getOnCompleteChildren().size() == 0)
                 isConnectionNumberAllowed = true;
             else if (sourceEndPont.getAnchor() == EndPointAnchor.RIGHT)
                 isConnectionNumberAllowed = true;
         }
 
         return isConnectionNumberAllowed;
-    }
-
-//    public void addTask(String taskType)
-//    {
-    public void addTask(ActionEvent param)
-    {
-        Map<String, String> params = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap();
-        String taskType = params.get("taskType");
-        String positionX = params.get("positionX");
-        String positionY = params.get("positionY");
-
-        mLogger.info("addTask"
-                        + ", taskType: " + taskType
-                        + ", positionX: " + positionX
-                        + ", positionY: " + positionY
-        );
-
-        WorkflowProperties workflowProperties = null;
-
-        if (taskType.equalsIgnoreCase("Add-Content"))
-            workflowProperties = new AddContentProperties(elementId++, labelTemplatePrefix + (elementId - 1),
-                    temporaryPushBinariesPathName);
-        else if (taskType.equalsIgnoreCase("GroupOfTasks"))
-            workflowProperties = new GroupOfTasksProperties(elementId++, labelTemplatePrefix + (elementId - 1));
-        else if (taskType.equalsIgnoreCase("Remove-Content"))
-            workflowProperties = new RemoveContentProperties(elementId++, labelTemplatePrefix + (elementId - 1));
-        else if (taskType.equalsIgnoreCase("Concat-Demuxer"))
-            workflowProperties = new ConcatDemuxerProperties(elementId++, labelTemplatePrefix + (elementId - 1));
-        else if (taskType.equalsIgnoreCase("Cut"))
-            workflowProperties = new CutProperties(elementId++, labelTemplatePrefix + (elementId - 1));
-        else if (taskType.equalsIgnoreCase("Extract-Tracks"))
-            workflowProperties = new ExtractTracksProperties(elementId++, labelTemplatePrefix + (elementId - 1));
-
-        /*
-        // some initialization here because otherwise the buildWorkflow (json), will fail
-        {
-            if (task.getType().equalsIgnoreCase("Encode"))
-            {
-                task.setEncodingProfileType("profilesSet");
-            }
-        }
-        */
-
-        currentY += stepY;
-
-        // Element taskElement = new Element(workflowProperties, currentX + "em", currentY + "em");
-        Element taskElement = new Element(workflowProperties, positionX, positionY);
-        taskElement.setId(String.valueOf(workflowProperties.getElementId()));
-        taskElement.setDraggable(true);
-        {
-
-            DotEndPoint endPoint = new DotEndPoint(EndPointAnchor.TOP);
-            // endPoint.setScope("network");
-            endPoint.setTarget(true);
-            endPoint.setStyle("{fillStyle:'#98AFC7'}");
-            endPoint.setHoverStyle("{fillStyle:'#5C738B'}");
-            // endPoint.setMaxConnections(1); not working
-
-            taskElement.addEndPoint(endPoint);
-        }
-
-        // onSuccess
-        {
-            RectangleEndPoint endPoint = new RectangleEndPoint(EndPointAnchor.BOTTOM);
-            // endPoint.setScope("network");
-            endPoint.setSource(true);
-            endPoint.setStyle("{fillStyle:'#98AFC7'}");
-            endPoint.setHoverStyle("{fillStyle:'#5C738B'}");
-
-            taskElement.addEndPoint(endPoint);
-        }
-
-        // onError
-        {
-            RectangleEndPoint endPoint = new RectangleEndPoint(EndPointAnchor.BOTTOM_LEFT);
-            // endPoint.setScope("network");
-            endPoint.setSource(true);
-            endPoint.setStyle("{fillStyle:'#98AFC7'}");
-            endPoint.setHoverStyle("{fillStyle:'#5C738B'}");
-
-            taskElement.addEndPoint(endPoint);
-        }
-
-        // onComplete
-        {
-            RectangleEndPoint endPoint = new RectangleEndPoint(EndPointAnchor.BOTTOM_RIGHT);
-            // endPoint.setScope("network");
-            endPoint.setSource(true);
-            endPoint.setStyle("{fillStyle:'#98AFC7'}");
-            endPoint.setHoverStyle("{fillStyle:'#5C738B'}");
-
-            taskElement.addEndPoint(endPoint);
-        }
-
-        if (taskType.equalsIgnoreCase("GroupOfTasks"))
-        {
-            // to add the list of Tasks
-
-            RectangleEndPoint endPoint = new RectangleEndPoint(EndPointAnchor.RIGHT);
-            // endPoint.setScope("network");
-            endPoint.setSource(true);
-            endPoint.setStyle("{fillStyle:'#98AFC7'}");
-            endPoint.setHoverStyle("{fillStyle:'#5C738B'}");
-
-            taskElement.addEndPoint(endPoint);
-        }
-
-        model.addElement(taskElement);
     }
 
     private Connection getConnection(EndPoint sourceEndPont, EndPoint targetEndPont)
@@ -1008,5 +1321,141 @@ public class WorkflowEditor extends Workspace implements Serializable {
 
     public void setCurrentExtractTracksProperties(ExtractTracksProperties currentExtractTracksProperties) {
         this.currentExtractTracksProperties = currentExtractTracksProperties;
+    }
+
+    public EncodeProperties getCurrentEncodeProperties() {
+        return currentEncodeProperties;
+    }
+
+    public void setCurrentEncodeProperties(EncodeProperties currentEncodeProperties) {
+        this.currentEncodeProperties = currentEncodeProperties;
+    }
+
+    public OverlayImageOnVideoProperties getCurrentOverlayImageOnVideoProperties() {
+        return currentOverlayImageOnVideoProperties;
+    }
+
+    public void setCurrentOverlayImageOnVideoProperties(OverlayImageOnVideoProperties currentOverlayImageOnVideoProperties) {
+        this.currentOverlayImageOnVideoProperties = currentOverlayImageOnVideoProperties;
+    }
+
+    public OverlayTextOnVideoProperties getCurrentOverlayTextOnVideoProperties() {
+        return currentOverlayTextOnVideoProperties;
+    }
+
+    public void setCurrentOverlayTextOnVideoProperties(OverlayTextOnVideoProperties currentOverlayTextOnVideoProperties) {
+        this.currentOverlayTextOnVideoProperties = currentOverlayTextOnVideoProperties;
+    }
+
+    public FrameProperties getCurrentFrameProperties() {
+        return currentFrameProperties;
+    }
+
+    public void setCurrentFrameProperties(FrameProperties currentFrameProperties) {
+        this.currentFrameProperties = currentFrameProperties;
+    }
+
+    public PeriodicalFramesProperties getCurrentPeriodicalFramesProperties() {
+        return currentPeriodicalFramesProperties;
+    }
+
+    public void setCurrentPeriodicalFramesProperties(PeriodicalFramesProperties currentPeriodicalFramesProperties) {
+        this.currentPeriodicalFramesProperties = currentPeriodicalFramesProperties;
+    }
+
+    public IFramesProperties getCurrentIFramesProperties() {
+        return currentIFramesProperties;
+    }
+
+    public void setCurrentIFramesProperties(IFramesProperties currentIFramesProperties) {
+        this.currentIFramesProperties = currentIFramesProperties;
+    }
+
+    public MotionJPEGByPeriodicalFramesProperties getCurrentMotionJPEGByPeriodicalFramesProperties() {
+        return currentMotionJPEGByPeriodicalFramesProperties;
+    }
+
+    public void setCurrentMotionJPEGByPeriodicalFramesProperties(MotionJPEGByPeriodicalFramesProperties currentMotionJPEGByPeriodicalFramesProperties) {
+        this.currentMotionJPEGByPeriodicalFramesProperties = currentMotionJPEGByPeriodicalFramesProperties;
+    }
+
+    public MotionJPEGByIFramesProperties getCurrentMotionJPEGByIFramesProperties() {
+        return currentMotionJPEGByIFramesProperties;
+    }
+
+    public void setCurrentMotionJPEGByIFramesProperties(MotionJPEGByIFramesProperties currentMotionJPEGByIFramesProperties) {
+        this.currentMotionJPEGByIFramesProperties = currentMotionJPEGByIFramesProperties;
+    }
+
+    public SlideshowProperties getCurrentSlideshowProperties() {
+        return currentSlideshowProperties;
+    }
+
+    public void setCurrentSlideshowProperties(SlideshowProperties currentSlideshowProperties) {
+        this.currentSlideshowProperties = currentSlideshowProperties;
+    }
+
+    public FTPDeliveryProperties getCurrentFTPDeliveryProperties() {
+        return currentFTPDeliveryProperties;
+    }
+
+    public void setCurrentFTPDeliveryProperties(FTPDeliveryProperties currentFTPDeliveryProperties) {
+        this.currentFTPDeliveryProperties = currentFTPDeliveryProperties;
+    }
+
+    public LocalCopyProperties getCurrentLocalCopyProperties() {
+        return currentLocalCopyProperties;
+    }
+
+    public void setCurrentLocalCopyProperties(LocalCopyProperties currentLocalCopyProperties) {
+        this.currentLocalCopyProperties = currentLocalCopyProperties;
+    }
+
+    public PostOnFacebookProperties getCurrentPostOnFacebookProperties() {
+        return currentPostOnFacebookProperties;
+    }
+
+    public void setCurrentPostOnFacebookProperties(PostOnFacebookProperties currentPostOnFacebookProperties) {
+        this.currentPostOnFacebookProperties = currentPostOnFacebookProperties;
+    }
+
+    public PostOnYouTubeProperties getCurrentPostOnYouTubeProperties() {
+        return currentPostOnYouTubeProperties;
+    }
+
+    public void setCurrentPostOnYouTubeProperties(PostOnYouTubeProperties currentPostOnYouTubeProperties) {
+        this.currentPostOnYouTubeProperties = currentPostOnYouTubeProperties;
+    }
+
+    public EmailNotificationProperties getCurrentEmailNotificationProperties() {
+        return currentEmailNotificationProperties;
+    }
+
+    public void setCurrentEmailNotificationProperties(EmailNotificationProperties currentEmailNotificationProperties) {
+        this.currentEmailNotificationProperties = currentEmailNotificationProperties;
+    }
+
+    public HTTPCallbackProperties getCurrentHttpCallbackProperties() {
+        return currentHttpCallbackProperties;
+    }
+
+    public void setCurrentHttpCallbackProperties(HTTPCallbackProperties currentHttpCallbackProperties) {
+        this.currentHttpCallbackProperties = currentHttpCallbackProperties;
+    }
+
+    public FaceRecognitionProperties getCurrentFaceRecognitionProperties() {
+        return currentFaceRecognitionProperties;
+    }
+
+    public void setCurrentFaceRecognitionProperties(FaceRecognitionProperties currentFaceRecognitionProperties) {
+        this.currentFaceRecognitionProperties = currentFaceRecognitionProperties;
+    }
+
+    public FaceIdentificationProperties getCurrentFaceIdentificationProperties() {
+        return currentFaceIdentificationProperties;
+    }
+
+    public void setCurrentFaceIdentificationProperties(FaceIdentificationProperties currentFaceIdentificationProperties) {
+        this.currentFaceIdentificationProperties = currentFaceIdentificationProperties;
     }
 }

@@ -1,0 +1,247 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:media="http://xmlns.jcp.org/jsf/composite/media">
+
+<p:dialog widgetVar="Face-Identification" modal="true"
+          header="Face-Identification" appendTo="@(body)" width="1000" height="600"
+          showEffect="fade" hideEffect="fade" resizable="false" draggable="true">
+
+    <h:form id="Face-IdentificationForm">
+
+        <p:toolbar>
+            <p:toolbarGroup align="left">
+            </p:toolbarGroup>
+
+            <p:toolbarGroup align="right">
+                <p:defaultCommand target="saveAddContentProperties"/>
+
+                <p:commandButton id="saveAddContentProperties" value="Save Properties"
+                                 action="#{workflowEditor.saveTaskProperties}"
+                                 update="viewForm:workspaceDiagram,viewForm:ingestWorkflowButton,viewForm:workflowIssuesWarning,jsonWorkflowForm:jsonWorkflow"
+                                 onclick="PF('Face-Identification').hide()" />
+            </p:toolbarGroup>
+        </p:toolbar>
+
+        <p:panelGrid cellpadding="10" style="width: 100%">
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Label" style="font-weight: bold"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskLabel_Face_Identification" style="width: 100%"
+                                 value="#{workflowEditor.currentFaceIdentificationProperties.label}"
+                                 autocomplete="true"
+                                 placeholder="label"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Cascade Name" style="font-weight: bold" />
+                </p:column>
+                <p:column>
+                    <p:selectOneMenu id="taskCascadeName_Face_Identification"
+                                     value="#{workflowEditor.currentFaceIdentificationProperties.cascadeName}"
+                                     autoWidth="false">
+                        <f:selectItems value="#{workflowEditor.currentFaceIdentificationProperties.cascadeNamesList}"/>
+                    </p:selectOneMenu>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Deep Learned Model Tags" style="font-weight: bold" />
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskDeepLearnedModelTags_Face_Identification" style="width: 100%"
+                                 value="#{workflowEditor.currentFaceIdentificationProperties.deepLearnedModelTags}"
+                                 title="tags are comma separated"
+                                 autocomplete="true"
+                                 placeholder="Deep Learned Model Tags are comma separated"/>
+                    <p:tooltip for="taskDeepLearnedModelTags_Face_Identification" showEffect="clip" hideEffect="explode" position="left"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="References (Source Physical Path Key)"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskReferences" style="width: 100%"
+                                 required="false"
+                                 value="#{workflowEditor.currentFaceIdentificationProperties.taskReferences}"
+                                 autocomplete="true"
+                                 placeholder="if left blank, references are retrieved from Workflow"/>
+                    <br/>
+                    <p:commandButton id="taskSelectReferences_Face_Identification"
+                                     icon="ui-icon-search"
+                                     value="Select Media"
+                                     update=":selectMediaItemsForm"
+                                     oncomplete="PF('selectMediaItems').show()"
+                    />
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Title"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskTitle_Face_Identification" style="width: 100%"
+                                 required="false"
+                                 value="#{workflowEditor.currentFaceIdentificationProperties.title}"
+                                 autocomplete="true"
+                                 placeholder="title of the content"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Tags"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskTags_Face_Identification"
+                                 required="false"
+                                 value="#{workflowEditor.currentFaceIdentificationProperties.tags}"
+                                 title="tags are comma separated"
+                                 autocomplete="true"
+                                 placeholder="tags"/>
+                    <p:tooltip for="taskTags_Face_Identification" showEffect="clip" hideEffect="explode" position="left"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Encoding Priority:"/>
+                </p:column>
+                <p:column>
+                    <p:selectOneMenu id="taskEncodingPriority_Face_Identification"
+                                     value="#{workflowEditor.currentFaceIdentificationProperties.encodingPriority}"
+                                     autoWidth="false">
+                        <f:selectItems value="#{workflowEditor.currentFaceIdentificationProperties.encodingPrioritiesList}"/>
+                    </p:selectOneMenu>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Retention"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskRetention_Face_Identification"
+                                 required="false"
+                                 value="#{workflowEditor.currentFaceIdentificationProperties.retention}"
+                                 title="Samples: 10s, 45m, 4h, 7d, 3M, 1y"
+                                 autocomplete="true"
+                                 placeholder="retention"/>
+                    <p:tooltip for="taskRetention_Face_Identification" showEffect="clip" hideEffect="explode" position="left"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Start publishing:"/>
+                </p:column>
+                <p:column>
+                    <p:calendar id="startPublishing_Face_Identification"
+                                value="#{workflowEditor.currentFaceIdentificationProperties.startPublishing}"
+                                autocomplete="true"
+                                pattern="dd-MM-yyyy HH:mm:ss" locale="my">
+                    </p:calendar>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="End publishing:"/>
+                </p:column>
+                <p:column>
+                    <p:calendar id="endPublishing_Face_Identification"
+                                value="#{workflowEditor.currentFaceIdentificationProperties.endPublishing}"
+                                autocomplete="true"
+                                pattern="dd-MM-yyyy HH:mm:ss" locale="my">
+                    </p:calendar>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="User Data"/>
+                </p:column>
+                <p:column>
+                    <p:scrollPanel>
+                        <p:inputTextarea id="taskUserData_Face_Identification" style="width: 100%"
+                                         required="false"
+                                         value="#{workflowEditor.currentFaceIdentificationProperties.userData}"
+                                         autocomplete="true"
+                                         placeholder="user data"/>
+                    </p:scrollPanel>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Ingester"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskIngester_Face_Identification"
+                                 required="false"
+                                 readonly="true"
+                                 value="#{workflowEditor.currentFaceIdentificationProperties.ingester}"
+                                 autocomplete="true"
+                                 placeholder="ingester"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Content Provider Name"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskContentProviderName_Face_Identification"
+                                 required="false"
+                                 value="#{workflowEditor.currentFaceIdentificationProperties.contentProviderName}"
+                                 autocomplete="true"
+                                 placeholder="content provider name"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Delivery File Name"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskDeliveryFileName_Face_Identification"
+                                 required="false"
+                                 value="#{workflowEditor.currentFaceIdentificationProperties.deliveryFileName}"
+                                 autocomplete="true"
+                                 placeholder="delivery file name"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Unique Name"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskUniqueName_Face_Identification"
+                                 required="false"
+                                 value="#{workflowEditor.currentFaceIdentificationProperties.uniqueName}"
+                                 autocomplete="true"
+                                 placeholder="unique name"/>
+                </p:column>
+            </p:row>
+
+        </p:panelGrid>
+
+    </h:form>
+</p:dialog>
+
+
+</html>

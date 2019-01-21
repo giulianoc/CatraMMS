@@ -33,6 +33,23 @@
     <ui:include src="workflowProperties/groupOfTasksProperties.xhtml"/>
     <ui:include src="workflowProperties/removeContentProperties.xhtml"/>
     <ui:include src="workflowProperties/extractTracksProperties.xhtml"/>
+    <ui:include src="workflowProperties/encodeProperties.xhtml"/>
+    <ui:include src="workflowProperties/overlayImageOnVideoProperties.xhtml"/>
+    <ui:include src="workflowProperties/overlayTextOnVideoProperties.xhtml"/>
+    <ui:include src="workflowProperties/frameProperties.xhtml"/>
+    <ui:include src="workflowProperties/periodicalFramesProperties.xhtml"/>
+    <ui:include src="workflowProperties/iFramesProperties.xhtml"/>
+    <ui:include src="workflowProperties/motionJPEGByPeriodicalFramesProperties.xhtml"/>
+    <ui:include src="workflowProperties/motionJPEGByIFramesProperties.xhtml"/>
+    <ui:include src="workflowProperties/slideShowProperties.xhtml"/>
+    <ui:include src="workflowProperties/ftpDeliveryProperties.xhtml"/>
+    <ui:include src="workflowProperties/localCopyProperties.xhtml"/>
+    <ui:include src="workflowProperties/postOnFacebookProperties.xhtml"/>
+    <ui:include src="workflowProperties/postOnYouTubeProperties.xhtml"/>
+    <ui:include src="workflowProperties/emailNotificationProperties.xhtml"/>
+    <ui:include src="workflowProperties/httpCallbackProperties.xhtml"/>
+    <ui:include src="workflowProperties/faceRecognitionProperties.xhtml"/>
+    <ui:include src="workflowProperties/faceIdentificationProperties.xhtml"/>
 
     <h:form id="viewForm" enctype="multipart/form-data">
 
@@ -92,7 +109,8 @@
 
             <p:toolbarGroup align="right">
 
-                <p:commandButton id="ingestWorkflowButton" global="true" value="Ingest Workflow"
+                <p:commandButton id="ingestWorkflowButton" global="true"
+                                 value="Ingest Workflow" icon="fa fa-cog"
                                  actionListener="#{workflowEditor.ingestWorkflow}"
                                  disabled="#{workflowEditor.ingestionData.workflowIssueList.size() > 0 || !sessionScope.currentWorkspaceDetails.ingestWorkflow}"
                                  update="ingestionWorkflowResultsForm"
@@ -104,8 +122,8 @@
                     <span class="ui-icon ui-icon-grip-dotted-vertical" />
                 </span>
 
+                <!-- disabled="#{!sessionScope.currentWorkspaceDetails.admin}" -->
                 <p:commandButton id="jsonWorkflowButton" global="true"
-                                 disabled="#{!sessionScope.currentWorkspaceDetails.admin}"
                                  icon="fa fa-file-code-o"
                                  oncomplete="PF('jsonWorkflowWidget').show()"
                         />
@@ -250,7 +268,7 @@
 
                         <br />
 
-                        <h:outputText value="id: #{el.elementId}, " />
+                        <h:outputText value="Id: #{el.elementId}, " />
                         <h:outputText styleClass="#{(el.type == 'Workflow') ? 'workflowElementText' : ''}"
                                       value="#{el.type}" />
                     </p>
@@ -277,26 +295,77 @@
             />
         </p:diagram>
 
-        <!--
         <p:dock position="bottom">
-            <p:menuitem value="Add Group of Tasks" icon="/resources/img/workspaceElements/GroupOfTasks-icon.png"
-                        actionListener="#{workflowEditor.addTask('GroupOfTasks')}"
+            <p:menuitem value="Group-Of-Tasks" icon="/resources/img/workspaceElements/GroupOfTasks-icon.png"
+                        actionListener="#{workflowEditor.addTask('GroupOfTasks', null, null)}"
                         update="workspaceDiagram"/>
-            <p:menuitem value="Add Content" icon="/resources/img/workspaceElements/Add-Content-icon.png"
-                        actionListener="#{workflowEditor.addTask('Add-Content')}"
+            <p:menuitem value="Add-Content" icon="/resources/img/workspaceElements/Add-Content-icon.png"
+                        actionListener="#{workflowEditor.addTask('Add-Content', null, null)}"
                         update="workspaceDiagram"/>
-            <p:menuitem value="Remove Content" icon="/resources/img/workspaceElements/Remove-Content-icon.png"
-                        actionListener="#{workflowEditor.addTask('Remove-Content')}"
+            <p:menuitem value="Remove-Content" icon="/resources/img/workspaceElements/Remove-Content-icon.png"
+                        actionListener="#{workflowEditor.addTask('Remove-Content', null, null)}"
                         update="workspaceDiagram"/>
-            <p:menuitem value="Music" icon="/resources/img/workspaceElements/Add-Content-icon.png" url="#"/>
-            <p:menuitem value="Video" icon="/resources/img/workspaceElements/Add-Content-icon.png" url="#"/>
-            <p:menuitem value="Email" icon="/resources/img/workspaceElements/Add-Content-icon.png" url="#"/>
-            <p:menuitem value="Portfolio" icon="/resources/img/workspaceElements/Add-Content-icon.png" url="#"/>
-            <p:menuitem value="Link" icon="/resources/img/workspaceElements/Add-Content-icon.png" url="#"/>
-            <p:menuitem value="RSS" icon="/resources/img/workspaceElements/Add-Content-icon.png" url="#"/>
-            <p:menuitem value="History" icon="/resources/img/workspaceElements/Add-Content-icon.png" url="#"/>
+            <p:menuitem value="Concat-Demuxer" icon="/resources/img/workspaceElements/Concat-Demuxer-icon.png"
+                        actionListener="#{workflowEditor.addTask('Concat-Demuxer', null, null)}"
+                        update="workspaceDiagram"/>
+            <p:menuitem value="Cut" icon="/resources/img/workspaceElements/Cut-icon.png"
+                        actionListener="#{workflowEditor.addTask('Cut', null, null)}"
+                        update="workspaceDiagram"/>
+            <p:menuitem value="Extract-Tracks" icon="/resources/img/workspaceElements/Extract-Tracks-icon.png"
+                        actionListener="#{workflowEditor.addTask('Extract-Tracks', null, null)}"
+                        update="workspaceDiagram"/>
+            <p:menuitem value="Encode" icon="/resources/img/workspaceElements/Encode-icon.png"
+                        actionListener="#{workflowEditor.addTask('Encode', null, null)}"
+                        update="workspaceDiagram"/>
+            <p:menuitem value="Overlay-Image-On-Video" icon="/resources/img/workspaceElements/Overlay-Image-On-Video-icon.png"
+                        actionListener="#{workflowEditor.addTask('Overlay-Image-On-Video', null, null)}"
+                        update="workspaceDiagram"/>
+            <p:menuitem value="Overlay-Text-On-Video" icon="/resources/img/workspaceElements/Overlay-Text-On-Video-icon.png"
+                        actionListener="#{workflowEditor.addTask('Overlay-Text-On-Video', null, null)}"
+                        update="workspaceDiagram"/>
+            <p:menuitem value="Frame" icon="/resources/img/workspaceElements/Frame-icon.png"
+                        actionListener="#{workflowEditor.addTask('Frame', null, null)}"
+                        update="workspaceDiagram"/>
+            <p:menuitem value="Periodical-Frames" icon="/resources/img/workspaceElements/Periodical-Frames-icon.png"
+                        actionListener="#{workflowEditor.addTask('Periodical-Frames', null, null)}"
+                        update="workspaceDiagram"/>
+            <p:menuitem value="I-Frames" icon="/resources/img/workspaceElements/I-Frames-icon.png"
+                        actionListener="#{workflowEditor.addTask('I-Frames', null, null)}"
+                        update="workspaceDiagram"/>
+            <p:menuitem value="Motion-JPEG-by-Periodical-Frames" icon="/resources/img/workspaceElements/Motion-JPEG-by-Periodical-Frames-icon.png"
+                        actionListener="#{workflowEditor.addTask('Motion-JPEG-by-Periodical-Frames', null, null)}"
+                        update="workspaceDiagram"/>
+            <p:menuitem value="Motion-JPEG-by-I-Frames" icon="/resources/img/workspaceElements/Motion-JPEG-by-I-Frames-icon.png"
+                        actionListener="#{workflowEditor.addTask('Motion-JPEG-by-I-Frames', null, null)}"
+                        update="workspaceDiagram"/>
+            <p:menuitem value="Slideshow" icon="/resources/img/workspaceElements/Slideshow-icon.png"
+                        actionListener="#{workflowEditor.addTask('Slideshow', null, null)}"
+                        update="workspaceDiagram"/>
+            <p:menuitem value="FTP-Delivery" icon="/resources/img/workspaceElements/FTP-Delivery-icon.png"
+                        actionListener="#{workflowEditor.addTask('FTP-Delivery', null, null)}"
+                        update="workspaceDiagram"/>
+            <p:menuitem value="Local-Copy" icon="/resources/img/workspaceElements/Local-Copy-icon.png"
+                        actionListener="#{workflowEditor.addTask('Local-Copy', null, null)}"
+                        update="workspaceDiagram"/>
+            <p:menuitem value="Post-On-Facebook" icon="/resources/img/workspaceElements/Post-On-Facebook-icon.png"
+                        actionListener="#{workflowEditor.addTask('Post-On-Facebook', null, null)}"
+                        update="workspaceDiagram"/>
+            <p:menuitem value="Post-On-YouTube" icon="/resources/img/workspaceElements/Post-On-YouTube-icon.png"
+                        actionListener="#{workflowEditor.addTask('Post-On-YouTube', null, null)}"
+                        update="workspaceDiagram"/>
+            <p:menuitem value="Email-Notification" icon="/resources/img/workspaceElements/Email-Notification-icon.png"
+                        actionListener="#{workflowEditor.addTask('Email-Notification', null, null)}"
+                        update="workspaceDiagram"/>
+            <p:menuitem value="HTTP-Callback" icon="/resources/img/workspaceElements/HTTP-Callback-icon.png"
+                        actionListener="#{workflowEditor.addTask('HTTP-Callback', null, null)}"
+                        update="workspaceDiagram"/>
+            <p:menuitem value="Face-Recognition" icon="/resources/img/workspaceElements/Face-Recognition-icon.png"
+                        actionListener="#{workflowEditor.addTask('Face-Recognition', null, null)}"
+                        update="workspaceDiagram"/>
+            <p:menuitem value="Face-Identification" icon="/resources/img/workspaceElements/Face-Identification-icon.png"
+                        actionListener="#{workflowEditor.addTask('Face-Identification', null, null)}"
+                        update="workspaceDiagram"/>
         </p:dock>
-        -->
 
     </h:form>
 

@@ -4,12 +4,13 @@
       xmlns:p="http://primefaces.org/ui"
       xmlns:h="http://xmlns.jcp.org/jsf/html">
 
-    <p:commandButton id="dynaButtonIngestion" type="button" icon="fa fa-navicon"/>
+
+    <p:commandButton id="dynaButtonIngestion" type="button" value="More" icon="fa fa-angle-down" iconPos="right" />
     <p:tieredMenu styleClass="tieredMenuClass" overlay="true" trigger="dynaButtonIngestion"
                   my="left top" at="left bottom" style="width:200px">
 
         <p:submenu label="Contents">
-            <p:menuitem value="Media Items" outcome="/mediaItems.xhtml" icon="ui-icon-search"/>
+            <p:menuitem value="Media Items" outcome="/mediaItems.xhtml" icon="fa fa-film"/>
         </p:submenu>
 
         <p:submenu label="Ingestion">
@@ -17,26 +18,28 @@
             <p:menuitem
                     value="Workflow editor"
                     outcome="/workflowEditor/workflowEditor.xhtml"
-                    icon="ui-icon-search"/>
+                    icon="fa fa-edit"/>
+            <!--
             <p:menuitem
                     value="New Workflow"
                     outcome="/newWorkflow/newWorkflow.xhtml"
                     icon="ui-icon-search"/>
-            <p:menuitem value="Workflows" outcome="/ingestionWorkflows.xhtml" icon="ui-icon-search"/>
-            <p:menuitem value="Ingestion Jobs" outcome="/ingestionJobs.xhtml" icon="ui-icon-search"/>
+            -->
+            <p:menuitem value="Workflows" outcome="/ingestionWorkflows.xhtml" icon="fa fa-gears"/>
+            <p:menuitem value="Ingestion Jobs" outcome="/ingestionJobs.xhtml" icon="fa fa-sliders"/>
         </p:submenu>
 
         <p:submenu label="Encoding">
-            <p:menuitem value="Jobs Queue" outcome="/encodingJobs.xhtml" icon="ui-icon-search"/>
-            <p:menuitem value="Profiles" outcome="/encodingProfiles.xhtml" icon="ui-icon-search"/>
-            <p:menuitem value="Profiles Sets" outcome="/encodingProfilesSets.xhtml" icon="ui-icon-search"/>
+            <p:menuitem value="Jobs Queue" outcome="/encodingJobs.xhtml" icon="fa fa-sort-numeric-asc"/>
+            <p:menuitem value="Profiles" outcome="/encodingProfiles.xhtml" icon="fa fa-file-text"/>
+            <p:menuitem value="Profiles Sets" outcome="/encodingProfilesSets.xhtml" icon="fa fa-files-o"/>
         </p:submenu>
 
         <p:submenu label="Configuration">
-            <p:menuitem value="Your Profile" outcome="/conf/yourProfile.xhtml" icon="ui-icon-search"/>
-            <p:menuitem value="Your Workspaces" outcome="/conf/yourWorkspaces.xhtml" icon="ui-icon-search"/>
-            <p:menuitem value="Facebook" outcome="/conf/facebook.xhtml" icon="ui-icon-search"/>
-            <p:menuitem value="YouTube" outcome="/conf/youTube.xhtml" icon="ui-icon-search"/>
+            <p:menuitem value="Your Profile" outcome="/conf/yourProfile.xhtml" icon="fa fa-user"/>
+            <p:menuitem value="Your Workspaces" outcome="/conf/yourWorkspaces.xhtml" icon="fa fa-th-large"/>
+            <p:menuitem value="Facebook" outcome="/conf/facebook.xhtml" icon="fa fa-facebook"/>
+            <p:menuitem value="YouTube" outcome="/conf/youTube.xhtml" icon="fa fa-youtube"/>
         </p:submenu>
 
     </p:tieredMenu>

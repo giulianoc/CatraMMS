@@ -34,16 +34,16 @@
 </script>
 
 <p:contextMenu id="workspaceDiagramMenuContext" for="workspaceDiagram">
-    <p:submenu label="Add Task">
+    <p:submenu label="Task">
         <p:submenu label="Content">
             <p:menuitem onclick="addTask(this, 'Add-Content')"
                         value="Add-Content"
-                        icon="/resources/img/workspaceElements/Add-Content-icon.png"
+                        icon="fa fa-plus"
                         update="workspaceDiagram"
                     />
             <p:menuitem onclick="addTask(this, 'Remove-Content')"
                         value="Remove-Content"
-                        icon="fa fa-eraser"
+                        icon="fa fa-close"
                         update="workspaceDiagram"
                     />
         </p:submenu>
@@ -60,7 +60,7 @@
                     />
             <p:menuitem onclick="addTask(this, 'Extract-Tracks')"
                         value="Extract-Tracks"
-                        icon="fas fa-arrow-alt-from-bottom"
+                        icon="fa fa-external-link"
                         update="workspaceDiagram"
                     />
         </p:submenu>
@@ -84,32 +84,32 @@
         <p:submenu label="Frame Processing">
             <p:menuitem onclick="addTask(this, 'Frame')"
                         value="Frame"
-                        icon="ui-icon-close"
+                        icon="fa fa-image"
                         update="workspaceDiagram"
                     />
             <p:menuitem onclick="addTask(this, 'Periodical-Frames')"
                         value="Periodical-Frames"
-                        icon="ui-icon-close"
+                        icon="fa fa-photo"
                         update="workspaceDiagram"
                     />
             <p:menuitem onclick="addTask(this, 'I-Frames')"
                         value="I-Frames"
-                        icon="ui-icon-close"
+                        icon="fa fa-file-picture-o"
                         update="workspaceDiagram"
                     />
             <p:menuitem onclick="addTask(this, 'Motion-JPEG-by-Periodical-Frames')"
                         value="Motion-JPEG-by-Periodical-Frames"
-                        icon="ui-icon-close"
+                        icon="fa fa-film"
                         update="workspaceDiagram"
                     />
             <p:menuitem onclick="addTask(this, 'Motion-JPEG-by-I-Frames')"
                         value="Motion-JPEG-by-I-Frames"
-                        icon="ui-icon-close"
+                        icon="fa fa-file-movie-o"
                         update="workspaceDiagram"
                     />
             <p:menuitem onclick="addTask(this, 'Slideshow')"
                         value="Slideshow"
-                        icon="ui-icon-close"
+                        icon="fa fa-file-video-o"
                         update="workspaceDiagram"
                     />
         </p:submenu>
@@ -128,47 +128,47 @@
         <p:submenu label="Social Network Delivery">
             <p:menuitem onclick="addTask(this, 'Post-On-Facebook')"
                         value="Post on Facebook"
-                        icon="fa fa-upload"
+                        icon="fa fa-facebook"
                         update="workspaceDiagram"
                     />
             <p:menuitem onclick="addTask(this, 'Post-On-YouTube')"
                         value="Post on YouTube"
-                        icon="fa fa-upload"
+                        icon="fa fa-youtube"
                         update="workspaceDiagram"
                     />
         </p:submenu>
         <p:submenu label="Communication">
             <p:menuitem onclick="addTask(this, 'Email-Notification')"
                         value="Email-Notification"
-                        icon="ui-icon-close"
+                        icon="fa fa-envelope"
                         update="workspaceDiagram"
                     />
             <p:menuitem onclick="addTask(this, 'HTTP-Callback')"
                         value="HTTP-Callback"
-                        icon="ui-icon-close"
+                        icon="fa fa-share"
                         update="workspaceDiagram"
             />
         </p:submenu>
         <p:submenu label="Computer Vision">
             <p:menuitem onclick="addTask(this, 'Face-Recognition')"
                         value="Face-Recognition"
-                        icon="ui-icon-close"
+                        icon="fa fa-user"
                         update="workspaceDiagram"
             />
             <p:menuitem onclick="addTask(this, 'Face-Identification')"
                         value="Face-Identification"
-                        icon="ui-icon-close"
+                        icon="fa fa-smile-o"
                         update="workspaceDiagram"
             />
         </p:submenu>
     </p:submenu>
     <p:menuitem onclick="addTask(this, 'GroupOfTasks')"
-                value="Add Group of Tasks"
-                icon="/resources/img/workspaceElements/GroupOfTasks-icon.png"
+                value="GroupOfTasks"
+                icon="fa fa-list-ol"
                 update="workspaceDiagram"
             />
     <p:menuitem value="Delete Task"
-                icon="ui-icon-close"
+                icon="fa fa-close"
                 actionListener="#{workflowEditor.deleteNode}"
             />
 </p:contextMenu>

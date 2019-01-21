@@ -1,0 +1,118 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:media="http://xmlns.jcp.org/jsf/composite/media">
+
+<p:dialog widgetVar="Post-On-Facebook" modal="true"
+          header="Post-On-Facebook" appendTo="@(body)" width="1000" height="600"
+          showEffect="fade" hideEffect="fade" resizable="false" draggable="true">
+
+    <h:form id="Post-On-FacebookForm">
+
+        <p:toolbar>
+            <p:toolbarGroup align="left">
+            </p:toolbarGroup>
+
+            <p:toolbarGroup align="right">
+                <p:defaultCommand target="saveAddContentProperties"/>
+
+                <p:commandButton id="saveAddContentProperties" value="Save Properties"
+                                 action="#{workflowEditor.saveTaskProperties}"
+                                 update="viewForm:workspaceDiagram,viewForm:ingestWorkflowButton,viewForm:workflowIssuesWarning,jsonWorkflowForm:jsonWorkflow"
+                                 onclick="PF('Post-On-Facebook').hide()" />
+            </p:toolbarGroup>
+        </p:toolbar>
+
+        <p:panelGrid cellpadding="10" style="width: 100%">
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Label" style="font-weight: bold"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskLabel_Post_On_Facebook" style="width: 100%"
+                                 value="#{workflowEditor.currentPostOnFacebookProperties.label}"
+                                 autocomplete="true"
+                                 placeholder="label"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Facebook Configuration" style="font-weight: bold"/>
+                </p:column>
+                <p:column>
+                    <p:selectOneMenu id="taskConfigurationLabel_Post_On_Facebook"
+                                     value="#{workflowEditor.currentPostOnFacebookProperties.configurationLabel}"
+                                     title="'Menu: Configuration -> Facebook' for Facebook configurations"
+                                     autoWidth="false">
+                        <f:selectItems value="#{workflowEditor.currentPostOnFacebookProperties.confLabels}"/>
+                    </p:selectOneMenu>
+                    <p:tooltip for="taskConfigurationLabel_Post_On_Facebook" showEffect="clip" hideEffect="explode" position="left"/>
+                    <br />
+                    <h:outputText
+                            rendered="#{workflowEditor.currentPostOnFacebookProperties.confLabels.size() == 0}"
+                            value="No MMS Facebook Configurations are present, please click " />
+                    <h:outputLink
+                            rendered="#{workflowEditor.currentPostOnFacebookProperties.confLabels.size() == 0}"
+                            value="/conf/facebook.xhtml" target="_blank">
+                        <h:outputText value="here" />
+                    </h:outputLink>
+                    <h:outputText
+                            rendered="#{workflowEditor.currentPostOnFacebookProperties.confLabels.size() == 0}"
+                            value=" to configure one" />
+                    <!--
+                    <h:outputLink
+                            rendered="#{newWorkflow.taskPostOnFacebookConfLabels.size() != 0}"
+                            value="/conf/facebook.xhtml" target="_blank">
+                        <h:outputText value="MMS Facebook Configurations" />
+                    </h:outputLink>
+                    -->
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Node Id" style="font-weight: bold"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskNodeId_Post_On_Facebook" style="width: 100%"
+                                 value="#{workflowEditor.currentPostOnFacebookProperties.nodeId}"
+                                 title="page_id or user_id or event_id or group_id"
+                                 autocomplete="true"
+                                 placeholder="node id"/>
+                    <p:tooltip for="taskNodeId_Post_On_Facebook" showEffect="clip" hideEffect="explode" position="left"/>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="References (Source Physical Path Key)"/>
+                </p:column>
+                <p:column>
+                    <p:inputText id="taskReferences" style="width: 100%"
+                                 required="false"
+                                 value="#{workflowEditor.currentPostOnFacebookProperties.taskReferences}"
+                                 autocomplete="true"
+                                 placeholder="if left blank, references are retrieved from Workflow"/>
+                    <br/>
+                    <p:commandButton id="taskSelectReferences_Post_On_Facebook"
+                                     icon="ui-icon-search"
+                                     value="Select Media"
+                                     update=":selectMediaItemsForm"
+                                     oncomplete="PF('selectMediaItems').show()"
+                    />
+                </p:column>
+            </p:row>
+
+        </p:panelGrid>
+
+    </h:form>
+</p:dialog>
+
+
+</html>

@@ -2702,6 +2702,7 @@ void FFMpeg::settingFfmpegParameters(
                     stagingEncodedAssetPathName
                     + "/index.m3u8";
             
+			// to be added too: -segment_format mpegts -segment_list_type m3u8
             ffmpegFileFormatParameter =
                     "-vbsf h264_mp4toannexb "
                     "-flags "

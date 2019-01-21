@@ -13,6 +13,7 @@
 
     <h:form id="jsonWorkflowForm">
 
+        <p:outputLabel value="Here follows the Json Workflow that will be ingested into MMS based on the Workflow Editor diagram" />
         <p:scrollPanel mode="native">
             <p:inputTextarea id="jsonWorkflow" style="width: 100%" cols="100" rows="30" readonly="true"
                          value="#{workflowEditor.ingestionData.jsonWorkflow}" />
