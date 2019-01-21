@@ -1107,6 +1107,27 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
         Json::Value parametersRoot = taskRoot[field]; 
         validateFaceIdentificationMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
     }
+    else if (type == "Live-Recorder")
+    {
+        ingestionType = MMSEngineDBFacade::IngestionType::LiveRecorder;
+        
+        field = "Parameters";
+        if (!isMetadataPresent(taskRoot, field))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field
+                    + ", sTaskRoot: " + sTaskRoot;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        Json::Value parametersRoot = taskRoot[field]; 
+        validateLiveRecorderMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+    }
     else
     {
         string errorMessage = __FILEREF__ + "Field 'Type' is wrong"
@@ -1229,6 +1250,11 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
     else if (ingestionType == MMSEngineDBFacade::IngestionType::FaceIdentification)
     {
         validateFaceIdentificationMetadata(workspaceKey, label, parametersRoot, 
+                validateDependenciesToo, dependencies);        
+    }
+    else if (ingestionType == MMSEngineDBFacade::IngestionType::LiveRecorder)
+    {
+        validateLiveRecorderMetadata(workspaceKey, label, parametersRoot, 
                 validateDependenciesToo, dependencies);        
     }
     else
@@ -2966,6 +2992,87 @@ void Validator::validateFaceIdentificationMetadata(int64_t workspaceKey, string 
     }    
 }
 
+void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
+	Json::Value parametersRoot,
+	bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+{
+        
+	vector<string> mandatoryFields = {
+		"LiveURL",
+		"RecordingPeriod",
+		"SegmentDuration"
+    };
+    for (string mandatoryField: mandatoryFields)
+    {
+        if (!isMetadataPresent(parametersRoot, mandatoryField))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + mandatoryField
+                    + ", sParametersRoot: " + sParametersRoot
+                    + ", label: " + label
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+
+    string field = "RecordingPeriod";
+	Json::Value recordingPeriodRoot = parametersRoot[field];
+    field = "Start";
+	if (!isMetadataPresent(recordingPeriodRoot, field))
+	{
+		Json::StreamWriterBuilder wbuilder;
+		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            
+		string errorMessage = __FILEREF__ + "Field is not present or it is null"
+			+ ", Field: " + field
+			+ ", sParametersRoot: " + sParametersRoot
+			+ ", label: " + label
+		;
+		_logger->error(errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+    field = "End";
+	if (!isMetadataPresent(recordingPeriodRoot, field))
+	{
+		Json::StreamWriterBuilder wbuilder;
+		string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            
+		string errorMessage = __FILEREF__ + "Field is not present or it is null"
+			+ ", Field: " + field
+			+ ", sParametersRoot: " + sParametersRoot
+			+ ", label: " + label
+		;
+		_logger->error(errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+
+    field = "OutputFormat";
+	if (isMetadataPresent(parametersRoot, field))
+	{
+		string liveRecorderOutputFormat = parametersRoot.get(field, "XXX").asString();
+		if (!isLiveRecorderOutputValid(liveRecorderOutputFormat))
+		{
+			string errorMessage = __FILEREF__ + field + " is wrong (it could be only "
+                + "ts"
+                + ")"
+                + ", Field: " + field
+                + ", liveRecorderOutputFormat: " + liveRecorderOutputFormat
+                + ", label: " + label
+                ;
+			_logger->error(__FILEREF__ + errorMessage);
+        
+			throw runtime_error(errorMessage);
+		}
+	}
+}
+
 bool Validator::isMetadataPresent(Json::Value root, string field)
 {
     if (root.isObject() && root.isMember(field) && !root[field].isNull())
@@ -3343,6 +3450,21 @@ bool Validator::isFaceRecognitionOutputValid(string faceRecognitionOutput)
     for (string validOutput: validOutputs)
     {
         if (faceRecognitionOutput == validOutput) 
+            return true;
+    }
+    
+    return false;
+}
+
+bool Validator::isLiveRecorderOutputValid(string liveRecorderOutputFormat)
+{
+    vector<string> outputFormats = {
+        "ts"
+    };
+
+    for (string outputFormat: outputFormats)
+    {
+        if (liveRecorderOutputFormat == outputFormat) 
             return true;
     }
     

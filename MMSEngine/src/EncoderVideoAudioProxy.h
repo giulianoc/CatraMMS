@@ -118,6 +118,7 @@ private:
     string                              _ffmpegOverlayTextOnVideoURI;
     string                              _ffmpegGenerateFramesURI;
     string                              _ffmpegSlideShowURI;
+    string                              _ffmpegLiveRecorderURI;
     
     #ifdef __LOCALENCODER__
         shared_ptr<FFMpeg>              _ffmpeg;
@@ -161,6 +162,10 @@ private:
 
     string faceIdentification();
     void processFaceIdentification(string stagingEncodedAssetPathName);    
+
+    string liveRecorder();
+    string liveRecorder_through_ffmpeg();
+    void processLiveRecorder(string stagingEncodedAssetPathName);    
 
     bool getEncodingStatus();
 

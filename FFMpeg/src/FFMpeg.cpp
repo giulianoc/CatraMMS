@@ -2619,6 +2619,143 @@ void FFMpeg::extractTrackMediaToIngest(
     FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
 }
 
+void FFMpeg::liveRecorder(
+        int64_t ingestionJobKey,
+		string segmentListPathName,
+        string liveURL,
+        time_t utcRecordingPeriodStart, 
+        time_t utcRecordingPeriodEnd, 
+        int segmentDurationInSeconds,
+        string outputFormat)
+{
+	string ffmpegExecuteCommand;
+
+    try
+    {
+		size_t segmentListPathIndex = segmentListPathName.find_last_of("/");
+		if (segmentListPathIndex == string::npos)
+		{
+			string errorMessage = __FILEREF__ + "No segmentListPath find in the segment path name"
+                   + ", segmentListPathName: " + segmentListPathName;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		string segmentListPath = segmentListPathName.substr(0, segmentListPathIndex);
+
+		time_t utcNow;
+		{
+			chrono::system_clock::time_point now = chrono::system_clock::now();
+			utcNow = chrono::system_clock::to_time_t(now);
+		}
+
+		if (utcNow < utcRecordingPeriodStart)
+		{
+			time_t sleepTime = utcRecordingPeriodStart - utcNow;
+
+			_logger->info(__FILEREF__ + "Too early to start the LiveRecorder, just sleep "
+					+ to_string(sleepTime) + " seconds");
+
+			this_thread::sleep_for(chrono::seconds(sleepTime));
+		}
+		else if (utcRecordingPeriodEnd <= utcNow)
+        {
+            string errorMessage = __FILEREF__ + "Too late to start the LiveRecorder"
+                    + ", utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd)
+                    + ", utcNow: " + to_string(utcNow)
+            ;
+
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+		_outputFfmpegPathFileName =
+			_ffmpegTempDir + "/"
+			+ to_string(ingestionJobKey)
+			+ ".liveRecorder.log"
+			;
+    
+		ffmpegExecuteCommand = 
+			_ffmpegPath + "/ffmpeg "
+			+ "-i " + liveURL + " "
+			+ "-t " + to_string(utcRecordingPeriodEnd - utcRecordingPeriodStart) + " "
+			+ "-c:v copy "
+			+ "-c:a copy "
+			+ "-f segment "
+			+ "-segment_list " + segmentListPathName + " "
+			+ "-segment_time " + to_string(segmentDurationInSeconds) + " "
+			+ "-segment_atclocktime 1 "
+			+ "-strftime 1 \"" + segmentListPath + "/%Y-%m-%d_%H-%M-%S." + outputFormat + "\" "
+			+ "> " + _outputFfmpegPathFileName + " "
+			+ "2>&1"
+		;
+
+		#ifdef __APPLE__
+			ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=")
+					+ getenv("DYLD_LIBRARY_PATH") + "; ");
+		#endif
+
+        _logger->info(__FILEREF__ + "liveRecorder: Executing ffmpeg command"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+        );
+
+        chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
+
+        int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
+        if (executeCommandStatus != 0)
+        {
+            string errorMessage = __FILEREF__ + "liveRecorder: ffmpeg command failed"
+                    + ", executeCommandStatus: " + to_string(executeCommandStatus)
+                    + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+            ;
+
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        
+        chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
+
+        _logger->info(__FILEREF__ + "liveRecorder: Executed ffmpeg command"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+            + ", ffmpegCommandDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
+        );
+    }
+    catch(runtime_error e)
+    {
+        string lastPartOfFfmpegOutputFile = getLastPartOfFile(
+                _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
+        string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+                + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+                + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+                + ", e.what(): " + e.what()
+        ;
+        _logger->error(errorMessage);
+
+        _logger->info(__FILEREF__ + "Remove"
+            + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+        bool exceptionInCaseOfError = false;
+        FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+
+        _logger->info(__FILEREF__ + "Remove"
+            + ", segmentListPathName: " + segmentListPathName);
+        FileIO::remove(segmentListPathName, exceptionInCaseOfError);
+
+		{
+		}
+
+        throw e;
+    }
+
+    _logger->info(__FILEREF__ + "Remove"
+        + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+    bool exceptionInCaseOfError = false;
+    FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
+}
+
 void FFMpeg::settingFfmpegParameters(
         string stagingEncodedAssetPathName,
         

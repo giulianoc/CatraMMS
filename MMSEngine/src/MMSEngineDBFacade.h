@@ -194,7 +194,8 @@ public:
         GenerateFrames      = 4,
         SlideShow           = 5,
         FaceRecognition		= 6,
-        FaceIdentification	= 7
+        FaceIdentification	= 7,
+		LiveRecorder		= 8
     };
     static const char* toString(const EncodingType& encodingType)
     {
@@ -216,6 +217,8 @@ public:
                 return "FaceRecognition";
             case EncodingType::FaceIdentification:
                 return "FaceIdentification";
+            case EncodingType::LiveRecorder:
+                return "LiveRecorder";
             default:
 				throw runtime_error(string("Wrong EncodingType"));
         }
@@ -242,6 +245,8 @@ public:
             return EncodingType::FaceRecognition;
         else if (lowerCase == "faceidentification")
             return EncodingType::FaceIdentification;
+        else if (lowerCase == "liverecorder")
+            return EncodingType::LiveRecorder;
         else
             throw runtime_error(string("Wrong EncodingType")
                     + ", encodingType: " + encodingType
@@ -378,6 +383,11 @@ public:
             Json::Value                             _faceIdentificationParametersRoot;
         };
 
+		struct LiveRecorderData {
+			// MMS_IngestionJob -> metaDataContent (you need it when the encoding generated a content to be ingested)
+			Json::Value								_liveRecorderParametersRoot;
+		};
+
         shared_ptr<EncodeData>                      _encodeData;
         shared_ptr<OverlayImageOnVideoData>         _overlayImageOnVideoData;
         shared_ptr<OverlayTextOnVideoData>          _overlayTextOnVideoData;
@@ -385,6 +395,7 @@ public:
         shared_ptr<SlideShowData>                   _slideShowData;
         shared_ptr<FaceRecognitionData>				_faceRecognitionData;
         shared_ptr<FaceIdentificationData>			_faceIdentificationData;
+		shared_ptr<LiveRecorderData>				_liveRecorderData;
     } ;
 
     enum class WorkspaceType {
@@ -416,6 +427,7 @@ public:
         PostOnYouTube           = 19,
         FaceRecognition         = 20,
         FaceIdentification		= 21,
+        LiveRecorder			= 22,
         EmailNotification       = 30,
         ContentUpdate           = 50,
         ContentRemove           = 60
@@ -468,6 +480,8 @@ public:
                 return "Face-Recognition";
             case IngestionType::FaceIdentification:
                 return "Face-Identification";
+			case IngestionType::LiveRecorder:
+				return "Live-Recorder";
                 
             case IngestionType::EmailNotification:
                 return "Email-Notification";
@@ -527,6 +541,8 @@ public:
             return IngestionType::FaceRecognition;
         else if (lowerCase == "face-identification")
             return IngestionType::FaceIdentification;
+        else if (lowerCase == "live-recorder")
+            return IngestionType::LiveRecorder;
 
         else if (lowerCase == "email-notification")
             return IngestionType::EmailNotification;
@@ -1065,6 +1081,15 @@ public:
 		string faceIdentificationCascadeName,
 		string jsonDeepLearnedModelTags,
         EncodingPriority encodingPriority);
+
+	int addEncoding_LiveRecorderJob (
+		shared_ptr<Workspace> workspace,
+		int64_t ingestionJobKey,
+		string liveURL,
+		time_t utcRecordingPeriodStart,
+		time_t utcRecordingPeriodEnd,
+		int segmentDuration,
+		EncodingPriority encodingPriority);
 
     int updateEncodingJob (
         int64_t encodingJobKey,

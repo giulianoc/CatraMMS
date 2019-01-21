@@ -131,6 +131,15 @@ public:
         vector<pair<string,int>>& tracksToBeExtracted,
         string extractTrackMediaPathName);
 
+	void liveRecorder(
+        int64_t ingestionJobKey,
+		string segmentListPathName,
+        string liveURL,
+        time_t utcRecordingPeriodStart, 
+        time_t utcRecordingPeriodEnd, 
+        int segmentDurationInSeconds,
+        string outputFormat);
+
     static void encodingFileFormatValidation(string fileFormat,
         shared_ptr<spdlog::logger> logger);
 

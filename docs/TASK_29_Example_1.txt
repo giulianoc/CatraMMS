@@ -6,9 +6,9 @@
 	"Parameters": {
 		"LiveURL": "https://abc-iview-mediapackagestreams-1.akamaized.net/out/v1/50345bf35f664739912f0b255c172ae9/index_1.m3u8",
 
-		"Period": {
-			"StartPublishing": "2019-01-21T13:00:00Z",
-			"EndPublishing": "2019-01-21T14:00:00Z"
+		"RecordingPeriod": {
+			"Start": "2019-01-21T13:00:00Z",
+			"End": "2019-01-21T14:00:00Z"
 		},
 
 		"SegmentDuration": 60

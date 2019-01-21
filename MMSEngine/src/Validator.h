@@ -46,6 +46,8 @@ public:
 
     bool isFaceRecognitionOutputValid(string faceRecognitionOutput);
 
+    bool isLiveRecorderOutputValid(string liveRecorderOutput);
+
     void validateIngestedRootMetadata(int64_t workspaceKey, Json::Value root);
 
     void validateGroupOfTasksMetadata(int64_t workspaceKey, Json::Value groupOfTasksRoot, bool validateDependenciesToo);
@@ -131,6 +133,10 @@ public:
         bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
     
     void validateFaceIdentificationMetadata(int64_t workspaceKey, string label,
+        Json::Value parametersRoot, 
+        bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
+    
+    void validateLiveRecorderMetadata(int64_t workspaceKey, string label,
         Json::Value parametersRoot, 
         bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies);
     

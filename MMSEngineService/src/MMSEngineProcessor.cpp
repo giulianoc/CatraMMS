@@ -2010,6 +2010,67 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 throw runtime_error(errorMessage);
                             }
                         }
+                        else if (ingestionType == MMSEngineDBFacade::IngestionType::LiveRecorder)
+                        {
+                            try
+                            {
+								manageLiveRecorder(
+									ingestionJobKey, 
+									ingestionStatus,
+									workspace, 
+									parametersRoot);
+                            }
+                            catch(runtime_error e)
+                            {
+                                _logger->error(__FILEREF__ + "manageLiveRecorder failed"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                                        errorMessage,
+                                        "" // processorMMS
+                                        );
+
+                                throw runtime_error(errorMessage);
+                            }
+                            catch(exception e)
+                            {
+                                _logger->error(__FILEREF__ + "manageLiveRecorder failed"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                                        errorMessage,
+                                        "" // processorMMS
+                                        );
+
+                                throw runtime_error(errorMessage);
+                            }
+                        }
                         else
                         {
                             string errorMessage = string("Unknown IngestionType")
@@ -4308,6 +4369,224 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
     catch(exception e)
     {
         _logger->error(__FILEREF__ + "manageFaceIdendificationMediaTask failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+        );
+        
+        // Update IngestionJob done in the calling method
+
+        throw e;
+    }
+}
+
+
+void MMSEngineProcessor::manageLiveRecorder(
+        int64_t ingestionJobKey,
+        MMSEngineDBFacade::IngestionStatus ingestionStatus,
+        shared_ptr<Workspace> workspace,
+        Json::Value parametersRoot
+)
+{
+    try
+    {
+		MMSEngineDBFacade::EncodingPriority encodingPriority;
+		string field = "EncodingPriority";
+		if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+		{
+			encodingPriority = 
+				static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority);
+		}
+		else
+		{
+			encodingPriority =
+				MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
+		}
+
+		string liveURL;
+        string recordingPeriodStart;
+        string recordingPeriodEnd;
+		int segmentDurationInSeconds;
+		string outputFormat;
+        {
+            string field = "LiveURL";
+            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            liveURL = parametersRoot.get(field, "XXX").asString();
+
+            field = "RecordingPeriod";
+			Json::Value recordingPeriodRoot = parametersRoot[field];
+
+            field = "Start";
+            if (!_mmsEngineDBFacade->isMetadataPresent(recordingPeriodRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            recordingPeriodStart = parametersRoot.get(field, "XXX").asString();
+
+            field = "End";
+            if (!_mmsEngineDBFacade->isMetadataPresent(recordingPeriodRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            recordingPeriodEnd = parametersRoot.get(field, "XXX").asString();
+
+            field = "SegmentDuration";
+            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            segmentDurationInSeconds = parametersRoot.get(field, 0).asInt();
+
+            field = "OutputFormat";
+            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            outputFormat = parametersRoot.get(field, "XXX").asString();
+        }
+
+		time_t utcRecordingPeriodStart;
+		{
+			unsigned long		ulUTCYear;
+			unsigned long		ulUTCMonth;
+			unsigned long		ulUTCDay;
+			unsigned long		ulUTCHour;
+			unsigned long		ulUTCMinutes;
+			unsigned long		ulUTCSeconds;
+			tm					tmRecordingPeriodStart;
+
+
+			if (sscanf (recordingPeriodStart.c_str(),
+				"%4lu-%2lu-%2luT%2lu:%2lu:%2luZ",
+				&ulUTCYear,
+				&ulUTCMonth,
+				&ulUTCDay,
+				&ulUTCHour,
+				&ulUTCMinutes,
+				&ulUTCSeconds) != 6)
+			{
+				string field = "Start";
+
+				string errorMessage = __FILEREF__ + "Field has a wrong format (sscanf failed)"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			tmRecordingPeriodStart.tm_year		= ulUTCYear;
+			tmRecordingPeriodStart.tm_mon		= ulUTCMonth;
+			tmRecordingPeriodStart.tm_mday		= ulUTCDay;
+			tmRecordingPeriodStart.tm_hour		= ulUTCHour;
+			tmRecordingPeriodStart.tm_min		= ulUTCMinutes;
+			tmRecordingPeriodStart.tm_sec		= ulUTCSeconds;
+
+			tmRecordingPeriodStart.tm_year		-= 1900;
+			tmRecordingPeriodStart.tm_mon		-= 1;
+
+			//	A negative value for tm_isdst causes mktime() to attempt
+			//	to determine whether Daylight Saving Time is in effect
+			//	for the specified time.
+			tmRecordingPeriodStart. tm_isdst	= 0;
+
+			utcRecordingPeriodStart = mktime (&tmRecordingPeriodStart);
+		}
+
+		time_t utcRecordingPeriodEnd;
+		{
+			unsigned long		ulUTCYear;
+			unsigned long		ulUTCMonth;
+			unsigned long		ulUTCDay;
+			unsigned long		ulUTCHour;
+			unsigned long		ulUTCMinutes;
+			unsigned long		ulUTCSeconds;
+			tm					tmRecordingPeriodEnd;
+
+
+			if (sscanf (recordingPeriodEnd.c_str(),
+				"%4lu-%2lu-%2luT%2lu:%2lu:%2luZ",
+				&ulUTCYear,
+				&ulUTCMonth,
+				&ulUTCDay,
+				&ulUTCHour,
+				&ulUTCMinutes,
+				&ulUTCSeconds) != 6)
+			{
+				string field = "Start";
+
+				string errorMessage = __FILEREF__ + "Field has a wrong format (sscanf failed)"
+					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+					+ ", Field: " + field;
+				_logger->error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			tmRecordingPeriodEnd.tm_year		= ulUTCYear;
+			tmRecordingPeriodEnd.tm_mon		= ulUTCMonth;
+			tmRecordingPeriodEnd.tm_mday		= ulUTCDay;
+			tmRecordingPeriodEnd.tm_hour		= ulUTCHour;
+			tmRecordingPeriodEnd.tm_min		= ulUTCMinutes;
+			tmRecordingPeriodEnd.tm_sec		= ulUTCSeconds;
+
+			tmRecordingPeriodEnd.tm_year		-= 1900;
+			tmRecordingPeriodEnd.tm_mon		-= 1;
+
+			//	A negative value for tm_isdst causes mktime() to attempt
+			//	to determine whether Daylight Saving Time is in effect
+			//	for the specified time.
+			tmRecordingPeriodEnd. tm_isdst	= 0;
+
+			utcRecordingPeriodEnd = mktime (&tmRecordingPeriodEnd);
+		}
+
+		_mmsEngineDBFacade->addEncoding_LiveRecorderJob(workspace, ingestionJobKey,
+			liveURL, utcRecordingPeriodStart, utcRecordingPeriodEnd, segmentDurationInSeconds,
+			encodingPriority);
+	}
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "manageLiveRecorder failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", e.what(): " + e.what()
+        );
+ 
+        // Update IngestionJob done in the calling method
+        
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "manageLiveRecorder failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );

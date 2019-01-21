@@ -10,14 +10,11 @@
 		// mandatory, supported protocols: http, https, rtsp, ...
 		"LiveURL": "https://...",
 
-		// mandatory: It specifies the recording period
-		//    Possible values can be:
-		//       - NOW
-		//       - FOREVER
+		// mandatory: It specifies the recording period, his format is:
 		//       - Zulu/UTC Date-time having the following format: YYYY-MM-DDTHH:MI:SSZ
-		"Period": {
-			"StartPublishing": "NOW",
-			"EndPublishing": "FOREVER"
+		"RecordingPeriod": {
+			"Start": "2019-01-21T12:30:00Z",
+			"End": "2019-01-21T13:30:00Z"
 		},
 
 		// mandatory. MMS records the live feed and save it in files. This parameter specifies
@@ -43,6 +40,11 @@
 
 		// optional
 		"Title": "My title",
+
+		// optional. Possible values: Low, Medium, High
+		// If not present or if it is specifying a priority bigger than the allowed for this Workspace,
+		//   the MaxEncodingPriority of the Workspace will be used.
+		"EncodingPriority": "Low",
 
 		// optional
 		"Ingester": "my ingester",
