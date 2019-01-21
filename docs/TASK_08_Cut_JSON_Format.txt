@@ -58,7 +58,7 @@
 		// optional
 		"ContentProviderName": "default",
 
-		// optional: it specifies the filename without extension when the content will be delivered
+		// optional: it specifies the filename without extension used by MMS when the content is delivered
 		"DeliveryFileName": "myFileName",
 
 		// optional: by default the content is published.
