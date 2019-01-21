@@ -2676,6 +2676,8 @@ void FFMpeg::liveRecorder(
 			+ ".liveRecorder.log"
 			;
     
+		string recordedFileNameTemplate = string("liveRecorder_") + to_string(ingestionJobKey)
+			+ "_%Y-%m-%d_%H-%M-%S." + outputFormat;
 		ffmpegExecuteCommand = 
 			_ffmpegPath + "/ffmpeg "
 			+ "-i " + liveURL + " "
@@ -2686,7 +2688,7 @@ void FFMpeg::liveRecorder(
 			+ "-segment_list " + segmentListPathName + " "
 			+ "-segment_time " + to_string(segmentDurationInSeconds) + " "
 			+ "-segment_atclocktime 1 "
-			+ "-strftime 1 \"" + segmentListPath + "/%Y-%m-%d_%H-%M-%S." + outputFormat + "\" "
+			+ "-strftime 1 \"" + segmentListPath + "/" + recordedFileNameTemplate + "\" "
 			+ "> " + _outputFfmpegPathFileName + " "
 			+ "2>&1"
 		;
