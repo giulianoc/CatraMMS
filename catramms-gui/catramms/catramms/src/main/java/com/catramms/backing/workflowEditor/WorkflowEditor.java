@@ -55,7 +55,7 @@ public class WorkflowEditor extends Workspace implements Serializable {
 
     private String workflowDefaultLabel = "<workflow label>";
     private String groupOfTasksDefaultLabel = "Details";
-    private String taskDefaultLabel = "<task label>";
+    private String taskDefaultLabel = "<task label __TASKID__>";
     private int elementId;
     private String temporaryPushBinariesPathName;
 
@@ -168,52 +168,97 @@ public class WorkflowEditor extends Workspace implements Serializable {
         if (taskType.equalsIgnoreCase("GroupOfTasks"))
             workflowProperties = new GroupOfTasksProperties(elementId++, groupOfTasksDefaultLabel);
         else if (taskType.equalsIgnoreCase("Add-Content"))
-            workflowProperties = new AddContentProperties(elementId++, taskDefaultLabel,
+            workflowProperties = new AddContentProperties(elementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString()),
                     temporaryPushBinariesPathName);
         else if (taskType.equalsIgnoreCase("Remove-Content"))
-            workflowProperties = new RemoveContentProperties(elementId++, taskDefaultLabel);
+            workflowProperties = new RemoveContentProperties(elementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
+                    );
         else if (taskType.equalsIgnoreCase("Concat-Demuxer"))
-            workflowProperties = new ConcatDemuxerProperties(elementId++, taskDefaultLabel);
+            workflowProperties = new ConcatDemuxerProperties(elementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
+            );
         else if (taskType.equalsIgnoreCase("Cut"))
-            workflowProperties = new CutProperties(elementId++, taskDefaultLabel);
+            workflowProperties = new CutProperties(elementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
+            );
         else if (taskType.equalsIgnoreCase("Extract-Tracks"))
-            workflowProperties = new ExtractTracksProperties(elementId++, taskDefaultLabel);
+            workflowProperties = new ExtractTracksProperties(elementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
+            );
         else if (taskType.equalsIgnoreCase("Encode"))
-            workflowProperties = new EncodeProperties(elementId++, taskDefaultLabel);
+            workflowProperties = new EncodeProperties(elementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
+            );
         else if (taskType.equalsIgnoreCase("Overlay-Image-On-Video"))
-            workflowProperties = new OverlayImageOnVideoProperties(elementId++, taskDefaultLabel);
+            workflowProperties = new OverlayImageOnVideoProperties(elementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
+            );
         else if (taskType.equalsIgnoreCase("Overlay-Text-On-Video"))
-            workflowProperties = new OverlayTextOnVideoProperties(elementId++, taskDefaultLabel);
+            workflowProperties = new OverlayTextOnVideoProperties(elementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
+            );
         else if (taskType.equalsIgnoreCase("Frame"))
-            workflowProperties = new FrameProperties(elementId++, taskDefaultLabel);
+            workflowProperties = new FrameProperties(elementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
+            );
         else if (taskType.equalsIgnoreCase("Periodical-Frames"))
-            workflowProperties = new PeriodicalFramesProperties(elementId++, taskDefaultLabel);
+            workflowProperties = new PeriodicalFramesProperties(elementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
+            );
         else if (taskType.equalsIgnoreCase("I-Frames"))
-            workflowProperties = new IFramesProperties(elementId++, taskDefaultLabel);
+            workflowProperties = new IFramesProperties(elementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
+            );
         else if (taskType.equalsIgnoreCase("Motion-JPEG-by-Periodical-Frames"))
-            workflowProperties = new MotionJPEGByPeriodicalFramesProperties(elementId++, taskDefaultLabel);
+            workflowProperties = new MotionJPEGByPeriodicalFramesProperties(elementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
+            );
         else if (taskType.equalsIgnoreCase("Motion-JPEG-by-I-Frames"))
-            workflowProperties = new MotionJPEGByIFramesProperties(elementId++, taskDefaultLabel);
+            workflowProperties = new MotionJPEGByIFramesProperties(elementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
+            );
         else if (taskType.equalsIgnoreCase("Slideshow"))
-            workflowProperties = new SlideshowProperties(elementId++, taskDefaultLabel);
+            workflowProperties = new SlideshowProperties(elementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
+            );
         else if (taskType.equalsIgnoreCase("FTP-Delivery"))
-            workflowProperties = new FTPDeliveryProperties(elementId++, taskDefaultLabel);
+            workflowProperties = new FTPDeliveryProperties(elementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
+            );
         else if (taskType.equalsIgnoreCase("Local-Copy"))
-            workflowProperties = new LocalCopyProperties(elementId++, taskDefaultLabel);
+            workflowProperties = new LocalCopyProperties(elementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
+            );
         else if (taskType.equalsIgnoreCase("Post-On-Facebook"))
-            workflowProperties = new PostOnFacebookProperties(elementId++, taskDefaultLabel);
+            workflowProperties = new PostOnFacebookProperties(elementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
+            );
         else if (taskType.equalsIgnoreCase("Post-On-YouTube"))
-            workflowProperties = new PostOnYouTubeProperties(elementId++, taskDefaultLabel);
+            workflowProperties = new PostOnYouTubeProperties(elementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
+            );
         else if (taskType.equalsIgnoreCase("Email-Notification"))
-            workflowProperties = new EmailNotificationProperties(elementId++, taskDefaultLabel);
+            workflowProperties = new EmailNotificationProperties(elementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
+            );
         else if (taskType.equalsIgnoreCase("HTTP-Callback"))
-            workflowProperties = new HTTPCallbackProperties(elementId++, taskDefaultLabel);
+            workflowProperties = new HTTPCallbackProperties(elementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
+            );
         else if (taskType.equalsIgnoreCase("Face-Recognition"))
-            workflowProperties = new FaceRecognitionProperties(elementId++, taskDefaultLabel);
+            workflowProperties = new FaceRecognitionProperties(elementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
+            );
         else if (taskType.equalsIgnoreCase("Face-Identification"))
-            workflowProperties = new FaceIdentificationProperties(elementId++, taskDefaultLabel);
+            workflowProperties = new FaceIdentificationProperties(elementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
+            );
         else if (taskType.equalsIgnoreCase("Live-Recorder"))
-            workflowProperties = new LiveRecorderProperties(elementId++, taskDefaultLabel);
+            workflowProperties = new LiveRecorderProperties(elementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
+            );
         else
             mLogger.error("Wrong taskType: " + taskType);
 

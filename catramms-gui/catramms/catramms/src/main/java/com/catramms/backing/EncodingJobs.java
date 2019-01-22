@@ -3,7 +3,6 @@ package com.catramms.backing;
 import com.catramms.backing.common.SessionUtils;
 import com.catramms.backing.common.Workspace;
 import com.catramms.backing.entity.EncodingJob;
-import com.catramms.backing.entity.IngestionJob;
 import com.catramms.backing.entity.MediaItem;
 import com.catramms.backing.entity.PhysicalPath;
 import com.catramms.utility.catramms.CatraMMS;

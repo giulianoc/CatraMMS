@@ -3,16 +3,12 @@ package com.catramms.backing.workflowEditor.Properties;
 import com.catramms.backing.newWorkflow.WorkflowIssue;
 import com.catramms.backing.workflowEditor.utility.IngestionData;
 import org.apache.log4j.Logger;
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.TimeZone;
+import java.util.*;
 
 public class LiveRecorderProperties extends CreateContentProperties implements Serializable {
 
@@ -29,6 +25,16 @@ public class LiveRecorderProperties extends CreateContentProperties implements S
     public LiveRecorderProperties(int elementId, String label)
     {
         super(elementId, label, "Live-Recorder" + "-icon.png", "Task", "Live-Recorder");
+
+        startRecording = new Date();
+        {
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(startRecording);
+            calendar.add(Calendar.HOUR_OF_DAY, 1);
+            endRecording = calendar.getTime();
+        }
+
+        segmentDuration = new Long(15 * 60);
 
         {
             outputFileFormatsList = new ArrayList<>();
@@ -94,7 +100,7 @@ public class LiveRecorderProperties extends CreateContentProperties implements S
             }
 
             if (getLiveURL() != null && !getLiveURL().equalsIgnoreCase(""))
-                jsonWorkflowElement.put("LiveURL", getLiveURL());
+                joParameters.put("LiveURL", getLiveURL());
             else
             {
                 WorkflowIssue workflowIssue = new WorkflowIssue();
@@ -107,7 +113,7 @@ public class LiveRecorderProperties extends CreateContentProperties implements S
             }
 
             JSONObject joRecordingPeriod = new JSONObject();
-            jsonWorkflowElement.put("RecordingPeriod", joRecordingPeriod);
+            joParameters.put("RecordingPeriod", joRecordingPeriod);
 
             if (getStartRecording() != null)
                 joRecordingPeriod.put("Start", dateFormat.format(getStartRecording()));
@@ -136,7 +142,7 @@ public class LiveRecorderProperties extends CreateContentProperties implements S
             }
 
             if (getSegmentDuration() != null)
-                jsonWorkflowElement.put("SegmentDuration", getSegmentDuration());
+                joParameters.put("SegmentDuration", getSegmentDuration());
             else
             {
                 WorkflowIssue workflowIssue = new WorkflowIssue();
@@ -149,7 +155,7 @@ public class LiveRecorderProperties extends CreateContentProperties implements S
             }
 
             if (getOutputFileFormat() != null && !getOutputFileFormat().equalsIgnoreCase(""))
-                jsonWorkflowElement.put("OutputFileFormat", getOutputFileFormat());
+                joParameters.put("OutputFileFormat", getOutputFileFormat());
 
             if (getEncodingPriority() != null && !getEncodingPriority().equalsIgnoreCase(""))
                 joParameters.put("EncodingPriority", getEncodingPriority());

@@ -4478,7 +4478,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 
 			if (sscanf (recordingPeriodStart.c_str(),
-				"%4lu-%2lu-%2luT%2lu:%2lu:%2luZ",
+				"%4lu-%2lu-%2lu'T'%2lu:%2lu:%2lu'Z'",
 				&ulUTCYear,
 				&ulUTCMonth,
 				&ulUTCDay,
@@ -4526,7 +4526,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 
 			if (sscanf (recordingPeriodEnd.c_str(),
-				"%4lu-%2lu-%2luT%2lu:%2lu:%2luZ",
+				"%4lu-%2lu-%2lu'T'%2lu:%2lu:%2lu'Z'",
 				&ulUTCYear,
 				&ulUTCMonth,
 				&ulUTCDay,
