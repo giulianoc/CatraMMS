@@ -38,6 +38,9 @@ public class FaceIdentificationProperties extends CreateContentProperties implem
     {
         FaceIdentificationProperties faceIdentificationProperties = new FaceIdentificationProperties(
                 super.getElementId(), super.getLabel());
+        faceIdentificationProperties.setOnSuccessChildren(super.getOnSuccessChildren());
+        faceIdentificationProperties.setOnErrorChildren(super.getOnErrorChildren());
+        faceIdentificationProperties.setOnCompleteChildren(super.getOnCompleteChildren());
 
         faceIdentificationProperties.setCascadeName(getCascadeName());
         faceIdentificationProperties.setDeepLearnedModelTags(getDeepLearnedModelTags());

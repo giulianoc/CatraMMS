@@ -37,7 +37,8 @@ public class WorkflowProperties implements Serializable
     private List<WorkflowProperties> onCompleteChildren = new ArrayList<>();
 
 
-    public WorkflowProperties(int elementId, String label, String image, String mainType, String type) {
+    public WorkflowProperties(int elementId, String label, String image, String mainType, String type)
+    {
         this.elementId = elementId;
         this.label = label;
         this.image = image;
@@ -128,8 +129,12 @@ public class WorkflowProperties implements Serializable
 
         WorkflowProperties workflowProperties = new WorkflowProperties(
                 getElementId(), getLabel(), getImage(), getMainType(), getType());
+        workflowProperties.setOnSuccessChildren(onSuccessChildren);
+        workflowProperties.setOnErrorChildren(onErrorChildren);
+        workflowProperties.setOnCompleteChildren(onCompleteChildren);
 
         workflowProperties.setLabelChanged(isLabelChanged);
+
 
         return workflowProperties;
     }

@@ -26,6 +26,9 @@ public class LocalCopyProperties extends WorkflowProperties implements Serializa
     {
         LocalCopyProperties localCopyProperties = new LocalCopyProperties(
                 super.getElementId(), super.getLabel());
+        localCopyProperties.setOnSuccessChildren(super.getOnSuccessChildren());
+        localCopyProperties.setOnErrorChildren(super.getOnErrorChildren());
+        localCopyProperties.setOnCompleteChildren(super.getOnCompleteChildren());
 
         localCopyProperties.setLocalPath(getLocalPath());
         localCopyProperties.setLocalFileName(getLocalFileName());

@@ -70,19 +70,22 @@ public class PostOnYouTubeProperties extends WorkflowProperties implements Seria
 
     public PostOnYouTubeProperties clone()
     {
-        PostOnYouTubeProperties postOnFacebookProperties = new PostOnYouTubeProperties(
+        PostOnYouTubeProperties postOnYouTubeProperties = new PostOnYouTubeProperties(
                 super.getElementId(), super.getLabel(), confList);
+        postOnYouTubeProperties.setOnSuccessChildren(super.getOnSuccessChildren());
+        postOnYouTubeProperties.setOnErrorChildren(super.getOnErrorChildren());
+        postOnYouTubeProperties.setOnCompleteChildren(super.getOnCompleteChildren());
 
-        postOnFacebookProperties.setConfigurationLabel(getConfigurationLabel());
-        postOnFacebookProperties.setYouTubeTitle(getYouTubeTitle());
-        postOnFacebookProperties.setYouTubeDescription(getYouTubeDescription());
-        postOnFacebookProperties.setYouTubeTags(getYouTubeTags());
-        postOnFacebookProperties.setCategoryId(getCategoryId());
-        postOnFacebookProperties.setPrivacy(getPrivacy());
+        postOnYouTubeProperties.setConfigurationLabel(getConfigurationLabel());
+        postOnYouTubeProperties.setYouTubeTitle(getYouTubeTitle());
+        postOnYouTubeProperties.setYouTubeDescription(getYouTubeDescription());
+        postOnYouTubeProperties.setYouTubeTags(getYouTubeTags());
+        postOnYouTubeProperties.setCategoryId(getCategoryId());
+        postOnYouTubeProperties.setPrivacy(getPrivacy());
 
-        postOnFacebookProperties.setStringBuilderTaskReferences(taskReferences);
+        postOnYouTubeProperties.setStringBuilderTaskReferences(taskReferences);
 
-        return postOnFacebookProperties;
+        return postOnYouTubeProperties;
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)

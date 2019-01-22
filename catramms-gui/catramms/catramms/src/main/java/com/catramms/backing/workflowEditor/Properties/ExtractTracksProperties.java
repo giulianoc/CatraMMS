@@ -27,6 +27,9 @@ public class ExtractTracksProperties extends CreateContentProperties implements 
     {
         ExtractTracksProperties extractTracksProperties = new ExtractTracksProperties(
                 super.getElementId(), super.getLabel());
+        extractTracksProperties.setOnSuccessChildren(super.getOnSuccessChildren());
+        extractTracksProperties.setOnErrorChildren(super.getOnErrorChildren());
+        extractTracksProperties.setOnCompleteChildren(super.getOnCompleteChildren());
 
         extractTracksProperties.setTitle(getTitle());
         extractTracksProperties.setTags(getTags());

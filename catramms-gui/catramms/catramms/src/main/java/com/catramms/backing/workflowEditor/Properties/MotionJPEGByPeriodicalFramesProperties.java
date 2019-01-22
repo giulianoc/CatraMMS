@@ -34,6 +34,9 @@ public class MotionJPEGByPeriodicalFramesProperties extends CreateContentPropert
         MotionJPEGByPeriodicalFramesProperties motionJPEGByPeriodicalFramesProperties
                 = new MotionJPEGByPeriodicalFramesProperties(
                     super.getElementId(), super.getLabel());
+        motionJPEGByPeriodicalFramesProperties.setOnSuccessChildren(super.getOnSuccessChildren());
+        motionJPEGByPeriodicalFramesProperties.setOnErrorChildren(super.getOnErrorChildren());
+        motionJPEGByPeriodicalFramesProperties.setOnCompleteChildren(super.getOnCompleteChildren());
 
         motionJPEGByPeriodicalFramesProperties.setStartTimeInSeconds(startTimeInSeconds);
         motionJPEGByPeriodicalFramesProperties.setPeriodInSeconds(periodInSeconds);

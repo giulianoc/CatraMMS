@@ -33,6 +33,9 @@ public class MotionJPEGByIFramesProperties extends CreateContentProperties imple
         MotionJPEGByIFramesProperties motionJPEGByIFramesProperties
                 = new MotionJPEGByIFramesProperties(
                     super.getElementId(), super.getLabel());
+        motionJPEGByIFramesProperties.setOnSuccessChildren(super.getOnSuccessChildren());
+        motionJPEGByIFramesProperties.setOnErrorChildren(super.getOnErrorChildren());
+        motionJPEGByIFramesProperties.setOnCompleteChildren(super.getOnCompleteChildren());
 
         motionJPEGByIFramesProperties.setStartTimeInSeconds(startTimeInSeconds);
         motionJPEGByIFramesProperties.setMaxFramesNumber(maxFramesNumber);

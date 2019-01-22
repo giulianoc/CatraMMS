@@ -29,6 +29,9 @@ public class FTPDeliveryProperties extends WorkflowProperties implements Seriali
     {
         FTPDeliveryProperties ftpDeliveryProperties = new FTPDeliveryProperties(
                 super.getElementId(), super.getLabel());
+        ftpDeliveryProperties.setOnSuccessChildren(super.getOnSuccessChildren());
+        ftpDeliveryProperties.setOnErrorChildren(super.getOnErrorChildren());
+        ftpDeliveryProperties.setOnCompleteChildren(super.getOnCompleteChildren());
 
         ftpDeliveryProperties.setServer(getServer());
         ftpDeliveryProperties.setPort(getPort());

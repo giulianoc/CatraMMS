@@ -67,6 +67,9 @@ public class PostOnFacebookProperties extends WorkflowProperties implements Seri
     {
         PostOnFacebookProperties postOnFacebookProperties = new PostOnFacebookProperties(
                 super.getElementId(), super.getLabel(), confList);
+        postOnFacebookProperties.setOnSuccessChildren(super.getOnSuccessChildren());
+        postOnFacebookProperties.setOnErrorChildren(super.getOnErrorChildren());
+        postOnFacebookProperties.setOnCompleteChildren(super.getOnCompleteChildren());
 
         postOnFacebookProperties.setConfigurationLabel(getConfigurationLabel());
         postOnFacebookProperties.setNodeId(getNodeId());

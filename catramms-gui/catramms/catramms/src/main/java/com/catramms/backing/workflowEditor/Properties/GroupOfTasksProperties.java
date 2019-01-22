@@ -29,6 +29,9 @@ public class GroupOfTasksProperties extends WorkflowProperties implements Serial
 
         GroupOfTasksProperties groupOfTasksProperties = new GroupOfTasksProperties(
                 super.getElementId(), super.getLabel());
+        groupOfTasksProperties.setOnSuccessChildren(super.getOnSuccessChildren());
+        groupOfTasksProperties.setOnErrorChildren(super.getOnErrorChildren());
+        groupOfTasksProperties.setOnCompleteChildren(super.getOnCompleteChildren());
 
         groupOfTasksProperties.setGroupOfTaskExecutionType(localGroupOfTaskExecutionType);
         groupOfTasksProperties.setTasks(getTasks());

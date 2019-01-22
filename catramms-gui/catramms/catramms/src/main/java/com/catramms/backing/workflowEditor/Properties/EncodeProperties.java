@@ -122,6 +122,9 @@ public class EncodeProperties extends WorkflowProperties implements Serializable
                 super.getElementId(), super.getLabel(),
                 videoEncodingProfilesList, audioEncodingProfilesList, imageEncodingProfilesList,
                 videoEncodingProfilesSetList, audioEncodingProfilesSetList, imageEncodingProfilesSetList);
+        encodeProperties.setOnSuccessChildren(super.getOnSuccessChildren());
+        encodeProperties.setOnErrorChildren(super.getOnErrorChildren());
+        encodeProperties.setOnCompleteChildren(super.getOnCompleteChildren());
 
         encodeProperties.setEncodingPriority(getEncodingPriority());
         encodeProperties.setContentType(getContentType());

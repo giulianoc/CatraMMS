@@ -33,6 +33,9 @@ public class PeriodicalFramesProperties extends CreateContentProperties implemen
     {
         PeriodicalFramesProperties periodicalFramesProperties = new PeriodicalFramesProperties(
                 super.getElementId(), super.getLabel());
+        periodicalFramesProperties.setOnSuccessChildren(super.getOnSuccessChildren());
+        periodicalFramesProperties.setOnErrorChildren(super.getOnErrorChildren());
+        periodicalFramesProperties.setOnCompleteChildren(super.getOnCompleteChildren());
 
         periodicalFramesProperties.setStartTimeInSeconds(startTimeInSeconds);
         periodicalFramesProperties.setPeriodInSeconds(periodInSeconds);

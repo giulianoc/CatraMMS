@@ -23,6 +23,9 @@ public class ConcatDemuxerProperties extends CreateContentProperties implements 
     {
         ConcatDemuxerProperties concatDemuxerProperties = new ConcatDemuxerProperties(
                 super.getElementId(), super.getLabel());
+        concatDemuxerProperties.setOnSuccessChildren(super.getOnSuccessChildren());
+        concatDemuxerProperties.setOnErrorChildren(super.getOnErrorChildren());
+        concatDemuxerProperties.setOnCompleteChildren(super.getOnCompleteChildren());
 
         concatDemuxerProperties.setTitle(getTitle());
         concatDemuxerProperties.setTags(getTags());

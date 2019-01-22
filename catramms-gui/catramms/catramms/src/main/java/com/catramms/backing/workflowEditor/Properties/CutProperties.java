@@ -34,6 +34,9 @@ public class CutProperties extends CreateContentProperties implements Serializab
     {
         CutProperties cutProperties = new CutProperties(
                 super.getElementId(), super.getLabel());
+        cutProperties.setOnSuccessChildren(super.getOnSuccessChildren());
+        cutProperties.setOnErrorChildren(super.getOnErrorChildren());
+        cutProperties.setOnCompleteChildren(super.getOnCompleteChildren());
 
         cutProperties.setTitle(getTitle());
         cutProperties.setTags(getTags());

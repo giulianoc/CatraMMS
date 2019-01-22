@@ -46,6 +46,9 @@ public class LiveRecorderProperties extends CreateContentProperties implements S
     {
         LiveRecorderProperties liveRecorderProperties = new LiveRecorderProperties(
                 super.getElementId(), super.getLabel());
+        liveRecorderProperties.setOnSuccessChildren(super.getOnSuccessChildren());
+        liveRecorderProperties.setOnErrorChildren(super.getOnErrorChildren());
+        liveRecorderProperties.setOnCompleteChildren(super.getOnCompleteChildren());
 
         liveRecorderProperties.setLiveURL(liveURL);
         liveRecorderProperties.setStartRecording(startRecording);

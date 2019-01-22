@@ -49,6 +49,9 @@ public class HTTPCallbackProperties extends WorkflowProperties implements Serial
     {
         HTTPCallbackProperties httpCallbackProperties = new HTTPCallbackProperties(
                 super.getElementId(), super.getLabel());
+        httpCallbackProperties.setOnSuccessChildren(super.getOnSuccessChildren());
+        httpCallbackProperties.setOnErrorChildren(super.getOnErrorChildren());
+        httpCallbackProperties.setOnCompleteChildren(super.getOnCompleteChildren());
 
         httpCallbackProperties.setProtocol(getProtocol());
         httpCallbackProperties.setMethod(getMethod());

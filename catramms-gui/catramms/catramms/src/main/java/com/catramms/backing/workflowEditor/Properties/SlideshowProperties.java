@@ -29,6 +29,9 @@ public class SlideshowProperties extends CreateContentProperties implements Seri
     {
         SlideshowProperties slideshowProperties = new SlideshowProperties(
                 super.getElementId(), super.getLabel());
+        slideshowProperties.setOnSuccessChildren(super.getOnSuccessChildren());
+        slideshowProperties.setOnErrorChildren(super.getOnErrorChildren());
+        slideshowProperties.setOnCompleteChildren(super.getOnCompleteChildren());
 
         slideshowProperties.setDurationOfEachSlideInSeconds(durationOfEachSlideInSeconds);
         slideshowProperties.setEncodingPriority(encodingPriority);

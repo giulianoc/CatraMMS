@@ -27,6 +27,9 @@ public class OverlayImageOnVideoProperties extends CreateContentProperties imple
     {
         OverlayImageOnVideoProperties overlayImageOnVideoProperties = new OverlayImageOnVideoProperties(
                 super.getElementId(), super.getLabel());
+        overlayImageOnVideoProperties.setOnSuccessChildren(super.getOnSuccessChildren());
+        overlayImageOnVideoProperties.setOnErrorChildren(super.getOnErrorChildren());
+        overlayImageOnVideoProperties.setOnCompleteChildren(super.getOnCompleteChildren());
 
         overlayImageOnVideoProperties.setPositionXInPixel(getPositionXInPixel());
         overlayImageOnVideoProperties.setPositionYInPixel(getPositionYInPixel());

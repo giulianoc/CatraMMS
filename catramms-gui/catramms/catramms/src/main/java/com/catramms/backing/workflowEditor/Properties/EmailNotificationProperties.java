@@ -31,6 +31,9 @@ public class EmailNotificationProperties extends WorkflowProperties implements S
     {
         EmailNotificationProperties emailNotificationProperties = new EmailNotificationProperties(
                 super.getElementId(), super.getLabel());
+        emailNotificationProperties.setOnSuccessChildren(super.getOnSuccessChildren());
+        emailNotificationProperties.setOnErrorChildren(super.getOnErrorChildren());
+        emailNotificationProperties.setOnCompleteChildren(super.getOnCompleteChildren());
 
         emailNotificationProperties.setEmailAddress(emailAddress);
         emailNotificationProperties.setSubject(subject);

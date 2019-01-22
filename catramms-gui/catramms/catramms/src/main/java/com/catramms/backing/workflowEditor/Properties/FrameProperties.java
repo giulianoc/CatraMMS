@@ -30,6 +30,9 @@ public class FrameProperties extends CreateContentProperties implements Serializ
     {
         FrameProperties frameProperties = new FrameProperties(
                 super.getElementId(), super.getLabel());
+        frameProperties.setOnSuccessChildren(super.getOnSuccessChildren());
+        frameProperties.setOnErrorChildren(super.getOnErrorChildren());
+        frameProperties.setOnCompleteChildren(super.getOnCompleteChildren());
 
         frameProperties.setInstantInSeconds(instantInSeconds);
         frameProperties.setWidth(width);

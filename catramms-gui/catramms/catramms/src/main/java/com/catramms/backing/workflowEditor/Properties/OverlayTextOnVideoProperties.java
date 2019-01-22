@@ -35,6 +35,9 @@ public class OverlayTextOnVideoProperties extends CreateContentProperties implem
     {
         OverlayTextOnVideoProperties overlayTextOnVideoProperties = new OverlayTextOnVideoProperties(
                 super.getElementId(), super.getLabel());
+        overlayTextOnVideoProperties.setOnSuccessChildren(super.getOnSuccessChildren());
+        overlayTextOnVideoProperties.setOnErrorChildren(super.getOnErrorChildren());
+        overlayTextOnVideoProperties.setOnCompleteChildren(super.getOnCompleteChildren());
 
         overlayTextOnVideoProperties.setText(getText());
         overlayTextOnVideoProperties.setPositionXInPixel(getPositionXInPixel());

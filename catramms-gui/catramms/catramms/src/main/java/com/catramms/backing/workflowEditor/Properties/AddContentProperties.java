@@ -57,6 +57,9 @@ public class AddContentProperties extends CreateContentProperties implements Ser
     {
         AddContentProperties addContentProperties = new AddContentProperties(
                 super.getElementId(), super.getLabel(), getTemporaryPushBinariesPathName());
+        addContentProperties.setOnSuccessChildren(super.getOnSuccessChildren());
+        addContentProperties.setOnErrorChildren(super.getOnErrorChildren());
+        addContentProperties.setOnCompleteChildren(super.getOnCompleteChildren());
 
         addContentProperties.setSourceDownloadType(sourceDownloadType);
         addContentProperties.setPullSourceURL(pullSourceURL);

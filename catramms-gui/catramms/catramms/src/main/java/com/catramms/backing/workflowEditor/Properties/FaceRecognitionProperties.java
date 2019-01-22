@@ -45,6 +45,9 @@ public class FaceRecognitionProperties extends CreateContentProperties implement
     {
         FaceRecognitionProperties faceRecognitionProperties = new FaceRecognitionProperties(
                 super.getElementId(), super.getLabel());
+        faceRecognitionProperties.setOnSuccessChildren(super.getOnSuccessChildren());
+        faceRecognitionProperties.setOnErrorChildren(super.getOnErrorChildren());
+        faceRecognitionProperties.setOnCompleteChildren(super.getOnCompleteChildren());
 
         faceRecognitionProperties.setCascadeName(getCascadeName());
         faceRecognitionProperties.setOutput(getOutput());

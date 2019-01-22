@@ -30,29 +30,32 @@ public class IFramesProperties extends CreateContentProperties implements Serial
 
     public IFramesProperties clone()
     {
-        IFramesProperties periodicalFramesProperties = new IFramesProperties(
+        IFramesProperties iFramesProperties = new IFramesProperties(
                 super.getElementId(), super.getLabel());
+        iFramesProperties.setOnSuccessChildren(super.getOnSuccessChildren());
+        iFramesProperties.setOnErrorChildren(super.getOnErrorChildren());
+        iFramesProperties.setOnCompleteChildren(super.getOnCompleteChildren());
 
-        periodicalFramesProperties.setStartTimeInSeconds(startTimeInSeconds);
-        periodicalFramesProperties.setMaxFramesNumber(maxFramesNumber);
-        periodicalFramesProperties.setWidth(width);
-        periodicalFramesProperties.setHeight(height);
-        periodicalFramesProperties.setEncodingPriority(encodingPriority);
+        iFramesProperties.setStartTimeInSeconds(startTimeInSeconds);
+        iFramesProperties.setMaxFramesNumber(maxFramesNumber);
+        iFramesProperties.setWidth(width);
+        iFramesProperties.setHeight(height);
+        iFramesProperties.setEncodingPriority(encodingPriority);
 
-        periodicalFramesProperties.setTitle(getTitle());
-        periodicalFramesProperties.setTags(getTags());
-        periodicalFramesProperties.setRetention(getRetention());
-        periodicalFramesProperties.setStartPublishing(getStartPublishing());
-        periodicalFramesProperties.setEndPublishing(getEndPublishing());
-        periodicalFramesProperties.setUserData(getUserData());
-        periodicalFramesProperties.setIngester(getIngester());
-        periodicalFramesProperties.setContentProviderName(getContentProviderName());
-        periodicalFramesProperties.setDeliveryFileName(getDeliveryFileName());
-        periodicalFramesProperties.setUniqueName(getUniqueName());
+        iFramesProperties.setTitle(getTitle());
+        iFramesProperties.setTags(getTags());
+        iFramesProperties.setRetention(getRetention());
+        iFramesProperties.setStartPublishing(getStartPublishing());
+        iFramesProperties.setEndPublishing(getEndPublishing());
+        iFramesProperties.setUserData(getUserData());
+        iFramesProperties.setIngester(getIngester());
+        iFramesProperties.setContentProviderName(getContentProviderName());
+        iFramesProperties.setDeliveryFileName(getDeliveryFileName());
+        iFramesProperties.setUniqueName(getUniqueName());
 
-        periodicalFramesProperties.setStringBuilderTaskReferences(taskReferences);
+        iFramesProperties.setStringBuilderTaskReferences(taskReferences);
 
-        return periodicalFramesProperties;
+        return iFramesProperties;
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)

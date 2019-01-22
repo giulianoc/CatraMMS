@@ -735,7 +735,13 @@ public class WorkflowEditor extends Workspace implements Serializable {
             else if (workflowProperties.getType().equalsIgnoreCase("Face-Identification"))
                 element.setData(currentFaceIdentificationProperties);
             else if (workflowProperties.getType().equalsIgnoreCase("Live-Recorder"))
+            {
                 element.setData(currentLiveRecorderProperties);
+                mLogger.info("setData"
+                                + ", workflowProperties.getType(): " + workflowProperties.getType()
+                                + ", currentLiveRecorderProperties.getLiveURL: " + currentLiveRecorderProperties.getLiveURL()
+                );
+            }
             else
                 mLogger.error("Wrong workflowProperties.getType(): " + workflowProperties.getType());
 
