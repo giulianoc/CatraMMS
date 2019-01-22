@@ -4433,7 +4433,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 
                 throw runtime_error(errorMessage);
             }
-            recordingPeriodStart = parametersRoot.get(field, "XXX").asString();
+            recordingPeriodStart = recordingPeriodRoot.get(field, "XXX").asString();
 
             field = "End";
             if (!_mmsEngineDBFacade->isMetadataPresent(recordingPeriodRoot, field))
@@ -4445,7 +4445,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 
                 throw runtime_error(errorMessage);
             }
-            recordingPeriodEnd = parametersRoot.get(field, "XXX").asString();
+            recordingPeriodEnd = recordingPeriodRoot.get(field, "XXX").asString();
 
             field = "SegmentDuration";
             if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
@@ -4479,10 +4479,10 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 
 			_logger->error(__FILEREF__ + "recordingPeriodStart 1: " + recordingPeriodStart);
-			recordingPeriodStart.replace(10, 1, string(" "), 0, 1);
-			_logger->error(__FILEREF__ + "recordingPeriodStart 2: " + recordingPeriodStart);
+			// recordingPeriodStart.replace(10, 1, string(" "), 0, 1);
+			// _logger->error(__FILEREF__ + "recordingPeriodStart 2: " + recordingPeriodStart);
 			if ((sscanfReturn = sscanf (recordingPeriodStart.c_str(),
-				"%4lu-%2lu-%2lu %2lu:%2lu:%2lu ",
+				"%4lu-%2lu-%2luT%2lu:%2lu:%2luZ",
 				&ulUTCYear,
 				&ulUTCMonth,
 				&ulUTCDay,
@@ -4529,20 +4529,17 @@ void MMSEngineProcessor::manageLiveRecorder(
 			unsigned long		ulUTCMinutes;
 			unsigned long		ulUTCSeconds;
 			tm					tmRecordingPeriodEnd;
-			char				c;
 			int					sscanfReturn;
 
 
 			if ((sscanfReturn = sscanf (recordingPeriodEnd.c_str(),
-				"%4lu-%2lu-%2lu%c%2lu:%2lu:%2lu%c",
+				"%4lu-%2lu-%2luT%2lu:%2lu:%2luZ",
 				&ulUTCYear,
 				&ulUTCMonth,
 				&ulUTCDay,
-				&c,
 				&ulUTCHour,
 				&ulUTCMinutes,
-				&ulUTCSeconds,
-				&c)) != 8)
+				&ulUTCSeconds)) != 6)
 			{
 				string field = "Start";
 
