@@ -111,7 +111,7 @@ public class Login implements Serializable {
                             || originURI.equalsIgnoreCase("/catramms/login.xhtml"))
                     {
                         // originURI = "mediaItems.xhtml";
-                        originURI = "workflowEditor.xhtml";
+                        originURI = "workflowEditor/workflowEditor.xhtml";
                     }
 
                     mLogger.info("Redirect to " + originURI);
