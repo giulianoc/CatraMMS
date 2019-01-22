@@ -4478,7 +4478,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 			int					sscanfReturn;
 
 
-			_logger->error(__FILEREF__ + "recordingPeriodStart 1: " + recordingPeriodStart);
+			// _logger->error(__FILEREF__ + "recordingPeriodStart 1: " + recordingPeriodStart);
 			// recordingPeriodStart.replace(10, 1, string(" "), 0, 1);
 			// _logger->error(__FILEREF__ + "recordingPeriodStart 2: " + recordingPeriodStart);
 			if ((sscanfReturn = sscanf (recordingPeriodStart.c_str(),
@@ -4519,6 +4519,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 			utcRecordingPeriodStart = mktime (&tmRecordingPeriodStart);
 		}
+		_logger->error(__FILEREF__ + "ctime recordingPeriodStart: " + ctime(utcRecordingPeriodStart));
 
 		time_t utcRecordingPeriodEnd;
 		{
