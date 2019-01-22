@@ -4519,7 +4519,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 			utcRecordingPeriodStart = timegm(&tmRecordingPeriodStart);
 		}
-		_logger->error(__FILEREF__ + "ctime recordingPeriodStart: " + ctime(utcRecordingPeriodStart));
+		// _logger->error(__FILEREF__ + "ctime recordingPeriodStart: " + ctime(utcRecordingPeriodStart));
 
 		time_t utcRecordingPeriodEnd;
 		{
