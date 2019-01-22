@@ -4476,9 +4476,10 @@ void MMSEngineProcessor::manageLiveRecorder(
 			unsigned long		ulUTCSeconds;
 			tm					tmRecordingPeriodStart;
 			char				c;
+			int					sscanfReturn;
 
 
-			if (sscanf (recordingPeriodStart.c_str(),
+			if ((sscanfReturn = sscanf (recordingPeriodStart.c_str(),
 				"%4lu-%2lu-%2lu%c%2lu:%2lu:%2lu%c",
 				&ulUTCYear,
 				&ulUTCMonth,
@@ -4487,13 +4488,15 @@ void MMSEngineProcessor::manageLiveRecorder(
 				&ulUTCHour,
 				&ulUTCMinutes,
 				&ulUTCSeconds,
-				&c) != 8)
+				&c)) != 8)
 			{
 				string field = "Start";
 
 				string errorMessage = __FILEREF__ + "Field has a wrong format (sscanf failed)"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", Field: " + field;
+					+ ", Field: " + field
+					+ ", sscanfReturn: " + to_string(sscanfReturn)
+					;
 				_logger->error(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -4527,9 +4530,10 @@ void MMSEngineProcessor::manageLiveRecorder(
 			unsigned long		ulUTCSeconds;
 			tm					tmRecordingPeriodEnd;
 			char				c;
+			int					sscanfReturn;
 
 
-			if (sscanf (recordingPeriodEnd.c_str(),
+			if ((sscanfReturn = sscanf (recordingPeriodEnd.c_str(),
 				"%4lu-%2lu-%2lu%c%2lu:%2lu:%2lu%c",
 				&ulUTCYear,
 				&ulUTCMonth,
@@ -4538,13 +4542,15 @@ void MMSEngineProcessor::manageLiveRecorder(
 				&ulUTCHour,
 				&ulUTCMinutes,
 				&ulUTCSeconds,
-				&c) != 8)
+				&c)) != 8)
 			{
 				string field = "Start";
 
 				string errorMessage = __FILEREF__ + "Field has a wrong format (sscanf failed)"
 					+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-					+ ", Field: " + field;
+					+ ", Field: " + field
+					+ ", sscanfReturn: " + to_string(sscanfReturn)
+					;
 				_logger->error(errorMessage);
 
 				throw runtime_error(errorMessage);

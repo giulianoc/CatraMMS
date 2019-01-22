@@ -99,6 +99,7 @@ public class LiveRecorderProperties extends CreateContentProperties implements S
                 ingestionData.getWorkflowIssueList().add(workflowIssue);
             }
 
+            mLogger.info("LiveURL: " + getLiveURL());
             if (getLiveURL() != null && !getLiveURL().equalsIgnoreCase(""))
                 joParameters.put("LiveURL", getLiveURL());
             else
