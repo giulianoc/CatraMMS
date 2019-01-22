@@ -6030,7 +6030,7 @@ void EncoderVideoAudioProxy::processLiveRecorder(string stagingEncodedAssetPathN
 
 		string outputFileFormat;
 		{
-        	field = "outputFileFormat";
+        	string field = "outputFileFormat";
         	outputFileFormat = _encodingItem->_parametersRoot.get(field, "XXX").asString();
 		}
 
@@ -6115,6 +6115,11 @@ void EncoderVideoAudioProxy::processLiveRecorder(string stagingEncodedAssetPathN
 
 			previousRecordedAssetFileName = currentRecordedAssetFileName;
 		}
+
+		_logger->info(__FILEREF__ + "remove"
+			+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+		);
+		FileIO::remove(stagingEncodedAssetPathName);
     }
     catch(runtime_error e)
     {
