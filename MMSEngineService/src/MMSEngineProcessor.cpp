@@ -4475,16 +4475,19 @@ void MMSEngineProcessor::manageLiveRecorder(
 			unsigned long		ulUTCMinutes;
 			unsigned long		ulUTCSeconds;
 			tm					tmRecordingPeriodStart;
+			char				c;
 
 
 			if (sscanf (recordingPeriodStart.c_str(),
-				"%4lu-%2lu-%2lu'T'%2lu:%2lu:%2lu'Z'",
+				"%4lu-%2lu-%2lu%c%2lu:%2lu:%2lu%c",
 				&ulUTCYear,
 				&ulUTCMonth,
 				&ulUTCDay,
+				&c,
 				&ulUTCHour,
 				&ulUTCMinutes,
-				&ulUTCSeconds) != 6)
+				&ulUTCSeconds,
+				&c) != 8)
 			{
 				string field = "Start";
 
@@ -4523,16 +4526,19 @@ void MMSEngineProcessor::manageLiveRecorder(
 			unsigned long		ulUTCMinutes;
 			unsigned long		ulUTCSeconds;
 			tm					tmRecordingPeriodEnd;
+			char				c;
 
 
 			if (sscanf (recordingPeriodEnd.c_str(),
-				"%4lu-%2lu-%2lu'T'%2lu:%2lu:%2lu'Z'",
+				"%4lu-%2lu-%2lu%c%2lu:%2lu:%2lu%c",
 				&ulUTCYear,
 				&ulUTCMonth,
 				&ulUTCDay,
+				&c,
 				&ulUTCHour,
 				&ulUTCMinutes,
-				&ulUTCSeconds) != 6)
+				&ulUTCSeconds,
+				&c) != 8)
 			{
 				string field = "Start";
 
