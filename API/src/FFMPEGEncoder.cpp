@@ -679,6 +679,106 @@ void FFMPEGEncoder::manageRequestAndResponse(
             throw runtime_error(errorMessage);
         }
     }
+    else if (method == "liveRecorder")
+    {
+        auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
+        if (encodingJobKeyIt == queryParameters.end())
+        {
+            string errorMessage = string("The 'encodingJobKey' parameter is not found");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
+        
+        lock_guard<mutex> locker(_encodingMutex);
+
+        shared_ptr<Encoding>    selectedEncoding;
+        bool                    encodingFound = false;
+        for (shared_ptr<Encoding> encoding: _encodingsCapability)
+        {
+            if (!encoding->_running)
+            {
+                encodingFound = true;
+                selectedEncoding = encoding;
+                
+                break;
+            }
+        }
+
+        if (!encodingFound)
+        {
+            // same string declared in EncoderVideoAudioProxy.cpp
+            string noEncodingAvailableMessage("__NO-ENCODING-AVAILABLE__");
+            
+            string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
+                    + ", " + noEncodingAvailableMessage;
+            
+            _logger->warn(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            // throw runtime_error(noEncodingAvailableMessage);
+            return;
+        }
+        
+        try
+        {            
+            selectedEncoding->_running = true;
+
+            _logger->info(__FILEREF__ + "Creating liveRecorder thread"
+                + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
+                + ", requestBody: " + requestBody
+            );
+            thread liveRecorderThread(&FFMPEGEncoder::liveRecorder, this, selectedEncoding, encodingJobKey, requestBody);
+            liveRecorderThread.detach();
+        }
+        catch(exception e)
+        {
+            selectedEncoding->_running = false;
+
+            _logger->error(__FILEREF__ + "liveRecorder failed"
+                + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
+                + ", requestBody: " + requestBody
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        try
+        {            
+            string responseBody = string("{ ")
+                    + "\"encodingJobKey\": " + to_string(encodingJobKey) + " "
+                    + ", \"ffmpegEncoderHost\": \"" + System::getHostName() + "\" "
+                    + "}";
+
+            sendSuccess(request, 200, responseBody);
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "liveRecorderThread failed"
+                + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
+                + ", requestBody: " + requestBody
+                + ", e.what(): " + e.what()
+            );
+
+            string errorMessage = string("Internal server error");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
     else if (method == "encodingStatus")
     {
         auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
@@ -1571,3 +1671,109 @@ void FFMPEGEncoder::slideShow(
         _logger->error(__FILEREF__ + errorMessage);
     }
 }
+
+void FFMPEGEncoder::liveRecorder(
+        // FCGX_Request& request,
+        shared_ptr<Encoding> encoding,
+        int64_t encodingJobKey,
+        string requestBody)
+{
+    string api = "liveRecorder";
+
+    _logger->info(__FILEREF__ + "Received " + api
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+        + ", requestBody: " + requestBody
+    );
+
+    try
+    {
+        encoding->_encodingJobKey = encodingJobKey;
+
+        Json::Value liveRecorderMedatada;
+        try
+        {
+            Json::CharReaderBuilder builder;
+            Json::CharReader* reader = builder.newCharReader();
+            string errors;
+
+            bool parsingSuccessful = reader->parse(requestBody.c_str(),
+                    requestBody.c_str() + requestBody.size(), 
+                    &liveRecorderMedatada, &errors);
+            delete reader;
+
+            if (!parsingSuccessful)
+            {
+                string errorMessage = __FILEREF__ + "failed to parse the requestBody"
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", errors: " + errors
+                        + ", requestBody: " + requestBody
+                        ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+        catch(...)
+        {
+            string errorMessage = string("requestBody json is not well format")
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+                    + ", requestBody: " + requestBody
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        
+        int64_t ingestionJobKey = liveRecorderMedatada.get("ingestionJobKey", -1).asInt64();
+        string segmentListPathName = liveRecorderMedatada.get("segmentListPathName", "XXX").asString();
+        string liveURL = liveRecorderMedatada.get("liveURL", "XXX").asString();
+        time_t utcRecordingPeriodStart = liveRecorderMedatada.get("utcRecordingPeriodStart", -1).asInt64();
+        time_t utcRecordingPeriodEnd = liveRecorderMedatada.get("utcRecordingPeriodEnd", -1).asInt64();
+        int segmentDurationInSeconds = liveRecorderMedatada.get("segmentDurationInSeconds", -1).asInt();
+        string outputFormat = liveRecorderMedatada.get("outputFormat", "XXX").asString();
+
+        encoding->_ffmpeg->liveRecorder(
+                ingestionJobKey,
+                segmentListPathName,
+                liveURL,
+                utcRecordingPeriodStart,
+                utcRecordingPeriodEnd,
+                segmentDurationInSeconds,
+                outputFormat
+        );
+        
+        encoding->_running = false;
+        
+        _logger->info(__FILEREF__ + "liveRecorded finished"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+        );
+    }
+    catch(runtime_error e)
+    {
+        encoding->_running = false;
+
+        string errorMessage = string ("API failed")
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        ;
+
+        _logger->error(__FILEREF__ + errorMessage);
+    }
+    catch(exception e)
+    {
+        encoding->_running = false;
+
+        string errorMessage = string("API failed")
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        ;
+
+        _logger->error(__FILEREF__ + errorMessage);
+    }
+}
+

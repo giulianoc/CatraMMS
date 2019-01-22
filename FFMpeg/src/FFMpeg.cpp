@@ -2629,6 +2629,8 @@ void FFMpeg::liveRecorder(
         string outputFormat)
 {
 	string ffmpegExecuteCommand;
+	string segmentListPath;
+	string recordedFileNamePrefix = string("liveRecorder_") + to_string(ingestionJobKey);
 
     try
     {
@@ -2641,7 +2643,7 @@ void FFMpeg::liveRecorder(
 
 			throw runtime_error(errorMessage);
 		}
-		string segmentListPath = segmentListPathName.substr(0, segmentListPathIndex);
+		segmentListPath = segmentListPathName.substr(0, segmentListPathIndex);
 
 		time_t utcNow;
 		{
@@ -2676,7 +2678,7 @@ void FFMpeg::liveRecorder(
 			+ ".liveRecorder.log"
 			;
     
-		string recordedFileNameTemplate = string("liveRecorder_") + to_string(ingestionJobKey)
+		string recordedFileNameTemplate = recordedFileNamePrefix
 			+ "_%Y-%m-%d_%H-%M-%S." + outputFormat;
 		ffmpegExecuteCommand = 
 			_ffmpegPath + "/ffmpeg "
@@ -2746,8 +2748,59 @@ void FFMpeg::liveRecorder(
             + ", segmentListPathName: " + segmentListPathName);
         FileIO::remove(segmentListPathName, exceptionInCaseOfError);
 
-		{
-		}
+		if (segmentListPath != "")
+    	{
+        	// get files from file system
+    
+        	FileIO::DirectoryEntryType_t detDirectoryEntryType;
+        	shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (segmentListPath + "/");
+
+        	bool scanDirectoryFinished = false;
+        	while (!scanDirectoryFinished)
+        	{
+            	string directoryEntry;
+            	try
+            	{
+                	string directoryEntry = FileIO::readDirectory (directory,
+                    	&detDirectoryEntryType);
+                
+                	if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
+                    	continue;
+
+                	if (directoryEntry.size() >= recorderFileNamePrefix.size() && 0 == directoryEntry.compare(0, recorderFileNamePrefix.size(), recorderFileNamePrefix))
+					{
+						string recordedPathNameToBeRemoved = segmentListPath + "/" + directoryEntry;
+        				_logger->info(__FILEREF__ + "Remove"
+            				+ ", recordedPathNameToBeRemoved: " + recordedPathNameToBeRemoved);
+        				FileIO::remove(recordedPathNameToBeRemoved, exceptionInCaseOfError);
+					}
+            	}
+            	catch(DirectoryListFinished e)
+            	{
+                	scanDirectoryFinished = true;
+            	}
+            	catch(runtime_error e)
+            	{
+                	string errorMessage = __FILEREF__ + "ffmpeg: listing directory failed"
+                       	+ ", e.what(): " + e.what()
+                	;
+                	_logger->error(errorMessage);
+
+                	// throw e;
+            	}
+            	catch(exception e)
+            	{
+                	string errorMessage = __FILEREF__ + "ffmpeg: listing directory failed"
+                       + ", e.what(): " + e.what()
+                	;
+                	_logger->error(errorMessage);
+
+                	// throw e;
+            	}
+        	}
+
+        	FileIO::closeDirectory (directory);
+    	}
 
         throw e;
     }
