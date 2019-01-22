@@ -85,6 +85,7 @@ public class LiveRecorderProperties extends CreateContentProperties implements S
             jsonWorkflowElement.put("Parameters", joParameters);
 
             mLogger.info("task.getType: " + super.getType());
+            mLogger.info("LiveURL 1: " + getLiveURL());
 
             if (super.getLabel() != null && !super.getLabel().equalsIgnoreCase(""))
                 jsonWorkflowElement.put("Label", super.getLabel());
@@ -99,7 +100,7 @@ public class LiveRecorderProperties extends CreateContentProperties implements S
                 ingestionData.getWorkflowIssueList().add(workflowIssue);
             }
 
-            mLogger.info("LiveURL: " + getLiveURL());
+            mLogger.info("LiveURL 2: " + getLiveURL());
             if (getLiveURL() != null && !getLiveURL().equalsIgnoreCase(""))
                 joParameters.put("LiveURL", getLiveURL());
             else

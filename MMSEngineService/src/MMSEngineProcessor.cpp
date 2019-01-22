@@ -4475,20 +4475,20 @@ void MMSEngineProcessor::manageLiveRecorder(
 			unsigned long		ulUTCMinutes;
 			unsigned long		ulUTCSeconds;
 			tm					tmRecordingPeriodStart;
-			char				c;
 			int					sscanfReturn;
 
 
+			_logger->error(__FILEREF__ + "recordingPeriodStart 1: " + recordingPeriodStart);
+			recordingPeriodStart.replace(10, 1, string(" "), 0, 1);
+			_logger->error(__FILEREF__ + "recordingPeriodStart 2: " + recordingPeriodStart);
 			if ((sscanfReturn = sscanf (recordingPeriodStart.c_str(),
-				"%4lu-%2lu-%2lu%c%2lu:%2lu:%2lu%c",
+				"%4lu-%2lu-%2lu %2lu:%2lu:%2lu ",
 				&ulUTCYear,
 				&ulUTCMonth,
 				&ulUTCDay,
-				&c,
 				&ulUTCHour,
 				&ulUTCMinutes,
-				&ulUTCSeconds,
-				&c)) != 8)
+				&ulUTCSeconds)) != 6)
 			{
 				string field = "Start";
 
