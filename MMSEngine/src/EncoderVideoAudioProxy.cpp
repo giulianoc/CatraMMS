@@ -6028,36 +6028,28 @@ void EncoderVideoAudioProxy::processLiveRecorder(string stagingEncodedAssetPathN
             throw runtime_error(errorMessage);
         }
 
-		string recordedAssetPathName;
-		while(getline(segmentList, recordedAssetPathName))
+		string outputFileFormat;
 		{
-			size_t extensionIndex = recordedAssetPathName.find_last_of(".");
-			if (extensionIndex == string::npos)
+        	field = "outputFileFormat";
+        	outputFileFormat = _encodingItem->_parametersRoot.get(field, "XXX").asString();
+		}
+
+		bool firstFile = true;
+		string currentRecordedAssetFileName;
+		string previousRecordedAssetFileName;
+		while(getline(segmentList, currentRecordedAssetFileName))
+		{
+			if (firstFile)
 			{
-				string errorMessage = __FILEREF__ + "No extention find in the asset file name"
-                    + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                    + ", recordedAssetPathName: " + recordedAssetPathName;
-				_logger->error(errorMessage);
+				previousRecordedAssetFileName = currentRecordedAssetFileName;
 
-				throw runtime_error(errorMessage);
+				firstFile = false;
+
+				continue;
 			}
-			string fileFormat = recordedAssetPathName.substr(extensionIndex + 1);
 
-			size_t fileNameIndex = recordedAssetPathName.find_last_of("/");
-			if (fileNameIndex == string::npos)
-			{
-				string errorMessage = __FILEREF__ + "No fileName find in the asset path name"
-                    + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                    + ", recordedAssetPathName: " + recordedAssetPathName;
-				_logger->error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			string sourceFileName = recordedAssetPathName.substr(fileNameIndex + 1);
-
-        
 			string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
-				fileFormat, _encodingItem->_liveRecorderData->_liveRecorderParametersRoot);
+				outputFileFormat, _encodingItem->_liveRecorderData->_liveRecorderParametersRoot);
     
 			shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
                 ->getFreeEvent<LocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
@@ -6067,8 +6059,43 @@ void EncoderVideoAudioProxy::processLiveRecorder(string stagingEncodedAssetPathN
 			localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
 
 			localAssetIngestionEvent->setIngestionJobKey(_encodingItem->_ingestionJobKey);
-			localAssetIngestionEvent->setIngestionSourceFileName(sourceFileName);
-			localAssetIngestionEvent->setMMSSourceFileName(sourceFileName);
+			localAssetIngestionEvent->setIngestionSourceFileName(previousRecordedAssetFileName);
+			localAssetIngestionEvent->setMMSSourceFileName(previousRecordedAssetFileName);
+			localAssetIngestionEvent->setWorkspace(_encodingItem->_workspace);
+			localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::AddContent);
+			localAssetIngestionEvent->setIngestionRowToBeUpdatedAsSuccess(false);
+			// localAssetIngestionEvent->setForcedAvgFrameRate(to_string(outputFrameRate) + "/1");
+
+			localAssetIngestionEvent->setMetadataContent(mediaMetaDataContent);
+
+			shared_ptr<Event2>    event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
+			_multiEventsSet->addEvent(event);
+
+			_logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", sourceFileName: " + previousRecordedAssetFileName
+				+ ", getEventKey().first: " + to_string(event->getEventKey().first)
+				+ ", getEventKey().second: " + to_string(event->getEventKey().second));
+
+			previousRecordedAssetFileName = currentRecordedAssetFileName;
+		}
+
+		if (previousRecordedAssetFileName != "")
+		{
+			string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
+				outputFileFormat, _encodingItem->_liveRecorderData->_liveRecorderParametersRoot);
+    
+			shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
+                ->getFreeEvent<LocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
+
+			localAssetIngestionEvent->setSource(ENCODERVIDEOAUDIOPROXY);
+			localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
+			localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
+
+			localAssetIngestionEvent->setIngestionJobKey(_encodingItem->_ingestionJobKey);
+			localAssetIngestionEvent->setIngestionSourceFileName(previousRecordedAssetFileName);
+			localAssetIngestionEvent->setMMSSourceFileName(previousRecordedAssetFileName);
 			localAssetIngestionEvent->setWorkspace(_encodingItem->_workspace);
 			localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::AddContent);
 			localAssetIngestionEvent->setIngestionRowToBeUpdatedAsSuccess(true);
@@ -6082,9 +6109,11 @@ void EncoderVideoAudioProxy::processLiveRecorder(string stagingEncodedAssetPathN
 			_logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 				+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				+ ", sourceFileName: " + sourceFileName
+				+ ", sourceFileName: " + previousRecordedAssetFileName
 				+ ", getEventKey().first: " + to_string(event->getEventKey().first)
 				+ ", getEventKey().second: " + to_string(event->getEventKey().second));
+
+			previousRecordedAssetFileName = currentRecordedAssetFileName;
 		}
     }
     catch(runtime_error e)
