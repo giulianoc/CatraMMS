@@ -1088,7 +1088,7 @@ public:
 		string liveURL,
 		time_t utcRecordingPeriodStart,
 		time_t utcRecordingPeriodEnd,
-		int segmentDuration,
+		int segmentDurationInSeconds,
 		string outputFileFormat,
 		EncodingPriority encodingPriority);
 

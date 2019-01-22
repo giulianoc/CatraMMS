@@ -4517,7 +4517,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 			//	for the specified time.
 			tmRecordingPeriodStart. tm_isdst	= 0;
 
-			utcRecordingPeriodStart = mktime (&tmRecordingPeriodStart);
+			utcRecordingPeriodStart = timegm(&tmRecordingPeriodStart);
 		}
 		_logger->error(__FILEREF__ + "ctime recordingPeriodStart: " + ctime(utcRecordingPeriodStart));
 
@@ -4569,7 +4569,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 			//	for the specified time.
 			tmRecordingPeriodEnd. tm_isdst	= 0;
 
-			utcRecordingPeriodEnd = mktime (&tmRecordingPeriodEnd);
+			utcRecordingPeriodEnd = timegm(&tmRecordingPeriodEnd);
 		}
 
 		_mmsEngineDBFacade->addEncoding_LiveRecorderJob(workspace, ingestionJobKey,
