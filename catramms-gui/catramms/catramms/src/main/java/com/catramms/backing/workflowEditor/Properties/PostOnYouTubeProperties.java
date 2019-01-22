@@ -72,9 +72,6 @@ public class PostOnYouTubeProperties extends WorkflowProperties implements Seria
     {
         PostOnYouTubeProperties postOnYouTubeProperties = new PostOnYouTubeProperties(
                 super.getElementId(), super.getLabel(), confList);
-        postOnYouTubeProperties.setOnSuccessChildren(super.getOnSuccessChildren());
-        postOnYouTubeProperties.setOnErrorChildren(super.getOnErrorChildren());
-        postOnYouTubeProperties.setOnCompleteChildren(super.getOnCompleteChildren());
 
         postOnYouTubeProperties.setConfigurationLabel(getConfigurationLabel());
         postOnYouTubeProperties.setYouTubeTitle(getYouTubeTitle());
@@ -86,6 +83,20 @@ public class PostOnYouTubeProperties extends WorkflowProperties implements Seria
         postOnYouTubeProperties.setStringBuilderTaskReferences(taskReferences);
 
         return postOnYouTubeProperties;
+    }
+
+    public void setData(PostOnYouTubeProperties workflowProperties)
+    {
+        super.setData(workflowProperties);
+
+        setConfigurationLabel(workflowProperties.getConfigurationLabel());
+        setYouTubeTitle(workflowProperties.getYouTubeTitle());
+        setYouTubeDescription(workflowProperties.getYouTubeDescription());
+        setYouTubeTags(workflowProperties.getYouTubeTags());
+        setCategoryId(workflowProperties.getCategoryId());
+        setPrivacy(workflowProperties.getPrivacy());
+
+        setStringBuilderTaskReferences(workflowProperties.getStringBuilderTaskReferences());
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)

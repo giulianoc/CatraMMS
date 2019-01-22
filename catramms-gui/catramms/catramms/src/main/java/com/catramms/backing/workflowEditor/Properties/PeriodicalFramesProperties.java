@@ -33,9 +33,6 @@ public class PeriodicalFramesProperties extends CreateContentProperties implemen
     {
         PeriodicalFramesProperties periodicalFramesProperties = new PeriodicalFramesProperties(
                 super.getElementId(), super.getLabel());
-        periodicalFramesProperties.setOnSuccessChildren(super.getOnSuccessChildren());
-        periodicalFramesProperties.setOnErrorChildren(super.getOnErrorChildren());
-        periodicalFramesProperties.setOnCompleteChildren(super.getOnCompleteChildren());
 
         periodicalFramesProperties.setStartTimeInSeconds(startTimeInSeconds);
         periodicalFramesProperties.setPeriodInSeconds(periodInSeconds);
@@ -44,20 +41,25 @@ public class PeriodicalFramesProperties extends CreateContentProperties implemen
         periodicalFramesProperties.setHeight(height);
         periodicalFramesProperties.setEncodingPriority(encodingPriority);
 
-        periodicalFramesProperties.setTitle(getTitle());
-        periodicalFramesProperties.setTags(getTags());
-        periodicalFramesProperties.setRetention(getRetention());
-        periodicalFramesProperties.setStartPublishing(getStartPublishing());
-        periodicalFramesProperties.setEndPublishing(getEndPublishing());
-        periodicalFramesProperties.setUserData(getUserData());
-        periodicalFramesProperties.setIngester(getIngester());
-        periodicalFramesProperties.setContentProviderName(getContentProviderName());
-        periodicalFramesProperties.setDeliveryFileName(getDeliveryFileName());
-        periodicalFramesProperties.setUniqueName(getUniqueName());
-
         periodicalFramesProperties.setStringBuilderTaskReferences(taskReferences);
 
+        super.getData(periodicalFramesProperties);
+
         return periodicalFramesProperties;
+    }
+
+    public void setData(PeriodicalFramesProperties workflowProperties)
+    {
+        super.setData(workflowProperties);
+
+        setStartTimeInSeconds(workflowProperties.getStartTimeInSeconds());
+        setPeriodInSeconds(workflowProperties.getPeriodInSeconds());
+        setMaxFramesNumber(workflowProperties.getMaxFramesNumber());
+        setWidth(workflowProperties.getWidth());
+        setHeight(workflowProperties.getHeight());
+        setEncodingPriority(workflowProperties.getEncodingPriority());
+
+        setStringBuilderTaskReferences(workflowProperties.getStringBuilderTaskReferences());
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)

@@ -45,28 +45,28 @@ public class FaceRecognitionProperties extends CreateContentProperties implement
     {
         FaceRecognitionProperties faceRecognitionProperties = new FaceRecognitionProperties(
                 super.getElementId(), super.getLabel());
-        faceRecognitionProperties.setOnSuccessChildren(super.getOnSuccessChildren());
-        faceRecognitionProperties.setOnErrorChildren(super.getOnErrorChildren());
-        faceRecognitionProperties.setOnCompleteChildren(super.getOnCompleteChildren());
 
         faceRecognitionProperties.setCascadeName(getCascadeName());
         faceRecognitionProperties.setOutput(getOutput());
         faceRecognitionProperties.setEncodingPriority(getEncodingPriority());
 
-        faceRecognitionProperties.setTitle(getTitle());
-        faceRecognitionProperties.setTags(getTags());
-        faceRecognitionProperties.setRetention(getRetention());
-        faceRecognitionProperties.setStartPublishing(getStartPublishing());
-        faceRecognitionProperties.setEndPublishing(getEndPublishing());
-        faceRecognitionProperties.setUserData(getUserData());
-        faceRecognitionProperties.setIngester(getIngester());
-        faceRecognitionProperties.setContentProviderName(getContentProviderName());
-        faceRecognitionProperties.setDeliveryFileName(getDeliveryFileName());
-        faceRecognitionProperties.setUniqueName(getUniqueName());
-
         faceRecognitionProperties.setStringBuilderTaskReferences(taskReferences);
 
+        super.getData(faceRecognitionProperties);
+
+
         return faceRecognitionProperties;
+    }
+
+    public void setData(FaceRecognitionProperties workflowProperties)
+    {
+        super.setData(workflowProperties);
+
+        setCascadeName(workflowProperties.getCascadeName());
+        setOutput(workflowProperties.getOutput());
+        setEncodingPriority(workflowProperties.getEncodingPriority());
+
+        setStringBuilderTaskReferences(workflowProperties.getStringBuilderTaskReferences());
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)

@@ -23,24 +23,20 @@ public class ConcatDemuxerProperties extends CreateContentProperties implements 
     {
         ConcatDemuxerProperties concatDemuxerProperties = new ConcatDemuxerProperties(
                 super.getElementId(), super.getLabel());
-        concatDemuxerProperties.setOnSuccessChildren(super.getOnSuccessChildren());
-        concatDemuxerProperties.setOnErrorChildren(super.getOnErrorChildren());
-        concatDemuxerProperties.setOnCompleteChildren(super.getOnCompleteChildren());
-
-        concatDemuxerProperties.setTitle(getTitle());
-        concatDemuxerProperties.setTags(getTags());
-        concatDemuxerProperties.setRetention(getRetention());
-        concatDemuxerProperties.setStartPublishing(getStartPublishing());
-        concatDemuxerProperties.setEndPublishing(getEndPublishing());
-        concatDemuxerProperties.setUserData(getUserData());
-        concatDemuxerProperties.setIngester(getIngester());
-        concatDemuxerProperties.setContentProviderName(getContentProviderName());
-        concatDemuxerProperties.setDeliveryFileName(getDeliveryFileName());
-        concatDemuxerProperties.setUniqueName(getUniqueName());
 
         concatDemuxerProperties.setStringBuilderTaskReferences(taskReferences);
 
+        super.getData(concatDemuxerProperties);
+
+
         return concatDemuxerProperties;
+    }
+
+    public void setData(ConcatDemuxerProperties workflowProperties)
+    {
+        super.setData(workflowProperties);
+
+        setStringBuilderTaskReferences(workflowProperties.getStringBuilderTaskReferences());
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)

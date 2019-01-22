@@ -33,9 +33,6 @@ public class MotionJPEGByIFramesProperties extends CreateContentProperties imple
         MotionJPEGByIFramesProperties motionJPEGByIFramesProperties
                 = new MotionJPEGByIFramesProperties(
                     super.getElementId(), super.getLabel());
-        motionJPEGByIFramesProperties.setOnSuccessChildren(super.getOnSuccessChildren());
-        motionJPEGByIFramesProperties.setOnErrorChildren(super.getOnErrorChildren());
-        motionJPEGByIFramesProperties.setOnCompleteChildren(super.getOnCompleteChildren());
 
         motionJPEGByIFramesProperties.setStartTimeInSeconds(startTimeInSeconds);
         motionJPEGByIFramesProperties.setMaxFramesNumber(maxFramesNumber);
@@ -43,20 +40,25 @@ public class MotionJPEGByIFramesProperties extends CreateContentProperties imple
         motionJPEGByIFramesProperties.setHeight(height);
         motionJPEGByIFramesProperties.setEncodingPriority(encodingPriority);
 
-        motionJPEGByIFramesProperties.setTitle(getTitle());
-        motionJPEGByIFramesProperties.setTags(getTags());
-        motionJPEGByIFramesProperties.setRetention(getRetention());
-        motionJPEGByIFramesProperties.setStartPublishing(getStartPublishing());
-        motionJPEGByIFramesProperties.setEndPublishing(getEndPublishing());
-        motionJPEGByIFramesProperties.setUserData(getUserData());
-        motionJPEGByIFramesProperties.setIngester(getIngester());
-        motionJPEGByIFramesProperties.setContentProviderName(getContentProviderName());
-        motionJPEGByIFramesProperties.setDeliveryFileName(getDeliveryFileName());
-        motionJPEGByIFramesProperties.setUniqueName(getUniqueName());
-
         motionJPEGByIFramesProperties.setStringBuilderTaskReferences(taskReferences);
 
+        super.getData(motionJPEGByIFramesProperties);
+
+
         return motionJPEGByIFramesProperties;
+    }
+
+    public void setData(MotionJPEGByIFramesProperties workflowProperties)
+    {
+        super.setData(workflowProperties);
+
+        setStartTimeInSeconds(workflowProperties.getStartTimeInSeconds());
+        setMaxFramesNumber(workflowProperties.getMaxFramesNumber());
+        setWidth(workflowProperties.getWidth());
+        setHeight(workflowProperties.getHeight());
+        setEncodingPriority(workflowProperties.getEncodingPriority());
+
+        setStringBuilderTaskReferences(workflowProperties.getStringBuilderTaskReferences());
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)

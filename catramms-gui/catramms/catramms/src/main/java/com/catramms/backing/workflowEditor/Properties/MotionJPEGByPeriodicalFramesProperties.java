@@ -34,9 +34,6 @@ public class MotionJPEGByPeriodicalFramesProperties extends CreateContentPropert
         MotionJPEGByPeriodicalFramesProperties motionJPEGByPeriodicalFramesProperties
                 = new MotionJPEGByPeriodicalFramesProperties(
                     super.getElementId(), super.getLabel());
-        motionJPEGByPeriodicalFramesProperties.setOnSuccessChildren(super.getOnSuccessChildren());
-        motionJPEGByPeriodicalFramesProperties.setOnErrorChildren(super.getOnErrorChildren());
-        motionJPEGByPeriodicalFramesProperties.setOnCompleteChildren(super.getOnCompleteChildren());
 
         motionJPEGByPeriodicalFramesProperties.setStartTimeInSeconds(startTimeInSeconds);
         motionJPEGByPeriodicalFramesProperties.setPeriodInSeconds(periodInSeconds);
@@ -45,20 +42,26 @@ public class MotionJPEGByPeriodicalFramesProperties extends CreateContentPropert
         motionJPEGByPeriodicalFramesProperties.setHeight(height);
         motionJPEGByPeriodicalFramesProperties.setEncodingPriority(encodingPriority);
 
-        motionJPEGByPeriodicalFramesProperties.setTitle(getTitle());
-        motionJPEGByPeriodicalFramesProperties.setTags(getTags());
-        motionJPEGByPeriodicalFramesProperties.setRetention(getRetention());
-        motionJPEGByPeriodicalFramesProperties.setStartPublishing(getStartPublishing());
-        motionJPEGByPeriodicalFramesProperties.setEndPublishing(getEndPublishing());
-        motionJPEGByPeriodicalFramesProperties.setUserData(getUserData());
-        motionJPEGByPeriodicalFramesProperties.setIngester(getIngester());
-        motionJPEGByPeriodicalFramesProperties.setContentProviderName(getContentProviderName());
-        motionJPEGByPeriodicalFramesProperties.setDeliveryFileName(getDeliveryFileName());
-        motionJPEGByPeriodicalFramesProperties.setUniqueName(getUniqueName());
-
         motionJPEGByPeriodicalFramesProperties.setStringBuilderTaskReferences(taskReferences);
 
+        super.getData(motionJPEGByPeriodicalFramesProperties);
+
+
         return motionJPEGByPeriodicalFramesProperties;
+    }
+
+    public void setData(MotionJPEGByPeriodicalFramesProperties workflowProperties)
+    {
+        super.setData(workflowProperties);
+
+        setStartTimeInSeconds(workflowProperties.getStartTimeInSeconds());
+        setPeriodInSeconds(workflowProperties.getPeriodInSeconds());
+        setMaxFramesNumber(workflowProperties.getMaxFramesNumber());
+        setWidth(workflowProperties.getWidth());
+        setHeight(workflowProperties.getHeight());
+        setEncodingPriority(workflowProperties.getEncodingPriority());
+
+        setStringBuilderTaskReferences(workflowProperties.getStringBuilderTaskReferences());
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)

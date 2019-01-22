@@ -129,14 +129,17 @@ public class WorkflowProperties implements Serializable
 
         WorkflowProperties workflowProperties = new WorkflowProperties(
                 getElementId(), getLabel(), getImage(), getMainType(), getType());
-        workflowProperties.setOnSuccessChildren(onSuccessChildren);
-        workflowProperties.setOnErrorChildren(onErrorChildren);
-        workflowProperties.setOnCompleteChildren(onCompleteChildren);
 
         workflowProperties.setLabelChanged(isLabelChanged);
 
 
         return workflowProperties;
+    }
+
+    public void setData(WorkflowProperties workflowProperties)
+    {
+        // mLogger.info("WorkflowProperties::setData");
+        setLabel(workflowProperties.getLabel());
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)
@@ -267,8 +270,11 @@ public class WorkflowProperties implements Serializable
     }
 
     public void setLabel(String label) {
-        this.label = label;
-        labelChanged = true;
+        if (!this.label.equals(label))
+        {
+            this.label = label;
+            labelChanged = true;
+        }
     }
 
     public boolean isLabelChanged() {

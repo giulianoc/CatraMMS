@@ -687,61 +687,55 @@ public class WorkflowEditor extends Workspace implements Serializable {
             WorkflowProperties workflowProperties = (WorkflowProperties) element.getData();
 
             if (workflowProperties.getType().equalsIgnoreCase("Workflow"))
-                element.setData(currentWorkflowProperties);
+                workflowProperties.setData(currentWorkflowProperties);
             else if (workflowProperties.getType().equalsIgnoreCase("Add-Content"))
-                element.setData(currentAddContentProperties);
+                ((AddContentProperties) workflowProperties).setData(currentAddContentProperties);
             else if (workflowProperties.getType().equalsIgnoreCase("GroupOfTasks"))
-                element.setData(currentGroupOfTasksProperties);
+                ((GroupOfTasksProperties) workflowProperties).setData(currentGroupOfTasksProperties);
             else if (workflowProperties.getType().equalsIgnoreCase("Remove-Content"))
-                element.setData(currentRemoveContentProperties);
+                ((RemoveContentProperties) workflowProperties).setData(currentRemoveContentProperties);
             else if (workflowProperties.getType().equalsIgnoreCase("Concat-Demuxer"))
-                element.setData(currentConcatDemuxerProperties);
+                ((ConcatDemuxerProperties) workflowProperties).setData(currentConcatDemuxerProperties);
             else if (workflowProperties.getType().equalsIgnoreCase("Cut"))
-                element.setData(currentCutProperties);
+                ((CutProperties) workflowProperties).setData(currentCutProperties);
             else if (workflowProperties.getType().equalsIgnoreCase("Extract-Tracks"))
-                element.setData(currentExtractTracksProperties);
+                ((ExtractTracksProperties) workflowProperties).setData(currentExtractTracksProperties);
             else if (workflowProperties.getType().equalsIgnoreCase("Encode"))
-                element.setData(currentEncodeProperties);
+                ((EncodeProperties) workflowProperties).setData(currentEncodeProperties);
             else if (workflowProperties.getType().equalsIgnoreCase("Overlay-Image-On-Video"))
-                element.setData(currentOverlayImageOnVideoProperties);
+                ((OverlayImageOnVideoProperties) workflowProperties).setData(currentOverlayImageOnVideoProperties);
             else if (workflowProperties.getType().equalsIgnoreCase("Overlay-Text-On-Video"))
-                element.setData(currentOverlayTextOnVideoProperties);
+                ((OverlayTextOnVideoProperties) workflowProperties).setData(currentOverlayTextOnVideoProperties);
             else if (workflowProperties.getType().equalsIgnoreCase("Frame"))
-                element.setData(currentFrameProperties);
+                ((FrameProperties) workflowProperties).setData(currentFrameProperties);
             else if (workflowProperties.getType().equalsIgnoreCase("Periodical-Frames"))
-                element.setData(currentPeriodicalFramesProperties);
+                ((PeriodicalFramesProperties) workflowProperties).setData(currentPeriodicalFramesProperties);
             else if (workflowProperties.getType().equalsIgnoreCase("I-Frames"))
-                element.setData(currentIFramesProperties);
+                ((IFramesProperties) workflowProperties).setData(currentIFramesProperties);
             else if (workflowProperties.getType().equalsIgnoreCase("Motion-JPEG-by-Periodical-Frames"))
-                element.setData(currentMotionJPEGByPeriodicalFramesProperties);
+                ((MotionJPEGByPeriodicalFramesProperties) workflowProperties).setData(currentMotionJPEGByPeriodicalFramesProperties);
             else if (workflowProperties.getType().equalsIgnoreCase("Motion-JPEG-by-I-Frames"))
-                element.setData(currentMotionJPEGByIFramesProperties);
+                ((MotionJPEGByIFramesProperties) workflowProperties).setData(currentMotionJPEGByIFramesProperties);
             else if (workflowProperties.getType().equalsIgnoreCase("Slideshow"))
-                element.setData(currentSlideshowProperties);
+                ((SlideshowProperties) workflowProperties).setData(currentSlideshowProperties);
             else if (workflowProperties.getType().equalsIgnoreCase("FTP-Delivery"))
-                element.setData(currentFTPDeliveryProperties);
+                ((FTPDeliveryProperties) workflowProperties).setData(currentFTPDeliveryProperties);
             else if (workflowProperties.getType().equalsIgnoreCase("Local-Copy"))
-                element.setData(currentLocalCopyProperties);
+                ((LocalCopyProperties) workflowProperties).setData(currentLocalCopyProperties);
             else if (workflowProperties.getType().equalsIgnoreCase("Post-On-Facebook"))
-                element.setData(currentPostOnFacebookProperties);
+                ((PostOnFacebookProperties) workflowProperties).setData(currentPostOnFacebookProperties);
             else if (workflowProperties.getType().equalsIgnoreCase("Post-On-YouTube"))
-                element.setData(currentPostOnYouTubeProperties);
+                ((PostOnYouTubeProperties) workflowProperties).setData(currentPostOnYouTubeProperties);
             else if (workflowProperties.getType().equalsIgnoreCase("Email-Notification"))
-                element.setData(currentEmailNotificationProperties);
+                ((EmailNotificationProperties) workflowProperties).setData(currentEmailNotificationProperties);
             else if (workflowProperties.getType().equalsIgnoreCase("HTTP-Callback"))
-                element.setData(currentHttpCallbackProperties);
+                ((HTTPCallbackProperties) workflowProperties).setData(currentHttpCallbackProperties);
             else if (workflowProperties.getType().equalsIgnoreCase("Face-Recognition"))
-                element.setData(currentFaceRecognitionProperties);
+                ((FaceRecognitionProperties) workflowProperties).setData(currentFaceRecognitionProperties);
             else if (workflowProperties.getType().equalsIgnoreCase("Face-Identification"))
-                element.setData(currentFaceIdentificationProperties);
+                ((FaceIdentificationProperties) workflowProperties).setData(currentFaceIdentificationProperties);
             else if (workflowProperties.getType().equalsIgnoreCase("Live-Recorder"))
-            {
-                element.setData(currentLiveRecorderProperties);
-                mLogger.info("setData"
-                                + ", workflowProperties.getType(): " + workflowProperties.getType()
-                                + ", currentLiveRecorderProperties.getLiveURL: " + currentLiveRecorderProperties.getLiveURL()
-                );
-            }
+                ((LiveRecorderProperties) workflowProperties).setData(currentLiveRecorderProperties);
             else
                 mLogger.error("Wrong workflowProperties.getType(): " + workflowProperties.getType());
 

@@ -23,13 +23,17 @@ public class RemoveContentProperties extends WorkflowProperties implements Seria
     {
         RemoveContentProperties removeContentProperties = new RemoveContentProperties(
                 super.getElementId(), super.getLabel());
-        removeContentProperties.setOnSuccessChildren(super.getOnSuccessChildren());
-        removeContentProperties.setOnErrorChildren(super.getOnErrorChildren());
-        removeContentProperties.setOnCompleteChildren(super.getOnCompleteChildren());
 
         removeContentProperties.setStringBuilderTaskReferences(taskReferences);
 
         return removeContentProperties;
+    }
+
+    public void setData(RemoveContentProperties workflowProperties)
+    {
+        super.setData(workflowProperties);
+
+        setStringBuilderTaskReferences(workflowProperties.getStringBuilderTaskReferences());
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)

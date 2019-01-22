@@ -29,9 +29,6 @@ public class FTPDeliveryProperties extends WorkflowProperties implements Seriali
     {
         FTPDeliveryProperties ftpDeliveryProperties = new FTPDeliveryProperties(
                 super.getElementId(), super.getLabel());
-        ftpDeliveryProperties.setOnSuccessChildren(super.getOnSuccessChildren());
-        ftpDeliveryProperties.setOnErrorChildren(super.getOnErrorChildren());
-        ftpDeliveryProperties.setOnCompleteChildren(super.getOnCompleteChildren());
 
         ftpDeliveryProperties.setServer(getServer());
         ftpDeliveryProperties.setPort(getPort());
@@ -42,6 +39,19 @@ public class FTPDeliveryProperties extends WorkflowProperties implements Seriali
         ftpDeliveryProperties.setStringBuilderTaskReferences(taskReferences);
 
         return ftpDeliveryProperties;
+    }
+
+    public void setData(FTPDeliveryProperties workflowProperties)
+    {
+        super.setData(workflowProperties);
+
+        setServer(workflowProperties.getServer());
+        setPort(workflowProperties.getPort());
+        setUserName(workflowProperties.getUserName());
+        setPassword(workflowProperties.getPassword());
+        setRemoteDirectory(workflowProperties.getRemoteDirectory());
+
+        setStringBuilderTaskReferences(workflowProperties.getStringBuilderTaskReferences());
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)

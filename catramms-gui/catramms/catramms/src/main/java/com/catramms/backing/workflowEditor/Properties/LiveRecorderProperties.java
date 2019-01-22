@@ -46,9 +46,6 @@ public class LiveRecorderProperties extends CreateContentProperties implements S
     {
         LiveRecorderProperties liveRecorderProperties = new LiveRecorderProperties(
                 super.getElementId(), super.getLabel());
-        liveRecorderProperties.setOnSuccessChildren(super.getOnSuccessChildren());
-        liveRecorderProperties.setOnErrorChildren(super.getOnErrorChildren());
-        liveRecorderProperties.setOnCompleteChildren(super.getOnCompleteChildren());
 
         liveRecorderProperties.setLiveURL(liveURL);
         liveRecorderProperties.setStartRecording(startRecording);
@@ -57,19 +54,23 @@ public class LiveRecorderProperties extends CreateContentProperties implements S
         liveRecorderProperties.setOutputFileFormat(outputFileFormat);
         liveRecorderProperties.setEncodingPriority(encodingPriority);
 
-        liveRecorderProperties.setTitle(getTitle());
-        liveRecorderProperties.setTags(getTags());
-        liveRecorderProperties.setRetention(getRetention());
-        liveRecorderProperties.setStartPublishing(getStartPublishing());
-        liveRecorderProperties.setEndPublishing(getEndPublishing());
-        liveRecorderProperties.setUserData(getUserData());
-        liveRecorderProperties.setIngester(getIngester());
-        liveRecorderProperties.setContentProviderName(getContentProviderName());
-        liveRecorderProperties.setDeliveryFileName(getDeliveryFileName());
-        liveRecorderProperties.setUniqueName(getUniqueName());
+        super.getData(liveRecorderProperties);
 
 
         return liveRecorderProperties;
+    }
+
+    public void setData(LiveRecorderProperties workflowProperties)
+    {
+        super.setData(workflowProperties);
+
+        // mLogger.info("LiveRecorderProperties::setData");
+        setLiveURL(workflowProperties.getLiveURL());
+        setStartRecording(workflowProperties.getStartRecording());
+        setEndRecording(workflowProperties.getEndRecording());
+        setSegmentDuration(workflowProperties.getSegmentDuration());
+        setOutputFileFormat(workflowProperties.getOutputFileFormat());
+        setEncodingPriority(workflowProperties.getEncodingPriority());
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)

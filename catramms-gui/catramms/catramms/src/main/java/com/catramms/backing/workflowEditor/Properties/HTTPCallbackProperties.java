@@ -49,9 +49,6 @@ public class HTTPCallbackProperties extends WorkflowProperties implements Serial
     {
         HTTPCallbackProperties httpCallbackProperties = new HTTPCallbackProperties(
                 super.getElementId(), super.getLabel());
-        httpCallbackProperties.setOnSuccessChildren(super.getOnSuccessChildren());
-        httpCallbackProperties.setOnErrorChildren(super.getOnErrorChildren());
-        httpCallbackProperties.setOnCompleteChildren(super.getOnCompleteChildren());
 
         httpCallbackProperties.setProtocol(getProtocol());
         httpCallbackProperties.setMethod(getMethod());
@@ -64,6 +61,21 @@ public class HTTPCallbackProperties extends WorkflowProperties implements Serial
         httpCallbackProperties.setStringBuilderTaskReferences(taskReferences);
 
         return httpCallbackProperties;
+    }
+
+    public void setData(HTTPCallbackProperties workflowProperties)
+    {
+        super.setData(workflowProperties);
+
+        setProtocol(workflowProperties.getProtocol());
+        setMethod(workflowProperties.getMethod());
+        setHostName(workflowProperties.getHostName());
+        setPort(workflowProperties.getPort());
+        setUri(workflowProperties.getUri());
+        setParameters(workflowProperties.getParameters());
+        setHeaders(workflowProperties.getHeaders());
+
+        setStringBuilderTaskReferences(workflowProperties.getStringBuilderTaskReferences());
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)

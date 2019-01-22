@@ -32,9 +32,6 @@ public class IFramesProperties extends CreateContentProperties implements Serial
     {
         IFramesProperties iFramesProperties = new IFramesProperties(
                 super.getElementId(), super.getLabel());
-        iFramesProperties.setOnSuccessChildren(super.getOnSuccessChildren());
-        iFramesProperties.setOnErrorChildren(super.getOnErrorChildren());
-        iFramesProperties.setOnCompleteChildren(super.getOnCompleteChildren());
 
         iFramesProperties.setStartTimeInSeconds(startTimeInSeconds);
         iFramesProperties.setMaxFramesNumber(maxFramesNumber);
@@ -42,20 +39,25 @@ public class IFramesProperties extends CreateContentProperties implements Serial
         iFramesProperties.setHeight(height);
         iFramesProperties.setEncodingPriority(encodingPriority);
 
-        iFramesProperties.setTitle(getTitle());
-        iFramesProperties.setTags(getTags());
-        iFramesProperties.setRetention(getRetention());
-        iFramesProperties.setStartPublishing(getStartPublishing());
-        iFramesProperties.setEndPublishing(getEndPublishing());
-        iFramesProperties.setUserData(getUserData());
-        iFramesProperties.setIngester(getIngester());
-        iFramesProperties.setContentProviderName(getContentProviderName());
-        iFramesProperties.setDeliveryFileName(getDeliveryFileName());
-        iFramesProperties.setUniqueName(getUniqueName());
-
         iFramesProperties.setStringBuilderTaskReferences(taskReferences);
 
+        super.getData(iFramesProperties);
+
+
         return iFramesProperties;
+    }
+
+    public void setData(IFramesProperties workflowProperties)
+    {
+        super.setData(workflowProperties);
+
+        setStartTimeInSeconds(workflowProperties.getStartTimeInSeconds());
+        setMaxFramesNumber(workflowProperties.getMaxFramesNumber());
+        setWidth(workflowProperties.getWidth());
+        setHeight(workflowProperties.getHeight());
+        setEncodingPriority(workflowProperties.getEncodingPriority());
+
+        setStringBuilderTaskReferences(workflowProperties.getStringBuilderTaskReferences());
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)

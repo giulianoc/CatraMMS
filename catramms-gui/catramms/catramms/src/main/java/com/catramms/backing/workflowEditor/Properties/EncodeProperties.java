@@ -122,9 +122,6 @@ public class EncodeProperties extends WorkflowProperties implements Serializable
                 super.getElementId(), super.getLabel(),
                 videoEncodingProfilesList, audioEncodingProfilesList, imageEncodingProfilesList,
                 videoEncodingProfilesSetList, audioEncodingProfilesSetList, imageEncodingProfilesSetList);
-        encodeProperties.setOnSuccessChildren(super.getOnSuccessChildren());
-        encodeProperties.setOnErrorChildren(super.getOnErrorChildren());
-        encodeProperties.setOnCompleteChildren(super.getOnCompleteChildren());
 
         encodeProperties.setEncodingPriority(getEncodingPriority());
         encodeProperties.setContentType(getContentType());
@@ -135,6 +132,19 @@ public class EncodeProperties extends WorkflowProperties implements Serializable
         encodeProperties.setStringBuilderTaskReferences(taskReferences);
 
         return encodeProperties;
+    }
+
+    public void setData(EncodeProperties workflowProperties)
+    {
+        super.setData(workflowProperties);
+
+        setEncodingPriority(workflowProperties.getEncodingPriority());
+        setContentType(workflowProperties.getContentType());
+        setEncodingProfileType(workflowProperties.getEncodingProfileType());
+        setEncodingProfileLabel(workflowProperties.getEncodingProfileLabel());
+        setEncodingProfilesSetLabel(workflowProperties.getEncodingProfilesSetLabel());
+
+        setStringBuilderTaskReferences(workflowProperties.getStringBuilderTaskReferences());
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)

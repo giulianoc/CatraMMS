@@ -57,30 +57,30 @@ public class AddContentProperties extends CreateContentProperties implements Ser
     {
         AddContentProperties addContentProperties = new AddContentProperties(
                 super.getElementId(), super.getLabel(), getTemporaryPushBinariesPathName());
-        addContentProperties.setOnSuccessChildren(super.getOnSuccessChildren());
-        addContentProperties.setOnErrorChildren(super.getOnErrorChildren());
-        addContentProperties.setOnCompleteChildren(super.getOnCompleteChildren());
 
         addContentProperties.setSourceDownloadType(sourceDownloadType);
         addContentProperties.setPullSourceURL(pullSourceURL);
         addContentProperties.setPushBinaryFileName(pushBinaryFileName);
         addContentProperties.setFileFormat(fileFormat);
-        addContentProperties.setTitle(getTitle());
-        addContentProperties.setTags(getTags());
-        addContentProperties.setRetention(getRetention());
-        addContentProperties.setStartPublishing(getStartPublishing());
-        addContentProperties.setEndPublishing(getEndPublishing());
-        addContentProperties.setUserData(getUserData());
-        addContentProperties.setIngester(getIngester());
         addContentProperties.setMd5FileChecksum(md5FileChecksum);
         addContentProperties.setFileSizeInBytes(fileSizeInBytes);
-        addContentProperties.setContentProviderName(getContentProviderName());
-        addContentProperties.setDeliveryFileName(getDeliveryFileName());
-        addContentProperties.setUniqueName(getUniqueName());
 
-        addContentProperties.setVideoAudioAllowTypes(videoAudioAllowTypes);
+        super.getData(addContentProperties);
+
 
         return addContentProperties;
+    }
+
+    public void setData(AddContentProperties workflowProperties)
+    {
+        super.setData(workflowProperties);
+
+        setSourceDownloadType(workflowProperties.getSourceDownloadType());
+        setPullSourceURL(workflowProperties.getPullSourceURL());
+        setPushBinaryFileName(workflowProperties.getPushBinaryFileName());
+        setFileFormat(workflowProperties.getFileFormat());
+        setMd5FileChecksum(workflowProperties.getMd5FileChecksum());
+        setFileSizeInBytes(workflowProperties.getFileSizeInBytes());
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)

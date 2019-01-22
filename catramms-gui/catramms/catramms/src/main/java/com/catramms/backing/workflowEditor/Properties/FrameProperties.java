@@ -30,28 +30,28 @@ public class FrameProperties extends CreateContentProperties implements Serializ
     {
         FrameProperties frameProperties = new FrameProperties(
                 super.getElementId(), super.getLabel());
-        frameProperties.setOnSuccessChildren(super.getOnSuccessChildren());
-        frameProperties.setOnErrorChildren(super.getOnErrorChildren());
-        frameProperties.setOnCompleteChildren(super.getOnCompleteChildren());
 
         frameProperties.setInstantInSeconds(instantInSeconds);
         frameProperties.setWidth(width);
         frameProperties.setHeight(height);
 
-        frameProperties.setTitle(getTitle());
-        frameProperties.setTags(getTags());
-        frameProperties.setRetention(getRetention());
-        frameProperties.setStartPublishing(getStartPublishing());
-        frameProperties.setEndPublishing(getEndPublishing());
-        frameProperties.setUserData(getUserData());
-        frameProperties.setIngester(getIngester());
-        frameProperties.setContentProviderName(getContentProviderName());
-        frameProperties.setDeliveryFileName(getDeliveryFileName());
-        frameProperties.setUniqueName(getUniqueName());
-
         frameProperties.setStringBuilderTaskReferences(taskReferences);
 
+        super.getData(frameProperties);
+
+
         return frameProperties;
+    }
+
+    public void setData(FrameProperties workflowProperties)
+    {
+        super.setData(workflowProperties);
+
+        setInstantInSeconds(workflowProperties.getInstantInSeconds());
+        setWidth(workflowProperties.getWidth());
+        setHeight(workflowProperties.getHeight());
+
+        setStringBuilderTaskReferences(workflowProperties.getStringBuilderTaskReferences());
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)

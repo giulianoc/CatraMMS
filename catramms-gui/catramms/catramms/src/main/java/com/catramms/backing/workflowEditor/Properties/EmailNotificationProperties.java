@@ -31,15 +31,21 @@ public class EmailNotificationProperties extends WorkflowProperties implements S
     {
         EmailNotificationProperties emailNotificationProperties = new EmailNotificationProperties(
                 super.getElementId(), super.getLabel());
-        emailNotificationProperties.setOnSuccessChildren(super.getOnSuccessChildren());
-        emailNotificationProperties.setOnErrorChildren(super.getOnErrorChildren());
-        emailNotificationProperties.setOnCompleteChildren(super.getOnCompleteChildren());
 
         emailNotificationProperties.setEmailAddress(emailAddress);
         emailNotificationProperties.setSubject(subject);
         emailNotificationProperties.setMessage(message);
 
         return emailNotificationProperties;
+    }
+
+    public void setData(EmailNotificationProperties workflowProperties)
+    {
+        super.setData(workflowProperties);
+
+        setEmailAddress(workflowProperties.getEmailAddress());
+        setSubject(workflowProperties.getSubject());
+        setMessage(workflowProperties.getMessage());
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)

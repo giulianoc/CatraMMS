@@ -29,27 +29,26 @@ public class SlideshowProperties extends CreateContentProperties implements Seri
     {
         SlideshowProperties slideshowProperties = new SlideshowProperties(
                 super.getElementId(), super.getLabel());
-        slideshowProperties.setOnSuccessChildren(super.getOnSuccessChildren());
-        slideshowProperties.setOnErrorChildren(super.getOnErrorChildren());
-        slideshowProperties.setOnCompleteChildren(super.getOnCompleteChildren());
 
         slideshowProperties.setDurationOfEachSlideInSeconds(durationOfEachSlideInSeconds);
         slideshowProperties.setEncodingPriority(encodingPriority);
 
-        slideshowProperties.setTitle(getTitle());
-        slideshowProperties.setTags(getTags());
-        slideshowProperties.setRetention(getRetention());
-        slideshowProperties.setStartPublishing(getStartPublishing());
-        slideshowProperties.setEndPublishing(getEndPublishing());
-        slideshowProperties.setUserData(getUserData());
-        slideshowProperties.setIngester(getIngester());
-        slideshowProperties.setContentProviderName(getContentProviderName());
-        slideshowProperties.setDeliveryFileName(getDeliveryFileName());
-        slideshowProperties.setUniqueName(getUniqueName());
-
         slideshowProperties.setStringBuilderTaskReferences(taskReferences);
 
+        super.getData(slideshowProperties);
+
+
         return slideshowProperties;
+    }
+
+    public void setData(SlideshowProperties workflowProperties)
+    {
+        super.setData(workflowProperties);
+
+        setDurationOfEachSlideInSeconds(workflowProperties.getDurationOfEachSlideInSeconds());
+        setEncodingPriority(workflowProperties.getEncodingPriority());
+
+        setStringBuilderTaskReferences(workflowProperties.getStringBuilderTaskReferences());
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)

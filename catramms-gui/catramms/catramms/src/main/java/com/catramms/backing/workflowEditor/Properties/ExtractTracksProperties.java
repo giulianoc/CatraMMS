@@ -27,20 +27,6 @@ public class ExtractTracksProperties extends CreateContentProperties implements 
     {
         ExtractTracksProperties extractTracksProperties = new ExtractTracksProperties(
                 super.getElementId(), super.getLabel());
-        extractTracksProperties.setOnSuccessChildren(super.getOnSuccessChildren());
-        extractTracksProperties.setOnErrorChildren(super.getOnErrorChildren());
-        extractTracksProperties.setOnCompleteChildren(super.getOnCompleteChildren());
-
-        extractTracksProperties.setTitle(getTitle());
-        extractTracksProperties.setTags(getTags());
-        extractTracksProperties.setRetention(getRetention());
-        extractTracksProperties.setStartPublishing(getStartPublishing());
-        extractTracksProperties.setEndPublishing(getEndPublishing());
-        extractTracksProperties.setUserData(getUserData());
-        extractTracksProperties.setIngester(getIngester());
-        extractTracksProperties.setContentProviderName(getContentProviderName());
-        extractTracksProperties.setDeliveryFileName(getDeliveryFileName());
-        extractTracksProperties.setUniqueName(getUniqueName());
 
         extractTracksProperties.setFileFormat(fileFormat);
         extractTracksProperties.setVideoTrackNumber(videoTrackNumber);
@@ -48,7 +34,21 @@ public class ExtractTracksProperties extends CreateContentProperties implements 
 
         extractTracksProperties.setStringBuilderTaskReferences(taskReferences);
 
+        super.getData(extractTracksProperties);
+
+
         return extractTracksProperties;
+    }
+
+    public void setData(ExtractTracksProperties workflowProperties)
+    {
+        super.setData(workflowProperties);
+
+        setFileFormat(workflowProperties.getFileFormat());
+        setVideoTrackNumber(workflowProperties.getVideoTrackNumber());
+        setAudioTrackNumber(workflowProperties.getAudioTrackNumber());
+
+        setStringBuilderTaskReferences(workflowProperties.getStringBuilderTaskReferences());
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)

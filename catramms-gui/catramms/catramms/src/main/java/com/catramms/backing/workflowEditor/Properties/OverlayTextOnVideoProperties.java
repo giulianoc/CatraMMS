@@ -35,9 +35,6 @@ public class OverlayTextOnVideoProperties extends CreateContentProperties implem
     {
         OverlayTextOnVideoProperties overlayTextOnVideoProperties = new OverlayTextOnVideoProperties(
                 super.getElementId(), super.getLabel());
-        overlayTextOnVideoProperties.setOnSuccessChildren(super.getOnSuccessChildren());
-        overlayTextOnVideoProperties.setOnErrorChildren(super.getOnErrorChildren());
-        overlayTextOnVideoProperties.setOnCompleteChildren(super.getOnCompleteChildren());
 
         overlayTextOnVideoProperties.setText(getText());
         overlayTextOnVideoProperties.setPositionXInPixel(getPositionXInPixel());
@@ -51,20 +48,31 @@ public class OverlayTextOnVideoProperties extends CreateContentProperties implem
         overlayTextOnVideoProperties.setBoxPercentageOpacity(getBoxPercentageOpacity());
         overlayTextOnVideoProperties.setEncodingPriority(getEncodingPriority());
 
-        overlayTextOnVideoProperties.setTitle(getTitle());
-        overlayTextOnVideoProperties.setTags(getTags());
-        overlayTextOnVideoProperties.setRetention(getRetention());
-        overlayTextOnVideoProperties.setStartPublishing(getStartPublishing());
-        overlayTextOnVideoProperties.setEndPublishing(getEndPublishing());
-        overlayTextOnVideoProperties.setUserData(getUserData());
-        overlayTextOnVideoProperties.setIngester(getIngester());
-        overlayTextOnVideoProperties.setContentProviderName(getContentProviderName());
-        overlayTextOnVideoProperties.setDeliveryFileName(getDeliveryFileName());
-        overlayTextOnVideoProperties.setUniqueName(getUniqueName());
-
         overlayTextOnVideoProperties.setStringBuilderTaskReferences(taskReferences);
 
+        super.getData(overlayTextOnVideoProperties);
+
+
         return overlayTextOnVideoProperties;
+    }
+
+    public void setData(OverlayTextOnVideoProperties workflowProperties)
+    {
+        super.setData(workflowProperties);
+
+        setText(workflowProperties.getText());
+        setPositionXInPixel(workflowProperties.getPositionXInPixel());
+        setPositionYInPixel(workflowProperties.getPositionYInPixel());
+        setFontType(workflowProperties.getFontType());
+        setFontSize(workflowProperties.getFontSize());
+        setFontColor(workflowProperties.getFontColor());
+        setTextPercentageOpacity(workflowProperties.getTextPercentageOpacity());
+        setBoxEnable(workflowProperties.getBoxEnable());
+        setBoxColor(workflowProperties.getBoxColor());
+        setBoxPercentageOpacity(workflowProperties.getBoxPercentageOpacity());
+        setEncodingPriority(workflowProperties.getEncodingPriority());
+
+        setStringBuilderTaskReferences(workflowProperties.getStringBuilderTaskReferences());
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)

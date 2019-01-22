@@ -38,28 +38,28 @@ public class FaceIdentificationProperties extends CreateContentProperties implem
     {
         FaceIdentificationProperties faceIdentificationProperties = new FaceIdentificationProperties(
                 super.getElementId(), super.getLabel());
-        faceIdentificationProperties.setOnSuccessChildren(super.getOnSuccessChildren());
-        faceIdentificationProperties.setOnErrorChildren(super.getOnErrorChildren());
-        faceIdentificationProperties.setOnCompleteChildren(super.getOnCompleteChildren());
 
         faceIdentificationProperties.setCascadeName(getCascadeName());
         faceIdentificationProperties.setDeepLearnedModelTags(getDeepLearnedModelTags());
         faceIdentificationProperties.setEncodingPriority(getEncodingPriority());
 
-        faceIdentificationProperties.setTitle(getTitle());
-        faceIdentificationProperties.setTags(getTags());
-        faceIdentificationProperties.setRetention(getRetention());
-        faceIdentificationProperties.setStartPublishing(getStartPublishing());
-        faceIdentificationProperties.setEndPublishing(getEndPublishing());
-        faceIdentificationProperties.setUserData(getUserData());
-        faceIdentificationProperties.setIngester(getIngester());
-        faceIdentificationProperties.setContentProviderName(getContentProviderName());
-        faceIdentificationProperties.setDeliveryFileName(getDeliveryFileName());
-        faceIdentificationProperties.setUniqueName(getUniqueName());
-
         faceIdentificationProperties.setStringBuilderTaskReferences(taskReferences);
 
+        super.getData(faceIdentificationProperties);
+
+
         return faceIdentificationProperties;
+    }
+
+    public void setData(FaceIdentificationProperties workflowProperties)
+    {
+        super.setData(workflowProperties);
+
+        setCascadeName(workflowProperties.getCascadeName());
+        setDeepLearnedModelTags(workflowProperties.getDeepLearnedModelTags());
+        setEncodingPriority(workflowProperties.getEncodingPriority());
+
+        setStringBuilderTaskReferences(workflowProperties.getStringBuilderTaskReferences());
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)

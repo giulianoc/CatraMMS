@@ -30,6 +30,38 @@ public class CreateContentProperties extends WorkflowProperties implements Seria
         super(elementId, label, image, mainType, type);
     }
 
+    public void getData(CreateContentProperties workflowProperties)
+    {
+        workflowProperties.setTitle(getTitle());
+        workflowProperties.setTags(getTags());
+        workflowProperties.setRetention(getRetention());
+        workflowProperties.setStartPublishing(getStartPublishing());
+        workflowProperties.setEndPublishing(getEndPublishing());
+        workflowProperties.setUserData(getUserData());
+        workflowProperties.setIngester(getIngester());
+        workflowProperties.setContentProviderName(getContentProviderName());
+        workflowProperties.setDeliveryFileName(getDeliveryFileName());
+        workflowProperties.setUniqueName(getUniqueName());
+    }
+
+    public void setData(CreateContentProperties workflowProperties)
+    {
+        super.setData(workflowProperties);
+
+        // mLogger.info("CreateContentProperties::setData");
+
+        setTitle(workflowProperties.getTitle());
+        setTags(workflowProperties.getTags());
+        setRetention(workflowProperties.getRetention());
+        setStartPublishing(workflowProperties.getStartPublishing());
+        setEndPublishing(workflowProperties.getEndPublishing());
+        setUserData(workflowProperties.getUserData());
+        setIngester(workflowProperties.getIngester());
+        setContentProviderName(workflowProperties.getContentProviderName());
+        setDeliveryFileName(workflowProperties.getDeliveryFileName());
+        setUniqueName(workflowProperties.getUniqueName());
+    }
+
     public void addCreateContentPropertiesToJson(JSONObject joParameters)
             throws Exception
     {

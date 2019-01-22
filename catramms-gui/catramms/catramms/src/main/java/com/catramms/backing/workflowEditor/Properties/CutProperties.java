@@ -34,20 +34,6 @@ public class CutProperties extends CreateContentProperties implements Serializab
     {
         CutProperties cutProperties = new CutProperties(
                 super.getElementId(), super.getLabel());
-        cutProperties.setOnSuccessChildren(super.getOnSuccessChildren());
-        cutProperties.setOnErrorChildren(super.getOnErrorChildren());
-        cutProperties.setOnCompleteChildren(super.getOnCompleteChildren());
-
-        cutProperties.setTitle(getTitle());
-        cutProperties.setTags(getTags());
-        cutProperties.setRetention(getRetention());
-        cutProperties.setStartPublishing(getStartPublishing());
-        cutProperties.setEndPublishing(getEndPublishing());
-        cutProperties.setUserData(getUserData());
-        cutProperties.setIngester(getIngester());
-        cutProperties.setContentProviderName(getContentProviderName());
-        cutProperties.setDeliveryFileName(getDeliveryFileName());
-        cutProperties.setUniqueName(getUniqueName());
 
         cutProperties.setStartTimeInSeconds(startTimeInSeconds);
         cutProperties.setEndType(endType);
@@ -57,7 +43,23 @@ public class CutProperties extends CreateContentProperties implements Serializab
 
         cutProperties.setStringBuilderTaskReferences(taskReferences);
 
+        super.getData(cutProperties);
+
+
         return cutProperties;
+    }
+
+    public void setData(CutProperties workflowProperties)
+    {
+        super.setData(workflowProperties);
+
+        setStartTimeInSeconds(workflowProperties.getStartTimeInSeconds());
+        setEndType(workflowProperties.getEndType());
+        setEndTimeInSeconds(workflowProperties.getEndTimeInSeconds());
+        setFramesNumber(workflowProperties.getFramesNumber());
+        setFileFormat(workflowProperties.getFileFormat());
+
+        setStringBuilderTaskReferences(workflowProperties.getStringBuilderTaskReferences());
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)

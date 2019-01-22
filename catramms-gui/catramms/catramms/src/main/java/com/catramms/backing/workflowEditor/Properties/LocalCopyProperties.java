@@ -26,9 +26,6 @@ public class LocalCopyProperties extends WorkflowProperties implements Serializa
     {
         LocalCopyProperties localCopyProperties = new LocalCopyProperties(
                 super.getElementId(), super.getLabel());
-        localCopyProperties.setOnSuccessChildren(super.getOnSuccessChildren());
-        localCopyProperties.setOnErrorChildren(super.getOnErrorChildren());
-        localCopyProperties.setOnCompleteChildren(super.getOnCompleteChildren());
 
         localCopyProperties.setLocalPath(getLocalPath());
         localCopyProperties.setLocalFileName(getLocalFileName());
@@ -36,6 +33,16 @@ public class LocalCopyProperties extends WorkflowProperties implements Serializa
         localCopyProperties.setStringBuilderTaskReferences(taskReferences);
 
         return localCopyProperties;
+    }
+
+    public void setData(LocalCopyProperties workflowProperties)
+    {
+        super.setData(workflowProperties);
+
+        setLocalPath(workflowProperties.getLocalPath());
+        setLocalFileName(workflowProperties.getLocalFileName());
+
+        setStringBuilderTaskReferences(workflowProperties.getStringBuilderTaskReferences());
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)
