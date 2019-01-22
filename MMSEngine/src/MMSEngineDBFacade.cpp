@@ -13551,10 +13551,10 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
         string parameters = string()
                 + "{ "
                 + "\"liveURL\": \"" + liveURL + "\""
-                + ", \"utcRecordingPeriodStart\": \"" + to_string(utcRecordingPeriodStart) + "\""
-                + ", \"utcRecordingPeriodEnd\": \"" + to_string(utcRecordingPeriodEnd) + "\""
+                + ", \"utcRecordingPeriodStart\": " + to_string(utcRecordingPeriodStart) + ""
+                + ", \"utcRecordingPeriodEnd\": " + to_string(utcRecordingPeriodEnd) + ""
                 + ", \"segmentDuration\": " + to_string(segmentDuration) + ""
-                + "\"outputFileFormat\": \"" + outputFileFormat + "\""
+                + ", \"outputFileFormat\": \"" + outputFileFormat + "\""
                 + "} "
                 ;
 
