@@ -1730,7 +1730,7 @@ void FFMPEGEncoder::liveRecorder(
         time_t utcRecordingPeriodStart = liveRecorderMedatada.get("utcRecordingPeriodStart", -1).asInt64();
         time_t utcRecordingPeriodEnd = liveRecorderMedatada.get("utcRecordingPeriodEnd", -1).asInt64();
         int segmentDurationInSeconds = liveRecorderMedatada.get("segmentDurationInSeconds", -1).asInt();
-        string outputFormat = liveRecorderMedatada.get("outputFormat", "XXX").asString();
+        string outputFileFormat = liveRecorderMedatada.get("outputFileFormat", "XXX").asString();
 
         encoding->_ffmpeg->liveRecorder(
                 ingestionJobKey,
@@ -1739,7 +1739,7 @@ void FFMPEGEncoder::liveRecorder(
                 utcRecordingPeriodStart,
                 utcRecordingPeriodEnd,
                 segmentDurationInSeconds,
-                outputFormat
+                outputFileFormat
         );
         
         encoding->_running = false;

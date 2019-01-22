@@ -89,6 +89,7 @@ public class WorkflowEditor extends Workspace implements Serializable {
     private HTTPCallbackProperties currentHttpCallbackProperties;
     private FaceRecognitionProperties currentFaceRecognitionProperties;
     private FaceIdentificationProperties currentFaceIdentificationProperties;
+    private LiveRecorderProperties currentLiveRecorderProperties;
 
 
     @PostConstruct
@@ -211,6 +212,8 @@ public class WorkflowEditor extends Workspace implements Serializable {
             workflowProperties = new FaceRecognitionProperties(elementId++, taskDefaultLabel);
         else if (taskType.equalsIgnoreCase("Face-Identification"))
             workflowProperties = new FaceIdentificationProperties(elementId++, taskDefaultLabel);
+        else if (taskType.equalsIgnoreCase("Live-Recorder"))
+            workflowProperties = new LiveRecorderProperties(elementId++, taskDefaultLabel);
         else
             mLogger.error("Wrong taskType: " + taskType);
 
@@ -620,6 +623,8 @@ public class WorkflowEditor extends Workspace implements Serializable {
                 mediaItemsReferences.prepareToSelectMediaItems(currentElementType, mediaItemsSelectionMode,
                         videoContentType, audioContentType, imageContentType, taskReferences);
             }
+            else if (workflowProperties.getType().equalsIgnoreCase("Live-Recorder"))
+                currentLiveRecorderProperties = ((LiveRecorderProperties) workflowProperties).clone();
             else
                 mLogger.error("Wrong workflowProperties.getType(): " + workflowProperties.getType());
         }
@@ -684,6 +689,8 @@ public class WorkflowEditor extends Workspace implements Serializable {
                 element.setData(currentFaceRecognitionProperties);
             else if (workflowProperties.getType().equalsIgnoreCase("Face-Identification"))
                 element.setData(currentFaceIdentificationProperties);
+            else if (workflowProperties.getType().equalsIgnoreCase("Live-Recorder"))
+                element.setData(currentLiveRecorderProperties);
             else
                 mLogger.error("Wrong workflowProperties.getType(): " + workflowProperties.getType());
 
@@ -1457,5 +1464,13 @@ public class WorkflowEditor extends Workspace implements Serializable {
 
     public void setCurrentFaceIdentificationProperties(FaceIdentificationProperties currentFaceIdentificationProperties) {
         this.currentFaceIdentificationProperties = currentFaceIdentificationProperties;
+    }
+
+    public LiveRecorderProperties getCurrentLiveRecorderProperties() {
+        return currentLiveRecorderProperties;
+    }
+
+    public void setCurrentLiveRecorderProperties(LiveRecorderProperties currentLiveRecorderProperties) {
+        this.currentLiveRecorderProperties = currentLiveRecorderProperties;
     }
 }

@@ -4406,7 +4406,7 @@ void MMSEngineProcessor::manageLiveRecorder(
         string recordingPeriodStart;
         string recordingPeriodEnd;
 		int segmentDurationInSeconds;
-		string outputFormat;
+		string outputFileFormat;
         {
             string field = "LiveURL";
             if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
@@ -4459,17 +4459,11 @@ void MMSEngineProcessor::manageLiveRecorder(
             }
             segmentDurationInSeconds = parametersRoot.get(field, 0).asInt();
 
-            field = "OutputFormat";
+            field = "OutputFileFormat";
             if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", Field: " + field;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-            outputFormat = parametersRoot.get(field, "XXX").asString();
+				outputFileFormat = "ts";
+			else
+            	outputFileFormat = parametersRoot.get(field, "XXX").asString();
         }
 
 		time_t utcRecordingPeriodStart;
@@ -4570,7 +4564,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 		_mmsEngineDBFacade->addEncoding_LiveRecorderJob(workspace, ingestionJobKey,
 			liveURL, utcRecordingPeriodStart, utcRecordingPeriodEnd, segmentDurationInSeconds,
-			encodingPriority);
+			outputFileFormat, encodingPriority);
 	}
     catch(runtime_error e)
     {

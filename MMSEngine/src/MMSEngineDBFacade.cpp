@@ -13519,6 +13519,7 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
 	time_t utcRecordingPeriodStart,
 	time_t utcRecordingPeriodEnd,
 	int segmentDuration,
+	string outputFileFormat,
 	EncodingPriority encodingPriority
 )
 {
@@ -13553,6 +13554,7 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
                 + ", \"utcRecordingPeriodStart\": \"" + to_string(utcRecordingPeriodStart) + "\""
                 + ", \"utcRecordingPeriodEnd\": \"" + to_string(utcRecordingPeriodEnd) + "\""
                 + ", \"segmentDuration\": " + to_string(segmentDuration) + ""
+                + "\"outputFileFormat\": \"" + outputFileFormat + "\""
                 + "} "
                 ;
 

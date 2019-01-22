@@ -2626,7 +2626,7 @@ void FFMpeg::liveRecorder(
         time_t utcRecordingPeriodStart, 
         time_t utcRecordingPeriodEnd, 
         int segmentDurationInSeconds,
-        string outputFormat)
+        string outputFileFormat)
 {
 	string ffmpegExecuteCommand;
 	string segmentListPath;
@@ -2679,7 +2679,7 @@ void FFMpeg::liveRecorder(
 			;
     
 		string recordedFileNameTemplate = recordedFileNamePrefix
-			+ "_%Y-%m-%d_%H-%M-%S." + outputFormat;
+			+ "_%Y-%m-%d_%H-%M-%S." + outputFileFormat;
 		ffmpegExecuteCommand = 
 			_ffmpegPath + "/ffmpeg "
 			+ "-i " + liveURL + " "
@@ -2767,7 +2767,7 @@ void FFMpeg::liveRecorder(
                 	if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
                     	continue;
 
-                	if (directoryEntry.size() >= recorderFileNamePrefix.size() && 0 == directoryEntry.compare(0, recorderFileNamePrefix.size(), recorderFileNamePrefix))
+                	if (directoryEntry.size() >= recordedFileNamePrefix.size() && 0 == directoryEntry.compare(0, recordedFileNamePrefix.size(), recordedFileNamePrefix))
 					{
 						string recordedPathNameToBeRemoved = segmentListPath + "/" + directoryEntry;
         				_logger->info(__FILEREF__ + "Remove"

@@ -50,6 +50,7 @@
     <ui:include src="workflowProperties/httpCallbackProperties.xhtml"/>
     <ui:include src="workflowProperties/faceRecognitionProperties.xhtml"/>
     <ui:include src="workflowProperties/faceIdentificationProperties.xhtml"/>
+    <ui:include src="workflowProperties/liveRecorderProperties.xhtml"/>
 
     <h:form id="viewForm" enctype="multipart/form-data">
 
@@ -352,6 +353,9 @@
                         update="workspaceDiagram"/>
             <p:menuitem value="Post-On-YouTube" icon="/resources/img/workspaceElements/Post-On-YouTube-icon.png"
                         actionListener="#{workflowEditor.addTask('Post-On-YouTube', null, null)}"
+                        update="workspaceDiagram"/>
+            <p:menuitem value="Live-Recorder" icon="/resources/img/workspaceElements/Live-Recorder-icon.png"
+                        actionListener="#{workflowEditor.addTask('Live-Recorder', null, null)}"
                         update="workspaceDiagram"/>
             <p:menuitem value="Email-Notification" icon="/resources/img/workspaceElements/Email-Notification-icon.png"
                         actionListener="#{workflowEditor.addTask('Email-Notification', null, null)}"

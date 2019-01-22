@@ -138,7 +138,7 @@ public:
         time_t utcRecordingPeriodStart, 
         time_t utcRecordingPeriodEnd, 
         int segmentDurationInSeconds,
-        string outputFormat);
+        string outputFileFormat);
 
     static void encodingFileFormatValidation(string fileFormat,
         shared_ptr<spdlog::logger> logger);

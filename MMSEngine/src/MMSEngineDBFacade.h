@@ -1089,6 +1089,7 @@ public:
 		time_t utcRecordingPeriodStart,
 		time_t utcRecordingPeriodEnd,
 		int segmentDuration,
+		string outputFileFormat,
 		EncodingPriority encodingPriority);
 
     int updateEncodingJob (

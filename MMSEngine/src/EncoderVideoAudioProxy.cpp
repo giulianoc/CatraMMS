@@ -5650,7 +5650,7 @@ string EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 	time_t utcRecordingPeriodStart;
 	time_t utcRecordingPeriodEnd;
 	int segmentDurationInSeconds;
-	string outputFormat;
+	string outputFileFormat;
 	{
         string field = "liveURL";
         liveURL = _encodingItem->_parametersRoot.get(field, "XXX").asString();
@@ -5664,8 +5664,8 @@ string EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
         field = "segmentDurationInSeconds";
         segmentDurationInSeconds = _encodingItem->_parametersRoot.get(field, 0).asInt();
 
-        field = "outputFormat";
-        outputFormat = _encodingItem->_parametersRoot.get(field, "XXX").asString();
+        field = "outputFileFormat";
+        outputFileFormat = _encodingItem->_parametersRoot.get(field, "XXX").asString();
 	}
 
 	string segmentListPathName;
@@ -5722,7 +5722,7 @@ string EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
                 liveRecorderMedatada["utcRecordingPeriodStart"] = utcRecordingPeriodStart;
                 liveRecorderMedatada["utcRecordingPeriodEnd"] = utcRecordingPeriodEnd;
                 liveRecorderMedatada["segmentDurationInSeconds"] = segmentDurationInSeconds;
-                liveRecorderMedatada["outputFormat"] = outputFormat;
+                liveRecorderMedatada["outputFileFormat"] = outputFileFormat;
 
                 {
                     Json::StreamWriterBuilder wbuilder;
