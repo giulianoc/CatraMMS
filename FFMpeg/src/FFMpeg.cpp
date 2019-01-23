@@ -2680,10 +2680,11 @@ void FFMpeg::liveRecorder(
     
 		string recordedFileNameTemplate = recordedFileNamePrefix
 			+ "_%Y-%m-%d_%H-%M-%S." + outputFileFormat;
+
 		ffmpegExecuteCommand = 
 			_ffmpegPath + "/ffmpeg "
 			+ "-i " + liveURL + " "
-			+ "-t " + to_string(utcRecordingPeriodEnd - utcRecordingPeriodStart) + " "
+			+ "-t " + to_string(utcRecordingPeriodEnd - utcNow) + " "
 			+ "-c:v copy "
 			+ "-c:a copy "
 			+ "-f segment "
@@ -2801,6 +2802,98 @@ void FFMpeg::liveRecorder(
 
         	FileIO::closeDirectory (directory);
     	}
+
+        throw e;
+    }
+
+    _logger->info(__FILEREF__ + "Remove"
+        + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+    bool exceptionInCaseOfError = false;
+    FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
+}
+
+void FFMpeg::changeContainer(
+	int64_t ingestionJobKey,
+	string sourcePhysicalPath,
+	string destinationPath,
+	string outputFileFormat)
+{
+	string ffmpegExecuteCommand;
+	string destinationPathName;
+
+    try
+    {
+		_outputFfmpegPathFileName =
+			_ffmpegTempDir + "/"
+			+ to_string(ingestionJobKey)
+			+ ".changeContainer.log"
+			;
+    
+		destinationPathName = destinationPath + "/"
+			+ string("changeContainer_") + to_string(ingestionJobKey) + "." + outputFileFormat;
+
+		ffmpegExecuteCommand = 
+			_ffmpegPath + "/ffmpeg "
+			+ "-i " + sourcePhysicalPath + " "
+			+ "-c:v copy "
+			+ "-c:a copy "
+			+ destinationPathName + " "
+			+ "> " + _outputFfmpegPathFileName + " "
+			+ "2>&1"
+		;
+
+		#ifdef __APPLE__
+			ffmpegExecuteCommand.insert(0, string("export DYLD_LIBRARY_PATH=")
+					+ getenv("DYLD_LIBRARY_PATH") + "; ");
+		#endif
+
+        _logger->info(__FILEREF__ + "changeContainer: Executing ffmpeg command"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+        );
+
+        chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
+
+        int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
+        if (executeCommandStatus != 0)
+        {
+            string errorMessage = __FILEREF__ + "changeContainer: ffmpeg command failed"
+                    + ", executeCommandStatus: " + to_string(executeCommandStatus)
+                    + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+            ;
+
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        
+        chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
+
+        _logger->info(__FILEREF__ + "changeContainer: Executed ffmpeg command"
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+            + ", ffmpegCommandDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
+        );
+    }
+    catch(runtime_error e)
+    {
+        string lastPartOfFfmpegOutputFile = getLastPartOfFile(
+                _outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
+        string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+                + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+                + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+                + ", e.what(): " + e.what()
+        ;
+        _logger->error(errorMessage);
+
+        _logger->info(__FILEREF__ + "Remove"
+            + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+        bool exceptionInCaseOfError = false;
+        FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
+
+        _logger->info(__FILEREF__ + "Remove"
+            + ", destinationPathName: " + destinationPathName);
+        FileIO::remove(destinationPathName, exceptionInCaseOfError);
 
         throw e;
     }

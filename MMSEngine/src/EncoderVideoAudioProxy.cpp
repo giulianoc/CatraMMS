@@ -6193,13 +6193,6 @@ int EncoderVideoAudioProxy::getEncodingProgress()
 		}
 		else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder)
 		{
-			_logger->info(__FILEREF__ + "encodingProgress"
-				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				+ ", encodingProgress: " + to_string(_localEncodingProgress)
-			);
-
 			time_t utcRecordingPeriodStart;
 			time_t utcRecordingPeriodEnd;
 			{
@@ -6223,6 +6216,13 @@ int EncoderVideoAudioProxy::getEncodingProgress()
 					(utcRecordingPeriodEnd - utcRecordingPeriodStart);
 			else
 				encodingProgress = 100;
+
+			_logger->info(__FILEREF__ + "encodingProgress"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", encodingProgress: " + to_string(encodingProgress)
+			);
 		}
 		else
 		{
