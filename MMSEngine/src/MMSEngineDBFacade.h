@@ -428,6 +428,7 @@ public:
         FaceRecognition         = 20,
         FaceIdentification		= 21,
         LiveRecorder			= 22,
+        ChangeFileFormat		= 23,
         EmailNotification       = 30,
         ContentUpdate           = 50,
         ContentRemove           = 60
@@ -482,6 +483,8 @@ public:
                 return "Face-Identification";
 			case IngestionType::LiveRecorder:
 				return "Live-Recorder";
+			case IngestionType::ChangeFileFormat:
+				return "Change-File-Format";
                 
             case IngestionType::EmailNotification:
                 return "Email-Notification";
@@ -543,6 +546,8 @@ public:
             return IngestionType::FaceIdentification;
         else if (lowerCase == "live-recorder")
             return IngestionType::LiveRecorder;
+        else if (lowerCase == "change-file-format")
+            return IngestionType::ChangeFileFormat;
 
         else if (lowerCase == "email-notification")
             return IngestionType::EmailNotification;

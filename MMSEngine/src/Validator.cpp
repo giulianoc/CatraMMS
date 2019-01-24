@@ -1128,6 +1128,27 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
         Json::Value parametersRoot = taskRoot[field]; 
         validateLiveRecorderMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
     }
+    else if (type == "Change-File-Format")
+    {
+        ingestionType = MMSEngineDBFacade::IngestionType::ChangeFileFormat;
+        
+        field = "Parameters";
+        if (!isMetadataPresent(taskRoot, field))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sTaskRoot = Json::writeString(wbuilder, taskRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + field
+                    + ", sTaskRoot: " + sTaskRoot;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        Json::Value parametersRoot = taskRoot[field]; 
+        validateChangeFileFormatMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+    }
     else
     {
         string errorMessage = __FILEREF__ + "Field 'Type' is wrong"
@@ -1255,6 +1276,11 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
     else if (ingestionType == MMSEngineDBFacade::IngestionType::LiveRecorder)
     {
         validateLiveRecorderMetadata(workspaceKey, label, parametersRoot, 
+                validateDependenciesToo, dependencies);        
+    }
+    else if (ingestionType == MMSEngineDBFacade::IngestionType::ChangeFileFormat)
+    {
+        validateChangeFileFormatMetadata(workspaceKey, label, parametersRoot, 
                 validateDependenciesToo, dependencies);        
     }
     else
@@ -3071,6 +3097,122 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 			throw runtime_error(errorMessage);
 		}
 	}
+}
+
+void Validator::validateChangeFileFormatMetadata(int64_t workspaceKey, string label,
+	Json::Value parametersRoot, 
+	bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+{     
+    vector<string> mandatoryFields = {
+        "OutputFileFormat"
+    };
+    for (string mandatoryField: mandatoryFields)
+    {
+        if (!isMetadataPresent(parametersRoot, mandatoryField))
+        {
+            Json::StreamWriterBuilder wbuilder;
+            string sParametersRoot = Json::writeString(wbuilder, parametersRoot);
+            
+            string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", Field: " + mandatoryField
+                    + ", sParametersRoot: " + sParametersRoot
+                    + ", label: " + label
+                    ;
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+    }
+
+	bool isVideoOrAudio = false;
+	bool isImage = false;
+
+    string field = "OutputFileFormat";
+    string outputFileFormat = parametersRoot.get(field, "XXX").asString();
+    if (!isVideoAudioFileFormat(outputFileFormat))
+		isVideoOrAudio = true;
+    else if (!isImageFileFormat(outputFileFormat))
+		isImage = true;
+	else
+    {
+        string errorMessage = __FILEREF__ + field + " is wrong"
+                + ", Field: " + field
+                + ", outputFileFormat: " + outputFileFormat
+                + ", label: " + label
+                ;
+        _logger->error(__FILEREF__ + errorMessage);
+        
+        throw runtime_error(errorMessage);
+    }
+
+    if (validateDependenciesToo)
+    {
+        // References is optional because in case of dependency managed automatically
+        // by MMS (i.e.: onSuccess)
+        string field = "References";
+        if (isMetadataPresent(parametersRoot, field))
+        {
+            Json::Value referencesRoot = parametersRoot[field];
+            if (referencesRoot.size() < 1)
+            {
+                string errorMessage = __FILEREF__ + "No correct number of References"
+                        + ", referencesRoot.size: " + to_string(referencesRoot.size())
+                        + ", label: " + label
+                        ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+
+            bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = true;
+            bool encodingProfileFieldsToBeManaged = false;
+            fillDependencies(workspaceKey, parametersRoot, dependencies,
+                    priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
+                    encodingProfileFieldsToBeManaged);
+			if (validateDependenciesToo)
+			{
+				for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
+				{
+					int64_t key;
+					MMSEngineDBFacade::ContentType referenceContentType;
+					Validator::DependencyType dependencyType;
+
+					tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+
+					if (isImage)
+					{
+						if (referenceContentType != MMSEngineDBFacade::ContentType::Image)
+						{
+							string errorMessage = __FILEREF__ + "Reference... does not refer an image content"
+								+ ", dependencyType: " + to_string(static_cast<int>(dependencyType))
+								+ ", referenceMediaItemKey: " + to_string(key)
+								+ ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
+								+ ", label: " + label
+							;
+							_logger->error(errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+					}
+					else if (isVideoOrAudio)
+					{
+						if (referenceContentType != MMSEngineDBFacade::ContentType::Video && referenceContentType != MMSEngineDBFacade::ContentType::Audio)
+						{
+							string errorMessage = __FILEREF__ + "Reference... does not refer a video or audio content"
+								+ ", dependencyType: " + to_string(static_cast<int>(dependencyType))
+								+ ", referenceMediaItemKey: " + to_string(key)
+								+ ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType)
+								+ ", label: " + label
+							;
+							_logger->error(errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+					}
+				}
+			}
+        }    
+    }    
 }
 
 bool Validator::isMetadataPresent(Json::Value root, string field)

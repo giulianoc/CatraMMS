@@ -178,6 +178,20 @@
 
                 </p:column>
                 <p:column>
+                    <p:panel rendered="#{workflowEditor.mediaItemsReferences.mediaItemsSelectionMode == 'multiple'}">
+                        <p:outputLabel value="Sorted by" />
+
+                        <p:selectOneRadio id="mediaItemsSortedBy"
+                                          value="#{workflowEditor.mediaItemsReferences.mediaItemsSortedBy}">
+                            <f:selectItem itemLabel="User selection" itemValue="userSelection"/>
+                            <f:selectItem itemLabel="Keys ascending" itemValue="keyAscending"/>
+                            <f:selectItem itemLabel="Keys descending" itemValue="keyDescending"/>
+                            <p:ajax process="@form" />
+                        </p:selectOneRadio>
+                    </p:panel>
+
+                </p:column>
+                <p:column>
                     <!--
                     update="viewForm:taskReferences_Overlay_Image_On_Video,viewForm:taskReferences_Overlay_Text_On_Video,viewForm:taskReferences_Frame,viewForm:taskReferences_Periodical_Frames,viewForm:taskReferences_I_Frames,viewForm:taskReferences_Motion_JPEG_by_Periodical_Frames,viewForm:taskReferences_Motion_JPEG_by_I_Frames,viewForm:taskReferences_Slideshow,viewForm:taskReferences_Encode,viewForm:taskReferences_FTP_Delivery,viewForm:taskReferences_Local_Copy,viewForm:taskReferences_HTTP_Callback,viewForm:taskReferences_Extract_Tracks,viewForm:taskReferences_Post_On_Facebook,viewForm:taskReferences_Post_On_YouTube,viewForm:taskReferences_Face_Recognition,viewForm:taskReferences_Face_Identification"
                     -->

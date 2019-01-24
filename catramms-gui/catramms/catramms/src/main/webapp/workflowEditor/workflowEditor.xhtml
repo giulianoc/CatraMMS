@@ -152,10 +152,11 @@
             .ui-diagram-element {
                 border:0.1em dotted #E5E4E2;
                 background-color: #EFEEEC;
-                width:13em;
-                height:5em;
                 text-align: center;
                 box-shadow: 0 5px 10px rgba(0, 0, 0, 0.8);
+                width:12em;
+                height:4em;
+                font-size: 16px;
             }
 
             .workflowElementText {
@@ -168,9 +169,62 @@
             }
 
             .connection-label {
-                font-size: 24px;
                 font-weight: bold;
                 color: #816A51;
+                font-size: 16px;
+            }
+
+            .diagram-element-icon {
+                width: 40px;
+                height: 40px;
+            }
+
+            .jsplumb-endpoint {
+                width: 35px;
+                height: 35px;
+            }
+
+            @media only screen and (min-width:769px) and (max-width: 992px) {
+                .ui-diagram-element {
+                    width:12em;
+                    height:4em;
+                    font-size: 14px;
+                }
+
+                .connection-label {
+                    font-size: 14px;
+                }
+
+                .diagram-element-icon {
+                    width: 35px;
+                    height: 35px;
+                }
+
+                .jsplumb-endpoint {
+                    width: 30px;
+                    height: 30px;
+                }
+            }
+            @media only screen and (min-width:0px) and (max-width: 768px) {
+                .ui-diagram-element {
+                    width:11em;
+                    height:3em;
+                    font-size: 12px;
+                }
+
+                .connection-label {
+                    font-size: 12px;
+                }
+
+                .diagram-element-icon {
+                    width: 30px;
+                    height: 30px;
+                }
+
+                .jsplumb-endpoint {
+                    width: 25px;
+                    height: 25px;
+                }
             }
         </style>
 
@@ -258,7 +312,8 @@
                 <!-- onclick="onElementMouseClick(this)"  -->
                 <div onmouseleave="onElementMouseLeave(this)">
                     <p>
-                        <p:graphicImage style="float: left;" name="/img/workspaceElements/#{el.image}" />
+                        <p:graphicImage styleClass="diagram-element-icon" style="float: left;"
+                                        name="/img/workspaceElements/#{el.image}" />
                         <p:commandLink
                                 value="#{el.label}"
                                 actionListener="#{workflowEditor.onElementLinkClicked()}"

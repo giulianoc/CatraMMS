@@ -29,6 +29,7 @@ public class MediaItemsReferences implements Serializable {
     private String mediaItemsTitle;
     private Long mediaItemsMaxMediaItemsNumber = new Long(100);
     private String mediaItemsToBeAddedOrReplaced;
+    private String mediaItemsSortedBy;
     private StringBuilder taskReferences;
 
     private String currentElementType;
@@ -63,6 +64,7 @@ public class MediaItemsReferences implements Serializable {
         mediaItemsTitle = "";
 
         mediaItemsToBeAddedOrReplaced = "toBeReplaced";
+        mediaItemsSortedBy = "userSelection";
     }
 
     public void prepareToSelectMediaItems(
@@ -159,13 +161,19 @@ public class MediaItemsReferences implements Serializable {
         this.mediaItemsSelectedList = mediaItemsSelectedList;
 
         mLogger.info("taskReferences initialization"
-                + ", mediaItemsSelectedList.size: " + mediaItemsSelectedList.size()
-                + ", mediaItemsToBeAddedOrReplaced: " + mediaItemsToBeAddedOrReplaced
-                + ", taskReferences: " + taskReferences
+                        + ", mediaItemsSelectedList.size: " + mediaItemsSelectedList.size()
+                        + ", mediaItemsToBeAddedOrReplaced: " + mediaItemsToBeAddedOrReplaced
+                        + ", mediaItemsSortedBy: " + mediaItemsSortedBy
+                        + ", taskReferences: " + taskReferences
         );
 
-        if (mediaItemsToBeAddedOrReplaced.equalsIgnoreCase("toBeReplaced"))
-            taskReferences.delete(0, taskReferences.length());
+        List<Long> keysList = new ArrayList<>();
+
+        if (mediaItemsToBeAddedOrReplaced.equalsIgnoreCase("toBeAdded"))
+        {
+            for (String key: taskReferences.toString().split(","))
+                keysList.add(Long.parseLong(key));
+        }
 
         mLogger.info("taskReferences initialization"
                         + ", currentElementType: " + currentElementType
@@ -178,18 +186,8 @@ public class MediaItemsReferences implements Serializable {
             if (currentElementType.equalsIgnoreCase("Remove-Content") ||
                     currentElementType.equalsIgnoreCase("HTTP-Callback"))
             {
-                if (taskReferences.length() == 0)
-                    taskReferences.append(mediaItem.getMediaItemKey().toString());
-                else
-                {
-                    int keyAlreadyAddedIndex = taskReferences.indexOf(mediaItem.getMediaItemKey().toString());
-                    if (keyAlreadyAddedIndex != -1 &&
-                            (taskReferences.length() == keyAlreadyAddedIndex + mediaItem.getMediaItemKey().toString().length()
-                            || taskReferences.charAt(keyAlreadyAddedIndex + mediaItem.getMediaItemKey().toString().length()) == ','))
-                    ;
-                    else
-                        taskReferences.append("," + mediaItem.getMediaItemKey().toString());
-                }
+                if (!keysList.contains(mediaItem.getMediaItemKey()))
+                    keysList.add(mediaItem.getMediaItemKey());
             }
             else
             {
@@ -198,23 +196,8 @@ public class MediaItemsReferences implements Serializable {
 
                 if (sourcePhysicalPath != null)
                 {
-                    if (taskReferences.length() == 0)
-                        taskReferences.append(sourcePhysicalPath.getPhysicalPathKey().toString());
-                    else
-                    {
-                        int keyAlreadyAddedIndex = taskReferences.indexOf(sourcePhysicalPath.getPhysicalPathKey().toString());
-                        mLogger.info("keyAlreadyAddedIndex: " + keyAlreadyAddedIndex
-                                + ", taskReferences: " + taskReferences
-                                + ", sourcePhysicalPath.getPhysicalPathKey().toString().length(): " + sourcePhysicalPath.getPhysicalPathKey().toString().length()
-                                + ", taskReferences.charAt(keyAlreadyAddedIndex + sourcePhysicalPath.getPhysicalPathKey().toString().length()): " + taskReferences.charAt(keyAlreadyAddedIndex + sourcePhysicalPath.getPhysicalPathKey().toString().length())
-                        );
-                        if (keyAlreadyAddedIndex != -1 &&
-                                (taskReferences.length() == keyAlreadyAddedIndex + sourcePhysicalPath.getPhysicalPathKey().toString().length()
-                                        || taskReferences.charAt(keyAlreadyAddedIndex + sourcePhysicalPath.getPhysicalPathKey().toString().length()) == ','))
-                            ;
-                        else
-                            taskReferences.append("," + sourcePhysicalPath.getPhysicalPathKey().toString());
-                    }
+                    if (!keysList.contains(sourcePhysicalPath.getPhysicalPathKey()))
+                        keysList.add(sourcePhysicalPath.getPhysicalPathKey());
                 }
                 else
                 {
@@ -228,6 +211,26 @@ public class MediaItemsReferences implements Serializable {
                 }
             }
         }
+
+        if (mediaItemsSortedBy.equalsIgnoreCase("keyAscending"))
+        {
+            Collections.sort(keysList);
+        }
+        else if (mediaItemsSortedBy.equalsIgnoreCase("keyDescending"))
+        {
+            Collections.sort(keysList);
+            Collections.reverse(keysList);
+        }
+
+        taskReferences.delete(0, taskReferences.length());
+        for (Long key: keysList)
+        {
+            if (taskReferences.length() == 0)
+                taskReferences.append(key);
+            else
+                taskReferences.append("," + key);
+        }
+
         mLogger.info("taskReferences: " + taskReferences);
     }
 
@@ -356,6 +359,14 @@ public class MediaItemsReferences implements Serializable {
 
     public void setMediaItemsToBeAddedOrReplaced(String mediaItemsToBeAddedOrReplaced) {
         this.mediaItemsToBeAddedOrReplaced = mediaItemsToBeAddedOrReplaced;
+    }
+
+    public String getMediaItemsSortedBy() {
+        return mediaItemsSortedBy;
+    }
+
+    public void setMediaItemsSortedBy(String mediaItemsSortedBy) {
+        this.mediaItemsSortedBy = mediaItemsSortedBy;
     }
 
     public StringBuilder getTaskReferences() {
