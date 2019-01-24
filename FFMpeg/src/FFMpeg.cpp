@@ -2812,26 +2812,24 @@ void FFMpeg::liveRecorder(
     FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);    
 }
 
-void FFMpeg::changeContainer(
+// destinationPathName will end with the new file format
+void FFMpeg::changeFileFormat(
 	int64_t ingestionJobKey,
+	int64_t sourceKey,
 	string sourcePhysicalPath,
-	string destinationPath,
-	string outputFileFormat)
+	string destinationPathName)
 {
 	string ffmpegExecuteCommand;
-	string destinationPathName;
 
     try
     {
 		_outputFfmpegPathFileName =
 			_ffmpegTempDir + "/"
 			+ to_string(ingestionJobKey)
-			+ ".changeContainer.log"
+			+ "_" + to_string(sourceKey)
+			+ ".changeFileFormat.log"
 			;
     
-		destinationPathName = destinationPath + "/"
-			+ string("changeContainer_") + to_string(ingestionJobKey) + "." + outputFileFormat;
-
 		ffmpegExecuteCommand = 
 			_ffmpegPath + "/ffmpeg "
 			+ "-i " + sourcePhysicalPath + " "
@@ -2847,8 +2845,9 @@ void FFMpeg::changeContainer(
 					+ getenv("DYLD_LIBRARY_PATH") + "; ");
 		#endif
 
-        _logger->info(__FILEREF__ + "changeContainer: Executing ffmpeg command"
+        _logger->info(__FILEREF__ + "changeFileFormat: Executing ffmpeg command"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", sourceKey: " + to_string(sourceKey)
             + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
         );
 
@@ -2857,7 +2856,7 @@ void FFMpeg::changeContainer(
         int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
         if (executeCommandStatus != 0)
         {
-            string errorMessage = __FILEREF__ + "changeContainer: ffmpeg command failed"
+            string errorMessage = __FILEREF__ + "changeFileFormat: ffmpeg command failed"
                     + ", executeCommandStatus: " + to_string(executeCommandStatus)
                     + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
             ;
@@ -2871,6 +2870,7 @@ void FFMpeg::changeContainer(
 
         _logger->info(__FILEREF__ + "changeContainer: Executed ffmpeg command"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", sourceKey: " + to_string(sourceKey)
             + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
             + ", ffmpegCommandDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
         );

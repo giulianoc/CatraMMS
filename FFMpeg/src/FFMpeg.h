@@ -140,11 +140,11 @@ public:
         int segmentDurationInSeconds,
         string outputFileFormat);
 
-	void changeContainer(
+	void changeFileFormat(
 		int64_t ingestionJobKey,
+		int64_t sourceKey,
 		string sourcePhysicalPath,
-		string destinationPath,
-		string outputFileFormat);
+		string destinationPathName);
 
     static void encodingFileFormatValidation(string fileFormat,
         shared_ptr<spdlog::logger> logger);

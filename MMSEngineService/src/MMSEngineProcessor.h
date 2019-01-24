@@ -209,6 +209,13 @@ private:
         Json::Value parametersRoot,
         vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> dependencies);
 
+    void changeFileFormatThread(
+        shared_ptr<long> processorsThreadsNumber,
+        int64_t ingestionJobKey,
+        shared_ptr<Workspace> workspace,
+        Json::Value parametersRoot,
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> dependencies);
+
     string generateMediaMetadataToIngest(
         int64_t ingestionJobKey,
         string fileFormat,

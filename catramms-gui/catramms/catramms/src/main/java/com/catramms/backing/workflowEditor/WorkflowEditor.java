@@ -90,6 +90,7 @@ public class WorkflowEditor extends Workspace implements Serializable {
     private FaceRecognitionProperties currentFaceRecognitionProperties;
     private FaceIdentificationProperties currentFaceIdentificationProperties;
     private LiveRecorderProperties currentLiveRecorderProperties;
+    private ChangeFileFormatProperties currentChangeFileFormatProperties;
 
 
     @PostConstruct
@@ -257,6 +258,10 @@ public class WorkflowEditor extends Workspace implements Serializable {
             );
         else if (taskType.equalsIgnoreCase("Live-Recorder"))
             workflowProperties = new LiveRecorderProperties(elementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
+            );
+        else if (taskType.equalsIgnoreCase("Change-File-Format"))
+            workflowProperties = new ChangeFileFormatProperties(elementId++,
                     taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
             );
         else
@@ -670,6 +675,19 @@ public class WorkflowEditor extends Workspace implements Serializable {
             }
             else if (workflowProperties.getType().equalsIgnoreCase("Live-Recorder"))
                 currentLiveRecorderProperties = ((LiveRecorderProperties) workflowProperties).clone();
+            else if (workflowProperties.getType().equalsIgnoreCase("Change-File-Format"))
+            {
+                currentChangeFileFormatProperties = ((ChangeFileFormatProperties) workflowProperties).clone();
+
+                String currentElementType = workflowProperties.getType();
+                String mediaItemsSelectionMode = "multiple";
+                boolean videoContentType = true;
+                boolean audioContentType = true;
+                boolean imageContentType = false;
+                StringBuilder taskReferences = currentChangeFileFormatProperties.getStringBuilderTaskReferences();
+                mediaItemsReferences.prepareToSelectMediaItems(currentElementType, mediaItemsSelectionMode,
+                        videoContentType, audioContentType, imageContentType, taskReferences);
+            }
             else
                 mLogger.error("Wrong workflowProperties.getType(): " + workflowProperties.getType());
         }
@@ -736,6 +754,8 @@ public class WorkflowEditor extends Workspace implements Serializable {
                 ((FaceIdentificationProperties) workflowProperties).setData(currentFaceIdentificationProperties);
             else if (workflowProperties.getType().equalsIgnoreCase("Live-Recorder"))
                 ((LiveRecorderProperties) workflowProperties).setData(currentLiveRecorderProperties);
+            else if (workflowProperties.getType().equalsIgnoreCase("Change-File-Format"))
+                ((ChangeFileFormatProperties) workflowProperties).setData(currentChangeFileFormatProperties);
             else
                 mLogger.error("Wrong workflowProperties.getType(): " + workflowProperties.getType());
 
@@ -1517,5 +1537,13 @@ public class WorkflowEditor extends Workspace implements Serializable {
 
     public void setCurrentLiveRecorderProperties(LiveRecorderProperties currentLiveRecorderProperties) {
         this.currentLiveRecorderProperties = currentLiveRecorderProperties;
+    }
+
+    public ChangeFileFormatProperties getCurrentChangeFileFormatProperties() {
+        return currentChangeFileFormatProperties;
+    }
+
+    public void setCurrentChangeFileFormatProperties(ChangeFileFormatProperties currentChangeFileFormatProperties) {
+        this.currentChangeFileFormatProperties = currentChangeFileFormatProperties;
     }
 }

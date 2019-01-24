@@ -2071,6 +2071,96 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 throw runtime_error(errorMessage);
                             }
                         }
+                        else if (ingestionType == MMSEngineDBFacade::IngestionType::ChangeFileFormat)
+                        {
+                            try
+                            {
+                                if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
+                                {
+                                    _logger->info(__FILEREF__ + "Not enough available threads to manage changeFileFormatThread, activity is postponed"
+                                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+                                        + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
+                                    );
+
+                                    string errorMessage = "";
+                                    string processorMMS = "";
+
+                                    _logger->info(__FILEREF__ + "Update IngestionJob"
+                                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
+                                        + ", errorMessage: " + errorMessage
+                                        + ", processorMMS: " + processorMMS
+                                    );                            
+                                    _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                            ingestionStatus, 
+                                            errorMessage,
+                                            processorMMS
+                                            );
+                                }
+                                else
+                                {
+                                    thread changeFileFormatThread(&MMSEngineProcessor::extractTracksContentThread, this, 
+                                        _processorsThreadsNumber, ingestionJobKey, 
+                                            workspace, 
+                                            parametersRoot,
+                                            dependencies    // it cannot be passed as reference because it will change soon by the parent thread
+                                            );
+                                    changeFileFormatThread.detach();
+                                }
+                            }
+                            catch(runtime_error e)
+                            {
+                                _logger->error(__FILEREF__ + "changeFileFormatThread failed"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                                        errorMessage,
+                                        "" // processorMMS
+                                        );
+
+                                throw runtime_error(errorMessage);
+                            }
+                            catch(exception e)
+                            {
+                                _logger->error(__FILEREF__ + "changeFileFormatThread failed"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                        + ", exception: " + e.what()
+                                );
+
+                                string errorMessage = e.what();
+
+                                _logger->info(__FILEREF__ + "Update IngestionJob"
+                                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                                    + ", IngestionStatus: " + "End_IngestionFailure"
+                                    + ", errorMessage: " + errorMessage
+                                    + ", processorMMS: " + ""
+                                );                            
+                                _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                                        MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                                        errorMessage,
+                                        "" // processorMMS
+                                        );
+
+                                throw runtime_error(errorMessage);
+                            }
+                        }
                         else
                         {
                             string errorMessage = string("Unknown IngestionType")
@@ -4598,6 +4688,226 @@ void MMSEngineProcessor::manageLiveRecorder(
         // Update IngestionJob done in the calling method
 
         throw e;
+    }
+}
+
+
+void MMSEngineProcessor::changeFileFormatThread(
+        shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey,
+        shared_ptr<Workspace> workspace,
+        Json::Value parametersRoot,
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> dependencies)
+
+{
+    try 
+    {
+        _logger->info(__FILEREF__ + "ChangeFileFormat"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", processors threads number: " + to_string(processorsThreadsNumber.use_count())
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+        );
+                
+        if (dependencies.size() == 0)
+        {
+            string errorMessage = __FILEREF__ + "No configured media to be used to changeFileFormat"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", dependencies.size: " + to_string(dependencies.size());
+            _logger->error(errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        string outputFileFormat;
+        {
+            string field = "OutputFileFormat";
+            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            outputFileFormat = parametersRoot.get(field, "XXX").asString();
+        }
+
+        for(vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>::iterator it = dependencies.begin(); 
+                it != dependencies.end(); ++it) 
+        {
+            tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType = *it;
+
+            int64_t key;
+            MMSEngineDBFacade::ContentType referenceContentType;
+            Validator::DependencyType dependencyType;
+
+            tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+
+            int mmsPartitionNumber;
+            string workspaceDirectoryName;
+            string relativePath;
+            string fileName;
+            shared_ptr<Workspace> workspace;
+            
+            if (dependencyType == Validator::DependencyType::MediaItemKey)
+            {
+
+                int64_t encodingProfileKey = -1;
+                
+                tuple<int64_t,int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
+                    = _mmsEngineDBFacade->getStorageDetails(
+                        key, encodingProfileKey);
+
+                int64_t physicalPathKey;
+                string deliveryFileName;
+                string title;
+                int64_t sizeInBytes;
+                
+                tie(physicalPathKey, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
+                        = storageDetails;
+                workspaceDirectoryName = workspace->_directoryName;
+            }
+            else
+            {
+                tuple<int,shared_ptr<Workspace>,string,string,string,string,int64_t> storageDetails 
+                    = _mmsEngineDBFacade->getStorageDetails(key);
+
+                string deliveryFileName;
+                string title;
+                int64_t sizeInBytes;
+                
+                tie(mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes) 
+                        = storageDetails;
+                workspaceDirectoryName = workspace->_directoryName;
+            }
+
+            _logger->info(__FILEREF__ + "getMMSAssetPathName ..."
+                + ", mmsPartitionNumber: " + to_string(mmsPartitionNumber)
+                + ", workspaceDirectoryName: " + workspaceDirectoryName
+                + ", relativePath: " + relativePath
+                + ", fileName: " + fileName
+            );
+            string mmsAssetPathName = _mmsStorage->getMMSAssetPathName(
+                mmsPartitionNumber,
+                workspaceDirectoryName,
+                relativePath,
+                fileName);
+            
+            {
+                string localSourceFileName;
+                string changeFileFormatMediaPathName;
+                {
+                    localSourceFileName = to_string(ingestionJobKey)
+                            + "_" + to_string(key)
+                            + "_changeFileFormat"
+                            + "." + outputFileFormat
+                            ;
+
+                    string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
+                        workspace);
+                    changeFileFormatMediaPathName = workspaceIngestionRepository + "/" 
+                            + localSourceFileName;
+                }
+
+                FFMpeg ffmpeg (_configuration, _logger);
+
+                ffmpeg.changeFileFormat(
+                    ingestionJobKey,
+					key,
+                    mmsAssetPathName,
+                    changeFileFormatMediaPathName);
+
+                _logger->info(__FILEREF__ + "ffmpeg.changeFileFormat done"
+                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", changeFileFormatMediaPathName: " + changeFileFormatMediaPathName
+                );
+
+                string title;
+                string mediaMetaDataContent = generateMediaMetadataToIngest(
+                        ingestionJobKey,
+                        outputFileFormat,
+                        title,
+                        parametersRoot
+                );
+
+                {
+                    shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
+                            ->getFreeEvent<LocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
+
+                    localAssetIngestionEvent->setSource(MMSENGINEPROCESSORNAME);
+                    localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
+                    localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
+
+                    localAssetIngestionEvent->setIngestionJobKey(ingestionJobKey);
+                    localAssetIngestionEvent->setIngestionSourceFileName(localSourceFileName);
+                    localAssetIngestionEvent->setMMSSourceFileName(localSourceFileName);
+                    localAssetIngestionEvent->setWorkspace(workspace);
+                    localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::AddContent);            
+                    localAssetIngestionEvent->setIngestionRowToBeUpdatedAsSuccess(
+                        it + 1 == dependencies.end() ? true : false);
+
+                    // to manage a ffmpeg bug generating a corrupted/wrong avgFrameRate, we will
+                    // force the concat file to have the same avgFrameRate of the source media
+                    // Uncomment next statements in case the problem is still present event in case of the ExtractTracks task
+                    // if (forcedAvgFrameRate != "" && concatContentType == MMSEngineDBFacade::ContentType::Video)
+                    //    localAssetIngestionEvent->setForcedAvgFrameRate(forcedAvgFrameRate);            
+
+                    localAssetIngestionEvent->setMetadataContent(mediaMetaDataContent);
+
+                    shared_ptr<Event2>    event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
+                    _multiEventsSet->addEvent(event);
+
+                    _logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
+                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                        + ", getEventKey().first: " + to_string(event->getEventKey().first)
+                        + ", getEventKey().second: " + to_string(event->getEventKey().second));
+                }
+            }
+        }
+    }
+    catch (runtime_error& e) 
+    {
+        _logger->error(__FILEREF__ + "ChangeFileFormat failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey) 
+            + ", exception: " + e.what()
+        );
+
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what(), "" /* processorMMS */);
+        
+        return;
+    }
+    catch (exception e)
+    {
+        _logger->error(__FILEREF__ + "ChangeFileFormat failed"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey) 
+            + ", exception: " + e.what()
+        );
+
+        _logger->info(__FILEREF__ + "Update IngestionJob"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", IngestionStatus: " + "End_IngestionFailure"
+            + ", errorMessage: " + e.what()
+        );                            
+        _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+                MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
+                e.what(), 
+                "" /* processorMMS */);
+
+        return;
     }
 }
 
