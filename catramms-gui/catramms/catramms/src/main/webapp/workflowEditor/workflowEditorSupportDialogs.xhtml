@@ -118,6 +118,20 @@
                     <p:outputLabel value="#{mediaItem.title}" />
                 </p:column>
 
+                <p:column style="width:50px;" headerText="Format" >
+                    <p:outputLabel value="#{mediaItem.sourcePhysicalPath.fileFormat}" />
+                </p:column>
+
+                <p:column style="width:100px;"
+                          headerText="Duration" >
+                    <p:outputLabel
+                            rendered="#{mediaItem.contentType == 'Video'}"
+                            value="#{workflowEditor.getDurationAsString(mediaItem.sourcePhysicalPath.videoDetails.durationInMilliseconds)}" />
+                    <p:outputLabel
+                            rendered="#{mediaItem.contentType == 'Audio'}"
+                            value="#{workflowEditor.getDurationAsString(mediaItem.sourcePhysicalPath.audioDetails.durationInMilliseconds)}" />
+                </p:column>
+
                 <p:column style="width:160px;" headerText="Ingestion Date" >
                     <p:outputLabel id="ingestionDate" value="#{mediaItem.ingestionDate}">
                         <f:convertDateTime type="date" pattern="dd-MM-yyyy HH:mm:ss" timeZone="CET"/>
@@ -149,6 +163,20 @@
 
                 <p:column headerText="Title" >
                     <p:outputLabel value="#{mediaItem.title}" />
+                </p:column>
+
+                <p:column style="width:50px;" headerText="Format" >
+                    <p:outputLabel value="#{mediaItem.sourcePhysicalPath.fileFormat}" />
+                </p:column>
+
+                <p:column style="width:100px;"
+                          headerText="Duration" >
+                    <p:outputLabel
+                            rendered="#{mediaItem.contentType == 'Video'}"
+                            value="#{workflowEditor.getDurationAsString(mediaItem.sourcePhysicalPath.videoDetails.durationInMilliseconds)}" />
+                    <p:outputLabel
+                            rendered="#{mediaItem.contentType == 'Audio'}"
+                            value="#{workflowEditor.getDurationAsString(mediaItem.sourcePhysicalPath.audioDetails.durationInMilliseconds)}" />
                 </p:column>
 
                 <p:column style="width:160px;" headerText="Ingestion Date" >

@@ -2102,7 +2102,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 }
                                 else
                                 {
-                                    thread changeFileFormatThread(&MMSEngineProcessor::extractTracksContentThread, this, 
+                                    thread changeFileFormatThread(&MMSEngineProcessor::changeFileFormatThread, this, 
                                         _processorsThreadsNumber, ingestionJobKey, 
                                             workspace, 
                                             parametersRoot,
