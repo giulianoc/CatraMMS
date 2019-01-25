@@ -73,7 +73,7 @@ public class ChangeFileFormatProperties extends CreateContentProperties implemen
             }
 
             if (getFileFormat() != null && !getFileFormat().equalsIgnoreCase(""))
-                jsonWorkflowElement.put("OutputFileFormat", getFileFormat());
+                joParameters.put("OutputFileFormat", getFileFormat());
             else
             {
                 WorkflowIssue workflowIssue = new WorkflowIssue();

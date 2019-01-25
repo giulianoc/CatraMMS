@@ -3129,9 +3129,9 @@ void Validator::validateChangeFileFormatMetadata(int64_t workspaceKey, string la
 
     string field = "OutputFileFormat";
     string outputFileFormat = parametersRoot.get(field, "XXX").asString();
-    if (!isVideoAudioFileFormat(outputFileFormat))
+    if (isVideoAudioFileFormat(outputFileFormat))
 		isVideoOrAudio = true;
-    else if (!isImageFileFormat(outputFileFormat))
+    else if (isImageFileFormat(outputFileFormat))
 		isImage = true;
 	else
     {
