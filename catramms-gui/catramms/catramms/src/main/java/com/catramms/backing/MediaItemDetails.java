@@ -337,7 +337,7 @@ public class MediaItemDetails extends Workspace implements Serializable {
                 jsonObject.put("e", smpteTimeCodeToSeconds(mark.getOut()).toString());
             }
 
-            String url = "newWorkflow/newWorkflow.xhtml?predefined=" + predefined
+            String url = "workflowEditor/workflowEditor.xhtml?predefined=" + predefined
                     + "&data=" + java.net.URLEncoder.encode(joCut.toString(), "UTF-8")
                     ;
             mLogger.info("Redirect to " + url);

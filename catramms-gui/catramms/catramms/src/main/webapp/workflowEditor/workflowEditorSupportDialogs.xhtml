@@ -7,6 +7,46 @@
       xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
       xmlns:media="http://xmlns.jcp.org/jsf/composite/media">
 
+<p:dialog widgetVar="deleteDiagramElementWidget" modal="true"
+          header="Detele Diagram Element" appendTo="@(body)" width="600"
+          showEffect="fade" hideEffect="fade" resizable="false" draggable="true">
+
+    <h:form id="deleteDiagramElementForm">
+
+        <p:toolbar>
+            <p:toolbarGroup align="left">
+            </p:toolbarGroup>
+
+            <p:toolbarGroup align="right">
+                <p:defaultCommand target="deleteDiagramElement"/>
+
+                <p:commandButton id="deleteDiagramElement" value="Delete Element"
+                                 action="#{workflowEditor.removeDiagramElement}"
+                                 update="viewForm:workspaceDiagram,viewForm:ingestWorkflowButton,viewForm:workflowIssuesWarning,jsonWorkflowForm:jsonWorkflow"
+                                 onclick="PF('deleteDiagramElementWidget').hide()" />
+            </p:toolbarGroup>
+        </p:toolbar>
+
+        <p:panelGrid cellpadding="10" style="width: 100%">
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel value="Element Id to be removed from the Diagram" style="font-weight: bold"/>
+                </p:column>
+                <p:column>
+                    <p:inputNumber id="removingCurrentElementId"
+                                   required="false"
+                                   decimalPlaces="0"
+                                   value="#{workflowEditor.removingCurrentElementId}"
+                                   autocomplete="true"
+                                   placeholder="diagram element to be removed"/>
+                </p:column>
+            </p:row>
+        </p:panelGrid>
+
+    </h:form>
+</p:dialog>
+
 <p:dialog widgetVar="jsonWorkflowWidget" modal="true"
           header="Json Workflow" appendTo="@(body)" width="600"
           showEffect="fade" hideEffect="fade" resizable="false" draggable="true">
@@ -122,7 +162,7 @@
                     <p:outputLabel value="#{mediaItem.sourcePhysicalPath.fileFormat}" />
                 </p:column>
 
-                <p:column style="width:100px;"
+                <p:column style="width:80px;"
                           headerText="Duration" >
                     <p:outputLabel
                             rendered="#{mediaItem.contentType == 'Video'}"
@@ -169,7 +209,7 @@
                     <p:outputLabel value="#{mediaItem.sourcePhysicalPath.fileFormat}" />
                 </p:column>
 
-                <p:column style="width:100px;"
+                <p:column style="width:80px;"
                           headerText="Duration" >
                     <p:outputLabel
                             rendered="#{mediaItem.contentType == 'Video'}"

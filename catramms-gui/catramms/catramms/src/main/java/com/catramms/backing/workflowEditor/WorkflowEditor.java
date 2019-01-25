@@ -11,7 +11,9 @@ import com.catramms.backing.newWorkflow.PushContent;
 import com.catramms.backing.workflowEditor.Properties.*;
 import com.catramms.backing.workflowEditor.utility.*;
 import com.catramms.utility.catramms.CatraMMS;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.log4j.Logger;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.primefaces.event.diagram.ConnectEvent;
 import org.primefaces.event.diagram.ConnectionChangeEvent;
@@ -49,6 +51,14 @@ public class WorkflowEditor extends Workspace implements Serializable {
 
     static public final String configFileName = "catramms.properties";
 
+    private String predefined;
+    private String data;
+
+    int initialWorkflowX = 20;
+    int initialWorkflowY = 1;
+    int stepX = 25;
+    int stepY = 7;
+
     private IngestionData ingestionData = new IngestionData();
 
     private MediaItemsReferences mediaItemsReferences = new MediaItemsReferences();
@@ -56,15 +66,17 @@ public class WorkflowEditor extends Workspace implements Serializable {
     private String workflowDefaultLabel = "<workflow label>";
     private String groupOfTasksDefaultLabel = "Details";
     private String taskDefaultLabel = "<task label __TASKID__>";
-    private int elementId;
+    private int creationCurrentElementId;
     private String temporaryPushBinariesPathName;
+
+    private Integer removingCurrentElementId;
 
     private String workflowLabel;
 
     private DefaultDiagramModel model;
-    private Element rootElement;
+    private Element workflowElement;
 
-    private String currentElementId;
+    private String editingCurrentElementId;
     private WorkflowProperties currentWorkflowProperties;
     private AddContentProperties currentAddContentProperties;
     private GroupOfTasksProperties currentGroupOfTasksProperties;
@@ -109,7 +121,8 @@ public class WorkflowEditor extends Workspace implements Serializable {
             return;
         }
 
-        elementId = 0;
+        creationCurrentElementId = 0;
+        removingCurrentElementId = new Integer(0);
 
         {
             model = new DefaultDiagramModel();
@@ -121,13 +134,10 @@ public class WorkflowEditor extends Workspace implements Serializable {
             connector.setHoverPaintStyle("{strokeStyle:'#5C738B'}");
             model.setDefaultConnector(connector);
 
-            int workflowX = 20;
-            int workflowY = 1;
-
-            WorkflowProperties workflowProperties = new WorkflowProperties(elementId++, workflowDefaultLabel, "Workflow-icon.png", "Root", "Workflow");
-            rootElement = new Element(workflowProperties, workflowX + "em", workflowY + "em");
-            rootElement.setId(String.valueOf(workflowProperties.getElementId()));
-            rootElement.setDraggable(true);
+            WorkflowProperties workflowProperties = new WorkflowProperties(creationCurrentElementId++, workflowDefaultLabel, "Workflow-icon.png", "Root", "Workflow");
+            workflowElement = new Element(workflowProperties, initialWorkflowX + "em", initialWorkflowY + "em");
+            workflowElement.setId(String.valueOf(workflowProperties.getElementId()));
+            workflowElement.setDraggable(true);
             {
                 // RectangleEndPoint endPoint = new RectangleEndPoint(EndPointAnchor.BOTTOM);
                 ImageEndPoint endPoint = new ImageEndPoint(EndPointAnchor.BOTTOM, "/resources/img/onSuccess.png");
@@ -137,13 +147,130 @@ public class WorkflowEditor extends Workspace implements Serializable {
                 endPoint.setHoverStyle("{fillStyle:'#5C738B'}");
                 // endPoint.setMaxConnections(1); not working
 
-                rootElement.addEndPoint(endPoint);
+                workflowElement.addEndPoint(endPoint);
             }
 
-            model.addElement(rootElement);
+            model.addElement(workflowElement);
         }
 
         buildWorkflowElementJson();
+
+        mLogger.info("predefined: " + predefined
+                        + ", data: " + data
+        );
+        if (predefined != null)
+        {
+            if (predefined.equalsIgnoreCase("cut"))
+            {
+                Element currentGroupOfTasksElement = null;
+                Element firstCutElement = null;
+                int currentX = initialWorkflowX;
+                int currentY = initialWorkflowY + stepY;
+
+                if (data != null && !data.equalsIgnoreCase(""))
+                {
+                    try {
+                        JSONObject joCut = new JSONObject(data);
+
+                        Long physicalPathKey = joCut.getLong("key");
+
+                        JSONArray jaMarks = joCut.getJSONArray("marks");
+
+                        if (jaMarks.length() > 1)
+                        {
+                            currentGroupOfTasksElement = addTask("GroupOfTasks",
+                                    new Integer(currentX).toString() + "em",
+                                    new Integer(currentY).toString() + "em");
+                            currentX += stepX;
+                            // currentY += stepY;
+
+
+                            EndPoint sourceEndPoint = getEndPoint(workflowElement, EndPointAnchor.BOTTOM);
+                            EndPoint targetEndPoint = getEndPoint(currentGroupOfTasksElement, EndPointAnchor.TOP);
+                            model.connect(new Connection(sourceEndPoint, targetEndPoint));
+                            manageNewConnection(workflowElement, sourceEndPoint, currentGroupOfTasksElement, targetEndPoint);
+                        }
+
+                        for (int markIndex = 0; markIndex < jaMarks.length(); markIndex++)
+                        {
+                            JSONObject joMark = jaMarks.getJSONObject(markIndex);
+
+                            Element cutElement = addTask("Cut",
+                                    new Integer(currentX).toString() + "em",
+                                    new Integer(currentY).toString() + "em");
+                            currentY += stepY;
+                            if (firstCutElement == null)
+                                firstCutElement = cutElement;
+
+                            CutProperties cutProperties = (CutProperties) cutElement.getData();
+
+                            if (currentGroupOfTasksElement != null)
+                            {
+                                EndPoint sourceEndPoint = getEndPoint(currentGroupOfTasksElement, EndPointAnchor.RIGHT);
+                                EndPoint targetEndPoint = getEndPoint(cutElement, EndPointAnchor.LEFT);
+                                model.connect(new Connection(sourceEndPoint, targetEndPoint));
+                                manageNewConnection(currentGroupOfTasksElement, sourceEndPoint, cutElement, targetEndPoint);
+                            }
+                            else
+                            {
+                                EndPoint sourceEndPoint = getEndPoint(workflowElement, EndPointAnchor.BOTTOM);
+                                EndPoint targetEndPoint = getEndPoint(cutElement, EndPointAnchor.TOP);
+                                model.connect(new Connection(sourceEndPoint, targetEndPoint));
+                                manageNewConnection(workflowElement, sourceEndPoint, cutElement, targetEndPoint);
+                            }
+
+                            cutProperties.setTaskReferences(physicalPathKey.toString());
+
+                            cutProperties.setStartTimeInSeconds(Float.parseFloat(joMark.getString("s")));
+                            cutProperties.setEndType("endTime");
+                            cutProperties.setEndTimeInSeconds(Float.parseFloat(joMark.getString("e")));
+
+                            if (jaMarks.length() > 1)
+                                cutProperties.setRetention("0");
+                        }
+
+                        if (jaMarks.length() > 1)
+                        {
+                            // tnSelectedNode = addOnSuccessEvent();
+
+                            Element concatElement = addTask("Concat-Demuxer",
+                                    new Integer(initialWorkflowX).toString() + "em",
+                                    new Integer(initialWorkflowY + stepY + stepY).toString() + "em");
+
+                            if (currentGroupOfTasksElement != null)
+                            {
+                                EndPoint sourceEndPoint = getEndPoint(currentGroupOfTasksElement, EndPointAnchor.BOTTOM);
+                                EndPoint targetEndPoint = getEndPoint(concatElement, EndPointAnchor.TOP);
+                                model.connect(new Connection(sourceEndPoint, targetEndPoint));
+                                manageNewConnection(currentGroupOfTasksElement, sourceEndPoint, concatElement, targetEndPoint);
+                            }
+                            else
+                            {
+                                EndPoint sourceEndPoint = getEndPoint(firstCutElement, EndPointAnchor.BOTTOM);
+                                EndPoint targetEndPoint = getEndPoint(concatElement, EndPointAnchor.TOP);
+                                model.connect(new Connection(sourceEndPoint, targetEndPoint));
+                                manageNewConnection(firstCutElement, sourceEndPoint, concatElement, targetEndPoint);
+                            }
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        mLogger.error("predefined workflow failed"
+                                        + ", predefined: " + predefined
+                                        + ", data: " + data
+                        );
+                    }
+                }
+                else
+                {
+                    mLogger.error("No data for the predefined Workflow " + predefined);
+                }
+            }
+            else
+            {
+                mLogger.error("Unknown predefined Workflow: " + predefined);
+            }
+        }
     }
 
     public void addTask(ActionEvent param)
@@ -156,7 +283,7 @@ public class WorkflowEditor extends Workspace implements Serializable {
         addTask(taskType, positionX, positionY);
     }
 
-    public void addTask(String taskType, String positionX, String positionY)
+    public Element addTask(String taskType, String positionX, String positionY)
     {
         mLogger.info("addTask"
                 + ", taskType: " + taskType
@@ -167,102 +294,102 @@ public class WorkflowEditor extends Workspace implements Serializable {
         WorkflowProperties workflowProperties = null;
 
         if (taskType.equalsIgnoreCase("GroupOfTasks"))
-            workflowProperties = new GroupOfTasksProperties(elementId++, groupOfTasksDefaultLabel);
+            workflowProperties = new GroupOfTasksProperties(creationCurrentElementId++, groupOfTasksDefaultLabel);
         else if (taskType.equalsIgnoreCase("Add-Content"))
-            workflowProperties = new AddContentProperties(elementId++,
-                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString()),
+            workflowProperties = new AddContentProperties(creationCurrentElementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(creationCurrentElementId - 1).toString()),
                     temporaryPushBinariesPathName);
         else if (taskType.equalsIgnoreCase("Remove-Content"))
-            workflowProperties = new RemoveContentProperties(elementId++,
-                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
+            workflowProperties = new RemoveContentProperties(creationCurrentElementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(creationCurrentElementId - 1).toString())
                     );
         else if (taskType.equalsIgnoreCase("Concat-Demuxer"))
-            workflowProperties = new ConcatDemuxerProperties(elementId++,
-                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
+            workflowProperties = new ConcatDemuxerProperties(creationCurrentElementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(creationCurrentElementId - 1).toString())
             );
         else if (taskType.equalsIgnoreCase("Cut"))
-            workflowProperties = new CutProperties(elementId++,
-                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
+            workflowProperties = new CutProperties(creationCurrentElementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(creationCurrentElementId - 1).toString())
             );
         else if (taskType.equalsIgnoreCase("Extract-Tracks"))
-            workflowProperties = new ExtractTracksProperties(elementId++,
-                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
+            workflowProperties = new ExtractTracksProperties(creationCurrentElementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(creationCurrentElementId - 1).toString())
             );
         else if (taskType.equalsIgnoreCase("Encode"))
-            workflowProperties = new EncodeProperties(elementId++,
-                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
+            workflowProperties = new EncodeProperties(creationCurrentElementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(creationCurrentElementId - 1).toString())
             );
         else if (taskType.equalsIgnoreCase("Overlay-Image-On-Video"))
-            workflowProperties = new OverlayImageOnVideoProperties(elementId++,
-                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
+            workflowProperties = new OverlayImageOnVideoProperties(creationCurrentElementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(creationCurrentElementId - 1).toString())
             );
         else if (taskType.equalsIgnoreCase("Overlay-Text-On-Video"))
-            workflowProperties = new OverlayTextOnVideoProperties(elementId++,
-                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
+            workflowProperties = new OverlayTextOnVideoProperties(creationCurrentElementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(creationCurrentElementId - 1).toString())
             );
         else if (taskType.equalsIgnoreCase("Frame"))
-            workflowProperties = new FrameProperties(elementId++,
-                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
+            workflowProperties = new FrameProperties(creationCurrentElementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(creationCurrentElementId - 1).toString())
             );
         else if (taskType.equalsIgnoreCase("Periodical-Frames"))
-            workflowProperties = new PeriodicalFramesProperties(elementId++,
-                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
+            workflowProperties = new PeriodicalFramesProperties(creationCurrentElementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(creationCurrentElementId - 1).toString())
             );
         else if (taskType.equalsIgnoreCase("I-Frames"))
-            workflowProperties = new IFramesProperties(elementId++,
-                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
+            workflowProperties = new IFramesProperties(creationCurrentElementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(creationCurrentElementId - 1).toString())
             );
         else if (taskType.equalsIgnoreCase("Motion-JPEG-by-Periodical-Frames"))
-            workflowProperties = new MotionJPEGByPeriodicalFramesProperties(elementId++,
-                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
+            workflowProperties = new MotionJPEGByPeriodicalFramesProperties(creationCurrentElementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(creationCurrentElementId - 1).toString())
             );
         else if (taskType.equalsIgnoreCase("Motion-JPEG-by-I-Frames"))
-            workflowProperties = new MotionJPEGByIFramesProperties(elementId++,
-                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
+            workflowProperties = new MotionJPEGByIFramesProperties(creationCurrentElementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(creationCurrentElementId - 1).toString())
             );
         else if (taskType.equalsIgnoreCase("Slideshow"))
-            workflowProperties = new SlideshowProperties(elementId++,
-                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
+            workflowProperties = new SlideshowProperties(creationCurrentElementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(creationCurrentElementId - 1).toString())
             );
         else if (taskType.equalsIgnoreCase("FTP-Delivery"))
-            workflowProperties = new FTPDeliveryProperties(elementId++,
-                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
+            workflowProperties = new FTPDeliveryProperties(creationCurrentElementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(creationCurrentElementId - 1).toString())
             );
         else if (taskType.equalsIgnoreCase("Local-Copy"))
-            workflowProperties = new LocalCopyProperties(elementId++,
-                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
+            workflowProperties = new LocalCopyProperties(creationCurrentElementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(creationCurrentElementId - 1).toString())
             );
         else if (taskType.equalsIgnoreCase("Post-On-Facebook"))
-            workflowProperties = new PostOnFacebookProperties(elementId++,
-                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
+            workflowProperties = new PostOnFacebookProperties(creationCurrentElementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(creationCurrentElementId - 1).toString())
             );
         else if (taskType.equalsIgnoreCase("Post-On-YouTube"))
-            workflowProperties = new PostOnYouTubeProperties(elementId++,
-                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
+            workflowProperties = new PostOnYouTubeProperties(creationCurrentElementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(creationCurrentElementId - 1).toString())
             );
         else if (taskType.equalsIgnoreCase("Email-Notification"))
-            workflowProperties = new EmailNotificationProperties(elementId++,
-                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
+            workflowProperties = new EmailNotificationProperties(creationCurrentElementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(creationCurrentElementId - 1).toString())
             );
         else if (taskType.equalsIgnoreCase("HTTP-Callback"))
-            workflowProperties = new HTTPCallbackProperties(elementId++,
-                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
+            workflowProperties = new HTTPCallbackProperties(creationCurrentElementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(creationCurrentElementId - 1).toString())
             );
         else if (taskType.equalsIgnoreCase("Face-Recognition"))
-            workflowProperties = new FaceRecognitionProperties(elementId++,
-                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
+            workflowProperties = new FaceRecognitionProperties(creationCurrentElementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(creationCurrentElementId - 1).toString())
             );
         else if (taskType.equalsIgnoreCase("Face-Identification"))
-            workflowProperties = new FaceIdentificationProperties(elementId++,
-                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
+            workflowProperties = new FaceIdentificationProperties(creationCurrentElementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(creationCurrentElementId - 1).toString())
             );
         else if (taskType.equalsIgnoreCase("Live-Recorder"))
-            workflowProperties = new LiveRecorderProperties(elementId++,
-                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
+            workflowProperties = new LiveRecorderProperties(creationCurrentElementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(creationCurrentElementId - 1).toString())
             );
         else if (taskType.equalsIgnoreCase("Change-File-Format"))
-            workflowProperties = new ChangeFileFormatProperties(elementId++,
-                    taskDefaultLabel.replaceAll("__TASKID__", new Long(elementId - 1).toString())
+            workflowProperties = new ChangeFileFormatProperties(creationCurrentElementId++,
+                    taskDefaultLabel.replaceAll("__TASKID__", new Long(creationCurrentElementId - 1).toString())
             );
         else
             mLogger.error("Wrong taskType: " + taskType);
@@ -350,6 +477,8 @@ public class WorkflowEditor extends Workspace implements Serializable {
         }
 
         model.addElement(taskElement);
+
+        return taskElement;
     }
 
     /*
@@ -401,7 +530,7 @@ public class WorkflowEditor extends Workspace implements Serializable {
         Element element = model.findElement(elementId);
         if (element != null)
         {
-            currentElementId = elementId;
+            editingCurrentElementId = elementId;
 
             WorkflowProperties workflowProperties = (WorkflowProperties) element.getData();
 
@@ -699,7 +828,7 @@ public class WorkflowEditor extends Workspace implements Serializable {
 
     public void saveTaskProperties()
     {
-        Element element = model.findElement(currentElementId);
+        Element element = model.findElement(editingCurrentElementId);
         if (element != null)
         {
             WorkflowProperties workflowProperties = (WorkflowProperties) element.getData();
@@ -763,7 +892,193 @@ public class WorkflowEditor extends Workspace implements Serializable {
         }
         else
         {
-            mLogger.error("saveTaskProperties. Didn't find element for elementId " + elementId);
+            mLogger.error("saveTaskProperties. Didn't find element for editingCurrentElementId " + editingCurrentElementId);
+        }
+    }
+
+    public void removeDiagramElement()
+    {
+        try {
+            if (removingCurrentElementId != null)
+            {
+                mLogger.info("Received removeDiagramElement, removingCurrentElementId: " + removingCurrentElementId);
+
+                Element elementToBeRemoved = model.findElement(removingCurrentElementId.toString());
+                if (elementToBeRemoved != null)
+                {
+                    WorkflowProperties workflowPropertiesToBeRemoved = (WorkflowProperties) elementToBeRemoved.getData();
+
+                    if (workflowPropertiesToBeRemoved.getType().equalsIgnoreCase("Workflow"))
+                    {
+                        mLogger.error("removeDiagramElement. Workflow cannot be removed, removingCurrentElementId " + removingCurrentElementId);
+
+                        FacesMessage msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "Deleting",
+                                "Workflow cannot be removed");
+                        FacesContext.getCurrentInstance().addMessage(null, msg);
+
+                        return;
+                    }
+
+                    // look for the connections of all the other elements and,
+                    // for the one's having elementToBeRemoved as target:
+                    //  - remove the WorkflowProperties from the list
+                    //  - disconnect the connection
+                    {
+                        for (Element element: model.getElements())
+                        {
+                            WorkflowProperties sourceWorkflowProperties = (WorkflowProperties) element.getData();
+
+                            if (sourceWorkflowProperties.getElementId() == workflowPropertiesToBeRemoved.getElementId())
+                                continue;
+
+                            for (WorkflowProperties onWorkflowProperties: sourceWorkflowProperties.getOnSuccessChildren())
+                            {
+                                if (onWorkflowProperties.getElementId() == workflowPropertiesToBeRemoved.getElementId())
+                                {
+                                    mLogger.info("Removing connection from "
+                                            + sourceWorkflowProperties.toString()
+                                            + " to " + onWorkflowProperties.toString());
+
+                                    sourceWorkflowProperties.getOnSuccessChildren().remove(onWorkflowProperties);
+
+                                    Connection connection = getConnection(
+                                            getEndPoint(element, EndPointAnchor.BOTTOM),
+                                            getEndPoint(elementToBeRemoved, EndPointAnchor.TOP));
+                                    if (connection == null)
+                                        connection = getConnection(
+                                                getEndPoint(element, EndPointAnchor.BOTTOM),
+                                                getEndPoint(elementToBeRemoved, EndPointAnchor.LEFT));
+                                    if (connection == null)
+                                    {
+                                        mLogger.error("It shall never happen");
+
+                                        return;
+                                    }
+
+                                    model.disconnect(connection);
+
+                                    break;
+                                }
+                            }
+
+                            for (WorkflowProperties onWorkflowProperties: sourceWorkflowProperties.getOnErrorChildren())
+                            {
+                                if (onWorkflowProperties.getElementId() == workflowPropertiesToBeRemoved.getElementId())
+                                {
+                                    mLogger.info("Removing connection from "
+                                            + sourceWorkflowProperties.toString()
+                                            + " to " + onWorkflowProperties.toString());
+
+                                    sourceWorkflowProperties.getOnErrorChildren().remove(onWorkflowProperties);
+
+                                    Connection connection = getConnection(
+                                            getEndPoint(element, EndPointAnchor.BOTTOM_LEFT),
+                                            getEndPoint(elementToBeRemoved, EndPointAnchor.TOP));
+                                    if (connection == null)
+                                        connection = getConnection(
+                                                getEndPoint(element, EndPointAnchor.BOTTOM_LEFT),
+                                                getEndPoint(elementToBeRemoved, EndPointAnchor.LEFT));
+                                    if (connection == null)
+                                    {
+                                        mLogger.error("It shall never happen");
+
+                                        return;
+                                    }
+
+                                    model.disconnect(connection);
+
+                                    break;
+                                }
+                            }
+
+                            for (WorkflowProperties onWorkflowProperties: sourceWorkflowProperties.getOnCompleteChildren())
+                            {
+                                if (onWorkflowProperties.getElementId() == workflowPropertiesToBeRemoved.getElementId())
+                                {
+                                    mLogger.info("Removing connection from "
+                                            + sourceWorkflowProperties.toString()
+                                            + " to " + onWorkflowProperties.toString());
+
+                                    sourceWorkflowProperties.getOnCompleteChildren().remove(onWorkflowProperties);
+
+                                    Connection connection = getConnection(
+                                            getEndPoint(element, EndPointAnchor.BOTTOM_RIGHT),
+                                            getEndPoint(elementToBeRemoved, EndPointAnchor.TOP));
+                                    if (connection == null)
+                                        connection = getConnection(
+                                                getEndPoint(element, EndPointAnchor.BOTTOM_RIGHT),
+                                                getEndPoint(elementToBeRemoved, EndPointAnchor.LEFT));
+                                    if (connection == null)
+                                    {
+                                        mLogger.error("It shall never happen");
+
+                                        return;
+                                    }
+
+                                    model.disconnect(connection);
+
+                                    break;
+                                }
+                            }
+
+                            if (sourceWorkflowProperties.getType().equalsIgnoreCase("GroupOfTasks"))
+                            {
+                                GroupOfTasksProperties sourceGroupOfTasksProperties = (GroupOfTasksProperties) sourceWorkflowProperties;
+                                for (WorkflowProperties onWorkflowProperties: sourceGroupOfTasksProperties.getTasks())
+                                {
+                                    if (onWorkflowProperties.getElementId() == workflowPropertiesToBeRemoved.getElementId())
+                                    {
+                                        mLogger.info("Removing connection from "
+                                                + sourceWorkflowProperties.toString()
+                                                + " to " + onWorkflowProperties.toString());
+
+                                        sourceGroupOfTasksProperties.getTasks().remove(onWorkflowProperties);
+
+                                        Connection connection = getConnection(
+                                                getEndPoint(element, EndPointAnchor.RIGHT),
+                                                getEndPoint(elementToBeRemoved, EndPointAnchor.TOP));
+                                        if (connection == null)
+                                            connection = getConnection(
+                                                    getEndPoint(element, EndPointAnchor.RIGHT),
+                                                    getEndPoint(elementToBeRemoved, EndPointAnchor.LEFT));
+                                        if (connection == null)
+                                        {
+                                            mLogger.error("It shall never happen");
+
+                                            return;
+                                        }
+
+                                        model.disconnect(connection);
+
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    mLogger.info("Removing element. removingCurrentElementId: " + removingCurrentElementId);
+                    model.removeElement(elementToBeRemoved);
+                }
+                else
+                {
+                    mLogger.error("removeDiagramElement. Didn't find element for removingCurrentElementId " + removingCurrentElementId);
+
+                    FacesMessage msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "Deleting",
+                            "No Diagram Element found having the " + removingCurrentElementId + " id");
+                    FacesContext.getCurrentInstance().addMessage(null, msg);
+
+                    return;
+                }
+            }
+            else
+            {
+                mLogger.error("removeDiagramElement. removingCurrentElementId is null");
+            }
+        }
+        catch (Exception e)
+        {
+            mLogger.error("Exception: " + e);
         }
     }
 
@@ -801,20 +1116,28 @@ public class WorkflowEditor extends Workspace implements Serializable {
     {
         try
         {
-            WorkflowProperties sourceWorkflowProperties = (WorkflowProperties) event.getSourceElement().getData();
-            WorkflowProperties targetWorkflowProperties = (WorkflowProperties) event.getTargetElement().getData();
+            manageNewConnection(event.getSourceElement(), event.getSourceEndPoint(),
+                    event.getTargetElement(), event.getTargetEndPoint());
+        }
+        catch (Exception e)
+        {
+            mLogger.error("Exception: " + e);
+        }
+    }
 
-            mLogger.info("onConnect"
-                    + ", sourceWorkflowProperties.getLabel: " + sourceWorkflowProperties.getLabel()
-                    + ", targetWorkflowProperties.getLabel: " + targetWorkflowProperties.getLabel()
-            );
+    private void manageNewConnection(Element sourceElement, EndPoint sourceEndPoint,
+                                     Element targetElement, EndPoint targetEndPoint)
+    {
+        try
+        {
+            mLogger.info("onConnect");
 
-            EndPoint sourceEndPont = event.getSourceEndPoint();
-            EndPoint targetEndPont = event.getTargetEndPoint();
+            WorkflowProperties sourceWorkflowProperties = (WorkflowProperties) sourceElement.getData();
+            WorkflowProperties targetWorkflowProperties = (WorkflowProperties) targetElement.getData();
 
             if (!isMainTypeConnectionAllowed(sourceWorkflowProperties, targetWorkflowProperties))
             {
-                Connection connection = getConnection(sourceEndPont, targetEndPont);
+                Connection connection = getConnection(sourceEndPoint, targetEndPoint);
                 if (connection != null)
                 {
                     model.disconnect(connection);
@@ -829,9 +1152,9 @@ public class WorkflowEditor extends Workspace implements Serializable {
                     return;
                 }
             }
-            else if (!isConnectionNumberAllowed(sourceEndPont, sourceWorkflowProperties))
+            else if (!isConnectionNumberAllowed(sourceEndPoint, sourceWorkflowProperties))
             {
-                Connection connection = getConnection(sourceEndPont, targetEndPont);
+                Connection connection = getConnection(sourceEndPoint, targetEndPoint);
                 if (connection != null)
                 {
                     model.disconnect(connection);
@@ -849,7 +1172,7 @@ public class WorkflowEditor extends Workspace implements Serializable {
 
             // label for the connection
             {
-                Connection connection = getConnection(sourceEndPont, targetEndPont);
+                Connection connection = getConnection(sourceEndPoint, targetEndPoint);
 
                 if (connection != null)
                 {
@@ -866,23 +1189,23 @@ public class WorkflowEditor extends Workspace implements Serializable {
                     else if (sourceWorkflowProperties.getMainType().equalsIgnoreCase("Task")
                             && targetWorkflowProperties.getMainType().equalsIgnoreCase("Task"))
                     {
-                        if (sourceEndPont.getAnchor() == EndPointAnchor.BOTTOM)
+                        if (sourceEndPoint.getAnchor() == EndPointAnchor.BOTTOM)
                             connection.getOverlays().add(new LabelOverlay("onSuccess", "connection-label", 0.5));
-                        else if (sourceEndPont.getAnchor() == EndPointAnchor.BOTTOM_RIGHT)
+                        else if (sourceEndPoint.getAnchor() == EndPointAnchor.BOTTOM_RIGHT)
                             connection.getOverlays().add(new LabelOverlay("onComplete", "connection-label", 0.5));
-                        else if (sourceEndPont.getAnchor() == EndPointAnchor.BOTTOM_LEFT)
+                        else if (sourceEndPoint.getAnchor() == EndPointAnchor.BOTTOM_LEFT)
                             connection.getOverlays().add(new LabelOverlay("onError", "connection-label", 0.5));
                     }
                     else if (sourceWorkflowProperties.getMainType().equalsIgnoreCase("GroupOfTasks")
                             && targetWorkflowProperties.getMainType().equalsIgnoreCase("Task"))
                     {
-                        if (sourceEndPont.getAnchor() == EndPointAnchor.BOTTOM)
+                        if (sourceEndPoint.getAnchor() == EndPointAnchor.BOTTOM)
                             connection.getOverlays().add(new LabelOverlay("onSuccess", "connection-label", 0.5));
-                        else if (sourceEndPont.getAnchor() == EndPointAnchor.BOTTOM_RIGHT)
+                        else if (sourceEndPoint.getAnchor() == EndPointAnchor.BOTTOM_RIGHT)
                             connection.getOverlays().add(new LabelOverlay("onComplete", "connection-label", 0.5));
-                        else if (sourceEndPont.getAnchor() == EndPointAnchor.BOTTOM_LEFT)
+                        else if (sourceEndPoint.getAnchor() == EndPointAnchor.BOTTOM_LEFT)
                             connection.getOverlays().add(new LabelOverlay("onError", "connection-label", 0.5));
-                        else if (sourceEndPont.getAnchor() == EndPointAnchor.RIGHT)
+                        else if (sourceEndPoint.getAnchor() == EndPointAnchor.RIGHT)
                             connection.getOverlays().add(new LabelOverlay("Task of Group", "connection-label", 0.5));
                     }
                 }
@@ -890,13 +1213,13 @@ public class WorkflowEditor extends Workspace implements Serializable {
 
             // update data children
             {
-                if (sourceEndPont.getAnchor() == EndPointAnchor.BOTTOM)
+                if (sourceEndPoint.getAnchor() == EndPointAnchor.BOTTOM)
                     sourceWorkflowProperties.getOnSuccessChildren().add(targetWorkflowProperties);
-                else if (sourceEndPont.getAnchor() == EndPointAnchor.BOTTOM_LEFT)
+                else if (sourceEndPoint.getAnchor() == EndPointAnchor.BOTTOM_LEFT)
                     sourceWorkflowProperties.getOnErrorChildren().add(targetWorkflowProperties);
-                else if (sourceEndPont.getAnchor() == EndPointAnchor.BOTTOM_RIGHT)
+                else if (sourceEndPoint.getAnchor() == EndPointAnchor.BOTTOM_RIGHT)
                     sourceWorkflowProperties.getOnCompleteChildren().add(targetWorkflowProperties);
-                else if (sourceEndPont.getAnchor() == EndPointAnchor.RIGHT)
+                else if (sourceEndPoint.getAnchor() == EndPointAnchor.RIGHT)
                 {
                     GroupOfTasksProperties groupOfTasksProperties = (GroupOfTasksProperties) sourceWorkflowProperties;
 
@@ -907,7 +1230,8 @@ public class WorkflowEditor extends Workspace implements Serializable {
             buildWorkflowElementJson();
 
             FacesMessage msg = new FacesMessage(FacesMessage.SEVERITY_INFO, "Connected",
-                    "From " + sourceWorkflowProperties + " To " + targetWorkflowProperties);
+                    "From " + StringEscapeUtils.escapeHtml(sourceWorkflowProperties.toString())
+                            + " To " + StringEscapeUtils.escapeHtml(targetWorkflowProperties.toString()));
 
             FacesContext.getCurrentInstance().addMessage(null, msg);
 
@@ -1112,13 +1436,31 @@ public class WorkflowEditor extends Workspace implements Serializable {
         return connectionToBeReturned;
     }
 
+    private EndPoint getEndPoint(Element element, EndPointAnchor endPointAnchor)
+            throws Exception
+    {
+        EndPoint endPointToBeReturned = null;
+
+        for (EndPoint endPoint: element.getEndPoints())
+        {
+            if (endPoint.getAnchor() == endPointAnchor)
+            {
+                endPointToBeReturned = endPoint;
+
+                break;
+            }
+        }
+
+        return endPointToBeReturned;
+    }
+
     public void buildWorkflowElementJson()
     {
         try {
             ingestionData.getWorkflowIssueList().clear();
             ingestionData.getPushContentList().clear();
 
-            WorkflowProperties workflowProperties = (WorkflowProperties) rootElement.getData();
+            WorkflowProperties workflowProperties = (WorkflowProperties) workflowElement.getData();
             JSONObject joWorkflow = workflowProperties.buildWorkflowElementJson(ingestionData);
 
             ingestionData.setJsonWorkflow(joWorkflow.toString(8));
@@ -1327,6 +1669,22 @@ public class WorkflowEditor extends Workspace implements Serializable {
         String sMilliSeconds = String.format("%03d", milliSeconds);
 
         return sHours.concat(":").concat(sMinutes).concat(":").concat(sSeconds).concat(".").concat(sMilliSeconds);
+    }
+
+    public String getPredefined() {
+        return predefined;
+    }
+
+    public void setPredefined(String predefined) {
+        this.predefined = predefined;
+    }
+
+    public String getData() {
+        return data;
+    }
+
+    public void setData(String data) {
+        this.data = data;
     }
 
     public String getWorkflowLabel() {
@@ -1567,5 +1925,13 @@ public class WorkflowEditor extends Workspace implements Serializable {
 
     public void setCurrentChangeFileFormatProperties(ChangeFileFormatProperties currentChangeFileFormatProperties) {
         this.currentChangeFileFormatProperties = currentChangeFileFormatProperties;
+    }
+
+    public int getRemovingCurrentElementId() {
+        return removingCurrentElementId;
+    }
+
+    public void setRemovingCurrentElementId(int removingCurrentElementId) {
+        this.removingCurrentElementId = removingCurrentElementId;
     }
 }

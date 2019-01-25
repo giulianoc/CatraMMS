@@ -8,11 +8,9 @@
       xmlns:media="http://xmlns.jcp.org/jsf/composite/media">
 
 <f:metadata>
-    <!--
-    <f:viewParam name="predefined" value="#{newWorkflow.predefined}" />
-    <f:viewParam name="data" value="#{newWorkflow.data}" />
-    <f:viewAction action="#{newWorkflow.init}" />
-    -->
+    <f:viewParam name="predefined" value="#{workflowEditor.predefined}" />
+    <f:viewParam name="data" value="#{workflowEditor.data}" />
+    <f:viewAction action="#{workflowEditor.init}" />
 </f:metadata>
 
 <h:head>
@@ -170,7 +168,7 @@
 
 
             .ui-diagram-element {
-                width:14em;
+                width:15em;
                 height:4em;
                 font-size: 16px;
             }
@@ -184,7 +182,7 @@
 
             @media only screen and (min-width:769px) and (max-width: 992px) {
                 .ui-diagram-element {
-                    width:13em;
+                    width:14em;
                     height:4em;
                     font-size: 14px;
                 }
@@ -198,7 +196,7 @@
             }
             @media only screen and (min-width:0px) and (max-width: 768px) {
                 .ui-diagram-element {
-                    width:12em;
+                    width:13em;
                     height:3em;
                     font-size: 12px;
                 }
@@ -309,8 +307,16 @@
                         <br />
 
                         <h:outputText value="Id: #{el.elementId}, " />
+
+                        <p:link
+                                value="#{el.type}"
+                                target="_blank"
+                                href="https://github.com/giulianoc/CatraMMS/wiki/#{el.type}"
+                                />
+                        <!--
                         <h:outputText styleClass="#{(el.type == 'Workflow') ? 'workflowElementText' : ''}"
                                       value="#{el.type}" />
+                        -->
                     </p>
 
                 </div>
