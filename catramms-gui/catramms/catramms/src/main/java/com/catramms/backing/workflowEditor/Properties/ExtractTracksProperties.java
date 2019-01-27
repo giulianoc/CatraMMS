@@ -18,14 +18,16 @@ public class ExtractTracksProperties extends CreateContentProperties implements 
 
     private StringBuilder taskReferences = new StringBuilder();
 
-    public ExtractTracksProperties(int elementId, String label)
+    public ExtractTracksProperties(String positionX, String positionY,
+                                   int elementId, String label)
     {
-        super(elementId, label, "Extract-Tracks" + "-icon.png", "Task", "Extract-Tracks");
+        super(positionX, positionY, elementId, label, "Extract-Tracks" + "-icon.png", "Task", "Extract-Tracks");
     }
 
     public ExtractTracksProperties clone()
     {
         ExtractTracksProperties extractTracksProperties = new ExtractTracksProperties(
+                super.getPositionX(), super.getPositionY(),
                 super.getElementId(), super.getLabel());
 
         extractTracksProperties.setFileFormat(fileFormat);
@@ -49,6 +51,28 @@ public class ExtractTracksProperties extends CreateContentProperties implements 
         setAudioTrackNumber(workflowProperties.getAudioTrackNumber());
 
         setStringBuilderTaskReferences(workflowProperties.getStringBuilderTaskReferences());
+    }
+
+    public void setData(JSONObject jsonWorkflowElement)
+    {
+        try {
+            super.setData(jsonWorkflowElement);
+
+            setLabel(jsonWorkflowElement.getString("Label"));
+
+            JSONObject joParameters = jsonWorkflowElement.getJSONObject("Parameters");
+
+            if (joParameters.has("FileFormat") && !joParameters.getString("FileFormat").equalsIgnoreCase(""))
+                setFileFormat(joParameters.getString("FileFormat"));
+            if (joParameters.has("VideoTrackNumber"))
+                setVideoTrackNumber(joParameters.getLong("VideoTrackNumber"));
+            if (joParameters.has("AudioTrackNumber"))
+                setAudioTrackNumber(joParameters.getLong("AudioTrackNumber"));
+        }
+        catch (Exception e)
+        {
+            mLogger.error("WorkflowProperties:setData failed, exception: " + e);
+        }
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)

@@ -4,8 +4,7 @@
       xmlns:p="http://primefaces.org/ui"
       xmlns:h="http://xmlns.jcp.org/jsf/html"
       xmlns:f="http://xmlns.jcp.org/jsf/core"
-      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
-      xmlns:media="http://xmlns.jcp.org/jsf/composite/media">
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
 
 <f:metadata>
     <f:viewParam name="mediaItemKey" value="#{mediaItemDetails.mediaItemKey}" />
@@ -24,6 +23,10 @@
     <ui:include src="/common/loadingDialog.xhtml"/>
     <h:outputScript library="js" name="smpte.js" target="head" />
 
+    <ui:include src="/common/playerDialog.xhtml">
+        <ui:param name="controller" value="#{mediaItemDetails}" />
+    </ui:include>
+
     <p:dialog widgetVar="showPhysicalPathDetails" modal="true"
               header="Media File Details" appendTo="@(body)" width="900" height="400"
               showEffect="fade" hideEffect="fade" resizable="true" draggable="true">
@@ -36,38 +39,38 @@
 
                     <p:panelGrid columns="2" cellpadding="10">
                         <p:outputLabel value="Physical Path Key: " />
-                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.physicalPathKey}" />
+                        <p:outputLabel value="#{mediaItemDetails.player.currentPhysicalPath.physicalPathKey}" />
 
                         <p:outputLabel value="File Format: " />
-                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.fileFormat}" />
+                        <p:outputLabel value="#{mediaItemDetails.player.currentPhysicalPath.fileFormat}" />
 
                         <p:outputLabel rendered="#{sessionScope.currentWorkspaceDetails.admin}"
                                        value="Partition Number: " />
                         <p:outputLabel rendered="#{sessionScope.currentWorkspaceDetails.admin}"
-                                value="#{mediaItemDetails.currentPhysicalPath.partitionNumber}" />
+                                value="#{mediaItemDetails.player.currentPhysicalPath.partitionNumber}" />
 
                         <p:outputLabel rendered="#{sessionScope.currentWorkspaceDetails.admin}"
                                        value="Relative Path: " />
                         <p:outputLabel rendered="#{sessionScope.currentWorkspaceDetails.admin}"
-                                       value="#{mediaItemDetails.currentPhysicalPath.relativePath}" />
+                                       value="#{mediaItemDetails.player.currentPhysicalPath.relativePath}" />
 
                         <p:outputLabel rendered="#{sessionScope.currentWorkspaceDetails.admin}"
                                        value="File Name: " />
                         <p:outputLabel rendered="#{sessionScope.currentWorkspaceDetails.admin}"
-                                       value="#{mediaItemDetails.currentPhysicalPath.fileName}" />
+                                       value="#{mediaItemDetails.player.currentPhysicalPath.fileName}" />
 
                         <p:outputLabel value="Size In Bytes: " />
-                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.sizeInBytes}" >
+                        <p:outputLabel value="#{mediaItemDetails.player.currentPhysicalPath.sizeInBytes}" >
                             <f:convertNumber type="number" groupingUsed="true" locale="it" />
                         </p:outputLabel>
 
                         <p:outputLabel value="Creation Date: " />
-                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.creationDate}">
+                        <p:outputLabel value="#{mediaItemDetails.player.currentPhysicalPath.creationDate}">
                             <f:convertDateTime type="date" pattern="dd-MM-yyyy HH:mm:ss" timeZone="CET"/>
                         </p:outputLabel>
 
                         <p:outputLabel value="Encoding Profile Key: " />
-                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.encodingProfileKey}" />
+                        <p:outputLabel value="#{mediaItemDetails.player.currentPhysicalPath.encodingProfileKey}" />
 
                     </p:panelGrid>
 
@@ -77,46 +80,46 @@
 
                     <p:panelGrid columns="2" cellpadding="10">
                         <p:outputLabel value="Duration: " />
-                        <p:outputLabel value="#{mediaItemDetails.getDurationAsString(mediaItemDetails.currentPhysicalPath.videoDetails.durationInMilliseconds)} (#{mediaItemDetails.currentPhysicalPath.videoDetails.durationInMilliseconds})" />
+                        <p:outputLabel value="#{mediaItemDetails.getDurationAsString(mediaItemDetails.player.currentPhysicalPath.videoDetails.durationInMilliseconds)} (#{mediaItemDetails.player.currentPhysicalPath.videoDetails.durationInMilliseconds})" />
 
                         <p:outputLabel value="Bit Rate (bytes/secs): " />
-                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.videoDetails.bitRate}">
+                        <p:outputLabel value="#{mediaItemDetails.player.currentPhysicalPath.videoDetails.bitRate}">
                             <f:convertNumber type="number" groupingUsed="true" locale="it" />
                         </p:outputLabel>
 
                         <p:outputLabel value="Video Codec Name: " />
-                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.videoDetails.videoCodecName}" />
+                        <p:outputLabel value="#{mediaItemDetails.player.currentPhysicalPath.videoDetails.videoCodecName}" />
 
                         <p:outputLabel value="Video Bit Rate (bytes/secs): " />
-                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.videoDetails.videoBitRate}">
+                        <p:outputLabel value="#{mediaItemDetails.player.currentPhysicalPath.videoDetails.videoBitRate}">
                             <f:convertNumber type="number" groupingUsed="true" locale="it" />
                         </p:outputLabel>
 
                         <p:outputLabel value="Video Profile: " />
-                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.videoDetails.videoProfile}" />
+                        <p:outputLabel value="#{mediaItemDetails.player.currentPhysicalPath.videoDetails.videoProfile}" />
 
                         <p:outputLabel value="Video Avg Frame Rate: " />
-                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.videoDetails.videoAvgFrameRate}" />
+                        <p:outputLabel value="#{mediaItemDetails.player.currentPhysicalPath.videoDetails.videoAvgFrameRate}" />
 
                         <p:outputLabel value="Video Width: " />
-                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.videoDetails.videoWidth}" />
+                        <p:outputLabel value="#{mediaItemDetails.player.currentPhysicalPath.videoDetails.videoWidth}" />
 
                         <p:outputLabel value="Video Height: " />
-                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.videoDetails.videoHeight}" />
+                        <p:outputLabel value="#{mediaItemDetails.player.currentPhysicalPath.videoDetails.videoHeight}" />
 
                         <p:outputLabel value="Audio Codec Name: " />
-                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.videoDetails.audioCodecName}" />
+                        <p:outputLabel value="#{mediaItemDetails.player.currentPhysicalPath.videoDetails.audioCodecName}" />
 
                         <p:outputLabel value="Audio Bit Rate (bytes/secs): " />
-                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.videoDetails.audioBitRate}">
+                        <p:outputLabel value="#{mediaItemDetails.player.currentPhysicalPath.videoDetails.audioBitRate}">
                             <f:convertNumber type="number" groupingUsed="true" locale="it" />
                         </p:outputLabel>
 
                         <p:outputLabel value="Audio Channels: " />
-                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.videoDetails.audioChannels}" />
+                        <p:outputLabel value="#{mediaItemDetails.player.currentPhysicalPath.videoDetails.audioChannels}" />
 
                         <p:outputLabel value="Audio Sample Rate (Hz): " />
-                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.videoDetails.audioSampleRate}">
+                        <p:outputLabel value="#{mediaItemDetails.player.currentPhysicalPath.videoDetails.audioSampleRate}">
                             <f:convertNumber type="number" groupingUsed="true" locale="it" />
                         </p:outputLabel>
 
@@ -128,23 +131,23 @@
 
                     <p:panelGrid columns="2" cellpadding="10">
                         <p:outputLabel value="Duration: " />
-                        <p:outputLabel value="#{mediaItemDetails.getDurationAsString(mediaItemDetails.currentPhysicalPath.audioDetails.durationInMilliseconds)} (#{mediaItemDetails.currentPhysicalPath.audioDetails.durationInMilliseconds})" />
+                        <p:outputLabel value="#{mediaItemDetails.getDurationAsString(mediaItemDetails.player.currentPhysicalPath.audioDetails.durationInMilliseconds)} (#{mediaItemDetails.player.currentPhysicalPath.audioDetails.durationInMilliseconds})" />
 
                         <p:outputLabel value="Codec Name: " />
-                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.audioDetails.codecName}" />
+                        <p:outputLabel value="#{mediaItemDetails.player.currentPhysicalPath.audioDetails.codecName}" />
 
                         <p:outputLabel value="Bit Rate (bytes/secs): " />
-                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.audioDetails.bitRate}">
+                        <p:outputLabel value="#{mediaItemDetails.player.currentPhysicalPath.audioDetails.bitRate}">
                             <f:convertNumber type="number" groupingUsed="true" locale="it" />
                         </p:outputLabel>
 
                         <p:outputLabel value="Sample Rate (Hz): " />
-                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.audioDetails.sampleRate}">
+                        <p:outputLabel value="#{mediaItemDetails.player.currentPhysicalPath.audioDetails.sampleRate}">
                             <f:convertNumber type="number" groupingUsed="true" locale="it" />
                         </p:outputLabel>
 
                         <p:outputLabel value="Channels: " />
-                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.audioDetails.channels}" />
+                        <p:outputLabel value="#{mediaItemDetails.player.currentPhysicalPath.audioDetails.channels}" />
                     </p:panelGrid>
 
                 </p:tab>
@@ -153,16 +156,16 @@
 
                     <p:panelGrid columns="2" cellpadding="10">
                         <p:outputLabel value="Width: " />
-                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.imageDetails.width}" />
+                        <p:outputLabel value="#{mediaItemDetails.player.currentPhysicalPath.imageDetails.width}" />
 
                         <p:outputLabel value="Height: " />
-                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.imageDetails.height}" />
+                        <p:outputLabel value="#{mediaItemDetails.player.currentPhysicalPath.imageDetails.height}" />
 
                         <p:outputLabel value="Format: " />
-                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.imageDetails.format}" />
+                        <p:outputLabel value="#{mediaItemDetails.player.currentPhysicalPath.imageDetails.format}" />
 
                         <p:outputLabel value="Quality: " />
-                        <p:outputLabel value="#{mediaItemDetails.currentPhysicalPath.imageDetails.quality}" />
+                        <p:outputLabel value="#{mediaItemDetails.player.currentPhysicalPath.imageDetails.quality}" />
 
                     </p:panelGrid>
 
@@ -170,158 +173,6 @@
 
             </p:tabView>
         </h:form>
-    </p:dialog>
-
-    <p:dialog widgetVar="showImage" modal="true"
-              header="Player" appendTo="@(body)"
-              showEffect="fade" hideEffect="fade" resizable="true" draggable="true" >
-
-        <h:form id="showImageForm">
-            <p:outputLabel value="Physical Path Key: #{mediaItemDetails.currentPhysicalPath.physicalPathKey}" />
-
-            <br />
-
-            <p:scrollPanel mode="native" style="height: 600px">
-                <h:graphicImage value="#{mediaItemDetails.currentMediaURL}" />
-            </p:scrollPanel>
-        </h:form>
-
-    </p:dialog>
-
-    <p:dialog widgetVar="showVideo" modal="true"
-              header="Player" appendTo="@(body)" width="900" height="600"
-              showEffect="fade" hideEffect="fade" resizable="true" draggable="true"
-              onHide="document.getElementById('showVideoForm:binaryLinkPlayer:media-player').pause()">
-
-        <h:form id="showVideoForm">
-            <p:growl id="growl" showDetail="true" sticky="false" escape="false" life="5000">
-                <p:autoUpdate />
-            </p:growl>
-
-            <p:outputLabel value="Physical Path Key: #{mediaItemDetails.currentPhysicalPath.physicalPathKey}" />
-            <p:outputLabel value=", FramesPerSeconds: " />
-            <!-- next outputLabel is also used inside javascript to retrieve the framesPerSeconds -->
-            <p:outputLabel id="framesPerSeconds" style="font-weight: bold"
-                           value="#{mediaItemDetails.framesPerSecond}" />
-
-            <br />
-
-            <p:scrollPanel mode="native" style="width: 100%; height: 400px">
-                <media:video
-                        id="binaryLinkPlayer"
-                        value="#{mediaItemDetails.currentMediaURL}"
-                        autoplay="true"
-                        controls="true" />
-            </p:scrollPanel>
-
-            <p:panel rendered="#{mediaItemDetails.editVideo}" >
-
-                <p:remoteCommand name="updateVideoTimeCode"
-                                 update="timecode,markInButton,markOutButton"
-                                 global="false"
-                                 actionListener="#{mediaItemDetails.updateVideoTimeCode}"
-                        />
-
-                <!-- <p:remoteCommand oncomplete="initPlayerListener" autoRun="true" /> -->
-
-                <p:toolbar >
-                    <p:toolbarGroup align="left">
-                        <p:commandButton global="false" icon="fa fa-minus" onclick="seekFrames(-1)" />
-                        <p:hotkey bind="left"  handler="seekFrames(-1);" />
-
-                        <span class="ui-separator">
-                            <span class="ui-icon ui-icon-grip-dotted-vertical" />
-                        </span>
-
-                        <p:commandButton global="false" icon="fa fa-plus" onclick="seekFrames(1)" />
-                        <p:hotkey bind="right"  handler="seekFrames(1);" />
-
-                        <span class="ui-separator">
-                            <span class="ui-icon ui-icon-grip-dotted-vertical" />
-                        </span>
-
-                        <p:outputLabel id="timecode" value="#{mediaItemDetails.videoCurrentTime}" />
-
-                        <span class="ui-separator">
-                            <span class="ui-icon ui-icon-grip-dotted-vertical" />
-                        </span>
-
-                        <p:outputLabel id="markIn"
-                                       title="#{mediaItemDetails.videoMarkIn}"
-                                       styleClass="#{mediaItemDetails.videoMarkIn.equalsIgnoreCase('') ? 'fa fa-bookmark-o' : 'fa fa-bookmark'}" />
-                        <p:tooltip for="markIn"
-                                   showEffect="clip" hideEffect="explode" position="left" />
-                        <p:commandButton id="markInButton" global="false" value="Mark In"
-                                         disabled="#{mediaItemDetails.markButtonDisabled}"
-                                         actionListener="#{mediaItemDetails.markIn}"
-                                         update="markIn,addMarkButton" />
-
-                        <span class="ui-separator">
-                            <span class="ui-icon ui-icon-grip-dotted-vertical" />
-                        </span>
-
-                        <p:outputLabel id="markOut"
-                                       title="#{mediaItemDetails.videoMarkOut}"
-                                       styleClass="#{mediaItemDetails.videoMarkOut.equalsIgnoreCase('') ? 'fa fa-bookmark-o' : 'fa fa-bookmark'}" />
-                        <p:tooltip for="markOut"
-                                   showEffect="clip" hideEffect="explode" position="left"/>
-                        <p:commandButton id="markOutButton" global="false" value="Mark Out"
-                                         disabled="#{mediaItemDetails.markButtonDisabled}"
-                                         actionListener="#{mediaItemDetails.markOut}"
-                                         update="markOut,addMarkButton" />
-
-                        <span class="ui-separator">
-                            <span class="ui-icon ui-icon-grip-dotted-vertical" />
-                        </span>
-
-                        <p:commandButton id="addMarkButton" global="false" value="Add Mark"
-                                         disabled="#{mediaItemDetails.addMarkButtonDisabled}"
-                                         icon="fa fa-map-marker"
-                                         update="markDataTable,markIn,markOut,addMarkButton,prepareWorkflowToIngest"
-                                         actionListener="#{mediaItemDetails.addMark}"/>
-
-                    </p:toolbarGroup>
-
-                    <p:toolbarGroup align="right">
-                        <p:commandButton id="prepareWorkflowToIngest" global="false" value="Prepare Workflow to ingest"
-                                         actionListener="#{mediaItemDetails.prepareWorkflowToIngest}"
-                                         disabled="#{mediaItemDetails.markList.size() == 0}"
-                                         icon="fa fa-map-marker"
-                                         oncomplete="PF('showVideo').hide()"
-                        />
-                    </p:toolbarGroup>
-                </p:toolbar>
-
-                <br/>
-
-                <p:dataTable resizableColumns="true" id="markDataTable" var="mark" rowIndexVar="rowId"
-                             value="#{mediaItemDetails.markList}" rowKey="#{mark.in}"
-                             selectionMode="single"
-                             widgetVar="markDataTable" >
-
-                    <f:facet name="header">
-                        <p:outputLabel value="Marks" />
-                    </f:facet>
-
-                    <p:column style="width:90px;" headerText="In" >
-                        <p:outputLabel value="#{mark.in}" />
-                    </p:column>
-
-                    <p:column style="width:90px;" headerText="End" >
-                        <p:outputLabel value="#{mark.out}" />
-                    </p:column>
-
-                    <p:column style="width:32px">
-                        <p:commandButton global="true" icon="fa fa-minus-circle"
-                                actionListener="#{mediaItemDetails.removeMark(mark.in)}"
-                                         update="markDataTable"
-                                />
-                    </p:column>
-                </p:dataTable>
-
-            </p:panel>
-        </h:form>
-
     </p:dialog>
 
     <h:form id="viewForm">
@@ -355,6 +206,16 @@
                 </span>
 
                 <p:commandLink value="Logout" action="#{login.logout}" />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:link
+                        value="Docs"
+                        target="_blank"
+                        href="https://github.com/giulianoc/CatraMMS/wiki"
+                />
 
                 <span class="ui-separator">
                     <span class="ui-icon ui-icon-grip-dotted-vertical" />
@@ -542,7 +403,7 @@
                         <p:menu toggleable="true" collapsed="true" overlay="true" trigger="dynaButtonOptions"
                                 my="left top" at="left bottom">
                             <p:menuitem value="Media File Details"
-                                        actionListener="#{mediaItemDetails.setCurrentPhysicalPath(physicalPath)}"
+                                        actionListener="#{mediaItemDetails.player.setCurrentPhysicalPath(physicalPath)}"
                                         update="showPhysicalPathDetailsForm"
                                         oncomplete="PF('showPhysicalPathDetails').show()">
                             </p:menuitem>
@@ -556,7 +417,7 @@
                             <p:menuitem value="Show Image"
                                         rendered="#{mediaItemDetails.mediaItem.contentType == 'Image'}"
                                         disabled="#{!sessionScope.currentWorkspaceDetails.deliveryAuthorization}"
-                                        actionListener="#{mediaItemDetails.prepareCurrentMediaURL(physicalPath, mediaItemDetails.mediaItem.contentType, false)}"
+                                        actionListener="#{mediaItemDetails.player.prepareCurrentMediaURL(mediaItemDetails.mediaItem, physicalPath, false)}"
                                         update="showImageForm"
                                         oncomplete="PF('showImage').show()">
                             </p:menuitem>
@@ -564,7 +425,7 @@
                             <p:menuitem value="Play"
                                         rendered="#{mediaItemDetails.mediaItem.contentType == 'Video' or mediaItemDetails.mediaItem.contentType == 'Audio'}"
                                         disabled="#{!sessionScope.currentWorkspaceDetails.deliveryAuthorization}"
-                                        actionListener="#{mediaItemDetails.prepareCurrentMediaURL(physicalPath, mediaItemDetails.mediaItem.contentType, false)}"
+                                        actionListener="#{mediaItemDetails.player.prepareCurrentMediaURL(mediaItemDetails.mediaItem, physicalPath, false)}"
                                         update="showVideoForm"
                                         oncomplete="PF('showVideo').show()">
                             </p:menuitem>
@@ -572,14 +433,14 @@
                             <p:menuitem value="Edit"
                                         rendered="#{mediaItemDetails.mediaItem.contentType == 'Video' or mediaItemDetails.mediaItem.contentType == 'Audio'}"
                                         disabled="#{!sessionScope.currentWorkspaceDetails.deliveryAuthorization or !sessionScope.currentWorkspaceDetails.editMedia}"
-                                        actionListener="#{mediaItemDetails.prepareCurrentMediaURL(physicalPath, mediaItemDetails.mediaItem.contentType, true)}"
+                                        actionListener="#{mediaItemDetails.player.prepareCurrentMediaURL(mediaItemDetails.mediaItem, physicalPath, true)}"
                                         update="showVideoForm"
                                         oncomplete="PF('showVideo').show()">
                             </p:menuitem>
 
                             <p:menuitem value="Download File"
                                         disabled="#{!sessionScope.currentWorkspaceDetails.deliveryAuthorization}"
-                                        actionListener="#{mediaItemDetails.downloadCurrentMediaURL(physicalPath)}"
+                                        actionListener="#{mediaItemDetails.player.downloadCurrentMediaURL(mediaItemDetails.mediaItem, physicalPath)}"
                                         >
                             </p:menuitem>
                         </p:menu>

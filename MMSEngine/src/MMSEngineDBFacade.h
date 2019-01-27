@@ -664,11 +664,11 @@ public:
     }
     static bool isIngestionStatusSuccess(const IngestionStatus& ingestionStatus)
     {
-        return (ingestionStatus == IngestionStatus::End_TaskSuccess);
+        return (ingestionStatus == IngestionStatus::End_TaskSuccess || ingestionStatus == IngestionStatus::End_NotToBeExecuted);
     }
     static bool isIngestionStatusFailed(const IngestionStatus& ingestionStatus)
     {
-        return (isIngestionStatusFinalState(ingestionStatus) && ingestionStatus != IngestionStatus::End_TaskSuccess);
+        return (isIngestionStatusFinalState(ingestionStatus) && !isIngestionStatusSuccess(ingestionStatus));
     }
 
     enum class IngestionRootStatus {
@@ -841,7 +841,8 @@ public:
     
     int64_t addIngestionRoot (
         shared_ptr<MySQLConnection> conn,
-    	int64_t workspaceKey, string rootType, string rootLabel);
+    	int64_t workspaceKey, string rootType, string rootLabel,
+		string metaDataContent);
 
     int64_t addIngestionJob (shared_ptr<MySQLConnection> conn,
     	int64_t workspaceKey, int64_t ingestionRootKey, 
@@ -907,6 +908,9 @@ public:
     void updateIngestionJobSourceBinaryTransferred (
         int64_t ingestionJobKey,
         bool sourceBinaryTransferred);
+
+	string getIngestionRootMetaDataContent (
+        shared_ptr<Workspace> workspace, int64_t ingestionRootKey);
 
     Json::Value getIngestionRootsStatus (
         shared_ptr<Workspace> workspace, int64_t ingestionRootKey,

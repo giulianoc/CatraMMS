@@ -28,9 +28,10 @@ public class HTTPCallbackProperties extends WorkflowProperties implements Serial
 
     private StringBuilder taskReferences = new StringBuilder();
 
-    public HTTPCallbackProperties(int elementId, String label)
+    public HTTPCallbackProperties(String positionX, String positionY,
+                                  int elementId, String label)
     {
-        super(elementId, label, "HTTP-Callback" + "-icon.png", "Task", "HTTP-Callback");
+        super(positionX, positionY, elementId, label, "HTTP-Callback" + "-icon.png", "Task", "HTTP-Callback");
 
         {
             protocolsList = new ArrayList<>();
@@ -48,6 +49,7 @@ public class HTTPCallbackProperties extends WorkflowProperties implements Serial
     public HTTPCallbackProperties clone()
     {
         HTTPCallbackProperties httpCallbackProperties = new HTTPCallbackProperties(
+                super.getPositionX(), super.getPositionY(),
                 super.getElementId(), super.getLabel());
 
         httpCallbackProperties.setProtocol(getProtocol());
@@ -76,6 +78,36 @@ public class HTTPCallbackProperties extends WorkflowProperties implements Serial
         setHeaders(workflowProperties.getHeaders());
 
         setStringBuilderTaskReferences(workflowProperties.getStringBuilderTaskReferences());
+    }
+
+    public void setData(JSONObject jsonWorkflowElement)
+    {
+        try {
+            super.setData(jsonWorkflowElement);
+
+            setLabel(jsonWorkflowElement.getString("Label"));
+
+            JSONObject joParameters = jsonWorkflowElement.getJSONObject("Parameters");
+
+            if (joParameters.has("Protocol") && !joParameters.getString("Protocol").equalsIgnoreCase(""))
+                setProtocol(joParameters.getString("Protocol"));
+            if (joParameters.has("Method") && !joParameters.getString("Method").equalsIgnoreCase(""))
+                setMethod(joParameters.getString("Method"));
+            if (joParameters.has("HostName") && !joParameters.getString("HostName").equalsIgnoreCase(""))
+                setHostName(joParameters.getString("HostName"));
+            if (joParameters.has("Port"))
+                setPort(joParameters.getLong("Port"));
+            if (joParameters.has("URI") && !joParameters.getString("URI").equalsIgnoreCase(""))
+                setUri(joParameters.getString("URI"));
+            if (joParameters.has("Parameters") && !joParameters.getString("Parameters").equalsIgnoreCase(""))
+                setParameters(joParameters.getString("Parameters"));
+            if (joParameters.has("Headers") && !joParameters.getString("Headers").equalsIgnoreCase(""))
+                setHeaders(joParameters.getString("Headers"));
+        }
+        catch (Exception e)
+        {
+            mLogger.error("WorkflowProperties:setData failed, exception: " + e);
+        }
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)

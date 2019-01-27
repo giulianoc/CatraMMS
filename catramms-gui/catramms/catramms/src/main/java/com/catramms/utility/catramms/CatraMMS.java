@@ -529,6 +529,40 @@ public class CatraMMS {
         return workflowRoot;
     }
 
+    public String getMetaDataContent(String username, String password, Long ingestionRootKey)
+            throws Exception
+    {
+        String metaDataContent;
+        String mmsURL = null;
+        try
+        {
+            mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort
+                    + "/catramms/v1/ingestionRoot/metaDataContent/" + ingestionRootKey;
+
+            mLogger.info("getMetaDataContent"
+                    + ", mmsURL: " + mmsURL
+                    + ", ingestionRootKey: " + ingestionRootKey
+            );
+
+            Date now = new Date();
+            metaDataContent = HttpFeedFetcher.fetchGetHttpsJson(mmsURL, timeoutInSeconds, maxRetriesNumber,
+                    username, password);
+            mLogger.info("Elapsed time login (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "getMetaDataContent MMS failed"
+                    + ", mmsURL: " + mmsURL
+                    + ", Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+
+
+        return metaDataContent;
+    }
+
     public Long addEncodingProfile(String username, String password,
                                    String contentType, String jsonEncodingProfile)
             throws Exception

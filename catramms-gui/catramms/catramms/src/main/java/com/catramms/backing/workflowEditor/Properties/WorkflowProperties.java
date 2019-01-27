@@ -31,14 +31,19 @@ public class WorkflowProperties implements Serializable
     private String image;
     private String mainType;
     private String type;
+    private String positionX;
+    private String positionY;
 
     private List<WorkflowProperties> onSuccessChildren = new ArrayList<>();
     private List<WorkflowProperties> onErrorChildren = new ArrayList<>();
     private List<WorkflowProperties> onCompleteChildren = new ArrayList<>();
 
 
-    public WorkflowProperties(int elementId, String label, String image, String mainType, String type)
+    public WorkflowProperties(String positionX, String positionY,
+                              int elementId, String label, String image, String mainType, String type)
     {
+        this.positionX = positionX;
+        this.positionY = positionY;
         this.elementId = elementId;
         this.label = label;
         this.image = image;
@@ -128,6 +133,7 @@ public class WorkflowProperties implements Serializable
         boolean isLabelChanged = isLabelChanged();
 
         WorkflowProperties workflowProperties = new WorkflowProperties(
+                getPositionX(), getPositionY(),
                 getElementId(), getLabel(), getImage(), getMainType(), getType());
 
         workflowProperties.setLabelChanged(isLabelChanged);
@@ -140,6 +146,19 @@ public class WorkflowProperties implements Serializable
     {
         // mLogger.info("WorkflowProperties::setData");
         setLabel(workflowProperties.getLabel());
+        setPositionX(workflowProperties.getPositionX());
+        setPositionY(workflowProperties.getPositionY());
+    }
+
+    public void setData(JSONObject jsonWorkflowElement)
+    {
+        try {
+            setLabel(jsonWorkflowElement.getString("Label"));
+        }
+        catch (Exception e)
+        {
+            mLogger.error("WorkflowProperties:setData failed, exception: " + e);
+        }
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)
@@ -387,5 +406,21 @@ public class WorkflowProperties implements Serializable
 
     public void setColorsList(List<String> colorsList) {
         this.colorsList = colorsList;
+    }
+
+    public String getPositionX() {
+        return positionX;
+    }
+
+    public void setPositionX(String positionX) {
+        this.positionX = positionX;
+    }
+
+    public String getPositionY() {
+        return positionY;
+    }
+
+    public void setPositionY(String positionY) {
+        this.positionY = positionY;
     }
 }

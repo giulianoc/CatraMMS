@@ -1,8 +1,10 @@
 package com.catramms.backing;
 
+import com.catramms.backing.common.Player;
 import com.catramms.backing.common.SessionUtils;
 import com.catramms.backing.common.Workspace;
 import com.catramms.backing.entity.MediaItem;
+import com.catramms.backing.entity.PhysicalPath;
 import com.catramms.backing.entity.WorkspaceDetails;
 import com.catramms.utility.catramms.CatraMMS;
 import org.apache.log4j.Logger;
@@ -31,6 +33,8 @@ public class MediaItems extends Workspace implements Serializable {
     // static because the class is Serializable
     private static final Logger mLogger = Logger.getLogger(MediaItems.class);
 
+    private Player player;
+
     private int autoRefreshPeriodInSeconds;
     private boolean autoRefresh;
     private Date begin;
@@ -51,6 +55,8 @@ public class MediaItems extends Workspace implements Serializable {
     public void init()
     {
         mLogger.debug("init");
+
+        player = new Player();
 
         autoRefresh = true;
         autoRefreshPeriodInSeconds = 30;
@@ -111,7 +117,7 @@ public class MediaItems extends Workspace implements Serializable {
 
             // really face message is useless because of the redirection
             FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
-                    "Traffic System Update", "BeginDate cannot be later the EndDate");
+                    "Media items", "BeginDate cannot be later the EndDate");
             FacesContext context = FacesContext.getCurrentInstance();
             context.addMessage(null, message);
         }
@@ -269,6 +275,12 @@ public class MediaItems extends Workspace implements Serializable {
         }
     }
 
+    public void aaprepareCurrentMediaURL(MediaItem mediaItem, PhysicalPath physicalPath, boolean editMedia)
+    {
+        autoRefresh = false;
+        player.prepareCurrentMediaURL(mediaItem, physicalPath, editMedia);
+    }
+
     public Date willBeRemovedAt(Date ingestionDate, Long retentionInMinutes)
     {
         Calendar calendar = Calendar.getInstance();
@@ -417,5 +429,13 @@ public class MediaItems extends Workspace implements Serializable {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public Player getPlayer() {
+        return player;
+    }
+
+    public void setPlayer(Player player) {
+        this.player = player;
     }
 }

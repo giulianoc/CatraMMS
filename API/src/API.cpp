@@ -567,6 +567,10 @@ void API::manageRequestAndResponse(
     {
         ingestionRootsStatus(request, workspace, queryParameters, requestBody);
     }
+    else if (method == "ingestionRootMetaDataContent")
+    {
+        ingestionRootMetaDataContent(request, workspace, queryParameters, requestBody);
+    }
     else if (method == "ingestionJobsStatus")
     {
         ingestionJobsStatus(request, workspace, queryParameters, requestBody);
@@ -2845,6 +2849,72 @@ void API::ingestionRootsStatus(
     }
 }
 
+void API::ingestionRootMetaDataContent(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody)
+{
+    string api = "ingestionRootMetaDataContent";
+
+    _logger->info(__FILEREF__ + "Received " + api
+        + ", requestBody: " + requestBody
+    );
+
+    try
+    {
+        int64_t ingestionRootKey = -1;
+        auto ingestionRootKeyIt = queryParameters.find("ingestionRootKey");
+        if (ingestionRootKeyIt == queryParameters.end() || ingestionRootKeyIt->second == "")
+		{
+			string errorMessage = string("The 'ingestionRootKey' parameter is not found");
+			_logger->error(__FILEREF__ + errorMessage);
+
+			sendError(request, 400, errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		ingestionRootKey = stoll(ingestionRootKeyIt->second);
+
+        {
+            string ingestionRootMetaDataContent = _mmsEngineDBFacade->getIngestionRootMetaDataContent(
+                    workspace, ingestionRootKey);
+
+            sendSuccess(request, 200, ingestionRootMetaDataContent);
+        }
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error: ") + e.what();
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
 void API::ingestionJobsStatus(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
@@ -4510,7 +4580,7 @@ void API::ingestion(
             }    
             
             int64_t ingestionRootKey = _mmsEngineDBFacade->addIngestionRoot(conn,
-                workspace->_workspaceKey, rootType, rootLabel);
+                workspace->_workspaceKey, rootType, rootLabel, requestBody.c_str());
     
             field = "Task";
             if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))

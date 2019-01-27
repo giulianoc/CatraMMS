@@ -16,14 +16,16 @@ public class ChangeFileFormatProperties extends CreateContentProperties implemen
 
     private StringBuilder taskReferences = new StringBuilder();
 
-    public ChangeFileFormatProperties(int elementId, String label)
+    public ChangeFileFormatProperties(String positionX, String positionY,
+                                      int elementId, String label)
     {
-        super(elementId, label, "Change-File-Format" + "-icon.png", "Task", "Change-File-Format");
+        super(positionX, positionY, elementId, label, "Change-File-Format" + "-icon.png", "Task", "Change-File-Format");
     }
 
     public ChangeFileFormatProperties clone()
     {
         ChangeFileFormatProperties changeFileFormatProperties = new ChangeFileFormatProperties(
+                super.getPositionX(), super.getPositionY(),
                 super.getElementId(), super.getLabel());
 
         changeFileFormatProperties.setFileFormat(fileFormat);
@@ -43,6 +45,24 @@ public class ChangeFileFormatProperties extends CreateContentProperties implemen
         setFileFormat(workflowProperties.getFileFormat());
 
         setStringBuilderTaskReferences(workflowProperties.getStringBuilderTaskReferences());
+    }
+
+    public void setData(JSONObject jsonWorkflowElement)
+    {
+        try {
+            super.setData(jsonWorkflowElement);
+
+            setLabel(jsonWorkflowElement.getString("Label"));
+
+            JSONObject joParameters = jsonWorkflowElement.getJSONObject("Parameters");
+
+            if (joParameters.has("FileFormat") && !joParameters.getString("FileFormat").equalsIgnoreCase(""))
+                setFileFormat(joParameters.getString("FileFormat"));
+        }
+        catch (Exception e)
+        {
+            mLogger.error("WorkflowProperties:setData failed, exception: " + e);
+        }
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)

@@ -22,9 +22,10 @@ public class FaceRecognitionProperties extends CreateContentProperties implement
 
     private StringBuilder taskReferences = new StringBuilder();
 
-    public FaceRecognitionProperties(int elementId, String label)
+    public FaceRecognitionProperties(String positionX, String positionY,
+                                     int elementId, String label)
     {
-        super(elementId, label, "Face-Recognition" + "-icon.png", "Task", "Face-Recognition");
+        super(positionX, positionY, elementId, label, "Face-Recognition" + "-icon.png", "Task", "Face-Recognition");
 
         {
             cascadeNamesList = new ArrayList<>();
@@ -44,6 +45,7 @@ public class FaceRecognitionProperties extends CreateContentProperties implement
     public FaceRecognitionProperties clone()
     {
         FaceRecognitionProperties faceRecognitionProperties = new FaceRecognitionProperties(
+                super.getPositionX(), super.getPositionY(),
                 super.getElementId(), super.getLabel());
 
         faceRecognitionProperties.setCascadeName(getCascadeName());
@@ -67,6 +69,28 @@ public class FaceRecognitionProperties extends CreateContentProperties implement
         setEncodingPriority(workflowProperties.getEncodingPriority());
 
         setStringBuilderTaskReferences(workflowProperties.getStringBuilderTaskReferences());
+    }
+
+    public void setData(JSONObject jsonWorkflowElement)
+    {
+        try {
+            super.setData(jsonWorkflowElement);
+
+            setLabel(jsonWorkflowElement.getString("Label"));
+
+            JSONObject joParameters = jsonWorkflowElement.getJSONObject("Parameters");
+
+            if (joParameters.has("CascadeName") && !joParameters.getString("CascadeName").equalsIgnoreCase(""))
+                setCascadeName(joParameters.getString("CascadeName"));
+            if (joParameters.has("Output") && !joParameters.getString("Output").equalsIgnoreCase(""))
+                setOutput(joParameters.getString("Output"));
+            if (joParameters.has("EncodingPriority") && !joParameters.getString("EncodingPriority").equalsIgnoreCase(""))
+                setEncodingPriority(joParameters.getString("EncodingPriority"));
+        }
+        catch (Exception e)
+        {
+            mLogger.error("WorkflowProperties:setData failed, exception: " + e);
+        }
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)

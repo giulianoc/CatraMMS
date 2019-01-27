@@ -18,14 +18,16 @@ public class OverlayImageOnVideoProperties extends CreateContentProperties imple
 
     private StringBuilder taskReferences = new StringBuilder();
 
-    public OverlayImageOnVideoProperties(int elementId, String label)
+    public OverlayImageOnVideoProperties(String positionX, String positionY,
+                                         int elementId, String label)
     {
-        super(elementId, label, "Overlay-Image-On-Video" + "-icon.png", "Task", "Overlay-Image-On-Video");
+        super(positionX, positionY, elementId, label, "Overlay-Image-On-Video" + "-icon.png", "Task", "Overlay-Image-On-Video");
     }
 
     public OverlayImageOnVideoProperties clone()
     {
         OverlayImageOnVideoProperties overlayImageOnVideoProperties = new OverlayImageOnVideoProperties(
+                super.getPositionX(), super.getPositionY(),
                 super.getElementId(), super.getLabel());
 
         overlayImageOnVideoProperties.setPositionXInPixel(getPositionXInPixel());
@@ -49,6 +51,28 @@ public class OverlayImageOnVideoProperties extends CreateContentProperties imple
         setEncodingPriority(workflowProperties.getEncodingPriority());
 
         setStringBuilderTaskReferences(workflowProperties.getStringBuilderTaskReferences());
+    }
+
+    public void setData(JSONObject jsonWorkflowElement)
+    {
+        try {
+            super.setData(jsonWorkflowElement);
+
+            setLabel(jsonWorkflowElement.getString("Label"));
+
+            JSONObject joParameters = jsonWorkflowElement.getJSONObject("Parameters");
+
+            if (joParameters.has("ImagePosition_X_InPixel") && !joParameters.getString("ImagePosition_X_InPixel").equalsIgnoreCase(""))
+                setPositionXInPixel(joParameters.getString("ImagePosition_X_InPixel"));
+            if (joParameters.has("ImagePosition_Y_InPixel") && !joParameters.getString("ImagePosition_Y_InPixel").equalsIgnoreCase(""))
+                setPositionYInPixel(joParameters.getString("ImagePosition_Y_InPixel"));
+            if (joParameters.has("EncodingPriority") && !joParameters.getString("EncodingPriority").equalsIgnoreCase(""))
+                setEncodingPriority(joParameters.getString("EncodingPriority"));
+        }
+        catch (Exception e)
+        {
+            mLogger.error("WorkflowProperties:setData failed, exception: " + e);
+        }
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)

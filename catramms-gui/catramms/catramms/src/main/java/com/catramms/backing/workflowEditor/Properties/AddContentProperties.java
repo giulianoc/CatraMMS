@@ -30,9 +30,10 @@ public class AddContentProperties extends CreateContentProperties implements Ser
     private String temporaryPushBinariesPathName;
     private String videoAudioAllowTypes;
 
-    public AddContentProperties(int elementId, String label, String temporaryPushBinariesPathName)
+    public AddContentProperties(String positionX, String positionY,
+                                int elementId, String label, String temporaryPushBinariesPathName)
     {
-        super(elementId, label, "Add-Content" + "-icon.png", "Task", "Add-Content");
+        super(positionX, positionY, elementId, label, "Add-Content" + "-icon.png", "Task", "Add-Content");
 
         sourceDownloadType = "pull";
 
@@ -56,7 +57,13 @@ public class AddContentProperties extends CreateContentProperties implements Ser
     public AddContentProperties clone()
     {
         AddContentProperties addContentProperties = new AddContentProperties(
+                super.getPositionX(), super.getPositionY(),
                 super.getElementId(), super.getLabel(), getTemporaryPushBinariesPathName());
+
+        mLogger.info("AddContentProperties clone"
+                + ", sourceDownloadType: " + sourceDownloadType
+                + ", pullSourceURL: " + pullSourceURL
+        );
 
         addContentProperties.setSourceDownloadType(sourceDownloadType);
         addContentProperties.setPullSourceURL(pullSourceURL);
@@ -75,12 +82,45 @@ public class AddContentProperties extends CreateContentProperties implements Ser
     {
         super.setData(workflowProperties);
 
+        mLogger.info("AddContentProperties setData"
+                + ", workflowProperties.getSourceDownloadType: " + workflowProperties.getSourceDownloadType()
+                + ", workflowProperties.getPullSourceURL: " + workflowProperties.getPullSourceURL()
+        );
+
         setSourceDownloadType(workflowProperties.getSourceDownloadType());
         setPullSourceURL(workflowProperties.getPullSourceURL());
         setPushBinaryFileName(workflowProperties.getPushBinaryFileName());
         setFileFormat(workflowProperties.getFileFormat());
         setMd5FileChecksum(workflowProperties.getMd5FileChecksum());
         setFileSizeInBytes(workflowProperties.getFileSizeInBytes());
+    }
+
+    public void setData(JSONObject jsonWorkflowElement)
+    {
+        try {
+            super.setData(jsonWorkflowElement);
+
+            setLabel(jsonWorkflowElement.getString("Label"));
+
+            JSONObject joParameters = jsonWorkflowElement.getJSONObject("Parameters");
+
+            if (joParameters.has("SourceURL") && !joParameters.getString("SourceURL").equalsIgnoreCase(""))
+                setSourceDownloadType("pull");
+            else
+                setSourceDownloadType("push");
+
+            // setPushBinaryFileName(workflowProperties.getPushBinaryFileName());
+            if (joParameters.has("FileFormat") && !joParameters.getString("FileFormat").equalsIgnoreCase(""))
+                setFileFormat(joParameters.getString("FileFormat"));
+            if (joParameters.has("MD5FileChecksum") && !joParameters.getString("MD5FileChecksum").equalsIgnoreCase(""))
+                setMd5FileChecksum(joParameters.getString("MD5FileChecksum"));
+            if (joParameters.has("FileSizeInBytes"))
+                setFileSizeInBytes(joParameters.getLong("FileSizeInBytes"));
+        }
+        catch (Exception e)
+        {
+            mLogger.error("WorkflowProperties:setData failed, exception: " + e);
+        }
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)
@@ -98,7 +138,10 @@ public class AddContentProperties extends CreateContentProperties implements Ser
             JSONObject joParameters = new JSONObject();
             jsonWorkflowElement.put("Parameters", joParameters);
 
-            mLogger.info("task.getType: " + super.getType());
+            mLogger.info("AddContentProperties buildWorkflowElementJson"
+                    + ", getSourceDownloadType(): " + getSourceDownloadType()
+                    + ", getPullSourceURL(): " + getPullSourceURL()
+            );
 
             if (super.getLabel() != null && !super.getLabel().equalsIgnoreCase(""))
                 jsonWorkflowElement.put("Label", super.getLabel());

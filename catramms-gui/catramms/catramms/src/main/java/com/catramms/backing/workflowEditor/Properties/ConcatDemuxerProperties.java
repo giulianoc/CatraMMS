@@ -14,14 +14,16 @@ public class ConcatDemuxerProperties extends CreateContentProperties implements 
 
     private StringBuilder taskReferences = new StringBuilder();
 
-    public ConcatDemuxerProperties(int elementId, String label)
+    public ConcatDemuxerProperties(String positionX, String positionY,
+                                   int elementId, String label)
     {
-        super(elementId, label, "Concat-Demuxer" + "-icon.png", "Task", "Concat-Demuxer");
+        super(positionX, positionY, elementId, label, "Concat-Demuxer" + "-icon.png", "Task", "Concat-Demuxer");
     }
 
     public ConcatDemuxerProperties clone()
     {
         ConcatDemuxerProperties concatDemuxerProperties = new ConcatDemuxerProperties(
+                super.getPositionX(), super.getPositionY(),
                 super.getElementId(), super.getLabel());
 
         concatDemuxerProperties.setStringBuilderTaskReferences(taskReferences);
@@ -37,6 +39,21 @@ public class ConcatDemuxerProperties extends CreateContentProperties implements 
         super.setData(workflowProperties);
 
         setStringBuilderTaskReferences(workflowProperties.getStringBuilderTaskReferences());
+    }
+
+    public void setData(JSONObject jsonWorkflowElement)
+    {
+        try {
+            super.setData(jsonWorkflowElement);
+
+            setLabel(jsonWorkflowElement.getString("Label"));
+
+            // JSONObject joParameters = jsonWorkflowElement.getJSONObject("Parameters");
+        }
+        catch (Exception e)
+        {
+            mLogger.error("WorkflowProperties:setData failed, exception: " + e);
+        }
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)

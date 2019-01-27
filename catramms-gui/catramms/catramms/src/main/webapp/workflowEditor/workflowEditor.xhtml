@@ -8,7 +8,7 @@
       xmlns:media="http://xmlns.jcp.org/jsf/composite/media">
 
 <f:metadata>
-    <f:viewParam name="predefined" value="#{workflowEditor.predefined}" />
+    <f:viewParam name="loadType" value="#{workflowEditor.loadType}" />
     <f:viewParam name="data" value="#{workflowEditor.data}" />
     <f:viewAction action="#{workflowEditor.init}" />
 </f:metadata>
@@ -51,6 +51,82 @@
     <ui:include src="workflowProperties/liveRecorderProperties.xhtml"/>
     <ui:include src="workflowProperties/changeFileFormatProperties.xhtml"/>
 
+    <p:dialog widgetVar="saveWorkflowWidget" modal="true"
+              header="Save Workflow" appendTo="@(body)" width="600"
+              showEffect="fade" hideEffect="fade" resizable="false" draggable="true">
+
+        <h:form id="saveWorkflowForm">
+
+            <p:panelGrid cellpadding="10" style="width: 100%">
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Workflow name" style="font-weight: bold"/>
+                    </p:column>
+                    <p:column>
+                        <p:inputText style="width:100%" id="currentWorkflowEditorName"
+                                     value="#{workflowEditor.currentWorkflowEditorName}"
+                                     placeholder="workspace name" />
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                    </p:column>
+                    <p:column>
+                        <p:commandButton id="saveWorkflow" icon="fa fa-save"
+                                         value="Save the workflow"
+                                         actionListener="#{workflowEditor.saveModelToFile}"
+                                         onclick="PF('saveWorkflowWidget').hide()" >
+                            <p:confirm header="Confirmation" message="Are you sure?" icon="ui-icon-alert" />
+                        </p:commandButton>
+                    </p:column>
+                </p:row>
+            </p:panelGrid>
+
+        </h:form>
+    </p:dialog>
+
+    <p:dialog widgetVar="loadWorkflowWidget" modal="true"
+              header="Load Workflow" appendTo="@(body)" width="600"
+              showEffect="fade" hideEffect="fade" resizable="false" draggable="true">
+
+        <h:form id="loadWorkflowForm">
+
+            <p:panelGrid cellpadding="10" style="width: 100%">
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Workflow name" style="font-weight: bold"/>
+                    </p:column>
+                    <p:column>
+                        <p:selectOneMenu id="workflowEditorNames" value="#{workflowEditor.currentWorkflowEditorName}"
+                                         autoWidth="false">
+                            <f:selectItems value="#{workflowEditor.workflowEditorNames}"/>
+                        </p:selectOneMenu>
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:commandButton id="removeWorkflowName" icon="fa fa-close"
+                                         value="Remove the workflow"
+                                         update="workflowEditorNames"
+                                         actionListener="#{workflowEditor.removeModelFile}" />
+                    </p:column>
+                    <p:column>
+                        <p:commandButton id="loadWorkflow" icon="fa fa-upload"
+                                         value="Load the workflow"
+                                         actionListener="#{workflowEditor.loadModelFromFile}"
+                                         update="viewForm:workspaceDiagram,viewForm:ingestWorkflowButton,viewForm:workflowIssuesWarning,jsonWorkflowForm:jsonWorkflow"
+                                         onclick="PF('loadWorkflowWidget').hide()" />
+                    </p:column>
+                </p:row>
+            </p:panelGrid>
+
+        </h:form>
+    </p:dialog>
+
     <h:form id="viewForm" enctype="multipart/form-data">
 
         <p:growl id="growl" showDetail="true" sticky="false" escape="false" life="2000">
@@ -91,6 +167,16 @@
                     <span class="ui-icon ui-icon-grip-dotted-vertical" />
                 </span>
 
+                <p:link
+                        value="Docs"
+                        target="_blank"
+                        href="https://github.com/giulianoc/CatraMMS/wiki"
+                />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
                 <ui:include src="/common/mainMenu.xhtml"/>
 
             </p:toolbarGroup>
@@ -124,6 +210,7 @@
 
                 <!-- disabled="#{!sessionScope.currentWorkspaceDetails.admin}" -->
                 <p:commandButton id="jsonWorkflowButton" global="true"
+                                 title="Json workflow"
                                  icon="fa fa-file-code-o"
                                  oncomplete="PF('jsonWorkflowWidget').show()"
                         />
@@ -133,11 +220,32 @@
                 </span>
 
                 <p:commandButton id="workflowIssuesWarning" global="true"
+                                 title="Workflow issues"
                                  styleClass="#{(workflowEditor.ingestionData.workflowIssueList.size() > 0) ? 'blink' : ''}" icon="fa fa-warning"
                                  disabled="#{workflowEditor.ingestionData.workflowIssueList.size() == 0}"
                                  update="workflowIssuesForm"
                                  oncomplete="PF('workflowIssues').show()"
                         />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:commandButton global="true"
+                                 icon="fa fa-upload"
+                                 title="Load a workflow"
+                                 actionListener="#{workflowEditor.fillWorkflowNames}"
+                                 update="loadWorkflowForm:workflowEditorNames"
+                                 oncomplete="PF('loadWorkflowWidget').show()" />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:commandButton global="true"
+                                 icon="fa fa-save"
+                                 title="Save the workflow"
+                                 oncomplete="PF('saveWorkflowWidget').show()" />
 
                 <span class="ui-separator">
                     <span class="ui-icon ui-icon-grip-dotted-vertical" />
@@ -238,7 +346,6 @@
 
                 return false;
             };
-            */
 
             function onElementMouseLeave(nodeElement)
             {
@@ -284,6 +391,34 @@
                     }
                 }
             }
+            */
+
+            function onElementMouseLeave(nodeElement)
+            {
+               var parent = nodeElement.parentElement;
+
+                var currentX = parent.style['left'];
+                var currentY = parent.style['top'];
+
+                {
+                    // console.log("DOES HAVE parent.hasAttribute")
+                    // console.log(", parent.prevx: " + parent.dataset.prevx)
+                    // console.log(", currentY: " + currentY)
+
+                    if (nodeElement.dataset.elementx != currentX || nodeElement.dataset.elementy != currentY)
+                    {
+                        // console.log("DIFFERENT");
+                        nodeElement.dataset.elementx = currentX;
+                        nodeElement.dataset.elementy = currentY;
+
+                        diagram_onElementMove([
+                            {name : 'elementId', value : parent.id},
+                            {name : 'elementX', value : currentX},
+                            {name : 'elementY',value : currentY}
+                        ]);
+                    }
+                }
+            }
         </script>
 
         <p:sticky target="stickedToolbar" />
@@ -292,27 +427,33 @@
             <f:facet name="element" id="diagramElement" widgetVar="element">
 
                 <!-- onclick="onElementMouseClick(this)"  -->
-                <div onmouseleave="onElementMouseLeave(this)">
+                <div onmouseleave="onElementMouseLeave(this)" data-elementx="#{el.positionX}" data-elementy="#{el.positionY}">
                     <p>
                         <p:graphicImage styleClass="diagram-element-icon" style="float: left;"
                                         name="/img/workspaceElements/#{el.image}" />
                         <p:commandLink
+                                id="editLink"
                                 value="#{el.label}"
+                                title="Edit #{el.label}"
                                 actionListener="#{workflowEditor.onElementLinkClicked()}"
                                 update="#{el.type}Form"
                                 oncomplete="PF('#{el.type}').show()">
                             <f:param name="elementId" value="#{el.elementId}" />
                         </p:commandLink>
+                        <!-- <p:tooltip for="editLink" showEffect="clip" hideEffect="explode" position="left"/> -->
 
                         <br />
 
                         <h:outputText value="Id: #{el.elementId}, " />
 
                         <p:link
+                                id="documentationLink"
                                 value="#{el.type}"
+                                title="Documentation for the '#{el.type}' Task"
                                 target="_blank"
                                 href="https://github.com/giulianoc/CatraMMS/wiki/#{el.type}"
                                 />
+                        <!-- <p:tooltip for="documentationLink" showEffect="clip" hideEffect="explode" position="left"/> -->
                         <!--
                         <h:outputText styleClass="#{(el.type == 'Workflow') ? 'workflowElementText' : ''}"
                                       value="#{el.type}" />

@@ -16,9 +16,10 @@ public class GroupOfTasksProperties extends WorkflowProperties implements Serial
     private String groupOfTaskExecutionType;
     private List<WorkflowProperties> tasks = new ArrayList<>();
 
-    public GroupOfTasksProperties(int elementId, String label)
+    public GroupOfTasksProperties(String positionX, String positionY,
+                                  int elementId, String label)
     {
-        super(elementId, label, "GroupOfTasks" + "-icon.png", "GroupOfTasks", "GroupOfTasks");
+        super(positionX, positionY, elementId, label, "GroupOfTasks" + "-icon.png", "GroupOfTasks", "GroupOfTasks");
 
         groupOfTaskExecutionType = "parallel";
     }
@@ -28,6 +29,7 @@ public class GroupOfTasksProperties extends WorkflowProperties implements Serial
         String localGroupOfTaskExecutionType = getGroupOfTaskExecutionType();
 
         GroupOfTasksProperties groupOfTasksProperties = new GroupOfTasksProperties(
+                super.getPositionX(), super.getPositionY(),
                 super.getElementId(), super.getLabel());
 
         groupOfTasksProperties.setGroupOfTaskExecutionType(localGroupOfTaskExecutionType);
@@ -42,6 +44,24 @@ public class GroupOfTasksProperties extends WorkflowProperties implements Serial
 
         setGroupOfTaskExecutionType(workflowProperties.getGroupOfTaskExecutionType());
         setTasks(workflowProperties.getTasks());
+    }
+
+    public void setData(JSONObject jsonWorkflowElement)
+    {
+        try {
+            super.setData(jsonWorkflowElement);
+
+            setLabel(jsonWorkflowElement.getString("Label"));
+
+            JSONObject joParameters = jsonWorkflowElement.getJSONObject("Parameters");
+
+            if (joParameters.has("GroupOfTaskExecutionType") && !joParameters.getString("GroupOfTaskExecutionType").equalsIgnoreCase(""))
+                setGroupOfTaskExecutionType(joParameters.getString("GroupOfTaskExecutionType"));
+        }
+        catch (Exception e)
+        {
+            mLogger.error("WorkflowProperties:setData failed, exception: " + e);
+        }
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)

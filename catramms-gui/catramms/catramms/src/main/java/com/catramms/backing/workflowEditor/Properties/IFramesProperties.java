@@ -21,9 +21,10 @@ public class IFramesProperties extends CreateContentProperties implements Serial
 
     private StringBuilder taskReferences = new StringBuilder();
 
-    public IFramesProperties(int elementId, String label)
+    public IFramesProperties(String positionX, String positionY,
+                             int elementId, String label)
     {
-        super(elementId, label, "I-Frames" + "-icon.png", "Task", "I-Frames");
+        super(positionX, positionY, elementId, label, "I-Frames" + "-icon.png", "Task", "I-Frames");
 
         timeInSecondsDecimalsPrecision = new Long(6);
     }
@@ -31,6 +32,7 @@ public class IFramesProperties extends CreateContentProperties implements Serial
     public IFramesProperties clone()
     {
         IFramesProperties iFramesProperties = new IFramesProperties(
+                super.getPositionX(), super.getPositionY(),
                 super.getElementId(), super.getLabel());
 
         iFramesProperties.setStartTimeInSeconds(startTimeInSeconds);
@@ -58,6 +60,32 @@ public class IFramesProperties extends CreateContentProperties implements Serial
         setEncodingPriority(workflowProperties.getEncodingPriority());
 
         setStringBuilderTaskReferences(workflowProperties.getStringBuilderTaskReferences());
+    }
+
+    public void setData(JSONObject jsonWorkflowElement)
+    {
+        try {
+            super.setData(jsonWorkflowElement);
+
+            setLabel(jsonWorkflowElement.getString("Label"));
+
+            JSONObject joParameters = jsonWorkflowElement.getJSONObject("Parameters");
+
+            if (joParameters.has("StartTimeInSeconds"))
+                setStartTimeInSeconds(new Float(joParameters.getDouble("StartTimeInSeconds")));
+            if (joParameters.has("MaxFramesNumber"))
+                setMaxFramesNumber(joParameters.getLong("MaxFramesNumber"));
+            if (joParameters.has("Width"))
+                setWidth(joParameters.getLong("Width"));
+            if (joParameters.has("Height"))
+                setHeight(joParameters.getLong("Height"));
+            if (joParameters.has("EncodingPriority") && !joParameters.getString("EncodingPriority").equalsIgnoreCase(""))
+                setEncodingPriority(joParameters.getString("EncodingPriority"));
+        }
+        catch (Exception e)
+        {
+            mLogger.error("WorkflowProperties:setData failed, exception: " + e);
+        }
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)

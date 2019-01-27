@@ -38,9 +38,10 @@ public class EncodeProperties extends WorkflowProperties implements Serializable
     private StringBuilder taskReferences = new StringBuilder();
 
 
-    public EncodeProperties(int elementId, String label)
+    public EncodeProperties(String positionX, String positionY,
+                            int elementId, String label)
     {
-        super(elementId, label, "Encode" + "-icon.png", "Task", "Encode");
+        super(positionX, positionY, elementId, label, "Encode" + "-icon.png", "Task", "Encode");
 
         encodingProfileType = "profilesSet";
 
@@ -93,7 +94,8 @@ public class EncodeProperties extends WorkflowProperties implements Serializable
         }
     }
 
-    public EncodeProperties(int elementId, String label,
+    public EncodeProperties(String positionX, String positionY,
+                            int elementId, String label,
                             List<EncodingProfile> videoEncodingProfilesList,
                             List<EncodingProfile> audioEncodingProfilesList,
                             List<EncodingProfile> imageEncodingProfilesList,
@@ -102,7 +104,8 @@ public class EncodeProperties extends WorkflowProperties implements Serializable
                             List<EncodingProfilesSet> imageEncodingProfilesSetList
     )
     {
-        super(elementId, label, "Encode" + "-icon.png", "Task", "Encode");
+        super(positionX, positionY, elementId, label,
+                "Encode" + "-icon.png", "Task", "Encode");
 
         encodingProfileType = "profilesSet";
 
@@ -119,7 +122,7 @@ public class EncodeProperties extends WorkflowProperties implements Serializable
     public EncodeProperties clone()
     {
         EncodeProperties encodeProperties = new EncodeProperties(
-                super.getElementId(), super.getLabel(),
+                super.getPositionX(), super.getPositionY(), super.getElementId(), super.getLabel(),
                 videoEncodingProfilesList, audioEncodingProfilesList, imageEncodingProfilesList,
                 videoEncodingProfilesSetList, audioEncodingProfilesSetList, imageEncodingProfilesSetList);
 
@@ -145,6 +148,36 @@ public class EncodeProperties extends WorkflowProperties implements Serializable
         setEncodingProfilesSetLabel(workflowProperties.getEncodingProfilesSetLabel());
 
         setStringBuilderTaskReferences(workflowProperties.getStringBuilderTaskReferences());
+    }
+
+    public void setData(JSONObject jsonWorkflowElement)
+    {
+        try {
+            super.setData(jsonWorkflowElement);
+
+            setLabel(jsonWorkflowElement.getString("Label"));
+
+            JSONObject joParameters = jsonWorkflowElement.getJSONObject("Parameters");
+
+            if (joParameters.has("EncodingPriority") && !joParameters.getString("EncodingPriority").equalsIgnoreCase(""))
+                setEncodingPriority(joParameters.getString("EncodingPriority"));
+            if (joParameters.has("ContentType") && !joParameters.getString("ContentType").equalsIgnoreCase(""))
+                setContentType(joParameters.getString("ContentType"));
+            if (joParameters.has("EncodingProfileLabel") && !joParameters.getString("EncodingProfileLabel").equalsIgnoreCase(""))
+            {
+                setEncodingProfileLabel(joParameters.getString("EncodingProfileLabel"));
+                setEncodingProfileType("singleProfile");
+            }
+            if (joParameters.has("EncodingProfilesSetLabel") && !joParameters.getString("EncodingProfilesSetLabel").equalsIgnoreCase(""))
+            {
+                setEncodingProfilesSetLabel(joParameters.getString("EncodingProfilesSetLabel"));
+                setEncodingProfileType("profilesSet");
+            }
+        }
+        catch (Exception e)
+        {
+            mLogger.error("WorkflowProperties:setData failed, exception: " + e);
+        }
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)

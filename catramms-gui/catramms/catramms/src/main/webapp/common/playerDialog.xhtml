@@ -1,0 +1,161 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:media="http://xmlns.jcp.org/jsf/composite/media">
+
+<p:dialog widgetVar="showImage" modal="true"
+          header="Player" appendTo="@(body)"
+          showEffect="fade" hideEffect="fade" resizable="true" draggable="true" >
+
+    <h:form id="showImageForm">
+        <p:outputLabel value="Physical Path Key: #{controller.player.currentPhysicalPath.physicalPathKey}" />
+
+        <br />
+
+        <p:scrollPanel mode="native" style="height: 600px">
+            <h:graphicImage value="#{controller.player.currentMediaURL}" />
+        </p:scrollPanel>
+    </h:form>
+
+</p:dialog>
+
+<p:dialog widgetVar="showVideo" modal="true"
+          header="Player" appendTo="@(body)" width="900" height="600"
+          showEffect="fade" hideEffect="fade" resizable="true" draggable="true"
+          onHide="document.getElementById('showVideoForm:binaryLinkPlayer:media-player').pause()">
+
+    <h:form id="showVideoForm">
+        <p:growl id="growl" showDetail="true" sticky="false" escape="false" life="5000">
+            <p:autoUpdate />
+        </p:growl>
+
+        <p:outputLabel value="Physical Path Key: #{controller.player.currentPhysicalPath.physicalPathKey}" />
+        <p:outputLabel value=", FramesPerSeconds: " />
+        <!-- next outputLabel is also used inside javascript to retrieve the framesPerSeconds -->
+        <p:outputLabel id="framesPerSeconds" style="font-weight: bold"
+                       value="#{controller.player.framesPerSecond}" />
+
+        <br />
+
+        <p:scrollPanel mode="native" style="width: 100%; height: 400px">
+            <media:video
+                    id="binaryLinkPlayer"
+                    value="#{controller.player.currentMediaURL}"
+                    autoplay="true"
+                    controls="true" />
+        </p:scrollPanel>
+
+        <p:panel rendered="#{controller.player.editVideo}" >
+
+            <p:remoteCommand name="updateVideoTimeCode"
+                             update="timecode,markInButton,markOutButton"
+                             global="false"
+                             actionListener="#{controller.player.updateVideoTimeCode}"
+            />
+
+            <!-- <p:remoteCommand oncomplete="initPlayerListener" autoRun="true" /> -->
+
+            <p:toolbar >
+                <p:toolbarGroup align="left">
+                    <p:commandButton global="false" icon="fa fa-minus" onclick="seekFrames(-1)" />
+                    <p:hotkey bind="left"  handler="seekFrames(-1);" />
+
+                    <span class="ui-separator">
+                            <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                        </span>
+
+                    <p:commandButton global="false" icon="fa fa-plus" onclick="seekFrames(1)" />
+                    <p:hotkey bind="right"  handler="seekFrames(1);" />
+
+                    <span class="ui-separator">
+                            <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                        </span>
+
+                    <p:outputLabel id="timecode" value="#{controller.player.videoCurrentTime}" />
+
+                    <span class="ui-separator">
+                            <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                        </span>
+
+                    <p:outputLabel id="markIn"
+                                   title="#{controller.player.videoMarkIn}"
+                                   styleClass="#{controller.player.videoMarkIn.equalsIgnoreCase('') ? 'fa fa-bookmark-o' : 'fa fa-bookmark'}" />
+                    <p:tooltip for="markIn"
+                               showEffect="clip" hideEffect="explode" position="left" />
+                    <p:commandButton id="markInButton" global="false" value="Mark In"
+                                     disabled="#{controller.player.markButtonDisabled}"
+                                     actionListener="#{controller.player.markIn}"
+                                     update="markIn,addMarkButton" />
+
+                    <span class="ui-separator">
+                            <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                        </span>
+
+                    <p:outputLabel id="markOut"
+                                   title="#{controller.player.videoMarkOut}"
+                                   styleClass="#{controller.player.videoMarkOut.equalsIgnoreCase('') ? 'fa fa-bookmark-o' : 'fa fa-bookmark'}" />
+                    <p:tooltip for="markOut"
+                               showEffect="clip" hideEffect="explode" position="left"/>
+                    <p:commandButton id="markOutButton" global="false" value="Mark Out"
+                                     disabled="#{controller.player.markButtonDisabled}"
+                                     actionListener="#{controller.player.markOut}"
+                                     update="markOut,addMarkButton" />
+
+                    <span class="ui-separator">
+                            <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                        </span>
+
+                    <p:commandButton id="addMarkButton" global="false" value="Add Mark"
+                                     disabled="#{controller.player.addMarkButtonDisabled}"
+                                     icon="fa fa-map-marker"
+                                     update="markDataTable,markIn,markOut,addMarkButton,prepareWorkflowToIngest"
+                                     actionListener="#{controller.player.addMark}"/>
+
+                </p:toolbarGroup>
+
+                <p:toolbarGroup align="right">
+                    <p:commandButton id="prepareWorkflowToIngest" global="false" value="Prepare Workflow to ingest"
+                                     actionListener="#{controller.player.prepareWorkflowToIngest}"
+                                     disabled="#{controller.player.markList.size() == 0}"
+                                     icon="fa fa-map-marker"
+                                     oncomplete="PF('showVideo').hide()"
+                    />
+                </p:toolbarGroup>
+            </p:toolbar>
+
+            <br/>
+
+            <p:dataTable resizableColumns="true" id="markDataTable" var="mark" rowIndexVar="rowId"
+                         value="#{controller.player.markList}" rowKey="#{mark.in}"
+                         selectionMode="single"
+                         widgetVar="markDataTable" >
+
+                <f:facet name="header">
+                    <p:outputLabel value="Marks" />
+                </f:facet>
+
+                <p:column style="width:90px;" headerText="In" >
+                    <p:outputLabel value="#{mark.in}" />
+                </p:column>
+
+                <p:column style="width:90px;" headerText="End" >
+                    <p:outputLabel value="#{mark.out}" />
+                </p:column>
+
+                <p:column style="width:32px">
+                    <p:commandButton global="true" icon="fa fa-minus-circle"
+                                     actionListener="#{controller.player.removeMark(mark.in)}"
+                                     update="markDataTable"
+                    />
+                </p:column>
+            </p:dataTable>
+
+        </p:panel>
+    </h:form>
+
+</p:dialog>
+
+</html>

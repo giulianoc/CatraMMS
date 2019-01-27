@@ -134,6 +134,12 @@ private:
         unordered_map<string, string> queryParameters,
         string requestBody);
 
+	void ingestionRootMetaDataContent(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody);
+
     void ingestionJobsStatus(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,

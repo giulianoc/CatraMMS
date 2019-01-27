@@ -25,9 +25,10 @@ public class CreateContentProperties extends WorkflowProperties implements Seria
     private String deliveryFileName;
     private String uniqueName;
 
-    public CreateContentProperties(int elementId, String label, String image, String mainType, String type)
+    public CreateContentProperties(String positionX, String positionY,
+                                   int elementId, String label, String image, String mainType, String type)
     {
-        super(elementId, label, image, mainType, type);
+        super(positionX, positionY, elementId, label, image, mainType, type);
     }
 
     public void getData(CreateContentProperties workflowProperties)
@@ -60,6 +61,45 @@ public class CreateContentProperties extends WorkflowProperties implements Seria
         setContentProviderName(workflowProperties.getContentProviderName());
         setDeliveryFileName(workflowProperties.getDeliveryFileName());
         setUniqueName(workflowProperties.getUniqueName());
+    }
+
+    public void setData(JSONObject jsonWorkflowElement)
+    {
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+
+        try {
+            super.setData(jsonWorkflowElement);
+
+            setLabel(jsonWorkflowElement.getString("Label"));
+
+            JSONObject joParameters = jsonWorkflowElement.getJSONObject("Parameters");
+
+            if (joParameters.has("Title") && !joParameters.getString("Title").equalsIgnoreCase(""))
+                setTitle(joParameters.getString("Title"));
+            if (joParameters.has("Tags") && !joParameters.getString("Tags").equalsIgnoreCase(""))
+                setTags(joParameters.getString("Tags"));
+            if (joParameters.has("Retention") && !joParameters.getString("Retention").equalsIgnoreCase(""))
+                setRetention(joParameters.getString("Retention"));
+            if (joParameters.has("StartPublishing") && !joParameters.getString("StartPublishing").equalsIgnoreCase(""))
+                setStartPublishing(dateFormat.parse(joParameters.getString("StartPublishing")));
+            if (joParameters.has("EndPublishing") && !joParameters.getString("EndPublishing").equalsIgnoreCase(""))
+                setEndPublishing(dateFormat.parse(joParameters.getString("EndPublishing")));
+            if (joParameters.has("UserData") && !joParameters.getString("UserData").equalsIgnoreCase(""))
+                setUserData(joParameters.getString("UserData"));
+            if (joParameters.has("Ingester") && !joParameters.getString("Ingester").equalsIgnoreCase(""))
+                setIngester(joParameters.getString("Ingester"));
+            if (joParameters.has("ContentProviderName") && !joParameters.getString("ContentProviderName").equalsIgnoreCase(""))
+                setContentProviderName(joParameters.getString("ContentProviderName"));
+            if (joParameters.has("DeliveryFileName") && !joParameters.getString("DeliveryFileName").equalsIgnoreCase(""))
+                setDeliveryFileName(joParameters.getString("DeliveryFileName"));
+            if (joParameters.has("UniqueName") && !joParameters.getString("UniqueName").equalsIgnoreCase(""))
+                setUniqueName(joParameters.getString("UniqueName"));
+        }
+        catch (Exception e)
+        {
+            mLogger.error("WorkflowProperties:setData failed, exception: " + e);
+        }
     }
 
     public void addCreateContentPropertiesToJson(JSONObject joParameters)

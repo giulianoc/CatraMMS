@@ -74,6 +74,7 @@ server {
 
 		if ($request_method = GET) {
 			rewrite ^/catramms/(v[0-9]+)/ingestionRoots/?([0-9]*)/?$ /api?version=$1&method=ingestionRootsStatus&ingestionRootKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/ingestionRoot/metaDataContent/([0-9]+)/?$ /api?version=$1&method=ingestionRootMetaDataContent&ingestionRootKey=$2 last;
 			rewrite ^/catramms/(v[0-9]+)/ingestionJobs/?([0-9]*)/?$ /api?version=$1&method=ingestionJobsStatus&ingestionJobKey=$2 last;
 			rewrite ^/catramms/(v[0-9]+)/encodingJobs/?([0-9]*)/?$ /api?version=$1&method=encodingJobsStatus&encodingJobKey=$2 last;
 		}

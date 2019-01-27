@@ -18,9 +18,10 @@ public class SlideshowProperties extends CreateContentProperties implements Seri
 
     private StringBuilder taskReferences = new StringBuilder();
 
-    public SlideshowProperties(int elementId, String label)
+    public SlideshowProperties(String positionX, String positionY,
+                               int elementId, String label)
     {
-        super(elementId, label, "Slideshow" + "-icon.png", "Task", "Slideshow");
+        super(positionX, positionY, elementId, label, "Slideshow" + "-icon.png", "Task", "Slideshow");
 
         timeInSecondsDecimalsPrecision = new Long(6);
     }
@@ -28,6 +29,7 @@ public class SlideshowProperties extends CreateContentProperties implements Seri
     public SlideshowProperties clone()
     {
         SlideshowProperties slideshowProperties = new SlideshowProperties(
+                super.getPositionX(), super.getPositionY(),
                 super.getElementId(), super.getLabel());
 
         slideshowProperties.setDurationOfEachSlideInSeconds(durationOfEachSlideInSeconds);
@@ -49,6 +51,26 @@ public class SlideshowProperties extends CreateContentProperties implements Seri
         setEncodingPriority(workflowProperties.getEncodingPriority());
 
         setStringBuilderTaskReferences(workflowProperties.getStringBuilderTaskReferences());
+    }
+
+    public void setData(JSONObject jsonWorkflowElement)
+    {
+        try {
+            super.setData(jsonWorkflowElement);
+
+            setLabel(jsonWorkflowElement.getString("Label"));
+
+            JSONObject joParameters = jsonWorkflowElement.getJSONObject("Parameters");
+
+            if (joParameters.has("DurationOfEachSlideInSeconds"))
+                setDurationOfEachSlideInSeconds(new Float(joParameters.getDouble("DurationOfEachSlideInSeconds")));
+            if (joParameters.has("EncodingPriority") && !joParameters.getString("EncodingPriority").equalsIgnoreCase(""))
+                setEncodingPriority(joParameters.getString("EncodingPriority"));
+        }
+        catch (Exception e)
+        {
+            mLogger.error("WorkflowProperties:setData failed, exception: " + e);
+        }
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)

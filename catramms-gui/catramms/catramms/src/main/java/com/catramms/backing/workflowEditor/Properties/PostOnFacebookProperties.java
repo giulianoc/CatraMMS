@@ -23,9 +23,10 @@ public class PostOnFacebookProperties extends WorkflowProperties implements Seri
 
     private StringBuilder taskReferences = new StringBuilder();
 
-    public PostOnFacebookProperties(int elementId, String label)
+    public PostOnFacebookProperties(String positionX, String positionY,
+                                    int elementId, String label)
     {
-        super(elementId, label, "Post-On-Facebook" + "-icon.png", "Task", "Post-On-Facebook");
+        super(positionX, positionY, elementId, label, "Post-On-Facebook" + "-icon.png", "Task", "Post-On-Facebook");
 
         try
         {
@@ -56,9 +57,11 @@ public class PostOnFacebookProperties extends WorkflowProperties implements Seri
         }
     }
 
-    public PostOnFacebookProperties(int elementId, String label, List<FacebookConf> confList)
+    public PostOnFacebookProperties(String positionX, String positionY,
+                                    int elementId, String label, List<FacebookConf> confList)
     {
-        super(elementId, label, "Post-On-Facebook" + "-icon.png", "Task", "Post-On-Facebook");
+        super(positionX, positionY, elementId, label,
+                "Post-On-Facebook" + "-icon.png", "Task", "Post-On-Facebook");
 
         this.confList = confList;
     }
@@ -66,6 +69,7 @@ public class PostOnFacebookProperties extends WorkflowProperties implements Seri
     public PostOnFacebookProperties clone()
     {
         PostOnFacebookProperties postOnFacebookProperties = new PostOnFacebookProperties(
+                super.getPositionX(), super.getPositionY(),
                 super.getElementId(), super.getLabel(), confList);
 
         postOnFacebookProperties.setConfigurationLabel(getConfigurationLabel());
@@ -84,6 +88,26 @@ public class PostOnFacebookProperties extends WorkflowProperties implements Seri
         setNodeId(workflowProperties.getNodeId());
 
         setStringBuilderTaskReferences(workflowProperties.getStringBuilderTaskReferences());
+    }
+
+    public void setData(JSONObject jsonWorkflowElement)
+    {
+        try {
+            super.setData(jsonWorkflowElement);
+
+            setLabel(jsonWorkflowElement.getString("Label"));
+
+            JSONObject joParameters = jsonWorkflowElement.getJSONObject("Parameters");
+
+            if (joParameters.has("ConfigurationLabel") && !joParameters.getString("ConfigurationLabel").equalsIgnoreCase(""))
+                setConfigurationLabel(joParameters.getString("ConfigurationLabel"));
+            if (joParameters.has("NodeId") && !joParameters.getString("NodeId").equalsIgnoreCase(""))
+                setNodeId(joParameters.getString("NodeId"));
+        }
+        catch (Exception e)
+        {
+            mLogger.error("WorkflowProperties:setData failed, exception: " + e);
+        }
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)

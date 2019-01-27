@@ -17,14 +17,16 @@ public class LocalCopyProperties extends WorkflowProperties implements Serializa
 
     private StringBuilder taskReferences = new StringBuilder();
 
-    public LocalCopyProperties(int elementId, String label)
+    public LocalCopyProperties(String positionX, String positionY,
+                               int elementId, String label)
     {
-        super(elementId, label, "Local-Copy" + "-icon.png", "Task", "Local-Copy");
+        super(positionX, positionY, elementId, label, "Local-Copy" + "-icon.png", "Task", "Local-Copy");
     }
 
     public LocalCopyProperties clone()
     {
         LocalCopyProperties localCopyProperties = new LocalCopyProperties(
+                super.getPositionX(), super.getPositionY(),
                 super.getElementId(), super.getLabel());
 
         localCopyProperties.setLocalPath(getLocalPath());
@@ -43,6 +45,26 @@ public class LocalCopyProperties extends WorkflowProperties implements Serializa
         setLocalFileName(workflowProperties.getLocalFileName());
 
         setStringBuilderTaskReferences(workflowProperties.getStringBuilderTaskReferences());
+    }
+
+    public void setData(JSONObject jsonWorkflowElement)
+    {
+        try {
+            super.setData(jsonWorkflowElement);
+
+            setLabel(jsonWorkflowElement.getString("Label"));
+
+            JSONObject joParameters = jsonWorkflowElement.getJSONObject("Parameters");
+
+            if (joParameters.has("LocalPath") && !joParameters.getString("LocalPath").equalsIgnoreCase(""))
+                setLocalPath(joParameters.getString("LocalPath"));
+            if (joParameters.has("LocalFileName") && !joParameters.getString("LocalFileName").equalsIgnoreCase(""))
+                setLocalFileName(joParameters.getString("LocalFileName"));
+        }
+        catch (Exception e)
+        {
+            mLogger.error("WorkflowProperties:setData failed, exception: " + e);
+        }
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)

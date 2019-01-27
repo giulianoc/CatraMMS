@@ -26,14 +26,16 @@ public class OverlayTextOnVideoProperties extends CreateContentProperties implem
 
     private StringBuilder taskReferences = new StringBuilder();
 
-    public OverlayTextOnVideoProperties(int elementId, String label)
+    public OverlayTextOnVideoProperties(String positionX, String positionY,
+                                        int elementId, String label)
     {
-        super(elementId, label, "Overlay-Text-On-Video" + "-icon.png", "Task", "Overlay-Text-On-Video");
+        super(positionX, positionY, elementId, label, "Overlay-Text-On-Video" + "-icon.png", "Task", "Overlay-Text-On-Video");
     }
 
     public OverlayTextOnVideoProperties clone()
     {
         OverlayTextOnVideoProperties overlayTextOnVideoProperties = new OverlayTextOnVideoProperties(
+                super.getPositionX(), super.getPositionY(),
                 super.getElementId(), super.getLabel());
 
         overlayTextOnVideoProperties.setText(getText());
@@ -73,6 +75,44 @@ public class OverlayTextOnVideoProperties extends CreateContentProperties implem
         setEncodingPriority(workflowProperties.getEncodingPriority());
 
         setStringBuilderTaskReferences(workflowProperties.getStringBuilderTaskReferences());
+    }
+
+    public void setData(JSONObject jsonWorkflowElement)
+    {
+        try {
+            super.setData(jsonWorkflowElement);
+
+            setLabel(jsonWorkflowElement.getString("Label"));
+
+            JSONObject joParameters = jsonWorkflowElement.getJSONObject("Parameters");
+
+            if (joParameters.has("Text") && !joParameters.getString("Text").equalsIgnoreCase(""))
+                setText(joParameters.getString("Text"));
+            if (joParameters.has("ImagePosition_X_InPixel") && !joParameters.getString("ImagePosition_X_InPixel").equalsIgnoreCase(""))
+                setPositionXInPixel(joParameters.getString("ImagePosition_X_InPixel"));
+            if (joParameters.has("ImagePosition_Y_InPixel") && !joParameters.getString("ImagePosition_Y_InPixel").equalsIgnoreCase(""))
+                setPositionYInPixel(joParameters.getString("ImagePosition_Y_InPixel"));
+            if (joParameters.has("FontType") && !joParameters.getString("FontType").equalsIgnoreCase(""))
+                setFontType(joParameters.getString("FontType"));
+            if (joParameters.has("FontSize") && !joParameters.getString("FontSize").equalsIgnoreCase(""))
+                setFontSize(joParameters.getString("FontSize"));
+            if (joParameters.has("FontColor") && !joParameters.getString("FontColor").equalsIgnoreCase(""))
+                setFontColor(joParameters.getString("FontColor"));
+            if (joParameters.has("TextPercentageOpacity"))
+                setTextPercentageOpacity(joParameters.getLong("TextPercentageOpacity"));
+            if (joParameters.has("BoxEnable"))
+                setBoxEnable(joParameters.getBoolean("BoxEnable"));
+            if (joParameters.has("BoxColor") && !joParameters.getString("BoxColor").equalsIgnoreCase(""))
+                setBoxColor(joParameters.getString("BoxColor"));
+            if (joParameters.has("BoxPercentageOpacity"))
+                setBoxPercentageOpacity(joParameters.getLong("BoxPercentageOpacity"));
+            if (joParameters.has("EncodingPriority") && !joParameters.getString("EncodingPriority").equalsIgnoreCase(""))
+                setEncodingPriority(joParameters.getString("EncodingPriority"));
+        }
+        catch (Exception e)
+        {
+            mLogger.error("WorkflowProperties:setData failed, exception: " + e);
+        }
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)

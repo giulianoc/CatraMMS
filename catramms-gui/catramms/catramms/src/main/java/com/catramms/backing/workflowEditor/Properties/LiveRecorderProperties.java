@@ -22,9 +22,10 @@ public class LiveRecorderProperties extends CreateContentProperties implements S
     private List<String> outputFileFormatsList;
     private String encodingPriority;
 
-    public LiveRecorderProperties(int elementId, String label)
+    public LiveRecorderProperties(String positionX, String positionY,
+                                  int elementId, String label)
     {
-        super(elementId, label, "Live-Recorder" + "-icon.png", "Task", "Live-Recorder");
+        super(positionX, positionY, elementId, label, "Live-Recorder" + "-icon.png", "Task", "Live-Recorder");
 
         startRecording = new Date();
         {
@@ -45,6 +46,7 @@ public class LiveRecorderProperties extends CreateContentProperties implements S
     public LiveRecorderProperties clone()
     {
         LiveRecorderProperties liveRecorderProperties = new LiveRecorderProperties(
+                super.getPositionX(), super.getPositionY(),
                 super.getElementId(), super.getLabel());
 
         liveRecorderProperties.setLiveURL(liveURL);
@@ -71,6 +73,37 @@ public class LiveRecorderProperties extends CreateContentProperties implements S
         setSegmentDuration(workflowProperties.getSegmentDuration());
         setOutputFileFormat(workflowProperties.getOutputFileFormat());
         setEncodingPriority(workflowProperties.getEncodingPriority());
+    }
+
+    public void setData(JSONObject jsonWorkflowElement)
+    {
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+
+        try {
+            super.setData(jsonWorkflowElement);
+
+            setLabel(jsonWorkflowElement.getString("Label"));
+
+            JSONObject joParameters = jsonWorkflowElement.getJSONObject("Parameters");
+
+            if (joParameters.has("LiveURL") && !joParameters.getString("LiveURL").equalsIgnoreCase(""))
+                setLiveURL(joParameters.getString("LiveURL"));
+            if (joParameters.has("StartRecording") && !joParameters.getString("StartRecording").equalsIgnoreCase(""))
+                setStartRecording(dateFormat.parse(joParameters.getString("StartRecording")));
+            if (joParameters.has("EndRecording") && !joParameters.getString("EndRecording").equalsIgnoreCase(""))
+                setEndRecording(dateFormat.parse(joParameters.getString("EndRecording")));
+            if (joParameters.has("SegmentDuration"))
+                setSegmentDuration(joParameters.getLong("SegmentDuration"));
+            if (joParameters.has("OutputFileFormat") && !joParameters.getString("OutputFileFormat").equalsIgnoreCase(""))
+                setOutputFileFormat(joParameters.getString("OutputFileFormat"));
+            if (joParameters.has("EncodingPriority") && !joParameters.getString("EncodingPriority").equalsIgnoreCase(""))
+                setEncodingPriority(joParameters.getString("EncodingPriority"));
+        }
+        catch (Exception e)
+        {
+            mLogger.error("WorkflowProperties:setData failed, exception: " + e);
+        }
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)

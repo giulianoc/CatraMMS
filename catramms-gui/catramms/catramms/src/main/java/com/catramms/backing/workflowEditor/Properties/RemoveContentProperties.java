@@ -14,14 +14,17 @@ public class RemoveContentProperties extends WorkflowProperties implements Seria
 
     private StringBuilder taskReferences = new StringBuilder();
 
-    public RemoveContentProperties(int elementId, String label)
+    public RemoveContentProperties(String positionX, String positionY,
+                                   int elementId, String label)
     {
-        super(elementId, label, "Remove-Content" + "-icon.png", "Task", "Remove-Content");
+        super(positionX, positionY, elementId, label,
+                "Remove-Content" + "-icon.png", "Task", "Remove-Content");
     }
 
     public RemoveContentProperties clone()
     {
         RemoveContentProperties removeContentProperties = new RemoveContentProperties(
+                super.getPositionX(), super.getPositionY(),
                 super.getElementId(), super.getLabel());
 
         removeContentProperties.setStringBuilderTaskReferences(taskReferences);
@@ -34,6 +37,21 @@ public class RemoveContentProperties extends WorkflowProperties implements Seria
         super.setData(workflowProperties);
 
         setStringBuilderTaskReferences(workflowProperties.getStringBuilderTaskReferences());
+    }
+
+    public void setData(JSONObject jsonWorkflowElement)
+    {
+        try {
+            super.setData(jsonWorkflowElement);
+
+            setLabel(jsonWorkflowElement.getString("Label"));
+
+            // JSONObject joParameters = jsonWorkflowElement.getJSONObject("Parameters");
+        }
+        catch (Exception e)
+        {
+            mLogger.error("WorkflowProperties:setData failed, exception: " + e);
+        }
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)

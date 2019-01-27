@@ -32,6 +32,10 @@
     <ui:include src="/common/loadingDialog.xhtml"/>
     <ui:include src="/common/globalConfirm.xhtml"/>
 
+    <ui:include src="/common/playerDialog.xhtml">
+        <ui:param name="controller" value="#{mediaItems}" />
+    </ui:include>
+
     <h:form id="viewForm">
 
         <p:growl id="growl" showDetail="true" sticky="false" escape="false" life="5000">
@@ -64,6 +68,16 @@
                 </span>
 
                 <p:commandLink value="Logout" action="#{login.logout}" />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:link
+                        value="Docs"
+                        target="_blank"
+                        href="https://github.com/giulianoc/CatraMMS/wiki"
+                />
 
                 <span class="ui-separator">
                     <span class="ui-icon ui-icon-grip-dotted-vertical" />
@@ -250,9 +264,46 @@
             </p:column>
 
             <p:column style="width:50px;" headerText="">
-                <h:link outcome="/mediaItemDetails.xhtml?faces-redirect=true" value="Details">
-                    <f:param name="mediaItemKey" value="#{mediaItem.mediaItemKey}" />
-                </h:link>
+
+                <p:commandButton id="dynaButtonOptions" type="button" icon="fa fa-navicon"/>
+                <p:menu toggleable="true" collapsed="true" overlay="true" trigger="dynaButtonOptions"
+                        my="left top" at="left bottom">
+                    <p:menuitem value="Details"
+                                outcome="/mediaItemDetails.xhtml?faces-redirect=true">
+                        <f:param name="mediaItemKey" value="#{mediaItem.mediaItemKey}" />
+                    </p:menuitem>
+
+                    <p:menuitem value="Show Image (one of the profiles)"
+                                rendered="#{mediaItem.contentType == 'Image'}"
+                                disabled="#{!sessionScope.currentWorkspaceDetails.deliveryAuthorization}"
+                                actionListener="#{mediaItems.player.prepareCurrentMediaURL(mediaItem, null, false)}"
+                                update="showImageForm"
+                                oncomplete="stopUpdaterTimer(); PF('showImage').show()">
+                    </p:menuitem>
+
+                    <p:menuitem value="Play (one of the profiles)"
+                                rendered="#{mediaItem.contentType == 'Video' or mediaItem.contentType == 'Audio'}"
+                                disabled="#{!sessionScope.currentWorkspaceDetails.deliveryAuthorization}"
+                                actionListener="#{mediaItems.aaprepareCurrentMediaURL(mediaItem, null, false)}"
+                                update="showVideoForm"
+                                oncomplete="stopUpdaterTimer(); PF('showVideo').show()">
+                    </p:menuitem>
+
+                    <p:menuitem value="Edit (one of the profiles)"
+                                rendered="#{mediaItem.contentType == 'Video' or mediaItem.contentType == 'Audio'}"
+                                disabled="#{!sessionScope.currentWorkspaceDetails.deliveryAuthorization or !sessionScope.currentWorkspaceDetails.editMedia}"
+                                actionListener="#{mediaItems.player.prepareCurrentMediaURL(mediaItem, null, true)}"
+                                update="showVideoForm"
+                                oncomplete="stopUpdaterTimer(); PF('showVideo').show()">
+                    </p:menuitem>
+
+                    <p:menuitem value="Download File (one of the profiles)"
+                                disabled="#{!sessionScope.currentWorkspaceDetails.deliveryAuthorization}"
+                                actionListener="#{mediaItems.player.downloadCurrentMediaURL(mediaItem, null)}"
+                    >
+                    </p:menuitem>
+                </p:menu>
+
             </p:column>
 
         </p:dataTable>

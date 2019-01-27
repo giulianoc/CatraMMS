@@ -20,14 +20,16 @@ public class FTPDeliveryProperties extends WorkflowProperties implements Seriali
 
     private StringBuilder taskReferences = new StringBuilder();
 
-    public FTPDeliveryProperties(int elementId, String label)
+    public FTPDeliveryProperties(String positionX, String positionY,
+                                 int elementId, String label)
     {
-        super(elementId, label, "FTP-Delivery" + "-icon.png", "Task", "FTP-Delivery");
+        super(positionX, positionY, elementId, label, "FTP-Delivery" + "-icon.png", "Task", "FTP-Delivery");
     }
 
     public FTPDeliveryProperties clone()
     {
         FTPDeliveryProperties ftpDeliveryProperties = new FTPDeliveryProperties(
+                super.getPositionX(), super.getPositionY(),
                 super.getElementId(), super.getLabel());
 
         ftpDeliveryProperties.setServer(getServer());
@@ -52,6 +54,32 @@ public class FTPDeliveryProperties extends WorkflowProperties implements Seriali
         setRemoteDirectory(workflowProperties.getRemoteDirectory());
 
         setStringBuilderTaskReferences(workflowProperties.getStringBuilderTaskReferences());
+    }
+
+    public void setData(JSONObject jsonWorkflowElement)
+    {
+        try {
+            super.setData(jsonWorkflowElement);
+
+            setLabel(jsonWorkflowElement.getString("Label"));
+
+            JSONObject joParameters = jsonWorkflowElement.getJSONObject("Parameters");
+
+            if (joParameters.has("Server") && !joParameters.getString("Server").equalsIgnoreCase(""))
+                setServer(joParameters.getString("Server"));
+            if (joParameters.has("Port"))
+                setPort(joParameters.getLong("Port"));
+            if (joParameters.has("UserName") && !joParameters.getString("UserName").equalsIgnoreCase(""))
+                setUserName(joParameters.getString("UserName"));
+            if (joParameters.has("Password") && !joParameters.getString("Password").equalsIgnoreCase(""))
+                setPassword(joParameters.getString("Password"));
+            if (joParameters.has("RemoteDirectory") && !joParameters.getString("RemoteDirectory").equalsIgnoreCase(""))
+                setRemoteDirectory(joParameters.getString("RemoteDirectory"));
+        }
+        catch (Exception e)
+        {
+            mLogger.error("WorkflowProperties:setData failed, exception: " + e);
+        }
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)

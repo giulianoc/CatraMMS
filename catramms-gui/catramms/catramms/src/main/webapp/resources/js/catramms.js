@@ -18,11 +18,16 @@ function on_complete() {
     PF('globalAjaxProgressBarDialog').hide();
 }
 
+var updaterTimer;
 function initUpdaterTimer(callback, periodInSeconds) {
     console.log("initUpdaterTimer. periodInSeconds: ", periodInSeconds * 1000);
-    var myVar = setInterval(callback, periodInSeconds * 1000);
+    updaterTimer = setInterval(callback, periodInSeconds * 1000);
 }
 
+function stopUpdaterTimer() {
+    console.log("stopUpdaterTimer");
+    clearInterval(updaterTimer);
+}
 
 function setZIndexTieredMenu() {
 

@@ -4720,7 +4720,8 @@ shared_ptr<MySQLConnection> MMSEngineDBFacade::endIngestionJobs (
 
 int64_t MMSEngineDBFacade::addIngestionRoot (
         shared_ptr<MySQLConnection> conn,
-    	int64_t workspaceKey, string rootType, string rootLabel
+    	int64_t workspaceKey, string rootType, string rootLabel,
+		string metaDataContent
 )
 {
     int64_t     ingestionRootKey;
@@ -4732,14 +4733,15 @@ int64_t MMSEngineDBFacade::addIngestionRoot (
         {
             {                
                 lastSQLCommand = 
-                    "insert into MMS_IngestionRoot (ingestionRootKey, workspaceKey, type, label, ingestionDate, lastUpdate, status) values ("
-                    "NULL, ?, ?, ?, NOW(), NOW(), ?)";
+                    "insert into MMS_IngestionRoot (ingestionRootKey, workspaceKey, type, label, metaDataContent, ingestionDate, lastUpdate, status) values ("
+                    "NULL, ?, ?, ?, ?, NOW(), NOW(), ?)";
 
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
                 preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
                 preparedStatement->setString(queryParameterIndex++, rootType);
                 preparedStatement->setString(queryParameterIndex++, rootLabel);
+                preparedStatement->setString(queryParameterIndex++, metaDataContent);
                 preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(MMSEngineDBFacade::IngestionRootStatus::NotCompleted));
  
                 preparedStatement->executeUpdate();
@@ -6250,6 +6252,112 @@ void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred (
         
         throw e;
     }
+}
+
+string MMSEngineDBFacade::getIngestionRootMetaDataContent (
+        shared_ptr<Workspace> workspace, int64_t ingestionRootKey
+)
+{    
+    string      lastSQLCommand;
+	string		metaDataContent;
+    
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+    try
+    {
+        
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        {
+            lastSQLCommand = 
+                string("select metaDataContent from MMS_IngestionRoot where workspaceKey = ? and ingestionRootKey = ?");
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspace->_workspaceKey);
+            preparedStatement->setInt64(queryParameterIndex++, ingestionRootKey);
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                metaDataContent = static_cast<string>(resultSet->getString("metaDataContent"));
+            }
+			else
+            {
+                string errorMessage = __FILEREF__ + "ingestion root not found"
+                        + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
+                        + ", ingestionRootKey: " + to_string(ingestionRootKey)
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+        }
+        
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+
+        throw se;
+    }    
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+
+        throw e;
+    } 
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+
+        throw e;
+    }
+    
+    return metaDataContent;
 }
 
 Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
@@ -19216,6 +19324,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "workspaceKey               BIGINT UNSIGNED NOT NULL,"
                     "type                       VARCHAR (64) NOT NULL,"
                     "label                      VARCHAR (256) NULL,"
+                    "metaDataContent			MEDIUMTEXT CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,"
                     "ingestionDate              DATETIME NOT NULL,"
                     "lastUpdate                 TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                     "status           			VARCHAR (64) NOT NULL,"

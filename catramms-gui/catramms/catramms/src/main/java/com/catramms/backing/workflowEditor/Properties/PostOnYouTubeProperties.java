@@ -28,9 +28,10 @@ public class PostOnYouTubeProperties extends WorkflowProperties implements Seria
 
     private StringBuilder taskReferences = new StringBuilder();
 
-    public PostOnYouTubeProperties(int elementId, String label)
+    public PostOnYouTubeProperties(String positionX, String positionY,
+                                   int elementId, String label)
     {
-        super(elementId, label, "Post-On-YouTube" + "-icon.png", "Task", "Post-On-YouTube");
+        super(positionX, positionY, elementId, label, "Post-On-YouTube" + "-icon.png", "Task", "Post-On-YouTube");
 
         try
         {
@@ -61,9 +62,11 @@ public class PostOnYouTubeProperties extends WorkflowProperties implements Seria
         }
     }
 
-    public PostOnYouTubeProperties(int elementId, String label, List<YouTubeConf> confList)
+    public PostOnYouTubeProperties(String positionX, String positionY,
+                                   int elementId, String label, List<YouTubeConf> confList)
     {
-        super(elementId, label, "Post-On-YouTube" + "-icon.png", "Task", "Post-On-YouTube");
+        super(positionX, positionY, elementId, label,
+                "Post-On-YouTube" + "-icon.png", "Task", "Post-On-YouTube");
 
         this.confList = confList;
     }
@@ -71,6 +74,7 @@ public class PostOnYouTubeProperties extends WorkflowProperties implements Seria
     public PostOnYouTubeProperties clone()
     {
         PostOnYouTubeProperties postOnYouTubeProperties = new PostOnYouTubeProperties(
+                super.getPositionX(), super.getPositionY(),
                 super.getElementId(), super.getLabel(), confList);
 
         postOnYouTubeProperties.setConfigurationLabel(getConfigurationLabel());
@@ -97,6 +101,46 @@ public class PostOnYouTubeProperties extends WorkflowProperties implements Seria
         setPrivacy(workflowProperties.getPrivacy());
 
         setStringBuilderTaskReferences(workflowProperties.getStringBuilderTaskReferences());
+    }
+
+    public void setData(JSONObject jsonWorkflowElement)
+    {
+        try {
+            super.setData(jsonWorkflowElement);
+
+            setLabel(jsonWorkflowElement.getString("Label"));
+
+            JSONObject joParameters = jsonWorkflowElement.getJSONObject("Parameters");
+
+            if (joParameters.has("ConfigurationLabel") && !joParameters.getString("ConfigurationLabel").equalsIgnoreCase(""))
+                setConfigurationLabel(joParameters.getString("ConfigurationLabel"));
+            if (joParameters.has("Title") && !joParameters.getString("Title").equalsIgnoreCase(""))
+                setYouTubeTitle(joParameters.getString("Title"));
+            if (joParameters.has("Description") && !joParameters.getString("Description").equalsIgnoreCase(""))
+                setYouTubeDescription(joParameters.getString("Description"));
+            if (joParameters.has("Tags"))
+            {
+                String tags = "";
+                JSONArray jaTags = joParameters.getJSONArray("Tags");
+                for (int tagIndex = 0; tagIndex < jaTags.length(); tagIndex++)
+                {
+                    if (tags.equalsIgnoreCase(""))
+                        tags = jaTags.getString(tagIndex);
+                    else
+                        tags += ("," + jaTags.getString(tagIndex));
+                }
+
+                setYouTubeTags(tags);
+            }
+            if (joParameters.has("CategoryId"))
+                setCategoryId(joParameters.getLong("CategoryId"));
+            if (joParameters.has("Privacy") && !joParameters.getString("Privacy").equalsIgnoreCase(""))
+                setPrivacy(joParameters.getString("Privacy"));
+        }
+        catch (Exception e)
+        {
+            mLogger.error("WorkflowProperties:setData failed, exception: " + e);
+        }
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)

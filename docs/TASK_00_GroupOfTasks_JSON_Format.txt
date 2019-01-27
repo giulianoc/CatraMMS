@@ -1,0 +1,15 @@
+"Task": {
+	// mandatory
+	"Type": "GroupOfTasks",
+
+	"Parameters": {
+		"ExecutionType": "parallel",
+
+		"Tasks": [
+			<Task 1>,
+			<Task 2>,
+			<Task 3>,
+			...
+		]
+	}
+}

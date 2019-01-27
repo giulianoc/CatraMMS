@@ -21,9 +21,10 @@ public class FaceIdentificationProperties extends CreateContentProperties implem
 
     private StringBuilder taskReferences = new StringBuilder();
 
-    public FaceIdentificationProperties(int elementId, String label)
+    public FaceIdentificationProperties(String positionX, String positionY,
+                                        int elementId, String label)
     {
-        super(elementId, label, "Face-Identification" + "-icon.png", "Task", "Face-Identification");
+        super(positionX, positionY, elementId, label, "Face-Identification" + "-icon.png", "Task", "Face-Identification");
 
         {
             cascadeNamesList = new ArrayList<>();
@@ -37,6 +38,7 @@ public class FaceIdentificationProperties extends CreateContentProperties implem
     public FaceIdentificationProperties clone()
     {
         FaceIdentificationProperties faceIdentificationProperties = new FaceIdentificationProperties(
+                super.getPositionX(), super.getPositionY(),
                 super.getElementId(), super.getLabel());
 
         faceIdentificationProperties.setCascadeName(getCascadeName());
@@ -60,6 +62,28 @@ public class FaceIdentificationProperties extends CreateContentProperties implem
         setEncodingPriority(workflowProperties.getEncodingPriority());
 
         setStringBuilderTaskReferences(workflowProperties.getStringBuilderTaskReferences());
+    }
+
+    public void setData(JSONObject jsonWorkflowElement)
+    {
+        try {
+            super.setData(jsonWorkflowElement);
+
+            setLabel(jsonWorkflowElement.getString("Label"));
+
+            JSONObject joParameters = jsonWorkflowElement.getJSONObject("Parameters");
+
+            if (joParameters.has("CascadeName") && !joParameters.getString("CascadeName").equalsIgnoreCase(""))
+                setCascadeName(joParameters.getString("CascadeName"));
+            if (joParameters.has("DeepLearnedModelTags") && !joParameters.getString("DeepLearnedModelTags").equalsIgnoreCase(""))
+                setDeepLearnedModelTags(joParameters.getString("DeepLearnedModelTags"));
+            if (joParameters.has("EncodingPriority") && !joParameters.getString("EncodingPriority").equalsIgnoreCase(""))
+                setEncodingPriority(joParameters.getString("EncodingPriority"));
+        }
+        catch (Exception e)
+        {
+            mLogger.error("WorkflowProperties:setData failed, exception: " + e);
+        }
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)

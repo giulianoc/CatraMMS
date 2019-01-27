@@ -7,7 +7,10 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.Serializable;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.TimeZone;
 
 public class CutProperties extends CreateContentProperties implements Serializable {
 
@@ -22,9 +25,10 @@ public class CutProperties extends CreateContentProperties implements Serializab
 
     private StringBuilder taskReferences = new StringBuilder();
 
-    public CutProperties(int elementId, String label)
+    public CutProperties(String positionX, String positionY,
+                         int elementId, String label)
     {
-        super(elementId, label, "Cut" + "-icon.png", "Task", "Cut");
+        super(positionX, positionY, elementId, label, "Cut" + "-icon.png", "Task", "Cut");
 
         endType = "endTime";
         timeInSecondsDecimalsPrecision = new Long(6);
@@ -33,6 +37,7 @@ public class CutProperties extends CreateContentProperties implements Serializab
     public CutProperties clone()
     {
         CutProperties cutProperties = new CutProperties(
+                super.getPositionX(), super.getPositionY(),
                 super.getElementId(), super.getLabel());
 
         cutProperties.setStartTimeInSeconds(startTimeInSeconds);
@@ -60,6 +65,35 @@ public class CutProperties extends CreateContentProperties implements Serializab
         setFileFormat(workflowProperties.getFileFormat());
 
         setStringBuilderTaskReferences(workflowProperties.getStringBuilderTaskReferences());
+    }
+
+    public void setData(JSONObject jsonWorkflowElement)
+    {
+        try {
+            super.setData(jsonWorkflowElement);
+
+            setLabel(jsonWorkflowElement.getString("Label"));
+
+            JSONObject joParameters = jsonWorkflowElement.getJSONObject("Parameters");
+
+            if (joParameters.has("StartTimeInSeconds"))
+                setStartTimeInSeconds(new Float(joParameters.getDouble("StartTimeInSeconds")));
+            if (joParameters.has("EndTimeInSeconds"))
+            {
+                setEndTimeInSeconds(new Float(joParameters.getDouble("EndTimeInSeconds")));
+                setEndType("endTime");
+            }
+            if (joParameters.has("FramesNumber")) {
+                setFramesNumber(joParameters.getLong("FramesNumber"));
+                setEndType("framesNumber");
+            }
+            if (joParameters.has("FileFormat") && !joParameters.getString("FileFormat").equalsIgnoreCase(""))
+                setFileFormat(joParameters.getString("FileFormat"));
+        }
+        catch (Exception e)
+        {
+            mLogger.error("WorkflowProperties:setData failed, exception: " + e);
+        }
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)

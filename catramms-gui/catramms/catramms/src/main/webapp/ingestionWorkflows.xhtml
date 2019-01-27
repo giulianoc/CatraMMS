@@ -72,6 +72,16 @@
                     <span class="ui-icon ui-icon-grip-dotted-vertical" />
                 </span>
 
+                <p:link
+                        value="Docs"
+                        target="_blank"
+                        href="https://github.com/giulianoc/CatraMMS/wiki"
+                />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
                 <ui:include src="/common/mainMenu.xhtml"/>
 
             </p:toolbarGroup>
@@ -224,10 +234,23 @@
                 </p:outputLabel>
             </p:column>
 
-            <p:column style="width:50px;" headerText="">
-                <h:link outcome="/ingestionWorkflowDetails.xhtml?faces-redirect=true" value="Details">
-                    <f:param name="ingestionRootKey" value="#{ingestionWorkflow.ingestionRootKey}" />
-                </h:link>
+            <p:column style="width:40px;" headerText="">
+
+                <p:commandButton id="dynaButtonOptions" type="button" icon="fa fa-navicon"/>
+                <p:menu toggleable="true" collapsed="true" overlay="true" trigger="dynaButtonOptions"
+                        my="left top" at="left bottom">
+                    <p:menuitem value="Details"
+                                outcome="/ingestionWorkflowDetails.xhtml?faces-redirect=true">
+                        <f:param name="ingestionRootKey" value="#{ingestionWorkflow.ingestionRootKey}" />
+                    </p:menuitem>
+
+                    <p:menuitem value="Workflow Editor"
+                                outcome="/workflowEditor/workflowEditor.xhtml?faces-redirect=true">
+                        <f:param name="loadType" value="ingestionRootKey" />
+                        <f:param name="data" value="#{ingestionWorkflow.ingestionRootKey}" />
+                    </p:menuitem>
+                </p:menu>
+
             </p:column>
 
         </p:dataTable>

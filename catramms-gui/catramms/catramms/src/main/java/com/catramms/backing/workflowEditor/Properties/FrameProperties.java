@@ -19,9 +19,10 @@ public class FrameProperties extends CreateContentProperties implements Serializ
 
     private StringBuilder taskReferences = new StringBuilder();
 
-    public FrameProperties(int elementId, String label)
+    public FrameProperties(String positionX, String positionY,
+                           int elementId, String label)
     {
-        super(elementId, label, "Frame" + "-icon.png", "Task", "Frame");
+        super(positionX, positionY, elementId, label, "Frame" + "-icon.png", "Task", "Frame");
 
         timeInSecondsDecimalsPrecision = new Long(6);
     }
@@ -29,6 +30,7 @@ public class FrameProperties extends CreateContentProperties implements Serializ
     public FrameProperties clone()
     {
         FrameProperties frameProperties = new FrameProperties(
+                super.getPositionX(), super.getPositionY(),
                 super.getElementId(), super.getLabel());
 
         frameProperties.setInstantInSeconds(instantInSeconds);
@@ -52,6 +54,28 @@ public class FrameProperties extends CreateContentProperties implements Serializ
         setHeight(workflowProperties.getHeight());
 
         setStringBuilderTaskReferences(workflowProperties.getStringBuilderTaskReferences());
+    }
+
+    public void setData(JSONObject jsonWorkflowElement)
+    {
+        try {
+            super.setData(jsonWorkflowElement);
+
+            setLabel(jsonWorkflowElement.getString("Label"));
+
+            JSONObject joParameters = jsonWorkflowElement.getJSONObject("Parameters");
+
+            if (joParameters.has("InstantInSeconds"))
+                setInstantInSeconds(new Float(joParameters.getDouble("InstantInSeconds")));
+            if (joParameters.has("Width"))
+                setWidth(joParameters.getLong("Width"));
+            if (joParameters.has("Height"))
+                setHeight(joParameters.getLong("Height"));
+        }
+        catch (Exception e)
+        {
+            mLogger.error("WorkflowProperties:setData failed, exception: " + e);
+        }
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)

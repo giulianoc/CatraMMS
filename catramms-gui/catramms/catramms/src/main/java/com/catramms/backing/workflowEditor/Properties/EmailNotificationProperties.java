@@ -22,14 +22,16 @@ public class EmailNotificationProperties extends WorkflowProperties implements S
     private String subject;
     private String message;
 
-    public EmailNotificationProperties(int elementId, String label)
+    public EmailNotificationProperties(String positionX, String positionY,
+                                       int elementId, String label)
     {
-        super(elementId, label, "Email-Notification" + "-icon.png", "Task", "Email-Notification");
+        super(positionX, positionY, elementId, label, "Email-Notification" + "-icon.png", "Task", "Email-Notification");
     }
 
     public EmailNotificationProperties clone()
     {
         EmailNotificationProperties emailNotificationProperties = new EmailNotificationProperties(
+                super.getPositionX(), super.getPositionY(),
                 super.getElementId(), super.getLabel());
 
         emailNotificationProperties.setEmailAddress(emailAddress);
@@ -46,6 +48,28 @@ public class EmailNotificationProperties extends WorkflowProperties implements S
         setEmailAddress(workflowProperties.getEmailAddress());
         setSubject(workflowProperties.getSubject());
         setMessage(workflowProperties.getMessage());
+    }
+
+    public void setData(JSONObject jsonWorkflowElement)
+    {
+        try {
+            super.setData(jsonWorkflowElement);
+
+            setLabel(jsonWorkflowElement.getString("Label"));
+
+            JSONObject joParameters = jsonWorkflowElement.getJSONObject("Parameters");
+
+            if (joParameters.has("EmailAddress") && !joParameters.getString("EmailAddress").equalsIgnoreCase(""))
+                setEmailAddress(joParameters.getString("EmailAddress"));
+            if (joParameters.has("Subject") && !joParameters.getString("Subject").equalsIgnoreCase(""))
+                setSubject(joParameters.getString("Subject"));
+            if (joParameters.has("Message") && !joParameters.getString("Message").equalsIgnoreCase(""))
+                setMessage(joParameters.getString("Message"));
+        }
+        catch (Exception e)
+        {
+            mLogger.error("WorkflowProperties:setData failed, exception: " + e);
+        }
     }
 
     public JSONObject buildWorkflowElementJson(IngestionData ingestionData)
