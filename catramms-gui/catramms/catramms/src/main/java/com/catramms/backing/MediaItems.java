@@ -8,6 +8,8 @@ import com.catramms.backing.entity.PhysicalPath;
 import com.catramms.backing.entity.WorkspaceDetails;
 import com.catramms.utility.catramms.CatraMMS;
 import org.apache.log4j.Logger;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import javax.annotation.PostConstruct;
 import javax.faces.application.FacesMessage;
@@ -283,6 +285,44 @@ public class MediaItems extends Workspace implements Serializable {
         calendar.add(Calendar.MINUTE, retentionInMinutes.intValue());
 
         return calendar.getTime();
+    }
+
+    public void removeMediaItem(MediaItem mediaItem)
+    {
+        try
+        {
+            JSONObject joWorkflow = new JSONObject();
+            joWorkflow.put("Label", "Remove Media Item");
+            joWorkflow.put("Type", "Workflow");
+
+            JSONObject joRemoveTask = new JSONObject();
+            joWorkflow.put("Task", joRemoveTask);
+
+            joRemoveTask.put("Label", "Remove Task");
+            joRemoveTask.put("Type", "Remove-Content");
+
+            JSONObject joRemoveParameters = new JSONObject();
+            joRemoveTask.put("Parameters", joRemoveParameters);
+
+            JSONArray jaReferences = new JSONArray();
+            joRemoveParameters.put("References", jaReferences);
+
+            JSONObject joReference = new JSONObject();
+            jaReferences.put(joReference);
+
+            joReference.put("ReferenceMediaItemKey", mediaItem.getMediaItemKey());
+
+            String url = "workflowEditor/workflowEditor.xhtml?loadType=metaDataContent"
+                    + "&data=" + java.net.URLEncoder.encode(joWorkflow.toString(), "UTF-8")
+                    ;
+
+            mLogger.info("Redirect to " + url);
+            FacesContext.getCurrentInstance().getExternalContext().redirect(url);
+        }
+        catch (Exception e)
+        {
+            mLogger.error("removeMediaItem, exception: " + e);
+        }
     }
 
     public String getDurationAsString(Long durationInMilliseconds)

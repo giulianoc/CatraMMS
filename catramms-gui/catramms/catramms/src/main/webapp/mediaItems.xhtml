@@ -303,6 +303,12 @@
                                 actionListener="#{mediaItems.player.downloadCurrentMediaURL(mediaItem, null)}"
                     >
                     </p:menuitem>
+
+                    <p:menuitem value="Remove Media Item"
+                                actionListener="#{mediaItems.removeMediaItem(mediaItem)}"
+                    >
+                        <p:confirm header="Confirmation" message="Are you sure?" icon="ui-icon-alert" />
+                    </p:menuitem>
                 </p:menu>
 
             </p:column>
