@@ -269,7 +269,9 @@ public class Player implements Serializable {
             return;
         }
 
-        try {
+        try
+        {
+            /*
             String predefined = "cut";
 
             JSONObject joCut = new JSONObject();
@@ -290,6 +292,90 @@ public class Player implements Serializable {
             String url = "workflowEditor/workflowEditor.xhtml?predefined=" + predefined
                     + "&data=" + java.net.URLEncoder.encode(joCut.toString(), "UTF-8")
                     ;
+            */
+
+            JSONObject joWorkflow = new JSONObject();
+            joWorkflow.put("Label", "Edit Player Cut");
+            joWorkflow.put("Type", "Workflow");
+
+            if (markList.size() > 1)
+            {
+                JSONObject joGroupOfTasks = new JSONObject();
+                joWorkflow.put("Task", joGroupOfTasks);
+
+                joGroupOfTasks.put("Type", "GroupOfTasks");
+
+                JSONObject joGroupOfTasksParameters = new JSONObject();
+                joGroupOfTasks.put("Parameters", joGroupOfTasksParameters);
+
+                joGroupOfTasksParameters.put("ExecutionType", "parallel");
+
+                JSONArray jaCutTasks = new JSONArray();
+                joGroupOfTasksParameters.put("Tasks", jaCutTasks);
+
+                int cutIndex = 1;
+                for (Mark mark: markList)
+                {
+                    JSONObject joCutTask = new JSONObject();
+                    jaCutTasks.put(joCutTask);
+
+                    joCutTask.put("Label", "Cut Task nr. " + cutIndex++);
+                    joCutTask.put("Type", "Cut");
+
+                    JSONObject joCutParameters = new JSONObject();
+                    joCutTask.put("Parameters", joCutParameters);
+
+                    joCutParameters.put("StartTimeInSeconds", smpteTimeCodeToSeconds(mark.getIn()));
+                    joCutParameters.put("EndTimeInSeconds", smpteTimeCodeToSeconds(mark.getOut()));
+
+                    JSONArray jaReferences = new JSONArray();
+                    joCutParameters.put("References", jaReferences);
+
+                    JSONObject joReference = new JSONObject();
+                    jaReferences.put(joReference);
+
+                    joReference.put("ReferencePhysicalPathKey", currentPhysicalPath.getPhysicalPathKey());
+                }
+
+                JSONObject joGroupOfTasksOnSuccess = new JSONObject();
+                joGroupOfTasks.put("OnSuccess", joGroupOfTasksOnSuccess);
+
+                JSONObject joConcatTask = new JSONObject();
+                joGroupOfTasksOnSuccess.put("Task", joConcatTask);
+
+                joConcatTask.put("Label", "Concat of all the Cuts (" + markList.size() + ")");
+                joConcatTask.put("Type", "Concat-Demuxer");
+
+                JSONObject joConcatParameters = new JSONObject();
+                joConcatTask.put("Parameters", joConcatParameters);
+            }
+            else
+            {
+                JSONObject joCutTask = new JSONObject();
+                joWorkflow.put("Task", joCutTask);
+
+                joCutTask.put("Label", "Cut Task");
+                joCutTask.put("Type", "Cut");
+
+                JSONObject joCutParameters = new JSONObject();
+                joCutTask.put("Parameters", joCutParameters);
+
+                joCutParameters.put("StartTimeInSeconds", smpteTimeCodeToSeconds(markList.get(0).getIn()));
+                joCutParameters.put("EndTimeInSeconds", smpteTimeCodeToSeconds(markList.get(0).getOut()));
+
+                JSONArray jaReferences = new JSONArray();
+                joCutParameters.put("References", jaReferences);
+
+                JSONObject joReference = new JSONObject();
+                jaReferences.put(joReference);
+
+                joReference.put("ReferencePhysicalPathKey", currentPhysicalPath.getPhysicalPathKey());
+            }
+
+            String url = "workflowEditor/workflowEditor.xhtml?loadType=metaDataContent"
+                    + "&data=" + java.net.URLEncoder.encode(joWorkflow.toString(), "UTF-8")
+                    ;
+
             mLogger.info("Redirect to " + url);
             FacesContext.getCurrentInstance().getExternalContext().redirect(url);
         }

@@ -1,6 +1,6 @@
 package com.catramms.backing.workflowEditor.Properties;
 
-import com.catramms.backing.newWorkflow.WorkflowIssue;
+import com.catramms.backing.workflowEditor.utility.WorkflowIssue;
 import com.catramms.backing.workflowEditor.utility.IngestionData;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
@@ -108,6 +108,26 @@ public class OverlayTextOnVideoProperties extends CreateContentProperties implem
                 setBoxPercentageOpacity(joParameters.getLong("BoxPercentageOpacity"));
             if (joParameters.has("EncodingPriority") && !joParameters.getString("EncodingPriority").equalsIgnoreCase(""))
                 setEncodingPriority(joParameters.getString("EncodingPriority"));
+
+            if (joParameters.has("References"))
+            {
+                String references = "";
+                JSONArray jaReferences = joParameters.getJSONArray("References");
+                for (int referenceIndex = 0; referenceIndex < jaReferences.length(); referenceIndex++)
+                {
+                    JSONObject joReference = jaReferences.getJSONObject(referenceIndex);
+
+                    if (joReference.has("ReferencePhysicalPathKey"))
+                    {
+                        if (references.equalsIgnoreCase(""))
+                            references = new Long(joReference.getLong("ReferencePhysicalPathKey")).toString();
+                        else
+                            references += ("," + new Long(joReference.getLong("ReferencePhysicalPathKey")).toString());
+                    }
+                }
+
+                setTaskReferences(references);
+            }
         }
         catch (Exception e)
         {

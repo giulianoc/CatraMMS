@@ -1,9 +1,5 @@
 package com.catramms.backing.workflowEditor.utility;
 
-import com.catramms.backing.newWorkflow.IngestionResult;
-import com.catramms.backing.newWorkflow.PushContent;
-import com.catramms.backing.newWorkflow.WorkflowIssue;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;

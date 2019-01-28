@@ -1,6 +1,6 @@
 package com.catramms.backing.workflowEditor.Properties;
 
-import com.catramms.backing.newWorkflow.WorkflowIssue;
+import com.catramms.backing.workflowEditor.utility.WorkflowIssue;
 import com.catramms.backing.workflowEditor.utility.IngestionData;
 import org.apache.log4j.Logger;
 import org.json.JSONObject;

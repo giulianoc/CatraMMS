@@ -2,13 +2,8 @@ package com.catramms.backing.workflowEditor;
 
 import com.catramms.backing.common.SessionUtils;
 import com.catramms.backing.common.Workspace;
-import com.catramms.backing.entity.EncodingProfile;
-import com.catramms.backing.entity.EncodingProfilesSet;
-import com.catramms.backing.entity.FacebookConf;
-import com.catramms.backing.entity.YouTubeConf;
-import com.catramms.backing.newWorkflow.IngestionResult;
-import com.catramms.backing.newWorkflow.PushContent;
-import com.catramms.backing.newWorkflow.Workflow;
+import com.catramms.backing.workflowEditor.utility.IngestionResult;
+import com.catramms.backing.workflowEditor.utility.PushContent;
 import com.catramms.backing.workflowEditor.Properties.*;
 import com.catramms.backing.workflowEditor.utility.*;
 import com.catramms.utility.catramms.CatraMMS;
@@ -183,7 +178,8 @@ public class WorkflowEditor extends Workspace implements Serializable {
 
                 if (data != null && !data.equalsIgnoreCase(""))
                 {
-                    try {
+                    try
+                    {
                         JSONObject joCut = new JSONObject(data);
 
                         Long physicalPathKey = joCut.getLong("key");
@@ -279,6 +275,10 @@ public class WorkflowEditor extends Workspace implements Serializable {
                 {
                     mLogger.error("No data for the loadType Workflow " + loadType);
                 }
+            }
+            else if (loadType.equalsIgnoreCase("metaDataContent"))
+            {
+                buildModelByMetaDataContent(data);
             }
             else if (loadType.equalsIgnoreCase("ingestionRootKey"))
             {
@@ -1271,7 +1271,14 @@ public class WorkflowEditor extends Workspace implements Serializable {
                         else if (sourceEndPoint.getAnchor() == EndPointAnchor.BOTTOM_LEFT)
                             connection.getOverlays().add(new LabelOverlay("onError", "connection-label", 0.5));
                         else if (sourceEndPoint.getAnchor() == EndPointAnchor.RIGHT)
-                            connection.getOverlays().add(new LabelOverlay("Task of Group", "connection-label", 0.5));
+                        {
+                            GroupOfTasksProperties groupOfTasksProperties = (GroupOfTasksProperties) sourceWorkflowProperties;
+
+                            // The task will be added few statements below
+                            connection.getOverlays().add(new LabelOverlay(
+                                    "Task nr. " + (groupOfTasksProperties.getTasks().size() + 1),
+                                    "connection-label", 0.5));
+                        }
                     }
                 }
             }
@@ -1334,6 +1341,11 @@ public class WorkflowEditor extends Workspace implements Serializable {
                 GroupOfTasksProperties groupOfTasksProperties = (GroupOfTasksProperties) sourceWorkflowProperties;
 
                 groupOfTasksProperties.getTasks().remove(targetWorkflowProperties);
+
+                // if the Task nr. 2 is removed, we have to change the label of the connection bigger of the Task nr. 2.
+                // For example, the current Task nr. 3 has to be labelled as Task nr. 2 and so on...
+
+                relabelGroupOfTasksConnections(event.getSourceElement(), sourceEndPont);
             }
 
             buildWorkflowElementJson();
@@ -1502,6 +1514,45 @@ public class WorkflowEditor extends Workspace implements Serializable {
         return connectionToBeReturned;
     }
 
+    private void relabelGroupOfTasksConnections(Element groupOfTasksElement, EndPoint rightEndPoint)
+    {
+        try {
+            List<Connection> connectionListToBeDisconnected = new ArrayList<>();
+
+            for (Connection connection: model.getConnections())
+            {
+                if (connection.getSource() == rightEndPoint)
+                    connectionListToBeDisconnected.add(connection);
+            }
+
+            for (Connection connection: connectionListToBeDisconnected)
+                model.disconnect(connection);
+
+            GroupOfTasksProperties groupOfTasksProperties = (GroupOfTasksProperties) groupOfTasksElement.getData();
+
+            for (int taskIndex = 0; taskIndex < groupOfTasksProperties.getTasks().size(); taskIndex++)
+            {
+                WorkflowProperties taskWorkflowProperties = groupOfTasksProperties.getTasks().get(taskIndex);
+
+                Element taskElement = model.findElement(new Integer(taskWorkflowProperties.getElementId()).toString());
+                if (taskElement != null)
+                {
+                    EndPoint leftEndPoint = getEndPoint(taskElement, EndPointAnchor.LEFT);
+
+                    Connection newConnection = new Connection(rightEndPoint, leftEndPoint);
+                    model.connect(newConnection);
+                    newConnection.getOverlays().add(new LabelOverlay(
+                            "Task nr. " + (taskIndex + 1),
+                            "connection-label", 0.5));
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            mLogger.info("Exception: " + e);
+        }
+    }
+
     private EndPoint getEndPoint(Element element, EndPointAnchor endPointAnchor)
             throws Exception
     {
@@ -1602,6 +1653,7 @@ public class WorkflowEditor extends Workspace implements Serializable {
                     continue;
                 }
 
+                mLogger.info("pushContent.getBinaryPathName: " + pushContent.getBinaryPathName());
                 File mediaFile = new File(pushContent.getBinaryPathName());
                 InputStream binaryFileInputStream = new DataInputStream(new FileInputStream(mediaFile));
 
@@ -1895,7 +1947,27 @@ public class WorkflowEditor extends Workspace implements Serializable {
             return;
         }
 
-        try {
+        try
+        {
+            buildModelByMetaDataContent(metaDataContent);
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "buildModelByMetaDataContent. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Workflow Editor",
+                    "Parsing metadata failed: " + errorMessage);
+            FacesContext.getCurrentInstance().addMessage(null, message);
+
+            return;
+        }
+    }
+
+    private void buildModelByMetaDataContent(String metaDataContent)
+    {
+        try
+        {
             JSONObject joMetaData = new JSONObject(metaDataContent);
 
             WorkflowProperties workflowProperties = (WorkflowProperties) workflowElement.getData();

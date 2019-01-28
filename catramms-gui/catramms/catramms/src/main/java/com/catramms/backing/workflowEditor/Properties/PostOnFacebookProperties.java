@@ -2,7 +2,7 @@ package com.catramms.backing.workflowEditor.Properties;
 
 import com.catramms.backing.common.SessionUtils;
 import com.catramms.backing.entity.FacebookConf;
-import com.catramms.backing.newWorkflow.WorkflowIssue;
+import com.catramms.backing.workflowEditor.utility.WorkflowIssue;
 import com.catramms.backing.workflowEditor.utility.IngestionData;
 import com.catramms.utility.catramms.CatraMMS;
 import org.apache.log4j.Logger;
@@ -103,6 +103,26 @@ public class PostOnFacebookProperties extends WorkflowProperties implements Seri
                 setConfigurationLabel(joParameters.getString("ConfigurationLabel"));
             if (joParameters.has("NodeId") && !joParameters.getString("NodeId").equalsIgnoreCase(""))
                 setNodeId(joParameters.getString("NodeId"));
+
+            if (joParameters.has("References"))
+            {
+                String references = "";
+                JSONArray jaReferences = joParameters.getJSONArray("References");
+                for (int referenceIndex = 0; referenceIndex < jaReferences.length(); referenceIndex++)
+                {
+                    JSONObject joReference = jaReferences.getJSONObject(referenceIndex);
+
+                    if (joReference.has("ReferencePhysicalPathKey"))
+                    {
+                        if (references.equalsIgnoreCase(""))
+                            references = new Long(joReference.getLong("ReferencePhysicalPathKey")).toString();
+                        else
+                            references += ("," + new Long(joReference.getLong("ReferencePhysicalPathKey")).toString());
+                    }
+                }
+
+                setTaskReferences(references);
+            }
         }
         catch (Exception e)
         {

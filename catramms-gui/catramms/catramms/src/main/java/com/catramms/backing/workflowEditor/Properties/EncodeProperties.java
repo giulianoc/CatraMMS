@@ -3,7 +3,7 @@ package com.catramms.backing.workflowEditor.Properties;
 import com.catramms.backing.common.SessionUtils;
 import com.catramms.backing.entity.EncodingProfile;
 import com.catramms.backing.entity.EncodingProfilesSet;
-import com.catramms.backing.newWorkflow.WorkflowIssue;
+import com.catramms.backing.workflowEditor.utility.WorkflowIssue;
 import com.catramms.backing.workflowEditor.utility.IngestionData;
 import com.catramms.utility.catramms.CatraMMS;
 import org.apache.log4j.Logger;
@@ -172,6 +172,26 @@ public class EncodeProperties extends WorkflowProperties implements Serializable
             {
                 setEncodingProfilesSetLabel(joParameters.getString("EncodingProfilesSetLabel"));
                 setEncodingProfileType("profilesSet");
+            }
+
+            if (joParameters.has("References"))
+            {
+                String references = "";
+                JSONArray jaReferences = joParameters.getJSONArray("References");
+                for (int referenceIndex = 0; referenceIndex < jaReferences.length(); referenceIndex++)
+                {
+                    JSONObject joReference = jaReferences.getJSONObject(referenceIndex);
+
+                    if (joReference.has("ReferencePhysicalPathKey"))
+                    {
+                        if (references.equalsIgnoreCase(""))
+                            references = new Long(joReference.getLong("ReferencePhysicalPathKey")).toString();
+                        else
+                            references += ("," + new Long(joReference.getLong("ReferencePhysicalPathKey")).toString());
+                    }
+                }
+
+                setTaskReferences(references);
             }
         }
         catch (Exception e)

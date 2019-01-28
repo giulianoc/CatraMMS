@@ -275,12 +275,6 @@ public class MediaItems extends Workspace implements Serializable {
         }
     }
 
-    public void aaprepareCurrentMediaURL(MediaItem mediaItem, PhysicalPath physicalPath, boolean editMedia)
-    {
-        autoRefresh = false;
-        player.prepareCurrentMediaURL(mediaItem, physicalPath, editMedia);
-    }
-
     public Date willBeRemovedAt(Date ingestionDate, Long retentionInMinutes)
     {
         Calendar calendar = Calendar.getInstance();

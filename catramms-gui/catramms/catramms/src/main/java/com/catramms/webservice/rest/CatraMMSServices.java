@@ -1,6 +1,6 @@
 package com.catramms.webservice.rest;
 
-import com.catramms.backing.newWorkflow.IngestionResult;
+import com.catramms.backing.workflowEditor.utility.IngestionResult;
 import com.catramms.utility.catramms.CatraMMS;
 import com.catramms.utility.httpFetcher.HttpFeedFetcher;
 import com.catramms.webservice.rest.utility.CutMediaInfo;

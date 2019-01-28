@@ -1,8 +1,8 @@
 package com.catramms.backing.workflowEditor.Properties;
 
 import com.catramms.backing.common.SessionUtils;
-import com.catramms.backing.newWorkflow.PushContent;
-import com.catramms.backing.newWorkflow.WorkflowIssue;
+import com.catramms.backing.workflowEditor.utility.PushContent;
+import com.catramms.backing.workflowEditor.utility.WorkflowIssue;
 import com.catramms.backing.workflowEditor.utility.IngestionData;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
@@ -12,8 +12,6 @@ import org.primefaces.event.FileUploadEvent;
 import java.io.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.TimeZone;
 
 public class AddContentProperties extends CreateContentProperties implements Serializable {
@@ -226,6 +224,7 @@ public class AddContentProperties extends CreateContentProperties implements Ser
                 pushBinaryFileName = event.getFile().getFileName();
                 binaryFile = new File(getLocalBinaryPathName(pushBinaryFileName));
 
+                mLogger.info("copy from " + event.getFile() + " to " + binaryFile.getAbsolutePath());
                 input = event.getFile().getInputstream();
                 output = new FileOutputStream(binaryFile);
 

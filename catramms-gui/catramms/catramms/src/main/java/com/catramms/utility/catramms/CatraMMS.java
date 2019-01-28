@@ -1,7 +1,7 @@
 package com.catramms.utility.catramms;
 
 import com.catramms.backing.entity.*;
-import com.catramms.backing.newWorkflow.IngestionResult;
+import com.catramms.backing.workflowEditor.utility.IngestionResult;
 import com.catramms.utility.httpFetcher.HttpFeedFetcher;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
