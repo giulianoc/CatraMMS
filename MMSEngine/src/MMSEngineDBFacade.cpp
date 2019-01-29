@@ -4183,7 +4183,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 			{
 				int64_t ingestionJobKey     = resultSet->getInt64("ingestionJobKey");
 				{     
-           			IngestionStatus ingestionStatus = IngestionStatus::End_IngestionFailure;
+           			IngestionStatus newIngestionStatus = IngestionStatus::End_IngestionFailure;
 
 					string errorMessage = "Set to Failure by MMS because of timeout to download/move/copy/upload the content";
 					string processorMMS;
@@ -4193,7 +4193,35 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 						+ ", errorMessage: " + errorMessage
 						+ ", processorMMS: " + processorMMS
 					);                            
-					updateIngestionJob (conn, ingestionJobKey, newIngestionStatus, errorMessage, processorMMS);
+    				try
+    				{
+						updateIngestionJob (conn, ingestionJobKey, newIngestionStatus, errorMessage, processorMMS);
+					}
+    				catch(sql::SQLException se)
+    				{
+        				string exceptionMessage(se.what());
+        
+        				_logger->error(__FILEREF__ + "SQL exception"
+            				+ ", lastSQLCommand: " + lastSQLCommand
+            				+ ", exceptionMessage: " + exceptionMessage
+            				+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        				);
+    				}    
+    				catch(runtime_error e)
+    				{        
+        				_logger->error(__FILEREF__ + "SQL exception"
+            				+ ", e.what(): " + e.what()
+            				+ ", lastSQLCommand: " + lastSQLCommand
+            				+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        				);
+    				}        
+    				catch(exception e)
+    				{        
+        				_logger->error(__FILEREF__ + "SQL exception"
+            				+ ", lastSQLCommand: " + lastSQLCommand
+            				+ ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        				);
+    				}        
 				}
 			}
 		}
