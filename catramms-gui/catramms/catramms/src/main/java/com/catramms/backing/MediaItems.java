@@ -164,7 +164,7 @@ public class MediaItems extends Workspace implements Serializable {
 
             // really face message is useless because of the redirection
             FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
-                "Traffic System Update", "BeginDate cannot be later the EndDate");
+                "Media Items", "BeginDate cannot be later the EndDate");
             FacesContext context = FacesContext.getCurrentInstance();
             context.addMessage(null, message);
         }
@@ -311,6 +311,66 @@ public class MediaItems extends Workspace implements Serializable {
             jaReferences.put(joReference);
 
             joReference.put("ReferenceMediaItemKey", mediaItem.getMediaItemKey());
+
+            String url = "workflowEditor/workflowEditor.xhtml?loadType=metaDataContent"
+                    + "&data=" + java.net.URLEncoder.encode(joWorkflow.toString(), "UTF-8")
+                    ;
+
+            mLogger.info("Redirect to " + url);
+            FacesContext.getCurrentInstance().getExternalContext().redirect(url);
+        }
+        catch (Exception e)
+        {
+            mLogger.error("removeMediaItem, exception: " + e);
+        }
+    }
+
+    public void addEncodingProfile(MediaItem mediaItem)
+    {
+        try
+        {
+            JSONObject joWorkflow = new JSONObject();
+            joWorkflow.put("Label", "Add new encoding profile");
+            joWorkflow.put("Type", "Workflow");
+
+            JSONObject joEncodeTask = new JSONObject();
+            joWorkflow.put("Task", joEncodeTask);
+
+            joEncodeTask.put("Label", "Encode Task");
+            joEncodeTask.put("Type", "Encode");
+
+            JSONObject joEncodeParameters = new JSONObject();
+            joEncodeTask.put("Parameters", joEncodeParameters);
+
+            JSONArray jaReferences = new JSONArray();
+            joEncodeParameters.put("References", jaReferences);
+
+            JSONObject joReference = new JSONObject();
+            jaReferences.put(joReference);
+
+            Long sourcePhysicalPathKey = null;
+            for (PhysicalPath physicalPath: mediaItem.getPhysicalPathList())
+            {
+                if (physicalPath.getEncodingProfileKey() == null)
+                {
+                    sourcePhysicalPathKey = physicalPath.getPhysicalPathKey();
+
+                    break;
+                }
+            }
+
+            if (sourcePhysicalPathKey == null)
+            {
+                mLogger.error("Source Physical Path Key not found");
+
+                FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                        "Media Items", "Source Physical Path Key not found");
+                FacesContext context = FacesContext.getCurrentInstance();
+                context.addMessage(null, message);
+
+                return;
+            }
+            joReference.put("ReferencePhysicalPathKey", sourcePhysicalPathKey);
 
             String url = "workflowEditor/workflowEditor.xhtml?loadType=metaDataContent"
                     + "&data=" + java.net.URLEncoder.encode(joWorkflow.toString(), "UTF-8")

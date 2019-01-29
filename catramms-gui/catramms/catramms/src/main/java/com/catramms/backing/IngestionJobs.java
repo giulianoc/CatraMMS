@@ -110,7 +110,7 @@ public class IngestionJobs extends Workspace implements Serializable {
 
             // really face message is useless because of the redirection
             FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
-                    "Traffic System Update", "BeginDate cannot be later the EndDate");
+                    "Ingestion Jobs", "BeginDate cannot be later the EndDate");
             FacesContext context = FacesContext.getCurrentInstance();
             context.addMessage(null, message);
         }
@@ -155,7 +155,7 @@ public class IngestionJobs extends Workspace implements Serializable {
 
             // really face message is useless because of the redirection
             FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
-                "Traffic System Update", "BeginDate cannot be later the EndDate");
+                "Ingestion Jobs", "BeginDate cannot be later the EndDate");
             FacesContext context = FacesContext.getCurrentInstance();
             context.addMessage(null, message);
         }

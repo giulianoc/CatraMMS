@@ -90,6 +90,10 @@ MMSEngineDBFacade::MMSEngineDBFacade(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", mms->contentRetentionInMinutesDefaultValue: " + to_string(_contentRetentionInMinutesDefaultValue)
     );
+    _contentNotTransferredRetentionInDays    = configuration["mms"].get("contentNotTransferredRetentionInDays", 1).asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", mms->contentNotTransferredRetentionInDays: " + to_string(_contentNotTransferredRetentionInDays)
+    );
     
     _predefinedVideoProfilesDirectoryPath = configuration["encoding"]["predefinedProfiles"].get("videoDir", "XXX").asString();
     _logger->info(__FILEREF__ + "Configuration item"
@@ -4158,6 +4162,41 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
             shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
             statement->execute(lastSQLCommand);
         }
+
+		// IngestionJobs taking too time to download/move/copy/upload the content are set to failed
+		{
+			lastSQLCommand = 
+				"select ingestionJobKey from MMS_IngestionJob "
+				"where status in (?, ?, ?, ?) and sourceBinaryTransferred = 0 "
+				"and DATE_ADD(startProcessing, INTERVAL ? DAY) <= NOW()";
+			shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+			int queryParameterIndex = 1;
+			preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress));
+			preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress));
+			preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress));
+			preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress));
+			preparedStatement->setInt(queryParameterIndex++, _contentNotTransferredRetentionInDays);
+
+			shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+
+			while (resultSet->next())
+			{
+				int64_t ingestionJobKey     = resultSet->getInt64("ingestionJobKey");
+				{     
+           			IngestionStatus ingestionStatus = IngestionStatus::End_IngestionFailure;
+
+					string errorMessage = "Set to Failure by MMS because of timeout to download/move/copy/upload the content";
+					string processorMMS;
+					_logger->info(__FILEREF__ + "Update IngestionJob"
+						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", IngestionStatus: " + toString(newIngestionStatus)
+						+ ", errorMessage: " + errorMessage
+						+ ", processorMMS: " + processorMMS
+					);                            
+					updateIngestionJob (conn, ingestionJobKey, newIngestionStatus, errorMessage, processorMMS);
+				}
+			}
+		}
 
         // ingested jobs that do not have to wait a dependency
         {

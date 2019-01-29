@@ -1244,6 +1244,7 @@ private:
     int                             _maxEncodingFailures;
     int                             _confirmationCodeRetentionInDays;
     int                             _contentRetentionInMinutesDefaultValue;
+	int								_contentNotTransferredRetentionInDays;
     
     chrono::system_clock::time_point _lastConnectionStatsReport;
     int             _dbConnectionPoolStatsReportPeriodInSeconds;

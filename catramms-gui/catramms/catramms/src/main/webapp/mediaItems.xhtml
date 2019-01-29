@@ -304,10 +304,14 @@
                     >
                     </p:menuitem>
 
-                    <p:menuitem value="Remove Media Item"
+                    <p:menuitem value="Workflow to remove Media Item"
                                 actionListener="#{mediaItems.removeMediaItem(mediaItem)}"
                     >
-                        <p:confirm header="Confirmation" message="Are you sure?" icon="ui-icon-alert" />
+                    </p:menuitem>
+
+                    <p:menuitem value="Workflow to add encoding profile"
+                                actionListener="#{mediaItems.addEncodingProfile(mediaItem)}"
+                            >
                     </p:menuitem>
                 </p:menu>
 
