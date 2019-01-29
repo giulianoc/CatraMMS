@@ -433,7 +433,7 @@
                                         name="/img/workspaceElements/#{el.image}" />
                         <p:commandLink
                                 id="editLink"
-                                value="#{el.label}"
+                                value="#{el.type == 'GroupOfTasks' ? (String('&lt;').concat(el.groupOfTaskExecutionType).concat('&gt;')) : el.label}"
                                 title="Edit #{el.label}"
                                 actionListener="#{workflowEditor.onElementLinkClicked()}"
                                 update="#{el.type}Form"

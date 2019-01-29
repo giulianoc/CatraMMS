@@ -298,9 +298,9 @@
                                 oncomplete="stopUpdaterTimer(); PF('showVideo').show()">
                     </p:menuitem>
 
-                    <p:menuitem value="Download File (one of the profiles)"
+                    <p:menuitem value="Download File (source profile)"
                                 disabled="#{!sessionScope.currentWorkspaceDetails.deliveryAuthorization}"
-                                actionListener="#{mediaItems.player.downloadCurrentMediaURL(mediaItem, null)}"
+                                actionListener="#{mediaItems.player.downloadCurrentMediaURL(mediaItem, null, true)}"
                     >
                     </p:menuitem>
 

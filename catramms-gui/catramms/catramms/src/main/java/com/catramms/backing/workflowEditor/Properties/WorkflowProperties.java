@@ -58,6 +58,7 @@ public class WorkflowProperties implements Serializable
             fileFormatsList.add("ts");
             fileFormatsList.add("wmv");
             fileFormatsList.add("mpeg");
+            fileFormatsList.add("mxf");
             fileFormatsList.add("avi");
             fileFormatsList.add("webm");
             fileFormatsList.add("mp3");

@@ -401,7 +401,11 @@ public class Player implements Serializable {
         PhysicalPath selectedPhysicalPath = null;
 
         if (physicalPath == null)
-            selectedPhysicalPath = getSelectedPhysicalPath(mediaItem);
+        {
+            boolean sourceFile = false;
+
+            selectedPhysicalPath = getSelectedPhysicalPath(mediaItem, sourceFile);
+        }
         else
             selectedPhysicalPath = physicalPath;
 
@@ -472,7 +476,7 @@ public class Player implements Serializable {
         }
     }
 
-    public void downloadCurrentMediaURL(MediaItem mediaItem, PhysicalPath physicalPath)
+    public void downloadCurrentMediaURL(MediaItem mediaItem, PhysicalPath physicalPath, boolean sourceFile)
     {
         long ttlInSeconds = 60 * 60;
         int maxRetries = 20;
@@ -481,7 +485,7 @@ public class Player implements Serializable {
         PhysicalPath selectedPhysicalPath = null;
 
         if (physicalPath == null)
-            selectedPhysicalPath = getSelectedPhysicalPath(mediaItem);
+            selectedPhysicalPath = getSelectedPhysicalPath(mediaItem, sourceFile);
         else
             selectedPhysicalPath = physicalPath;
 
@@ -519,7 +523,7 @@ public class Player implements Serializable {
         }
     }
 
-    private PhysicalPath getSelectedPhysicalPath(MediaItem mediaItem)
+    private PhysicalPath getSelectedPhysicalPath(MediaItem mediaItem, boolean sourceFile)
     {
         PhysicalPath selectedPhysicalPath = null;
         try
@@ -528,15 +532,28 @@ public class Player implements Serializable {
             {
                 for (PhysicalPath localPhysicalPath: mediaItem.getPhysicalPathList())
                 {
-                    if (localPhysicalPath.getFileFormat().equalsIgnoreCase("mp4"))
+                    if (sourceFile)
                     {
-                        if (selectedPhysicalPath == null)
-                            selectedPhysicalPath = localPhysicalPath;
-                        else
+                        if (localPhysicalPath.getEncodingProfileKey() == null)
                         {
-                            if (localPhysicalPath.getVideoDetails().getVideoHeight().longValue() <
-                                    selectedPhysicalPath.getVideoDetails().getVideoHeight().longValue())
+                            selectedPhysicalPath = localPhysicalPath;
+
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        if (localPhysicalPath.getFileFormat().equalsIgnoreCase("mp4")
+                                || localPhysicalPath.getFileFormat().equalsIgnoreCase("mov"))
+                        {
+                            if (selectedPhysicalPath == null)
                                 selectedPhysicalPath = localPhysicalPath;
+                            else
+                            {
+                                if (localPhysicalPath.getVideoDetails().getVideoHeight().longValue() <
+                                        selectedPhysicalPath.getVideoDetails().getVideoHeight().longValue())
+                                    selectedPhysicalPath = localPhysicalPath;
+                            }
                         }
                     }
                 }

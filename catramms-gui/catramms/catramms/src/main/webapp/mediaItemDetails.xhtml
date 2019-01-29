@@ -440,7 +440,7 @@
 
                             <p:menuitem value="Download File"
                                         disabled="#{!sessionScope.currentWorkspaceDetails.deliveryAuthorization}"
-                                        actionListener="#{mediaItemDetails.player.downloadCurrentMediaURL(mediaItemDetails.mediaItem, physicalPath)}"
+                                        actionListener="#{mediaItemDetails.player.downloadCurrentMediaURL(mediaItemDetails.mediaItem, physicalPath, false)}"
                                         >
                             </p:menuitem>
                         </p:menu>
