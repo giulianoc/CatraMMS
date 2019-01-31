@@ -18740,6 +18740,573 @@ string MMSEngineDBFacade::getFacebookPageTokenByConfigurationLabel(
     return facebookPageToken;
 }
 
+int64_t MMSEngineDBFacade::addLiveURLConf(
+    int64_t workspaceKey,
+    string label,
+    string liveURL)
+{
+    string      lastSQLCommand;
+    int64_t     confKey;
+    
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        
+        {
+            lastSQLCommand = 
+                "insert into MMS_Conf_LiveURL(workspaceKey, label, liveURL) values ("
+                "?, ?, ?)";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            preparedStatement->setString(queryParameterIndex++, label);
+            preparedStatement->setString(queryParameterIndex++, liveURL);
+
+            preparedStatement->executeUpdate();
+
+            confKey = getLastInsertId(conn);
+        }
+                            
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+
+        throw se;
+    }    
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+
+        throw e;
+    }        
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+
+        throw e;
+    }  
+    
+    return confKey;
+}
+
+void MMSEngineDBFacade::modifyLiveURLConf(
+    int64_t confKey,
+    int64_t workspaceKey,
+    string label,
+    string liveURL)
+{
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        
+        {
+            lastSQLCommand = 
+                "update MMS_Conf_LiveURL set label = ?, liveURL = ? where confKey = ? and workspaceKey = ?";
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, label);
+            preparedStatement->setString(queryParameterIndex++, liveURL);
+            preparedStatement->setInt64(queryParameterIndex++, confKey);
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+
+            int rowsUpdated = preparedStatement->executeUpdate();
+            if (rowsUpdated != 1)
+            {
+                /*
+                string errorMessage = __FILEREF__ + "no update was done"
+                        + ", confKey: " + to_string(confKey)
+                        + ", rowsUpdated: " + to_string(rowsUpdated)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->warn(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+                */
+            }
+        }
+                            
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+
+        throw se;
+    }    
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+
+        throw e;
+    }        
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+
+        throw e;
+    }      
+}
+
+void MMSEngineDBFacade::removeLiveURLConf(
+    int64_t workspaceKey,
+    int64_t confKey)
+{
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        
+        {
+            lastSQLCommand = 
+                "delete from MMS_Conf_LiveURL where confKey = ? and workspaceKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, confKey);
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+
+            int rowsUpdated = preparedStatement->executeUpdate();
+            if (rowsUpdated != 1)
+            {
+                string errorMessage = __FILEREF__ + "no delete was done"
+                        + ", confKey: " + to_string(confKey)
+                        + ", rowsUpdated: " + to_string(rowsUpdated)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->warn(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }
+        }
+                            
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+
+        throw se;
+    }    
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+
+        throw e;
+    }        
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+
+        throw e;
+    }        
+}
+
+Json::Value MMSEngineDBFacade::getLiveURLConfList (
+        int64_t workspaceKey
+)
+{
+    string      lastSQLCommand;
+    Json::Value liveURLConfListRoot;
+    
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+    try
+    {
+        string field;
+        
+        _logger->info(__FILEREF__ + "getLiveURLConfList"
+            + ", workspaceKey: " + to_string(workspaceKey)
+        );
+        
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        {
+            Json::Value requestParametersRoot;
+            
+            {
+                field = "workspaceKey";
+                requestParametersRoot[field] = workspaceKey;
+            }
+            
+            field = "requestParameters";
+            liveURLConfListRoot[field] = requestParametersRoot;
+        }
+        
+        string sqlWhere = string ("where workspaceKey = ? ");
+        
+        Json::Value responseRoot;
+        {
+            lastSQLCommand = 
+                string("select count(*) from MMS_Conf_LiveURL ")
+                    + sqlWhere;
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (!resultSet->next())
+            {
+                string errorMessage ("select count(*) failed");
+
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+
+            field = "numFound";
+            responseRoot[field] = resultSet->getInt64(1);
+        }
+
+        Json::Value liveURLRoot(Json::arrayValue);
+        {                    
+            lastSQLCommand = 
+                string ("select confKey, label, liveURL from MMS_Conf_LiveURL ") 
+                + sqlWhere;
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            while (resultSet->next())
+            {
+                Json::Value liveURLConfRoot;
+
+                field = "confKey";
+                liveURLConfRoot[field] = resultSet->getInt64("confKey");
+
+                field = "label";
+                liveURLConfRoot[field] = static_cast<string>(resultSet->getString("label"));
+
+                field = "liveURL";
+                liveURLConfRoot[field] = static_cast<string>(resultSet->getString("liveURL"));
+
+                liveURLRoot.append(liveURLConfRoot);
+            }
+        }
+
+        field = "liveURLConf";
+        responseRoot[field] = liveURLRoot;
+
+        field = "response";
+        liveURLConfListRoot[field] = responseRoot;
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+
+        throw se;
+    }    
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+
+        throw e;
+    } 
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+
+        throw e;
+    } 
+    
+    return liveURLConfListRoot;
+}
+
+string MMSEngineDBFacade::getLiveURLByConfigurationLabel(
+    int64_t workspaceKey, string label
+)
+{
+    string      lastSQLCommand;
+    string      liveURL;
+    
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+    try
+    {        
+        _logger->info(__FILEREF__ + "getLiveURLByConfigurationLabel"
+            + ", workspaceKey: " + to_string(workspaceKey)
+            + ", label: " + label
+        );
+
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        
+        {
+            lastSQLCommand = 
+                string("select liveURL from MMS_Conf_LiveURL where workspaceKey = ? and label = ?");
+
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, workspaceKey);
+            preparedStatement->setString(queryParameterIndex++, label);
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (!resultSet->next())
+            {
+                string errorMessage = __FILEREF__ + "select from MMS_Conf_LiveURL failed"
+                    + ", workspaceKey: " + to_string(workspaceKey)
+                    + ", label: " + label
+                ;
+
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+
+            liveURL = resultSet->getString("liveURL");
+        }
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+
+        throw se;
+    }    
+    catch(runtime_error e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+
+        throw e;
+    } 
+    catch(exception e)
+    {        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+
+        throw e;
+    } 
+    
+    return liveURL;
+}
+
 bool MMSEngineDBFacade::isMetadataPresent(Json::Value root, string field)
 {
     if (root.isObject() && root.isMember(field) && !root[field].isNull()
@@ -19967,6 +20534,34 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "pageToken                  VARCHAR (256) NOT NULL,"
                     "constraint MMS_Conf_Facebook_PK PRIMARY KEY (confKey), "
                     "constraint MMS_Conf_Facebook_FK foreign key (workspaceKey) "
+                        "references MMS_Workspace (workspaceKey) on delete cascade, "
+                    "UNIQUE (workspaceKey, label)) "
+                    "ENGINE=InnoDB";
+            statement->execute(lastSQLCommand);
+        }
+        catch(sql::SQLException se)
+        {
+            if (isRealDBError(se.what()))
+            {
+                _logger->error(__FILEREF__ + "SQL exception"
+                    + ", lastSQLCommand: " + lastSQLCommand
+                    + ", se.what(): " + se.what()
+                );
+
+                throw se;
+            }
+        }
+        
+        try
+        {
+            lastSQLCommand = 
+                "create table if not exists MMS_Conf_LiveURL ("
+                    "confKey                    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+                    "workspaceKey               BIGINT UNSIGNED NOT NULL,"
+                    "label                      VARCHAR (128) NOT NULL,"
+                    "liveURL					VARCHAR (128) NOT NULL,"
+                    "constraint MMS_Conf_LiveURL_PK PRIMARY KEY (confKey), "
+                    "constraint MMS_Conf_LiveURL_FK foreign key (workspaceKey) "
                         "references MMS_Workspace (workspaceKey) on delete cascade, "
                     "UNIQUE (workspaceKey, label)) "
                     "ENGINE=InnoDB";

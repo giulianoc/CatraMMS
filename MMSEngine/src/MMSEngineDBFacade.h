@@ -1235,6 +1235,27 @@ public:
     string getFacebookPageTokenByConfigurationLabel(
         int64_t workspaceKey, string facebookConfigurationLabel);
     
+    int64_t addLiveURLConf(
+        int64_t workspaceKey,
+        string label,
+        string liveURL);
+
+    void modifyLiveURLConf(
+        int64_t confKey,
+        int64_t workspaceKey,
+        string label,
+        string liveURL);
+
+    void removeLiveURLConf(
+        int64_t workspaceKey,
+        int64_t confKey);
+
+    Json::Value getLiveURLConfList (
+        int64_t workspaceKey);
+
+    string getLiveURLByConfigurationLabel(
+        int64_t workspaceKey, string liveURLConfigurationLabel);
+    
 private:
     shared_ptr<spdlog::logger>                          _logger;
     shared_ptr<MySQLConnectionFactory>                  _mySQLConnectionFactory;
