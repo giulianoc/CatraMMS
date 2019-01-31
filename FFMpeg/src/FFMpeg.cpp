@@ -299,7 +299,19 @@ void FFMpeg::encodeContent(
                         + ffmpegVideoResolutionParameter
                         + "-threads 0 "
                         + "-pass 1 -passlogfile " + ffmpegPassLogPathFileName + " "
-                        + "-an "    // disable audio
+
+						// It should be useless to add the audio parameters in phase 1 but,
+						// it happened once that the passed 2 failed. Looking on Internet (https://ffmpeg.zeranoe.com/forum/viewtopic.php?t=2464)
+						//	it suggested to add the audio parameters too in phase 1. Really, adding the audio prameters, phase 2 was successful.
+						//	So, this is the reason, I'm adding phase 2 as well
+                        // + "-an "    // disable audio
+
+                        + ffmpegAudioCodecParameter
+                        + ffmpegAudioBitRateParameter
+                        + ffmpegAudioOtherParameters
+                        + ffmpegAudioChannelsParameter
+                        + ffmpegAudioSampleRateParameter
+
                         + ffmpegFileFormatParameter
                         ;
                 
