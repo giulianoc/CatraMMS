@@ -726,6 +726,22 @@ void API::manageRequestAndResponse(
     {
         facebookConfList(request, workspace);
     }
+    else if (method == "addLiveURLConf")
+    {
+        addLiveURLConf(request, workspace, queryParameters, requestBody);
+    }
+    else if (method == "modifyLiveURLConf")
+    {
+        modifyLiveURLConf(request, workspace, queryParameters, requestBody);
+    }
+    else if (method == "removeLiveURLConf")
+    {
+        removeLiveURLConf(request, workspace, queryParameters);
+    }
+    else if (method == "liveURLConfList")
+    {
+        liveURLConfList(request, workspace);
+    }
     else
     {
         string errorMessage = string("No API is matched")
@@ -4176,6 +4192,456 @@ void API::modifyFacebookConf(
                 throw runtime_error(errorMessage);
             }    
             pageToken = requestBodyRoot.get(field, "XXX").asString();            
+        }
+        catch(runtime_error e)
+        {
+            string errorMessage = string("requestBody json is not well format")
+                    + ", requestBody: " + requestBody
+                    + ", e.what(): " + e.what()
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        catch(exception e)
+        {
+            string errorMessage = string("requestBody json is not well format")
+                    + ", requestBody: " + requestBody
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        
+        string sResponse;
+        try
+        {
+            int64_t confKey;
+            auto confKeyIt = queryParameters.find("confKey");
+            if (confKeyIt == queryParameters.end())
+            {
+                string errorMessage = string("The 'confKey' parameter is not found");
+                _logger->error(__FILEREF__ + errorMessage);
+
+                sendError(request, 400, errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            confKey = stoll(confKeyIt->second);
+
+            _mmsEngineDBFacade->modifyFacebookConf(
+                confKey, workspace->_workspaceKey, label, pageToken);
+
+            sResponse = (
+                    string("{ ") 
+                    + "\"confKey\": " + to_string(confKey)
+                    + "}"
+                    );            
+        }
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyFacebookConf failed"
+                + ", e.what(): " + e.what()
+            );
+
+            throw e;
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyFacebookConf failed"
+                + ", e.what(): " + e.what()
+            );
+
+            throw e;
+        }
+
+        sendSuccess(request, 200, sResponse);
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error: ") + e.what();
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::removeFacebookConf(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters)
+{
+    string api = "removeFacebookConf";
+
+    _logger->info(__FILEREF__ + "Received " + api
+        + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
+    );
+
+    try
+    {
+        string sResponse;
+        try
+        {
+            int64_t confKey;
+            auto confKeyIt = queryParameters.find("confKey");
+            if (confKeyIt == queryParameters.end())
+            {
+                string errorMessage = string("The 'confKey' parameter is not found");
+                _logger->error(__FILEREF__ + errorMessage);
+
+                sendError(request, 400, errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            confKey = stoll(confKeyIt->second);
+            
+            _mmsEngineDBFacade->removeFacebookConf(
+                workspace->_workspaceKey, confKey);
+
+            sResponse = (
+                    string("{ ") 
+                    + "\"confKey\": " + to_string(confKey)
+                    + "}"
+                    );            
+        }
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeFacebookConf failed"
+                + ", e.what(): " + e.what()
+            );
+
+            throw e;
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeFacebookConf failed"
+                + ", e.what(): " + e.what()
+            );
+
+            throw e;
+        }
+
+        sendSuccess(request, 200, sResponse);
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error: ") + e.what();
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::facebookConfList(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace)
+{
+    string api = "facebookConfList";
+
+    _logger->info(__FILEREF__ + "Received " + api
+    );
+
+    try
+    {
+        {
+            
+            Json::Value facebookConfListRoot = _mmsEngineDBFacade->getFacebookConfList(
+                    workspace->_workspaceKey);
+
+            Json::StreamWriterBuilder wbuilder;
+            string responseBody = Json::writeString(wbuilder, facebookConfListRoot);
+            
+            sendSuccess(request, 200, responseBody);
+        }
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error: ") + e.what();
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::addLiveURLConf(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody)
+{
+    string api = "addLiveURLConf";
+
+    _logger->info(__FILEREF__ + "Received " + api
+        + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
+        + ", requestBody: " + requestBody
+    );
+
+    try
+    {
+        string label;
+        string liveURL;
+        
+        try
+        {
+            Json::Value requestBodyRoot;
+            
+            {
+                Json::CharReaderBuilder builder;
+                Json::CharReader* reader = builder.newCharReader();
+                string errors;
+
+                bool parsingSuccessful = reader->parse(requestBody.c_str(),
+                        requestBody.c_str() + requestBody.size(), 
+                        &requestBodyRoot, &errors);
+                delete reader;
+
+                if (!parsingSuccessful)
+                {
+                    string errorMessage = __FILEREF__ + "failed to parse the requestBody"
+                            + ", errors: " + errors
+                            + ", requestBody: " + requestBody
+                            ;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errors);
+                }
+            }
+
+            string field = "Label";
+            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }    
+            label = requestBodyRoot.get(field, "XXX").asString();            
+
+            field = "LiveURL";
+            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }    
+            liveURL = requestBodyRoot.get(field, "XXX").asString();            
+        }
+        catch(runtime_error e)
+        {
+            string errorMessage = string("requestBody json is not well format")
+                    + ", requestBody: " + requestBody
+                    + ", e.what(): " + e.what()
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        catch(exception e)
+        {
+            string errorMessage = string("requestBody json is not well format")
+                    + ", requestBody: " + requestBody
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        
+        string sResponse;
+        try
+        {
+            int64_t confKey = _mmsEngineDBFacade->addLiveURLConf(
+                workspace->_workspaceKey, label, liveURL);
+
+            sResponse = (
+                    string("{ ") 
+                    + "\"confKey\": " + to_string(confKey)
+                    + "}"
+                    );            
+        }
+        catch(runtime_error e)
+        {
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addLiveURLConf failed"
+                + ", e.what(): " + e.what()
+            );
+
+            throw e;
+        }
+        catch(exception e)
+        {
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->addLiveURLConf failed"
+                + ", e.what(): " + e.what()
+            );
+
+            throw e;
+        }
+
+        sendSuccess(request, 201, sResponse);
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error: ") + e.what();
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+void API::modifyLiveURLConf(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody)
+{
+    string api = "modifyLiveURLConf";
+
+    _logger->info(__FILEREF__ + "Received " + api
+        + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
+        + ", requestBody: " + requestBody
+    );
+
+    try
+    {
+        string label;
+        string liveURL;
+        
+        try
+        {
+            Json::Value requestBodyRoot;
+            
+            {
+                Json::CharReaderBuilder builder;
+                Json::CharReader* reader = builder.newCharReader();
+                string errors;
+
+                bool parsingSuccessful = reader->parse(requestBody.c_str(),
+                        requestBody.c_str() + requestBody.size(), 
+                        &requestBodyRoot, &errors);
+                delete reader;
+
+                if (!parsingSuccessful)
+                {
+                    string errorMessage = __FILEREF__ + "failed to parse the requestBody"
+                            + ", errors: " + errors
+                            + ", requestBody: " + requestBody
+                            ;
+                    _logger->error(errorMessage);
+
+                    throw runtime_error(errors);
+                }
+            }
+
+            string field = "Label";
+            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }    
+            label = requestBodyRoot.get(field, "XXX").asString();            
+
+            field = "LiveURL";
+            if (!_mmsEngineDBFacade->isMetadataPresent(requestBodyRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }    
+            liveURL = requestBodyRoot.get(field, "XXX").asString();            
         }
         catch(runtime_error e)
         {
