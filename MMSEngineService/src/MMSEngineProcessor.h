@@ -202,6 +202,9 @@ private:
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot);
 
+    string getLiveURLByConfigurationLabel(
+        shared_ptr<Workspace> workspace, string label);
+
     void extractTracksContentThread(
         shared_ptr<long> processorsThreadsNumber,
         int64_t ingestionJobKey,

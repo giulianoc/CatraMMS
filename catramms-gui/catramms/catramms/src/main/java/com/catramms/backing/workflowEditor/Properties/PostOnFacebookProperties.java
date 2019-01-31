@@ -26,7 +26,8 @@ public class PostOnFacebookProperties extends WorkflowProperties implements Seri
     public PostOnFacebookProperties(String positionX, String positionY,
                                     int elementId, String label)
     {
-        super(positionX, positionY, elementId, label, "Post-On-Facebook" + "-icon.png", "Task", "Post-On-Facebook");
+        super(positionX, positionY, elementId, label,
+                "Post-On-Facebook" + "-icon.png", "Task", "Post-On-Facebook");
 
         try
         {

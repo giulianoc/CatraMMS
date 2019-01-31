@@ -43,13 +43,28 @@
 
             <p:row>
                 <p:column>
-                    <p:outputLabel value="Live URL" style="font-weight: bold"/>
+                    <p:outputLabel value="Live URL Configuration" style="font-weight: bold"/>
                 </p:column>
                 <p:column>
-                    <p:inputText id="taskLiveURL_Live_Recorder" style="width: 100%"
-                                 value="#{workflowEditor.currentLiveRecorderProperties.liveURL}"
-                                 autocomplete="true"
-                                 placeholder="live url"/>
+                    <p:selectOneMenu id="taskConfigurationLabel_Live_Recorder"
+                                     value="#{workflowEditor.currentLiveRecorderProperties.configurationLabel}"
+                                     title="'Menu: Configuration -> Live URL' for LiveURL configurations"
+                                     autoWidth="false">
+                        <f:selectItems value="#{workflowEditor.currentLiveRecorderProperties.confLabels}"/>
+                    </p:selectOneMenu>
+                    <p:tooltip for="taskConfigurationLabel_Live_Recorder" showEffect="clip" hideEffect="explode" position="left"/>
+                    <br />
+                    <h:outputText
+                            rendered="#{workflowEditor.currentLiveRecorderProperties.confLabels.size() == 0}"
+                            value="No MMS LiveURL Configurations are present, please click " />
+                    <h:outputLink
+                            rendered="#{workflowEditor.currentLiveRecorderProperties.confLabels.size() == 0}"
+                            value="/conf/liveURL.xhtml" target="_blank">
+                        <h:outputText value="here" />
+                    </h:outputLink>
+                    <h:outputText
+                            rendered="#{workflowEditor.currentLiveRecorderProperties.confLabels.size() == 0}"
+                            value=" to configure one" />
                 </p:column>
             </p:row>
 

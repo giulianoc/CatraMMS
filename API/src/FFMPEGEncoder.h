@@ -57,9 +57,22 @@ private:
         shared_ptr<FFMpeg>      _ffmpeg;
     };
 
+	// no encoding, just copying the video/audio tracks
+    struct LiveRecording
+    {
+        bool                    _running;
+        int64_t                 _encodingJobKey;
+        shared_ptr<FFMpeg>      _ffmpeg;
+    };
+
     mutex                       _encodingMutex;
     int                         _maxEncodingsCapability;
     vector<shared_ptr<Encoding>>    _encodingsCapability;
+
+    mutex                       _liveRecordingMutex;
+    int                         _maxLiveRecordingsCapability;
+    vector<shared_ptr<LiveRecording>>    _liveRecordingsCapability;
+
 
     void encodeContent(
         // FCGX_Request& request,
@@ -93,7 +106,7 @@ private:
 
 	void liveRecorder(
         // FCGX_Request& request,
-        shared_ptr<Encoding> encoding,
+        shared_ptr<LiveRecording> liveRecording,
         int64_t encodingJobKey,
         string requestBody);
 

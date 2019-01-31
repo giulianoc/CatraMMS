@@ -235,6 +235,31 @@
                         <p:outputLabel value=")" />
                     </p:panel>
 
+                    <p:outputLabel rendered="#{encodingJobDetails.encodingJob.type == 'LiveRecorder'}"
+                                   value="Live URL: " />
+                    <p:outputLabel rendered="#{encodingJobDetails.encodingJob.type == 'LiveRecorder'}"
+                                   value="#{encodingJobDetails.encodingJob.liveURL}" />
+                    <p:outputLabel rendered="#{encodingJobDetails.encodingJob.type == 'LiveRecorder'}"
+                                   value="Output File Format: " />
+                    <p:outputLabel rendered="#{encodingJobDetails.encodingJob.type == 'LiveRecorder'}"
+                                   value="#{encodingJobDetails.encodingJob.outputFileFormat}" />
+                    <p:outputLabel rendered="#{encodingJobDetails.encodingJob.type == 'LiveRecorder'}"
+                                   value="Segment Duration In Seconds: " />
+                    <p:outputLabel rendered="#{encodingJobDetails.encodingJob.type == 'LiveRecorder'}"
+                                   value="#{encodingJobDetails.encodingJob.segmentDurationInSeconds}" />
+                    <p:outputLabel rendered="#{encodingJobDetails.encodingJob.type == 'LiveRecorder'}"
+                                   value="Recording Period Start: " />
+                    <p:outputLabel rendered="#{encodingJobDetails.encodingJob.type == 'LiveRecorder'}"
+                                   value="#{encodingJobDetails.encodingJob.recordingPeriodStart}">
+                        <f:convertDateTime type="date" pattern="dd-MM-yyyy HH:mm:ss" timeZone="CET"/>
+                    </p:outputLabel>
+                    <p:outputLabel rendered="#{encodingJobDetails.encodingJob.type == 'LiveRecorder'}"
+                                   value="Recording Period End: " />
+                    <p:outputLabel rendered="#{encodingJobDetails.encodingJob.type == 'LiveRecorder'}"
+                                   value="#{encodingJobDetails.encodingJob.recordingPeriodEnd}">
+                        <f:convertDateTime type="date" pattern="dd-MM-yyyy HH:mm:ss" timeZone="CET"/>
+                    </p:outputLabel>
+
                     <p:outputLabel value="Parameters: " />
                     <p:outputLabel value="#{encodingJobDetails.encodingJob.parameters}" />
                 </p:panelGrid>

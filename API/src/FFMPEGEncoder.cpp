@@ -120,6 +120,11 @@ FFMPEGEncoder::FFMPEGEncoder(Json::Value configuration,
         + ", ffmpeg->maxEncodingsCapability: " + to_string(_maxEncodingsCapability)
     );
 
+    _maxLiveRecordingsCapability =  _configuration["ffmpeg"].get("maxLiveRecordingsCapability", 0).asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", ffmpeg->maxLiveRecordingsCapability: " + to_string(_maxEncodingsCapability)
+    );
+
     for (int encodingIndex = 0; encodingIndex < _maxEncodingsCapability; encodingIndex++)
     {
         shared_ptr<Encoding>    encoding = make_shared<Encoding>();
@@ -127,6 +132,15 @@ FFMPEGEncoder::FFMPEGEncoder(Json::Value configuration,
         encoding->_ffmpeg   = make_shared<FFMpeg>(_configuration, _logger);
 
         _encodingsCapability.push_back(encoding);
+    }
+
+    for (int liveRecordingIndex = 0; liveRecordingIndex < _maxLiveRecordingsCapability; liveRecordingIndex++)
+    {
+        shared_ptr<LiveRecording>    liveRecording = make_shared<LiveRecording>();
+        liveRecording->_running   = false;
+        liveRecording->_ffmpeg   = make_shared<FFMpeg>(_configuration, _logger);
+
+        _liveRecordingsCapability.push_back(liveRecording);
     }
 }
 
@@ -694,22 +708,22 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
         int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
         
-        lock_guard<mutex> locker(_encodingMutex);
+        lock_guard<mutex> locker(_liveRecordingMutex);
 
-        shared_ptr<Encoding>    selectedEncoding;
-        bool                    encodingFound = false;
-        for (shared_ptr<Encoding> encoding: _encodingsCapability)
+        shared_ptr<LiveRecording>	selectedLiveRecording;
+        bool						liveRecordingFound = false;
+        for (shared_ptr<LiveRecording> liveRecording: _liveRecordingsCapability)
         {
-            if (!encoding->_running)
+            if (!liveRecording->_running)
             {
-                encodingFound = true;
-                selectedEncoding = encoding;
+                liveRecordingFound = true;
+                selectedLiveRecording = liveRecording;
                 
                 break;
             }
         }
 
-        if (!encodingFound)
+        if (!liveRecordingFound)
         {
             // same string declared in EncoderVideoAudioProxy.cpp
             string noEncodingAvailableMessage("__NO-ENCODING-AVAILABLE__");
@@ -727,21 +741,21 @@ void FFMPEGEncoder::manageRequestAndResponse(
         
         try
         {            
-            selectedEncoding->_running = true;
+            selectedLiveRecording->_running = true;
 
             _logger->info(__FILEREF__ + "Creating liveRecorder thread"
                 + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
                 + ", requestBody: " + requestBody
             );
-            thread liveRecorderThread(&FFMPEGEncoder::liveRecorder, this, selectedEncoding, encodingJobKey, requestBody);
+            thread liveRecorderThread(&FFMPEGEncoder::liveRecorder, this, selectedLiveRecording, encodingJobKey, requestBody);
             liveRecorderThread.detach();
         }
         catch(exception e)
         {
-            selectedEncoding->_running = false;
+            selectedLiveRecording->_running = false;
 
             _logger->error(__FILEREF__ + "liveRecorder failed"
-                + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
+                + ", selectedLiveRecording->_encodingJobKey: " + to_string(encodingJobKey)
                 + ", requestBody: " + requestBody
                 + ", e.what(): " + e.what()
             );
@@ -794,23 +808,44 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
         int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
         
-        lock_guard<mutex> locker(_encodingMutex);
+		bool                    encodingFound = false;
+		shared_ptr<Encoding>    selectedEncoding;
+		bool                    liveRecordingFound = false;
+		shared_ptr<LiveRecording>    selectedLiveRecording;
 
-        shared_ptr<Encoding>    selectedEncoding;
-        bool                    encodingFound = false;
-        for (shared_ptr<Encoding> encoding: _encodingsCapability)
-        {
-            if (encoding->_encodingJobKey == encodingJobKey)
-            {
-                encodingFound = true;
-                selectedEncoding = encoding;
+		{
+			lock_guard<mutex> locker(_encodingMutex);
+
+			for (shared_ptr<Encoding> encoding: _encodingsCapability)
+			{
+				if (encoding->_encodingJobKey == encodingJobKey)
+				{
+					encodingFound = true;
+					selectedEncoding = encoding;
                 
-                break;
-            }
-        }
+					break;
+				}
+			}
+		}
+
+        if (!encodingFound)
+		{
+			lock_guard<mutex> locker(_liveRecordingMutex);
+
+			for (shared_ptr<LiveRecording> liveRecording: _liveRecordingsCapability)
+			{
+				if (liveRecording->_encodingJobKey == encodingJobKey)
+				{
+					liveRecordingFound = true;
+					selectedLiveRecording = liveRecording;
+                
+					break;
+				}
+			}
+		}
 
         string responseBody;
-        if (!encodingFound)
+        if (!encodingFound && !liveRecordingFound)
         {
             responseBody = string("{ ")
                 + "\"encodingJobKey\": " + to_string(encodingJobKey) + " "
@@ -832,10 +867,16 @@ void FFMPEGEncoder::manageRequestAndResponse(
             }
             */
             
-            responseBody = string("{ ")
-                + "\"encodingJobKey\": " + to_string(selectedEncoding->_encodingJobKey) + " "
-                + ", \"encodingFinished\": " + (selectedEncoding->_running ? "false " : "true ")
-                + "}";
+			if (encodingFound)
+				responseBody = string("{ ")
+					+ "\"encodingJobKey\": " + to_string(selectedEncoding->_encodingJobKey) + " "
+					 + ", \"encodingFinished\": " + (selectedEncoding->_running ? "false " : "true ")
+					 + "}";
+			else // if (liveRecording)
+				responseBody = string("{ ")
+					+ "\"encodingJobKey\": " + to_string(selectedLiveRecording->_encodingJobKey) + " "
+					+ ", \"encodingFinished\": " + (selectedLiveRecording->_running ? "false " : "true ")
+					+ "}";
         }
 
         sendSuccess(request, 200, responseBody);
@@ -1674,7 +1715,7 @@ void FFMPEGEncoder::slideShow(
 
 void FFMPEGEncoder::liveRecorder(
         // FCGX_Request& request,
-        shared_ptr<Encoding> encoding,
+        shared_ptr<LiveRecording> liveRecording,
         int64_t encodingJobKey,
         string requestBody)
 {
@@ -1687,7 +1728,7 @@ void FFMPEGEncoder::liveRecorder(
 
     try
     {
-        encoding->_encodingJobKey = encodingJobKey;
+        liveRecording->_encodingJobKey = encodingJobKey;
 
         Json::Value liveRecorderMedatada;
         try
@@ -1732,7 +1773,7 @@ void FFMPEGEncoder::liveRecorder(
         int segmentDurationInSeconds = liveRecorderMedatada.get("segmentDurationInSeconds", -1).asInt();
         string outputFileFormat = liveRecorderMedatada.get("outputFileFormat", "XXX").asString();
 
-        encoding->_ffmpeg->liveRecorder(
+        liveRecording->_ffmpeg->liveRecorder(
                 ingestionJobKey,
                 segmentListPathName,
                 liveURL,
@@ -1742,7 +1783,7 @@ void FFMPEGEncoder::liveRecorder(
                 outputFileFormat
         );
         
-        encoding->_running = false;
+        liveRecording->_running = false;
         
         _logger->info(__FILEREF__ + "liveRecorded finished"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -1751,7 +1792,7 @@ void FFMPEGEncoder::liveRecorder(
     }
     catch(runtime_error e)
     {
-        encoding->_running = false;
+        liveRecording->_running = false;
 
         string errorMessage = string ("API failed")
                     + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -1764,7 +1805,7 @@ void FFMPEGEncoder::liveRecorder(
     }
     catch(exception e)
     {
-        encoding->_running = false;
+        liveRecording->_running = false;
 
         string errorMessage = string("API failed")
                     + ", encodingJobKey: " + to_string(encodingJobKey)

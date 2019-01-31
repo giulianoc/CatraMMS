@@ -4679,8 +4679,8 @@ void API::modifyLiveURLConf(
             }
             confKey = stoll(confKeyIt->second);
 
-            _mmsEngineDBFacade->modifyFacebookConf(
-                confKey, workspace->_workspaceKey, label, pageToken);
+            _mmsEngineDBFacade->modifyLiveURLConf(
+                confKey, workspace->_workspaceKey, label, liveURL);
 
             sResponse = (
                     string("{ ") 
@@ -4690,7 +4690,7 @@ void API::modifyLiveURLConf(
         }
         catch(runtime_error e)
         {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyFacebookConf failed"
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyLiveURLConf failed"
                 + ", e.what(): " + e.what()
             );
 
@@ -4698,7 +4698,7 @@ void API::modifyLiveURLConf(
         }
         catch(exception e)
         {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyFacebookConf failed"
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->modifyLiveURLConf failed"
                 + ", e.what(): " + e.what()
             );
 
@@ -4739,12 +4739,12 @@ void API::modifyLiveURLConf(
     }
 }
 
-void API::removeFacebookConf(
+void API::removeLiveURLConf(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters)
 {
-    string api = "removeFacebookConf";
+    string api = "removeLiveURLConf";
 
     _logger->info(__FILEREF__ + "Received " + api
         + ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey)
@@ -4779,7 +4779,7 @@ void API::removeFacebookConf(
         }
         catch(runtime_error e)
         {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeFacebookConf failed"
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeLiveURLConf failed"
                 + ", e.what(): " + e.what()
             );
 
@@ -4787,7 +4787,7 @@ void API::removeFacebookConf(
         }
         catch(exception e)
         {
-            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeFacebookConf failed"
+            _logger->error(__FILEREF__ + "_mmsEngineDBFacade->removeLiveURLConf failed"
                 + ", e.what(): " + e.what()
             );
 
@@ -4826,11 +4826,11 @@ void API::removeFacebookConf(
     }
 }
 
-void API::facebookConfList(
+void API::liveURLConfList(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace)
 {
-    string api = "facebookConfList";
+    string api = "liveURLConfList";
 
     _logger->info(__FILEREF__ + "Received " + api
     );
@@ -4839,11 +4839,11 @@ void API::facebookConfList(
     {
         {
             
-            Json::Value facebookConfListRoot = _mmsEngineDBFacade->getFacebookConfList(
+            Json::Value liveURLConfListRoot = _mmsEngineDBFacade->getLiveURLConfList(
                     workspace->_workspaceKey);
 
             Json::StreamWriterBuilder wbuilder;
-            string responseBody = Json::writeString(wbuilder, facebookConfListRoot);
+            string responseBody = Json::writeString(wbuilder, liveURLConfListRoot);
             
             sendSuccess(request, 200, responseBody);
         }

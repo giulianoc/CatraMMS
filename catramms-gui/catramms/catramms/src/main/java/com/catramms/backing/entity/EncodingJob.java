@@ -30,6 +30,13 @@ public class EncodingJob implements Serializable {
     // type is 'OverlayTextOnVideo'
     // private Long sourceVideoPhysicalPathKey; already present
 
+    // type is 'LiveRecorder'
+    private String liveURL;
+    private String outputFileFormat;
+    private Long segmentDurationInSeconds;
+    private Date recordingPeriodStart;
+    private Date recordingPeriodEnd;
+
 
     public Long getEncodingJobKey() {
         return encodingJobKey;
@@ -149,5 +156,45 @@ public class EncodingJob implements Serializable {
 
     public void setMaxEncodingPriorityCode(int maxEncodingPriorityCode) {
         this.maxEncodingPriorityCode = maxEncodingPriorityCode;
+    }
+
+    public String getLiveURL() {
+        return liveURL;
+    }
+
+    public void setLiveURL(String liveURL) {
+        this.liveURL = liveURL;
+    }
+
+    public String getOutputFileFormat() {
+        return outputFileFormat;
+    }
+
+    public void setOutputFileFormat(String outputFileFormat) {
+        this.outputFileFormat = outputFileFormat;
+    }
+
+    public Long getSegmentDurationInSeconds() {
+        return segmentDurationInSeconds;
+    }
+
+    public void setSegmentDurationInSeconds(Long segmentDurationInSeconds) {
+        this.segmentDurationInSeconds = segmentDurationInSeconds;
+    }
+
+    public Date getRecordingPeriodStart() {
+        return recordingPeriodStart;
+    }
+
+    public void setRecordingPeriodStart(Date recordingPeriodStart) {
+        this.recordingPeriodStart = recordingPeriodStart;
+    }
+
+    public Date getRecordingPeriodEnd() {
+        return recordingPeriodEnd;
+    }
+
+    public void setRecordingPeriodEnd(Date recordingPeriodEnd) {
+        this.recordingPeriodEnd = recordingPeriodEnd;
     }
 }

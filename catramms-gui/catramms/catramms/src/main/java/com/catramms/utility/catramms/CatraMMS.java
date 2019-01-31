@@ -2009,6 +2009,173 @@ public class CatraMMS {
         return facebookConfList;
     }
 
+    public void addLiveURLConf(String username, String password,
+                                String label, String liveURL)
+            throws Exception
+    {
+
+        String mmsInfo;
+        try
+        {
+            String jsonLiveURLConf;
+            {
+                JSONObject joLiveURLConf = new JSONObject();
+
+                joLiveURLConf.put("Label", label);
+                joLiveURLConf.put("LiveURL", liveURL);
+
+                jsonLiveURLConf = joLiveURLConf.toString(4);
+            }
+
+            String mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort + "/catramms/v1/conf/liveURL";
+
+            mLogger.info("addLiveURLConf"
+                    + ", mmsURL: " + mmsURL
+                    + ", jsonLiveURLConf: " + jsonLiveURLConf
+            );
+
+            Date now = new Date();
+            String contentType = null;
+            mmsInfo = HttpFeedFetcher.fetchPostHttpsJson(mmsURL, contentType, timeoutInSeconds, maxRetriesNumber,
+                    username, password, jsonLiveURLConf);
+            mLogger.info("Elapsed time login (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "addLiveURLConf MMS failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+    }
+
+    public void modifyLiveURLConf(String username, String password,
+                                   Long confKey, String label, String liveURL)
+            throws Exception
+    {
+
+        String mmsInfo;
+        try
+        {
+            String jsonLiveURLConf;
+            {
+                JSONObject joLiveURLConf = new JSONObject();
+
+                joLiveURLConf.put("Label", label);
+                joLiveURLConf.put("LiveURL", liveURL);
+
+                jsonLiveURLConf = joLiveURLConf.toString(4);
+            }
+
+            String mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort + "/catramms/v1/conf/liveURL/" + confKey;
+
+            mLogger.info("modifyLiveURLConf"
+                    + ", mmsURL: " + mmsURL
+                    + ", jsonLiveURLConf: " + jsonLiveURLConf
+            );
+
+            Date now = new Date();
+            mmsInfo = HttpFeedFetcher.fetchPutHttpsJson(mmsURL, timeoutInSeconds, maxRetriesNumber,
+                    username, password, jsonLiveURLConf);
+            mLogger.info("Elapsed time login (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "modifyLiveURLConf MMS failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+    }
+
+    public void removeLiveURLConf(String username, String password,
+                                   Long confKey)
+            throws Exception
+    {
+
+        String mmsInfo;
+        try
+        {
+            String mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort + "/catramms/v1/conf/liveURL/" + confKey;
+
+            mLogger.info("removeLiveURLConf"
+                    + ", mmsURL: " + mmsURL
+                    + ", confKey: " + confKey
+            );
+
+            Date now = new Date();
+            mmsInfo = HttpFeedFetcher.fetchDeleteHttpsJson(mmsURL, timeoutInSeconds, maxRetriesNumber,
+                    username, password);
+            mLogger.info("Elapsed time login (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "removeLiveURLConf MMS failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+    }
+
+    public List<LiveURLConf> getLiveURLConf(String username, String password)
+            throws Exception
+    {
+        List<LiveURLConf> liveURLConfList = new ArrayList<>();
+
+        String mmsInfo;
+        try
+        {
+            String mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort + "/catramms/v1/conf/liveURL";
+
+            mLogger.info("mmsURL: " + mmsURL);
+
+            Date now = new Date();
+            mmsInfo = HttpFeedFetcher.fetchGetHttpsJson(mmsURL, timeoutInSeconds, maxRetriesNumber,
+                    username, password);
+            mLogger.info("Elapsed time getLiveURLConf (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "MMS API failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+
+        try
+        {
+            JSONObject joMMSInfo = new JSONObject(mmsInfo);
+            JSONObject joResponse = joMMSInfo.getJSONObject("response");
+            JSONArray jaLiveURLConf = joResponse.getJSONArray("liveURLConf");
+
+            mLogger.info("jaLiveURLConf.length(): " + jaLiveURLConf.length());
+
+            liveURLConfList.clear();
+
+            for (int liveURLConfIndex = 0;
+                 liveURLConfIndex < jaLiveURLConf.length();
+                 liveURLConfIndex++)
+            {
+                LiveURLConf liveURLConf = new LiveURLConf();
+
+                JSONObject liveURLConfInfo = jaLiveURLConf.getJSONObject(liveURLConfIndex);
+
+                fillLiveURLConf(liveURLConf, liveURLConfInfo);
+
+                liveURLConfList.add(liveURLConf);
+            }
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "Parsing liveURLConf failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+
+        return liveURLConfList;
+    }
+
     private void fillUserProfile(UserProfile userProfile, JSONObject joUserProfileInfo)
             throws Exception
     {
@@ -2149,6 +2316,15 @@ public class CatraMMS {
                         )
                 {
                     encodingJob.setSourceVideoPhysicalPathKey(joParameters.getLong("sourceVideoPhysicalPathKey"));
+                }
+                else if (encodingJob.getType().equalsIgnoreCase("LiveRecorder")
+                )
+                {
+                    encodingJob.setLiveURL(joParameters.getString("liveURL"));
+                    encodingJob.setOutputFileFormat(joParameters.getString("outputFileFormat"));
+                    encodingJob.setSegmentDurationInSeconds(joParameters.getLong("segmentDurationInSeconds"));
+                    encodingJob.setRecordingPeriodEnd(new Date(1000 * joParameters.getLong("utcRecordingPeriodEnd")));
+                    encodingJob.setRecordingPeriodStart(new Date(1000 * joParameters.getLong("utcRecordingPeriodStart")));
                 }
                 else
                 {
@@ -2573,6 +2749,23 @@ public class CatraMMS {
         catch (Exception e)
         {
             String errorMessage = "fillFacebookConf failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+    }
+
+    private void fillLiveURLConf(LiveURLConf liveURLConf, JSONObject liveURLConfInfo)
+            throws Exception
+    {
+        try {
+            liveURLConf.setConfKey(liveURLConfInfo.getLong("confKey"));
+            liveURLConf.setLabel(liveURLConfInfo.getString("label"));
+            liveURLConf.setLiveURL(liveURLConfInfo.getString("liveURL"));
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "fillLiveURLConf failed. Exception: " + e;
             mLogger.error(errorMessage);
 
             throw new Exception(errorMessage);

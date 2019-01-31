@@ -3024,7 +3024,7 @@ void Validator::validateLiveRecorderMetadata(int64_t workspaceKey, string label,
 {
         
 	vector<string> mandatoryFields = {
-		"LiveURL",
+		"ConfigurationLabel",
 		"RecordingPeriod",
 		"SegmentDuration"
     };

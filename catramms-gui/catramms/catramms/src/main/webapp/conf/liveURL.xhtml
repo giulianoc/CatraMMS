@@ -1,0 +1,213 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:media="http://xmlns.jcp.org/jsf/composite/media">
+
+<f:metadata>
+    <f:viewAction action="#{liveURLView.fillList(false)}" />
+</f:metadata>
+
+<h:head>
+
+    <h:outputStylesheet library="css" name="catramms.css"  />
+
+</h:head>
+
+<h:body>
+
+    <ui:include src="/common/loadingDialog.xhtml"/>
+    <ui:include src="/common/globalConfirm.xhtml"/>
+
+    <p:dialog widgetVar="editLiveURLConf" modal="true"
+              header="Edit LiveURL Conf" appendTo="@(body)" width="600" height="500"
+              showEffect="fade" hideEffect="fade" resizable="false" draggable="true">
+
+        <h:form id="editLiveURLConfForm">
+
+            <p:panelGrid cellpadding="10" style="width: 100%" >
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="ConfKey" style="font-weight: bold" />
+                    </p:column>
+                    <p:column>
+                        <p:outputLabel value="#{liveURLView.editLiveURLConfKey == -1 ? '' : liveURLView.editLiveURLConfKey}" />
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Label" style="font-weight: bold" />
+                    </p:column>
+                    <p:column>
+                        <p:inputText style="width: 100%"
+                                     required="true"
+                                     autocomplete="true"
+                                     value="#{liveURLView.editLiveURLLabel}"
+                                     placeholder="label for this configuration"/>
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Live URL" style="font-weight: bold" />
+                    </p:column>
+                    <p:column>
+                        <p:inputText style="width: 100%"
+                                     required="true"
+                                     autocomplete="true"
+                                     value="#{liveURLView.editLiveURLLiveURL}"
+                                     placeholder="live url"/>
+                    </p:column>
+                </p:row>
+
+            </p:panelGrid>
+
+            <p:commandButton value="#{liveURLView.editLiveURLConfKey == -1 ? 'Add LiveURL Conf' : 'Edit LiveURL Conf'}"
+                             actionListener="#{liveURLView.addModifyLiveURLConf}"
+                             update="viewForm:liveURLDataTable"
+                             oncomplete="PF('editLiveURLConf').hide()" />
+
+        </h:form>
+    </p:dialog>
+
+    <h:form id="viewForm">
+
+        <p:growl id="growl" showDetail="true" sticky="false" escape="false" life="5000" >
+            <p:autoUpdate />
+        </p:growl>
+
+        <p:toolbar>
+            <p:toolbarGroup align="left">
+                <p:outputLabel styleClass="appTitle" value="Media Management System" />
+            </p:toolbarGroup>
+
+            <p:toolbarGroup align="right">
+
+                <p:outputLabel value="Welcome #{sessionScope.userProfile.name}" />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:outputLabel value="Workspace:" />
+                <p:selectOneMenu id="workspaceName" value="#{liveURLView.workspaceName}"
+                                 autoWidth="false">
+                    <f:selectItems value="#{liveURLView.workspaceNames}" />
+                    <p:ajax
+                            global="true"
+                            event="change"
+                            listener="#{liveURLView.fillList(false)}"
+                            update="liveURLDataTable" />
+                </p:selectOneMenu>
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:commandLink value="Logout" action="#{login.logout}" />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:link
+                        value="Docs"
+                        target="_blank"
+                        href="https://github.com/giulianoc/CatraMMS/wiki"
+                />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <ui:include src="/common/mainMenu.xhtml"/>
+
+            </p:toolbarGroup>
+        </p:toolbar>
+
+        <p:toolbar>
+            <p:toolbarGroup align="left">
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:outputLabel styleClass="viewTitle" value="LiveURL Configuration" />
+
+            </p:toolbarGroup>
+
+            <p:toolbarGroup align="right">
+
+                <p:commandButton value="Add LiveURL Conf"
+                                 disabled="#{!sessionScope.currentWorkspaceDetails.owner}"
+                                 actionListener="#{liveURLView.prepareEditLiveURLConf(-1)}"
+                                 update="editLiveURLConfForm"
+                               oncomplete="PF('editLiveURLConf').show()" />
+
+            </p:toolbarGroup>
+        </p:toolbar>
+
+        <p:dataTable resizableColumns="true" id="liveURLDataTable" var="liveURLConf" rowIndexVar="rowId"
+                     value="#{liveURLView.liveURLConfList}" rowKey="#{liveURLConf.label}"
+                     selectionMode="single" stickyHeader="true"
+                     widgetVar="liveURLDataTable" >
+
+            <f:facet name="header">
+
+                <p:toolbar>
+                    <p:toolbarGroup align="left">
+                        <!-- panelGroup is to make 'rendered' working on update -->
+                        <h:panelGroup>
+                            <p:outputLabel styleClass="red" value="#{liveURLView.liveURLConfList.size()}" />
+                            <p:outputLabel value=" LiveURL conf" />
+                        </h:panelGroup>
+                    </p:toolbarGroup>
+
+                    <p:toolbarGroup align="right">
+
+                    </p:toolbarGroup>
+                </p:toolbar>
+
+            </f:facet>
+
+            <p:column style="width:70px;" headerText="ConfKey" >
+                <p:outputLabel value="#{liveURLConf.confKey}" />
+            </p:column>
+
+            <p:column headerText="Label" >
+                <p:outputLabel value="#{liveURLConf.label}" />
+            </p:column>
+
+            <p:column headerText="Live URL" >
+                <p:outputLabel value="#{liveURLConf.liveURL}" />
+            </p:column>
+
+            <p:column style="width:150px;" headerText="">
+
+                <p:commandLink value="Remove"
+                               disabled="#{!sessionScope.currentWorkspaceDetails.owner}"
+                               action="#{liveURLView.removeLiveURLConf(liveURLConf.confKey)}"
+                               update="liveURLDataTable"
+                        >
+                    <p:confirm header="Confirmation" message="Are you sure?" icon="ui-icon-alert" />
+                </p:commandLink>
+
+                <p:outputLabel value=" - " />
+
+                <p:commandLink value="Edit"
+                               disabled="#{!sessionScope.currentWorkspaceDetails.owner}"
+                               actionListener="#{liveURLView.prepareEditLiveURLConf(rowId)}"
+                                 update="editLiveURLConfForm"
+                                 oncomplete="PF('editLiveURLConf').show()" />
+            </p:column>
+
+        </p:dataTable>
+
+    </h:form>
+
+</h:body>
+</html>

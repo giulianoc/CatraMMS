@@ -284,6 +284,27 @@ private:
         FCGX_Request& request,
         shared_ptr<Workspace> workspace);
 
+    void addLiveURLConf(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody);
+
+    void modifyLiveURLConf(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody);
+
+    void removeLiveURLConf(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters);
+
+    void liveURLConfList(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace);
+
     void parseContentRange(string contentRange,
         long long& contentRangeStart,
         long long& contentRangeEnd,

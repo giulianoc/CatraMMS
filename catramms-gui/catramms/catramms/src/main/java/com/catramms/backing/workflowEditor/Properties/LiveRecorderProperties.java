@@ -1,7 +1,10 @@
 package com.catramms.backing.workflowEditor.Properties;
 
+import com.catramms.backing.common.SessionUtils;
+import com.catramms.backing.entity.LiveURLConf;
 import com.catramms.backing.workflowEditor.utility.WorkflowIssue;
 import com.catramms.backing.workflowEditor.utility.IngestionData;
+import com.catramms.utility.catramms.CatraMMS;
 import org.apache.log4j.Logger;
 import org.json.JSONObject;
 
@@ -14,7 +17,8 @@ public class LiveRecorderProperties extends CreateContentProperties implements S
 
     private static final Logger mLogger = Logger.getLogger(LiveRecorderProperties.class);
 
-    private String liveURL;
+    private String configurationLabel;
+    private List<LiveURLConf> confList;
     private Date startRecording;
     private Date endRecording;
     private Long segmentDuration;
@@ -35,21 +39,72 @@ public class LiveRecorderProperties extends CreateContentProperties implements S
             endRecording = calendar.getTime();
         }
 
-        segmentDuration = new Long(15 * 60);
+        segmentDuration = new Long(1 * 60);
 
         {
             outputFileFormatsList = new ArrayList<>();
             outputFileFormatsList.add("ts");
         }
+
+        try
+        {
+            Long userKey = SessionUtils.getUserProfile().getUserKey();
+            String apiKey = SessionUtils.getCurrentWorkspaceDetails().getApiKey();
+
+            if (userKey == null || apiKey == null || apiKey.equalsIgnoreCase(""))
+            {
+                mLogger.warn("no input to require encodingProfilesSetKey"
+                        + ", userKey: " + userKey
+                        + ", apiKey: " + apiKey
+                );
+            }
+            else
+            {
+                String username = userKey.toString();
+                String password = apiKey;
+
+                CatraMMS catraMMS = new CatraMMS();
+
+                confList = catraMMS.getLiveURLConf(username, password);
+            }
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "Exception: " + e;
+            mLogger.error(errorMessage);
+        }
+    }
+
+    public LiveRecorderProperties(String positionX, String positionY,
+                                  int elementId, String label, List<LiveURLConf> confList)
+    {
+        super(positionX, positionY, elementId, label, "Live-Recorder" + "-icon.png", "Task", "Live-Recorder");
+
+        startRecording = new Date();
+        {
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(startRecording);
+            calendar.add(Calendar.HOUR_OF_DAY, 1);
+            endRecording = calendar.getTime();
+        }
+
+        segmentDuration = new Long(1 * 60);
+
+        {
+            outputFileFormatsList = new ArrayList<>();
+            outputFileFormatsList.add("ts");
+        }
+
+        this.confList = confList;
     }
 
     public LiveRecorderProperties clone()
     {
         LiveRecorderProperties liveRecorderProperties = new LiveRecorderProperties(
                 super.getPositionX(), super.getPositionY(),
-                super.getElementId(), super.getLabel());
+                super.getElementId(), super.getLabel(), confList);
 
-        liveRecorderProperties.setLiveURL(liveURL);
+        liveRecorderProperties.setConfigurationLabel(configurationLabel);
         liveRecorderProperties.setStartRecording(startRecording);
         liveRecorderProperties.setEndRecording(endRecording);
         liveRecorderProperties.setSegmentDuration(segmentDuration);
@@ -67,7 +122,7 @@ public class LiveRecorderProperties extends CreateContentProperties implements S
         super.setData(workflowProperties);
 
         // mLogger.info("LiveRecorderProperties::setData");
-        setLiveURL(workflowProperties.getLiveURL());
+        setConfigurationLabel(workflowProperties.getConfigurationLabel());
         setStartRecording(workflowProperties.getStartRecording());
         setEndRecording(workflowProperties.getEndRecording());
         setSegmentDuration(workflowProperties.getSegmentDuration());
@@ -87,8 +142,8 @@ public class LiveRecorderProperties extends CreateContentProperties implements S
 
             JSONObject joParameters = jsonWorkflowElement.getJSONObject("Parameters");
 
-            if (joParameters.has("LiveURL") && !joParameters.getString("LiveURL").equalsIgnoreCase(""))
-                setLiveURL(joParameters.getString("LiveURL"));
+            if (joParameters.has("ConfigurationLabel") && !joParameters.getString("ConfigurationLabel").equalsIgnoreCase(""))
+                setConfigurationLabel(joParameters.getString("ConfigurationLabel"));
             if (joParameters.has("StartRecording") && !joParameters.getString("StartRecording").equalsIgnoreCase(""))
                 setStartRecording(dateFormat.parse(joParameters.getString("StartRecording")));
             if (joParameters.has("EndRecording") && !joParameters.getString("EndRecording").equalsIgnoreCase(""))
@@ -122,7 +177,7 @@ public class LiveRecorderProperties extends CreateContentProperties implements S
             jsonWorkflowElement.put("Parameters", joParameters);
 
             mLogger.info("task.getType: " + super.getType());
-            mLogger.info("LiveURL 1: " + getLiveURL());
+            mLogger.info("ConfigurationLabel 1: " + getConfigurationLabel());
 
             if (super.getLabel() != null && !super.getLabel().equalsIgnoreCase(""))
                 jsonWorkflowElement.put("Label", super.getLabel());
@@ -137,14 +192,14 @@ public class LiveRecorderProperties extends CreateContentProperties implements S
                 ingestionData.getWorkflowIssueList().add(workflowIssue);
             }
 
-            mLogger.info("LiveURL 2: " + getLiveURL());
-            if (getLiveURL() != null && !getLiveURL().equalsIgnoreCase(""))
-                joParameters.put("LiveURL", getLiveURL());
+            mLogger.info("ConfigurationLabel 2: " + getConfigurationLabel());
+            if (getConfigurationLabel() != null && !getConfigurationLabel().equalsIgnoreCase(""))
+                joParameters.put("ConfigurationLabel", getConfigurationLabel());
             else
             {
                 WorkflowIssue workflowIssue = new WorkflowIssue();
                 workflowIssue.setLabel("");
-                workflowIssue.setFieldName("LiveURL");
+                workflowIssue.setFieldName("ConfigurationLabel");
                 workflowIssue.setTaskType(super.getType());
                 workflowIssue.setIssue("The field is not initialized");
 
@@ -213,6 +268,16 @@ public class LiveRecorderProperties extends CreateContentProperties implements S
         return jsonWorkflowElement;
     }
 
+    public List<String> getConfLabels()
+    {
+        List<String> configurationLabels = new ArrayList<>();
+
+        for (LiveURLConf liveURLConf: confList)
+            configurationLabels.add(liveURLConf.getLabel());
+
+        return configurationLabels;
+    }
+
     public String getEncodingPriority() {
         return encodingPriority;
     }
@@ -221,12 +286,12 @@ public class LiveRecorderProperties extends CreateContentProperties implements S
         this.encodingPriority = encodingPriority;
     }
 
-    public String getLiveURL() {
-        return liveURL;
+    public String getConfigurationLabel() {
+        return configurationLabel;
     }
 
-    public void setLiveURL(String liveURL) {
-        this.liveURL = liveURL;
+    public void setConfigurationLabel(String configurationLabel) {
+        this.configurationLabel = configurationLabel;
     }
 
     public Date getStartRecording() {

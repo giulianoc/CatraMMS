@@ -4492,13 +4492,13 @@ void MMSEngineProcessor::manageLiveRecorder(
 				MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
 		}
 
-		string liveURL;
+		string configurationLabel;
         string recordingPeriodStart;
         string recordingPeriodEnd;
 		int segmentDurationInSeconds;
 		string outputFileFormat;
         {
-            string field = "LiveURL";
+            string field = "ConfigurationLabel";
             if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
             {
                 string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -4508,7 +4508,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 
                 throw runtime_error(errorMessage);
             }
-            liveURL = parametersRoot.get(field, "XXX").asString();
+            configurationLabel = parametersRoot.get(field, "XXX").asString();
 
             field = "RecordingPeriod";
 			Json::Value recordingPeriodRoot = parametersRoot[field];
@@ -4661,6 +4661,8 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 			utcRecordingPeriodEnd = timegm(&tmRecordingPeriodEnd);
 		}
+
+		string liveURL = getLiveURLByConfigurationLabel(workspace, configurationLabel);
 
 		_mmsEngineDBFacade->addEncoding_LiveRecorderJob(workspace, ingestionJobKey,
 			liveURL, utcRecordingPeriodStart, utcRecordingPeriodEnd, segmentDurationInSeconds,
@@ -9991,6 +9993,36 @@ string MMSEngineProcessor::getFacebookPageTokenByConfigurationLabel(
         string errorMessage = string("facebook access token failed")
                 // + ", youTubeURL: " + youTubeURL
                 // + ", sResponse: " + sResponse
+                ;
+        _logger->error(__FILEREF__ + errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
+string MMSEngineProcessor::getLiveURLByConfigurationLabel(
+    shared_ptr<Workspace> workspace, string label)
+{
+    
+    try
+    {
+        string liveURL = _mmsEngineDBFacade->getLiveURLByConfigurationLabel(
+                workspace->_workspaceKey, label);            
+
+        return liveURL;
+    }
+    catch(runtime_error e)
+    {
+        string errorMessage = string("getLiveURLByConfigurationLabel failed")
+                + ", e.what(): " + e.what()
+                ;
+        _logger->error(__FILEREF__ + errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        string errorMessage = string("getLiveURLByConfigurationLabel failed")
                 ;
         _logger->error(__FILEREF__ + errorMessage);
 
