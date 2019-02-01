@@ -6038,7 +6038,7 @@ string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
         {
             string errorMessage = __FILEREF__ + "No segment list file found"
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
+                    + ", segmentListPathName: " + segmentListPathName;
             _logger->error(errorMessage);
 
             throw runtime_error(errorMessage);
@@ -6055,11 +6055,11 @@ string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
 		{
 			if (!reachedNextFileToProcess)
 			{
-				if (lastProcessedFile == "")
+				if (lastRecordedAssetFileName == "")
 				{
 					reachedNextFileToProcess = true;
 				}
-				else if (currentRecordedAssetFileName == lastProcessedFile)
+				else if (currentRecordedAssetFileName == lastRecordedAssetFileName)
 				{
 					reachedNextFileToProcess = true;
 
@@ -6074,7 +6074,7 @@ string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
 			_logger->info(__FILEREF__ + "processing LiveRecorder file"
 				+ ", currentRecordedAssetFileName: " + currentRecordedAssetFileName);
 
-			bool ingestionRowToBeUpdatedAsSuccess = isLastFile();	// check inside the directory if there are newer files
+			bool ingestionRowToBeUpdatedAsSuccess = false; // isLastLiveRecorderFile();	// check inside the directory if there are newer files
 
 			string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
 				outputFileFormat, _encodingItem->_liveRecorderData->_liveRecorderParametersRoot);
@@ -6102,7 +6102,7 @@ string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
 			_logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
 				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 				+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				+ ", sourceFileName: " + previousRecordedAssetFileName
+				+ ", sourceFileName: " + currentRecordedAssetFileName
 				+ ", getEventKey().first: " + to_string(event->getEventKey().first)
 				+ ", getEventKey().second: " + to_string(event->getEventKey().second));
 		}
@@ -6114,7 +6114,7 @@ string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
             + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
-            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            + ", segmentListPathName: " + segmentListPathName
             + ", _encodingItem->_workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
             + ", e.what(): " + e.what()
         );
@@ -6128,7 +6128,7 @@ string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
             + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
-            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            + ", segmentListPathName: " + segmentListPathName
             + ", _encodingItem->_workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
         );
                 
