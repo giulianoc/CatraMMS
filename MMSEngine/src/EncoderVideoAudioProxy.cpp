@@ -5933,7 +5933,8 @@ string EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
                 {
                     encodingFinished = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
 
-					lastRecordedAssetFileName = processLastGeneratedLiveRecorderFiles(lastRecordedAssetFileName);
+					lastRecordedAssetFileName = processLastGeneratedLiveRecorderFiles(
+						segmentListPathName, lastRecordedAssetFileName);
                 }
                 catch(...)
                 {
@@ -6020,7 +6021,8 @@ string EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
     return segmentListPathName;
 }
 
-string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(string lastRecordedAssetFileName)
+string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
+	string segmentListPathName, string lastRecordedAssetFileName)
 {
 	string currentRecordedAssetFileName;
 
@@ -6028,7 +6030,10 @@ string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(string last
     {
 		this_thread::sleep_for(chrono::seconds(_secondsToWaitNFSBuffers));
 
-		ifstream segmentList(stagingEncodedAssetPathName);
+		_logger->info(__FILEREF__ + "processing LiveRecorder segment files"
+			+ ", segmentListPathName: " + segmentListPathName);
+
+		ifstream segmentList(segmentListPathName);
 		if (!segmentList)
         {
             string errorMessage = __FILEREF__ + "No segment list file found"
@@ -6065,6 +6070,9 @@ string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(string last
 					continue;
 				}
 			}
+
+			_logger->info(__FILEREF__ + "processing LiveRecorder file"
+				+ ", currentRecordedAssetFileName: " + currentRecordedAssetFileName);
 
 			bool ingestionRowToBeUpdatedAsSuccess = isLastFile();	// check inside the directory if there are newer files
 
