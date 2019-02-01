@@ -6053,20 +6053,26 @@ string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
 		bool reachedNextFileToProcess = false;
 		while(getline(segmentList, currentRecordedAssetFileName))
 		{
+			_logger->info(__FILEREF__ + "0000 processing LiveRecorder file"
+				+ ", currentRecordedAssetFileName: " + currentRecordedAssetFileName);
 			if (!reachedNextFileToProcess)
 			{
 				if (lastRecordedAssetFileName == "")
 				{
+					_logger->info(__FILEREF__ + "0000 lastRecordedAssetFileName == ");
+
 					reachedNextFileToProcess = true;
 				}
 				else if (currentRecordedAssetFileName == lastRecordedAssetFileName)
 				{
+					_logger->info(__FILEREF__ + "0000 currentRecordedAssetFileName == lastRecordedAssetFileName");
 					reachedNextFileToProcess = true;
 
 					continue;
 				}
 				else
 				{
+					_logger->info(__FILEREF__ + "0000 continue");
 					continue;
 				}
 			}
