@@ -6025,7 +6025,7 @@ string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
 	string segmentListPathName, string lastRecordedAssetFileName)
 {
 
-	string lastRecordedAssetFileName;
+	string newLastRecordedAssetFileName;
     try
     {
 		this_thread::sleep_for(chrono::seconds(_secondsToWaitNFSBuffers));
@@ -6081,7 +6081,7 @@ string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
 			_logger->info(__FILEREF__ + "processing LiveRecorder file"
 				+ ", currentRecordedAssetFileName: " + currentRecordedAssetFileName);
 
-			lastRecordedAssetFileName = currentRecordedAssetFileName;
+			newLastRecordedAssetFileName = currentRecordedAssetFileName;
 
 			bool ingestionRowToBeUpdatedAsSuccess = false; // isLastLiveRecorderFile();	// check inside the directory if there are newer files
 
@@ -6144,7 +6144,7 @@ string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
         throw e;
     }
 
-	return lastRecordedAssetFileName;
+	return newLastRecordedAssetFileName;
 }
 
 void EncoderVideoAudioProxy::processLiveRecorder(string stagingEncodedAssetPathName)
