@@ -1,5 +1,6 @@
 package com.catramms.backing.workflowEditor.Properties;
 
+import com.catramms.backing.common.SessionUtils;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -29,6 +30,8 @@ public class CreateContentProperties extends WorkflowProperties implements Seria
                                    int elementId, String label, String image, String mainType, String type)
     {
         super(positionX, positionY, elementId, label, image, mainType, type);
+
+        setIngester(SessionUtils.getUserProfile().getName());
     }
 
     public void getData(CreateContentProperties workflowProperties)

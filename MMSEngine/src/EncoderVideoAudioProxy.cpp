@@ -5686,11 +5686,12 @@ string EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
         }
     #endif
 
+	string contentsPath;
     {        
-		string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
+		contentsPath = _mmsStorage->getWorkspaceIngestionRepository(
 			_encodingItem->_workspace);
 		segmentListPathName =
-			workspaceIngestionRepository + "/" 
+			contentsPath + "/" 
 			+ to_string(_encodingItem->_ingestionJobKey)
 			+ ".liveRecorder.list"
 		;
@@ -5934,7 +5935,7 @@ string EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
                     encodingFinished = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
 
 					lastRecordedAssetFileName = processLastGeneratedLiveRecorderFiles(
-						segmentListPathName, lastRecordedAssetFileName);
+						segmentListPathName, contentsPath, lastRecordedAssetFileName);
                 }
                 catch(...)
                 {
@@ -6022,14 +6023,12 @@ string EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 }
 
 string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
-	string segmentListPathName, string lastRecordedAssetFileName)
+	string segmentListPathName, string contentsPath, string lastRecordedAssetFileName)
 {
 
 	string newLastRecordedAssetFileName;
     try
     {
-		this_thread::sleep_for(chrono::seconds(_secondsToWaitNFSBuffers));
-
 		_logger->info(__FILEREF__ + "processing LiveRecorder segment files"
 			+ ", segmentListPathName: " + segmentListPathName);
 
@@ -6054,26 +6053,20 @@ string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
 		string currentRecordedAssetFileName;
 		while(getline(segmentList, currentRecordedAssetFileName))
 		{
-			_logger->info(__FILEREF__ + "0000 processing LiveRecorder file"
-				+ ", currentRecordedAssetFileName: " + currentRecordedAssetFileName);
 			if (!reachedNextFileToProcess)
 			{
 				if (lastRecordedAssetFileName == "")
 				{
-					_logger->info(__FILEREF__ + "0000 lastRecordedAssetFileName == ");
-
 					reachedNextFileToProcess = true;
 				}
 				else if (currentRecordedAssetFileName == lastRecordedAssetFileName)
 				{
-					_logger->info(__FILEREF__ + "0000 currentRecordedAssetFileName == lastRecordedAssetFileName");
 					reachedNextFileToProcess = true;
 
 					continue;
 				}
 				else
 				{
-					_logger->info(__FILEREF__ + "0000 continue");
 					continue;
 				}
 			}
@@ -6081,10 +6074,15 @@ string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
 			_logger->info(__FILEREF__ + "processing LiveRecorder file"
 				+ ", currentRecordedAssetFileName: " + currentRecordedAssetFileName);
 
+			string currentRecordedAssetPathName = contentsPath + "/" + currentRecordedAssetFileName;
+			// time_t currentRecordedAssetFileCreationTime: calcolo creation file time
+			// sleep se minore di this_thread::sleep_for(chrono::seconds(_secondsToWaitNFSBuffers));
+
+			bool ingestionRowToBeUpdatedAsSuccess = false; // isLastLiveRecorderFile(currentRecordedAssetFileCreationTime, contentsPath);	// check inside the directory if there are newer files
+
 			newLastRecordedAssetFileName = currentRecordedAssetFileName;
 
-			bool ingestionRowToBeUpdatedAsSuccess = false; // isLastLiveRecorderFile();	// check inside the directory if there are newer files
-
+// aggiungere currentRecordedAssetFileCreationTime a _encodingItem->_liveRecorderData->_liveRecorderParametersRoot
 			string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
 				outputFileFormat, _encodingItem->_liveRecorderData->_liveRecorderParametersRoot);
     
