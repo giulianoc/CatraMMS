@@ -106,6 +106,7 @@ private:
     string                              _mp4Encoder;
     string                              _mpeg2TSEncoder;
     int                                 _intervalInSecondsToCheckEncodingFinished;
+	int									_secondsToWaitNFSBuffers;
     
     string                              _ffmpegEncoderProtocol;
     int                                 _ffmpegEncoderPort;
@@ -166,6 +167,7 @@ private:
     string liveRecorder();
     string liveRecorder_through_ffmpeg();
     void processLiveRecorder(string stagingEncodedAssetPathName);    
+	string processLastGeneratedLiveRecorderFiles(string lastRecordedAssetFileName);
 
     bool getEncodingStatus();
 

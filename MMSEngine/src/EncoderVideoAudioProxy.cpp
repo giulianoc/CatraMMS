@@ -82,6 +82,10 @@ void EncoderVideoAudioProxy::init(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", encoding->intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
     );        
+    _secondsToWaitNFSBuffers						= _configuration["encoding"].get("secondsToWaitNFSBuffers", "").asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", encoding->secondsToWaitNFSBuffers: " + to_string(_secondsToWaitNFSBuffers)
+    );        
     
     _ffmpegEncoderProtocol = _configuration["ffmpeg"].get("encoderProtocol", "").asString();
     _logger->info(__FILEREF__ + "Configuration item"
@@ -5920,6 +5924,7 @@ string EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
             bool encodingFinished = false;
             int maxEncodingStatusFailures = 1;
             int encodingStatusFailures = 0;
+			string lastRecordedAssetFileName;
             while(!(encodingFinished || encodingStatusFailures >= maxEncodingStatusFailures))
             {
                 this_thread::sleep_for(chrono::seconds(_intervalInSecondsToCheckEncodingFinished));
@@ -5927,6 +5932,8 @@ string EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
                 try
                 {
                     encodingFinished = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
+
+					lastRecordedAssetFileName = processLastGeneratedLiveRecorderFiles(lastRecordedAssetFileName);
                 }
                 catch(...)
                 {
@@ -6013,10 +6020,14 @@ string EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
     return segmentListPathName;
 }
 
-void EncoderVideoAudioProxy::processLiveRecorder(string stagingEncodedAssetPathName)
+string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(string lastRecordedAssetFileName)
 {
+	string currentRecordedAssetFileName;
+
     try
     {
+		this_thread::sleep_for(chrono::seconds(_secondsToWaitNFSBuffers));
+
 		ifstream segmentList(stagingEncodedAssetPathName);
 		if (!segmentList)
         {
@@ -6034,20 +6045,29 @@ void EncoderVideoAudioProxy::processLiveRecorder(string stagingEncodedAssetPathN
         	outputFileFormat = _encodingItem->_parametersRoot.get(field, "XXX").asString();
 		}
 
-		bool firstFile = true;
-		string currentRecordedAssetFileName;
-		string previousRecordedAssetFileName;
+		bool reachedNextFileToProcess = false;
 		while(getline(segmentList, currentRecordedAssetFileName))
 		{
-			if (firstFile)
+			if (!reachedNextFileToProcess)
 			{
-				previousRecordedAssetFileName = currentRecordedAssetFileName;
+				if (lastProcessedFile == "")
+				{
+					reachedNextFileToProcess = true;
+				}
+				else if (currentRecordedAssetFileName == lastProcessedFile)
+				{
+					reachedNextFileToProcess = true;
 
-				firstFile = false;
-
-				continue;
+					continue;
+				}
+				else
+				{
+					continue;
+				}
 			}
 
+			bool ingestionRowToBeUpdatedAsSuccess = isLastFile();	// check inside the directory if there are newer files
+
 			string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
 				outputFileFormat, _encodingItem->_liveRecorderData->_liveRecorderParametersRoot);
     
@@ -6059,11 +6079,11 @@ void EncoderVideoAudioProxy::processLiveRecorder(string stagingEncodedAssetPathN
 			localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
 
 			localAssetIngestionEvent->setIngestionJobKey(_encodingItem->_ingestionJobKey);
-			localAssetIngestionEvent->setIngestionSourceFileName(previousRecordedAssetFileName);
-			localAssetIngestionEvent->setMMSSourceFileName(previousRecordedAssetFileName);
+			localAssetIngestionEvent->setIngestionSourceFileName(currentRecordedAssetFileName);
+			localAssetIngestionEvent->setMMSSourceFileName(currentRecordedAssetFileName);
 			localAssetIngestionEvent->setWorkspace(_encodingItem->_workspace);
 			localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::AddContent);
-			localAssetIngestionEvent->setIngestionRowToBeUpdatedAsSuccess(false);
+			localAssetIngestionEvent->setIngestionRowToBeUpdatedAsSuccess(ingestionRowToBeUpdatedAsSuccess);
 			// localAssetIngestionEvent->setForcedAvgFrameRate(to_string(outputFrameRate) + "/1");
 
 			localAssetIngestionEvent->setMetadataContent(mediaMetaDataContent);
@@ -6077,45 +6097,43 @@ void EncoderVideoAudioProxy::processLiveRecorder(string stagingEncodedAssetPathN
 				+ ", sourceFileName: " + previousRecordedAssetFileName
 				+ ", getEventKey().first: " + to_string(event->getEventKey().first)
 				+ ", getEventKey().second: " + to_string(event->getEventKey().second));
-
-			previousRecordedAssetFileName = currentRecordedAssetFileName;
 		}
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "processLastGeneratedLiveRecorderFiles failed"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            + ", _encodingItem->_workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+            + ", e.what(): " + e.what()
+        );
+                
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "processLastGeneratedLiveRecorderFiles failed"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            + ", _encodingItem->_workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+        );
+                
+        throw e;
+    }
 
-		if (previousRecordedAssetFileName != "")
-		{
-			string mediaMetaDataContent = generateMediaMetadataToIngest(_encodingItem->_ingestionJobKey,
-				outputFileFormat, _encodingItem->_liveRecorderData->_liveRecorderParametersRoot);
-    
-			shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent = _multiEventsSet->getEventsFactory()
-                ->getFreeEvent<LocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
+	return currentRecordedAssetFileName;
+}
 
-			localAssetIngestionEvent->setSource(ENCODERVIDEOAUDIOPROXY);
-			localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
-			localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
-
-			localAssetIngestionEvent->setIngestionJobKey(_encodingItem->_ingestionJobKey);
-			localAssetIngestionEvent->setIngestionSourceFileName(previousRecordedAssetFileName);
-			localAssetIngestionEvent->setMMSSourceFileName(previousRecordedAssetFileName);
-			localAssetIngestionEvent->setWorkspace(_encodingItem->_workspace);
-			localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::AddContent);
-			localAssetIngestionEvent->setIngestionRowToBeUpdatedAsSuccess(true);
-			// localAssetIngestionEvent->setForcedAvgFrameRate(to_string(outputFrameRate) + "/1");
-
-			localAssetIngestionEvent->setMetadataContent(mediaMetaDataContent);
-
-			shared_ptr<Event2>    event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
-			_multiEventsSet->addEvent(event);
-
-			_logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
-				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-				+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				+ ", sourceFileName: " + previousRecordedAssetFileName
-				+ ", getEventKey().first: " + to_string(event->getEventKey().first)
-				+ ", getEventKey().second: " + to_string(event->getEventKey().second));
-
-			previousRecordedAssetFileName = currentRecordedAssetFileName;
-		}
-
+void EncoderVideoAudioProxy::processLiveRecorder(string stagingEncodedAssetPathName)
+{
+    try
+    {
 		_logger->info(__FILEREF__ + "remove"
 			+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
 		);
@@ -6149,7 +6167,6 @@ void EncoderVideoAudioProxy::processLiveRecorder(string stagingEncodedAssetPathN
         throw e;
     }
 }
-
 
 int EncoderVideoAudioProxy::getEncodingProgress()
 {
