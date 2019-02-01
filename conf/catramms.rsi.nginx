@@ -164,6 +164,32 @@ server {
 		if ($request_method = GET) {
 			rewrite ^/catramms/(v[0-9]+)/conf/liveURL/?$ /api?version=$1&method=liveURLConfList last;
 		}
+
+		if ($request_method = POST) {
+			rewrite ^/catramms/(v[0-9]+)/conf/ftp/?$ /api?version=$1&method=addFTPConf last;
+		}
+		if ($request_method = PUT) {
+			rewrite ^/catramms/(v[0-9]+)/conf/ftp/([0-9]+)/?$ /api?version=$1&method=modifyFTPConf&confKey=$2 last;
+		}
+		if ($request_method = DELETE) {
+			rewrite ^/catramms/(v[0-9]+)/conf/ftp/([0-9]+)/?$ /api?version=$1&method=removeFTPConf&confKey=$2 last;
+		}
+		if ($request_method = GET) {
+			rewrite ^/catramms/(v[0-9]+)/conf/ftp/?$ /api?version=$1&method=ftpConfList last;
+		}
+
+		if ($request_method = POST) {
+			rewrite ^/catramms/(v[0-9]+)/conf/email/?$ /api?version=$1&method=addEMailConf last;
+		}
+		if ($request_method = PUT) {
+			rewrite ^/catramms/(v[0-9]+)/conf/email/([0-9]+)/?$ /api?version=$1&method=modifyEMailConf&confKey=$2 last;
+		}
+		if ($request_method = DELETE) {
+			rewrite ^/catramms/(v[0-9]+)/conf/email/([0-9]+)/?$ /api?version=$1&method=removeEMailConf&confKey=$2 last;
+		}
+		if ($request_method = GET) {
+			rewrite ^/catramms/(v[0-9]+)/conf/email/?$ /api?version=$1&method=emailConfList last;
+		}
 	}
 
 	location /api {

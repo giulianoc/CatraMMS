@@ -1256,6 +1256,60 @@ public:
     string getLiveURLByConfigurationLabel(
         int64_t workspaceKey, string liveURLConfigurationLabel);
     
+    int64_t addFTPConf(
+        int64_t workspaceKey,
+        string label,
+        string server,
+		int port,
+		string userName,
+		string password,
+		string remoteDirectory);
+
+    void modifyFTPConf(
+        int64_t confKey,
+        int64_t workspaceKey,
+        string label,
+        string server,
+		int port,
+		string userName,
+		string password,
+		string remoteDirectory);
+
+    void removeFTPConf(
+        int64_t workspaceKey,
+        int64_t confKey);
+
+    Json::Value getFTPConfList (
+        int64_t workspaceKey);
+
+    tuple<string, int, string, string, string> getFTPByConfigurationLabel(
+        int64_t workspaceKey, string liveURLConfigurationLabel);
+    
+    int64_t addEMailConf(
+        int64_t workspaceKey,
+        string label,
+        string address,
+		string subject,
+		string message);
+
+    void modifyEMailConf(
+        int64_t confKey,
+        int64_t workspaceKey,
+        string label,
+        string address,
+		string subject,
+		string message);
+
+    void removeEMailConf(
+        int64_t workspaceKey,
+        int64_t confKey);
+
+    Json::Value getEMailConfList (
+        int64_t workspaceKey);
+
+    tuple<string, string, string> getEMailByConfigurationLabel(
+        int64_t workspaceKey, string liveURLConfigurationLabel);
+    
 private:
     shared_ptr<spdlog::logger>                          _logger;
     shared_ptr<MySQLConnectionFactory>                  _mySQLConnectionFactory;

@@ -3115,61 +3115,31 @@ void MMSEngineProcessor::ftpDeliveryContentTask(
             return;
         }
 
+        string configurationLabel;
+        {
+            string field = "ConfigurationLabel";
+            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            {
+                string errorMessage = __FILEREF__ + "Field is not present or it is null"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", Field: " + field;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);
+            }
+            configurationLabel = parametersRoot.get(field, "XXX").asString();
+        }
+        
         string ftpServer;
         int ftpPort;
         string ftpUserName;
         string ftpPassword;
         string ftpRemoteDirectory;
-        {
-            string field = "Server";
-            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", Field: " + field;
-                _logger->error(errorMessage);
 
-                throw runtime_error(errorMessage);
-            }
-            ftpServer = parametersRoot.get(field, "XXX").asString();
+        tuple<string, int, string, string, string> ftp = _mmsEngineDBFacade->getFTPByConfigurationLabel(
+                workspace->_workspaceKey, configurationLabel);            
+        tie(ftpServer, ftpPort, ftpUserName, ftpPassword, ftpRemoteDirectory) = ftp;
 
-            field = "Port";
-            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-            {
-                ftpPort = 21;
-            }
-            else
-                ftpPort = parametersRoot.get(field, "XXX").asInt();
-
-            field = "UserName";
-            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", Field: " + field;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-            ftpUserName = parametersRoot.get(field, "XXX").asString();
-
-            field = "Password";
-            if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-            {
-                string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                        + ", Field: " + field;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-            ftpPassword = parametersRoot.get(field, "XXX").asString();
-
-            field = "RemoteDirectory";
-            if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-                ftpRemoteDirectory = parametersRoot.get(field, "XXX").asString();
-        }
-        
         for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
         {
             int mmsPartitionNumber;
@@ -4662,7 +4632,8 @@ void MMSEngineProcessor::manageLiveRecorder(
 			utcRecordingPeriodEnd = timegm(&tmRecordingPeriodEnd);
 		}
 
-		string liveURL = getLiveURLByConfigurationLabel(workspace, configurationLabel);
+        string liveURL = _mmsEngineDBFacade->getLiveURLByConfigurationLabel(
+                workspace->_workspaceKey, configurationLabel);            
 
 		_mmsEngineDBFacade->addEncoding_LiveRecorderJob(workspace, ingestionJobKey,
 			liveURL, utcRecordingPeriodStart, utcRecordingPeriodEnd, segmentDurationInSeconds,
@@ -7631,7 +7602,7 @@ void MMSEngineProcessor::manageEmailNotificationTask(
                 sIngestionJobJeyDependency += (", " + to_string(key));
         }
         
-        string field = "EmailAddress";
+        string field = "ConfigurationLabel";
         if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
         {
             string errorMessage = __FILEREF__ + "Field is not present or it is null"
@@ -7640,31 +7611,14 @@ void MMSEngineProcessor::manageEmailNotificationTask(
 
             throw runtime_error(errorMessage);
         }
-        string emailAddress = parametersRoot.get(field, "XXX").asString();
-    
-        field = "Subject";
-        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-        {
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    + ", Field: " + field;
-            _logger->error(errorMessage);
+        string configurationLabel = parametersRoot.get(field, "XXX").asString();
 
-            throw runtime_error(errorMessage);
-        }
-        string subject = parametersRoot.get(field, "XXX").asString();
-
-        field = "Message";
-        if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
-        {
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-                    + ", Field: " + field;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        string message = parametersRoot.get(field, "XXX").asString();
+		string emailAddress;
+		string subject;
+		string message;
+        tuple<string, string, string> email = _mmsEngineDBFacade->getEMailByConfigurationLabel(
+                workspace->_workspaceKey, configurationLabel);            
+        tie(emailAddress, subject, message) = email;
 
         {
             string strToBeReplaced = "__INGESTIONJOBKEY__";
@@ -7677,8 +7631,8 @@ void MMSEngineProcessor::manageEmailNotificationTask(
         emailBody.push_back(message);
             
         EMailSender emailSender(_logger, _configuration);
-        emailSender.sendEmail(emailAddress, "Task finished", emailBody);
-        
+        emailSender.sendEmail(emailAddress, subject, emailBody);
+
         _logger->info(__FILEREF__ + "Update IngestionJob"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -9005,8 +8959,8 @@ void MMSEngineProcessor::postVideoOnFacebookThread(
             + ", facebookConfigurationLabel: " + facebookConfigurationLabel
         );
         
-        string facebookPageToken = getFacebookPageTokenByConfigurationLabel(
-            workspace, facebookConfigurationLabel);
+        string facebookPageToken = _mmsEngineDBFacade->getFacebookPageTokenByConfigurationLabel(
+                workspace->_workspaceKey, facebookConfigurationLabel);            
         
         string fileFormat;
         {
@@ -9786,247 +9740,6 @@ void MMSEngineProcessor::postVideoOnFacebookThread(
                 "");    // processorMMS
 
         return;
-    }
-}
-
-string MMSEngineProcessor::getFacebookPageTokenByConfigurationLabel(
-    shared_ptr<Workspace> workspace, string facebookConfigurationLabel)
-{
-    // string youTubeURL;
-    // string sResponse;
-    
-    try
-    {
-        string facebookPageToken = _mmsEngineDBFacade->getFacebookPageTokenByConfigurationLabel(
-                workspace->_workspaceKey, facebookConfigurationLabel);            
-
-        return facebookPageToken;
-        /*
-        youTubeURL = _youTubeDataAPIProtocol
-            + "://"
-            + _youTubeDataAPIHostName
-            + ":" + to_string(_youTubeDataAPIPort)
-            + _youTubeDataAPIRefreshTokenURI;
-
-        string body =
-                string("client_id=") + _youTubeDataAPIClientId
-                + "&client_secret=" + _youTubeDataAPIClientSecret
-                + "&refresh_token=" + youTubeRefreshToken
-                + "&grant_type=refresh_token";
-
-        list<string> headerList;
-
-        {
-            // header = "Content-Length: " + to_string(body.length());
-            // headerList.push_back(header);
-
-            string header = "Content-Type: application/x-www-form-urlencoded";
-            headerList.push_back(header);
-        }
-
-        curlpp::Cleanup cleaner;
-        curlpp::Easy request;
-
-        request.setOpt(new curlpp::options::PostFields(body));
-        request.setOpt(new curlpp::options::PostFieldSize(body.length()));
-
-        request.setOpt(new curlpp::options::Url(youTubeURL));
-        request.setOpt(new curlpp::options::Timeout(_youTubeDataAPITimeoutInSeconds));
-
-        if (_youTubeDataAPIProtocol == "https")
-        {
-//                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;
-//                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;
-//                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;
-//                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;
-//                typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;
-//                typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;
-//                typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;
-//                typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;
-//                typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;
-//                typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;
-//                typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;
-//                typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;
-//                typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;
-
-
-            // cert is stored PEM coded in file...
-            // since PEM is default, we needn't set it for PEM
-            // curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
-            // curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
-            // equest.setOpt(sslCertType);
-
-            // set the cert for client authentication
-            // "testcert.pem"
-            // curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
-            // curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
-            // request.setOpt(sslCert);
-
-            // sorry, for engine we must set the passphrase
-            //   (if the key has one...)
-            // const char *pPassphrase = NULL;
-            // if(pPassphrase)
-            //  curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
-
-            // if we use a key stored in a crypto engine,
-            //   we must set the key type to "ENG"
-            // pKeyType  = "PEM";
-            // curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
-
-            // set the private key (file or ID in engine)
-            // pKeyName  = "testkey.pem";
-            // curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
-
-            // set the file with the certs vaildating the server
-            // *pCACertFile = "cacert.pem";
-            // curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
-
-            // disconnect if we can't validate server's cert
-            bool bSslVerifyPeer = false;
-            curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
-            request.setOpt(sslVerifyPeer);
-
-            curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
-            request.setOpt(sslVerifyHost);
-
-            // request.setOpt(new curlpp::options::SslEngineDefault());
-
-        }
-        request.setOpt(new curlpp::options::HttpHeader(headerList));
-
-        ostringstream response;
-        request.setOpt(new curlpp::options::WriteStream(&response));
-
-        // chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
-
-        _logger->info(__FILEREF__ + "Calling youTube refresh token"
-                + ", youTubeURL: " + youTubeURL
-                + ", body: " + body
-        );
-        request.perform();
-
-        long responseCode = curlpp::infos::ResponseCode::get(request);
-
-        sResponse = response.str();
-        _logger->info(__FILEREF__ + "Called youTube refresh token"
-                + ", youTubeURL: " + youTubeURL
-                + ", body: " + body
-                + ", responseCode: " + to_string(responseCode)
-                + ", sResponse: " + sResponse
-        );
-
-        if (responseCode != 200)
-        {
-            string errorMessage = __FILEREF__ + "YouTube refresh token failed"
-                    + ", responseCode: " + to_string(responseCode);
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-
-        Json::Value youTubeResponseRoot;
-        try
-        {
-            Json::CharReaderBuilder builder;
-            Json::CharReader* reader = builder.newCharReader();
-            string errors;
-
-            bool parsingSuccessful = reader->parse(sResponse.c_str(),
-                    sResponse.c_str() + sResponse.size(),
-                    &youTubeResponseRoot, &errors);
-            delete reader;
-
-            if (!parsingSuccessful)
-            {
-                string errorMessage = __FILEREF__ + "failed to parse the youTube response"
-                        + ", errors: " + errors
-                        + ", sResponse: " + sResponse
-                        ;
-                _logger->error(errorMessage);
-
-                throw runtime_error(errorMessage);
-            }
-        }
-        catch(...)
-        {
-            string errorMessage = string("youTube json response is not well format")
-                    + ", sResponse: " + sResponse
-                    ;
-            _logger->error(__FILEREF__ + errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-
-        //    {
-        //      "access_token": "ya29.GlxvBv2JUSUGmxHncG7KK118PHh4IY3ce6hbSRBoBjeXMiZjD53y3ZoeGchIkyJMb2rwQHlp-tQUZcIJ5zrt6CL2iWj-fV_2ArlAOCTy8y2B0_3KeZrbbJYgoFXCYA",
-        //      "expires_in": 3600,
-        //      "scope": "https://www.googleapis.com/auth/youtube https://www.googleapis.com/auth/youtube.upload",
-        //      "token_type": "Bearer"
-        //    }
-        
-        string field = "access_token";
-        if (!_mmsEngineDBFacade->isMetadataPresent(youTubeResponseRoot, field))
-        {
-            string errorMessage = __FILEREF__ + "Field is not present or it is null"
-                    + ", Field: " + field;
-            _logger->error(errorMessage);
-
-            throw runtime_error(errorMessage);
-        }
-        
-        return youTubeResponseRoot.get(field, "XXX").asString();
-        */
-    }
-    catch(runtime_error e)
-    {
-        string errorMessage = string("facebook access token failed")
-                // + ", youTubeURL: " + youTubeURL
-                // + ", sResponse: " + sResponse
-                + ", e.what(): " + e.what()
-                ;
-        _logger->error(__FILEREF__ + errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-    catch(exception e)
-    {
-        string errorMessage = string("facebook access token failed")
-                // + ", youTubeURL: " + youTubeURL
-                // + ", sResponse: " + sResponse
-                ;
-        _logger->error(__FILEREF__ + errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-}
-
-string MMSEngineProcessor::getLiveURLByConfigurationLabel(
-    shared_ptr<Workspace> workspace, string label)
-{
-    
-    try
-    {
-        string liveURL = _mmsEngineDBFacade->getLiveURLByConfigurationLabel(
-                workspace->_workspaceKey, label);            
-
-        return liveURL;
-    }
-    catch(runtime_error e)
-    {
-        string errorMessage = string("getLiveURLByConfigurationLabel failed")
-                + ", e.what(): " + e.what()
-                ;
-        _logger->error(__FILEREF__ + errorMessage);
-
-        throw runtime_error(errorMessage);
-    }
-    catch(exception e)
-    {
-        string errorMessage = string("getLiveURLByConfigurationLabel failed")
-                ;
-        _logger->error(__FILEREF__ + errorMessage);
-
-        throw runtime_error(errorMessage);
     }
 }
 

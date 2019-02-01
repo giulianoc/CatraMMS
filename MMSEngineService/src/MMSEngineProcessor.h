@@ -202,9 +202,6 @@ private:
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot);
 
-    string getLiveURLByConfigurationLabel(
-        shared_ptr<Workspace> workspace, string label);
-
     void extractTracksContentThread(
         shared_ptr<long> processorsThreadsNumber,
         int64_t ingestionJobKey,
@@ -351,9 +348,6 @@ private:
         string facebookNodeId, string facebookConfigurationLabel
         );
 
-    string getFacebookPageTokenByConfigurationLabel(
-        shared_ptr<Workspace> workspace, string facebookConfigurationLabel);
-
     void postVideoOnYouTubeThread(
         shared_ptr<long> processorsThreadsNumber,
         string mmsAssetPathName, int64_t sizeInBytes,
@@ -362,9 +356,8 @@ private:
         string youTubeDescription, Json::Value youTubeTags,
         int youTubeCategoryId, string youTubePrivacy);
 
-    string getYouTubeAccessTokenByConfigurationLabel(
-        shared_ptr<Workspace> workspace, string youTubeConfigurationLabel);
-
+	string getYouTubeAccessTokenByConfigurationLabel(
+		shared_ptr<Workspace> workspace, string youTubeConfigurationLabel);
 } ;
 
 #endif

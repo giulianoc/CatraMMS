@@ -2169,9 +2169,7 @@ void Validator::validateEmailNotificationMetadata(string label,
     // see sample in directory samples
         
     vector<string> mandatoryFields = {
-        "EmailAddress",
-        "Subject",
-        "Message"
+        "ConfigurationLabel"
     };
     for (string mandatoryField: mandatoryFields)
     {
@@ -2263,9 +2261,7 @@ void Validator::validateFTPDeliveryMetadata(int64_t workspaceKey, string label,
     // see sample in directory samples
         
     vector<string> mandatoryFields = {
-        "Server",
-        "UserName",
-        "Password"
+        "ConfigurationLabel"
     };
     for (string mandatoryField: mandatoryFields)
     {
