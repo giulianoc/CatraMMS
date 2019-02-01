@@ -43,61 +43,28 @@
 
             <p:row>
                 <p:column>
-                    <p:outputLabel value="Server"/>
+                    <p:outputLabel value="FTP Configuration" style="font-weight: bold"/>
                 </p:column>
                 <p:column>
-                    <p:inputText id="taskServer_FTP_Delivery" style="width: 100%"
-                                 value="#{workflowEditor.currentFTPDeliveryProperties.server}"
-                                 autocomplete="true"
-                                 placeholder="ftp server"/>
-                </p:column>
-            </p:row>
-
-            <p:row>
-                <p:column>
-                    <p:outputLabel value="Port"/>
-                </p:column>
-                <p:column>
-                    <p:inputNumber id="taskPort_FTP_Delivery"
-                                   required="false"
-                                   decimalPlaces="0"
-                                   value="#{workflowEditor.currentFTPDeliveryProperties.port}"
-                                   autocomplete="true"
-                                   placeholder="ftp port"/>
-                </p:column>
-            </p:row>
-
-            <p:row>
-                <p:column>
-                    <p:outputLabel value="User name"/>
-                </p:column>
-                <p:column>
-                    <p:inputText id="taskUserName_FTP_Delivery" style="width: 100%"
-                                 value="#{workflowEditor.currentFTPDeliveryProperties.userName}"
-                                 autocomplete="true"
-                                 placeholder="ftp user name"/>
-                </p:column>
-            </p:row>
-
-            <p:row>
-                <p:column>
-                    <p:outputLabel value="Password"/>
-                </p:column>
-                <p:column>
-                    <p:password id="taskPassword_FTP_Delivery" style="width: 100%"
-                                value="#{workflowEditor.currentFTPDeliveryProperties.password}" />
-                </p:column>
-            </p:row>
-
-            <p:row>
-                <p:column>
-                    <p:outputLabel value="Remote directory"/>
-                </p:column>
-                <p:column>
-                    <p:inputText id="taskRemoteDir_FTP_Delivery" style="width: 100%"
-                                 value="#{workflowEditor.currentFTPDeliveryProperties.remoteDirectory}"
-                                 autocomplete="true"
-                                 placeholder="ftp remote dir"/>
+                    <p:selectOneMenu id="taskConfigurationLabel_FTP_Delivery"
+                                     value="#{workflowEditor.currentFTPDeliveryProperties.configurationLabel}"
+                                     title="'Menu: Configuration -> FTP' for FTP configurations"
+                                     autoWidth="false">
+                        <f:selectItems value="#{workflowEditor.currentFTPDeliveryProperties.confLabels}"/>
+                    </p:selectOneMenu>
+                    <p:tooltip for="taskConfigurationLabel_FTP_Delivery" showEffect="clip" hideEffect="explode" position="left"/>
+                    <br />
+                    <h:outputText
+                            rendered="#{workflowEditor.currentFTPDeliveryProperties.confLabels.size() == 0}"
+                            value="No MMS FTP Configurations are present, please click " />
+                    <h:outputLink
+                            rendered="#{workflowEditor.currentFTPDeliveryProperties.confLabels.size() == 0}"
+                            value="/conf/ftp.xhtml" target="_blank">
+                        <h:outputText value="here" />
+                    </h:outputLink>
+                    <h:outputText
+                            rendered="#{workflowEditor.currentFTPDeliveryProperties.confLabels.size() == 0}"
+                            value=" to configure one" />
                 </p:column>
             </p:row>
 

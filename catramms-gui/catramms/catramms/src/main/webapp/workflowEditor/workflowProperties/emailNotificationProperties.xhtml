@@ -8,7 +8,7 @@
       xmlns:media="http://xmlns.jcp.org/jsf/composite/media">
 
 <p:dialog widgetVar="Email-Notification" modal="true"
-          header="Email-Notification" appendTo="@(body)" width="1000" height="600"
+          header="Email-Notification" appendTo="@(body)" width="1000" height="300"
           showEffect="fade" hideEffect="fade" resizable="false" draggable="true">
 
     <h:form id="Email-NotificationForm">
@@ -43,40 +43,28 @@
 
             <p:row>
                 <p:column>
-                    <p:outputLabel value="Email address:"/>
+                    <p:outputLabel value="EMail Configuration" style="font-weight: bold"/>
                 </p:column>
                 <p:column>
-                    <p:inputText id="taskEmailAddress_Email_Notification"
-                                 value="#{workflowEditor.currentEmailNotificationProperties.emailAddress}"
-                                 autocomplete="true"
-                                 placeholder="email address"/>
-                </p:column>
-            </p:row>
-
-            <p:row>
-                <p:column>
-                    <p:outputLabel value="Subject" style="font-weight: bold"/>
-                </p:column>
-                <p:column colspan="3">
-                    <p:inputText id="taskSubject_Email_Notification" style="width: 100%"
-                                 value="#{workflowEditor.currentEmailNotificationProperties.subject}"
-                                 autocomplete="true"
-                                 placeholder="subject"/>
-                </p:column>
-
-            </p:row>
-
-            <p:row>
-                <p:column>
-                    <p:outputLabel value="Message"/>
-                </p:column>
-                <p:column colspan="3">
-                    <p:scrollPanel>
-                        <p:inputTextarea id="taskMessage_Email_Notification" style="width: 100%"
-                                         value="#{workflowEditor.currentEmailNotificationProperties.message}"
-                                         autocomplete="true"
-                                         placeholder="message"/>
-                    </p:scrollPanel>
+                    <p:selectOneMenu id="taskConfigurationLabel_Email_Notification"
+                                     value="#{workflowEditor.currentEmailNotificationProperties.configurationLabel}"
+                                     title="'Menu: Configuration -> EMail' for EMail configurations"
+                                     autoWidth="false">
+                        <f:selectItems value="#{workflowEditor.currentEmailNotificationProperties.confLabels}"/>
+                    </p:selectOneMenu>
+                    <p:tooltip for="taskConfigurationLabel_Email_Notification" showEffect="clip" hideEffect="explode" position="left"/>
+                    <br />
+                    <h:outputText
+                            rendered="#{workflowEditor.currentEmailNotificationProperties.confLabels.size() == 0}"
+                            value="No MMS EMail Configurations are present, please click " />
+                    <h:outputLink
+                            rendered="#{workflowEditor.currentEmailNotificationProperties.confLabels.size() == 0}"
+                            value="/conf/email.xhtml" target="_blank">
+                        <h:outputText value="here" />
+                    </h:outputLink>
+                    <h:outputText
+                            rendered="#{workflowEditor.currentEmailNotificationProperties.confLabels.size() == 0}"
+                            value=" to configure one" />
                 </p:column>
             </p:row>
 

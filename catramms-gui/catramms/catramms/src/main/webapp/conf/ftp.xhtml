@@ -1,0 +1,281 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:media="http://xmlns.jcp.org/jsf/composite/media">
+
+<f:metadata>
+    <f:viewAction action="#{ftpView.fillList(false)}" />
+</f:metadata>
+
+<h:head>
+
+    <h:outputStylesheet library="css" name="catramms.css"  />
+
+</h:head>
+
+<h:body>
+
+    <ui:include src="/common/loadingDialog.xhtml"/>
+    <ui:include src="/common/globalConfirm.xhtml"/>
+
+    <p:dialog widgetVar="editFTPConf" modal="true"
+              header="Edit FTP Conf" appendTo="@(body)" width="600" height="500"
+              showEffect="fade" hideEffect="fade" resizable="false" draggable="true">
+
+        <h:form id="editFTPConfForm">
+
+            <p:panelGrid cellpadding="10" style="width: 100%" >
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="ConfKey" style="font-weight: bold" />
+                    </p:column>
+                    <p:column>
+                        <p:outputLabel value="#{ftpView.editFTPConfKey == -1 ? '' : ftpView.editFTPConfKey}" />
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Label" style="font-weight: bold" />
+                    </p:column>
+                    <p:column>
+                        <p:inputText style="width: 100%"
+                                     required="true"
+                                     autocomplete="true"
+                                     value="#{ftpView.editFTPLabel}"
+                                     placeholder="label for this configuration"/>
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Server" style="font-weight: bold" />
+                    </p:column>
+                    <p:column>
+                        <p:inputText style="width: 100%"
+                                     required="true"
+                                     autocomplete="true"
+                                     value="#{ftpView.editFTPServer}"
+                                     placeholder="server"/>
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Port" />
+                    </p:column>
+                    <p:column>
+                        <p:inputNumber style="width: 100%"
+                                       required="true"
+                                       decimalPlaces="0"
+                                       value="#{ftpView.editFTPPort}"
+                                       placeholder="port"
+                                />
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="User name" style="font-weight: bold" />
+                    </p:column>
+                    <p:column>
+                        <p:inputText style="width: 100%"
+                                     required="true"
+                                     autocomplete="true"
+                                     value="#{ftpView.editFTPUserName}"
+                                     placeholder="username"/>
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Password" style="font-weight: bold" />
+                    </p:column>
+                    <p:column>
+                        <p:inputText style="width: 100%"
+                                     required="true"
+                                     autocomplete="true"
+                                     value="#{ftpView.editFTPPassword}"
+                                     placeholder="password"/>
+                    </p:column>
+                </p:row>
+
+                <p:row>
+                    <p:column>
+                        <p:outputLabel value="Remote directory" style="font-weight: bold" />
+                    </p:column>
+                    <p:column>
+                        <p:inputText style="width: 100%"
+                                     required="true"
+                                     autocomplete="true"
+                                     value="#{ftpView.editFTPRemoteDirectory}"
+                                     placeholder="remote directory"/>
+                    </p:column>
+                </p:row>
+            </p:panelGrid>
+
+            <p:commandButton value="#{ftpView.editFTPConfKey == -1 ? 'Add FTP Conf' : 'Edit FTP Conf'}"
+                             actionListener="#{ftpView.addModifyFTPConf}"
+                             update="viewForm:ftpDataTable"
+                             oncomplete="PF('editFTPConf').hide()" />
+
+        </h:form>
+    </p:dialog>
+
+    <h:form id="viewForm">
+
+        <p:growl id="growl" showDetail="true" sticky="false" escape="false" life="5000" >
+            <p:autoUpdate />
+        </p:growl>
+
+        <p:toolbar>
+            <p:toolbarGroup align="left">
+                <p:outputLabel styleClass="appTitle" value="Media Management System" />
+            </p:toolbarGroup>
+
+            <p:toolbarGroup align="right">
+
+                <p:outputLabel value="Welcome #{sessionScope.userProfile.name}" />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:outputLabel value="Workspace:" />
+                <p:selectOneMenu id="workspaceName" value="#{ftpView.workspaceName}"
+                                 autoWidth="false">
+                    <f:selectItems value="#{ftpView.workspaceNames}" />
+                    <p:ajax
+                            global="true"
+                            event="change"
+                            listener="#{ftpView.fillList(false)}"
+                            update="ftpDataTable" />
+                </p:selectOneMenu>
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:commandLink value="Logout" action="#{login.logout}" />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:link
+                        value="Docs"
+                        target="_blank"
+                        href="https://github.com/giulianoc/CatraMMS/wiki"
+                />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <ui:include src="/common/mainMenu.xhtml"/>
+
+            </p:toolbarGroup>
+        </p:toolbar>
+
+        <p:toolbar>
+            <p:toolbarGroup align="left">
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:outputLabel styleClass="viewTitle" value="FTP Configuration" />
+
+            </p:toolbarGroup>
+
+            <p:toolbarGroup align="right">
+
+                <p:commandButton value="Add FTP Conf"
+                                 disabled="#{!sessionScope.currentWorkspaceDetails.owner}"
+                                 actionListener="#{ftpView.prepareEditFTPConf(-1)}"
+                                 update="editFTPConfForm"
+                               oncomplete="PF('editFTPConf').show()" />
+
+            </p:toolbarGroup>
+        </p:toolbar>
+
+        <p:dataTable resizableColumns="true" id="ftpDataTable" var="ftpConf" rowIndexVar="rowId"
+                     value="#{ftpView.ftpConfList}" rowKey="#{ftpConf.label}"
+                     selectionMode="single" stickyHeader="true"
+                     widgetVar="ftpDataTable" >
+
+            <f:facet name="header">
+
+                <p:toolbar>
+                    <p:toolbarGroup align="left">
+                        <!-- panelGroup is to make 'rendered' working on update -->
+                        <h:panelGroup>
+                            <p:outputLabel styleClass="red" value="#{ftpView.ftpConfList.size()}" />
+                            <p:outputLabel value=" FTP conf" />
+                        </h:panelGroup>
+                    </p:toolbarGroup>
+
+                    <p:toolbarGroup align="right">
+
+                    </p:toolbarGroup>
+                </p:toolbar>
+
+            </f:facet>
+
+            <p:column style="width:70px;" headerText="ConfKey" >
+                <p:outputLabel value="#{ftpConf.confKey}" />
+            </p:column>
+
+            <p:column headerText="Label" >
+                <p:outputLabel value="#{ftpConf.label}" />
+            </p:column>
+
+            <p:column headerText="Server" >
+                <p:outputLabel value="#{ftpConf.server}" />
+            </p:column>
+
+            <p:column headerText="Port" >
+                <p:outputLabel value="#{ftpConf.port}" />
+            </p:column>
+
+            <p:column headerText="User Name" >
+                <p:outputLabel value="#{ftpConf.userName}" />
+            </p:column>
+
+            <p:column headerText="Password" >
+                <p:outputLabel value="#{ftpConf.password}" />
+            </p:column>
+
+            <p:column headerText="Remote Directory" >
+                <p:outputLabel value="#{ftpConf.remoteDirectory}" />
+            </p:column>
+
+            <p:column style="width:150px;" headerText="">
+
+                <p:commandLink value="Remove"
+                               disabled="#{!sessionScope.currentWorkspaceDetails.owner}"
+                               action="#{ftpView.removeFTPConf(ftpConf.confKey)}"
+                               update="ftpDataTable"
+                        >
+                    <p:confirm header="Confirmation" message="Are you sure?" icon="ui-icon-alert" />
+                </p:commandLink>
+
+                <p:outputLabel value=" - " />
+
+                <p:commandLink value="Edit"
+                               disabled="#{!sessionScope.currentWorkspaceDetails.owner}"
+                               actionListener="#{ftpView.prepareEditFTPConf(rowId)}"
+                                 update="editFTPConfForm"
+                                 oncomplete="PF('editFTPConf').show()" />
+            </p:column>
+
+        </p:dataTable>
+
+    </h:form>
+
+</h:body>
+</html>

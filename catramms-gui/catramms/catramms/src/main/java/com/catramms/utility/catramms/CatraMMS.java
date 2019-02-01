@@ -2176,6 +2176,358 @@ public class CatraMMS {
         return liveURLConfList;
     }
 
+    public void addFTPConf(String username, String password,
+                               String label, String ftpServer,
+                           Long ftpPort, String ftpUserName, String ftpPassword,
+                           String ftpRemoteDirectory)
+            throws Exception
+    {
+
+        String mmsInfo;
+        try
+        {
+            String jsonFTPConf;
+            {
+                JSONObject joFTPConf = new JSONObject();
+
+                joFTPConf.put("Label", label);
+                joFTPConf.put("Server", ftpServer);
+                joFTPConf.put("Port", ftpPort);
+                joFTPConf.put("UserName", ftpUserName);
+                joFTPConf.put("Password", ftpPassword);
+                joFTPConf.put("RemoteDirectory", ftpRemoteDirectory);
+
+                jsonFTPConf = joFTPConf.toString(4);
+            }
+
+            String mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort + "/catramms/v1/conf/ftp";
+
+            mLogger.info("addFTPConf"
+                            + ", mmsURL: " + mmsURL
+                            + ", jsonFTPConf: " + jsonFTPConf
+            );
+
+            Date now = new Date();
+            String contentType = null;
+            mmsInfo = HttpFeedFetcher.fetchPostHttpsJson(mmsURL, contentType, timeoutInSeconds, maxRetriesNumber,
+                    username, password, jsonFTPConf);
+            mLogger.info("Elapsed time login (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "addFTPConf MMS failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+    }
+
+    public void modifyFTPConf(String username, String password,
+                                  Long confKey, String label, String ftpServer,
+                              Long ftpPort, String ftpUserName, String ftpPassword,
+                              String ftpRemoteDirectory)
+            throws Exception
+    {
+
+        String mmsInfo;
+        try
+        {
+            String jsonFTPConf;
+            {
+                JSONObject joFTPConf = new JSONObject();
+
+                joFTPConf.put("Label", label);
+                joFTPConf.put("Server", ftpServer);
+                joFTPConf.put("Port", ftpPort);
+                joFTPConf.put("UserName", ftpUserName);
+                joFTPConf.put("Password", ftpPassword);
+                joFTPConf.put("RemoteDirectory", ftpRemoteDirectory);
+
+                jsonFTPConf = joFTPConf.toString(4);
+            }
+
+            String mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort + "/catramms/v1/conf/ftp/" + confKey;
+
+            mLogger.info("modifyFTPConf"
+                            + ", mmsURL: " + mmsURL
+                            + ", jsonFTPConf: " + jsonFTPConf
+            );
+
+            Date now = new Date();
+            mmsInfo = HttpFeedFetcher.fetchPutHttpsJson(mmsURL, timeoutInSeconds, maxRetriesNumber,
+                    username, password, jsonFTPConf);
+            mLogger.info("Elapsed time login (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "modifyFTPConf MMS failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+    }
+
+    public void removeFTPConf(String username, String password,
+                                  Long confKey)
+            throws Exception
+    {
+
+        String mmsInfo;
+        try
+        {
+            String mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort + "/catramms/v1/conf/ftp/" + confKey;
+
+            mLogger.info("removeFTPConf"
+                            + ", mmsURL: " + mmsURL
+                            + ", confKey: " + confKey
+            );
+
+            Date now = new Date();
+            mmsInfo = HttpFeedFetcher.fetchDeleteHttpsJson(mmsURL, timeoutInSeconds, maxRetriesNumber,
+                    username, password);
+            mLogger.info("Elapsed time login (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "removeFTPConf MMS failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+    }
+
+    public List<FTPConf> getFTPConf(String username, String password)
+            throws Exception
+    {
+        List<FTPConf> ftpConfList = new ArrayList<>();
+
+        String mmsInfo;
+        try
+        {
+            String mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort + "/catramms/v1/conf/ftp";
+
+            mLogger.info("mmsURL: " + mmsURL);
+
+            Date now = new Date();
+            mmsInfo = HttpFeedFetcher.fetchGetHttpsJson(mmsURL, timeoutInSeconds, maxRetriesNumber,
+                    username, password);
+            mLogger.info("Elapsed time getLiveURLConf (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "MMS API failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+
+        try
+        {
+            JSONObject joMMSInfo = new JSONObject(mmsInfo);
+            JSONObject joResponse = joMMSInfo.getJSONObject("response");
+            JSONArray jaFTPConf = joResponse.getJSONArray("ftpConf");
+
+            mLogger.info("jaFTPConf.length(): " + jaFTPConf.length());
+
+            ftpConfList.clear();
+
+            for (int ftpConfIndex = 0;
+                 ftpConfIndex < jaFTPConf.length();
+                 ftpConfIndex++)
+            {
+                FTPConf ftpConf = new FTPConf();
+
+                JSONObject ftpConfInfo = jaFTPConf.getJSONObject(ftpConfIndex);
+
+                fillFTPConf(ftpConf, ftpConfInfo);
+
+                ftpConfList.add(ftpConf);
+            }
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "Parsing ftpConf failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+
+        return ftpConfList;
+    }
+
+    public void addEMailConf(String username, String password,
+                           String label, String address,
+                           String subject, String message)
+            throws Exception
+    {
+
+        String mmsInfo;
+        try
+        {
+            String jsonEMailConf;
+            {
+                JSONObject joEMailConf = new JSONObject();
+
+                joEMailConf.put("Label", label);
+                joEMailConf.put("Address", address);
+                joEMailConf.put("Subject", subject);
+                joEMailConf.put("Message", message);
+
+                jsonEMailConf = joEMailConf.toString(4);
+            }
+
+            String mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort + "/catramms/v1/conf/email";
+
+            mLogger.info("addEMailConf"
+                            + ", mmsURL: " + mmsURL
+                            + ", jsonEMailConf: " + jsonEMailConf
+            );
+
+            Date now = new Date();
+            String contentType = null;
+            mmsInfo = HttpFeedFetcher.fetchPostHttpsJson(mmsURL, contentType, timeoutInSeconds, maxRetriesNumber,
+                    username, password, jsonEMailConf);
+            mLogger.info("Elapsed time login (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "addEMailConf MMS failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+    }
+
+    public void modifyEMailConf(String username, String password,
+                              Long confKey, String label, String address,
+                                String subject, String message)
+            throws Exception
+    {
+
+        String mmsInfo;
+        try
+        {
+            String jsonEMailConf;
+            {
+                JSONObject joEMailConf = new JSONObject();
+
+                joEMailConf.put("Label", label);
+                joEMailConf.put("Address", address);
+                joEMailConf.put("Subject", subject);
+                joEMailConf.put("Message", message);
+
+                jsonEMailConf = joEMailConf.toString(4);
+            }
+
+            String mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort + "/catramms/v1/conf/email/" + confKey;
+
+            mLogger.info("modifyEMailConf"
+                            + ", mmsURL: " + mmsURL
+                            + ", jsonEMailConf: " + jsonEMailConf
+            );
+
+            Date now = new Date();
+            mmsInfo = HttpFeedFetcher.fetchPutHttpsJson(mmsURL, timeoutInSeconds, maxRetriesNumber,
+                    username, password, jsonEMailConf);
+            mLogger.info("Elapsed time login (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "modifyEMailConf MMS failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+    }
+
+    public void removeEMailConf(String username, String password,
+                              Long confKey)
+            throws Exception
+    {
+
+        String mmsInfo;
+        try
+        {
+            String mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort + "/catramms/v1/conf/email/" + confKey;
+
+            mLogger.info("removeEMailConf"
+                            + ", mmsURL: " + mmsURL
+                            + ", confKey: " + confKey
+            );
+
+            Date now = new Date();
+            mmsInfo = HttpFeedFetcher.fetchDeleteHttpsJson(mmsURL, timeoutInSeconds, maxRetriesNumber,
+                    username, password);
+            mLogger.info("Elapsed time login (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "removeEMailConf MMS failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+    }
+
+    public List<EMailConf> getEMailConf(String username, String password)
+            throws Exception
+    {
+        List<EMailConf> emailConfList = new ArrayList<>();
+
+        String mmsInfo;
+        try
+        {
+            String mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort + "/catramms/v1/conf/email";
+
+            mLogger.info("mmsURL: " + mmsURL);
+
+            Date now = new Date();
+            mmsInfo = HttpFeedFetcher.fetchGetHttpsJson(mmsURL, timeoutInSeconds, maxRetriesNumber,
+                    username, password);
+            mLogger.info("Elapsed time getLiveURLConf (@" + mmsURL + "@): @" + (new Date().getTime() - now.getTime()) + "@ millisecs.");
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "MMS API failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+
+        try
+        {
+            JSONObject joMMSInfo = new JSONObject(mmsInfo);
+            JSONObject joResponse = joMMSInfo.getJSONObject("response");
+            JSONArray jaEMailConf = joResponse.getJSONArray("emailConf");
+
+            mLogger.info("jaEMailConf.length(): " + jaEMailConf.length());
+
+            emailConfList.clear();
+
+            for (int emailConfIndex = 0;
+                 emailConfIndex < jaEMailConf.length();
+                 emailConfIndex++)
+            {
+                EMailConf emailConf = new EMailConf();
+
+                JSONObject emailConfInfo = jaEMailConf.getJSONObject(emailConfIndex);
+
+                fillEMailConf(emailConf, emailConfInfo);
+
+                emailConfList.add(emailConf);
+            }
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "Parsing emailConf failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+
+        return emailConfList;
+    }
+
     private void fillUserProfile(UserProfile userProfile, JSONObject joUserProfileInfo)
             throws Exception
     {
@@ -2766,6 +3118,46 @@ public class CatraMMS {
         catch (Exception e)
         {
             String errorMessage = "fillLiveURLConf failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+    }
+
+    private void fillFTPConf(FTPConf ftpConf, JSONObject ftpConfInfo)
+            throws Exception
+    {
+        try {
+            ftpConf.setConfKey(ftpConfInfo.getLong("confKey"));
+            ftpConf.setLabel(ftpConfInfo.getString("label"));
+            ftpConf.setServer(ftpConfInfo.getString("server"));
+            ftpConf.setPort(ftpConfInfo.getLong("port"));
+            ftpConf.setUserName(ftpConfInfo.getString("userName"));
+            ftpConf.setPassword(ftpConfInfo.getString("password"));
+            ftpConf.setRemoteDirectory(ftpConfInfo.getString("remoteDirectory"));
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "fillFTPConf failed. Exception: " + e;
+            mLogger.error(errorMessage);
+
+            throw new Exception(errorMessage);
+        }
+    }
+
+    private void fillEMailConf(EMailConf emailConf, JSONObject emailConfInfo)
+            throws Exception
+    {
+        try {
+            emailConf.setConfKey(emailConfInfo.getLong("confKey"));
+            emailConf.setLabel(emailConfInfo.getString("label"));
+            emailConf.setAddress(emailConfInfo.getString("address"));
+            emailConf.setSubject(emailConfInfo.getString("subject"));
+            emailConf.setMessage(emailConfInfo.getString("message"));
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "fillEMailConf failed. Exception: " + e;
             mLogger.error(errorMessage);
 
             throw new Exception(errorMessage);

@@ -1,22 +1,24 @@
 package com.catramms.backing.workflowEditor.Properties;
 
+import com.catramms.backing.common.SessionUtils;
+import com.catramms.backing.entity.FTPConf;
 import com.catramms.backing.workflowEditor.utility.WorkflowIssue;
 import com.catramms.backing.workflowEditor.utility.IngestionData;
+import com.catramms.utility.catramms.CatraMMS;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 public class FTPDeliveryProperties extends WorkflowProperties implements Serializable {
 
     private static final Logger mLogger = Logger.getLogger(FTPDeliveryProperties.class);
 
-    private String server;
-    private Long port;
-    private String userName;
-    private String password;
-    private String remoteDirectory;
+    private String configurationLabel;
+    private List<FTPConf> confList;
 
     private StringBuilder taskReferences = new StringBuilder();
 
@@ -24,19 +26,52 @@ public class FTPDeliveryProperties extends WorkflowProperties implements Seriali
                                  int elementId, String label)
     {
         super(positionX, positionY, elementId, label, "FTP-Delivery" + "-icon.png", "Task", "FTP-Delivery");
+
+        try
+        {
+            Long userKey = SessionUtils.getUserProfile().getUserKey();
+            String apiKey = SessionUtils.getCurrentWorkspaceDetails().getApiKey();
+
+            if (userKey == null || apiKey == null || apiKey.equalsIgnoreCase(""))
+            {
+                mLogger.warn("no input to require encodingProfilesSetKey"
+                                + ", userKey: " + userKey
+                                + ", apiKey: " + apiKey
+                );
+            }
+            else
+            {
+                String username = userKey.toString();
+                String password = apiKey;
+
+                CatraMMS catraMMS = new CatraMMS();
+
+                confList = catraMMS.getFTPConf(username, password);
+            }
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "Exception: " + e;
+            mLogger.error(errorMessage);
+        }
+    }
+
+    public FTPDeliveryProperties(String positionX, String positionY,
+                                 int elementId, String label,
+                                 List<FTPConf> confList)
+    {
+        super(positionX, positionY, elementId, label, "FTP-Delivery" + "-icon.png", "Task", "FTP-Delivery");
+
+        this.confList = confList;
     }
 
     public FTPDeliveryProperties clone()
     {
         FTPDeliveryProperties ftpDeliveryProperties = new FTPDeliveryProperties(
                 super.getPositionX(), super.getPositionY(),
-                super.getElementId(), super.getLabel());
+                super.getElementId(), super.getLabel(), confList);
 
-        ftpDeliveryProperties.setServer(getServer());
-        ftpDeliveryProperties.setPort(getPort());
-        ftpDeliveryProperties.setUserName(getUserName());
-        ftpDeliveryProperties.setPassword(getPassword());
-        ftpDeliveryProperties.setRemoteDirectory(getRemoteDirectory());
+        ftpDeliveryProperties.setConfigurationLabel(getConfigurationLabel());
 
         ftpDeliveryProperties.setStringBuilderTaskReferences(taskReferences);
 
@@ -47,11 +82,7 @@ public class FTPDeliveryProperties extends WorkflowProperties implements Seriali
     {
         super.setData(workflowProperties);
 
-        setServer(workflowProperties.getServer());
-        setPort(workflowProperties.getPort());
-        setUserName(workflowProperties.getUserName());
-        setPassword(workflowProperties.getPassword());
-        setRemoteDirectory(workflowProperties.getRemoteDirectory());
+        setConfigurationLabel(workflowProperties.getConfigurationLabel());
 
         setStringBuilderTaskReferences(workflowProperties.getStringBuilderTaskReferences());
     }
@@ -65,16 +96,8 @@ public class FTPDeliveryProperties extends WorkflowProperties implements Seriali
 
             JSONObject joParameters = jsonWorkflowElement.getJSONObject("Parameters");
 
-            if (joParameters.has("Server") && !joParameters.getString("Server").equalsIgnoreCase(""))
-                setServer(joParameters.getString("Server"));
-            if (joParameters.has("Port"))
-                setPort(joParameters.getLong("Port"));
-            if (joParameters.has("UserName") && !joParameters.getString("UserName").equalsIgnoreCase(""))
-                setUserName(joParameters.getString("UserName"));
-            if (joParameters.has("Password") && !joParameters.getString("Password").equalsIgnoreCase(""))
-                setPassword(joParameters.getString("Password"));
-            if (joParameters.has("RemoteDirectory") && !joParameters.getString("RemoteDirectory").equalsIgnoreCase(""))
-                setRemoteDirectory(joParameters.getString("RemoteDirectory"));
+            if (joParameters.has("ConfigurationLabel") && !joParameters.getString("ConfigurationLabel").equalsIgnoreCase(""))
+                setConfigurationLabel(joParameters.getString("ConfigurationLabel"));
 
             if (joParameters.has("References"))
             {
@@ -129,50 +152,18 @@ public class FTPDeliveryProperties extends WorkflowProperties implements Seriali
                 ingestionData.getWorkflowIssueList().add(workflowIssue);
             }
 
-            if (getServer() != null && !getServer().equalsIgnoreCase(""))
-                joParameters.put("Server", getServer());
+            if (getConfigurationLabel() != null && !getConfigurationLabel().equalsIgnoreCase(""))
+                joParameters.put("ConfigurationLabel", getConfigurationLabel());
             else
             {
                 WorkflowIssue workflowIssue = new WorkflowIssue();
-                workflowIssue.setLabel(getLabel());
-                workflowIssue.setFieldName("Server");
-                workflowIssue.setTaskType(getType());
+                workflowIssue.setLabel("");
+                workflowIssue.setFieldName("ConfigurationLabel");
+                workflowIssue.setTaskType(super.getType());
                 workflowIssue.setIssue("The field is not initialized");
 
                 ingestionData.getWorkflowIssueList().add(workflowIssue);
             }
-
-            if (getPort() != null)
-                joParameters.put("Port", getPort());
-
-            if (getUserName() != null && !getUserName().equalsIgnoreCase(""))
-                joParameters.put("UserName", getUserName());
-            else
-            {
-                WorkflowIssue workflowIssue = new WorkflowIssue();
-                workflowIssue.setLabel(getLabel());
-                workflowIssue.setFieldName("UserName");
-                workflowIssue.setTaskType(getType());
-                workflowIssue.setIssue("The field is not initialized");
-
-                ingestionData.getWorkflowIssueList().add(workflowIssue);
-            }
-
-            if (getPassword() != null && !getPassword().equalsIgnoreCase(""))
-                joParameters.put("Password", getPassword());
-            else
-            {
-                WorkflowIssue workflowIssue = new WorkflowIssue();
-                workflowIssue.setLabel(getLabel());
-                workflowIssue.setFieldName("Password");
-                workflowIssue.setTaskType(getType());
-                workflowIssue.setIssue("The field is not initialized");
-
-                ingestionData.getWorkflowIssueList().add(workflowIssue);
-            }
-
-            if (getRemoteDirectory() != null && !getRemoteDirectory().equalsIgnoreCase(""))
-                joParameters.put("RemoteDirectory", getRemoteDirectory());
 
             if (taskReferences != null && !taskReferences.toString().equalsIgnoreCase(""))
             {
@@ -201,44 +192,22 @@ public class FTPDeliveryProperties extends WorkflowProperties implements Seriali
         return jsonWorkflowElement;
     }
 
-    public String getServer() {
-        return server;
+    public List<String> getConfLabels()
+    {
+        List<String> configurationLabels = new ArrayList<>();
+
+        for (FTPConf ftpConf: confList)
+            configurationLabels.add(ftpConf.getLabel());
+
+        return configurationLabels;
     }
 
-    public void setServer(String server) {
-        this.server = server;
+    public String getConfigurationLabel() {
+        return configurationLabel;
     }
 
-    public Long getPort() {
-        return port;
-    }
-
-    public void setPort(Long port) {
-        this.port = port;
-    }
-
-    public String getUserName() {
-        return userName;
-    }
-
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public String getRemoteDirectory() {
-        return remoteDirectory;
-    }
-
-    public void setRemoteDirectory(String remoteDirectory) {
-        this.remoteDirectory = remoteDirectory;
+    public void setConfigurationLabel(String configurationLabel) {
+        this.configurationLabel = configurationLabel;
     }
 
     public void setStringBuilderTaskReferences(StringBuilder taskReferences) {

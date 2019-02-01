@@ -7576,6 +7576,7 @@ void MMSEngineProcessor::manageEmailNotificationTask(
 {
     try
     {
+		/*
         if (dependencies.size() == 0)
         {
             string errorMessage = __FILEREF__ + "No configured any IngestionJobKey in order to send an email"
@@ -7586,6 +7587,7 @@ void MMSEngineProcessor::manageEmailNotificationTask(
 
             throw runtime_error(errorMessage);
         }
+		*/
         
         string sIngestionJobJeyDependency;
         for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)

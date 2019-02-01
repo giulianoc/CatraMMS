@@ -1,35 +1,74 @@
 package com.catramms.backing.workflowEditor.Properties;
 
+import com.catramms.backing.common.SessionUtils;
+import com.catramms.backing.entity.EMailConf;
 import com.catramms.backing.workflowEditor.utility.WorkflowIssue;
 import com.catramms.backing.workflowEditor.utility.IngestionData;
+import com.catramms.utility.catramms.CatraMMS;
 import org.apache.log4j.Logger;
 import org.json.JSONObject;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class EmailNotificationProperties extends WorkflowProperties implements Serializable {
 
     private static final Logger mLogger = Logger.getLogger(EmailNotificationProperties.class);
 
-    private String emailAddress;
-    private String subject;
-    private String message;
+    private String configurationLabel;
+    private List<EMailConf> confList;
 
     public EmailNotificationProperties(String positionX, String positionY,
                                        int elementId, String label)
     {
         super(positionX, positionY, elementId, label, "Email-Notification" + "-icon.png", "Task", "Email-Notification");
+
+        try
+        {
+            Long userKey = SessionUtils.getUserProfile().getUserKey();
+            String apiKey = SessionUtils.getCurrentWorkspaceDetails().getApiKey();
+
+            if (userKey == null || apiKey == null || apiKey.equalsIgnoreCase(""))
+            {
+                mLogger.warn("no input to require encodingProfilesSetKey"
+                                + ", userKey: " + userKey
+                                + ", apiKey: " + apiKey
+                );
+            }
+            else
+            {
+                String username = userKey.toString();
+                String password = apiKey;
+
+                CatraMMS catraMMS = new CatraMMS();
+
+                confList = catraMMS.getEMailConf(username, password);
+            }
+        }
+        catch (Exception e)
+        {
+            String errorMessage = "Exception: " + e;
+            mLogger.error(errorMessage);
+        }
+    }
+
+    public EmailNotificationProperties(String positionX, String positionY,
+                                       int elementId, String label,
+                                       List<EMailConf> confList)
+    {
+        super(positionX, positionY, elementId, label, "Email-Notification" + "-icon.png", "Task", "Email-Notification");
+
+        this.confList = confList;
     }
 
     public EmailNotificationProperties clone()
     {
         EmailNotificationProperties emailNotificationProperties = new EmailNotificationProperties(
                 super.getPositionX(), super.getPositionY(),
-                super.getElementId(), super.getLabel());
+                super.getElementId(), super.getLabel(), confList);
 
-        emailNotificationProperties.setEmailAddress(emailAddress);
-        emailNotificationProperties.setSubject(subject);
-        emailNotificationProperties.setMessage(message);
+        emailNotificationProperties.setConfigurationLabel(getConfigurationLabel());
 
         return emailNotificationProperties;
     }
@@ -38,9 +77,7 @@ public class EmailNotificationProperties extends WorkflowProperties implements S
     {
         super.setData(workflowProperties);
 
-        setEmailAddress(workflowProperties.getEmailAddress());
-        setSubject(workflowProperties.getSubject());
-        setMessage(workflowProperties.getMessage());
+        setConfigurationLabel(workflowProperties.getConfigurationLabel());
     }
 
     public void setData(JSONObject jsonWorkflowElement)
@@ -52,12 +89,8 @@ public class EmailNotificationProperties extends WorkflowProperties implements S
 
             JSONObject joParameters = jsonWorkflowElement.getJSONObject("Parameters");
 
-            if (joParameters.has("EmailAddress") && !joParameters.getString("EmailAddress").equalsIgnoreCase(""))
-                setEmailAddress(joParameters.getString("EmailAddress"));
-            if (joParameters.has("Subject") && !joParameters.getString("Subject").equalsIgnoreCase(""))
-                setSubject(joParameters.getString("Subject"));
-            if (joParameters.has("Message") && !joParameters.getString("Message").equalsIgnoreCase(""))
-                setMessage(joParameters.getString("Message"));
+            if (joParameters.has("ConfigurationLabel") && !joParameters.getString("ConfigurationLabel").equalsIgnoreCase(""))
+                setConfigurationLabel(joParameters.getString("ConfigurationLabel"));
         }
         catch (Exception e)
         {
@@ -92,40 +125,14 @@ public class EmailNotificationProperties extends WorkflowProperties implements S
                 ingestionData.getWorkflowIssueList().add(workflowIssue);
             }
 
-            if (getEmailAddress() != null && !getEmailAddress().equalsIgnoreCase(""))
-                joParameters.put("EmailAddress", getEmailAddress());
+            if (getConfigurationLabel() != null && !getConfigurationLabel().equalsIgnoreCase(""))
+                joParameters.put("ConfigurationLabel", getConfigurationLabel());
             else
             {
                 WorkflowIssue workflowIssue = new WorkflowIssue();
-                workflowIssue.setLabel(getLabel());
-                workflowIssue.setFieldName("EmailAddress");
-                workflowIssue.setTaskType(getType());
-                workflowIssue.setIssue("The field is not initialized");
-
-                ingestionData.getWorkflowIssueList().add(workflowIssue);
-            }
-
-            if (getSubject() != null && !getSubject().equalsIgnoreCase(""))
-                joParameters.put("Subject", getSubject());
-            else
-            {
-                WorkflowIssue workflowIssue = new WorkflowIssue();
-                workflowIssue.setLabel(getLabel());
-                workflowIssue.setFieldName("Subject");
-                workflowIssue.setTaskType(getType());
-                workflowIssue.setIssue("The field is not initialized");
-
-                ingestionData.getWorkflowIssueList().add(workflowIssue);
-            }
-
-            if (getMessage() != null && !getMessage().equalsIgnoreCase(""))
-                joParameters.put("Message", getMessage());
-            else
-            {
-                WorkflowIssue workflowIssue = new WorkflowIssue();
-                workflowIssue.setLabel(getLabel());
-                workflowIssue.setFieldName("Message");
-                workflowIssue.setTaskType(getType());
+                workflowIssue.setLabel("");
+                workflowIssue.setFieldName("ConfigurationLabel");
+                workflowIssue.setTaskType(super.getType());
                 workflowIssue.setIssue("The field is not initialized");
 
                 ingestionData.getWorkflowIssueList().add(workflowIssue);
@@ -143,27 +150,21 @@ public class EmailNotificationProperties extends WorkflowProperties implements S
         return jsonWorkflowElement;
     }
 
-    public String getEmailAddress() {
-        return emailAddress;
+    public List<String> getConfLabels()
+    {
+        List<String> configurationLabels = new ArrayList<>();
+
+        for (EMailConf emailConf: confList)
+            configurationLabels.add(emailConf.getLabel());
+
+        return configurationLabels;
     }
 
-    public void setEmailAddress(String emailAddress) {
-        this.emailAddress = emailAddress;
+    public String getConfigurationLabel() {
+        return configurationLabel;
     }
 
-    public String getSubject() {
-        return subject;
-    }
-
-    public void setSubject(String subject) {
-        this.subject = subject;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
+    public void setConfigurationLabel(String configurationLabel) {
+        this.configurationLabel = configurationLabel;
     }
 }
