@@ -46,8 +46,6 @@ public class ConcatDemuxerProperties extends CreateContentProperties implements 
         try {
             super.setData(jsonWorkflowElement);
 
-            setLabel(jsonWorkflowElement.getString("Label"));
-
             JSONObject joParameters = jsonWorkflowElement.getJSONObject("Parameters");
 
             if (joParameters.has("References"))

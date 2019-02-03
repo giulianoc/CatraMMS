@@ -8,9 +8,7 @@
 			"References": [
 				{ "ReferenceIngestionJobKey": 11 }
 			],
-			"EmailAddress": "xxxxxx@yyyyyyyyy.zz",
-			"Subject": "Task finished",
-			"Message": "Task __INGESTIONJOBKEY__ has finished"
+			"ConfigurationLabel": "My email"
 		}
 	}
 }

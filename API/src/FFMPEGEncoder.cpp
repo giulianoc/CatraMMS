@@ -1767,6 +1767,7 @@ void FFMPEGEncoder::liveRecorder(
         
         int64_t ingestionJobKey = liveRecorderMedatada.get("ingestionJobKey", -1).asInt64();
         string segmentListPathName = liveRecorderMedatada.get("segmentListPathName", "XXX").asString();
+        string recordedFileNamePrefix = liveRecorderMedatada.get("recordedFileNamePrefix", "XXX").asString();
         string liveURL = liveRecorderMedatada.get("liveURL", "XXX").asString();
         time_t utcRecordingPeriodStart = liveRecorderMedatada.get("utcRecordingPeriodStart", -1).asInt64();
         time_t utcRecordingPeriodEnd = liveRecorderMedatada.get("utcRecordingPeriodEnd", -1).asInt64();
@@ -1776,6 +1777,7 @@ void FFMPEGEncoder::liveRecorder(
         liveRecording->_ffmpeg->liveRecorder(
                 ingestionJobKey,
                 segmentListPathName,
+				recordedFileNamePrefix,
                 liveURL,
                 utcRecordingPeriodStart,
                 utcRecordingPeriodEnd,

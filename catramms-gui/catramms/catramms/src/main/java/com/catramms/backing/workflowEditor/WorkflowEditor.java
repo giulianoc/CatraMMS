@@ -1901,7 +1901,8 @@ public class WorkflowEditor extends Workspace implements Serializable {
                                          Element parentElement, EndPointAnchor parentEndPointAnchor)
             throws Exception
     {
-        try {
+        try
+        {
             Element groupOfTasksElement = addTask(joGroupOfTasks.getString("Type"),
                     new Integer(workflow_firstX + (workflow_column * workflow_stepX)).toString() + "em",
                     new Integer(workflow_firstY + (workflow_rowForTheTask * workflow_stepY)) + "em");
@@ -1920,21 +1921,33 @@ public class WorkflowEditor extends Workspace implements Serializable {
             GroupOfTasksProperties workflowProperties = (GroupOfTasksProperties) groupOfTasksElement.getData();
             workflowProperties.setData(joGroupOfTasks);
 
+            mLogger.info("buildModel_GroupOfTasks"
+                    + ", workflowProperties.getElementId: " + workflowProperties.getElementId()
+                    + ", workflowProperties.getLabel: " + workflowProperties.getLabel()
+                    + ", workflow_column: " + workflow_column
+                    + ", workflow_rowForTheTask: " + workflow_rowForTheTask
+                    + ", rowForTasksOfGroup: " + rowForTasksOfGroup
+            );
+
             JSONObject joParameters = joGroupOfTasks.getJSONObject("Parameters");
 
             JSONArray jaTasks = joParameters.getJSONArray("Tasks");
             for (int taskIndex = 0; taskIndex < jaTasks.length(); taskIndex++)
             {
                 JSONObject joTask = jaTasks.getJSONObject(taskIndex);
+                mLogger.info("buildModel_GroupOfTasks"
+                        + ", Task number: " + taskIndex
+                        + ", Task type: " + joTask.getString("Type")
+                );
                 if (joTask.getString("Type").equalsIgnoreCase("GroupOfTasks"))
                     buildModel_GroupOfTasks(joTask,
                             workflow_column + 2,    // +1: onComplete, +2: tasks
-                            rowForTasksOfGroup, -1,
+                            rowForTasksOfGroup, rowForTasksOfGroup,
                             groupOfTasksElement, EndPointAnchor.RIGHT);
                 else
                     buildModel_Task(joTask,
                             workflow_column + 2,    // +1: onComplete, +2: tasks
-                            rowForTasksOfGroup, -1,
+                            rowForTasksOfGroup, rowForTasksOfGroup,
                             groupOfTasksElement, EndPointAnchor.RIGHT);
                 rowForTasksOfGroup++;
             }
@@ -2025,11 +2038,29 @@ public class WorkflowEditor extends Workspace implements Serializable {
             WorkflowProperties workflowProperties = (WorkflowProperties) taskElement.getData();
             workflowProperties.setData(joTask);
 
+            mLogger.info("buildModel_Task"
+                    + ", workflowProperties.getElementId: " + workflowProperties.getElementId()
+                    + ", workflowProperties.getLabel: " + workflowProperties.getLabel()
+                    + ", workflow_column: " + workflow_column
+                    + ", workflow_rowForTheTask: " + workflow_rowForTheTask
+                    + ", rowForTasksOfGroup: " + rowForTasksOfGroup
+            );
+
+            boolean rowForTasksOfGroupAlreadyIncreased = false;
+
             if (joTask.has("OnSuccess"))
             {
                 JSONObject joOnSuccess = joTask.getJSONObject("OnSuccess");
                 if (joOnSuccess.has("Task"))
                 {
+                    // if the current Task is already in the GroupOfTasks column (3) and we have to add
+                    // an OnSuccess/OnError/OnComplete Task, than the rowForTasksOfGroup has to be increased
+                    if (workflow_column == 3)
+                    {
+                        rowForTasksOfGroup++;
+                        rowForTasksOfGroupAlreadyIncreased = true;
+                    }
+
                     JSONObject joOnSuccessTask = joOnSuccess.getJSONObject("Task");
                     if (joOnSuccessTask.getString("Type").equalsIgnoreCase("GroupOfTasks"))
                         buildModel_GroupOfTasks(joOnSuccessTask,
@@ -2047,6 +2078,14 @@ public class WorkflowEditor extends Workspace implements Serializable {
                 JSONObject joOnError = joTask.getJSONObject("OnError");
                 if (joOnError.has("Task"))
                 {
+                    // if the current Task is already in the GroupOfTasks column (3) and we have to add
+                    // an OnSuccess/OnError/OnComplete Task, than the rowForTasksOfGroup has to be increased
+                    if (workflow_column == 3 && !rowForTasksOfGroupAlreadyIncreased)
+                    {
+                        rowForTasksOfGroup++;
+                        rowForTasksOfGroupAlreadyIncreased = true;
+                    }
+
                     JSONObject joOnErrorTask = joOnError.getJSONObject("Task");
                     if (joOnErrorTask.getString("Type").equalsIgnoreCase("GroupOfTasks"))
                         buildModel_GroupOfTasks(joOnErrorTask,
@@ -2064,6 +2103,14 @@ public class WorkflowEditor extends Workspace implements Serializable {
                 JSONObject joOnComplete = joTask.getJSONObject("OnComplete");
                 if (joOnComplete.has("Task"))
                 {
+                    // if the current Task is already in the GroupOfTasks column (3) and we have to add
+                    // an OnSuccess/OnError/OnComplete Task, than the rowForTasksOfGroup has to be increased
+                    if (workflow_column == 3 && !rowForTasksOfGroupAlreadyIncreased)
+                    {
+                        rowForTasksOfGroup++;
+                        rowForTasksOfGroupAlreadyIncreased = true;
+                    }
+
                     JSONObject joOnCompleteTask = joOnComplete.getJSONObject("Task");
                     if (joOnCompleteTask.getString("Type").equalsIgnoreCase("GroupOfTasks"))
                         buildModel_GroupOfTasks(joOnCompleteTask,

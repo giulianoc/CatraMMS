@@ -69,8 +69,6 @@ public class FaceIdentificationProperties extends CreateContentProperties implem
         try {
             super.setData(jsonWorkflowElement);
 
-            setLabel(jsonWorkflowElement.getString("Label"));
-
             JSONObject joParameters = jsonWorkflowElement.getJSONObject("Parameters");
 
             if (joParameters.has("CascadeName") && !joParameters.getString("CascadeName").equalsIgnoreCase(""))

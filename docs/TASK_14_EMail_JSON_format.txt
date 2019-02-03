@@ -6,9 +6,9 @@
 	"Type": "Email-Notification",
 
 	"Parameters": {
-		// mandatory
+		// optional
 		"References": [
-			// mandatory. Just one Reference needed.
+			// optional.
 			// In case this task is placed inside an onSuccess event, the Reference... item can be omitted.
 			// In such a case, the System will automatically add the Reference... item using the key
 			// of the ingestion job by which this EMail depend on.
@@ -18,12 +18,6 @@
 		],
 
 		// mandatory
-		"EmailAddress": "aaaa@bbbb.xxx",
-
-		// mandatory
-		"Subject": ".....",
-
-		// mandatory
-		"Message": "....."
+		"ConfigurationLabel": "My email"
 	}
 }

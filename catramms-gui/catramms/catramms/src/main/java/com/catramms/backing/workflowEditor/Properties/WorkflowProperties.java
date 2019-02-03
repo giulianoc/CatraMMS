@@ -154,7 +154,8 @@ public class WorkflowProperties implements Serializable
     public void setData(JSONObject jsonWorkflowElement)
     {
         try {
-            setLabel(jsonWorkflowElement.getString("Label"));
+            if (jsonWorkflowElement.has("Label"))   // GroupOfTasks does not have Label
+                setLabel(jsonWorkflowElement.getString("Label"));
         }
         catch (Exception e)
         {

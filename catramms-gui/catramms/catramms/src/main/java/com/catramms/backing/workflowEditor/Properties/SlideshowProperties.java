@@ -58,8 +58,6 @@ public class SlideshowProperties extends CreateContentProperties implements Seri
         try {
             super.setData(jsonWorkflowElement);
 
-            setLabel(jsonWorkflowElement.getString("Label"));
-
             JSONObject joParameters = jsonWorkflowElement.getJSONObject("Parameters");
 
             if (joParameters.has("DurationOfEachSlideInSeconds"))

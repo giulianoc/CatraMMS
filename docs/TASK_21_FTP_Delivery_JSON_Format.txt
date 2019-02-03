@@ -25,18 +25,6 @@
 		],
 
 		// mandatory
-		"Server": "ftp server name or IP address",
-
-		// optional
-		"Port": 21,
-
-		// mandatory
-		"UserName": "ftp user name",
-
-		// mandatory
-		"Password": "ftp password",
-
-		// optional, default is "/"
-		"RemoteDirectory": "ftp remote dir"
+		"ConfigurationLabel": "my ftp server"
 	}
 }

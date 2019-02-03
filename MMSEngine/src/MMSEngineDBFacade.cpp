@@ -7423,9 +7423,10 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
         int start, int rows,
         bool contentTypePresent, ContentType contentType,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
-        string title,
+        string title, string jsonCondition,
 		vector<string>& tags,
         string ingestionDateOrder,   // "" or "asc" or "desc"
+		string jsonOrderBy,
 		bool admin
 )
 {
@@ -7450,7 +7451,9 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
             + ", startIngestionDate: " + (startAndEndIngestionDatePresent ? startIngestionDate : "")
             + ", endIngestionDate: " + (startAndEndIngestionDatePresent ? endIngestionDate : "")
             + ", title: " + title
+            + ", jsonCondition: " + jsonCondition
             + ", ingestionDateOrder: " + ingestionDateOrder
+            + ", jsonOrderBy: " + jsonOrderBy
         );
         
         conn = _connectionPool->borrow();	
@@ -7500,10 +7503,22 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                 requestParametersRoot[field] = title;
             }
 
+            if (jsonCondition != "")
+            {
+                field = "jsonCondition";
+                requestParametersRoot[field] = jsonCondition;
+            }
+
             if (ingestionDateOrder != "")
             {
                 field = "ingestionDateOrder";
                 requestParametersRoot[field] = ingestionDateOrder;
+            }
+
+            if (jsonOrderBy != "")
+            {
+                field = "jsonOrderBy";
+                requestParametersRoot[field] = jsonOrderBy;
             }
 
             field = "requestParameters";
@@ -7546,6 +7561,8 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
             sqlWhere += ("and mi.ingestionDate >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) and mi.ingestionDate <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
         if (title != "")
             sqlWhere += ("and mi.title like ? ");
+        if (jsonCondition != "")
+            sqlWhere += ("and " + jsonCondition);
 		if (tags.size() > 0)
 		{
 			string tagsCondition;
@@ -7633,8 +7650,26 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 
         Json::Value mediaItemsRoot(Json::arrayValue);
         {
-		if (tags.size() > 0)
-		{
+			string orderByCondition;
+			if (ingestionDateOrder == "" && jsonOrderBy == "")
+			{
+				orderByCondition = " ";
+			}
+			else if (ingestionDateOrder == "" && jsonOrderBy != "")
+			{
+				orderByCondition = "order by " + jsonOrderBy + " ";
+			}
+			else if (ingestionDateOrder != "" && jsonOrderBy == "")
+			{
+				orderByCondition = "order by mi.ingestionDate " + ingestionDateOrder + " ";
+			}
+			else // if (ingestionDateOrder != "" && jsonOrderBy != "")
+			{
+				orderByCondition = "order by " + jsonOrderBy + ", mi.ingestionDate " + ingestionDateOrder + " ";
+			}
+
+			if (tags.size() > 0)
+			{
             		lastSQLCommand = 
                 		string("select mi.mediaItemKey, mi.title, mi.deliveryFileName, mi.ingester, mi.userData, mi.contentProviderKey, "
                     			"DATE_FORMAT(convert_tz(mi.ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate, "
@@ -7642,11 +7677,11 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                     			"DATE_FORMAT(convert_tz(mi.endPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endPublishing, "
                     			"mi.contentType, mi.retentionInMinutes from MMS_MediaItem mi, MMS_Tag t ")
                     			+ sqlWhere
-                    			+ (ingestionDateOrder != "" ? ("order by mi.ingestionDate " + ingestionDateOrder + " ") : "")
+                    			+ orderByCondition
                     			+ "limit ? offset ?";
-		}
-		else
-		{
+			}
+			else
+			{
             		lastSQLCommand = 
                 		string("select mi.mediaItemKey, mi.title, mi.deliveryFileName, mi.ingester, mi.userData, mi.contentProviderKey, "
                     			"DATE_FORMAT(convert_tz(mi.ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate, "
@@ -7654,9 +7689,9 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                     			"DATE_FORMAT(convert_tz(mi.endPublishing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endPublishing, "
                     			"mi.contentType, mi.retentionInMinutes from MMS_MediaItem mi ")
                     			+ sqlWhere
-                    			+ (ingestionDateOrder != "" ? ("order by mi.ingestionDate " + ingestionDateOrder + " ") : "")
+                    			+ orderByCondition
                     			+ "limit ? offset ?";
-		}
+			}
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;

@@ -134,6 +134,7 @@ public:
 	void liveRecorder(
         int64_t ingestionJobKey,
 		string segmentListPathName,
+		string recordedFileNamePrefix,
         string liveURL,
         time_t utcRecordingPeriodStart, 
         time_t utcRecordingPeriodEnd, 

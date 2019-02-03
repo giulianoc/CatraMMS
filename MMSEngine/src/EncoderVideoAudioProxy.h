@@ -167,8 +167,11 @@ private:
     string liveRecorder();
     string liveRecorder_through_ffmpeg();
     void processLiveRecorder(string stagingEncodedAssetPathName);    
+	bool isLastLiveRecorderFile(time_t currentRecordedFileCreationTime, string contentsPath,
+			string recordedFileNamePrefix);
+	time_t getMediaLiveRecorderStartTime(string mediaLiveRecorderFileName);
 	string processLastGeneratedLiveRecorderFiles(string segmentListPathName,
-		string contentsPath, string lastRecordedAssetFileName);
+		string recordedFileNamePrefix, string contentsPath, string lastRecordedAssetFileName);
 
     bool getEncodingStatus();
 

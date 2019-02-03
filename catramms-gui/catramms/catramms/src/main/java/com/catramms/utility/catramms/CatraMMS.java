@@ -776,8 +776,10 @@ public class CatraMMS {
     }
 
     public Vector<Long> getMediaItems(String username, String password,
-                          Long maxMediaItemsNumber, String contentType,
-                          Date start, Date end, String title, String ingestionDateOrder,
+                                      Long maxMediaItemsNumber, String contentType,
+                                      Date begin, Date end, String title,
+                                      String jsonCondition,
+                                      String ingestionDateOrder, String jsonOrderBy,
                           List<MediaItem> mediaItemsList)
             throws Exception
     {
@@ -791,14 +793,20 @@ public class CatraMMS {
         String mmsInfo;
         try
         {
+            String ingestionDatesParameters = "";
+            if (begin != null && end != null)
+                ingestionDatesParameters = "&startIngestionDate=" + simpleDateFormat.format(begin)
+                        + "&endIngestionDate=" + simpleDateFormat.format(end);
+
             String mmsURL = mmsAPIProtocol + "://" + mmsAPIHostName + ":" + mmsAPIPort + "/catramms/v1/mediaItems"
                     + "?start=0"
                     + "&rows=" + maxMediaItemsNumber
                     + "&contentType=" + contentType
                     + "&title=" + (title == null ? "" : java.net.URLEncoder.encode(title, "UTF-8"))
-                    + "&startIngestionDate=" + simpleDateFormat.format(start)
-                    + "&endIngestionDate=" + simpleDateFormat.format(end)
+                    + ingestionDatesParameters
+                    + "&jsonCondition=" + (jsonCondition == null ? "" : java.net.URLEncoder.encode(jsonCondition, "UTF-8"))
                     + "&ingestionDateOrder=" + (ingestionDateOrder == null ? "" : ingestionDateOrder)
+                    + "&jsonOrderBy=" + (jsonOrderBy == null ? "" : java.net.URLEncoder.encode(jsonOrderBy, "UTF-8"))
                     ;
 
             mLogger.info("mmsURL: " + mmsURL);

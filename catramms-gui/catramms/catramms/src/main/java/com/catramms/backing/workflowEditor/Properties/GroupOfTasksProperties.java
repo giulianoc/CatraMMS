@@ -51,8 +51,6 @@ public class GroupOfTasksProperties extends WorkflowProperties implements Serial
         try {
             super.setData(jsonWorkflowElement);
 
-            setLabel(jsonWorkflowElement.getString("Label"));
-
             JSONObject joParameters = jsonWorkflowElement.getJSONObject("Parameters");
 
             if (joParameters.has("GroupOfTaskExecutionType") && !joParameters.getString("GroupOfTaskExecutionType").equalsIgnoreCase(""))

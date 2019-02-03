@@ -936,8 +936,8 @@ public:
         int start, int rows,
         bool contentTypePresent, ContentType contentType,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
-        string title, vector<string>& tags,
-		string ingestionDateOrder, bool admin);
+        string title, string jsonCondition, vector<string>& tags,
+		string ingestionDateAndTitleOrder, string jsonOrderBy, bool admin);
 
     Json::Value getEncodingProfilesSetList (
         int64_t workspaceKey, int64_t encodingProfilesSetKey,

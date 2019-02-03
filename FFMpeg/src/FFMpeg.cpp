@@ -2634,6 +2634,7 @@ void FFMpeg::extractTrackMediaToIngest(
 void FFMpeg::liveRecorder(
         int64_t ingestionJobKey,
 		string segmentListPathName,
+		string recordedFileNamePrefix,
         string liveURL,
         time_t utcRecordingPeriodStart, 
         time_t utcRecordingPeriodEnd, 
@@ -2642,7 +2643,7 @@ void FFMpeg::liveRecorder(
 {
 	string ffmpegExecuteCommand;
 	string segmentListPath;
-	string recordedFileNamePrefix = string("liveRecorder_") + to_string(ingestionJobKey);
+	// string recordedFileNamePrefix = string("liveRecorder_") + to_string(ingestionJobKey);
 
     try
     {

@@ -13,6 +13,7 @@
 
 #include <fstream>
 #include <sstream>
+#include <regex>
 #include <curlpp/cURLpp.hpp>
 #include <curlpp/Easy.hpp>
 #include <curlpp/Options.hpp>
@@ -3360,6 +3361,31 @@ void API::mediaItemsList(
             title = titleIt->second;
         }
 
+        string jsonCondition;
+        auto jsonConditionIt = queryParameters.find("jsonCondition");
+        if (jsonConditionIt != queryParameters.end() && jsonConditionIt->second != "")
+        {
+            jsonCondition = jsonConditionIt->second;
+
+			CURL *curl = curl_easy_init();
+			if(curl)
+			{
+				int outLength;
+				char *decoded = curl_easy_unescape(curl,
+						jsonCondition.c_str(), jsonCondition.length(), &outLength);
+				if(decoded)
+				{
+					string sDecoded = decoded;
+					curl_free(decoded);
+
+					// still there is the '+' char
+					string plus = "\\+";
+					string plusDecoded = " ";
+					jsonCondition = regex_replace(sDecoded, regex(plus), plusDecoded);
+				}
+			}
+        }
+
         string ingestionDateOrder;
         auto ingestionDateOrderIt = queryParameters.find("ingestionDateOrder");
         if (ingestionDateOrderIt != queryParameters.end() && ingestionDateOrderIt->second != "")
@@ -3371,6 +3397,31 @@ void API::mediaItemsList(
                     + ", ingestionDateOrder: " + ingestionDateOrderIt->second);
         }
 
+        string jsonOrderBy;
+        auto jsonOrderByIt = queryParameters.find("jsonOrderBy");
+        if (jsonOrderByIt != queryParameters.end() && jsonOrderByIt->second != "")
+        {
+            jsonOrderBy = jsonOrderByIt->second;
+
+			CURL *curl = curl_easy_init();
+			if(curl)
+			{
+				int outLength;
+				char *decoded = curl_easy_unescape(curl,
+						jsonOrderBy.c_str(), jsonOrderBy.length(), &outLength);
+				if(decoded)
+				{
+					string sDecoded = decoded;
+					curl_free(decoded);
+
+					// still there is the '+' char
+					string plus = "\\+";
+					string plusDecoded = " ";
+					jsonOrderBy = regex_replace(sDecoded, regex(plus), plusDecoded);
+				}
+			}
+        }
+
         {
 			vector<string> tags;
             
@@ -3379,7 +3430,7 @@ void API::mediaItemsList(
                     start, rows,
                     contentTypePresent, contentType,
                     startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
-                    title, tags, ingestionDateOrder, admin);
+                    title, jsonCondition, tags, ingestionDateOrder, jsonOrderBy, admin);
 
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, ingestionStatusRoot);

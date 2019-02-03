@@ -18,9 +18,7 @@
 			"Task": {
 				"Type": "Email-Notification",
 				"Parameters": {
-					"EmailAddress": "xxxx@yyyy.zz",
-					"Subject": "Task finished",
-					"Message": "Task __INGESTIONJOBKEY__ has finished"
+					"ConfigurationLabel": "My email"
 				}
 			}
 		}

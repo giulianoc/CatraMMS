@@ -69,8 +69,6 @@ public class PeriodicalFramesProperties extends CreateContentProperties implemen
         try {
             super.setData(jsonWorkflowElement);
 
-            setLabel(jsonWorkflowElement.getString("Label"));
-
             JSONObject joParameters = jsonWorkflowElement.getJSONObject("Parameters");
 
             if (joParameters.has("StartTimeInSeconds"))

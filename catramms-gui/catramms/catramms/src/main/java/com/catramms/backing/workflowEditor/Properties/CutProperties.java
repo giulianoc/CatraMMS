@@ -68,8 +68,6 @@ public class CutProperties extends CreateContentProperties implements Serializab
         try {
             super.setData(jsonWorkflowElement);
 
-            setLabel(jsonWorkflowElement.getString("Label"));
-
             JSONObject joParameters = jsonWorkflowElement.getJSONObject("Parameters");
 
             if (joParameters.has("StartTimeInSeconds"))

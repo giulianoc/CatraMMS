@@ -98,8 +98,6 @@ public class AddContentProperties extends CreateContentProperties implements Ser
         try {
             super.setData(jsonWorkflowElement);
 
-            setLabel(jsonWorkflowElement.getString("Label"));
-
             JSONObject joParameters = jsonWorkflowElement.getJSONObject("Parameters");
 
             if (joParameters.has("SourceURL") && !joParameters.getString("SourceURL").equalsIgnoreCase(""))

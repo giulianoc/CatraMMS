@@ -71,8 +71,6 @@ public class MotionJPEGByPeriodicalFramesProperties extends CreateContentPropert
         try {
             super.setData(jsonWorkflowElement);
 
-            setLabel(jsonWorkflowElement.getString("Label"));
-
             JSONObject joParameters = jsonWorkflowElement.getJSONObject("Parameters");
 
             if (joParameters.has("StartTimeInSeconds"))

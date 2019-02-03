@@ -52,8 +52,6 @@ public class ChangeFileFormatProperties extends CreateContentProperties implemen
         try {
             super.setData(jsonWorkflowElement);
 
-            setLabel(jsonWorkflowElement.getString("Label"));
-
             JSONObject joParameters = jsonWorkflowElement.getJSONObject("Parameters");
 
             if (joParameters.has("FileFormat") && !joParameters.getString("FileFormat").equalsIgnoreCase(""))

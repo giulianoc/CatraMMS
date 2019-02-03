@@ -44,8 +44,6 @@ public class RemoveContentProperties extends WorkflowProperties implements Seria
         try {
             super.setData(jsonWorkflowElement);
 
-            setLabel(jsonWorkflowElement.getString("Label"));
-
             JSONObject joParameters = jsonWorkflowElement.getJSONObject("Parameters");
 
             if (joParameters.has("References"))

@@ -593,7 +593,7 @@ public class Player implements Serializable {
             if (selectedPhysicalPath == null)
             {
                 FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
-                        "Player", "No correct profile to play found");
+                        "Player", "No correct profile to play");
                 FacesContext context = FacesContext.getCurrentInstance();
                 context.addMessage(null, message);
             }

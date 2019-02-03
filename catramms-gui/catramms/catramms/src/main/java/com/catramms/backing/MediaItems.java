@@ -256,11 +256,14 @@ public class MediaItems extends Workspace implements Serializable {
 
                         mediaItemsList.clear();
 
-                        String ingestionDateOrder = "desc";
+                        String jsonCondition = null;
+                        String jsonOrderBy = null;
+                        String ingestionDateAndTitleOrder = "desc";
                         CatraMMS catraMMS = new CatraMMS();
                         Vector<Long> mediaItemsData = catraMMS.getMediaItems(
                                 username, password, maxMediaItemsNumber,
-                                contentType, begin, end, title, ingestionDateOrder,
+                                contentType, begin, end, title, jsonCondition,
+                                ingestionDateAndTitleOrder, jsonOrderBy,
                                 mediaItemsList);
 
                         mediaItemsNumber = mediaItemsData.get(0);
@@ -301,11 +304,13 @@ public class MediaItems extends Workspace implements Serializable {
             joRemoveTask.put("Label", "Remove Task");
             joRemoveTask.put("Type", "Remove-Content");
 
-            JSONObject joRemoveParameters = new JSONObject();
-            joRemoveTask.put("Parameters", joRemoveParameters);
+            JSONObject joParameters = new JSONObject();
+            joRemoveTask.put("Parameters", joParameters);
+
+            joParameters.put("Ingester", SessionUtils.getUserProfile().getName());
 
             JSONArray jaReferences = new JSONArray();
-            joRemoveParameters.put("References", jaReferences);
+            joParameters.put("References", jaReferences);
 
             JSONObject joReference = new JSONObject();
             jaReferences.put(joReference);
@@ -339,11 +344,77 @@ public class MediaItems extends Workspace implements Serializable {
             joEncodeTask.put("Label", "Encode Task");
             joEncodeTask.put("Type", "Encode");
 
-            JSONObject joEncodeParameters = new JSONObject();
-            joEncodeTask.put("Parameters", joEncodeParameters);
+            JSONObject joParameters = new JSONObject();
+            joEncodeTask.put("Parameters", joParameters);
+
+            joParameters.put("Ingester", SessionUtils.getUserProfile().getName());
 
             JSONArray jaReferences = new JSONArray();
-            joEncodeParameters.put("References", jaReferences);
+            joParameters.put("References", jaReferences);
+
+            JSONObject joReference = new JSONObject();
+            jaReferences.put(joReference);
+
+            Long sourcePhysicalPathKey = null;
+            for (PhysicalPath physicalPath: mediaItem.getPhysicalPathList())
+            {
+                if (physicalPath.getEncodingProfileKey() == null)
+                {
+                    sourcePhysicalPathKey = physicalPath.getPhysicalPathKey();
+
+                    break;
+                }
+            }
+
+            if (sourcePhysicalPathKey == null)
+            {
+                mLogger.error("Source Physical Path Key not found");
+
+                FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                        "Media Items", "Source Physical Path Key not found");
+                FacesContext context = FacesContext.getCurrentInstance();
+                context.addMessage(null, message);
+
+                return;
+            }
+            joReference.put("ReferencePhysicalPathKey", sourcePhysicalPathKey);
+
+            String url = "workflowEditor/workflowEditor.xhtml?loadType=metaDataContent"
+                    + "&data=" + java.net.URLEncoder.encode(joWorkflow.toString(), "UTF-8")
+                    ;
+
+            mLogger.info("Redirect to " + url);
+            FacesContext.getCurrentInstance().getExternalContext().redirect(url);
+        }
+        catch (Exception e)
+        {
+            mLogger.error("removeMediaItem, exception: " + e);
+        }
+    }
+
+    public void changeFileFormat(MediaItem mediaItem)
+    {
+        try
+        {
+            JSONObject joWorkflow = new JSONObject();
+            joWorkflow.put("Label", "Change File Format Workflow");
+            joWorkflow.put("Type", "Workflow");
+
+            JSONObject joChangeFileFormatTask = new JSONObject();
+            joWorkflow.put("Task", joChangeFileFormatTask);
+
+            joChangeFileFormatTask.put("Label", "Change File Format Task");
+            joChangeFileFormatTask.put("Type", "Change-File-Format");
+
+            JSONObject joParameters = new JSONObject();
+            joChangeFileFormatTask.put("Parameters", joParameters);
+
+            joParameters.put("Ingester", SessionUtils.getUserProfile().getName());
+
+            joParameters.put("Title", mediaItem.getTitle() + " - New Format");
+
+            JSONArray jaReferences = new JSONArray();
+            joParameters.put("References", jaReferences);
 
             JSONObject joReference = new JSONObject();
             jaReferences.put(joReference);

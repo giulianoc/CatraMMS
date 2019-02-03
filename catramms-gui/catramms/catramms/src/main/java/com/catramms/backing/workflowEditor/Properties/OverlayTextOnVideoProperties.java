@@ -82,8 +82,6 @@ public class OverlayTextOnVideoProperties extends CreateContentProperties implem
         try {
             super.setData(jsonWorkflowElement);
 
-            setLabel(jsonWorkflowElement.getString("Label"));
-
             JSONObject joParameters = jsonWorkflowElement.getJSONObject("Parameters");
 
             if (joParameters.has("Text") && !joParameters.getString("Text").equalsIgnoreCase(""))

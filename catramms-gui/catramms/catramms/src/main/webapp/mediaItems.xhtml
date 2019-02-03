@@ -285,7 +285,7 @@
                     <p:menuitem value="Play (one of the profiles)"
                                 rendered="#{mediaItem.contentType == 'Video' or mediaItem.contentType == 'Audio'}"
                                 disabled="#{!sessionScope.currentWorkspaceDetails.deliveryAuthorization}"
-                                actionListener="#{mediaItems.prepareCurrentMediaURL(mediaItem, null, false)}"
+                                actionListener="#{mediaItems.player.prepareCurrentMediaURL(mediaItem, null, false)}"
                                 update="showVideoForm"
                                 oncomplete="stopUpdaterTimer(); PF('showVideo').show()">
                     </p:menuitem>
@@ -312,6 +312,11 @@
                     <p:menuitem value="Workflow to add encoding profile"
                                 actionListener="#{mediaItems.addEncodingProfile(mediaItem)}"
                             >
+                    </p:menuitem>
+
+                    <p:menuitem value="Workflow to change file format"
+                                actionListener="#{mediaItems.changeFileFormat(mediaItem)}"
+                    >
                     </p:menuitem>
                 </p:menu>
 

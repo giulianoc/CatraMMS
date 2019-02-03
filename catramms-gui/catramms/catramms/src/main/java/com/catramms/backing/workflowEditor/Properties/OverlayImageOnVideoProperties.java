@@ -58,8 +58,6 @@ public class OverlayImageOnVideoProperties extends CreateContentProperties imple
         try {
             super.setData(jsonWorkflowElement);
 
-            setLabel(jsonWorkflowElement.getString("Label"));
-
             JSONObject joParameters = jsonWorkflowElement.getJSONObject("Parameters");
 
             if (joParameters.has("ImagePosition_X_InPixel") && !joParameters.getString("ImagePosition_X_InPixel").equalsIgnoreCase(""))

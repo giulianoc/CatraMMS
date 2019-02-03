@@ -134,14 +134,16 @@ public class MediaItemsReferences implements Serializable {
                         + ", mediaItemsTitle: " + mediaItemsTitle
                 );
 
+                String jsonCondition = null;
+                String jsonOrderBy = null;
                 String ingestionDateOrder = "desc";
                 CatraMMS catraMMS = new CatraMMS();
                 Vector<Long> mediaItemsData = catraMMS.getMediaItems(
                         username, password, mediaItemsMaxMediaItemsNumber,
                         mediaItemsContentType,
                         mediaItemsBegin, mediaItemsEnd,
-                        mediaItemsTitle,
-                        ingestionDateOrder, mediaItemsList);
+                        mediaItemsTitle, jsonCondition,
+                        ingestionDateOrder, jsonOrderBy, mediaItemsList);
                 mLogger.info("mediaItemsData: " + mediaItemsData.toString()
                         + ", mediaItemsList.size: " + mediaItemsList.size()
                                 + ", mediaItemsSelectedList.size: " + mediaItemsSelectedList.size()

@@ -92,8 +92,6 @@ public class FTPDeliveryProperties extends WorkflowProperties implements Seriali
         try {
             super.setData(jsonWorkflowElement);
 
-            setLabel(jsonWorkflowElement.getString("Label"));
-
             JSONObject joParameters = jsonWorkflowElement.getJSONObject("Parameters");
 
             if (joParameters.has("ConfigurationLabel") && !joParameters.getString("ConfigurationLabel").equalsIgnoreCase(""))

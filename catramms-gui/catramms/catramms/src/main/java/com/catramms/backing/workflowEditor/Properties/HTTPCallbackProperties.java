@@ -85,8 +85,6 @@ public class HTTPCallbackProperties extends WorkflowProperties implements Serial
         try {
             super.setData(jsonWorkflowElement);
 
-            setLabel(jsonWorkflowElement.getString("Label"));
-
             JSONObject joParameters = jsonWorkflowElement.getJSONObject("Parameters");
 
             if (joParameters.has("Protocol") && !joParameters.getString("Protocol").equalsIgnoreCase(""))
