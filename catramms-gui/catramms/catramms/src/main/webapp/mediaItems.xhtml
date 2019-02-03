@@ -18,6 +18,7 @@
     </f:viewParam>
     <f:viewParam name="contentType" value="#{mediaItems.contentType}"/>
     <f:viewParam name="title" value="#{mediaItems.title}"/>
+    <f:viewParam name="tags" value="#{mediaItems.tags}"/>
     <f:viewAction action="#{mediaItems.fillList(false)}" />
 </f:metadata>
 
@@ -137,6 +138,16 @@
                 <p:inputText style="width:70px;" id="title"
                              value="#{mediaItems.title}"
                              placeholder="title" />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:outputLabel value="Tags:" />
+                <p:inputText style="width:70px;" id="tags"
+                             value="#{mediaItems.tags}"
+                             title="tags are comma separated"
+                             placeholder="tags" />
 
                 <span class="ui-separator">
                     <span class="ui-icon ui-icon-grip-dotted-vertical" />

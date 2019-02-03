@@ -1866,20 +1866,24 @@ public class WorkflowEditor extends Workspace implements Serializable {
             WorkflowProperties workflowProperties = (WorkflowProperties) workflowElement.getData();
             workflowProperties.setData(joMetaData);
 
-            // 0 is the Workflow,
-            int workflow_rowForTheTask = 1;
-            Integer rowForTasksOfGroup = 0;
+            Vector<Integer> currentRowForAColumn = new Vector<>();
+            currentRowForAColumn.add(0);  // for the column 0 (index of the vector), current row is 0
+            currentRowForAColumn.add(1);  // for the column 1 (index of the vector), current row is 1 (we already have the Workflow root)
+            currentRowForAColumn.add(0);  // for the column 2 (index of the vector), current row is 0
+            currentRowForAColumn.add(0);  // for the column 3 (index of the vector), current row is 0
+            currentRowForAColumn.add(0);  // for the column 4 (index of the vector), current row is 0
+            currentRowForAColumn.add(0);  // for the column 5 (index of the vector), current row is 0
 
             // on success
-            Integer workflow_column = 1;
+            Integer currentColumn = 1;
 
             JSONObject joTask = joMetaData.getJSONObject("Task");
 
             if (joTask.getString("Type").equalsIgnoreCase("GroupOfTasks"))
-                buildModel_GroupOfTasks(joTask, workflow_column, workflow_rowForTheTask, rowForTasksOfGroup,
+                buildModel_GroupOfTasks(joTask, currentColumn, currentRowForAColumn,
                         workflowElement, EndPointAnchor.BOTTOM);
             else
-                buildModel_Task(joTask, workflow_column, workflow_rowForTheTask, rowForTasksOfGroup,
+                buildModel_Task(joTask, currentColumn, currentRowForAColumn,
                         workflowElement, EndPointAnchor.BOTTOM);
         }
         catch (Exception e)
@@ -1896,16 +1900,17 @@ public class WorkflowEditor extends Workspace implements Serializable {
     }
 
     private void buildModel_GroupOfTasks(JSONObject joGroupOfTasks,
-                                         Integer workflow_column,
-                                         int workflow_rowForTheTask, Integer rowForTasksOfGroup,
+                                         Integer currentColumn,
+                                         Vector<Integer> currentRowForAColumn,
                                          Element parentElement, EndPointAnchor parentEndPointAnchor)
             throws Exception
     {
         try
         {
             Element groupOfTasksElement = addTask(joGroupOfTasks.getString("Type"),
-                    new Integer(workflow_firstX + (workflow_column * workflow_stepX)).toString() + "em",
-                    new Integer(workflow_firstY + (workflow_rowForTheTask * workflow_stepY)) + "em");
+                    new Integer(workflow_firstX + (currentColumn * workflow_stepX)).toString() + "em",
+                    new Integer(workflow_firstY + (currentRowForAColumn.get(currentColumn) * workflow_stepY)) + "em");
+            currentRowForAColumn.set(currentColumn, currentRowForAColumn.get(currentColumn) + 1);
 
             {
                 EndPoint sourceEndPoint = getEndPoint(parentElement, parentEndPointAnchor);
@@ -1924,9 +1929,8 @@ public class WorkflowEditor extends Workspace implements Serializable {
             mLogger.info("buildModel_GroupOfTasks"
                     + ", workflowProperties.getElementId: " + workflowProperties.getElementId()
                     + ", workflowProperties.getLabel: " + workflowProperties.getLabel()
-                    + ", workflow_column: " + workflow_column
-                    + ", workflow_rowForTheTask: " + workflow_rowForTheTask
-                    + ", rowForTasksOfGroup: " + rowForTasksOfGroup
+                    + ", currentColumn: " + currentColumn
+                    + ", currentRowForAColumn.toString: " + currentRowForAColumn.toString()
             );
 
             JSONObject joParameters = joGroupOfTasks.getJSONObject("Parameters");
@@ -1941,15 +1945,14 @@ public class WorkflowEditor extends Workspace implements Serializable {
                 );
                 if (joTask.getString("Type").equalsIgnoreCase("GroupOfTasks"))
                     buildModel_GroupOfTasks(joTask,
-                            workflow_column + 2,    // +1: onComplete, +2: tasks
-                            rowForTasksOfGroup, rowForTasksOfGroup,
+                            currentColumn + 2,    // +1: onComplete, +2: tasks
+                            currentRowForAColumn,
                             groupOfTasksElement, EndPointAnchor.RIGHT);
                 else
                     buildModel_Task(joTask,
-                            workflow_column + 2,    // +1: onComplete, +2: tasks
-                            rowForTasksOfGroup, rowForTasksOfGroup,
+                            currentColumn + 2,    // +1: onComplete, +2: tasks
+                            currentRowForAColumn,
                             groupOfTasksElement, EndPointAnchor.RIGHT);
-                rowForTasksOfGroup++;
             }
 
             if (joGroupOfTasks.has("OnSuccess"))
@@ -1960,11 +1963,11 @@ public class WorkflowEditor extends Workspace implements Serializable {
                     JSONObject joOnSuccessTask = joOnSuccess.getJSONObject("Task");
                     if (joOnSuccessTask.getString("Type").equalsIgnoreCase("GroupOfTasks"))
                         buildModel_GroupOfTasks(joOnSuccessTask,
-                                workflow_column, workflow_rowForTheTask + 1, rowForTasksOfGroup,
+                                currentColumn, currentRowForAColumn,
                                 groupOfTasksElement, EndPointAnchor.BOTTOM);
                     else
                         buildModel_Task(joOnSuccessTask,
-                                workflow_column, workflow_rowForTheTask + 1, rowForTasksOfGroup,
+                                currentColumn, currentRowForAColumn,
                                 groupOfTasksElement, EndPointAnchor.BOTTOM);
                 }
             }
@@ -1977,11 +1980,11 @@ public class WorkflowEditor extends Workspace implements Serializable {
                     JSONObject joOnErrorTask = joOnError.getJSONObject("Task");
                     if (joOnErrorTask.getString("Type").equalsIgnoreCase("GroupOfTasks"))
                         buildModel_GroupOfTasks(joOnErrorTask,
-                                workflow_column - 1, workflow_rowForTheTask + 1, rowForTasksOfGroup,
+                                currentColumn - 1, currentRowForAColumn,
                                 groupOfTasksElement, EndPointAnchor.BOTTOM_LEFT);
                     else
                         buildModel_Task(joOnErrorTask,
-                                workflow_column - 1, workflow_rowForTheTask + 1, rowForTasksOfGroup,
+                                currentColumn - 1, currentRowForAColumn,
                                 groupOfTasksElement, EndPointAnchor.BOTTOM_LEFT);
                 }
             }
@@ -1994,11 +1997,11 @@ public class WorkflowEditor extends Workspace implements Serializable {
                     JSONObject joOnCompleteTask = joOnComplete.getJSONObject("Task");
                     if (joOnCompleteTask.getString("Type").equalsIgnoreCase("GroupOfTasks"))
                         buildModel_GroupOfTasks(joOnCompleteTask,
-                                workflow_column + 1, workflow_rowForTheTask + 1, rowForTasksOfGroup,
+                                currentColumn + 1, currentRowForAColumn,
                                 groupOfTasksElement, EndPointAnchor.BOTTOM_RIGHT);
                     else
-                        buildModel_Task(joOnCompleteTask, workflow_column + 1,
-                                workflow_rowForTheTask + 1, rowForTasksOfGroup,
+                        buildModel_Task(joOnCompleteTask, currentColumn + 1,
+                                currentRowForAColumn,
                                 groupOfTasksElement, EndPointAnchor.BOTTOM_RIGHT);
                 }
             }
@@ -2013,16 +2016,17 @@ public class WorkflowEditor extends Workspace implements Serializable {
     }
 
     private Element buildModel_Task(JSONObject joTask,
-                                 Integer workflow_column,
-                                    int workflow_rowForTheTask, Integer rowForTasksOfGroup,
+                                 Integer currentColumn,
+                                    Vector<Integer> currentRowForAColumn,
                                  Element parentElement, EndPointAnchor parentEndPointAnchor)
             throws Exception
     {
         try
         {
             Element taskElement = addTask(joTask.getString("Type"),
-                    new Integer(workflow_firstX + (workflow_column * workflow_stepX)).toString() + "em",
-                    new Integer(workflow_firstY + (workflow_rowForTheTask * workflow_stepY)) + "em");
+                    new Integer(workflow_firstX + (currentColumn * workflow_stepX)).toString() + "em",
+                    new Integer(workflow_firstY + (currentRowForAColumn.get(currentColumn) * workflow_stepY)) + "em");
+            currentRowForAColumn.set(currentColumn, currentRowForAColumn.get(currentColumn) + 1);
 
             {
                 EndPoint sourceEndPoint = getEndPoint(parentElement, parentEndPointAnchor);
@@ -2041,34 +2045,23 @@ public class WorkflowEditor extends Workspace implements Serializable {
             mLogger.info("buildModel_Task"
                     + ", workflowProperties.getElementId: " + workflowProperties.getElementId()
                     + ", workflowProperties.getLabel: " + workflowProperties.getLabel()
-                    + ", workflow_column: " + workflow_column
-                    + ", workflow_rowForTheTask: " + workflow_rowForTheTask
-                    + ", rowForTasksOfGroup: " + rowForTasksOfGroup
+                    + ", currentColumn: " + currentColumn
+                    + ", currentRowForAColumn.toString: " + currentRowForAColumn.toString()
             );
-
-            boolean rowForTasksOfGroupAlreadyIncreased = false;
 
             if (joTask.has("OnSuccess"))
             {
                 JSONObject joOnSuccess = joTask.getJSONObject("OnSuccess");
                 if (joOnSuccess.has("Task"))
                 {
-                    // if the current Task is already in the GroupOfTasks column (3) and we have to add
-                    // an OnSuccess/OnError/OnComplete Task, than the rowForTasksOfGroup has to be increased
-                    if (workflow_column == 3)
-                    {
-                        rowForTasksOfGroup++;
-                        rowForTasksOfGroupAlreadyIncreased = true;
-                    }
-
                     JSONObject joOnSuccessTask = joOnSuccess.getJSONObject("Task");
                     if (joOnSuccessTask.getString("Type").equalsIgnoreCase("GroupOfTasks"))
                         buildModel_GroupOfTasks(joOnSuccessTask,
-                                workflow_column, workflow_rowForTheTask + 1, rowForTasksOfGroup,
+                                currentColumn, currentRowForAColumn,
                                 taskElement, EndPointAnchor.BOTTOM);
                     else
                         buildModel_Task(joOnSuccessTask,
-                                workflow_column, workflow_rowForTheTask + 1, rowForTasksOfGroup,
+                                currentColumn, currentRowForAColumn,
                                 taskElement, EndPointAnchor.BOTTOM);
                 }
             }
@@ -2078,22 +2071,14 @@ public class WorkflowEditor extends Workspace implements Serializable {
                 JSONObject joOnError = joTask.getJSONObject("OnError");
                 if (joOnError.has("Task"))
                 {
-                    // if the current Task is already in the GroupOfTasks column (3) and we have to add
-                    // an OnSuccess/OnError/OnComplete Task, than the rowForTasksOfGroup has to be increased
-                    if (workflow_column == 3 && !rowForTasksOfGroupAlreadyIncreased)
-                    {
-                        rowForTasksOfGroup++;
-                        rowForTasksOfGroupAlreadyIncreased = true;
-                    }
-
                     JSONObject joOnErrorTask = joOnError.getJSONObject("Task");
                     if (joOnErrorTask.getString("Type").equalsIgnoreCase("GroupOfTasks"))
                         buildModel_GroupOfTasks(joOnErrorTask,
-                                workflow_column - 1, workflow_rowForTheTask + 1, rowForTasksOfGroup,
+                                currentColumn - 1, currentRowForAColumn,
                                 taskElement, EndPointAnchor.BOTTOM_LEFT);
                     else
                         buildModel_Task(joOnErrorTask,
-                                workflow_column - 1, workflow_rowForTheTask + 1, rowForTasksOfGroup,
+                                currentColumn - 1, currentRowForAColumn,
                                 taskElement, EndPointAnchor.BOTTOM_LEFT);
                 }
             }
@@ -2103,22 +2088,14 @@ public class WorkflowEditor extends Workspace implements Serializable {
                 JSONObject joOnComplete = joTask.getJSONObject("OnComplete");
                 if (joOnComplete.has("Task"))
                 {
-                    // if the current Task is already in the GroupOfTasks column (3) and we have to add
-                    // an OnSuccess/OnError/OnComplete Task, than the rowForTasksOfGroup has to be increased
-                    if (workflow_column == 3 && !rowForTasksOfGroupAlreadyIncreased)
-                    {
-                        rowForTasksOfGroup++;
-                        rowForTasksOfGroupAlreadyIncreased = true;
-                    }
-
                     JSONObject joOnCompleteTask = joOnComplete.getJSONObject("Task");
                     if (joOnCompleteTask.getString("Type").equalsIgnoreCase("GroupOfTasks"))
                         buildModel_GroupOfTasks(joOnCompleteTask,
-                                workflow_column + 1, workflow_rowForTheTask + 1, rowForTasksOfGroup,
+                                currentColumn + 1, currentRowForAColumn,
                                 taskElement, EndPointAnchor.BOTTOM_RIGHT);
                     else
                         buildModel_Task(joOnCompleteTask,
-                                workflow_column + 1, workflow_rowForTheTask + 1, rowForTasksOfGroup,
+                                currentColumn + 1, currentRowForAColumn,
                                 taskElement, EndPointAnchor.BOTTOM_RIGHT);
                 }
             }

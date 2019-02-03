@@ -134,6 +134,7 @@ public class MediaItemsReferences implements Serializable {
                         + ", mediaItemsTitle: " + mediaItemsTitle
                 );
 
+                String tags = null;
                 String jsonCondition = null;
                 String jsonOrderBy = null;
                 String ingestionDateOrder = "desc";
@@ -142,7 +143,7 @@ public class MediaItemsReferences implements Serializable {
                         username, password, mediaItemsMaxMediaItemsNumber,
                         mediaItemsContentType,
                         mediaItemsBegin, mediaItemsEnd,
-                        mediaItemsTitle, jsonCondition,
+                        mediaItemsTitle, tags, jsonCondition,
                         ingestionDateOrder, jsonOrderBy, mediaItemsList);
                 mLogger.info("mediaItemsData: " + mediaItemsData.toString()
                         + ", mediaItemsList.size: " + mediaItemsList.size()

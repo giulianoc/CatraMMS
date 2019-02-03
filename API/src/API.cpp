@@ -3361,6 +3361,21 @@ void API::mediaItemsList(
             title = titleIt->second;
         }
 
+		vector<string> tags;
+        auto tagsIt = queryParameters.find("tags");
+        if (tagsIt != queryParameters.end() && tagsIt->second != "")
+		{
+			char delim = ',';
+
+			stringstream ssTags (tagsIt->second);
+			string item;
+
+			while (getline (ssTags, item, delim))
+			{
+				tags.push_back (item);
+			}
+        }
+
         string jsonCondition;
         auto jsonConditionIt = queryParameters.find("jsonCondition");
         if (jsonConditionIt != queryParameters.end() && jsonConditionIt->second != "")
@@ -3423,8 +3438,6 @@ void API::mediaItemsList(
         }
 
         {
-			vector<string> tags;
-            
             Json::Value ingestionStatusRoot = _mmsEngineDBFacade->getMediaItemsList(
                     workspace->_workspaceKey, mediaItemKey, physicalPathKey,
                     start, rows,

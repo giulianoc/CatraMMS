@@ -777,7 +777,7 @@ public class CatraMMS {
 
     public Vector<Long> getMediaItems(String username, String password,
                                       Long maxMediaItemsNumber, String contentType,
-                                      Date begin, Date end, String title,
+                                      Date begin, Date end, String title, String tags,
                                       String jsonCondition,
                                       String ingestionDateOrder, String jsonOrderBy,
                           List<MediaItem> mediaItemsList)
@@ -803,6 +803,7 @@ public class CatraMMS {
                     + "&rows=" + maxMediaItemsNumber
                     + "&contentType=" + contentType
                     + "&title=" + (title == null ? "" : java.net.URLEncoder.encode(title, "UTF-8"))
+                    + "&tags=" + (tags == null ? "" : java.net.URLEncoder.encode(tags, "UTF-8"))
                     + ingestionDatesParameters
                     + "&jsonCondition=" + (jsonCondition == null ? "" : java.net.URLEncoder.encode(jsonCondition, "UTF-8"))
                     + "&ingestionDateOrder=" + (ingestionDateOrder == null ? "" : ingestionDateOrder)

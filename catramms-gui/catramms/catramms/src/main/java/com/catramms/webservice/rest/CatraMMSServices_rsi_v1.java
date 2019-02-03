@@ -163,12 +163,12 @@ public class CatraMMSServices_rsi_v1 {
                         Date begin = null;
                         Date end = null;
                         String title = null;
-
+                        String tags = null;
                         String ingestionDateAndTitleOrder = "desc";
                         CatraMMS catraMMS = new CatraMMS();
                         catraMMS.getMediaItems(
                                 userKey.toString(), apiKey,
-                                maxMediaItemsNumber, contentType, begin, end, title,
+                                maxMediaItemsNumber, contentType, begin, end, title, tags,
                                 jsonCondition,
                                 ingestionDateAndTitleOrder, jsonOrderBy,
                                 mediaItemsList);
@@ -258,7 +258,7 @@ public class CatraMMSServices_rsi_v1 {
                             || cutPlayoutChannel.equalsIgnoreCase("la2"))
                     {
                         String workflowTitle = cutPlayoutTitle;
-                        String finalContentRetention = "2g";
+                        String finalContentRetention = "1d";
                         joWorkflow = buildTVJson(workflowTitle, cutMediaInfoList,
                             ingester, finalContentTitle, finalContentRetention,
                             encodingPriority,

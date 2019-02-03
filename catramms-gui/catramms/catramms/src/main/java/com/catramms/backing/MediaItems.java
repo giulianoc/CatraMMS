@@ -42,6 +42,7 @@ public class MediaItems extends Workspace implements Serializable {
     private Date begin;
     private Date end;
     private String title;
+    private String tags;
 
     private String contentType;
     private List<String> contentTypesList;
@@ -223,6 +224,7 @@ public class MediaItems extends Workspace implements Serializable {
                         + "&begin=" + simpleDateFormat_1.format(begin)
                         + "&end=" + simpleDateFormat_1.format(end)
                         + "&title=" + java.net.URLEncoder.encode(title, "UTF-8")
+                        + "&tags=" + java.net.URLEncoder.encode(tags, "UTF-8")
                         + "&contentType=" + contentType
                         ;
                 mLogger.info("Redirect to " + url);
@@ -262,7 +264,7 @@ public class MediaItems extends Workspace implements Serializable {
                         CatraMMS catraMMS = new CatraMMS();
                         Vector<Long> mediaItemsData = catraMMS.getMediaItems(
                                 username, password, maxMediaItemsNumber,
-                                contentType, begin, end, title, jsonCondition,
+                                contentType, begin, end, title, tags, jsonCondition,
                                 ingestionDateAndTitleOrder, jsonOrderBy,
                                 mediaItemsList);
 
@@ -594,6 +596,14 @@ public class MediaItems extends Workspace implements Serializable {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public String getTags() {
+        return tags;
+    }
+
+    public void setTags(String tags) {
+        this.tags = tags;
     }
 
     public Player getPlayer() {
