@@ -3564,7 +3564,7 @@ void MMSEngineProcessor::postOnYouTubeTask(
 
                     string localTitle;
                     string userData;
-                    tie(contentType, localTitle, UserData) = contentTypeTitleAndUserData;
+                    tie(contentType, localTitle, userData) = contentTypeTitleAndUserData;
                 }
             }
             else
@@ -3870,7 +3870,7 @@ void MMSEngineProcessor::httpCallbackTask(
                     string localTitle;
                     string userData;
                     tie(mediaItemKey, contentType, localTitle, userData)
-                            = mediaItemKeyContentTypeAndUserData;
+                            = mediaItemKeyContentTypeTitleAndUserData;
 
                     callbackMedatada["mediaItemKey"] = mediaItemKey;
 
@@ -6279,7 +6279,7 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
             string localTitle;
             string userData;
             tie(sourceMediaItemKey,localContentType, localTitle, userData)
-                    = mediaItemKeyContentTypeAndUserData;
+                    = mediaItemKeyContentTypeTitleAndUserData;
             
             sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourcePhysicalPathKey);
         }
@@ -7630,7 +7630,7 @@ void MMSEngineProcessor::manageEmailNotificationTask(
 		string firstTitle;
 		if (dependencies.size() > 0)
 		{
-			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType = dependencies.get[0];
+			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType = dependencies[0];
 
         	int64_t key;
         	MMSEngineDBFacade::ContentType referenceContentType;
