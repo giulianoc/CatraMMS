@@ -3296,22 +3296,24 @@ void Validator::fillDependencies(int64_t workspaceKey, Json::Value parametersRoo
             bool warningIfMissing = true;
             if (referenceMediaItemKey != -1)
             {
+                string title;
                 string userData;
                 
-                pair<MMSEngineDBFacade::ContentType,string> contentTypeAndUserData = 
+                pair<MMSEngineDBFacade::ContentType,string> contentTypeTitleAndUserData = 
                         _mmsEngineDBFacade->getMediaItemKeyDetails(referenceMediaItemKey, warningIfMissing); 
-                tie(referenceContentType, userData) = contentTypeAndUserData;
+                tie(referenceContentType, title, userData) = contentTypeTitleAndUserData;
             }
             else if (referencePhysicalPathKey != -1)
             {
+                string title;
                 string userData;
 
-                tuple<int64_t,MMSEngineDBFacade::ContentType,string> mediaItemKeyContentTypeAndUserData = 
+                tuple<int64_t,MMSEngineDBFacade::ContentType,string> mediaItemKeyContentTypeTitleAndUserData = 
                         _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                         referencePhysicalPathKey, warningIfMissing);  
 
-                tie(referenceMediaItemKey,referenceContentType, userData) 
-                        = mediaItemKeyContentTypeAndUserData;
+                tie(referenceMediaItemKey,referenceContentType, title, userData) 
+                        = mediaItemKeyContentTypeTitleAndUserData;
             }
             else if (referenceIngestionJobKey != -1)
             {
