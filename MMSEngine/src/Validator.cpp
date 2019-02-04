@@ -2210,6 +2210,12 @@ void Validator::validateEmailNotificationMetadata(string label,
                 throw runtime_error(errorMessage);
             }
 			*/
+            bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
+            bool encodingProfileFieldsToBeManaged = false;
+            fillDependencies(workspaceKey, parametersRoot, dependencies,
+                    priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey,
+                    encodingProfileFieldsToBeManaged);
+			/*
             for (int referenceIndex = 0; referenceIndex < referencesRoot.size(); referenceIndex++)
             {
                 Json::Value referenceRoot = referencesRoot[referenceIndex];
@@ -2252,6 +2258,7 @@ void Validator::validateEmailNotificationMetadata(string label,
                     dependencies.push_back(make_tuple(referenceIngestionJobKey, referenceContentType, DependencyType::IngestionJobKey));
                 }
             }
+			*/
         } 
     }
 }
