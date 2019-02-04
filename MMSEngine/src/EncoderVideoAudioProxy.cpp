@@ -1531,13 +1531,13 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                 }
                 catch(...)
                 {
+                    encodingStatusFailures++;
+
                     _logger->error(__FILEREF__ + "getEncodingStatus failed"
                         + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                         + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                         + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
                     );
-                    
-                    encodingStatusFailures++;
                 }
             }
             
@@ -2355,13 +2355,13 @@ string EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
                 }
                 catch(...)
                 {
+                    encodingStatusFailures++;
+
                     _logger->error(__FILEREF__ + "getEncodingStatus failed"
                         + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                         + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                         + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
                     );
-                    
-                    encodingStatusFailures++;
                 }
             }
             
@@ -3958,13 +3958,13 @@ void EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
                 }
                 catch(...)
                 {
+                    encodingStatusFailures++;
+
                     _logger->error(__FILEREF__ + "getEncodingStatus failed"
                         + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                         + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                         + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
                     );
-                    
-                    encodingStatusFailures++;
                 }
             }
             
@@ -4436,13 +4436,13 @@ string EncoderVideoAudioProxy::slideShow_through_ffmpeg()
                 }
                 catch(...)
                 {
+                    encodingStatusFailures++;
+
                     _logger->error(__FILEREF__ + "getEncodingStatus failed"
                         + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                         + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                         + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
                     );
-                    
-                    encodingStatusFailures++;
                 }
             }
             
@@ -5974,13 +5974,14 @@ string EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
                 }
                 catch(...)
                 {
+                    encodingStatusFailures++;
+
                     _logger->error(__FILEREF__ + "getEncodingStatus failed"
                         + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                         + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                         + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
                     );
                     
-                    encodingStatusFailures++;
 					/*
             		if(encodingStatusFailures >= maxEncodingStatusFailures)
 					{
@@ -6999,7 +7000,7 @@ bool EncoderVideoAudioProxy::getEncodingStatus()
 
             if (!parsingSuccessful)
             {
-                string errorMessage = __FILEREF__ + "failed to parse the response body"
+                string errorMessage = __FILEREF__ + "getEncodingStatus. Failed to parse the response body"
                         + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                         + ", errors: " + errors
                         + ", sResponse: " + sResponse
@@ -7013,7 +7014,7 @@ bool EncoderVideoAudioProxy::getEncodingStatus()
         }
         catch(...)
         {
-            string errorMessage = string("response Body json is not well format")
+            string errorMessage = string("getEncodingStatus. Response Body json is not well format")
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                     + ", sResponse: " + sResponse
                     ;
@@ -7024,7 +7025,7 @@ bool EncoderVideoAudioProxy::getEncodingStatus()
     }
     catch (curlpp::LogicError & e) 
     {
-        _logger->error(__FILEREF__ + "Progress URL failed (LogicError)"
+        _logger->error(__FILEREF__ + "Status URL failed (LogicError)"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
             + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
@@ -7036,7 +7037,7 @@ bool EncoderVideoAudioProxy::getEncodingStatus()
     }
     catch (curlpp::RuntimeError & e) 
     { 
-        string errorMessage = string("Progress URL failed (RuntimeError)")
+        string errorMessage = string("Status URL failed (RuntimeError)")
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
             + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
@@ -7050,7 +7051,7 @@ bool EncoderVideoAudioProxy::getEncodingStatus()
     }
     catch (runtime_error e)
     {
-        _logger->error(__FILEREF__ + "Progress URL failed (exception)"
+        _logger->error(__FILEREF__ + "Status URL failed (exception)"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
             + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
@@ -7062,7 +7063,7 @@ bool EncoderVideoAudioProxy::getEncodingStatus()
     }
     catch (exception e)
     {
-        _logger->error(__FILEREF__ + "Progress URL failed (exception)"
+        _logger->error(__FILEREF__ + "Status URL failed (exception)"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
             + ", ffmpegEncoderURL: " + ffmpegEncoderURL 
