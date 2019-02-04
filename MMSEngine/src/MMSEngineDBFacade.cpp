@@ -7570,9 +7570,9 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 			for (int tagIndex = 0; tagIndex < tags.size(); tagIndex++)
 			{
 				if (tagsCondition == "")
-					tagsCondition = ("tags like ? ");
+					tagsCondition = ("?");
 				else
-					tagsCondition.append("or tags like ? ");
+					tagsCondition.append(", ?");
 			}
 
             sqlWhere += ("and t.name in (" + tagsCondition + ") ");
