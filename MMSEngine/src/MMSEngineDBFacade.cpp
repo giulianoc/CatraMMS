@@ -8995,7 +8995,7 @@ tuple<int64_t,MMSEngineDBFacade::ContentType,string,string> MMSEngineDBFacade::g
         
     shared_ptr<MySQLConnection> conn = nullptr;
     
-    tuple<int64_t,MMSEngineDBFacade::ContentType,string> mediaItemKeyContentTypeTitleAndUserData;
+    tuple<int64_t,MMSEngineDBFacade::ContentType,string,string> mediaItemKeyContentTypeTitleAndUserData;
 
     try
     {
