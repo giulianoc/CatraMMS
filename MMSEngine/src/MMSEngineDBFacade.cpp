@@ -7560,7 +7560,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
         if (startAndEndIngestionDatePresent)
             sqlWhere += ("and mi.ingestionDate >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) and mi.ingestionDate <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
         if (title != "")
-            sqlWhere += ("and mi.title like ? ");
+            sqlWhere += ("and LOWER(mi.title) like LOWER(?) ");		// LOWER was used because the column is using utf8_bin that is case sensitive
         if (jsonCondition != "")
             sqlWhere += ("and " + jsonCondition);
 		if (tags.size() > 0)
