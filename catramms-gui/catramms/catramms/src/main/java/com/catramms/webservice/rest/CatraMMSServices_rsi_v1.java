@@ -496,7 +496,10 @@ public class CatraMMSServices_rsi_v1 {
                     joParameters.put("Ingester", ingester);
                     joParameters.put("Retention", finalContentRetention);
                     joParameters.put("Title", finalContentTitle);
-
+                    {
+                        String tags = "PROGRAM," + cutMediaChannel + "_PROGRAM";
+                        joParameters.put("Tags", tags);
+                    }
                     {
                         JSONObject joUserData = new JSONObject();
                         joParameters.put("UserData", joUserData);
