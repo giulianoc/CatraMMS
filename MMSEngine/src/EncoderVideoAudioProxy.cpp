@@ -1531,7 +1531,11 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                 }
                 catch(...)
                 {
-                    _logger->error(__FILEREF__ + "getEncodingStatus failed");
+                    _logger->error(__FILEREF__ + "getEncodingStatus failed"
+                        + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                        + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+                        + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
+                    );
                     
                     encodingStatusFailures++;
                 }
@@ -2351,7 +2355,11 @@ string EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
                 }
                 catch(...)
                 {
-                    _logger->error(__FILEREF__ + "getEncodingStatus failed");
+                    _logger->error(__FILEREF__ + "getEncodingStatus failed"
+                        + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                        + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+                        + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
+                    );
                     
                     encodingStatusFailures++;
                 }
@@ -3154,6 +3162,7 @@ string EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
                     _logger->error(__FILEREF__ + "getEncodingStatus failed"
                         + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                         + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+                        + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
                     );
                 }
             }
@@ -3949,7 +3958,11 @@ void EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
                 }
                 catch(...)
                 {
-                    _logger->error(__FILEREF__ + "getEncodingStatus failed");
+                    _logger->error(__FILEREF__ + "getEncodingStatus failed"
+                        + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                        + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+                        + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
+                    );
                     
                     encodingStatusFailures++;
                 }
@@ -4423,7 +4436,11 @@ string EncoderVideoAudioProxy::slideShow_through_ffmpeg()
                 }
                 catch(...)
                 {
-                    _logger->error(__FILEREF__ + "getEncodingStatus failed");
+                    _logger->error(__FILEREF__ + "getEncodingStatus failed"
+                        + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                        + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+                        + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
+                    );
                     
                     encodingStatusFailures++;
                 }
@@ -5957,9 +5974,28 @@ string EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
                 }
                 catch(...)
                 {
-                    _logger->error(__FILEREF__ + "getEncodingStatus failed");
+                    _logger->error(__FILEREF__ + "getEncodingStatus failed"
+                        + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                        + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+                        + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
+                    );
                     
                     encodingStatusFailures++;
+					/*
+            		if(encodingStatusFailures >= maxEncodingStatusFailures)
+					{
+                        string errorMessage = string("getEncodingStatus/processLastGeneratedLiveRecorderFiles too many failures")
+                                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                    			+ ", encodingFinished: " + to_string(encodingFinished)
+                    			+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+                    			+ ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
+                                ;
+                        _logger->error(__FILEREF__ + errorMessage);
+
+                        throw runtime_error(errorMessage);
+					}
+					*/
                 }
             }
             
