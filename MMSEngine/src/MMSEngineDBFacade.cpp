@@ -8988,7 +8988,7 @@ tuple<MMSEngineDBFacade::ContentType,string,string> MMSEngineDBFacade::getMediaI
     }    
 }
 
-tuple<int64_t,MMSEngineDBFacade::ContentType,title,string> MMSEngineDBFacade::getMediaItemKeyDetailsByPhysicalPathKey(
+tuple<int64_t,MMSEngineDBFacade::ContentType,string,string> MMSEngineDBFacade::getMediaItemKeyDetailsByPhysicalPathKey(
     int64_t physicalPathKey, bool warningIfMissing)
 {
     string      lastSQLCommand;
