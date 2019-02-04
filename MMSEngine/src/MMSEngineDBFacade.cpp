@@ -8855,7 +8855,7 @@ tuple<MMSEngineDBFacade::ContentType,string,string> MMSEngineDBFacade::getMediaI
         
     shared_ptr<MySQLConnection> conn = nullptr;
     
-    pair<MMSEngineDBFacade::ContentType,string,string> contentTypeTitleAndUserData;
+    tuple<MMSEngineDBFacade::ContentType,string,string> contentTypeTitleAndUserData;
 
     try
     {
@@ -8884,7 +8884,7 @@ tuple<MMSEngineDBFacade::ContentType,string,string> MMSEngineDBFacade::getMediaI
                 if (!resultSet->isNull("title"))
                     title = resultSet->getString("title");
                 
-                contentTypeTitleAndUserData = make_pair(contentType, title, userData);
+                contentTypeTitleAndUserData = make_tuple(contentType, title, userData);
             }
             else
             {
