@@ -3299,7 +3299,7 @@ void Validator::fillDependencies(int64_t workspaceKey, Json::Value parametersRoo
                 string title;
                 string userData;
                 
-                pair<MMSEngineDBFacade::ContentType,string> contentTypeTitleAndUserData = 
+                tuple<MMSEngineDBFacade::ContentType,string,string> contentTypeTitleAndUserData = 
                         _mmsEngineDBFacade->getMediaItemKeyDetails(referenceMediaItemKey, warningIfMissing); 
                 tie(referenceContentType, title, userData) = contentTypeTitleAndUserData;
             }
@@ -3308,7 +3308,7 @@ void Validator::fillDependencies(int64_t workspaceKey, Json::Value parametersRoo
                 string title;
                 string userData;
 
-                tuple<int64_t,MMSEngineDBFacade::ContentType,string> mediaItemKeyContentTypeTitleAndUserData = 
+                tuple<int64_t,MMSEngineDBFacade::ContentType,string,string> mediaItemKeyContentTypeTitleAndUserData = 
                         _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                         referencePhysicalPathKey, warningIfMissing);  
 

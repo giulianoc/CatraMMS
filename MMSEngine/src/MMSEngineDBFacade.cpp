@@ -8848,7 +8848,7 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
     return physicalPathKey;
 }
 
-pair<MMSEngineDBFacade::ContentType,string,string> MMSEngineDBFacade::getMediaItemKeyDetails(
+tuple<MMSEngineDBFacade::ContentType,string,string> MMSEngineDBFacade::getMediaItemKeyDetails(
     int64_t mediaItemKey, bool warningIfMissing)
 {
     string      lastSQLCommand;

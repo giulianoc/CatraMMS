@@ -3340,7 +3340,7 @@ void MMSEngineProcessor::postOnFacebookTask(
 
                 {
                     bool warningIfMissing = false;
-                    pair<MMSEngineDBFacade::ContentType,string,string> contentTypeTitleAndUserData =
+                    tuple<MMSEngineDBFacade::ContentType,string,string> contentTypeTitleAndUserData =
                         _mmsEngineDBFacade->getMediaItemKeyDetails(
                             key, warningIfMissing);
 
@@ -3558,7 +3558,7 @@ void MMSEngineProcessor::postOnYouTubeTask(
 
                 {
                     bool warningIfMissing = false;
-                    pair<MMSEngineDBFacade::ContentType,string,string> contentTypeTitleAndUserData =
+                    tuple<MMSEngineDBFacade::ContentType,string,string> contentTypeTitleAndUserData =
                         _mmsEngineDBFacade->getMediaItemKeyDetails(
                             key, warningIfMissing);
 
@@ -3817,7 +3817,7 @@ void MMSEngineProcessor::httpCallbackTask(
                     callbackMedatada["mediaItemKey"] = key;
 
                     bool warningIfMissing = false;
-                    pair<MMSEngineDBFacade::ContentType,string,string> contentTypeTitleAndUserData =
+                    tuple<MMSEngineDBFacade::ContentType,string,string> contentTypeTitleAndUserData =
                         _mmsEngineDBFacade->getMediaItemKeyDetails(
                             key, warningIfMissing);
 
@@ -4197,7 +4197,7 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 
                 {
                     bool warningIfMissing = false;
-                    pair<MMSEngineDBFacade::ContentType,string,string> contentTypeTitleAndUserData =
+                    tuple<MMSEngineDBFacade::ContentType,string,string> contentTypeTitleAndUserData =
                         _mmsEngineDBFacade->getMediaItemKeyDetails(
                             key, warningIfMissing);
 
@@ -4374,7 +4374,7 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
 
                 {
                     bool warningIfMissing = false;
-                    pair<MMSEngineDBFacade::ContentType,string,string> contentTypeTitleAndUserData =
+                    tuple<MMSEngineDBFacade::ContentType,string,string> contentTypeTitleAndUserData =
                         _mmsEngineDBFacade->getMediaItemKeyDetails(
                             key, warningIfMissing);
 
@@ -6482,7 +6482,7 @@ void MMSEngineProcessor::manageSlideShowTask(
             
             bool warningIfMissing = false;
             
-            pair<MMSEngineDBFacade::ContentType,string,string> contentTypeTitleAndUserData 
+            tuple<MMSEngineDBFacade::ContentType,string,string> contentTypeTitleAndUserData 
                     = _mmsEngineDBFacade->getMediaItemKeyDetails(sourceMediaItemKey, warningIfMissing);
            
             MMSEngineDBFacade::ContentType contentType;
@@ -6882,7 +6882,7 @@ void MMSEngineProcessor::generateAndIngestCutMediaTask(
 
         bool warningIfMissing = false;
 
-        pair<MMSEngineDBFacade::ContentType,string,string> contentTypeTitleAndUserData 
+        tuple<MMSEngineDBFacade::ContentType,string,string> contentTypeTitleAndUserData 
                 = _mmsEngineDBFacade->getMediaItemKeyDetails(sourceMediaItemKey, warningIfMissing);
         
         MMSEngineDBFacade::ContentType contentType;
@@ -7642,7 +7642,7 @@ void MMSEngineProcessor::manageEmailNotificationTask(
         	{
         		bool warningIfMissing = false;
 
-        		pair<MMSEngineDBFacade::ContentType,string,string> contentTypeTitleAndUserData 
+        		tuple<MMSEngineDBFacade::ContentType,string,string> contentTypeTitleAndUserData 
                 	= _mmsEngineDBFacade->getMediaItemKeyDetails(key, warningIfMissing);
         
         		MMSEngineDBFacade::ContentType contentType;
