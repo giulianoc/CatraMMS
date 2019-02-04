@@ -82,7 +82,7 @@
                         <p:outputLabel value="Message" style="font-weight: bold" />
                     </p:column>
                     <p:column>
-                        <p:inputTextarea style="width: 100%" cols="100" rows="20" readonly="false"
+                        <p:inputTextarea style="width: 100%" cols="100" rows="15" readonly="false"
                                          required="true"
                                          value="#{emailView.editEMailMessage}" />
                     </p:column>
@@ -90,7 +90,7 @@
 
             </p:panelGrid>
 
-            <p:commandButton value="#{emailView.editEMailConfKey == -1 ? 'Add EMail Conf' : 'Edit EMail Conf'}"
+            <p:commandButton value="#{emailView.editEMailConfKey == -1 ? 'Save' : 'Save'}"
                              actionListener="#{emailView.addModifyEMailConf}"
                              update="viewForm:emailDataTable"
                              oncomplete="PF('editEMailConf').hide()" />

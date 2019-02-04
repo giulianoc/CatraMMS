@@ -1538,6 +1538,20 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                         + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                         + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
                     );
+
+            		if(encodingStatusFailures >= maxEncodingStatusFailures)
+					{
+                        string errorMessage = string("getEncodingStatus too many failures")
+                                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                    			+ ", encodingFinished: " + to_string(encodingFinished)
+                    			+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+                    			+ ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
+                                ;
+                        _logger->error(__FILEREF__ + errorMessage);
+
+                        throw runtime_error(errorMessage);
+					}
                 }
             }
             
@@ -2362,6 +2376,20 @@ string EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
                         + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                         + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
                     );
+
+            		if(encodingStatusFailures >= maxEncodingStatusFailures)
+					{
+                        string errorMessage = string("getEncodingStatus too many failures")
+                                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                    			+ ", encodingFinished: " + to_string(encodingFinished)
+                    			+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+                    			+ ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
+                                ;
+                        _logger->error(__FILEREF__ + errorMessage);
+
+                        throw runtime_error(errorMessage);
+					}
                 }
             }
             
@@ -3164,6 +3192,20 @@ string EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
                         + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                         + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
                     );
+
+            		if(encodingStatusFailures >= maxEncodingStatusFailures)
+					{
+                        string errorMessage = string("getEncodingStatus too many failures")
+                                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                    			+ ", encodingFinished: " + to_string(encodingFinished)
+                    			+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+                    			+ ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
+                                ;
+                        _logger->error(__FILEREF__ + errorMessage);
+
+                        throw runtime_error(errorMessage);
+					}
                 }
             }
             
@@ -3965,6 +4007,20 @@ void EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
                         + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                         + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
                     );
+
+            		if(encodingStatusFailures >= maxEncodingStatusFailures)
+					{
+                        string errorMessage = string("getEncodingStatus too many failures")
+                                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                    			+ ", encodingFinished: " + to_string(encodingFinished)
+                    			+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+                    			+ ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
+                                ;
+                        _logger->error(__FILEREF__ + errorMessage);
+
+                        throw runtime_error(errorMessage);
+					}
                 }
             }
             
@@ -4443,6 +4499,20 @@ string EncoderVideoAudioProxy::slideShow_through_ffmpeg()
                         + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                         + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
                     );
+
+            		if(encodingStatusFailures >= maxEncodingStatusFailures)
+					{
+                        string errorMessage = string("getEncodingStatus too many failures")
+                                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                    			+ ", encodingFinished: " + to_string(encodingFinished)
+                    			+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
+                    			+ ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
+                                ;
+                        _logger->error(__FILEREF__ + errorMessage);
+
+                        throw runtime_error(errorMessage);
+					}
                 }
             }
             
@@ -5981,22 +6051,22 @@ string EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
                         + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                         + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
                     );
-                    
-					/*
+
             		if(encodingStatusFailures >= maxEncodingStatusFailures)
 					{
                         string errorMessage = string("getEncodingStatus/processLastGeneratedLiveRecorderFiles too many failures")
                                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                                + ", _encodingItem->_ingestionJobKey: "
+									+ to_string(_encodingItem->_ingestionJobKey) 
                     			+ ", encodingFinished: " + to_string(encodingFinished)
                     			+ ", encodingStatusFailures: " + to_string(encodingStatusFailures)
-                    			+ ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
+                    			+ ", maxEncodingStatusFailures: "
+									+ to_string(maxEncodingStatusFailures)
                                 ;
                         _logger->error(__FILEREF__ + errorMessage);
 
                         throw runtime_error(errorMessage);
 					}
-					*/
                 }
             }
             
@@ -6200,6 +6270,7 @@ string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
 
 			// Title
 			{
+				// ConfigurationLabel is the label associated to the live URL
 				string configurationLabelField = "ConfigurationLabel";
 				string newTitle = _encodingItem->_liveRecorderData
 					->_liveRecorderParametersRoot.get(configurationLabelField, "XXX").asString();

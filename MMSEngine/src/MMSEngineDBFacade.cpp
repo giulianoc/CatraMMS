@@ -14050,7 +14050,15 @@ int MMSEngineDBFacade::updateEncodingJob (
             }
             
             if (encodingFailureNumber + 1 >= _maxEncodingFailures)
+			{
                 newEncodingStatus          = EncodingStatus::End_Failed;
+
+				_logger->info(__FILEREF__ + "update EncodingJob"
+					+ ", newEncodingStatus: " + MMSEngineDBFacade::toString(newEncodingStatus)
+					+ ", encodingFailureNumber: " + to_string(encodingFailureNumber)
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+				);
+			}
             else
             {
                 newEncodingStatus          = EncodingStatus::ToBeProcessed;

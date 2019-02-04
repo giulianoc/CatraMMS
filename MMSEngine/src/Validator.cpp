@@ -937,7 +937,8 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
         }
 
         Json::Value parametersRoot = taskRoot[field]; 
-        validateEmailNotificationMetadata(label, parametersRoot, validateDependenciesToo, dependencies);        
+        validateEmailNotificationMetadata(workspaceKey, label, parametersRoot,
+				validateDependenciesToo, dependencies);        
     }
     else if (type == "FTP-Delivery")
     {
@@ -1230,7 +1231,7 @@ vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>> 
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::EmailNotification)
     {
-        validateEmailNotificationMetadata(label, parametersRoot, 
+        validateEmailNotificationMetadata(workspaceKey, label, parametersRoot, 
                 validateDependenciesToo, dependencies);        
     }
     else if (ingestionType == MMSEngineDBFacade::IngestionType::FTPDelivery)
@@ -1381,15 +1382,17 @@ void Validator::validateRemoveContentMetadata(int64_t workspaceKey, string label
 }
 
 void Validator::validateEncodeMetadata(int64_t workspaceKey, string label,
-    Json::Value parametersRoot, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
+	Json::Value parametersRoot,
+	vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
 {
-    string field = "EncodingPriority";
+	string field = "EncodingPriority";
     if (isMetadataPresent(parametersRoot, field))
     {
         string encodingPriority = parametersRoot.get(field, "XXX").asString();
         try
         {
-            MMSEngineDBFacade::toEncodingPriority(encodingPriority);    // it generate an exception in case of wrong string
+			// it generate an exception in case of wrong string
+            MMSEngineDBFacade::toEncodingPriority(encodingPriority);
         }
         catch(exception e)
         {
@@ -2162,7 +2165,7 @@ void Validator::validateOverlayTextOnVideoMetadata(int64_t workspaceKey, string 
     }        
 }
 
-void Validator::validateEmailNotificationMetadata(string label,
+void Validator::validateEmailNotificationMetadata(int64_t workspaceKey, string label,
     Json::Value parametersRoot, 
         bool validateDependenciesToo, vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies)
 {

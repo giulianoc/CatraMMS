@@ -64,14 +64,26 @@
                         <p:outputLabel value="Workflow name" style="font-weight: bold"/>
                     </p:column>
                     <p:column>
+                        <p:selectOneMenu id="workflowEditorNames" effect="fold" editable="true"
+                                         value="#{workflowEditor.currentWorkflowEditorName}"
+                                         autoWidth="false">
+                            <f:selectItems value="#{workflowEditor.workflowEditorNames}"/>
+                        </p:selectOneMenu>
+
+                        <!--
                         <p:inputText style="width:100%" id="currentWorkflowEditorName"
                                      value="#{workflowEditor.currentWorkflowEditorName}"
                                      placeholder="workspace name" />
+                        -->
                     </p:column>
                 </p:row>
 
                 <p:row>
                     <p:column>
+                        <p:commandButton id="removeWorkflowName" icon="fa fa-close"
+                                         value="Remove the workflow"
+                                         update="workflowEditorNames"
+                                         actionListener="#{workflowEditor.removeModelFile}" />
                     </p:column>
                     <p:column>
                         <p:commandButton id="saveWorkflow" icon="fa fa-save"
@@ -245,6 +257,8 @@
                 <p:commandButton global="true"
                                  icon="fa fa-save"
                                  title="Save the workflow"
+                                 actionListener="#{workflowEditor.fillWorkflowNames}"
+                                 update="saveWorkflowForm:workflowEditorNames"
                                  oncomplete="PF('saveWorkflowWidget').show()" />
 
                 <span class="ui-separator">

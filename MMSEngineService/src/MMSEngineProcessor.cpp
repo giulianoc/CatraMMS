@@ -7142,7 +7142,8 @@ void MMSEngineProcessor::manageEncodeTask(
         int64_t ingestionJobKey,
         shared_ptr<Workspace> workspace,
         Json::Value parametersRoot,
-        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>& dependencies
+        vector<tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>>&
+			dependencies
 )
 {
     try
@@ -7190,57 +7191,70 @@ void MMSEngineProcessor::manageEncodeTask(
         string field = "EncodingPriority";
         if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
         {
-            encodingPriority = 
-                    static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority);
+            encodingPriority = static_cast<MMSEngineDBFacade::EncodingPriority>(
+				workspace->_maxEncodingPriority);
         }
         else
         {
-            encodingPriority =
-                MMSEngineDBFacade::toEncodingPriority(parametersRoot.get(field, "XXX").asString());
+            encodingPriority = MMSEngineDBFacade::toEncodingPriority(
+					parametersRoot.get(field, "XXX").asString());
         }
 
-        int64_t sourceMediaItemKey;
-        int64_t sourcePhysicalPathKey;
-        tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType = dependencies.back();
-
-        int64_t key;
-        MMSEngineDBFacade::ContentType referenceContentType;
-        Validator::DependencyType dependencyType;
-
-        tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
-
-        if (dependencyType == Validator::DependencyType::MediaItemKey)
+		// it is not possible to manage more than one encode because:
+		// 1. inside _mmsEngineDBFacade->addEncodingJob, the ingestionJob is updated to encodingQueue
+		//		and the second call will fail (because the update of the ingestion was already done
+		//	2. The ingestionJob mantains the status of the encoding, how would be managed
+		//		the status in case of more than one encoding?
+        // for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>&
+		// 		keyAndDependencyType: dependencies)
         {
-            sourceMediaItemKey = key;
-
-            sourcePhysicalPathKey = -1;
-        }
-        else
-        {
-            sourcePhysicalPathKey = key;
+            int64_t key;
+            MMSEngineDBFacade::ContentType referenceContentType;
+            Validator::DependencyType dependencyType;
             
-            bool warningIfMissing = false;
-            tuple<int64_t,MMSEngineDBFacade::ContentType,string,string> mediaItemKeyContentTypeTitleAndUserData =
-                _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-                    sourcePhysicalPathKey, warningIfMissing);
+			tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>&
+				keyAndDependencyType	= dependencies[0];
+            tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+            
+			int64_t sourceMediaItemKey;
+			int64_t sourcePhysicalPathKey;
 
-            MMSEngineDBFacade::ContentType localContentType;
-            string localTitle;
-            string userData;
-            tie(sourceMediaItemKey,localContentType, localTitle, userData)
+			if (dependencyType == Validator::DependencyType::MediaItemKey)
+			{
+				sourceMediaItemKey = key;
+
+				sourcePhysicalPathKey = -1;
+			}
+			else
+			{
+				sourcePhysicalPathKey = key;
+            
+				bool warningIfMissing = false;
+				tuple<int64_t,MMSEngineDBFacade::ContentType,string,string>
+					mediaItemKeyContentTypeTitleAndUserData =
+					_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+					sourcePhysicalPathKey, warningIfMissing);
+
+				MMSEngineDBFacade::ContentType localContentType;
+				string localTitle;
+				string userData;
+				tie(sourceMediaItemKey,localContentType, localTitle, userData)
                     = mediaItemKeyContentTypeTitleAndUserData;
-        }
+			}
     
-        if (encodingProfileKey == -1)
-            _mmsEngineDBFacade->addEncodingJob (workspace, ingestionJobKey,
-                encodingProfileLabel, sourceMediaItemKey, sourcePhysicalPathKey, encodingPriority);
-        else
-            _mmsEngineDBFacade->addEncodingJob (workspace, ingestionJobKey,
-                encodingProfileKey, sourceMediaItemKey, sourcePhysicalPathKey, encodingPriority);
+			if (encodingProfileKey == -1)
+				_mmsEngineDBFacade->addEncodingJob (workspace, ingestionJobKey,
+					encodingProfileLabel, sourceMediaItemKey, sourcePhysicalPathKey,
+					encodingPriority);
+			else
+				_mmsEngineDBFacade->addEncodingJob (workspace, ingestionJobKey,
+					encodingProfileKey, sourceMediaItemKey, sourcePhysicalPathKey,
+					encodingPriority);
+		}
     }
     catch(runtime_error e)
     {
-        _logger->error(__FILEREF__ + "generateAndIngestFrame failed"
+        _logger->error(__FILEREF__ + "manageEncodeTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", e.what(): " + e.what()
@@ -7252,7 +7266,7 @@ void MMSEngineProcessor::manageEncodeTask(
     }
     catch(exception e)
     {
-        _logger->error(__FILEREF__ + "generateAndIngestFrame failed"
+        _logger->error(__FILEREF__ + "manageEncodeTask failed"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
         );
