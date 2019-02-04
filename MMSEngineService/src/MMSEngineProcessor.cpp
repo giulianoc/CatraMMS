@@ -7692,7 +7692,7 @@ void MMSEngineProcessor::manageEmailNotificationTask(
         }
         {
             string strToBeReplaced = "{FIRSTTITLE}";
-            string strToReplace = sIngestionJobKeyDependency;
+            string strToReplace = firstTitle;
             if (subject.find(strToBeReplaced) != string::npos)
                 subject.replace(subject.find(strToBeReplaced), strToBeReplaced.length(), strToReplace);
             if (message.find(strToBeReplaced) != string::npos)
