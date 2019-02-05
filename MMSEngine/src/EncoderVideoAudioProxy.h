@@ -121,6 +121,13 @@ private:
     string                              _ffmpegSlideShowURI;
     string                              _ffmpegLiveRecorderURI;
     
+    string								_mmsAPIProtocol;
+    string								_mmsAPIHostname;
+    int									_mmsAPIPort;
+    string								_mmsAPIUser;
+    string								_mmsAPIPassword;
+    string								_mmsAPIIngestionURI;
+
     #ifdef __LOCALENCODER__
         shared_ptr<FFMpeg>              _ffmpeg;
         int*                            _pRunningEncodingsNumber;
@@ -172,6 +179,7 @@ private:
 	time_t getMediaLiveRecorderStartTime(string mediaLiveRecorderFileName);
 	string processLastGeneratedLiveRecorderFiles(string segmentListPathName,
 		string recordedFileNamePrefix, string contentsPath, string lastRecordedAssetFileName);
+	void ingestRecordedMedia(string workflowMetadata);
 
     bool getEncodingStatus();
 

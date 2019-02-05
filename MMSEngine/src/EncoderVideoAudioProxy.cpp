@@ -155,6 +155,31 @@ void EncoderVideoAudioProxy::init(
         + ", computerVision->defaultTryFlip: " + to_string(_computerVisionDefaultTryFlip)
     );
 
+    _mmsAPIProtocol = _configuration["api"].get("protocol", "").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->protocol: " + _mmsAPIProtocol
+    );
+    _mmsAPIHostname = _configuration["api"].get("hostname", "").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->hostname: " + _mmsAPIHostname
+    );
+    _mmsAPIPort = _configuration["api"].get("port", "").asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->port: " + to_string(_mmsAPIPort)
+    );
+    _mmsAPIUser = _configuration["api"].get("user", "").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->user: " + _mmsAPIUser
+    );
+    _mmsAPIPassword = _configuration["api"].get("password", "").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->password: " + "..."
+    );
+    _mmsAPIIngestionURI = _configuration["api"].get("ingestionURI", "").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", api->ingestionURI: " + _mmsAPIIngestionURI
+    );
+
     #ifdef __LOCALENCODER__
         _ffmpegMaxCapacity      = 1;
         
@@ -1129,7 +1154,6 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                         S_IROTH | S_IXOTH, noErrorIfExists, recursive);
             }        
         }
-        
     }
 
     #ifdef __LOCALENCODER__
@@ -6395,6 +6419,205 @@ string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
     }
 
 	return newLastRecordedAssetFileName;
+}
+
+void EncoderVideoAudioProxy::ingestRecordedMedia(string workflowMetadata)
+{
+	string mmsAPIURL;
+	ostringstream response;
+	try
+	{
+		mmsAPIURL =
+			_mmsAPIProtocol
+			+ "://"
+			+ _mmsAPIHostname + ":"
+			+ to_string(_mmsAPIPort)
+			+ _mmsAPIIngestionURI
+            ;
+
+		list<string> header;
+
+		header.push_back("Content-Type: application/json");
+		{
+			string userPasswordEncoded = Convert::base64_encode(_mmsAPIUser + ":" + _mmsAPIPassword);
+			string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
+
+			header.push_back(basicAuthorization);
+		}
+
+		curlpp::Cleanup cleaner;
+		curlpp::Easy request;
+
+		// Setting the URL to retrive.
+		request.setOpt(new curlpp::options::Url(mmsAPIURL));
+
+		if (_ffmpegEncoderProtocol == "https")
+		{
+			/*
+			typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
+			typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;                                          
+			typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;                                  
+			typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;                              
+			typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;                                    
+			typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;                           
+			typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;                                         
+			typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;                                          
+			typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;                                          
+			typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;                                 
+			typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;                                    
+			typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;                          
+			typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;                                    
+			*/
+
+			/*
+			// cert is stored PEM coded in file... 
+			// since PEM is default, we needn't set it for PEM 
+			// curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
+			curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
+			equest.setOpt(sslCertType);
+
+			// set the cert for client authentication
+			// "testcert.pem"
+			// curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
+			curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
+			request.setOpt(sslCert);
+			*/
+
+			/*
+			// sorry, for engine we must set the passphrase
+			//   (if the key has one...)
+			// const char *pPassphrase = NULL;
+			if(pPassphrase)
+			curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
+
+			// if we use a key stored in a crypto engine,
+			//   we must set the key type to "ENG"
+			// pKeyType  = "PEM";
+			curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
+
+			// set the private key (file or ID in engine)
+			// pKeyName  = "testkey.pem";
+			curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
+
+			// set the file with the certs vaildating the server
+			// *pCACertFile = "cacert.pem";
+			curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
+			*/
+
+			// disconnect if we can't validate server's cert
+			bool bSslVerifyPeer = false;
+			curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
+			request.setOpt(sslVerifyPeer);
+               
+			curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
+			request.setOpt(sslVerifyHost);
+               
+			// request.setOpt(new curlpp::options::SslEngineDefault());                                              
+		}
+
+		request.setOpt(new curlpp::options::HttpHeader(header));
+		request.setOpt(new curlpp::options::PostFields(workflowMetadata));
+		request.setOpt(new curlpp::options::PostFieldSize(workflowMetadata.length()));
+
+		request.setOpt(new curlpp::options::WriteStream(&response));
+
+		chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
+
+		_logger->info(__FILEREF__ + "Ingesting recorded media file"
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+			+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+			+ ", mmsAPIURL: " + mmsAPIURL
+			+ ", workflowMetadata: " + workflowMetadata
+		);
+		request.perform();
+
+		string sResponse = response.str();
+		// LF and CR create problems to the json parser...
+		while (sResponse.back() == 10 || sResponse.back() == 13)
+			sResponse.pop_back();
+
+		{
+			string message = __FILEREF__ + "Ingested recorded response"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+				+ ", sResponse: " + sResponse
+				;
+			_logger->info(message);
+		}
+
+		long responseCode = curlpp::infos::ResponseCode::get(request);
+		if (responseCode == 201)
+		{
+			string message = __FILEREF__ + "Ingested recorded response"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+				+ ", workflowMetadata: " + workflowMetadata
+				+ ", sResponse: " + sResponse
+				;
+			_logger->info(message);
+		}
+		else
+		{
+			string message = __FILEREF__ + "Ingested recorded response"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+				+ ", workflowMetadata: " + workflowMetadata
+				+ ", sResponse: " + sResponse
+				+ ", responseCode: " + to_string(responseCode)
+				;
+			_logger->error(message);
+
+           	throw e;
+		}
+	}
+	catch (curlpp::LogicError & e) 
+	{
+		_logger->error(__FILEREF__ + "Ingested URL failed (LogicError)"
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+			+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+			+ ", workflowMetadata: " + workflowMetadata
+			+ ", exception: " + e.what()
+			+ ", response.str(): " + response.str()
+		);
+            
+		throw e;
+	}
+	catch (curlpp::RuntimeError & e) 
+	{
+		_logger->error(__FILEREF__ + "Ingested URL failed (RuntimeError)"
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+			+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+			+ ", workflowMetadata: " + workflowMetadata
+			+ ", exception: " + e.what()
+			+ ", response.str(): " + response.str()
+		);
+
+		throw e;
+	}
+	catch (runtime_error e)
+	{
+		_logger->error(__FILEREF__ + "Ingested URL failed (runtime_error)"
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+			+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+			+ ", workflowMetadata: " + workflowMetadata
+			+ ", exception: " + e.what()
+			+ ", response.str(): " + response.str()
+		);
+
+		throw e;
+	}
+	catch (exception e)
+	{
+		_logger->error(__FILEREF__ + "Ingested URL failed (exception)"
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+			+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+			+ ", workflowMetadata: " + workflowMetadata
+			+ ", exception: " + e.what()
+			+ ", response.str(): " + response.str()
+		);
+
+		throw e;
+	}
 }
 
 bool EncoderVideoAudioProxy::isLastLiveRecorderFile(
