@@ -6468,7 +6468,7 @@ void EncoderVideoAudioProxy::ingestRecordedMedia(
 		*/
 		Json::Value addContentRoot;
 
-		field = "Label";
+		string field = "Label";
 		addContentRoot[field] = title;
 
 		field = "Type";
@@ -6511,7 +6511,7 @@ void EncoderVideoAudioProxy::ingestRecordedMedia(
 
 		Json::Value workflowRoot;
 
-		string field = "Label";
+		field = "Label";
 		workflowRoot[field] = title;
 
 		field = "Type";
