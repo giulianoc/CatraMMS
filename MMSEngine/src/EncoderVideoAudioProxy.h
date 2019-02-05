@@ -180,6 +180,7 @@ private:
 	string processLastGeneratedLiveRecorderFiles(string segmentListPathName,
 		string recordedFileNamePrefix, string contentsPath, string lastRecordedAssetFileName);
 	void ingestRecordedMedia(
+		string currentRecordedAssetPathName,
 		string title,
 		Json::Value userDataRoot,
 		string fileFormat,

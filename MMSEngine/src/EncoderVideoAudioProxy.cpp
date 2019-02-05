@@ -5802,14 +5802,36 @@ string EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
 	string contentsPath;
 	string recordedFileNamePrefix;
-    {        
-		contentsPath = _mmsStorage->getWorkspaceIngestionRepository(
-			_encodingItem->_workspace);
+	{
+		bool removeLinuxPathIfExist = false;
+        string stagingLiveRecordingAssetPathName = _mmsStorage->getStagingAssetPathName(
+			_encodingItem->_workspace->_directoryName,
+			to_string(_encodingItem->_encodingJobKey),
+			"/",    // _encodingItem->_relativePath,
+			to_string(_encodingItem->_ingestionJobKey),
+			-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
+			-1, // _encodingItem->_physicalPathKey, not used because encodedFileName is not ""
+			removeLinuxPathIfExist);
+
+		size_t directoryEndIndex = stagingLiveRecordingAssetPathName.find_last_of("/");
+		if (directoryEndIndex == string::npos)
+		{
+			string errorMessage = __FILEREF__ + "No directory found in the staging asset path name"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+				+ ", stagingLiveRecordingAssetPathName: " + stagingLiveRecordingAssetPathName;
+			_logger->error(errorMessage);
+
+			// throw runtime_error(errorMessage);
+		}
+
+		contentsPath = stagingLiveRecordingAssetPathName.substr(0, directoryEndIndex);
 		segmentListPathName =
-			contentsPath + "/" 
+			contentsPath + "/"
 			+ to_string(_encodingItem->_ingestionJobKey)
 			+ ".liveRecorder.list"
 		;
+
 		// In case we are coming from a restart, we will clean
 		// the segment files list
 		if (FileIO::fileExisting(segmentListPathName))
@@ -5825,7 +5847,7 @@ string EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
     }
 
     #ifdef __LOCALENCODER__
-        (*_pRunningEncodingsNumber)++;
+		(*_pRunningEncodingsNumber)++;
     #else
 		string ffmpegEncoderURL;
 		ostringstream response;
@@ -6336,7 +6358,8 @@ string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
 				}
 			}
 
-			ingestRecordedMedia(newTitle, userDataRoot, outputFileFormat,
+			ingestRecordedMedia(currentRecordedAssetPathName,
+				newTitle, userDataRoot, outputFileFormat,
 				_encodingItem->_liveRecorderData->_liveRecorderParametersRoot);
 
 			/*
@@ -6417,6 +6440,7 @@ string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
 }
 
 void EncoderVideoAudioProxy::ingestRecordedMedia(
+	string currentRecordedAssetPathName,
 	string title,
 	Json::Value userDataRoot,
 	string fileFormat,
@@ -6464,6 +6488,13 @@ void EncoderVideoAudioProxy::ingestRecordedMedia(
 
 		field = "FileFormat";
 		addContentParametersRoot[field] = fileFormat;
+
+		string sourceURL = string("move") + "://" + currentRecordedAssetPathName;
+		field = "SourceURL";
+		addContentParametersRoot[field] = sourceURL;
+
+		field = "Ingester";
+		addContentParametersRoot[field] = "Live Recorder Task";
 
 		field = "Title";
 		addContentParametersRoot[field] = title;
