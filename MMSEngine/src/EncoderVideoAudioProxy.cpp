@@ -6466,14 +6466,6 @@ void EncoderVideoAudioProxy::ingestRecordedMedia(
         	}
 		}
 		*/
-		Json::Value workflowRoot;
-
-		string field = "Label";
-		workflowRoot[field] = title;
-
-		field = "Type";
-		workflowRoot[field] = "Workflow";
-
 		Json::Value addContentRoot;
 
 		field = "Label";
@@ -6482,9 +6474,20 @@ void EncoderVideoAudioProxy::ingestRecordedMedia(
 		field = "Type";
 		addContentRoot[field] = "Add-Content";
 
-		field = "Parameters";
-		addContentRoot[field] = liveRecorderParametersRoot;
-		Json::Value addContentParametersRoot = addContentRoot[field];
+		field = "OnSuccess";
+    	if (_mmsEngineDBFacade->isMetadataPresent(liveRecorderParametersRoot, field))
+			addContentRoot[field] = liveRecorderParametersRoot[field];
+
+		field = "OnError";
+    	if (_mmsEngineDBFacade->isMetadataPresent(liveRecorderParametersRoot, field))
+			addContentRoot[field] = liveRecorderParametersRoot[field];
+
+		field = "OnComplete";
+    	if (_mmsEngineDBFacade->isMetadataPresent(liveRecorderParametersRoot, field))
+			addContentRoot[field] = liveRecorderParametersRoot[field];
+
+
+		Json::Value addContentParametersRoot = liveRecorderParametersRoot;
 
 		field = "FileFormat";
 		addContentParametersRoot[field] = fileFormat;
@@ -6502,17 +6505,17 @@ void EncoderVideoAudioProxy::ingestRecordedMedia(
 		field = "UserData";
 		addContentParametersRoot[field] = userDataRoot;
 
-		field = "OnSuccess";
-    	if (_mmsEngineDBFacade->isMetadataPresent(liveRecorderParametersRoot, field))
-			addContentRoot[field] = liveRecorderParametersRoot[field];
+		field = "Parameters";
+		addContentRoot[field] = addContentParametersRoot;
 
-		field = "OnError";
-    	if (_mmsEngineDBFacade->isMetadataPresent(liveRecorderParametersRoot, field))
-			addContentRoot[field] = liveRecorderParametersRoot[field];
 
-		field = "OnComplete";
-    	if (_mmsEngineDBFacade->isMetadataPresent(liveRecorderParametersRoot, field))
-			addContentRoot[field] = liveRecorderParametersRoot[field];
+		Json::Value workflowRoot;
+
+		string field = "Label";
+		workflowRoot[field] = title;
+
+		field = "Type";
+		workflowRoot[field] = "Workflow";
 
 		field = "Task";
 		workflowRoot[field] = addContentRoot;
