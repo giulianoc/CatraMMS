@@ -6474,20 +6474,36 @@ void EncoderVideoAudioProxy::ingestRecordedMedia(
 		field = "Type";
 		addContentRoot[field] = "Add-Content";
 
-		field = "OnSuccess";
-    	if (_mmsEngineDBFacade->isMetadataPresent(liveRecorderParametersRoot, field))
-			addContentRoot[field] = liveRecorderParametersRoot[field];
+		bool internalMMSRootPresent = false;
+		{
+			field = "InternalMMS";
+    		if (_mmsEngineDBFacade->isMetadataPresent(liveRecorderParametersRoot, field))
+			{
+				internalMMSRootPresent = true;
 
-		field = "OnError";
-    	if (_mmsEngineDBFacade->isMetadataPresent(liveRecorderParametersRoot, field))
-			addContentRoot[field] = liveRecorderParametersRoot[field];
+				Json::Value internalMMSRoot = liveRecorderParametersRoot[field];
 
-		field = "OnComplete";
-    	if (_mmsEngineDBFacade->isMetadataPresent(liveRecorderParametersRoot, field))
-			addContentRoot[field] = liveRecorderParametersRoot[field];
+				field = "OnSuccess";
+    			if (_mmsEngineDBFacade->isMetadataPresent(internalMMSRoot, field))
+					addContentRoot[field] = internalMMSRoot[field];
 
+				field = "OnError";
+    			if (_mmsEngineDBFacade->isMetadataPresent(internalMMSRoot, field))
+					addContentRoot[field] = internalMMSRoot[field];
+
+				field = "OnComplete";
+    			if (_mmsEngineDBFacade->isMetadataPresent(internalMMSRoot, field))
+					addContentRoot[field] = internalMMSRoot[field];
+			}
+		}
 
 		Json::Value addContentParametersRoot = liveRecorderParametersRoot;
+		if (internalMMSRootPresent)
+		{
+			Json::Value removed;
+			field = "InternalMMS";
+			addContentParametersRoot.removeMember(field, &removed);
+		}
 
 		field = "FileFormat";
 		addContentParametersRoot[field] = fileFormat;
