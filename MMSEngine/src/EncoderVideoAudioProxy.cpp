@@ -6268,35 +6268,29 @@ string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
 					&utcCurrentRecordedFileLastModificationTime);
 
 			// UserData
+			Json::Value userDataRoot;
 			{
 				string userDataField = "UserData";
 				string utcChunkStartTime = "utcChunkStartTime";
 				string utcChunkEndTime = "utcChunkEndTime";
-				if (!_mmsEngineDBFacade->isMetadataPresent(
+
+				if (_mmsEngineDBFacade->isMetadataPresent(
 							_encodingItem->_liveRecorderData->_liveRecorderParametersRoot,
 							userDataField))
 				{
-					Json::Value userDataRoot;
-					userDataRoot[utcChunkStartTime] = utcCurrentRecordedFileCreationTime;
-					userDataRoot[utcChunkEndTime] = utcCurrentRecordedFileLastModificationTime;
+					userDataRoot = _encodingItem->_liveRecorderData->_liveRecorderParametersRoot[userDataField];
+				}
 
-					_encodingItem->_liveRecorderData->_liveRecorderParametersRoot[userDataField]
-						= userDataRoot;
-				}
-				else
-				{
-					_encodingItem->_liveRecorderData->_liveRecorderParametersRoot[userDataField]
-						[utcChunkStartTime] = utcCurrentRecordedFileCreationTime;
-					_encodingItem->_liveRecorderData->_liveRecorderParametersRoot[userDataField]
-						[utcChunkEndTime] = utcCurrentRecordedFileLastModificationTime;
-				}
+				userDataRoot[utcChunkStartTime] = utcCurrentRecordedFileCreationTime;
+				userDataRoot[utcChunkEndTime] = utcCurrentRecordedFileLastModificationTime;
 			}
 
 			// Title
+			string newTitle;
 			{
 				// ConfigurationLabel is the label associated to the live URL
 				string configurationLabelField = "ConfigurationLabel";
-				string newTitle = _encodingItem->_liveRecorderData
+				newTitle = _encodingItem->_liveRecorderData
 					->_liveRecorderParametersRoot.get(configurationLabelField, "XXX").asString();
 
 				newTitle += " - ";
@@ -6340,12 +6334,12 @@ string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
 
 					newTitle += strCurrentRecordedFileTime;	// local time
 				}
-
-				string titleField = "Title";
-				_encodingItem->_liveRecorderData->_liveRecorderParametersRoot[titleField]
-					= newTitle;
 			}
 
+			ingestRecordedMedia(newTitle, userDataRoot, outputFileFormat,
+				_encodingItem->_liveRecorderData->_liveRecorderParametersRoot);
+
+			/*
 			string mediaMetaDataContent = generateMediaMetadataToIngest(
 					_encodingItem->_ingestionJobKey, outputFileFormat,
 					_encodingItem->_liveRecorderData->_liveRecorderParametersRoot);
@@ -6378,6 +6372,7 @@ string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
 				+ ", sourceFileName: " + currentRecordedAssetFileName
 				+ ", getEventKey().first: " + to_string(event->getEventKey().first)
 				+ ", getEventKey().second: " + to_string(event->getEventKey().second));
+			*/
 		}
 		if (reachedNextFileToProcess == false)
 		{
@@ -6389,7 +6384,7 @@ string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
 			// In this scenario, we will reset newLastRecordedAssetFileName
 			newLastRecordedAssetFileName	= "";
 		}
-    }
+	}
     catch(runtime_error e)
     {
         _logger->error(__FILEREF__ + "processLastGeneratedLiveRecorderFiles failed"
@@ -6421,12 +6416,86 @@ string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
 	return newLastRecordedAssetFileName;
 }
 
-void EncoderVideoAudioProxy::ingestRecordedMedia(string workflowMetadata)
+void EncoderVideoAudioProxy::ingestRecordedMedia(
+	string title,
+	Json::Value userDataRoot,
+	string fileFormat,
+	Json::Value liveRecorderParametersRoot)
 {
 	string mmsAPIURL;
 	ostringstream response;
 	try
 	{
+		/*
+		{
+        	"Label": "<workflow label>",
+        	"Type": "Workflow",
+        	"Task": {
+                "Label": "<task label 1>",
+                "Type": "Add-Content"
+                "Parameters": {
+                        "FileFormat": "ts",
+                        "Ingester": "Giuliano",
+                        "SourceURL": "move:///abc...."
+                },
+        	}
+		}
+		*/
+		Json::Value workflowRoot;
+
+		string field = "Label";
+		workflowRoot[field] = title;
+
+		field = "Type";
+		workflowRoot[field] = "Workflow";
+
+		Json::Value addContentRoot;
+
+		field = "Label";
+		addContentRoot[field] = title;
+
+		field = "Type";
+		addContentRoot[field] = "Add-Content";
+
+		field = "Parameters";
+		addContentRoot[field] = liveRecorderParametersRoot;
+		Json::Value addContentParametersRoot = addContentRoot[field];
+
+		field = "FileFormat";
+		addContentParametersRoot[field] = fileFormat;
+
+		field = "Title";
+		addContentParametersRoot[field] = title;
+
+		field = "UserData";
+		addContentParametersRoot[field] = userDataRoot;
+
+		field = "OnSuccess";
+    	if (_mmsEngineDBFacade->isMetadataPresent(liveRecorderParametersRoot, field))
+			addContentRoot[field] = liveRecorderParametersRoot[field];
+
+		field = "OnError";
+    	if (_mmsEngineDBFacade->isMetadataPresent(liveRecorderParametersRoot, field))
+			addContentRoot[field] = liveRecorderParametersRoot[field];
+
+		field = "OnComplete";
+    	if (_mmsEngineDBFacade->isMetadataPresent(liveRecorderParametersRoot, field))
+			addContentRoot[field] = liveRecorderParametersRoot[field];
+
+		field = "Task";
+		workflowRoot[field] = addContentRoot;
+
+		string workflowMetadata;
+   		{
+       		Json::StreamWriterBuilder wbuilder;
+       		mediaMetadata = Json::writeString(wbuilder, workflowRoot);
+   		}
+
+		_logger->info(__FILEREF__ + "Recorded Workflow metadata generated"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", workflowMetadata: " + workflowMetadata
+		);
+
 		mmsAPIURL =
 			_mmsAPIProtocol
 			+ "://"
@@ -6575,6 +6644,7 @@ void EncoderVideoAudioProxy::ingestRecordedMedia(string workflowMetadata)
 		_logger->error(__FILEREF__ + "Ingested URL failed (LogicError)"
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 			+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+			+ ", mmsAPIURL: " + mmsAPIURL
 			+ ", workflowMetadata: " + workflowMetadata
 			+ ", exception: " + e.what()
 			+ ", response.str(): " + response.str()
@@ -6587,6 +6657,7 @@ void EncoderVideoAudioProxy::ingestRecordedMedia(string workflowMetadata)
 		_logger->error(__FILEREF__ + "Ingested URL failed (RuntimeError)"
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 			+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+			+ ", mmsAPIURL: " + mmsAPIURL
 			+ ", workflowMetadata: " + workflowMetadata
 			+ ", exception: " + e.what()
 			+ ", response.str(): " + response.str()
@@ -6599,6 +6670,7 @@ void EncoderVideoAudioProxy::ingestRecordedMedia(string workflowMetadata)
 		_logger->error(__FILEREF__ + "Ingested URL failed (runtime_error)"
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 			+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+			+ ", mmsAPIURL: " + mmsAPIURL
 			+ ", workflowMetadata: " + workflowMetadata
 			+ ", exception: " + e.what()
 			+ ", response.str(): " + response.str()
@@ -6611,6 +6683,7 @@ void EncoderVideoAudioProxy::ingestRecordedMedia(string workflowMetadata)
 		_logger->error(__FILEREF__ + "Ingested URL failed (exception)"
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 			+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+			+ ", mmsAPIURL: " + mmsAPIURL
 			+ ", workflowMetadata: " + workflowMetadata
 			+ ", exception: " + e.what()
 			+ ", response.str(): " + response.str()
@@ -7404,7 +7477,7 @@ string EncoderVideoAudioProxy::generateMediaMetadataToIngest(
         Json::StreamWriterBuilder wbuilder;
         mediaMetadata = Json::writeString(wbuilder, parametersRoot);
     }
-                        
+
     _logger->info(__FILEREF__ + "Media metadata generated"
         + ", ingestionJobKey: " + to_string(ingestionJobKey)
         + ", mediaMetadata: " + mediaMetadata

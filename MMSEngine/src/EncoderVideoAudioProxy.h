@@ -179,7 +179,11 @@ private:
 	time_t getMediaLiveRecorderStartTime(string mediaLiveRecorderFileName);
 	string processLastGeneratedLiveRecorderFiles(string segmentListPathName,
 		string recordedFileNamePrefix, string contentsPath, string lastRecordedAssetFileName);
-	void ingestRecordedMedia(string workflowMetadata);
+	void ingestRecordedMedia(
+		string title,
+		Json::Value userDataRoot,
+		string fileFormat,
+		Json::Value liveRecorderParametersRoot);
 
     bool getEncodingStatus();
 
