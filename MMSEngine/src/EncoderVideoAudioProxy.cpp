@@ -6424,6 +6424,7 @@ void EncoderVideoAudioProxy::ingestRecordedMedia(
 {
 	string mmsAPIURL;
 	ostringstream response;
+	string workflowMetadata;
 	try
 	{
 		/*
@@ -6485,14 +6486,13 @@ void EncoderVideoAudioProxy::ingestRecordedMedia(
 		field = "Task";
 		workflowRoot[field] = addContentRoot;
 
-		string workflowMetadata;
    		{
        		Json::StreamWriterBuilder wbuilder;
-       		mediaMetadata = Json::writeString(wbuilder, workflowRoot);
+       		workflowMetadata = Json::writeString(wbuilder, workflowRoot);
    		}
 
 		_logger->info(__FILEREF__ + "Recorded Workflow metadata generated"
-			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 			+ ", workflowMetadata: " + workflowMetadata
 		);
 
