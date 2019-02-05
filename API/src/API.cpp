@@ -6498,8 +6498,8 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 
 				internalMMSRoot[onSuccessField] = onSuccessRoot;
 
-				Json::Value* removed;
-				taskRoot.removeMember(onSuccessField, removed);
+				Json::Value removed;
+				taskRoot.removeMember(onSuccessField, &removed);
 			}
     		if (_mmsEngineDBFacade->isMetadataPresent(taskRoot, onErrorField))
 			{
@@ -6507,8 +6507,8 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 
 				internalMMSRoot[onErrorField] = onErrorRoot;
 
-				Json::Value* removed;
-				taskRoot.removeMember(onErrorField, removed);
+				Json::Value removed;
+				taskRoot.removeMember(onErrorField, &removed);
 			}
     		if (_mmsEngineDBFacade->isMetadataPresent(taskRoot, onCompleteField))
 			{
@@ -6516,8 +6516,8 @@ vector<int64_t> API::ingestionSingleTask(shared_ptr<MySQLConnection> conn,
 
 				internalMMSRoot[onCompleteField] = onCompleteRoot;
 
-				Json::Value* removed;
-				taskRoot.removeMember(onCompleteField, removed);
+				Json::Value removed;
+				taskRoot.removeMember(onCompleteField, &removed);
 			}
 
 			parametersRoot[internalMMSField] = internalMMSRoot;
