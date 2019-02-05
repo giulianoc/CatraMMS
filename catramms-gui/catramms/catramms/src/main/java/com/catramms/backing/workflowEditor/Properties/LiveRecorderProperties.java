@@ -19,6 +19,7 @@ public class LiveRecorderProperties extends CreateContentProperties implements S
 
     private String configurationLabel;
     private List<LiveURLConf> confList;
+    private boolean highAvailability;
     private Date startRecording;
     private Date endRecording;
     private Long segmentDuration;
@@ -30,6 +31,8 @@ public class LiveRecorderProperties extends CreateContentProperties implements S
                                   int elementId, String label)
     {
         super(positionX, positionY, elementId, label, "Live-Recorder" + "-icon.png", "Task", "Live-Recorder");
+
+        highAvailability = false;
 
         startRecording = new Date();
         {
@@ -80,6 +83,8 @@ public class LiveRecorderProperties extends CreateContentProperties implements S
     {
         super(positionX, positionY, elementId, label, "Live-Recorder" + "-icon.png", "Task", "Live-Recorder");
 
+        highAvailability = false;
+
         startRecording = new Date();
         {
             Calendar calendar = Calendar.getInstance();
@@ -105,6 +110,7 @@ public class LiveRecorderProperties extends CreateContentProperties implements S
                 super.getElementId(), super.getLabel(), confList);
 
         liveRecorderProperties.setConfigurationLabel(configurationLabel);
+        liveRecorderProperties.setHighAvailability(highAvailability);
         liveRecorderProperties.setStartRecording(startRecording);
         liveRecorderProperties.setEndRecording(endRecording);
         liveRecorderProperties.setSegmentDuration(segmentDuration);
@@ -123,6 +129,7 @@ public class LiveRecorderProperties extends CreateContentProperties implements S
 
         // mLogger.info("LiveRecorderProperties::setData");
         setConfigurationLabel(workflowProperties.getConfigurationLabel());
+        setHighAvailability(workflowProperties.highAvailability);
         setStartRecording(workflowProperties.getStartRecording());
         setEndRecording(workflowProperties.getEndRecording());
         setSegmentDuration(workflowProperties.getSegmentDuration());
@@ -142,10 +149,19 @@ public class LiveRecorderProperties extends CreateContentProperties implements S
 
             if (joParameters.has("ConfigurationLabel") && !joParameters.getString("ConfigurationLabel").equalsIgnoreCase(""))
                 setConfigurationLabel(joParameters.getString("ConfigurationLabel"));
-            if (joParameters.has("StartRecording") && !joParameters.getString("StartRecording").equalsIgnoreCase(""))
-                setStartRecording(dateFormat.parse(joParameters.getString("StartRecording")));
-            if (joParameters.has("EndRecording") && !joParameters.getString("EndRecording").equalsIgnoreCase(""))
-                setEndRecording(dateFormat.parse(joParameters.getString("EndRecording")));
+            if (joParameters.has("HighAvailability"))
+                setHighAvailability(joParameters.getBoolean("HighAvailability"));
+
+            if (joParameters.has("RecordingPeriod"))
+            {
+                JSONObject joRecordingPeriod = joParameters.getJSONObject("RecordingPeriod");
+
+                if (joRecordingPeriod.has("StartRecording") && !joRecordingPeriod.getString("StartRecording").equalsIgnoreCase(""))
+                    setStartRecording(dateFormat.parse(joRecordingPeriod.getString("StartRecording")));
+                if (joRecordingPeriod.has("EndRecording") && !joRecordingPeriod.getString("EndRecording").equalsIgnoreCase(""))
+                    setEndRecording(dateFormat.parse(joRecordingPeriod.getString("EndRecording")));
+            }
+
             if (joParameters.has("SegmentDuration"))
                 setSegmentDuration(joParameters.getLong("SegmentDuration"));
             if (joParameters.has("OutputFileFormat") && !joParameters.getString("OutputFileFormat").equalsIgnoreCase(""))
@@ -203,6 +219,9 @@ public class LiveRecorderProperties extends CreateContentProperties implements S
 
                 ingestionData.getWorkflowIssueList().add(workflowIssue);
             }
+
+            if (isHighAvailability())
+                joParameters.put("HighAvailability", isHighAvailability());
 
             JSONObject joRecordingPeriod = new JSONObject();
             joParameters.put("RecordingPeriod", joRecordingPeriod);
@@ -330,5 +349,13 @@ public class LiveRecorderProperties extends CreateContentProperties implements S
 
     public void setOutputFileFormatsList(List<String> outputFileFormatsList) {
         this.outputFileFormatsList = outputFileFormatsList;
+    }
+
+    public boolean isHighAvailability() {
+        return highAvailability;
+    }
+
+    public void setHighAvailability(boolean highAvailability) {
+        this.highAvailability = highAvailability;
     }
 }

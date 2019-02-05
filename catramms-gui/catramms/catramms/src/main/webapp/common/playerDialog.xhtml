@@ -6,6 +6,12 @@
       xmlns:f="http://xmlns.jcp.org/jsf/core"
       xmlns:media="http://xmlns.jcp.org/jsf/composite/media">
 
+<style type="text/css">
+.ui-dialog {
+    width: auto !important;
+}
+</style>
+
 <p:dialog widgetVar="showImage" modal="true"
           header="Player" appendTo="@(body)"
           showEffect="fade" hideEffect="fade" resizable="true" draggable="true" >
@@ -22,8 +28,9 @@
 
 </p:dialog>
 
+<!-- width="700" height="500" -->
 <p:dialog widgetVar="showVideo" modal="true"
-          header="Player" appendTo="@(body)" width="900" height="600"
+          header="Player" appendTo="@(body)"
           showEffect="fade" hideEffect="fade" resizable="true" draggable="true"
           onHide="document.getElementById('showVideoForm:binaryLinkPlayer:media-player').pause()">
 
@@ -32,11 +39,18 @@
             <p:autoUpdate />
         </p:growl>
 
-        <p:outputLabel value="Physical Path Key: #{controller.player.currentPhysicalPath.physicalPathKey}" />
-        <p:outputLabel value=", FramesPerSeconds: " />
-        <!-- next outputLabel is also used inside javascript to retrieve the framesPerSeconds -->
-        <p:outputLabel id="framesPerSeconds" style="font-weight: bold"
-                       value="#{controller.player.framesPerSecond}" />
+        <p:toolbar>
+            <p:toolbarGroup align="left">
+                <p:outputLabel value="FramesPerSeconds: " />
+                <!-- next outputLabel is also used inside javascript to retrieve the framesPerSeconds -->
+                <p:outputLabel id="framesPerSeconds" value="#{controller.player.framesPerSecond}" />
+            </p:toolbarGroup>
+
+            <p:toolbarGroup align="right">
+                <p:outputLabel value="Physical Path Key: " />
+                <p:outputLabel value="#{controller.player.currentPhysicalPath.physicalPathKey}" />
+            </p:toolbarGroup>
+        </p:toolbar>
 
         <br />
 

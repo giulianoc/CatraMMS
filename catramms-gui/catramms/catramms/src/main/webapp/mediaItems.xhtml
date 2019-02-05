@@ -295,7 +295,7 @@
 
                     <p:menuitem value="Play (one of the profiles)"
                                 rendered="#{mediaItem.contentType == 'Video' or mediaItem.contentType == 'Audio'}"
-                                disabled="#{!sessionScope.currentWorkspaceDetails.deliveryAuthorization}"
+                                disabled="#{!sessionScope.currentWorkspaceDetails.deliveryAuthorization or mediaItems.player.getSelectedPhysicalPath(mediaItem, false) == null}"
                                 actionListener="#{mediaItems.player.prepareCurrentMediaURL(mediaItem, null, false)}"
                                 update="showVideoForm"
                                 oncomplete="stopUpdaterTimer(); PF('showVideo').show()">
@@ -303,7 +303,7 @@
 
                     <p:menuitem value="Edit (one of the profiles)"
                                 rendered="#{mediaItem.contentType == 'Video' or mediaItem.contentType == 'Audio'}"
-                                disabled="#{!sessionScope.currentWorkspaceDetails.deliveryAuthorization or !sessionScope.currentWorkspaceDetails.editMedia}"
+                                disabled="#{!sessionScope.currentWorkspaceDetails.deliveryAuthorization or !sessionScope.currentWorkspaceDetails.editMedia or mediaItems.player.getSelectedPhysicalPath(mediaItem, false) == null}"
                                 actionListener="#{mediaItems.player.prepareCurrentMediaURL(mediaItem, null, true)}"
                                 update="showVideoForm"
                                 oncomplete="stopUpdaterTimer(); PF('showVideo').show()">

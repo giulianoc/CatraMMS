@@ -110,6 +110,18 @@
 
             <p:row>
                 <p:column>
+                    <p:outputLabel value="High Availability"/>
+                </p:column>
+                <p:column>
+                    <p:selectBooleanButton id="highAvailability_Live_Recorder"
+                                           value="#{workflowEditor.currentLiveRecorderProperties.highAvailability}"
+                                           onLabel="YES" offLabel="NO" onIcon="ui-icon-check" offIcon="ui-icon-check">
+                    </p:selectBooleanButton>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
                     <p:outputLabel value="Output File Format" />
                 </p:column>
                 <p:column>

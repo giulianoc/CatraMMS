@@ -29,6 +29,7 @@ public class Player implements Serializable {
     // static because the class is Serializable
     private static final Logger mLogger = Logger.getLogger(Player.class);
 
+    private MediaItem mediaItem;
     private String currentMediaURL;
     private PhysicalPath currentPhysicalPath;
     private List<Mark> markList = new ArrayList<>();
@@ -397,6 +398,7 @@ public class Player implements Serializable {
         long ttlInSeconds = 60 * 60;
         int maxRetries = 20;
 
+        this.mediaItem = mediaItem;
 
         PhysicalPath selectedPhysicalPath = null;
 
@@ -408,6 +410,16 @@ public class Player implements Serializable {
         }
         else
             selectedPhysicalPath = physicalPath;
+
+        if (selectedPhysicalPath == null)
+        {
+            mLogger.info("prepareCurrentMediaURL. No correct profile to play"
+                    + ", mediaItem.getMediaItemKey: " + mediaItem.getMediaItemKey()
+                    + ", editMedia: " + editMedia
+            );
+
+            return;
+        }
 
         try
         {
@@ -481,6 +493,7 @@ public class Player implements Serializable {
         long ttlInSeconds = 60 * 60;
         int maxRetries = 20;
 
+        this.mediaItem = mediaItem;
 
         PhysicalPath selectedPhysicalPath = null;
 
@@ -523,7 +536,7 @@ public class Player implements Serializable {
         }
     }
 
-    private PhysicalPath getSelectedPhysicalPath(MediaItem mediaItem, boolean sourceFile)
+    public PhysicalPath getSelectedPhysicalPath(MediaItem mediaItem, boolean sourceFile)
     {
         PhysicalPath selectedPhysicalPath = null;
         try
@@ -592,6 +605,11 @@ public class Player implements Serializable {
 
             if (selectedPhysicalPath == null)
             {
+                mLogger.info("No correct profile to play"
+                        + ", mediaItem.getMediaItemKey: " + mediaItem.getMediaItemKey()
+                        + ", sourceFile: " + sourceFile
+                );
+
                 FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_ERROR,
                         "Player", "No correct profile to play");
                 FacesContext context = FacesContext.getCurrentInstance();
@@ -685,5 +703,13 @@ public class Player implements Serializable {
 
     public void setAddMarkButtonDisabled(Boolean addMarkButtonDisabled) {
         this.addMarkButtonDisabled = addMarkButtonDisabled;
+    }
+
+    public MediaItem getMediaItem() {
+        return mediaItem;
+    }
+
+    public void setMediaItem(MediaItem mediaItem) {
+        this.mediaItem = mediaItem;
     }
 }
