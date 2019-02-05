@@ -6567,7 +6567,7 @@ void EncoderVideoAudioProxy::ingestRecordedMedia(string workflowMetadata)
 				;
 			_logger->error(message);
 
-           	throw e;
+           	throw runtime_error(message);
 		}
 	}
 	catch (curlpp::LogicError & e) 
