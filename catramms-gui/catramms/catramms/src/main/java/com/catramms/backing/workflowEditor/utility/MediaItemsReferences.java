@@ -27,6 +27,7 @@ public class MediaItemsReferences implements Serializable {
     private Date mediaItemsBegin;
     private Date mediaItemsEnd;
     private String mediaItemsTitle;
+    private String mediaItemsTags;
     private Long mediaItemsMaxMediaItemsNumber = new Long(100);
     private String mediaItemsToBeAddedOrReplaced;
     private String mediaItemsSortedBy;
@@ -62,6 +63,7 @@ public class MediaItemsReferences implements Serializable {
         }
 
         mediaItemsTitle = "";
+        mediaItemsTags = "";
 
         mediaItemsToBeAddedOrReplaced = "toBeReplaced";
         mediaItemsSortedBy = "userSelection";
@@ -132,9 +134,9 @@ public class MediaItemsReferences implements Serializable {
                         + ", mediaItemsBegin: " + mediaItemsBegin
                         + ", mediaItemsEnd: " + mediaItemsEnd
                         + ", mediaItemsTitle: " + mediaItemsTitle
+                                + ", mediaItemsTags: " + mediaItemsTags
                 );
 
-                String tags = null;
                 String jsonCondition = null;
                 String jsonOrderBy = null;
                 String ingestionDateOrder = "desc";
@@ -143,7 +145,7 @@ public class MediaItemsReferences implements Serializable {
                         username, password, mediaItemsMaxMediaItemsNumber,
                         mediaItemsContentType,
                         mediaItemsBegin, mediaItemsEnd,
-                        mediaItemsTitle, tags, jsonCondition,
+                        mediaItemsTitle, mediaItemsTags, jsonCondition,
                         ingestionDateOrder, jsonOrderBy, mediaItemsList);
                 mLogger.info("mediaItemsData: " + mediaItemsData.toString()
                         + ", mediaItemsList.size: " + mediaItemsList.size()
@@ -346,6 +348,14 @@ public class MediaItemsReferences implements Serializable {
 
     public void setMediaItemsTitle(String mediaItemsTitle) {
         this.mediaItemsTitle = mediaItemsTitle;
+    }
+
+    public String getMediaItemsTags() {
+        return mediaItemsTags;
+    }
+
+    public void setMediaItemsTags(String mediaItemsTags) {
+        this.mediaItemsTags = mediaItemsTags;
     }
 
     public Long getMediaItemsMaxMediaItemsNumber() {

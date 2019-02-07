@@ -63,7 +63,7 @@
 </p:dialog>
 
 <p:dialog widgetVar="selectMediaItems" modal="true"
-          header="Select Media Items" appendTo="@(body)" width="1000" height="500"
+          header="Select Media Items" appendTo="@(body)" width="1200" height="500"
           showEffect="fade" hideEffect="fade" resizable="false" draggable="true">
 
     <h:form id="selectMediaItemsForm">
@@ -109,9 +109,19 @@
                 </span>
 
                 <p:outputLabel value="Title:" />
-                <p:inputText style="width:70px;" id="title"
+                <p:inputText id="title"
                              value="#{workflowEditor.mediaItemsReferences.mediaItemsTitle}"
                              placeholder="title" />
+
+                <span class="ui-separator">
+                    <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                </span>
+
+                <p:outputLabel value="Tags:" />
+                <p:inputText id="tags"
+                             value="#{workflowEditor.mediaItemsReferences.mediaItemsTags}"
+                             title="tags are comma separated"
+                             placeholder="tags" />
 
                 <span class="ui-separator">
                     <span class="ui-icon ui-icon-grip-dotted-vertical" />
@@ -203,6 +213,16 @@
 
                 <p:column headerText="Title" >
                     <p:outputLabel value="#{mediaItem.title}" />
+                </p:column>
+
+                <p:column style="width:200px;" headerText="Tags" >
+                    <p:outputLabel
+                            id="mediaItemTags"
+                            value="#{mediaItem.tags}"
+                            title="#{mediaItem.tags}"
+                            />
+                    <p:tooltip for="mediaItemTags"
+                               showEffect="clip" hideEffect="explode" position="left"/>
                 </p:column>
 
                 <p:column style="width:50px;" headerText="Format" >
