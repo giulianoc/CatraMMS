@@ -29,6 +29,8 @@ import javax.faces.bean.ViewScoped;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 import java.io.*;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -2201,21 +2203,12 @@ public class WorkflowEditor extends Workspace implements Serializable {
         if (durationInMilliseconds == null)
             return "";
 
-        String duration;
+        DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss.SSS");
+        dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
 
-        int hours = (int) (durationInMilliseconds / 3600000);
-        String sHours = String.format("%02d", hours);
+        Date durationDate = new Date(durationInMilliseconds);
 
-        int minutes = (int) ((durationInMilliseconds - (hours * 3600000)) / 60000);
-        String sMinutes = String.format("%02d", minutes);
-
-        int seconds = (int) ((durationInMilliseconds - ((hours * 3600000) + (minutes * 60000))) / 1000);
-        String sSeconds = String.format("%02d", seconds);
-
-        int milliSeconds = (int) (durationInMilliseconds - ((hours * 3600000) + (minutes * 60000) + (seconds * 1000)));
-        String sMilliSeconds = String.format("%03d", milliSeconds);
-
-        return sHours.concat(":").concat(sMinutes).concat(":").concat(sSeconds).concat(".").concat(sMilliSeconds);
+        return dateFormat.format(durationDate);
     }
 
     public String getLoadType() {
