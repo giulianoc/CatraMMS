@@ -22,6 +22,7 @@ public class UIMediaComponent extends UINamingContainer {
     private static final String ATTRIBUTE_LOOP = "loop";
     private static final String ATTRIBUTE_MUTED = "muted";
     private static final String ATTRIBUTE_CONTROLS = "controls";
+    private static final String ATTRIBUTE_CONTROLSLIST = "controlsList";
     private static final String ATTRIBUTE_CROSSORIGIN = "crossorigin";
     private static final String ATTRIBUTE_POSTER = "poster";
     private static final String ATTRIBUTE_WIDTH = "width";
@@ -39,10 +40,11 @@ public class UIMediaComponent extends UINamingContainer {
 
         UIComponent element = findMediaElement();
 
-        addAttributeIfTrue(element, ATTRIBUTE_AUTOPLAY);
-        addAttributeIfTrue(element, ATTRIBUTE_LOOP);
-        addAttributeIfTrue(element, ATTRIBUTE_MUTED);
-        addAttributeIfTrue(element, ATTRIBUTE_CONTROLS);
+        addAttributeIfTrue(element, ATTRIBUTE_AUTOPLAY, null);
+        addAttributeIfTrue(element, ATTRIBUTE_LOOP, null);
+        addAttributeIfTrue(element, ATTRIBUTE_MUTED, null);
+        addAttributeIfTrue(element, ATTRIBUTE_CONTROLS, null);
+        addAttributeIfTrue(element, ATTRIBUTE_CONTROLSLIST, "nodownload");
 
         addAttributeIfNotNull(element, ATTRIBUTE_CROSSORIGIN);
         addAttributeIfNotNull(element, ATTRIBUTE_POSTER);
@@ -59,11 +61,11 @@ public class UIMediaComponent extends UINamingContainer {
         }
     }
 
-    private void addAttributeIfTrue(UIComponent component, String attributeName)
+    private void addAttributeIfTrue(UIComponent component, String attributeName, String attributeValue)
     {
         if (isAttributeTrue(attributeName))
         {
-            component.getPassThroughAttributes().put(attributeName, "true");
+            component.getPassThroughAttributes().put(attributeName, attributeValue == null ? "true" : attributeValue);
         }
     }
 

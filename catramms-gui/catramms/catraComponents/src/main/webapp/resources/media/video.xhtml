@@ -8,34 +8,6 @@
       xmlns:jsf="http://xmlns.jcp.org/jsf" xmlns:h="http://java.sun.com/jsf/html"
         >
 
-<script type="application/javascript">
-    function seekFrames(nr_of_frames, fps) {
-
-        var video = document.getElementsByTagName("video")[0];
-
-        if (video.paused == false) {
-            video.pause();
-        }
-
-        //var currentFrames = Math.round(video.currentTime * fps);
-
-        var currentFrames = video.currentTime * fps;
-
-        var newPos = (currentFrames + nr_of_frames) / fps;
-        newPos = newPos + 0.00001; // FIXES A SAFARI SEEK ISSUE. myVdieo.currentTime = 0.04 would give SMPTE 00:00:00:00 wheras it should give 00:00:00:01
-
-        //var newPos = video.currentTime += 1/fps;
-        //newPos = Math.round(newPos, 2) + 1/fps;
-
-        video.currentTime = newPos; // TELL THE PLAYER TO GO HERE
-
-        var seekError = newPos - video.currentTime;
-
-        //console.log("found_frame_nr: " + found_frame_nr + " (found_frame: "+found_frame+")");
-
-        // $('#timecode_tracker').append("<font color='"+fontColor+"'>" + clickCounter + ";" + newPos + ';' + video.currentTime + ';'+found_frame+'</font><br/>');
-    }
-</script>
 
 <cc:interface componentType="UIMediaComponent">
 
@@ -63,6 +35,9 @@
 
     <cc:attribute name="controls" type="java.lang.Boolean" default="false"
                   shortDescription="Display user controls" />
+
+    <cc:attribute name="controlsList" type="java.lang.Boolean" default="false"
+                  shortDescription="Hide download user controls" />
 
     <cc:attribute name="poster" type="java.lang.String"
                   shortDescription="URL of a poster (image) to display before playback" />

@@ -7,10 +7,16 @@ import com.catramms.utility.catramms.CatraMMS;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.primefaces.component.outputlabel.OutputLabel;
+import org.w3c.dom.html.HTMLLabelElement;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
+import javax.faces.component.UIComponent;
+import javax.faces.component.UIInput;
+import javax.faces.component.UIOutput;
+import javax.faces.component.UIViewRoot;
 import javax.faces.context.FacesContext;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -36,39 +42,35 @@ public class Player implements Serializable {
     private boolean editVideo;
     private Long framesPerSecond;
     private String videoCurrentTime;
+    private String videoCurrentTimeHidden;
     private String videoMarkIn = "";
     private String videoMarkOut = "";
-    private Boolean markButtonDisabled;
     private Boolean addMarkButtonDisabled;
 
 
     public Player()
     {
         videoCurrentTime = "";
-        markButtonDisabled = true;
         addMarkButtonDisabled = true;
-    }
-
-    public void updateVideoTimeCode()
-    {
-        mLogger.info("updateVideoTimeCode is called");
-        Map<String, String> requestParamMap = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap();
-        if (requestParamMap.containsKey("newTimeCode"))
-        {
-            videoCurrentTime = requestParamMap.get("newTimeCode");
-            markButtonDisabled = false;
-
-            mLogger.info("videoCurrentTime: " + videoCurrentTime);
-        }
     }
 
     private Float smpteTimeCodeToSeconds(String smpteTimecode)
     {
+        /*
         String[] smpteTimecodeArray = smpteTimecode.split(":");
         float localHours = Long.parseLong(smpteTimecodeArray[0]);
         float localMinutes = Long.parseLong(smpteTimecodeArray[1]);
         float localSeconds = Long.parseLong(smpteTimecodeArray[2]);
         float localFramesPerSeconds = Long.parseLong(smpteTimecodeArray[3]);
+        */
+
+        mLogger.info("smpteTimeCodeToSeconds"
+                + ", smpteTimecode: " + smpteTimecode);
+
+        float localHours = Long.parseLong(smpteTimecode.substring(0, 2));
+        float localMinutes = Long.parseLong(smpteTimecode.substring(3, 5));
+        float localSeconds = Long.parseLong(smpteTimecode.substring(6, 8));
+        float localFramesPerSeconds = Long.parseLong(smpteTimecode.substring(9, 11));
 
         Float seconds = new Float(
                         (localHours * 3600)
@@ -85,6 +87,17 @@ public class Player implements Serializable {
 
     public void markIn()
     {
+        // UIInput get the value only in case of inputText with readonly false.
+        // Since we needed to use just a label, we set the inputText as hidden
+        UIViewRoot view = FacesContext.getCurrentInstance().getViewRoot();
+        UIComponent uiComponent = view.findComponent("showVideoForm:timecodeHidden");
+
+        // mLogger.info("uiComponent.toString: " + uiComponent.toString());
+
+        UIInput inputText = (UIInput) uiComponent;
+        videoCurrentTime = (String) inputText.getAttributes().get("value");
+        // mLogger.info("videoCurrentTime: " + videoCurrentTime);
+
         if (videoCurrentTime.equalsIgnoreCase(""))
         {
             FacesContext.getCurrentInstance().addMessage(
@@ -106,7 +119,7 @@ public class Player implements Serializable {
                         null,
                         new FacesMessage(FacesMessage.SEVERITY_WARN,
                                 "Mark",
-                                "Mark In cannot be greater than Mark Out"));
+                                "Mark In cannot be greater or equal than Mark Out"));
                 return;
             }
 
@@ -122,6 +135,14 @@ public class Player implements Serializable {
 
     public void markOut()
     {
+        // UIInput get the value only in case of inputText with readonly false.
+        // Since we needed to use just a label, we set the inputText as hidden
+        UIViewRoot view = FacesContext.getCurrentInstance().getViewRoot();
+        UIComponent uiComponent = view.findComponent("showVideoForm:timecodeHidden");
+
+        UIInput inputText = (UIInput) uiComponent;
+        videoCurrentTime = (String) inputText.getAttributes().get("value");
+
         if (videoCurrentTime.equalsIgnoreCase(""))
         {
             FacesContext.getCurrentInstance().addMessage(
@@ -143,7 +164,7 @@ public class Player implements Serializable {
                         null,
                         new FacesMessage(FacesMessage.SEVERITY_WARN,
                                 "Mark",
-                                "Mark In cannot be greater than Mark Out"));
+                                "Mark In cannot be greater or equal than Mark Out"));
                 return;
             }
 
@@ -689,14 +710,6 @@ public class Player implements Serializable {
         this.videoMarkOut = videoMarkOut;
     }
 
-    public Boolean getMarkButtonDisabled() {
-        return markButtonDisabled;
-    }
-
-    public void setMarkButtonDisabled(Boolean markButtonDisabled) {
-        this.markButtonDisabled = markButtonDisabled;
-    }
-
     public Boolean getAddMarkButtonDisabled() {
         return addMarkButtonDisabled;
     }
@@ -711,5 +724,13 @@ public class Player implements Serializable {
 
     public void setMediaItem(MediaItem mediaItem) {
         this.mediaItem = mediaItem;
+    }
+
+    public String getVideoCurrentTimeHidden() {
+        return videoCurrentTimeHidden;
+    }
+
+    public void setVideoCurrentTimeHidden(String videoCurrentTimeHidden) {
+        this.videoCurrentTimeHidden = videoCurrentTimeHidden;
     }
 }

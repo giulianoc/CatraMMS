@@ -59,27 +59,37 @@
                     id="binaryLinkPlayer"
                     value="#{controller.player.currentMediaURL}"
                     autoplay="true"
-                    controls="true" />
+                    controls="true" controlsList="true" />
         </p:scrollPanel>
+
+        <script type="text/javascript">
+            initPlayerListener(#{controller.player.editVideo});
+        </script>
 
         <p:panel rendered="#{controller.player.editVideo}" >
 
-            <p:remoteCommand name="updateVideoTimeCode"
-                             update="timecode,markInButton,markOutButton"
-                             global="false"
-                             actionListener="#{controller.player.updateVideoTimeCode}"
-            />
-
-            <!-- <p:remoteCommand oncomplete="initPlayerListener" autoRun="true" /> -->
-
             <p:toolbar >
                 <p:toolbarGroup align="left">
+                    <p:commandButton global="false" icon="fa fa-backward" onclick="rewind(4)" />
+                    <p:commandButton global="false" icon="fa fa-caret-left" onclick="rewind(1)" />
+
+                    <span class="ui-separator">
+                            <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                    </span>
+
+                    <p:commandButton global="false" icon="fa fa-caret-right" onclick="speed(1)" />
+                    <p:commandButton global="false" icon="fa fa-forward" onclick="speed(4)" />
+
+                    <span class="ui-separator">
+                            <span class="ui-icon ui-icon-grip-dotted-vertical" />
+                    </span>
+
                     <p:commandButton global="false" icon="fa fa-minus" onclick="seekFrames(-1)" />
                     <p:hotkey bind="left"  handler="seekFrames(-1);" />
 
                     <span class="ui-separator">
                             <span class="ui-icon ui-icon-grip-dotted-vertical" />
-                        </span>
+                    </span>
 
                     <p:commandButton global="false" icon="fa fa-plus" onclick="seekFrames(1)" />
                     <p:hotkey bind="right"  handler="seekFrames(1);" />
@@ -88,7 +98,14 @@
                             <span class="ui-icon ui-icon-grip-dotted-vertical" />
                         </span>
 
-                    <p:outputLabel id="timecode" value="#{controller.player.videoCurrentTime}" />
+                    <p:outputLabel id="timecode"
+                                   value="#{controller.player.videoCurrentTime}"
+                    />
+                    <p:inputText id="timecodeHidden"
+                                 readonly="false"
+                                 type="hidden"
+                                 value="#{controller.player.videoCurrentTimeHidden}"
+                                 />
 
                     <span class="ui-separator">
                             <span class="ui-icon ui-icon-grip-dotted-vertical" />
@@ -97,12 +114,12 @@
                     <p:outputLabel id="markIn"
                                    title="#{controller.player.videoMarkIn}"
                                    styleClass="#{controller.player.videoMarkIn.equalsIgnoreCase('') ? 'fa fa-bookmark-o' : 'fa fa-bookmark'}" />
-                    <p:tooltip for="markIn"
-                               showEffect="clip" hideEffect="explode" position="left" />
+                    <p:tooltip for="markIn" showEffect="clip" hideEffect="explode" position="left" />
                     <p:commandButton id="markInButton" global="false" value="Mark In"
-                                     disabled="#{controller.player.markButtonDisabled}"
+                                     title="#{controller.player.videoMarkIn}"
                                      actionListener="#{controller.player.markIn}"
                                      update="markIn,addMarkButton" />
+                    <p:tooltip for="markInButton" showEffect="clip" hideEffect="explode" position="left" />
 
                     <span class="ui-separator">
                             <span class="ui-icon ui-icon-grip-dotted-vertical" />
@@ -111,12 +128,12 @@
                     <p:outputLabel id="markOut"
                                    title="#{controller.player.videoMarkOut}"
                                    styleClass="#{controller.player.videoMarkOut.equalsIgnoreCase('') ? 'fa fa-bookmark-o' : 'fa fa-bookmark'}" />
-                    <p:tooltip for="markOut"
-                               showEffect="clip" hideEffect="explode" position="left"/>
+                    <p:tooltip for="markOut" showEffect="clip" hideEffect="explode" position="left"/>
                     <p:commandButton id="markOutButton" global="false" value="Mark Out"
-                                     disabled="#{controller.player.markButtonDisabled}"
+                                     title="#{controller.player.videoMarkOut}"
                                      actionListener="#{controller.player.markOut}"
                                      update="markOut,addMarkButton" />
+                    <p:tooltip for="markOutButton" showEffect="clip" hideEffect="explode" position="left"/>
 
                     <span class="ui-separator">
                             <span class="ui-icon ui-icon-grip-dotted-vertical" />

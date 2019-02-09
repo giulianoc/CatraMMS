@@ -1,81 +1,153 @@
 
+/*
 jQuery(document).ready(function() {
     initPlayerListener();
 });
+*/
 
-function initPlayerListener() {
+var intervalRewind;
+var updateVideoCurrentTimeCodeInterval;
+var editVideo;
+
+function initPlayerListener(localEditVideo) {
+    console.log("initPlayerListener. editVideo: " + localEditVideo);
+    editVideo = localEditVideo;
     var video = document.getElementsByTagName("video")[0];
-    console.log("initPlayerListener. video: " + video);
 
     // video.addEventListener("loadedmetadata", onLoadedMetaData, false); // does not fire on WebKit nightly
     // video.addEventListener("loadeddata", onLoadedData, false);
     video.onplay = onPlay;
     video.onpause = onPause;
 
-    // var updateVideoCurrentTimeCodeInterval = setInterval("updateVideoCurrentTimeCode()", 100);
+    // video.ontimeupdate = onTimeUpdate;
 }
+
 
 function onPlay() {
     console.log("play");
+
+    var video = document.getElementsByTagName("video")[0];
+
+    // video.playbackRate = 1.0;
+
+    clearInterval(intervalRewind);
+
+    updateVideoCurrentTimeCodeInterval = setInterval(onTimeUpdate, 100);
 }
 
 function onPause() {
     console.log("pause");
+
+    var video = document.getElementsByTagName("video")[0];
+
+    if (typeof intervalRewind === 'undefined')
+    {
+        // we are NOT doing 'rewind'
+        console.log("we are NOT doing rewind");
+
+        video.playbackRate = 1.0;
+
+        // clearInterval(intervalRewind);
+    }
+
+    clearInterval(updateVideoCurrentTimeCodeInterval);
 }
 
+function onTimeUpdate()
+{
+    console.log("onTimeUpdate");
+
+    if (editVideo)
+    {
+        var timeCode = document.getElementById("showVideoForm:timecode");
+        var timeCodeHidden = document.getElementById("showVideoForm:timecodeHidden");
+        var video = document.getElementsByTagName("video")[0];
+
+        var framesPerSeconds = document.getElementById("showVideoForm:framesPerSeconds").innerHTML;
+        var smpteTimeCode = secondsToTimecode(video.currentTime, framesPerSeconds);
+
+        // console.log(smpteTimeCode);
+        timeCode.innerHTML = smpteTimeCode;
+        timeCodeHidden.value = smpteTimeCode;
+    }
+}
+
+function speed(playSpeed) {
+    console.log("speed", playSpeed);
+
+    var video = document.getElementsByTagName("video")[0];
+
+    video.playbackRate = playSpeed;
+
+    if (video.paused == true)
+        video.play();
+}
+
+function rewind(playSpeed)
+{
+    console.log("rewind", playSpeed);
+    var video = document.getElementsByTagName("video")[0];
+
+    video.pause();
+
+   var framesPerSeconds = document.getElementById("showVideoForm:framesPerSeconds").innerHTML;
+    framesPerSeconds /= playSpeed;
+    console.log("framesPerSeconds: " + framesPerSeconds)
+
+    console.log("intervalRewind", intervalRewind)
+    if (typeof intervalRewind !== 'undefined')
+        clearInterval(intervalRewind);
+    intervalRewind = setInterval(
+        function(){
+            video.playbackRate = playSpeed;
+            if(video.currentTime <= 0){
+                clearInterval(intervalRewind);
+                video.pause();
+            }
+            else{
+                // video.currentTime += -.1;
+                var decrement = 1/framesPerSeconds
+                console.log("decrement", decrement);
+                video.currentTime -= decrement;
+                onTimeUpdate();
+            }
+        },
+        playSpeed == 1 ? 100 : 400);   // 1000 / framesPerSeconds); 1000/25 = 40 and it is too fast, the player is not able to refresh the picture
+}
 
 function seekFrames(nr_of_frames) {
+    console.log("seekFrames");
+
     var video = document.getElementsByTagName("video")[0];
-    // var video = document.getElementsById("showVideoForm:binaryLinkPlayer");
-    // var timecodeLabel = document.getElementsById("showVideoForm:timecode");
-    // var timecodeLabel = $(".timecodeClass");
-    // var video = jQuery(PrimeFaces.escapeClientId('showVideoForm:binaryLinkPlayer:media-player'));
-    // var video = jQuery("#showVideoForm\\:binaryLinkPlayer\\:media-player");
-    // var timecodeLabel = jQuery(".timecodeClass");
-    // jQuery(".timecodeClass").value="timecodeText";
-    // document.getElementById("#{p:component('timecodeHiddenId')}").value = "timecodeText";
 
     var framesPerSeconds = document.getElementById("showVideoForm:framesPerSeconds").innerHTML;
     console.log("framesPerSeconds: " + framesPerSeconds)
 
-    if (video.paused == false) {
+    if (typeof intervalRewind !== 'undefined')
+        clearInterval(intervalRewind);
+    if (video.paused == false)
         video.pause();
-    }
-
-    //var currentFrames = Math.round(video.currentTime * framesPerSeconds);
 
     var currentFrames = video.currentTime * framesPerSeconds;
     console.log("currentFrames: " + currentFrames)
 
     var newPos = (currentFrames + nr_of_frames) / framesPerSeconds;
-    newPos = newPos + 0.00001; // FIXES A SAFARI SEEK ISSUE. myVdieo.currentTime = 0.04 would give SMPTE 00:00:00:00 wheras it should give 00:00:00:01
-
-    //var newPos = video.currentTime += 1/framesPerSeconds;
-    //newPos = Math.round(newPos, 2) + 1/framesPerSeconds;
-
-    // console.log("initial position: " + video.currentTime);
-    // console.log("new position: " + newPos);
+    // newPos = newPos + 0.00001; // FIXES A SAFARI SEEK ISSUE. myVdieo.currentTime = 0.04 would give SMPTE 00:00:00:00 wheras it should give 00:00:00:01
 
     video.currentTime = newPos; // TELL THE PLAYER TO GO HERE
 
     var seekError = newPos - video.currentTime;
+    console.log("seekError: " + seekError);
 
+    onTimeUpdate();
+
+        /*
     var smpteTimeCode = secondsToTimecode(video.currentTime, framesPerSeconds);
 
     updateVideoTimeCode([
         {name:'newTimeCode',value:smpteTimeCode}
     ]);
-
-    // console.log("confirm new position: " + video.currentTime);
-    console.log("seekError: " + seekError);
-
-    // var timecodeText = video.currentTime + "(" + secondsToTimecode(video.currentTime, 25) + ")";
-    // timecodeLabel.innerHTML = "timecodeText";
-
-    //console.log("found_frame_nr: " + found_frame_nr + " (found_frame: "+found_frame+")");
-
-    // $('#timecode_tracker').append("<font color='"+fontColor+"'>" + clickCounter + ";" + newPos + ';' + video.currentTime + ';'+found_frame+'</font><br/>');
-
+    */
 }
 
 function seekToTimecode(hh_mm_ss_ff, fps) {
@@ -115,7 +187,7 @@ function secondsToTimecode(time, fps) {
 
     var result = (hours < 10 ? "0" + hours : hours) + ":"
         + (minutes < 10 ? "0" + minutes : minutes) + ":"
-        + (seconds < 10 ? "0" + seconds : seconds) + ":"
+        + (seconds < 10 ? "0" + seconds : seconds) + "."
         + (frames < 10 ? "0" + frames : frames);
 
     return result;
