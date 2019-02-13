@@ -54,7 +54,8 @@ private:
     {
         bool                    _running;
         int64_t                 _encodingJobKey;
-        shared_ptr<FFMpeg>      _ffmpeg;
+        shared_ptr<FFMpeg>		_ffmpeg;
+		pid_t					_childPid;
     };
 
 	// no encoding, just copying the video/audio tracks
@@ -63,6 +64,7 @@ private:
         bool                    _running;
         int64_t                 _encodingJobKey;
         shared_ptr<FFMpeg>      _ffmpeg;
+		pid_t					_childPid;
     };
 
     mutex                       _encodingMutex;

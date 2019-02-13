@@ -129,6 +129,7 @@ FFMPEGEncoder::FFMPEGEncoder(Json::Value configuration,
     {
         shared_ptr<Encoding>    encoding = make_shared<Encoding>();
         encoding->_running   = false;
+        encoding->_childPid		= 0;
         encoding->_ffmpeg   = make_shared<FFMpeg>(_configuration, _logger);
 
         _encodingsCapability.push_back(encoding);
@@ -138,6 +139,7 @@ FFMPEGEncoder::FFMPEGEncoder(Json::Value configuration,
     {
         shared_ptr<LiveRecording>    liveRecording = make_shared<LiveRecording>();
         liveRecording->_running   = false;
+        liveRecording->_childPid		= 0;
         liveRecording->_ffmpeg   = make_shared<FFMpeg>(_configuration, _logger);
 
         _liveRecordingsCapability.push_back(liveRecording);
@@ -242,6 +244,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         try
         {            
             selectedEncoding->_running = true;
+            selectedEncoding->_childPid = 0;
             
             _logger->info(__FILEREF__ + "Creating encodeContent thread"
                 + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
@@ -253,6 +256,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         catch(exception e)
         {
             selectedEncoding->_running = false;
+            selectedEncoding->_childPid = 0;
 
             _logger->error(__FILEREF__ + "encodeContentThread failed"
                 + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
@@ -342,6 +346,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         try
         {            
             selectedEncoding->_running = true;
+            selectedEncoding->_childPid = 0;
 
             _logger->info(__FILEREF__ + "Creating encodeContent thread"
                 + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
@@ -353,6 +358,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         catch(exception e)
         {
             selectedEncoding->_running = false;
+            selectedEncoding->_childPid = 0;
 
             _logger->error(__FILEREF__ + "overlayImageOnVideoThread failed"
                 + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
@@ -442,6 +448,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         try
         {            
             selectedEncoding->_running = true;
+            selectedEncoding->_childPid = 0;
 
             _logger->info(__FILEREF__ + "Creating encodeContent thread"
                 + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
@@ -453,6 +460,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         catch(exception e)
         {
             selectedEncoding->_running = false;
+            selectedEncoding->_childPid = 0;
             
             _logger->error(__FILEREF__ + "overlayTextOnVideoThread failed"
                 + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
@@ -542,6 +550,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         try
         {            
             selectedEncoding->_running = true;
+            selectedEncoding->_childPid = 0;
 
             _logger->info(__FILEREF__ + "Creating generateFrames thread"
                 + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
@@ -553,6 +562,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         catch(exception e)
         {
             selectedEncoding->_running = false;
+            selectedEncoding->_childPid = 0;
 
             _logger->error(__FILEREF__ + "generateFrames failed"
                 + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
@@ -642,6 +652,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         try
         {            
             selectedEncoding->_running = true;
+            selectedEncoding->_childPid = 0;
 
             _logger->info(__FILEREF__ + "Creating slideShow thread"
                 + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
@@ -653,6 +664,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         catch(exception e)
         {
             selectedEncoding->_running = false;
+            selectedEncoding->_childPid = 0;
 
             _logger->error(__FILEREF__ + "slideShow failed"
                 + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
@@ -742,6 +754,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         try
         {            
             selectedLiveRecording->_running = true;
+            selectedLiveRecording->_childPid = 0;
 
             _logger->info(__FILEREF__ + "Creating liveRecorder thread"
                 + ", selectedEncoding->_encodingJobKey: " + to_string(encodingJobKey)
@@ -753,6 +766,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         catch(exception e)
         {
             selectedLiveRecording->_running = false;
+            selectedLiveRecording->_childPid = 0;
 
             _logger->error(__FILEREF__ + "liveRecorder failed"
                 + ", selectedLiveRecording->_encodingJobKey: " + to_string(encodingJobKey)
@@ -849,6 +863,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         {
             responseBody = string("{ ")
                 + "\"encodingJobKey\": " + to_string(encodingJobKey) + " "
+                + ", \"pid\": 0 "
                 + ", \"encodingFinished\": true "
                 + "}";
         }
@@ -869,12 +884,14 @@ void FFMPEGEncoder::manageRequestAndResponse(
             
 			if (encodingFound)
 				responseBody = string("{ ")
-					+ "\"encodingJobKey\": " + to_string(selectedEncoding->_encodingJobKey) + " "
-					 + ", \"encodingFinished\": " + (selectedEncoding->_running ? "false " : "true ")
-					 + "}";
+					+ "\"encodingJobKey\": " + to_string(selectedEncoding->_encodingJobKey)
+					+ ", \"pid\": " + to_string(selectedEncoding->_childPid)
+					+ ", \"encodingFinished\": " + (selectedEncoding->_running ? "false " : "true ")
+					+ "}";
 			else // if (liveRecording)
 				responseBody = string("{ ")
-					+ "\"encodingJobKey\": " + to_string(selectedLiveRecording->_encodingJobKey) + " "
+					+ "\"encodingJobKey\": " + to_string(selectedLiveRecording->_encodingJobKey)
+					+ ", \"pid\": " + to_string(selectedEncoding->_childPid)
 					+ ", \"encodingFinished\": " + (selectedLiveRecording->_running ? "false " : "true ")
 					+ "}";
         }
@@ -973,9 +990,10 @@ void FFMPEGEncoder::manageRequestAndResponse(
         }
         
         string responseBody = string("{ ")
-                    + "\"encodingJobKey\": " + to_string(encodingJobKey)
-                + ", \"encodingProgress\": " + to_string(encodingProgress) + " "
-                + "}";
+			+ "\"encodingJobKey\": " + to_string(encodingJobKey)
+			+ ", \"pid\": " + to_string(selectedEncoding->_childPid)
+            + ", \"encodingProgress\": " + to_string(encodingProgress) + " "
+            + "}";
         
         sendSuccess(request, 200, responseBody);
     }
@@ -1089,7 +1107,8 @@ void FFMPEGEncoder::encodeContent(
                 workspaceDirectoryName,
                 relativePath,
                 encodingJobKey,
-                ingestionJobKey);        
+                ingestionJobKey,
+				&(encoding->_childPid));
 		// chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
 
 //        string responseBody = string("{ ")
@@ -1100,6 +1119,7 @@ void FFMPEGEncoder::encodeContent(
         // sendSuccess(request, 200, responseBody);
         
         encoding->_running = false;
+        encoding->_childPid = 0;
         
         _logger->info(__FILEREF__ + "Encode content finished"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -1110,6 +1130,7 @@ void FFMPEGEncoder::encodeContent(
     catch(runtime_error e)
     {
         encoding->_running = false;
+        encoding->_childPid = 0;
 
         string errorMessage = string ("API failed")
                     + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -1134,6 +1155,7 @@ void FFMPEGEncoder::encodeContent(
     catch(exception e)
     {
         encoding->_running = false;
+        encoding->_childPid = 0;
 
         string errorMessage = string("API failed")
                     + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -1230,7 +1252,8 @@ void FFMPEGEncoder::overlayImageOnVideo(
             // encodedFileName,
             stagingEncodedAssetPathName,
             encodingJobKey,
-            ingestionJobKey);
+            ingestionJobKey,
+			&(encoding->_childPid));
 		// chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
 
 //        string responseBody = string("{ ")
@@ -1241,6 +1264,7 @@ void FFMPEGEncoder::overlayImageOnVideo(
         // sendSuccess(request, 200, responseBody);
         
         encoding->_running = false;
+        encoding->_childPid = 0;
         
         _logger->info(__FILEREF__ + "Encode content finished"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -1251,6 +1275,7 @@ void FFMPEGEncoder::overlayImageOnVideo(
     catch(runtime_error e)
     {
         encoding->_running = false;
+        encoding->_childPid = 0;
 
         string errorMessage = string ("API failed")
                     + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -1275,6 +1300,7 @@ void FFMPEGEncoder::overlayImageOnVideo(
     catch(exception e)
     {
         encoding->_running = false;
+        encoding->_childPid = 0;
 
         string errorMessage = string("API failed")
                     + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -1424,7 +1450,8 @@ void FFMPEGEncoder::overlayTextOnVideo(
                 // encodedFileName,
                 stagingEncodedAssetPathName,
                 encodingJobKey,
-                ingestionJobKey);
+                ingestionJobKey,
+				&(encoding->_childPid));
 		// chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
 
 //        string responseBody = string("{ ")
@@ -1435,6 +1462,7 @@ void FFMPEGEncoder::overlayTextOnVideo(
         // sendSuccess(request, 200, responseBody);
         
         encoding->_running = false;
+        encoding->_childPid = 0;
         
         _logger->info(__FILEREF__ + "Encode content finished"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -1445,6 +1473,7 @@ void FFMPEGEncoder::overlayTextOnVideo(
     catch(runtime_error e)
     {
         encoding->_running = false;
+        encoding->_childPid = 0;
 
         string errorMessage = string ("API failed")
                     + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -1469,6 +1498,7 @@ void FFMPEGEncoder::overlayTextOnVideo(
     catch(exception e)
     {
         encoding->_running = false;
+        encoding->_childPid = 0;
 
         string errorMessage = string("API failed")
                     + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -1569,10 +1599,12 @@ void FFMPEGEncoder::generateFrames(
                 imageWidth, 
                 imageHeight,
                 mmsSourceVideoAssetPathName,
-                videoDurationInMilliSeconds
+                videoDurationInMilliSeconds,
+				&(encoding->_childPid)
         );
         
         encoding->_running = false;
+        encoding->_childPid = 0;
         
         _logger->info(__FILEREF__ + "generateFrames finished"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -1582,6 +1614,7 @@ void FFMPEGEncoder::generateFrames(
     catch(runtime_error e)
     {
         encoding->_running = false;
+        encoding->_childPid = 0;
 
         string errorMessage = string ("API failed")
                     + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -1595,6 +1628,7 @@ void FFMPEGEncoder::generateFrames(
     catch(exception e)
     {
         encoding->_running = false;
+        encoding->_childPid = 0;
 
         string errorMessage = string("API failed")
                     + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -1676,9 +1710,11 @@ void FFMPEGEncoder::slideShow(
 
         encoding->_ffmpeg->generateSlideshowMediaToIngest(ingestionJobKey, 
                 sourcePhysicalPaths, durationOfEachSlideInSeconds,
-                outputFrameRate, slideShowMediaPathName);
+                outputFrameRate, slideShowMediaPathName,
+				&(encoding->_childPid));
         
         encoding->_running = false;
+        encoding->_childPid = 0;
         
         _logger->info(__FILEREF__ + "slideShow finished"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -1688,6 +1724,7 @@ void FFMPEGEncoder::slideShow(
     catch(runtime_error e)
     {
         encoding->_running = false;
+        encoding->_childPid = 0;
 
         string errorMessage = string ("API failed")
                     + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -1701,6 +1738,7 @@ void FFMPEGEncoder::slideShow(
     catch(exception e)
     {
         encoding->_running = false;
+        encoding->_childPid = 0;
 
         string errorMessage = string("API failed")
                     + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -1782,10 +1820,12 @@ void FFMPEGEncoder::liveRecorder(
                 utcRecordingPeriodStart,
                 utcRecordingPeriodEnd,
                 segmentDurationInSeconds,
-                outputFileFormat
+                outputFileFormat,
+				&(liveRecording->_childPid)
         );
         
         liveRecording->_running = false;
+        liveRecording->_childPid = 0;
         
         _logger->info(__FILEREF__ + "liveRecorded finished"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -1795,6 +1835,7 @@ void FFMPEGEncoder::liveRecorder(
     catch(runtime_error e)
     {
         liveRecording->_running = false;
+        liveRecording->_childPid = 0;
 
         string errorMessage = string ("API failed")
                     + ", encodingJobKey: " + to_string(encodingJobKey)
@@ -1808,6 +1849,7 @@ void FFMPEGEncoder::liveRecorder(
     catch(exception e)
     {
         liveRecording->_running = false;
+        liveRecording->_childPid = 0;
 
         string errorMessage = string("API failed")
                     + ", encodingJobKey: " + to_string(encodingJobKey)

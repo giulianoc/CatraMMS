@@ -5825,6 +5825,7 @@ void MMSEngineProcessor::generateAndIngestFramesTask(
         string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(
                 workspace);
 
+		pid_t childPid;
         FFMpeg ffmpeg (_configuration, _logger);
 
         vector<string> generatedFramesFileNames = ffmpeg.generateFramesToIngest(
@@ -5840,7 +5841,8 @@ void MMSEngineProcessor::generateAndIngestFramesTask(
                 imageWidth, 
                 imageHeight,
                 sourcePhysicalPath,
-                durationInMilliSeconds
+                durationInMilliSeconds,
+				&childPid
         );
 
         _logger->info(__FILEREF__ + "generateFramesToIngest done"

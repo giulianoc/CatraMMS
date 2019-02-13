@@ -53,7 +53,8 @@ public:
         string customerDirectoryName,
         string relativePath,
         int64_t encodingJobKey,
-        int64_t ingestionJobKey);
+        int64_t ingestionJobKey,
+		pid_t* pChildPid);
     
     void overlayImageOnVideo(
         string mmsSourceVideoAssetPathName,
@@ -64,7 +65,8 @@ public:
         // string encodedFileName,
         string stagingEncodedAssetPathName,
         int64_t encodingJobKey,
-        int64_t ingestionJobKey);
+        int64_t ingestionJobKey,
+		pid_t* pChildPid);
 
     void overlayTextOnVideo(
         string mmsSourceVideoAssetPathName,
@@ -84,7 +86,8 @@ public:
         // string encodedFileName,
         string stagingEncodedAssetPathName,
         int64_t encodingJobKey,
-        int64_t ingestionJobKey);
+        int64_t ingestionJobKey,
+		pid_t* pChildPid);
 
     int getEncodingProgress();
 
@@ -103,7 +106,8 @@ public:
         int imageWidth,
         int imageHeight,
         string mmsAssetPathName,
-        int64_t videoDurationInMilliSeconds);
+        int64_t videoDurationInMilliSeconds,
+		pid_t* pChildPid);
 
     void generateConcatMediaToIngest(
         int64_t ingestionJobKey,
@@ -115,7 +119,8 @@ public:
         vector<string>& sourcePhysicalPaths,
         double durationOfEachSlideInSeconds, 
         int outputFrameRate,
-        string slideshowMediaPathName);
+        string slideshowMediaPathName,
+		pid_t* pChildPid);
 
     void generateCutMediaToIngest(
         int64_t ingestionJobKey,
@@ -139,7 +144,8 @@ public:
         time_t utcRecordingPeriodStart, 
         time_t utcRecordingPeriodEnd, 
         int segmentDurationInSeconds,
-        string outputFileFormat);
+        string outputFileFormat,
+		pid_t* pChildPid);
 
 	void changeFileFormat(
 		int64_t ingestionJobKey,
@@ -202,6 +208,7 @@ private:
         string& ffmpegAudioChannelsParameter,
         string& ffmpegAudioSampleRateParameter
     );
+	void addToArguments(string parameter, vector<string>& argumentList);
     
     string getLastPartOfFile(
         string pathFileName, int lastCharsToBeRead);
