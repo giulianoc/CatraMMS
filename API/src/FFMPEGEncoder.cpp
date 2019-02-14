@@ -125,6 +125,11 @@ FFMPEGEncoder::FFMPEGEncoder(Json::Value configuration,
         + ", ffmpeg->maxLiveRecordingsCapability: " + to_string(_maxEncodingsCapability)
     );
 
+    _encodingCompletedRetentionInSeconds = _configuration["ffmpeg"].get("encodingCompletedRetentionInSeconds", 0).asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", ffmpeg->encodingCompletedRetentionInSeconds: " + to_string(_encodingCompletedRetentionInSeconds)
+    );
+
     for (int encodingIndex = 0; encodingIndex < _maxEncodingsCapability; encodingIndex++)
     {
         shared_ptr<Encoding>    encoding = make_shared<Encoding>();
@@ -144,6 +149,8 @@ FFMPEGEncoder::FFMPEGEncoder(Json::Value configuration,
 
         _liveRecordingsCapability.push_back(liveRecording);
     }
+
+	_lastEncodingCompletedCheck = chrono::system_clock::now();
 }
 
 FFMPEGEncoder::~FFMPEGEncoder() {
@@ -783,7 +790,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
         }
 
         try
-        {            
+        {
             string responseBody = string("{ ")
                     + "\"encodingJobKey\": " + to_string(encodingJobKey) + " "
                     + ", \"ffmpegEncoderHost\": \"" + System::getHostName() + "\" "
@@ -824,9 +831,26 @@ void FFMPEGEncoder::manageRequestAndResponse(
         
 		bool                    encodingFound = false;
 		shared_ptr<Encoding>    selectedEncoding;
+
 		bool                    liveRecordingFound = false;
 		shared_ptr<LiveRecording>    selectedLiveRecording;
 
+		bool                    encodingCompleted = false;
+		shared_ptr<EncodingCompleted>    selectedEncodingCompleted;
+
+		{
+			lock_guard<mutex> locker(_encodingCompletedMutex);
+
+			map<int64_t, shared_ptr<EncodingCompleted>>::iterator it =
+				_encodingCompletedMap.find(encodingJobKey);
+			if (it != _encodingCompletedMap.end())
+			{
+				encodingCompleted = true;
+				selectedEncodingCompleted = it->second;
+			}
+		}
+
+		if (!encodingCompleted)
 		{
 			lock_guard<mutex> locker(_encodingMutex);
 
@@ -840,30 +864,38 @@ void FFMPEGEncoder::manageRequestAndResponse(
 					break;
 				}
 			}
-		}
 
-        if (!encodingFound)
-		{
-			lock_guard<mutex> locker(_liveRecordingMutex);
-
-			for (shared_ptr<LiveRecording> liveRecording: _liveRecordingsCapability)
+			if (!encodingFound)
 			{
-				if (liveRecording->_encodingJobKey == encodingJobKey)
+				lock_guard<mutex> locker(_liveRecordingMutex);
+
+				for (shared_ptr<LiveRecording> liveRecording: _liveRecordingsCapability)
 				{
-					liveRecordingFound = true;
-					selectedLiveRecording = liveRecording;
+					if (liveRecording->_encodingJobKey == encodingJobKey)
+					{
+						liveRecordingFound = true;
+						selectedLiveRecording = liveRecording;
                 
-					break;
+						break;
+					}
 				}
 			}
 		}
 
+		_logger->info(__FILEREF__ + "Encoding Status"
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", encodingFound: " + to_string(encodingFound)
+				+ ", liveRecordingFound: " + to_string(liveRecordingFound)
+				+ ", encodingCompleted: " + to_string(encodingCompleted)
+				);
         string responseBody;
-        if (!encodingFound && !liveRecordingFound)
+        if (!encodingFound && !liveRecordingFound && !encodingCompleted)
         {
+			// it should never happen
             responseBody = string("{ ")
-                + "\"encodingJobKey\": " + to_string(encodingJobKey) + " "
-                + ", \"pid\": 0 "
+                + "\"encodingJobKey\": " + to_string(encodingJobKey)
+                + ", \"pid\": 0"
+				+ ", \"killedByUser\": false"
                 + ", \"encodingFinished\": true "
                 + "}";
         }
@@ -882,16 +914,25 @@ void FFMPEGEncoder::manageRequestAndResponse(
             }
             */
             
-			if (encodingFound)
+			if (encodingCompleted)
+				responseBody = string("{ ")
+					+ "\"encodingJobKey\": " + to_string(selectedEncodingCompleted->_encodingJobKey)
+					+ ", \"pid\": 0 "
+					+ ", \"killedByUser\": " + (selectedEncodingCompleted->_killedByUser ? "true" : "false")
+					+ ", \"encodingFinished\": true "
+					+ "}";
+			else if (encodingFound)
 				responseBody = string("{ ")
 					+ "\"encodingJobKey\": " + to_string(selectedEncoding->_encodingJobKey)
 					+ ", \"pid\": " + to_string(selectedEncoding->_childPid)
+					+ ", \"killedByUser\": false"
 					+ ", \"encodingFinished\": " + (selectedEncoding->_running ? "false " : "true ")
 					+ "}";
 			else // if (liveRecording)
 				responseBody = string("{ ")
 					+ "\"encodingJobKey\": " + to_string(selectedLiveRecording->_encodingJobKey)
-					+ ", \"pid\": " + to_string(selectedEncoding->_childPid)
+					+ ", \"pid\": " + to_string(selectedLiveRecording->_childPid)
+					+ ", \"killedByUser\": false"
 					+ ", \"encodingFinished\": " + (selectedLiveRecording->_running ? "false " : "true ")
 					+ "}";
         }
@@ -1008,6 +1049,13 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
         throw runtime_error(errorMessage);
     }
+
+	if (chrono::system_clock::now() - _lastEncodingCompletedCheck >=
+			chrono::seconds(_encodingCompletedRetentionInSeconds))
+	{
+		_lastEncodingCompletedCheck = chrono::system_clock::now();
+		encodingCompletedRetention();
+	}
 }
 
 void FFMPEGEncoder::encodeContent(
@@ -1026,6 +1074,8 @@ void FFMPEGEncoder::encodeContent(
     try
     {
         encoding->_encodingJobKey = encodingJobKey;
+		removeEncodingCompletedIfPresent(encodingJobKey);
+
         /*
         {
             "mmsSourceAssetPathName": "...",
@@ -1126,6 +1176,30 @@ void FFMPEGEncoder::encodeContent(
             + ", encodingJobKey: " + to_string(encodingJobKey)
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
         );
+
+		bool completedWithError			= false;
+		bool killedByUser				= false;
+		addEncodingCompleted(encodingJobKey,
+				completedWithError, killedByUser);
+    }
+	catch(FFMpegEncodingKilledByUser e)
+	{
+        encoding->_running = false;
+        encoding->_childPid = 0;
+
+        string errorMessage = string ("API failed")
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        ;
+
+        _logger->error(__FILEREF__ + errorMessage);
+
+		bool completedWithError			= false;
+		bool killedByUser				= true;
+		addEncodingCompleted(encodingJobKey,
+				completedWithError, killedByUser);
     }
     catch(runtime_error e)
     {
@@ -1140,13 +1214,11 @@ void FFMPEGEncoder::encodeContent(
         ;
 
         _logger->error(__FILEREF__ + errorMessage);
-        /*
-        string errorMessage = string("Internal server error");
-        _logger->error(__FILEREF__ + errorMessage);
 
-        sendError(request, 500, errorMessage);
-        */
-
+		bool completedWithError			= true;
+		bool killedByUser				= false;
+		addEncodingCompleted(encodingJobKey,
+				completedWithError, killedByUser);
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
         // (this is checked in EncoderVideoAudioProxy)
@@ -1165,13 +1237,11 @@ void FFMPEGEncoder::encodeContent(
         ;
 
         _logger->error(__FILEREF__ + errorMessage);
-        /*
-        string errorMessage = string("Internal server error");
-        _logger->error(__FILEREF__ + errorMessage);
 
-        sendError(request, 500, errorMessage);
-         */
-
+		bool completedWithError			= true;
+		bool killedByUser				= false;
+		addEncodingCompleted(encodingJobKey,
+				completedWithError, killedByUser);
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
         // (this is checked in EncoderVideoAudioProxy)
@@ -1195,6 +1265,7 @@ void FFMPEGEncoder::overlayImageOnVideo(
     try
     {
         encoding->_encodingJobKey = encodingJobKey;
+		removeEncodingCompletedIfPresent(encodingJobKey);
 
         Json::Value overlayMedatada;
         try
@@ -1271,6 +1342,30 @@ void FFMPEGEncoder::overlayImageOnVideo(
             + ", encodingJobKey: " + to_string(encodingJobKey)
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
         );
+
+		bool completedWithError			= false;
+		bool killedByUser				= false;
+		addEncodingCompleted(encodingJobKey,
+				completedWithError, killedByUser);
+    }
+	catch(FFMpegEncodingKilledByUser e)
+	{
+        encoding->_running = false;
+        encoding->_childPid = 0;
+
+        string errorMessage = string ("API failed")
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        ;
+
+        _logger->error(__FILEREF__ + errorMessage);
+
+		bool completedWithError			= false;
+		bool killedByUser				= true;
+		addEncodingCompleted(encoding->_encodingJobKey,
+				completedWithError, killedByUser);
     }
     catch(runtime_error e)
     {
@@ -1285,13 +1380,11 @@ void FFMPEGEncoder::overlayImageOnVideo(
         ;
 
         _logger->error(__FILEREF__ + errorMessage);
-        /*
-        string errorMessage = string("Internal server error");
-        _logger->error(__FILEREF__ + errorMessage);
 
-        sendError(request, 500, errorMessage);
-        */
-
+		bool completedWithError			= true;
+		bool killedByUser				= false;
+		addEncodingCompleted(encodingJobKey,
+				completedWithError, killedByUser);
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
         // (this is checked in EncoderVideoAudioProxy)
@@ -1310,13 +1403,11 @@ void FFMPEGEncoder::overlayImageOnVideo(
         ;
 
         _logger->error(__FILEREF__ + errorMessage);
-        /*
-        string errorMessage = string("Internal server error");
-        _logger->error(__FILEREF__ + errorMessage);
 
-        sendError(request, 500, errorMessage);
-         */
-
+		bool completedWithError			= true;
+		bool killedByUser				= false;
+		addEncodingCompleted(encodingJobKey,
+				completedWithError, killedByUser);
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
         // (this is checked in EncoderVideoAudioProxy)
@@ -1340,6 +1431,7 @@ void FFMPEGEncoder::overlayTextOnVideo(
     try
     {
         encoding->_encodingJobKey = encodingJobKey;
+		removeEncodingCompletedIfPresent(encodingJobKey);
 
         Json::Value overlayTextMedatada;
         try
@@ -1469,6 +1561,30 @@ void FFMPEGEncoder::overlayTextOnVideo(
             + ", encodingJobKey: " + to_string(encodingJobKey)
             + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
         );
+
+		bool completedWithError			= false;
+		bool killedByUser				= false;
+		addEncodingCompleted(encodingJobKey,
+				completedWithError, killedByUser);
+    }
+	catch(FFMpegEncodingKilledByUser e)
+	{
+        encoding->_running = false;
+        encoding->_childPid = 0;
+
+        string errorMessage = string ("API failed")
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        ;
+
+        _logger->error(__FILEREF__ + errorMessage);
+
+		bool completedWithError			= false;
+		bool killedByUser				= true;
+		addEncodingCompleted(encoding->_encodingJobKey,
+				completedWithError, killedByUser);
     }
     catch(runtime_error e)
     {
@@ -1483,13 +1599,11 @@ void FFMPEGEncoder::overlayTextOnVideo(
         ;
 
         _logger->error(__FILEREF__ + errorMessage);
-        /*
-        string errorMessage = string("Internal server error");
-        _logger->error(__FILEREF__ + errorMessage);
 
-        sendError(request, 500, errorMessage);
-        */
-
+		bool completedWithError			= true;
+		bool killedByUser				= false;
+		addEncodingCompleted(encodingJobKey,
+				completedWithError, killedByUser);
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
         // (this is checked in EncoderVideoAudioProxy)
@@ -1508,13 +1622,11 @@ void FFMPEGEncoder::overlayTextOnVideo(
         ;
 
         _logger->error(__FILEREF__ + errorMessage);
-        /*
-        string errorMessage = string("Internal server error");
-        _logger->error(__FILEREF__ + errorMessage);
 
-        sendError(request, 500, errorMessage);
-         */
-
+		bool completedWithError			= true;
+		bool killedByUser				= false;
+		addEncodingCompleted(encodingJobKey,
+				completedWithError, killedByUser);
         // this method run on a detached thread, we will not generate exception
         // The ffmpeg method will make sure the encoded file is removed 
         // (this is checked in EncoderVideoAudioProxy)
@@ -1538,6 +1650,7 @@ void FFMPEGEncoder::generateFrames(
     try
     {
         encoding->_encodingJobKey = encodingJobKey;
+		removeEncodingCompletedIfPresent(encodingJobKey);
 
         Json::Value generateFramesMedatada;
         try
@@ -1610,6 +1723,30 @@ void FFMPEGEncoder::generateFrames(
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", encodingJobKey: " + to_string(encodingJobKey)
         );
+
+		bool completedWithError			= false;
+		bool killedByUser				= false;
+		addEncodingCompleted(encodingJobKey,
+				completedWithError, killedByUser);
+    }
+	catch(FFMpegEncodingKilledByUser e)
+	{
+        encoding->_running = false;
+        encoding->_childPid = 0;
+
+        string errorMessage = string ("API failed")
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        ;
+
+        _logger->error(__FILEREF__ + errorMessage);
+
+		bool completedWithError			= false;
+		bool killedByUser				= true;
+		addEncodingCompleted(encoding->_encodingJobKey,
+				completedWithError, killedByUser);
     }
     catch(runtime_error e)
     {
@@ -1624,6 +1761,11 @@ void FFMPEGEncoder::generateFrames(
         ;
 
         _logger->error(__FILEREF__ + errorMessage);
+
+		bool completedWithError			= true;
+		bool killedByUser				= false;
+		addEncodingCompleted(encodingJobKey,
+				completedWithError, killedByUser);
     }
     catch(exception e)
     {
@@ -1638,6 +1780,11 @@ void FFMPEGEncoder::generateFrames(
         ;
 
         _logger->error(__FILEREF__ + errorMessage);
+
+		bool completedWithError			= true;
+		bool killedByUser				= false;
+		addEncodingCompleted(encodingJobKey,
+				completedWithError, killedByUser);
     }
 }
 
@@ -1657,6 +1804,7 @@ void FFMPEGEncoder::slideShow(
     try
     {
         encoding->_encodingJobKey = encodingJobKey;
+		removeEncodingCompletedIfPresent(encodingJobKey);
 
         Json::Value slideShowMedatada;
         try
@@ -1708,7 +1856,7 @@ void FFMPEGEncoder::slideShow(
             sourcePhysicalPaths.push_back(sourcePhysicalPathName);
         }
 
-        encoding->_ffmpeg->generateSlideshowMediaToIngest(ingestionJobKey, 
+        encoding->_ffmpeg->generateSlideshowMediaToIngest(ingestionJobKey, encodingJobKey,
                 sourcePhysicalPaths, durationOfEachSlideInSeconds,
                 outputFrameRate, slideShowMediaPathName,
 				&(encoding->_childPid));
@@ -1720,6 +1868,30 @@ void FFMPEGEncoder::slideShow(
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", encodingJobKey: " + to_string(encodingJobKey)
         );
+
+		bool completedWithError			= false;
+		bool killedByUser				= false;
+		addEncodingCompleted(encodingJobKey,
+				completedWithError, killedByUser);
+    }
+	catch(FFMpegEncodingKilledByUser e)
+	{
+        encoding->_running = false;
+        encoding->_childPid = 0;
+
+        string errorMessage = string ("API failed")
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        ;
+
+        _logger->error(__FILEREF__ + errorMessage);
+
+		bool completedWithError			= false;
+		bool killedByUser				= true;
+		addEncodingCompleted(encoding->_encodingJobKey,
+				completedWithError, killedByUser);
     }
     catch(runtime_error e)
     {
@@ -1734,6 +1906,11 @@ void FFMPEGEncoder::slideShow(
         ;
 
         _logger->error(__FILEREF__ + errorMessage);
+
+		bool completedWithError			= true;
+		bool killedByUser				= false;
+		addEncodingCompleted(encodingJobKey,
+				completedWithError, killedByUser);
     }
     catch(exception e)
     {
@@ -1748,6 +1925,11 @@ void FFMPEGEncoder::slideShow(
         ;
 
         _logger->error(__FILEREF__ + errorMessage);
+
+		bool completedWithError			= true;
+		bool killedByUser				= false;
+		addEncodingCompleted(encodingJobKey,
+				completedWithError, killedByUser);
     }
 }
 
@@ -1767,6 +1949,7 @@ void FFMPEGEncoder::liveRecorder(
     try
     {
         liveRecording->_encodingJobKey = encodingJobKey;
+		removeEncodingCompletedIfPresent(encodingJobKey);
 
         Json::Value liveRecorderMedatada;
         try
@@ -1814,6 +1997,7 @@ void FFMPEGEncoder::liveRecorder(
 
         liveRecording->_ffmpeg->liveRecorder(
                 ingestionJobKey,
+				encodingJobKey,
                 segmentListPathName,
 				recordedFileNamePrefix,
                 liveURL,
@@ -1831,6 +2015,30 @@ void FFMPEGEncoder::liveRecorder(
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", encodingJobKey: " + to_string(encodingJobKey)
         );
+
+		bool completedWithError			= false;
+		bool killedByUser				= false;
+		addEncodingCompleted(encodingJobKey,
+				completedWithError, killedByUser);
+    }
+	catch(FFMpegEncodingKilledByUser e)
+	{
+        liveRecording->_running = false;
+        liveRecording->_childPid = 0;
+
+        string errorMessage = string ("API failed")
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        ;
+
+        _logger->error(__FILEREF__ + errorMessage);
+
+		bool completedWithError			= false;
+		bool killedByUser				= true;
+		addEncodingCompleted(encodingJobKey,
+				completedWithError, killedByUser);
     }
     catch(runtime_error e)
     {
@@ -1845,6 +2053,11 @@ void FFMPEGEncoder::liveRecorder(
         ;
 
         _logger->error(__FILEREF__ + errorMessage);
+
+		bool completedWithError			= true;
+		bool killedByUser				= false;
+		addEncodingCompleted(encodingJobKey,
+				completedWithError, killedByUser);
     }
     catch(exception e)
     {
@@ -1859,6 +2072,70 @@ void FFMPEGEncoder::liveRecorder(
         ;
 
         _logger->error(__FILEREF__ + errorMessage);
+
+		bool completedWithError			= true;
+		bool killedByUser				= false;
+		addEncodingCompleted(encodingJobKey,
+				completedWithError, killedByUser);
     }
+}
+
+void FFMPEGEncoder::addEncodingCompleted(
+        int64_t encodingJobKey, bool completedWithError,
+		bool killedByUser)
+{
+	lock_guard<mutex> locker(_encodingCompletedMutex);
+
+	shared_ptr<EncodingCompleted> encodingCompleted = make_shared<EncodingCompleted>();
+
+	encodingCompleted->_encodingJobKey		= encodingJobKey;
+	encodingCompleted->_completedWithError	= completedWithError;
+	encodingCompleted->_killedByUser		= killedByUser;
+	encodingCompleted->_timestamp			= chrono::system_clock::now();
+
+	_encodingCompletedMap.insert(make_pair(encodingCompleted->_encodingJobKey, encodingCompleted));
+
+	_logger->info(__FILEREF__ + "addEncodingCompleted"
+			+ ", encodingJobKey: " + to_string(encodingJobKey)
+			+ ", encodingCompletedRetention.size: " + to_string(_encodingCompletedMap.size())
+			);
+}
+
+void FFMPEGEncoder::removeEncodingCompletedIfPresent(int64_t encodingJobKey)
+{
+
+	lock_guard<mutex> locker(_encodingCompletedMutex);
+
+	map<int64_t, shared_ptr<EncodingCompleted>>::iterator it =
+		_encodingCompletedMap.find(encodingJobKey);
+	if (it != _encodingCompletedMap.end())
+	{
+		_encodingCompletedMap.erase(it);
+
+		_logger->info(__FILEREF__ + "removeEncodingCompletedIfPresent"
+			+ ", encodingCompletedRetention.size: " + to_string(_encodingCompletedMap.size())
+			);
+	}
+}
+
+void FFMPEGEncoder::encodingCompletedRetention()
+{
+
+	lock_guard<mutex> locker(_encodingCompletedMutex);
+
+	chrono::system_clock::time_point now = chrono::system_clock::now();
+
+	for(map<int64_t, shared_ptr<EncodingCompleted>>::iterator it = _encodingCompletedMap.begin();
+			it != _encodingCompletedMap.end(); )
+	{
+		if(now - (it->second->_timestamp) >= chrono::seconds(_encodingCompletedRetentionInSeconds))
+			it = _encodingCompletedMap.erase(it);
+		else
+			it++;
+	}
+
+	_logger->info(__FILEREF__ + "encodingCompletedRetention"
+			+ ", encodingCompletedRetention.size: " + to_string(_encodingCompletedMap.size())
+			);
 }
 

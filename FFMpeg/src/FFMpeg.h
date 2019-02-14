@@ -35,6 +35,13 @@ struct FFMpegEncodingStatusNotAvailable: public exception {
     }; 
 };
 
+struct FFMpegEncodingKilledByUser: public exception {
+    char const* what() const throw() 
+    {
+        return "Encoding was killed by the User";
+    }; 
+};
+
 class FFMpeg {
 public:
     FFMpeg(Json::Value configuration,
@@ -116,6 +123,7 @@ public:
 
     void generateSlideshowMediaToIngest(
         int64_t ingestionJobKey,
+        int64_t encodingJobKey,
         vector<string>& sourcePhysicalPaths,
         double durationOfEachSlideInSeconds, 
         int outputFrameRate,
@@ -138,6 +146,7 @@ public:
 
 	void liveRecorder(
         int64_t ingestionJobKey,
+        int64_t encodingJobKey,
 		string segmentListPathName,
 		string recordedFileNamePrefix,
         string liveURL,

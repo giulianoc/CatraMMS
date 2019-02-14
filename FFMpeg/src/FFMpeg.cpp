@@ -58,6 +58,8 @@ void FFMpeg::encodeContent(
         int64_t ingestionJobKey,
 		pid_t* pChildPid)
 {
+	int iReturnedStatus = 0;
+
     try
     {
         bool segmentFileFormat;    
@@ -272,7 +274,6 @@ void FFMpeg::encodeContent(
 
 				bool redirectionStdOutput = true;
 				bool redirectionStdError = true;
-				int iReturnedStatus;
 
 				ProcessUtility::forkAndExec (
 					_ffmpegPath + "/ffmpeg",
@@ -324,13 +325,25 @@ void FFMpeg::encodeContent(
                         + ", e.what(): " + e.what()
                 ;
 			#else
-                string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+				string errorMessage;
+				if (iReturnedStatus == 9)	// 9 means: SIGKILL
+					errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-                        + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
-                        + ", e.what(): " + e.what()
-                ;
+						+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+						+ ", e.what(): " + e.what()
+					;
+				else
+					errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+						+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+						+ ", e.what(): " + e.what()
+					;
 			#endif
                 _logger->error(errorMessage);
 
@@ -339,7 +352,10 @@ void FFMpeg::encodeContent(
                 bool exceptionInCaseOfError = false;
                 FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
 
-                throw e;
+				if (iReturnedStatus == 9)	// 9 means: SIGKILL
+					throw FFMpegEncodingKilledByUser();
+				else
+					throw e;
             }
 
             _logger->info(__FILEREF__ + "Remove"
@@ -492,12 +508,12 @@ void FFMpeg::encodeContent(
                     _logger->info(__FILEREF__ + "encodeContent: Executing ffmpeg command (first step)"
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
                     );
 
 					bool redirectionStdOutput = true;
 					bool redirectionStdError = true;
-					int iReturnedStatus;
 
 					ProcessUtility::forkAndExec (
 						_ffmpegPath + "/ffmpeg",
@@ -509,6 +525,7 @@ void FFMpeg::encodeContent(
                         string errorMessage = __FILEREF__ + "encodeContent: ffmpeg command failed"
                             + ", encodingJobKey: " + to_string(encodingJobKey)
                             + ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
                             + ", iReturnedStatus: " + to_string(iReturnedStatus)
 							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
                         ;            
@@ -531,6 +548,7 @@ void FFMpeg::encodeContent(
                     _logger->info(__FILEREF__ + "encodeContent: Executed ffmpeg command"
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
                         + ", ffmpegCommandDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
                     );
@@ -549,13 +567,25 @@ void FFMpeg::encodeContent(
                             + ", e.what(): " + e.what()
                     ;
 				#else
-                    string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
-                        + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-                            + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
-                            + ", e.what(): " + e.what()
-                    ;
+					string errorMessage;
+					if (iReturnedStatus == 9)	// 9 means: SIGKILL
+						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+							+ ", e.what(): " + e.what()
+						;
+					else
+						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+							+ ", e.what(): " + e.what()
+						;
 				#endif
                     _logger->error(errorMessage);
 
@@ -565,7 +595,10 @@ void FFMpeg::encodeContent(
                         + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
                     FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
 
-                    throw e;
+					if (iReturnedStatus == 9)	// 9 means: SIGKILL
+						throw FFMpegEncodingKilledByUser();
+					else
+						throw e;
                 }
 
 			#ifdef __EXECUTE__
@@ -677,12 +710,12 @@ void FFMpeg::encodeContent(
                     _logger->info(__FILEREF__ + "encodeContent: Executing ffmpeg command (second step)"
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
                     );
 
 					bool redirectionStdOutput = true;
 					bool redirectionStdError = true;
-					int iReturnedStatus;
 
 					ProcessUtility::forkAndExec (
 						_ffmpegPath + "/ffmpeg",
@@ -694,6 +727,7 @@ void FFMpeg::encodeContent(
                         string errorMessage = __FILEREF__ + "encodeContent: ffmpeg command failed (second step)"
                             + ", encodingJobKey: " + to_string(encodingJobKey)
                             + ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
                             + ", iReturnedStatus: " + to_string(iReturnedStatus)
 							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
                         ;            
@@ -716,6 +750,7 @@ void FFMpeg::encodeContent(
                     _logger->info(__FILEREF__ + "encodeContent: Executed ffmpeg command (second step)"
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
                         + ", ffmpegCommandDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
                     );
@@ -729,18 +764,30 @@ void FFMpeg::encodeContent(
                     string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                            + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
-                            + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
-                            + ", e.what(): " + e.what()
-                    ;
-				#else
-                    string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
-                        + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+                        + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
                         + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
                         + ", e.what(): " + e.what()
                     ;
+				#else
+					string errorMessage;
+					if (iReturnedStatus == 9)	// 9 means: SIGKILL
+						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+							+ ", e.what(): " + e.what()
+						;
+					else
+						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+							+ ", e.what(): " + e.what()
+						;
 				#endif
                     _logger->error(errorMessage);
 
@@ -750,7 +797,10 @@ void FFMpeg::encodeContent(
                         + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
                     FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
 
-                    throw e;
+					if (iReturnedStatus == 9)	// 9 means: SIGKILL
+						throw FFMpegEncodingKilledByUser();
+					else
+						throw e;
                 }
 
                 bool exceptionInCaseOfError = false;
@@ -863,12 +913,12 @@ void FFMpeg::encodeContent(
                     _logger->info(__FILEREF__ + "encodeContent: Executing ffmpeg command"
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
                     );
 
 					bool redirectionStdOutput = true;
 					bool redirectionStdError = true;
-					int iReturnedStatus;
 
 					ProcessUtility::forkAndExec (
 						_ffmpegPath + "/ffmpeg",
@@ -881,6 +931,7 @@ void FFMpeg::encodeContent(
                             + ", encodingJobKey: " + to_string(encodingJobKey)
                             + ", ingestionJobKey: " + to_string(ingestionJobKey)
                             + ", iReturnedStatus: " + to_string(iReturnedStatus)
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
                         ;            
                         _logger->error(errorMessage);
@@ -902,6 +953,7 @@ void FFMpeg::encodeContent(
                     _logger->info(__FILEREF__ + "encodeContent: Executed ffmpeg command"
                         + ", encodingJobKey: " + to_string(encodingJobKey)
                         + ", ingestionJobKey: " + to_string(ingestionJobKey)
+						+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
                         + ", ffmpegCommandDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count())
                     );
@@ -920,13 +972,25 @@ void FFMpeg::encodeContent(
                             + ", e.what(): " + e.what()
                     ;
 				#else
-                    string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
-                        + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-                        + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
-                        + ", e.what(): " + e.what()
-                    ;
+					string errorMessage;
+					if (iReturnedStatus == 9)	// 9 means: SIGKILL
+						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+							+ ", e.what(): " + e.what()
+						;
+					else
+						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+							+ ", e.what(): " + e.what()
+						;
 				#endif
                     _logger->error(errorMessage);
 
@@ -935,7 +999,10 @@ void FFMpeg::encodeContent(
                     bool exceptionInCaseOfError = false;
                     FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
 
-                    throw e;
+					if (iReturnedStatus == 9)	// 9 means: SIGKILL
+						throw FFMpegEncodingKilledByUser();
+					else
+						throw e;
                 }
 
                 _logger->info(__FILEREF__ + "Remove"
@@ -975,6 +1042,46 @@ void FFMpeg::encodeContent(
                 throw runtime_error(errorMessage);
             }
         }        
+    }
+    catch(FFMpegEncodingKilledByUser e)
+    {
+        _logger->error(__FILEREF__ + "ffmpeg: ffmpeg encode failed"
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", physicalPathKey: " + to_string(physicalPathKey)
+            + ", mmsSourceAssetPathName: " + mmsSourceAssetPathName
+            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            + ", e.what(): " + e.what()
+        );
+
+        if (FileIO::fileExisting(stagingEncodedAssetPathName)
+                || FileIO::directoryExisting(stagingEncodedAssetPathName))
+        {
+            FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
+
+            _logger->info(__FILEREF__ + "Remove"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            );
+
+            // file in case of .3gp content OR directory in case of IPhone content
+            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
+            {
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
+                Boolean_t bRemoveRecursively = true;
+                FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
+            }
+            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
+            {
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
+                FileIO::remove(stagingEncodedAssetPathName);
+            }
+        }
+
+        throw e;
     }
     catch(runtime_error e)
     {
@@ -1069,6 +1176,8 @@ void FFMpeg::overlayImageOnVideo(
         int64_t ingestionJobKey,
 		pid_t* pChildPid)
 {
+	int iReturnedStatus = 0;
+
     try
     {
         _currentDurationInMilliSeconds      = videoDurationInMilliSeconds;
@@ -1181,7 +1290,6 @@ void FFMpeg::overlayImageOnVideo(
 
 					bool redirectionStdOutput = true;
 					bool redirectionStdError = true;
-					int iReturnedStatus;
 
 					ProcessUtility::forkAndExec (
 						_ffmpegPath + "/ffmpeg",
@@ -1233,13 +1341,25 @@ void FFMpeg::overlayImageOnVideo(
                             + ", e.what(): " + e.what()
                     ;
 				#else
-                    string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
-                        + ", encodingJobKey: " + to_string(encodingJobKey)
-                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
-						+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-                        + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
-                        + ", e.what(): " + e.what()
-                    ;
+					string errorMessage;
+					if (iReturnedStatus == 9)	// 9 means: SIGKILL
+						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+							+ ", e.what(): " + e.what()
+						;
+					else
+						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+							+ ", e.what(): " + e.what()
+						;
 				#endif
                     _logger->error(errorMessage);
 
@@ -1248,7 +1368,10 @@ void FFMpeg::overlayImageOnVideo(
                     bool exceptionInCaseOfError = false;
                     FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
 
-                    throw e;
+					if (iReturnedStatus == 9)	// 9 means: SIGKILL
+						throw FFMpegEncodingKilledByUser();
+					else
+						throw e;
                 }
 
                 _logger->info(__FILEREF__ + "Remove"
@@ -1288,6 +1411,46 @@ void FFMpeg::overlayImageOnVideo(
                 throw runtime_error(errorMessage);
             }
         }        
+    }
+    catch(FFMpegEncodingKilledByUser e)
+    {
+        _logger->error(__FILEREF__ + "ffmpeg: ffmpeg overlay failed"
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", mmsSourceVideoAssetPathName: " + mmsSourceVideoAssetPathName
+            + ", mmsSourceImageAssetPathName: " + mmsSourceImageAssetPathName
+            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            + ", e.what(): " + e.what()
+        );
+
+        if (FileIO::fileExisting(stagingEncodedAssetPathName)
+                || FileIO::directoryExisting(stagingEncodedAssetPathName))
+        {
+            FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
+
+            _logger->info(__FILEREF__ + "Remove"
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            );
+
+            // file in case of .3gp content OR directory in case of IPhone content
+            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
+            {
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
+                Boolean_t bRemoveRecursively = true;
+                FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
+            }
+            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
+            {
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
+                FileIO::remove(stagingEncodedAssetPathName);
+            }
+        }
+
+        throw e;
     }
     catch(runtime_error e)
     {
@@ -1391,6 +1554,8 @@ void FFMpeg::overlayTextOnVideo(
         int64_t ingestionJobKey,
 		pid_t* pChildPid)
 {
+	int iReturnedStatus = 0;
+
     try
     {
         _currentDurationInMilliSeconds      = videoDurationInMilliSeconds;
@@ -1545,7 +1710,6 @@ void FFMpeg::overlayTextOnVideo(
 
 					bool redirectionStdOutput = true;
 					bool redirectionStdError = true;
-					int iReturnedStatus;
 
 					ProcessUtility::forkAndExec (
 						_ffmpegPath + "/ffmpeg",
@@ -1597,13 +1761,25 @@ void FFMpeg::overlayTextOnVideo(
                             + ", e.what(): " + e.what()
                     ;
 				#else
-                    string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
-                            + ", encodingJobKey: " + to_string(encodingJobKey)
-                            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+					string errorMessage;
+					if (iReturnedStatus == 9)	// 9 means: SIGKILL
+						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-                            + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
-                            + ", e.what(): " + e.what()
-                    ;
+							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+							+ ", e.what(): " + e.what()
+						;
+					else
+						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
+							+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+							+ ", encodingJobKey: " + to_string(encodingJobKey)
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+							+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+							+ ", e.what(): " + e.what()
+						;
 				#endif
                     _logger->error(errorMessage);
 
@@ -1612,7 +1788,10 @@ void FFMpeg::overlayTextOnVideo(
                     bool exceptionInCaseOfError = false;
                     FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
 
-                    throw e;
+					if (iReturnedStatus == 9)	// 9 means: SIGKILL
+						throw FFMpegEncodingKilledByUser();
+					else
+						throw e;
                 }
 
                 _logger->info(__FILEREF__ + "Remove"
@@ -1652,6 +1831,45 @@ void FFMpeg::overlayTextOnVideo(
                 throw runtime_error(errorMessage);
             }
         }        
+    }
+    catch(FFMpegEncodingKilledByUser e)
+    {
+        _logger->error(__FILEREF__ + "ffmpeg: ffmpeg drawtext failed"
+            + ", encodingJobKey: " + to_string(encodingJobKey)
+            + ", ingestionJobKey: " + to_string(ingestionJobKey)
+            + ", mmsSourceVideoAssetPathName: " + mmsSourceVideoAssetPathName
+            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            + ", e.what(): " + e.what()
+        );
+
+        if (FileIO::fileExisting(stagingEncodedAssetPathName)
+                || FileIO::directoryExisting(stagingEncodedAssetPathName))
+        {
+            FileIO::DirectoryEntryType_t detSourceFileType = FileIO::getDirectoryEntryType(stagingEncodedAssetPathName);
+
+            _logger->info(__FILEREF__ + "Remove"
+                    + ", encodingJobKey: " + to_string(encodingJobKey)
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            );
+
+            // file in case of .3gp content OR directory in case of IPhone content
+            if (detSourceFileType == FileIO::TOOLS_FILEIO_DIRECTORY)
+            {
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
+                Boolean_t bRemoveRecursively = true;
+                FileIO::removeDirectory(stagingEncodedAssetPathName, bRemoveRecursively);
+            }
+            else if (detSourceFileType == FileIO::TOOLS_FILEIO_REGULARFILE) 
+            {
+                _logger->info(__FILEREF__ + "Remove"
+                    + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
+                FileIO::remove(stagingEncodedAssetPathName);
+            }
+        }
+
+        throw e;
     }
     catch(runtime_error e)
     {
@@ -2528,6 +2746,8 @@ vector<string> FFMpeg::generateFramesToIngest(
         + ", videoDurationInMilliSeconds: " + to_string(videoDurationInMilliSeconds)
     );
     
+	int iReturnedStatus = 0;
+
     _currentDurationInMilliSeconds      = videoDurationInMilliSeconds;
     _currentMMSSourceAssetPathName      = mmsAssetPathName;
     _currentIngestionJobKey             = ingestionJobKey;
@@ -2671,7 +2891,6 @@ vector<string> FFMpeg::generateFramesToIngest(
 
 		bool redirectionStdOutput = true;
 		bool redirectionStdError = true;
-		int iReturnedStatus;
 
 		ProcessUtility::forkAndExec (
 			_ffmpegPath + "/ffmpeg",
@@ -2719,11 +2938,25 @@ vector<string> FFMpeg::generateFramesToIngest(
                 + ", e.what(): " + e.what()
         ;
 	#else
-        string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+		string errorMessage;
+		if (iReturnedStatus == 9)	// 9 means: SIGKILL
+			errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+				+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-                + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
-                + ", e.what(): " + e.what()
-        ;
+				+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+				+ ", e.what(): " + e.what()
+			;
+		else
+			errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
+				+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+				+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+				+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+				+ ", e.what(): " + e.what()
+			;
 	#endif
         _logger->error(errorMessage);
 
@@ -2732,7 +2965,10 @@ vector<string> FFMpeg::generateFramesToIngest(
         bool exceptionInCaseOfError = false;
         FileIO::remove(_outputFfmpegPathFileName, exceptionInCaseOfError);
 
-        throw e;
+		if (iReturnedStatus == 9)	// 9 means: SIGKILL
+			throw FFMpegEncodingKilledByUser();
+		else
+			throw e;
     }
 
     _logger->info(__FILEREF__ + "Remove"
@@ -2917,12 +3153,15 @@ void FFMpeg::generateConcatMediaToIngest(
 
 void FFMpeg::generateSlideshowMediaToIngest(
         int64_t ingestionJobKey,
+        int64_t encodingJobKey,
         vector<string>& sourcePhysicalPaths,
         double durationOfEachSlideInSeconds, 
         int outputFrameRate,
         string slideshowMediaPathName,
 		pid_t* pChildPid)
 {
+	int iReturnedStatus = 0;
+
     string slideshowListPathName =
         _ffmpegTempDir + "/"
         + to_string(ingestionJobKey)
@@ -3025,7 +3264,6 @@ void FFMpeg::generateSlideshowMediaToIngest(
 
 		bool redirectionStdOutput = true;
 		bool redirectionStdError = true;
-		int iReturnedStatus;
 
 		ProcessUtility::forkAndExec (
 			_ffmpegPath + "/ffmpeg",
@@ -3072,11 +3310,25 @@ void FFMpeg::generateSlideshowMediaToIngest(
                 + ", e.what(): " + e.what()
 			;
 		#else
-			string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
-				+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-                + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
-                + ", e.what(): " + e.what()
-			;
+			string errorMessage;
+			if (iReturnedStatus == 9)	// 9 means: SIGKILL
+				errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+					+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+					+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+					+ ", e.what(): " + e.what()
+				;
+			else
+				errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
+					+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+					+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+					+ ", e.what(): " + e.what()
+				;
 		#endif
         _logger->error(errorMessage);
 
@@ -3089,7 +3341,10 @@ void FFMpeg::generateSlideshowMediaToIngest(
             + ", slideshowListPathName: " + slideshowListPathName);
         FileIO::remove(slideshowListPathName, exceptionInCaseOfError);
 
-        throw e;
+		if (iReturnedStatus == 9)	// 9 means: SIGKILL
+			throw FFMpegEncodingKilledByUser();
+		else
+			throw e;
     }
 
     _logger->info(__FILEREF__ + "Remove"
@@ -3309,6 +3564,7 @@ void FFMpeg::extractTrackMediaToIngest(
 
 void FFMpeg::liveRecorder(
         int64_t ingestionJobKey,
+        int64_t encodingJobKey,
 		string segmentListPathName,
 		string recordedFileNamePrefix,
         string liveURL,
@@ -3323,6 +3579,7 @@ void FFMpeg::liveRecorder(
 #else
 	vector<string> ffmpegArgumentList;
 	ostringstream ffmpegArgumentListStream;
+	int iReturnedStatus = 0;
 #endif
 	string segmentListPath;
 	// string recordedFileNamePrefix = string("liveRecorder_") + to_string(ingestionJobKey);
@@ -3404,6 +3661,7 @@ void FFMpeg::liveRecorder(
 	#else
 
 		ffmpegArgumentList.push_back("ffmpeg");
+		// addToArguments("-loglevel repeat+level+trace", ffmpegArgumentList);
 		ffmpegArgumentList.push_back("-i");
 		ffmpegArgumentList.push_back(liveURL);
 		ffmpegArgumentList.push_back("-t");
@@ -3417,12 +3675,12 @@ void FFMpeg::liveRecorder(
 		ffmpegArgumentList.push_back("-segment_list");
 		ffmpegArgumentList.push_back(segmentListPathName);
 		ffmpegArgumentList.push_back("-segment_time");
-		ffmpegArgumentList.push_back("to_string(segmentDurationInSeconds)");
+		ffmpegArgumentList.push_back(to_string(segmentDurationInSeconds));
 		ffmpegArgumentList.push_back("-segment_atclocktime");
 		ffmpegArgumentList.push_back("1");
 		ffmpegArgumentList.push_back("-strftime");
 		ffmpegArgumentList.push_back("1");
-		ffmpegArgumentList.push_back(string("\"") + segmentListPath + "/" + recordedFileNameTemplate + "\"");
+		ffmpegArgumentList.push_back(segmentListPath + "/" + recordedFileNameTemplate);
 
 		if (!ffmpegArgumentList.empty())
 			copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(),
@@ -3430,6 +3688,7 @@ void FFMpeg::liveRecorder(
 
         _logger->info(__FILEREF__ + "liveRecorder: Executing ffmpeg command"
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 			+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
         );
 	#endif
@@ -3452,7 +3711,6 @@ void FFMpeg::liveRecorder(
 	#else
 		bool redirectionStdOutput = true;
 		bool redirectionStdError = true;
-		int iReturnedStatus;
 
 		ProcessUtility::forkAndExec (
 			_ffmpegPath + "/ffmpeg",
@@ -3464,6 +3722,7 @@ void FFMpeg::liveRecorder(
 			string errorMessage = __FILEREF__ + "liveRecorder: ffmpeg command failed"
                 + ", ingestionJobKey: " + to_string(ingestionJobKey)
                 + ", iReturnedStatus: " + to_string(iReturnedStatus)
+				+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
 				+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
             ;            
             _logger->error(errorMessage);
@@ -3499,11 +3758,25 @@ void FFMpeg::liveRecorder(
                 + ", e.what(): " + e.what()
 			;
 		#else
-			string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
-				+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
-                + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
-                + ", e.what(): " + e.what()
-			;
+			string errorMessage;
+			if (iReturnedStatus == 9)	// 9 means: SIGKILL
+				errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed"
+					+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+					+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+					+ ", e.what(): " + e.what()
+				;
+			else
+				errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user"
+					+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+					+ ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+					+ ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile
+					+ ", e.what(): " + e.what()
+				;
 		#endif
         _logger->error(errorMessage);
 
@@ -3540,7 +3813,7 @@ void FFMpeg::liveRecorder(
 						string recordedPathNameToBeRemoved = segmentListPath + "/" + directoryEntry;
         				_logger->info(__FILEREF__ + "Remove"
             				+ ", recordedPathNameToBeRemoved: " + recordedPathNameToBeRemoved);
-        				FileIO::remove(recordedPathNameToBeRemoved, exceptionInCaseOfError);
+        				// FileIO::remove(recordedPathNameToBeRemoved, exceptionInCaseOfError);
 					}
             	}
             	catch(DirectoryListFinished e)
@@ -3570,7 +3843,10 @@ void FFMpeg::liveRecorder(
         	FileIO::closeDirectory (directory);
     	}
 
-        throw e;
+		if (iReturnedStatus == 9)	// 9 means: SIGKILL
+			throw FFMpegEncodingKilledByUser();
+		else
+			throw e;
     }
 
     _logger->info(__FILEREF__ + "Remove"
@@ -4070,7 +4346,6 @@ void FFMpeg::addToArguments(string parameter, vector<string>& argumentList)
 
 		while(getline(parameterStream, item, ' '))
 		{
-			_logger->info(string("item: ") + item);
 			if (item != "")
 				argumentList.push_back(item);
 		}

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CatraMMS_PATH=/opt/catramms
+export CatraMMS_PATH=/opt/catramms
 
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CatraMMS_PATH/ffmpeg-4.0.2/lib
 export PATH=$PATH:$CatraMMS_PATH/ffmpeg-4.0.2/bin

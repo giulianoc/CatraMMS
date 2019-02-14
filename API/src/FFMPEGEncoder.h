@@ -67,6 +67,14 @@ private:
 		pid_t					_childPid;
     };
 
+	struct EncodingCompleted
+	{
+		int64_t					_encodingJobKey;
+		bool					_completedWithError;
+		bool					_killedByUser;
+		chrono::system_clock::time_point	_timestamp;
+    };
+
     mutex                       _encodingMutex;
     int                         _maxEncodingsCapability;
     vector<shared_ptr<Encoding>>    _encodingsCapability;
@@ -75,6 +83,10 @@ private:
     int                         _maxLiveRecordingsCapability;
     vector<shared_ptr<LiveRecording>>    _liveRecordingsCapability;
 
+    mutex						_encodingCompletedMutex;
+	int							_encodingCompletedRetentionInSeconds;
+    map<int64_t, shared_ptr<EncodingCompleted>>		_encodingCompletedMap;
+	chrono::system_clock::time_point				_lastEncodingCompletedCheck;
 
     void encodeContent(
         // FCGX_Request& request,
@@ -112,6 +124,13 @@ private:
         int64_t encodingJobKey,
         string requestBody);
 
+	void addEncodingCompleted(
+        int64_t encodingJobKey, bool completedWithError,
+		bool killedByUser);
+
+	void removeEncodingCompletedIfPresent(int64_t encodingJobKey);
+
+	void encodingCompletedRetention();
 };
 
 #endif
