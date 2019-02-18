@@ -84,6 +84,16 @@ private:
     string              _apiHostname;
     int                 _apiPort;
     
+    string				_guiProtocol;
+    string				_guiHostname;
+    int					_guiPort;
+
+    string				_ffmpegEncoderProtocol;
+    int					_ffmpegEncoderPort;
+    string				_ffmpegEncoderUser;
+    string				_ffmpegEncoderPassword;
+    string				_ffmpegEncoderKillEncodingURI;
+
     int                 _defaultTTLInSeconds;
     int                 _defaultMaxRetries;
     bool                _defaultRedirect;
@@ -157,6 +167,14 @@ private:
         shared_ptr<Workspace> workspace,
         unordered_map<string, string> queryParameters,
         string requestBody);
+
+    void killEncodingJob(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody);
+
+	void killEncodingJob(string transcoderHost, int64_t encodingJobKey);
 
     void mediaItemsList(
         FCGX_Request& request,

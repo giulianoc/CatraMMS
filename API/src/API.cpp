@@ -19,6 +19,7 @@
 #include <curlpp/Options.hpp>
 #include <curlpp/Exception.hpp>
 #include <curlpp/Infos.hpp>
+#include "catralibraries/Convert.h"
 #include "Validator.h"
 #include "EMailSender.h"
 #include "API.h"
@@ -200,6 +201,19 @@ API::API(Json::Value configuration,
         + ", api->port: " + to_string(_apiPort)
     );
 
+    _guiProtocol =  _configuration["mms"].get("guiProtocol", "XXX").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", mms->guiProtocol: " + _guiProtocol
+    );
+    _guiHostname =  _configuration["mms"].get("guiHostname", "XXX").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", mms->guiHostname: " + _guiHostname
+    );
+    _guiPort = _configuration["mms"].get("guiPort", "XXX").asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", mms->guiPort: " + to_string(_guiPort)
+    );
+
     Json::Value api = _configuration["api"];
     // _binaryBufferLength             = api["binary"].get("binaryBufferLength", "XXX").asInt();
     // _logger->info(__FILEREF__ + "Configuration item"
@@ -246,6 +260,27 @@ API::API(Json::Value configuration,
         + ", api->delivery->deliveryHost: " + _deliveryHost
     );
         
+    _ffmpegEncoderProtocol = _configuration["ffmpeg"].get("encoderProtocol", "").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", ffmpeg->encoderProtocol: " + _ffmpegEncoderProtocol
+    );
+    _ffmpegEncoderPort = _configuration["ffmpeg"].get("encoderPort", "").asInt();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", ffmpeg->encoderPort: " + to_string(_ffmpegEncoderPort)
+    );
+    _ffmpegEncoderUser = _configuration["ffmpeg"].get("encoderUser", "").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", ffmpeg->encoderUser: " + _ffmpegEncoderUser
+    );
+    _ffmpegEncoderPassword = _configuration["ffmpeg"].get("encoderPassword", "").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", ffmpeg->encoderPassword: " + "..."
+    );
+    _ffmpegEncoderKillEncodingURI = _configuration["ffmpeg"].get("encoderKillEncodingURI", "").asString();
+    _logger->info(__FILEREF__ + "Configuration item"
+        + ", ffmpeg->encoderKillEncodingURI: " + _ffmpegEncoderKillEncodingURI
+    );
+
     _fileUploadProgressData     = fileUploadProgressData;
     _fileUploadProgressThreadShutdown       = false;
 }
@@ -583,6 +618,10 @@ void API::manageRequestAndResponse(
     else if (method == "encodingJobPriority")
     {
         encodingJobPriority(request, workspace, queryParameters, requestBody);
+    }
+    else if (method == "killEncodingJob")
+    {
+        killEncodingJob(request, workspace, queryParameters, requestBody);
     }
     else if (method == "mediaItemsList")
     {
@@ -1406,17 +1445,26 @@ void API::registerUser(
                 + "}";
             sendSuccess(request, 201, responseBody);
             
+			string confirmationURL = _guiProtocol + "://" + _guiHostname;
+			if (_guiProtocol == "https" && _guiPort != 443)
+				confirmationURL += (":" + to_string(_guiPort));
+			confirmationURL += ("/catramms/login.xhtml?confirmationRequested=true");
+
             string to = email;
             string subject = "Confirmation code";
             
             vector<string> emailBody;
             emailBody.push_back(string("<p>Hi ") + name + ",</p>");
             emailBody.push_back(string("<p>the registration has been done successfully, user and default Workspace have been created</p>"));
-            emailBody.push_back(string("<p>here follows the user key ") + to_string(get<1>(workspaceKeyUserKeyAndConfirmationCode)) 
-                + " and the confirmation code " + get<2>(workspaceKeyUserKeyAndConfirmationCode) + " to be used to confirm the registration</p>");
-            string confirmURL = _apiProtocol + "://" + _apiHostname + ":" + to_string(_apiPort) + "/catramms/v1/user/" 
-                    + to_string(get<1>(workspaceKeyUserKeyAndConfirmationCode)) + "/" + get<2>(workspaceKeyUserKeyAndConfirmationCode);
-            emailBody.push_back(string("<p>Click <a href=\"") + confirmURL + "\">here</a> to confirm the registration</p>");
+            emailBody.push_back(string("<p>here follows the user key <b>") + to_string(get<1>(workspaceKeyUserKeyAndConfirmationCode)) 
+                + "</b> and the confirmation code <b>" + get<2>(workspaceKeyUserKeyAndConfirmationCode) + "</b> to be used to confirm the registration</p>");
+            // string confirmURL = _apiProtocol + "://" + _apiHostname + ":" + to_string(_apiPort) + "/catramms/v1/user/" 
+            //         + to_string(get<1>(workspaceKeyUserKeyAndConfirmationCode)) + "/" + get<2>(workspaceKeyUserKeyAndConfirmationCode);
+            // emailBody.push_back(string("<p>Click <a href=\"") + confirmURL + "\">here</a> to confirm the registration</p>");
+            emailBody.push_back(
+					string("<p>Please click <a href=\"")
+					+ confirmationURL
+					+ "\">here</a> to confirm the registration</p>");
             emailBody.push_back("<p>Have a nice day, best regards</p>");
             emailBody.push_back("<p>MMS technical support</p>");
 
@@ -1894,14 +1942,23 @@ void API::shareWorkspace_(
                 + "}";
             sendSuccess(request, 201, responseBody);
             
+			string confirmationURL = _guiProtocol + "://" + _guiHostname;
+			if (_guiProtocol == "https" && _guiPort != 443)
+				confirmationURL += (":" + to_string(_guiPort));
+			confirmationURL += ("/catramms/login.xhtml?confirmationRequested=true");
+
             string to = email;
             string subject = "Confirmation code";
             
             vector<string> emailBody;
             emailBody.push_back(string("<p>Hi ") + name + ",</p>");
             emailBody.push_back(string("<p>the workspace has been shared successfully</p>"));
-            emailBody.push_back(string("<p>here follows the user key ") + to_string(get<0>(userKeyAndConfirmationCode)) 
-                + " and the confirmation code " + get<1>(userKeyAndConfirmationCode) + " to be used to confirm the sharing of the Workspace</p>");
+            emailBody.push_back(string("<p>Here follows the user key <b>") + to_string(get<0>(userKeyAndConfirmationCode)) 
+                + "</b> and the confirmation code <b>" + get<1>(userKeyAndConfirmationCode) + "</b> to be used to confirm the sharing of the Workspace</p>");
+            emailBody.push_back(
+					string("<p>Please click <a href=\"")
+					+ confirmationURL
+					+ "\">here</a> to confirm the registration</p>");
             emailBody.push_back("<p>Have a nice day, best regards</p>");
             emailBody.push_back("<p>MMS technical support</p>");
 
@@ -3284,6 +3341,68 @@ void API::encodingJobPriority(
     }
 }
 
+void API::killEncodingJob(
+        FCGX_Request& request,
+        shared_ptr<Workspace> workspace,
+        unordered_map<string, string> queryParameters,
+        string requestBody)
+{
+    string api = "encodingJobKill";
+
+    _logger->info(__FILEREF__ + "Received " + api
+        + ", requestBody: " + requestBody
+    );
+
+    try
+    {
+        int64_t encodingJobKey = -1;
+        auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
+        if (encodingJobKeyIt != queryParameters.end() && encodingJobKeyIt->second != "")
+        {
+            encodingJobKey = stoll(encodingJobKeyIt->second);
+        }
+
+        {
+			string transcoder = _mmsEngineDBFacade->getEncodingJobDetails(encodingJobKey);
+
+			killEncodingJob(transcoder, encodingJobKey);
+
+            string responseBody;
+            sendSuccess(request, 200, responseBody);
+        }
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error: ") + e.what();
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "API failed"
+            + ", API: " + api
+            + ", requestBody: " + requestBody
+            + ", e.what(): " + e.what()
+        );
+
+        string errorMessage = string("Internal server error");
+        _logger->error(__FILEREF__ + errorMessage);
+
+        sendError(request, 500, errorMessage);
+
+        throw runtime_error(errorMessage);
+    }
+}
+
 void API::mediaItemsList(
         FCGX_Request& request,
         shared_ptr<Workspace> workspace,
@@ -3341,6 +3460,22 @@ void API::mediaItemsList(
             contentTypePresent = true;
         }
         
+		/*
+		 * liveRecordingChunk:
+		 * -1: no condition in select
+		 *  0: look for NO liveRecordingChunk
+		 *  1: look for liveRecordingChunk
+		 */
+        int liveRecordingChunk = -1;
+        auto liveRecordingChunkIt = queryParameters.find("liveRecordingChunk");
+        if (liveRecordingChunkIt != queryParameters.end() && liveRecordingChunkIt->second != "")
+        {
+			if (liveRecordingChunkIt->second == "true")
+				liveRecordingChunk = 1;
+			else if (liveRecordingChunkIt->second == "false")
+				liveRecordingChunk = 0;
+        }
+
         bool startAndEndIngestionDatePresent = false;
         string startIngestionDate;
         string endIngestionDate;
@@ -3443,7 +3578,7 @@ void API::mediaItemsList(
                     start, rows,
                     contentTypePresent, contentType,
                     startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
-                    title, jsonCondition, tags, ingestionDateOrder, jsonOrderBy, admin);
+                    title, liveRecordingChunk, jsonCondition, tags, ingestionDateOrder, jsonOrderBy, admin);
 
             Json::StreamWriterBuilder wbuilder;
             string responseBody = Json::writeString(wbuilder, ingestionStatusRoot);
@@ -8052,6 +8187,194 @@ void API::removeEncodingProfilesSet(
 
         throw runtime_error(errorMessage);
     }
+}
+
+void API::killEncodingJob(string transcoderHost, int64_t encodingJobKey)
+{
+	string ffmpegEncoderURL;
+	ostringstream response;
+	try
+	{
+		ffmpegEncoderURL = _ffmpegEncoderProtocol
+			+ "://"
+			+ transcoderHost + ":"
+			+ to_string(_ffmpegEncoderPort)
+			+ _ffmpegEncoderKillEncodingURI
+			+ "/" + to_string(encodingJobKey)
+		;
+            
+		list<string> header;
+
+		{
+			string userPasswordEncoded = Convert::base64_encode(_ffmpegEncoderUser + ":" + _ffmpegEncoderPassword);
+			string basicAuthorization = string("Authorization: Basic ") + userPasswordEncoded;
+
+			header.push_back(basicAuthorization);
+		}
+            
+		curlpp::Cleanup cleaner;
+		curlpp::Easy request;
+
+		// Setting the URL to retrive.
+		request.setOpt(new curlpp::options::Url(ffmpegEncoderURL));
+		request.setOpt(new curlpp::options::CustomRequest("DELETE"));
+
+		if (_ffmpegEncoderProtocol == "https")
+		{
+			/*
+                  typedef curlpp::OptionTrait<std::string, CURLOPT_SSLCERTPASSWD> SslCertPasswd;                            
+                  typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEY> SslKey;                                          
+                  typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYTYPE> SslKeyType;                                  
+                  typedef curlpp::OptionTrait<std::string, CURLOPT_SSLKEYPASSWD> SslKeyPasswd;                              
+                  typedef curlpp::OptionTrait<std::string, CURLOPT_SSLENGINE> SslEngine;                                    
+                  typedef curlpp::NoValueOptionTrait<CURLOPT_SSLENGINE_DEFAULT> SslEngineDefault;                           
+                  typedef curlpp::OptionTrait<long, CURLOPT_SSLVERSION> SslVersion;                                         
+                  typedef curlpp::OptionTrait<std::string, CURLOPT_CAINFO> CaInfo;                                          
+                  typedef curlpp::OptionTrait<std::string, CURLOPT_CAPATH> CaPath;                                          
+                  typedef curlpp::OptionTrait<std::string, CURLOPT_RANDOM_FILE> RandomFile;                                 
+                  typedef curlpp::OptionTrait<std::string, CURLOPT_EGDSOCKET> EgdSocket;                                    
+                  typedef curlpp::OptionTrait<std::string, CURLOPT_SSL_CIPHER_LIST> SslCipherList;                          
+                  typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;                                    
+			*/
+                                                                                                
+              
+			/*
+			// cert is stored PEM coded in file... 
+			// since PEM is default, we needn't set it for PEM 
+			// curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
+			curlpp::OptionTrait<string, CURLOPT_SSLCERTTYPE> sslCertType("PEM");
+			equest.setOpt(sslCertType);
+
+			// set the cert for client authentication
+			// "testcert.pem"
+			// curl_easy_setopt(curl, CURLOPT_SSLCERT, pCertFile);
+			curlpp::OptionTrait<string, CURLOPT_SSLCERT> sslCert("cert.pem");
+			request.setOpt(sslCert);
+			*/
+
+			/*
+			// sorry, for engine we must set the passphrase
+			//   (if the key has one...)
+			// const char *pPassphrase = NULL;
+			if(pPassphrase)
+			curl_easy_setopt(curl, CURLOPT_KEYPASSWD, pPassphrase);
+
+			// if we use a key stored in a crypto engine,
+			//   we must set the key type to "ENG"
+			// pKeyType  = "PEM";
+			curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, pKeyType);
+
+			// set the private key (file or ID in engine)
+			// pKeyName  = "testkey.pem";
+			curl_easy_setopt(curl, CURLOPT_SSLKEY, pKeyName);
+
+			// set the file with the certs vaildating the server
+			// *pCACertFile = "cacert.pem";
+			curl_easy_setopt(curl, CURLOPT_CAINFO, pCACertFile);
+			*/
+              
+			// disconnect if we can't validate server's cert
+			bool bSslVerifyPeer = false;
+			curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYPEER> sslVerifyPeer(bSslVerifyPeer);
+			request.setOpt(sslVerifyPeer);
+              
+			curlpp::OptionTrait<bool, CURLOPT_SSL_VERIFYHOST> sslVerifyHost(0L);
+			request.setOpt(sslVerifyHost);
+              
+			// request.setOpt(new curlpp::options::SslEngineDefault());                                              
+
+		}
+
+		request.setOpt(new curlpp::options::HttpHeader(header));
+
+		request.setOpt(new curlpp::options::WriteStream(&response));
+
+		chrono::system_clock::time_point startEncoding = chrono::system_clock::now();
+
+		_logger->info(__FILEREF__ + "killEncodingJob"
+			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
+		);
+		request.perform();
+		chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
+		_logger->info(__FILEREF__ + "killEncodingJob"
+			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL
+			+ ", encodingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count())
+			+ ", response.str: " + response.str()
+		);
+
+		string sResponse = response.str();
+
+		// LF and CR create problems to the json parser...                                                    
+		while (sResponse.back() == 10 || sResponse.back() == 13)                                              
+			sResponse.pop_back();                                                                             
+
+		{
+			string message = __FILEREF__ + "Kill encoding response"                                       
+				+ ", encodingJobKey: " + to_string(encodingJobKey)          
+				+ ", sResponse: " + sResponse                                                                 
+			;                                                                                             
+			_logger->info(message);
+		}
+
+		long responseCode = curlpp::infos::ResponseCode::get(request);                                        
+		if (responseCode != 200)
+		{
+			string errorMessage = __FILEREF__ + "Kill encoding URL failed"                                       
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", sResponse: " + sResponse                                                                 
+				+ ", responseCode: " + to_string(responseCode)
+			;
+			_logger->error(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+	}
+	catch (curlpp::LogicError & e) 
+	{
+		_logger->error(__FILEREF__ + "killEncoding URL failed (LogicError)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey) 
+			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+			+ ", exception: " + e.what()
+			+ ", response.str(): " + response.str()
+		);
+            
+		throw e;
+	}
+	catch (curlpp::RuntimeError & e) 
+	{ 
+		string errorMessage = string("killEncoding URL failed (RuntimeError)")
+			+ ", encodingJobKey: " + to_string(encodingJobKey) 
+			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+			+ ", exception: " + e.what()
+			+ ", response.str(): " + response.str()
+		;
+          
+		_logger->error(__FILEREF__ + errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+	catch (runtime_error e)
+	{
+		_logger->error(__FILEREF__ + "killEncoding URL failed (runtime_error)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey) 
+			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+			+ ", exception: " + e.what()
+			+ ", response.str(): " + response.str()
+		);
+
+		throw e;
+	}
+	catch (exception e)
+	{
+		_logger->error(__FILEREF__ + "killEncoding URL failed (exception)"
+			+ ", encodingJobKey: " + to_string(encodingJobKey) 
+			+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
+			+ ", exception: " + e.what()
+			+ ", response.str(): " + response.str()
+		);
+
+		throw e;
+	}
 }
 
 void API::parseContentRange(string contentRange,

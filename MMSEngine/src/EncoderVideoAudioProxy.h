@@ -49,6 +49,13 @@ struct EncoderError: public exception {
     }; 
 };
 
+struct EncodingKilledByUser: public exception {
+    char const* what() const throw()
+    {
+        return "Encoding was killed by the User";
+    };
+};
+
 enum class EncodingJobStatus
 {
     Free,
@@ -144,26 +151,25 @@ private:
     int						_computerVisionDefaultMinNeighbors;
     bool					_computerVisionDefaultTryFlip;
 
-    string encodeContentVideoAudio();
-    string encodeContent_VideoAudio_through_ffmpeg();
+    pair<string, bool> encodeContentVideoAudio();
+    pair<string, bool> encodeContent_VideoAudio_through_ffmpeg();
+    int64_t processEncodedContentVideoAudio(string stagingEncodedAssetPathName, bool killedByUser);    
 
-    int64_t processEncodedContentVideoAudio(string stagingEncodedAssetPathName);    
+    pair<string, bool> overlayImageOnVideo();
+    pair<string, bool> overlayImageOnVideo_through_ffmpeg();
+    void processOverlayedImageOnVideo(string stagingEncodedAssetPathName, bool killedByUser);    
 
-    string overlayImageOnVideo();
-    string overlayImageOnVideo_through_ffmpeg();
-    void processOverlayedImageOnVideo(string stagingEncodedAssetPathName);    
-
-    string overlayTextOnVideo();
-    string overlayTextOnVideo_through_ffmpeg();
-    void processOverlayedTextOnVideo(string stagingEncodedAssetPathName);    
+    pair<string, bool> overlayTextOnVideo();
+    pair<string, bool> overlayTextOnVideo_through_ffmpeg();
+    void processOverlayedTextOnVideo(string stagingEncodedAssetPathName, bool killedByUser);    
     
-    void generateFrames();
-    void generateFrames_through_ffmpeg();
-    void processGeneratedFrames();
+    bool generateFrames();
+    bool generateFrames_through_ffmpeg();
+    void processGeneratedFrames(bool killedByUser);
 
-    string slideShow();
-    string slideShow_through_ffmpeg();
-    void processSlideShow(string stagingEncodedAssetPathName);    
+    pair<string, bool> slideShow();
+    pair<string, bool> slideShow_through_ffmpeg();
+    void processSlideShow(string stagingEncodedAssetPathName, bool killedByUser);    
 
     string faceRecognition();
     void processFaceRecognition(string stagingEncodedAssetPathName);    
@@ -171,9 +177,9 @@ private:
     string faceIdentification();
     void processFaceIdentification(string stagingEncodedAssetPathName);    
 
-    string liveRecorder();
-    string liveRecorder_through_ffmpeg();
-    void processLiveRecorder(string stagingEncodedAssetPathName);    
+    pair<string, bool> liveRecorder();
+    pair<string, bool> liveRecorder_through_ffmpeg();
+    void processLiveRecorder(string stagingEncodedAssetPathName, bool killedByUser);    
 	bool isLastLiveRecorderFile(time_t currentRecordedFileCreationTime, string contentsPath,
 			string recordedFileNamePrefix);
 	time_t getMediaLiveRecorderStartTime(string mediaLiveRecorderFileName);
@@ -186,7 +192,7 @@ private:
 		string fileFormat,
 		Json::Value liveRecorderParametersRoot);
 
-    bool getEncodingStatus();
+    pair<bool, bool> getEncodingStatus();
 
     string generateMediaMetadataToIngest(
         int64_t ingestionJobKey,

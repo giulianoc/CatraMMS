@@ -146,10 +146,15 @@ void ActiveEncodingsManager::operator()()
                         {
                             try
                             {
-                                int encodingPercentage = encodingPercentage =
+                                int encodingPercentage =
 									encodingJob->_encoderVideoAudioProxy
 									.getEncodingProgress(/* encodingJob->_encodingItem */);
 
+								_logger->info(__FILEREF__ + "updateEncodingJobProgress"
+										+ ", encodingJobKey: "
+											+ to_string(encodingJob->_encodingItem->_encodingJobKey)
+										+ ", encodingPercentage: " + to_string(encodingPercentage)
+										);
                                 _mmsEngineDBFacade->updateEncodingJobProgress (encodingJob->_encodingItem->_encodingJobKey, 
                                     encodingPercentage);
                             }
@@ -856,9 +861,12 @@ unsigned long ActiveEncodingsManager:: addEncodingItems (
     unsigned long       ulEncodingsNumberAdded = 0;
     lock_guard<mutex>   locker(_mtEncodingJobs);
 
+	int encodingItemIndex = 0;
+	int encodingItemsNumber = vEncodingItems.size();
     for (shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem: vEncodingItems)
     {
-        _logger->info(__FILEREF__ + "Adding Encoding Item"
+        _logger->info(__FILEREF__ + "Adding Encoding Item "
+				+ to_string(encodingItemIndex) + "/" + to_string(encodingItemsNumber)
             + ", encodingItem->_workspace->_name: " + encodingItem->_workspace->_name
             + ", encodingItem->_ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
             + ", encodingItem->_encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
@@ -874,7 +882,8 @@ unsigned long ActiveEncodingsManager:: addEncodingItems (
         }
         catch(MaxEncodingsManagerCapacityReached e)
         {
-            _logger->info(__FILEREF__ + "Max Encodings Manager Capacity reached"
+            _logger->info(__FILEREF__ + "Max Encodings Manager Capacity reached "
+				+ to_string(encodingItemIndex) + "/" + to_string(encodingItemsNumber)
                 + ", encodingItem->_workspace->_name: " + encodingItem->_workspace->_name
                 + ", encodingItem->_ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
                 + ", encodingItem->_encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
@@ -892,7 +901,8 @@ unsigned long ActiveEncodingsManager:: addEncodingItems (
         }
         catch(exception e)
         {
-            _logger->error(__FILEREF__ + "addEncodingItem failed"
+            _logger->error(__FILEREF__ + "addEncodingItem failed "
+				+ to_string(encodingItemIndex) + "/" + to_string(encodingItemsNumber)
                 + ", encodingItem->_workspace->_name: " + encodingItem->_workspace->_name
                 + ", encodingItem->_ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey)
                 + ", encodingItem->_encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
@@ -905,7 +915,9 @@ unsigned long ActiveEncodingsManager:: addEncodingItems (
             _mmsEngineDBFacade->updateEncodingJob (encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::ErrorBeforeEncoding,
                 mediaItemKey, encodedPhysicalPathKey, encodingItem->_ingestionJobKey);
-        }        
+        }
+
+		encodingItemIndex++;
     }
     
     if (ulEncodingsNumberAdded > 0)

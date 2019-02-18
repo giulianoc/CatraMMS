@@ -4023,7 +4023,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
                         
         {
             lastSQLCommand = 
-                "update MMS_EncodingJob set status = ?, processorMMS = null where processorMMS = ? and status = ?";
+                "update MMS_EncodingJob set status = ?, processorMMS = null, transcoder = null where processorMMS = ? and status = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
@@ -6006,7 +6006,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress (
             {
                 IngestionStatus ingestionStatus = MMSEngineDBFacade::toIngestionStatus(resultSet->getString("Status"));
                 
-                if (ingestionStatus == IngestionStatus::End_DwlOrUplCancelledByUser)
+                if (ingestionStatus == IngestionStatus::End_DwlUplOrEncCancelledByUser)
                     toBeCancelled = true;
             }
             else
@@ -6139,7 +6139,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress (
             {
                 IngestionStatus ingestionStatus = MMSEngineDBFacade::toIngestionStatus(resultSet->getString("Status"));
                 
-                if (ingestionStatus == IngestionStatus::End_DwlOrUplCancelledByUser)
+                if (ingestionStatus == IngestionStatus::End_DwlUplOrEncCancelledByUser)
                     toBeCancelled = true;
             }
             else
@@ -6877,7 +6877,7 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
         bool asc, string status
 )
-{    
+{
     string      lastSQLCommand;
     Json::Value statusListRoot;
     
@@ -6969,7 +6969,8 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
         Json::Value encodingJobsRoot(Json::arrayValue);
         {            
             lastSQLCommand = 
-                "select ej.encodingJobKey, ej.type, ej.parameters, ej.status, ej.encodingProgress, ej.failuresNumber, ej.encodingPriority, "
+                "select ej.encodingJobKey, ej.type, ej.parameters, ej.status, ej.encodingProgress, "
+				"ej.transcoder, ej.failuresNumber, ej.encodingPriority, "
                 "DATE_FORMAT(convert_tz(ej.encodingJobStart, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as encodingJobStart, "
                 "DATE_FORMAT(convert_tz(ej.encodingJobEnd, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as encodingJobEnd, "
                 "IF(ij.startProcessing is null, NOW(), ij.startProcessing) as newStartProcessing, "
@@ -7061,6 +7062,9 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
                     encodingJobRoot[field] = Json::nullValue;
                 else
                     encodingJobRoot[field] = static_cast<string>(resultSetEncodingJob->getString("encodingJobEnd"));
+
+                field = "transcoder";
+                encodingJobRoot[field] = static_cast<string>(resultSetEncodingJob->getString("transcoder"));
 
                 field = "failuresNumber";
                 encodingJobRoot[field] = resultSetEncodingJob->getInt("failuresNumber");  
@@ -7265,7 +7269,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
                 "select encodingJobKey, type, parameters, status, encodingProgress, encodingPriority, "
                 "DATE_FORMAT(convert_tz(encodingJobStart, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as encodingJobStart, "
                 "DATE_FORMAT(convert_tz(encodingJobEnd, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as encodingJobEnd, "
-                "failuresNumber from MMS_EncodingJob where ingestionJobKey = ?";
+                "transcoder, failuresNumber from MMS_EncodingJob where ingestionJobKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatementEncodingJob (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -7351,6 +7355,9 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
                 else
                     encodingJobRoot[field] = static_cast<string>(resultSetEncodingJob->getString("encodingJobEnd"));
 
+                field = "transcoder";
+                encodingJobRoot[field] = static_cast<string>(resultSetEncodingJob->getString("transcoder"));
+
                 field = "failuresNumber";
                 encodingJobRoot[field] = resultSetEncodingJob->getInt("failuresNumber");  
 
@@ -7423,7 +7430,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
         int start, int rows,
         bool contentTypePresent, ContentType contentType,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
-        string title, string jsonCondition,
+        string title, int liveRecordingChunk, string jsonCondition,
 		vector<string>& tags,
         string ingestionDateOrder,   // "" or "asc" or "desc"
 		string jsonOrderBy,
@@ -7451,6 +7458,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
             + ", startIngestionDate: " + (startAndEndIngestionDatePresent ? startIngestionDate : "")
             + ", endIngestionDate: " + (startAndEndIngestionDatePresent ? endIngestionDate : "")
             + ", title: " + title
+            + ", liveRecordingChunk: " + to_string(liveRecordingChunk)
             + ", jsonCondition: " + jsonCondition
             + ", ingestionDateOrder: " + ingestionDateOrder
             + ", jsonOrderBy: " + jsonOrderBy
@@ -7503,6 +7511,12 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                 requestParametersRoot[field] = title;
             }
 
+            if (liveRecordingChunk != -1)
+            {
+                field = "liveRecordingChunk";
+                requestParametersRoot[field] = liveRecordingChunk;
+            }
+
             if (jsonCondition != "")
             {
                 field = "jsonCondition";
@@ -7541,7 +7555,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
             }
             else
             {
-                string errorMessage ("physicalPathKey does not exist");
+                string errorMessage (__FILEREF__ + "physicalPathKey does not exist");
                 _logger->error(errorMessage);
 
                 throw runtime_error(errorMessage);
@@ -7549,10 +7563,10 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
         }
         
         string sqlWhere;
-	if (tags.size() > 0)
-		sqlWhere = string ("where mi.mediaItemKey = t.mediaItemKey and mi.workspaceKey = ? ");
-	else
-		sqlWhere = string ("where mi.workspaceKey = ? ");
+		if (tags.size() > 0)
+			sqlWhere = string ("where mi.mediaItemKey = t.mediaItemKey and mi.workspaceKey = ? ");
+		else
+			sqlWhere = string ("where mi.workspaceKey = ? ");
         if (newMediaItemKey != -1)
             sqlWhere += ("and mi.mediaItemKey = ? ");
         if (contentTypePresent)
@@ -7561,6 +7575,22 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
             sqlWhere += ("and mi.ingestionDate >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) and mi.ingestionDate <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
         if (title != "")
             sqlWhere += ("and LOWER(mi.title) like LOWER(?) ");		// LOWER was used because the column is using utf8_bin that is case sensitive
+		/*
+		 * liveRecordingChunk:
+		 * -1: no condition in select
+		 *  0: look for NO liveRecordingChunk
+		 *  1: look for liveRecordingChunk
+		 */
+        if (liveRecordingChunk != -1)
+		{
+			if (liveRecordingChunk == 0)
+			{
+				sqlWhere += ("and (JSON_EXTRACT(userData, '$.mmsData.dataType') is NULL ");
+				sqlWhere += ("OR JSON_EXTRACT(userData, '$.mmsData.dataType') != 'liveRecordingChunk') ");
+			}
+			else if (liveRecordingChunk == 1)
+				sqlWhere += ("and JSON_EXTRACT(userData, '$.mmsData.dataType') = 'liveRecordingChunk' ");
+		}
         if (jsonCondition != "")
             sqlWhere += ("and " + jsonCondition);
 		if (tags.size() > 0)
@@ -9864,7 +9894,8 @@ tuple<int,int,string,int> MMSEngineDBFacade::getImageDetails(
 
 void MMSEngineDBFacade::getEncodingJobs(
         string processorMMS,
-        vector<shared_ptr<MMSEngineDBFacade::EncodingItem>>& encodingItems
+        vector<shared_ptr<MMSEngineDBFacade::EncodingItem>>& encodingItems,
+		int maxEncodingsNumber
 )
 {
     string      lastSQLCommand;
@@ -9893,7 +9924,7 @@ void MMSEngineDBFacade::getEncodingJobs(
             int retentionDaysToReset = 7;
             
             lastSQLCommand = 
-                "update MMS_EncodingJob set status = ?, processorMMS = null where processorMMS = ? and status = ? "
+                "update MMS_EncodingJob set status = ?, processorMMS = null, transcoder = null where processorMMS = ? and status = ? "
                 "and DATE_ADD(encodingJobStart, INTERVAL ? DAY) <= NOW()";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -9913,10 +9944,11 @@ void MMSEngineDBFacade::getEncodingJobs(
             lastSQLCommand = 
                 "select encodingJobKey, ingestionJobKey, type, parameters, encodingPriority from MMS_EncodingJob " 
                 "where processorMMS is null and status = ? and encodingJobStart <= NOW() "
-                "order by encodingPriority desc, encodingJobStart asc, failuresNumber asc for update";
+                "order by encodingPriority desc, encodingJobStart asc, failuresNumber asc limit ? for update";
             shared_ptr<sql::PreparedStatement> preparedStatementEncoding (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatementEncoding->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed));
+            preparedStatementEncoding->setInt(queryParameterIndex++, maxEncodingsNumber);
 
             shared_ptr<sql::ResultSet> encodingResultSet (preparedStatementEncoding->executeQuery());
             while (encodingResultSet->next())
@@ -11787,8 +11819,8 @@ int MMSEngineDBFacade::addEncodingJob (
             }
 
             lastSQLCommand = 
-                "insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, parameters, encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, failuresNumber) values ("
-                                            "NULL,           ?,               ?,    ?,          ?,                NULL,             NULL,           NULL,             ?,      NULL,         0)";
+                "insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, parameters, encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, transcoder, failuresNumber) values ("
+                                            "NULL,           ?,               ?,    ?,          ?,                NULL,             NULL,           NULL,             ?,      NULL,         NULL,       0)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -12164,8 +12196,8 @@ int MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
             }
 
             lastSQLCommand = 
-                "insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, parameters, encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, failuresNumber) values ("
-                                            "NULL,           ?,               ?,    ?,          ?,                NULL,             NULL,           NULL,             ?,      NULL,         0)";
+                "insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, parameters, encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, transcoder, failuresNumber) values ("
+                                            "NULL,           ?,               ?,    ?,          ?,                NULL,             NULL,           NULL,             ?,      NULL,         NULL,       0)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -12484,8 +12516,8 @@ int MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob (
             }
 
             lastSQLCommand = 
-                "insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, parameters, encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, failuresNumber) values ("
-                                            "NULL,           ?,               ?,    ?,          ?,                NULL,             NULL,           NULL,             ?,      NULL,         0)";
+                "insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, parameters, encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, transcoder, failuresNumber) values ("
+                                            "NULL,           ?,               ?,    ?,          ?,                NULL,             NULL,           NULL,             ?,      NULL,         NULL,       0)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -12762,8 +12794,8 @@ int MMSEngineDBFacade::addEncoding_GenerateFramesJob (
             }
 
             lastSQLCommand = 
-                "insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, parameters, encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, failuresNumber) values ("
-                                            "NULL,           ?,               ?,    ?,          ?,                NULL,             NULL,           NULL,             ?,      NULL,         0)";
+                "insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, parameters, encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, transcoder, failuresNumber) values ("
+                                            "NULL,           ?,               ?,    ?,          ?,                NULL,             NULL,           NULL,             ?,      NULL,         NULL,       0)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -13028,8 +13060,8 @@ int MMSEngineDBFacade::addEncoding_SlideShowJob (
             }
 
             lastSQLCommand = 
-                "insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, parameters, encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, failuresNumber) values ("
-                                            "NULL,           ?,               ?,    ?,          ?,                NULL,             NULL,           NULL,             ?,      NULL,         0)";
+                "insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, parameters, encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, transcoder, failuresNumber) values ("
+                                            "NULL,           ?,               ?,    ?,          ?,                NULL,             NULL,           NULL,             ?,      NULL,         NULL,       0)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -13282,8 +13314,8 @@ int MMSEngineDBFacade::addEncoding_FaceRecognitionJob (
             }
 
             lastSQLCommand = 
-                "insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, parameters, encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, failuresNumber) values ("
-                                            "NULL,           ?,               ?,    ?,          ?,                NULL,             NULL,           NULL,             ?,      NULL,         0)";
+                "insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, parameters, encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, transcoder, failuresNumber) values ("
+                                            "NULL,           ?,               ?,    ?,          ?,                NULL,             NULL,           NULL,             ?,      NULL,         NULL,       0)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -13536,8 +13568,8 @@ int MMSEngineDBFacade::addEncoding_FaceIdentificationJob (
             }
 
             lastSQLCommand = 
-                "insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, parameters, encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, failuresNumber) values ("
-                                            "NULL,           ?,               ?,    ?,          ?,                NULL,             NULL,           NULL,             ?,      NULL,         0)";
+                "insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, parameters, encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, transcoder, failuresNumber) values ("
+                                            "NULL,           ?,               ?,    ?,          ?,                NULL,             NULL,           NULL,             ?,      NULL,         NULL,       0)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -13794,8 +13826,8 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
             }
 
             lastSQLCommand = 
-                "insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, parameters, encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, failuresNumber) values ("
-                                            "NULL,           ?,               ?,    ?,          ?,                NULL,             NULL,           NULL,             ?,      NULL,         0)";
+                "insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, parameters, encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, transcoder, failuresNumber) values ("
+                                            "NULL,           ?,               ?,    ?,          ?,                NULL,             NULL,           NULL,             ?,      NULL,         NULL,       0)";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -14049,6 +14081,7 @@ int MMSEngineDBFacade::updateEncodingJob (
                 }
             }
             
+			string transcoderUpdate;
             if (encodingFailureNumber + 1 >= _maxEncodingFailures)
 			{
                 newEncodingStatus          = EncodingStatus::End_Failed;
@@ -14063,11 +14096,13 @@ int MMSEngineDBFacade::updateEncodingJob (
             {
                 newEncodingStatus          = EncodingStatus::ToBeProcessed;
                 encodingFailureNumber++;
+
+				transcoderUpdate = ", transcoder = NULL";
             }
 
             {
                 lastSQLCommand = 
-                    "update MMS_EncodingJob set status = ?, processorMMS = NULL, failuresNumber = ?, encodingProgress = NULL where encodingJobKey = ? and status = ?";
+                    string("update MMS_EncodingJob set status = ?, processorMMS = NULL") + transcoderUpdate + ", failuresNumber = ?, encodingProgress = NULL where encodingJobKey = ? and status = ?";
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
                 preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(newEncodingStatus));
@@ -14101,7 +14136,38 @@ int MMSEngineDBFacade::updateEncodingJob (
             newEncodingStatus       = EncodingStatus::ToBeProcessed;
             
             lastSQLCommand = 
-                "update MMS_EncodingJob set status = ?, processorMMS = NULL, encodingProgress = NULL where encodingJobKey = ? and status = ?";
+                "update MMS_EncodingJob set status = ?, processorMMS = NULL, transcoder = NULL, encodingProgress = NULL where encodingJobKey = ? and status = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(newEncodingStatus));
+            preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
+            preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(EncodingStatus::Processing));
+
+            int rowsUpdated = preparedStatement->executeUpdate();
+            if (rowsUpdated != 1)
+            {
+                string errorMessage = __FILEREF__ + "no update was done"
+                        + ", MMSEngineDBFacade::toString(newEncodingStatus): " + MMSEngineDBFacade::toString(newEncodingStatus)
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", rowsUpdated: " + to_string(rowsUpdated)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }
+            _logger->info(__FILEREF__ + "EncodingJob updated successful"
+                + ", newEncodingStatus: " + MMSEngineDBFacade::toString(newEncodingStatus)
+                + ", encodingJobKey: " + to_string(encodingJobKey)
+            );
+        }
+        else if (encodingError == EncodingError::KilledByUser)
+        {
+            newEncodingStatus       = EncodingStatus::End_KilledByUser;
+            
+            lastSQLCommand = 
+                "update MMS_EncodingJob set status = ?, processorMMS = NULL, encodingJobEnd = NOW() "
+				"where encodingJobKey = ? and status = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(newEncodingStatus));
@@ -14128,7 +14194,7 @@ int MMSEngineDBFacade::updateEncodingJob (
         }
         else    // success
         {
-            newEncodingStatus       = EncodingStatus::End_ProcessedSuccessful;
+            newEncodingStatus       = EncodingStatus::End_Success;
 
             lastSQLCommand = 
                 "update MMS_EncodingJob set status = ?, processorMMS = NULL, encodingJobEnd = NOW(), encodingProgress = 100 "
@@ -14158,7 +14224,7 @@ int MMSEngineDBFacade::updateEncodingJob (
             );
         }
         
-        if (newEncodingStatus == EncodingStatus::End_ProcessedSuccessful)
+        if (newEncodingStatus == EncodingStatus::End_Success)
         {
             // In the Generate-Frames scenario we will have mediaItemKey and encodedPhysicalPathKey set to -1.
             // In this case we do not have to update the IngestionJob because this is done when all the images (the files generated)
@@ -14193,6 +14259,22 @@ int MMSEngineDBFacade::updateEncodingJob (
         else if (newEncodingStatus == EncodingStatus::End_Failed)
         {
             IngestionStatus ingestionStatus = IngestionStatus::End_IngestionFailure;
+            string errorMessage;
+            string processorMMS;
+            int64_t physicalPathKey = -1;
+
+            _logger->info(__FILEREF__ + "Update IngestionJob"
+                + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                + ", IngestionStatus: " + toString(ingestionStatus)
+                + ", physicalPathKey: " + to_string(physicalPathKey)
+                + ", errorMessage: " + errorMessage
+                + ", processorMMS: " + processorMMS
+            );                            
+            updateIngestionJob (ingestionJobKey, ingestionStatus, errorMessage, processorMMS);
+        }
+        else if (newEncodingStatus == EncodingStatus::End_KilledByUser)
+        {
+            IngestionStatus ingestionStatus = IngestionStatus::End_DwlUplOrEncCancelledByUser;
             string errorMessage;
             string processorMMS;
             int64_t physicalPathKey = -1;
@@ -14970,6 +15052,212 @@ void MMSEngineDBFacade::updateEncodingJobProgress (
             + ", getConnectionId: " + to_string(conn->getConnectionId())
         );
         _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        
+        throw e;
+    }
+}
+
+void MMSEngineDBFacade::updateEncodingJobTranscoder (
+        int64_t encodingJobKey,
+        string transcoder)
+{
+    
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        {
+            lastSQLCommand = 
+                "update MMS_EncodingJob set transcoder = ? where encodingJobKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setString(queryParameterIndex++, transcoder);
+            preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
+
+            int rowsUpdated = preparedStatement->executeUpdate();
+            if (rowsUpdated != 1)
+            {
+                // probable because encodingPercentage was already the same in the table
+                string errorMessage = __FILEREF__ + "no update was done"
+                        + ", transcoder: " + transcoder
+                        + ", encodingJobKey: " + to_string(encodingJobKey)
+                        + ", rowsUpdated: " + to_string(rowsUpdated)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->warn(errorMessage);
+
+                // throw runtime_error(errorMessage);                    
+            }
+        }
+        
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            _logger->debug(__FILEREF__ + "DB connection unborrow"
+                + ", getConnectionId: " + to_string(conn->getConnectionId())
+            );
+            _connectionPool->unborrow(conn);
+        }
+        
+        throw e;
+    }
+}
+
+string MMSEngineDBFacade::getEncodingJobDetails (
+        int64_t encodingJobKey)
+{
+    
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn = nullptr;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+		string      transcoder;
+        {
+            lastSQLCommand = 
+                "select transcoder from MMS_EncodingJob where encodingJobKey = ?";
+            shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+            int queryParameterIndex = 1;
+            preparedStatement->setInt64(queryParameterIndex++, encodingJobKey);
+
+            shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
+            if (resultSet->next())
+            {
+                transcoder = resultSet->getString("transcoder");
+            }
+            else
+            {
+                string errorMessage = __FILEREF__ + "EncodingJob not found"
+                        + ", EncodingJobKey: " + to_string(encodingJobKey)
+                        + ", lastSQLCommand: " + lastSQLCommand
+                ;
+                _logger->error(errorMessage);
+
+                throw runtime_error(errorMessage);                    
+            }
+        }
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+
+		return transcoder;
     }
     catch(sql::SQLException se)
     {
@@ -22035,6 +22323,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
                     "encodingProgress           INT NULL,"
                     "status           			VARCHAR (64) NOT NULL,"
                     "processorMMS               VARCHAR (128) NULL,"
+                    "transcoder					VARCHAR (128) NULL,"
                     "failuresNumber           	INT NOT NULL,"
                     "constraint MMS_EncodingJob_PK PRIMARY KEY (encodingJobKey), "
                     "constraint MMS_EncodingJob_FK foreign key (ingestionJobKey) "

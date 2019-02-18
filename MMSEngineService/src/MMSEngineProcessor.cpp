@@ -4572,20 +4572,15 @@ void MMSEngineProcessor::manageLiveRecorder(
 				throw runtime_error(errorMessage);
 			}
 
-			tmRecordingPeriodStart.tm_year		= ulUTCYear;
-			tmRecordingPeriodStart.tm_mon		= ulUTCMonth;
+			time (&utcRecordingPeriodStart);
+			gmtime_r(&utcRecordingPeriodStart, &tmRecordingPeriodStart);
+
+			tmRecordingPeriodStart.tm_year		= ulUTCYear - 1900;
+			tmRecordingPeriodStart.tm_mon		= ulUTCMonth - 1;
 			tmRecordingPeriodStart.tm_mday		= ulUTCDay;
 			tmRecordingPeriodStart.tm_hour		= ulUTCHour;
 			tmRecordingPeriodStart.tm_min		= ulUTCMinutes;
 			tmRecordingPeriodStart.tm_sec		= ulUTCSeconds;
-
-			tmRecordingPeriodStart.tm_year		-= 1900;
-			tmRecordingPeriodStart.tm_mon		-= 1;
-
-			//	A negative value for tm_isdst causes mktime() to attempt
-			//	to determine whether Daylight Saving Time is in effect
-			//	for the specified time.
-			tmRecordingPeriodStart. tm_isdst	= 0;
 
 			utcRecordingPeriodStart = timegm(&tmRecordingPeriodStart);
 		}
@@ -4624,20 +4619,15 @@ void MMSEngineProcessor::manageLiveRecorder(
 				throw runtime_error(errorMessage);
 			}
 
-			tmRecordingPeriodEnd.tm_year		= ulUTCYear;
-			tmRecordingPeriodEnd.tm_mon		= ulUTCMonth;
+			time (&utcRecordingPeriodEnd);
+			gmtime_r(&utcRecordingPeriodEnd, &tmRecordingPeriodEnd);
+
+			tmRecordingPeriodEnd.tm_year		= ulUTCYear - 1900;
+			tmRecordingPeriodEnd.tm_mon			= ulUTCMonth - 1;
 			tmRecordingPeriodEnd.tm_mday		= ulUTCDay;
 			tmRecordingPeriodEnd.tm_hour		= ulUTCHour;
-			tmRecordingPeriodEnd.tm_min		= ulUTCMinutes;
-			tmRecordingPeriodEnd.tm_sec		= ulUTCSeconds;
-
-			tmRecordingPeriodEnd.tm_year		-= 1900;
-			tmRecordingPeriodEnd.tm_mon		-= 1;
-
-			//	A negative value for tm_isdst causes mktime() to attempt
-			//	to determine whether Daylight Saving Time is in effect
-			//	for the specified time.
-			tmRecordingPeriodEnd. tm_isdst	= 0;
+			tmRecordingPeriodEnd.tm_min			= ulUTCMinutes;
+			tmRecordingPeriodEnd.tm_sec			= ulUTCSeconds;
 
 			utcRecordingPeriodEnd = timegm(&tmRecordingPeriodEnd);
 		}
@@ -7816,9 +7806,11 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
 
 void MMSEngineProcessor::handleCheckEncodingEvent ()
 {
+	int maxEncodingsNumber = 20;
+
     vector<shared_ptr<MMSEngineDBFacade::EncodingItem>> encodingItems;
         
-    _mmsEngineDBFacade->getEncodingJobs(_processorMMS, encodingItems);
+    _mmsEngineDBFacade->getEncodingJobs(_processorMMS, encodingItems, maxEncodingsNumber);
 
     _pActiveEncodingsManager->addEncodingItems(encodingItems);
 }

@@ -147,8 +147,9 @@ public:
     enum class EncodingStatus {
         ToBeProcessed           = 0,
         Processing              = 1,
-        End_ProcessedSuccessful = 2,
-        End_Failed              = 3
+        End_Success				= 2,
+        End_Failed              = 3,
+        End_KilledByUser		= 4
     };
     static const char* toString(const EncodingStatus& encodingStatus)
     {
@@ -158,10 +159,12 @@ public:
                 return "ToBeProcessed";
             case EncodingStatus::Processing:
                 return "Processing";
-            case EncodingStatus::End_ProcessedSuccessful:
-                return "End_ProcessedSuccessful";
+            case EncodingStatus::End_Success:
+                return "End_Success";
             case EncodingStatus::End_Failed:
                 return "End_Failed";
+            case EncodingStatus::End_KilledByUser:
+                return "End_KilledByUser";
             default:
             throw runtime_error(string("Wrong EncodingStatus"));
         }
@@ -176,10 +179,12 @@ public:
             return EncodingStatus::ToBeProcessed;
         else if (lowerCase == "processing")
             return EncodingStatus::Processing;
-        else if (lowerCase == "end_processedsuccessful")
-            return EncodingStatus::End_ProcessedSuccessful;
+        else if (lowerCase == "end_success")
+            return EncodingStatus::End_Success;
         else if (lowerCase == "end_failed")
             return EncodingStatus::End_Failed;
+        else if (lowerCase == "end_killedbyuser")
+            return EncodingStatus::End_KilledByUser;
         else
             throw runtime_error(string("Wrong EncodingStatus")
                     + ", encodingStatus: " + encodingStatus
@@ -257,7 +262,8 @@ public:
         NoError,
         PunctualError,
         MaxCapacityReached,
-        ErrorBeforeEncoding
+        ErrorBeforeEncoding,
+		KilledByUser
     };
     
     enum class EncodingTechnology {
@@ -570,7 +576,7 @@ public:
         SourceUploadingInProgress,
         EncodingQueued,
 
-        End_DwlOrUplCancelledByUser,   
+        End_DwlUplOrEncCancelledByUser,   
 
         End_ValidationMetadataFailed,   
 
@@ -600,8 +606,8 @@ public:
                 return "SourceUploadingInProgress";
             case IngestionStatus::EncodingQueued:
                 return "EncodingQueued";
-            case IngestionStatus::End_DwlOrUplCancelledByUser:
-                return "End_DwlOrUplCancelledByUser";
+            case IngestionStatus::End_DwlUplOrEncCancelledByUser:
+                return "End_DwlUplOrEncCancelledByUser";
             case IngestionStatus::End_ValidationMetadataFailed:
                 return "End_ValidationMetadataFailed";
             case IngestionStatus::End_ValidationMediaSourceFailed:
@@ -636,8 +642,8 @@ public:
             return IngestionStatus::SourceUploadingInProgress;
         else if (lowerCase == "encodingqueued")
             return IngestionStatus::EncodingQueued;
-        else if (lowerCase == "end_dwloruplcancelledbyuser")
-            return IngestionStatus::End_DwlOrUplCancelledByUser;
+        else if (lowerCase == "end_dwluplorenccancelledbyuser")
+            return IngestionStatus::End_DwlUplOrEncCancelledByUser;
         else if (lowerCase == "end_validationmetadatafailed")
             return IngestionStatus::End_ValidationMetadataFailed;
         else if (lowerCase == "end_validationmediasourcefailed")
@@ -936,7 +942,7 @@ public:
         int start, int rows,
         bool contentTypePresent, ContentType contentType,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
-        string title, string jsonCondition, vector<string>& tags,
+        string title, int liveRecordingChunk, string jsonCondition, vector<string>& tags,
 		string ingestionDateAndTitleOrder, string jsonOrderBy, bool admin);
 
     Json::Value getEncodingProfilesSetList (
@@ -1013,7 +1019,8 @@ public:
 
     void getEncodingJobs(
         string processorMMS,
-        vector<shared_ptr<MMSEngineDBFacade::EncodingItem>>& encodingItems);
+        vector<shared_ptr<MMSEngineDBFacade::EncodingItem>>& encodingItems,
+		int maxEncodingsNumber);
     
     int addEncodingJob (
         shared_ptr<Workspace> workspace,
@@ -1120,6 +1127,13 @@ public:
     void updateEncodingJobProgress (
         int64_t encodingJobKey,
         int encodingPercentage);
+
+    void updateEncodingJobTranscoder (
+        int64_t encodingJobKey,
+        string transcoder);
+
+	string getEncodingJobDetails (
+		int64_t encodingJobKey);
 
     void checkWorkspaceMaxIngestionNumber (int64_t workspaceKey);
     

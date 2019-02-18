@@ -2020,7 +2020,6 @@ int FFMpeg::getEncodingProgress()
 {
     int encodingPercentage;
 
-
     try
     {        
         if (!FileIO::isFileExisting(_outputFfmpegPathFileName.c_str()))
@@ -2110,19 +2109,40 @@ int FFMpeg::getEncodingProgress()
                 
                 encodingPercentage = 100 * currentTimeInMilliSeconds / (_currentDurationInMilliSeconds * (_twoPasses ? 2 : 1));
 
-                _logger->info(__FILEREF__ + "Encoding status"
-                    + ", duration: " + duration
-                    + ", encodingSeconds: " + to_string(encodingSeconds)
-                    + ", _twoPasses: " + to_string(_twoPasses)
-                    + ", _currentlyAtSecondPass: " + to_string(_currentlyAtSecondPass)
-                    + ", currentTimeInMilliSeconds: " + to_string(currentTimeInMilliSeconds)
-                    + ", _currentDurationInMilliSeconds: " + to_string(_currentDurationInMilliSeconds)
-                    + ", encodingPercentage: " + to_string(encodingPercentage)
-                    + ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
-                    + ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
-                    + ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
-                    + ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
-                );
+				if (encodingPercentage > 100)
+				{
+					_logger->error(__FILEREF__ + "Encoding status too big"
+						+ ", duration: " + duration
+						+ ", encodingSeconds: " + to_string(encodingSeconds)
+						+ ", _twoPasses: " + to_string(_twoPasses)
+						+ ", _currentlyAtSecondPass: " + to_string(_currentlyAtSecondPass)
+						+ ", currentTimeInMilliSeconds: " + to_string(currentTimeInMilliSeconds)
+						+ ", _currentDurationInMilliSeconds: " + to_string(_currentDurationInMilliSeconds)
+						+ ", encodingPercentage: " + to_string(encodingPercentage)
+						+ ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
+						+ ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
+						+ ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
+						+ ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
+					);
+
+					encodingPercentage		= 0;
+				}
+				else
+				{
+					_logger->info(__FILEREF__ + "Encoding status"
+						+ ", duration: " + duration
+						+ ", encodingSeconds: " + to_string(encodingSeconds)
+						+ ", _twoPasses: " + to_string(_twoPasses)
+						+ ", _currentlyAtSecondPass: " + to_string(_currentlyAtSecondPass)
+						+ ", currentTimeInMilliSeconds: " + to_string(currentTimeInMilliSeconds)
+						+ ", _currentDurationInMilliSeconds: " + to_string(_currentDurationInMilliSeconds)
+						+ ", encodingPercentage: " + to_string(encodingPercentage)
+						+ ", _currentMMSSourceAssetPathName: " + _currentMMSSourceAssetPathName
+						+ ", _currentStagingEncodedAssetPathName: " + _currentStagingEncodedAssetPathName
+						+ ", _currentIngestionJobKey: " + to_string(_currentIngestionJobKey)
+						+ ", _currentEncodingJobKey: " + to_string(_currentEncodingJobKey)
+					);
+				}
             }
         }
     }

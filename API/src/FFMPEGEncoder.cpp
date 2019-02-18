@@ -1012,7 +1012,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
                     ;
             _logger->info(__FILEREF__ + errorMessage);
 
-            sendError(request, 400, errorMessage);
+            sendError(request, 500, errorMessage);
 
             // throw e;
             return;
@@ -1025,7 +1025,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
                     ;
             _logger->error(__FILEREF__ + errorMessage);
 
-            sendError(request, 400, errorMessage);
+            sendError(request, 500, errorMessage);
 
             throw e;
         }
@@ -1036,6 +1036,100 @@ void FFMPEGEncoder::manageRequestAndResponse(
             + ", \"encodingProgress\": " + to_string(encodingProgress) + " "
             + "}";
         
+        sendSuccess(request, 200, responseBody);
+    }
+    else if (method == "killEncodingJob")
+    {
+        /*
+        bool isAdminAPI = get<1>(workspaceAndFlags);
+        if (!isAdminAPI)
+        {
+            string errorMessage = string("APIKey flags does not have the ADMIN permission"
+                    ", isAdminAPI: " + to_string(isAdminAPI)
+                    );
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 403, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+        */
+
+        auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
+        if (encodingJobKeyIt == queryParameters.end())
+        {
+            string errorMessage = string("The 'encodingJobKey' parameter is not found");
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            throw runtime_error(errorMessage);
+        }
+
+        int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
+        
+		pid_t			pidToBeKilled;
+		bool			encodingFound = false;
+
+		{
+			lock_guard<mutex> locker(_encodingMutex);
+
+			for (shared_ptr<Encoding> encoding: _encodingsCapability)
+			{
+				if (encoding->_encodingJobKey == encodingJobKey)
+				{
+					encodingFound = true;
+					pidToBeKilled = encoding->_childPid;
+               
+					break;
+				}
+			}
+		}
+
+		if (!encodingFound)
+		{
+			lock_guard<mutex> locker(_liveRecordingMutex);
+
+			for (shared_ptr<LiveRecording> liveRecording: _liveRecordingsCapability)
+			{
+				if (liveRecording->_encodingJobKey == encodingJobKey)
+				{
+					encodingFound = true;
+					pidToBeKilled = liveRecording->_childPid;
+               
+					break;
+				}
+			}
+		}
+
+		_logger->info(__FILEREF__ + "Found Encoding to kill"
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", pidToBeKilled: " + to_string(pidToBeKilled)
+				);
+
+        try
+        {
+			ProcessUtility::killProcess(pidToBeKilled);
+        }
+        catch(runtime_error e)
+        {
+            string errorMessage = string("ProcessUtility::killProcess failed")
+				+ ", encodingJobKey: " + to_string(encodingJobKey)
+				+ ", pidToBeKilled: " + to_string(pidToBeKilled)
+                + ", e.what(): " + e.what()
+                    ;
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 500, errorMessage);
+
+            throw e;
+        }
+
+		string responseBody = string("{ ")
+			+ "\"encodingJobKey\": " + to_string(encodingJobKey)
+			+ ", \"pid\": " + to_string(pidToBeKilled)
+			+ "}";
+
         sendSuccess(request, 200, responseBody);
     }
     else

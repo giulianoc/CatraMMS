@@ -211,27 +211,32 @@ void EncoderVideoAudioProxy::operator()()
     );
 
     string stagingEncodedAssetPathName;
+	bool killedByUser;
     try
     {
         if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::EncodeVideoAudio)
         {
-            stagingEncodedAssetPathName = encodeContentVideoAudio();
+			pair<string, bool> stagingEncodedAssetPathNameAndKilledByUser = encodeContentVideoAudio();
+			tie(stagingEncodedAssetPathName, killedByUser) = stagingEncodedAssetPathNameAndKilledByUser;
         }
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::OverlayImageOnVideo)
         {
-            stagingEncodedAssetPathName = overlayImageOnVideo();
+			pair<string, bool> stagingEncodedAssetPathNameAndKilledByUser = overlayImageOnVideo();
+			tie(stagingEncodedAssetPathName, killedByUser) = stagingEncodedAssetPathNameAndKilledByUser;
         }
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::OverlayTextOnVideo)
         {
-            stagingEncodedAssetPathName = overlayTextOnVideo();
+			pair<string, bool> stagingEncodedAssetPathNameAndKilledByUser = overlayTextOnVideo();
+			tie(stagingEncodedAssetPathName, killedByUser) = stagingEncodedAssetPathNameAndKilledByUser;
         }
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::GenerateFrames)
         {
-            generateFrames();
+            killedByUser = generateFrames();
         }
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::SlideShow)
         {
-            stagingEncodedAssetPathName = slideShow();
+			pair<string, bool> stagingEncodedAssetPathNameAndKilledByUser = slideShow();
+			tie(stagingEncodedAssetPathName, killedByUser) = stagingEncodedAssetPathNameAndKilledByUser;
         }
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceRecognition)
         {
@@ -243,7 +248,8 @@ void EncoderVideoAudioProxy::operator()()
         }
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder)
         {
-            stagingEncodedAssetPathName = liveRecorder();
+			pair<string, bool> stagingEncodedAssetPathNameAndKilledByUser = liveRecorder();
+			tie(stagingEncodedAssetPathName, killedByUser) = stagingEncodedAssetPathNameAndKilledByUser;
         }
         else
         {
@@ -406,6 +412,98 @@ void EncoderVideoAudioProxy::operator()()
                 _encodingItem->_ingestionJobKey);
 
         _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", encodingFailureNumber: " + to_string(encodingFailureNumber)
+            + ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+        );
+
+        {
+            lock_guard<mutex> locker(*_mtEncodingJobs);
+
+            *_status = EncodingJobStatus::Free;
+        }
+
+        _logger->info(__FILEREF__ + "EncoderVideoAudioProxy finished"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+        );
+
+        // throw e;
+        return;
+    }
+	catch(EncodingKilledByUser e)
+    {
+        if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::EncodeVideoAudio)
+        {
+            _logger->error(__FILEREF__ + "encodeContentVideoAudio: " + e.what()
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            );
+        }
+        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::OverlayImageOnVideo)
+        {
+            _logger->error(__FILEREF__ + "overlayImageOnVideo: " + e.what()
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            );
+        }
+        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::OverlayTextOnVideo)
+        {
+            _logger->error(__FILEREF__ + "overlayTextOnVideo: " + e.what()
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            );
+        }
+        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::GenerateFrames)
+        {
+            _logger->error(__FILEREF__ + "generateFrames: " + e.what()
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            );
+        }
+        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::SlideShow)
+        {
+            _logger->error(__FILEREF__ + "slideShow: " + e.what()
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            );
+        }
+        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceRecognition)
+        {
+            _logger->error(__FILEREF__ + "faceRecognition: " + e.what()
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            );
+        }
+        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceIdentification)
+        {
+            _logger->warn(__FILEREF__ + "faceIdentification: " + e.what()
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            );
+        }
+        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder)
+        {
+            _logger->warn(__FILEREF__ + "liveRecorder: " + e.what()
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            );
+        }
+
+        _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob KilledByUser"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+        );
+
+        int64_t mediaItemKey = -1;
+        int64_t encodedPhysicalPathKey = -1;
+        int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (_encodingItem->_encodingJobKey, 
+                MMSEngineDBFacade::EncodingError::KilledByUser, 
+                mediaItemKey, encodedPhysicalPathKey,
+                _encodingItem->_ingestionJobKey);
+
+        _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob KilledByUser"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
@@ -630,14 +728,14 @@ void EncoderVideoAudioProxy::operator()()
             mediaItemKey = _encodingItem->_encodeData->_mediaItemKey;
 
             encodedPhysicalPathKey = processEncodedContentVideoAudio(
-                stagingEncodedAssetPathName);
+                stagingEncodedAssetPathName, killedByUser);
         }
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::OverlayImageOnVideo)
         {
 //            pair<int64_t,int64_t> mediaItemKeyAndPhysicalPathKey = processOverlayedImageOnVideo(
 //                stagingEncodedAssetPathName);
 
-            processOverlayedImageOnVideo(stagingEncodedAssetPathName);
+            processOverlayedImageOnVideo(stagingEncodedAssetPathName, killedByUser);
             
             mediaItemKey = -1;
             encodedPhysicalPathKey = -1;
@@ -654,21 +752,21 @@ void EncoderVideoAudioProxy::operator()()
             mediaItemKey = mediaItemKeyAndPhysicalPathKey.first;
             encodedPhysicalPathKey = mediaItemKeyAndPhysicalPathKey.second;
              */
-            processOverlayedTextOnVideo(stagingEncodedAssetPathName);     
+            processOverlayedTextOnVideo(stagingEncodedAssetPathName, killedByUser);     
             
             mediaItemKey = -1;
             encodedPhysicalPathKey = -1;
         }
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::GenerateFrames)
         {
-            processGeneratedFrames();     
+            processGeneratedFrames(killedByUser);     
             
             mediaItemKey = -1;
             encodedPhysicalPathKey = -1;
         }
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::SlideShow)
         {
-            processSlideShow(stagingEncodedAssetPathName);
+            processSlideShow(stagingEncodedAssetPathName, killedByUser);
             
             mediaItemKey = -1;
             encodedPhysicalPathKey = -1;            
@@ -689,7 +787,7 @@ void EncoderVideoAudioProxy::operator()()
         }
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder)
         {
-            processLiveRecorder(stagingEncodedAssetPathName);
+            processLiveRecorder(stagingEncodedAssetPathName, killedByUser);
             
             mediaItemKey = -1;
             encodedPhysicalPathKey = -1;            
@@ -1006,15 +1104,15 @@ void EncoderVideoAudioProxy::operator()()
         
 }
 
-string EncoderVideoAudioProxy::encodeContentVideoAudio()
+pair<string, bool> EncoderVideoAudioProxy::encodeContentVideoAudio()
 {
-    string stagingEncodedAssetPathName;
-    
-    _logger->info(__FILEREF__ + "Creating encoderVideoAudioProxy thread"
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-        + ", _encodingItem->_encodeData->_encodingProfileTechnology" + to_string(static_cast<int>(_encodingItem->_encodeData->_encodingProfileTechnology))
-        + ", _mp4Encoder: " + _mp4Encoder
-    );
+	pair<string, bool> stagingEncodedAssetPathNameAndKilledByUser;
+
+	_logger->info(__FILEREF__ + "Creating encoderVideoAudioProxy thread"
+		+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+		+ ", _encodingItem->_encodeData->_encodingProfileTechnology" + to_string(static_cast<int>(_encodingItem->_encodeData->_encodingProfileTechnology))
+		+ ", _mp4Encoder: " + _mp4Encoder
+	);
 
     if (
         (_encodingItem->_encodeData->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::MP4 &&
@@ -1026,7 +1124,18 @@ string EncoderVideoAudioProxy::encodeContentVideoAudio()
             _mpeg2TSEncoder == "FFMPEG")
     )
     {
-        stagingEncodedAssetPathName = encodeContent_VideoAudio_through_ffmpeg();
+        stagingEncodedAssetPathNameAndKilledByUser = encodeContent_VideoAudio_through_ffmpeg();
+		if (stagingEncodedAssetPathNameAndKilledByUser.second)	// KilledByUser
+		{
+			string errorMessage = __FILEREF__ + "Encoding killed by the User"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+                ;
+			_logger->error(errorMessage);
+        
+			throw EncodingKilledByUser();
+		}
     }
     else if (_encodingItem->_encodeData->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::WindowsMedia)
     {
@@ -1047,10 +1156,10 @@ string EncoderVideoAudioProxy::encodeContentVideoAudio()
         throw runtime_error(errorMessage);
     }
     
-    return stagingEncodedAssetPathName;
+    return stagingEncodedAssetPathNameAndKilledByUser;
 }
 
-string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
+pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
 {
     
     int64_t sourcePhysicalPathKey;
@@ -1065,6 +1174,7 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
     }
     
     string stagingEncodedAssetPathName;
+	bool killedByUser = false;
     string encodedFileName;
     string mmsSourceAssetPathName;
 
@@ -1541,6 +1651,13 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                 */                        
             }
             
+			_logger->info(__FILEREF__ + "Update EncodingJob"
+				+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", transcoder: " + _currentUsedFFMpegEncoderHost
+			);
+			_mmsEngineDBFacade->updateEncodingJobTranscoder(_encodingItem->_encodingJobKey,
+				_currentUsedFFMpegEncoderHost);
+
             // loop waiting the end of the encoding
             bool encodingFinished = false;
             int maxEncodingStatusFailures = 1;
@@ -1551,7 +1668,8 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
                 
                 try
                 {
-                    encodingFinished = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
+                    pair<bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
+					tie(encodingFinished, killedByUser) = encodingStatus;
                 }
                 catch(...)
                 {
@@ -1653,10 +1771,11 @@ string EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmpeg()
         }
     #endif
 
-    return stagingEncodedAssetPathName;
+    return make_pair(stagingEncodedAssetPathName, killedByUser);
 }
 
-int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEncodedAssetPathName)
+int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEncodedAssetPathName,
+		bool killedByUser)
 {
     int64_t sourcePhysicalPathKey;
     int64_t encodingProfileKey;    
@@ -1927,9 +2046,9 @@ int64_t EncoderVideoAudioProxy::processEncodedContentVideoAudio(string stagingEn
     return encodedPhysicalPathKey;
 }
 
-string EncoderVideoAudioProxy::overlayImageOnVideo()
+pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo()
 {
-    string stagingEncodedAssetPathName;
+    pair<string, bool> stagingEncodedAssetPathNameAndKilledByUser;
     
     /*
     _logger->info(__FILEREF__ + "Creating encoderVideoAudioProxy thread"
@@ -1949,7 +2068,18 @@ string EncoderVideoAudioProxy::overlayImageOnVideo()
     )
     {
     */
-        stagingEncodedAssetPathName = overlayImageOnVideo_through_ffmpeg();
+        stagingEncodedAssetPathNameAndKilledByUser = overlayImageOnVideo_through_ffmpeg();
+		if (stagingEncodedAssetPathNameAndKilledByUser.second)	// KilledByUser
+		{
+			string errorMessage = __FILEREF__ + "Encoding killed by the User"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+                ;
+			_logger->error(errorMessage);
+        
+			throw EncodingKilledByUser();
+		}
     /*
     }
     else if (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::WindowsMedia)
@@ -1972,10 +2102,10 @@ string EncoderVideoAudioProxy::overlayImageOnVideo()
     }
     */
     
-    return stagingEncodedAssetPathName;
+    return stagingEncodedAssetPathNameAndKilledByUser;
 }
 
-string EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
+pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
 {
     
     int64_t sourceVideoPhysicalPathKey;
@@ -1999,6 +2129,7 @@ string EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
     }
     
     string stagingEncodedAssetPathName;
+	bool killedByUser = false;
     // string encodedFileName;
     string mmsSourceVideoAssetPathName;
     string mmsSourceImageAssetPathName;
@@ -2379,6 +2510,13 @@ string EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
                 */                        
             }
             
+			_logger->info(__FILEREF__ + "Update EncodingJob"
+				+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", transcoder: " + _currentUsedFFMpegEncoderHost
+			);
+			_mmsEngineDBFacade->updateEncodingJobTranscoder(_encodingItem->_encodingJobKey,
+				_currentUsedFFMpegEncoderHost);
+
             // loop waiting the end of the encoding
             bool encodingFinished = false;
             int maxEncodingStatusFailures = 1;
@@ -2389,7 +2527,8 @@ string EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
                 
                 try
                 {
-                    encodingFinished = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
+                    pair<bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
+					tie(encodingFinished, killedByUser) = encodingStatus;
                 }
                 catch(...)
                 {
@@ -2491,10 +2630,11 @@ string EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
         }
     #endif
 
-    return stagingEncodedAssetPathName;
+    return make_pair(stagingEncodedAssetPathName, killedByUser);
 }
 
-void EncoderVideoAudioProxy::processOverlayedImageOnVideo(string stagingEncodedAssetPathName)
+void EncoderVideoAudioProxy::processOverlayedImageOnVideo(string stagingEncodedAssetPathName,
+		bool killedByUser)
 {
     try
     {
@@ -2808,16 +2948,27 @@ void EncoderVideoAudioProxy::processOverlayedImageOnVideo(string stagingEncodedA
     */
 }
 
-string EncoderVideoAudioProxy::overlayTextOnVideo()
+pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo()
 {
-    string stagingEncodedAssetPathName;
+    pair<string, bool> stagingEncodedAssetPathNameAndKilledByUser;
     
-    stagingEncodedAssetPathName = overlayTextOnVideo_through_ffmpeg();
+    stagingEncodedAssetPathNameAndKilledByUser = overlayTextOnVideo_through_ffmpeg();
+	if (stagingEncodedAssetPathNameAndKilledByUser.second)	// KilledByUser
+	{
+		string errorMessage = __FILEREF__ + "Encoding killed by the User"
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+            ;
+		_logger->error(errorMessage);
+       
+		throw EncodingKilledByUser();
+	}
     
-    return stagingEncodedAssetPathName;
+    return stagingEncodedAssetPathNameAndKilledByUser;
 }
 
-string EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
+pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
 {
     
     int64_t sourceVideoPhysicalPathKey;
@@ -2869,6 +3020,7 @@ string EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
     }
     
     string stagingEncodedAssetPathName;
+	bool killedByUser = false;
     // string encodedFileName;
     string mmsSourceVideoAssetPathName;
 
@@ -3195,6 +3347,13 @@ string EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
                 */                        
             }
             
+			_logger->info(__FILEREF__ + "Update EncodingJob"
+				+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", transcoder: " + _currentUsedFFMpegEncoderHost
+			);
+			_mmsEngineDBFacade->updateEncodingJobTranscoder(_encodingItem->_encodingJobKey,
+				_currentUsedFFMpegEncoderHost);
+
             // loop waiting the end of the encoding
             bool encodingFinished = false;
             int maxEncodingStatusFailures = 1;
@@ -3205,7 +3364,8 @@ string EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
                 
                 try
                 {
-                    encodingFinished = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
+                    pair<bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
+					tie(encodingFinished, killedByUser) = encodingStatus;
                 }
                 catch(...)
                 {                    
@@ -3324,10 +3484,11 @@ string EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
         }
     #endif
 
-    return stagingEncodedAssetPathName;
+    return make_pair(stagingEncodedAssetPathName, killedByUser);
 }
 
-void EncoderVideoAudioProxy::processOverlayedTextOnVideo(string stagingEncodedAssetPathName)
+void EncoderVideoAudioProxy::processOverlayedTextOnVideo(string stagingEncodedAssetPathName,
+		bool killedByUser)
 {
     try
     {
@@ -3640,7 +3801,7 @@ void EncoderVideoAudioProxy::processOverlayedTextOnVideo(string stagingEncodedAs
      */
 }
 
-void EncoderVideoAudioProxy::generateFrames()
+bool EncoderVideoAudioProxy::generateFrames()
 {    
     /*
     _logger->info(__FILEREF__ + "Creating encoderVideoAudioProxy thread"
@@ -3660,7 +3821,20 @@ void EncoderVideoAudioProxy::generateFrames()
     )
     {
     */
-        generateFrames_through_ffmpeg();
+        bool killedByUser = generateFrames_through_ffmpeg();
+		if (killedByUser)
+		{
+			string errorMessage = __FILEREF__ + "Encoding killed by the User"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+                ;
+			_logger->error(errorMessage);
+        
+			throw EncodingKilledByUser();
+		}
+
+		return killedByUser;
     /*
     }
     else if (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::WindowsMedia)
@@ -3684,7 +3858,7 @@ void EncoderVideoAudioProxy::generateFrames()
     */    
 }
 
-void EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
+bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
 {
     
     string imageDirectory;
@@ -3697,6 +3871,8 @@ void EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
     int imageHeight;
     int64_t ingestionJobKey;
     int64_t videoDurationInMilliSeconds;
+
+	bool killedByUser = false;
 
     // _encodingItem->_parametersRoot filled in MMSEngineDBFacade::addOverlayImageOnVideoJob
     {
@@ -4010,6 +4186,13 @@ void EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
                 */                        
             }
             
+			_logger->info(__FILEREF__ + "Update EncodingJob"
+				+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", transcoder: " + _currentUsedFFMpegEncoderHost
+			);
+			_mmsEngineDBFacade->updateEncodingJobTranscoder(_encodingItem->_encodingJobKey,
+				_currentUsedFFMpegEncoderHost);
+
             // loop waiting the end of the encoding
             bool encodingFinished = false;
             int maxEncodingStatusFailures = 1;
@@ -4020,7 +4203,8 @@ void EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
                 
                 try
                 {
-                    encodingFinished = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
+                    pair<bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
+					tie(encodingFinished, killedByUser) = encodingStatus;
                 }
                 catch(...)
                 {
@@ -4121,9 +4305,11 @@ void EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
             throw e;
         }
     #endif
+
+	return killedByUser;
 }
 
-void EncoderVideoAudioProxy::processGeneratedFrames()
+void EncoderVideoAudioProxy::processGeneratedFrames(bool killedByUser)
 {    
     // here we do not have just a profile to be added into MMS but we have
     // one or more MediaItemKeys that have to be ingested
@@ -4151,9 +4337,9 @@ void EncoderVideoAudioProxy::processGeneratedFrames()
         + ", getEventKey().second: " + to_string(event->getEventKey().second));
 }
 
-string EncoderVideoAudioProxy::slideShow()
+pair<string, bool> EncoderVideoAudioProxy::slideShow()
 {
-    string stagingEncodedAssetPathName;
+    pair<string, bool> stagingEncodedAssetPathNameAndKilledByUser;
     
     /*
     _logger->info(__FILEREF__ + "Creating encoderVideoAudioProxy thread"
@@ -4173,7 +4359,18 @@ string EncoderVideoAudioProxy::slideShow()
     )
     {
     */
-        stagingEncodedAssetPathName = slideShow_through_ffmpeg();
+        stagingEncodedAssetPathNameAndKilledByUser = slideShow_through_ffmpeg();
+		if (stagingEncodedAssetPathNameAndKilledByUser.second)	// KilledByUser
+		{
+			string errorMessage = __FILEREF__ + "Encoding killed by the User"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+                ;
+			_logger->error(errorMessage);
+        
+			throw EncodingKilledByUser();
+		}
     /*
     }
     else if (_encodingItem->_encodingProfileTechnology == MMSEngineDBFacade::EncodingTechnology::WindowsMedia)
@@ -4196,10 +4393,10 @@ string EncoderVideoAudioProxy::slideShow()
     }
     */
     
-    return stagingEncodedAssetPathName;
+    return stagingEncodedAssetPathNameAndKilledByUser;
 }
 
-string EncoderVideoAudioProxy::slideShow_through_ffmpeg()
+pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
 {
     
     double durationOfEachSlideInSeconds;
@@ -4218,6 +4415,7 @@ string EncoderVideoAudioProxy::slideShow_through_ffmpeg()
     }
     
     string slideShowMediaPathName;
+	bool killedByUser = false;
     // string encodedFileName;
 
     
@@ -4502,6 +4700,13 @@ string EncoderVideoAudioProxy::slideShow_through_ffmpeg()
                 */                        
             }
             
+			_logger->info(__FILEREF__ + "Update EncodingJob"
+				+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", transcoder: " + _currentUsedFFMpegEncoderHost
+			);
+			_mmsEngineDBFacade->updateEncodingJobTranscoder(_encodingItem->_encodingJobKey,
+				_currentUsedFFMpegEncoderHost);
+
             // loop waiting the end of the encoding
             bool encodingFinished = false;
             int maxEncodingStatusFailures = 1;
@@ -4512,7 +4717,8 @@ string EncoderVideoAudioProxy::slideShow_through_ffmpeg()
                 
                 try
                 {
-                    encodingFinished = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
+                    pair<bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
+					tie(encodingFinished, killedByUser) = encodingStatus;
                 }
                 catch(...)
                 {
@@ -4614,10 +4820,11 @@ string EncoderVideoAudioProxy::slideShow_through_ffmpeg()
         }
     #endif
 
-    return slideShowMediaPathName;
+    return make_pair(slideShowMediaPathName, killedByUser);
 }
 
-void EncoderVideoAudioProxy::processSlideShow(string stagingEncodedAssetPathName)
+void EncoderVideoAudioProxy::processSlideShow(string stagingEncodedAssetPathName,
+		bool killedByUser)
 {
     try
     {
@@ -5207,6 +5414,7 @@ string EncoderVideoAudioProxy::faceIdentification()
 		string startIngestionDate;
 		string endIngestionDate;
 		string title;
+		int liveRecordingChunk = -1;
 		string jsonCondition;
 		string ingestionDateOrder;
 		string jsonOrderBy;
@@ -5226,7 +5434,7 @@ string EncoderVideoAudioProxy::faceIdentification()
 					_encodingItem->_workspace->_workspaceKey, mediaItemKey, physicalPathKey,
 					start, rows, contentTypePresent, contentType,
 					startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
-					title, jsonCondition, deepLearnedModelTags,
+					title, liveRecordingChunk, jsonCondition, deepLearnedModelTags,
 					ingestionDateOrder, jsonOrderBy, admin);
 
 			field = "response";
@@ -5618,7 +5826,6 @@ string EncoderVideoAudioProxy::faceIdentification()
 	return faceIdentificationMediaPathName;
 }
 
-
 void EncoderVideoAudioProxy::processFaceIdentification(string stagingEncodedAssetPathName)
 {
     try
@@ -5708,7 +5915,7 @@ void EncoderVideoAudioProxy::processFaceIdentification(string stagingEncodedAsse
     }
 }
 
-string EncoderVideoAudioProxy::liveRecorder()
+pair<string, bool> EncoderVideoAudioProxy::liveRecorder()
 {
 
 	time_t utcRecordingPeriodStart;
@@ -5754,14 +5961,23 @@ string EncoderVideoAudioProxy::liveRecorder()
 		throw runtime_error(errorMessage);
 	}
 
-	string stagingEncodedAssetPathName;
+	pair<string, bool> stagingEncodedAssetPathNameAndKilledByUser = liveRecorder_through_ffmpeg();
+	if (stagingEncodedAssetPathNameAndKilledByUser.second)	// KilledByUser
+	{
+		string errorMessage = __FILEREF__ + "Encoding killed by the User"
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
+            ;
+		_logger->error(errorMessage);
+        
+		throw EncodingKilledByUser();
+	}
     
-	stagingEncodedAssetPathName = liveRecorder_through_ffmpeg();
-    
-	return stagingEncodedAssetPathName;
+	return stagingEncodedAssetPathNameAndKilledByUser;
 }
 
-string EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
+pair<string, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 {
 
 	string liveURL;
@@ -5787,7 +6003,7 @@ string EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 	}
 
 	string segmentListPathName;
-
+	bool killedByUser = false;
     
     #ifdef __LOCALENCODER__
         if (*_pRunningEncodingsNumber > _ffmpegMaxCapacity)
@@ -6071,6 +6287,13 @@ string EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
                 }
             }
             
+			_logger->info(__FILEREF__ + "Update EncodingJob"
+				+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", transcoder: " + _currentUsedFFMpegEncoderHost
+			);
+			_mmsEngineDBFacade->updateEncodingJobTranscoder(_encodingItem->_encodingJobKey,
+				_currentUsedFFMpegEncoderHost);
+
             // loop waiting the end of the encoding
             bool encodingFinished = false;
             int maxEncodingStatusFailures = 1;
@@ -6082,7 +6305,8 @@ string EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
                 
                 try
                 {
-                    encodingFinished = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
+                    pair<bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
+					tie(encodingFinished, killedByUser) = encodingStatus;
 
 					lastRecordedAssetFileName = processLastGeneratedLiveRecorderFiles(
 						segmentListPathName, recordedFileNamePrefix,
@@ -6100,7 +6324,7 @@ string EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
             		if(encodingStatusFailures >= maxEncodingStatusFailures)
 					{
-                        string errorMessage = string("getEncodingStatus/processLastGeneratedLiveRecorderFiles too many failures")
+                        string errorMessage = string("LiveRecorder media file completed. getEncodingStatus/processLastGeneratedLiveRecorderFiles too many failures")
                                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                                 + ", _encodingItem->_ingestionJobKey: "
 									+ to_string(_encodingItem->_ingestionJobKey) 
@@ -6118,7 +6342,20 @@ string EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
             
             chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
             
-            _logger->info(__FILEREF__ + "LiveRecorder media file"
+			time_t utcNow = chrono::system_clock::to_time_t(endEncoding);
+			if (utcNow < utcRecordingPeriodEnd)
+				_logger->error(__FILEREF__ + "LiveRecorder media file completed unexpected"
+                    + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                    + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+					+ ", still remaining seconds (utcRecordingPeriodEnd - utcNow): " + to_string(utcRecordingPeriodEnd - utcNow)
+                    + ", ffmpegEncoderURL: " + ffmpegEncoderURL
+                    + ", body: " + body
+                    + ", sResponse: " + sResponse
+                    + ", encodingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count())
+                    + ", _intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
+				);
+			else
+				_logger->info(__FILEREF__ + "LiveRecorder media file completed"
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                     + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
@@ -6126,7 +6363,7 @@ string EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
                     + ", sResponse: " + sResponse
                     + ", encodingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count())
                     + ", _intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
-            );
+				);
 		}
 		catch(MaxConcurrentJobsReached e)
 		{
@@ -6190,7 +6427,59 @@ string EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
         }
     #endif
 
-    return segmentListPathName;
+    return make_pair(segmentListPathName, killedByUser);
+}
+
+void EncoderVideoAudioProxy::processLiveRecorder(string stagingEncodedAssetPathName,
+		bool killedByUser)
+{
+    try
+    {
+		_logger->info(__FILEREF__ + "remove"
+			+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+		);
+		FileIO::remove(stagingEncodedAssetPathName);
+
+		string errorMessage;
+		string processorMMS;
+		MMSEngineDBFacade::IngestionStatus	newIngestionStatus =
+			MMSEngineDBFacade::IngestionStatus::End_TaskSuccess;
+		_logger->info(__FILEREF__ + "Update IngestionJob"
+			+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+			+ ", IngestionStatus: " + MMSEngineDBFacade::toString(newIngestionStatus)
+			+ ", errorMessage: " + errorMessage
+			+ ", processorMMS: " + processorMMS
+		);
+		_mmsEngineDBFacade->updateIngestionJob(_encodingItem->_ingestionJobKey, newIngestionStatus,
+				errorMessage, processorMMS);
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "processLiveRecorder failed"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            + ", _encodingItem->_workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+            + ", e.what(): " + e.what()
+        );
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "processLiveRecorder failed"
+            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
+            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+            + ", _encodingItem->_workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+        );
+                
+        throw e;
+    }
 }
 
 string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
@@ -6293,6 +6582,8 @@ string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
 			Json::Value userDataRoot;
 			{
 				string userDataField = "UserData";
+				string mmsDataField = "mmsData";
+				string mmsDataTypeField = "dataType";
 				string utcChunkStartTime = "utcChunkStartTime";
 				string utcChunkEndTime = "utcChunkEndTime";
 
@@ -6303,8 +6594,12 @@ string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
 					userDataRoot = _encodingItem->_liveRecorderData->_liveRecorderParametersRoot[userDataField];
 				}
 
-				userDataRoot[utcChunkStartTime] = utcCurrentRecordedFileCreationTime;
-				userDataRoot[utcChunkEndTime] = utcCurrentRecordedFileLastModificationTime;
+				Json::Value mmsDataRoot;
+				mmsDataRoot[mmsDataTypeField] = "liveRecordingChunk";
+				mmsDataRoot[utcChunkStartTime] = utcCurrentRecordedFileCreationTime;
+				mmsDataRoot[utcChunkEndTime] = utcCurrentRecordedFileLastModificationTime;
+
+				userDataRoot[mmsDataField] = mmsDataRoot;
 			}
 
 			// Title
@@ -6857,44 +7152,6 @@ time_t EncoderVideoAudioProxy::getMediaLiveRecorderStartTime(
 	return mktime (&tmDateTime);	// utc
 }
 
-void EncoderVideoAudioProxy::processLiveRecorder(string stagingEncodedAssetPathName)
-{
-    try
-    {
-		_logger->info(__FILEREF__ + "remove"
-			+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-		);
-		FileIO::remove(stagingEncodedAssetPathName);
-    }
-    catch(runtime_error e)
-    {
-        _logger->error(__FILEREF__ + "processLiveRecorder failed"
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
-            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-            + ", _encodingItem->_workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
-            + ", e.what(): " + e.what()
-        );
-                
-        throw e;
-    }
-    catch(exception e)
-    {
-        _logger->error(__FILEREF__ + "processLiveRecorder failed"
-            + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-            + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-            + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
-            + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-            + ", _encodingItem->_workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
-        );
-                
-        throw e;
-    }
-}
-
 int EncoderVideoAudioProxy::getEncodingProgress()
 {
     int encodingProgress = 0;
@@ -7281,9 +7538,10 @@ int EncoderVideoAudioProxy::getEncodingProgress()
     return encodingProgress;
 }
 
-bool EncoderVideoAudioProxy::getEncodingStatus()
+pair<bool,bool> EncoderVideoAudioProxy::getEncodingStatus()
 {
     bool encodingFinished;
+    bool killedByUser;
     
     string ffmpegEncoderURL;
     ostringstream response;
@@ -7428,6 +7686,7 @@ bool EncoderVideoAudioProxy::getEncodingStatus()
             }
 
             encodingFinished = encodeStatusResponse.get("encodingFinished", "XXX").asBool();
+            killedByUser = encodeStatusResponse.get("killedByUser", "XXX").asBool();
         }
         catch(...)
         {
@@ -7491,7 +7750,7 @@ bool EncoderVideoAudioProxy::getEncodingStatus()
         throw e;
     }
 
-    return encodingFinished;
+    return make_pair(encodingFinished, killedByUser);
 }
 
 string EncoderVideoAudioProxy::generateMediaMetadataToIngest(
