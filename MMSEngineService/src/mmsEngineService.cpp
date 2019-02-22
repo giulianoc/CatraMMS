@@ -10,6 +10,7 @@
 #include "CheckIngestionTimes.h"
 #include "CheckEncodingTimes.h"
 #include "RetentionTimes.h"
+#include "MainAndBackupRunningHALiveRecordingEvent.h"
 #include "MMSEngineDBFacade.h"
 #include "ActiveEncodingsManager.h"
 #include "MMSStorage.h"
@@ -207,6 +208,15 @@ int main (int iArgc, char *pArgv [])
             make_shared<RetentionTimes>(contentRetentionTimesSchedule, multiEventsSet, logger);
     retentionTimes->start();
     scheduler.activeTimes(retentionTimes);
+
+    string           mainAndBackupRunningHALiveRecordingTimesSchedule = configuration["scheduler"].get("mainAndBackupRunningHALiveRecordingTimesSchedule", "").asString();
+    logger->info(__FILEREF__ + "Creating and Starting MainAndBackupRunningHALiveRecordingEvent"
+        + ", mainAndBackupRunningHALiveRecordingTimesSchedule: " + mainAndBackupRunningHALiveRecordingTimesSchedule
+            );
+    shared_ptr<MainAndBackupRunningHALiveRecordingEvent>     mainAndBackupRunningHALiveRecordingTimes =
+            make_shared<MainAndBackupRunningHALiveRecordingEvent>(mainAndBackupRunningHALiveRecordingTimesSchedule, multiEventsSet, logger);
+    mainAndBackupRunningHALiveRecordingTimes->start();
+    scheduler.activeTimes(mainAndBackupRunningHALiveRecordingTimes);
 
 
     logger->info(__FILEREF__ + "Waiting ActiveEncodingsManager"

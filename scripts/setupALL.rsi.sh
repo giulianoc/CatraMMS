@@ -31,3 +31,5 @@ echo "tomcat"
 /opt/catramms/CatraMMS/scripts/tomcat.sh status
 /opt/catramms/CatraMMS/scripts/tomcat.sh start
 
+date
+

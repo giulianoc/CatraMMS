@@ -84,7 +84,7 @@ private:
     int                     _progressUpdatePeriodInSeconds;
     int                     _secondsWaitingAmongDownloadingAttempt;
     
-    int                     _stagingRetentionInDays;
+    // int                     _stagingRetentionInDays;
 
     int                     _maxIngestionJobsPerEvent;
     int                     _dependencyExpirationInHours;
@@ -127,6 +127,8 @@ private:
     void handleCheckEncodingEvent ();
 
     void handleContentRetentionEventThread (shared_ptr<long> processorsThreadsNumber);
+
+	void handleMainAndBackupOfRunnungLiveRecordingHA (shared_ptr<long> processorsThreadsNumber);
 
     void removeContentTask(
         int64_t ingestionJobKey,

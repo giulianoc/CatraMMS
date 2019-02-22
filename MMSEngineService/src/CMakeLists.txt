@@ -26,6 +26,7 @@ SET (SOURCES
 	CheckIngestionTimes.cpp
 	CheckEncodingTimes.cpp
 	RetentionTimes.cpp
+	MainAndBackupRunningHALiveRecordingEvent.cpp
 )
 
 SET (HEADERS
@@ -33,6 +34,7 @@ SET (HEADERS
 	CheckIngestionTimes.h
 	CheckEncodingTimes.h
 	RetentionTimes.h
+	MainAndBackupRunningHALiveRecordingEvent.h
 )
 
 include_directories ("${PROJECT_SOURCE_DIR}/../spdlog/include")

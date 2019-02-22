@@ -2892,6 +2892,13 @@ void API::ingestionRootsStatus(
             startAndEndIngestionDatePresent = true;
         }
 
+        string label;
+        auto labelIt = queryParameters.find("label");
+        if (labelIt != queryParameters.end() && labelIt->second != "")
+        {
+            label = labelIt->second;
+        }
+
         string status = "all";
         auto statusIt = queryParameters.find("status");
         if (statusIt != queryParameters.end() && statusIt->second != "")
@@ -2914,7 +2921,7 @@ void API::ingestionRootsStatus(
                     workspace, ingestionRootKey,
                     start, rows,
                     startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
-                    status, asc
+                    label, status, asc
                     );
 
             Json::StreamWriterBuilder wbuilder;

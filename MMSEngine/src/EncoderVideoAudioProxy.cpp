@@ -212,6 +212,7 @@ void EncoderVideoAudioProxy::operator()()
 
     string stagingEncodedAssetPathName;
 	bool killedByUser;
+	bool main = true;
     try
     {
         if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::EncodeVideoAudio)
@@ -248,8 +249,8 @@ void EncoderVideoAudioProxy::operator()()
         }
         else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder)
         {
-			pair<string, bool> stagingEncodedAssetPathNameAndKilledByUser = liveRecorder();
-			tie(stagingEncodedAssetPathName, killedByUser) = stagingEncodedAssetPathNameAndKilledByUser;
+			tuple<string, bool, bool> stagingEncodedAssetPathNameKilledByUserAndMain = liveRecorder();
+			tie(stagingEncodedAssetPathName, killedByUser, main) = stagingEncodedAssetPathNameKilledByUserAndMain;
         }
         else
         {
@@ -321,12 +322,15 @@ void EncoderVideoAudioProxy::operator()()
             + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
         );
 
+		// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
+		// This because, if also the 'backup' liverecording updates the ingestionJob, it will generate an erro
+		// 'no update is done'
         int64_t mediaItemKey = -1;
         int64_t encodedPhysicalPathKey = -1;
         _mmsEngineDBFacade->updateEncodingJob (_encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::MaxCapacityReached, 
                 mediaItemKey, encodedPhysicalPathKey,
-                _encodingItem->_ingestionJobKey);
+                main ? _encodingItem->_ingestionJobKey : -1);
 
         {
             lock_guard<mutex> locker(*_mtEncodingJobs);
@@ -404,12 +408,15 @@ void EncoderVideoAudioProxy::operator()()
             + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
         );
 
+		// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
+		// This because, if also the 'backup' liverecording updates the ingestionJob, it will generate an erro
+		// 'no update is done'
         int64_t mediaItemKey = -1;
         int64_t encodedPhysicalPathKey = -1;
         int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (_encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::PunctualError, 
                 mediaItemKey, encodedPhysicalPathKey,
-                _encodingItem->_ingestionJobKey);
+                main ? _encodingItem->_ingestionJobKey : -1);
 
         _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -496,12 +503,15 @@ void EncoderVideoAudioProxy::operator()()
             + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
         );
 
+		// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
+		// This because, if also the 'backup' liverecording updates the ingestionJob, it will generate an erro
+		// 'no update is done'
         int64_t mediaItemKey = -1;
         int64_t encodedPhysicalPathKey = -1;
         int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob (_encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::KilledByUser, 
                 mediaItemKey, encodedPhysicalPathKey,
-                _encodingItem->_ingestionJobKey);
+                main ? _encodingItem->_ingestionJobKey : -1);
 
         _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob KilledByUser"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -588,6 +598,9 @@ void EncoderVideoAudioProxy::operator()()
             + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
         );
 
+		// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
+		// This because, if also the 'backup' liverecording updates the ingestionJob, it will generate an erro
+		// 'no update is done'
         int64_t mediaItemKey = -1;
         int64_t encodedPhysicalPathKey = -1;
         // PunctualError is used because, in case it always happens, the encoding will never reach a final state
@@ -595,7 +608,7 @@ void EncoderVideoAudioProxy::operator()()
                 _encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
                 mediaItemKey, encodedPhysicalPathKey,
-                _encodingItem->_ingestionJobKey);
+                main ? _encodingItem->_ingestionJobKey : -1);
 
         _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -682,6 +695,9 @@ void EncoderVideoAudioProxy::operator()()
             + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
         );
 
+		// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
+		// This because, if also the 'backup' liverecording updates the ingestionJob, it will generate an erro
+		// 'no update is done'
         int64_t mediaItemKey = -1;
         int64_t encodedPhysicalPathKey = -1;
         // PunctualError is used because, in case it always happens, the encoding will never reach a final state
@@ -689,7 +705,7 @@ void EncoderVideoAudioProxy::operator()()
                 _encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
                 mediaItemKey, encodedPhysicalPathKey,
-                _encodingItem->_ingestionJobKey);
+                main ? _encodingItem->_ingestionJobKey : -1);
 
         _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -890,6 +906,9 @@ void EncoderVideoAudioProxy::operator()()
             + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
         );
 
+		// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
+		// This because, if also the 'backup' liverecording updates the ingestionJob, it will generate an erro
+		// 'no update is done'
         int64_t mediaItemKey = -1;
         encodedPhysicalPathKey = -1;
         // PunctualError is used because, in case it always happens, the encoding will never reach a final state
@@ -897,7 +916,7 @@ void EncoderVideoAudioProxy::operator()()
                 _encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
                 mediaItemKey, encodedPhysicalPathKey,
-                _encodingItem->_ingestionJobKey);
+                main ? _encodingItem->_ingestionJobKey : -1);
 
         _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -1012,6 +1031,9 @@ void EncoderVideoAudioProxy::operator()()
             + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
         );
 
+		// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
+		// This because, if also the 'backup' liverecording updates the ingestionJob, it will generate an erro
+		// 'no update is done'
         int64_t mediaItemKey = -1;
         int64_t encodedPhysicalPathKey = -1;
         // PunctualError is used because, in case it always happens, the encoding will never reach a final state
@@ -1019,7 +1041,7 @@ void EncoderVideoAudioProxy::operator()()
                 _encodingItem->_encodingJobKey, 
                 MMSEngineDBFacade::EncodingError::PunctualError,    // ErrorBeforeEncoding, 
                 mediaItemKey, encodedPhysicalPathKey,
-                _encodingItem->_ingestionJobKey);
+                main ? _encodingItem->_ingestionJobKey : -1);
 
         _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -1058,11 +1080,14 @@ void EncoderVideoAudioProxy::operator()()
             + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
         );
 
+		// in case of HighAvailability of the liveRecording, only the main should update the ingestionJob status
+		// This because, if also the 'backup' liverecording updates the ingestionJob, it will generate an erro
+		// 'no update is done'
         _mmsEngineDBFacade->updateEncodingJob (
             _encodingItem->_encodingJobKey, 
             MMSEngineDBFacade::EncodingError::NoError,
             mediaItemKey, encodedPhysicalPathKey,
-            _encodingItem->_ingestionJobKey);
+           main ? _encodingItem->_ingestionJobKey : -1);
     }
     catch(exception e)
     {
@@ -5915,7 +5940,7 @@ void EncoderVideoAudioProxy::processFaceIdentification(string stagingEncodedAsse
     }
 }
 
-pair<string, bool> EncoderVideoAudioProxy::liveRecorder()
+tuple<string, bool, bool> EncoderVideoAudioProxy::liveRecorder()
 {
 
 	time_t utcRecordingPeriodStart;
@@ -5961,32 +5986,40 @@ pair<string, bool> EncoderVideoAudioProxy::liveRecorder()
 		throw runtime_error(errorMessage);
 	}
 
-	pair<string, bool> stagingEncodedAssetPathNameAndKilledByUser = liveRecorder_through_ffmpeg();
-	if (stagingEncodedAssetPathNameAndKilledByUser.second)	// KilledByUser
+	tuple<string, bool, bool> stagingEncodedAssetPathNameKilledByUserAndMain = liveRecorder_through_ffmpeg();
+	if (get<1>(stagingEncodedAssetPathNameKilledByUserAndMain))	// KilledByUser
 	{
 		string errorMessage = __FILEREF__ + "Encoding killed by the User"
 			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
             + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
             ;
-		_logger->error(errorMessage);
+		_logger->warn(errorMessage);
         
 		throw EncodingKilledByUser();
 	}
     
-	return stagingEncodedAssetPathNameAndKilledByUser;
+	return stagingEncodedAssetPathNameKilledByUserAndMain;
 }
 
-pair<string, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
+tuple<string, bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 {
 
+	bool highAvailability;
+	bool main;
 	string liveURL;
 	time_t utcRecordingPeriodStart;
 	time_t utcRecordingPeriodEnd;
 	int segmentDurationInSeconds;
 	string outputFileFormat;
 	{
-        string field = "liveURL";
+        string field = "highAvailability";
+        highAvailability = _encodingItem->_parametersRoot.get(field, 0).asBool();
+
+        field = "main";
+        main = _encodingItem->_parametersRoot.get(field, 0).asBool();
+
+        field = "liveURL";
         liveURL = _encodingItem->_parametersRoot.get(field, "XXX").asString();
 
         field = "utcRecordingPeriodStart";
@@ -6022,7 +6055,7 @@ pair<string, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 		bool removeLinuxPathIfExist = false;
         string stagingLiveRecordingAssetPathName = _mmsStorage->getStagingAssetPathName(
 			_encodingItem->_workspace->_directoryName,
-			to_string(_encodingItem->_encodingJobKey),
+			to_string(_encodingItem->_encodingJobKey),	// directoryNamePrefix,
 			"/",    // _encodingItem->_relativePath,
 			to_string(_encodingItem->_ingestionJobKey),
 			-1, // _encodingItem->_mediaItemKey, not used because encodedFileName is not ""
@@ -6309,7 +6342,7 @@ pair<string, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 					tie(encodingFinished, killedByUser) = encodingStatus;
 
 					lastRecordedAssetFileName = processLastGeneratedLiveRecorderFiles(
-						segmentListPathName, recordedFileNamePrefix,
+						highAvailability, main, segmentListPathName, recordedFileNamePrefix,
 						contentsPath, lastRecordedAssetFileName);
                 }
                 catch(...)
@@ -6427,7 +6460,7 @@ pair<string, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
         }
     #endif
 
-    return make_pair(segmentListPathName, killedByUser);
+    return make_tuple(segmentListPathName, killedByUser, main);
 }
 
 void EncoderVideoAudioProxy::processLiveRecorder(string stagingEncodedAssetPathName,
@@ -6435,23 +6468,38 @@ void EncoderVideoAudioProxy::processLiveRecorder(string stagingEncodedAssetPathN
 {
     try
     {
+		bool main;
+		{
+			string field = "main";
+			main = _encodingItem->_parametersRoot.get(field, 0).asBool();
+		}
+
 		_logger->info(__FILEREF__ + "remove"
 			+ ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
 		);
 		FileIO::remove(stagingEncodedAssetPathName);
 
-		string errorMessage;
-		string processorMMS;
-		MMSEngineDBFacade::IngestionStatus	newIngestionStatus =
-			MMSEngineDBFacade::IngestionStatus::End_TaskSuccess;
-		_logger->info(__FILEREF__ + "Update IngestionJob"
-			+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-			+ ", IngestionStatus: " + MMSEngineDBFacade::toString(newIngestionStatus)
-			+ ", errorMessage: " + errorMessage
-			+ ", processorMMS: " + processorMMS
-		);
-		_mmsEngineDBFacade->updateIngestionJob(_encodingItem->_ingestionJobKey, newIngestionStatus,
+		if (main)
+		{
+			string errorMessage;
+			string processorMMS;
+			MMSEngineDBFacade::IngestionStatus	newIngestionStatus =
+				MMSEngineDBFacade::IngestionStatus::End_TaskSuccess;
+			_logger->info(__FILEREF__ + "Update IngestionJob"
+				+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", IngestionStatus: " + MMSEngineDBFacade::toString(newIngestionStatus)
+				+ ", errorMessage: " + errorMessage
+				+ ", processorMMS: " + processorMMS
+			);
+			_mmsEngineDBFacade->updateIngestionJob(_encodingItem->_ingestionJobKey, newIngestionStatus,
 				errorMessage, processorMMS);
+		}
+		else
+		{
+			_logger->info(__FILEREF__ + "IngestionJob does not update because it's backup recording"
+				+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+			);
+		}
     }
     catch(runtime_error e)
     {
@@ -6483,7 +6531,7 @@ void EncoderVideoAudioProxy::processLiveRecorder(string stagingEncodedAssetPathN
 }
 
 string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
-	string segmentListPathName, string recordedFileNamePrefix,
+	bool highAvailability, bool main, string segmentListPathName, string recordedFileNamePrefix,
 	string contentsPath, string lastRecordedAssetFileName)
 {
 
@@ -6493,6 +6541,8 @@ string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
     try
     {
 		_logger->info(__FILEREF__ + "processLastGeneratedLiveRecorderFiles"
+			+ ", highAvailability: " + to_string(highAvailability)
+			+ ", main: " + to_string(main)
 			+ ", segmentListPathName: " + segmentListPathName
 			+ ", lastRecordedAssetFileName: " + lastRecordedAssetFileName
 			);
@@ -6584,6 +6634,9 @@ string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
 				string userDataField = "UserData";
 				string mmsDataField = "mmsData";
 				string mmsDataTypeField = "dataType";
+				string mmsValidatedField = "validated";
+				string mmsMainField = "main";
+				string mmsIngestionJobKeyField = "ingestionJobKey";
 				string utcChunkStartTime = "utcChunkStartTime";
 				string utcChunkEndTime = "utcChunkEndTime";
 
@@ -6596,6 +6649,13 @@ string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
 
 				Json::Value mmsDataRoot;
 				mmsDataRoot[mmsDataTypeField] = "liveRecordingChunk";
+				mmsDataRoot[mmsMainField] = main;
+				if (!highAvailability)
+				{
+					bool validated = true;
+					mmsDataRoot[mmsValidatedField] = validated;
+				}
+				mmsDataRoot[mmsIngestionJobKeyField] = (int64_t) (_encodingItem->_ingestionJobKey);
 				mmsDataRoot[utcChunkStartTime] = utcCurrentRecordedFileCreationTime;
 				mmsDataRoot[utcChunkEndTime] = utcCurrentRecordedFileLastModificationTime;
 
@@ -6651,6 +6711,9 @@ string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
 
 					newTitle += strCurrentRecordedFileTime;	// local time
 				}
+
+				if (!main)
+					newTitle += " (BCK)";
 			}
 
 			ingestRecordedMedia(currentRecordedAssetPathName,

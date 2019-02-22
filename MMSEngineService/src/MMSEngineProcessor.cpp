@@ -15,6 +15,7 @@
 #include "CheckIngestionTimes.h"
 #include "CheckEncodingTimes.h"
 #include "RetentionTimes.h"
+#include "MainAndBackupRunningHALiveRecordingEvent.h"
 #include "catralibraries/md5.h"
 #include "EMailSender.h"
 #include "Magick++.h"
@@ -69,10 +70,12 @@ MMSEngineProcessor::MMSEngineProcessor(
     _logger->info(__FILEREF__ + "Configuration item"
         + ", mms->dependencyExpirationInHours: " + to_string(_dependencyExpirationInHours)
     );
+	/*
     _stagingRetentionInDays             = configuration["mms"].get("stagingRetentionInDays", 5).asInt();
     _logger->info(__FILEREF__ + "Configuration item"
         + ", mms->stagingRetentionInDays: " + to_string(_stagingRetentionInDays)
     );
+	*/
 
     _downloadChunkSizeInMegaBytes       = configuration["download"].get("downloadChunkSizeInMegaBytes", 5).asInt();
     _logger->info(__FILEREF__ + "Configuration item"
@@ -373,6 +376,46 @@ void MMSEngineProcessor::operator ()()
                 _multiEventsSet->getEventsFactory()->releaseEvent<MultiLocalAssetIngestionEvent>(multiLocalAssetIngestionEvent);
 
                 _logger->debug(__FILEREF__ + "2. Received MULTILOCALASSETINGESTIONEVENT"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                );
+            }
+            break;
+            case MMSENGINE_EVENTTYPEIDENTIFIER_MAINANDBACKUPRUNNINGHALIVERECORDINGEVENT:	// 6
+            {
+                _logger->debug(__FILEREF__ + "1. Received MMSENGINE_EVENTTYPEIDENTIFIER_MAINANDBACKUPRUNNINGHALIVERECORDINGEVENT:"
+                    + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                );
+
+                try
+                {
+                    if (_processorsThreadsNumber.use_count() > _processorThreads + _maxAdditionalProcessorThreads)
+                    {
+                        // main and backup running HA live recording is a periodical event, we will wait the next one
+                        
+                        _logger->info(__FILEREF__ + "Not enough available threads to manage handleMainAndBackupOfRunnungLiveRecordingHA, activity is postponed"
+                            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                            + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+                            + ", _processorThreads + _maxAdditionalProcessorThreads: " + to_string(_processorThreads + _maxAdditionalProcessorThreads)
+                        );
+                    }
+                    else
+                    {
+                        thread mainAndBackupOfRunnungLiveRecordingHA(&MMSEngineProcessor::handleMainAndBackupOfRunnungLiveRecordingHA, this,
+                            _processorsThreadsNumber);
+                        mainAndBackupOfRunnungLiveRecordingHA.detach();
+                    }
+                }
+                catch(exception e)
+                {
+                    _logger->error(__FILEREF__ + "handleMainAndBackupOfRunnungLiveRecordingHA failed"
+                        + ", _processorIdentifier: " + to_string(_processorIdentifier)
+                        + ", exception: " + e.what()
+                    );
+                }
+
+                _multiEventsSet->getEventsFactory()->releaseEvent<Event2>(event);
+
+                _logger->debug(__FILEREF__ + "2. Received MMSENGINE_EVENTTYPEIDENTIFIER_MAINANDBACKUPRUNNINGHALIVERECORDINGEVENT:"
                     + ", _processorIdentifier: " + to_string(_processorIdentifier)
                 );
             }
@@ -4477,6 +4520,7 @@ void MMSEngineProcessor::manageLiveRecorder(
         string recordingPeriodEnd;
 		int segmentDurationInSeconds;
 		string outputFileFormat;
+		bool highAvailability = false;
         {
             string field = "ConfigurationLabel";
             if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
@@ -4489,6 +4533,12 @@ void MMSEngineProcessor::manageLiveRecorder(
                 throw runtime_error(errorMessage);
             }
             configurationLabel = parametersRoot.get(field, "XXX").asString();
+
+            field = "HighAvailability";
+            if (_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
+            {
+				highAvailability = parametersRoot.get(field, "XXX").asBool();
+            }
 
             field = "RecordingPeriod";
 			Json::Value recordingPeriodRoot = parametersRoot[field];
@@ -4635,9 +4685,20 @@ void MMSEngineProcessor::manageLiveRecorder(
         string liveURL = _mmsEngineDBFacade->getLiveURLByConfigurationLabel(
                 workspace->_workspaceKey, configurationLabel);            
 
+		bool main = true;
+
 		_mmsEngineDBFacade->addEncoding_LiveRecorderJob(workspace, ingestionJobKey,
-			liveURL, utcRecordingPeriodStart, utcRecordingPeriodEnd, segmentDurationInSeconds,
+			highAvailability, main, liveURL, utcRecordingPeriodStart, utcRecordingPeriodEnd, segmentDurationInSeconds,
 			outputFileFormat, encodingPriority);
+
+		if (highAvailability)
+		{
+			main = false;
+
+			_mmsEngineDBFacade->addEncoding_LiveRecorderJob(workspace, ingestionJobKey,
+				highAvailability, main, liveURL, utcRecordingPeriodStart, utcRecordingPeriodEnd, segmentDurationInSeconds,
+				outputFileFormat, encodingPriority);
+		}
 	}
     catch(runtime_error e)
     {
@@ -7916,6 +7977,7 @@ void MMSEngineProcessor::handleContentRetentionEventThread (
         );
     }
 
+	/* Already done by the crontab script
     {
         _logger->info(__FILEREF__ + "Staging Retention started"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -8044,6 +8106,48 @@ void MMSEngineProcessor::handleContentRetentionEventThread (
         }
 
         _logger->info(__FILEREF__ + "Staging Retention finished"
+                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+        );
+    }
+	*/
+}
+
+void MMSEngineProcessor::handleMainAndBackupOfRunnungLiveRecordingHA (
+        shared_ptr<long> processorsThreadsNumber)
+{
+    
+    {
+        _logger->info(__FILEREF__ + "Live Recording HA started"
+            + ", _processorIdentifier: " + to_string(_processorIdentifier)
+            + ", processors threads number: " + to_string(processorsThreadsNumber.use_count())
+        );
+
+		try
+		{
+			_mmsEngineDBFacade->manageMainAndBackupOfRunnungLiveRecordingHA();
+		}
+		catch(runtime_error e)
+		{
+			_logger->error(__FILEREF__ + "manageMainAndBackupOfRunnungLiveRecordingHA failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", exception: " + e.what()
+			);
+
+			// no throw since it is running in a detached thread
+			// throw e;
+		}
+		catch(exception e)
+		{
+			_logger->error(__FILEREF__ + "manageMainAndBackupOfRunnungLiveRecordingHA failed"
+				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", exception: " + e.what()
+			);
+
+			// no throw since it is running in a detached thread
+			// throw e;
+		}
+
+        _logger->info(__FILEREF__ + "Live Recording HA finished"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
         );
     }

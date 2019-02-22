@@ -177,13 +177,13 @@ private:
     string faceIdentification();
     void processFaceIdentification(string stagingEncodedAssetPathName);    
 
-    pair<string, bool> liveRecorder();
-    pair<string, bool> liveRecorder_through_ffmpeg();
+    tuple<string, bool, bool> liveRecorder();
+    tuple<string, bool, bool> liveRecorder_through_ffmpeg();
     void processLiveRecorder(string stagingEncodedAssetPathName, bool killedByUser);    
 	bool isLastLiveRecorderFile(time_t currentRecordedFileCreationTime, string contentsPath,
 			string recordedFileNamePrefix);
 	time_t getMediaLiveRecorderStartTime(string mediaLiveRecorderFileName);
-	string processLastGeneratedLiveRecorderFiles(string segmentListPathName,
+	string processLastGeneratedLiveRecorderFiles(bool highAvailability, bool main, string segmentListPathName,
 		string recordedFileNamePrefix, string contentsPath, string lastRecordedAssetFileName);
 	void ingestRecordedMedia(
 		string currentRecordedAssetPathName,

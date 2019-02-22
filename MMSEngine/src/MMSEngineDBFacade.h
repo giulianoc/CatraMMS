@@ -843,6 +843,8 @@ public:
         // int maxIngestionJobsWithDependencyToCheck
     );
 
+	void manageMainAndBackupOfRunnungLiveRecordingHA();
+
     shared_ptr<MySQLConnection> beginIngestionJobs ();
     
     int64_t addIngestionRoot (
@@ -923,7 +925,7 @@ public:
         int start, int rows,
         bool startAndEndIngestionDatePresent, 
         string startIngestionDate, string endIngestionDate,
-        string status, bool asc);
+        string label, string status, bool asc);
 
     Json::Value getIngestionJobsStatus (
         shared_ptr<Workspace> workspace, int64_t ingestionJobKey,
@@ -1101,6 +1103,8 @@ public:
 	int addEncoding_LiveRecorderJob (
 		shared_ptr<Workspace> workspace,
 		int64_t ingestionJobKey,
+		bool highAvailability,
+		bool main,
 		string liveURL,
 		time_t utcRecordingPeriodStart,
 		time_t utcRecordingPeriodEnd,
