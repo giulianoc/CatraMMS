@@ -7879,7 +7879,9 @@ void MMSEngineProcessor::handleCheckEncodingEvent ()
 void MMSEngineProcessor::handleContentRetentionEventThread (
         shared_ptr<long> processorsThreadsNumber)
 {
-    
+
+	chrono::system_clock::time_point start = chrono::system_clock::now();
+
     {
         _logger->info(__FILEREF__ + "Content Retention started"
             + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -7972,9 +7974,11 @@ void MMSEngineProcessor::handleContentRetentionEventThread (
             }
         }
 
-        _logger->info(__FILEREF__ + "Content Retention finished"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
-        );
+		chrono::system_clock::time_point end = chrono::system_clock::now();
+		_logger->info(__FILEREF__ + "Content retention finished"
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", duration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(end - start).count())
+		);
     }
 
 	/* Already done by the crontab script
@@ -8110,12 +8114,15 @@ void MMSEngineProcessor::handleContentRetentionEventThread (
         );
     }
 	*/
+
 }
 
 void MMSEngineProcessor::handleMainAndBackupOfRunnungLiveRecordingHA (
         shared_ptr<long> processorsThreadsNumber)
 {
     
+	chrono::system_clock::time_point start = chrono::system_clock::now();
+
     {
         _logger->info(__FILEREF__ + "Live Recording HA started"
             + ", _processorIdentifier: " + to_string(_processorIdentifier)
@@ -8147,8 +8154,10 @@ void MMSEngineProcessor::handleMainAndBackupOfRunnungLiveRecordingHA (
 			// throw e;
 		}
 
+		chrono::system_clock::time_point end = chrono::system_clock::now();
         _logger->info(__FILEREF__ + "Live Recording HA finished"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
+				+ ", duration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(end - start).count())
         );
     }
 }
