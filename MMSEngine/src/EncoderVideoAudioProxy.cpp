@@ -6269,6 +6269,8 @@ string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
     try
     {
 		_logger->info(__FILEREF__ + "processLastGeneratedLiveRecorderFiles"
+			+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+			+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 			+ ", highAvailability: " + to_string(highAvailability)
 			+ ", main: " + to_string(main)
 			+ ", segmentListPathName: " + segmentListPathName
@@ -6352,9 +6354,8 @@ string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
 
 			newLastRecordedAssetFileName = currentRecordedAssetFileName;
 
-			time_t utcCurrentRecordedFileLastModificationTime;
-			FileIO::getFileTime (currentRecordedAssetPathName.c_str(),
-					&utcCurrentRecordedFileLastModificationTime);
+			time_t utcCurrentRecordedFileLastModificationTime = getMediaLiveRecorderEndTime(
+				currentRecordedAssetPathName);
 
 			// UserData
 			Json::Value userDataRoot;
@@ -6444,52 +6445,30 @@ string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
 					newTitle += " (BCK)";
 			}
 
-			_logger->info(__FILEREF__ + "ingest Recorded media"
-				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-				+ ", currentRecordedAssetPathName: " + currentRecordedAssetPathName
-				+ ", title: " + newTitle
-			);
+			if (lastRecordedAssetFileName == "")
+			{
+				_logger->info(__FILEREF__ + "The first asset file name is not ingested because it does not contain the entire period"
+					+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", currentRecordedAssetPathName: " + currentRecordedAssetPathName
+					+ ", title: " + newTitle
+				);
+			}
+			else
+			{
+				_logger->info(__FILEREF__ + "ingest Recorded media"
+					+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+					+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					+ ", currentRecordedAssetPathName: " + currentRecordedAssetPathName
+					+ ", title: " + newTitle
+				);
 
-			ingestRecordedMedia(currentRecordedAssetPathName,
-				newTitle, userDataRoot, outputFileFormat,
-				_encodingItem->_liveRecorderData->_liveRecorderParametersRoot);
-
-			/*
-			string mediaMetaDataContent = generateMediaMetadataToIngest(
-					_encodingItem->_ingestionJobKey, outputFileFormat,
+				ingestRecordedMedia(currentRecordedAssetPathName,
+					newTitle, userDataRoot, outputFileFormat,
 					_encodingItem->_liveRecorderData->_liveRecorderParametersRoot);
-
-			shared_ptr<LocalAssetIngestionEvent>    localAssetIngestionEvent =
-				_multiEventsSet->getEventsFactory()
-                ->getFreeEvent<LocalAssetIngestionEvent>(
-						MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
-
-			localAssetIngestionEvent->setSource(ENCODERVIDEOAUDIOPROXY);
-			localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
-			localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
-
-			localAssetIngestionEvent->setIngestionJobKey(_encodingItem->_ingestionJobKey);
-			localAssetIngestionEvent->setIngestionSourceFileName(currentRecordedAssetFileName);
-			localAssetIngestionEvent->setMMSSourceFileName(currentRecordedAssetFileName);
-			localAssetIngestionEvent->setWorkspace(_encodingItem->_workspace);
-			localAssetIngestionEvent->setIngestionType(MMSEngineDBFacade::IngestionType::AddContent);
-			localAssetIngestionEvent->setIngestionRowToBeUpdatedAsSuccess(ingestionRowToBeUpdatedAsSuccess);
-			// localAssetIngestionEvent->setForcedAvgFrameRate(to_string(outputFrameRate) + "/1");
-
-			localAssetIngestionEvent->setMetadataContent(mediaMetaDataContent);
-
-			shared_ptr<Event2>    event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
-			_multiEventsSet->addEvent(event);
-
-			_logger->info(__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)"
-				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-				+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
-				+ ", sourceFileName: " + currentRecordedAssetFileName
-				+ ", getEventKey().first: " + to_string(event->getEventKey().first)
-				+ ", getEventKey().second: " + to_string(event->getEventKey().second));
-			*/
+			}
 		}
+
 		if (reachedNextFileToProcess == false)
 		{
 			// this scenario should never happens, we have only one option when mmEngineService
@@ -6933,6 +6912,10 @@ time_t EncoderVideoAudioProxy::getMediaLiveRecorderStartTime(
 		throw runtime_error(errorMessage);
 	}
 
+	time_t utcMediaLiveRecorderStartTime;
+	time (&utcMediaLiveRecorderStartTime);
+	gmtime_r(&utcMediaLiveRecorderStartTime, &tmDateTime);
+
 	tmDateTime.tm_year		= stoi(mediaLiveRecorderFileName.substr(index - 19, 4))
 		- 1900;
 	tmDateTime.tm_mon		= stoi(mediaLiveRecorderFileName.substr(index - 14, 2))
@@ -6940,14 +6923,51 @@ time_t EncoderVideoAudioProxy::getMediaLiveRecorderStartTime(
 	tmDateTime.tm_mday		= stoi(mediaLiveRecorderFileName.substr(index - 11, 2));
 	tmDateTime.tm_hour		= stoi(mediaLiveRecorderFileName.substr(index - 8, 2));
 	tmDateTime.tm_min      = stoi(mediaLiveRecorderFileName.substr(index - 5, 2));
-	tmDateTime.tm_sec      = stoi(mediaLiveRecorderFileName.substr(index - 2, 2));
 
-	//  Negative value if status of daylight saving time is unknown.
-	// (does it mean it attempt to determine whether Daylight Saving Time is in effect
-	//  for the specified time?)
-	tmDateTime.tm_isdst	= -1;
+	// in case of high bit rate (huge files) and server with high cpu usage, sometime I saw seconds 1 instead of 0
+	// For this reason, 0 is set.
+	// From the other side the first generated file is the only one where we can have seconds
+	// different from 0, anyway here this is not possible because we discard the first chunk
+	int seconds = stoi(mediaLiveRecorderFileName.substr(index - 2, 2));
+	if (seconds != 0)
+	{
+		_logger->warn(__FILEREF__ + "Wrong seconds (start time), force it to 0"
+				+ ", seconds: " + to_string(seconds)
+				);
+		seconds = 0;
+	}
+	tmDateTime.tm_sec      = seconds;
 
-	return mktime (&tmDateTime);	// utc
+	utcMediaLiveRecorderStartTime = mktime (&tmDateTime);
+
+	return utcMediaLiveRecorderStartTime;
+}
+
+time_t EncoderVideoAudioProxy::getMediaLiveRecorderEndTime(
+	string mediaLiveRecorderFileName)
+{
+	tm                      tmDateTime;
+
+	time_t utcCurrentRecordedFileLastModificationTime;
+
+	FileIO::getFileTime (mediaLiveRecorderFileName.c_str(),
+		&utcCurrentRecordedFileLastModificationTime);
+
+	localtime_r(&utcCurrentRecordedFileLastModificationTime, &tmDateTime);
+
+	// in case of high bit rate (huge files) and server with high cpu usage, sometime I saw seconds 1 instead of 0
+	// For this reason, 0 is set
+	if (tmDateTime.tm_sec != 0)
+	{
+		_logger->warn(__FILEREF__ + "Wrong seconds (end time), force it to 0"
+				+ ", seconds: " + to_string(tmDateTime.tm_sec)
+				);
+		tmDateTime.tm_sec = 0;
+	}
+
+	utcCurrentRecordedFileLastModificationTime = mktime(&tmDateTime);
+
+	return utcCurrentRecordedFileLastModificationTime;
 }
 
 int EncoderVideoAudioProxy::getEncodingProgress()

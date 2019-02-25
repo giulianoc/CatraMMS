@@ -183,6 +183,7 @@ private:
 	bool isLastLiveRecorderFile(time_t currentRecordedFileCreationTime, string contentsPath,
 			string recordedFileNamePrefix);
 	time_t getMediaLiveRecorderStartTime(string mediaLiveRecorderFileName);
+	time_t getMediaLiveRecorderEndTime(string mediaLiveRecorderFileName);
 	string processLastGeneratedLiveRecorderFiles(bool highAvailability, bool main, string segmentListPathName,
 		string recordedFileNamePrefix, string contentsPath, string lastRecordedAssetFileName);
 	void ingestRecordedMedia(
