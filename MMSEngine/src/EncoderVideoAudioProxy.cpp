@@ -6932,6 +6932,9 @@ time_t EncoderVideoAudioProxy::getMediaLiveRecorderStartTime(
 	if (seconds != 0)
 	{
 		_logger->warn(__FILEREF__ + "Wrong seconds (start time), force it to 0"
+				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName
 				+ ", seconds: " + to_string(seconds)
 				);
 		seconds = 0;
@@ -6960,6 +6963,9 @@ time_t EncoderVideoAudioProxy::getMediaLiveRecorderEndTime(
 	if (tmDateTime.tm_sec != 0)
 	{
 		_logger->warn(__FILEREF__ + "Wrong seconds (end time), force it to 0"
+				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName
 				+ ", seconds: " + to_string(tmDateTime.tm_sec)
 				);
 		tmDateTime.tm_sec = 0;
