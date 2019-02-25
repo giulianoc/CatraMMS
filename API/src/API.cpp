@@ -3076,6 +3076,13 @@ void API::ingestionJobsStatus(
             startAndEndIngestionDatePresent = true;
         }
 
+        string ingestionType;
+        auto ingestionTypeIt = queryParameters.find("ingestionType");
+        if (ingestionTypeIt != queryParameters.end() && ingestionTypeIt->second != "")
+        {
+            ingestionType = ingestionTypeIt->second;
+        }
+
         bool asc = true;
         auto ascIt = queryParameters.find("asc");
         if (ascIt != queryParameters.end() && ascIt->second != "")
@@ -3093,12 +3100,13 @@ void API::ingestionJobsStatus(
             status = statusIt->second;
         }
 
+		_logger->info(__FILEREF__ + "aaaaaaaa: " + ingestionType);
         {
             Json::Value ingestionStatusRoot = _mmsEngineDBFacade->getIngestionJobsStatus(
                     workspace, ingestionJobKey,
                     start, rows,
                     startAndEndIngestionDatePresent, startIngestionDate, endIngestionDate,
-                    asc, status
+                    ingestionType, asc, status
                     );
 
             Json::StreamWriterBuilder wbuilder;

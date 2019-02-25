@@ -4005,7 +4005,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 
         {
             lastSQLCommand = 
-                "update MMS_IngestionJob set processorMMS = NULL where processorMMS = ?";
+                "update MMS_IngestionJob set processorMMS = NULL where processorMMS = ? and status not like 'End_%'";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -4195,7 +4195,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					);                            
     				try
     				{
-						updateIngestionJob (conn, ingestionJobKey, newIngestionStatus, errorMessage, processorMMS);
+						updateIngestionJob (conn, ingestionJobKey, newIngestionStatus, errorMessage);
 					}
     				catch(sql::SQLException se)
     				{
@@ -4979,6 +4979,7 @@ int64_t MMSEngineDBFacade::addIngestionJob (
                             + ", getConnectionId: " + to_string(conn->getConnectionId())
                             + ", ingestionJobKey: " + to_string(ingestionJobKey)
                             + ", dependOnSuccess: " + to_string(dependOnSuccess)
+                            + ", dependOnIngestionJobKey: " + to_string(dependOnIngestionJobKey)
                             + ", orderNumber: " + to_string(orderNumber)
                             + ", rowsInserted: " + to_string(rowsInserted)
                         );
@@ -5292,16 +5293,23 @@ void MMSEngineDBFacade::updateIngestionJob (
         
         if (MMSEngineDBFacade::isIngestionStatusFinalState(newIngestionStatus))
         {
-            lastSQLCommand = 
-                "update MMS_IngestionJob set status = ?, endProcessing = NOW(), processorMMS = ?, errorMessage = ? where ingestionJobKey = ?";
+			if (processorMMS != "noToBeUpdated")
+				lastSQLCommand = 
+					"update MMS_IngestionJob set status = ?, endProcessing = NOW(), processorMMS = ?, errorMessage = ? where ingestionJobKey = ?";
+			else
+				lastSQLCommand = 
+					"update MMS_IngestionJob set status = ?, endProcessing = NOW(), errorMessage = ? where ingestionJobKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(newIngestionStatus));
-            if (processorMMS == "")
-                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-            else
-                preparedStatement->setString(queryParameterIndex++, processorMMS);
+			if (processorMMS != "noToBeUpdated")
+			{
+				if (processorMMS == "")
+					preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+				else
+					preparedStatement->setString(queryParameterIndex++, processorMMS);
+			}
             if (errorMessageForSQL == "")
                 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
             else
@@ -5325,16 +5333,23 @@ void MMSEngineDBFacade::updateIngestionJob (
         }
         else
         {
-            lastSQLCommand = 
-                "update MMS_IngestionJob set status = ?, processorMMS = ?, errorMessage = ? where ingestionJobKey = ?";
+			if (processorMMS != "noToBeUpdated")
+				lastSQLCommand = 
+					"update MMS_IngestionJob set status = ?, processorMMS = ?, errorMessage = ? where ingestionJobKey = ?";
+			else
+				lastSQLCommand = 
+					"update MMS_IngestionJob set status = ?, errorMessage = ? where ingestionJobKey = ?";
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(newIngestionStatus));
-            if (processorMMS == "")
-                preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
-            else
-                preparedStatement->setString(queryParameterIndex++, processorMMS);
+			if (processorMMS != "noToBeUpdated")
+			{
+				if (processorMMS == "")
+					preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
+				else
+					preparedStatement->setString(queryParameterIndex++, processorMMS);
+			}
             if (errorMessageForSQL == "")
                 preparedStatement->setNull(queryParameterIndex++, sql::DataType::VARCHAR);
             else
@@ -5357,12 +5372,14 @@ void MMSEngineDBFacade::updateIngestionJob (
             }
         }
             
-        manageIngestionJobStatusUpdate (ingestionJobKey, newIngestionStatus, conn);
+		bool updateIngestionRootStatus = true;
+		manageIngestionJobStatusUpdate (ingestionJobKey, newIngestionStatus, updateIngestionRootStatus, conn);
 
         _logger->info(__FILEREF__ + "IngestionJob updated successful"
             + ", newIngestionStatus: " + MMSEngineDBFacade::toString(newIngestionStatus)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
-            );
+            + ", processorMMS: " + processorMMS
+		);
     }
     catch(sql::SQLException se)
     {
@@ -5722,9 +5739,10 @@ void MMSEngineDBFacade::updateIngestionJob (
 void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
         int64_t ingestionJobKey,
         IngestionStatus newIngestionStatus,
+		bool updateIngestionRootStatus,
         shared_ptr<MySQLConnection> conn
 )
-{    
+{
     string      lastSQLCommand;
     
 
@@ -5808,7 +5826,9 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
             if (hierarchicalIngestionJobKeysDependencies != "")
             {
                 lastSQLCommand = 
-                    "update MMS_IngestionJob set status = ?, endProcessing = NOW() where ingestionJobKey in (" + hierarchicalIngestionJobKeysDependencies + ")";
+                    "update MMS_IngestionJob set status = ?, "
+					"startProcessing = IF(startProcessing IS NULL, NOW(), startProcessing), "
+					"endProcessing = NOW() where ingestionJobKey in (" + hierarchicalIngestionJobKeysDependencies + ")";
 
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndex = 1;
@@ -5950,6 +5970,218 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate (
 
         throw e;
     }    
+}
+
+void MMSEngineDBFacade::setNotToBeExecutedStartingFrom (int64_t ingestionJobKey)
+{
+
+    string      lastSQLCommand;
+    
+    shared_ptr<MySQLConnection> conn = nullptr;
+    bool autoCommit = true;
+
+    try
+    {
+        conn = _connectionPool->borrow();	
+        _logger->debug(__FILEREF__ + "DB connection borrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+
+        autoCommit = false;
+        // conn->_sqlConnection->setAutoCommit(autoCommit); OR execute the statement START TRANSACTION
+        {
+            lastSQLCommand = 
+                "START TRANSACTION";
+
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute(lastSQLCommand);
+        }
+        
+		_logger->info(__FILEREF__ + "Update IngestionJob"
+			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+			+ ", IngestionStatus: " + "End_NotToBeExecuted"
+			+ ", errorMessage: " + ""
+			+ ", processorMMS: " + ""
+		);
+		updateIngestionJob (conn, ingestionJobKey,
+			IngestionStatus::End_NotToBeExecuted,
+			"",	// errorMessage,
+			"" // processorMMS
+		);
+
+		// to set 'not to be executed' to the tasks depending from ingestionJobKey,, we will call manageIngestionJobStatusUpdate
+		// simulating the IngestionJob failed, that cause the setting to 'not to be executed'
+		// for the onSuccess tasks                                        
+
+		bool updateIngestionRootStatus = false;
+		manageIngestionJobStatusUpdate (ingestionJobKey, IngestionStatus::End_IngestionFailure, updateIngestionRootStatus, conn);
+
+        // conn->_sqlConnection->commit(); OR execute COMMIT
+        {
+            lastSQLCommand = 
+                "COMMIT";
+
+            shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+            statement->execute(lastSQLCommand);
+        }
+        autoCommit = true;
+
+        _logger->debug(__FILEREF__ + "DB connection unborrow"
+            + ", getConnectionId: " + to_string(conn->getConnectionId())
+        );
+        _connectionPool->unborrow(conn);
+    }
+    catch(sql::SQLException se)
+    {
+        string exceptionMessage(se.what());
+        
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", exceptionMessage: " + exceptionMessage
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            try
+            {
+                // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+                if (!autoCommit)
+                {
+                    shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                    statement->execute("ROLLBACK");
+                }
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+            }
+            catch(sql::SQLException se)
+            {
+                _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                    + ", exceptionMessage: " + se.what()
+                );
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+            }
+            catch(exception e)
+            {
+                _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                    + ", exceptionMessage: " + e.what()
+                );
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+            }
+        }
+
+        throw se;
+    }
+    catch(runtime_error e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", e.what(): " + e.what()
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            try
+            {
+                // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+                if (!autoCommit)
+                {
+                    shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                    statement->execute("ROLLBACK");
+                }
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+            }
+            catch(sql::SQLException se)
+            {
+                _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                    + ", exceptionMessage: " + se.what()
+                );
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+            }
+            catch(exception e)
+            {
+                _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                    + ", exceptionMessage: " + e.what()
+                );
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+            }
+        }
+
+        throw e;
+    }
+    catch(exception e)
+    {
+        _logger->error(__FILEREF__ + "SQL exception"
+            + ", lastSQLCommand: " + lastSQLCommand
+            + ", conn: " + (conn != nullptr ? to_string(conn->getConnectionId()) : "-1")
+        );
+
+        if (conn != nullptr)
+        {
+            try
+            {
+                // conn->_sqlConnection->rollback(); OR execute ROLLBACK
+                if (!autoCommit)
+                {
+                    shared_ptr<sql::Statement> statement (conn->_sqlConnection->createStatement());
+                    statement->execute("ROLLBACK");
+                }
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+            }
+            catch(sql::SQLException se)
+            {
+                _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                    + ", exceptionMessage: " + se.what()
+                );
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+            }
+            catch(exception e)
+            {
+                _logger->error(__FILEREF__ + "SQL exception doing ROLLBACK"
+                    + ", exceptionMessage: " + e.what()
+                );
+
+                _logger->debug(__FILEREF__ + "DB connection unborrow"
+                    + ", getConnectionId: " + to_string(conn->getConnectionId())
+                );
+                _connectionPool->unborrow(conn);
+            }
+        }
+
+        throw e;
+    }
 }
 
 bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress (
@@ -6585,7 +6817,7 @@ Json::Value MMSEngineDBFacade::getIngestionRootsStatus (
                 Json::Value ingestionJobsRoot(Json::arrayValue);
                 {            
                     lastSQLCommand = 
-                        "select ingestionJobKey, label, ingestionType, metaDataContent, "
+                        "select ingestionJobKey, label, ingestionType, metaDataContent, processorMMS, "
                         "DATE_FORMAT(convert_tz(startProcessing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as startProcessing, "
                         "DATE_FORMAT(convert_tz(endProcessing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endProcessing, "
                         "IF(startProcessing is null, NOW(), startProcessing) as newStartProcessing, "
@@ -6687,6 +6919,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
         shared_ptr<Workspace> workspace, int64_t ingestionJobKey,
         int start, int rows,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
+		string ingestionType,
         bool asc, string status
 )
 {    
@@ -6728,6 +6961,12 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
                 requestParametersRoot[field] = endIngestionDate;
             }
             
+            if (ingestionType != "")
+            {
+                field = "ingestionType";
+                requestParametersRoot[field] = ingestionType;
+            }
+            
             field = "requestParameters";
             statusListRoot[field] = requestParametersRoot;
         }
@@ -6738,6 +6977,8 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
             sqlWhere += ("and ij.ingestionJobKey = ? ");
         if (startAndEndIngestionDatePresent)
             sqlWhere += ("and ir.ingestionDate >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) and ir.ingestionDate <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
+        if (ingestionType != "")
+            sqlWhere += ("and ij.ingestionType = ? ");
         if (status == "completed")
             sqlWhere += ("and ij.status like 'End_%' ");
         else if (status == "notCompleted")
@@ -6759,6 +7000,8 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
                 preparedStatement->setString(queryParameterIndex++, startIngestionDate);
                 preparedStatement->setString(queryParameterIndex++, endIngestionDate);
             }
+			if (ingestionType != "")
+                preparedStatement->setString(queryParameterIndex++, ingestionType);
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
             if (resultSet->next())
             {
@@ -6778,7 +7021,7 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
         Json::Value ingestionJobsRoot(Json::arrayValue);
         {            
             lastSQLCommand = 
-                "select ir.ingestionRootKey, ij.ingestionJobKey, ij.label, ij.ingestionType, ij.metaDataContent, "
+                "select ir.ingestionRootKey, ij.ingestionJobKey, ij.label, ij.ingestionType, ij.metaDataContent, ij.processorMMS, "
                 "DATE_FORMAT(convert_tz(ij.startProcessing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as startProcessing, "
                 "DATE_FORMAT(convert_tz(ij.endProcessing, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as endProcessing, "
                 "IF(ij.startProcessing is null, NOW(), ij.startProcessing) as newStartProcessing, "
@@ -6798,6 +7041,8 @@ Json::Value MMSEngineDBFacade::getIngestionJobsStatus (
                 preparedStatement->setString(queryParameterIndex++, startIngestionDate);
                 preparedStatement->setString(queryParameterIndex++, endIngestionDate);
             }
+			if (ingestionType != "")
+                preparedStatement->setString(queryParameterIndex++, ingestionType);
             preparedStatement->setInt(queryParameterIndex++, rows);
             preparedStatement->setInt(queryParameterIndex++, start);
             shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
@@ -7190,6 +7435,12 @@ Json::Value MMSEngineDBFacade::getIngestionJobRoot(
         field = "metaDataContent";
         ingestionJobRoot[field] = static_cast<string>(resultSet->getString("metaDataContent"));
 
+        field = "processorMMS";
+        if (resultSet->isNull("processorMMS"))
+            ingestionJobRoot[field] = Json::nullValue;
+        else
+			ingestionJobRoot[field] = static_cast<string>(resultSet->getString("processorMMS"));
+
         field = "label";
         if (resultSet->isNull("label"))
             ingestionJobRoot[field] = Json::nullValue;
@@ -7471,8 +7722,8 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA()
 				string("select ingestionJobKey from MMS_IngestionJob "
 						"where ingestionType = 'Live-Recorder' "
 						"and JSON_EXTRACT(metaDataContent, '$.HighAvailability') = true "
-						"and status = 'EncodingQueued' "
-						"or (status = 'End_TaskSuccess' and NOW() <= DATE_ADD(endProcessing, INTERVAL ? MINUTE)) "
+						"and (status = 'EncodingQueued' "
+						"or (status = 'End_TaskSuccess' and NOW() <= DATE_ADD(endProcessing, INTERVAL ? MINUTE))) "
 						);
 			// This select returns all the ingestion joob key of running HA LiveRecording
 
@@ -7518,10 +7769,12 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA()
 
 					lastSQLCommand =
 						string("select mediaItemKey, CAST(JSON_EXTRACT(userData, '$.mmsData.main') as SIGNED INTEGER) as main from MMS_MediaItem "
-								"where JSON_EXTRACT(userData, '$.mmsData.utcChunkStartTime') = ? "
+								"where JSON_EXTRACT(userData, '$.mmsData.ingestionJobKey') = ? "
+								"and JSON_EXTRACT(userData, '$.mmsData.utcChunkStartTime') = ? "
 						);
 					shared_ptr<sql::PreparedStatement> preparedStatementMediaItemDetails (conn->_sqlConnection->prepareStatement(lastSQLCommand));
 					int queryParameterIndex = 1;
+					preparedStatementMediaItemDetails->setInt64(queryParameterIndex++, ingestionJobKey);
 					preparedStatementMediaItemDetails->setInt64(queryParameterIndex++, utcChunkStartTime);
 					shared_ptr<sql::ResultSet> resultSetMediaItemDetails (preparedStatementMediaItemDetails->executeQuery());
 					if (resultSetMediaItemDetails->next())
@@ -7555,6 +7808,7 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA()
 					{
 						_logger->error(__FILEREF__ + "It should never happen"
 							+ ", lastSQLCommand: " + lastSQLCommand
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 							+ ", utcChunkStartTime: " + to_string(utcChunkStartTime)
 						);
 
@@ -7592,6 +7846,18 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA()
 					{
 						_logger->error(__FILEREF__ + "It should never happen"
 							+ ", lastSQLCommand: " + lastSQLCommand
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+							+ ", utcChunkStartTime: " + to_string(utcChunkStartTime)
+						);
+
+						continue;
+					}
+
+					if (resultSetMediaItemDetails->next())
+					{
+						_logger->error(__FILEREF__ + "It should never happen"
+							+ ", lastSQLCommand: " + lastSQLCommand
+							+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 							+ ", utcChunkStartTime: " + to_string(utcChunkStartTime)
 						);
 
@@ -7610,30 +7876,30 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA()
 						);
 
 					{
-						int64_t mediaItemKeyRetentionToBeReset;
-						int64_t mediaItemKeyToBeValidated;
+						int64_t mediaItemKeyNotValidated;
+						int64_t mediaItemKeyValidated;
 						if (durationInMilliSecondsChunk_1 == durationInMilliSecondsChunk_2)
 						{
 							if (mainChunk_1)
 							{
-								mediaItemKeyRetentionToBeReset = mediaItemKeyChunk_2;
-								mediaItemKeyToBeValidated = mediaItemKeyChunk_1;
+								mediaItemKeyNotValidated = mediaItemKeyChunk_2;
+								mediaItemKeyValidated = mediaItemKeyChunk_1;
 							}
 							else
 							{
-								mediaItemKeyRetentionToBeReset = mediaItemKeyChunk_1;
-								mediaItemKeyToBeValidated = mediaItemKeyChunk_2;
+								mediaItemKeyNotValidated = mediaItemKeyChunk_1;
+								mediaItemKeyValidated = mediaItemKeyChunk_2;
 							}
 						}
 						else if (durationInMilliSecondsChunk_1 < durationInMilliSecondsChunk_2)
 						{
-								mediaItemKeyRetentionToBeReset = mediaItemKeyChunk_1;
-								mediaItemKeyToBeValidated = mediaItemKeyChunk_2;
+								mediaItemKeyNotValidated = mediaItemKeyChunk_1;
+								mediaItemKeyValidated = mediaItemKeyChunk_2;
 						}
 						else
 						{
-								mediaItemKeyRetentionToBeReset = mediaItemKeyChunk_2;
-								mediaItemKeyToBeValidated = mediaItemKeyChunk_1;
+								mediaItemKeyNotValidated = mediaItemKeyChunk_2;
+								mediaItemKeyValidated = mediaItemKeyChunk_1;
 						}
 
 						_logger->info(__FILEREF__ + "Manage HA LiveRecording, reset of chunk"
@@ -7645,37 +7911,39 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA()
 							+ ", mediaItemKeyChunk_2: " + to_string(mediaItemKeyChunk_2)
 							+ ", mainChunk_2: " + to_string(mainChunk_2)
 							+ ", durationInMilliSecondsChunk_2: " + to_string(durationInMilliSecondsChunk_2)
-							+ ", mediaItemKeyRetentionToBeReset: " + to_string(mediaItemKeyRetentionToBeReset)
-							+ ", mediaItemKeyToBeValidated: " + to_string(mediaItemKeyToBeValidated)
+							+ ", mediaItemKeyNotValidated: " + to_string(mediaItemKeyNotValidated)
+							+ ", mediaItemKeyValidated: " + to_string(mediaItemKeyValidated)
 						);
 
+						// mediaItemKeyValidated
 						{
 							lastSQLCommand = 
-								"update MMS_MediaItem set userData = JSON_INSERT(`userData`, '$.mmsData.validated', 'true') "
+								"update MMS_MediaItem set userData = JSON_INSERT(`userData`, '$.mmsData.validated', true) "
 								"where mediaItemKey = ?";
 							shared_ptr<sql::PreparedStatement> preparedStatementUpdate (conn->_sqlConnection->prepareStatement(lastSQLCommand));
 							int queryParameterIndex = 1;
-							preparedStatementUpdate->setInt64(queryParameterIndex++, mediaItemKeyToBeValidated);
+							preparedStatementUpdate->setInt64(queryParameterIndex++, mediaItemKeyValidated);
 
 							int rowsUpdated = preparedStatementUpdate->executeUpdate();            
 							if (rowsUpdated != 1)
 								_logger->error(__FILEREF__ + "It should never happen"
-									+ ", mediaItemKeyToBeValidated: " + to_string(mediaItemKeyToBeValidated)
+									+ ", mediaItemKeyToBeValidated: " + to_string(mediaItemKeyValidated)
 								);
 						}
 
+						// mediaItemKeyNotValidated
 						{
 							lastSQLCommand = 
-								"update MMS_MediaItem set retentionInMinutes = 0 "
+								"update MMS_MediaItem set retentionInMinutes = 0, userData = JSON_INSERT(`userData`, '$.mmsData.validated', false) "
 								"where mediaItemKey = ?";
 							shared_ptr<sql::PreparedStatement> preparedStatementUpdate (conn->_sqlConnection->prepareStatement(lastSQLCommand));
 							int queryParameterIndex = 1;
-							preparedStatementUpdate->setInt64(queryParameterIndex++, mediaItemKeyRetentionToBeReset);
+							preparedStatementUpdate->setInt64(queryParameterIndex++, mediaItemKeyNotValidated);
 
 							int rowsUpdated = preparedStatementUpdate->executeUpdate();            
 							if (rowsUpdated != 1)
 								_logger->error(__FILEREF__ + "It should never happen"
-									+ ", mediaItemKeyRetentionToBeReset: " + to_string(mediaItemKeyRetentionToBeReset)
+									+ ", mediaItemKeyNotValidated: " + to_string(mediaItemKeyNotValidated)
 								);
 						}
 					}
@@ -7981,10 +8249,11 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
             }
             else
             {
-                string errorMessage (__FILEREF__ + "physicalPathKey does not exist");
+                string errorMessage (__FILEREF__ + "getMediaItemsList: requested physicalPathKey does not exist");
                 _logger->error(errorMessage);
 
-                throw runtime_error(errorMessage);
+                // throw runtime_error(errorMessage);
+				newMediaItemKey = 0;	// let's force a MIK that does not exist
             }
         }
         
@@ -8036,18 +8305,18 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
         
         Json::Value responseRoot;
         {
-		if (tags.size() > 0)
-		{
-			lastSQLCommand = 
-				string("select count(*) from MMS_MediaItem mi, MMS_Tag t ")
-				+ sqlWhere;
-		}
-		else
-		{
-			lastSQLCommand = 
-				string("select count(*) from MMS_MediaItem mi ")
-				+ sqlWhere;
-		}
+			if (tags.size() > 0)
+			{
+				lastSQLCommand = 
+					string("select count(*) from MMS_MediaItem mi, MMS_Tag t ")
+					+ sqlWhere;
+			}
+			else
+			{
+				lastSQLCommand = 
+					string("select count(*) from MMS_MediaItem mi ")
+					+ sqlWhere;
+			}
 
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -9304,14 +9573,15 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
     return physicalPathKey;
 }
 
-tuple<MMSEngineDBFacade::ContentType,string,string> MMSEngineDBFacade::getMediaItemKeyDetails(
+tuple<MMSEngineDBFacade::ContentType,string,string,string> MMSEngineDBFacade::getMediaItemKeyDetails(
     int64_t mediaItemKey, bool warningIfMissing)
 {
     string      lastSQLCommand;
         
     shared_ptr<MySQLConnection> conn = nullptr;
     
-    tuple<MMSEngineDBFacade::ContentType,string,string> contentTypeTitleAndUserData;
+    tuple<MMSEngineDBFacade::ContentType,string,string,string>
+		contentTypeTitleUserDataAndIngestionDate;
 
     try
     {
@@ -9322,7 +9592,9 @@ tuple<MMSEngineDBFacade::ContentType,string,string> MMSEngineDBFacade::getMediaI
 
         {
             lastSQLCommand = 
-                "select contentType, title, userData from MMS_MediaItem where mediaItemKey = ?";
+                "select contentType, title, userData, "
+                "DATE_FORMAT(convert_tz(ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate "
+				"from MMS_MediaItem where mediaItemKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
             preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
@@ -9340,7 +9612,11 @@ tuple<MMSEngineDBFacade::ContentType,string,string> MMSEngineDBFacade::getMediaI
                 if (!resultSet->isNull("title"))
                     title = resultSet->getString("title");
                 
-                contentTypeTitleAndUserData = make_tuple(contentType, title, userData);
+                string ingestionDate;
+                if (!resultSet->isNull("ingestionDate"))
+                    ingestionDate = resultSet->getString("ingestionDate");
+                
+                contentTypeTitleUserDataAndIngestionDate = make_tuple(contentType, title, userData, ingestionDate);
             }
             else
             {
@@ -9353,7 +9629,7 @@ tuple<MMSEngineDBFacade::ContentType,string,string> MMSEngineDBFacade::getMediaI
                 else
                     _logger->error(errorMessage);
 
-                throw runtime_error(errorMessage);                    
+                throw runtime_error(errorMessage);
             }             
         }
                         
@@ -9362,7 +9638,7 @@ tuple<MMSEngineDBFacade::ContentType,string,string> MMSEngineDBFacade::getMediaI
         );
         _connectionPool->unborrow(conn);
 
-        return contentTypeTitleAndUserData;
+        return contentTypeTitleUserDataAndIngestionDate;
     }
     catch(sql::SQLException se)
     {
@@ -9444,14 +9720,15 @@ tuple<MMSEngineDBFacade::ContentType,string,string> MMSEngineDBFacade::getMediaI
     }    
 }
 
-tuple<int64_t,MMSEngineDBFacade::ContentType,string,string> MMSEngineDBFacade::getMediaItemKeyDetailsByPhysicalPathKey(
+tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string> MMSEngineDBFacade::getMediaItemKeyDetailsByPhysicalPathKey(
     int64_t physicalPathKey, bool warningIfMissing)
 {
     string      lastSQLCommand;
         
     shared_ptr<MySQLConnection> conn = nullptr;
     
-    tuple<int64_t,MMSEngineDBFacade::ContentType,string,string> mediaItemKeyContentTypeTitleAndUserData;
+    tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string>
+		mediaItemKeyContentTypeTitleUserDataAndIngestionDate;
 
     try
     {
@@ -9462,7 +9739,9 @@ tuple<int64_t,MMSEngineDBFacade::ContentType,string,string> MMSEngineDBFacade::g
 
         {
             lastSQLCommand = 
-                "select mi.mediaItemKey, mi.contentType, mi.title, mi.userData from MMS_MediaItem mi, MMS_PhysicalPath p "
+                "select mi.mediaItemKey, mi.contentType, mi.title, mi.userData, "
+                "DATE_FORMAT(convert_tz(ingestionDate, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as ingestionDate "
+				"from MMS_MediaItem mi, MMS_PhysicalPath p "
                 "where mi.mediaItemKey = p.mediaItemKey and p.physicalPathKey = ?";
             shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
             int queryParameterIndex = 1;
@@ -9482,7 +9761,12 @@ tuple<int64_t,MMSEngineDBFacade::ContentType,string,string> MMSEngineDBFacade::g
                 if (!resultSet->isNull("title"))
                     title = resultSet->getString("title");
 
-                mediaItemKeyContentTypeTitleAndUserData = make_tuple(mediaItemKey, contentType, title, userData);                
+                string ingestionDate;
+                if (!resultSet->isNull("ingestionDate"))
+                    ingestionDate = resultSet->getString("ingestionDate");
+
+                mediaItemKeyContentTypeTitleUserDataAndIngestionDate =
+					make_tuple(mediaItemKey, contentType, title, userData, ingestionDate);                
             }
             else
             {
@@ -9504,7 +9788,7 @@ tuple<int64_t,MMSEngineDBFacade::ContentType,string,string> MMSEngineDBFacade::g
         );
         _connectionPool->unborrow(conn);
         
-        return mediaItemKeyContentTypeTitleAndUserData;
+        return mediaItemKeyContentTypeTitleUserDataAndIngestionDate;
     }
     catch(sql::SQLException se)
     {
@@ -12270,7 +12554,7 @@ int MMSEngineDBFacade::addEncodingJob (
                 + ", errorMessage: " + errorMessage
                 + ", processorMMS: " + processorMMS
             );                            
-            updateIngestionJob (conn, ingestionJobKey, newIngestionStatus, errorMessage, processorMMS);
+            updateIngestionJob (conn, ingestionJobKey, newIngestionStatus, errorMessage);
         }
 
         // conn->_sqlConnection->commit(); OR execute COMMIT
@@ -12647,7 +12931,7 @@ int MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob (
                 + ", errorMessage: " + errorMessage
                 + ", processorMMS: " + processorMMS
             );                            
-            updateIngestionJob (conn, ingestionJobKey, newIngestionStatus, errorMessage, processorMMS);
+            updateIngestionJob (conn, ingestionJobKey, newIngestionStatus, errorMessage);
         }
 
         // conn->_sqlConnection->commit(); OR execute COMMIT
@@ -12967,7 +13251,7 @@ int MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob (
                 + ", errorMessage: " + errorMessage
                 + ", processorMMS: " + processorMMS
             );                            
-            updateIngestionJob (conn, ingestionJobKey, newIngestionStatus, errorMessage, processorMMS);
+            updateIngestionJob (conn, ingestionJobKey, newIngestionStatus, errorMessage);
         }
 
         // conn->_sqlConnection->commit(); OR execute COMMIT
@@ -13245,7 +13529,7 @@ int MMSEngineDBFacade::addEncoding_GenerateFramesJob (
                 + ", errorMessage: " + errorMessage
                 + ", processorMMS: " + processorMMS
             );                            
-            updateIngestionJob (conn, ingestionJobKey, newIngestionStatus, errorMessage, processorMMS);
+            updateIngestionJob (conn, ingestionJobKey, newIngestionStatus, errorMessage);
         }
 
         // conn->_sqlConnection->commit(); OR execute COMMIT
@@ -13511,7 +13795,7 @@ int MMSEngineDBFacade::addEncoding_SlideShowJob (
                 + ", errorMessage: " + errorMessage
                 + ", processorMMS: " + processorMMS
             );                            
-            updateIngestionJob (conn, ingestionJobKey, newIngestionStatus, errorMessage, processorMMS);
+            updateIngestionJob (conn, ingestionJobKey, newIngestionStatus, errorMessage);
         }
 
         // conn->_sqlConnection->commit(); OR execute COMMIT
@@ -13765,7 +14049,7 @@ int MMSEngineDBFacade::addEncoding_FaceRecognitionJob (
                 + ", errorMessage: " + errorMessage
                 + ", processorMMS: " + processorMMS
             );                            
-            updateIngestionJob (conn, ingestionJobKey, newIngestionStatus, errorMessage, processorMMS);
+            updateIngestionJob (conn, ingestionJobKey, newIngestionStatus, errorMessage);
         }
 
         // conn->_sqlConnection->commit(); OR execute COMMIT
@@ -14019,7 +14303,7 @@ int MMSEngineDBFacade::addEncoding_FaceIdentificationJob (
                 + ", errorMessage: " + errorMessage
                 + ", processorMMS: " + processorMMS
             );                            
-            updateIngestionJob (conn, ingestionJobKey, newIngestionStatus, errorMessage, processorMMS);
+            updateIngestionJob (conn, ingestionJobKey, newIngestionStatus, errorMessage);
         }
 
         // conn->_sqlConnection->commit(); OR execute COMMIT
@@ -14294,7 +14578,7 @@ int MMSEngineDBFacade::addEncoding_LiveRecorderJob (
                 + ", errorMessage: " + errorMessage
                 + ", processorMMS: " + processorMMS
             );                            
-            updateIngestionJob (conn, ingestionJobKey, newIngestionStatus, errorMessage, processorMMS);
+            updateIngestionJob (conn, ingestionJobKey, newIngestionStatus, errorMessage);
         }
 
         // conn->_sqlConnection->commit(); OR execute COMMIT
@@ -14684,7 +14968,7 @@ int MMSEngineDBFacade::updateEncodingJob (
                     + ", errorMessage: " + errorMessage
                     + ", processorMMS: " + processorMMS
                 );                            
-                updateIngestionJob (conn, ingestionJobKey, newIngestionStatus, errorMessage, processorMMS);
+                updateIngestionJob (conn, ingestionJobKey, newIngestionStatus, errorMessage);
             
                 lastSQLCommand = 
                     "insert into MMS_IngestionJobOutput (ingestionJobKey, mediaItemKey, physicalPathKey) values ("
@@ -14713,7 +14997,7 @@ int MMSEngineDBFacade::updateEncodingJob (
                 + ", errorMessage: " + errorMessage
                 + ", processorMMS: " + processorMMS
             );                            
-            updateIngestionJob (ingestionJobKey, ingestionStatus, errorMessage, processorMMS);
+            updateIngestionJob (ingestionJobKey, ingestionStatus, errorMessage);
         }
         else if (newEncodingStatus == EncodingStatus::End_KilledByUser && ingestionJobKey != -1)
         {
@@ -14729,7 +15013,7 @@ int MMSEngineDBFacade::updateEncodingJob (
                 + ", errorMessage: " + errorMessage
                 + ", processorMMS: " + processorMMS
             );                            
-            updateIngestionJob (ingestionJobKey, ingestionStatus, errorMessage, processorMMS);
+            updateIngestionJob (ingestionJobKey, ingestionStatus, errorMessage);
         }
 
         // conn->_sqlConnection->commit(); OR execute COMMIT
@@ -16879,7 +17163,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                     + ", errorMessage: " + errorMessage
                     + ", processorMMS: " + processorMMS
                 );                            
-                updateIngestionJob (conn, ingestionJobKey, newIngestionStatus, errorMessage, processorMMS);
+                updateIngestionJob (conn, ingestionJobKey, newIngestionStatus, errorMessage);
             }
 
             {

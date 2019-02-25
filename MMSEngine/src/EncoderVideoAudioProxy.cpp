@@ -265,54 +265,9 @@ void EncoderVideoAudioProxy::operator()()
     }
     catch(MaxConcurrentJobsReached e)
     {
-        if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::EncodeVideoAudio)
-        {
-            _logger->warn(__FILEREF__ + "encodeContentVideoAudio: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::OverlayImageOnVideo)
-        {
-            _logger->warn(__FILEREF__ + "overlayImageOnVideo: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::OverlayTextOnVideo)
-        {
-            _logger->warn(__FILEREF__ + "overlayTextOnVideo: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::GenerateFrames)
-        {
-            _logger->warn(__FILEREF__ + "generateFrames: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::SlideShow)
-        {
-            _logger->warn(__FILEREF__ + "slideShow: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceRecognition)
-        {
-            _logger->warn(__FILEREF__ + "faceRecognition: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceIdentification)
-        {
-            _logger->warn(__FILEREF__ + "faceIdentification: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder)
-        {
-            _logger->warn(__FILEREF__ + "liveRecorder: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
+		_logger->warn(__FILEREF__ + MMSEngineDBFacade::toString(_encodingItem->_encodingType) + ": " + e.what()
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+		);
 
         _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob MaxCapacityReached"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -351,54 +306,9 @@ void EncoderVideoAudioProxy::operator()()
     }
     catch(EncoderError e)
     {
-        if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::EncodeVideoAudio)
-        {
-            _logger->error(__FILEREF__ + "encodeContentVideoAudio: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::OverlayImageOnVideo)
-        {
-            _logger->error(__FILEREF__ + "overlayImageOnVideo: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::OverlayTextOnVideo)
-        {
-            _logger->error(__FILEREF__ + "overlayTextOnVideo: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::GenerateFrames)
-        {
-            _logger->error(__FILEREF__ + "generateFrames: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::SlideShow)
-        {
-            _logger->error(__FILEREF__ + "slideShow: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceRecognition)
-        {
-            _logger->error(__FILEREF__ + "faceRecognition: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceIdentification)
-        {
-            _logger->warn(__FILEREF__ + "faceIdentification: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder)
-        {
-            _logger->warn(__FILEREF__ + "liveRecorder: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
+		_logger->error(__FILEREF__ + MMSEngineDBFacade::toString(_encodingItem->_encodingType) + ": " + e.what()
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+		);
 
         _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -446,54 +356,9 @@ void EncoderVideoAudioProxy::operator()()
     }
 	catch(EncodingKilledByUser e)
     {
-        if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::EncodeVideoAudio)
-        {
-            _logger->error(__FILEREF__ + "encodeContentVideoAudio: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::OverlayImageOnVideo)
-        {
-            _logger->error(__FILEREF__ + "overlayImageOnVideo: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::OverlayTextOnVideo)
-        {
-            _logger->error(__FILEREF__ + "overlayTextOnVideo: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::GenerateFrames)
-        {
-            _logger->error(__FILEREF__ + "generateFrames: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::SlideShow)
-        {
-            _logger->error(__FILEREF__ + "slideShow: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceRecognition)
-        {
-            _logger->error(__FILEREF__ + "faceRecognition: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceIdentification)
-        {
-            _logger->warn(__FILEREF__ + "faceIdentification: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder)
-        {
-            _logger->warn(__FILEREF__ + "liveRecorder: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
+		_logger->error(__FILEREF__ + MMSEngineDBFacade::toString(_encodingItem->_encodingType) + ": " + e.what()
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+		);
 
         _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob KilledByUser"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -541,54 +406,9 @@ void EncoderVideoAudioProxy::operator()()
     }
     catch(runtime_error e)
     {
-        if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::EncodeVideoAudio)
-        {
-            _logger->error(__FILEREF__ + "encodeContentVideoAudio: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::OverlayImageOnVideo)
-        {
-            _logger->error(__FILEREF__ + "overlayImageOnVideo: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::OverlayTextOnVideo)
-        {
-            _logger->error(__FILEREF__ + "overlayTextOnVideo: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::GenerateFrames)
-        {
-            _logger->error(__FILEREF__ + "generateFrames: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::SlideShow)
-        {
-            _logger->error(__FILEREF__ + "slideShow: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceRecognition)
-        {
-            _logger->error(__FILEREF__ + "faceRecognition: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceIdentification)
-        {
-            _logger->warn(__FILEREF__ + "faceIdentification: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder)
-        {
-            _logger->warn(__FILEREF__ + "liveRecorder: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
+		_logger->error(__FILEREF__ + MMSEngineDBFacade::toString(_encodingItem->_encodingType) + ": " + e.what()
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+		);
 
         _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -638,54 +458,9 @@ void EncoderVideoAudioProxy::operator()()
     }
     catch(exception e)
     {
-        if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::EncodeVideoAudio)
-        {
-            _logger->error(__FILEREF__ + "encodeContentVideoAudio: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::OverlayImageOnVideo)
-        {
-            _logger->error(__FILEREF__ + "overlayImageOnVideo: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::OverlayTextOnVideo)
-        {
-            _logger->error(__FILEREF__ + "overlayTextOnVideo: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::GenerateFrames)
-        {
-            _logger->error(__FILEREF__ + "generateFrames: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::SlideShow)
-        {
-            _logger->error(__FILEREF__ + "slideShow: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceRecognition)
-        {
-            _logger->error(__FILEREF__ + "faceRecognition: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceIdentification)
-        {
-            _logger->warn(__FILEREF__ + "faceIdentification: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder)
-        {
-            _logger->warn(__FILEREF__ + "liveRecorder: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
+		_logger->error(__FILEREF__ + MMSEngineDBFacade::toString(_encodingItem->_encodingType) + ": " + e.what()
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+		);
 
         _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -821,54 +596,9 @@ void EncoderVideoAudioProxy::operator()()
     }
     catch(runtime_error e)
     {
-        if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::EncodeVideoAudio)
-        {
-            _logger->error(__FILEREF__ + "processEncodedContentVideoAudio failed: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::OverlayImageOnVideo)
-        {
-            _logger->error(__FILEREF__ + "processOverlayedImageOnVideo failed: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::OverlayTextOnVideo)
-        {
-            _logger->error(__FILEREF__ + "processOverlayedTextOnVideo failed: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::GenerateFrames)
-        {
-            _logger->error(__FILEREF__ + "processGeneratedFrames failed: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::SlideShow)
-        {
-            _logger->error(__FILEREF__ + "processSlideShow failed: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceRecognition)
-        {
-            _logger->error(__FILEREF__ + "processFaceRecognition failed: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceIdentification)
-        {
-            _logger->error(__FILEREF__ + "processFaceIdentification failed: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder)
-        {
-            _logger->error(__FILEREF__ + "processLiveRecorder failed: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
+		_logger->error(__FILEREF__ + MMSEngineDBFacade::toString(_encodingItem->_encodingType) + ": " + e.what()
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+		);
 
         if (FileIO::fileExisting(stagingEncodedAssetPathName) || 
                 FileIO::directoryExisting(stagingEncodedAssetPathName))
@@ -946,54 +676,9 @@ void EncoderVideoAudioProxy::operator()()
     }
     catch(exception e)
     {
-        if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::EncodeVideoAudio)
-        {
-            _logger->error(__FILEREF__ + "processEncodedContentVideoAudio failed: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::OverlayImageOnVideo)
-        {
-            _logger->error(__FILEREF__ + "processOverlayedImageOnVideo failed: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::OverlayTextOnVideo)
-        {
-            _logger->error(__FILEREF__ + "processOverlayedTextOnVideo failed: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::GenerateFrames)
-        {
-            _logger->error(__FILEREF__ + "processGeneratedFrames failed: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::SlideShow)
-        {
-            _logger->error(__FILEREF__ + "processSlideShow failed: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceRecognition)
-        {
-            _logger->error(__FILEREF__ + "processFaceRecognition failed: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceIdentification)
-        {
-            _logger->error(__FILEREF__ + "processFaceIdentification failed: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
-        else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder)
-        {
-            _logger->error(__FILEREF__ + "processLiveRecorder failed: " + e.what()
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-            );
-        }
+		_logger->error(__FILEREF__ + MMSEngineDBFacade::toString(_encodingItem->_encodingType) + ": " + e.what()
+			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+		);
 
         if (FileIO::fileExisting(stagingEncodedAssetPathName)
                 || FileIO::directoryExisting(stagingEncodedAssetPathName))
@@ -5284,7 +4969,7 @@ string EncoderVideoAudioProxy::faceRecognition()
 				+ ", processorMMS: " + processorMMS
 			);                                                                                            
 			_mmsEngineDBFacade->updateIngestionJob (_encodingItem->_ingestionJobKey,
-					newIngestionStatus, errorMessage, processorMMS);
+					newIngestionStatus, errorMessage);
 		}
 	}
 
@@ -6037,7 +5722,7 @@ tuple<string, bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
 	string segmentListPathName;
 	bool killedByUser = false;
-    
+
     #ifdef __LOCALENCODER__
         if (*_pRunningEncodingsNumber > _ffmpegMaxCapacity)
         {
@@ -6095,6 +5780,9 @@ tuple<string, bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 				_encodingItem->_ingestionJobKey);
     }
 
+	time_t utcNow = 0;
+	while (!killedByUser && utcNow < utcRecordingPeriodEnd)
+	{
     #ifdef __LOCALENCODER__
 		(*_pRunningEncodingsNumber)++;
     #else
@@ -6332,10 +6020,11 @@ tuple<string, bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
             int maxEncodingStatusFailures = 1;
             int encodingStatusFailures = 0;
 			string lastRecordedAssetFileName;
+
             while(!(encodingFinished || encodingStatusFailures >= maxEncodingStatusFailures))
             {
                 this_thread::sleep_for(chrono::seconds(_intervalInSecondsToCheckEncodingFinished));
-                
+
                 try
                 {
                     pair<bool, bool> encodingStatus = getEncodingStatus(/* _encodingItem->_encodingJobKey */);
@@ -6349,7 +6038,7 @@ tuple<string, bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
                 {
                     encodingStatusFailures++;
 
-                    _logger->error(__FILEREF__ + "getEncodingStatus failed"
+                    _logger->error(__FILEREF__ + "getEncodingStatus/processLastGeneratedLiveRecorderFiles failed"
                         + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                         + ", encodingStatusFailures: " + to_string(encodingStatusFailures)
                         + ", maxEncodingStatusFailures: " + to_string(maxEncodingStatusFailures)
@@ -6408,9 +6097,11 @@ tuple<string, bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
                 ;
             _logger->warn(__FILEREF__ + errorMessage);
 
+			// in this case we will through the exception independently if the live streaming time (utcRecordingPeriodEnd)
+			// is finished or not. This task will come back by the MMS system
             throw e;
         }
-        catch (curlpp::LogicError & e) 
+        catch (curlpp::LogicError& e) 
         {
             _logger->error(__FILEREF__ + "Encoding URL failed (LogicError)"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -6420,9 +6111,18 @@ tuple<string, bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
                 + ", response.str(): " + response.str()
             );
             
-            throw e;
+			// sleep a bit and try again
+			int sleepTime = 30;
+			this_thread::sleep_for(chrono::seconds(sleepTime));
+
+			{
+				chrono::system_clock::time_point now = chrono::system_clock::now();
+				utcNow = chrono::system_clock::to_time_t(now);
+			}
+
+            // throw e;
         }
-        catch (curlpp::RuntimeError & e) 
+        catch (curlpp::RuntimeError& e) 
         {
             _logger->error(__FILEREF__ + "Encoding URL failed (RuntimeError)"
                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -6432,7 +6132,16 @@ tuple<string, bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
                 + ", response.str(): " + response.str()
             );
 
-            throw e;
+			// sleep a bit and try again
+			int sleepTime = 30;
+			this_thread::sleep_for(chrono::seconds(sleepTime));
+
+			{
+				chrono::system_clock::time_point now = chrono::system_clock::now();
+				utcNow = chrono::system_clock::to_time_t(now);
+			}
+
+            // throw e;
         }
         catch (runtime_error e)
         {
@@ -6444,7 +6153,16 @@ tuple<string, bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
                 + ", response.str(): " + response.str()
             );
 
-            throw e;
+			// sleep a bit and try again
+			int sleepTime = 30;
+			this_thread::sleep_for(chrono::seconds(sleepTime));
+
+			{
+				chrono::system_clock::time_point now = chrono::system_clock::now();
+				utcNow = chrono::system_clock::to_time_t(now);
+			}
+
+            // throw e;
         }
         catch (exception e)
         {
@@ -6456,9 +6174,19 @@ tuple<string, bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
                 + ", response.str(): " + response.str()
             );
 
-            throw e;
+			// sleep a bit and try again
+			int sleepTime = 30;
+			this_thread::sleep_for(chrono::seconds(sleepTime));
+
+			{
+				chrono::system_clock::time_point now = chrono::system_clock::now();
+				utcNow = chrono::system_clock::to_time_t(now);
+			}
+
+            // throw e;
         }
     #endif
+	}
 
     return make_tuple(segmentListPathName, killedByUser, main);
 }
@@ -6492,7 +6220,7 @@ void EncoderVideoAudioProxy::processLiveRecorder(string stagingEncodedAssetPathN
 				+ ", processorMMS: " + processorMMS
 			);
 			_mmsEngineDBFacade->updateIngestionJob(_encodingItem->_ingestionJobKey, newIngestionStatus,
-				errorMessage, processorMMS);
+				errorMessage);
 		}
 		else
 		{
@@ -6715,6 +6443,13 @@ string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
 				if (!main)
 					newTitle += " (BCK)";
 			}
+
+			_logger->info(__FILEREF__ + "ingest Recorded media"
+				+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+				+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				+ ", currentRecordedAssetPathName: " + currentRecordedAssetPathName
+				+ ", title: " + newTitle
+			);
 
 			ingestRecordedMedia(currentRecordedAssetPathName,
 				newTitle, userDataRoot, outputFileFormat,

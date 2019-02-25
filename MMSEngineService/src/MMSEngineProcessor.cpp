@@ -510,8 +510,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                     );                            
                     _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
                             MMSEngineDBFacade::IngestionStatus::End_WorkspaceReachedHisMaxIngestionNumber,
-                            e.what(), 
-                            "" // processorMMS
+                            e.what()
                     );
 
                     throw e;
@@ -533,8 +532,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                     );                            
                     _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
                             MMSEngineDBFacade::IngestionStatus::End_WorkspaceReachedHisMaxIngestionNumber,
-                            e.what(), 
-                            "" // processorMMS
+                            e.what()
                     );
 
                     throw e;
@@ -621,8 +619,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         );
                         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                 MMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed, 
-                                errorMessage,
-                                "" // processorMMS
+                                errorMessage
                         );
 
                         throw runtime_error(errorMessage);
@@ -634,6 +631,246 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         Validator validator(_logger, _mmsEngineDBFacade, _configuration);
                         dependencies = validator.validateSingleTaskMetadata(
                                 workspace->_workspaceKey, ingestionType, parametersRoot);                        
+
+						// Scenario: Live-Recording using HighAvailability, both main and backup contents are ingested (Add-Content)
+						//		and both potentially will have the tasks for onSuccess, onFailure and onComplete.
+						//		In this scenario, only the content having validated=true has to execute
+						//		the tasks (onSuccess, onFailure and onComplete) and the one having validated=false,
+						//		does not have to execute the tasks
+						//		To manage this scenario we will check if the dependency is a content coming
+						//		from Live-Recording using HighAvailability and, if it is validated=false
+						//		we will set NOT_TO_BE_EXECUTED to the potential tasks 
+						if (dependencies.size() == 1)
+						{
+							string userData;
+							string ingestionDate;
+							{
+								int64_t key;
+								MMSEngineDBFacade::ContentType referenceContentType;
+								Validator::DependencyType dependencyType;
+            
+								tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>&
+									keyAndDependencyType	= dependencies[0];
+								tie(key, referenceContentType, dependencyType) = keyAndDependencyType;
+            
+								try
+								{
+									if (dependencyType == Validator::DependencyType::MediaItemKey)
+									{
+										bool warningIfMissing = false;
+										tuple<MMSEngineDBFacade::ContentType,string,string,string>
+											contentTypeTitleUserDataAndIngestionDate =
+											_mmsEngineDBFacade->getMediaItemKeyDetails(
+											key, warningIfMissing);
+
+										string localTitle;
+										tie(referenceContentType, localTitle, userData, ingestionDate)
+											= contentTypeTitleUserDataAndIngestionDate;
+									}
+									else
+									{
+										bool warningIfMissing = false;
+										tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string>
+											mediaItemKeyContentTypeTitleUserDataAndIngestionDate =
+											_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+											key, warningIfMissing);
+
+										int64_t mediaItemKey;
+										string localTitle;
+										string userData;
+										tie(mediaItemKey, referenceContentType, localTitle, userData, ingestionDate)
+											= mediaItemKeyContentTypeTitleUserDataAndIngestionDate;
+									}
+								}
+								catch (exception e)
+								{
+									// in case MediaItemKey is not present, just continue,
+									// we will have an error during the management of the task
+									string errorMessage = __FILEREF__ + "Exception to retrieve the MediaItemKey details"
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+											+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+											+ ", key: " + to_string(key)
+											;
+									_logger->error(errorMessage);
+								}
+							}
+
+							if (userData != "")
+							{
+								bool userDataParsedSuccessful = false;
+
+								Json::Value userDataRoot;
+								try
+								{
+									Json::CharReaderBuilder builder;
+									Json::CharReader* reader = builder.newCharReader();
+									string errors;
+
+									userDataParsedSuccessful = reader->parse(userData.c_str(),
+										userData.c_str() + userData.size(), 
+										&userDataRoot, &errors);
+									delete reader;
+
+									if (!userDataParsedSuccessful)
+									{
+										string errorMessage = __FILEREF__ + "failed to parse userData"
+											+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+												+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+												+ ", errors: " + errors
+												+ ", userData: " + userData
+												;
+										_logger->error(errorMessage);
+									}
+								}
+								catch(...)
+								{
+									string errorMessage = string("userData json is not well format")
+										+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+										+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+										+ ", userData: " + userData
+										;
+									_logger->error(__FILEREF__ + errorMessage);
+								}
+
+								if (userDataParsedSuccessful)
+								{
+									string mmsDataField = "mmsData";
+									string dataTypeField = "dataType";
+									if (_mmsEngineDBFacade->isMetadataPresent(userDataRoot, mmsDataField)
+											&& _mmsEngineDBFacade->isMetadataPresent(userDataRoot[mmsDataField], dataTypeField)
+											)
+									{
+										string dataType = (userDataRoot[mmsDataField]).get(dataTypeField, "XXX").asString();
+
+										if (dataType == "liveRecordingChunk")
+										{
+											string validatedField = "validated";
+											if (_mmsEngineDBFacade->isMetadataPresent(userDataRoot[mmsDataField], validatedField))
+											{
+												bool validated = (userDataRoot[mmsDataField]).get(validatedField, "XXX").asBool();
+
+												if (!validated)
+												{
+													_logger->info(__FILEREF__ + "This task and all his dependencies will not be executed "
+														"because caused by a liveRecordingChunk that was not validated. setNotToBeExecutedStartingFrom will be called"
+														+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+														+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+													);
+
+													_mmsEngineDBFacade->setNotToBeExecutedStartingFrom(ingestionJobKey);
+
+													continue;
+												}
+												else
+												{
+													// it is validated, just continue to manage the task
+												}
+											}
+											else if (ingestionDate != "")
+											{
+												time_t utcIngestionDate;
+												bool ingestionDateParsedSuccessful = true;
+												{
+													unsigned long		ulUTCYear;
+													unsigned long		ulUTCMonth;
+													unsigned long		ulUTCDay;
+													unsigned long		ulUTCHour;
+													unsigned long		ulUTCMinutes;
+													unsigned long		ulUTCSeconds;
+													tm					tmIngestionDate;
+													int					sscanfReturn;
+
+
+													if ((sscanfReturn = sscanf (ingestionDate.c_str(),
+														"%4lu-%2lu-%2luT%2lu:%2lu:%2luZ",
+														&ulUTCYear,
+														&ulUTCMonth,
+														&ulUTCDay,
+														&ulUTCHour,
+														&ulUTCMinutes,
+														&ulUTCSeconds)) != 6)
+													{
+														string errorMessage = __FILEREF__ + "IngestionDate has a wrong format (sscanf failed)"
+															+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+															+ ", sscanfReturn: " + to_string(sscanfReturn)
+															;
+														_logger->error(errorMessage);
+
+														ingestionDateParsedSuccessful = false;
+														// throw runtime_error(errorMessage);
+													}
+													else
+													{
+														time (&utcIngestionDate);
+														gmtime_r(&utcIngestionDate, &tmIngestionDate);
+
+														tmIngestionDate.tm_year		= ulUTCYear - 1900;
+														tmIngestionDate.tm_mon		= ulUTCMonth - 1;
+														tmIngestionDate.tm_mday		= ulUTCDay;
+														tmIngestionDate.tm_hour		= ulUTCHour;
+														tmIngestionDate.tm_min		= ulUTCMinutes;
+														tmIngestionDate.tm_sec		= ulUTCSeconds;
+
+														utcIngestionDate = timegm(&tmIngestionDate);
+													}
+												}
+
+												if (ingestionDateParsedSuccessful)
+												{
+													time_t utcNow;
+													{
+														chrono::system_clock::time_point now = chrono::system_clock::now();
+														utcNow = chrono::system_clock::to_time_t(now);
+													}
+
+													int waitingTimeoutToValidateInSeconds = 120;
+													if (utcNow - utcIngestionDate >= waitingTimeoutToValidateInSeconds)
+													{
+														_logger->info(__FILEREF__ + "This task is caused by a liveRecordingChunk and we do not know yet "
+															"if it will be validated or not. The waiting timeout expired, so setNotToBeExecutedStartingFrom will be called"
+															+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+															+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+															+ ", mediaItemKey ingestionDate: " + ingestionDate
+															+ ", waitingTimeoutToValidateInSeconds: " + to_string(waitingTimeoutToValidateInSeconds)
+														);
+
+														_mmsEngineDBFacade->setNotToBeExecutedStartingFrom(ingestionJobKey);
+
+														continue;
+													}
+													else
+													{
+														_logger->info(__FILEREF__ + "This task is caused by a liveRecordingChunk and we do not know yet "
+															"if it will be validated or not. For this reason we will just wait the validation"
+															+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+															+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+														);
+
+														string errorMessage = "";
+														string processorMMS = "";
+
+														_logger->info(__FILEREF__ + "Update IngestionJob"
+															+ ", _processorIdentifier: " + to_string(_processorIdentifier)
+															+ ", ingestionJobKey: " + to_string(ingestionJobKey)
+															+ ", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus)
+															+ ", errorMessage: " + errorMessage
+															+ ", processorMMS: " + processorMMS
+														);                            
+														_mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
+															ingestionStatus, 
+															errorMessage,
+															processorMMS
+															);
+
+														continue;
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
                     }
                     catch(runtime_error e)
                     {
@@ -653,8 +890,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         );
                         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                 MMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed, 
-                                errorMessage,
-                                "" // processorMMS
+                                errorMessage
                         );
 
                         throw runtime_error(errorMessage);
@@ -678,8 +914,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                         );
                         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                 MMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed, 
-                                errorMessage,
-                                "" // processorMMS
+                                errorMessage
                         );
 
                         throw runtime_error(errorMessage);
@@ -724,8 +959,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
-                                        errorMessage,
-                                        "" // processorMMS
+                                        errorMessage
                                         );
 
                                 throw runtime_error(errorMessage);
@@ -749,8 +983,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
-                                        errorMessage,
-                                        "" // processorMMS
+                                        errorMessage
                                         );
 
                                 throw runtime_error(errorMessage);
@@ -968,8 +1201,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                                        errorMessage,
-                                        "" // processorMMS
+                                        errorMessage
                                         );
 
                                 throw runtime_error(errorMessage);
@@ -993,8 +1225,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                                        errorMessage,
-                                        "" // processorMMS
+                                        errorMessage
                                         );
 
                                 throw runtime_error(errorMessage);
@@ -1030,8 +1261,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                                        errorMessage,
-                                        "" // processorMMS
+                                        errorMessage
                                         );
 
                                 throw runtime_error(errorMessage);
@@ -1055,8 +1285,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                                        errorMessage,
-                                        "" // processorMMS
+                                        errorMessage
                                         );
 
                                 throw runtime_error(errorMessage);
@@ -1103,8 +1332,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                                        errorMessage,
-                                        "" // processorMMS
+                                        errorMessage
                                         );
 
                                 throw runtime_error(errorMessage);
@@ -1128,8 +1356,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                                        errorMessage,
-                                        "" // processorMMS
+                                        errorMessage
                                         );
 
                                 throw runtime_error(errorMessage);
@@ -1165,8 +1392,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                                        errorMessage,
-                                        "" // processorMMS
+                                        errorMessage
                                         );
 
                                 throw runtime_error(errorMessage);
@@ -1190,8 +1416,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                                        errorMessage,
-                                        "" // processorMMS
+                                        errorMessage
                                         );
 
                                 throw runtime_error(errorMessage);
@@ -1226,8 +1451,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                                        errorMessage,
-                                        "" // processorMMS
+                                        errorMessage
                                         );
 
                                 throw runtime_error(errorMessage);
@@ -1251,8 +1475,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                                        errorMessage,
-                                        "" // processorMMS
+                                        errorMessage
                                         );
 
                                 throw runtime_error(errorMessage);
@@ -1309,8 +1532,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                                        errorMessage,
-                                        "" // processorMMS
+                                        errorMessage
                                         );
 
                                 throw runtime_error(errorMessage);
@@ -1334,8 +1556,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                                        errorMessage,
-                                        "" // processorMMS
+                                        errorMessage
                                         );
 
                                 throw runtime_error(errorMessage);
@@ -1371,8 +1592,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                                        errorMessage,
-                                        "" // processorMMS
+                                        errorMessage
                                         );
 
                                 throw runtime_error(errorMessage);
@@ -1396,8 +1616,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                                        errorMessage,
-                                        "" // processorMMS
+                                        errorMessage
                                         );
 
                                 throw runtime_error(errorMessage);
@@ -1433,8 +1652,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                                        errorMessage,
-                                        "" // processorMMS
+                                        errorMessage
                                         );
 
                                 throw runtime_error(errorMessage);
@@ -1458,8 +1676,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                                        errorMessage,
-                                        "" // processorMMS
+                                        errorMessage
                                         );
 
                                 throw runtime_error(errorMessage);
@@ -1495,8 +1712,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                                        errorMessage,
-                                        "" // processorMMS
+                                        errorMessage
                                         );
 
                                 throw runtime_error(errorMessage);
@@ -1520,8 +1736,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                                        errorMessage,
-                                        "" // processorMMS
+                                        errorMessage
                                         );
 
                                 throw runtime_error(errorMessage);
@@ -1585,8 +1800,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                                        errorMessage,
-                                        "" // processorMMS
+                                        errorMessage
                                         );
 
                                 throw runtime_error(errorMessage);
@@ -1610,8 +1824,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                                        errorMessage,
-                                        "" // processorMMS
+                                        errorMessage
                                         );
 
                                 throw runtime_error(errorMessage);
@@ -1647,8 +1860,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                                        errorMessage,
-                                        "" // processorMMS
+                                        errorMessage
                                         );
 
                                 throw runtime_error(errorMessage);
@@ -1672,8 +1884,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                                        errorMessage,
-                                        "" // processorMMS
+                                        errorMessage
                                         );
 
                                 throw runtime_error(errorMessage);
@@ -1709,8 +1920,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                                        errorMessage,
-                                        "" // processorMMS
+                                        errorMessage
                                         );
 
                                 throw runtime_error(errorMessage);
@@ -1734,8 +1944,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                                        errorMessage,
-                                        "" // processorMMS
+                                        errorMessage
                                         );
 
                                 throw runtime_error(errorMessage);
@@ -1771,8 +1980,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                                        errorMessage,
-                                        "" // processorMMS
+                                        errorMessage
                                         );
 
                                 throw runtime_error(errorMessage);
@@ -1796,8 +2004,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                                        errorMessage,
-                                        "" // processorMMS
+                                        errorMessage
                                         );
 
                                 throw runtime_error(errorMessage);
@@ -1833,8 +2040,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                                        errorMessage,
-                                        "" // processorMMS
+                                        errorMessage
                                         );
 
                                 throw runtime_error(errorMessage);
@@ -1858,8 +2064,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                                        errorMessage,
-                                        "" // processorMMS
+                                        errorMessage
                                         );
 
                                 throw runtime_error(errorMessage);
@@ -1895,8 +2100,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                                        errorMessage,
-                                        "" // processorMMS
+                                        errorMessage
                                         );
 
                                 throw runtime_error(errorMessage);
@@ -1920,8 +2124,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                                        errorMessage,
-                                        "" // processorMMS
+                                        errorMessage
                                         );
 
                                 throw runtime_error(errorMessage);
@@ -1958,8 +2161,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                                        errorMessage,
-                                        "" // processorMMS
+                                        errorMessage
                                         );
 
                                 throw runtime_error(errorMessage);
@@ -1983,8 +2185,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                                        errorMessage,
-                                        "" // processorMMS
+                                        errorMessage
                                         );
 
                                 throw runtime_error(errorMessage);
@@ -2021,8 +2222,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                                        errorMessage,
-                                        "" // processorMMS
+                                        errorMessage
                                         );
 
                                 throw runtime_error(errorMessage);
@@ -2046,8 +2246,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                                        errorMessage,
-                                        "" // processorMMS
+                                        errorMessage
                                         );
 
                                 throw runtime_error(errorMessage);
@@ -2082,8 +2281,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                                        errorMessage,
-                                        "" // processorMMS
+                                        errorMessage
                                         );
 
                                 throw runtime_error(errorMessage);
@@ -2107,8 +2305,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                                        errorMessage,
-                                        "" // processorMMS
+                                        errorMessage
                                         );
 
                                 throw runtime_error(errorMessage);
@@ -2172,8 +2369,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                                        errorMessage,
-                                        "" // processorMMS
+                                        errorMessage
                                         );
 
                                 throw runtime_error(errorMessage);
@@ -2197,8 +2393,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                                 );                            
                                 _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                         MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                                        errorMessage,
-                                        "" // processorMMS
+                                        errorMessage
                                         );
 
                                 throw runtime_error(errorMessage);
@@ -2221,8 +2416,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
                             );                            
                             _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                                     MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, 
-                                    errorMessage,
-                                    "" // processorMMS
+                                    errorMessage
                                     );
 
                             throw runtime_error(errorMessage);
@@ -2325,7 +2519,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         );                            
         _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
             MMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed,
-            e.what(), "" //ProcessorMMS
+            e.what()
         );
 
         _logger->info(__FILEREF__ + "Remove file"
@@ -2355,7 +2549,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         );                            
         _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
             MMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed,
-            e.what(), "" // ProcessorMMS
+            e.what()
         );
 
         _logger->info(__FILEREF__ + "Remove file"
@@ -2403,7 +2597,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         );                            
         _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
             MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed,
-            e.what(), "" // ProcessorMMS
+            e.what()
         );
 
         _logger->info(__FILEREF__ + "Remove file"
@@ -2433,7 +2627,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         );                            
         _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
             MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed,
-            e.what(), "" // ProcessorMMS
+            e.what()
         );
 
         _logger->info(__FILEREF__ + "Remove file"
@@ -2471,7 +2665,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         );                            
         _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
             MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed,
-            e.what(), "" // ProcessorMMS
+            e.what()
         );
 
         _logger->info(__FILEREF__ + "Remove file"
@@ -2501,7 +2695,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         );                            
         _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
             MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed,
-            e.what(), "" // ProcessorMMS
+            e.what()
         );
 
         _logger->info(__FILEREF__ + "Remove file"
@@ -2556,7 +2750,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         );                            
         _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what(), "" // ProcessorMMS
+                e.what()
         );
         
         _logger->info(__FILEREF__ + "Remove file"
@@ -2582,7 +2776,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         );                            
         _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what(), "" // ProcessorMMS
+                e.what()
         );
         
         _logger->info(__FILEREF__ + "Remove file"
@@ -2663,7 +2857,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             );                            
             _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                     MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
-                    e.what(), "" // ProcessorMMS
+                    e.what()
             );
 
             throw e;
@@ -2690,7 +2884,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             );                            
             _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                     MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                    e.what(), "" // ProcessorMMS
+                    e.what()
             );
 
             throw e;
@@ -2744,7 +2938,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             );                            
             _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                     MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                    e.what(), "" // ProcessorMMS
+                    e.what()
             );
 
             throw runtime_error(e.what());
@@ -2772,7 +2966,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             );                            
             _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                     MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                    e.what(), "" // ProcessorMMS
+                    e.what()
             );
 
             throw runtime_error(e.what());
@@ -2800,7 +2994,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             );                            
             _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                     MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                    e.what(), "" // ProcessorMMS
+                    e.what()
             );
 
             throw runtime_error(e.what());
@@ -2828,7 +3022,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             );                            
             _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                     MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                    e.what(), "" // ProcessorMMS
+                    e.what()
             );
 
             throw runtime_error(e.what());
@@ -2855,7 +3049,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
             );                            
             _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                     MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                    e.what(), "" // ProcessorMMS
+                    e.what()
             );
 
             throw e;
@@ -2886,7 +3080,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         );                            
         _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                errorMessage, "" // ProcessorMMS
+                errorMessage
         );
 
         throw runtime_error(errorMessage);
@@ -2992,7 +3186,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         );                            
         _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what(), "" // ProcessorMMS
+                e.what()
         );
 
         throw e;
@@ -3019,8 +3213,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent (
         );                            
         _mmsEngineDBFacade->updateIngestionJob (localAssetIngestionEvent->getIngestionJobKey(),
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what(), 
-                "" // ProcessorMMS
+                e.what()
         );
 
         throw e;
@@ -3080,8 +3273,7 @@ void MMSEngineProcessor::removeContentTask(
         );                            
         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
                 MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
-                "", // errorMessage
-                "" // ProcessorMMS
+                "" // errorMessage
         );
     }
     catch(runtime_error e)
@@ -3383,13 +3575,14 @@ void MMSEngineProcessor::postOnFacebookTask(
 
                 {
                     bool warningIfMissing = false;
-                    tuple<MMSEngineDBFacade::ContentType,string,string> contentTypeTitleAndUserData =
+                    tuple<MMSEngineDBFacade::ContentType,string,string,string> contentTypeTitleUserDataAndIngestionDate =
                         _mmsEngineDBFacade->getMediaItemKeyDetails(
                             key, warningIfMissing);
 
                     string localTitle;
                     string userData;
-                    tie(contentType, localTitle, userData) = contentTypeTitleAndUserData;
+					string ingestionDate;
+                    tie(contentType, localTitle, userData, ingestionDate) = contentTypeTitleUserDataAndIngestionDate;
                 }
             }
             else
@@ -3406,15 +3599,16 @@ void MMSEngineProcessor::postOnFacebookTask(
                 
                 {
                     bool warningIfMissing = false;
-                    tuple<int64_t,MMSEngineDBFacade::ContentType,string,string> mediaItemKeyContentTypeTitleAndUserData =
+                    tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string> mediaItemKeyContentTypeTitleUserDataAndIngestionDate =
                         _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                             key, warningIfMissing);
 
                     int64_t mediaItemKey;
                     string localTitle;
                     string userData;
-                    tie(mediaItemKey, contentType, localTitle, userData)
-                            = mediaItemKeyContentTypeTitleAndUserData;
+					string ingestionDate;
+                    tie(mediaItemKey, contentType, localTitle, userData, ingestionDate)
+                            = mediaItemKeyContentTypeTitleUserDataAndIngestionDate;
                 }
             }
 
@@ -3601,13 +3795,14 @@ void MMSEngineProcessor::postOnYouTubeTask(
 
                 {
                     bool warningIfMissing = false;
-                    tuple<MMSEngineDBFacade::ContentType,string,string> contentTypeTitleAndUserData =
+                    tuple<MMSEngineDBFacade::ContentType,string,string,string> contentTypeTitleUserDataAndIngestionDate =
                         _mmsEngineDBFacade->getMediaItemKeyDetails(
                             key, warningIfMissing);
 
                     string localTitle;
                     string userData;
-                    tie(contentType, localTitle, userData) = contentTypeTitleAndUserData;
+					string ingestionDate;
+                    tie(contentType, localTitle, userData, ingestionDate) = contentTypeTitleUserDataAndIngestionDate;
                 }
             }
             else
@@ -3623,15 +3818,16 @@ void MMSEngineProcessor::postOnYouTubeTask(
                 
                 {
                     bool warningIfMissing = false;
-                    tuple<int64_t,MMSEngineDBFacade::ContentType,string,string> mediaItemKeyContentTypeTitleAndUserData =
+                    tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string> mediaItemKeyContentTypeTitleUserDataAndIngestionDate =
                         _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                             key, warningIfMissing);
 
                     int64_t mediaItemKey;
                     string localTitle;
                     string userData;
-                    tie(mediaItemKey, contentType, localTitle, userData)
-                            = mediaItemKeyContentTypeTitleAndUserData;
+					string ingestionDate;
+                    tie(mediaItemKey, contentType, localTitle, userData, ingestionDate)
+                            = mediaItemKeyContentTypeTitleUserDataAndIngestionDate;
                 }
             }
             
@@ -3860,14 +4056,15 @@ void MMSEngineProcessor::httpCallbackTask(
                     callbackMedatada["mediaItemKey"] = key;
 
                     bool warningIfMissing = false;
-                    tuple<MMSEngineDBFacade::ContentType,string,string> contentTypeTitleAndUserData =
+                    tuple<MMSEngineDBFacade::ContentType,string,string,string> contentTypeTitleUserDataAndIngestionDate =
                         _mmsEngineDBFacade->getMediaItemKeyDetails(
                             key, warningIfMissing);
 
                     MMSEngineDBFacade::ContentType contentType;
                     string localTitle;
                     string userData;
-                    tie(contentType, localTitle, userData) = contentTypeTitleAndUserData;
+					string ingestionDate;
+                    tie(contentType, localTitle, userData, ingestionDate) = contentTypeTitleUserDataAndIngestionDate;
 
                     if (userData == "")
                         callbackMedatada["userData"] = Json::nullValue;
@@ -3904,7 +4101,7 @@ void MMSEngineProcessor::httpCallbackTask(
                     callbackMedatada["physicalPathKey"] = key;
 
                     bool warningIfMissing = false;
-                    tuple<int64_t,MMSEngineDBFacade::ContentType,string,string> mediaItemKeyContentTypeTitleAndUserData =
+                    tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string> mediaItemKeyContentTypeTitleUserDataAndIngestionDate =
                         _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                             key, warningIfMissing);
 
@@ -3912,8 +4109,9 @@ void MMSEngineProcessor::httpCallbackTask(
                     MMSEngineDBFacade::ContentType contentType;
                     string localTitle;
                     string userData;
-                    tie(mediaItemKey, contentType, localTitle, userData)
-                            = mediaItemKeyContentTypeTitleAndUserData;
+					string ingestionDate;
+                    tie(mediaItemKey, contentType, localTitle, userData, ingestionDate)
+                            = mediaItemKeyContentTypeTitleUserDataAndIngestionDate;
 
                     callbackMedatada["mediaItemKey"] = mediaItemKey;
 
@@ -4240,13 +4438,14 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 
                 {
                     bool warningIfMissing = false;
-                    tuple<MMSEngineDBFacade::ContentType,string,string> contentTypeTitleAndUserData =
+                    tuple<MMSEngineDBFacade::ContentType,string,string,string> contentTypeTitleUserDataAndIngestionDate =
                         _mmsEngineDBFacade->getMediaItemKeyDetails(
                             key, warningIfMissing);
 
                     string localTitle;
                     string userData;
-                    tie(contentType, localTitle, userData) = contentTypeTitleAndUserData;
+					string ingestionDate;
+                    tie(contentType, localTitle, userData, ingestionDate) = contentTypeTitleUserDataAndIngestionDate;
                 }
             }
             else
@@ -4262,15 +4461,16 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
                 
                 {
                     bool warningIfMissing = false;
-                    tuple<int64_t,MMSEngineDBFacade::ContentType,string,string> mediaItemKeyContentTypeTitleAndUserData =
+                    tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string> mediaItemKeyContentTypeTitleUserDataAndIngestionDate =
                         _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                             key, warningIfMissing);
 
                     int64_t mediaItemKey;
                     string localTitle;
                     string userData;
-                    tie(mediaItemKey, contentType, localTitle, userData)
-                            = mediaItemKeyContentTypeTitleAndUserData;
+					string ingestionDate;
+                    tie(mediaItemKey, contentType, localTitle, userData, ingestionDate)
+                            = mediaItemKeyContentTypeTitleUserDataAndIngestionDate;
                 }
             }
             
@@ -4417,13 +4617,14 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
 
                 {
                     bool warningIfMissing = false;
-                    tuple<MMSEngineDBFacade::ContentType,string,string> contentTypeTitleAndUserData =
+                    tuple<MMSEngineDBFacade::ContentType,string,string,string> contentTypeTitleUserDataAndIngestionDate =
                         _mmsEngineDBFacade->getMediaItemKeyDetails(
                             key, warningIfMissing);
 
                     string localTitle;
                     string userData;
-                    tie(contentType, localTitle, userData) = contentTypeTitleAndUserData;
+					string ingestionDate;
+                    tie(contentType, localTitle, userData, ingestionDate) = contentTypeTitleUserDataAndIngestionDate;
                 }
             }
             else
@@ -4439,15 +4640,16 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
                 
                 {
                     bool warningIfMissing = false;
-                    tuple<int64_t,MMSEngineDBFacade::ContentType,string,string> mediaItemKeyContentTypeTitleAndUserData =
+                    tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string> mediaItemKeyContentTypeTitleUserDataAndIngestionDate =
                         _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                             key, warningIfMissing);
 
                     int64_t mediaItemKey;
                     string localTitle;
                     string userData;
-                    tie(mediaItemKey, contentType, localTitle, userData)
-                            = mediaItemKeyContentTypeTitleAndUserData;
+					string ingestionDate;
+                    tie(mediaItemKey, contentType, localTitle, userData, ingestionDate)
+                            = mediaItemKeyContentTypeTitleUserDataAndIngestionDate;
                 }
             }
             
@@ -4918,7 +5120,7 @@ void MMSEngineProcessor::changeFileFormatThread(
         );                            
         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what(), "" /* processorMMS */);
+                e.what());
         
         return;
     }
@@ -4938,8 +5140,7 @@ void MMSEngineProcessor::changeFileFormatThread(
         );                            
         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what(), 
-                "" /* processorMMS */);
+                e.what());
 
         return;
     }
@@ -4979,8 +5180,7 @@ void MMSEngineProcessor::copyContentThread(
         );                            
         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
                 MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
-                "", // errorMessage
-                "" // ProcessorMMS
+                "" // errorMessage
         );
     }
     catch (runtime_error& e) 
@@ -5002,7 +5202,7 @@ void MMSEngineProcessor::copyContentThread(
         );                            
         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what(), "" /* processorMMS */);
+                e.what());
         
         return;
     }
@@ -5025,8 +5225,7 @@ void MMSEngineProcessor::copyContentThread(
         );                            
         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what(), 
-                "" /* processorMMS */);
+                e.what());
 
         return;
     }
@@ -5265,7 +5464,7 @@ void MMSEngineProcessor::extractTracksContentThread(
         );                            
         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what(), "" /* processorMMS */);
+                e.what());
         
         return;
     }
@@ -5285,8 +5484,7 @@ void MMSEngineProcessor::extractTracksContentThread(
         );                            
         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what(), 
-                "" /* processorMMS */);
+                e.what());
 
         return;
     }
@@ -5550,7 +5748,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEvent (
         );                            
         _mmsEngineDBFacade->updateIngestionJob (multiLocalAssetIngestionEvent->getIngestionJobKey(),
             MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
-            e.what(), "" //ProcessorMMS
+            e.what()
         );
 
         bool exceptionInCaseOfError = false;
@@ -5585,7 +5783,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEvent (
         );                            
         _mmsEngineDBFacade->updateIngestionJob (multiLocalAssetIngestionEvent->getIngestionJobKey(),
             MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
-            e.what(), "" //ProcessorMMS
+            e.what()
         );
 
         bool exceptionInCaseOfError = false;
@@ -5917,7 +6115,7 @@ void MMSEngineProcessor::generateAndIngestFramesTask(
             );                            
             _mmsEngineDBFacade->updateIngestionJob (
                 ingestionJobKey, 
-                newIngestionStatus, errorMessage, processorMMS);
+                newIngestionStatus, errorMessage);
         }
         else
         {
@@ -6324,15 +6522,16 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
             sourcePhysicalPathKey = key;
             
             bool warningIfMissing = false;
-            tuple<int64_t,MMSEngineDBFacade::ContentType,string,string> mediaItemKeyContentTypeTitleAndUserData =
+            tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string> mediaItemKeyContentTypeTitleUserDataAndIngestionDate =
                 _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                     sourcePhysicalPathKey, warningIfMissing);
     
             MMSEngineDBFacade::ContentType localContentType;
             string localTitle;
             string userData;
-            tie(sourceMediaItemKey,localContentType, localTitle, userData)
-                    = mediaItemKeyContentTypeTitleAndUserData;
+			string ingestionDate;
+            tie(sourceMediaItemKey,localContentType, localTitle, userData, ingestionDate)
+                    = mediaItemKeyContentTypeTitleUserDataAndIngestionDate;
             
             sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourcePhysicalPathKey);
         }
@@ -6518,15 +6717,16 @@ void MMSEngineProcessor::manageSlideShowTask(
                 sourcePhysicalPathKey = key;
 
                 bool warningIfMissing = false;
-                tuple<int64_t,MMSEngineDBFacade::ContentType,string,string> mediaItemKeyContentTypeTitleAndUserData =
+                tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string> mediaItemKeyContentTypeTitleUserDataAndIngestionDate =
                     _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                         sourcePhysicalPathKey, warningIfMissing);
 
                 MMSEngineDBFacade::ContentType localContentType;
                 string localTitle;
                 string userData;
-                tie(sourceMediaItemKey,localContentType, localTitle, userData)
-                        = mediaItemKeyContentTypeTitleAndUserData;
+                string ingestionDate;
+                tie(sourceMediaItemKey,localContentType, localTitle, userData, ingestionDate)
+                        = mediaItemKeyContentTypeTitleUserDataAndIngestionDate;
 
                 sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourcePhysicalPathKey);
             }
@@ -6535,13 +6735,14 @@ void MMSEngineProcessor::manageSlideShowTask(
             
             bool warningIfMissing = false;
             
-            tuple<MMSEngineDBFacade::ContentType,string,string> contentTypeTitleAndUserData 
+            tuple<MMSEngineDBFacade::ContentType,string,string,string> contentTypeTitleUserDataAndIngestionDate 
                     = _mmsEngineDBFacade->getMediaItemKeyDetails(sourceMediaItemKey, warningIfMissing);
            
             MMSEngineDBFacade::ContentType contentType;
             string localTitle;
             string userData;
-            tie(contentType, localTitle, userData) = contentTypeTitleAndUserData;
+            string ingestionDate;
+            tie(contentType, localTitle, userData, ingestionDate) = contentTypeTitleUserDataAndIngestionDate;
             
             if (!slideshowContentTypeInitialized)
             {
@@ -6668,15 +6869,16 @@ void MMSEngineProcessor::generateAndIngestConcatenationTask(
                 sourcePhysicalPathKey = key;
 
                 bool warningIfMissing = false;
-                tuple<int64_t,MMSEngineDBFacade::ContentType,string,string> mediaItemKeyContentTypeTitleAndUserData =
+                tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string> mediaItemKeyContentTypeTitleUserDataAndIngestionDate =
                     _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                         sourcePhysicalPathKey, warningIfMissing);
 
                 MMSEngineDBFacade::ContentType localContentType;
                 string localTitle;
                 string userData;
-                tie(sourceMediaItemKey,localContentType, localTitle, userData)
-                        = mediaItemKeyContentTypeTitleAndUserData;
+                string ingestionDate;
+                tie(sourceMediaItemKey,localContentType, localTitle, userData, ingestionDate)
+                        = mediaItemKeyContentTypeTitleUserDataAndIngestionDate;
 
                 sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourcePhysicalPathKey);
             }
@@ -6684,7 +6886,7 @@ void MMSEngineProcessor::generateAndIngestConcatenationTask(
             sourcePhysicalPaths.push_back(sourcePhysicalPath);
             
             bool warningIfMissing = false;
-            tuple<int64_t,MMSEngineDBFacade::ContentType,string,string> mediaItemKeyContentTypeTitleAndUserData 
+            tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string> mediaItemKeyContentTypeTitleUserDataAndIngestionDate
                     = _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                         sourcePhysicalPathKey, warningIfMissing);
             
@@ -6693,7 +6895,8 @@ void MMSEngineProcessor::generateAndIngestConcatenationTask(
                 int64_t localMediaItemKey;
                 string localTitle;
                 string userData;
-                tie(localMediaItemKey, contentType, localTitle, userData) = mediaItemKeyContentTypeTitleAndUserData;                
+                string ingestionDate;
+                tie(localMediaItemKey, contentType, localTitle, userData, ingestionDate) = mediaItemKeyContentTypeTitleUserDataAndIngestionDate;
             }
             
             if (!concatContentTypeInitialized)
@@ -6920,28 +7123,30 @@ void MMSEngineProcessor::generateAndIngestCutMediaTask(
             sourcePhysicalPathKey = key;
             
             bool warningIfMissing = false;
-            tuple<int64_t,MMSEngineDBFacade::ContentType,string,string> mediaItemKeyContentTypeTitleAndUserData =
+            tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string> mediaItemKeyContentTypeTitleUserDataAndIngestionDate =
                 _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                     sourcePhysicalPathKey, warningIfMissing);
 
             MMSEngineDBFacade::ContentType localContentType;
             string localTitle;
             string userData;
-            tie(sourceMediaItemKey,localContentType, localTitle, userData)
-                    = mediaItemKeyContentTypeTitleAndUserData;
+            string ingestionDate;
+            tie(sourceMediaItemKey,localContentType, localTitle, userData, ingestionDate)
+                    = mediaItemKeyContentTypeTitleUserDataAndIngestionDate;
 
             sourcePhysicalPath = _mmsStorage->getPhysicalPath(sourcePhysicalPathKey);
         }
 
         bool warningIfMissing = false;
 
-        tuple<MMSEngineDBFacade::ContentType,string,string> contentTypeTitleAndUserData 
+        tuple<MMSEngineDBFacade::ContentType,string,string,string> contentTypeTitleUserDataAndIngestionDate
                 = _mmsEngineDBFacade->getMediaItemKeyDetails(sourceMediaItemKey, warningIfMissing);
         
         MMSEngineDBFacade::ContentType contentType;
         string localTitle;
         string userData;
-        tie(contentType, localTitle, userData) = contentTypeTitleAndUserData;
+        string ingestionDate;
+        tie(contentType, localTitle, userData, ingestionDate) = contentTypeTitleUserDataAndIngestionDate;
         
         if (contentType != MMSEngineDBFacade::ContentType::Video
                 && contentType != MMSEngineDBFacade::ContentType::Audio)
@@ -7283,16 +7488,17 @@ void MMSEngineProcessor::manageEncodeTask(
 				sourcePhysicalPathKey = key;
             
 				bool warningIfMissing = false;
-				tuple<int64_t,MMSEngineDBFacade::ContentType,string,string>
-					mediaItemKeyContentTypeTitleAndUserData =
+				tuple<int64_t,MMSEngineDBFacade::ContentType,string,string, string>
+					mediaItemKeyContentTypeTitleUserDataAndIngestionDate =
 					_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
 					sourcePhysicalPathKey, warningIfMissing);
 
 				MMSEngineDBFacade::ContentType localContentType;
 				string localTitle;
 				string userData;
-				tie(sourceMediaItemKey,localContentType, localTitle, userData)
-                    = mediaItemKeyContentTypeTitleAndUserData;
+                string ingestionDate;
+				tie(sourceMediaItemKey,localContentType, localTitle, userData, ingestionDate)
+                    = mediaItemKeyContentTypeTitleUserDataAndIngestionDate;
 			}
     
 			if (encodingProfileKey == -1)
@@ -7408,15 +7614,16 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
             sourcePhysicalPathKey_1 = key_1;
             
             bool warningIfMissing = false;
-            tuple<int64_t,MMSEngineDBFacade::ContentType,string,string> mediaItemKeyContentTypeTitleAndUserData =
+            tuple<int64_t,MMSEngineDBFacade::ContentType,string,string, string> mediaItemKeyContentTypeTitleUserDataAndIngestionDate =
                 _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                     sourcePhysicalPathKey_1, warningIfMissing);
 
             MMSEngineDBFacade::ContentType localContentType;
             string localTitle;
             string userData;
-            tie(sourceMediaItemKey_1,localContentType, localTitle, userData)
-                    = mediaItemKeyContentTypeTitleAndUserData;
+            string ingestionDate;
+            tie(sourceMediaItemKey_1,localContentType, localTitle, userData, ingestionDate)
+                    = mediaItemKeyContentTypeTitleUserDataAndIngestionDate;
         }
 
         int64_t sourceMediaItemKey_2;
@@ -7440,15 +7647,16 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
             sourcePhysicalPathKey_2 = key_2;
             
             bool warningIfMissing = false;
-            tuple<int64_t,MMSEngineDBFacade::ContentType,string,string> mediaItemKeyContentTypeTitleAndUserData =
+            tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string> mediaItemKeyContentTypeTitleUserDataAndIngestionDate =
                 _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                     sourcePhysicalPathKey_2, warningIfMissing);
 
             MMSEngineDBFacade::ContentType localContentType;
             string localTitle;
             string userData;
-            tie(sourceMediaItemKey_2,localContentType, localTitle, userData)
-                    = mediaItemKeyContentTypeTitleAndUserData;
+            string ingestionDate;
+            tie(sourceMediaItemKey_2,localContentType, localTitle, userData, ingestionDate)
+                    = mediaItemKeyContentTypeTitleUserDataAndIngestionDate;
         }
 
         _mmsEngineDBFacade->addEncoding_OverlayImageOnVideoJob (workspace, ingestionJobKey,
@@ -7611,15 +7819,16 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
             sourcePhysicalPathKey = key;
             
             bool warningIfMissing = false;
-            tuple<int64_t,MMSEngineDBFacade::ContentType,string,string> mediaItemKeyContentTypeTitleAndUserData =
+            tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string> mediaItemKeyContentTypeTitleUserDataAndIngestionDate =
                 _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                     sourcePhysicalPathKey, warningIfMissing);
 
             MMSEngineDBFacade::ContentType localContentType;
             string localTitle;
             string userData;
-            tie(sourceMediaItemKey,localContentType, localTitle, userData)
-                    = mediaItemKeyContentTypeTitleAndUserData;
+            string ingestionDate;
+            tie(sourceMediaItemKey,localContentType, localTitle, userData, ingestionDate)
+                    = mediaItemKeyContentTypeTitleUserDataAndIngestionDate;
         }
 
         _mmsEngineDBFacade->addEncoding_OverlayTextOnVideoJob (
@@ -7709,25 +7918,27 @@ void MMSEngineProcessor::manageEmailNotificationTask(
         	{
         		bool warningIfMissing = false;
 
-        		tuple<MMSEngineDBFacade::ContentType,string,string> contentTypeTitleAndUserData 
+        		tuple<MMSEngineDBFacade::ContentType,string,string,string> contentTypeTitleUserDataAndIngestionDate
                 	= _mmsEngineDBFacade->getMediaItemKeyDetails(key, warningIfMissing);
         
         		MMSEngineDBFacade::ContentType contentType;
         		string userData;
-        		tie(contentType, firstTitle, userData) = contentTypeTitleAndUserData;
+                string ingestionDate;
+        		tie(contentType, firstTitle, userData, ingestionDate) = contentTypeTitleUserDataAndIngestionDate;
         	}
         	else
         	{
             	bool warningIfMissing = false;
-            	tuple<int64_t,MMSEngineDBFacade::ContentType,string,string> mediaItemKeyContentTypeTitleAndUserData =
+            	tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string> mediaItemKeyContentTypeTitleUserDataAndIngestionDate =
                 	_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
                     	key, warningIfMissing);
 
 				int64_t sourceMediaItemKey;
             	MMSEngineDBFacade::ContentType localContentType;
             	string userData;
-            	tie(sourceMediaItemKey,localContentType, firstTitle, userData)
-                    = mediaItemKeyContentTypeTitleAndUserData;
+                string ingestionDate;
+            	tie(sourceMediaItemKey,localContentType, firstTitle, userData, ingestionDate)
+                    = mediaItemKeyContentTypeTitleUserDataAndIngestionDate;
         	}
 		}
 
@@ -7780,8 +7991,7 @@ void MMSEngineProcessor::manageEmailNotificationTask(
         );                            
         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
                 MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
-                "", // errorMessage
-                "" // ProcessorMMS
+                "" // errorMessage
         );
     }
     catch(runtime_error e)
@@ -8713,7 +8923,7 @@ RESUMING FILE TRANSFERS
                     );                            
                     _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                             MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                            e.what(), "" /* processorMMS */ );
+                            e.what());
 
                     return;
                 }
@@ -8760,7 +8970,7 @@ RESUMING FILE TRANSFERS
                     );                            
                     _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                             MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                            e.what(), "" /* processorMMS */);
+                            e.what());
 
                     return;
                 }
@@ -8807,7 +9017,7 @@ RESUMING FILE TRANSFERS
                     );                            
                     _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                             MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                            e.what(), "" /* processorMMS */);
+                            e.what());
                     
                     return;
                 }
@@ -8950,8 +9160,7 @@ void MMSEngineProcessor::ftpUploadMediaSourceThread(
         );                            
         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
                 MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
-                "", // errorMessage
-                "" // ProcessorMMS
+                "" // errorMessage
         );
     }
     catch (curlpp::LogicError & e) 
@@ -8971,8 +9180,7 @@ void MMSEngineProcessor::ftpUploadMediaSourceThread(
         );                            
         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what(), 
-                "");    // processorMMS
+                e.what());
 
         return;
     }
@@ -8993,8 +9201,7 @@ void MMSEngineProcessor::ftpUploadMediaSourceThread(
         );                            
         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what(), 
-                ""); // processorMMS
+                e.what());
 
         return;
     }
@@ -9015,8 +9222,7 @@ void MMSEngineProcessor::ftpUploadMediaSourceThread(
         );                            
         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what(), 
-                ""); // processorMMS
+                e.what());
 
         return;
     }
@@ -9847,8 +10053,7 @@ void MMSEngineProcessor::postVideoOnFacebookThread(
             );                            
             _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
                     MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
-                    "", // errorMessage
-                    "" // ProcessorMMS
+                    "" // errorMessage
             );
         }
     }
@@ -9868,8 +10073,7 @@ void MMSEngineProcessor::postVideoOnFacebookThread(
         );                            
         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what(), 
-                "");    // processorMMS
+                e.what());
 
         return;
     }
@@ -9889,8 +10093,7 @@ void MMSEngineProcessor::postVideoOnFacebookThread(
         );                            
         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what(), 
-                "");    // processorMMS
+                e.what());
 
         return;
     }
@@ -9909,8 +10112,7 @@ void MMSEngineProcessor::postVideoOnFacebookThread(
         );                            
         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what(), 
-                "");    // processorMMS
+                e.what());
 
         return;
     }
@@ -9929,8 +10131,7 @@ void MMSEngineProcessor::postVideoOnFacebookThread(
         );                            
         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what(), 
-                "");    // processorMMS
+                e.what());
 
         return;
     }
@@ -10598,8 +10799,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
             );                            
             _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
                     MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
-                    "", // errorMessage
-                    "" // ProcessorMMS
+                    "" // errorMessage
             );
         }
     }
@@ -10620,8 +10820,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
         );                            
         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what(), 
-                "");    // processorMMS
+                e.what());
 
         return;
     }
@@ -10642,8 +10841,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
         );                            
         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what(), 
-                "");    // processorMMS
+                e.what());
 
         return;
     }
@@ -10662,8 +10860,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
         );                            
         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what(), 
-                "");    // processorMMS
+                e.what());
 
         return;
     }
@@ -10682,8 +10879,7 @@ void MMSEngineProcessor::postVideoOnYouTubeThread(
         );
         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what(), 
-                "");    // processorMMS
+                e.what());
 
         return;
     }
@@ -11068,8 +11264,7 @@ void MMSEngineProcessor::userHttpCallbackThread(
         );                            
         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey,
                 MMSEngineDBFacade::IngestionStatus::End_TaskSuccess, 
-                "", // errorMessage
-                "" // ProcessorMMS
+                "" // errorMessage
         );
     }
     catch (curlpp::LogicError & e) 
@@ -11088,8 +11283,7 @@ void MMSEngineProcessor::userHttpCallbackThread(
         );                            
         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what(), 
-                "");    // processorMMS
+                e.what());
 
         return;
     }
@@ -11109,8 +11303,7 @@ void MMSEngineProcessor::userHttpCallbackThread(
         );                            
         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what(), 
-                "");    // processorMMS
+                e.what());
 
         return;
     }
@@ -11130,8 +11323,7 @@ void MMSEngineProcessor::userHttpCallbackThread(
         );                            
         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what(), 
-                "");    // processorMMS
+                e.what());
 
         return;
     }
@@ -11151,8 +11343,7 @@ void MMSEngineProcessor::userHttpCallbackThread(
         );                            
         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what(), 
-                "");    // processorMMS
+                e.what());
 
         return;
     }
@@ -11223,7 +11414,7 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
         );                            
         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what(), "" /* processorMMS */);
+                e.what());
         
         return;
     }
@@ -11244,7 +11435,7 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
         );                            
         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what(), "" /* processorMMS */);
+                e.what());
 
         return;
     }
@@ -11315,7 +11506,7 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
         );                            
         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what(), "" /* processorMMS */);
+                e.what());
         
         return;
     }
@@ -11336,8 +11527,7 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
         );                            
         _mmsEngineDBFacade->updateIngestionJob (ingestionJobKey, 
                 MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, 
-                e.what(), 
-                "" /* processorMMS */);
+                e.what());
 
         return;
     }

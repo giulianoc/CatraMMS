@@ -843,6 +843,8 @@ public:
         // int maxIngestionJobsWithDependencyToCheck
     );
 
+	void setNotToBeExecutedStartingFrom (int64_t ingestionJobKey);
+
 	void manageMainAndBackupOfRunnungLiveRecordingHA();
 
     shared_ptr<MySQLConnection> beginIngestionJobs ();
@@ -877,14 +879,14 @@ public:
         int64_t ingestionJobKey,
         IngestionStatus newIngestionStatus,
         string errorMessage,
-        string processorMMS);
+        string processorMMS = "noToBeUpdated");
 
     void updateIngestionJob (
         shared_ptr<MySQLConnection> conn,
         int64_t ingestionJobKey,
         IngestionStatus newIngestionStatus,
         string errorMessage,
-        string processorMMS);
+        string processorMMS = "noToBeUpdated");
 
     /*
     void updateIngestionJob (
@@ -931,6 +933,7 @@ public:
         shared_ptr<Workspace> workspace, int64_t ingestionJobKey,
         int start, int rows,
         bool startAndEndIngestionDatePresent, string startIngestionDate, string endIngestionDate,
+		string ingestionType,
         bool asc, string status);
 
     Json::Value getEncodingJobsStatus (
@@ -963,10 +966,10 @@ public:
         int64_t mediaItemKey, ContentType contentType,
         string encodingProfileLabel);
 
-    tuple<MMSEngineDBFacade::ContentType,string,string> getMediaItemKeyDetails(
+    tuple<MMSEngineDBFacade::ContentType,string,string,string> getMediaItemKeyDetails(
         int64_t mediaItemKey, bool warningIfMissing);
 
-    tuple<int64_t,MMSEngineDBFacade::ContentType,string,string> getMediaItemKeyDetailsByPhysicalPathKey(
+    tuple<int64_t,MMSEngineDBFacade::ContentType,string,string,string> getMediaItemKeyDetailsByPhysicalPathKey(
         int64_t physicalPathKey, bool warningIfMissing);
     
     void getMediaItemDetailsByIngestionJobKey(
@@ -1407,6 +1410,7 @@ private:
     void manageIngestionJobStatusUpdate (
         int64_t ingestionJobKey,
         IngestionStatus newIngestionStatus,
+		bool updateIngestionRootStatus,
         shared_ptr<MySQLConnection> conn);
 
     pair<int64_t,int64_t> getWorkspaceUsage(
