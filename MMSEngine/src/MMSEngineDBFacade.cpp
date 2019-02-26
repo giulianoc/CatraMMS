@@ -4240,14 +4240,14 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                         "and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) "
                         "limit ? offset ? for update";
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                int queryParameterIndex = 1;
-                preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::Start_TaskQueued));
-                preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress));
-                preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress));
-                preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress));
-                preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress));
-                preparedStatement->setInt(queryParameterIndex++, mysqlRowCount);
-                preparedStatement->setInt(queryParameterIndex++, mysqlOffset);
+                int queryParameterIndexIngestionJob = 1;
+                preparedStatement->setString(queryParameterIndexIngestionJob++, MMSEngineDBFacade::toString(IngestionStatus::Start_TaskQueued));
+                preparedStatement->setString(queryParameterIndexIngestionJob++, MMSEngineDBFacade::toString(IngestionStatus::SourceDownloadingInProgress));
+                preparedStatement->setString(queryParameterIndexIngestionJob++, MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress));
+                preparedStatement->setString(queryParameterIndexIngestionJob++, MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress));
+                preparedStatement->setString(queryParameterIndexIngestionJob++, MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress));
+                preparedStatement->setInt(queryParameterIndexIngestionJob++, mysqlRowCount);
+                preparedStatement->setInt(queryParameterIndexIngestionJob++, mysqlOffset);
 
                 shared_ptr<sql::ResultSet> resultSet (preparedStatement->executeQuery());
 
@@ -4275,8 +4275,8 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                     lastSQLCommand = 
                         "select dependOnIngestionJobKey, dependOnSuccess from MMS_IngestionJobDependency where ingestionJobKey = ? order by orderNumber asc";
                     shared_ptr<sql::PreparedStatement> preparedStatementDependency (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                    int queryParameterIndex = 1;
-                    preparedStatementDependency->setInt64(queryParameterIndex++, ingestionJobKey);
+                    int queryParameterIndexDependency = 1;
+                    preparedStatementDependency->setInt64(queryParameterIndexDependency++, ingestionJobKey);
 
                     int64_t dependOnIngestionJobKey = -1;
                     int dependOnSuccess = -1;
@@ -4295,8 +4295,8 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                             lastSQLCommand = 
                                 "select status from MMS_IngestionJob where ingestionJobKey = ?";
                             shared_ptr<sql::PreparedStatement> preparedStatementIngestionJob (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                            int queryParameterIndex = 1;
-                            preparedStatementIngestionJob->setInt64(queryParameterIndex++, dependOnIngestionJobKey);
+                            int queryParameterIndexStatus = 1;
+                            preparedStatementIngestionJob->setInt64(queryParameterIndexStatus++, dependOnIngestionJobKey);
 
                             shared_ptr<sql::ResultSet> resultSetIngestionJob (preparedStatementIngestionJob->executeQuery());
                             if (resultSetIngestionJob->next())
@@ -4357,11 +4357,14 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                     
                     if (!atLeastOneDependencyRowFound)
                     {
-			// this is not possible, even the ingestionJob without dependency
-                        // have a row here with dependOnIngestionJobKey NULL
+						// this is not possible, even an ingestionJob without dependency has a row
+						// (with dependOnIngestionJobKey NULL)
 
                         _logger->error(__FILEREF__ + "No dependency Row for the IngestionJob"
                             + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                            + ", workspaceKey: " + to_string(workspaceKey)
+                            + ", ingestionStatus: " + to_string(static_cast<int>(ingestionStatus))
+                            + ", ingestionType: " + to_string(static_cast<int>(ingestionType))
                         );
                     	ingestionJobToBeManaged = false;
                     }
@@ -5332,7 +5335,9 @@ void MMSEngineDBFacade::updateIngestionJob (
                 ;
                 _logger->error(errorMessage);
 
-                throw runtime_error(errorMessage);                    
+				// it is not so important to block the continuation of this method
+				// Also the exception caused a crash of the process
+                // throw runtime_error(errorMessage);                    
             }            
         }
         else
@@ -5372,7 +5377,9 @@ void MMSEngineDBFacade::updateIngestionJob (
                 ;
                 _logger->error(errorMessage);
 
-                throw runtime_error(errorMessage);                    
+				// it is not so important to block the continuation of this method
+				// Also the exception caused a crash of the process
+                // throw runtime_error(errorMessage);                    
             }
         }
             

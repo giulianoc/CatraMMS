@@ -162,10 +162,6 @@ void ActiveEncodingsManager::operator()()
                             {
 
                             }
-                            catch(NoEncodingJobKeyFound e)
-                            {
-
-                            }
                             catch(runtime_error e)
                             {
                                 _logger->error(__FILEREF__ + "getEncodingProgress failed"

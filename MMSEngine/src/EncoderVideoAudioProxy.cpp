@@ -433,6 +433,7 @@ void EncoderVideoAudioProxy::operator()()
         _logger->info(__FILEREF__ + "_mmsEngineDBFacade->updateEncodingJob PunctualError"
             + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
             + ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+            + ", main: " + to_string(main)
             + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
             + ", _encodingItem->_encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
             + ", _encodingItem->_encodingParameters: " + _encodingItem->_encodingParameters
@@ -6283,6 +6284,7 @@ string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
             string errorMessage = __FILEREF__ + "No segment list file found yet"
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                     + ", segmentListPathName: " + segmentListPathName;
+                    + ", lastRecordedAssetFileName: " + lastRecordedAssetFileName;
             _logger->warn(errorMessage);
 
 			return lastRecordedAssetFileName;
@@ -6450,12 +6452,19 @@ string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
 
 			if (lastRecordedAssetFileName == "")
 			{
-				_logger->info(__FILEREF__ + "The first asset file name is not ingested because it does not contain the entire period"
+				_logger->info(__FILEREF__ + "The first asset file name is not ingested because it does not contain the entire period and it will be removed"
 					+ ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
 					+ ", _encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
 					+ ", currentRecordedAssetPathName: " + currentRecordedAssetPathName
 					+ ", title: " + newTitle
 				);
+
+				_logger->info(__FILEREF__ + "Remove"
+					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+					+ ", currentRecordedAssetPathName: " + currentRecordedAssetPathName
+				);
+
+                FileIO::remove(currentRecordedAssetPathName);
 			}
 			else
 			{
@@ -7212,19 +7221,16 @@ int EncoderVideoAudioProxy::getEncodingProgress()
 					{
 						string error = encodeProgressResponse.get(field, "XXX").asString();
                     
-						// same string declared in FFMPEGEncoder.cpp
-						string noEncodingJobKeyFound("__NO-ENCODINGJOBKEY-FOUND__");
-            
-						if (error.find(noEncodingJobKeyFound) != string::npos)
+						if (error.find(EncodingStatusNotAvailable().what()) != string::npos)
 						{
-							string errorMessage = string("No EncodingJobKey found")
+							string errorMessage = string(EncodingStatusNotAvailable().what())
 								+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                                 + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                                 + ", sResponse: " + sResponse
                                 ;
 							_logger->warn(__FILEREF__ + errorMessage);
 
-							throw NoEncodingJobKeyFound();
+							throw EncodingStatusNotAvailable();
 						}
 						else
 						{
@@ -7264,16 +7270,15 @@ int EncoderVideoAudioProxy::getEncodingProgress()
 						}
 					}                        
 				}
-				catch(NoEncodingJobKeyFound e)
+				catch(EncodingStatusNotAvailable e)
 				{
-					string errorMessage = string("NoEncodingJobKeyFound")
+					string errorMessage = string(e.what())
                         + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                         + ", sResponse: " + sResponse
-                        + ", e.what(): " + e.what()
                         ;
 					_logger->warn(__FILEREF__ + errorMessage);
 
-					throw NoEncodingJobKeyFound();
+					throw EncodingStatusNotAvailable();
 				}
 				catch(runtime_error e)
 				{
@@ -7323,9 +7328,9 @@ int EncoderVideoAudioProxy::getEncodingProgress()
 
 				throw runtime_error(errorMessage);
 			}
-			catch (NoEncodingJobKeyFound e)
+			catch (EncodingStatusNotAvailable e)
 			{
-				_logger->warn(__FILEREF__ + "Progress URL failed (NoEncodingJobKeyFound)"
+				_logger->warn(__FILEREF__ + "Progress URL failed (EncodingStatusNotAvailable)"
 					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
 					+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) 
 					+ ", ffmpegEncoderURL: " + ffmpegEncoderURL 
@@ -7476,17 +7481,19 @@ pair<bool,bool> EncoderVideoAudioProxy::getEncodingStatus()
         );
         request.perform();
         chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
-        _logger->info(__FILEREF__ + "getEncodingStatus"
-                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-                + ", ffmpegEncoderURL: " + ffmpegEncoderURL
-                + ", encodingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count())
-        );
 
         string sResponse = response.str();
         // LF and CR create problems to the json parser...
         while (sResponse.back() == 10 || sResponse.back() == 13)
             sResponse.pop_back();
-            
+
+        _logger->info(__FILEREF__ + "getEncodingStatus"
+                + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+                + ", ffmpegEncoderURL: " + ffmpegEncoderURL
+                + ", sResponse: " + sResponse
+                + ", encodingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count())
+        );
+
         try
         {
             Json::Value encodeStatusResponse;

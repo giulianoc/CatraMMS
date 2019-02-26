@@ -35,13 +35,6 @@ struct MaxConcurrentJobsReached: public exception {
     }; 
 };
 
-struct NoEncodingJobKeyFound: public exception {
-    char const* what() const throw() 
-    {
-        return "No Encoding Job Key Found";
-    }; 
-};
-
 struct EncoderError: public exception {
     char const* what() const throw() 
     {

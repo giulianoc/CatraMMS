@@ -621,7 +621,7 @@ public:
             case IngestionStatus::End_TaskSuccess:
                 return "End_TaskSuccess";
             default:
-            throw runtime_error(string("Wrong IngestionStatus"));
+            throw runtime_error(string("Wrong IngestionStatus: ") + to_string(static_cast<int>(ingestionStatus)));
         }
     }
     static IngestionStatus toIngestionStatus(const string& ingestionStatus)
