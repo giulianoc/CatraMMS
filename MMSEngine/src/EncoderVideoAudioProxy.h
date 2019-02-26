@@ -56,12 +56,14 @@ enum class EncodingJobStatus
     Running
 };
 
+/*
 struct EncodingStatusNotAvailable: public exception {
     char const* what() const throw() 
     {
         return "Encoding status not available";
     }; 
 };
+*/
 
 class EncoderVideoAudioProxy {
 public:

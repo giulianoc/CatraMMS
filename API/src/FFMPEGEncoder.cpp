@@ -234,11 +234,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
         if (!encodingFound)
         {
-            // same string declared in EncoderVideoAudioProxy.cpp
-            string noEncodingAvailableMessage("__NO-ENCODING-AVAILABLE__");
-            
             string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-                    + ", " + noEncodingAvailableMessage;
+				+ ", " + NoEncodingAvailable().what();
             
             _logger->warn(__FILEREF__ + errorMessage);
 
@@ -336,11 +333,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
         if (!encodingFound)
         {
-            // same string declared in EncoderVideoAudioProxy.cpp
-            string noEncodingAvailableMessage("__NO-ENCODING-AVAILABLE__");
-            
             string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-                    + ", " + noEncodingAvailableMessage;
+				+ ", " + NoEncodingAvailable().what();
             
             _logger->warn(__FILEREF__ + errorMessage);
 
@@ -438,11 +432,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
         if (!encodingFound)
         {
-            // same string declared in EncoderVideoAudioProxy.cpp
-            string noEncodingAvailableMessage("__NO-ENCODING-AVAILABLE__");
-            
             string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-                    + ", " + noEncodingAvailableMessage;
+				+ ", " + NoEncodingAvailable().what();
             
             _logger->warn(__FILEREF__ + errorMessage);
 
@@ -540,11 +531,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
         if (!encodingFound)
         {
-            // same string declared in EncoderVideoAudioProxy.cpp
-            string noEncodingAvailableMessage("__NO-ENCODING-AVAILABLE__");
-            
             string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-                    + ", " + noEncodingAvailableMessage;
+				+ ", " + NoEncodingAvailable().what();
             
             _logger->warn(__FILEREF__ + errorMessage);
 
@@ -642,11 +630,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
         if (!encodingFound)
         {
-            // same string declared in EncoderVideoAudioProxy.cpp
-            string noEncodingAvailableMessage("__NO-ENCODING-AVAILABLE__");
-            
             string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-                    + ", " + noEncodingAvailableMessage;
+				+ ", " + NoEncodingAvailable().what();
             
             _logger->warn(__FILEREF__ + errorMessage);
 
@@ -744,11 +729,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
         if (!liveRecordingFound)
         {
-            // same string declared in EncoderVideoAudioProxy.cpp
-            string noEncodingAvailableMessage("__NO-ENCODING-AVAILABLE__");
-            
             string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-                    + ", " + noEncodingAvailableMessage;
+				+ ", " + NoEncodingAvailable().what();
             
             _logger->warn(__FILEREF__ + errorMessage);
 
@@ -986,17 +968,15 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
         if (!encodingFound)
         {
-            // same string declared in EncoderVideoAudioProxy.cpp
-            string noEncodingJobKeyFound("__NO-ENCODINGJOBKEY-FOUND__");
-            
             string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
-                    + ", " + noEncodingJobKeyFound;
+				+ ", " + NoEncodingJobKeyFound().what();
             
             _logger->error(__FILEREF__ + errorMessage);
 
             sendError(request, 400, errorMessage);
 
-            throw runtime_error(errorMessage);
+            // throw runtime_error(errorMessage);
+			return;
         }
 
         int encodingProgress;
@@ -1101,6 +1081,19 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				}
 			}
 		}
+
+        if (!encodingFound)
+        {
+            string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
+				+ ", " + NoEncodingJobKeyFound().what();
+            
+            _logger->error(__FILEREF__ + errorMessage);
+
+            sendError(request, 400, errorMessage);
+
+            // throw runtime_error(errorMessage);
+			return;
+        }
 
 		_logger->info(__FILEREF__ + "Found Encoding to kill"
 				+ ", encodingJobKey: " + to_string(encodingJobKey)

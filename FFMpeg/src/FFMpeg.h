@@ -42,6 +42,20 @@ struct FFMpegEncodingKilledByUser: public exception {
     }; 
 };
 
+struct NoEncodingJobKeyFound: public exception {
+    char const* what() const throw() 
+    {
+        return "No encoding job key found";
+    }; 
+};
+
+struct NoEncodingAvailable: public exception {
+    char const* what() const throw() 
+    {
+        return "No encoding available";
+    }; 
+};
+
 class FFMpeg {
 public:
     FFMpeg(Json::Value configuration,

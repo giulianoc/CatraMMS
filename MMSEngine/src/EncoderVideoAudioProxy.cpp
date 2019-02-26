@@ -1264,9 +1264,6 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
             }
 
             {
-                // same string declared in FFMPEGEncoder.cpp
-                string noEncodingAvailableMessage("__NO-ENCODING-AVAILABLE__");
-            
                 string field = "error";
                 if (Validator::isMetadataPresent(encodeContentResponse, field))
                 {
@@ -1310,7 +1307,7 @@ pair<string, bool> EncoderVideoAudioProxy::encodeContent_VideoAudio_through_ffmp
                     
                     string error = encodeContentResponse.get(field, "XXX").asString();
                     
-                    if (error.find(noEncodingAvailableMessage) != string::npos)
+                    if (error.find(NoEncodingAvailable().what()) != string::npos)
                     {
                         string errorMessage = string("No Encodings available")
                                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -2161,15 +2158,12 @@ pair<string, bool> EncoderVideoAudioProxy::overlayImageOnVideo_through_ffmpeg()
             }
 
             {
-                // same string declared in FFMPEGEncoder.cpp
-                string noEncodingAvailableMessage("__NO-ENCODING-AVAILABLE__");
-            
                 string field = "error";
                 if (Validator::isMetadataPresent(overlayContentResponse, field))
                 {
                     string error = overlayContentResponse.get(field, "XXX").asString();
                     
-                    if (error.find(noEncodingAvailableMessage) != string::npos)
+                    if (error.find(NoEncodingAvailable().what()) != string::npos)
                     {
                         string errorMessage = string("No Encodings available")
                                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -2998,15 +2992,12 @@ pair<string, bool> EncoderVideoAudioProxy::overlayTextOnVideo_through_ffmpeg()
             }
 
             {
-                // same string declared in FFMPEGEncoder.cpp
-                string noEncodingAvailableMessage("__NO-ENCODING-AVAILABLE__");
-            
                 string field = "error";
                 if (Validator::isMetadataPresent(overlayTextContentResponse, field))
                 {
                     string error = overlayTextContentResponse.get(field, "XXX").asString();
-                    
-                    if (error.find(noEncodingAvailableMessage) != string::npos)
+
+                    if (error.find(NoEncodingAvailable().what()) != string::npos)
                     {
                         string errorMessage = string("No Encodings available")
                                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -3837,15 +3828,12 @@ bool EncoderVideoAudioProxy::generateFrames_through_ffmpeg()
             }
 
             {
-                // same string declared in FFMPEGEncoder.cpp
-                string noEncodingAvailableMessage("__NO-ENCODING-AVAILABLE__");
-            
                 string field = "error";
                 if (Validator::isMetadataPresent(generateFramesContentResponse, field))
                 {
                     string error = generateFramesContentResponse.get(field, "XXX").asString();
                     
-                    if (error.find(noEncodingAvailableMessage) != string::npos)
+                    if (error.find(NoEncodingAvailable().what()) != string::npos)
                     {
                         string errorMessage = string("No Encodings available")
                                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -4351,15 +4339,12 @@ pair<string, bool> EncoderVideoAudioProxy::slideShow_through_ffmpeg()
             }
 
             {
-                // same string declared in FFMPEGEncoder.cpp
-                string noEncodingAvailableMessage("__NO-ENCODING-AVAILABLE__");
-            
                 string field = "error";
                 if (Validator::isMetadataPresent(slideShowContentResponse, field))
                 {
                     string error = slideShowContentResponse.get(field, "XXX").asString();
                     
-                    if (error.find(noEncodingAvailableMessage) != string::npos)
+                    if (error.find(NoEncodingAvailable().what()) != string::npos)
                     {
                         string errorMessage = string("No Encodings available")
                                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -5767,8 +5752,15 @@ tuple<string, bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 			+ ".liveRecorder.list"
 		;
 
-		// In case we are coming from a restart, we will clean
-		// the segment files list
+		recordedFileNamePrefix = string("liveRecorder_") + to_string(
+				_encodingItem->_ingestionJobKey);
+    }
+
+	time_t utcNow = 0;
+	while (!killedByUser && utcNow < utcRecordingPeriodEnd)
+	{
+		// In case we are coming from a restart or ffmpef recorder is finished unexpectely,
+		// we will clean the segment files list
 		if (FileIO::fileExisting(segmentListPathName))
 		{
 			_logger->info(__FILEREF__ + "Remove"
@@ -5777,13 +5769,6 @@ tuple<string, bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 			FileIO::remove(segmentListPathName, exceptionInCaseOfError);
 		}
 
-		recordedFileNamePrefix = string("liveRecorder_") + to_string(
-				_encodingItem->_ingestionJobKey);
-    }
-
-	time_t utcNow = 0;
-	while (!killedByUser && utcNow < utcRecordingPeriodEnd)
-	{
     #ifdef __LOCALENCODER__
 		(*_pRunningEncodingsNumber)++;
     #else
@@ -5976,15 +5961,12 @@ tuple<string, bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
             }
 
             {
-                // same string declared in FFMPEGEncoder.cpp
-                string noEncodingAvailableMessage("__NO-ENCODING-AVAILABLE__");
-            
                 string field = "error";
                 if (Validator::isMetadataPresent(liveRecorderContentResponse, field))
                 {
                     string error = liveRecorderContentResponse.get(field, "XXX").asString();
                     
-                    if (error.find(noEncodingAvailableMessage) != string::npos)
+                    if (error.find(NoEncodingAvailable().what()) != string::npos)
                     {
                         string errorMessage = string("No Encodings available")
                                 + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -7221,16 +7203,16 @@ int EncoderVideoAudioProxy::getEncodingProgress()
 					{
 						string error = encodeProgressResponse.get(field, "XXX").asString();
                     
-						if (error.find(EncodingStatusNotAvailable().what()) != string::npos)
+						if (error.find(FFMpegEncodingStatusNotAvailable().what()) != string::npos)
 						{
-							string errorMessage = string(EncodingStatusNotAvailable().what())
+							string errorMessage = string(FFMpegEncodingStatusNotAvailable().what())
 								+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                                 + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
                                 + ", sResponse: " + sResponse
                                 ;
 							_logger->warn(__FILEREF__ + errorMessage);
 
-							throw EncodingStatusNotAvailable();
+							throw FFMpegEncodingStatusNotAvailable();
 						}
 						else
 						{
@@ -7270,7 +7252,7 @@ int EncoderVideoAudioProxy::getEncodingProgress()
 						}
 					}                        
 				}
-				catch(EncodingStatusNotAvailable e)
+				catch(FFMpegEncodingStatusNotAvailable e)
 				{
 					string errorMessage = string(e.what())
                         + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
@@ -7278,7 +7260,7 @@ int EncoderVideoAudioProxy::getEncodingProgress()
                         ;
 					_logger->warn(__FILEREF__ + errorMessage);
 
-					throw EncodingStatusNotAvailable();
+					throw FFMpegEncodingStatusNotAvailable();
 				}
 				catch(runtime_error e)
 				{
@@ -7328,7 +7310,7 @@ int EncoderVideoAudioProxy::getEncodingProgress()
 
 				throw runtime_error(errorMessage);
 			}
-			catch (EncodingStatusNotAvailable e)
+			catch (FFMpegEncodingStatusNotAvailable e)
 			{
 				_logger->warn(__FILEREF__ + "Progress URL failed (EncodingStatusNotAvailable)"
 					+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)

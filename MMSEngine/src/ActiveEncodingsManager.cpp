@@ -12,6 +12,7 @@
  */
 
 #include "ActiveEncodingsManager.h"
+#include "FFMpeg.h"
 
 ActiveEncodingsManager::ActiveEncodingsManager(
     Json::Value configuration,
@@ -158,7 +159,7 @@ void ActiveEncodingsManager::operator()()
                                 _mmsEngineDBFacade->updateEncodingJobProgress (encodingJob->_encodingItem->_encodingJobKey, 
                                     encodingPercentage);
                             }
-                            catch(EncodingStatusNotAvailable e)
+                            catch(FFMpegEncodingStatusNotAvailable e)
                             {
 
                             }
