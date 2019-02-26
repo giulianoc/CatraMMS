@@ -6031,7 +6031,7 @@ tuple<string, bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 					tie(encodingFinished, killedByUser) = encodingStatus;
 
 					lastRecordedAssetFileName = processLastGeneratedLiveRecorderFiles(
-						highAvailability, main, segmentListPathName, recordedFileNamePrefix,
+						highAvailability, main, segmentDurationInSeconds, segmentListPathName, recordedFileNamePrefix,
 						contentsPath, lastRecordedAssetFileName);
                 }
                 catch(...)
@@ -6259,7 +6259,7 @@ void EncoderVideoAudioProxy::processLiveRecorder(string stagingEncodedAssetPathN
 }
 
 string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
-	bool highAvailability, bool main, string segmentListPathName, string recordedFileNamePrefix,
+	bool highAvailability, bool main, int segmentDurationInSeconds, string segmentListPathName, string recordedFileNamePrefix,
 	string contentsPath, string lastRecordedAssetFileName)
 {
 
@@ -6354,8 +6354,11 @@ string EncoderVideoAudioProxy::processLastGeneratedLiveRecorderFiles(
 
 			newLastRecordedAssetFileName = currentRecordedAssetFileName;
 
+			time_t utcCurrentRecordedFileLastModificationTime = utcCurrentRecordedFileCreationTime + segmentDurationInSeconds;
+			/*
 			time_t utcCurrentRecordedFileLastModificationTime = getMediaLiveRecorderEndTime(
 				currentRecordedAssetPathName);
+			*/
 
 			// UserData
 			Json::Value userDataRoot;

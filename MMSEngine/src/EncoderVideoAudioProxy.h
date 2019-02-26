@@ -184,8 +184,8 @@ private:
 			string recordedFileNamePrefix);
 	time_t getMediaLiveRecorderStartTime(string mediaLiveRecorderFileName);
 	time_t getMediaLiveRecorderEndTime(string mediaLiveRecorderFileName);
-	string processLastGeneratedLiveRecorderFiles(bool highAvailability, bool main, string segmentListPathName,
-		string recordedFileNamePrefix, string contentsPath, string lastRecordedAssetFileName);
+	string processLastGeneratedLiveRecorderFiles(bool highAvailability, bool main, int segmentDurationInSeconds,
+		string segmentListPathName, string recordedFileNamePrefix, string contentsPath, string lastRecordedAssetFileName);
 	void ingestRecordedMedia(
 		string currentRecordedAssetPathName,
 		string title,
