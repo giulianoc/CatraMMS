@@ -17159,9 +17159,9 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
 
                 _logger->info(__FILEREF__ + "insert into MMS_IngestionJobOutput"
                     + ", ingestionJobKey: " + to_string(ingestionJobKey)
-                    + ", mediaItemKey: " + toString(mediaItemKey)
-                    + ", physicalPathKey: " + toString(physicalPathKey)
-                    + ", rowsUpdated: " + toString(rowsUpdated)
+                    + ", mediaItemKey: " + to_string(mediaItemKey)
+                    + ", physicalPathKey: " + to_string(physicalPathKey)
+                    + ", rowsUpdated: " + to_string(rowsUpdated)
                 );                            
             }
 
