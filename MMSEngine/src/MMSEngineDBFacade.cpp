@@ -17144,6 +17144,20 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
         }
         
         {
+            {
+                lastSQLCommand = 
+                    "insert into MMS_IngestionJobOutput (ingestionJobKey, mediaItemKey, physicalPathKey) values ("
+                    "?, ?, ?)";
+
+                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
+                int queryParameterIndex = 1;
+                preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
+                preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
+                preparedStatement->setInt64(queryParameterIndex++, physicalPathKey);
+
+                preparedStatement->executeUpdate();
+            }
+
             if (ingestionRowToBeUpdatedAsSuccess)
             {
                 // we can have two scenarios:
@@ -17164,20 +17178,6 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                     + ", processorMMS: " + processorMMS
                 );                            
                 updateIngestionJob (conn, ingestionJobKey, newIngestionStatus, errorMessage);
-            }
-
-            {
-                lastSQLCommand = 
-                    "insert into MMS_IngestionJobOutput (ingestionJobKey, mediaItemKey, physicalPathKey) values ("
-                    "?, ?, ?)";
-
-                shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
-                int queryParameterIndex = 1;
-                preparedStatement->setInt64(queryParameterIndex++, ingestionJobKey);
-                preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
-                preparedStatement->setInt64(queryParameterIndex++, physicalPathKey);
-
-                preparedStatement->executeUpdate();
             }
         }
 
