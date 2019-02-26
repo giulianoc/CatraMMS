@@ -11387,12 +11387,15 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
             + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
         );
         
+		chrono::system_clock::time_point startMoving = chrono::system_clock::now();
         FileIO::moveFile(sourcePathName, workspaceIngestionBinaryPathName);
+        chrono::system_clock::time_point endMoving = chrono::system_clock::now();
             
         _logger->info(__FILEREF__ + "Update IngestionJob"
                 + ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", movingCompleted: " + to_string(true)
+			+ ", movingDuration (millisecs): " + to_string(chrono::duration_cast<chrono::milliseconds>(endMoving - startMoving).count())
         );                            
         _mmsEngineDBFacade->updateIngestionJobSourceBinaryTransferred (
             ingestionJobKey, true);
@@ -11478,12 +11481,15 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
             + ", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
         );
         
+		chrono::system_clock::time_point startCoping = chrono::system_clock::now();
         FileIO::copyFile(sourcePathName, workspaceIngestionBinaryPathName);
+        chrono::system_clock::time_point endCoping = chrono::system_clock::now();
             
         _logger->info(__FILEREF__ + "Update IngestionJob"
-                + ", _processorIdentifier: " + to_string(_processorIdentifier)
+			+ ", _processorIdentifier: " + to_string(_processorIdentifier)
             + ", ingestionJobKey: " + to_string(ingestionJobKey)
             + ", movingCompleted: " + to_string(true)
+			+ ", copingDuration (millisecs): " + to_string(chrono::duration_cast<chrono::milliseconds>(endCoping - startCoping).count())
         );              
         
         _mmsEngineDBFacade->updateIngestionJobSourceBinaryTransferred (
