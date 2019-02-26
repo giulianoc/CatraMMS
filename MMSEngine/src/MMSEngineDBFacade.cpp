@@ -4270,7 +4270,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 //                    );
                     
                     bool ingestionJobToBeManaged = true;
-                    bool atLeastOneDependencyFound = false;
+                    bool atLeastOneDependencyRowFound = false;
 
                     lastSQLCommand = 
                         "select dependOnIngestionJobKey, dependOnSuccess from MMS_IngestionJobDependency where ingestionJobKey = ? order by orderNumber asc";
@@ -4284,8 +4284,8 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                     shared_ptr<sql::ResultSet> resultSetDependency (preparedStatementDependency->executeQuery());
                     while (resultSetDependency->next())
                     {
-                        if (!atLeastOneDependencyFound)
-                            atLeastOneDependencyFound = true;
+                        if (!atLeastOneDependencyRowFound)
+                            atLeastOneDependencyRowFound = true;
 
                         if (!resultSetDependency->isNull("dependOnIngestionJobKey"))
                         {
@@ -4355,11 +4355,15 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                         }
                     }
                     
-                    if (!atLeastOneDependencyFound)
+                    if (!atLeastOneDependencyRowFound)
                     {
-                        _logger->info(__FILEREF__ + "No dependency for the IngestionJob"
+			// this is not possible, even the ingestionJob without dependency
+                        // have a row here with dependOnIngestionJobKey NULL
+
+                        _logger->error(__FILEREF__ + "No dependency Row for the IngestionJob"
                             + ", ingestionJobKey: " + to_string(ingestionJobKey)
                         );
+                    	ingestionJobToBeManaged = false;
                     }
 
                     if (ingestionJobToBeManaged)
