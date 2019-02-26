@@ -17155,7 +17155,14 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveIngestedContentMetadata(
                 preparedStatement->setInt64(queryParameterIndex++, mediaItemKey);
                 preparedStatement->setInt64(queryParameterIndex++, physicalPathKey);
 
-                preparedStatement->executeUpdate();
+                int rowsUpdated = preparedStatement->executeUpdate();
+
+                _logger->info(__FILEREF__ + "insert into MMS_IngestionJobOutput"
+                    + ", ingestionJobKey: " + to_string(ingestionJobKey)
+                    + ", mediaItemKey: " + toString(mediaItemKey)
+                    + ", physicalPathKey: " + toString(physicalPathKey)
+                    + ", rowsUpdated: " + toString(rowsUpdated)
+                );                            
             }
 
             if (ingestionRowToBeUpdatedAsSuccess)
