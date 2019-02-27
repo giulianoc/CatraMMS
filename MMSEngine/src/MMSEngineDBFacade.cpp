@@ -7978,7 +7978,7 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA()
 							"and JSON_EXTRACT(userData, '$.mmsData.ingestionJobKey') = ? "
 							"and JSON_EXTRACT(userData, '$.mmsData.validated') is null "
 							"and NOW() > DATE_ADD(ingestionDate, INTERVAL ? SECOND) "
-							"retentionInMinutes != 0 for update"
+							"and retentionInMinutes != 0 for update"
 						);
 
 					shared_ptr<sql::PreparedStatement> preparedStatementMediaItemKey (conn->_sqlConnection->prepareStatement(lastSQLCommand));
