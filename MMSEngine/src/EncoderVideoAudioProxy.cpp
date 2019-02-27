@@ -6817,6 +6817,11 @@ bool EncoderVideoAudioProxy::isLastLiveRecorderFile(
 
     try
     {
+		_logger->info(__FILEREF__ + "isLastLiveRecorderFile"
+			", contentsPath: " + contentsPath
+			", recordedFileNamePrefix: " + recordedFileNamePrefix
+		);
+
         FileIO::DirectoryEntryType_t detDirectoryEntryType;
         shared_ptr<FileIO::Directory> directory = FileIO::openDirectory (contentsPath + "/");
 
@@ -6826,8 +6831,15 @@ bool EncoderVideoAudioProxy::isLastLiveRecorderFile(
             string directoryEntry;
             try
             {
+				_logger->info(__FILEREF__ + "FileIO::readDirectory");
+
                 string directoryEntry = FileIO::readDirectory (directory,
                     &detDirectoryEntryType);
+
+				_logger->info(__FILEREF__ + "FileIO::readDirectory"
+					", directoryEntry: " + directoryEntry
+					", detDirectoryEntryType: " + to_string(detDirectoryEntryType)
+				);
 
                 if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
                     continue;
@@ -6893,6 +6905,10 @@ time_t EncoderVideoAudioProxy::getMediaLiveRecorderStartTime(
 
 
 	// liveRecorder_6405_2019-02-02_22-11-00.ts
+
+	_logger->info(__FILEREF__ + "getMediaLiveRecorderStartTime"
+		", mediaLiveRecorderFileName: " + mediaLiveRecorderFileName
+	);
 
 	size_t index = mediaLiveRecorderFileName.find_last_of(".");
 	if (mediaLiveRecorderFileName.length() < 20 ||
