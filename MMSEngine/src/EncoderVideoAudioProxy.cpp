@@ -6837,8 +6837,8 @@ bool EncoderVideoAudioProxy::isLastLiveRecorderFile(
                     &detDirectoryEntryType);
 
 				_logger->info(__FILEREF__ + "FileIO::readDirectory"
-					", directoryEntry: " + directoryEntry
-					", detDirectoryEntryType: " + to_string(detDirectoryEntryType)
+					+ ", directoryEntry: " + directoryEntry
+					+ ", detDirectoryEntryType: " + to_string(static_cast<int>(detDirectoryEntryType))
 				);
 
                 if (detDirectoryEntryType != FileIO::TOOLS_FILEIO_REGULARFILE)
