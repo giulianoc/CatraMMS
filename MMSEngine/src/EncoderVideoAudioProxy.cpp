@@ -6818,8 +6818,8 @@ bool EncoderVideoAudioProxy::isLastLiveRecorderFile(
     try
     {
 		_logger->info(__FILEREF__ + "isLastLiveRecorderFile"
-			", contentsPath: " + contentsPath
-			", recordedFileNamePrefix: " + recordedFileNamePrefix
+			+ ", contentsPath: " + contentsPath
+			+ ", recordedFileNamePrefix: " + recordedFileNamePrefix
 		);
 
         FileIO::DirectoryEntryType_t detDirectoryEntryType;
