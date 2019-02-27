@@ -951,22 +951,41 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
         int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
 
-        lock_guard<mutex> locker(_encodingMutex);
+		bool                    encodingCompleted = false;
+		shared_ptr<EncodingCompleted>    selectedEncodingCompleted;
 
-        shared_ptr<Encoding>    selectedEncoding;
-        bool                    encodingFound = false;
-        for (shared_ptr<Encoding> encoding: _encodingsCapability)
-        {
-            if (encoding->_encodingJobKey == encodingJobKey)
-            {
-                encodingFound = true;
-                selectedEncoding = encoding;
+		shared_ptr<Encoding>    selectedEncoding;
+		bool                    encodingFound = false;
+
+		{
+			lock_guard<mutex> locker(_encodingCompletedMutex);
+
+			map<int64_t, shared_ptr<EncodingCompleted>>::iterator it =
+				_encodingCompletedMap.find(encodingJobKey);
+			if (it != _encodingCompletedMap.end())
+			{
+				encodingCompleted = true;
+				selectedEncodingCompleted = it->second;
+			}
+		}
+
+		if (!encodingCompleted)
+		{
+			lock_guard<mutex> locker(_encodingMutex);
+
+			for (shared_ptr<Encoding> encoding: _encodingsCapability)
+			{
+				if (encoding->_encodingJobKey == encodingJobKey)
+				{
+					encodingFound = true;
+					selectedEncoding = encoding;
                 
-                break;
-            }
-        }
+					break;
+				}
+			}
+		}
 
-        if (!encodingFound)
+        if (!encodingCompleted && !encodingFound)
         {
             string errorMessage = string("EncodingJobKey: ") + to_string(encodingJobKey)
 				+ ", " + NoEncodingJobKeyFound().what();
@@ -979,44 +998,60 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			return;
         }
 
-        int encodingProgress;
-        try
-        {
-            encodingProgress = selectedEncoding->_ffmpeg->getEncodingProgress();
-        }
-        catch(FFMpegEncodingStatusNotAvailable e)
-        {
-            string errorMessage = string("_ffmpeg->getEncodingProgress failed")
+        if (encodingFound)
+		{
+			int encodingProgress;
+			try
+			{
+				encodingProgress = selectedEncoding->_ffmpeg->getEncodingProgress();
+			}
+			catch(FFMpegEncodingStatusNotAvailable e)
+			{
+				string errorMessage = string("_ffmpeg->getEncodingProgress failed")
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+					+ ", e.what(): " + e.what()
+						;
+				_logger->info(__FILEREF__ + errorMessage);
+
+				sendError(request, 500, errorMessage);
+
+				// throw e;
+				return;
+			}
+			catch(exception e)
+			{
+				string errorMessage = string("_ffmpeg->getEncodingProgress failed")
                     + ", encodingJobKey: " + to_string(encodingJobKey)
-                + ", e.what(): " + e.what()
+					+ ", e.what(): " + e.what()
                     ;
-            _logger->info(__FILEREF__ + errorMessage);
+				_logger->error(__FILEREF__ + errorMessage);
 
-            sendError(request, 500, errorMessage);
+				sendError(request, 500, errorMessage);
 
-            // throw e;
-            return;
-        }
-        catch(exception e)
-        {
-            string errorMessage = string("_ffmpeg->getEncodingProgress failed")
-                    + ", encodingJobKey: " + to_string(encodingJobKey)
-                + ", e.what(): " + e.what()
-                    ;
-            _logger->error(__FILEREF__ + errorMessage);
-
-            sendError(request, 500, errorMessage);
-
-            throw e;
-        }
+				// throw e;
+				return;
+			}
         
-        string responseBody = string("{ ")
-			+ "\"encodingJobKey\": " + to_string(encodingJobKey)
-			+ ", \"pid\": " + to_string(selectedEncoding->_childPid)
-            + ", \"encodingProgress\": " + to_string(encodingProgress) + " "
-            + "}";
-        
-        sendSuccess(request, 200, responseBody);
+			string responseBody = string("{ ")
+				+ "\"encodingJobKey\": " + to_string(encodingJobKey)
+				+ ", \"pid\": " + to_string(selectedEncoding->_childPid)
+				+ ", \"encodingProgress\": " + to_string(encodingProgress) + " "
+				+ "}";
+
+			sendSuccess(request, 200, responseBody);
+		}
+		else // if (encodingCompleted)
+		{
+			string errorMessage = string(FFMpegEncodingStatusNotAvailable().what())
+					+ ", encodingJobKey: " + to_string(encodingJobKey)
+					;
+			_logger->info(__FILEREF__ + errorMessage);
+
+			sendError(request, 500, errorMessage);
+
+			// throw e;
+			return;
+		}
     }
     else if (method == "killEncodingJob")
     {
