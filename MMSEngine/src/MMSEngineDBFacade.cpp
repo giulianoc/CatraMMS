@@ -8006,7 +8006,7 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA()
 							int rowsUpdated = preparedStatementUpdate->executeUpdate();            
 							if (rowsUpdated != 1)
 								_logger->error(__FILEREF__ + "It should never happen"
-									+ ", mediaItemKeyToBeValidated: " + to_string(mediaItemKeyValidated)
+									+ ", mediaItemKeyChunk: " + to_string(mediaItemKeyChunk)
 								);
 						}
 					}
