@@ -4565,7 +4565,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
         }
 
         throw e;
-    }        
+    }
     catch(exception e)
     {        
         _logger->error(__FILEREF__ + "SQL exception"
