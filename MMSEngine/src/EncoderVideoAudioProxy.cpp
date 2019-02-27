@@ -5616,8 +5616,12 @@ tuple<string, bool, bool> EncoderVideoAudioProxy::liveRecorder()
 
 	time_t utcRecordingPeriodStart;
 	time_t utcRecordingPeriodEnd;
+	bool autoRenew;
 	{
-        string field = "utcRecordingPeriodStart";
+        string field = "autoRenew";
+        autoRenew = _encodingItem->_parametersRoot.get(field, 0).asBool();
+
+        field = "utcRecordingPeriodStart";
         utcRecordingPeriodStart = _encodingItem->_parametersRoot.get(field, 0).asInt64();
 
         field = "utcRecordingPeriodEnd";
@@ -5645,16 +5649,19 @@ tuple<string, bool, bool> EncoderVideoAudioProxy::liveRecorder()
 		}
 	}
 
-	if (utcRecordingPeriodEnd <= utcNow)
+	if (!autoRenew)
 	{
-		string errorMessage = __FILEREF__ + "Too late to activate the recording"
-			+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
-			+ ", utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd)
-			+ ", utcNow: " + to_string(utcNow)
-			;
-		_logger->error(errorMessage);
+		if (utcRecordingPeriodEnd <= utcNow)
+		{
+			string errorMessage = __FILEREF__ + "Too late to activate the recording"
+				+ ", _proxyIdentifier: " + to_string(_proxyIdentifier)
+				+ ", utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd)
+				+ ", utcNow: " + to_string(utcNow)
+				;
+			_logger->error(errorMessage);
 
-		throw runtime_error(errorMessage);
+			throw runtime_error(errorMessage);
+		}
 	}
 
 	tuple<string, bool, bool> stagingEncodedAssetPathNameKilledByUserAndMain = liveRecorder_through_ffmpeg();
@@ -5681,6 +5688,7 @@ tuple<string, bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 	string liveURL;
 	time_t utcRecordingPeriodStart;
 	time_t utcRecordingPeriodEnd;
+	bool autoRenew;
 	int segmentDurationInSeconds;
 	string outputFileFormat;
 	{
@@ -5698,6 +5706,9 @@ tuple<string, bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
 
         field = "utcRecordingPeriodEnd";
         utcRecordingPeriodEnd = _encodingItem->_parametersRoot.get(field, 0).asInt64();
+
+        field = "autoRenew";
+        autoRenew = _encodingItem->_parametersRoot.get(field, 0).asBool();
 
         field = "segmentDurationInSeconds";
         segmentDurationInSeconds = _encodingItem->_parametersRoot.get(field, 0).asInt();
@@ -6047,8 +6058,10 @@ tuple<string, bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
             
             chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
             
-			time_t utcNow = chrono::system_clock::to_time_t(endEncoding);
+			utcNow = chrono::system_clock::to_time_t(endEncoding);
+
 			if (utcNow < utcRecordingPeriodEnd)
+			{
 				_logger->error(__FILEREF__ + "LiveRecorder media file completed unexpected"
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                     + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
@@ -6059,16 +6072,52 @@ tuple<string, bool, bool> EncoderVideoAudioProxy::liveRecorder_through_ffmpeg()
                     + ", encodingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count())
                     + ", _intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
 				);
+			}
 			else
+			{
 				_logger->info(__FILEREF__ + "LiveRecorder media file completed"
                     + ", _proxyIdentifier: " + to_string(_proxyIdentifier)
                     + ", _encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) 
+                    + ", autoRenew: " + to_string(autoRenew) 
+                    + ", killedByUser: " + to_string(killedByUser) 
                     + ", ffmpegEncoderURL: " + ffmpegEncoderURL
                     + ", body: " + body
                     + ", sResponse: " + sResponse
                     + ", encodingDuration (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count())
                     + ", _intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
 				);
+
+				if (autoRenew)
+				{
+					_logger->info(__FILEREF__ + "Renew Live Recording"
+						+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						);
+
+					time_t recordingPeriodInSeconds = utcRecordingPeriodEnd - utcRecordingPeriodStart;
+
+					utcRecordingPeriodStart		= utcRecordingPeriodEnd;
+					utcRecordingPeriodEnd		+= recordingPeriodInSeconds;
+
+					_logger->info(__FILEREF__ + "Update Encoding LiveRecording Period"
+						+ ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+						+ ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+						+ ", utcRecordingPeriodStart: " + to_string(utcRecordingPeriodStart)
+						+ ", utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd)
+					);
+					_mmsEngineDBFacade->updateEncodingLiveRecordingPeriod(
+							_encodingItem->_encodingJobKey,
+							utcRecordingPeriodStart, utcRecordingPeriodEnd);
+
+					// next update is important because the JSON is used in the getEncodingProgress method 
+					{
+						string field = "utcRecordingPeriodStart";
+						_encodingItem->_parametersRoot[field] = utcRecordingPeriodStart;
+
+						field = "utcRecordingPeriodEnd";
+						_encodingItem->_parametersRoot[field] = utcRecordingPeriodEnd;
+					}
+				}
+			}
 		}
 		catch(MaxConcurrentJobsReached e)
 		{

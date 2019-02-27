@@ -4720,6 +4720,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 		string configurationLabel;
         string recordingPeriodStart;
         string recordingPeriodEnd;
+        bool autoRenew;
 		int segmentDurationInSeconds;
 		string outputFileFormat;
 		bool highAvailability = false;
@@ -4768,6 +4769,12 @@ void MMSEngineProcessor::manageLiveRecorder(
                 throw runtime_error(errorMessage);
             }
             recordingPeriodEnd = recordingPeriodRoot.get(field, "XXX").asString();
+
+            field = "AutoRenew";
+            if (!_mmsEngineDBFacade->isMetadataPresent(recordingPeriodRoot, field))
+				autoRenew = false;
+			else
+				autoRenew = recordingPeriodRoot.get(field, "XXX").asBool();
 
             field = "SegmentDuration";
             if (!_mmsEngineDBFacade->isMetadataPresent(parametersRoot, field))
@@ -4890,16 +4897,16 @@ void MMSEngineProcessor::manageLiveRecorder(
 		bool main = true;
 
 		_mmsEngineDBFacade->addEncoding_LiveRecorderJob(workspace, ingestionJobKey,
-			highAvailability, main, liveURL, utcRecordingPeriodStart, utcRecordingPeriodEnd, segmentDurationInSeconds,
-			outputFileFormat, encodingPriority);
+			highAvailability, main, liveURL, utcRecordingPeriodStart, utcRecordingPeriodEnd,
+			autoRenew, segmentDurationInSeconds, outputFileFormat, encodingPriority);
 
 		if (highAvailability)
 		{
 			main = false;
 
 			_mmsEngineDBFacade->addEncoding_LiveRecorderJob(workspace, ingestionJobKey,
-				highAvailability, main, liveURL, utcRecordingPeriodStart, utcRecordingPeriodEnd, segmentDurationInSeconds,
-				outputFileFormat, encodingPriority);
+				highAvailability, main, liveURL, utcRecordingPeriodStart, utcRecordingPeriodEnd,
+				autoRenew, segmentDurationInSeconds, outputFileFormat, encodingPriority);
 		}
 	}
     catch(runtime_error e)

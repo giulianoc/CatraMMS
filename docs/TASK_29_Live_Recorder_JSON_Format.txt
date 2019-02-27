@@ -20,7 +20,12 @@
 		//       - Zulu/UTC Date-time having the following format: YYYY-MM-DDTHH:MI:SSZ
 		"RecordingPeriod": {
 			"Start": "2019-01-21T12:30:00Z",
-			"End": "2019-01-21T13:30:00Z"
+			"End": "2019-01-21T13:30:00Z",
+			// If true, as soon as the End is reached, the recording will start again
+			// with the following dates:
+			//	Start will be set to the End
+			//	End will be increased of the same period (End - Start)
+			"AutoRenew": false
 		},
 
 		// mandatory. MMS records the live feed and save it in files. This parameter specifies

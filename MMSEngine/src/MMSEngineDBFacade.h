@@ -1111,9 +1111,15 @@ public:
 		string liveURL,
 		time_t utcRecordingPeriodStart,
 		time_t utcRecordingPeriodEnd,
+		bool autoRenew,
 		int segmentDurationInSeconds,
 		string outputFileFormat,
 		EncodingPriority encodingPriority);
+
+	void updateEncodingLiveRecordingPeriod (
+		int64_t encodingJobKey,
+		time_t utcRecordingPeriodStart,
+		time_t utcRecordingPeriodEnd);
 
     int updateEncodingJob (
         int64_t encodingJobKey,
