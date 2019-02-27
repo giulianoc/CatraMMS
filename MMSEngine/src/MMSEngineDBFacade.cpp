@@ -8001,7 +8001,7 @@ void MMSEngineDBFacade::manageMainAndBackupOfRunnungLiveRecordingHA()
 								"where mediaItemKey = ?";
 							shared_ptr<sql::PreparedStatement> preparedStatementUpdate (conn->_sqlConnection->prepareStatement(lastSQLCommand));
 							int queryParameterIndex = 1;
-							preparedStatementUpdate->setInt64(queryParameterIndex++, mediaItemKeyValidated);
+							preparedStatementUpdate->setInt64(queryParameterIndex++, mediaItemKeyChunk);
 
 							int rowsUpdated = preparedStatementUpdate->executeUpdate();            
 							if (rowsUpdated != 1)
