@@ -8,7 +8,7 @@
 		"Width" : 1280,
 		"Height" : 720,
 		"FrameRate": 30,
-		"TwoPasses" : true,
+		"TwoPasses" : false,
 		"KBitRate" : 1500,
 		"OtherOutputParameters": "-preset veryfast -level 4.0 -crf 23"
 	},
