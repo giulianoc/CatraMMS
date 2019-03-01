@@ -4228,13 +4228,6 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 
         // ingested jobs that do not have to wait a dependency
         {
-			// we will introduce a delay to manage the ingestions because sometimes we saw mysql errors
-			// due to the concurrency accessing rows in this table. From one side we have API transactions
-			// when the contents are ingested. Here we have select for updates.
-			// That generates mysql errors that are managed by the connections pool opening again aborted connection.
-			// Anyway, to avoid at all the mysql errors we introduced this delay working on ingestions that
-			// were ingested at least 2 seconds ago.
-			int delayToManageIngestionsInSeconds = 2;
             int mysqlOffset = 0;
             int mysqlRowCount = maxIngestionJobs;
             bool moreRows = true;
@@ -4245,7 +4238,6 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                         "from MMS_IngestionRoot ir, MMS_IngestionJob ij "
                         "where ir.ingestionRootKey = ij.ingestionRootKey and ij.processorMMS is null "
                         "and (ij.status = ? or (ij.status in (?, ?, ?, ?) and ij.sourceBinaryTransferred = 1)) "
-						"and ir.ingestionDate <= DATE_SUB(NOW(), INTERVAL ? SECOND) "
                         "limit ? offset ? for update";
                 shared_ptr<sql::PreparedStatement> preparedStatement (conn->_sqlConnection->prepareStatement(lastSQLCommand));
                 int queryParameterIndexIngestionJob = 1;
@@ -4254,7 +4246,6 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
                 preparedStatement->setString(queryParameterIndexIngestionJob++, MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress));
                 preparedStatement->setString(queryParameterIndexIngestionJob++, MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress));
                 preparedStatement->setString(queryParameterIndexIngestionJob++, MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress));
-                preparedStatement->setInt(queryParameterIndexIngestionJob++, delayToManageIngestionsInSeconds);
                 preparedStatement->setInt(queryParameterIndexIngestionJob++, mysqlRowCount);
                 preparedStatement->setInt(queryParameterIndexIngestionJob++, mysqlOffset);
 

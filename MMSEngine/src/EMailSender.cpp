@@ -59,9 +59,29 @@ void EMailSender:: sendEmail(string to, string subject, vector<string>& emailBod
     deque<string> emailLines;
   
     emailLines.push_back(string("From: <") + from + ">" + "\r\n");
+
+	/*
+	{
+		vector<string> tos;
+		string sTos;
+		for (string to: tos)
+		{
+			if (sTos == "")
+				sTos = string("<") + to + ">";
+			else
+				sTos += (string(", <") + to + ">");
+		}
+
+		emailLines.push_back(string("To: ") + sTos + "\r\n");
+	}
+	*/
     emailLines.push_back(string("To: <") + to + ">" + "\r\n");
+
     if (cc != "")
+	{
         emailLines.push_back(string("Cc: <") + cc + ">" + "\r\n");
+	}
+
     emailLines.push_back(string("Subject: ") + subject + "\r\n");
     emailLines.push_back(string("Content-Type: text/html; charset=\"UTF-8\"") + "\r\n");
     emailLines.push_back("\r\n");   // empty line to divide headers from body, see RFC5322
