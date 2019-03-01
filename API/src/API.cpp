@@ -346,10 +346,10 @@ void API::manageRequestAndResponse(
         _logger->info(__FILEREF__ + "Received manageRequestAndResponse"
             + ", requestURI: " + requestURI
             + ", requestMethod: " + requestMethod
-            + ", requestBody: " + requestBody
             + ", contentLength: " + to_string(contentLength)
-            + ", userKey        " + to_string(userKey)
+            + ", userKey: " + to_string(userKey)
             + ", workspace->_name: " + workspace->_name
+            + ", requestBody: " + requestBody
             + ", admin: " + to_string(admin)
             + ", ingestWorkflow: " + to_string(ingestWorkflow)
             + ", createProfiles: " + to_string(createProfiles)
@@ -363,8 +363,8 @@ void API::manageRequestAndResponse(
         _logger->info(__FILEREF__ + "Received manageRequestAndResponse"
             + ", requestURI: " + requestURI
             + ", requestMethod: " + requestMethod
-            + ", requestBody: " + requestBody
             + ", contentLength: " + to_string(contentLength)
+            + ", requestBody: " + requestBody
         );        
     }
         
